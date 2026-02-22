@@ -1,0 +1,40 @@
+# seed.yaml — Automation Contract for organvm-iii-ergon/peer-audited--behavioral-blockchain
+# Schema: seed/v1.0
+# Generated: 2026-02-22
+
+schema_version: "1.0"
+organ: III
+organ_name: Commerce
+repo: peer-audited--behavioral-blockchain
+org: organvm-iii-ergon
+
+metadata:
+  implementation_status: ACTIVE
+  tier: standard
+  promotion_status: LOCAL
+  last_validated: "2026-02-22"
+  generated: "2026-02-22"
+  language: typescript
+
+agents:
+  - name: ci
+    trigger: on_push
+    workflow: .github/workflows/ci.yml
+    description: "Continuous integration pipeline"
+
+produces:
+  - type: product
+    description: "Styx: peer-audited behavioral market platform (NestJS API, Next.js web, React Native mobile, Tauri desktop)"
+
+consumes:
+  - type: governance-rules
+    source: ORGAN-IV
+    description: Commerce operations follow governance policies
+
+subscriptions:
+  - event: governance.updated
+    source: ORGAN-IV
+    action: Check compliance with updated governance rules
+  - event: health-audit.completed
+    source: ORGAN-IV
+    action: Review audit findings for this repo
