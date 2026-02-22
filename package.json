@@ -18,10 +18,14 @@
   "devDependencies": {
     "turbo": "latest",
     "prettier": "^3.0.0",
-    "eslint": "^8.0.0",
+    "eslint": "^9.0.0",
     "typescript": "^5.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "overrides": {
+    "minimatch": ">=10.2.1",
+    "fast-xml-parser": ">=5.3.6"
   }
 }
