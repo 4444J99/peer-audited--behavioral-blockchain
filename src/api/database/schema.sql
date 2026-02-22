@@ -31,3 +31,59 @@ CREATE TABLE event_log (
 
 -- Index for rapid sequential verification of the chain.
 CREATE INDEX idx_event_log_created_at ON event_log(created_at);
+
+-- ============================================================
+-- Domain Tables: Users, Contracts, Proofs, Fury Assignments
+-- ============================================================
+
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE NOT NULL,
+    stripe_customer_id TEXT,
+    integrity_score INTEGER DEFAULT 50,
+    account_id UUID REFERENCES accounts(id),
+    status TEXT DEFAULT 'ACTIVE',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE contracts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    oath_category TEXT NOT NULL,
+    verification_method TEXT NOT NULL,
+    stake_amount DECIMAL(19,4) NOT NULL CHECK (stake_amount > 0),
+    payment_intent_id TEXT,
+    duration_days INTEGER NOT NULL,
+    status TEXT DEFAULT 'PENDING_STAKE',
+    grace_days_used INTEGER DEFAULT 0,
+    strikes INTEGER DEFAULT 0,
+    started_at TIMESTAMPTZ,
+    ends_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE proofs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contract_id UUID REFERENCES contracts(id),
+    user_id UUID REFERENCES users(id),
+    media_uri TEXT,
+    is_honeypot BOOLEAN DEFAULT FALSE,
+    status TEXT DEFAULT 'PENDING_REVIEW',
+    submitted_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE fury_assignments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    proof_id UUID REFERENCES proofs(id),
+    fury_user_id UUID REFERENCES users(id),
+    verdict TEXT,
+    reviewed_at TIMESTAMPTZ,
+    assigned_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_contracts_user_id ON contracts(user_id);
+CREATE INDEX idx_contracts_status ON contracts(status);
+CREATE INDEX idx_proofs_contract_id ON proofs(contract_id);
+CREATE INDEX idx_proofs_status ON proofs(status);
+CREATE INDEX idx_fury_assignments_proof_id ON fury_assignments(proof_id);
+CREATE INDEX idx_fury_assignments_fury_user_id ON fury_assignments(fury_user_id);

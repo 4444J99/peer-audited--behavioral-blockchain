@@ -17,8 +17,8 @@ describe('DisputeService', () => {
   describe('initiateAppeal', () => {
     it('should successfully initiate an appeal if the $5 fee holds', async () => {
       (mockStripeService.holdStake as jest.Mock).mockResolvedValueOnce({
+        id: 'pi_test_appeal_fee',
         status: 'requires_capture',
-        paymentIntentId: 'pi_test_appeal_fee',
       });
 
       const result = await disputeService.initiateAppeal('user-1', 'proof-1', 'cus_123');
