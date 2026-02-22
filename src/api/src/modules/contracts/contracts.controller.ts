@@ -1,5 +1,4 @@
-import { Controller, Post, Get, Param, Body, UseGuards, Req } from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Post, Get, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ContractsService, CreateContractDto, SubmitProofDto } from './contracts.service';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { GeofenceGuard } from '../../common/guards/geofence.guard';
@@ -8,6 +7,11 @@ import { GeofenceGuard } from '../../common/guards/geofence.guard';
 @UseGuards(GeofenceGuard, AuthGuard)
 export class ContractsController {
   constructor(private readonly contractsService: ContractsService) {}
+
+  @Get()
+  async findByUser(@Query('userId') userId: string) {
+    return this.contractsService.getUserContracts(userId);
+  }
 
   @Post()
   async create(@Body() dto: CreateContractDto) {

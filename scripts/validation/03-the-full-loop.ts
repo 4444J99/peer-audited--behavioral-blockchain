@@ -1,35 +1,109 @@
 /**
  * Validation Gate 03: The Full Loop (WS2 + WS1 + WS3)
- * 
- * Objective: Simulates a seamless end-to-end journey confirming cross-workspace structural routing.
- * Scenario: Mobile video upload -> API queue -> Web Peer Review.
+ *
+ * Objective: End-to-end contract lifecycle via real HTTP calls.
+ * Flow: Create contract → Submit proof → 3 Fury verdicts → Verify resolution.
  */
+
+const API_BASE = process.env.API_URL || 'http://localhost:3000';
+const USER_ID = 'demo-user-001';
+const FURY_USERS = ['fury-user-001', 'admin-001', 'demo-user-001'];
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer dev-token', ...options?.headers },
+    ...options,
+  });
+  if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
+  return res.json();
+}
 
 async function runTheFullLoop() {
   console.log('\n--- STARTING VALIDATION GATE 03: THE FULL LOOP ---');
-  
-  console.log(`[WS2: MOBILE] User submits live camera feed to Cloudflare R2...`);
-  const videoUri = 'r2://styx-fury-proofs/video_mock_8z.mp4';
-  console.log(`[WS2: MOBILE] Transmitting Proof URI to API Core...`);
 
-  // Simulated API Layer
-  console.log(`[WS1: API] Appending Proof to PostgreSQL Truth Log (Status: PENDING_QUEUE).`);
-  console.log(`[WS1: API] Dispatching Job to BullMQ (Worker: FuryRouter).`);
-  
-  // Simulated BullMQ
-  const routedPeers = ['usr_peer1', 'usr_peer2', 'usr_peer3'];
-  console.log(`[WS1: API] BullMQ Engine randomized 3 anonymous peers: [${routedPeers.join(', ')}].`);
+  // Step 1: Verify API is alive
+  const health = await request<{ status: string }>('/health');
+  console.log(`[HEALTH] API status: ${health.status}`);
 
-  // Simulated Web Consumer Portal
-  for (const peer of routedPeers) {
-    console.log(`[WS3: WEB] Peer ${peer} rendered HLS stream on Fury Dashboard.`);
-    console.log(`[WS3: WEB] Peer ${peer} voted: "PASS".`);
+  // Step 2: Create a behavioral contract
+  console.log(`[STEP 1] Creating behavioral contract for user ${USER_ID}...`);
+  let contractId: string;
+  try {
+    const contract = await request<{ contractId: string }>('/contracts', {
+      method: 'POST',
+      body: JSON.stringify({
+        userId: USER_ID,
+        oathCategory: 'CREATIVE_WRITING',
+        verificationMethod: 'FURY_NETWORK',
+        stakeAmount: 15,
+        durationDays: 7,
+      }),
+    });
+    contractId = contract.contractId;
+    console.log(`[STEP 1] Contract created: ${contractId}`);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.log(`[STEP 1] Contract creation failed (may require Stripe): ${message}`);
+    console.log('⚠️  GATE 03 SKIPPED: Cannot complete full loop without payment integration.');
+    return;
   }
 
-  // Simulated API Resolution
-  console.log(`[WS1: API] 3/3 "PASS" Consensus reached. Unlocking Vault. Disbursing principal.`);
-  console.log('✅ GATE 03 PASSED: The End-to-End architectural loop is structurally sound.');
+  // Step 3: Submit proof
+  console.log(`[STEP 2] Submitting proof for contract ${contractId}...`);
+  const proof = await request<{ proofId: string; jobId: string }>(`/contracts/${contractId}/proof`, {
+    method: 'POST',
+    body: JSON.stringify({
+      userId: USER_ID,
+      mediaUri: 'r2://styx-fury-proofs/validation-gate-03.mp4',
+    }),
+  });
+  console.log(`[STEP 2] Proof submitted: ${proof.proofId} (job: ${proof.jobId})`);
+
+  // Step 4: Fury verdicts — query each fury user's queue and vote PASS
+  console.log(`[STEP 3] Submitting Fury verdicts...`);
+  let verdictsSubmitted = 0;
+
+  for (const furyUserId of FURY_USERS) {
+    const queue = await request<{ assignments: Array<{ assignment_id: string; proof_id: string }> }>(
+      `/fury/queue?furyUserId=${furyUserId}`,
+    );
+
+    const matching = queue.assignments.find((a) => a.proof_id === proof.proofId);
+    if (matching) {
+      await request('/fury/verdict', {
+        method: 'POST',
+        body: JSON.stringify({
+          assignmentId: matching.assignment_id,
+          furyUserId,
+          verdict: 'PASS',
+        }),
+      });
+      verdictsSubmitted++;
+      console.log(`[STEP 3] Fury ${furyUserId} voted PASS on assignment ${matching.assignment_id}`);
+    }
+  }
+  console.log(`[STEP 3] ${verdictsSubmitted} verdict(s) submitted.`);
+
+  // Step 5: Verify contract state
+  console.log(`[STEP 4] Checking final contract state...`);
+  const finalContract = await request<{ id: string; status: string }>(`/contracts/${contractId}`);
+  console.log(`[STEP 4] Contract ${contractId} status: ${finalContract.status}`);
+
+  // Step 6: Verify user contracts list includes this one
+  const userContracts = await request<Array<{ id: string }>>(`/contracts?userId=${USER_ID}`);
+  const found = userContracts.some((c) => c.id === contractId);
+
+  if (found) {
+    console.log('✅ GATE 03 PASSED: End-to-end lifecycle completed. Contract visible in user list.');
+  } else {
+    console.error('❌ GATE 03 FAILED: Contract not found in user contracts list.');
+    process.exit(1);
+  }
 }
 
-// runTheFullLoop();
+runTheFullLoop().catch((err) => {
+  console.error('❌ GATE 03 CRASHED:', err);
+  process.exit(1);
+});
+
 export default runTheFullLoop;

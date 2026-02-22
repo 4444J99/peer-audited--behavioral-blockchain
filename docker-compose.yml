@@ -15,6 +15,7 @@ services:
       - POSTGRES_USER=styx_admin
       - POSTGRES_PASSWORD=styx_local_secret
       - POSTGRES_DB=styx_ledger
+      - DATABASE_URL=postgresql://styx_admin:styx_local_secret@styx-postgres:5432/styx_ledger
       - REDIS_HOST=styx-redis
       - REDIS_PORT=6379
     depends_on:
@@ -35,6 +36,8 @@ services:
       - '5432:5432'
     volumes:
       - styx-pg-data:/var/lib/postgresql/data
+      - ./src/api/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./src/api/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     networks:
       - styx-network
 
