@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.git
+*.spec.ts
+*.test.ts
+npm-debug.log
+yarn-error.log
+coverage/

@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # The Styx API (Workstream 1)
+  styx-api:
+    build:
+      context: .
+      dockerfile: ./src/api/Dockerfile
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_HOST=styx-postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=styx_admin
+      - POSTGRES_PASSWORD=styx_local_secret
+      - POSTGRES_DB=styx_ledger
+      - REDIS_HOST=styx-redis
+      - REDIS_PORT=6379
+    depends_on:
+      - styx-postgres
+      - styx-redis
+    networks:
+      - styx-network
+
+  # Core Ledger Database (PostgreSQL)
+  styx-postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: styx_admin
+      POSTGRES_PASSWORD: styx_local_secret
+      POSTGRES_DB: styx_ledger
+    ports:
+      - '5432:5432'
+    volumes:
+      - styx-pg-data:/var/lib/postgresql/data
+    networks:
+      - styx-network
+
+  # Core Router Queue (Redis)
+  styx-redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    networks:
+      - styx-network
+    command: redis-server --appendonly yes
+    volumes:
+      - styx-redis-data:/data
+
+volumes:
+  styx-pg-data:
+  styx-redis-data:
+
+networks:
+  styx-network:
+    driver: bridge

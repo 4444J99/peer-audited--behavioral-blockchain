@@ -1,0 +1,19 @@
+{
+  "name": "@styx/mobile",
+  "version": "0.0.1",
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "react": "18.2.0",
+    "react-native": "0.73.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "@types/react-native": "0.72.8",
+    "typescript": "5.9.3"
+  }
+}

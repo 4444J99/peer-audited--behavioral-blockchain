@@ -1,0 +1,28 @@
+{
+  "description": "Styx Geo-Blocking Configuration (Phase Delta)",
+  "rules": [
+    {
+      "id": "block_any_chance_jurisdictions",
+      "action": "block",
+      "expression": "(ip.geoip.country in {\"AF\" \"BY\" \"CU\" \"IR\" \"IQ\" \"KP\" \"SD\" \"SY\" \"UA\"})",
+      "description": "Strict blanket enforcement blocking traffic from legally ambiguous/sanctioned territories."
+    },
+    {
+      "id": "block_us_restrictive_states",
+      "action": "managed_challenge",
+      "expression": "(ip.geoip.region in {\"NV\" \"WA\" \"NJ\" \"NY\"})",
+      "description": "Trigger aggressive captcha challenges for US states with heavy consumer protection / sweepstakes regulations."
+    },
+    {
+      "id": "rate_limit_api_abuse",
+      "action": "log",
+      "expression": "(http.request.uri.path contains \"/api/v1/fury/\" and http.request.method == \"POST\")",
+      "ratelimit": {
+          "characteristics": ["ip.src"],
+          "period": 60,
+          "requests_per_period": 30
+      },
+      "description": "Throttle aggressive bot voting on the Fury API."
+    }
+  ]
+}
