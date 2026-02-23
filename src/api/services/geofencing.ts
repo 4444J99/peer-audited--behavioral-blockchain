@@ -1,10 +1,9 @@
 /**
  * Aegis Protocol: Jurisdictional Geofencing
  *
- * Uses geoip-lite for IP-to-state lookups, falling back gracefully.
  * Jurisdiction classification based on docs/legal/ gambling law analysis.
+ * IP-to-state lookup is handled by GeofenceService (injectable, testable).
  */
-import geoip from 'geoip-lite';
 
 /**
  * CG-06: Jurisdiction Tiers
@@ -84,11 +83,11 @@ export const STATE_TIERS: Record<string, JurisdictionTier> = {
 };
 
 /**
- * Look up an IP address and return its jurisdiction tier and resolved state.
- * Non-US IPs default to TIER_1 (permissive) with null state.
+ * Classify a resolved geo result into a jurisdiction tier.
+ * Non-US or unknown geos default to TIER_1 (permissive).
+ * IP-to-geo resolution is the caller's responsibility (see GeofenceService).
  */
-export function checkJurisdiction(ip: string): { tier: JurisdictionTier; state: string | null } {
-    const geo = geoip.lookup(ip);
+export function classifyJurisdiction(geo: { country: string; region: string } | null): { tier: JurisdictionTier; state: string | null } {
     if (!geo || geo.country !== 'US') return { tier: JurisdictionTier.TIER_1, state: null };
     const state = geo.region;
     const tier = STATE_TIERS[state] ?? JurisdictionTier.TIER_1;
