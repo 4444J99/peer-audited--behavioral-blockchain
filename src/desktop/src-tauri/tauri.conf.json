@@ -1,43 +1,25 @@
 {
+  "$schema": "https://raw.githubusercontent.com/nicedoc/tauri/dev/core/tauri-config-schema/schema.json",
   "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist"
+    "beforeBuildCommand": "npm run build"
   },
-  "package": {
-    "productName": "StyxJudgeAdmin",
-    "version": "0.0.1"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": true
-    },
-    "bundle": {
-      "active": true,
-      "category": "Utility",
-      "copyright": "Styx Protocol",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
-      "identifier": "com.styx.judgeadmin",
-      "targets": "all"
-    },
-    "security": {
-      "csp": null
-    },
+  "app": {
+    "title": "Styx Judge",
+    "identifier": "com.styx.judge",
     "windows": [
       {
-        "fullscreen": false,
+        "title": "Styx Judge \u2014 The Court of Behavioral Truth",
+        "width": 1200,
         "height": 800,
         "resizable": true,
-        "title": "Styx: The Judge",
-        "width": 1200
+        "fullscreen": false
       }
-    ]
+    ],
+    "security": {
+      "csp": null
+    }
   }
 }
