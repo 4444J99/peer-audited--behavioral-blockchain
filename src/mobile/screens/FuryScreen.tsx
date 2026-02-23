@@ -15,6 +15,24 @@ export function FuryScreen() {
   const [loading, setLoading] = useState(true);
   const [verdictLoading, setVerdictLoading] = useState(false);
   const [error, setError] = useState('');
+  const [stats, setStats] = useState<{
+    totalAudits: number;
+    accuracy: number;
+    netEarnings: number;
+  } | null>(null);
+
+  const loadStats = useCallback(async () => {
+    try {
+      const data = await ApiClient.getFuryStats();
+      setStats({
+        totalAudits: data.totalAudits,
+        accuracy: data.accuracy,
+        netEarnings: data.netEarnings,
+      });
+    } catch {
+      // Non-blocking: stats are supplementary
+    }
+  }, []);
 
   const loadQueue = useCallback(async () => {
     try {
@@ -29,7 +47,7 @@ export function FuryScreen() {
     }
   }, []);
 
-  useEffect(() => { loadQueue(); }, [loadQueue]);
+  useEffect(() => { loadQueue(); loadStats(); }, [loadQueue, loadStats]);
 
   const current = queue[currentIndex];
 
@@ -73,6 +91,26 @@ export function FuryScreen() {
   return (
     <View style={styles.container}>
       {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      {/* Fury stats bar */}
+      {stats && (
+        <View style={styles.statsBar}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{stats.totalAudits}</Text>
+            <Text style={styles.statLabel}>Audits</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{(stats.accuracy * 100).toFixed(0)}%</Text>
+            <Text style={styles.statLabel}>Accuracy</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, stats.netEarnings >= 0 ? styles.positive : styles.negative]}>
+              ${Math.abs(stats.netEarnings).toFixed(2)}
+            </Text>
+            <Text style={styles.statLabel}>Earnings</Text>
+          </View>
+        </View>
+      )}
 
       {/* Queue indicator */}
       <View style={styles.queueBar}>
@@ -139,6 +177,12 @@ const styles = StyleSheet.create({
   emptySubtext: { color: '#888', fontSize: 14 },
   refreshButton: { marginTop: 20, backgroundColor: '#1a1a2e', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#2a2a3e' },
   refreshText: { color: '#ff4444', fontSize: 14, fontWeight: '600' },
+  statsBar: { flexDirection: 'row', backgroundColor: '#1a1a2e', borderRadius: 8, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#2a2a3e', justifyContent: 'space-around' },
+  statItem: { alignItems: 'center' },
+  statValue: { color: '#e0e0e0', fontSize: 18, fontWeight: '700' },
+  statLabel: { color: '#666', fontSize: 11, fontWeight: '500', marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.5 },
+  positive: { color: '#2ecc71' },
+  negative: { color: '#e74c3c' },
   queueBar: { backgroundColor: '#1a1a2e', borderRadius: 8, padding: 10, alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#2a2a3e' },
   queueText: { color: '#888', fontSize: 13, fontWeight: '500' },
   proofCard: {

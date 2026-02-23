@@ -123,7 +123,31 @@ export const ApiClient = {
       body: JSON.stringify({ assignmentId, verdict }),
     }),
 
+  // Fury Stats
+  getFuryStats: () =>
+    request<{
+      totalAudits: number;
+      successfulAudits: number;
+      falseAccusations: number;
+      accuracy: number;
+      totalBountiesEarned: number;
+      totalPenaltiesPaid: number;
+      netEarnings: number;
+      honeypotsCaught: number;
+      honeypotsFailedOn: number;
+    }>('/fury/stats'),
+
   // Wallet
+  getBalance: () =>
+    request<{
+      userId: string;
+      email: string;
+      integrityScore: number;
+      allowedTiers: string[];
+      ledgerBalance: number;
+      status: string;
+    }>('/wallet/balance'),
+
   getWalletHistory: (limit?: number) =>
     request<{ transactions: Array<{ id: string; type: string; amount: number; timestamp: string; description: string }> }>(
       `/wallet/history${limit ? `?limit=${limit}` : ''}`,

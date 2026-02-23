@@ -18,6 +18,7 @@ All authenticated endpoints require `Authorization: Bearer <JWT>` header unless 
 |--------|------|------|-------------|
 | POST | `/auth/register` | Public | Create user account (email + password). Returns `{ userId, token }`. Rate-limited: 5/min. |
 | POST | `/auth/login` | Public | Authenticate and issue JWT. Returns `{ userId, token }`. Rate-limited: 5/min. |
+| POST | `/auth/enterprise` | Public | Enterprise SSO token exchange. Body: `{ enterpriseToken }`. Returns `{ userId, token }`. |
 
 ## Users
 
@@ -50,6 +51,7 @@ All authenticated endpoints require `Authorization: Bearer <JWT>` header unless 
 |--------|------|------|-------------|
 | GET | `/fury/queue` | JWT | Get pending audit assignments for the authenticated Fury reviewer |
 | POST | `/fury/verdict` | JWT | Submit verdict. Body: `{ assignmentId, verdict: 'PASS' \| 'FAIL' }`. Returns `{ status }` |
+| GET | `/fury/stats` | JWT | Get Fury reviewer stats (audits, accuracy, earnings, honeypots). Returns `{ totalAudits, successfulAudits, falseAccusations, accuracy, totalBountiesEarned, totalPenaltiesPaid, netEarnings, honeypotsCaught, honeypotsFailedOn }` |
 
 ## Wallet
 

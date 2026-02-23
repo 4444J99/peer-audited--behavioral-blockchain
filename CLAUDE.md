@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Styx** ("The Blockchain of Truth") — a peer-audited behavioral market that weaponizes loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes. Users stake money into behavioral contracts; a decentralized "Fury" network audits compliance; hardware oracles and a double-entry ledger enforce integrity.
 
-This is a **pre-production** monorepo in ORGAN-III (commercial products). Core service logic is partially implemented with "Tasks for AI Engineer" comments marking remaining work.
+This is a **pre-production** monorepo in ORGAN-III (commercial products). Core service logic is fully implemented with 290+ tests across all workspaces.
 
 ## Build & Dev Commands
 
@@ -46,7 +46,7 @@ cd src/shared && npm run build     # tsc
 
 ### Testing
 
-API tests use **Jest + ts-jest**. Test files are co-located as `*.spec.ts` next to their service files (not in a separate `tests/` dir).
+Tests use **Jest + ts-jest** in both API and Shared workspaces. Test files are co-located as `*.spec.ts` next to their source files.
 
 ```bash
 # All tests via turbo
@@ -63,6 +63,7 @@ cd src/api && npx jest --testNamePattern="should reject non-positive"
 ```
 
 Existing spec files:
+- `src/shared/libs/integrity.spec.ts` — core algorithm tests (integrity score, tiers, accuracy, demotion, stake limits)
 - `src/api/services/ledger/ledger.service.spec.ts` — double-entry transaction tests
 - `src/api/services/ledger/truth-log.service.spec.ts` — hash-chain audit log tests
 - `src/api/services/fury-router/fury-router.service.spec.ts` — BullMQ routing tests
@@ -73,6 +74,7 @@ Existing spec files:
 - `src/api/services/intelligence/honeypot.service.spec.ts` — known-fail injection tests
 - `src/api/src/modules/fury/fury.bounty.spec.ts` — Fury bounty ledger transaction tests
 - `src/api/src/modules/fury/fury.stats.spec.ts` — Fury stats endpoint tests
+- `src/api/src/modules/ai/ai.controller.spec.ts` — AI controller tests (grill-me, eli5)
 
 ### Validation Scripts
 
@@ -193,6 +195,6 @@ Docker services (port mappings): PostgreSQL on `5432`, Redis on `6379`, API on `
 
 ## Implementation Status
 
-**Implemented**: LedgerService (double-entry transactions), TruthLogService (hash-chained audit log), FuryRouterService (BullMQ proof routing), ConsensusEngine (verdict aggregation), StripeFboService (hold/capture/cancel), DisputeService (appeal fee), AegisProtocolService (BMI/velocity validation), GeofenceService (jurisdiction blocking), ModerationService (permanent bans), HoneypotInjectorService (Fury QA), AnomalyService (pHash duplicate detection + EXIF validation), WebhookService (HMAC-signed B2B dispatch), GeminiClient (Gemini 2.5 Flash API — VC questions, ELI5, **goal ethics screening**), AiController (POST /ai/grill-me, POST /ai/eli5), AuthGuard (JWT), OnboardingWizard, linguistic cloaker, integrity scoring algorithms, PitchDeck UI (routed through API), Desktop admin panels, **Fury Bounty Economy** (AUDITOR_STAKE_AMOUNT disbursed via ledger on consensus — bounty for correct votes, penalty for incorrect/honeypot failures), **Fury Stats API** (GET /fury/stats — audit counts, earnings, accuracy), **Fury Stats UI** (workbench stats bar — audits, accuracy, earnings, honeypots, penalties), **Wallet Economy UI** (balance summary, transaction history with human-readable labels for FURY_BOUNTY/FURY_PENALTY/STAKE_HOLD/STAKE_RELEASE/ONBOARDING_BONUS), **Tavern Board bounty events** (FURY_BOUNTY_PAID / FURY_PENALTY_CHARGED in public feed), **isGoalEthical()** (Gemini 2.5 Flash content policy screening — fail-open), **CI pipeline with gates** (lint + Gate 04 redacted build check + Gate 05 behavioral physics check).
+**Implemented**: LedgerService (double-entry transactions), TruthLogService (hash-chained audit log), FuryRouterService (BullMQ proof routing), ConsensusEngine (verdict aggregation), StripeFboService (hold/capture/cancel), DisputeService (appeal fee), AegisProtocolService (BMI/velocity validation), GeofenceService (jurisdiction blocking), ModerationService (permanent bans), HoneypotInjectorService (Fury QA), AnomalyService (pHash duplicate detection + EXIF validation), WebhookService (HMAC-signed B2B dispatch), GeminiClient (Gemini 2.5 Flash API — VC questions, ELI5, **goal ethics screening**), AiController (POST /ai/grill-me, POST /ai/eli5), AuthGuard (JWT), OnboardingWizard, linguistic cloaker, integrity scoring algorithms, PitchDeck UI (routed through API), Desktop admin panels, **Fury Bounty Economy** (AUDITOR_STAKE_AMOUNT disbursed via ledger on consensus — bounty for correct votes, penalty for incorrect/honeypot failures), **Fury Stats API** (GET /fury/stats — audit counts, earnings, accuracy), **Fury Stats UI** (workbench stats bar — audits, accuracy, earnings, honeypots, penalties — web + mobile), **Wallet Economy UI** (balance summary, transaction history with human-readable labels for FURY_BOUNTY/FURY_PENALTY/STAKE_HOLD/STAKE_RELEASE/ONBOARDING_BONUS), **Tavern Board bounty events** (FURY_BOUNTY_PAID / FURY_PENALTY_CHARGED in public feed, using api-client), **isGoalEthical()** (Gemini 2.5 Flash content policy screening — fail-open), **CI pipeline with gates** (lint + Gate 04 redacted build check + Gate 05 behavioral physics check), **Core algorithm tests** (integrity score, tiers, accuracy, demotion, stake limits — 20 cases), **AiController tests** (grill-me + eli5 — 6 cases), **GitHub issue/PR templates**, **Mobile Fury stats parity** (getFuryStats + getBalance in mobile ApiClient).
 
 **Remaining limitations**: CameraModule (mobile camera requires native Swift/Kotlin — placeholder UI with text proof submission).

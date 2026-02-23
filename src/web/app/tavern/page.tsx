@@ -6,6 +6,7 @@ import {
   ArrowLeft, Flame, ScrollText, Trophy, AlertTriangle, Shield, Users,
   RefreshCw, Loader2, Clock, DollarSign, MinusCircle,
 } from 'lucide-react';
+import { api } from '../../services/api-client';
 
 interface FeedItem {
   id: string;
@@ -116,8 +117,6 @@ function getSampleFeed(): FeedItem[] {
   ];
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
 export default function TavernPage() {
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,16 +127,10 @@ export default function TavernPage() {
   const loadFeed = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     try {
-      const res = await fetch(`${API_BASE}/feed?limit=50`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.events && data.events.length > 0) {
-          setFeed(data.events);
-          setUsingSampleData(false);
-        } else {
-          setFeed(getSampleFeed());
-          setUsingSampleData(true);
-        }
+      const data = await api.getPublicFeed(50);
+      if (data.events && data.events.length > 0) {
+        setFeed(data.events as FeedItem[]);
+        setUsingSampleData(false);
       } else {
         setFeed(getSampleFeed());
         setUsingSampleData(true);

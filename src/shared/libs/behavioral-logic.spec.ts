@@ -130,26 +130,32 @@ describe('behavioral-logic', () => {
 
     it('should return true when Gemini approves the goal', async () => {
       process.env.GEMINI_API_KEY = 'test-key';
-      jest.mock('../../api/services/intelligence/GeminiClient', () => ({
+      jest.resetModules();
+      jest.doMock('../../api/services/intelligence/GeminiClient', () => ({
         screenGoalEthics: jest.fn().mockResolvedValue({ ethical: true }),
       }));
-      await expect(isGoalEthical('Run a 5K marathon')).resolves.toBe(true);
+      const { isGoalEthical: fn } = require('./behavioral-logic');
+      await expect(fn('Run a 5K marathon')).resolves.toBe(true);
     });
 
     it('should return false when Gemini rejects the goal', async () => {
       process.env.GEMINI_API_KEY = 'test-key';
-      jest.mock('../../api/services/intelligence/GeminiClient', () => ({
+      jest.resetModules();
+      jest.doMock('../../api/services/intelligence/GeminiClient', () => ({
         screenGoalEthics: jest.fn().mockResolvedValue({ ethical: false, reason: 'Self-harm risk' }),
       }));
-      await expect(isGoalEthical('Starve myself to lose weight')).resolves.toBe(false);
+      const { isGoalEthical: fn } = require('./behavioral-logic');
+      await expect(fn('Starve myself to lose weight')).resolves.toBe(false);
     });
 
     it('should fail open when Gemini throws an error', async () => {
       process.env.GEMINI_API_KEY = 'test-key';
-      jest.mock('../../api/services/intelligence/GeminiClient', () => ({
+      jest.resetModules();
+      jest.doMock('../../api/services/intelligence/GeminiClient', () => ({
         screenGoalEthics: jest.fn().mockRejectedValue(new Error('Gemini down')),
       }));
-      await expect(isGoalEthical('Any goal')).resolves.toBe(true);
+      const { isGoalEthical: fn } = require('./behavioral-logic');
+      await expect(fn('Any goal')).resolves.toBe(true);
     });
   });
 });
