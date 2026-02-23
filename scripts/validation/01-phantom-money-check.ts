@@ -6,11 +6,11 @@
  */
 
 const API_BASE = process.env.API_URL || 'http://localhost:3000';
-const USER_ID = 'demo-user-001';
+const USER_ID = 'd0000000-0000-0000-0000-000000000001';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer dev-token', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer dev-mock-jwt-token-alpha-omega', ...options?.headers }, // allow-secret
     ...options,
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);

@@ -1,8 +1,13 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const AUTH_TOKEN = process.env.NEXT_PUBLIC_AUTH_TOKEN || 'dev-mock-jwt-token-alpha-omega'; // allow-secret
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${AUTH_TOKEN}`,
+      ...options?.headers,
+    },
     ...options,
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);

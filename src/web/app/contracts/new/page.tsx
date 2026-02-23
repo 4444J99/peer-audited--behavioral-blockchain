@@ -6,7 +6,7 @@ import { Flame, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '../../../services/api-client';
 
-const DEMO_USER_ID = process.env.NEXT_PUBLIC_DEMO_USER_ID || 'demo-user-001';
+const DEMO_USER_ID = process.env.NEXT_PUBLIC_DEMO_USER_ID || 'd0000000-0000-0000-0000-000000000001';
 
 const OATH_CATEGORIES = [
   { value: 'BIOLOGICAL_WEIGHT', label: 'Weight Management', stream: 'Biological' },

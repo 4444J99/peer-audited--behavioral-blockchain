@@ -5,7 +5,7 @@ import { Eye, ShieldAlert, CheckCircle, Target, Loader2, AlertTriangle, Inbox } 
 import Link from 'next/link';
 import { api } from '../../services/api-client';
 
-const FURY_USER_ID = process.env.NEXT_PUBLIC_FURY_USER_ID || 'fury-user-001';
+const FURY_USER_ID = process.env.NEXT_PUBLIC_FURY_USER_ID || 'd0000000-0000-0000-0000-000000000002';
 
 interface Assignment {
   assignment_id: string;
