@@ -356,6 +356,104 @@ export const slides: SlideData[] = [
   },
   {
     id: 8,
+    title: 'Platform Economics',
+    subtitle: 'Cost to Run at Every Stage',
+    contentBlocks: [
+      {
+        type: 'columns',
+        data: {
+          columns: [
+            {
+              title: 'MVP \u2014 0\u20131K Users',
+              items: [
+                'PostgreSQL: $0\u201315/mo (free tier \u2192 starter)',
+                'Redis: $0\u201310/mo (free tier)',
+                'Cloudflare R2: $0 (zero egress, free tier)',
+                'Compute (API): $7\u201325/mo (Render starter)',
+                'Stripe: 2.9% + $0.30 per txn (no fixed cost)',
+                'Total: ~$25\u201350/mo',
+              ],
+            },
+            {
+              title: 'Growth \u2014 1K\u201310K Users',
+              items: [
+                'PostgreSQL: $25\u201350/mo (managed, small)',
+                'Redis: $15\u201330/mo',
+                'Cloudflare R2: $0\u20135/mo (still minimal)',
+                'Compute: $50\u2013100/mo (horizontal scaling)',
+                'BullMQ workers: included in compute',
+                'Total: ~$100\u2013200/mo',
+              ],
+            },
+          ],
+        } satisfies ColumnBlock,
+      },
+      {
+        type: 'columns',
+        data: {
+          columns: [
+            {
+              title: 'Scale \u2014 10K\u2013100K Users',
+              items: [
+                'PostgreSQL: $100\u2013300/mo (read replicas)',
+                'Redis cluster: $50\u2013100/mo',
+                'Cloudflare R2: $10\u201350/mo',
+                'Compute: $200\u2013500/mo',
+                'Monitoring/logging: $50\u2013100/mo',
+                'Total: ~$500\u20131,000/mo',
+              ],
+            },
+            {
+              title: 'Enterprise \u2014 100K+ Users',
+              items: [
+                'PostgreSQL HA cluster: $500\u20131,500/mo',
+                'Redis cluster: $200\u2013400/mo',
+                'Cloudflare R2: $50\u2013200/mo',
+                'Compute: $1,000\u20133,000/mo',
+                'Security/compliance tooling: $250\u2013500/mo',
+                'Total: ~$2,000\u20135,000/mo',
+              ],
+            },
+          ],
+        } satisfies ColumnBlock,
+      },
+      {
+        type: 'stat',
+        data: {
+          items: [
+            { value: '$600', label: 'Year 1 infrastructure (MVP phase)' },
+            { value: '$0', label: 'Storage egress cost (R2 zero-egress)' },
+            { value: '100\u00D7', label: 'Revenue-to-infra ratio at 10K users' },
+          ],
+        } satisfies StatBlock,
+      },
+      {
+        type: 'callout',
+        data: {
+          title: 'Why Costs Stay Low',
+          body: 'Three structural advantages: (1) Cloudflare R2 eliminates the #1 startup cost killer \u2014 media egress fees. (2) BullMQ/Redis handles proof routing without paid queue services. (3) PostgreSQL double-entry ledger replaces expensive fintech middleware. At 100K users generating $300K+/month in revenue, infrastructure costs remain under 2% of gross \u2014 dramatically better than the 15\u201330% typical for media-heavy platforms.',
+        } satisfies CalloutBlock,
+      },
+    ],
+    eli5: 'Running Styx costs almost nothing compared to what it makes. Year one, the servers cost about $50 a month \u2014 less than a gym membership. Even when a hundred thousand people are using it, the servers only cost a few thousand a month while the platform is making hundreds of thousands. The secret is using free/cheap storage (Cloudflare doesn\u2019t charge when people download photos) and free database software instead of expensive cloud services.',
+    toughQuestions: [
+      {
+        question: 'These numbers seem too low \u2014 what about hidden costs?',
+        answer: 'The biggest hidden cost for media platforms is egress bandwidth (AWS charges $0.09/GB). Cloudflare R2 has zero egress fees \u2014 this alone saves $10K\u2013$100K/year at scale. Stripe fees are transaction-based, not fixed \u2014 they scale linearly with revenue. There are no ML training costs (Gemini API is pay-per-call for ethics screening only). The architecture was specifically designed to avoid the cost traps that kill media-heavy startups.',
+      },
+      {
+        question: 'What happens if you need to scale suddenly?',
+        answer: 'PostgreSQL scales horizontally with read replicas (\u2018pg_basebackup\u2019 takes minutes). BullMQ workers are stateless \u2014 add more containers instantly. R2 has no bandwidth limits. The only bottleneck is write throughput on the primary Postgres, which handles ~10K transactions/second on a $300/month instance. That\u2019s ~500M ledger entries/month before needing sharding.',
+      },
+      {
+        question: 'How do infrastructure costs compare to competitors?',
+        answer: 'Noom spends an estimated $15\u201320M/year on infrastructure for ~45M users. At that scale, Styx\u2019s architecture would cost ~$50\u201360K/year \u2014 roughly 300\u00D7 cheaper. The difference: no ML training pipeline, no video transcoding (FFmpeg is free), zero-egress storage, and no proprietary database licensing. Open-source stack + smart architecture = structural cost advantage.',
+      },
+    ],
+    sketch: 'costLayers',
+  },
+  {
+    id: 9,
     title: 'Tech Stack',
     subtitle: 'Open-Source, Low-Burn Architecture',
     contentBlocks: [
@@ -397,7 +495,7 @@ export const slides: SlideData[] = [
     sketch: 'techNetwork',
   },
   {
-    id: 9,
+    id: 10,
     title: 'The Team',
     subtitle: 'Operator \u00D7 Psychologist \u00D7 Engineer',
     contentBlocks: [
@@ -450,7 +548,7 @@ export const slides: SlideData[] = [
     sketch: 'teamGears',
   },
   {
-    id: 10,
+    id: 11,
     title: 'The Ask',
     subtitle: '$1,500,000 Seed Round',
     contentBlocks: [

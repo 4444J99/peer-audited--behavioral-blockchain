@@ -18,6 +18,7 @@ import { furyNetwork } from '../sketches/furyNetwork';
 import { aegisShield } from '../sketches/aegisShield';
 import { marketPipeline } from '../sketches/marketPipeline';
 import { revenueWaterfall } from '../sketches/revenueWaterfall';
+import { costLayers } from '../sketches/costLayers';
 import { techNetwork } from '../sketches/techNetwork';
 import { teamGears } from '../sketches/teamGears';
 import { milestoneRockets } from '../sketches/milestoneRockets';
@@ -36,6 +37,7 @@ const SKETCHES: ((p: p5) => void)[] = [
   aegisShield,
   marketPipeline,
   revenueWaterfall,
+  costLayers,
   techNetwork,
   teamGears,
   milestoneRockets,
@@ -43,7 +45,7 @@ const SKETCHES: ((p: p5) => void)[] = [
 
 export function SlideSection({ slide, index, isActive }: SlideSectionProps) {
   const isHero = index === 0;
-  const isCta = index === 9;
+  const isCta = index === 10;
 
   return (
     <>
