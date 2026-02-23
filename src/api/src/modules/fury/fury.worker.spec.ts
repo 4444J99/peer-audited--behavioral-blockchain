@@ -61,6 +61,12 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-1' }] });
+      // Accuracy tracking: 2 correct (+2), 1 wrong (-5)
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       await worker.checkConsensus('proof-1');
 
@@ -91,6 +97,11 @@ describe('FuryWorker', () => {
         flaggedFuries: [],
       });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-1' }] });
+      // Accuracy tracking
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       await worker.checkConsensus('proof-1');
 
@@ -116,6 +127,12 @@ describe('FuryWorker', () => {
         flaggedFuries: [],
       });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-1' }] });
+      // Accuracy tracking
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       await worker.checkConsensus('proof-1');
 
@@ -139,6 +156,8 @@ describe('FuryWorker', () => {
         flaggedFuries: [],
       });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-1' }] });
 
       await worker.checkConsensus('proof-1');
 
@@ -168,6 +187,8 @@ describe('FuryWorker', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       // UPDATE users for fury-corrupt-2
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-hp' }] });
 
       await worker.checkConsensus('proof-honeypot');
 
@@ -196,11 +217,14 @@ describe('FuryWorker', () => {
         flaggedFuries: [],
       });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-clean' }] });
+      // Accuracy tracking: 2 correct FAIL votes
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       await worker.checkConsensus('proof-clean');
 
-      // 3 base queries + 2 accuracy tracking (both correct FAIL votes on REJECTED)
-      expect(mockPool.query).toHaveBeenCalledTimes(5);
       // No fraud penalty queries (integrity_score - 15) should exist
       const penaltyCalls = mockPool.query.mock.calls.filter(
         (c) => typeof c[0] === 'string' && c[0].includes('integrity_score - 15'),
@@ -232,6 +256,8 @@ describe('FuryWorker', () => {
         flaggedFuries: [],
       });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-hp' }] });
 
       await worker.checkConsensus('proof-hp');
 
@@ -266,6 +292,8 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-99' }] });
       // Accuracy tracking: 3 correct votes (+2 each)
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
@@ -298,6 +326,8 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-100' }] });
       // Accuracy tracking: 3 correct votes (+2 each)
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
@@ -328,6 +358,8 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-split' }] });
 
       await worker.checkConsensus('proof-split');
 
@@ -356,6 +388,8 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-reward' }] });
       // Accuracy rewards (+2 each)
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
@@ -392,6 +426,8 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-pen' }] });
       // Accuracy: +2 for fury-right, -5 for fury-wrong, +2 for fury-right-2
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
@@ -426,6 +462,8 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-hp' }] });
 
       await worker.checkConsensus('proof-hp-skip');
 

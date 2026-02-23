@@ -15,11 +15,11 @@ INSERT INTO accounts (id, name, type) VALUES
   ('a0000000-0000-0000-0000-000000000012', 'USER_admin', 'ASSET')
 ON CONFLICT (name) DO NOTHING;
 
--- Demo users
-INSERT INTO users (id, email, stripe_customer_id, integrity_score, account_id, status) VALUES
-  ('d0000000-0000-0000-0000-000000000001', 'demo@styx.protocol', 'cus_demo_001', 75, 'a0000000-0000-0000-0000-000000000010', 'ACTIVE'),
-  ('d0000000-0000-0000-0000-000000000002', 'fury@styx.protocol', 'cus_fury_001', 90, 'a0000000-0000-0000-0000-000000000011', 'ACTIVE'),
-  ('d0000000-0000-0000-0000-000000000003', 'admin@styx.protocol', 'cus_admin_001', 200, 'a0000000-0000-0000-0000-000000000012', 'ACTIVE')
+-- Demo users (password: demo-password-123, bcrypt cost 10) -- allow-secret
+INSERT INTO users (id, email, password_hash, stripe_customer_id, integrity_score, account_id, role, enterprise_id, status) VALUES
+  ('d0000000-0000-0000-0000-000000000001', 'demo@styx.protocol', '$2b$10$8KzaNdKIMyOkASCagkfQPehGTm0dKPOoeiPmOOFMBkGjqqCMqGMSa', 'cus_demo_001', 75, 'a0000000-0000-0000-0000-000000000010', 'USER', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE'),
+  ('d0000000-0000-0000-0000-000000000002', 'fury@styx.protocol', '$2b$10$8KzaNdKIMyOkASCagkfQPehGTm0dKPOoeiPmOOFMBkGjqqCMqGMSa', 'cus_fury_001', 90, 'a0000000-0000-0000-0000-000000000011', 'FURY', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE'),
+  ('d0000000-0000-0000-0000-000000000003', 'admin@styx.protocol', '$2b$10$8KzaNdKIMyOkASCagkfQPehGTm0dKPOoeiPmOOFMBkGjqqCMqGMSa', 'cus_admin_001', 200, 'a0000000-0000-0000-0000-000000000012', 'ADMIN', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE')
 ON CONFLICT (id) DO NOTHING;
 
 -- Contracts in different states

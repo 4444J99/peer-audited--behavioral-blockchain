@@ -1,6 +1,7 @@
 import { AdminController } from './admin.controller';
 import { ModerationService } from '../../../services/security/moderation.service';
 import { HoneypotInjectorService } from '../../../services/intelligence/honeypot.service';
+import { ContractsService } from '../contracts/contracts.service';
 
 describe('AdminController', () => {
   let controller: AdminController;
@@ -13,8 +14,12 @@ describe('AdminController', () => {
     injectKnownFail: jest.fn(),
   } as unknown as HoneypotInjectorService;
 
+  const mockContracts = {
+    resolveContract: jest.fn(),
+  } as unknown as ContractsService;
+
   beforeEach(() => {
-    controller = new AdminController(mockModeration, mockHoneypot);
+    controller = new AdminController(mockModeration, mockHoneypot, mockContracts);
     jest.clearAllMocks();
   });
 

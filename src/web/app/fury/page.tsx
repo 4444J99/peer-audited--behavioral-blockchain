@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Eye, ShieldAlert, CheckCircle, Target, Loader2, AlertTriangle, Inbox } from 'lucide-react';
+import { Eye, ShieldAlert, CheckCircle, Target, Loader2, AlertTriangle, Inbox, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { api } from '../../services/api-client';
-
-const FURY_USER_ID = process.env.NEXT_PUBLIC_FURY_USER_ID || 'd0000000-0000-0000-0000-000000000002';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Assignment {
   assignment_id: string;
@@ -17,6 +17,8 @@ interface Assignment {
 }
 
 export default function FuryWorkbench() {
+  const { user: authUser, logout, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -27,7 +29,7 @@ export default function FuryWorkbench() {
     try {
       setLoading(true);
       setError(null);
-      const data = await api.getFuryAssignments(FURY_USER_ID);
+      const data = await api.getFuryAssignments();
       setAssignments(data.assignments);
       setCurrentIndex(0);
     } catch (err) {
@@ -38,8 +40,18 @@ export default function FuryWorkbench() {
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!authUser) {
+      router.push('/login');
+      return;
+    }
     loadAssignments();
-  }, [loadAssignments]);
+  }, [authUser, authLoading, router, loadAssignments]);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   const handleVerdict = async (verdict: 'PASS' | 'FAIL') => {
     const current = assignments[currentIndex];
@@ -49,7 +61,6 @@ export default function FuryWorkbench() {
     try {
       await api.submitVerdict({
         assignmentId: current.assignment_id,
-        furyUserId: FURY_USER_ID,
         verdict,
       });
       // Advance to next assignment
@@ -105,11 +116,17 @@ export default function FuryWorkbench() {
             <p className="text-xs text-neutral-500 uppercase tracking-widest">Fury Peer Review Pipeline</p>
           </div>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
           <div className="px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-lg text-right">
             <p className="text-xs text-neutral-500">Queue Depth</p>
             <p className="font-black text-lime-400">{queueCount}</p>
           </div>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-sm font-bold text-neutral-400 hover:text-red-500 transition-colors flex items-center gap-2"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </header>
 

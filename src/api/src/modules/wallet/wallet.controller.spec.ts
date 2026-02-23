@@ -28,7 +28,7 @@ describe('WalletController', () => {
       // Debit sum
       mockPool.query.mockResolvedValueOnce({ rows: [{ total: '50.0000' }] });
 
-      const result = await controller.getBalance('user-1');
+      const result = await controller.getBalance({ id: 'user-1' });
 
       expect(result.userId).toBe('user-1');
       expect(result.email).toBe('user@styx.app');
@@ -41,7 +41,7 @@ describe('WalletController', () => {
     it('should throw NotFoundException for missing user', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
-      await expect(controller.getBalance('missing')).rejects.toThrow(NotFoundException);
+      await expect(controller.getBalance({ id: 'missing' })).rejects.toThrow(NotFoundException);
     });
 
     it('should return zero balance when user has no account_id', async () => {
@@ -55,7 +55,7 @@ describe('WalletController', () => {
         }],
       });
 
-      const result = await controller.getBalance('user-2');
+      const result = await controller.getBalance({ id: 'user-2' });
 
       expect(result.ledgerBalance).toBe(0);
       // Should NOT query entries at all
@@ -73,7 +73,7 @@ describe('WalletController', () => {
         }],
       });
 
-      const result = await controller.getBalance('user-bad');
+      const result = await controller.getBalance({ id: 'user-bad' });
 
       expect(result.allowedTiers).toEqual(['RESTRICTED_MODE']);
     });
@@ -91,7 +91,7 @@ describe('WalletController', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ total: '0' }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ total: '0' }] });
 
-      const result = await controller.getBalance('user-whale');
+      const result = await controller.getBalance({ id: 'user-whale' });
 
       expect(result.allowedTiers).toContain('TIER_4_WHALE_VAULTS');
       expect(result.allowedTiers).toHaveLength(4);
@@ -109,7 +109,7 @@ describe('WalletController', () => {
       ];
       mockPool.query.mockResolvedValueOnce({ rows: txns });
 
-      const result = await controller.getHistory('user-1');
+      const result = await controller.getHistory({ id: 'user-1' });
 
       expect(result.transactions).toEqual(txns);
     });
@@ -117,7 +117,7 @@ describe('WalletController', () => {
     it('should throw NotFoundException for missing user', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
-      await expect(controller.getHistory('missing')).rejects.toThrow(NotFoundException);
+      await expect(controller.getHistory({ id: 'missing' })).rejects.toThrow(NotFoundException);
     });
 
     it('should return empty transactions when user has no account', async () => {
@@ -125,7 +125,7 @@ describe('WalletController', () => {
         rows: [{ account_id: null }],
       });
 
-      const result = await controller.getHistory('user-no-acct');
+      const result = await controller.getHistory({ id: 'user-no-acct' });
 
       expect(result.transactions).toEqual([]);
     });
@@ -136,7 +136,7 @@ describe('WalletController', () => {
       });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
-      await controller.getHistory('user-1', '200');
+      await controller.getHistory({ id: 'user-1' }, '200');
 
       // Limit should be capped at 100
       const historyCall = mockPool.query.mock.calls[1];
@@ -149,7 +149,7 @@ describe('WalletController', () => {
       });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
-      await controller.getHistory('user-1');
+      await controller.getHistory({ id: 'user-1' });
 
       const historyCall = mockPool.query.mock.calls[1];
       expect(historyCall[1][1]).toBe(50);

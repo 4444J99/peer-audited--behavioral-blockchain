@@ -6,11 +6,14 @@ import { ContractsScheduler } from './contracts.scheduler';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { StripeFboService } from '../../../services/escrow/stripe.service';
+import { DisputeService } from '../../../services/escrow/dispute.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { AegisProtocolService } from '../../../services/health/aegis.service';
+import { AnomalyService } from '../../../services/anomaly/anomaly.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot()],
+  imports: [ScheduleModule.forRoot(), NotificationsModule],
   controllers: [ContractsController],
   providers: [
     ContractsService,
@@ -18,8 +21,10 @@ import { AegisProtocolService } from '../../../services/health/aegis.service';
     LedgerService,
     TruthLogService,
     StripeFboService,
+    DisputeService,
     FuryRouterService,
     AegisProtocolService,
+    AnomalyService,
   ],
   exports: [ContractsService],
 })

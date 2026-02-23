@@ -1,10 +1,13 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Optional, Inject } from '@nestjs/common';
 import { Pool } from 'pg';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { StripeFboService } from '../../../services/escrow/stripe.service';
+import { DisputeService } from '../../../services/escrow/dispute.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { AegisProtocolService } from '../../../services/health/aegis.service';
+import { AnomalyService } from '../../../services/anomaly/anomaly.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { calculateIntegrity, getAllowedTiers, UserHistory } from '../../../../shared/libs/integrity';
 import {
   OathCategory,
@@ -40,8 +43,11 @@ export class ContractsService {
     private readonly ledger: LedgerService,
     private readonly truthLog: TruthLogService,
     private readonly stripe: StripeFboService,
+    private readonly dispute: DisputeService,
     private readonly furyRouter: FuryRouterService,
     private readonly aegis: AegisProtocolService,
+    private readonly anomaly: AnomalyService,
+    @Optional() @Inject(NotificationsService) private readonly notifications?: NotificationsService,
   ) {}
 
   async createContract(dto: CreateContractDto): Promise<{ contractId: string; paymentIntentId: string }> {
@@ -165,6 +171,15 @@ export class ContractsService {
       durationDays: dto.durationDays,
     });
 
+    // 10. Notify user
+    await this.notifications?.create({
+      userId: dto.userId,
+      type: 'CONTRACT_CREATED',
+      title: 'Contract Created',
+      body: `Your ${dto.oathCategory.replace(/_/g, ' ').toLowerCase()} contract ($${dto.stakeAmount}) is now active.`,
+      metadata: { contractId },
+    });
+
     return { contractId, paymentIntentId: paymentIntent.id };
   }
 
@@ -181,7 +196,7 @@ export class ContractsService {
     return result.rows[0];
   }
 
-  async submitProof(contractId: string, dto: SubmitProofDto): Promise<{ proofId: string; jobId: string }> {
+  async submitProof(contractId: string, dto: SubmitProofDto): Promise<{ proofId: string; jobId: string; rejected?: boolean; reason?: string }> {
     // 1. Validate contract ownership and status
     const contract = await this.pool.query(
       'SELECT * FROM contracts WHERE id = $1',
@@ -197,23 +212,47 @@ export class ContractsService {
       throw new BadRequestException(`Contract is not active (status: ${contract.rows[0].status})`);
     }
 
-    // 2. Insert proof row
+    // 2. Run anomaly detection before routing to Fury
+    const anomalyResult = await this.anomaly.analyze(dto.mediaUri, dto.userId);
+
+    // 3. Insert proof row
     const proofResult = await this.pool.query(
       `INSERT INTO proofs (contract_id, user_id, media_uri, status)
-       VALUES ($1, $2, $3, 'PENDING_REVIEW')
+       VALUES ($1, $2, $3, $4)
        RETURNING id`,
-      [contractId, dto.userId, dto.mediaUri],
+      [contractId, dto.userId, dto.mediaUri, anomalyResult.rejected ? 'AUTO_REJECTED' : 'PENDING_REVIEW'],
     );
     const proofId = proofResult.rows[0].id;
 
-    // 3. Route to Fury network via BullMQ
+    // If anomaly detected, auto-reject without routing to Fury
+    if (anomalyResult.rejected) {
+      await this.truthLog.appendEvent('PROOF_AUTO_REJECTED', {
+        proofId,
+        contractId,
+        userId: dto.userId,
+        reason: anomalyResult.reason,
+      });
+      return { proofId, jobId: 'auto-rejected', rejected: true, reason: anomalyResult.reason };
+    }
+
+    // 4. Route to Fury network via BullMQ
     const jobId = await this.furyRouter.routeProof(proofId, dto.userId, 3);
 
-    // 4. Log to TruthLog
+    // 5. Log to TruthLog
     await this.truthLog.appendEvent('PROOF_SUBMITTED', {
       proofId,
       contractId,
       userId: dto.userId,
+      anomalyFlags: anomalyResult.flags,
+    });
+
+    // 6. Notify user
+    await this.notifications?.create({
+      userId: dto.userId,
+      type: 'PROOF_SUBMITTED',
+      title: 'Proof Submitted',
+      body: 'Your proof has been submitted and routed to the Fury network for review.',
+      metadata: { proofId, contractId },
     });
 
     return { proofId, jobId };
@@ -311,6 +350,17 @@ export class ContractsService {
       userId: row.user_id,
       stakeAmount: Number(row.stake_amount),
     });
+
+    // Notify user of resolution
+    await this.notifications?.create({
+      userId: row.user_id,
+      type: 'CONTRACT_RESOLVED',
+      title: outcome === 'COMPLETED' ? 'Contract Completed' : 'Contract Failed',
+      body: outcome === 'COMPLETED'
+        ? `Your contract has been fulfilled. $${Number(row.stake_amount).toFixed(2)} returned.`
+        : `Your contract has failed. $${Number(row.stake_amount).toFixed(2)} has been captured.`,
+      metadata: { contractId, outcome },
+    });
   }
 
   async useGraceDay(contractId: string, userId: string): Promise<{ newDeadline: Date }> {
@@ -358,6 +408,50 @@ export class ContractsService {
     });
 
     return { newDeadline: result.newDeadline! };
+  }
+
+  async fileDispute(userId: string, contractId: string) {
+    const contract = await this.pool.query(
+      'SELECT * FROM contracts WHERE id = $1',
+      [contractId],
+    );
+    if (contract.rows.length === 0) {
+      throw new NotFoundException(`Contract ${contractId} not found`);
+    }
+    if (contract.rows[0].user_id !== userId) {
+      throw new ForbiddenException('Cannot dispute another user\'s contract');
+    }
+
+    // Get user's Stripe customer ID for the appeal fee
+    const userResult = await this.pool.query(
+      'SELECT stripe_customer_id FROM users WHERE id = $1',
+      [userId],
+    );
+    if (userResult.rows.length === 0 || !userResult.rows[0].stripe_customer_id) {
+      throw new BadRequestException('User has no payment method for appeal fee');
+    }
+
+    // Get the latest proof for this contract to dispute
+    const proofResult = await this.pool.query(
+      `SELECT id FROM proofs WHERE contract_id = $1 ORDER BY submitted_at DESC LIMIT 1`,
+      [contractId],
+    );
+    const proofId = proofResult.rows.length > 0 ? proofResult.rows[0].id : contractId;
+
+    const result = await this.dispute.initiateAppeal(
+      userId,
+      proofId,
+      userResult.rows[0].stripe_customer_id,
+    );
+
+    await this.truthLog.appendEvent('APPEAL_INITIATED', {
+      contractId,
+      userId,
+      proofId,
+      paymentIntentId: result.paymentIntentId,
+    });
+
+    return result;
   }
 
   async getUserContracts(userId: string) {

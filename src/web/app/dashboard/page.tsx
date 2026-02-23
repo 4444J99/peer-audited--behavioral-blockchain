@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Activity, ShieldCheck, Flame, History, User, Loader2, AlertTriangle } from 'lucide-react';
+import { Activity, ShieldCheck, Flame, History, User, Loader2, AlertTriangle, LogOut, Bell } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { api } from '../../services/api-client';
-
-const DEMO_USER_ID = process.env.NEXT_PUBLIC_DEMO_USER_ID || 'd0000000-0000-0000-0000-000000000001';
+import { useAuth } from '../../contexts/AuthContext';
+import Leaderboard from '../../components/Leaderboard';
+import NotificationPanel from '../../components/NotificationPanel';
 
 interface BalanceData {
   userId: string;
@@ -32,6 +34,8 @@ interface Contract {
 }
 
 export default function IdentityDashboard() {
+  const { user: authUser, logout, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [balance, setBalance] = useState<BalanceData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -39,12 +43,17 @@ export default function IdentityDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!authUser) {
+      router.push('/login');
+      return;
+    }
     async function load() {
       try {
         const [balanceData, historyData, contractData] = await Promise.all([
-          api.getBalance(DEMO_USER_ID),
-          api.getHistory(DEMO_USER_ID, 10),
-          api.getUserContracts(DEMO_USER_ID),
+          api.getBalance(),
+          api.getHistory(10),
+          api.getUserContracts(),
         ]);
         setBalance(balanceData);
         setTransactions(historyData.transactions);
@@ -56,7 +65,12 @@ export default function IdentityDashboard() {
       }
     }
     load();
-  }, []);
+  }, [authUser, authLoading, router]);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   if (loading) {
     return (
@@ -101,10 +115,18 @@ export default function IdentityDashboard() {
           <Link href="/wallet" className="px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-sm font-bold text-neutral-400 hover:text-white transition-colors">
             WALLET
           </Link>
+          <NotificationPanel />
           <div className="flex items-center gap-2 px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800">
             <User size={16} className="text-neutral-400" />
-            <span className="font-bold">{balance?.email ?? 'Unknown'}</span>
+            <span className="font-bold">{authUser?.email ?? balance?.email ?? 'Unknown'}</span>
           </div>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-sm font-bold text-neutral-400 hover:text-red-500 transition-colors flex items-center gap-2"
+          >
+            <LogOut size={16} />
+            LOGOUT
+          </button>
         </div>
       </header>
 
@@ -148,6 +170,9 @@ export default function IdentityDashboard() {
               CREATE NEW CONTRACT
             </Link>
           </div>
+
+          {/* Leaderboard */}
+          <Leaderboard />
         </div>
 
         {/* Right Column: Ledger & Actions */}

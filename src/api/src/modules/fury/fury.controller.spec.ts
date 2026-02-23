@@ -33,7 +33,7 @@ describe('FuryController', () => {
       ];
       mockPool.query.mockResolvedValueOnce({ rows: assignments });
 
-      const result = await controller.getAssignments('fury-user-1');
+      const result = await controller.getAssignments({ id: 'fury-user-1' });
 
       expect(result).toEqual({ assignments });
       expect(mockPool.query).toHaveBeenCalledWith(
@@ -45,7 +45,7 @@ describe('FuryController', () => {
     it('should return empty assignments when Fury has no pending reviews', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
-      const result = await controller.getAssignments('fury-idle');
+      const result = await controller.getAssignments({ id: 'fury-idle' });
 
       expect(result).toEqual({ assignments: [] });
     });
@@ -58,15 +58,14 @@ describe('FuryController', () => {
       // SELECT proof_id
       mockPool.query.mockResolvedValueOnce({ rows: [{ proof_id: 'proof-1' }] });
 
-      const result = await controller.submitVerdict({
-        assignmentId: 'assign-1',
-        furyUserId: 'fury-1',
-        verdict: 'PASS',
-      });
+      const result = await controller.submitVerdict(
+        { id: 'fury-1' },
+        { assignmentId: 'assign-1', verdict: 'PASS' },
+      );
 
       expect(result).toEqual({ status: 'verdict_recorded' });
 
-      // Verify UPDATE was called
+      // Verify UPDATE was called with user ID from @CurrentUser
       const updateCall = mockPool.query.mock.calls[0];
       expect(updateCall[0]).toMatch(/UPDATE fury_assignments SET verdict/);
       expect(updateCall[1]).toEqual(['PASS', 'assign-1', 'fury-1']);
@@ -86,11 +85,10 @@ describe('FuryController', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ proof_id: 'proof-2' }] });
 
-      await controller.submitVerdict({
-        assignmentId: 'assign-2',
-        furyUserId: 'fury-2',
-        verdict: 'FAIL',
-      });
+      await controller.submitVerdict(
+        { id: 'fury-2' },
+        { assignmentId: 'assign-2', verdict: 'FAIL' },
+      );
 
       const updateCall = mockPool.query.mock.calls[0];
       expect(updateCall[1]).toEqual(['FAIL', 'assign-2', 'fury-2']);
@@ -100,11 +98,10 @@ describe('FuryController', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // no assignment found
 
-      await controller.submitVerdict({
-        assignmentId: 'assign-ghost',
-        furyUserId: 'fury-1',
-        verdict: 'PASS',
-      });
+      await controller.submitVerdict(
+        { id: 'fury-1' },
+        { assignmentId: 'assign-ghost', verdict: 'PASS' },
+      );
 
       expect(mockFuryWorker.checkConsensus).not.toHaveBeenCalled();
     });

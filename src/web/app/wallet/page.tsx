@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { EscrowConnect } from '../../components/EscrowConnect';
-import { Wallet as WalletIcon, Lock, ArrowRightCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { Wallet as WalletIcon, Lock, ArrowRightCircle, Loader2, AlertTriangle, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { api } from '../../services/api-client';
-
-const DEMO_USER_ID = process.env.NEXT_PUBLIC_DEMO_USER_ID || 'd0000000-0000-0000-0000-000000000001';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Contract {
   id: string;
@@ -24,14 +24,21 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function WalletDashboard() {
+  const { user: authUser, logout, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!authUser) {
+      router.push('/login');
+      return;
+    }
     async function load() {
       try {
-        const data = await api.getUserContracts(DEMO_USER_ID);
+        const data = await api.getUserContracts();
         setContracts(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load contracts');
@@ -40,7 +47,12 @@ export default function WalletDashboard() {
       }
     }
     load();
-  }, []);
+  }, [authUser, authLoading, router]);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   return (
     <div className="min-h-screen bg-black text-white p-6 md:p-12">
@@ -51,9 +63,17 @@ export default function WalletDashboard() {
           </div>
           <h1 className="text-2xl font-black tracking-tight uppercase">Capital Escrow</h1>
         </div>
-        <Link href="/dashboard" className="text-sm font-bold text-neutral-400 hover:text-white transition-colors">
-          RETURN TO IDENTITY &rarr;
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard" className="text-sm font-bold text-neutral-400 hover:text-white transition-colors">
+            RETURN TO IDENTITY &rarr;
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-sm font-bold text-neutral-400 hover:text-red-500 transition-colors flex items-center gap-2"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
       </header>
 
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">

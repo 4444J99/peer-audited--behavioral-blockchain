@@ -1,6 +1,11 @@
+'use client';
+
 import Link from 'next/link';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Home() {
+  const { user } = useAuth();
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-950 text-white font-sans text-center p-8">
       {/* Hero Section */}
@@ -11,11 +16,11 @@ export default function Home() {
       <p className="text-2xl text-neutral-300 max-w-2xl mb-12 font-medium leading-relaxed">
         The Blockchain of Truth. We weaponize loss aversion to forge unbreakable habits. Stake your money. Prove your actions. Earn back your integrity.
       </p>
-      
+
       {/* Primary Actions */}
       <div className="flex flex-col sm:flex-row gap-6 mb-24">
-        <Link 
-          href="/dashboard"
+        <Link
+          href={user ? '/dashboard' : '/login'}
           className="px-8 py-4 bg-white text-black font-extrabold rounded-full hover:bg-neutral-200 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
         >
           ENTER THE ARENA

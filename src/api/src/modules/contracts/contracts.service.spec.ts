@@ -3,8 +3,10 @@ import { ContractsService, CreateContractDto } from './contracts.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { StripeFboService } from '../../../services/escrow/stripe.service';
+import { DisputeService } from '../../../services/escrow/dispute.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { AegisProtocolService } from '../../../services/health/aegis.service';
+import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { OathCategory, VerificationMethod } from '../../../../shared/libs/behavioral-logic';
 import { Pool } from 'pg';
 
@@ -30,9 +32,17 @@ describe('ContractsService', () => {
     routeProof: jest.fn().mockResolvedValue('job-id-1'),
   } as unknown as FuryRouterService;
 
+  const mockDispute = {
+    initiateAppeal: jest.fn().mockResolvedValue({ appealStatus: 'FEE_AUTHORIZED_PENDING_REVIEW', paymentIntentId: 'pi_appeal_1' }),
+  } as unknown as DisputeService;
+
   const mockAegis = {
     validateHealthMetrics: jest.fn().mockReturnValue(true),
   } as unknown as AegisProtocolService;
+
+  const mockAnomaly = {
+    analyze: jest.fn().mockResolvedValue({ rejected: false, flags: [] }),
+  } as unknown as AnomalyService;
 
   const activeUser = {
     id: 'user-1',
@@ -58,8 +68,10 @@ describe('ContractsService', () => {
       mockLedger,
       mockTruthLog,
       mockStripe,
+      mockDispute,
       mockFuryRouter,
       mockAegis,
+      mockAnomaly,
     );
     jest.clearAllMocks();
   });
@@ -312,6 +324,7 @@ describe('ContractsService', () => {
         proofId: 'proof-1',
         contractId: 'contract-1',
         userId: 'user-1',
+        anomalyFlags: [],
       });
     });
   });

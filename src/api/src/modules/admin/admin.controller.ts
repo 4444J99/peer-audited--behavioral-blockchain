@@ -1,11 +1,13 @@
 import { Controller, Post, Param, Body, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../../guards/auth.guard';
+import { RoleGuard, Roles } from '../../common/guards/role.guard';
 import { ModerationService } from '../../../services/security/moderation.service';
 import { HoneypotInjectorService } from '../../../services/intelligence/honeypot.service';
 import { ContractsService } from '../contracts/contracts.service';
 
 @Controller('admin')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RoleGuard)
+@Roles('ADMIN')
 export class AdminController {
   constructor(
     private readonly moderation: ModerationService,

@@ -1,11 +1,21 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 const AUTH_TOKEN = process.env.NEXT_PUBLIC_AUTH_TOKEN || 'dev-mock-jwt-token-alpha-omega'; // allow-secret
 
+let currentToken = AUTH_TOKEN;
+
+export function setAuthToken(token: string) { // allow-secret
+  currentToken = token;
+}
+
+export function getAuthToken(): string {
+  return currentToken;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${AUTH_TOKEN}`,
+      'Authorization': `Bearer ${currentToken}`,
       ...options?.headers,
     },
     ...options,
@@ -15,7 +25,6 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export interface CreateContractDto {
-  userId: string;
   oathCategory: string;
   verificationMethod: string;
   stakeAmount: number;
@@ -28,20 +37,39 @@ export interface CreateContractDto {
 }
 
 export interface SubmitProofDto {
-  userId: string;
   mediaUri: string;
 }
 
 export interface VerdictDto {
   assignmentId: string;
-  furyUserId: string;
   verdict: 'PASS' | 'FAIL';
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  email: string;
+  integrity_score: number;
+  created_at: string;
 }
 
 export const api = {
   health: () => request<{ status: string }>('/health'),
 
-  getBalance: (userId: string) =>
+  // Auth
+  register: (email: string, password: string) => // allow-secret
+    request<{ userId: string; token: string }>('/auth/register', { // allow-secret
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+
+  login: (email: string, password: string) => // allow-secret
+    request<{ userId: string; token: string }>('/auth/login', { // allow-secret
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+
+  // Wallet — no more userId query params
+  getBalance: () =>
     request<{
       userId: string;
       email: string;
@@ -49,9 +77,9 @@ export const api = {
       allowedTiers: string[];
       ledgerBalance: number;
       status: string;
-    }>(`/wallet/balance?userId=${userId}`),
+    }>('/wallet/balance'),
 
-  getHistory: (userId: string, limit?: number) =>
+  getHistory: (limit?: number) =>
     request<{ transactions: Array<{
       id: string;
       debit_account_id: string;
@@ -62,9 +90,10 @@ export const api = {
       created_at: string;
       debit_account_name: string;
       credit_account_name: string;
-    }> }>(`/wallet/history?userId=${userId}${limit ? `&limit=${limit}` : ''}`),
+    }> }>(`/wallet/history${limit ? `?limit=${limit}` : ''}`),
 
-  getUserContracts: (userId: string) =>
+  // Contracts — userId comes from JWT
+  getUserContracts: () =>
     request<Array<{
       id: string;
       user_id: string;
@@ -76,7 +105,7 @@ export const api = {
       started_at: string;
       ends_at: string;
       created_at: string;
-    }>>(`/contracts?userId=${userId}`),
+    }>>('/contracts'),
 
   getContract: (id: string) => request(`/contracts/${id}`),
 
@@ -92,7 +121,13 @@ export const api = {
       body: JSON.stringify(dto),
     }),
 
-  getFuryAssignments: (furyUserId: string) =>
+  disputeContract: (contractId: string) =>
+    request<{ appealStatus: string; paymentIntentId: string }>(`/contracts/${contractId}/dispute`, {
+      method: 'POST',
+    }),
+
+  // Fury — userId comes from JWT
+  getFuryAssignments: () =>
     request<{ assignments: Array<{
       assignment_id: string;
       proof_id: string;
@@ -100,11 +135,62 @@ export const api = {
       media_uri: string;
       contract_id: string;
       submitted_at: string;
-    }> }>(`/fury/queue?furyUserId=${furyUserId}`),
+    }> }>('/fury/queue'),
 
   submitVerdict: (dto: VerdictDto) =>
     request<{ status: string }>('/fury/verdict', {
       method: 'POST',
       body: JSON.stringify(dto),
+    }),
+
+  // Users
+  getMe: () => request<{ id: string; email: string; integrity_score: number; created_at: string }>('/users/me'),
+
+  getLeaderboard: (limit?: number) =>
+    request<LeaderboardEntry[]>(`/users/leaderboard${limit ? `?limit=${limit}` : ''}`),
+
+  // Notifications
+  getNotifications: () =>
+    request<Array<{
+      id: string;
+      type: string;
+      title: string;
+      body: string | null;
+      read: boolean;
+      created_at: string;
+    }>>('/notifications'),
+
+  getUnreadCount: () =>
+    request<{ count: number }>('/notifications/unread-count'),
+
+  markNotificationRead: (id: string) =>
+    request<{ status: string }>(`/notifications/${id}/read`, { method: 'POST' }),
+
+  // B2B Enterprise
+  getEnterpriseMetrics: (enterpriseId: string) =>
+    request<{
+      enterpriseId: string;
+      totalContracts: number;
+      completedContracts: number;
+      failedContracts: number;
+      activeContracts: number;
+      completionRate: number;
+      avgIntegrityScore: number;
+      totalEmployees: number;
+    }>(`/b2b/metrics/${enterpriseId}`),
+
+  getEnterpriseBilling: (enterpriseId: string) =>
+    request<{
+      enterpriseId: string;
+      plan: string;
+      events: unknown[];
+      totalDue: number;
+      currency: string;
+    }>(`/b2b/billing/${enterpriseId}`),
+
+  // Billing — ticket purchase
+  purchaseTicket: (contractId: string) =>
+    request<{ paymentIntentId: string; amount: number }>(`/contracts/${contractId}/ticket`, {
+      method: 'POST',
     }),
 };

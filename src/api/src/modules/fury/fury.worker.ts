@@ -1,9 +1,10 @@
-import { Injectable, Inject, OnModuleInit, Logger, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, OnModuleInit, Logger, forwardRef, Optional } from '@nestjs/common';
 import { Worker, Job } from 'bullmq';
 import { Pool } from 'pg';
 import { FURY_ROUTER_QUEUE_NAME, REDIS_CONNECTION_CONFIG } from '../../../config/queue.config';
 import { ConsensusEngine, FuryVote } from './consensus.engine';
 import { ContractsService } from '../contracts/contracts.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 interface FuryRouteJob {
   proofId: string;
@@ -22,6 +23,7 @@ export class FuryWorker implements OnModuleInit {
     private readonly consensusEngine: ConsensusEngine,
     @Inject(forwardRef(() => ContractsService))
     private readonly contractsService: ContractsService,
+    @Optional() @Inject(NotificationsService) private readonly notifications?: NotificationsService,
   ) {}
 
   onModuleInit() {
@@ -146,6 +148,27 @@ export class FuryWorker implements OnModuleInit {
             [vote.furyUserId],
           );
         }
+      }
+    }
+
+    // Notify proof submitter of consensus result
+    if (contract_id) {
+      const contractResult = await this.pool.query(
+        `SELECT user_id FROM contracts WHERE id = $1`,
+        [contract_id],
+      );
+      if (contractResult.rows.length > 0) {
+        await this.notifications?.create({
+          userId: contractResult.rows[0].user_id,
+          type: 'CONSENSUS_REACHED',
+          title: `Proof ${result.outcome === 'VERIFIED' ? 'Verified' : result.outcome === 'REJECTED' ? 'Rejected' : 'Split'}`,
+          body: result.outcome === 'VERIFIED'
+            ? 'Your proof has been verified by the Fury network.'
+            : result.outcome === 'REJECTED'
+              ? 'Your proof has been rejected by the Fury network.'
+              : 'The Fury network reached a split decision on your proof.',
+          metadata: { proofId, contractId: contract_id, outcome: result.outcome },
+        });
       }
     }
 

@@ -39,9 +39,12 @@ CREATE INDEX idx_event_log_created_at ON event_log(created_at);
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT UNIQUE NOT NULL,
+    password_hash TEXT,
     stripe_customer_id TEXT,
     integrity_score INTEGER DEFAULT 50,
     account_id UUID REFERENCES accounts(id),
+    role TEXT DEFAULT 'USER',
+    enterprise_id UUID,
     status TEXT DEFAULT 'ACTIVE',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -80,6 +83,20 @@ CREATE TABLE fury_assignments (
     reviewed_at TIMESTAMPTZ,
     assigned_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT,
+    read BOOLEAN DEFAULT FALSE,
+    metadata JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX idx_notifications_unread ON notifications(user_id, read) WHERE read = FALSE;
 
 CREATE INDEX idx_contracts_user_id ON contracts(user_id);
 CREATE INDEX idx_contracts_status ON contracts(status);
