@@ -133,7 +133,12 @@ export class DataLakeService {
          TO_CHAR(c.created_at, 'YYYY-MM') as month,
          COUNT(*) as new_contracts,
          COUNT(*) FILTER (WHERE c.status = 'COMPLETED') as completions,
-         COUNT(*) FILTER (WHERE c.status = 'FAILED') as failures
+         COUNT(*) FILTER (WHERE c.status = 'FAILED') as failures,
+         AVG(CASE
+           WHEN c.status = 'COMPLETED' THEN 5
+           WHEN c.status = 'FAILED' THEN -15
+           ELSE 0
+         END) as avg_integrity_delta
        FROM contracts c
        JOIN users u ON c.user_id = u.id
        WHERE u.enterprise_id = $1
@@ -149,7 +154,7 @@ export class DataLakeService {
       newContracts: Number(row.new_contracts),
       completions: Number(row.completions),
       failures: Number(row.failures),
-      avgIntegrityDelta: 0, // Requires event_log cross-reference; placeholder
+      avgIntegrityDelta: Math.round(Number(row.avg_integrity_delta) * 10) / 10,
     }));
   }
 

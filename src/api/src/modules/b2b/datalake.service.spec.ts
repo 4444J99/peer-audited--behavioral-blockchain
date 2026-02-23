@@ -33,6 +33,7 @@ describe('DataLakeService', () => {
           new_contracts: '5',
           completions: '3',
           failures: '1',
+          avg_integrity_delta: '-1.7',
         }],
       });
 
@@ -56,6 +57,7 @@ describe('DataLakeService', () => {
       expect(result.contractMetrics[0].completionRate).toBe(60);
       expect(result.behavioralTrends).toHaveLength(1);
       expect(result.behavioralTrends[0].month).toBe('2026-01');
+      expect(result.behavioralTrends[0].avgIntegrityDelta).toBe(-1.7);
       expect(result.cohortAnalysis).toHaveLength(1);
       expect(result.cohortAnalysis[0].retentionRate).toBe(80);
     });
