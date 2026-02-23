@@ -1,30 +1,33 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, MinLength, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
   @ApiProperty({ description: 'User email address', example: 'user@example.com' })
   @IsEmail()
-  email: string;
+  email!: string;
 
-  @ApiProperty({ description: 'Password (minimum 6 characters)', example: 'secure123', minLength: 6 }) // allow-secret
+  @ApiProperty({ description: 'Password (minimum 12 characters, 1 uppercase, 1 digit, 1 symbol)', minLength: 12 }) // allow-secret
   @IsString()
-  @MinLength(6)
-  password: string; // allow-secret
+  @MinLength(12)
+  @Matches(/(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/, {
+    message: 'Password must contain at least 1 uppercase letter, 1 digit, and 1 symbol',
+  })
+  password!: string; // allow-secret
 }
 
 export class LoginDto {
   @ApiProperty({ description: 'User email address', example: 'user@example.com' })
   @IsEmail()
-  email: string;
+  email!: string;
 
-  @ApiProperty({ description: 'User password' }) // allow-secret
+  @ApiProperty({ description: 'User password', minLength: 12 }) // allow-secret
   @IsString()
-  @MinLength(1)
-  password: string; // allow-secret
+  @MinLength(12)
+  password!: string; // allow-secret
 }
 
 export class EnterpriseTokenDto {
   @ApiProperty({ description: 'Enterprise SSO token to exchange for a session JWT' }) // allow-secret
   @IsString()
-  enterpriseToken: string; // allow-secret
+  enterpriseToken!: string; // allow-secret
 }

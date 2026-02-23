@@ -2,8 +2,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 async function apiRequest<T>(path: string, body: Record<string, string>): Promise<T> {
   const token = typeof window !== 'undefined'
-    ? localStorage.getItem('styx_token') || 'dev-mock-jwt-token-alpha-omega' // allow-secret
-    : 'dev-mock-jwt-token-alpha-omega'; // allow-secret
+    ? localStorage.getItem('styx_token') || '' // allow-secret
+    : ''; // allow-secret
 
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',

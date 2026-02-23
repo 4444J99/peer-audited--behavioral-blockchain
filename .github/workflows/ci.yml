@@ -9,7 +9,7 @@ on:
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         node-version: [20.x]
@@ -27,6 +27,9 @@ jobs:
     - name: Install Dependencies
       run: npm ci
 
+    - name: Security Audit
+      run: npm audit --audit-level=high
+
     - name: Execute Tests (Turborepo)
       run: npx turbo run test
 
@@ -41,3 +44,25 @@ jobs:
 
     - name: Gate 05 — Behavioral Physics Check
       run: npx tsx scripts/validation/05-behavioral-physics-check.ts
+
+    - name: Gate 06 — Security Invariant Check
+      run: npx tsx scripts/validation/06-security-invariant-check.ts
+
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript-typescript
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3

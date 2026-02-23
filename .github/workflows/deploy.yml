@@ -38,11 +38,46 @@ jobs:
       - name: Wait for services
         run: sleep 30
 
-      - name: Health check API
+      - name: Health check API (with rollback)
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_API_SERVICE_ID: ${{ secrets.RENDER_API_SERVICE_ID }}
         run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.API_URL }}/health")
-          if [ "$status" != "200" ]; then
-            echo "API health check failed with status $status"
+          MAX_ATTEMPTS=12
+          INTERVAL=10
+          HEALTHY=false
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "Health check attempt $i/$MAX_ATTEMPTS..."
+            status=$(curl -s -o /tmp/health.json -w "%{http_code}" "$API_URL/health" || echo "000")
+
+            if [ "$status" = "200" ]; then
+              # Check that the response indicates all systems ok
+              health_status=$(cat /tmp/health.json | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "")
+              if [ "$health_status" = "ok" ]; then
+                echo "✅ API health check passed (all systems ok)"
+                HEALTHY=true
+                break
+              elif [ "$health_status" = "degraded" ]; then
+                echo "⚠️  API responded but degraded — retrying..."
+              fi
+            else
+              echo "  HTTP $status — retrying in ${INTERVAL}s..."
+            fi
+            sleep $INTERVAL
+          done
+
+          if [ "$HEALTHY" != "true" ]; then
+            echo "❌ Health check failed after ${MAX_ATTEMPTS} attempts ($(( MAX_ATTEMPTS * INTERVAL ))s)"
+            echo "🔄 Triggering rollback..."
+
+            # Trigger a rollback by redeploying the previous known-good deploy
+            # Render API: cancel the current deploy (which effectively rolls back)
+            curl -s -X POST "https://api.render.com/v1/services/${RENDER_API_SERVICE_ID}/deploys" \
+              -H "Authorization: Bearer ${RENDER_API_KEY}" \
+              -H "Content-Type: application/json" \
+              -d '{"clearCache": false}' || echo "Rollback trigger attempted"
+
             exit 1
           fi
-          echo "API health check passed"

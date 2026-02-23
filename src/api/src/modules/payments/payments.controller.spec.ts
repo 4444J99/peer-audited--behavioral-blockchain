@@ -53,4 +53,22 @@ describe('PaymentsController', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
   });
+
+  it('should throw on startup in production without STRIPE_WEBHOOK_SECRET', () => {
+    const original = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    delete process.env.STRIPE_WEBHOOK_SECRET;
+
+    const prodController = new PaymentsController(
+      mockPool as unknown as Pool,
+      mockContractsService as unknown as ContractsService,
+      mockNotifications as unknown as NotificationsService,
+    );
+
+    expect(() => prodController.onModuleInit()).toThrow(
+      'STRIPE_WEBHOOK_SECRET must be set in production',
+    );
+
+    process.env.NODE_ENV = original;
+  });
 });

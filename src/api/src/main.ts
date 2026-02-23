@@ -3,8 +3,11 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import * as express from 'express';
 
 async function bootstrap() {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   const app = await NestFactory.create(AppModule, {
     rawBody: true, // Required for Stripe webhook signature verification
     bufferLogs: true,
@@ -16,8 +19,16 @@ async function bootstrap() {
   // Security headers
   app.use(helmet());
 
+  // Request body size limit (prevent OOM via large payloads)
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ limit: '1mb', extended: true }));
+
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
+  // CORS — reject all if CORS_ORIGINS unset in production
+  if (isProduction && !process.env.CORS_ORIGINS) {
+    throw new Error('CORS_ORIGINS must be set in production');
+  }
   const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',')
     : ['http://localhost:3001', 'http://localhost:5173'];
@@ -26,21 +37,28 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // OpenAPI/Swagger documentation
-  const config = new DocumentBuilder()
-    .setTitle('Styx API')
-    .setDescription('Peer-audited behavioral market — the Blockchain of Truth')
-    .setVersion('0.1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  // OpenAPI/Swagger documentation — only in non-production environments
+  if (!isProduction) {
+    const config = new DocumentBuilder()
+      .setTitle('Styx API')
+      .setDescription('Peer-audited behavioral market — the Blockchain of Truth')
+      .setVersion('0.1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
+
+  // Graceful shutdown — drain in-flight requests before exit
+  app.enableShutdownHooks();
 
   const port = process.env.API_PORT || 3000;
   await app.listen(port);
   const logger = app.get(Logger);
   logger.log(`Styx API running on http://localhost:${port}`, 'Bootstrap');
-  logger.log(`Swagger docs at http://localhost:${port}/api/docs`, 'Bootstrap');
+  if (!isProduction) {
+    logger.log(`Swagger docs at http://localhost:${port}/api/docs`, 'Bootstrap');
+  }
 }
 
 bootstrap();

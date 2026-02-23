@@ -4,7 +4,7 @@ import { FURY_ROUTER_QUEUE_NAME, getDefaultQueueOptions } from '../../config/que
 
 @Injectable()
 export class FuryRouterService implements OnModuleInit {
-  private queue: Queue;
+  private queue!: Queue;
 
   onModuleInit() {
     this.queue = new Queue(FURY_ROUTER_QUEUE_NAME, getDefaultQueueOptions());

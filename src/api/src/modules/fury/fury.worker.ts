@@ -19,7 +19,7 @@ interface FuryRouteJob {
 @Injectable()
 export class FuryWorker implements OnModuleInit {
   private readonly logger = new Logger(FuryWorker.name);
-  private worker: Worker;
+  private worker!: Worker;
 
   constructor(
     private readonly pool: Pool,

@@ -7,6 +7,46 @@ export class TruthLogService {
   constructor(private readonly pool: Pool) {}
 
   /**
+   * Walks the hash chain from oldest to newest, recomputing each hash
+   * and verifying it matches the stored value. Returns a summary with
+   * the total events checked and any corrupted entries.
+   */
+  async verifyChain(): Promise<{ valid: boolean; checked: number; corrupted: string[] }> {
+    const result = await this.pool.query(
+      'SELECT id, event_type, payload, previous_hash, current_hash FROM event_log ORDER BY created_at ASC',
+    );
+
+    const corrupted: string[] = [];
+    let expectedPreviousHash = 'GENESIS_HASH';
+
+    for (const row of result.rows) {
+      // Verify the previous_hash link
+      if (row.previous_hash !== expectedPreviousHash) {
+        corrupted.push(row.id);
+        // Continue checking remaining entries
+      }
+
+      // Recompute the hash
+      const hashInput = `${row.previous_hash}${JSON.stringify(row.payload)}`;
+      const recomputedHash = createHash('sha256').update(hashInput).digest('hex');
+
+      if (recomputedHash !== row.current_hash) {
+        if (!corrupted.includes(row.id)) {
+          corrupted.push(row.id);
+        }
+      }
+
+      expectedPreviousHash = row.current_hash;
+    }
+
+    return {
+      valid: corrupted.length === 0,
+      checked: result.rows.length,
+      corrupted,
+    };
+  }
+
+  /**
    * Appends an event to the cryptographically linked tamper-evident log.
    */
   async appendEvent(eventType: string, payload: Record<string, any>): Promise<string> {

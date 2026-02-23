@@ -14,4 +14,12 @@ module.exports = {
       "<rootDir>/__mocks__/async-storage.ts",
     "^react-native$": "<rootDir>/__mocks__/react-native.ts",
   },
+  coverageThreshold: {
+    global: {
+      lines: 70,
+      branches: 60,
+      functions: 60,
+      statements: 70,
+    },
+  },
 };

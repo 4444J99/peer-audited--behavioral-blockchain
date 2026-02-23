@@ -117,6 +117,16 @@ CREATE TABLE notifications (
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX idx_notifications_unread ON notifications(user_id, read) WHERE read = FALSE;
 
+-- Stripe webhook idempotency: track processed event IDs
+CREATE TABLE stripe_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id TEXT UNIQUE NOT NULL,
+    event_type TEXT NOT NULL,
+    processed_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_stripe_events_event_id ON stripe_events(event_id);
+
 CREATE INDEX idx_contracts_user_id ON contracts(user_id);
 CREATE INDEX idx_contracts_status ON contracts(status);
 CREATE INDEX idx_proofs_contract_id ON proofs(contract_id);

@@ -37,6 +37,7 @@ describe('AnomalyService', () => {
   let service: AnomalyService;
 
   beforeEach(() => {
+    // No Redis passed — uses in-memory fallback
     service = new AnomalyService();
   });
 

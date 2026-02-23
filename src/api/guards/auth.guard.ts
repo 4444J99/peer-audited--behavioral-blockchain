@@ -2,13 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
-
-const DEV_MOCK_TOKEN = 'dev-mock-jwt-token-alpha-omega'; // allow-secret
-const DEV_MOCK_USER_ID = 'd0000000-0000-0000-0000-000000000001';
-
-function getJwtSecret(): string {
-  return process.env.JWT_SECRET || 'styx-dev-secret-do-not-use-in-production'; // allow-secret
-}
+import { getJwtSecret } from '../src/modules/auth/auth.service';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 
@@ -31,15 +25,12 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing Authorization Bearer token');
     }
 
-    // Dev-mode fallback: only available outside production
-    if (process.env.NODE_ENV !== 'production' && token === DEV_MOCK_TOKEN) { // allow-secret
-      (request as any).user = { id: DEV_MOCK_USER_ID, email: 'demo@styx.protocol' };
-      return true;
-    }
+    // Resolve secret outside try/catch so production enforcement errors propagate
+    const secret = getJwtSecret();
 
-    // Decode real JWT
+    // Decode real JWT — single source of truth for secret via auth.service.ts
     try {
-      const payload = jwt.verify(token, getJwtSecret()) as { sub: string; email: string };
+      const payload = jwt.verify(token, secret) as { sub: string; email: string };
       (request as any).user = { id: payload.sub, email: payload.email };
       return true;
     } catch {

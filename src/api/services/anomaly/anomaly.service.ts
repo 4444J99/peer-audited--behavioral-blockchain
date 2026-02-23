@@ -1,9 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
 import sharp from 'sharp';
+import Redis from 'ioredis';
 
 const PHASH_HAMMING_THRESHOLD = 5;
 const EXIF_DISCREPANCY_HOURS = 1;
 const ANALYSIS_TIMEOUT_MS = 10_000;
+const HASH_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
+
+export const ANOMALY_REDIS_CLIENT = 'ANOMALY_REDIS_CLIENT';
 
 export interface AnomalyResult {
   rejected: boolean;
@@ -15,9 +19,13 @@ export interface AnomalyResult {
 export class AnomalyService {
   private readonly logger = new Logger(AnomalyService.name);
 
-  // In-memory pHash store (production would use Redis sorted set)
-  private readonly hashStore = new Map<string, { hash: string; userId: string; mediaUri: string; id: number }[]>();
+  // Fallback in-memory store when Redis is unavailable (tests, local dev without Redis)
+  private readonly memoryStore = new Map<string, { hash: string; userId: string; mediaUri: string; id: number }[]>();
   private nextId = 0;
+
+  constructor(
+    @Optional() @Inject(ANOMALY_REDIS_CLIENT) private readonly redis?: Redis,
+  ) {}
 
   async analyze(mediaUri: string, userId: string): Promise<AnomalyResult> {
     const flags: string[] = [];
@@ -39,7 +47,7 @@ export class AnomalyService {
   private async runAnalysis(mediaUri: string, userId: string, flags: string[]): Promise<AnomalyResult> {
     // 1. pHash duplicate detection — check BEFORE storing
     const pHash = this.computePHash(mediaUri);
-    const duplicate = this.checkDuplicate(pHash);
+    const duplicate = await this.checkDuplicate(pHash);
     if (duplicate) {
       return {
         rejected: true,
@@ -49,7 +57,7 @@ export class AnomalyService {
     }
 
     // Store the hash for future comparisons
-    this.storeHash(pHash, userId, mediaUri);
+    await this.storeHash(pHash, userId, mediaUri);
 
     // 2. EXIF timestamp validation
     const exifFlag = await this.checkExifTimestamp(mediaUri);
@@ -88,9 +96,37 @@ export class AnomalyService {
     return distance;
   }
 
-  private checkDuplicate(pHash: string): { mediaUri: string } | null {
-    // Check all stored hashes for collisions
-    for (const [, entries] of this.hashStore) {
+  private async checkDuplicate(pHash: string): Promise<{ mediaUri: string } | null> {
+    if (this.redis) {
+      return this.checkDuplicateRedis(pHash);
+    }
+    return this.checkDuplicateMemory(pHash);
+  }
+
+  private async checkDuplicateRedis(pHash: string): Promise<{ mediaUri: string } | null> {
+    // Scan all anomaly:phash:* keys
+    let cursor = '0';
+    do {
+      const [nextCursor, keys] = await this.redis!.scan(cursor, 'MATCH', 'anomaly:phash:*', 'COUNT', 100);
+      cursor = nextCursor;
+
+      for (const key of keys) {
+        const entries = await this.redis!.lrange(key, 0, -1);
+        for (const raw of entries) {
+          const entry = JSON.parse(raw);
+          const distance = this.hammingDistance(pHash, entry.hash);
+          if (distance < PHASH_HAMMING_THRESHOLD) {
+            return { mediaUri: entry.mediaUri };
+          }
+        }
+      }
+    } while (cursor !== '0');
+
+    return null;
+  }
+
+  private checkDuplicateMemory(pHash: string): { mediaUri: string } | null {
+    for (const [, entries] of this.memoryStore) {
       for (const entry of entries) {
         const distance = this.hammingDistance(pHash, entry.hash);
         if (distance < PHASH_HAMMING_THRESHOLD) {
@@ -101,11 +137,19 @@ export class AnomalyService {
     return null;
   }
 
-  private storeHash(pHash: string, userId: string, mediaUri: string): void {
-    const key = userId;
-    const entries = this.hashStore.get(key) || [];
+  private async storeHash(pHash: string, userId: string, mediaUri: string): Promise<void> {
+    if (this.redis) {
+      const key = `anomaly:phash:${userId}`;
+      const entry = JSON.stringify({ hash: pHash, userId, mediaUri });
+      await this.redis.rpush(key, entry);
+      await this.redis.expire(key, HASH_TTL_SECONDS);
+      return;
+    }
+
+    // Fallback: in-memory store
+    const entries = this.memoryStore.get(userId) || [];
     entries.push({ hash: pHash, userId, mediaUri, id: this.nextId++ });
-    this.hashStore.set(key, entries);
+    this.memoryStore.set(userId, entries);
   }
 
   /**

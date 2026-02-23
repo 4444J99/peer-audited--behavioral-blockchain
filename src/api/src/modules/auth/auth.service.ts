@@ -6,7 +6,7 @@ import * as jwt from 'jsonwebtoken';
 const BCRYPT_ROUNDS = 10;
 const TOKEN_EXPIRY = '24h';
 
-function getJwtSecret(): string {
+export function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET; // allow-secret
   if (!secret && process.env.NODE_ENV === 'production') {
     throw new Error('JWT_SECRET must be set in production');

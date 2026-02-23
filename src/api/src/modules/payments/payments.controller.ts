@@ -1,4 +1,4 @@
-import { Controller, Post, Req, Res, Logger, RawBodyRequest } from '@nestjs/common';
+import { Controller, Post, Req, Res, Logger, RawBodyRequest, OnModuleInit } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { Pool } from 'pg';
 import { Request, Response } from 'express';
@@ -9,7 +9,7 @@ import { Public } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('Payments')
 @Controller('payments')
-export class PaymentsController {
+export class PaymentsController implements OnModuleInit {
   private readonly logger = new Logger(PaymentsController.name);
   private readonly stripe: Stripe;
   private readonly webhookSecret: string;
@@ -22,6 +22,13 @@ export class PaymentsController {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
     this.stripe = new Stripe(apiKey, { apiVersion: '2023-10-16' });
     this.webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''; // allow-secret
+  }
+
+  onModuleInit() {
+    // Enforce webhook secret in production — fail fast at startup
+    if (process.env.NODE_ENV === 'production' && !this.webhookSecret) {
+      throw new Error('STRIPE_WEBHOOK_SECRET must be set in production');
+    }
   }
 
   @Post('webhook')
@@ -50,6 +57,22 @@ export class PaymentsController {
       this.logger.error(`Webhook signature verification failed: ${err instanceof Error ? err.message : err}`);
       return res.status(400).json({ error: 'Invalid signature' });
     }
+
+    // Idempotency: skip already-processed events
+    const alreadyProcessed = await this.pool.query(
+      'SELECT id FROM stripe_events WHERE event_id = $1',
+      [event.id],
+    );
+    if (alreadyProcessed.rows.length > 0) {
+      this.logger.debug(`Duplicate Stripe event ${event.id}, skipping`);
+      return res.json({ received: true, duplicate: true });
+    }
+
+    // Record event before processing to prevent race conditions
+    await this.pool.query(
+      'INSERT INTO stripe_events (event_id, event_type) VALUES ($1, $2) ON CONFLICT (event_id) DO NOTHING',
+      [event.id, event.type],
+    );
 
     switch (event.type) {
       case 'payment_intent.succeeded': {

@@ -42,15 +42,10 @@ describe('AuthGuard', () => {
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
-  it('should accept the dev mock token and attach demo user', () => {
+  it('should NOT accept any hardcoded dev mock token', () => {
+    // Verify that the old dev mock token is rejected (security regression test)
     const context = createMockContext('Bearer dev-mock-jwt-token-alpha-omega'); // allow-secret
-    const result = guard.canActivate(context);
-
-    expect(result).toBe(true);
-
-    const request = context.switchToHttp().getRequest() as any;
-    expect(request.user.id).toBe('d0000000-0000-0000-0000-000000000001');
-    expect(request.user.email).toBe('demo@styx.protocol');
+    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
   it('should accept a valid JWT and attach user from payload', () => {
@@ -95,5 +90,26 @@ describe('AuthGuard', () => {
   it('should reject non-Bearer auth schemes', () => {
     const context = createMockContext('Basic dXNlcjpwYXNz');
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+  });
+
+  it('should throw in production if JWT_SECRET is not set', () => {
+    const originalEnv = process.env.NODE_ENV;
+    const originalSecret = process.env.JWT_SECRET;
+
+    process.env.NODE_ENV = 'production';
+    delete process.env.JWT_SECRET;
+
+    const token = jwt.sign( // allow-secret
+      { sub: 'user-uuid-123', email: 'alice@styx.protocol' },
+      'any-secret',
+      { expiresIn: '1h' },
+    );
+    const context = createMockContext(`Bearer ${token}`);
+
+    // getJwtSecret() should throw because JWT_SECRET is missing in production
+    expect(() => guard.canActivate(context)).toThrow('JWT_SECRET must be set in production');
+
+    process.env.NODE_ENV = originalEnv;
+    if (originalSecret) process.env.JWT_SECRET = originalSecret;
   });
 });
