@@ -12,6 +12,7 @@ import { HealthModule } from './modules/health/health.module';
 import { B2BModule } from './modules/b2b/b2b.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
     B2BModule,
     NotificationsModule,
     PaymentsModule,
+    AiModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

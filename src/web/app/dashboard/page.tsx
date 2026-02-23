@@ -8,6 +8,7 @@ import { api } from '../../services/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import Leaderboard from '../../components/Leaderboard';
 import NotificationPanel from '../../components/NotificationPanel';
+import { OnboardingWizard } from '../../components/OnboardingWizard';
 
 interface BalanceData {
   userId: string;
@@ -43,6 +44,7 @@ export default function IdentityDashboard() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -60,6 +62,7 @@ export default function IdentityDashboard() {
         setBalance(balanceData);
         setTransactions(historyData.transactions);
         setContracts(contractData);
+        if (contractData.length === 0) setShowOnboarding(true);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load dashboard');
       } finally {
@@ -103,6 +106,12 @@ export default function IdentityDashboard() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans p-6 md:p-12">
+      {showOnboarding && (
+        <OnboardingWizard
+          onComplete={() => setShowOnboarding(false)}
+          onSkip={() => setShowOnboarding(false)}
+        />
+      )}
       <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-16 border-b border-neutral-800 pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">

@@ -19,8 +19,7 @@ export class DisputeService {
       // Attempt to hold the $5.00 appeal fee
       const holdResult = await this.stripeService.holdStake(customerId, APPEAL_FEE_AMOUNT, proofId);
 
-      // In production, this would also write an 'APPEAL_INITIATED' event to the TruthLog 
-      // and move the proofId into a MANUAL_JUDGE_QUEUE for human review.
+      // APPEAL_INITIATED event is logged by ContractsService.disputeContract()
 
       return {
         appealStatus: 'FEE_AUTHORIZED_PENDING_REVIEW',

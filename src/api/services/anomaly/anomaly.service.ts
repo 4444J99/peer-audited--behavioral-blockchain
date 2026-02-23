@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import sharp from 'sharp';
 
 const PHASH_HAMMING_THRESHOLD = 5;
 const EXIF_DISCREPANCY_HOURS = 1;
@@ -51,7 +52,7 @@ export class AnomalyService {
     this.storeHash(pHash, userId, mediaUri);
 
     // 2. EXIF timestamp validation
-    const exifFlag = this.checkExifTimestamp(mediaUri);
+    const exifFlag = await this.checkExifTimestamp(mediaUri);
     if (exifFlag) {
       flags.push('EXIF_TIMESTAMP_DISCREPANCY');
     }
@@ -108,14 +109,49 @@ export class AnomalyService {
   }
 
   /**
-   * Check EXIF DateTimeOriginal vs upload time.
-   * Returns true if discrepancy > 1 hour.
-   * In production, this would parse actual EXIF metadata from the media file.
+   * Extract EXIF DateTimeOriginal from media and compare against current time.
+   * Flags if discrepancy exceeds EXIF_DISCREPANCY_HOURS.
+   * Falls back gracefully when media is not a local file or has no EXIF data.
    */
-  private checkExifTimestamp(_mediaUri: string): boolean {
-    // Stub: In production, fetch the media, extract EXIF DateTimeOriginal,
-    // and compare against current time. Flag if > EXIF_DISCREPANCY_HOURS apart.
-    return false;
+  async checkExifTimestamp(mediaUri: string): Promise<boolean> {
+    try {
+      // Only process local file paths or R2 URLs — skip non-image URIs
+      if (!mediaUri || mediaUri.startsWith('http')) {
+        // For remote URLs, we'd need to fetch the file first.
+        // In production, proofs are fetched from R2 via signed URL before analysis.
+        return false;
+      }
+
+      const metadata = await sharp(mediaUri).metadata();
+      const exifBuffer = metadata.exif;
+      if (!exifBuffer) return false;
+
+      const exifDateMatch = exifBuffer.toString('binary').match(
+        /(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/,
+      );
+      if (!exifDateMatch) return false;
+
+      const [, year, month, day, hour, minute, second] = exifDateMatch;
+      const exifDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`);
+
+      if (isNaN(exifDate.getTime())) return false;
+
+      const now = new Date();
+      const diffHours = Math.abs(now.getTime() - exifDate.getTime()) / (1000 * 60 * 60);
+
+      if (diffHours > EXIF_DISCREPANCY_HOURS) {
+        this.logger.warn(
+          `EXIF timestamp discrepancy: ${diffHours.toFixed(1)}h for ${mediaUri}`,
+        );
+        return true;
+      }
+
+      return false;
+    } catch (err) {
+      // Non-image files, corrupted EXIF, etc. — fail open
+      this.logger.debug(`EXIF check skipped for ${mediaUri}: ${(err as Error).message}`);
+      return false;
+    }
   }
 
   private timeout(ms: number): Promise<never> {

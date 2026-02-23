@@ -107,17 +107,15 @@ services/
 │   └── truth-log.service.ts      # SHA-256 hash-chained event log (IMPLEMENTED)
 ├── fury-router/
 │   ├── fury-router.service.ts    # BullMQ proof routing to anonymous reviewers (IMPLEMENTED)
-│   └── ConsensusEngine.ts        # Verdict aggregation (EMPTY STUB)
+│   └── ConsensusEngine.ts        # Verdict aggregation (IMPLEMENTED)
 ├── escrow/
 │   ├── stripe.service.ts         # Stripe FBO hold/capture/cancel (IMPLEMENTED)
-│   ├── dispute.service.ts        # $5 appeal fee + escalation (IMPLEMENTED)
-│   ├── BankDataProvider.ts       # External bank data interface (EMPTY STUB)
-│   └── escrow.ts                 # (EMPTY STUB)
+│   └── dispute.service.ts        # $5 appeal fee + escalation (IMPLEMENTED)
 ├── health/
 │   └── aegis.service.ts          # BMI floor + velocity cap validation (IMPLEMENTED)
 ├── intelligence/
 │   ├── honeypot.service.ts       # Known-fail proof injection for Fury QA (IMPLEMENTED)
-│   └── GeminiClient.ts           # AI integration constants (STUB — callGemini, ELI5 unimplemented)
+│   └── GeminiClient.ts           # Gemini 2.5 Flash API: callGemini, generateVCQuestions, simplifyConcept (IMPLEMENTED)
 ├── security/
 │   ├── geofence.service.ts       # IP-to-state jurisdiction check (IMPLEMENTED, mock lookup)
 │   └── moderation.service.ts     # Permanent user ban via TruthLog (IMPLEMENTED)
@@ -189,8 +187,6 @@ Docker services (port mappings): PostgreSQL on `5432`, Redis on `6379`, API on `
 
 ## Implementation Status
 
-**Implemented**: LedgerService (double-entry transactions), TruthLogService (hash-chained audit log), FuryRouterService (BullMQ proof routing), StripeFboService (hold/capture/cancel), DisputeService (appeal fee), AegisProtocolService (BMI/velocity validation), GeofenceService (jurisdiction blocking), ModerationService (permanent bans), HoneypotInjectorService (Fury QA), AuthGuard (mock JWT), linguistic cloaker, integrity scoring algorithms, PitchDeck UI, Desktop admin panels.
+**Implemented**: LedgerService (double-entry transactions), TruthLogService (hash-chained audit log), FuryRouterService (BullMQ proof routing), ConsensusEngine (verdict aggregation), StripeFboService (hold/capture/cancel), DisputeService (appeal fee), AegisProtocolService (BMI/velocity validation), GeofenceService (jurisdiction blocking), ModerationService (permanent bans), HoneypotInjectorService (Fury QA), AnomalyService (pHash duplicate detection + EXIF validation), WebhookService (HMAC-signed B2B dispatch), GeminiClient (Gemini 2.5 Flash API), AiController (POST /ai/grill-me, POST /ai/eli5), AuthGuard (JWT), OnboardingWizard, linguistic cloaker, integrity scoring algorithms, PitchDeck UI (routed through API), Desktop admin panels.
 
-**Empty stubs**: ConsensusEngine (verdict aggregation), BankDataProvider (external bank data), escrow.ts (main escrow orchestration), GeminiClient (AI API calls), CameraModule (mobile camera).
-
-**Stub pattern**: Files marked with `/** Tasks for AI Engineer: ... */` comments describe what to implement.
+**Remaining limitations**: CameraModule (mobile camera requires native Swift/Kotlin — placeholder UI with text proof submission).

@@ -1,5 +1,38 @@
 import { AnomalyService } from './anomaly.service';
 
+// Mock sharp for EXIF tests
+jest.mock('sharp', () => {
+  return jest.fn().mockImplementation((input: string) => {
+    if (input === '/tmp/proof-with-old-exif.jpg') {
+      // Return EXIF with a date far in the past
+      const exifString = '2020:01:01 12:00:00';
+      const exifBuffer = Buffer.from(exifString, 'binary');
+      return { metadata: jest.fn().mockResolvedValue({ exif: exifBuffer }) };
+    }
+    if (input === '/tmp/proof-with-recent-exif.jpg') {
+      // Return EXIF with current time
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hour = String(now.getHours()).padStart(2, '0');
+      const minute = String(now.getMinutes()).padStart(2, '0');
+      const second = String(now.getSeconds()).padStart(2, '0');
+      const exifString = `${year}:${month}:${day} ${hour}:${minute}:${second}`;
+      const exifBuffer = Buffer.from(exifString, 'binary');
+      return { metadata: jest.fn().mockResolvedValue({ exif: exifBuffer }) };
+    }
+    if (input === '/tmp/proof-no-exif.jpg') {
+      return { metadata: jest.fn().mockResolvedValue({ exif: undefined }) };
+    }
+    if (input === '/tmp/proof-corrupt.jpg') {
+      return { metadata: jest.fn().mockRejectedValue(new Error('Input buffer contains unsupported image format')) };
+    }
+    // Default: no EXIF
+    return { metadata: jest.fn().mockResolvedValue({ exif: undefined }) };
+  });
+});
+
 describe('AnomalyService', () => {
   let service: AnomalyService;
 
@@ -77,6 +110,33 @@ describe('AnomalyService', () => {
       const second = await service.analyze(mediaUri, 'user-B');
       expect(second.rejected).toBe(true);
       expect(second.flags).toContain('PHASH_DUPLICATE');
+    });
+  });
+
+  describe('EXIF timestamp validation', () => {
+    it('should flag old EXIF timestamps (> 1 hour discrepancy)', async () => {
+      const result = await service.checkExifTimestamp('/tmp/proof-with-old-exif.jpg');
+      expect(result).toBe(true);
+    });
+
+    it('should pass recent EXIF timestamps (< 1 hour)', async () => {
+      const result = await service.checkExifTimestamp('/tmp/proof-with-recent-exif.jpg');
+      expect(result).toBe(false);
+    });
+
+    it('should pass when no EXIF data present', async () => {
+      const result = await service.checkExifTimestamp('/tmp/proof-no-exif.jpg');
+      expect(result).toBe(false);
+    });
+
+    it('should fail open on corrupt files', async () => {
+      const result = await service.checkExifTimestamp('/tmp/proof-corrupt.jpg');
+      expect(result).toBe(false);
+    });
+
+    it('should skip remote URLs (http)', async () => {
+      const result = await service.checkExifTimestamp('https://styx-proofs.r2.dev/proof.jpg');
+      expect(result).toBe(false);
     });
   });
 

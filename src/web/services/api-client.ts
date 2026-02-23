@@ -273,6 +273,19 @@ export const api = {
       method: 'DELETE',
     }),
 
+  // AI
+  grillMe: (slideContent: string) =>
+    request<{ questions: string[] }>('/ai/grill-me', {
+      method: 'POST',
+      body: JSON.stringify({ slideContent }),
+    }),
+
+  eli5: (text: string) =>
+    request<{ explanation: string }>('/ai/eli5', {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    }),
+
   // Public feed (no auth)
   getPublicFeed: (limit?: number) =>
     request<{ events: Array<{
