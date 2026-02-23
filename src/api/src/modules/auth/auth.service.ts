@@ -79,6 +79,34 @@ export class AuthService {
     return jwt.sign({ sub: userId, email }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY });
   }
 
+  async exchangeEnterpriseToken(enterpriseToken: string): Promise<{ userId: string; token: string }> { // allow-secret
+    // Verify the enterprise token is a valid JWT signed with our secret
+    let payload: AuthPayload;
+    try {
+      payload = jwt.verify(enterpriseToken, getJwtSecret()) as AuthPayload;
+    } catch {
+      throw new UnauthorizedException('Invalid enterprise token');
+    }
+
+    // Look up the user by enterprise association
+    const result = await this.pool.query(
+      'SELECT id, email, enterprise_id, status FROM users WHERE id = $1 AND enterprise_id IS NOT NULL',
+      [payload.sub],
+    );
+
+    if (result.rows.length === 0) {
+      throw new UnauthorizedException('No enterprise user found for this token');
+    }
+
+    const user = result.rows[0];
+    if (user.status !== 'ACTIVE') {
+      throw new UnauthorizedException('Enterprise user account is not active');
+    }
+
+    const token = this.signToken(user.id, user.email); // allow-secret
+    return { userId: user.id, token };
+  }
+
   verifyToken(token: string): AuthPayload { // allow-secret
     return jwt.verify(token, getJwtSecret()) as AuthPayload;
   }

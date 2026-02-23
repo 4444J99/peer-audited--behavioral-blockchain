@@ -4,11 +4,7 @@ import { AuthGuard } from '../../../guards/auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { FuryWorker } from './fury.worker';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
-
-interface SubmitVerdictDto {
-  assignmentId: string;
-  verdict: 'PASS' | 'FAIL';
-}
+import { SubmitVerdictDto } from './dto';
 
 @Controller('fury')
 @UseGuards(AuthGuard)

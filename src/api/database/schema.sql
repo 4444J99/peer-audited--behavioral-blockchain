@@ -15,7 +15,7 @@ CREATE TABLE entries (
     debit_account_id UUID REFERENCES accounts(id) ON DELETE RESTRICT,
     credit_account_id UUID REFERENCES accounts(id) ON DELETE RESTRICT,
     amount DECIMAL(19, 4) NOT NULL CHECK (amount > 0),
-    contract_id UUID, -- Links to the behavioral contract
+    contract_id UUID,
     metadata JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -65,6 +65,10 @@ CREATE TABLE contracts (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Deferred FK: entries.contract_id references contracts (entries table defined before contracts)
+ALTER TABLE entries ADD CONSTRAINT fk_entries_contract_id
+  FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE RESTRICT;
 
 -- Auto-update updated_at on row modification
 CREATE OR REPLACE FUNCTION update_updated_at_column()

@@ -8,7 +8,7 @@
  */
 
 const API_BASE = process.env.API_URL || 'http://localhost:3000';
-const DEMO_USER = { email: 'user@styx.app', password: 'styx-demo-2026' }; // allow-secret
+const DEMO_USER = { email: 'demo@styx.protocol', password: 'demo-password-123' }; // allow-secret
 
 async function request<T>(path: string, token: string, options?: RequestInit): Promise<T> { // allow-secret
   const res = await fetch(`${API_BASE}${path}`, {

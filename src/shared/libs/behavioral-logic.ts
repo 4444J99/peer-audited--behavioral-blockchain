@@ -58,6 +58,7 @@ export const ONBOARDING_BONUS_AMOUNT = 5.00;
 /**
  * BE-01: Loss Aversion Anchor
  * Perceived pain of loss is ~2x pleasure of gain (λ = 1.955).
+ * Reserved: Dynamic stake messaging (Phase Omega)
  */
 export const LOSS_AVERSION_COEFFICIENT = 1.955;
 
@@ -146,9 +147,10 @@ export function grantOnboardingBonus(totalContracts: number): OnboardingBonusRes
 
 /**
  * Placeholder ethical screening for goal descriptions.
- * Full LLM-based screening is Phase Omega scope.
+ * Phase Omega: LLM-based goal screening (Gemini 2.5 Flash content policy check).
  * Currently returns true for all goals (pass-through).
  */
 export function isGoalEthical(_goalDescription: string): boolean {
+  // TODO(Phase Omega): Integrate Gemini content policy check
   return true;
 }

@@ -8,7 +8,14 @@ async function bootstrap() {
   });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  app.enableCors();
+
+  const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',')
+    : ['http://localhost:3001', 'http://localhost:5173'];
+  app.enableCors({
+    origin: allowedOrigins,
+    credentials: true,
+  });
 
   const port = process.env.API_PORT || 3000;
   await app.listen(port);

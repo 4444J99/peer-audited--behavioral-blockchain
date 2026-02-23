@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3000';
+const API_BASE = process.env.STYX_API_URL || 'http://localhost:3000';
 
 let authToken: string | null = null;
 
@@ -143,7 +143,7 @@ export const ApiClient = {
 
   // Enterprise SSO
   exchangeEnterpriseToken: (enterpriseToken: string) => // allow-secret
-    request<{ userId: string; token: string }>('/auth/login', {
+    request<{ userId: string; token: string }>('/auth/enterprise', {
       method: 'POST',
       body: JSON.stringify({ enterpriseToken }), // allow-secret
     }),

@@ -1,10 +1,13 @@
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { BadRequestException } from '@nestjs/common';
+import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
+import { RegisterDto, LoginDto } from './dto';
 
 const mockAuthService = {
   register: jest.fn(),
   login: jest.fn(),
+  exchangeEnterpriseToken: jest.fn(),
 } as unknown as AuthService;
 
 describe('AuthController', () => {
@@ -22,32 +25,37 @@ describe('AuthController', () => {
         token: 'jwt-token', // allow-secret
       });
 
-      const result = await controller.register({
-        email: 'test@styx.protocol',
-        password: 'secure123', // allow-secret
-      });
+      const result = await controller.register(
+        plainToInstance(RegisterDto, {
+          email: 'test@styx.protocol',
+          password: 'secure123', // allow-secret
+        }),
+      );
 
       expect(result.userId).toBe('new-user-id');
       expect(result.token).toBe('jwt-token');
       expect(mockAuthService.register).toHaveBeenCalledWith('test@styx.protocol', 'secure123'); // allow-secret
     });
 
-    it('should reject missing email', async () => {
-      await expect(
-        controller.register({ email: '', password: 'secure123' }), // allow-secret
-      ).rejects.toThrow(BadRequestException);
+    it('should reject missing email via DTO validation', async () => {
+      const dto = plainToInstance(RegisterDto, { email: '', password: 'secure123' }); // allow-secret
+      const errors = await validate(dto);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.some((e) => e.property === 'email')).toBe(true);
     });
 
-    it('should reject missing password', async () => {
-      await expect(
-        controller.register({ email: 'test@styx.protocol', password: '' }),
-      ).rejects.toThrow(BadRequestException);
+    it('should reject missing password via DTO validation', async () => {
+      const dto = plainToInstance(RegisterDto, { email: 'test@styx.protocol', password: '' });
+      const errors = await validate(dto);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.some((e) => e.property === 'password')).toBe(true);
     });
 
-    it('should reject short password', async () => {
-      await expect(
-        controller.register({ email: 'test@styx.protocol', password: '12345' }), // allow-secret
-      ).rejects.toThrow(BadRequestException);
+    it('should reject short password via DTO validation', async () => {
+      const dto = plainToInstance(RegisterDto, { email: 'test@styx.protocol', password: '12345' }); // allow-secret
+      const errors = await validate(dto);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.some((e) => e.property === 'password')).toBe(true);
     });
   });
 
@@ -58,25 +66,29 @@ describe('AuthController', () => {
         token: 'jwt-token', // allow-secret
       });
 
-      const result = await controller.login({
-        email: 'test@styx.protocol',
-        password: 'secure123', // allow-secret
-      });
+      const result = await controller.login(
+        plainToInstance(LoginDto, {
+          email: 'test@styx.protocol',
+          password: 'secure123', // allow-secret
+        }),
+      );
 
       expect(result.userId).toBe('user-id');
       expect(result.token).toBe('jwt-token'); // allow-secret
     });
 
-    it('should reject missing email', async () => {
-      await expect(
-        controller.login({ email: '', password: 'secure123' }), // allow-secret
-      ).rejects.toThrow(BadRequestException);
+    it('should reject missing email via DTO validation', async () => {
+      const dto = plainToInstance(LoginDto, { email: '', password: 'secure123' }); // allow-secret
+      const errors = await validate(dto);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.some((e) => e.property === 'email')).toBe(true);
     });
 
-    it('should reject missing password', async () => {
-      await expect(
-        controller.login({ email: 'test@styx.protocol', password: '' }),
-      ).rejects.toThrow(BadRequestException);
+    it('should reject missing password via DTO validation', async () => {
+      const dto = plainToInstance(LoginDto, { email: 'test@styx.protocol', password: '' });
+      const errors = await validate(dto);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.some((e) => e.property === 'password')).toBe(true);
     });
   });
 });

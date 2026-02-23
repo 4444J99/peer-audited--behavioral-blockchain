@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { ContractsService, CreateContractDto } from './contracts.service';
+import { ContractsService, CreateContractInput } from './contracts.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { StripeFboService } from '../../../services/escrow/stripe.service';
@@ -35,7 +35,7 @@ describe('ContractsService — Behavioral Physics', () => {
     status: 'ACTIVE',
   };
 
-  const validDto: CreateContractDto = {
+  const validDto: CreateContractInput = {
     userId: 'user-1',
     oathCategory: OathCategory.DEEP_WORK_FOCUS,
     verificationMethod: VerificationMethod.API_SCREEN_TIME,

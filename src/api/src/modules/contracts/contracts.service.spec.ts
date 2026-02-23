@@ -1,5 +1,5 @@
 import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { ContractsService, CreateContractDto } from './contracts.service';
+import { ContractsService, CreateContractInput } from './contracts.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { StripeFboService } from '../../../services/escrow/stripe.service';
@@ -53,7 +53,7 @@ describe('ContractsService', () => {
     status: 'ACTIVE',
   };
 
-  const validDto: CreateContractDto = {
+  const validDto: CreateContractInput = {
     userId: 'user-1',
     oathCategory: OathCategory.DEEP_WORK_FOCUS,
     verificationMethod: VerificationMethod.API_SCREEN_TIME,
@@ -145,7 +145,7 @@ describe('ContractsService', () => {
     });
 
     it('should call Aegis validation for biological oaths with health metrics', async () => {
-      const bioDto: CreateContractDto = {
+      const bioDto: CreateContractInput = {
         ...validDto,
         oathCategory: OathCategory.WEIGHT_MANAGEMENT,
         verificationMethod: VerificationMethod.HARDWARE_HEALTHKIT,

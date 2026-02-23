@@ -31,8 +31,8 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing Authorization Bearer token');
     }
 
-    // Dev-mode fallback: accept the old mock token so existing integrations don't break
-    if (token === DEV_MOCK_TOKEN) { // allow-secret
+    // Dev-mode fallback: only available outside production
+    if (process.env.NODE_ENV !== 'production' && token === DEV_MOCK_TOKEN) { // allow-secret
       (request as any).user = { id: DEV_MOCK_USER_ID, email: 'demo@styx.protocol' };
       return true;
     }

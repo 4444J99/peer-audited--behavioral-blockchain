@@ -20,22 +20,14 @@ import {
   DOWNSCALE_STRIKE_THRESHOLD,
 } from '../../../../shared/libs/behavioral-logic';
 
-export interface CreateContractDto {
+import { CreateContractDto as CreateContractDtoBase, SubmitProofDto as SubmitProofDtoBase } from './dto';
+
+export interface CreateContractInput extends CreateContractDtoBase {
   userId: string;
-  oathCategory: string;
-  verificationMethod: string;
-  stakeAmount: number;
-  durationDays: number;
-  healthMetrics?: {
-    currentWeightLbs: number;
-    heightInches: number;
-    targetWeightLbs: number;
-  };
 }
 
-export interface SubmitProofDto {
+export interface SubmitProofInput extends SubmitProofDtoBase {
   userId: string;
-  mediaUri: string;
 }
 
 @Injectable()
@@ -52,7 +44,7 @@ export class ContractsService {
     @Optional() @Inject(NotificationsService) private readonly notifications?: NotificationsService,
   ) {}
 
-  async createContract(dto: CreateContractDto): Promise<{ contractId: string; paymentIntentId: string }> {
+  async createContract(dto: CreateContractInput): Promise<{ contractId: string; paymentIntentId: string }> {
     // 1. Validate oath category
     const validCategories = Object.values(OathCategory) as string[];
     if (!validCategories.includes(dto.oathCategory)) {
@@ -86,8 +78,8 @@ export class ContractsService {
     const recentFailures = await this.pool.query(
       `SELECT COUNT(*) as count FROM contracts
        WHERE user_id = $1 AND status = 'FAILED'
-       AND updated_at > NOW() - INTERVAL '${FAILURE_COOL_OFF_DAYS} days'`,
-      [dto.userId],
+       AND updated_at > NOW() - make_interval(days => $2)`,
+      [dto.userId, FAILURE_COOL_OFF_DAYS],
     );
     if (Number(recentFailures.rows[0].count) > 0) {
       throw new ForbiddenException(
@@ -239,7 +231,7 @@ export class ContractsService {
     return result.rows[0];
   }
 
-  async submitProof(contractId: string, dto: SubmitProofDto): Promise<{ proofId: string; jobId: string; rejected?: boolean; reason?: string }> {
+  async submitProof(contractId: string, dto: SubmitProofInput): Promise<{ proofId: string; jobId: string; rejected?: boolean; reason?: string }> {
     // 1. Validate contract ownership and status
     const contract = await this.pool.query(
       'SELECT * FROM contracts WHERE id = $1',

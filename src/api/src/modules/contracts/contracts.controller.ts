@@ -1,7 +1,8 @@
 import { Controller, Post, Get, Param, Body, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Pool } from 'pg';
-import { ContractsService, CreateContractDto, SubmitProofDto } from './contracts.service';
+import { ContractsService } from './contracts.service';
+import { CreateContractDto, SubmitProofDto } from './dto';
 import { DisputeService } from '../../../services/escrow/dispute.service';
 import { StripeFboService } from '../../../services/escrow/stripe.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
@@ -29,7 +30,7 @@ export class ContractsController {
   }
 
   @Post()
-  async create(@CurrentUser() user: { id: string }, @Body() dto: Omit<CreateContractDto, 'userId'>) {
+  async create(@CurrentUser() user: { id: string }, @Body() dto: CreateContractDto) {
     return this.contractsService.createContract({ ...dto, userId: user.id });
   }
 
@@ -48,7 +49,7 @@ export class ContractsController {
   async submitProof(
     @Param('id') contractId: string,
     @CurrentUser() user: { id: string },
-    @Body() dto: Omit<SubmitProofDto, 'userId'>,
+    @Body() dto: SubmitProofDto,
   ) {
     return this.contractsService.submitProof(contractId, { ...dto, userId: user.id });
   }

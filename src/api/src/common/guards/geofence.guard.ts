@@ -1,24 +1,29 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Request } from 'express';
+import { STATE_TIERS, JurisdictionTier } from '../../../services/geofencing';
 
 @Injectable()
 export class GeofenceGuard implements CanActivate {
-  // Mocked list of subnets/IPs for legally restricted jurisdictions (e.g., "Any Chance" states)
-  private readonly BANNED_SUBNETS = [
-    '198.51.100.0/24', // Example Mock
-    '203.0.113.0/24'   // Example Mock
-  ];
-
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
-    const clientIp = request.ip || request.connection.remoteAddress;
 
-    // In a production environment, this would evaluate the subnet via a fast Trie or CDN header (CF-Connecting-IP)
-    const isBanned = this.BANNED_SUBNETS.some(subnet => clientIp?.startsWith(subnet.split('/')[0].slice(0, -1)));
+    // Prefer CDN-provided headers (Cloudflare, AWS CloudFront) over raw IP geolocation.
+    // CF-IPState is set by Cloudflare Managed Transform "Add visitor location headers".
+    const stateCode = (
+      request.headers['cf-ipstate'] ||
+      request.headers['x-styx-state'] // test override header for validation gates
+    ) as string | undefined;
 
-    if (isBanned || clientIp === '198.51.100.42') {
+    if (!stateCode) {
+      // No geolocation data available — allow through (fail-open for dev/non-CDN environments)
+      return true;
+    }
+
+    const tier = STATE_TIERS[stateCode.toUpperCase()];
+
+    if (tier === JurisdictionTier.TIER_3) {
       throw new ForbiddenException(
-        'Styx Protocol is legally restricted in your jurisdiction. Geofencing enforcement active.'
+        'Styx Protocol is legally restricted in your jurisdiction. Geofencing enforcement active.',
       );
     }
 

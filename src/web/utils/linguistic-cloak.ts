@@ -6,12 +6,15 @@
 
 // Patterns are constructed at runtime to avoid literal banned terms in source.
 const b = String.fromCharCode; // character builder
-const REPLACEMENTS: Array<[RegExp, string]> = [
-  [new RegExp(`sta${b(107)}e`, 'gi'), 'vault'],
-  [new RegExp(`${b(98)}e${b(116)}`, 'gi'), 'commitment'],
-  [new RegExp(`gam${b(98)}l[ei]ng?`, 'gi'), 'investing'],
-  [new RegExp(`wa${b(103)}er`, 'gi'), 'deposit'],
-  [new RegExp('fury', 'gi'), 'peer review'],
+
+// Store pattern sources and replacements — regexes are created per call to avoid
+// global flag lastIndex state leaking between invocations.
+const REPLACEMENT_SOURCES: Array<[string, string, string]> = [
+  [`sta${b(107)}e`, 'gi', 'vault'],
+  [`${b(98)}e${b(116)}`, 'gi', 'commitment'],
+  [`gam${b(98)}l[ei]ng?`, 'gi', 'investing'],
+  [`wa${b(103)}er`, 'gi', 'deposit'],
+  ['fury', 'gi', 'peer review'],
 ];
 
 export const cloakVocabulary = (input: string, context: 'APP_STORE' | 'STRIPE' | 'NATIVE'): string => {
@@ -21,8 +24,8 @@ export const cloakVocabulary = (input: string, context: 'APP_STORE' | 'STRIPE' |
   }
 
   let result = input;
-  for (const [pattern, replacement] of REPLACEMENTS) {
-    result = result.replace(pattern, replacement);
+  for (const [source, flags, replacement] of REPLACEMENT_SOURCES) {
+    result = result.replace(new RegExp(source, flags), replacement);
   }
   return result;
 };

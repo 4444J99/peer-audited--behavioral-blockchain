@@ -6,6 +6,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ModerationService } from '../../../services/security/moderation.service';
 import { HoneypotInjectorService } from '../../../services/intelligence/honeypot.service';
 import { ContractsService } from '../contracts/contracts.service';
+import { BanUserDto, ResolveContractDto } from './dto';
 
 @Controller('admin')
 @UseGuards(AuthGuard, RoleGuard)
@@ -28,7 +29,7 @@ export class AdminController {
   async banUser(
     @Param('userId') targetUserId: string,
     @CurrentUser() user: { id: string },
-    @Body() body: { reason: string },
+    @Body() body: BanUserDto,
   ) {
     return this.moderation.banUser(user.id, targetUserId, body.reason);
   }
@@ -36,7 +37,7 @@ export class AdminController {
   @Post('resolve/:contractId')
   async resolveContract(
     @Param('contractId') contractId: string,
-    @Body() body: { outcome: 'COMPLETED' | 'FAILED' },
+    @Body() body: ResolveContractDto,
   ) {
     await this.contractsService.resolveContract(contractId, body.outcome);
     return { status: 'resolved', contractId, outcome: body.outcome };
