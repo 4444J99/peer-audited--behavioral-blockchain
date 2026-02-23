@@ -94,7 +94,7 @@ export const ApiClient = {
     }),
 
   useGraceDay: (contractId: string) =>
-    request<{ success: boolean; graceDaysRemaining: number }>(`/contracts/${contractId}/grace`, {
+    request<{ success: boolean; graceDaysRemaining: number }>(`/contracts/${contractId}/grace-day`, {
       method: 'POST',
     }),
 
@@ -118,9 +118,9 @@ export const ApiClient = {
     }>('/fury/queue'),
 
   submitVerdict: (assignmentId: string, verdict: 'VERIFY' | 'BURN') =>
-    request<{ success: boolean; bounty?: number }>(`/fury/verdict/${assignmentId}`, {
+    request<{ success: boolean; bounty?: number }>('/fury/verdict', {
       method: 'POST',
-      body: JSON.stringify({ verdict }),
+      body: JSON.stringify({ assignmentId, verdict }),
     }),
 
   // Wallet
@@ -140,4 +140,11 @@ export const ApiClient = {
     request<{ notifications: Array<{ id: string; type: string; message: string; read: boolean; createdAt: string }> }>(
       '/notifications',
     ),
+
+  // Enterprise SSO
+  exchangeEnterpriseToken: (enterpriseToken: string) => // allow-secret
+    request<{ userId: string; token: string }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ enterpriseToken }), // allow-secret
+    }),
 };

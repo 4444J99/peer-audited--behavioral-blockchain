@@ -7,12 +7,11 @@
 
 const API_BASE = process.env.API_URL || 'http://localhost:3000';
 
-// Demo credentials — these users must exist in the DB seed
-const DEMO_USER = { email: 'user@styx.app', password: 'styx-demo-2026' }; // allow-secret
+// Demo credentials — must match seed.sql (password: demo-password-123, bcrypt cost 10)
+const DEMO_USER = { email: 'demo@styx.protocol', password: 'demo-password-123' }; // allow-secret
 const FURY_USERS = [
-  { email: 'fury1@styx.app', password: 'styx-demo-2026' }, // allow-secret
-  { email: 'fury2@styx.app', password: 'styx-demo-2026' }, // allow-secret
-  { email: 'fury3@styx.app', password: 'styx-demo-2026' }, // allow-secret
+  { email: 'fury@styx.protocol', password: 'demo-password-123' }, // allow-secret
+  { email: 'admin@styx.protocol', password: 'demo-password-123' }, // allow-secret
 ];
 
 async function request<T>(path: string, token: string, options?: RequestInit): Promise<T> { // allow-secret

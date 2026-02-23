@@ -505,6 +505,25 @@ export class ContractsService {
     return result;
   }
 
+  async getContractProofs(contractId: string) {
+    // Verify contract exists
+    const contract = await this.pool.query(
+      'SELECT id FROM contracts WHERE id = $1',
+      [contractId],
+    );
+    if (contract.rows.length === 0) {
+      throw new NotFoundException(`Contract ${contractId} not found`);
+    }
+
+    const result = await this.pool.query(
+      `SELECT id, contract_id, user_id, media_uri, status, submitted_at
+       FROM proofs WHERE contract_id = $1
+       ORDER BY submitted_at DESC`,
+      [contractId],
+    );
+    return result.rows;
+  }
+
   async getUserContracts(userId: string) {
     const result = await this.pool.query(
       `SELECT * FROM contracts WHERE user_id = $1 ORDER BY created_at DESC`,

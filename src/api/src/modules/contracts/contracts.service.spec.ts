@@ -516,6 +516,41 @@ describe('ContractsService', () => {
     });
   });
 
+  // ── getContractProofs ──────────────────────────────────────────
+
+  describe('getContractProofs', () => {
+    it('should return proofs for an existing contract', async () => {
+      // Contract exists
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      // Proofs query
+      const proofs = [
+        { id: 'proof-1', contract_id: 'contract-1', user_id: 'user-1', media_uri: 'uri-1', status: 'PENDING_REVIEW', submitted_at: '2026-01-01' },
+        { id: 'proof-2', contract_id: 'contract-1', user_id: 'user-1', media_uri: 'uri-2', status: 'APPROVED', submitted_at: '2026-01-02' },
+      ];
+      mockPool.query.mockResolvedValueOnce({ rows: proofs });
+
+      const result = await service.getContractProofs('contract-1');
+
+      expect(result).toEqual(proofs);
+      expect(result).toHaveLength(2);
+    });
+
+    it('should return empty array when contract has no proofs', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.getContractProofs('contract-1');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should throw NotFoundException when contract does not exist', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(service.getContractProofs('missing-contract')).rejects.toThrow(NotFoundException);
+    });
+  });
+
   // ── getUserContracts ────────────────────────────────────────────
 
   describe('getUserContracts', () => {

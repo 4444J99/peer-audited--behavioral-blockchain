@@ -119,15 +119,19 @@ services/
 ├── security/
 │   ├── geofence.service.ts       # IP-to-state jurisdiction check (IMPLEMENTED, mock lookup)
 │   └── moderation.service.ts     # Permanent user ban via TruthLog (IMPLEMENTED)
+├── anomaly/
+│   └── anomaly.service.ts        # pHash duplicate detection + EXIF validation (IMPLEMENTED)
 ├── geofencing.ts                 # JurisdictionTier enum + STATE_TIERS map
 └── billing.ts                    # Pricing constants ($14.99/mo, $4.99 ticket, $5 appeal)
 ```
 
 Additional API code:
-- `src/api/guards/auth.guard.ts` — Bearer token guard (mock JWT in Phase Beta)
+- `src/api/guards/auth.guard.ts` — JWT auth guard (real JWT with dev-secret fallback)
 - `src/api/config/queue.config.ts` — Redis/BullMQ connection config
 - `src/api/database/schema.sql` — PostgreSQL double-entry ledger + hash-chained event_log
 - `src/api/src/modules/b2b/` — B2B billing and webhook services
+- `src/api/src/modules/notifications/` — Real-time notifications (SSE stream, unread count, mark-read)
+- `src/api/src/modules/payments/` — Stripe webhook handler (payment_intent.succeeded/failed, disputes)
 
 ### Core Algorithms (in `src/shared/libs/`)
 
@@ -150,7 +154,7 @@ Additional API code:
 - **Storage**: Cloudflare R2 (zero-egress video hosting, signed URLs only)
 - **Payments**: Stripe (FBO escrow model — hold/capture/cancel pattern)
 - **AI**: Gemini 2.5 Flash (`gemini-2.5-flash-preview-09-2025`)
-- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — Node 20, yarn install, turbo test + build
+- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — Node 20, npm ci, turbo test + build
 
 ### Key Design Constraints
 

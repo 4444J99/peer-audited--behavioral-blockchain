@@ -1,13 +1,22 @@
 import { Linking } from 'react-native';
+import { ApiClient, setAuthToken } from './ApiClient';
+
+type SSOCallback = (result: { success: boolean; userId?: string; error?: string }) => void;
+
+let onAuthComplete: SSOCallback | null = null;
 
 export class EnterpriseSSO {
   /**
-   * Intercepts "styx://enterprise/" deep links to fluidly route corporate employees 
+   * Intercepts "styx://enterprise/" deep links to fluidly route corporate employees
    * from internal portals directly into a pre-funded Styx vault.
    */
-  static async initializeDeepLinkListener(): Promise<void> {
+  static async initializeDeepLinkListener(callback?: SSOCallback): Promise<void> {
+    if (callback) {
+      onAuthComplete = callback;
+    }
+
     Linking.addEventListener('url', this.handleDeepLink);
-    
+
     // Check if the app was opened from a cold start via a link
     const initialUrl = await Linking.getInitialURL();
     if (initialUrl) {
@@ -15,16 +24,30 @@ export class EnterpriseSSO {
     }
   }
 
-  private static handleDeepLink(event: { url: string }): void {
+  private static async handleDeepLink(event: { url: string }): Promise<void> {
     const { url } = event;
     console.log(`EnterpriseSSO: Intercepted deep link [${url}]`);
 
-    if (url.startsWith('styx://enterprise/')) {
-        const token = url.split('token=')[1]; // allow-secret
-        if (token) {
-            console.log(`Authenticating Enterprise Token: ${token}`);
-            // Swap token with Styx API and bypass standard AuthScreen
-        }
+    if (!url.startsWith('styx://enterprise/')) {
+      return;
+    }
+
+    const token = url.split('token=')[1]; // allow-secret
+    if (!token) {
+      console.warn('EnterpriseSSO: Deep link missing token parameter');
+      onAuthComplete?.({ success: false, error: 'Missing enterprise token' });
+      return;
+    }
+
+    try {
+      const result = await ApiClient.exchangeEnterpriseToken(token);
+      setAuthToken(result.token); // allow-secret
+      console.log(`EnterpriseSSO: Authenticated as ${result.userId}`);
+      onAuthComplete?.({ success: true, userId: result.userId });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`EnterpriseSSO: Token exchange failed: ${message}`);
+      onAuthComplete?.({ success: false, error: message });
     }
   }
 }

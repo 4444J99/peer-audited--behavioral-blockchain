@@ -38,6 +38,11 @@ export class ContractsController {
     return this.contractsService.getContract(id);
   }
 
+  @Get(':id/proofs')
+  async getProofs(@Param('id') contractId: string) {
+    return this.contractsService.getContractProofs(contractId);
+  }
+
   @Post(':id/proof')
   @Throttle({ default: { ttl: 60000, limit: 10 } })
   async submitProof(
