@@ -190,11 +190,11 @@ export default function ProfilePage() {
                     <p className="font-bold text-sm">
                       {EVENT_LABELS[entry.event_type] || entry.event_type.replace(/_/g, ' ')}
                     </p>
-                    {entry.payload?.contractId && (
+                    {entry.payload?.contractId ? (
                       <p className="text-xs text-neutral-600">
                         Contract: {String(entry.payload.contractId).slice(0, 8)}...
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 </div>
                 <span className="text-xs text-neutral-500">
