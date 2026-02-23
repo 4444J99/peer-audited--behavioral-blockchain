@@ -56,7 +56,7 @@ export default function WalletDashboard() {
 
   return (
     <div className="min-h-screen bg-black text-white p-6 md:p-12">
-      <header className="flex justify-between items-center mb-12 border-b border-neutral-800 pb-6">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12 border-b border-neutral-800 pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-lime-500 rounded-full flex items-center justify-center">
             <WalletIcon className="text-black" />

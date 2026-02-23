@@ -75,4 +75,81 @@ export class NotificationsService {
     );
     return Number(result.rows[0].count);
   }
+
+  /**
+   * Returns anonymized public feed events from the event_log.
+   * Strips all PII — returns only event types and anonymized descriptions.
+   */
+  async getPublicFeed(limit: number = 50): Promise<{ events: Array<{
+    id: string;
+    type: string;
+    message: string;
+    timestamp: string;
+  }> }> {
+    const result = await this.pool.query(
+      `SELECT id, event_type, payload, created_at
+       FROM event_log
+       WHERE event_type IN (
+         'CONTRACT_CREATED', 'CONTRACT_RESOLVED', 'PROOF_SUBMITTED',
+         'CONSENSUS_REACHED', 'FURY_VERDICT', 'HONEYPOT_DETECTED'
+       )
+       ORDER BY created_at DESC
+       LIMIT $1`,
+      [limit],
+    );
+
+    const events = result.rows.map((row) => ({
+      id: row.id,
+      type: this.mapEventType(row.event_type),
+      message: this.anonymizeEvent(row.event_type, row.payload),
+      timestamp: row.created_at,
+    }));
+
+    return { events };
+  }
+
+  private mapEventType(eventType: string): string {
+    const map: Record<string, string> = {
+      CONTRACT_CREATED: 'contract_created',
+      CONTRACT_RESOLVED: 'contract_completed',
+      PROOF_SUBMITTED: 'contract_created',
+      CONSENSUS_REACHED: 'fury_catch',
+      FURY_VERDICT: 'fury_catch',
+      HONEYPOT_DETECTED: 'honeypot_test',
+    };
+    return map[eventType] || 'milestone';
+  }
+
+  private anonymizeEvent(eventType: string, payload: Record<string, unknown>): string {
+    const amount = payload?.stakeAmount || payload?.amount;
+    const category = payload?.oathCategory
+      ? String(payload.oathCategory).replace(/_/g, ' ').toLowerCase()
+      : 'behavioral';
+    const duration = payload?.durationDays;
+
+    switch (eventType) {
+      case 'CONTRACT_CREATED':
+        return `Someone committed ${amount ? `$${amount}` : 'capital'} to a ${duration ? `${duration}-day` : ''} ${category} oath`;
+      case 'CONTRACT_RESOLVED': {
+        const outcome = payload?.outcome;
+        if (outcome === 'COMPLETED') {
+          return `A ${category} oath was successfully completed${amount ? `. $${amount} returned.` : '.'}`;
+        }
+        return `A ${category} oath was not fulfilled${amount ? `. $${amount} captured and redistributed.` : '.'}`;
+      }
+      case 'CONSENSUS_REACHED':
+        return `Fury consensus reached on a proof review`;
+      case 'FURY_VERDICT': {
+        const verdict = payload?.verdict;
+        if (verdict === 'FAIL') {
+          return `A Fury caught a fraudulent proof and earned a bounty`;
+        }
+        return `A Fury verified a proof submission`;
+      }
+      case 'HONEYPOT_DETECTED':
+        return `System honeypot test completed — auditor integrity validated`;
+      default:
+        return `System event recorded`;
+    }
+  }
 }

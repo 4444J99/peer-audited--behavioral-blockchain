@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Activity, ShieldCheck, Flame, History, User, Loader2, AlertTriangle, LogOut, Bell } from 'lucide-react';
+import { Activity, ShieldCheck, Flame, History, User, Loader2, AlertTriangle, LogOut, Bell, Settings, ScrollText } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '../../services/api-client';
@@ -103,36 +103,43 @@ export default function IdentityDashboard() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans p-6 md:p-12">
-      <header className="flex justify-between items-center mb-16 border-b border-neutral-800 pb-6">
+      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-16 border-b border-neutral-800 pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
             <span className="text-xl font-black text-black">S</span>
           </div>
           <h1 className="text-2xl font-black tracking-tight uppercase">Identity Oracle</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <Link href="/fury" className="px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-sm font-bold text-neutral-400 hover:text-white transition-colors">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          <Link href="/fury" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors">
             FURY WORKBENCH
           </Link>
-          <Link href="/wallet" className="px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-sm font-bold text-neutral-400 hover:text-white transition-colors">
+          <Link href="/wallet" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors">
             WALLET
           </Link>
+          <Link href="/tavern" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors flex items-center gap-1">
+            <ScrollText size={14} />
+            <span className="hidden sm:inline">TAVERN</span>
+          </Link>
+          <Link href="/settings" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors flex items-center gap-1">
+            <Settings size={14} />
+          </Link>
           {authUser?.role === 'ADMIN' && (
-            <Link href="/admin" className="px-4 py-2 bg-neutral-900 rounded-full border border-red-900/50 text-sm font-bold text-red-400 hover:text-red-300 transition-colors">
+            <Link href="/admin" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-red-900/50 text-xs md:text-sm font-bold text-red-400 hover:text-red-300 transition-colors">
               ADMIN
             </Link>
           )}
           <NotificationPanel />
-          <Link href="/profile" className="flex items-center gap-2 px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 hover:border-neutral-600 transition-colors">
+          <Link href="/profile" className="flex items-center gap-2 px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 hover:border-neutral-600 transition-colors">
             <User size={16} className="text-neutral-400" />
-            <span className="font-bold">{authUser?.email ?? balance?.email ?? 'Unknown'}</span>
+            <span className="font-bold text-sm hidden sm:inline">{authUser?.email ?? balance?.email ?? 'Unknown'}</span>
           </Link>
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-sm font-bold text-neutral-400 hover:text-red-500 transition-colors flex items-center gap-2"
+            className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-red-500 transition-colors flex items-center gap-2"
           >
             <LogOut size={16} />
-            LOGOUT
+            <span className="hidden md:inline">LOGOUT</span>
           </button>
         </div>
       </header>

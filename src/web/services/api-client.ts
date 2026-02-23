@@ -254,4 +254,31 @@ export const api = {
       payload: Record<string, unknown>;
       created_at: string;
     }>>('/users/me/history'),
+
+  // Settings
+  changePassword: (currentPassword: string, newPassword: string) => // allow-secret
+    request<{ status: string }>('/users/me/password', {
+      method: 'PATCH',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
+
+  updateSettings: (settings: { emailNotifications?: boolean; pushNotifications?: boolean }) =>
+    request<{ status: string }>('/users/me/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(settings),
+    }),
+
+  deleteAccount: () =>
+    request<{ status: string }>('/users/me', {
+      method: 'DELETE',
+    }),
+
+  // Public feed (no auth)
+  getPublicFeed: (limit?: number) =>
+    request<{ events: Array<{
+      id: string;
+      type: string;
+      message: string;
+      timestamp: string;
+    }> }>(`/feed${limit ? `?limit=${limit}` : ''}`),
 };

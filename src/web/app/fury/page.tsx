@@ -106,7 +106,7 @@ export default function FuryWorkbench() {
 
   return (
     <div className="min-h-screen bg-black text-white p-6 md:p-12 font-sans flex flex-col">
-      <header className="flex justify-between items-center mb-8 border-b border-red-900/40 pb-6">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-red-900/40 pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-red-600 rounded-none flex items-center justify-center -rotate-12 shadow-[0_0_20px_rgba(220,38,38,0.5)]">
             <Eye className="text-black" />

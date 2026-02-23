@@ -183,7 +183,7 @@ export default function NewContractPage() {
           <label className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-3">
             Duration
           </label>
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
             {DURATION_OPTIONS.map((opt) => (
               <button
                 key={opt.value}

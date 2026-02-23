@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { UsersService } from './users.service';
 import { AuthGuard } from '../../../guards/auth.guard';
@@ -18,6 +18,30 @@ export class UsersController {
   @UseGuards(AuthGuard)
   async getHistory(@CurrentUser() user: { id: string }) {
     return this.usersService.getUserHistory(user.id);
+  }
+
+  @Patch('me/password')
+  @UseGuards(AuthGuard)
+  async changePassword(
+    @CurrentUser() user: { id: string },
+    @Body() body: { currentPassword: string; newPassword: string }, // allow-secret
+  ) {
+    return this.usersService.changePassword(user.id, body.currentPassword, body.newPassword);
+  }
+
+  @Patch('me/settings')
+  @UseGuards(AuthGuard)
+  async updateSettings(
+    @CurrentUser() user: { id: string },
+    @Body() body: { emailNotifications?: boolean; pushNotifications?: boolean },
+  ) {
+    return this.usersService.updateSettings(user.id, body);
+  }
+
+  @Delete('me')
+  @UseGuards(AuthGuard)
+  async deleteAccount(@CurrentUser() user: { id: string }) {
+    return this.usersService.requestDeletion(user.id);
   }
 
   @Get('leaderboard')

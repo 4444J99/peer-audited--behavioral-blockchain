@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Param, Sse, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Sse, UseGuards } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { AuthGuard } from '../../../guards/auth.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUser, Public } from '../../common/decorators/current-user.decorator';
 import { NotificationsService } from './notifications.service';
 
 @Controller('notifications')
@@ -32,5 +32,21 @@ export class NotificationsController {
   ) {
     await this.notifications.markRead(id, user.id);
     return { status: 'read' };
+  }
+}
+
+/**
+ * Public feed controller — serves anonymized system events.
+ * Mounted at /feed (separate from /notifications which requires auth).
+ */
+@Controller('feed')
+export class FeedController {
+  constructor(private readonly notifications: NotificationsService) {}
+
+  @Get()
+  @Public()
+  async getPublicFeed(@Query('limit') limit?: string) {
+    const maxLimit = Math.min(parseInt(limit || '50', 10) || 50, 100);
+    return this.notifications.getPublicFeed(maxLimit);
   }
 }
