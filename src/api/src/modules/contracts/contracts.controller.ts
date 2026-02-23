@@ -27,4 +27,12 @@ export class ContractsController {
   async submitProof(@Param('id') contractId: string, @Body() dto: SubmitProofDto) {
     return this.contractsService.submitProof(contractId, dto);
   }
+
+  @Post(':id/grace-day')
+  async useGraceDay(
+    @Param('id') contractId: string,
+    @Body() body: { userId: string },
+  ) {
+    return this.contractsService.useGraceDay(contractId, body.userId);
+  }
 }

@@ -6,7 +6,14 @@ import { StripeFboService } from '../../../services/escrow/stripe.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { AegisProtocolService } from '../../../services/health/aegis.service';
 import { calculateIntegrity, getAllowedTiers, UserHistory } from '../../../../shared/libs/integrity';
-import { OathCategory, VerificationMethod } from '../../../../shared/libs/behavioral-logic';
+import {
+  OathCategory,
+  VerificationMethod,
+  validateOathMapping,
+  grantOnboardingBonus,
+  useGraceDay,
+  ONBOARDING_BONUS_AMOUNT,
+} from '../../../../shared/libs/behavioral-logic';
 
 export interface CreateContractDto {
   userId: string;
@@ -47,6 +54,13 @@ export class ContractsService {
     const validMethods = Object.values(VerificationMethod) as string[];
     if (!validMethods.includes(dto.verificationMethod)) {
       throw new BadRequestException(`Invalid verification method: ${dto.verificationMethod}`);
+    }
+
+    // 1b. Validate oath-to-method mapping
+    if (!validateOathMapping(dto.oathCategory as OathCategory, dto.verificationMethod as VerificationMethod)) {
+      throw new BadRequestException(
+        `Verification method ${dto.verificationMethod} is not valid for oath category ${dto.oathCategory}`,
+      );
     }
 
     // 2. Fetch user
@@ -99,7 +113,33 @@ export class ContractsService {
     );
     const contractId = contractResult.rows[0].id;
 
-    // 7. Record ledger entry (user asset → escrow liability)
+    // 7. Check for onboarding bonus (first contract)
+    const priorContracts = await this.pool.query(
+      `SELECT COUNT(*) as count FROM contracts WHERE user_id = $1 AND id != $2`,
+      [dto.userId, contractId],
+    );
+    const bonus = grantOnboardingBonus(Number(priorContracts.rows[0].count));
+    if (bonus.granted && user.account_id) {
+      const escrowCheck = await this.pool.query(
+        `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
+      );
+      if (escrowCheck.rows.length > 0) {
+        await this.ledger.recordTransaction(
+          escrowCheck.rows[0].id,
+          user.account_id,
+          ONBOARDING_BONUS_AMOUNT,
+          contractId,
+          { type: 'ONBOARDING_BONUS', userId: dto.userId },
+        );
+      }
+      await this.truthLog.appendEvent('ONBOARDING_BONUS_GRANTED', {
+        userId: dto.userId,
+        amount: ONBOARDING_BONUS_AMOUNT,
+        contractId,
+      });
+    }
+
+    // 8. Record ledger entry (user asset → escrow liability)
     if (user.account_id) {
       // Use a system escrow account — create one if needed
       const escrowResult = await this.pool.query(
@@ -116,7 +156,7 @@ export class ContractsService {
       }
     }
 
-    // 8. Log to TruthLog
+    // 9. Log to TruthLog
     await this.truthLog.appendEvent('CONTRACT_CREATED', {
       contractId,
       userId: dto.userId,
@@ -271,6 +311,53 @@ export class ContractsService {
       userId: row.user_id,
       stakeAmount: Number(row.stake_amount),
     });
+  }
+
+  async useGraceDay(contractId: string, userId: string): Promise<{ newDeadline: Date }> {
+    const contract = await this.pool.query(
+      'SELECT * FROM contracts WHERE id = $1',
+      [contractId],
+    );
+    if (contract.rows.length === 0) {
+      throw new NotFoundException(`Contract ${contractId} not found`);
+    }
+    const row = contract.rows[0];
+    if (row.user_id !== userId) {
+      throw new ForbiddenException('Cannot use grace day for another user\'s contract');
+    }
+    if (row.status !== 'ACTIVE') {
+      throw new BadRequestException(`Contract is not active (status: ${row.status})`);
+    }
+
+    // Count grace days used this month for this user
+    const graceDaysResult = await this.pool.query(
+      `SELECT COUNT(*) as count FROM truth_log
+       WHERE event_type = 'GRACE_DAY_USED'
+       AND payload->>'userId' = $1
+       AND created_at >= date_trunc('month', NOW())`,
+      [userId],
+    );
+    const graceDaysUsed = Number(graceDaysResult.rows[0].count);
+
+    const result = useGraceDay(graceDaysUsed, new Date(row.ends_at));
+    if (!result.success) {
+      throw new BadRequestException(result.reason);
+    }
+
+    // Extend the contract deadline
+    await this.pool.query(
+      'UPDATE contracts SET ends_at = $1 WHERE id = $2',
+      [result.newDeadline!.toISOString(), contractId],
+    );
+
+    await this.truthLog.appendEvent('GRACE_DAY_USED', {
+      contractId,
+      userId,
+      previousDeadline: row.ends_at,
+      newDeadline: result.newDeadline!.toISOString(),
+    });
+
+    return { newDeadline: result.newDeadline! };
   }
 
   async getUserContracts(userId: string) {

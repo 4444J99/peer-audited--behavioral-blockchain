@@ -1,22 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import Stripe from 'stripe';
 
 @Injectable()
 export class StripeFboService {
+  private readonly logger = new Logger(StripeFboService.name);
   private stripe: Stripe;
 
   constructor() {
-    // Note: In production, this key must be injected via ConfigService/env.
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
     this.stripe = new Stripe(apiKey, {
-      apiVersion: '2023-10-16', // Match closest valid API version for expected types
+      apiVersion: '2023-10-16',
     });
   }
 
-  /**
-   * Creates a Stripe customer for a user to attach payment methods.
-   */
+  private get isDevMode(): boolean {
+    const key = process.env.STRIPE_SECRET_KEY;
+    return !key || key === 'sk_test_mock_key';
+  }
+
   async createCustomer(userId: string, email?: string): Promise<string> {
+    if (this.isDevMode) {
+      const id = `cus_dev_${randomUUID().slice(0, 8)}`;
+      this.logger.debug(`[DEV] Created mock customer ${id}`);
+      return id;
+    }
     const customer = await this.stripe.customers.create({
       metadata: { styxUserId: userId },
       email,
@@ -24,34 +32,39 @@ export class StripeFboService {
     return customer.id;
   }
 
-  /**
-   * Initiates a hold on a user's card for a behavioral contract (7-day standard auth limit).
-   * Does NOT capture funds immediately.
-   */
   async holdStake(customerId: string, amountDollars: number, contractId: string): Promise<Stripe.PaymentIntent> {
+    if (this.isDevMode) {
+      this.logger.debug(`[DEV] Mock hold $${amountDollars} for contract ${contractId}`);
+      return {
+        id: `pi_dev_${randomUUID().slice(0, 8)}`,
+        status: 'requires_capture',
+        amount: Math.round(amountDollars * 100),
+        currency: 'usd',
+      } as any;
+    }
     const intent = await this.stripe.paymentIntents.create({
-      amount: Math.round(amountDollars * 100), // Convert to cents
+      amount: Math.round(amountDollars * 100),
       currency: 'usd',
       customer: customerId,
-      capture_method: 'manual', // Critcal: Authorized only, not captured
+      capture_method: 'manual',
       metadata: { contractId },
     });
     return intent;
   }
 
-  /**
-   * Captures the held funds if the user fails the contract oath.
-   */
   async captureStake(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
-    const intent = await this.stripe.paymentIntents.capture(paymentIntentId);
-    return intent;
+    if (this.isDevMode) {
+      this.logger.debug(`[DEV] Mock capture ${paymentIntentId}`);
+      return { id: paymentIntentId, status: 'succeeded' } as any;
+    }
+    return this.stripe.paymentIntents.capture(paymentIntentId);
   }
 
-  /**
-   * Cancels the hold and releases funds back to the user if they succeed.
-   */
   async cancelHold(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
-    const intent = await this.stripe.paymentIntents.cancel(paymentIntentId);
-    return intent;
+    if (this.isDevMode) {
+      this.logger.debug(`[DEV] Mock cancel ${paymentIntentId}`);
+      return { id: paymentIntentId, status: 'canceled' } as any;
+    }
+    return this.stripe.paymentIntents.cancel(paymentIntentId);
   }
 }

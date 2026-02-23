@@ -53,6 +53,21 @@ services:
     volumes:
       - styx-redis-data:/data
 
+  # Web Dashboard (Next.js)
+  styx-web:
+    build:
+      context: .
+      dockerfile: ./src/web/Dockerfile
+    ports:
+      - '3001:3000'
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://styx-api:3000
+    depends_on:
+      - styx-api
+    networks:
+      - styx-network
+
 volumes:
   styx-pg-data:
   styx-redis-data:

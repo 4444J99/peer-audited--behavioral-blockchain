@@ -2,41 +2,61 @@
 set -euo pipefail
 
 # Validation Gate 04: The Redacted Build Check (WS3 + WS4 + WS1)
-# 
+#
 # Objective: Hard assertion that the 'Linguistic Cloaker' was architecturally successful.
-# Action: Grep the compiled dist/build bundles for legally banned wording that triggers Apple/Stripe bot rejections.
+# Action: Grep the client source bundles for legally banned wording that triggers
+# Apple/Stripe bot rejections.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 echo ""
 echo "--- STARTING VALIDATION GATE 04: REDACTED BUILD CHECK ---"
 
-# We must ensure terms like 'bet', 'gamble', 'wager' do not appear in user-facing client bundles.
-# Note: 'stake' is permitted internally but usually cloaked as 'vault' client-side. We are checking for explicitly banned terms.
+# Banned terms that must never appear in user-facing client code.
+# 'stake' is permitted internally but cloaked as 'vault' client-side.
+banned_terms=("bet" "gamble" "wager")
 
-# Search targets (using generic paths to avoid failing on absent specific files in this mock)
+# Search targets: client-facing source directories
 search_dirs=(
-  "../../src/web"
-  "../../src/desktop"
-  "../../src/mobile"
+  "$REPO_ROOT/src/web"
+  "$REPO_ROOT/src/desktop"
+  "$REPO_ROOT/src/mobile"
 )
 
-banned_terms=("bet" "gamble" "wager")
 found_violations=false
 
 for dir in "${search_dirs[@]}"; do
-  if [ -d "$dir" ]; then
-    echo "[ANALYSIS] Scanning components in $dir for restricted terms..."
-    
-    for term in "${banned_terms[@]}"; do
-      # Case insensitive recursive grep on standard files, ignoring .git, node_modules.
-      
-      # Mock the grep behavior to assert it passes. In a real shell script run, 
-      # this would be `grep -Hrnwi --exclude-dir=node_modules --exclude-dir=.next "$term" "$dir" || true`.
-      # We assume the codebase is clean for the mock output.
-      echo "  - Checking for '$term'... Clean."
-    done
-  else
-      echo "Directory $dir not found, skipping."
+  if [ ! -d "$dir" ]; then
+    echo "[SKIP] Directory $dir not found, skipping."
+    continue
   fi
+
+  echo "[ANALYSIS] Scanning $dir for restricted terms..."
+
+  for term in "${banned_terms[@]}"; do
+    # Case insensitive, whole-word, recursive grep
+    # Exclude build artifacts, deps, and config files
+    if grep -Hrnwi \
+      --exclude-dir=node_modules \
+      --exclude-dir=.next \
+      --exclude-dir=dist \
+      --exclude-dir=build \
+      --exclude-dir=.turbo \
+      --exclude='*.lock' \
+      --exclude='package-lock.json' \
+      --exclude='CLAUDE.md' \
+      --exclude='*.md' \
+      --exclude='*.sh' \
+      --exclude='*.spec.ts' \
+      --exclude='*.test.ts' \
+      "$term" "$dir" 2>/dev/null; then
+      echo "  ⚠ Found restricted term '$term' in $dir"
+      found_violations=true
+    else
+      echo "  - Checking for '$term'... Clean."
+    fi
+  done
 done
 
 if [ "$found_violations" = true ]; then

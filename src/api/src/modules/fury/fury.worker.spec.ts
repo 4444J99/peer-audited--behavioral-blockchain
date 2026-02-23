@@ -1,5 +1,6 @@
 import { FuryWorker } from './fury.worker';
 import { ConsensusEngine } from './consensus.engine';
+import { ContractsService } from '../contracts/contracts.service';
 import { Pool } from 'pg';
 
 describe('FuryWorker', () => {
@@ -10,11 +11,16 @@ describe('FuryWorker', () => {
     evaluate: jest.fn(),
   } as unknown as ConsensusEngine;
 
+  const mockContractsService = {
+    resolveContract: jest.fn().mockResolvedValue(undefined),
+  } as unknown as ContractsService;
+
   beforeEach(() => {
     mockPool = { query: jest.fn() };
     worker = new FuryWorker(
       mockPool as unknown as Pool,
       mockConsensus,
+      mockContractsService,
     );
     jest.clearAllMocks();
   });
@@ -193,8 +199,13 @@ describe('FuryWorker', () => {
 
       await worker.checkConsensus('proof-clean');
 
-      // Only 3 queries: assignments, proofs, update status — no penalty queries
-      expect(mockPool.query).toHaveBeenCalledTimes(3);
+      // 3 base queries + 2 accuracy tracking (both correct FAIL votes on REJECTED)
+      expect(mockPool.query).toHaveBeenCalledTimes(5);
+      // No fraud penalty queries (integrity_score - 15) should exist
+      const penaltyCalls = mockPool.query.mock.calls.filter(
+        (c) => typeof c[0] === 'string' && c[0].includes('integrity_score - 15'),
+      );
+      expect(penaltyCalls).toHaveLength(0);
     });
 
     it('should silently return if proof is not found', async () => {
@@ -229,6 +240,205 @@ describe('FuryWorker', () => {
         expect.any(Array),
         true, // isHoneypot passed through
       );
+    });
+
+    // ── Contract resolution via consensus ─────────────────────────
+
+    it('should call resolveContract(COMPLETED) when consensus is VERIFIED and contract_id exists', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { fury_user_id: 'fury-1', verdict: 'PASS' },
+          { fury_user_id: 'fury-2', verdict: 'PASS' },
+          { fury_user_id: 'fury-3', verdict: 'PASS' },
+        ],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ is_honeypot: false, contract_id: 'contract-99' }],
+      });
+      (mockConsensus.evaluate as jest.Mock).mockResolvedValueOnce({
+        outcome: 'VERIFIED',
+        votes: [
+          { furyUserId: 'fury-1', verdict: 'PASS' },
+          { furyUserId: 'fury-2', verdict: 'PASS' },
+          { furyUserId: 'fury-3', verdict: 'PASS' },
+        ],
+        flaggedFuries: [],
+      });
+      // UPDATE proofs
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Accuracy tracking: 3 correct votes (+2 each)
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await worker.checkConsensus('proof-resolve-complete');
+
+      expect(mockContractsService.resolveContract).toHaveBeenCalledWith('contract-99', 'COMPLETED');
+    });
+
+    it('should call resolveContract(FAILED) when consensus is REJECTED and contract_id exists', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { fury_user_id: 'fury-1', verdict: 'FAIL' },
+          { fury_user_id: 'fury-2', verdict: 'FAIL' },
+          { fury_user_id: 'fury-3', verdict: 'FAIL' },
+        ],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ is_honeypot: false, contract_id: 'contract-100' }],
+      });
+      (mockConsensus.evaluate as jest.Mock).mockResolvedValueOnce({
+        outcome: 'REJECTED',
+        votes: [
+          { furyUserId: 'fury-1', verdict: 'FAIL' },
+          { furyUserId: 'fury-2', verdict: 'FAIL' },
+          { furyUserId: 'fury-3', verdict: 'FAIL' },
+        ],
+        flaggedFuries: [],
+      });
+      // UPDATE proofs
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Accuracy tracking: 3 correct votes (+2 each)
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await worker.checkConsensus('proof-resolve-fail');
+
+      expect(mockContractsService.resolveContract).toHaveBeenCalledWith('contract-100', 'FAILED');
+    });
+
+    it('should NOT call resolveContract when consensus is SPLIT', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { fury_user_id: 'fury-1', verdict: 'PASS' },
+          { fury_user_id: 'fury-2', verdict: 'FAIL' },
+        ],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ is_honeypot: false, contract_id: 'contract-split' }],
+      });
+      (mockConsensus.evaluate as jest.Mock).mockResolvedValueOnce({
+        outcome: 'SPLIT',
+        votes: [
+          { furyUserId: 'fury-1', verdict: 'PASS' },
+          { furyUserId: 'fury-2', verdict: 'FAIL' },
+        ],
+        flaggedFuries: [],
+      });
+      // UPDATE proofs
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await worker.checkConsensus('proof-split');
+
+      expect(mockContractsService.resolveContract).not.toHaveBeenCalled();
+    });
+
+    // ── Accuracy tracking ─────────────────────────────────────────
+
+    it('should reward correct Fury votes with +2 integrity score', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { fury_user_id: 'fury-correct-1', verdict: 'PASS' },
+          { fury_user_id: 'fury-correct-2', verdict: 'PASS' },
+        ],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ is_honeypot: false, contract_id: 'c-acc' }],
+      });
+      (mockConsensus.evaluate as jest.Mock).mockResolvedValueOnce({
+        outcome: 'VERIFIED',
+        votes: [
+          { furyUserId: 'fury-correct-1', verdict: 'PASS' },
+          { furyUserId: 'fury-correct-2', verdict: 'PASS' },
+        ],
+        flaggedFuries: [],
+      });
+      // UPDATE proofs
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Accuracy rewards (+2 each)
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await worker.checkConsensus('proof-reward');
+
+      const rewardCalls = mockPool.query.mock.calls.filter(
+        (c) => typeof c[0] === 'string' && c[0].includes('integrity_score + 2'),
+      );
+      expect(rewardCalls).toHaveLength(2);
+      expect(rewardCalls[0][1]).toEqual(['fury-correct-1']);
+      expect(rewardCalls[1][1]).toEqual(['fury-correct-2']);
+    });
+
+    it('should penalize incorrect Fury votes with -5 integrity score', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { fury_user_id: 'fury-right', verdict: 'PASS' },
+          { fury_user_id: 'fury-wrong', verdict: 'FAIL' },
+          { fury_user_id: 'fury-right-2', verdict: 'PASS' },
+        ],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ is_honeypot: false, contract_id: 'c-pen' }],
+      });
+      (mockConsensus.evaluate as jest.Mock).mockResolvedValueOnce({
+        outcome: 'VERIFIED',
+        votes: [
+          { furyUserId: 'fury-right', verdict: 'PASS' },
+          { furyUserId: 'fury-wrong', verdict: 'FAIL' },
+          { furyUserId: 'fury-right-2', verdict: 'PASS' },
+        ],
+        flaggedFuries: [],
+      });
+      // UPDATE proofs
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Accuracy: +2 for fury-right, -5 for fury-wrong, +2 for fury-right-2
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await worker.checkConsensus('proof-penalty');
+
+      const penaltyCalls = mockPool.query.mock.calls.filter(
+        (c) => typeof c[0] === 'string' && c[0].includes('integrity_score - 5'),
+      );
+      expect(penaltyCalls).toHaveLength(1);
+      expect(penaltyCalls[0][1]).toEqual(['fury-wrong']);
+    });
+
+    it('should skip accuracy tracking for honeypot proofs', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { fury_user_id: 'fury-1', verdict: 'FAIL' },
+          { fury_user_id: 'fury-2', verdict: 'FAIL' },
+        ],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ is_honeypot: true, contract_id: 'c-hp' }],
+      });
+      (mockConsensus.evaluate as jest.Mock).mockResolvedValueOnce({
+        outcome: 'REJECTED',
+        votes: [
+          { furyUserId: 'fury-1', verdict: 'FAIL' },
+          { furyUserId: 'fury-2', verdict: 'FAIL' },
+        ],
+        flaggedFuries: [],
+      });
+      // UPDATE proofs
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await worker.checkConsensus('proof-hp-skip');
+
+      // Only 3 calls: fury_assignments, proofs, UPDATE proofs
+      // No accuracy tracking calls (no +2 or -5 queries)
+      const rewardCalls = mockPool.query.mock.calls.filter(
+        (c) => typeof c[0] === 'string' && c[0].includes('integrity_score + 2'),
+      );
+      const penaltyCalls = mockPool.query.mock.calls.filter(
+        (c) => typeof c[0] === 'string' && c[0].includes('integrity_score - 5'),
+      );
+      expect(rewardCalls).toHaveLength(0);
+      expect(penaltyCalls).toHaveLength(0);
     });
   });
 });

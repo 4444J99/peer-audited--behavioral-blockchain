@@ -79,9 +79,76 @@ export const MIN_SAFE_BMI = 18.5;
 export const MAX_WEEKLY_LOSS_VELOCITY_PCT = 0.02;
 
 /**
- * Tasks for AI Engineer:
- * 1. Implement 'useGraceDay(contractId)': Deducts 1 token, prevents stake loss for 24h.
- * 2. Implement 'grantOnboardingBonus(userId)': Stripe FBO credit of $5 immediately upon funding.
- * 3. Implement 'isGoalEthical(goalDescription: string): boolean': Use LLM to screen for non-ethical goals.
- * 4. Implement 'validateOathMapping(category: OathCategory, method: VerificationMethod)': Ensures category uses correct oracle.
+ * Oracle mapping: which verification methods are allowed for each oath stream.
+ * BIOLOGICAL requires hardware oracles; COGNITIVE uses device APIs; etc.
  */
+const OATH_METHOD_MAP: Record<string, VerificationMethod[]> = {
+  BIOLOGICAL: [VerificationMethod.HARDWARE_HEALTHKIT, VerificationMethod.HARDWARE_HEALTHCONNECT],
+  COGNITIVE: [VerificationMethod.API_SCREEN_TIME, VerificationMethod.API_THIRD_PARTY],
+  PROFESSIONAL: [VerificationMethod.API_THIRD_PARTY, VerificationMethod.FINANCIAL_LEDGER],
+  CREATIVE: [VerificationMethod.TIME_LAPSE, VerificationMethod.FURY_CONSENSUS],
+  VISUAL: [VerificationMethod.FURY_CONSENSUS, VerificationMethod.GPS_GEOFENCE],
+  SOCIAL: [VerificationMethod.FURY_CONSENSUS, VerificationMethod.GPS_GEOFENCE],
+};
+
+/**
+ * Validates that an oath category uses a correct oracle/verification method.
+ * Returns true if the mapping is valid, false if the method is not allowed for the stream.
+ */
+export function validateOathMapping(category: OathCategory, method: VerificationMethod): boolean {
+  const categoryValue = category as string;
+  // Extract the stream prefix (e.g., "BIOLOGICAL" from "BIOLOGICAL_WEIGHT")
+  const stream = categoryValue.split('_')[0];
+  const allowedMethods = OATH_METHOD_MAP[stream];
+
+  if (!allowedMethods) return false;
+  return allowedMethods.includes(method);
+}
+
+export interface GraceDayResult {
+  success: boolean;
+  reason?: string;
+  newDeadline?: Date;
+}
+
+/**
+ * Uses one grace day for a contract — extends the deadline by 24 hours.
+ * Caller must pass the current grace_days_used count and the current ends_at.
+ * Returns the new deadline if successful, or a rejection reason.
+ */
+export function useGraceDay(
+  graceDaysUsedThisMonth: number,
+  currentEndsAt: Date,
+): GraceDayResult {
+  if (graceDaysUsedThisMonth >= MAX_GRACE_DAYS_PER_MONTH) {
+    return { success: false, reason: `Maximum ${MAX_GRACE_DAYS_PER_MONTH} grace days per month exceeded` };
+  }
+  const newDeadline = new Date(currentEndsAt.getTime() + 24 * 60 * 60 * 1000);
+  return { success: true, newDeadline };
+}
+
+export interface OnboardingBonusResult {
+  granted: boolean;
+  amount: number;
+  reason?: string;
+}
+
+/**
+ * Determines if a user qualifies for the onboarding bonus ($5 credit on first contract).
+ * Caller must pass the user's total contract count.
+ */
+export function grantOnboardingBonus(totalContracts: number): OnboardingBonusResult {
+  if (totalContracts > 0) {
+    return { granted: false, amount: 0, reason: 'User already has prior contracts' };
+  }
+  return { granted: true, amount: ONBOARDING_BONUS_AMOUNT };
+}
+
+/**
+ * Placeholder ethical screening for goal descriptions.
+ * Full LLM-based screening is Phase Omega scope.
+ * Currently returns true for all goals (pass-through).
+ */
+export function isGoalEthical(_goalDescription: string): boolean {
+  return true;
+}

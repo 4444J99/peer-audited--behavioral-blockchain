@@ -142,6 +142,8 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Contract insert
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-bio' }] });
+      // Prior contracts count (onboarding bonus check)
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       // Escrow account lookup
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
 
@@ -153,6 +155,7 @@ describe('ContractsService', () => {
     it('should NOT call Aegis validation for non-biological oaths', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
 
       await service.createContract(validDto);
@@ -163,6 +166,7 @@ describe('ContractsService', () => {
     it('should hold stake via Stripe with correct amount', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
 
       await service.createContract(validDto);
@@ -173,6 +177,7 @@ describe('ContractsService', () => {
     it('should insert the contract and return contractId + paymentIntentId', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'new-contract-id' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
 
       const result = await service.createContract(validDto);
@@ -184,6 +189,7 @@ describe('ContractsService', () => {
     it('should record a ledger transaction when user has an account and escrow exists', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct-id' }] });
 
       await service.createContract(validDto);
@@ -200,6 +206,7 @@ describe('ContractsService', () => {
     it('should log CONTRACT_CREATED to TruthLog', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
 
       await service.createContract(validDto);
@@ -217,6 +224,7 @@ describe('ContractsService', () => {
       const userNoAccount = { ...activeUser, account_id: null };
       mockPool.query.mockResolvedValueOnce({ rows: [userNoAccount] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
 
       await service.createContract(validDto);
 
@@ -498,6 +506,64 @@ describe('ContractsService', () => {
       const result = await service.getUserContracts('new-user');
 
       expect(result).toEqual([]);
+    });
+  });
+
+  // ── useGraceDay ───────────────────────────────────────────────
+
+  describe('useGraceDay', () => {
+    const activeContract = {
+      id: 'contract-1',
+      user_id: 'user-1',
+      status: 'ACTIVE',
+      ends_at: '2026-03-15T12:00:00Z',
+    };
+
+    it('should extend deadline by 24h and log GRACE_DAY_USED to TruthLog', async () => {
+      // Contract lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [activeContract] });
+      // Grace days count query
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
+      // UPDATE contracts
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.useGraceDay('contract-1', 'user-1');
+
+      const expectedDeadline = new Date(new Date('2026-03-15T12:00:00Z').getTime() + 24 * 60 * 60 * 1000);
+      expect(result.newDeadline.getTime()).toBe(expectedDeadline.getTime());
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('GRACE_DAY_USED', expect.objectContaining({
+        contractId: 'contract-1',
+        userId: 'user-1',
+      }));
+    });
+
+    it('should reject when contract not found (NotFoundException)', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(service.useGraceDay('missing', 'user-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it("should reject when user doesn't own the contract (ForbiddenException)", async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [activeContract] });
+
+      await expect(service.useGraceDay('contract-1', 'user-impostor')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should reject when contract is not ACTIVE (BadRequestException)', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ ...activeContract, status: 'COMPLETED' }],
+      });
+
+      await expect(service.useGraceDay('contract-1', 'user-1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject when max grace days exceeded (BadRequestException)', async () => {
+      // Contract lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [activeContract] });
+      // Grace days count: already at max (2)
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 2 }] });
+
+      await expect(service.useGraceDay('contract-1', 'user-1')).rejects.toThrow(BadRequestException);
     });
   });
 });

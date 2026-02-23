@@ -1,8 +1,9 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, Inject, OnModuleInit, Logger, forwardRef } from '@nestjs/common';
 import { Worker, Job } from 'bullmq';
 import { Pool } from 'pg';
 import { FURY_ROUTER_QUEUE_NAME, REDIS_CONNECTION_CONFIG } from '../../../config/queue.config';
 import { ConsensusEngine, FuryVote } from './consensus.engine';
+import { ContractsService } from '../contracts/contracts.service';
 
 interface FuryRouteJob {
   proofId: string;
@@ -19,6 +20,8 @@ export class FuryWorker implements OnModuleInit {
   constructor(
     private readonly pool: Pool,
     private readonly consensusEngine: ConsensusEngine,
+    @Inject(forwardRef(() => ContractsService))
+    private readonly contractsService: ContractsService,
   ) {}
 
   onModuleInit() {
@@ -123,6 +126,42 @@ export class FuryWorker implements OnModuleInit {
         `UPDATE users SET integrity_score = GREATEST(0, integrity_score - 15) WHERE id = $1`,
         [furyId],
       );
+    }
+
+    // Track Fury accuracy: reward correct votes, penalize incorrect ones
+    if (!is_honeypot && result.outcome !== 'SPLIT') {
+      for (const vote of votes) {
+        const wasCorrect =
+          (result.outcome === 'VERIFIED' && vote.verdict === 'PASS') ||
+          (result.outcome === 'REJECTED' && vote.verdict === 'FAIL');
+
+        if (wasCorrect) {
+          await this.pool.query(
+            `UPDATE users SET integrity_score = integrity_score + 2 WHERE id = $1`,
+            [vote.furyUserId],
+          );
+        } else {
+          await this.pool.query(
+            `UPDATE users SET integrity_score = GREATEST(0, integrity_score - 5) WHERE id = $1`,
+            [vote.furyUserId],
+          );
+        }
+      }
+    }
+
+    // Bridge: resolve the contract based on consensus outcome
+    if (contract_id && result.outcome !== 'SPLIT') {
+      try {
+        const resolution = result.outcome === 'VERIFIED' ? 'COMPLETED' : 'FAILED';
+        await this.contractsService.resolveContract(contract_id, resolution);
+        this.logger.log(
+          `Contract ${contract_id} resolved as ${resolution} via consensus`,
+        );
+      } catch (err) {
+        this.logger.error(
+          `Failed to resolve contract ${contract_id}: ${err instanceof Error ? err.message : err}`,
+        );
+      }
     }
 
     this.logger.log(
