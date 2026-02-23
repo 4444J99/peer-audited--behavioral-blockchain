@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { BillingService } from './billing.service';
 import { WebhookService } from './webhook.service';
 import { MetricsService } from './metrics.service';
+import { AnonymizeService } from './anonymize.service';
+import { DataLakeService } from './datalake.service';
 
 @Controller('b2b')
 @UseGuards(AuthGuard)
@@ -11,6 +13,8 @@ export class B2BController {
     private readonly billing: BillingService,
     private readonly webhook: WebhookService,
     private readonly metrics: MetricsService,
+    private readonly anonymize: AnonymizeService,
+    private readonly dataLake: DataLakeService,
   ) {}
 
   @Get('metrics/:enterpriseId')
@@ -46,5 +50,20 @@ export class B2BController {
       { type: 'TEST', timestamp: new Date().toISOString() },
     );
     return { status: sent ? 'sent' : 'failed' };
+  }
+
+  @Get('export/hr/:enterpriseId')
+  async exportHrData(@Param('enterpriseId') enterpriseId: string) {
+    const metrics = await this.metrics.getEnterpriseMetrics(enterpriseId);
+    return this.anonymize.anonymizeEmployeeData(enterpriseId, []);
+  }
+
+  @Get('datalake/:enterpriseId')
+  async getDataLakeSnapshot(
+    @Param('enterpriseId') enterpriseId: string,
+    @Query('start') start: string,
+    @Query('end') end: string,
+  ) {
+    return this.dataLake.extractSnapshot(enterpriseId, start, end);
   }
 }

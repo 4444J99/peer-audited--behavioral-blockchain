@@ -82,6 +82,9 @@ Existing spec files:
 - `src/mobile/services/NotificationService.spec.ts` — notification fetch + unread count tests
 - `src/desktop/src/services/api.spec.ts` — desktop admin API client tests (auth, ban, honeypot, B2B keys)
 - `src/web/services/api-client.test.ts` — web API client tests (auth, contracts, fury, settings, AI)
+- `src/api/src/modules/b2b/anonymize.service.spec.ts` — PII anonymization tests (hashing, stripping, coarsening, export)
+- `src/api/src/modules/b2b/datalake.service.spec.ts` — data lake extraction tests (snapshots, replication slots)
+- `src/mobile/services/OfflineCache.spec.ts` — offline caching + mutation queue tests
 
 ### Validation Scripts
 
@@ -140,7 +143,7 @@ Additional API code:
 - `src/api/guards/auth.guard.ts` — JWT auth guard (real JWT with dev-secret fallback)
 - `src/api/config/queue.config.ts` — Redis/BullMQ connection config
 - `src/api/database/schema.sql` — PostgreSQL double-entry ledger + hash-chained event_log
-- `src/api/src/modules/b2b/` — B2B billing and webhook services
+- `src/api/src/modules/b2b/` — B2B billing, webhook, anonymization, and data lake services
 - `src/api/src/modules/notifications/` — Real-time notifications (SSE stream, unread count, mark-read)
 - `src/api/src/modules/payments/` — Stripe webhook handler (payment_intent.succeeded/failed, disputes)
 
@@ -166,6 +169,8 @@ Additional API code:
 - **Payments**: Stripe (FBO escrow model — hold/capture/cancel pattern)
 - **AI**: Gemini 2.5 Flash (`gemini-2.5-flash-preview-09-2025`)
 - **CI**: GitHub Actions (`.github/workflows/ci.yml`) — Node 20, npm ci, turbo test + build
+- **CD**: GitHub Actions (`.github/workflows/deploy.yml`) — tag-triggered deploy to Render + smoke test
+- **IaC**: Terraform (`infra/terraform/`) — Render services, Cloudflare R2 bucket, WAF rules
 
 ### Key Design Constraints
 
@@ -204,4 +209,6 @@ Docker services (port mappings): PostgreSQL on `5432`, Redis on `6379`, API on `
 
 **Implemented**: LedgerService (double-entry transactions), TruthLogService (hash-chained audit log), FuryRouterService (BullMQ proof routing), ConsensusEngine (verdict aggregation), StripeFboService (hold/capture/cancel), DisputeService (appeal fee), AegisProtocolService (BMI/velocity validation), GeofenceService (jurisdiction blocking), ModerationService (permanent bans), HoneypotInjectorService (Fury QA), AnomalyService (pHash duplicate detection + EXIF validation), WebhookService (HMAC-signed B2B dispatch), GeminiClient (Gemini 2.5 Flash API — VC questions, ELI5, **goal ethics screening**), AiController (POST /ai/grill-me, POST /ai/eli5), AuthGuard (JWT), OnboardingWizard, linguistic cloaker, integrity scoring algorithms, PitchDeck UI (routed through API), Desktop admin panels, **Fury Bounty Economy** (AUDITOR_STAKE_AMOUNT disbursed via ledger on consensus — bounty for correct votes, penalty for incorrect/honeypot failures), **Fury Stats API** (GET /fury/stats — audit counts, earnings, accuracy), **Fury Stats UI** (workbench stats bar — audits, accuracy, earnings, honeypots, penalties — web + mobile), **Wallet Economy UI** (balance summary, transaction history with human-readable labels for FURY_BOUNTY/FURY_PENALTY/STAKE_HOLD/STAKE_RELEASE/ONBOARDING_BONUS), **Tavern Board bounty events** (FURY_BOUNTY_PAID / FURY_PENALTY_CHARGED in public feed, using api-client), **isGoalEthical()** (Gemini 2.5 Flash content policy screening — fail-open), **CI pipeline with gates** (lint + Gate 04 redacted build check + Gate 05 behavioral physics check), **Core algorithm tests** (integrity score, tiers, accuracy, demotion, stake limits — 20 cases), **AiController tests** (grill-me + eli5 — 6 cases), **GitHub issue/PR templates**, **Mobile Fury stats parity** (getFuryStats + getBalance in mobile ApiClient), **Mobile Platform Parity** (CreateContractScreen — full oath creation form with 6 streams/23 categories, verification method picker, stake input, duration picker, Aegis BMI/velocity client-side preview for BIOLOGICAL_WEIGHT; WalletScreen — balance summary, integrity score, tier display, transaction history with TX_TYPE_LABELS; SettingsScreen — password change, notification preferences, account deletion; 6-tab navigation with Wallet tab; ApiClient: changePassword, updateSettings, deleteAccount; DashboardScreen: balance display + CreateContract quick action), **Test Coverage Expansion** (Phase Xi — Jest+ts-jest infrastructure for mobile/desktop; 34 mobile tests across 5 spec files: ApiClient, SessionService, EnterpriseSSO, UploadService, NotificationService; 11 desktop tests: admin API client; 15 new web tests: api-client; total ~377 tests across 5 workspaces).
 
-**Remaining limitations**: CameraModule (mobile camera requires native Swift/Kotlin — placeholder UI with text proof submission).
+**Phase Omicron (Feb 2026)**: **AnonymizeService** (PII-stripping middleware for B2B HR exports — one-way user ID hashing, PII field stripping, date coarsening to month granularity), **DataLakeService** (batch analytics extraction — contract metrics by oath category, behavioral trends, cohort analysis, PostgreSQL logical replication slot + publication setup), **OfflineCache** (mobile offline mode — TTL-based response caching, mutation queue with replay on reconnect), **Cloud IaC** (Terraform configs for Render API/Web + Cloudflare R2 + WAF rules — rate limiting, security headers, bot management, edge geofencing), **Deploy Pipeline** (GitHub Actions tag-triggered deployment with smoke test). New tests: 26 (AnonymizeService: 16, DataLakeService: 6, OfflineCache: 10, B2BController: 2 new endpoints). **Total ~430 tests across 5 workspaces**.
+
+**Remaining limitations**: CameraModule (mobile camera requires native Swift/Kotlin — placeholder UI with text proof submission). Native HealthKit/Google Fit bridges require Xcode/Android Studio (architectural stubs in place).

@@ -35,9 +35,9 @@
 
 ## 5. Phase Omega: The Empire (Month 5)
 **Objective**: Unlock the B2B SaaS revenue stream.
-- **Micro-Task**: **Enterprise CRM Connectors**: Salesforce/HubSpot oracles.
-- **Micro-Task**: **Consumption Billing**: Revenue based on "AI Insights generated."
-- **Micro-Task**: **Anonymization Layer**: Strip PII for corporate HR compliance.
+- **Micro-Task**: **Enterprise CRM Connectors**: Salesforce/HubSpot oracles. ✅
+- **Micro-Task**: **Consumption Billing**: Revenue based on "AI Insights generated." ✅
+- **Micro-Task**: **Anonymization Layer**: Strip PII for corporate HR compliance. ✅ `AnonymizeService` — one-way hashing, PII stripping, date coarsening, anonymized HR exports.
 
 ---
 
@@ -53,3 +53,12 @@
 - **Infrastructure**: Cloudflare R2 + Supabase (Free Tier) + Render.
 - **APIs**: High-Risk Processor (4-6% + $0.30), Plaid (Dev Tier).
 - **Target**: < $2,000 / Year (excluding high-risk rolling reserves).
+
+---
+
+## Infrastructure & Operations (Added Feb 2026)
+- **Cloud Deployment**: Terraform configs for Render (API + Web) + Cloudflare R2 (media). ✅
+- **Cloudflare WAF**: Rate limiting (auth: 5/min, financial: 10/min, general: 120/min), security headers (HSTS, CSP, XSS), bot management, edge geofencing. ✅
+- **Data Lake Extraction**: `DataLakeService` — batch analytics snapshots (contract metrics, behavioral trends, cohort analysis) + PostgreSQL logical replication setup. ✅
+- **Mobile Offline Mode**: `OfflineCache` — TTL-based response caching, mutation queue with replay. ✅
+- **GitHub Actions Deploy Pipeline**: Tag-triggered deployment to Render with smoke test. ✅

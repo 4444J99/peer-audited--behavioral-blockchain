@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars and fill in real values
+# NEVER commit terraform.tfvars — it contains secrets
+
+render_api_key        = "rnd_..."
+cloudflare_api_token  = "..."
+cloudflare_account_id = "..."
+database_url          = "postgresql://user:pass@db.supabase.co:5432/postgres"
+redis_url             = "redis://default:pass@redis-host:6379"
+stripe_secret_key     = "sk_live_..."
+jwt_secret            = "..."
+anonymize_salt        = "..."
+environment           = "production"

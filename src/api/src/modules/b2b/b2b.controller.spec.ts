@@ -2,6 +2,8 @@ import { B2BController } from './b2b.controller';
 import { BillingService } from './billing.service';
 import { WebhookService } from './webhook.service';
 import { MetricsService } from './metrics.service';
+import { AnonymizeService } from './anonymize.service';
+import { DataLakeService } from './datalake.service';
 
 describe('B2BController', () => {
   let controller: B2BController;
@@ -18,8 +20,29 @@ describe('B2BController', () => {
     getEnterpriseMetrics: jest.fn(),
   } as unknown as MetricsService;
 
+  const mockAnonymize = {
+    anonymizeEmployeeData: jest.fn().mockReturnValue({
+      enterpriseId: 'ent-001',
+      generatedAt: '2026-01-01T00:00:00Z',
+      employeeCount: 0,
+      employees: [],
+      aggregate: { avgIntegrityScore: 0, avgCompletionRate: 0, totalContracts: 0, completedContracts: 0 },
+    }),
+  } as unknown as AnonymizeService;
+
+  const mockDataLake = {
+    extractSnapshot: jest.fn().mockResolvedValue({
+      extractedAt: '2026-01-01T00:00:00Z',
+      enterpriseId: 'ent-001',
+      period: { start: '2026-01-01', end: '2026-02-01' },
+      contractMetrics: [],
+      behavioralTrends: [],
+      cohortAnalysis: [],
+    }),
+  } as unknown as DataLakeService;
+
   beforeEach(() => {
-    controller = new B2BController(mockBilling, mockWebhook, mockMetrics);
+    controller = new B2BController(mockBilling, mockWebhook, mockMetrics, mockAnonymize, mockDataLake);
     jest.clearAllMocks();
   });
 
@@ -93,6 +116,26 @@ describe('B2BController', () => {
       const result = await controller.testWebhook({ url: 'https://bad.com/hook' });
 
       expect(result).toEqual({ status: 'failed' });
+    });
+  });
+
+  describe('exportHrData', () => {
+    it('should return anonymized employee data', async () => {
+      (mockMetrics.getEnterpriseMetrics as jest.Mock).mockResolvedValueOnce({});
+
+      const result = await controller.exportHrData('ent-001');
+
+      expect(result.employeeCount).toBe(0);
+      expect(mockAnonymize.anonymizeEmployeeData).toHaveBeenCalledWith('ent-001', []);
+    });
+  });
+
+  describe('getDataLakeSnapshot', () => {
+    it('should return a data lake snapshot for the given period', async () => {
+      const result = await controller.getDataLakeSnapshot('ent-001', '2026-01-01', '2026-02-01');
+
+      expect(result.enterpriseId).toBe('ent-001');
+      expect(mockDataLake.extractSnapshot).toHaveBeenCalledWith('ent-001', '2026-01-01', '2026-02-01');
     });
   });
 });
