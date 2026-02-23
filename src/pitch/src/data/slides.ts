@@ -306,6 +306,96 @@ export const slides: SlideData[] = [
   },
   {
     id: 7,
+    title: 'Competitive Landscape',
+    subtitle: 'Where Styx Sits',
+    contentBlocks: [
+      {
+        type: 'columns',
+        data: {
+          columns: [
+            {
+              title: 'Habit Apps (Habitica, Stickk, Beeminder)',
+              items: [
+                'Self-reported completion — easy to game',
+                'Low or zero financial stakes',
+                'No peer verification infrastructure',
+                'Gamification points, not real consequences',
+              ],
+            },
+            {
+              title: 'Health Betting (HealthyWage, DietBet)',
+              items: [
+                'Real money at stake, but verification is weak',
+                'Weigh-ins are self-submitted photos',
+                'No third-party audit network',
+                'Limited to weight loss — single use case',
+              ],
+            },
+          ],
+        } satisfies ColumnBlock,
+      },
+      {
+        type: 'columns',
+        data: {
+          columns: [
+            {
+              title: 'Corp Wellness (Virgin Pulse, Limeade, Wellable)',
+              items: [
+                'Enterprise scale, but survey-based reporting',
+                'Self-reported outcomes inflate engagement 73%',
+                'No financial skin-in-the-game for participants',
+                '$300+ per employee per year with low ROI proof',
+              ],
+            },
+            {
+              title: 'Styx — Upper Right Quadrant',
+              items: [
+                'Real financial stakes + peer-audited verification',
+                'Decentralized Fury network eliminates self-reporting',
+                'Loss aversion mechanics (λ = 1.955) drive follow-through',
+                'B2C → B2B pipeline covers both market segments',
+              ],
+            },
+          ],
+        } satisfies ColumnBlock,
+      },
+      {
+        type: 'stat',
+        data: {
+          items: [
+            { value: '0', label: 'Competitors with decentralized peer audit' },
+            { value: '73%', label: 'Self-report inflation rate in incumbent platforms', source: 'Baumeister et al.' },
+            { value: '2x', label: 'Completion rate when real money is at stake', source: 'Kahneman & Tversky' },
+          ],
+        } satisfies StatBlock,
+      },
+      {
+        type: 'callout',
+        data: {
+          title: 'Structural Moat',
+          body: 'Styx\u2019s competitive advantage isn\u2019t a feature — it\u2019s an infrastructure. Building a decentralized audit network takes years and millions of users. Competitors can copy the staking mechanic in a weekend; they cannot replicate the Fury network that makes it trustworthy. The network effect compounds: more Furies = faster verdicts = better UX = more users = more Furies.',
+        } satisfies CalloutBlock,
+      },
+    ],
+    eli5: 'Other apps either let you set goals with no real consequences (Habitica gives you points), or bet money but trust you to report honestly (HealthyWage just asks for a photo). Big corporate wellness companies charge a fortune but rely on surveys people lie on. Styx is the only platform that combines real money on the line with strangers who verify whether you actually did the thing. Nobody else has that combination.',
+    toughQuestions: [
+      {
+        question: 'What stops a well-funded competitor from copying this?',
+        answer: 'They can copy the staking mechanic — it\u2019s just escrow. What they can\u2019t copy is the Fury network. A decentralized audit system requires a critical mass of trained, incentivized auditors with accuracy histories. That takes years of organic growth. It\u2019s the same moat that protects Uber (driver network) and Airbnb (host network). By the time a competitor builds their audit network, ours is entrenched.',
+      },
+      {
+        question: 'Why haven\u2019t HealthyWage or Stickk added peer verification?',
+        answer: 'Because it\u2019s architecturally incompatible with their model. They\u2019re centralized platforms — adding a decentralized audit layer means rebuilding from scratch. It\u2019s the innovator\u2019s dilemma: their existing revenue comes from the very self-reporting system they\u2019d need to dismantle. They\u2019d cannibalize their own product.',
+      },
+      {
+        question: 'How do you compete with free habit tracking apps?',
+        answer: 'We don\u2019t. Free apps serve a different audience — people who want gentle nudges. Our users are people who\u2019ve already failed with free apps and want real accountability. The $5 onboarding bonus means trying Styx is literally free. And the 92% quit rate of free apps is our best marketing: "You\u2019ve tried everything else."',
+      },
+    ],
+    sketch: 'competitiveGrid',
+  },
+  {
+    id: 8,
     title: 'Business Model',
     subtitle: 'Clean Unit Economics',
     contentBlocks: [
@@ -355,7 +445,7 @@ export const slides: SlideData[] = [
     sketch: 'revenueWaterfall',
   },
   {
-    id: 8,
+    id: 9,
     title: 'Platform Economics',
     subtitle: 'Cost to Run at Every Stage',
     contentBlocks: [
@@ -453,7 +543,7 @@ export const slides: SlideData[] = [
     sketch: 'costLayers',
   },
   {
-    id: 9,
+    id: 10,
     title: 'Tech Stack',
     subtitle: 'Open-Source, Low-Burn Architecture',
     contentBlocks: [
@@ -495,7 +585,7 @@ export const slides: SlideData[] = [
     sketch: 'techNetwork',
   },
   {
-    id: 10,
+    id: 11,
     title: 'The Team',
     subtitle: 'Operator \u00D7 Psychologist \u00D7 Engineer',
     contentBlocks: [
@@ -548,7 +638,7 @@ export const slides: SlideData[] = [
     sketch: 'teamGears',
   },
   {
-    id: 11,
+    id: 12,
     title: 'The Ask',
     subtitle: '$1,500,000 Seed Round',
     contentBlocks: [
