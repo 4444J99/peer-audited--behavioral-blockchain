@@ -8,6 +8,7 @@ interface User {
   email: string;
   integrity_score: number;
   role: string;
+  created_at?: string;
 }
 
 interface AuthContextValue {

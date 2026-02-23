@@ -130,7 +130,7 @@ export const api = {
     }),
 
   submitProof: (contractId: string, dto: SubmitProofDto) =>
-    request<{ proofId: string; jobId: string }>(`/contracts/${contractId}/proof`, {
+    request<{ proofId: string; jobId: string; rejected?: boolean; reason?: string }>(`/contracts/${contractId}/proof`, {
       method: 'POST',
       body: JSON.stringify(dto),
     }),

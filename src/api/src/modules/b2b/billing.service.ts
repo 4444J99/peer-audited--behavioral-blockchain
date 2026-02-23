@@ -8,7 +8,7 @@ export class BillingService {
 
   constructor() {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-      apiVersion: '2024-12-18.acacia',
+      apiVersion: '2023-10-16',
     });
   }
 
@@ -50,9 +50,8 @@ export class BillingService {
    * Looks up the active subscription with the matching enterpriseId metadata.
    */
   private async getMeteredSubscriptionItem(enterpriseId: string): Promise<string | null> {
-    const subscriptions = await this.stripe.subscriptions.list({
-      metadata: { enterpriseId } as any,
-      status: 'active',
+    const subscriptions = await this.stripe.subscriptions.search({
+      query: `metadata["enterpriseId"]:"${enterpriseId}" AND status:"active"`,
       limit: 1,
     });
 
