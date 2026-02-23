@@ -29,8 +29,10 @@ interface Transaction {
 
 interface Contract {
   id: string;
+  oath_category: string;
   stake_amount: string;
   status: string;
+  ends_at: string;
 }
 
 export default function IdentityDashboard() {
@@ -115,11 +117,16 @@ export default function IdentityDashboard() {
           <Link href="/wallet" className="px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-sm font-bold text-neutral-400 hover:text-white transition-colors">
             WALLET
           </Link>
+          {authUser?.role === 'ADMIN' && (
+            <Link href="/admin" className="px-4 py-2 bg-neutral-900 rounded-full border border-red-900/50 text-sm font-bold text-red-400 hover:text-red-300 transition-colors">
+              ADMIN
+            </Link>
+          )}
           <NotificationPanel />
-          <div className="flex items-center gap-2 px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800">
+          <Link href="/profile" className="flex items-center gap-2 px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 hover:border-neutral-600 transition-colors">
             <User size={16} className="text-neutral-400" />
             <span className="font-bold">{authUser?.email ?? balance?.email ?? 'Unknown'}</span>
-          </div>
+          </Link>
           <button
             onClick={handleLogout}
             className="px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-sm font-bold text-neutral-400 hover:text-red-500 transition-colors flex items-center gap-2"
@@ -209,6 +216,51 @@ export default function IdentityDashboard() {
                         </p>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* My Contracts */}
+          <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-3xl">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <Activity className="text-neutral-500" />
+                <h2 className="text-xl font-bold tracking-tighter">MY CONTRACTS</h2>
+              </div>
+              <Link href="/contracts/new" className="text-sm font-bold text-red-500 hover:text-red-400 transition-colors">
+                + NEW
+              </Link>
+            </div>
+
+            {contracts.length === 0 ? (
+              <p className="text-neutral-500 text-center py-8">No contracts yet. Create one to begin.</p>
+            ) : (
+              <div className="space-y-3">
+                {contracts.map((c) => {
+                  const status = c.status;
+                  const statusColor = status === 'COMPLETED' ? 'text-green-400' : status === 'FAILED' ? 'text-red-400' : status === 'ACTIVE' ? 'text-yellow-400' : 'text-blue-400';
+                  const statusBg = status === 'COMPLETED' ? 'bg-green-900/30' : status === 'FAILED' ? 'bg-red-900/30' : status === 'ACTIVE' ? 'bg-yellow-900/30' : 'bg-blue-900/30';
+                  return (
+                    <Link
+                      key={c.id}
+                      href={`/contracts/${c.id}`}
+                      className="flex items-center justify-between p-4 bg-black rounded-2xl border border-neutral-800 hover:border-neutral-600 transition-colors"
+                    >
+                      <div>
+                        <p className="font-bold">{(c.oath_category || 'CONTRACT').replace(/_/g, ' ')}</p>
+                        <p className="text-xs text-neutral-500">
+                          {c.id.slice(0, 8)} &bull; {c.ends_at ? new Date(c.ends_at).toLocaleDateString() : ''}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-black text-white">${Number(c.stake_amount).toFixed(2)}</span>
+                        <span className={`text-xs font-bold px-3 py-1 rounded-full ${statusBg} ${statusColor}`}>
+                          {status}
+                        </span>
+                      </div>
+                    </Link>
                   );
                 })}
               </div>

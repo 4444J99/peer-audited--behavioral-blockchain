@@ -33,8 +33,42 @@ export default function NotificationPanel() {
 
   useEffect(() => {
     loadNotifications();
-    const interval = setInterval(loadNotifications, 30000);
-    return () => clearInterval(interval);
+
+    // Try SSE first, fall back to polling
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    let eventSource: EventSource | null = null;
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+    try {
+      const { getAuthToken } = require('../services/api-client');
+      const token = getAuthToken(); // allow-secret
+      eventSource = new EventSource(`${API_BASE}/notifications/stream?token=${token}`);
+
+      eventSource.onmessage = (event) => {
+        try {
+          const notification = JSON.parse(event.data);
+          setNotifications((prev) => [notification, ...prev]);
+          setUnreadCount((prev) => prev + 1);
+        } catch {
+          // Invalid message — ignore
+        }
+      };
+
+      eventSource.onerror = () => {
+        // SSE failed — close and fall back to polling
+        eventSource?.close();
+        eventSource = null;
+        pollInterval = setInterval(loadNotifications, 30000);
+      };
+    } catch {
+      // SSE not available — use polling
+      pollInterval = setInterval(loadNotifications, 30000);
+    }
+
+    return () => {
+      eventSource?.close();
+      if (pollInterval) clearInterval(pollInterval);
+    };
   }, [loadNotifications]);
 
   const handleMarkRead = async (id: string) => {

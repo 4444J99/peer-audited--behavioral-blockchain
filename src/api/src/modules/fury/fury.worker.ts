@@ -5,6 +5,7 @@ import { FURY_ROUTER_QUEUE_NAME, REDIS_CONNECTION_CONFIG } from '../../../config
 import { ConsensusEngine, FuryVote } from './consensus.engine';
 import { ContractsService } from '../contracts/contracts.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { shouldDemoteFury } from '../../../../shared/libs/integrity';
 
 interface FuryRouteJob {
   proofId: string;
@@ -46,10 +47,10 @@ export class FuryWorker implements OnModuleInit {
   private async process(job: Job<FuryRouteJob>): Promise<void> {
     const { proofId, submitterUserId, requiredReviewers } = job.data;
 
-    // 1. Find eligible Furies: active users who are not the submitter
+    // 1. Find eligible Furies: active FURY-role users who are not the submitter
     const eligibleResult = await this.pool.query(
       `SELECT id FROM users
-       WHERE status = 'ACTIVE' AND id != $1
+       WHERE status = 'ACTIVE' AND role = 'FURY' AND id != $1
        ORDER BY RANDOM()
        LIMIT $2`,
       [submitterUserId, requiredReviewers],
@@ -147,6 +148,35 @@ export class FuryWorker implements OnModuleInit {
             `UPDATE users SET integrity_score = GREATEST(0, integrity_score - 5) WHERE id = $1`,
             [vote.furyUserId],
           );
+        }
+      }
+    }
+
+    // Check if any Fury should be demoted based on accuracy
+    if (!is_honeypot) {
+      for (const vote of votes) {
+        const furyStats = await this.pool.query(
+          `SELECT
+             COUNT(*) FILTER (WHERE fa.verdict IS NOT NULL) as total_audits,
+             COUNT(*) FILTER (WHERE (fa.verdict = 'PASS' AND p.status = 'VERIFIED') OR (fa.verdict = 'FAIL' AND p.status = 'REJECTED')) as successful_audits,
+             COUNT(*) FILTER (WHERE fa.verdict = 'FAIL' AND p.status = 'VERIFIED') as false_accusations
+           FROM fury_assignments fa
+           JOIN proofs p ON fa.proof_id = p.id
+           WHERE fa.fury_user_id = $1`,
+          [vote.furyUserId],
+        );
+        const stats = furyStats.rows[0];
+        if (shouldDemoteFury({
+          furyId: vote.furyUserId,
+          successfulAudits: Number(stats.successful_audits),
+          falseAccusations: Number(stats.false_accusations),
+          totalAudits: Number(stats.total_audits),
+        })) {
+          await this.pool.query(
+            `UPDATE users SET role = 'USER' WHERE id = $1 AND role = 'FURY'`,
+            [vote.furyUserId],
+          );
+          this.logger.warn(`Fury ${vote.furyUserId} demoted due to low accuracy`);
         }
       }
     }

@@ -7,13 +7,24 @@ export class UsersService {
 
   async getProfile(userId: string) {
     const result = await this.pool.query(
-      'SELECT id, email, integrity_score, status, created_at FROM users WHERE id = $1',
+      'SELECT id, email, integrity_score, role, status, created_at FROM users WHERE id = $1',
       [userId],
     );
     if (result.rows.length === 0) {
       throw new NotFoundException(`User ${userId} not found`);
     }
     return result.rows[0];
+  }
+
+  async getUserHistory(userId: string, limit = 50) {
+    const result = await this.pool.query(
+      `SELECT event_type, payload, created_at FROM truth_log
+       WHERE payload->>'userId' = $1
+       ORDER BY created_at DESC
+       LIMIT $2`,
+      [userId, limit],
+    );
+    return result.rows;
   }
 
   async getPublicProfile(userId: string) {

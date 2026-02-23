@@ -116,6 +116,8 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{ ...activeUser, integrity_score: 10 }],
       });
+      // Cool-off check
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
 
       await expect(service.createContract(validDto)).rejects.toThrow(
         expect.objectContaining({
@@ -129,6 +131,10 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{ ...activeUser, stripe_customer_id: null }],
       });
+      // Cool-off check
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
+      // Total failures (downscaling)
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
 
       await expect(service.createContract(validDto)).rejects.toThrow(
         expect.objectContaining({
@@ -152,6 +158,10 @@ describe('ContractsService', () => {
 
       // User lookup
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
+      // Cool-off check
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
+      // Total failures (downscaling)
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       // Contract insert
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-bio' }] });
       // Prior contracts count (onboarding bonus check)
@@ -166,6 +176,8 @@ describe('ContractsService', () => {
 
     it('should NOT call Aegis validation for non-biological oaths', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
@@ -177,6 +189,8 @@ describe('ContractsService', () => {
 
     it('should hold stake via Stripe with correct amount', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
@@ -188,6 +202,8 @@ describe('ContractsService', () => {
 
     it('should insert the contract and return contractId + paymentIntentId', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'new-contract-id' }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
@@ -200,6 +216,8 @@ describe('ContractsService', () => {
 
     it('should record a ledger transaction when user has an account and escrow exists', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct-id' }] });
@@ -217,6 +235,8 @@ describe('ContractsService', () => {
 
     it('should log CONTRACT_CREATED to TruthLog', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
@@ -235,6 +255,8 @@ describe('ContractsService', () => {
     it('should skip ledger entry when user has no account_id', async () => {
       const userNoAccount = { ...activeUser, account_id: null };
       mockPool.query.mockResolvedValueOnce({ rows: [userNoAccount] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
 

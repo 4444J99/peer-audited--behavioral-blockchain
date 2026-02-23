@@ -74,3 +74,14 @@ export function shouldDemoteFury(history: FuryHistory): boolean {
   if (history.totalAudits < 10) return false;
   return calculateAccuracy(history) < 0.8;
 }
+
+/**
+ * Returns the maximum stake amount for a given set of allowed tiers.
+ */
+export function getTierMaxStake(tiers: string[]): number {
+  if (tiers.includes('TIER_4_WHALE_VAULTS')) return Infinity;
+  if (tiers.includes('TIER_3_HIGH_ROLLER')) return 1000;
+  if (tiers.includes('TIER_2_STANDARD')) return 100;
+  if (tiers.includes('TIER_1_MICRO_STAKES')) return 20;
+  return 0;
+}

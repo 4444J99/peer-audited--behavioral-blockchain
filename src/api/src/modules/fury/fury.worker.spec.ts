@@ -15,6 +15,9 @@ describe('FuryWorker', () => {
     resolveContract: jest.fn().mockResolvedValue(undefined),
   } as unknown as ContractsService;
 
+  // Helper: demotion stats mock (under 10-audit burn-in → no demotion)
+  const demotionStatsMock = { rows: [{ total_audits: '5', successful_audits: '4', false_accusations: '0' }] };
+
   beforeEach(() => {
     mockPool = { query: jest.fn() };
     worker = new FuryWorker(
@@ -61,12 +64,16 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
-      // Notification: contract user lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-1' }] });
       // Accuracy tracking: 2 correct (+2), 1 wrong (-5)
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Demotion check stats (3 furies)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-1' }] });
 
       await worker.checkConsensus('proof-1');
 
@@ -96,12 +103,16 @@ describe('FuryWorker', () => {
         votes: [],
         flaggedFuries: [],
       });
+      // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Accuracy tracking (2 furies)
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Demotion check stats (2 furies)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
       // Notification: contract user lookup
       mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-1' }] });
-      // Accuracy tracking
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       await worker.checkConsensus('proof-1');
 
@@ -126,13 +137,18 @@ describe('FuryWorker', () => {
         votes: [],
         flaggedFuries: [],
       });
+      // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Accuracy tracking (3 furies)
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Demotion check stats (3 furies)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
       // Notification: contract user lookup
       mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-1' }] });
-      // Accuracy tracking
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       await worker.checkConsensus('proof-1');
 
@@ -155,7 +171,12 @@ describe('FuryWorker', () => {
         votes: [],
         flaggedFuries: [],
       });
+      // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // No accuracy tracking (SPLIT outcome)
+      // Demotion check stats (2 furies — runs for all non-honeypot)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
       // Notification: contract user lookup
       mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-1' }] });
 
@@ -187,6 +208,7 @@ describe('FuryWorker', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       // UPDATE users for fury-corrupt-2
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // No accuracy tracking or demotion check (honeypot)
       // Notification: contract user lookup
       mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-hp' }] });
 
@@ -216,12 +238,16 @@ describe('FuryWorker', () => {
         votes: [],
         flaggedFuries: [],
       });
+      // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
-      // Notification: contract user lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-clean' }] });
       // Accuracy tracking: 2 correct FAIL votes
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Demotion check stats (2 furies)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-clean' }] });
 
       await worker.checkConsensus('proof-clean');
 
@@ -255,7 +281,9 @@ describe('FuryWorker', () => {
         votes: [],
         flaggedFuries: [],
       });
+      // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // No accuracy tracking or demotion check (honeypot)
       // Notification: contract user lookup
       mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-hp' }] });
 
@@ -292,12 +320,16 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
-      // Notification: contract user lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-99' }] });
       // Accuracy tracking: 3 correct votes (+2 each)
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Demotion check stats (3 furies)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-99' }] });
 
       await worker.checkConsensus('proof-resolve-complete');
 
@@ -326,12 +358,16 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
-      // Notification: contract user lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-100' }] });
       // Accuracy tracking: 3 correct votes (+2 each)
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Demotion check stats (3 furies)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-100' }] });
 
       await worker.checkConsensus('proof-resolve-fail');
 
@@ -358,6 +394,10 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // No accuracy tracking (SPLIT)
+      // Demotion check stats (2 furies — runs for all non-honeypot)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
       // Notification: contract user lookup
       mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-split' }] });
 
@@ -388,11 +428,14 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
-      // Notification: contract user lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-reward' }] });
       // Accuracy rewards (+2 each)
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Demotion check stats (2 furies)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-reward' }] });
 
       await worker.checkConsensus('proof-reward');
 
@@ -426,12 +469,16 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
-      // Notification: contract user lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-pen' }] });
       // Accuracy: +2 for fury-right, -5 for fury-wrong, +2 for fury-right-2
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Demotion check stats (3 furies)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-pen' }] });
 
       await worker.checkConsensus('proof-penalty');
 
@@ -462,6 +509,7 @@ describe('FuryWorker', () => {
       });
       // UPDATE proofs
       mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // No accuracy tracking or demotion check (honeypot)
       // Notification: contract user lookup
       mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-hp' }] });
 

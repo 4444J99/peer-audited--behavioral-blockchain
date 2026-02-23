@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
+import { Subject, Observable } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 
 export interface CreateNotificationDto {
   userId: string;
@@ -22,7 +24,19 @@ export interface Notification {
 
 @Injectable()
 export class NotificationsService {
+  private readonly notificationSubject = new Subject<Notification>();
+
   constructor(private readonly pool: Pool) {}
+
+  /**
+   * Returns an observable stream of notifications filtered for a specific user.
+   */
+  getStreamForUser(userId: string): Observable<MessageEvent> {
+    return this.notificationSubject.asObservable().pipe(
+      filter((n) => n.user_id === userId),
+      map((n) => ({ data: n } as MessageEvent)),
+    );
+  }
 
   async create(dto: CreateNotificationDto): Promise<Notification> {
     const result = await this.pool.query(
@@ -31,7 +45,12 @@ export class NotificationsService {
        RETURNING *`,
       [dto.userId, dto.type, dto.title, dto.body ?? null, dto.metadata ? JSON.stringify(dto.metadata) : null],
     );
-    return result.rows[0];
+    const notification = result.rows[0];
+
+    // Emit to SSE subscribers
+    this.notificationSubject.next(notification);
+
+    return notification;
   }
 
   async getUserNotifications(userId: string, limit = 20): Promise<Notification[]> {

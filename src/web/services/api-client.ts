@@ -107,7 +107,21 @@ export const api = {
       created_at: string;
     }>>('/contracts'),
 
-  getContract: (id: string) => request(`/contracts/${id}`),
+  getContract: (id: string) => request<{
+    id: string;
+    user_id: string;
+    oath_category: string;
+    verification_method: string;
+    stake_amount: string;
+    status: string;
+    duration_days: number;
+    started_at: string;
+    ends_at: string;
+    created_at: string;
+    email: string;
+    integrity_score: number;
+    grace_days_used?: number;
+  }>(`/contracts/${id}`),
 
   createContract: (dto: CreateContractDto) =>
     request<{ contractId: string; paymentIntentId: string }>('/contracts', {
@@ -144,7 +158,7 @@ export const api = {
     }),
 
   // Users
-  getMe: () => request<{ id: string; email: string; integrity_score: number; created_at: string }>('/users/me'),
+  getMe: () => request<{ id: string; email: string; integrity_score: number; role: string; created_at: string }>('/users/me'),
 
   getLeaderboard: (limit?: number) =>
     request<LeaderboardEntry[]>(`/users/leaderboard${limit ? `?limit=${limit}` : ''}`),
@@ -193,4 +207,51 @@ export const api = {
     request<{ paymentIntentId: string; amount: number }>(`/contracts/${contractId}/ticket`, {
       method: 'POST',
     }),
+
+  // Grace day
+  useGraceDay: (contractId: string) =>
+    request<{ newDeadline: string }>(`/contracts/${contractId}/grace-day`, {
+      method: 'POST',
+    }),
+
+  // Proofs for a contract
+  getContractProofs: (contractId: string) =>
+    request<Array<{
+      id: string;
+      status: string;
+      media_uri: string;
+      submitted_at: string;
+    }>>(`/contracts/${contractId}/proofs`),
+
+  // Admin
+  injectHoneypot: () =>
+    request<{ status: string; jobId: string }>('/admin/honeypot', { method: 'POST' }),
+
+  banUser: (userId: string, reason: string) =>
+    request('/admin/ban/' + userId, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+
+  adminResolve: (contractId: string, outcome: 'COMPLETED' | 'FAILED') =>
+    request('/admin/resolve/' + contractId, {
+      method: 'POST',
+      body: JSON.stringify({ outcome }),
+    }),
+
+  getAdminStats: () =>
+    request<{
+      totalUsers: number;
+      activeContracts: number;
+      pendingProofs: number;
+      avgIntegrity: number;
+    }>('/admin/stats'),
+
+  // User profile / history
+  getIntegrityHistory: () =>
+    request<Array<{
+      event_type: string;
+      payload: Record<string, unknown>;
+      created_at: string;
+    }>>('/users/me/history'),
 };

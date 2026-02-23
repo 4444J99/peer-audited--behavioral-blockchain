@@ -8,7 +8,7 @@ import { FuryRouterService } from '../../../services/fury-router/fury-router.ser
 import { AegisProtocolService } from '../../../services/health/aegis.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { calculateIntegrity, getAllowedTiers, UserHistory } from '../../../../shared/libs/integrity';
+import { calculateIntegrity, getAllowedTiers, getTierMaxStake, UserHistory } from '../../../../shared/libs/integrity';
 import {
   OathCategory,
   VerificationMethod,
@@ -16,6 +16,8 @@ import {
   grantOnboardingBonus,
   useGraceDay,
   ONBOARDING_BONUS_AMOUNT,
+  FAILURE_COOL_OFF_DAYS,
+  DOWNSCALE_STRIKE_THRESHOLD,
 } from '../../../../shared/libs/behavioral-logic';
 
 export interface CreateContractDto {
@@ -80,10 +82,47 @@ export class ContractsService {
       throw new ForbiddenException('User account is not active');
     }
 
+    // 2b. Cool-off period: 7-day lockout after a failure
+    const recentFailures = await this.pool.query(
+      `SELECT COUNT(*) as count FROM contracts
+       WHERE user_id = $1 AND status = 'FAILED'
+       AND updated_at > NOW() - INTERVAL '${FAILURE_COOL_OFF_DAYS} days'`,
+      [dto.userId],
+    );
+    if (Number(recentFailures.rows[0].count) > 0) {
+      throw new ForbiddenException(
+        `Cool-off period active: ${FAILURE_COOL_OFF_DAYS}-day lockout after contract failure`,
+      );
+    }
+
     // 3. Validate stake amount against integrity tier
     const tiers = getAllowedTiers(user.integrity_score);
     if (tiers[0] === 'RESTRICTED_MODE') {
       throw new ForbiddenException('Integrity score too low — account is in restricted mode');
+    }
+
+    // 3b. Stake tier limit
+    const tierMax = getTierMaxStake(tiers);
+    if (dto.stakeAmount > tierMax) {
+      throw new BadRequestException(
+        `Stake amount $${dto.stakeAmount} exceeds tier limit of $${tierMax}`,
+      );
+    }
+
+    // 3c. Dynamic downscaling: after 3 failures, max stake is halved per 3 failures
+    const totalFailures = await this.pool.query(
+      `SELECT COUNT(*) as count FROM contracts WHERE user_id = $1 AND status = 'FAILED'`,
+      [dto.userId],
+    );
+    const failCount = Number(totalFailures.rows[0].count);
+    if (failCount >= DOWNSCALE_STRIKE_THRESHOLD) {
+      const downscaleFactor = Math.pow(0.5, Math.floor(failCount / DOWNSCALE_STRIKE_THRESHOLD));
+      const maxStake = tierMax * downscaleFactor;
+      if (dto.stakeAmount > maxStake) {
+        throw new BadRequestException(
+          `Dynamic downscaling: max stake is $${maxStake.toFixed(2)} after ${failCount} failures`,
+        );
+      }
     }
 
     // 4. If biological oath, run Aegis medical guardrails

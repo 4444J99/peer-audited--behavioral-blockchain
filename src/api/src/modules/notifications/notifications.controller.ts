@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Sse, UseGuards } from '@nestjs/common';
+import { Observable } from 'rxjs';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { NotificationsService } from './notifications.service';
@@ -17,6 +18,11 @@ export class NotificationsController {
   async getUnreadCount(@CurrentUser() user: { id: string }) {
     const count = await this.notifications.getUnreadCount(user.id);
     return { count };
+  }
+
+  @Sse('stream')
+  stream(@CurrentUser() user: { id: string }): Observable<MessageEvent> {
+    return this.notifications.getStreamForUser(user.id);
   }
 
   @Post(':id/read')

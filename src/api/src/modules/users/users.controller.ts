@@ -14,6 +14,12 @@ export class UsersController {
     return this.usersService.getProfile(user.id);
   }
 
+  @Get('me/history')
+  @UseGuards(AuthGuard)
+  async getHistory(@CurrentUser() user: { id: string }) {
+    return this.usersService.getUserHistory(user.id);
+  }
+
   @Get('leaderboard')
   @Public()
   @Throttle({ default: { ttl: 60000, limit: 30 } })
