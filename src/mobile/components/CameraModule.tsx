@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { UploadService } from '../services/UploadService';
+import { ApiClient } from '../services/ApiClient';
 
 /**
  * The Styx Camera Module.
@@ -8,7 +9,7 @@ import { UploadService } from '../services/UploadService';
  * This component intentionally omits any integration with `expo-image-picker` or the device gallery.
  * The ONLY way a user can submit a proof is by pressing the live record button through this view.
  */
-export const CameraModule = () => {
+export const CameraModule = ({ contractId }: { contractId?: string }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [videoUri, setVideoUri] = useState<string | null>(null);
@@ -43,8 +44,16 @@ export const CameraModule = () => {
         throw new Error('Video blob failed to transmit to Cloudflare R2.');
       }
 
-      // Step 3: API Dispatch
+      // Step 3: API Dispatch via UploadService
       await UploadService.confirmUploadDispatch(proofId);
+
+      // Step 4: Submit proof to API if contractId is provided
+      if (contractId) {
+        await ApiClient.submitProof(contractId, {
+          mediaUri: videoUri,
+          notes: `Video proof ${proofId} uploaded via CameraModule`,
+        });
+      }
 
       Alert.alert('Proof Secured', 'Your recording has been sent to the Fury Router for anonymous validation.');
       setVideoUri(null); // Clear buffer

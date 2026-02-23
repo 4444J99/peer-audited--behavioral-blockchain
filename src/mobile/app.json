@@ -1,0 +1,11 @@
+{
+  "name": "StyxMobile",
+  "displayName": "Styx",
+  "expo": {
+    "name": "Styx",
+    "slug": "styx-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "styx"
+  }
+}

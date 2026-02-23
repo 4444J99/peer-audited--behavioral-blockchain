@@ -34,7 +34,7 @@ export const AuthScreen = () => {
       const mockToken = 'jwt_mock_token_12345';
       const mockUserId = 'usr_mock_67890';
 
-      await SessionService.saveSession(mockToken, mockUserId);
+      await SessionService.saveSession(mockUserId, mockToken);
       
       Alert.alert('Success', 'Logged into Styx Core.');
     } catch (error) {
