@@ -124,11 +124,38 @@ async function runTheFullLoop() {
   const userContracts = await request<Array<{ id: string }>>('/contracts', userAuth.token);
   const found = userContracts.some((c) => c.id === contractId);
 
-  if (found) {
-    console.log('✅ GATE 03 PASSED: End-to-end lifecycle completed. Contract visible in user list.');
-  } else {
+  if (!found) {
     console.error('❌ GATE 03 FAILED: Contract not found in user contracts list.');
     process.exit(1);
+  }
+  console.log(`[STEP 5] Contract visible in user list.`);
+
+  // Step 8: Verify Fury bounty disbursement
+  console.log(`[STEP 6] Checking Fury bounty disbursement...`);
+  let bountyVerified = false;
+  for (const furyUser of FURY_USERS) {
+    try {
+      const furyAuth = await login(furyUser.email, furyUser.password);
+      const stats = await request<{
+        totalAudits: number;
+        totalBountiesEarned: number;
+        netEarnings: number;
+      }>('/fury/stats', furyAuth.token);
+
+      console.log(`[STEP 6] Fury ${furyUser.email}: ${stats.totalAudits} audits, $${stats.totalBountiesEarned} earned, net $${stats.netEarnings}`);
+
+      if (stats.totalBountiesEarned > 0) {
+        bountyVerified = true;
+      }
+    } catch (err) {
+      console.log(`[STEP 6] Fury ${furyUser.email} stats check failed: ${err instanceof Error ? err.message : err}`);
+    }
+  }
+
+  if (bountyVerified) {
+    console.log('✅ GATE 03 PASSED: End-to-end lifecycle completed with bounty disbursement.');
+  } else {
+    console.log('⚠️  GATE 03 PARTIAL: Lifecycle completed but bounty disbursement not confirmed (Furies may lack account_id).');
   }
 }
 

@@ -5,6 +5,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { FuryWorker } from './fury.worker';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { SubmitVerdictDto } from './dto';
+import { calculateAccuracy } from '../../../../shared/libs/integrity';
 
 @Controller('fury')
 @UseGuards(AuthGuard)
@@ -14,6 +15,79 @@ export class FuryController {
     private readonly furyWorker: FuryWorker,
     private readonly truthLog: TruthLogService,
   ) {}
+
+  @Get('stats')
+  async getStats(@CurrentUser() user: { id: string }) {
+    // Audit statistics
+    const auditStats = await this.pool.query(
+      `SELECT
+         COUNT(*) FILTER (WHERE fa.verdict IS NOT NULL) as total_audits,
+         COUNT(*) FILTER (WHERE (fa.verdict = 'PASS' AND p.status = 'VERIFIED')
+                             OR (fa.verdict = 'FAIL' AND p.status = 'REJECTED')) as successful_audits,
+         COUNT(*) FILTER (WHERE fa.verdict = 'FAIL' AND p.status = 'VERIFIED') as false_accusations,
+         COUNT(*) FILTER (WHERE p.is_honeypot = true AND fa.verdict = 'FAIL') as honeypots_caught,
+         COUNT(*) FILTER (WHERE p.is_honeypot = true AND fa.verdict = 'PASS') as honeypots_failed
+       FROM fury_assignments fa
+       JOIN proofs p ON fa.proof_id = p.id
+       WHERE fa.fury_user_id = $1`,
+      [user.id],
+    );
+
+    const stats = auditStats.rows[0];
+    const totalAudits = Number(stats.total_audits);
+    const successfulAudits = Number(stats.successful_audits);
+    const falseAccusations = Number(stats.false_accusations);
+    const honeypotsCaught = Number(stats.honeypots_caught);
+    const honeypotsFailedOn = Number(stats.honeypots_failed);
+
+    const accuracy = calculateAccuracy({
+      furyId: user.id,
+      successfulAudits,
+      falseAccusations,
+      totalAudits,
+    });
+
+    // Earnings from ledger
+    const userResult = await this.pool.query(
+      `SELECT account_id FROM users WHERE id = $1`,
+      [user.id],
+    );
+
+    let totalBountiesEarned = 0;
+    let totalPenaltiesPaid = 0;
+
+    if (userResult.rows.length > 0 && userResult.rows[0].account_id) {
+      const accountId = userResult.rows[0].account_id;
+
+      const bountyResult = await this.pool.query(
+        `SELECT COALESCE(SUM(amount), 0) as total
+         FROM entries
+         WHERE credit_account_id = $1 AND metadata->>'type' = 'FURY_BOUNTY'`,
+        [accountId],
+      );
+      totalBountiesEarned = Number(bountyResult.rows[0].total);
+
+      const penaltyResult = await this.pool.query(
+        `SELECT COALESCE(SUM(amount), 0) as total
+         FROM entries
+         WHERE debit_account_id = $1 AND metadata->>'type' = 'FURY_PENALTY'`,
+        [accountId],
+      );
+      totalPenaltiesPaid = Number(penaltyResult.rows[0].total);
+    }
+
+    return {
+      totalAudits,
+      successfulAudits,
+      falseAccusations,
+      accuracy: Math.round(accuracy * 1000) / 1000,
+      totalBountiesEarned,
+      totalPenaltiesPaid,
+      netEarnings: totalBountiesEarned - totalPenaltiesPaid,
+      honeypotsCaught,
+      honeypotsFailedOn,
+    };
+  }
 
   @Get('queue')
   async getAssignments(@CurrentUser() user: { id: string }) {

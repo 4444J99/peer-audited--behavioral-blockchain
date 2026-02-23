@@ -5,7 +5,9 @@ import { FURY_ROUTER_QUEUE_NAME, REDIS_CONNECTION_CONFIG } from '../../../config
 import { ConsensusEngine, FuryVote } from './consensus.engine';
 import { ContractsService } from '../contracts/contracts.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { shouldDemoteFury } from '../../../../shared/libs/integrity';
+import { LedgerService } from '../../../services/ledger/ledger.service';
+import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { shouldDemoteFury, AUDITOR_STAKE_AMOUNT } from '../../../../shared/libs/integrity';
 
 interface FuryRouteJob {
   proofId: string;
@@ -25,6 +27,8 @@ export class FuryWorker implements OnModuleInit {
     @Inject(forwardRef(() => ContractsService))
     private readonly contractsService: ContractsService,
     @Optional() @Inject(NotificationsService) private readonly notifications?: NotificationsService,
+    @Optional() @Inject(LedgerService) private readonly ledger?: LedgerService,
+    @Optional() @Inject(TruthLogService) private readonly truthLog?: TruthLogService,
   ) {}
 
   onModuleInit() {
@@ -152,6 +156,11 @@ export class FuryWorker implements OnModuleInit {
       }
     }
 
+    // Disburse Fury bounties/penalties via the double-entry ledger
+    if (this.ledger && result.outcome !== 'SPLIT') {
+      await this.disburseFuryBounties(votes, result, is_honeypot, contract_id, proofId);
+    }
+
     // Check if any Fury should be demoted based on accuracy
     if (!is_honeypot) {
       for (const vote of votes) {
@@ -220,5 +229,106 @@ export class FuryWorker implements OnModuleInit {
     this.logger.log(
       `Consensus for proof ${proofId}: ${result.outcome} (${result.flaggedFuries.length} flagged)`,
     );
+  }
+
+  /**
+   * Disburses AUDITOR_STAKE_AMOUNT bounties to correct Furies and charges penalties to incorrect ones.
+   * Honeypot failures also receive a financial penalty via the ledger.
+   */
+  private async disburseFuryBounties(
+    votes: FuryVote[],
+    result: { outcome: string; flaggedFuries: string[] },
+    isHoneypot: boolean,
+    contractId: string | null,
+    proofId: string,
+  ): Promise<void> {
+    // Look up system accounts
+    const escrowResult = await this.pool.query(
+      `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
+    );
+    const revenueResult = await this.pool.query(
+      `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
+    );
+    if (escrowResult.rows.length === 0 || revenueResult.rows.length === 0) return;
+
+    const escrowAccountId = escrowResult.rows[0].id;
+    const revenueAccountId = revenueResult.rows[0].id;
+
+    // For honeypot proofs, penalize flagged Furies financially
+    if (isHoneypot) {
+      for (const furyId of result.flaggedFuries) {
+        const furyUser = await this.pool.query(
+          `SELECT account_id FROM users WHERE id = $1`,
+          [furyId],
+        );
+        if (furyUser.rows.length === 0 || !furyUser.rows[0].account_id) continue;
+
+        try {
+          await this.ledger!.recordTransaction(
+            furyUser.rows[0].account_id,
+            revenueAccountId,
+            AUDITOR_STAKE_AMOUNT,
+            contractId ?? undefined,
+            { type: 'FURY_PENALTY' },
+          );
+          await this.truthLog?.appendEvent('FURY_PENALTY_CHARGED', {
+            furyUserId: furyId,
+            proofId,
+            amount: AUDITOR_STAKE_AMOUNT,
+            reason: 'honeypot_failure',
+          });
+        } catch (err) {
+          this.logger.error(`Failed to charge honeypot penalty for Fury ${furyId}: ${err instanceof Error ? err.message : err}`);
+        }
+      }
+      return;
+    }
+
+    // For regular proofs with clear outcome, reward/penalize each voter
+    for (const vote of votes) {
+      const wasCorrect =
+        (result.outcome === 'VERIFIED' && vote.verdict === 'PASS') ||
+        (result.outcome === 'REJECTED' && vote.verdict === 'FAIL');
+
+      const furyUser = await this.pool.query(
+        `SELECT account_id FROM users WHERE id = $1`,
+        [vote.furyUserId],
+      );
+      if (furyUser.rows.length === 0 || !furyUser.rows[0].account_id) continue;
+
+      const furyAccountId = furyUser.rows[0].account_id;
+
+      try {
+        if (wasCorrect) {
+          await this.ledger!.recordTransaction(
+            escrowAccountId,
+            furyAccountId,
+            AUDITOR_STAKE_AMOUNT,
+            contractId ?? undefined,
+            { type: 'FURY_BOUNTY' },
+          );
+          await this.truthLog?.appendEvent('FURY_BOUNTY_PAID', {
+            furyUserId: vote.furyUserId,
+            proofId,
+            amount: AUDITOR_STAKE_AMOUNT,
+          });
+        } else {
+          await this.ledger!.recordTransaction(
+            furyAccountId,
+            revenueAccountId,
+            AUDITOR_STAKE_AMOUNT,
+            contractId ?? undefined,
+            { type: 'FURY_PENALTY' },
+          );
+          await this.truthLog?.appendEvent('FURY_PENALTY_CHARGED', {
+            furyUserId: vote.furyUserId,
+            proofId,
+            amount: AUDITOR_STAKE_AMOUNT,
+          });
+        }
+      } catch (err) {
+        this.logger.error(`Failed to process bounty for Fury ${vote.furyUserId}: ${err instanceof Error ? err.message : err}`);
+      }
+    }
   }
 }

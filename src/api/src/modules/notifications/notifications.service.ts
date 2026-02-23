@@ -91,7 +91,8 @@ export class NotificationsService {
        FROM event_log
        WHERE event_type IN (
          'CONTRACT_CREATED', 'CONTRACT_RESOLVED', 'PROOF_SUBMITTED',
-         'CONSENSUS_REACHED', 'FURY_VERDICT', 'HONEYPOT_DETECTED'
+         'CONSENSUS_REACHED', 'FURY_VERDICT', 'HONEYPOT_DETECTED',
+         'FURY_BOUNTY_PAID', 'FURY_PENALTY_CHARGED'
        )
        ORDER BY created_at DESC
        LIMIT $1`,
@@ -116,6 +117,8 @@ export class NotificationsService {
       CONSENSUS_REACHED: 'fury_catch',
       FURY_VERDICT: 'fury_catch',
       HONEYPOT_DETECTED: 'honeypot_test',
+      FURY_BOUNTY_PAID: 'bounty_paid',
+      FURY_PENALTY_CHARGED: 'penalty_charged',
     };
     return map[eventType] || 'milestone';
   }
@@ -148,6 +151,15 @@ export class NotificationsService {
       }
       case 'HONEYPOT_DETECTED':
         return `System honeypot test completed — auditor integrity validated`;
+      case 'FURY_BOUNTY_PAID': {
+        const bountyAmount = payload?.amount;
+        return `A Fury earned a $${bountyAmount || '2.00'} bounty for a correct audit`;
+      }
+      case 'FURY_PENALTY_CHARGED': {
+        const penaltyAmount = payload?.amount;
+        const reason = payload?.reason === 'honeypot_failure' ? 'failing a honeypot test' : 'an incorrect audit';
+        return `A Fury was charged a $${penaltyAmount || '2.00'} penalty for ${reason}`;
+      }
       default:
         return `System event recorded`;
     }

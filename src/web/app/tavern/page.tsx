@@ -4,12 +4,12 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, Flame, ScrollText, Trophy, AlertTriangle, Shield, Users,
-  RefreshCw, Loader2, Clock,
+  RefreshCw, Loader2, Clock, DollarSign, MinusCircle,
 } from 'lucide-react';
 
 interface FeedItem {
   id: string;
-  type: 'contract_created' | 'contract_completed' | 'contract_failed' | 'fury_catch' | 'honeypot_test' | 'milestone';
+  type: 'contract_created' | 'contract_completed' | 'contract_failed' | 'fury_catch' | 'honeypot_test' | 'milestone' | 'bounty_paid' | 'penalty_charged';
   message: string;
   timestamp: string;
 }
@@ -20,6 +20,8 @@ const EVENT_ICONS: Record<string, { icon: React.ElementType; color: string; bgCo
   contract_failed: { icon: AlertTriangle, color: 'text-red-400', bgColor: 'bg-red-900/30' },
   fury_catch: { icon: Flame, color: 'text-orange-400', bgColor: 'bg-orange-900/30' },
   honeypot_test: { icon: Shield, color: 'text-yellow-400', bgColor: 'bg-yellow-900/30' },
+  bounty_paid: { icon: DollarSign, color: 'text-emerald-400', bgColor: 'bg-emerald-900/30' },
+  penalty_charged: { icon: MinusCircle, color: 'text-rose-400', bgColor: 'bg-rose-900/30' },
   milestone: { icon: Users, color: 'text-purple-400', bgColor: 'bg-purple-900/30' },
 };
 

@@ -3,7 +3,6 @@ export const FRAUD_PENALTY = 15;
 export const STRIKE_PENALTY = 20;
 export const COMPLETION_BONUS = 5;
 
-// Reserved: Fury bounty economy (Phase Omega)
 export const AUDITOR_STAKE_AMOUNT = 2.00;
 export const AUDITOR_HARASSMENT_THRESHOLD = 3;
 

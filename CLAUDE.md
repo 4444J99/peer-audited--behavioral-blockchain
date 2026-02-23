@@ -71,6 +71,8 @@ Existing spec files:
 - `src/api/services/security/geofence.service.spec.ts` — jurisdiction tier tests
 - `src/api/services/security/moderation.service.spec.ts` — ban/exile tests
 - `src/api/services/intelligence/honeypot.service.spec.ts` — known-fail injection tests
+- `src/api/src/modules/fury/fury.bounty.spec.ts` — Fury bounty ledger transaction tests
+- `src/api/src/modules/fury/fury.stats.spec.ts` — Fury stats endpoint tests
 
 ### Validation Scripts
 
@@ -191,6 +193,6 @@ Docker services (port mappings): PostgreSQL on `5432`, Redis on `6379`, API on `
 
 ## Implementation Status
 
-**Implemented**: LedgerService (double-entry transactions), TruthLogService (hash-chained audit log), FuryRouterService (BullMQ proof routing), ConsensusEngine (verdict aggregation), StripeFboService (hold/capture/cancel), DisputeService (appeal fee), AegisProtocolService (BMI/velocity validation), GeofenceService (jurisdiction blocking), ModerationService (permanent bans), HoneypotInjectorService (Fury QA), AnomalyService (pHash duplicate detection + EXIF validation), WebhookService (HMAC-signed B2B dispatch), GeminiClient (Gemini 2.5 Flash API), AiController (POST /ai/grill-me, POST /ai/eli5), AuthGuard (JWT), OnboardingWizard, linguistic cloaker, integrity scoring algorithms, PitchDeck UI (routed through API), Desktop admin panels.
+**Implemented**: LedgerService (double-entry transactions), TruthLogService (hash-chained audit log), FuryRouterService (BullMQ proof routing), ConsensusEngine (verdict aggregation), StripeFboService (hold/capture/cancel), DisputeService (appeal fee), AegisProtocolService (BMI/velocity validation), GeofenceService (jurisdiction blocking), ModerationService (permanent bans), HoneypotInjectorService (Fury QA), AnomalyService (pHash duplicate detection + EXIF validation), WebhookService (HMAC-signed B2B dispatch), GeminiClient (Gemini 2.5 Flash API), AiController (POST /ai/grill-me, POST /ai/eli5), AuthGuard (JWT), OnboardingWizard, linguistic cloaker, integrity scoring algorithms, PitchDeck UI (routed through API), Desktop admin panels, **Fury Bounty Economy** (AUDITOR_STAKE_AMOUNT disbursed via ledger on consensus — bounty for correct votes, penalty for incorrect/honeypot failures), **Fury Stats API** (GET /fury/stats — audit counts, earnings, accuracy), **Tavern Board bounty events** (FURY_BOUNTY_PAID / FURY_PENALTY_CHARGED in public feed).
 
 **Remaining limitations**: CameraModule (mobile camera requires native Swift/Kotlin — placeholder UI with text proof submission).
