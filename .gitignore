@@ -10,6 +10,7 @@ dist/
 # (docs/index.html + docs/assets/ are build artifacts that should be tracked)
 !docs/
 !docs/**
+docs/**/.DS_Store
 
 # Terraform
 infra/terraform/.terraform/
