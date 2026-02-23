@@ -1,15 +1,19 @@
 import { Controller, Get, Query, UseGuards, NotFoundException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Pool } from 'pg';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { getAllowedTiers } from '../../../../shared/libs/integrity';
 
+@ApiTags('Wallet')
+@ApiBearerAuth()
 @Controller('wallet')
 @UseGuards(AuthGuard)
 export class WalletController {
   constructor(private readonly pool: Pool) {}
 
   @Get('balance')
+  @ApiOperation({ summary: 'Get ledger balance and integrity tier for the current user' })
   async getBalance(@CurrentUser() user: { id: string }) {
     const userResult = await this.pool.query(
       'SELECT id, email, integrity_score, account_id, status FROM users WHERE id = $1',
@@ -47,6 +51,7 @@ export class WalletController {
   }
 
   @Get('history')
+  @ApiOperation({ summary: 'Get transaction history from the double-entry ledger' })
   async getHistory(@CurrentUser() user: { id: string }, @Query('limit') limit?: string) {
     const userResult = await this.pool.query(
       'SELECT account_id FROM users WHERE id = $1',

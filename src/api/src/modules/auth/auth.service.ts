@@ -7,7 +7,11 @@ const BCRYPT_ROUNDS = 10;
 const TOKEN_EXPIRY = '24h';
 
 function getJwtSecret(): string {
-  return process.env.JWT_SECRET || 'styx-dev-secret-do-not-use-in-production'; // allow-secret
+  const secret = process.env.JWT_SECRET; // allow-secret
+  if (!secret && process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET must be set in production');
+  }
+  return secret || 'styx-dev-secret-do-not-use-in-production'; // allow-secret
 }
 
 export interface AuthPayload {

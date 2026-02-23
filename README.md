@@ -1,6 +1,9 @@
 # Styx: The Blockchain of Truth
 
-A peer-audited behavioral market that weaponizes loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes. Users stake money into behavioral contracts; a decentralized "Fury" network audits compliance; hardware oracles and a double-entry ledger enforce integrity.
+![CI](https://github.com/labores-profani-crux/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
+![License: Private](https://img.shields.io/badge/license-private-red)
+
+A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes. Users stake money into behavioral contracts; a decentralized "Fury" network audits compliance; hardware oracles and a double-entry ledger enforce integrity.
 
 ## Architecture
 
@@ -10,7 +13,7 @@ Turborepo monorepo with **npm** workspaces. Package scope: `@styx/*`.
 |-----------|---------|-------|------|
 | `src/api` | `@styx/api` | NestJS 10, BullMQ, Stripe, PostgreSQL | Backend — ledger, escrow, Fury Router, oracles |
 | `src/web` | `@styx/web` | Next.js 16, React 18, Tailwind, p5.js | Dashboard, Fury audit workbench, interactive pitch deck |
-| `src/mobile` | `@styx/mobile` | React Native 0.73 | Sensor bridge (HealthKit/Google Fit), camera, biometrics |
+| `src/mobile` | `@styx/mobile` | React Native 0.76 | Sensor bridge (HealthKit/Google Fit), camera, biometrics |
 | `src/desktop` | `@styx/desktop` | Tauri 2.0, Vite, React | "The Judge" admin dashboard |
 | `src/shared` | `@styx/shared` | TypeScript | Constants, types, algorithms (integrity score, behavioral logic) |
 
@@ -23,13 +26,16 @@ Turborepo monorepo with **npm** workspaces. Package scope: `@styx/*`.
 - **Payments**: Stripe (FBO escrow — hold/capture/cancel)
 - **Storage**: Cloudflare R2 (zero-egress video hosting)
 - **AI**: Gemini 2.5 Flash (VC questions, ELI5, goal ethics screening)
+- **Logging**: Pino (structured JSON in production, pretty-print in dev)
+- **Security**: Helmet, rate limiting, JWT auth, geofencing
 - **CI**: GitHub Actions (5-stage pipeline)
+- **API Docs**: OpenAPI/Swagger at [`/api/docs`](#api-documentation)
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js >= 18
+- Node.js >= 20
 - Docker & Docker Compose
 - npm 10+
 
@@ -42,6 +48,9 @@ docker-compose up -d
 # Install dependencies across all workspaces
 make install
 
+# Run database migrations
+cd src/api && npm run migrate && cd ../..
+
 # Run all services (API + Web + Mobile)
 make dev
 ```
@@ -52,9 +61,20 @@ Docker services: PostgreSQL on `5432`, Redis on `6379`, API on `3000`.
 
 Copy `.env.example` to `.env` and set: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `DATABASE_URL`, `REDIS_URL`, `CLOUDFLARE_R2_ACCESS_KEY`, `CLOUDFLARE_R2_SECRET_KEY`, `JWT_SECRET`.
 
+**Important**: `JWT_SECRET` is required in production (`NODE_ENV=production`). The API will refuse to start without it.
+
+## API Documentation
+
+Interactive Swagger/OpenAPI docs are available at `/api/docs` when the API is running:
+
+```bash
+cd src/api && npm run dev
+# Open http://localhost:3000/api/docs
+```
+
 ## Testing
 
-270+ tests across all workspaces using Jest + ts-jest.
+~430 tests across all workspaces using Jest + ts-jest.
 
 ```bash
 make test                    # All tests via Turborepo
@@ -93,6 +113,7 @@ npx tsx scripts/validation/05-behavioral-physics-check.ts  # Algorithm constant 
 - **Linguistic Cloaker** — Runtime vocabulary swap (stake/vault, bet/commitment) for App Store compliance.
 - **Integrity Scoring** — `Base(50) + 5/completion - 15/fraud - 20/strike - 1/inactive_month`. Score determines financial tier access.
 - **Goal Ethics Screening** — Gemini 2.5 Flash content policy check on user-submitted goals.
+- **Structured Logging** — Pino JSON logs with request tracing for production observability.
 
 ## Commands
 
@@ -106,6 +127,11 @@ npx tsx scripts/validation/05-behavioral-physics-check.ts  # Algorithm constant 
 | `npx turbo run lint` | TypeScript strict lint |
 | `npm run format` | Prettier across all workspaces |
 | `npm run clean` | Clean build artifacts + node_modules |
+| `cd src/api && npm run migrate` | Run database migrations |
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for vulnerability disclosure policy and security controls.
 
 ## License
 

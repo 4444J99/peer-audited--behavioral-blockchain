@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Pool } from 'pg';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -7,6 +8,8 @@ import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { SubmitVerdictDto } from './dto';
 import { calculateAccuracy } from '../../../../shared/libs/integrity';
 
+@ApiTags('Fury')
+@ApiBearerAuth()
 @Controller('fury')
 @UseGuards(AuthGuard)
 export class FuryController {
@@ -17,6 +20,7 @@ export class FuryController {
   ) {}
 
   @Get('stats')
+  @ApiOperation({ summary: 'Get audit statistics for the current Fury reviewer' })
   async getStats(@CurrentUser() user: { id: string }) {
     // Audit statistics
     const auditStats = await this.pool.query(
@@ -90,6 +94,7 @@ export class FuryController {
   }
 
   @Get('queue')
+  @ApiOperation({ summary: 'Get pending audit assignments for the current Fury reviewer' })
   async getAssignments(@CurrentUser() user: { id: string }) {
     const result = await this.pool.query(
       `SELECT fa.id AS assignment_id, fa.proof_id, fa.assigned_at,
@@ -104,6 +109,7 @@ export class FuryController {
   }
 
   @Post('verdict')
+  @ApiOperation({ summary: 'Submit a PASS or FAIL verdict on an assigned proof' })
   async submitVerdict(@CurrentUser() user: { id: string }, @Body() dto: SubmitVerdictDto) {
     // Record the verdict
     await this.pool.query(

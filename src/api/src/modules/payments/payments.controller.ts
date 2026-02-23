@@ -1,4 +1,5 @@
 import { Controller, Post, Req, Res, Logger, RawBodyRequest } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { Pool } from 'pg';
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
@@ -6,6 +7,7 @@ import { ContractsService } from '../contracts/contracts.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Public } from '../../common/decorators/current-user.decorator';
 
+@ApiTags('Payments')
 @Controller('payments')
 export class PaymentsController {
   private readonly logger = new Logger(PaymentsController.name);
@@ -23,6 +25,8 @@ export class PaymentsController {
   }
 
   @Post('webhook')
+  @ApiOperation({ summary: 'Handle Stripe webhook events (payment, dispute)' })
+  @ApiExcludeEndpoint()
   @Public()
   async handleWebhook(
     @Req() req: RawBodyRequest<Request>,

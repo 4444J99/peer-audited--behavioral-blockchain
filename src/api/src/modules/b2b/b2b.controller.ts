@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { BillingService } from './billing.service';
 import { WebhookService } from './webhook.service';
@@ -6,6 +7,8 @@ import { MetricsService } from './metrics.service';
 import { AnonymizeService } from './anonymize.service';
 import { DataLakeService } from './datalake.service';
 
+@ApiTags('B2B')
+@ApiBearerAuth()
 @Controller('b2b')
 @UseGuards(AuthGuard)
 export class B2BController {
@@ -18,11 +21,13 @@ export class B2BController {
   ) {}
 
   @Get('metrics/:enterpriseId')
+  @ApiOperation({ summary: 'Get enterprise compliance metrics' })
   async getMetrics(@Param('enterpriseId') enterpriseId: string) {
     return this.metrics.getEnterpriseMetrics(enterpriseId);
   }
 
   @Get('billing/:enterpriseId')
+  @ApiOperation({ summary: 'Get enterprise billing summary' })
   async getBilling(@Param('enterpriseId') enterpriseId: string) {
     await this.billing.recordConsumptionEvent(enterpriseId, 'BILLING_QUERY');
     return {
@@ -35,6 +40,7 @@ export class B2BController {
   }
 
   @Post('webhook/register')
+  @ApiOperation({ summary: 'Register a webhook URL for enterprise event notifications' })
   async registerWebhook(@Body() body: { enterpriseId: string; url: string }) {
     return {
       status: 'registered',
@@ -44,6 +50,7 @@ export class B2BController {
   }
 
   @Post('webhook/test')
+  @ApiOperation({ summary: 'Send a test event to a webhook URL' })
   async testWebhook(@Body() body: { url: string }) {
     const sent = await this.webhook.dispatchEnterpriseMetricEvent(
       body.url,
@@ -53,12 +60,14 @@ export class B2BController {
   }
 
   @Get('export/hr/:enterpriseId')
+  @ApiOperation({ summary: 'Export anonymized HR compliance data' })
   async exportHrData(@Param('enterpriseId') enterpriseId: string) {
     const metrics = await this.metrics.getEnterpriseMetrics(enterpriseId);
     return this.anonymize.anonymizeEmployeeData(enterpriseId, []);
   }
 
   @Get('datalake/:enterpriseId')
+  @ApiOperation({ summary: 'Extract a time-bounded snapshot from the enterprise data lake' })
   async getDataLakeSnapshot(
     @Param('enterpriseId') enterpriseId: string,
     @Query('start') start: string,

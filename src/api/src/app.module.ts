@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ContractsModule } from './modules/contracts/contracts.module';
@@ -16,6 +17,15 @@ import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
+    LoggerModule.forRoot({
+      pinoHttp: {
+        autoLogging: true,
+        level: process.env.LOG_LEVEL || 'info',
+        transport: process.env.NODE_ENV !== 'production'
+          ? { target: 'pino-pretty', options: { colorize: true } }
+          : undefined,
+      },
+    }),
     DatabaseModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
     AuthModule,

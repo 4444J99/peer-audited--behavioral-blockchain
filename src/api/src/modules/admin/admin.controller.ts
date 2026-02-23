@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Param, Body, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Pool } from 'pg';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { RoleGuard, Roles } from '../../common/guards/role.guard';
@@ -8,6 +9,8 @@ import { HoneypotInjectorService } from '../../../services/intelligence/honeypot
 import { ContractsService } from '../contracts/contracts.service';
 import { BanUserDto, ResolveContractDto } from './dto';
 
+@ApiTags('Admin')
+@ApiBearerAuth()
 @Controller('admin')
 @UseGuards(AuthGuard, RoleGuard)
 @Roles('ADMIN')
@@ -20,12 +23,14 @@ export class AdminController {
   ) {}
 
   @Post('honeypot')
+  @ApiOperation({ summary: 'Inject a honeypot proof to QA reviewer accuracy' })
   async injectHoneypot() {
     const jobId = await this.honeypot.injectKnownFail();
     return { status: 'honeypot_injected', jobId };
   }
 
   @Post('ban/:userId')
+  @ApiOperation({ summary: 'Ban a user for policy violations' })
   async banUser(
     @Param('userId') targetUserId: string,
     @CurrentUser() user: { id: string },
@@ -35,6 +40,7 @@ export class AdminController {
   }
 
   @Post('resolve/:contractId')
+  @ApiOperation({ summary: 'Manually resolve a contract as completed or failed' })
   async resolveContract(
     @Param('contractId') contractId: string,
     @Body() body: ResolveContractDto,
@@ -44,6 +50,7 @@ export class AdminController {
   }
 
   @Get('stats')
+  @ApiOperation({ summary: 'Get platform-wide statistics' })
   async getStats() {
     const [users, contracts, proofs, integrity] = await Promise.all([
       this.pool.query(`SELECT COUNT(*) as count FROM users WHERE status = 'ACTIVE'`),
