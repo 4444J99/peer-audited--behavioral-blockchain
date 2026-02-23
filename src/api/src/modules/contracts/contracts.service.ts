@@ -210,14 +210,18 @@ export class ContractsService {
       durationDays: dto.durationDays,
     });
 
-    // 10. Notify user
-    await this.notifications?.create({
-      userId: dto.userId,
-      type: 'CONTRACT_CREATED',
-      title: 'Contract Created',
-      body: `Your ${dto.oathCategory.replace(/_/g, ' ').toLowerCase()} contract ($${dto.stakeAmount}) is now active.`,
-      metadata: { contractId },
-    });
+    // 10. Notify user (non-critical — must not break the financial transaction)
+    try {
+      await this.notifications?.create({
+        userId: dto.userId,
+        type: 'CONTRACT_CREATED',
+        title: 'Contract Created',
+        body: `Your ${dto.oathCategory.replace(/_/g, ' ').toLowerCase()} contract ($${dto.stakeAmount}) is now active.`,
+        metadata: { contractId },
+      });
+    } catch {
+      // Notification failure must never abort a successful financial transaction
+    }
 
     return { contractId, paymentIntentId: paymentIntent.id };
   }
@@ -285,14 +289,18 @@ export class ContractsService {
       anomalyFlags: anomalyResult.flags,
     });
 
-    // 6. Notify user
-    await this.notifications?.create({
-      userId: dto.userId,
-      type: 'PROOF_SUBMITTED',
-      title: 'Proof Submitted',
-      body: 'Your proof has been submitted and routed to the Fury network for review.',
-      metadata: { proofId, contractId },
-    });
+    // 6. Notify user (non-critical)
+    try {
+      await this.notifications?.create({
+        userId: dto.userId,
+        type: 'PROOF_SUBMITTED',
+        title: 'Proof Submitted',
+        body: 'Your proof has been submitted and routed to the Fury network for review.',
+        metadata: { proofId, contractId },
+      });
+    } catch {
+      // Notification failure must never abort a successful proof submission
+    }
 
     return { proofId, jobId };
   }
@@ -390,16 +398,20 @@ export class ContractsService {
       stakeAmount: Number(row.stake_amount),
     });
 
-    // Notify user of resolution
-    await this.notifications?.create({
-      userId: row.user_id,
-      type: 'CONTRACT_RESOLVED',
-      title: outcome === 'COMPLETED' ? 'Contract Completed' : 'Contract Failed',
-      body: outcome === 'COMPLETED'
-        ? `Your contract has been fulfilled. $${Number(row.stake_amount).toFixed(2)} returned.`
-        : `Your contract has failed. $${Number(row.stake_amount).toFixed(2)} has been captured.`,
-      metadata: { contractId, outcome },
-    });
+    // Notify user of resolution (non-critical)
+    try {
+      await this.notifications?.create({
+        userId: row.user_id,
+        type: 'CONTRACT_RESOLVED',
+        title: outcome === 'COMPLETED' ? 'Contract Completed' : 'Contract Failed',
+        body: outcome === 'COMPLETED'
+          ? `Your contract has been fulfilled. $${Number(row.stake_amount).toFixed(2)} returned.`
+          : `Your contract has failed. $${Number(row.stake_amount).toFixed(2)} has been captured.`,
+        metadata: { contractId, outcome },
+      });
+    } catch {
+      // Notification failure must never abort a successful resolution
+    }
   }
 
   async useGraceDay(contractId: string, userId: string): Promise<{ newDeadline: Date }> {
