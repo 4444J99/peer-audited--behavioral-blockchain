@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Styx** ("The Blockchain of Truth") — a peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes. Users stake money into behavioral contracts; a decentralized "Fury" network audits compliance; hardware oracles and a double-entry ledger enforce integrity.
 
-Turborepo monorepo in ORGAN-III (commercial products). Promotion status: **CANDIDATE**. ~430 tests across 5 workspaces.
+Turborepo monorepo in ORGAN-III (commercial products). Promotion status: **PUBLIC_PROCESS**. 307 tests across 5 workspaces.
 
 ## Build & Dev Commands
 
