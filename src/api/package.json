@@ -6,6 +6,7 @@
     "start": "node dist/api/src/main.js",
     "dev": "nest start --watch",
     "build": "nest build",
+    "lint": "tsc --noEmit",
     "test": "jest"
   },
   "dependencies": {

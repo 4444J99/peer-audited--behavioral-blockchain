@@ -286,6 +286,20 @@ export const api = {
       body: JSON.stringify({ text }),
     }),
 
+  // Fury stats (earnings, accuracy)
+  getFuryStats: () =>
+    request<{
+      totalAudits: number;
+      successfulAudits: number;
+      falseAccusations: number;
+      accuracy: number;
+      totalBountiesEarned: number;
+      totalPenaltiesPaid: number;
+      netEarnings: number;
+      honeypotsCaught: number;
+      honeypotsFailedOn: number;
+    }>('/fury/stats'),
+
   // Public feed (no auth)
   getPublicFeed: (limit?: number) =>
     request<{ events: Array<{

@@ -32,3 +32,12 @@ jobs:
 
     - name: Execute Build (Turborepo)
       run: npx turbo run build
+
+    - name: Lint (Turborepo)
+      run: npx turbo run lint
+
+    - name: Gate 04 — Redacted Build Check
+      run: bash scripts/validation/04-redacted-build-check.sh
+
+    - name: Gate 05 — Behavioral Physics Check
+      run: npx tsx scripts/validation/05-behavioral-physics-check.ts

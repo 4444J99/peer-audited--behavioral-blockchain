@@ -1,4 +1,4 @@
-import { callGemini, generateVCQuestions, simplifyConcept } from './GeminiClient';
+import { callGemini, generateVCQuestions, simplifyConcept, screenGoalEthics } from './GeminiClient';
 
 // Mock global fetch
 const mockFetch = jest.fn();
@@ -101,6 +101,45 @@ describe('GeminiClient', () => {
 
       const result = await simplifyConcept('Blockchain escrow');
       expect(result).toBe('It is like a piggy bank but on a computer');
+    });
+  });
+
+  describe('screenGoalEthics', () => {
+    it('should return ethical:true for safe goals', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: '{"ethical":true}' }] } }],
+        }),
+      });
+
+      const result = await screenGoalEthics('Run a 5K marathon');
+      expect(result).toEqual({ ethical: true });
+    });
+
+    it('should return ethical:false with reason for unsafe goals', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: '{"ethical":false,"reason":"Self-harm risk"}' }] } }],
+        }),
+      });
+
+      const result = await screenGoalEthics('Starve myself');
+      expect(result).toEqual({ ethical: false, reason: 'Self-harm risk' });
+    });
+
+    it('should send JSON mode request', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: '{"ethical":true}' }] } }],
+        }),
+      });
+
+      await screenGoalEthics('Read more books');
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.generationConfig.responseMimeType).toBe('application/json');
     });
   });
 });

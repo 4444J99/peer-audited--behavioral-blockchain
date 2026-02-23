@@ -146,11 +146,19 @@ export function grantOnboardingBonus(totalContracts: number): OnboardingBonusRes
 }
 
 /**
- * Placeholder ethical screening for goal descriptions.
- * Phase Omega: LLM-based goal screening (Gemini 2.5 Flash content policy check).
- * Currently returns true for all goals (pass-through).
+ * Ethical screening for goal descriptions via Gemini 2.5 Flash content policy check.
+ * Rejects goals involving self-harm, eating disorders, harming others,
+ * illegal activity, discrimination, or dangerous challenges.
+ * Fails open: if Gemini is unavailable or no API key is set, goals pass through.
  */
-export function isGoalEthical(_goalDescription: string): boolean {
-  // TODO(Phase Omega): Integrate Gemini content policy check
-  return true;
+export async function isGoalEthical(goalDescription: string): Promise<boolean> {
+  if (!process.env.GEMINI_API_KEY) return true;
+
+  try {
+    const { screenGoalEthics } = await import('../../api/services/intelligence/GeminiClient');
+    const result = await screenGoalEthics(goalDescription);
+    return result.ethical;
+  } catch {
+    return true;
+  }
 }

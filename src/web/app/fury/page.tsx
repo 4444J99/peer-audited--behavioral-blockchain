@@ -16,6 +16,18 @@ interface Assignment {
   submitted_at: string;
 }
 
+interface FuryStats {
+  totalAudits: number;
+  successfulAudits: number;
+  falseAccusations: number;
+  accuracy: number;
+  totalBountiesEarned: number;
+  totalPenaltiesPaid: number;
+  netEarnings: number;
+  honeypotsCaught: number;
+  honeypotsFailedOn: number;
+}
+
 export default function FuryWorkbench() {
   const { user: authUser, logout, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -24,6 +36,7 @@ export default function FuryWorkbench() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<FuryStats | null>(null);
 
   const loadAssignments = useCallback(async () => {
     try {
@@ -39,6 +52,15 @@ export default function FuryWorkbench() {
     }
   }, []);
 
+  const loadStats = useCallback(async () => {
+    try {
+      const data = await api.getFuryStats();
+      setStats(data);
+    } catch {
+      // Stats are non-critical — don't block the workbench
+    }
+  }, []);
+
   useEffect(() => {
     if (authLoading) return;
     if (!authUser) {
@@ -46,7 +68,8 @@ export default function FuryWorkbench() {
       return;
     }
     loadAssignments();
-  }, [authUser, authLoading, router, loadAssignments]);
+    loadStats();
+  }, [authUser, authLoading, router, loadAssignments, loadStats]);
 
   const handleLogout = () => {
     logout();
@@ -129,6 +152,38 @@ export default function FuryWorkbench() {
           </button>
         </div>
       </header>
+
+      {/* Fury Stats Bar */}
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
+          <div className="px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg">
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">Audits</p>
+            <p className="font-black text-lg text-white">{stats.totalAudits}</p>
+          </div>
+          <div className="px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg">
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">Accuracy</p>
+            <p className="font-black text-lg text-lime-400">{(stats.accuracy * 100).toFixed(1)}%</p>
+          </div>
+          <div className="px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg">
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">Net Earnings</p>
+            <p className={`font-black text-lg ${stats.netEarnings >= 0 ? 'text-lime-400' : 'text-red-500'}`}>
+              ${stats.netEarnings.toFixed(2)}
+            </p>
+          </div>
+          <div className="px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg">
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">Bounties</p>
+            <p className="font-black text-lg text-lime-400">${stats.totalBountiesEarned.toFixed(2)}</p>
+          </div>
+          <div className="px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg">
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">Honeypots Caught</p>
+            <p className="font-black text-lg text-white">{stats.honeypotsCaught}</p>
+          </div>
+          <div className="px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg">
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">Penalties</p>
+            <p className="font-black text-lg text-red-500">${stats.totalPenaltiesPaid.toFixed(2)}</p>
+          </div>
+        </div>
+      )}
 
       {!current ? (
         <div className="flex-1 flex items-center justify-center">

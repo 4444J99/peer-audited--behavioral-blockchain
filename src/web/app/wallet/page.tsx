@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { EscrowConnect } from '../../components/EscrowConnect';
-import { Wallet as WalletIcon, Lock, ArrowRightCircle, Loader2, AlertTriangle, LogOut } from 'lucide-react';
+import { Wallet as WalletIcon, Lock, ArrowRightCircle, Loader2, AlertTriangle, LogOut, History } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '../../services/api-client';
@@ -16,6 +16,37 @@ interface Contract {
   ends_at: string;
 }
 
+interface Balance {
+  userId: string;
+  email: string;
+  integrityScore: number;
+  allowedTiers: string[];
+  ledgerBalance: number;
+  status: string;
+}
+
+interface Transaction {
+  id: string;
+  debit_account_id: string;
+  credit_account_id: string;
+  amount: string;
+  contract_id: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  debit_account_name: string;
+  credit_account_name: string;
+}
+
+const TX_TYPE_LABELS: Record<string, { label: string; color: string }> = {
+  FURY_BOUNTY: { label: 'Fury Bounty Earned', color: 'text-lime-400' },
+  FURY_PENALTY: { label: 'Fury Penalty', color: 'text-red-500' },
+  STAKE_HOLD: { label: 'Stake Held', color: 'text-yellow-500' },
+  STAKE_RELEASE: { label: 'Stake Released', color: 'text-green-400' },
+  STAKE_BURN: { label: 'Stake Burned', color: 'text-red-500' },
+  ONBOARDING_BONUS: { label: 'Onboarding Bonus', color: 'text-lime-400' },
+  APPEAL_FEE: { label: 'Appeal Fee', color: 'text-orange-400' },
+};
+
 const STATUS_COLORS: Record<string, string> = {
   ACTIVE: 'text-red-500',
   COMPLETED: 'text-green-500',
@@ -23,10 +54,17 @@ const STATUS_COLORS: Record<string, string> = {
   PENDING_STAKE: 'text-yellow-500',
 };
 
+function getTxLabel(metadata: Record<string, unknown>): { label: string; color: string } {
+  const type = (metadata?.type as string) || '';
+  return TX_TYPE_LABELS[type] || { label: type || 'Transaction', color: 'text-neutral-400' };
+}
+
 export default function WalletDashboard() {
   const { user: authUser, logout, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [balance, setBalance] = useState<Balance | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,8 +76,14 @@ export default function WalletDashboard() {
     }
     async function load() {
       try {
-        const data = await api.getUserContracts();
-        setContracts(data);
+        const [contractsData, balanceData, historyData] = await Promise.all([
+          api.getUserContracts(),
+          api.getBalance().catch(() => null),
+          api.getHistory(20).catch(() => ({ transactions: [] })),
+        ]);
+        setContracts(contractsData);
+        setBalance(balanceData);
+        setTransactions(historyData.transactions);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load contracts');
       } finally {
@@ -75,6 +119,28 @@ export default function WalletDashboard() {
           </button>
         </div>
       </header>
+
+      {/* Balance Summary */}
+      {balance && (
+        <div className="max-w-5xl mx-auto mb-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="px-5 py-4 bg-neutral-900 border border-neutral-800 rounded-xl">
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">Ledger Balance</p>
+            <p className="font-black text-2xl text-lime-400">${balance.ledgerBalance.toFixed(2)}</p>
+          </div>
+          <div className="px-5 py-4 bg-neutral-900 border border-neutral-800 rounded-xl">
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">Integrity Score</p>
+            <p className="font-black text-2xl text-white">{balance.integrityScore}</p>
+          </div>
+          <div className="px-5 py-4 bg-neutral-900 border border-neutral-800 rounded-xl">
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">Tiers Allowed</p>
+            <p className="font-bold text-sm text-neutral-300 mt-1">{balance.allowedTiers.join(', ')}</p>
+          </div>
+          <div className="px-5 py-4 bg-neutral-900 border border-neutral-800 rounded-xl">
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">Account Status</p>
+            <p className={`font-black text-lg ${balance.status === 'ACTIVE' ? 'text-lime-400' : 'text-red-500'}`}>{balance.status}</p>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Connection Flow */}
@@ -139,6 +205,35 @@ export default function WalletDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Transaction History */}
+      {transactions.length > 0 && (
+        <div className="max-w-5xl mx-auto mt-12">
+          <h3 className="text-lg font-black uppercase tracking-tight mb-4 flex items-center gap-2">
+            <History size={18} className="text-neutral-500" /> Transaction History
+          </h3>
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl divide-y divide-neutral-800">
+            {transactions.map((tx) => {
+              const { label, color } = getTxLabel(tx.metadata);
+              return (
+                <div key={tx.id} className="px-6 py-4 flex justify-between items-center">
+                  <div>
+                    <p className={`font-bold text-sm ${color}`}>{label}</p>
+                    <p className="text-xs text-neutral-600 mt-1">
+                      {tx.debit_account_name} &rarr; {tx.credit_account_name}
+                      {tx.contract_id && <span className="ml-2 text-neutral-700">Contract: {tx.contract_id.slice(0, 8)}...</span>}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-black text-white">${Number(tx.amount).toFixed(2)}</p>
+                    <p className="text-xs text-neutral-600">{new Date(tx.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

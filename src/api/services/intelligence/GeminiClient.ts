@@ -57,3 +57,16 @@ export async function generateVCQuestions(slideContent: string): Promise<string[
 export async function simplifyConcept(text: string): Promise<string> {
   return callGemini(`Explain this like I'm 5 years old:\n\n${text}`);
 }
+
+/**
+ * Screen a user-submitted goal description for ethical/safety compliance.
+ * Rejects goals involving self-harm, eating disorders, harming others,
+ * illegal activity, discrimination, or dangerous challenges.
+ */
+export async function screenGoalEthics(goalDescription: string): Promise<{ ethical: boolean; reason?: string }> {
+  const raw = await callGemini(
+    `You are a content safety reviewer for a behavioral accountability platform. Evaluate whether this user goal is ethical and safe. Reject goals that involve: self-harm, eating disorders, harming others, illegal activity, discrimination, or dangerous challenges. Return JSON: { "ethical": boolean, "reason": "brief explanation if rejected" }\n\nGoal: "${goalDescription}"`,
+    true,
+  );
+  return JSON.parse(raw);
+}

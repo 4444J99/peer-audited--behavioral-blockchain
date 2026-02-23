@@ -110,10 +110,46 @@ describe('behavioral-logic', () => {
   // ── isGoalEthical ───────────────────────────────────────────────
 
   describe('isGoalEthical', () => {
-    it('should return true (placeholder)', () => {
-      expect(isGoalEthical('Lose 10 lbs')).toBe(true);
-      expect(isGoalEthical('something potentially problematic')).toBe(true);
-      expect(isGoalEthical('')).toBe(true);
+    const originalEnv = process.env.GEMINI_API_KEY;
+
+    afterEach(() => {
+      if (originalEnv !== undefined) {
+        process.env.GEMINI_API_KEY = originalEnv;
+      } else {
+        delete process.env.GEMINI_API_KEY;
+      }
+      jest.restoreAllMocks();
+    });
+
+    it('should pass through when no GEMINI_API_KEY is set', async () => {
+      delete process.env.GEMINI_API_KEY;
+      await expect(isGoalEthical('Lose 10 lbs')).resolves.toBe(true);
+      await expect(isGoalEthical('something potentially problematic')).resolves.toBe(true);
+      await expect(isGoalEthical('')).resolves.toBe(true);
+    });
+
+    it('should return true when Gemini approves the goal', async () => {
+      process.env.GEMINI_API_KEY = 'test-key';
+      jest.mock('../../api/services/intelligence/GeminiClient', () => ({
+        screenGoalEthics: jest.fn().mockResolvedValue({ ethical: true }),
+      }));
+      await expect(isGoalEthical('Run a 5K marathon')).resolves.toBe(true);
+    });
+
+    it('should return false when Gemini rejects the goal', async () => {
+      process.env.GEMINI_API_KEY = 'test-key';
+      jest.mock('../../api/services/intelligence/GeminiClient', () => ({
+        screenGoalEthics: jest.fn().mockResolvedValue({ ethical: false, reason: 'Self-harm risk' }),
+      }));
+      await expect(isGoalEthical('Starve myself to lose weight')).resolves.toBe(false);
+    });
+
+    it('should fail open when Gemini throws an error', async () => {
+      process.env.GEMINI_API_KEY = 'test-key';
+      jest.mock('../../api/services/intelligence/GeminiClient', () => ({
+        screenGoalEthics: jest.fn().mockRejectedValue(new Error('Gemini down')),
+      }));
+      await expect(isGoalEthical('Any goal')).resolves.toBe(true);
     });
   });
 });
