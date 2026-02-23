@@ -7,13 +7,17 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ApiClient } from '../services/ApiClient';
+import type { ProfileStackParamList } from '../App';
 
 interface ProfileScreenProps {
   onLogout: () => void;
 }
 
 export function ProfileScreen({ onLogout }: ProfileScreenProps) {
+  const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -77,6 +81,10 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
         </View>
       </View>
 
+      <TouchableOpacity style={styles.settingsButton} onPress={() => navigation.navigate('Settings')}>
+        <Text style={styles.settingsText}>Settings</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
@@ -103,6 +111,8 @@ const styles = StyleSheet.create({
   statItem: { flex: 1, backgroundColor: '#1a1a2e', borderRadius: 12, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#2a2a3e' },
   statValue: { color: '#e0e0e0', fontSize: 20, fontWeight: '700' },
   statLabel: { color: '#888', fontSize: 12, marginTop: 4 },
+  settingsButton: { backgroundColor: '#1a1a2e', borderWidth: 1, borderColor: '#2a2a3e', borderRadius: 10, padding: 14, alignItems: 'center', marginBottom: 12 },
+  settingsText: { color: '#e0e0e0', fontSize: 15, fontWeight: '600' },
   logoutButton: { backgroundColor: '#e74c3c20', borderWidth: 1, borderColor: '#e74c3c', borderRadius: 10, padding: 14, alignItems: 'center', marginBottom: 16 },
   logoutText: { color: '#e74c3c', fontSize: 15, fontWeight: '600' },
   version: { color: '#444', fontSize: 12, textAlign: 'center', marginTop: 8, marginBottom: 32 },

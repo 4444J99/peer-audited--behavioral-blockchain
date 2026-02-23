@@ -11,9 +11,12 @@ import { RegisterScreen } from './screens/RegisterScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { ContractListScreen } from './screens/ContractListScreen';
 import { ContractDetailScreen } from './screens/ContractDetailScreen';
+import { CreateContractScreen } from './screens/CreateContractScreen';
 import { CameraScreen } from './screens/CameraScreen';
 import { FuryScreen } from './screens/FuryScreen';
+import { WalletScreen } from './screens/WalletScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -23,19 +26,27 @@ export type AuthStackParamList = {
 export type ContractsStackParamList = {
   ContractList: undefined;
   ContractDetail: { contractId: string };
+  CreateContract: undefined;
   SubmitProof: { contractId: string };
+};
+
+export type ProfileStackParamList = {
+  ProfileMain: undefined;
+  Settings: undefined;
 };
 
 export type MainTabParamList = {
   Dashboard: undefined;
   Contracts: undefined;
-  Camera: undefined;
+  Wallet: undefined;
   Fury: undefined;
+  Camera: undefined;
   Profile: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const ContractsStack = createNativeStackNavigator<ContractsStackParamList>();
+const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 
 function ContractsNavigator() {
@@ -56,7 +67,32 @@ function ContractsNavigator() {
         component={ContractDetailScreen}
         options={{ title: 'Oath Details' }}
       />
+      <ContractsStack.Screen
+        name="CreateContract"
+        component={CreateContractScreen}
+        options={{ title: 'New Oath' }}
+      />
     </ContractsStack.Navigator>
+  );
+}
+
+function ProfileNavigator({ onLogout }: { onLogout: () => void }) {
+  return (
+    <ProfileStack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: '#0a0a0f' },
+        headerTintColor: '#e0e0e0',
+      }}
+    >
+      <ProfileStack.Screen name="ProfileMain" options={{ title: 'Profile' }}>
+        {(props) => <ProfileScreen {...props} onLogout={onLogout} />}
+      </ProfileStack.Screen>
+      <ProfileStack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: 'Settings' }}
+      />
+    </ProfileStack.Navigator>
   );
 }
 
@@ -89,11 +125,11 @@ function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
         }}
       />
       <MainTab.Screen
-        name="Camera"
-        component={CameraScreen}
+        name="Wallet"
+        component={WalletScreen}
         options={{
-          title: 'Prove',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>{'📷'}</Text>,
+          title: 'Wallet',
+          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>{'💰'}</Text>,
         }}
       />
       <MainTab.Screen
@@ -105,13 +141,22 @@ function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
         }}
       />
       <MainTab.Screen
+        name="Camera"
+        component={CameraScreen}
+        options={{
+          title: 'Prove',
+          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>{'📷'}</Text>,
+        }}
+      />
+      <MainTab.Screen
         name="Profile"
         options={{
+          headerShown: false,
           title: 'Profile',
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>{'👤'}</Text>,
         }}
       >
-        {(props) => <ProfileScreen {...props} onLogout={onLogout} />}
+        {() => <ProfileNavigator onLogout={onLogout} />}
       </MainTab.Screen>
     </MainTab.Navigator>
   );

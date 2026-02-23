@@ -46,7 +46,7 @@ cd src/shared && npm run build     # tsc
 
 ### Testing
 
-Tests use **Jest + ts-jest** in both API and Shared workspaces. Test files are co-located as `*.spec.ts` next to their source files.
+Tests use **Jest + ts-jest** in all workspaces (API, Shared, Mobile, Desktop, Web). Test files are co-located as `*.spec.ts` (or `*.test.ts` in web) next to their source files.
 
 ```bash
 # All tests via turbo
@@ -75,6 +75,13 @@ Existing spec files:
 - `src/api/src/modules/fury/fury.bounty.spec.ts` — Fury bounty ledger transaction tests
 - `src/api/src/modules/fury/fury.stats.spec.ts` — Fury stats endpoint tests
 - `src/api/src/modules/ai/ai.controller.spec.ts` — AI controller tests (grill-me, eli5)
+- `src/mobile/services/ApiClient.spec.ts` — mobile API client tests (request plumbing, all endpoints)
+- `src/mobile/services/SessionService.spec.ts` — AsyncStorage session persistence tests
+- `src/mobile/services/EnterpriseSSO.spec.ts` — deep link SSO flow tests
+- `src/mobile/services/UploadService.spec.ts` — R2 upload mock tests
+- `src/mobile/services/NotificationService.spec.ts` — notification fetch + unread count tests
+- `src/desktop/src/services/api.spec.ts` — desktop admin API client tests (auth, ban, honeypot, B2B keys)
+- `src/web/services/api-client.test.ts` — web API client tests (auth, contracts, fury, settings, AI)
 
 ### Validation Scripts
 
@@ -195,6 +202,6 @@ Docker services (port mappings): PostgreSQL on `5432`, Redis on `6379`, API on `
 
 ## Implementation Status
 
-**Implemented**: LedgerService (double-entry transactions), TruthLogService (hash-chained audit log), FuryRouterService (BullMQ proof routing), ConsensusEngine (verdict aggregation), StripeFboService (hold/capture/cancel), DisputeService (appeal fee), AegisProtocolService (BMI/velocity validation), GeofenceService (jurisdiction blocking), ModerationService (permanent bans), HoneypotInjectorService (Fury QA), AnomalyService (pHash duplicate detection + EXIF validation), WebhookService (HMAC-signed B2B dispatch), GeminiClient (Gemini 2.5 Flash API — VC questions, ELI5, **goal ethics screening**), AiController (POST /ai/grill-me, POST /ai/eli5), AuthGuard (JWT), OnboardingWizard, linguistic cloaker, integrity scoring algorithms, PitchDeck UI (routed through API), Desktop admin panels, **Fury Bounty Economy** (AUDITOR_STAKE_AMOUNT disbursed via ledger on consensus — bounty for correct votes, penalty for incorrect/honeypot failures), **Fury Stats API** (GET /fury/stats — audit counts, earnings, accuracy), **Fury Stats UI** (workbench stats bar — audits, accuracy, earnings, honeypots, penalties — web + mobile), **Wallet Economy UI** (balance summary, transaction history with human-readable labels for FURY_BOUNTY/FURY_PENALTY/STAKE_HOLD/STAKE_RELEASE/ONBOARDING_BONUS), **Tavern Board bounty events** (FURY_BOUNTY_PAID / FURY_PENALTY_CHARGED in public feed, using api-client), **isGoalEthical()** (Gemini 2.5 Flash content policy screening — fail-open), **CI pipeline with gates** (lint + Gate 04 redacted build check + Gate 05 behavioral physics check), **Core algorithm tests** (integrity score, tiers, accuracy, demotion, stake limits — 20 cases), **AiController tests** (grill-me + eli5 — 6 cases), **GitHub issue/PR templates**, **Mobile Fury stats parity** (getFuryStats + getBalance in mobile ApiClient).
+**Implemented**: LedgerService (double-entry transactions), TruthLogService (hash-chained audit log), FuryRouterService (BullMQ proof routing), ConsensusEngine (verdict aggregation), StripeFboService (hold/capture/cancel), DisputeService (appeal fee), AegisProtocolService (BMI/velocity validation), GeofenceService (jurisdiction blocking), ModerationService (permanent bans), HoneypotInjectorService (Fury QA), AnomalyService (pHash duplicate detection + EXIF validation), WebhookService (HMAC-signed B2B dispatch), GeminiClient (Gemini 2.5 Flash API — VC questions, ELI5, **goal ethics screening**), AiController (POST /ai/grill-me, POST /ai/eli5), AuthGuard (JWT), OnboardingWizard, linguistic cloaker, integrity scoring algorithms, PitchDeck UI (routed through API), Desktop admin panels, **Fury Bounty Economy** (AUDITOR_STAKE_AMOUNT disbursed via ledger on consensus — bounty for correct votes, penalty for incorrect/honeypot failures), **Fury Stats API** (GET /fury/stats — audit counts, earnings, accuracy), **Fury Stats UI** (workbench stats bar — audits, accuracy, earnings, honeypots, penalties — web + mobile), **Wallet Economy UI** (balance summary, transaction history with human-readable labels for FURY_BOUNTY/FURY_PENALTY/STAKE_HOLD/STAKE_RELEASE/ONBOARDING_BONUS), **Tavern Board bounty events** (FURY_BOUNTY_PAID / FURY_PENALTY_CHARGED in public feed, using api-client), **isGoalEthical()** (Gemini 2.5 Flash content policy screening — fail-open), **CI pipeline with gates** (lint + Gate 04 redacted build check + Gate 05 behavioral physics check), **Core algorithm tests** (integrity score, tiers, accuracy, demotion, stake limits — 20 cases), **AiController tests** (grill-me + eli5 — 6 cases), **GitHub issue/PR templates**, **Mobile Fury stats parity** (getFuryStats + getBalance in mobile ApiClient), **Mobile Platform Parity** (CreateContractScreen — full oath creation form with 6 streams/23 categories, verification method picker, stake input, duration picker, Aegis BMI/velocity client-side preview for BIOLOGICAL_WEIGHT; WalletScreen — balance summary, integrity score, tier display, transaction history with TX_TYPE_LABELS; SettingsScreen — password change, notification preferences, account deletion; 6-tab navigation with Wallet tab; ApiClient: changePassword, updateSettings, deleteAccount; DashboardScreen: balance display + CreateContract quick action), **Test Coverage Expansion** (Phase Xi — Jest+ts-jest infrastructure for mobile/desktop; 34 mobile tests across 5 spec files: ApiClient, SessionService, EnterpriseSSO, UploadService, NotificationService; 11 desktop tests: admin API client; 15 new web tests: api-client; total ~377 tests across 5 workspaces).
 
 **Remaining limitations**: CameraModule (mobile camera requires native Swift/Kotlin — placeholder UI with text proof submission).

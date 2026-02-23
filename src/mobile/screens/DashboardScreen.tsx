@@ -15,16 +15,19 @@ export function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const [balance, setBalance] = useState<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [error, setError] = useState('');
 
   const loadData = useCallback(async () => {
     try {
-      const [me, notifs] = await Promise.all([
+      const [me, balanceData, notifs] = await Promise.all([
         ApiClient.getMe(),
+        ApiClient.getBalance().catch(() => null),
         ApiClient.getNotifications().catch(() => ({ notifications: [] })),
       ]);
       setProfile(me);
+      setBalance(balanceData);
       setNotifications(notifs.notifications.slice(0, 5));
       setError('');
     } catch (err: any) {
@@ -88,6 +91,10 @@ export function DashboardScreen() {
           <Text style={styles.statValue}>${profile?.totalStaked?.toFixed(2) ?? '0.00'}</Text>
           <Text style={styles.statLabel}>Total Staked</Text>
         </View>
+        <View style={styles.statCard}>
+          <Text style={[styles.statValue, { color: '#84cc16' }]}>${balance?.ledgerBalance?.toFixed(2) ?? '0.00'}</Text>
+          <Text style={styles.statLabel}>Balance</Text>
+        </View>
       </View>
 
       {/* Quick Actions */}
@@ -96,10 +103,17 @@ export function DashboardScreen() {
         <View style={styles.actionsRow}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => navigation.navigate('Contracts')}
+            onPress={() => navigation.navigate('Contracts', { screen: 'CreateContract' } as any)}
           >
             <Text style={styles.actionIcon}>{'📜'}</Text>
             <Text style={styles.actionLabel}>New Oath</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('Wallet')}
+          >
+            <Text style={styles.actionIcon}>{'💰'}</Text>
+            <Text style={styles.actionLabel}>Wallet</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}

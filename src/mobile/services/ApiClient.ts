@@ -165,6 +165,24 @@ export const ApiClient = {
       '/notifications',
     ),
 
+  // Settings
+  changePassword: (currentPassword: string, newPassword: string) => // allow-secret
+    request<{ status: string }>('/users/me/password', {
+      method: 'PATCH',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
+
+  updateSettings: (settings: { emailNotifications?: boolean; pushNotifications?: boolean }) =>
+    request<{ status: string }>('/users/me/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(settings),
+    }),
+
+  deleteAccount: () =>
+    request<{ status: string }>('/users/me', {
+      method: 'DELETE',
+    }),
+
   // Enterprise SSO
   exchangeEnterpriseToken: (enterpriseToken: string) => // allow-secret
     request<{ userId: string; token: string }>('/auth/enterprise', {

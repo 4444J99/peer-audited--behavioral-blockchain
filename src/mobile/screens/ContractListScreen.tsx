@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,19 @@ export function ContractListScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('CreateContract')}
+          style={{ marginRight: 8 }}
+        >
+          <Text style={{ color: '#ff4444', fontSize: 14, fontWeight: '700' }}>+ New Oath</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   const loadContracts = useCallback(async () => {
     try {
