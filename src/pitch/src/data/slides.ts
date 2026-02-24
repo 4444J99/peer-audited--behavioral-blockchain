@@ -263,7 +263,7 @@ export const slides: SlideData[] = [
             {
               title: 'Phase 1: B2C',
               items: [
-                'Target: biohacker & hardcore fitness communities',
+                'Target: biohacker, fitness & post-breakup recovery communities',
                 'Viral referral loop via endowed bonuses',
                 'Zero customer acquisition cost',
                 'High-LTV early adopters validate product-market fit',
@@ -286,6 +286,7 @@ export const slides: SlideData[] = [
         data: {
           items: [
             { value: '$13B \u2192 $50B', label: 'Corporate wellness market by 2035', source: 'Grand View Research' },
+            { value: '200K+', label: 'r/ExNoContact members (organic)', source: 'Reddit' },
             { value: '23%', label: 'CAGR healthcare gamification', source: 'Markets & Markets' },
           ],
         } satisfies StatBlock,
@@ -300,6 +301,10 @@ export const slides: SlideData[] = [
       {
         question: 'What\u2019s your competitive moat against enterprise wellness incumbents?',
         answer: 'Incumbents (Virgin Pulse, Limeade) rely on surveys and self-reporting \u2014 the exact Oracle Problem we solve. Our decentralized verification network is a structural moat: it takes years and millions of users to build a Fury network. We\u2019re not selling software; we\u2019re selling a truth infrastructure that no competitor can replicate by hiring engineers.',
+      },
+      {
+        question: 'Isn\u2019t post-breakup a risky emotional space for financial stakes?',
+        answer: 'It\u2019s the perfect space. These users are already experiencing acute loss aversion from the breakup. The financial stake channels that emotional energy into constructive behavior. The Recovery Protocol includes mandatory accountability partners, AP veto power, and emergency contact exemptions \u2014 hardcoded guardrails that protect vulnerable users better than any existing app in the space.',
       },
     ],
     sketch: 'marketPipeline',

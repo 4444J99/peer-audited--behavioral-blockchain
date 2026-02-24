@@ -37,4 +37,30 @@ describe('Linguistic Cloaker', () => {
     const input = 'Welcome to the platform dashboard';
     expect(cloakVocabulary(input, 'APP_STORE')).toBe(input);
   });
+
+  it('should replace "no contact" with "personal boundary" in APP_STORE context', () => {
+    const input = 'Maintain no contact with your ex';
+    const result = cloakVocabulary(input, 'APP_STORE');
+    expect(result).not.toMatch(/no.?contact/i);
+    expect(result).toContain('personal boundary');
+  });
+
+  it('should replace "no-contact" (hyphenated) with "personal boundary"', () => {
+    const input = 'Your no-contact commitment is active';
+    const result = cloakVocabulary(input, 'APP_STORE');
+    expect(result).toContain('personal boundary');
+  });
+
+  it('should replace "relapse" with "setback" in STRIPE context', () => {
+    const input = 'Prevent relapse with financial accountability';
+    const result = cloakVocabulary(input, 'STRIPE');
+    expect(result).not.toMatch(/relapse/i);
+    expect(result).toContain('setback');
+  });
+
+  it('should not replace recovery terms in NATIVE context', () => {
+    const input = 'no contact relapse prevention';
+    const result = cloakVocabulary(input, 'NATIVE');
+    expect(result).toBe(input);
+  });
 });

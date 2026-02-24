@@ -6,6 +6,7 @@ import { StripeFboService } from '../../../services/escrow/stripe.service';
 import { DisputeService } from '../../../services/escrow/dispute.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { AegisProtocolService } from '../../../services/health/aegis.service';
+import { RecoveryProtocolService } from '../../../services/health/recovery-protocol.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { calculateIntegrity, getAllowedTiers, getTierMaxStake, UserHistory } from '../../../../shared/libs/integrity';
@@ -18,6 +19,7 @@ import {
   ONBOARDING_BONUS_AMOUNT,
   FAILURE_COOL_OFF_DAYS,
   DOWNSCALE_STRIKE_THRESHOLD,
+  MAX_NOCONTACT_DURATION_DAYS,
 } from '../../../../shared/libs/behavioral-logic';
 
 import { CreateContractDto as CreateContractDtoBase, SubmitProofDto as SubmitProofDtoBase } from './dto';
@@ -40,6 +42,7 @@ export class ContractsService {
     private readonly dispute: DisputeService,
     private readonly furyRouter: FuryRouterService,
     private readonly aegis: AegisProtocolService,
+    private readonly recovery: RecoveryProtocolService,
     private readonly anomaly: AnomalyService,
     @Optional() @Inject(NotificationsService) private readonly notifications?: NotificationsService,
   ) {}
@@ -127,6 +130,19 @@ export class ContractsService {
       );
     }
 
+    // 4b. If recovery oath, run Recovery Protocol guardrails
+    if (dto.oathCategory.startsWith('RECOVERY_')) {
+      this.recovery.validateRecoveryContract(
+        dto.oathCategory,
+        dto.durationDays,
+        dto.recoveryMetadata,
+      );
+      // Enforce duration cap for RECOVERY_NOCONTACT
+      if (dto.durationDays > MAX_NOCONTACT_DURATION_DAYS) {
+        dto = { ...dto, durationDays: MAX_NOCONTACT_DURATION_DAYS };
+      }
+    }
+
     // 5. Hold stake via Stripe FBO
     if (!user.stripe_customer_id) {
       throw new BadRequestException('User has no payment method on file');
@@ -141,14 +157,26 @@ export class ContractsService {
     // 6. Insert contract row
     const now = new Date();
     const endsAt = new Date(now.getTime() + dto.durationDays * 24 * 60 * 60 * 1000);
+    const contractMetadata = dto.recoveryMetadata
+      ? { recovery: { noContactIdentifiers: dto.recoveryMetadata.noContactIdentifiers, acknowledgments: dto.recoveryMetadata.acknowledgments } }
+      : {};
 
     const contractResult = await this.pool.query(
-      `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE', $7, $8)
+      `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE', $7, $8, $9)
        RETURNING id`,
-      [dto.userId, dto.oathCategory, dto.verificationMethod, dto.stakeAmount, paymentIntent.id, dto.durationDays, now.toISOString(), endsAt.toISOString()],
+      [dto.userId, dto.oathCategory, dto.verificationMethod, dto.stakeAmount, paymentIntent.id, dto.durationDays, now.toISOString(), endsAt.toISOString(), JSON.stringify(contractMetadata)],
     );
     const contractId = contractResult.rows[0].id;
+
+    // 6b. If recovery oath, create accountability partner row
+    if (dto.oathCategory.startsWith('RECOVERY_') && dto.recoveryMetadata) {
+      await this.pool.query(
+        `INSERT INTO accountability_partners (contract_id, partner_email, status)
+         VALUES ($1, $2, 'PENDING')`,
+        [contractId, dto.recoveryMetadata.accountabilityPartnerEmail],
+      );
+    }
 
     // 7. Check for onboarding bonus (first contract)
     const priorContracts = await this.pool.query(

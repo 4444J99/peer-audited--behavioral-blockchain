@@ -15,6 +15,8 @@ const REPLACEMENT_SOURCES: Array<[string, string, string]> = [
   [`gam${b(98)}l[ei]ng?`, 'gi', 'investing'],
   [`wa${b(103)}er`, 'gi', 'deposit'],
   ['fury', 'gi', 'peer review'],
+  [`no.?contact`, 'gi', 'personal boundary'],
+  [`relapse`, 'gi', 'setback'],
 ];
 
 export const cloakVocabulary = (input: string, context: 'APP_STORE' | 'STRIPE' | 'NATIVE'): string => {

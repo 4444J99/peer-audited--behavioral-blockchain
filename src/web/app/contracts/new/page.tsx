@@ -30,6 +30,10 @@ const OATH_CATEGORIES = [
   { value: 'SOCIAL_COMMUNITY', label: 'Civic Engagement', stream: 'Character' },
   { value: 'SOCIAL_CHARITY', label: 'Philanthropic Velocity', stream: 'Character' },
   { value: 'SOCIAL_CONNECTION', label: 'Family Presence', stream: 'Character' },
+  { value: 'RECOVERY_NOCONTACT', label: 'No-Contact Boundary', stream: 'Recovery' },
+  { value: 'RECOVERY_SUBSTANCE', label: 'Substance Abstinence', stream: 'Recovery' },
+  { value: 'RECOVERY_DETOX', label: 'Behavioral Detox', stream: 'Recovery' },
+  { value: 'RECOVERY_AVOIDANCE', label: 'Environment Avoidance', stream: 'Recovery' },
 ];
 
 const VERIFICATION_METHODS = [
@@ -41,6 +45,7 @@ const VERIFICATION_METHODS = [
   { value: 'TIME_LAPSE_PROOF', label: 'Time-Lapse Proof' },
   { value: 'GPS', label: 'GPS Geofence' },
   { value: 'LEDGER', label: 'Financial Ledger' },
+  { value: 'ATTESTATION', label: 'Daily Attestation' },
 ];
 
 const DURATION_OPTIONS = [
@@ -60,6 +65,17 @@ export default function NewContractPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Recovery stream fields
+  const [apEmail, setApEmail] = useState('');
+  const [noContactIds, setNoContactIds] = useState('');
+  const [ackVoluntary, setAckVoluntary] = useState(false);
+  const [ackNoMinors, setAckNoMinors] = useState(false);
+  const [ackNoDependents, setAckNoDependents] = useState(false);
+  const [ackNoLegal, setAckNoLegal] = useState(false);
+
+  const isRecovery = oathCategory.startsWith('RECOVERY_');
+  const isNoContact = oathCategory === 'RECOVERY_NOCONTACT';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -75,14 +91,42 @@ export default function NewContractPage() {
       return;
     }
 
+    if (isRecovery && !apEmail) {
+      setError('Accountability partner email is required for Recovery contracts.');
+      return;
+    }
+    if (isRecovery && (!ackVoluntary || !ackNoMinors || !ackNoDependents || !ackNoLegal)) {
+      setError('All safety acknowledgments must be confirmed for Recovery contracts.');
+      return;
+    }
+
+    const effectiveDuration = isRecovery ? Math.min(durationDays, 30) : durationDays;
+
     setSubmitting(true);
     try {
-      await api.createContract({
+      const payload: Record<string, unknown> = {
         oathCategory,
         verificationMethod,
         stakeAmount: amount,
-        durationDays,
-      });
+        durationDays: effectiveDuration,
+      };
+
+      if (isRecovery) {
+        payload.recoveryMetadata = {
+          accountabilityPartnerEmail: apEmail,
+          noContactIdentifiers: isNoContact && noContactIds.trim()
+            ? noContactIds.split(',').map(s => s.trim()).filter(Boolean)
+            : undefined,
+          acknowledgments: {
+            voluntary: ackVoluntary,
+            noMinors: ackNoMinors,
+            noDependents: ackNoDependents,
+            noLegalObligations: ackNoLegal,
+          },
+        };
+      }
+
+      await api.createContract(payload);
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create contract');
@@ -184,7 +228,7 @@ export default function NewContractPage() {
             Duration
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-            {DURATION_OPTIONS.map((opt) => (
+            {DURATION_OPTIONS.filter(opt => !isRecovery || opt.value <= 30).map((opt) => (
               <button
                 key={opt.value}
                 type="button"
@@ -200,6 +244,70 @@ export default function NewContractPage() {
             ))}
           </div>
         </div>
+
+        {/* Recovery Stream Fields */}
+        {isRecovery && (
+          <div className="space-y-6 p-6 bg-neutral-900/50 border border-amber-600/30 rounded-xl">
+            <h3 className="text-sm font-bold text-amber-500 uppercase tracking-widest">Recovery Protocol</h3>
+
+            <div>
+              <label className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2">
+                Accountability Partner Email *
+              </label>
+              <input
+                type="email"
+                value={apEmail}
+                onChange={(e) => setApEmail(e.target.value)}
+                placeholder="friend@example.com"
+                className="w-full p-3 bg-neutral-900 border border-neutral-800 rounded-xl text-white focus:border-amber-600 focus:outline-none"
+              />
+              <p className="text-xs text-neutral-600 mt-1">Your AP will co-sign daily attestations and can cancel the contract if needed.</p>
+            </div>
+
+            {isNoContact && (
+              <div>
+                <label className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2">
+                  No-Contact Identifiers (hashed, max 3)
+                </label>
+                <input
+                  type="text"
+                  value={noContactIds}
+                  onChange={(e) => setNoContactIds(e.target.value)}
+                  placeholder="Comma-separated identifiers"
+                  className="w-full p-3 bg-neutral-900 border border-neutral-800 rounded-xl text-white focus:border-amber-600 focus:outline-none"
+                />
+                <p className="text-xs text-neutral-600 mt-1">Identifiers are hashed client-side. Styx never stores plaintext.</p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <p className="text-sm font-bold text-neutral-400 uppercase tracking-widest">Safety Acknowledgments *</p>
+              {[
+                { id: 'voluntary', label: 'This contract is entirely voluntary', checked: ackVoluntary, set: setAckVoluntary },
+                { id: 'noMinors', label: 'No minors are involved in this contract', checked: ackNoMinors, set: setAckNoMinors },
+                { id: 'noDependents', label: 'No dependents are affected by this commitment', checked: ackNoDependents, set: setAckNoDependents },
+                { id: 'noLegal', label: 'No legal obligations are being violated', checked: ackNoLegal, set: setAckNoLegal },
+              ].map(({ id, label, checked, set }) => (
+                <label key={id} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => set(e.target.checked)}
+                    className="w-4 h-4 rounded border-neutral-700 bg-neutral-900 text-amber-600 focus:ring-amber-600"
+                  />
+                  <span className="text-sm text-neutral-300">{label}</span>
+                </label>
+              ))}
+            </div>
+
+            {isRecovery && (
+              <p className="text-xs text-amber-600/70 italic">
+                Recovery contracts are capped at 30 days to ensure ongoing well-being evaluation.
+                Emergency contacts (crisis hotlines, therapists, legal counsel) never count as violations.
+              </p>
+            )}
+          </div>
+        )}
 
         {error && (
           <div className="p-4 bg-red-600/10 border border-red-600/30 rounded-xl text-red-400 text-sm font-bold">

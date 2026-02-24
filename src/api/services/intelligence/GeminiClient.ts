@@ -62,10 +62,23 @@ export async function simplifyConcept(text: string): Promise<string> {
  * Screen a user-submitted goal description for ethical/safety compliance.
  * Rejects goals involving self-harm, eating disorders, harming others,
  * illegal activity, discrimination, or dangerous challenges.
+ *
+ * For RECOVERY_ oaths, additionally screens for: coercive control,
+ * isolation from support networks, stalking patterns, or preventing
+ * contact with emergency services.
  */
-export async function screenGoalEthics(goalDescription: string): Promise<{ ethical: boolean; reason?: string }> {
+export async function screenGoalEthics(
+  goalDescription: string,
+  oathCategory?: string,
+): Promise<{ ethical: boolean; reason?: string }> {
+  const isRecovery = oathCategory?.startsWith('RECOVERY_');
+
+  const recoveryClause = isRecovery
+    ? ' Additionally, because this is a recovery/no-contact contract, also reject goals that involve: coercive control over another person, isolation from support networks (therapists, sponsors, family), stalking or surveillance behavior, preventing contact with emergency services, or any pattern that suggests the user is being coerced into this contract by a third party.'
+    : '';
+
   const raw = await callGemini(
-    `You are a content safety reviewer for a behavioral accountability platform. Evaluate whether this user goal is ethical and safe. Reject goals that involve: self-harm, eating disorders, harming others, illegal activity, discrimination, or dangerous challenges. Return JSON: { "ethical": boolean, "reason": "brief explanation if rejected" }\n\nGoal: "${goalDescription}"`,
+    `You are a content safety reviewer for a behavioral accountability platform. Evaluate whether this user goal is ethical and safe. Reject goals that involve: self-harm, eating disorders, harming others, illegal activity, discrimination, or dangerous challenges.${recoveryClause} Return JSON: { "ethical": boolean, "reason": "brief explanation if rejected" }\n\nGoal: "${goalDescription}"`,
     true,
   );
   return JSON.parse(raw);

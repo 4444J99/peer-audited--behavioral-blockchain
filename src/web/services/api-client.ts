@@ -123,7 +123,7 @@ export const api = {
     grace_days_used?: number;
   }>(`/contracts/${id}`),
 
-  createContract: (dto: CreateContractDto) =>
+  createContract: (dto: CreateContractDto | Record<string, unknown>) =>
     request<{ contractId: string; paymentIntentId: string }>('/contracts', {
       method: 'POST',
       body: JSON.stringify(dto),
@@ -299,6 +299,23 @@ export const api = {
       honeypotsCaught: number;
       honeypotsFailedOn: number;
     }>('/fury/stats'),
+
+  // Attestations (Recovery stream)
+  getAttestationStatus: (contractId: string) =>
+    request<{
+      contractId: string;
+      oathCategory: string;
+      streakDays: number;
+      daysRemaining: number;
+      graceDaysAvailable: number;
+      todayAttested: boolean;
+      totalStrikes: number;
+    }>(`/contracts/${contractId}/attestation`),
+
+  submitAttestation: (contractId: string) =>
+    request<{ status: string }>(`/contracts/${contractId}/attestation`, {
+      method: 'POST',
+    }),
 
   // Public feed (no auth)
   getPublicFeed: (limit?: number) =>

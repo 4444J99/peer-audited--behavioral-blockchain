@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Styx** ("The Blockchain of Truth") — a peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes. Users stake money into behavioral contracts; a decentralized "Fury" network audits compliance; hardware oracles and a double-entry ledger enforce integrity.
 
-Turborepo monorepo in ORGAN-III (commercial products). Promotion status: **PUBLIC_PROCESS**. 425 tests across 6 workspaces.
+Turborepo monorepo in ORGAN-III (commercial products). Promotion status: **PUBLIC_PROCESS**. 467 tests across 6 workspaces.
 
 ## Build & Dev Commands
 
@@ -87,7 +87,7 @@ src/api/
 │   ├── ledger/                  #   Double-entry transactions, hash-chained audit log
 │   ├── fury-router/             #   BullMQ proof routing, consensus engine
 │   ├── escrow/                  #   Stripe FBO hold/capture/cancel, disputes
-│   ├── health/                  #   Aegis protocol (BMI floor, velocity caps)
+│   ├── health/                  #   Aegis protocol (BMI floor, velocity caps) + Recovery Protocol (no-contact guardrails)
 │   ├── intelligence/            #   Honeypot injection, Gemini AI client
 │   ├── security/                #   Geofencing, moderation (bans)
 │   ├── anomaly/                 #   pHash duplicate detection, EXIF validation
@@ -123,7 +123,7 @@ src/api/
 
 **Fury Accuracy** (`integrity.ts`): `(successful - false_accusations*3) / total`. Demotion at < 0.8 after 10-audit burn-in. Auditor stake: $2.00 per audit.
 
-**Behavioral Logic** (`behavioral-logic.ts`): 6 oath categories (Biological, Cognitive, Professional, Creative, Environmental, Character). Constants: grace days 2/month, onboarding bonus $5, loss aversion λ=1.955, downscale after 3 strikes, 7-day cool-off, BMI floor 18.5, 2% weekly loss velocity cap.
+**Behavioral Logic** (`behavioral-logic.ts`): 7 oath categories (Biological, Cognitive, Professional, Creative, Environmental, Character, Recovery). Constants: grace days 2/month, onboarding bonus $5, loss aversion λ=1.955, downscale after 3 strikes, 7-day cool-off, BMI floor 18.5, 2% weekly loss velocity cap, recovery max 30 days, max 3 no-contact targets, 3 missed attestations = auto-fail.
 
 ### Web Routes
 

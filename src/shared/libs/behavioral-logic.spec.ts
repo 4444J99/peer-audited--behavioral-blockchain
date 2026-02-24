@@ -7,6 +7,9 @@ import {
   isGoalEthical,
   MAX_GRACE_DAYS_PER_MONTH,
   ONBOARDING_BONUS_AMOUNT,
+  MAX_NOCONTACT_DURATION_DAYS,
+  MAX_NOCONTACT_TARGETS,
+  NOCONTACT_MISS_STRIKE_THRESHOLD,
 } from './behavioral-logic';
 
 describe('behavioral-logic', () => {
@@ -158,4 +161,54 @@ describe('behavioral-logic', () => {
       await expect(fn('Any goal')).resolves.toBe(true);
     });
   });
+
+  // ── Recovery Stream ───────────────────────────────────────────
+
+  describe('RECOVERY oath stream', () => {
+    it('should have 4 RECOVERY oath categories', () => {
+      const recoveryOaths = Object.values(OathCategory).filter(v => (v as string).startsWith('RECOVERY_'));
+      expect(recoveryOaths).toHaveLength(4);
+    });
+
+    it('should include DAILY_ATTESTATION verification method', () => {
+      expect(VerificationMethod.DAILY_ATTESTATION).toBe('ATTESTATION');
+    });
+
+    it('should allow ATTESTATION for RECOVERY_NOCONTACT', () => {
+      expect(
+        validateOathMapping(OathCategory.NO_CONTACT_BOUNDARY, VerificationMethod.DAILY_ATTESTATION),
+      ).toBe(true);
+    });
+
+    it('should allow SCREENTIME for RECOVERY_DETOX', () => {
+      expect(
+        validateOathMapping(OathCategory.BEHAVIORAL_DETOX, VerificationMethod.API_SCREEN_TIME),
+      ).toBe(true);
+    });
+
+    it('should allow FURY_NETWORK for RECOVERY_SUBSTANCE', () => {
+      expect(
+        validateOathMapping(OathCategory.SUBSTANCE_ABSTINENCE, VerificationMethod.FURY_CONSENSUS),
+      ).toBe(true);
+    });
+
+    it('should reject HEALTHKIT for RECOVERY_NOCONTACT', () => {
+      expect(
+        validateOathMapping(OathCategory.NO_CONTACT_BOUNDARY, VerificationMethod.HARDWARE_HEALTHKIT),
+      ).toBe(false);
+    });
+
+    it('should reject GPS for RECOVERY_AVOIDANCE', () => {
+      expect(
+        validateOathMapping(OathCategory.ENVIRONMENT_AVOIDANCE, VerificationMethod.GPS_GEOFENCE),
+      ).toBe(false);
+    });
+
+    it('should export recovery-specific constants', () => {
+      expect(MAX_NOCONTACT_DURATION_DAYS).toBe(30);
+      expect(MAX_NOCONTACT_TARGETS).toBe(3);
+      expect(NOCONTACT_MISS_STRIKE_THRESHOLD).toBe(3);
+    });
+  });
+
 });

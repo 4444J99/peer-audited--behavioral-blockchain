@@ -141,5 +141,49 @@ describe('GeminiClient', () => {
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
       expect(body.generationConfig.responseMimeType).toBe('application/json');
     });
+
+    it('should include recovery-specific screening for RECOVERY_ oaths', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: '{"ethical":true}' }] } }],
+        }),
+      });
+
+      await screenGoalEthics('No contact with ex-partner for 30 days', 'RECOVERY_NOCONTACT');
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const prompt = body.contents[0].parts[0].text;
+      expect(prompt).toContain('coercive control');
+      expect(prompt).toContain('isolation from support networks');
+      expect(prompt).toContain('stalking');
+    });
+
+    it('should not include recovery screening for non-RECOVERY oaths', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: '{"ethical":true}' }] } }],
+        }),
+      });
+
+      await screenGoalEthics('Run a marathon', 'BIOLOGICAL_CARDIO');
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const prompt = body.contents[0].parts[0].text;
+      expect(prompt).not.toContain('coercive control');
+    });
+
+    it('should not include recovery screening when oathCategory is undefined', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: '{"ethical":true}' }] } }],
+        }),
+      });
+
+      await screenGoalEthics('General goal');
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const prompt = body.contents[0].parts[0].text;
+      expect(prompt).not.toContain('coercive control');
+    });
   });
 });

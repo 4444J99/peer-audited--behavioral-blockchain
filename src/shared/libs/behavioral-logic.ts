@@ -38,7 +38,13 @@ export enum OathCategory {
   // 6. Character Stream (Multi-Oracle)
   CIVIC_ENGAGEMENT = "SOCIAL_COMMUNITY",
   PHILANTHROPIC_VELOCITY = "SOCIAL_CHARITY",
-  FAMILY_PRESENCE = "SOCIAL_CONNECTION"
+  FAMILY_PRESENCE = "SOCIAL_CONNECTION",
+
+  // 7. Recovery Stream (Abstinence Oracle)
+  NO_CONTACT_BOUNDARY = "RECOVERY_NOCONTACT",
+  SUBSTANCE_ABSTINENCE = "RECOVERY_SUBSTANCE",
+  BEHAVIORAL_DETOX = "RECOVERY_DETOX",
+  ENVIRONMENT_AVOIDANCE = "RECOVERY_AVOIDANCE",
 }
 
 export enum VerificationMethod {
@@ -49,7 +55,8 @@ export enum VerificationMethod {
   FURY_CONSENSUS = "FURY_NETWORK",
   TIME_LAPSE = "TIME_LAPSE_PROOF", // For Creative Stream
   GPS_GEOFENCE = "GPS",
-  FINANCIAL_LEDGER = "LEDGER"
+  FINANCIAL_LEDGER = "LEDGER",
+  DAILY_ATTESTATION = "ATTESTATION",
 }
 
 export const MAX_GRACE_DAYS_PER_MONTH = 2;
@@ -80,6 +87,14 @@ export const MIN_SAFE_BMI = 18.5;
 export const MAX_WEEKLY_LOSS_VELOCITY_PCT = 0.02;
 
 /**
+ * RECOVERY-01: Recovery Stream Guardrails
+ * Forces re-evaluation cadence and prevents isolation patterns.
+ */
+export const MAX_NOCONTACT_DURATION_DAYS = 30;
+export const MAX_NOCONTACT_TARGETS = 3;
+export const NOCONTACT_MISS_STRIKE_THRESHOLD = 3;
+
+/**
  * Oracle mapping: which verification methods are allowed for each oath stream.
  * BIOLOGICAL requires hardware oracles; COGNITIVE uses device APIs; etc.
  */
@@ -90,6 +105,7 @@ const OATH_METHOD_MAP: Record<string, VerificationMethod[]> = {
   CREATIVE: [VerificationMethod.TIME_LAPSE, VerificationMethod.FURY_CONSENSUS],
   VISUAL: [VerificationMethod.FURY_CONSENSUS, VerificationMethod.GPS_GEOFENCE],
   SOCIAL: [VerificationMethod.FURY_CONSENSUS, VerificationMethod.GPS_GEOFENCE],
+  RECOVERY: [VerificationMethod.DAILY_ATTESTATION, VerificationMethod.API_SCREEN_TIME, VerificationMethod.FURY_CONSENSUS],
 };
 
 /**

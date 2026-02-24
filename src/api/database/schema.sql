@@ -84,11 +84,44 @@ CREATE TRIGGER contracts_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+-- ============================================================
+-- Recovery Stream: Accountability Partners & Daily Attestations
+-- ============================================================
+
+ALTER TABLE contracts ADD COLUMN metadata JSONB DEFAULT '{}';
+
+CREATE TABLE accountability_partners (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contract_id UUID REFERENCES contracts(id) ON DELETE CASCADE,
+    partner_user_id UUID REFERENCES users(id),
+    partner_email TEXT,
+    status TEXT DEFAULT 'PENDING',  -- PENDING, ACTIVE, VETOED
+    invited_at TIMESTAMPTZ DEFAULT NOW(),
+    accepted_at TIMESTAMPTZ
+);
+
+CREATE TABLE attestations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contract_id UUID REFERENCES contracts(id),
+    user_id UUID REFERENCES users(id),
+    attestation_date DATE NOT NULL,
+    attested_at TIMESTAMPTZ,
+    cosigned_by UUID REFERENCES users(id),
+    cosigned_at TIMESTAMPTZ,
+    status TEXT DEFAULT 'PENDING',  -- PENDING, ATTESTED, COSIGNED, MISSED
+    UNIQUE(contract_id, attestation_date)
+);
+
+CREATE INDEX idx_attestations_contract_id ON attestations(contract_id);
+CREATE INDEX idx_attestations_status ON attestations(status);
+CREATE INDEX idx_accountability_partners_contract_id ON accountability_partners(contract_id);
+
 CREATE TABLE proofs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     contract_id UUID REFERENCES contracts(id),
     user_id UUID REFERENCES users(id),
     media_uri TEXT,
+    proof_type TEXT DEFAULT 'MEDIA',  -- MEDIA, ATTESTATION
     is_honeypot BOOLEAN DEFAULT FALSE,
     status TEXT DEFAULT 'PENDING_REVIEW',
     submitted_at TIMESTAMPTZ DEFAULT NOW()

@@ -6,6 +6,7 @@ import { StripeFboService } from '../../../services/escrow/stripe.service';
 import { DisputeService } from '../../../services/escrow/dispute.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { AegisProtocolService } from '../../../services/health/aegis.service';
+import { RecoveryProtocolService } from '../../../services/health/recovery-protocol.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { OathCategory, VerificationMethod } from '../../../../shared/libs/behavioral-logic';
 import { Pool } from 'pg';
@@ -40,6 +41,10 @@ describe('ContractsService', () => {
     validateHealthMetrics: jest.fn().mockReturnValue(true),
   } as unknown as AegisProtocolService;
 
+  const mockRecovery = {
+    validateRecoveryContract: jest.fn().mockReturnValue(true),
+  } as unknown as RecoveryProtocolService;
+
   const mockAnomaly = {
     analyze: jest.fn().mockResolvedValue({ rejected: false, flags: [] }),
   } as unknown as AnomalyService;
@@ -71,6 +76,7 @@ describe('ContractsService', () => {
       mockDispute,
       mockFuryRouter,
       mockAegis,
+      mockRecovery,
       mockAnomaly,
     );
     jest.clearAllMocks();
