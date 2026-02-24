@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Styx** ("The Blockchain of Truth") — a peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes. Users stake money into behavioral contracts; a decentralized "Fury" network audits compliance; hardware oracles and a double-entry ledger enforce integrity.
 
-Turborepo monorepo in ORGAN-III (commercial products). Promotion status: **PUBLIC_PROCESS**. 425 tests across 5 workspaces.
+Turborepo monorepo in ORGAN-III (commercial products). Promotion status: **PUBLIC_PROCESS**. 425 tests across 6 workspaces.
 
 ## Build & Dev Commands
 
@@ -29,8 +29,12 @@ cd src/api && npm run dev          # nest start --watch
 cd src/web && npm run dev          # next dev
 cd src/mobile && npm start         # metro bundler
 cd src/desktop && npm run dev      # vite dev
+cd src/pitch && npm run dev        # vite dev (interactive pitch deck)
 cd src/shared && npm run build     # tsc
+cd src/api && npm run migrate      # run database migrations
 ```
+
+API docs (Swagger/OpenAPI): `http://localhost:3000/api/docs` when API is running.
 
 ### Testing
 
@@ -47,12 +51,13 @@ Note: turbo config has `"test": { "dependsOn": ["build"] }` — tests run after 
 
 ### Validation Gates
 
-`scripts/validation/` — integration-level checks, run manually (Gates 04+05 also run in CI):
+`scripts/validation/` — integration-level checks, run manually (Gates 04–06 also run in CI):
 1. `01-phantom-money-check.ts` — ledger prevents unbalanced entries
 2. `02-simulator-spoof-check.ts` — hardware oracles reject manual data
 3. `03-the-full-loop.ts` — end-to-end contract lifecycle
 4. `04-redacted-build-check.sh` — no gambling terminology in production build
 5. `05-behavioral-physics-check.ts` — core constants match spec
+6. `06-security-invariant-check.ts` — no hardcoded secrets or debug backdoors in production output
 
 ## Architecture
 
@@ -60,11 +65,12 @@ Note: turbo config has `"test": { "dependsOn": ["build"] }` — tests run after 
 
 | Workspace | Package | Stack | Role |
 |-----------|---------|-------|------|
-| `src/api` | `@styx/api` | NestJS 10, BullMQ, Stripe, pg | Backend — ledger, escrow, Fury Router, oracles |
-| `src/web` | `@styx/web` | Next.js 16, React 18, Tailwind, p5.js | Dashboard, Fury workbench, pitch deck |
+| `src/api` | `@styx/api` | NestJS 11, BullMQ, Stripe, pg | Backend — ledger, escrow, Fury Router, oracles |
+| `src/web` | `@styx/web` | Next.js 16, React 18, Tailwind | Dashboard, Fury workbench |
 | `src/mobile` | `@styx/mobile` | React Native 0.76 | Sensor bridge, camera, biometrics |
 | `src/shared` | `@styx/shared` | TypeScript | Constants, types, algorithms |
 | `src/desktop` | `@styx/desktop` | Tauri 2.0 beta, Vite, React | "The Judge" admin dashboard |
+| `src/pitch` | `@styx/pitch` | Vite, React 18, p5.js, Tailwind | Interactive pitch deck (builds to `docs/` for GitHub Pages) |
 
 Path alias: `@styx/shared/*` → `./src/shared/*` (root `tsconfig.json`).
 
@@ -142,7 +148,7 @@ Next.js App Router: `/`, `/dashboard`, `/fury`, `/wallet`, `/pitch`, `/hr`, `/ta
 - **Storage**: Cloudflare R2 (zero-egress, signed URLs only)
 - **Payments**: Stripe FBO escrow (hold/capture/cancel)
 - **AI**: Gemini 2.5 Flash (`gemini-2.5-flash-preview-09-2025`)
-- **CI**: GitHub Actions — Node 20, turbo test + build + lint, Gate 04 + Gate 05
+- **CI**: GitHub Actions — Node 20, security audit, turbo test + build + lint, Gates 04–06, CodeQL analysis
 - **CD**: GitHub Actions (`deploy.yml`) — tag-triggered deploy to Render with smoke test
 - **IaC**: Terraform (`infra/terraform/`) — Render services, Cloudflare R2, WAF rules
 
