@@ -13,8 +13,8 @@ describe('AdminController', () => {
   } as unknown as ModerationService;
 
   const mockHoneypot = {
-    injectKnownFail: jest.fn(),
-  } as unknown as HoneypotInjectorService;
+    injectHoneypot: jest.fn(),
+  } as unknown as HoneypotService;
 
   const mockContracts = {
     resolveContract: jest.fn(),
@@ -27,13 +27,13 @@ describe('AdminController', () => {
   });
 
   describe('injectHoneypot', () => {
-    it('should delegate to HoneypotInjectorService and return jobId', async () => {
-      (mockHoneypot.injectKnownFail as jest.Mock).mockResolvedValueOnce('job-hp-1');
+    it('should delegate to HoneypotService and return status', async () => {
+      (mockHoneypot.injectHoneypot as jest.Mock).mockResolvedValueOnce(undefined);
 
       const result = await controller.injectHoneypot();
 
-      expect(result).toEqual({ status: 'honeypot_injected', jobId: 'job-hp-1' });
-      expect(mockHoneypot.injectKnownFail).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({ status: 'honeypot_injected' });
+      expect(mockHoneypot.injectHoneypot).toHaveBeenCalledTimes(1);
     });
   });
 

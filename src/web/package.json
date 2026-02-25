@@ -2,7 +2,7 @@
   "name": "@styx/web",
   "version": "0.0.1",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3001",
     "build": "next build",
     "lint": "tsc --noEmit",
     "start": "next start",

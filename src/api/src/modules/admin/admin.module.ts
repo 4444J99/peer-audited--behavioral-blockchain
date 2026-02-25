@@ -6,13 +6,14 @@ import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { RoleGuard } from '../../common/guards/role.guard';
 import { ContractsModule } from '../contracts/contracts.module';
+import { ProofsModule } from '../proofs/proofs.module';
 
 @Module({
-  imports: [ContractsModule],
+  imports: [ContractsModule, ProofsModule],
   controllers: [AdminController],
   providers: [
     ModerationService,
-    HoneypotInjectorService,
+    HoneypotService,
     TruthLogService,
     FuryRouterService,
     RoleGuard,

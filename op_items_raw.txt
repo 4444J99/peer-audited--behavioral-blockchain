@@ -1,0 +1,132 @@
+ID                            TITLE                                                                                         VAULT                    EDITED
+ucbvi64oj5eoypve7meegdikxe    Service Account Auth Token: 1password--github-actions--service-acount-011826                  GitHub-Tokens            1 month ago
+3fkuqwiwulrdkciodp2cfcvm2u    org-onboarding-token                                                                          GitHub-Tokens            1 month ago
+3vmoduupwmesfwul5gjar643qa    org-repo-analysis-token                                                                       GitHub-Tokens            1 month ago
+3wa5hgwecxvcuiel3totxwz26e    master-org-token-011726                                                                       GitHub-Tokens            1 month ago
+fbc32qol4ukciabcmzf56zhjxi    Service Account Auth Token: 1password--github-actions--service-acount-011826                  GitHub-Tokens            1 month ago
+hv33ltnzmkguvo5jize3fkk64u    Service Account Auth Token: 1password--service-acount-011826                                  GitHub-Tokens            1 month ago
+rwaat66xsj43ncm46rvwxdqgdu    org-label-sync-token                                                                          GitHub-Tokens            1 month ago
+szur5f66cyy4ntoe2ly43ugkgy    org-project-admin-token                                                                       GitHub-Tokens            1 month ago
+utaxycvgshe4ryutgai6xwqku4    accounts.google.com                                                                           Personal                 4 months ago
+nmxvye5wj2mlkfbxu2h43amsdy    Topcashback                                                                                   Personal                 4 months ago
+xidzh2qxiajansb67v6zsgsdzi    Electronica                                                                                   Personal                 1 day ago
+kenvbwlx7rlddel5ep2h77dt6q    Markwise                                                                                      Personal                 4 months ago
+o3wmc3olx37nlfk2usnnyqrlnq    Dropbox                                                                                       Personal                 4 months ago
+urekfxgpplfbcddq4bdvp5zwe4    Password                                                                                      Personal                 4 months ago
+bzcwwwvjnjlg2wo2kks5l44wca    DuckDuckGo Recovery Code                                                                      Personal                 4 months ago
+tlulk3bvfokbillnkgspw5hfwi    OpenAI                                                                                        Personal                 4 months ago
+uhhnzgglo3ymogrfn4qmw27bqy    ChatGPT                                                                                       Personal                 4 months ago
+owhkq3oje5lru7ji6wu6ebzzai    ChatGPT                                                                                       Personal                 4 months ago
+ync7c3mmcnauod7tl7zbmfnjym    Fandango                                                                                      Personal                 4 months ago
+f67gwb5xngnb3oijayggki2quu    Live                                                                                          Personal                 4 months ago
+lfw4qp6o2ryiosxdqbczxik2ji    Claude                                                                                        Personal                 4 months ago
+s6i4i4weh2dgkykp3frnvjujlm    Dropbox 2FA OAuth2                                                                            Personal                 4 months ago
+ab3akzvneot4akz6kof6vnkvtq    Huggingface                                                                                   Personal                 4 months ago
+4el2gxa2ehjrdmix623h6ulkdu    Brave                                                                                         Personal                 4 months ago
+5ime536olw2ueijzm676df4f3y    Perplexity AI                                                                                 Personal                 4 months ago
+7tifovi3yq2rqr26dji5mjxhwu    Notion                                                                                        Personal                 4 months ago
+4fbzqnpd6anfljlmlxabwoxz6m    1Password Account (AnthonyPadavano)                                                           Personal                 4 months ago
+fm5h7ke3ga6cuktepvah57o2vq    apple.com                                                                                     Personal                 3 months ago
+wnpzu5qsz27amauljfbtxf22su    chime-debit                                                                                   Personal                 3 months ago
+hgwlea5u4w6us2w46otp5mcf5i    Ollama                                                                                        Personal                 3 months ago
+w5cv4q2akiekkwpkwu5mx4vqbq    Trinity-health                                                                                Personal                 3 months ago
+qpa4yrynuuhepj47aukao6ur7q    Semgrep                                                                                       Personal                 3 months ago
+kzklaikuhdsbrmqbrfxup4ra3i    Google Gemini                                                                                 Personal                 3 months ago
+wqwjl72qbt2epuoau2mfwqtoji    actionsGH-auth-token                                                                          Personal                 3 months ago
+e5ntjsjqitrmiiansvt3nkiy74    idmsa.apple.com                                                                               Personal                 3 months ago
+eoy42r5yqxqxuipiiy5u6httfe    Pieces                                                                                        Personal                 3 months ago
+ztzjtni7kxorgrvne7iklbb6ry    Namecheap                                                                                     Personal                 3 months ago
+sirzuqcycfbzyhe3aoj5lggpyi    Google                                                                                        Personal                 3 months ago
+eioxyodalriujgnnbu3al5nr7i    key-keeper                                                                                    Personal                 3 months ago
+jq2ahcbsqzbkazpnmksxqq4ke4    cli-push-111625                                                                               Personal                 3 months ago
+bxzdg5xek2sb3mjfehnzgnvwhi    github-ssh-key-111625                                                                         Personal                 3 months ago
+qvsk4aet364b72jbvmwez6knkm    GitKraken                                                                                     Personal                 3 months ago
+maaek6nc5rczbzki7kits2rwpu    Smartstopselfstorage                                                                          Personal                 3 months ago
+42vnzjtwgnx5yeh4equyuu55jq    antigravity--github-api--112525                                                               Personal                 3 months ago
+u5uyf5ecfbenvgaiq52o5by3k4    Replit                                                                                        Personal                 2 months ago
+cgzsm7jzcvdvn2wyq7czqzsrx4    ORCID                                                                                         Personal                 2 months ago
+l5rkkvoclurxlfjytsni254bru    Railway                                                                                       Personal                 1 month ago
+g4olfsbomgzwgs4bx6ggaufeee    FAU                                                                                           Personal                 2 months ago
+j3olhs6qxw37yp3v3esjlwpzh4    X                                                                                             Personal                 3 months ago
+udubegilatkcsali3o3gmum32e    Termius                                                                                       Personal                 3 months ago
+n3gyfab6l2osv3aonymmnouj7e    Google                                                                                        Personal                 3 months ago
+lgzmvg3bnuhelkiareiznat3de    google.com                                                                                    Personal                 3 months ago
+adnevxmdmiy73wopdelzw7bzt4    Candid                                                                                        Personal                 2 months ago
+yif3irs5e475i4uy5fzeaxlaby    master-org-token-110525                                                                       Personal                 3 months ago
+zv7vspqp2p6og6vhm7cjtwurkq    USPS                                                                                          Personal                 1 month ago
+stjnhkle7ffnzfxtmxijyiwoei    Nyc                                                                                           Personal                 2 months ago
+hwmakg2xjy4qgxxjio6fqnqtpq    JustWatch                                                                                     Personal                 2 months ago
+35vc34k2gjh7jfjwspbj5ctpqe    Terraform                                                                                     Personal                 2 months ago
+hh4db6f6pcfeuwriiian6ntcye    Gemini API Key                                                                                Personal                 2 months ago
+gciawsp462b3dqhp2l7idd4zuq    Service Account Auth Token: 1password--github-actions--service-acount-120825                  Personal                 2 months ago
+vnrx56uj7pvyoc6gpy4ezh5a2e    Amc                                                                                           Personal                 1 month ago
+kuo6vs5ip7itbsykfvybmny4tq    Inventory: /Users/4jp/.config/gh/hosts.yml                                                    Personal                 2 months ago
+xr4mjbfnmsgf5hrw4kjuczm3bm    Render                                                                                        Personal                 2 months ago
+ccdmawetzvj66d2n5vayurhbfu    Inventory: /Users/4jp/.docker/config.json                                                     Personal                 2 months ago
+tzxpo5swucqyxsvhaqpxyu6dkm    Zillow                                                                                        Personal                 1 month ago
+bu7folbyxkcs5peqps6vv6jx6q    MyChart                                                                                       Personal                 2 weeks ago
+jb2kofpmn7u6xato7bfo33ig7m    Nychhc                                                                                        Personal                 2 weeks ago
+fdxere6vynm72i6bhsgpn6t47u    ENV::Workspace__gamified-coach-interface.worktrees__worktree-2025-12-17T02-59-44__.env        Personal                 2 months ago
+vts5bplswy7vjif2megprwexse    github.com                                                                                    Personal                 2 months ago
+4fqg6rbiawhg4o7zu643huh2ka    Derivative                                                                                    Personal                 2 months ago
+6xmtl45uxw5pwkhpj7mvx2y3dy    Site                                                                                          Personal                 1 month ago
+wa7x5ejlmnfimhmwrdpsvyh7c4    hims.com                                                                                      Personal                 2 weeks ago
+a3axxvw2stfwwtc5fu2dip55di    LinkedIn                                                                                      Personal                 2 months ago
+kad524on4fjla3kky2bmea4nce    developer.mend.io                                                                             Personal                 1 month ago
+gkjfnd46cochnzrjxrcske5zdq    ChatGPT                                                                                       Personal                 2 months ago
+t5pdyeuaevicgdqvpto7e5onfe    Mastodon                                                                                      Personal                 2 weeks ago
+rx7pdsjpc34meqrodr5bfv26ju    Backblaze                                                                                     Personal                 1 month ago
+azgh3zupf4lc6j5osef4ojcequ    NY.GOV                                                                                        Personal                 2 months ago
+6zng3tgswlh4adjy4polqwjbqi    Trunk                                                                                         Personal                 1 month ago
+bimsaepjew7haw2qz4yi254yzu    Walgreens                                                                                     Personal                 1 month ago
+anfcqvuknruplr7d4oiygoowve    Stripe                                                                                        Personal                 1 month ago
+ftcc52pgs3hytzmwea6ii6zqb4    Discord                                                                                       Personal                 2 weeks ago
+6y74zvwfvcudjue4c6nbkkwnzm    Anthony Padavano                                                                              Personal                 1 month ago
+hgdmghuid5ciy7rib5ap4wmtb4    Gmail                                                                                         Personal                 2 months ago
+dwhvdnhqaktrkp5f6rjhhccg4q    Florida Driver's License                                                                      Personal                 1 month ago
+zos6xlqlir2lbhtnrwuqkgi564    Trunk                                                                                         Personal                 1 month ago
+sx43szthe2nmmi76ev62gkklye    SlideRoom                                                                                     Personal                 6 days ago
+g5znrf44vdigkpxyf42px5qoua    broward.onelogin.com                                                                          Personal                 2 months ago
+fxmrn36x2sbvsvshskgvrap5pu    Login                                                                                         Personal                 1 month ago
+vvnnt7kt3ywuu4j27gahcl4jaa    Netflix                                                                                       Personal                 3 days ago
+ghkkckskpkedts3wbm42sm7b4u    Barnesandnoble                                                                                Personal                 1 month ago
+luwl2p4uwtsdtynbuvlm2fiwoq    Sourcery                                                                                      Personal                 1 month ago
+nskirw2vukjblxknohmz56rqne    Neon API Key                                                                                  Personal                 2 days ago
+sfx2tghq5rxhkmhl5oyxy7227a    Ngrok                                                                                         Personal                 1 month ago
+ex3sj47iofbjtq2dml7meftqti    AJPadavano_identification_100425                                                              Personal                 1 month ago
+3bwr4bkwm4gdwg3updz6eaeqzu    Fjallraven                                                                                    Personal                 1 month ago
+qktenit7r5cbsjfwgef67rbdmm    Figma                                                                                         Personal                 1 month ago
+yigqfdpkkkotfeivqvra3y67wi    Anaconda                                                                                      Personal                 1 month ago
+ers7zfrutp4fl3xulzb5pc4g4e    Microsoft                                                                                     Personal                 4 weeks ago
+rzhdafbyyev3rv53pix3pdthki    Sonatype                                                                                      Personal                 2 days ago
+e5w3pepkab5otinpizoeuiy7ue    Tencent                                                                                       Personal                 1 week ago
+3g7ihotizzbn3ywguvpkhryiei    Airtable                                                                                      Personal                 1 month ago
+hwug6uz3gvfndq6ny3uxdenzum    Sonatype Guide                                                                                Personal                 2 days ago
+ujwnfo74vfoo2zy4ffxiobmanq    Socket                                                                                        Personal                 1 month ago
+pzaa7mutohskhfy54q6lryje6a    Target                                                                                        Personal                 1 month ago
+soafr5uiu2lu3m77obmrtvu7si    Netlify                                                                                       Personal                 1 month ago
+bxvrvdkiynk52upb5natlo2a2m    Claude                                                                                        Personal                 1 month ago
+xglagfyqwn3pcxt3tvc7osxkiu    OMNY                                                                                          Personal                 3 weeks ago
+ldhm24clfengnhfokkhcqcyqei    GoatCounter                                                                                   Personal                 1 week ago
+jwoxiq5msayf4zjvvn2vqngfgi    Myflorida                                                                                     Personal                 1 week ago
+tj7khpa7yey6x3njhxnkzd2tba    Givingdata                                                                                    Personal                 1 day ago
+jaf3v4t3yszykqhvdgycnoowgy    ID                                                                                            Personal                 1 week ago
+wdzsstgcrmqsflwelmv3wml7i4    Komment                                                                                       Personal                 1 month ago
+idcsidx4sacng3573ap3bjbos4    Nyc                                                                                           Personal                 3 weeks ago
+vjdr4ivbmjvbmxo5szndmsrkxa    Omny                                                                                          Personal                 3 weeks ago
+r4egxfaydmo3iyokp3i4e72l4i    Context7                                                                                      Personal                 1 week ago
+rnsprrji4t5cp2vdo7hu5hexhi    Grafana                                                                                       Personal                 1 month ago
+4tddim3imr5ufvj6nlv2l75ttm    Neon                                                                                          Personal                 1 month ago
+k7g5akcneyaixe74j5or77rusu    Obsidian                                                                                      Personal                 3 months ago
+lwhexfqbuo75a5euszpv5jneiq    GitGuardian                                                                                   Personal                 1 month ago
+2ysv66wby7qeknmvrntqivt7xm    Ebtedge                                                                                       Personal                 3 weeks ago
+sduprddvl6g7dzvzqnje556wey    Warp                                                                                          Personal                 1 week ago
+k5bnr35b6u4wnovpqqvha3zu4e    Stopandshop                                                                                   Personal                 3 weeks ago
+6gpuxuglt3o5mdeu4ipwkdqace    Vercel / v0                                                                                   Personal                 1 month ago
+3mtueqvojjesc77vp5zlhg2coe    Gmail OAuth                                                                                   Personal                 1 month ago
+5utyd5d3wqqnhtvzbnn4essbjq    Ghost                                                                                         Personal                 1 week ago
+iyyi5wprb3lnnpt665kkknlryu    CodeRabbit                                                                                    Personal                 1 month ago
+fn2p4a4fmfmysszukggssolnya    Tabnine                                                                                       Personal                 1 month ago
+n2xjzsulrq2bwwfxrys5ugr7ne    X                                                                                             Personal                 1 week ago
+dcahedze3i6l43gemeo5rv5ixm    Cloudflare                                                                                    Personal                 1 month ago
+o2wtsitdkbhi23pjmtqkmx6kxm    Tavily                                                                                        Personal                 1 month ago

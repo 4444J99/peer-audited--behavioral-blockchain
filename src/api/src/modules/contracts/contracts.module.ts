@@ -46,6 +46,6 @@ const redisProvider = {
     AnomalyService,
     redisProvider,
   ],
-  exports: [ContractsService, HoneypotService],
+  exports: [ContractsService, HoneypotService, DisputeService],
 })
 export class ContractsModule {}

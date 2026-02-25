@@ -13,6 +13,3 @@ CREATE TABLE IF NOT EXISTS proof_hashes (
 -- Index for scanning existing hashes during dedup checks
 CREATE INDEX IF NOT EXISTS idx_proof_hashes_phash ON proof_hashes (phash);
 
--- Track migration
-INSERT INTO schema_migrations (version, name) VALUES (3, '003_proof_hashes')
-ON CONFLICT (version) DO NOTHING;

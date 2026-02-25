@@ -17,6 +17,3 @@ CREATE TABLE IF NOT EXISTS disputes (
 CREATE INDEX IF NOT EXISTS idx_disputes_appeal_status ON disputes (appeal_status);
 CREATE INDEX IF NOT EXISTS idx_disputes_user_id ON disputes (user_id);
 
--- Track migration
-INSERT INTO schema_migrations (version, name) VALUES (4, '004_disputes')
-ON CONFLICT (version) DO NOTHING;

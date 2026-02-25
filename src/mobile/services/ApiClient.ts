@@ -82,7 +82,7 @@ export const ApiClient = {
     }>(`/contracts/${id}`),
 
   createContract: (data: { category: string; description: string; stakeAmount: number; durationDays: number }) =>
-    request<{ contractId: string }>('/contracts', {
+    request<{ contractId: string; bountyLink?: string }>('/contracts', {
       method: 'POST',
       body: JSON.stringify(data),
     }),

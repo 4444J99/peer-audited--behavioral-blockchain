@@ -8,10 +8,11 @@ describe('HoneypotInjectorService', () => {
     routeProof: jest.fn(),
   } as unknown as FuryRouterService;
 
-  const mockPool = { query: jest.fn() } as unknown;
+  const mockPool = { query: jest.fn(), connect: jest.fn() };
+  const mockTruthLog = { appendEvent: jest.fn() };
 
   beforeEach(() => {
-    honeypotService = new HoneypotService(mockPool as any, mockRouter);
+    honeypotService = new HoneypotService(mockPool as any, mockRouter, mockTruthLog as any);
     jest.clearAllMocks();
   });
 
@@ -21,9 +22,6 @@ describe('HoneypotInjectorService', () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: 'contract-abc', user_id: 'user-xyz' }] });
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: 'proof-hp-123' }] });
       (mockRouter.routeProof as jest.Mock).mockResolvedValueOnce('mock-job-123');
-
-      const mockTruthLog = { appendEvent: jest.fn() };
-      honeypotService = new HoneypotService(mockPool as any, mockRouter, mockTruthLog as any);
 
       await honeypotService.injectHoneypot();
 

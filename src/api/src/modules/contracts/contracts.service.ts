@@ -47,7 +47,7 @@ export class ContractsService {
     @Optional() @Inject(NotificationsService) private readonly notifications?: NotificationsService,
   ) {}
 
-  async createContract(dto: CreateContractInput): Promise<{ contractId: string; paymentIntentId: string }> {
+  async createContract(dto: CreateContractInput): Promise<{ contractId: string; paymentIntentId: string; bountyLink?: string }> {
     // 1. Validate oath category
     const validCategories = Object.values(OathCategory) as string[];
     if (!validCategories.includes(dto.oathCategory)) {
@@ -256,7 +256,17 @@ export class ContractsService {
       // Notification failure must never abort a successful financial transaction
     }
 
-    return { contractId, paymentIntentId: paymentIntent.id };
+    const response: { contractId: string; paymentIntentId: string; bountyLink?: string } = {
+      contractId,
+      paymentIntentId: paymentIntent.id
+    };
+
+    if (bountyLinkId) {
+      const publicWebUrl = process.env.STYX_WEB_PUBLIC_URL || 'http://localhost:3001';
+      response.bountyLink = `${publicWebUrl}/whistleblower/${bountyLinkId}`;
+    }
+
+    return response;
   }
 
   async getContract(contractId: string) {
@@ -275,8 +285,8 @@ export class ContractsService {
   async claimBounty(bountyLinkId: string, mediaUri: string, claimantIp: string): Promise<{ proofId: string; jobId: string }> {
     // 1. Verify the bounty link is valid and ACTIVE
     const bountyResult = await this.pool.query(
-      `SELECT b.*, c.user_id, c.status as contract_status 
-       FROM bounties b 
+      `SELECT b.*, c.user_id, c.status as contract_status
+       FROM bounties b
        JOIN contracts c ON b.contract_id = c.id
        WHERE b.bounty_link_id = $1`,
       [bountyLinkId]
