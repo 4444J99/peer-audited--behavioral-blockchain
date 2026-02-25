@@ -6,6 +6,20 @@ dist/
 .turbo/
 *.log
 
+# TypeScript artifacts in source directories
+src/api/**/*.js
+src/api/**/*.js.map
+src/api/**/*.d.ts
+src/shared/**/*.js
+src/shared/**/*.js.map
+src/shared/**/*.d.ts
+
+# Project-specific temporary files
+op_items.json
+op_items_raw.txt
+op_items_v2.txt
+ngrok_app.yml
+
 # Pitch deck build output is committed for GitHub Pages
 # (docs/index.html + docs/assets/ are build artifacts that should be tracked)
 !docs/
