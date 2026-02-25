@@ -1,39 +1,42 @@
-import { HoneypotInjectorService } from './honeypot.service';
+import { HoneypotService } from './honeypot.service';
 import { FuryRouterService } from '../fury-router/fury-router.service';
 
 describe('HoneypotInjectorService', () => {
-  let honeypotService: HoneypotInjectorService;
-  
+  let honeypotService: HoneypotService;
+
   const mockRouter = {
     routeProof: jest.fn(),
   } as unknown as FuryRouterService;
 
+  const mockPool = { query: jest.fn() } as unknown;
+
   beforeEach(() => {
-    honeypotService = new HoneypotInjectorService(mockRouter);
+    honeypotService = new HoneypotService(mockPool as any, mockRouter);
     jest.clearAllMocks();
   });
 
-  describe('injectKnownFail', () => {
-    it('should generate a secure fake proof ID and route it to the system oracle', async () => {
+  describe('injectHoneypot', () => {
+    it('should query for furies and inject honeypot proof', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ count: '10' }] });
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: 'contract-abc', user_id: 'user-xyz' }] });
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: 'proof-hp-123' }] });
       (mockRouter.routeProof as jest.Mock).mockResolvedValueOnce('mock-job-123');
 
-      const result = await honeypotService.injectKnownFail();
-      
-      expect(result).toBe('mock-job-123');
+      const mockTruthLog = { appendEvent: jest.fn() };
+      honeypotService = new HoneypotService(mockPool as any, mockRouter, mockTruthLog as any);
 
-      const routeCallArgs = (mockRouter.routeProof as jest.Mock).mock.calls[0];
-      const injectedProofId = routeCallArgs[0];
-      const submitterId = routeCallArgs[1];
-      const requiredReviewers = routeCallArgs[2];
+      await honeypotService.injectHoneypot();
 
-      // Verify it constructed a Honeypot specific ID prefix
-      expect(injectedProofId).toMatch(/^HONEYPOT_FAIL_[a-f0-9]{16}$/);
-      
-      // Verify it used the system submitter
-      expect(submitterId).toBe('SYSTEM_HONEYPOT_ORACLE');
-      
-      // Verify it requested 3 reviewers to test
-      expect(requiredReviewers).toBe(3);
+      expect(mockRouter.routeProof).toHaveBeenCalledWith('proof-hp-123', 'user-xyz', 3);
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('HONEYPOT_INJECTED', expect.any(Object));
+    });
+
+    it('should skip injection if not enough furies', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ count: '1' }] });
+
+      await honeypotService.injectHoneypot();
+
+      expect(mockRouter.routeProof).not.toHaveBeenCalled();
     });
   });
 });

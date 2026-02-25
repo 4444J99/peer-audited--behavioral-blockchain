@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { api, LeaderboardEntry } from '../services/api-client';
+import './Leaderboard.css';
 
 type Period = 'weekly' | 'monthly' | 'alltime';
 
@@ -11,13 +12,14 @@ interface TierInfo {
   bgColor: string;
   icon: string;
   minScore: number;
+  tierClass: string;
 }
 
 const TIERS: TierInfo[] = [
-  { name: 'DIAMOND', color: '#b9f2ff', bgColor: 'rgba(185, 242, 255, 0.1)', icon: '💎', minScore: 90 },
-  { name: 'GOLD', color: '#ffd700', bgColor: 'rgba(255, 215, 0, 0.1)', icon: '🥇', minScore: 75 },
-  { name: 'SILVER', color: '#c0c0c0', bgColor: 'rgba(192, 192, 192, 0.1)', icon: '🥈', minScore: 50 },
-  { name: 'BRONZE', color: '#cd7f32', bgColor: 'rgba(205, 127, 50, 0.1)', icon: '🥉', minScore: 0 },
+  { name: 'DIAMOND', color: '#b9f2ff', bgColor: 'rgba(185, 242, 255, 0.1)', icon: '💎', minScore: 90, tierClass: 'diamond' },
+  { name: 'GOLD', color: '#ffd700', bgColor: 'rgba(255, 215, 0, 0.1)', icon: '🥇', minScore: 75, tierClass: 'gold' },
+  { name: 'SILVER', color: '#c0c0c0', bgColor: 'rgba(192, 192, 192, 0.1)', icon: '🥈', minScore: 50, tierClass: 'silver' },
+  { name: 'BRONZE', color: '#cd7f32', bgColor: 'rgba(205, 127, 50, 0.1)', icon: '🥉', minScore: 0, tierClass: 'bronze' },
 ];
 
 function getTier(score: number): TierInfo {
@@ -89,7 +91,7 @@ export default function Leaderboard() {
               <div className="font-black text-lg text-white">
                 {furyOfWeek.email.split('@')[0]}
               </div>
-              <div className="text-sm" style={{ color: getTier(furyOfWeek.integrity_score).color }}>
+              <div className={`text-sm tier-${getTier(furyOfWeek.integrity_score).tierClass}-text`}>
                 {getTier(furyOfWeek.integrity_score).name} · {furyOfWeek.integrity_score} IS
               </div>
             </div>
@@ -111,11 +113,7 @@ export default function Leaderboard() {
             return (
               <li
                 key={leader.id}
-                className="flex justify-between items-center p-3 rounded-lg border transition-all duration-300 hover:scale-[1.01]"
-                style={{
-                  borderColor: `${tier.color}22`,
-                  backgroundColor: tier.bgColor,
-                }}
+                className={`flex justify-between items-center p-3 rounded-lg border transition-all duration-300 hover:scale-[1.01] tier-${tier.tierClass}-row`}
               >
                 <div className="flex items-center gap-4">
                   {/* Rank Badge */}
@@ -130,12 +128,7 @@ export default function Leaderboard() {
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span
-                        className="text-[10px] font-black tracking-[0.2em] px-2 py-0.5 rounded-full border"
-                        style={{
-                          color: tier.color,
-                          borderColor: `${tier.color}44`,
-                          backgroundColor: `${tier.color}11`,
-                        }}
+                        className={`text-[10px] font-black tracking-[0.2em] px-2 py-0.5 rounded-full border tier-${tier.tierClass}-badge`}
                       >
                         {tier.icon} {tier.name}
                       </span>
@@ -148,7 +141,7 @@ export default function Leaderboard() {
 
                 {/* Score */}
                 <div className="text-right">
-                  <div className="font-black text-lg" style={{ color: tier.color }}>
+                  <div className={`font-black text-lg tier-${tier.tierClass}-text`}>
                     {leader.integrity_score}
                   </div>
                   <div className="text-[10px] text-gray-600 uppercase tracking-widest">

@@ -1,16 +1,53 @@
 import { DisputeService } from './dispute.service';
 import { StripeFboService } from './stripe.service';
 import { HttpException } from '@nestjs/common';
+import { Pool } from 'pg';
+import { LedgerService } from '../ledger/ledger.service';
+import { TruthLogService } from '../ledger/truth-log.service';
 
 describe('DisputeService', () => {
   let disputeService: DisputeService;
-  
-  const mockStripeService = {
-    holdStake: jest.fn(),
-  } as unknown as StripeFboService;
+
+  let mockStripeService: any;
+  let mockPool: any;
+  let mockTruthLog: any;
+  let mockLedger: any;
 
   beforeEach(() => {
-    disputeService = new DisputeService(mockStripeService);
+    mockStripeService = {
+      holdStake: jest.fn(),
+      captureStake: jest.fn(),
+      refundStake: jest.fn(),
+      transferBounty: jest.fn(),
+    };
+
+    mockPool = {
+      query: jest.fn(),
+    };
+
+    mockTruthLog = {
+      appendEvent: jest.fn(),
+    };
+
+    mockLedger = {
+      recordTransaction: jest.fn(),
+    };
+
+    const stripeMock = {
+      holdStake: jest.fn(),
+      captureStake: jest.fn(),
+      refundStake: jest.fn(),
+      transferBounty: jest.fn(),
+    } as unknown as StripeFboService;
+
+    mockStripeService = stripeMock;
+
+    disputeService = new DisputeService(
+      mockPool as unknown as Pool,
+      stripeMock,
+      mockTruthLog as any,
+      mockLedger as any,
+    );
     jest.clearAllMocks();
   });
 
@@ -25,7 +62,7 @@ describe('DisputeService', () => {
 
       expect(result.appealStatus).toBe('FEE_AUTHORIZED_PENDING_REVIEW');
       expect(result.paymentIntentId).toBe('pi_test_appeal_fee');
-      
+
       const holdCallArgs = (mockStripeService.holdStake as jest.Mock).mock.calls[0];
       expect(holdCallArgs[0]).toBe('cus_123');
       expect(holdCallArgs[1]).toBe(5); // Asserts the APPEAL_FEE_AMOUNT is exactly 5

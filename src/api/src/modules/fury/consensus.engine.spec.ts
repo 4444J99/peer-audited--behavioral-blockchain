@@ -9,7 +9,7 @@ describe('ConsensusEngine', () => {
   } as unknown as TruthLogService;
 
   beforeEach(() => {
-    engine = new ConsensusEngine(mockTruthLog);
+    engine = new ConsensusEngine(mockTruthLog, {} as any, {} as any);
     jest.clearAllMocks();
   });
 

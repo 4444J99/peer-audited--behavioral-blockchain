@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 
 @Injectable()
 export class AnonymizationService {
-  
+
   anonymizeUser(user: any): any {
     if (!user) return null;
 
@@ -32,7 +32,7 @@ export class AnonymizationService {
   }
 
   private hash(input: string): string {
-    return createHash('sha256').update(input).digest('hex');
+    return createHash('sha256').update(input.toLowerCase()).digest('hex');
   }
 
   private getInitials(name: string): string {

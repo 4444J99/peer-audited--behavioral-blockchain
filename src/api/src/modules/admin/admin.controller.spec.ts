@@ -1,6 +1,6 @@
 import { AdminController } from './admin.controller';
 import { ModerationService } from '../../../services/security/moderation.service';
-import { HoneypotInjectorService } from '../../../services/intelligence/honeypot.service';
+import { HoneypotService } from '../../../services/intelligence/honeypot.service';
 import { ContractsService } from '../contracts/contracts.service';
 import { Pool } from 'pg';
 
@@ -22,7 +22,7 @@ describe('AdminController', () => {
 
   beforeEach(() => {
     mockPool = { query: jest.fn() };
-    controller = new AdminController(mockModeration, mockHoneypot, mockContracts, mockPool as unknown as Pool);
+    controller = new AdminController(mockModeration, mockHoneypot as any, mockContracts, {} as any, {} as any, mockPool as unknown as Pool);
     jest.clearAllMocks();
   });
 

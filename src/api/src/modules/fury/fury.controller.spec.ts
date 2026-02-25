@@ -21,6 +21,7 @@ describe('FuryController', () => {
       mockPool as unknown as Pool,
       mockFuryWorker,
       mockTruthLog,
+      {} as any
     );
     jest.clearAllMocks();
   });
