@@ -5,6 +5,25 @@
 terraform {
   required_version = ">= 1.5"
 
+  # Remote state in Cloudflare R2 (S3-compatible)
+  # Prevents state divergence across machines.
+  # Run `terraform init` with environment variables:
+  #   AWS_ACCESS_KEY_ID=<R2_access_key>
+  #   AWS_SECRET_ACCESS_KEY=<R2_secret_key>
+  backend "s3" {
+    bucket                      = "styx-terraform-state"
+    key                         = "production/terraform.tfstate"
+    region                      = "auto"
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    skip_s3_checksum            = true
+    use_path_style              = true
+    # Set endpoints via TF_S3_ENDPOINT or -backend-config
+    # e.g. -backend-config="endpoint=https://<account_id>.r2.cloudflarestorage.com"
+  }
+
   required_providers {
     render = {
       source  = "render-oss/render"

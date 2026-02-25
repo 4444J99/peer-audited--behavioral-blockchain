@@ -9,6 +9,15 @@ export class StripeFboService {
 
   constructor() {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    if (isProduction && (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_mock_key')) {
+      throw new Error(
+        'FATAL: STRIPE_SECRET_KEY is required in production. ' +
+        'Set a valid Stripe secret key to prevent mock mode in production.'
+      );
+    }
+
     this.stripe = new Stripe(apiKey, {
       apiVersion: '2023-10-16',
     });

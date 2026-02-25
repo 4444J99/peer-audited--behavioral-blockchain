@@ -1,0 +1,9 @@
+{
+  "rubyLsp.enable": false,
+  "files.associations": {
+    "Gemfile": "ruby"
+  },
+  "[ruby]": {
+    "editor.defaultFormatter": null
+  }
+}

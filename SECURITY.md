@@ -61,3 +61,17 @@ Styx implements the following security controls:
 - **Double-entry ledger** with hash-chained audit log for tamper evidence
 - **Stripe webhook signature verification** for payment integrity
 - **Structured logging** (pino) for security event monitoring
+
+## Data Retention Policy
+
+| Data Type | Retention Period | Disposition |
+|-----------|-----------------|-------------|
+| `event_log` (hash chain) | **Indefinite** | Append-only; critical for audit integrity. Archival to cold storage after 2 years. |
+| `proofs` (media URIs) | **1 year** after contract completion | R2 objects deleted; metadata row retained with `media_uri = '[REDACTED]'`. |
+| `notifications` | **90 days** after read | Soft-deleted, then purged in batch. |
+| `fury_assignments` | **1 year** after verdict | Retained for dispute resolution window, then anonymized. |
+| `stripe_events` | **7 years** | Financial regulatory compliance (IRS record-keeping). |
+| User PII (email, hashes) | **Account lifetime + 30 days** | Deleted upon account deletion request per CCPA/GDPR. |
+
+> **Note**: The hash-chained `event_log` cannot be truncated without breaking chain integrity. Archival involves moving rows to a separate `event_log_archive` table while preserving the chain's terminal hash for verification.
+

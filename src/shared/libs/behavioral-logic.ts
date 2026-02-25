@@ -6,10 +6,15 @@
 
 export enum OathCategory {
   // 1. Biological Stream (Hardware Oracle)
+  /** @deprecated Deferred — native HealthKit/HealthConnect bridges not implemented in MVP */
   WEIGHT_MANAGEMENT = "BIOLOGICAL_WEIGHT",
+  /** @deprecated Deferred — native HealthKit/HealthConnect bridges not implemented in MVP */
   CARDIOVASCULAR_STAMINA = "BIOLOGICAL_CARDIO",
+  /** @deprecated Deferred — native HealthKit/HealthConnect bridges not implemented in MVP */
   GLUCOSE_STABILITY = "BIOLOGICAL_METABOLIC",
+  /** @deprecated Deferred — native HealthKit/HealthConnect bridges not implemented in MVP */
   SLEEP_INTEGRITY = "BIOLOGICAL_SLEEP",
+  /** @deprecated Deferred — native HealthKit/HealthConnect bridges not implemented in MVP */
   SOBRIETY_HRV = "BIOLOGICAL_SOBRIETY",
 
   // 2. Cognitive Stream (Device Oracle)
@@ -48,7 +53,9 @@ export enum OathCategory {
 }
 
 export enum VerificationMethod {
+  /** @deprecated Deferred — native HealthKit bridge not implemented in MVP */
   HARDWARE_HEALTHKIT = "HEALTHKIT",
+  /** @deprecated Deferred — native HealthConnect bridge not implemented in MVP */
   HARDWARE_HEALTHCONNECT = "HEALTHCONNECT",
   API_SCREEN_TIME = "SCREENTIME",
   API_THIRD_PARTY = "EXTERNAL_API",
@@ -162,19 +169,22 @@ export function grantOnboardingBonus(totalContracts: number): OnboardingBonusRes
 }
 
 /**
- * Ethical screening for goal descriptions via Gemini 2.5 Flash content policy check.
- * Rejects goals involving self-harm, eating disorders, harming others,
- * illegal activity, discrimination, or dangerous challenges.
- * Fails open: if Gemini is unavailable or no API key is set, goals pass through.
+ * DEPRECATED: Goal ethics screening has been moved to
+ * src/api/services/intelligence/goal-ethics.service.ts
+ * to fix the shared → api dependency inversion.
+ * Import GoalEthicsService from the API layer instead.
  */
-export async function isGoalEthical(goalDescription: string): Promise<boolean> {
-  if (!process.env.GEMINI_API_KEY) return true;
 
-  try {
-    const { screenGoalEthics } = await import('../../api/services/intelligence/GeminiClient');
-    const result = await screenGoalEthics(goalDescription);
-    return result.ethical;
-  } catch {
-    return true;
-  }
+/** Active oath streams supported in MVP */
+export const ACTIVE_OATH_STREAMS = [
+  'COGNITIVE',
+  'PROFESSIONAL',
+  'CREATIVE',
+  'RECOVERY',
+] as const;
+
+/** Check if an oath category is supported in the current MVP */
+export function isOathStreamActive(category: OathCategory): boolean {
+  const stream = (category as string).split('_')[0];
+  return (ACTIVE_OATH_STREAMS as readonly string[]).includes(stream);
 }
