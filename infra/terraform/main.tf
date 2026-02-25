@@ -142,6 +142,43 @@ resource "cloudflare_r2_bucket" "styx_proofs" {
   location   = "WNAM"
 }
 
+# R2 Lifecycle: auto-delete proof media 30 days after final review
+# Prevents unbounded storage growth and maintains GDPR compliance.
+resource "cloudflare_r2_bucket_lifecycle" "proofs_cleanup" {
+  account_id = var.cloudflare_account_id
+  bucket     = cloudflare_r2_bucket.styx_proofs.name
+
+  rules {
+    id      = "auto-expire-proofs"
+    enabled = true
+
+    conditions {
+      prefix = "proofs/"
+    }
+
+    abort_multipart_uploads_after {
+      days = 1
+    }
+
+    delete_objects_after {
+      days = 30
+    }
+  }
+
+  rules {
+    id      = "auto-expire-honeypots"
+    enabled = true
+
+    conditions {
+      prefix = "honeypots/"
+    }
+
+    delete_objects_after {
+      days = 7
+    }
+  }
+}
+
 # --- Outputs ---
 
 output "api_url" {

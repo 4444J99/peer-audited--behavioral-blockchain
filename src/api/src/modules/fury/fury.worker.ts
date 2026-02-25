@@ -7,6 +7,7 @@ import { ContractsService } from '../contracts/contracts.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { HoneypotService } from '../../../services/intelligence/honeypot.service';
 import { shouldDemoteFury, AUDITOR_STAKE_AMOUNT } from '../../../../shared/libs/integrity';
 
 interface FuryRouteJob {
@@ -29,6 +30,7 @@ export class FuryWorker implements OnModuleInit {
     @Optional() @Inject(NotificationsService) private readonly notifications?: NotificationsService,
     @Optional() @Inject(LedgerService) private readonly ledger?: LedgerService,
     @Optional() @Inject(TruthLogService) private readonly truthLog?: TruthLogService,
+    @Optional() @Inject(HoneypotService) private readonly honeypotService?: HoneypotService,
   ) {}
 
   onModuleInit() {
@@ -127,12 +129,13 @@ export class FuryWorker implements OnModuleInit {
       [proofStatus, proofId],
     );
 
-    // Apply fraud penalty to flagged Furies (honeypot failures)
-    for (const furyId of result.flaggedFuries) {
-      await this.pool.query(
-        `UPDATE users SET integrity_score = GREATEST(0, integrity_score - 15) WHERE id = $1`,
-        [furyId],
-      );
+    // Grade honeypot performance via HoneypotService (nuanced ±5 scoring)
+    if (is_honeypot && this.honeypotService) {
+      try {
+        await this.honeypotService.gradeHoneypotPerformance(proofId, result.flaggedFuries);
+      } catch (err) {
+        this.logger.error(`Honeypot grading failed for proof ${proofId}: ${err instanceof Error ? err.message : err}`);
+      }
     }
 
     // Track Fury accuracy: reward correct votes, penalize incorrect ones

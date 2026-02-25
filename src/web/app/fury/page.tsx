@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Eye, ShieldAlert, CheckCircle, Target, Loader2, AlertTriangle, Inbox, LogOut } from 'lucide-react';
+import { Eye, ShieldAlert, CheckCircle, Target, Loader2, AlertTriangle, Inbox, LogOut, Flag, SlidersHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '../../services/api-client';
@@ -31,6 +31,8 @@ export default function FuryWorkbench() {
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [stats, setStats] = useState<FuryStats | null>(null);
+  const [confidence, setConfidence] = useState(75);
+  const [honeypotFeedback, setHoneypotFeedback] = useState<{ wasHoneypot: boolean; correct: boolean } | null>(null);
 
   const loadStats = useCallback(async () => {
     try {
@@ -63,26 +65,42 @@ export default function FuryWorkbench() {
     router.push('/login');
   };
 
-  const handleVerdict = async (verdict: 'PASS' | 'FAIL') => {
+  const handleVerdict = async (verdict: 'PASS' | 'FAIL' | 'FLAG') => {
     const current = assignments[currentIndex];
     if (!current) return;
 
     setSubmitting(true);
     setActionError(null);
+    setHoneypotFeedback(null);
     try {
-      await api.submitVerdict({
-        assignmentId: current.assignment_id,
-        verdict,
+      const result = await api.submitVerdict({
+        assignmentId: current.assignmentId,
+        verdict: verdict === 'FLAG' ? 'FAIL' : verdict,
+        confidence,
+        flagged: verdict === 'FLAG',
       });
+
+      // Check for honeypot feedback in response
+      if (result && result.honeypotReveal) {
+        setHoneypotFeedback({
+          wasHoneypot: true,
+          correct: result.honeypotReveal.wasCorrect,
+        });
+        // Show feedback for 3 seconds before moving on
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        setHoneypotFeedback(null);
+      }
+
       // Remove from store immediately for snappy UI
-      removeAssignment(current.assignment_id);
+      removeAssignment(current.assignmentId);
       
       // Update UI index if necessary
       if (currentIndex >= assignments.length - 1) {
-        setCurrentIndex(Math.max(0, assignments.length - 2)); // Shift back if we were at the end
+        setCurrentIndex(Math.max(0, assignments.length - 2));
       }
       
-      // Refresh stats after a judgement
+      // Reset confidence for next proof
+      setConfidence(75);
       loadStats();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to submit verdict');
@@ -194,36 +212,72 @@ export default function FuryWorkbench() {
           {/* Video Player & Evidence */}
           <div className="lg:col-span-2 flex flex-col gap-4">
             <div className="w-full aspect-video bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden relative group">
-              {current.media_uri ? (
-                <video
-                  src={current.media_uri}
-                  controls
-                  className="w-full h-full object-contain"
-                  playsInline
-                />
+              {current.viewUrl ? (
+                current.contentType?.startsWith('image') ? (
+                  <img
+                    src={current.viewUrl}
+                    alt={`Proof ${current.proofId.slice(0, 8)}`}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <video
+                    key={current.viewUrl}
+                    controls
+                    className="w-full h-full object-contain"
+                    playsInline
+                    preload="metadata"
+                  >
+                    <source src={current.viewUrl} type={current.contentType || 'video/mp4'} />
+                    Your browser does not support video playback.
+                  </video>
+                )
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-neutral-700 font-bold tracking-widest">[ NO MEDIA AVAILABLE ]</span>
+                  <span className="text-neutral-700 font-bold tracking-widest">[ MEDIA LOADING... ]</span>
+                </div>
+              )}
+
+              {/* Honeypot Feedback Overlay */}
+              {honeypotFeedback && (
+                <div className={`absolute inset-0 flex items-center justify-center z-20 ${honeypotFeedback.correct ? 'bg-lime-500/20' : 'bg-red-600/20'} backdrop-blur-sm`}>
+                  <div className="text-center px-8 py-6 rounded-2xl bg-black/80 border border-white/10">
+                    <p className="text-2xl font-black mb-2">
+                      {honeypotFeedback.correct ? '✅ HONEYPOT DETECTED' : '⚠️ HONEYPOT MISSED'}
+                    </p>
+                    <p className="text-sm text-neutral-400">
+                      {honeypotFeedback.correct
+                        ? 'Excellent work. Integrity score boosted +5.'
+                        : 'This was a known-fail proof. Integrity score reduced -5.'}
+                    </p>
+                  </div>
                 </div>
               )}
 
               {/* Meta Overlay */}
               <div className="absolute top-4 left-4 flex gap-2 pointer-events-none">
                 <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-md text-xs font-bold text-white border border-white/10 uppercase tracking-wider">
-                  Proof: {current.proof_id.slice(0, 8)}
+                  Proof: {current.proofId.slice(0, 8)}
                 </span>
                 <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-md text-xs font-bold text-white border border-white/10">
-                  Submitted: {new Date(current.submitted_at).toLocaleString()}
+                  Submitted: {new Date(current.submittedAt).toLocaleString()}
                 </span>
+                {current.contentType && (
+                  <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-md text-xs font-bold text-neutral-400 border border-white/10 uppercase">
+                    {current.contentType.split('/')[1]}
+                  </span>
+                )}
               </div>
             </div>
 
             <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-2xl">
               <h3 className="font-bold text-neutral-400 mb-2 uppercase text-xs tracking-widest">Assignment Details</h3>
               <p className="text-white text-sm">
-                <span className="text-neutral-500">Contract:</span> {current.contract_id.slice(0, 8)}...
-                <span className="text-neutral-500 ml-4">Assigned:</span> {new Date(current.assigned_at).toLocaleString()}
+                <span className="text-neutral-500">Contract:</span> {current.contractId.slice(0, 8)}...
+                <span className="text-neutral-500 ml-4">Assigned:</span> {new Date(current.assignedAt).toLocaleString()}
               </p>
+              {current.description && (
+                <p className="text-neutral-400 text-sm mt-2 italic">{current.description}</p>
+              )}
             </div>
           </div>
 
@@ -234,13 +288,40 @@ export default function FuryWorkbench() {
                 <Target size={20} className="text-red-500" /> Cast Judgment
               </h2>
 
-              <p className="text-sm text-neutral-400 mb-8">
+              <p className="text-sm text-neutral-400 mb-6">
                 Analyze the evidence. If the user successfully completed the habit parameters, hit VERIFY. If they are forging, stalling, or failing, hit BURN.
                 <br /><br />
-                <strong className="text-red-500">WARNING:</strong> If you verify a Honeypot (fake proof) your entire grading score will drop and you will incur a financial penalty.
+                <strong className="text-red-500">WARNING:</strong> If you verify a Honeypot (fake proof) your grading score will drop and you will incur a financial penalty.
               </p>
 
-              <div className="mt-auto space-y-4">
+              {/* Confidence Slider */}
+              <div className="mb-6 p-4 bg-black/40 rounded-xl border border-neutral-800">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs text-neutral-500 uppercase tracking-wider flex items-center gap-1">
+                    <SlidersHorizontal size={12} /> Confidence
+                  </span>
+                  <span className={`text-sm font-black ${confidence >= 80 ? 'text-lime-400' : confidence >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
+                    {confidence}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={confidence}
+                  onChange={(e) => setConfidence(Number(e.target.value))}
+                  aria-label="Confidence level"
+                  className="w-full accent-red-500 h-2 bg-neutral-800 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+
+              {actionError && (
+                <div className="mb-4 p-3 bg-red-950/50 border border-red-900 rounded-lg text-red-400 text-sm">
+                  {actionError}
+                </div>
+              )}
+
+              <div className="mt-auto space-y-3">
                 <button
                   onClick={() => handleVerdict('PASS')}
                   disabled={submitting}
@@ -257,6 +338,15 @@ export default function FuryWorkbench() {
                 >
                   {submitting ? <Loader2 size={24} className="animate-spin" /> : <ShieldAlert size={24} />}
                   BURN STAKE (FRAUD)
+                </button>
+
+                <button
+                  onClick={() => handleVerdict('FLAG')}
+                  disabled={submitting}
+                  className="w-full py-3 bg-yellow-600/10 hover:bg-yellow-600/20 border border-yellow-600/50 text-yellow-400 font-bold rounded-xl transition-all flex justify-center items-center gap-2 text-sm disabled:opacity-50"
+                >
+                  <Flag size={16} />
+                  FLAG AS SUSPICIOUS
                 </button>
               </div>
             </div>

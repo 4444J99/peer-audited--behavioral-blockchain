@@ -7,6 +7,7 @@ import { AuthGuard } from '../../../guards/auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { FuryWorker } from './fury.worker';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { R2StorageService } from '../../../services/storage/r2.service';
 import { SubmitVerdictDto } from './dto';
 import { calculateAccuracy } from '../../../../shared/libs/integrity';
 
@@ -19,6 +20,7 @@ export class FuryController {
     private readonly pool: Pool,
     private readonly furyWorker: FuryWorker,
     private readonly truthLog: TruthLogService,
+    private readonly r2: R2StorageService,
   ) {}
 
   @Get('stats')
@@ -100,14 +102,39 @@ export class FuryController {
   async getAssignments(@CurrentUser() user: { id: string }) {
     const result = await this.pool.query(
       `SELECT fa.id AS assignment_id, fa.proof_id, fa.assigned_at,
-              p.media_uri, p.contract_id, p.submitted_at
+              p.media_uri, p.content_type, p.contract_id, p.submitted_at, p.description
        FROM fury_assignments fa
        JOIN proofs p ON fa.proof_id = p.id
        WHERE fa.fury_user_id = $1 AND fa.verdict IS NULL
        ORDER BY fa.assigned_at ASC`,
       [user.id],
     );
-    return { assignments: result.rows };
+
+    // Generate signed R2 view URLs for each assignment's proof media
+    const assignments = await Promise.all(
+      result.rows.map(async (row: any) => {
+        let viewUrl: string | null = null;
+        if (row.media_uri) {
+          try {
+            viewUrl = await this.r2.generateViewUrl(row.media_uri);
+          } catch {
+            // R2 may be unavailable in dev — degrade gracefully
+          }
+        }
+        return {
+          assignmentId: row.assignment_id,
+          proofId: row.proof_id,
+          assignedAt: row.assigned_at,
+          contractId: row.contract_id,
+          submittedAt: row.submitted_at,
+          contentType: row.content_type,
+          description: row.description,
+          viewUrl,
+        };
+      }),
+    );
+
+    return { assignments };
   }
 
   @Sse('stream')

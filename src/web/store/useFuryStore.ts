@@ -2,12 +2,14 @@ import { create } from 'zustand';
 import { getAuthToken } from '../services/api-client';
 
 export interface Assignment {
-  assignment_id: string;
-  proof_id: string;
-  assigned_at: string;
-  media_uri: string;
-  contract_id: string;
-  submitted_at: string;
+  assignmentId: string;
+  proofId: string;
+  assignedAt: string;
+  contractId: string;
+  submittedAt: string;
+  contentType: string | null;
+  description: string | null;
+  viewUrl: string | null;
 }
 
 interface FuryState {
@@ -80,7 +82,7 @@ export const useFuryStore = create<FuryState>((set, get) => ({
 
   removeAssignment: (assignmentId: string) => {
     set((state) => ({
-      assignments: state.assignments.filter((a) => a.assignment_id !== assignmentId),
+      assignments: state.assignments.filter((a) => a.assignmentId !== assignmentId),
     }));
   },
 }));

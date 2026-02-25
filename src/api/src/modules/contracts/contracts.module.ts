@@ -11,6 +11,7 @@ import { DisputeService } from '../../../services/escrow/dispute.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { AegisProtocolService } from '../../../services/health/aegis.service';
 import { RecoveryProtocolService } from '../../../services/health/recovery-protocol.service';
+import { HoneypotService } from '../../../services/intelligence/honeypot.service';
 import { AnomalyService, ANOMALY_REDIS_CLIENT } from '../../../services/anomaly/anomaly.service';
 import { NotificationsModule } from '../notifications/notifications.module';
 import Redis from 'ioredis';
@@ -41,9 +42,10 @@ const redisProvider = {
     FuryRouterService,
     AegisProtocolService,
     RecoveryProtocolService,
+    HoneypotService,
     AnomalyService,
     redisProvider,
   ],
-  exports: [ContractsService],
+  exports: [ContractsService, HoneypotService],
 })
 export class ContractsModule {}

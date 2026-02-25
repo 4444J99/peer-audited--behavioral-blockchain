@@ -43,6 +43,8 @@ export interface SubmitProofDto {
 export interface VerdictDto {
   assignmentId: string;
   verdict: 'PASS' | 'FAIL';
+  confidence?: number;
+  flagged?: boolean;
 }
 
 export interface LeaderboardEntry {
@@ -143,16 +145,18 @@ export const api = {
   // Fury — userId comes from JWT
   getFuryAssignments: () =>
     request<{ assignments: Array<{
-      assignment_id: string;
-      proof_id: string;
-      assigned_at: string;
-      media_uri: string;
-      contract_id: string;
-      submitted_at: string;
+      assignmentId: string;
+      proofId: string;
+      assignedAt: string;
+      contractId: string;
+      submittedAt: string;
+      contentType: string | null;
+      description: string | null;
+      viewUrl: string | null;
     }> }>('/fury/queue'),
 
   submitVerdict: (dto: VerdictDto) =>
-    request<{ status: string }>('/fury/verdict', {
+    request<{ status: string; honeypotReveal?: { wasHoneypot: boolean; wasCorrect: boolean } }>('/fury/verdict', {
       method: 'POST',
       body: JSON.stringify(dto),
     }),
