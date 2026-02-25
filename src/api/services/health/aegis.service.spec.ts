@@ -8,40 +8,34 @@ describe('AegisProtocolService', () => {
     service = new AegisProtocolService();
   });
 
-  describe('validateHealthMetrics', () => {
-    it('should pass for a medically safe weight loss metric (BMI > 18.5, Loss < 2%)', () => {
-      // 180 lbs, 70 inches (5'10") -> BMI ~ 25.8
-      // Wants to lose 2 lbs in 7 days (1 week) -> ~ 1.1% velocity
-      const isValid = service.validateHealthMetrics(180, 70, 178, 7);
+  describe('validatePsychologicalGuardrails', () => {
+    it('should pass for a safe contract ($100 stake, 30 days, good score)', () => {
+      const isValid = service.validatePsychologicalGuardrails(100, 30, 80, 0);
       expect(isValid).toBe(true);
     });
 
-    it('should throw HttpException (406) if current BMI is too low (< 18.5)', () => {
-      // 110 lbs, 67 inches (5'7") -> BMI ~ 17.2 (Anorexia/Underweight risk)
+    it('should throw HttpException (406) if stake exceeds absolute ceiling ($500)', () => {
       expect(() => {
-        service.validateHealthMetrics(110, 67, 108, 14);
-      }).toThrow(HttpException);
-      expect(() => {
-        service.validateHealthMetrics(110, 67, 108, 14);
-      }).toThrow(/Current BMI .* strictly below the safe floor/);
+        service.validatePsychologicalGuardrails(600, 30, 90, 0);
+      }).toThrow(/Proposed stake .* exceeds the absolute psychological safety ceiling/);
     });
 
-    it('should throw HttpException (406) if proposed loss velocity is dangerously high (> 2%/week)', () => {
-      // 200 lbs, 70 inches -> BMI ~ 28.7
-      // Wants to lose 10 lbs in 7 days -> 5% velocity per week (Starvation risk)
+    it('should throw HttpException (406) if duration is too short (< 7 days)', () => {
       expect(() => {
-        service.validateHealthMetrics(200, 70, 190, 7);
-      }).toThrow(HttpException);
-      expect(() => {
-        service.validateHealthMetrics(200, 70, 190, 7);
-      }).toThrow(/Proposed weight loss velocity .* strictly exceeds the safe maximum/);
+        service.validatePsychologicalGuardrails(50, 5, 80, 0);
+      }).toThrow(/Proposed duration .* is beneath the clinical threshold/);
     });
 
-    it('should pass if the user is not trying to lose weight (e.g. maintaining or bulking)', () => {
-      // 150 lbs, 70 inches -> BMI 21.5
-      // Target is 155 lbs (Muscle gain)
-      const isValid = service.validateHealthMetrics(150, 70, 155, 30);
-      expect(isValid).toBe(true);
+    it('should throw HttpException (406) to prevent downward spiral (3+ failures & >$50 stake)', () => {
+      expect(() => {
+        service.validatePsychologicalGuardrails(100, 14, 80, 4); // 4 failures, trying to bet $100
+      }).toThrow(/After 4 recent contract failures, your maximum allowed stake is strictly capped at \$50/);
+    });
+
+    it('should throw HttpException (406) if integrity score is low (< 40) and stake is high (>$100)', () => {
+      expect(() => {
+        service.validatePsychologicalGuardrails(200, 14, 30, 0); // Score 30, betting $200
+      }).toThrow(/A low Integrity Score .* restricts stakes to a maximum of \$100/);
     });
   });
 });

@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, UseGuards, Res, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Pool } from 'pg';
@@ -16,7 +16,6 @@ import { processIAP } from '../../../services/billing';
 @ApiTags('Contracts')
 @ApiBearerAuth()
 @Controller('contracts')
-@UseGuards(GeofenceGuard, AuthGuard)
 export class ContractsController {
   constructor(
     private readonly contractsService: ContractsService,
@@ -27,30 +26,35 @@ export class ContractsController {
     private readonly truthLog: TruthLogService,
   ) {}
 
+  @UseGuards(GeofenceGuard, AuthGuard)
   @Get()
   @ApiOperation({ summary: 'List contracts for the authenticated user' })
   async findByUser(@CurrentUser() user: { id: string }) {
     return this.contractsService.getUserContracts(user.id);
   }
 
+  @UseGuards(GeofenceGuard, AuthGuard)
   @Post()
   @ApiOperation({ summary: 'Create a new behavioral contract with a financial stake' })
   async create(@CurrentUser() user: { id: string }, @Body() dto: CreateContractDto) {
     return this.contractsService.createContract({ ...dto, userId: user.id });
   }
 
+  @UseGuards(GeofenceGuard, AuthGuard)
   @Get(':id')
   @ApiOperation({ summary: 'Get a single contract by ID' })
   async findOne(@Param('id') id: string) {
     return this.contractsService.getContract(id);
   }
 
+  @UseGuards(GeofenceGuard, AuthGuard)
   @Get(':id/proofs')
   @ApiOperation({ summary: 'List proof submissions for a contract' })
   async getProofs(@Param('id') contractId: string) {
     return this.contractsService.getContractProofs(contractId);
   }
 
+  @UseGuards(GeofenceGuard, AuthGuard)
   @Post(':id/proof')
   @ApiOperation({ summary: 'Submit a proof of compliance for peer review' })
   @Throttle({ default: { ttl: 60000, limit: 10 } })
@@ -62,6 +66,7 @@ export class ContractsController {
     return this.contractsService.submitProof(contractId, { ...dto, userId: user.id });
   }
 
+  @UseGuards(GeofenceGuard, AuthGuard)
   @Post(':id/grace-day')
   @ApiOperation({ summary: 'Use a grace day on a contract' })
   async useGraceDay(
@@ -71,6 +76,7 @@ export class ContractsController {
     return this.contractsService.useGraceDay(contractId, user.id);
   }
 
+  @UseGuards(GeofenceGuard, AuthGuard)
   @Post(':id/dispute')
   @ApiOperation({ summary: 'File a dispute against a verdict' })
   async disputeVerdict(
@@ -80,6 +86,7 @@ export class ContractsController {
     return this.contractsService.fileDispute(user.id, contractId);
   }
 
+  @UseGuards(GeofenceGuard, AuthGuard)
   @Post(':id/ticket')
   @ApiOperation({ summary: 'Purchase an in-app ticket for a contract' })
   async purchaseTicket(
@@ -87,5 +94,20 @@ export class ContractsController {
     @CurrentUser() user: { id: string },
   ) {
     return processIAP(this.pool, this.stripe, this.ledger, this.truthLog, user.id, contractId);
+  }
+
+  // --- No Auth Guard for Bounty Claims (Ex-partner access) ---
+  @Post('bounty/:linkId')
+  @ApiOperation({ summary: 'Submit evidence against a user via their unique whistleblower bounty link' })
+  @Throttle({ default: { ttl: 60000, limit: 5 } }) // Stricter throttling for public endpoint
+  async claimBounty(
+    @Param('linkId') linkId: string,
+    @Body() dto: { mediaUri: string },
+    @Res() res: any, // Extract Request to get IP if possible, NestJS often uses @Req
+    @Req() req: any
+  ) {
+    const claimantIp = req.ip || req.connection.remoteAddress;
+    const result = await this.contractsService.claimBounty(linkId, dto.mediaUri, claimantIp);
+    return res.json(result);
   }
 }

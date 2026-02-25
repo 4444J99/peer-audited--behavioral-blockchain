@@ -38,7 +38,7 @@ describe('ContractsService', () => {
   } as unknown as DisputeService;
 
   const mockAegis = {
-    validateHealthMetrics: jest.fn().mockReturnValue(true),
+    validatePsychologicalGuardrails: jest.fn().mockReturnValue(true),
   } as unknown as AegisProtocolService;
 
   const mockRecovery = {
@@ -177,7 +177,7 @@ describe('ContractsService', () => {
 
       await service.createContract(bioDto);
 
-      expect(mockAegis.validateHealthMetrics).toHaveBeenCalledWith(180, 70, 170, 30);
+      expect(mockAegis.validatePsychologicalGuardrails).toHaveBeenCalledWith(25, 30, 50, 0);
     });
 
     it('should NOT call Aegis validation for non-biological oaths', async () => {
@@ -190,7 +190,8 @@ describe('ContractsService', () => {
 
       await service.createContract(validDto);
 
-      expect(mockAegis.validateHealthMetrics).not.toHaveBeenCalled();
+      // Aegis is run for ALL contracts now (psychological stakes), so this test checks that it IS called.
+      expect(mockAegis.validatePsychologicalGuardrails).toHaveBeenCalledWith(25, 30, 50, 0);
     });
 
     it('should hold stake via Stripe with correct amount', async () => {

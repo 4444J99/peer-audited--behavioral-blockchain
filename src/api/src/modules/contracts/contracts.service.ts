@@ -120,15 +120,13 @@ export class ContractsService {
       }
     }
 
-    // 4. If biological oath, run Aegis medical guardrails
-    if (dto.oathCategory.startsWith('BIOLOGICAL_') && dto.healthMetrics) {
-      this.aegis.validateHealthMetrics(
-        dto.healthMetrics.currentWeightLbs,
-        dto.healthMetrics.heightInches,
-        dto.healthMetrics.targetWeightLbs,
-        dto.durationDays,
-      );
-    }
+    // 3. Aegis Protocol Verification (Psychological / Financial Guardrails)
+    this.aegis.validatePsychologicalGuardrails(
+      dto.stakeAmount,
+      dto.durationDays,
+      user.integrity_score,
+      totalFailures.rows[0].count
+    );
 
     // 4b. If recovery oath, run Recovery Protocol guardrails
     if (dto.oathCategory.startsWith('RECOVERY_')) {
@@ -141,6 +139,13 @@ export class ContractsService {
       if (dto.durationDays > MAX_NOCONTACT_DURATION_DAYS) {
         dto = { ...dto, durationDays: MAX_NOCONTACT_DURATION_DAYS };
       }
+    }
+
+    // Generate unique Whistleblower Bounty Link for No Contact
+    let bountyLinkId: string | null = null;
+    if (dto.oathCategory === 'RECOVERY_NOCONTACT') {
+       const crypto = require('crypto');
+       bountyLinkId = crypto.randomBytes(32).toString('hex');
     }
 
     // 5. Hold stake via Stripe FBO
@@ -162,12 +167,20 @@ export class ContractsService {
       : {};
 
     const contractResult = await this.pool.query(
-      `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata)
-       VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE', $7, $8, $9)
+      `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id)
+       VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE', $7, $8, $9, $10)
        RETURNING id`,
-      [dto.userId, dto.oathCategory, dto.verificationMethod, dto.stakeAmount, paymentIntent.id, dto.durationDays, now.toISOString(), endsAt.toISOString(), JSON.stringify(contractMetadata)],
+      [dto.userId, dto.oathCategory, dto.verificationMethod, dto.stakeAmount, paymentIntent.id, dto.durationDays, now.toISOString(), endsAt.toISOString(), JSON.stringify(contractMetadata), bountyLinkId],
     );
     const contractId = contractResult.rows[0].id;
+
+    if (bountyLinkId) {
+      // Insert corresponding bounty record to track the link's state
+      await this.pool.query(
+          `INSERT INTO bounties (contract_id, bounty_link_id) VALUES ($1, $2)`,
+          [contractId, bountyLinkId]
+      );
+    }
 
     // 6b. If recovery oath, create accountability partner row
     if (dto.oathCategory.startsWith('RECOVERY_') && dto.recoveryMetadata) {
@@ -257,6 +270,54 @@ export class ContractsService {
       throw new NotFoundException(`Contract ${contractId} not found`);
     }
     return result.rows[0];
+  }
+
+  async claimBounty(bountyLinkId: string, mediaUri: string, claimantIp: string): Promise<{ proofId: string; jobId: string }> {
+    // 1. Verify the bounty link is valid and ACTIVE
+    const bountyResult = await this.pool.query(
+      `SELECT b.*, c.user_id, c.status as contract_status 
+       FROM bounties b 
+       JOIN contracts c ON b.contract_id = c.id
+       WHERE b.bounty_link_id = $1`,
+      [bountyLinkId]
+    );
+
+    if (bountyResult.rows.length === 0) {
+      throw new NotFoundException('Invalid bounty link');
+    }
+
+    const bounty = bountyResult.rows[0];
+
+    if (bounty.status !== 'ACTIVE' || bounty.contract_status !== 'ACTIVE') {
+      throw new BadRequestException('This bounty is no longer active or has already been claimed.');
+    }
+
+    // 2. Mark bounty as pending review (claimed)
+    await this.pool.query(
+      `UPDATE bounties SET status = 'CLAIMED', claimed_at = NOW(), claimant_ip = $1 WHERE id = $2`,
+      [claimantIp, bounty.id]
+    );
+
+    // 3. Create a proof submission on behalf of the Ex (linked to the user's contract)
+    const proofResult = await this.pool.query(
+      `INSERT INTO proofs (contract_id, user_id, media_uri, status, is_honeypot)
+       VALUES ($1, $2, $3, 'PENDING_REVIEW', false)
+       RETURNING id`,
+      [bounty.contract_id, bounty.user_id, mediaUri]
+    );
+    const proofId = proofResult.rows[0].id;
+
+    // 4. Route to Fury network with high priority
+    const jobId = await this.furyRouter.routeProof(proofId, bounty.user_id, 5); // Higher priority for bounties
+
+    // 5. Log it
+    await this.truthLog.appendEvent('BOUNTY_CLAIMED', {
+      bountyId: bounty.id,
+      contractId: bounty.contract_id,
+      proofId,
+    });
+
+    return { proofId, jobId };
   }
 
   async submitProof(contractId: string, dto: SubmitProofInput): Promise<{ proofId: string; jobId: string; rejected?: boolean; reason?: string }> {

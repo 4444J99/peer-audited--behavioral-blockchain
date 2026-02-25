@@ -8,12 +8,10 @@ import {
 } from 'lucide-react';
 
 const OATH_CATEGORIES = [
-  { id: 'biological', label: 'Biological', icon: '\u{1F9EC}', description: 'Fitness, nutrition, sleep, health habits', color: 'border-green-700 hover:border-green-500' },
-  { id: 'cognitive', label: 'Cognitive', icon: '\u{1F9E0}', description: 'Learning, reading, skill development', color: 'border-purple-700 hover:border-purple-500' },
-  { id: 'professional', label: 'Professional', icon: '\u{1F4BC}', description: 'Career goals, productivity, deadlines', color: 'border-blue-700 hover:border-blue-500' },
-  { id: 'creative', label: 'Creative', icon: '\u{1F3A8}', description: 'Art, music, writing, creative projects', color: 'border-yellow-700 hover:border-yellow-500' },
-  { id: 'environmental', label: 'Environmental', icon: '\u{1F331}', description: 'Sustainability, eco habits, reduction', color: 'border-emerald-700 hover:border-emerald-500' },
-  { id: 'character', label: 'Character', icon: '\u{2694}\u{FE0F}', description: 'Personal virtues, habits, discipline', color: 'border-red-700 hover:border-red-500' },
+  { id: 'RECOVERY_NOCONTACT', label: 'No Contact', icon: '\u{1F6AB}', description: 'Absolute severance. No texts, calls, or DMs.', color: 'border-red-700 hover:border-red-500' },
+  { id: 'RECOVERY_DETOX', label: 'Digital Detox', icon: '\u{1F4F4}', description: 'Strict limits on social media doom-scrolling.', color: 'border-purple-700 hover:border-purple-500' },
+  { id: 'RECOVERY_ENDORPHIN', label: 'Endorphin Recovery', icon: '\u{1F3CB}\u{FE0F}', description: 'Physical exertion to process stress (Gym/Steps).', color: 'border-green-700 hover:border-green-500' },
+  { id: 'RECOVERY_DIVERSION', label: 'Venting Vault', icon: '\u{1F512}', description: 'Send toxic urges here instead of to them.', color: 'border-blue-700 hover:border-blue-500' },
 ];
 
 const STAKE_PRESETS = [5, 10, 25, 50, 100, 250, 500];

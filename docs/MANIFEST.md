@@ -74,7 +74,7 @@
 - **[FILE-RES-03] `research--competitor-teardown.md`**
   - **Unique ID**: `RES-03`
   - **Tags**: #market #differentiation #anti-cheat
-  - **Annotation**: Tactical analysis of DietBet, Beeminder, and Habitica. Identifies the "Oracle Problem" and defines the "Fury Bounty" as the primary market disruptor.
+  - **Annotation**: Tactical analysis of Relationship Recovery and Habit tracking space. Identifies the "Oracle Problem" and defines the "Ex Whistleblower Bounty" as the primary market disruptor for the No Contact pivot.
 - **[FILE-RES-04] `research--market-analysis.md`**
   - **Unique ID**: `RES-04`
   - **Tags**: #market #B2B #TAM
@@ -93,7 +93,7 @@
 - **[FILE-LEG-02] `legal--compliance-guardrails.md`**
   - **Unique ID**: `LEG-02`
   - **Tags**: #compliance #FTC #BMI #medical
-  - **Annotation**: Operational rules for the "Aegis Protocol." Hardcodes BMI floors (18.5), velocity caps (2%), and geofencing requirements.
+  - **Annotation**: Operational rules for the "Aegis Protocol." Hardcodes psychological safety nets (maximum stake limits to prevent emotional gambling) and geofencing requirements.
 - **[FILE-LEG-03] `legal--gatekeeper-compliance.md`**
   - **Unique ID**: `LEG-03`
   - **Tags**: #Apple #Stripe #Section5.3 #Risk
@@ -104,7 +104,7 @@
 - **[FILE-ARC-01] `architecture--truth-blockchain.md`**
   - **Unique ID**: `ARC-01`
   - **Tags**: #tech #architecture #oracles
-  - **Annotation**: Technical feasibility report. Outlines the hardware-only biometric pipeline and the "GYNOPTICON" consensus algorithm.
+  - **Annotation**: Technical feasibility report. Outlines the "Ex Bounty" and "Digital Exhaust" tracking for verification, along with the "GYNOPTICON" consensus algorithm.
 - **[FILE-ARC-02] `architecture--feasibility-stack.md`**
   - **Unique ID**: `ARC-02`
   - **Tags**: #techstack #PostgreSQL #Redis #R2

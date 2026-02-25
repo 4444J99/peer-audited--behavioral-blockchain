@@ -24,7 +24,7 @@ describe('ContractsService — Behavioral Physics', () => {
   } as unknown as StripeFboService;
   const mockFuryRouter = { routeProof: jest.fn().mockResolvedValue('job-id-1') } as unknown as FuryRouterService;
   const mockDispute = { initiateAppeal: jest.fn() } as unknown as DisputeService;
-  const mockAegis = { validateHealthMetrics: jest.fn() } as unknown as AegisProtocolService;
+  const mockAegis = { validatePsychologicalGuardrails: jest.fn() } as unknown as AegisProtocolService;
   const mockRecovery = { validateRecoveryContract: jest.fn() } as unknown as RecoveryProtocolService;
   const mockAnomaly = { analyze: jest.fn().mockResolvedValue({ rejected: false, flags: [] }) } as unknown as AnomalyService;
 
@@ -212,6 +212,7 @@ describe('ContractsService — Behavioral Physics', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Total failures
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-r1' }] }); // Contract insert
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // Bounty insert (for NOCONTACT)
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // AP insert
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] }); // Prior contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] }); // Escrow lookup
@@ -234,7 +235,7 @@ describe('ContractsService — Behavioral Physics', () => {
 
       await service.createContract(recoveryDto);
 
-      // The AP insert is the 5th query call (index 4)
+      // The AP insert is the 6th query call (index 5)
       const apInsertCall = mockPool.query.mock.calls.find(
         ([sql]: [string]) => typeof sql === 'string' && sql.includes('accountability_partners'),
       );
@@ -311,7 +312,7 @@ describe('ContractsService — Behavioral Physics', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-r2' }] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] }); // AP insert
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // AP insert (no bounty for SUBSTANCE)
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
 

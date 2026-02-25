@@ -15,14 +15,15 @@ This is the primary chronological guide for the development of Styx. It maps the
 - **Micro-Task**: **High-Risk Merchant Underwriting**: Apply for specialized processors (Corepay/Allied Wallet) to avoid Stripe "Shadow Bans."
 - **Micro-Task**: **Linguistic Middleware**: Implement terminology filters to swap themed terms (Fury/Fury) for "Stake/Vault" on iOS/Android builds.
 - **Micro-Task**: Stripe FBO routing & `BankDataProvider` interface.
-- **Micro-Task**: **Truth Log (Hash-Chained)**: Cryptographic audit trail of all behavioral events.
+- [x] **Truth Log (Hash-Chained)**: Cryptographic audit trail of all behavioral events.
+- [x] **Weaponized Whistleblower**: Implement the anonymous bounty link generation for "No Contact" contracts.
 
 ## 2. Phase Beta: The Shield (Month 2)
 **Objective**: Build the regulatory and biometric immune system.
-- **Micro-Task**: **Aegis Protocol**: BMI floors, 2% velocity caps, and age gates.
-- **Micro-Task**: **100% Native Bridges**: Ensure all HealthKit/Google Fit code is native Swift/Kotlin to satisfy Guideline 4.7.
-- **Micro-Task**: **IP-Based Geofencing**: Hard-block "Any Chance" jurisdictions (AZ, AR, DE, etc.) at the API level.
-- **Micro-Task**: **Hardware Oracles**: iOS/Android bridges filtering manual entries.
+- [x] **Aegis Protocol**: Psychological and financial guardrails to prevent emotional gambling (max stake limits).
+- [ ] **Native Bridges**: Strip or defer HealthKit/Google Fit bridges to focus entirely on behavioral/digital exhaust.
+- [x] **IP-Based Geofencing**: Hard-block "Any Chance" jurisdictions (AZ, AR, DE, etc.) at the API level.
+- [x] **Digital Oracles**: DeviceActivity tracking and the Whistleblower Bounty as primary verification mechanics.
 - **Micro-Task**: **Grace Days & Endowed Progress**: Manufacture psychological momentum.
 
 ## 3. Phase Gamma: The Panopticon (Month 3)

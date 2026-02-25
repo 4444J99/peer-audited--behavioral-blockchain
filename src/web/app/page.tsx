@@ -14,7 +14,7 @@ export default function Home() {
       </div>
       <h1 className="text-7xl font-black tracking-tighter mb-6 uppercase text-transparent bg-clip-text bg-gradient-to-br from-white to-neutral-600">STYX</h1>
       <p className="text-2xl text-neutral-300 max-w-2xl mb-12 font-medium leading-relaxed">
-        The Blockchain of Truth. We weaponize loss aversion to forge unbreakable habits. Stake your money. Prove your actions. Earn back your integrity.
+        The Blockchain of Truth for Relationship Recovery. We weaponize loss aversion to enforce the No Contact rule. Stake your money. Maintain your distance. Earn back your emotional resilience.
       </p>
 
       {/* Primary Actions */}
@@ -40,8 +40,8 @@ export default function Home() {
           <p className="text-neutral-400 leading-relaxed">Hardware-only oracles. No manual entries. Your biometric data is pulled directly from the silicon. You cannot lie to Styx.</p>
         </div>
         <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-red-600/50 transition-colors">
-          <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">PEER AUDITED</h3>
-          <p className="text-neutral-400 leading-relaxed">The Fury Bounty. A decentralized network of your peers audits your daily video proofs. A false claim means immediate financial execution.</p>
+          <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">WEAPONIZED WHISTLEBLOWER</h3>
+          <p className="text-neutral-400 leading-relaxed">The Ex Bounty. Generate a unique, anonymous link for your ex-partner. If you break No Contact, their proof immediately burns your staked funds.</p>
         </div>
         <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-red-600/50 transition-colors">
           <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">HARD LEDGER</h3>

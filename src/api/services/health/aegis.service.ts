@@ -5,42 +5,50 @@ import { MIN_SAFE_BMI, MAX_WEEKLY_LOSS_VELOCITY_PCT } from '../../../shared/libs
 export class AegisProtocolService {
   
   /**
-   * Validates if a proposed health/weight loss contract is medically safe to underwrite.
-   * Throws 406 Not Acceptable if the contract violates the Aegis Guardrails.
+   * Validates if a proposed behavioral contract is psychologically and financially safe.
+   * Throws 406 Not Acceptable if the contract violates the Aegis Guardrails for Phase 1 (No Contact).
    */
-  validateHealthMetrics(
-    currentWeightLbs: number, 
-    heightInches: number, 
-    targetWeightLbs: number, 
-    targetDays: number
+  validatePsychologicalGuardrails(
+    stakeAmount: number,
+    durationDays: number,
+    integrityScore: number,
+    pastFailures: number
   ): boolean {
-    // 1. Calculate current BMI (Formula: weight (lb) / [height (in)]^2 x 703)
-    const currentBmi = (currentWeightLbs / Math.pow(heightInches, 2)) * 703;
+    const MAX_STAKE_LIMIT = 500; // Hard cap to prevent emotional gambling
+    const MIN_DURATION_DAYS = 7; // Minimum time to build a habit/break a cycle
     
-    if (currentBmi < MIN_SAFE_BMI) {
+    // 1. Guard against emotional "revenge staking" or impulsive gambling
+    if (stakeAmount > MAX_STAKE_LIMIT) {
       throw new HttpException(
-        `Aegis Violation: Current BMI (${currentBmi.toFixed(1)}) is strictly below the safe floor of ${MIN_SAFE_BMI}. Contract rejected.`,
+        `Aegis Violation: Proposed stake ($${stakeAmount}) exceeds the absolute psychological safety ceiling of $${MAX_STAKE_LIMIT}. Contract rejected to prevent emotional self-harm.`,
         HttpStatus.NOT_ACCEPTABLE
       );
     }
 
-    // 2. Calculate proposed weekly weight loss velocity
-    const weightToLose = currentWeightLbs - targetWeightLbs;
-    
-    // If they aren't trying to lose weight, velocity check is moot
-    if (weightToLose <= 0) return true;
-
-    const weeks = targetDays / 7;
-    const lossPerWeek = weightToLose / weeks;
-    const velocityPct = lossPerWeek / currentWeightLbs;
-
-    if (velocityPct > MAX_WEEKLY_LOSS_VELOCITY_PCT) {
+    // 2. Guard against meaningless, too-short contracts
+    if (durationDays < MIN_DURATION_DAYS) {
       throw new HttpException(
-        `Aegis Violation: Proposed weight loss velocity (${(velocityPct * 100).toFixed(1)}%/week) strictly exceeds the safe maximum of ${(MAX_WEEKLY_LOSS_VELOCITY_PCT * 100).toFixed(1)}%/week. Contract rejected.`,
-        HttpStatus.NOT_ACCEPTABLE
+         `Aegis Violation: Proposed duration (${durationDays} days) is beneath the clinical threshold (${MIN_DURATION_DAYS} days) required to interrupt habituated neural pathways. Contract rejected.`,
+         HttpStatus.NOT_ACCEPTABLE
       );
     }
 
-    return true; // Contract is medically safe to underwrite
+    // 3. Dynamic scaling based on previous consecutive failures (Downward spiral prevention)
+    if (pastFailures >= 3 && stakeAmount > 50) {
+      throw new HttpException(
+        `Aegis Velocity Check: After ${pastFailures} recent contract failures, your maximum allowed stake is strictly capped at $50 to prevent a financial downward spiral.`,
+        HttpStatus.NOT_ACCEPTABLE
+      );
+    }
+    
+    // 4. Score-based limits (Low integrity score restricts high stakes)
+    if (integrityScore < 40 && stakeAmount > 100) {
+         throw new HttpException(
+           `Aegis Integrity Check: A low Integrity Score (${integrityScore}) restricts stakes to a maximum of $100 until peer trust is rebuilt over time.`,
+           HttpStatus.NOT_ACCEPTABLE
+        );
+    }
+
+    return true; // Contract is psychologically safe to underwrite
   }
 }
