@@ -246,10 +246,14 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                   <span>Low Risk</span>
                   <span>High Risk</span>
                 </div>
+                <style>{`
+                  .dynamic-stake-width {
+                    width: ${Math.min((stakeAmount / 500) * 100, 100)}%;
+                  }
+                `}</style>
                 <div className="w-full h-3 bg-neutral-800 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-full transition-all"
-                    style={{ width: `${Math.min((stakeAmount / 500) * 100, 100)}%` }}
+                    className="h-full bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-full transition-all dynamic-stake-width"
                   />
                 </div>
               </div>

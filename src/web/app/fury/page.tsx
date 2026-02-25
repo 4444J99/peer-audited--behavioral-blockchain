@@ -6,15 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '../../services/api-client';
 import { useAuth } from '../../contexts/AuthContext';
-
-interface Assignment {
-  assignment_id: string;
-  proof_id: string;
-  assigned_at: string;
-  media_uri: string;
-  contract_id: string;
-  submitted_at: string;
-}
+import { useFuryStore } from '../../store/useFuryStore';
 
 interface FuryStats {
   totalAudits: number;
@@ -31,33 +23,21 @@ interface FuryStats {
 export default function FuryWorkbench() {
   const { user: authUser, logout, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<FuryStats | null>(null);
+  
+  // Zustand State
+  const { assignments, isConnected, error: streamError, connectStream, disconnectStream, removeAssignment } = useFuryStore();
 
-  const loadAssignments = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await api.getFuryAssignments();
-      setAssignments(data.assignments);
-      setCurrentIndex(0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load assignments');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [stats, setStats] = useState<FuryStats | null>(null);
 
   const loadStats = useCallback(async () => {
     try {
       const data = await api.getFuryStats();
       setStats(data);
     } catch {
-      // Stats are non-critical — don't block the workbench
+      // Stats are non-critical
     }
   }, []);
 
@@ -67,11 +47,18 @@ export default function FuryWorkbench() {
       router.push('/login');
       return;
     }
-    loadAssignments();
+    
+    // Connect to SSE stream
+    connectStream();
     loadStats();
-  }, [authUser, authLoading, router, loadAssignments, loadStats]);
+
+    return () => {
+      disconnectStream();
+    };
+  }, [authUser, authLoading, router, connectStream, disconnectStream, loadStats]);
 
   const handleLogout = () => {
+    disconnectStream();
     logout();
     router.push('/login');
   };
@@ -81,46 +68,50 @@ export default function FuryWorkbench() {
     if (!current) return;
 
     setSubmitting(true);
+    setActionError(null);
     try {
       await api.submitVerdict({
         assignmentId: current.assignment_id,
         verdict,
       });
-      // Advance to next assignment
-      if (currentIndex + 1 < assignments.length) {
-        setCurrentIndex(currentIndex + 1);
-      } else {
-        // Reload to check for new assignments
-        await loadAssignments();
+      // Remove from store immediately for snappy UI
+      removeAssignment(current.assignment_id);
+      
+      // Update UI index if necessary
+      if (currentIndex >= assignments.length - 1) {
+        setCurrentIndex(Math.max(0, assignments.length - 2)); // Shift back if we were at the end
       }
+      
+      // Refresh stats after a judgement
+      loadStats();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit verdict');
+      setActionError(err instanceof Error ? err.message : 'Failed to submit verdict');
     } finally {
       setSubmitting(false);
     }
   };
 
   const current = assignments[currentIndex];
-  const queueCount = assignments.length - currentIndex;
+  const queueCount = assignments.length;
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <Loader2 className="animate-spin mr-3" size={24} />
-        <span className="text-neutral-400 font-bold">Loading Fury queue...</span>
+        <span className="text-neutral-400 font-bold">Authenticating...</span>
       </div>
     );
   }
 
-  if (error) {
+  if (streamError) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center space-y-4">
           <AlertTriangle className="mx-auto text-red-500" size={48} />
-          <p className="text-red-400 font-bold">{error}</p>
-          <p className="text-neutral-500 text-sm">Ensure the API is running on port 3000.</p>
-          <button onClick={loadAssignments} className="px-6 py-2 bg-neutral-800 rounded-lg text-sm font-bold hover:bg-neutral-700 transition-colors">
-            RETRY
+          <p className="text-red-400 font-bold">{streamError}</p>
+          <p className="text-neutral-500 text-sm">Attempting to reconnect to The Panopticon...</p>
+          <button onClick={connectStream} className="px-6 py-2 bg-neutral-800 rounded-lg text-sm font-bold hover:bg-neutral-700 transition-colors mt-4">
+            FORCE RECONNECT
           </button>
         </div>
       </div>
@@ -146,6 +137,8 @@ export default function FuryWorkbench() {
           </div>
           <button
             onClick={handleLogout}
+            aria-label="Disconnect and Logout"
+            title="Disconnect and Logout"
             className="px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-sm font-bold text-neutral-400 hover:text-red-500 transition-colors flex items-center gap-2"
           >
             <LogOut size={16} />
@@ -190,10 +183,10 @@ export default function FuryWorkbench() {
           <div className="text-center space-y-4">
             <Inbox className="mx-auto text-neutral-600" size={64} />
             <p className="text-neutral-500 font-bold text-lg">Queue Empty</p>
-            <p className="text-neutral-600 text-sm">No proofs awaiting review. Check back later.</p>
-            <button onClick={loadAssignments} className="px-6 py-2 bg-neutral-800 rounded-lg text-sm font-bold hover:bg-neutral-700 transition-colors">
-              REFRESH
-            </button>
+            <p className="text-neutral-600 text-sm">
+              No proofs awaiting review. The Panopticon is actively scanning... <br />
+              <span className="text-lime-500/50 mt-2 inline-block">● Live Connection Active</span>
+            </p>
           </div>
         </div>
       ) : (

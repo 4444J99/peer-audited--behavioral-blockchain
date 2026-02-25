@@ -1,5 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicedoc/tauri/dev/core/tauri-config-schema/schema.json",
+  "productName": "Styx Judge",
+  "identifier": "com.styx.judge",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -7,8 +9,6 @@
     "beforeBuildCommand": "npm run build"
   },
   "app": {
-    "title": "Styx Judge",
-    "identifier": "com.styx.judge",
     "windows": [
       {
         "title": "Styx Judge \u2014 The Court of Behavioral Truth",

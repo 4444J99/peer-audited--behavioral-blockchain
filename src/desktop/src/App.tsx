@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, Activity, Database, Gavel } from 'lucide-react';
+import { Shield, Activity, Database, Gavel, Fingerprint } from 'lucide-react';
+import './App.css';
 import { LoginScreen } from './components/LoginScreen';
 import LedgerInspector from './components/LedgerInspector';
 import MacroReview from './components/MacroReview';
 import ExilePanel from './components/ExilePanel';
 import B2BOrchestration from './components/B2BOrchestration';
+import HashCollider from './components/HashCollider';
 import { getToken } from './services/api';
 
 interface Notification {
@@ -15,51 +17,22 @@ interface Notification {
 
 function ToastOverlay({ notifications, onDismiss }: { notifications: Notification[]; onDismiss: (id: number) => void }) {
   return (
-    <div style={{
-      position: 'fixed',
-      top: '1rem',
-      right: '1rem',
-      zIndex: 9999,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.5rem',
-      maxWidth: '360px',
-    }}>
+    <div className="toast-overlay">
       {notifications.map((n) => (
         <div
           key={n.id}
-          style={{
-            background: '#1a1a2e',
-            border: '1px solid #DC2626',
-            borderRadius: '8px',
-            padding: '0.75rem 1rem',
-            color: '#e0e0e0',
-            fontSize: '0.85rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: '0.5rem',
-            animation: 'fadeIn 0.3s ease-in',
-          }}
+          className="toast-item"
         >
           <div>
-            <div style={{ fontWeight: 600, marginBottom: '0.25rem', color: '#DC2626' }}>SYSTEM EVENT</div>
+            <div className="system-event-title">SYSTEM EVENT</div>
             <div>{n.message}</div>
-            <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.25rem' }}>
+            <div className="toast-timestamp">
               {n.timestamp.toLocaleTimeString()}
             </div>
           </div>
           <button
             onClick={() => onDismiss(n.id)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#666',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              padding: '0',
-              lineHeight: 1,
-            }}
+            className="dismiss-button"
           >
             x
           </button>
@@ -71,7 +44,7 @@ function ToastOverlay({ notifications, onDismiss }: { notifications: Notificatio
 
 export default function App() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'MACRO_QUEUE' | 'TRUTH_LOG' | 'EXILE' | 'B2B'>('MACRO_QUEUE');
+  const [activeTab, setActiveTab] = useState<'MACRO_QUEUE' | 'TRUTH_LOG' | 'HASH_COLLIDER' | 'EXILE' | 'B2B'>('MACRO_QUEUE');
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   // SSE connection for real-time updates
@@ -131,23 +104,23 @@ export default function App() {
   }
 
   return (
-    <div style={{ backgroundColor: '#000', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif', padding: '2rem' }}>
+    <div className="app-container">
       {/* Toast Notifications */}
       <ToastOverlay notifications={notifications} onDismiss={dismissNotification} />
 
       {/* Header */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '1.5rem', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ backgroundColor: '#DC2626', width: '3rem', height: '3rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <header className="app-header">
+        <div className="header-left">
+          <div className="gavel-icon-container">
             {React.createElement(Gavel as any, { color: "#000" })}
           </div>
           <div>
-            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900, letterSpacing: '-0.05em' }}>THE JUDGE</h1>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#666', textTransform: 'uppercase' }}>Styx Protocol - Admin Console</p>
+            <h1 className="header-title">THE JUDGE</h1>
+            <p className="header-subtitle">Styx Protocol - Admin Console</p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ padding: '0.5rem 1rem', border: '1px solid #DC2626', backgroundColor: 'rgba(220,38,38,0.1)', color: '#DC2626', fontWeight: 'bold', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="header-right">
+          <div className="level-5-badge">
             {React.createElement(Shield as any, { size: 14 })} LEVEL 5 CLEARANCE ACTIVE
           </div>
           <button
@@ -155,73 +128,52 @@ export default function App() {
               setUserId(null);
               setNotifications([]);
             }}
-            style={{
-              padding: '0.5rem 1rem',
-              background: 'transparent',
-              border: '1px solid #333',
-              color: '#666',
-              cursor: 'pointer',
-              fontSize: '0.8rem',
-              fontWeight: 'bold',
-            }}
+            className="logout-button"
           >
             LOGOUT
           </button>
         </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 4fr', gap: '2rem' }}>
+      <div className="layout-grid">
         {/* Sidebar */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <nav className="sidebar-nav">
           <button
             onClick={() => setActiveTab('MACRO_QUEUE')}
-            style={{
-              backgroundColor: activeTab === 'MACRO_QUEUE' ? '#1A1A1A' : 'transparent',
-              border: '1px solid', borderColor: activeTab === 'MACRO_QUEUE' ? '#333' : 'transparent',
-              color: activeTab === 'MACRO_QUEUE' ? '#fff' : '#666',
-              padding: '1rem', textAlign: 'left', fontWeight: 'bold', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '0.5rem'
-            }}>
+            className={`nav-button ${activeTab === 'MACRO_QUEUE' ? 'active' : ''}`}
+          >
             {React.createElement(Activity as any, { size: 16 })} Dashboard / Queue
           </button>
 
           <button
             onClick={() => setActiveTab('TRUTH_LOG')}
-            style={{
-              backgroundColor: activeTab === 'TRUTH_LOG' ? '#1A1A1A' : 'transparent',
-              border: '1px solid', borderColor: activeTab === 'TRUTH_LOG' ? '#333' : 'transparent',
-              color: activeTab === 'TRUTH_LOG' ? '#fff' : '#666',
-              padding: '1rem', textAlign: 'left', fontWeight: 'bold', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '0.5rem'
-            }}>
+            className={`nav-button ${activeTab === 'TRUTH_LOG' ? 'active' : ''}`}
+          >
             {React.createElement(Database as any, { size: 16 })} Truth Log Inspector
           </button>
 
-          <div style={{ borderTop: '1px solid #333', margin: '1rem 0' }}></div>
+          <button
+            onClick={() => setActiveTab('HASH_COLLIDER')}
+            className={`nav-button ${activeTab === 'HASH_COLLIDER' ? 'active' : ''}`}
+          >
+            {React.createElement(Fingerprint as any, { size: 16 })} Hash Collider
+          </button>
+
+          <div className="nav-divider"></div>
 
           <button
             onClick={() => setActiveTab('EXILE')}
-            style={{
-              backgroundColor: activeTab === 'EXILE' ? '#1A1A1A' : 'transparent',
-              border: '1px solid', borderColor: activeTab === 'EXILE' ? '#DC2626' : 'transparent',
-              color: activeTab === 'EXILE' ? '#DC2626' : '#666',
-              padding: '1rem', textAlign: 'left', fontWeight: 'bold', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '0.5rem'
-            }}>
+            className={`nav-button exile-tab ${activeTab === 'EXILE' ? 'active' : ''}`}
+          >
             {React.createElement(Shield as any, { size: 16 })} Ban / Exile Entity
           </button>
 
-          <div style={{ borderTop: '1px solid #333', margin: '1rem 0' }}></div>
+          <div className="nav-divider"></div>
 
           <button
             onClick={() => setActiveTab('B2B')}
-            style={{
-              backgroundColor: activeTab === 'B2B' ? '#1A1A1A' : 'transparent',
-              border: '1px solid', borderColor: activeTab === 'B2B' ? '#333' : 'transparent',
-              color: activeTab === 'B2B' ? '#fff' : '#666',
-              padding: '1rem', textAlign: 'left', fontWeight: 'bold', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '0.5rem'
-            }}>
+            className={`nav-button ${activeTab === 'B2B' ? 'active' : ''}`}
+          >
             Enterprise B2B Keys
           </button>
         </nav>
@@ -230,6 +182,7 @@ export default function App() {
         <main>
           {activeTab === 'MACRO_QUEUE' && <MacroReview />}
           {activeTab === 'TRUTH_LOG' && <LedgerInspector />}
+          {activeTab === 'HASH_COLLIDER' && <HashCollider />}
           {activeTab === 'EXILE' && <ExilePanel />}
           {activeTab === 'B2B' && <B2BOrchestration />}
         </main>

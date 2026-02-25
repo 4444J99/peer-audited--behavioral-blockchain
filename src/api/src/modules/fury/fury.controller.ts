@@ -1,5 +1,7 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Sse, MessageEvent } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Observable, timer } from 'rxjs';
+import { concatMap, map } from 'rxjs/operators';
 import { Pool } from 'pg';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -106,6 +108,16 @@ export class FuryController {
       [user.id],
     );
     return { assignments: result.rows };
+  }
+
+  @Sse('stream')
+  @ApiOperation({ summary: 'Stream pending audit assignments to the current Fury via SSE' })
+  streamAssignments(@CurrentUser() user: { id: string }): Observable<MessageEvent> {
+    // Poll the DB every 5 seconds and push over SSE
+    return timer(0, 5000).pipe(
+      concatMap(() => this.getAssignments(user)),
+      map((data) => ({ data } as MessageEvent)),
+    );
   }
 
   @Post('verdict')

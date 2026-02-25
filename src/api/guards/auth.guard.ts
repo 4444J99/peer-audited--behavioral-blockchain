@@ -39,6 +39,10 @@ export class AuthGuard implements CanActivate {
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {
+    // Support SSE streaming auth via query params
+    if (request.query && request.query.token) {
+      return request.query.token as string;
+    }
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined; // allow-secret
   }

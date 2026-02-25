@@ -247,6 +247,18 @@ export const api = {
       avgIntegrity: number;
     }>('/admin/stats'),
 
+  getDisputes: () =>
+    request<Array<{
+      id: string;
+      contract_id: string;
+      user_id: string;
+      media_uri: string;
+      status: string;
+      submitted_at: string;
+      email: string;
+      oath_category: string;
+    }>>('/admin/disputes'),
+
   // User profile / history
   getIntegrityHistory: () =>
     request<Array<{

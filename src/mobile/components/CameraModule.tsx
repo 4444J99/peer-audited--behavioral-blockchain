@@ -13,6 +13,7 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [videoUri, setVideoUri] = useState<string | null>(null);
+  const [watermark, setWatermark] = useState<string | null>(null);
 
   const toggleRecording = () => {
     if (isRecording) {
@@ -25,7 +26,14 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
       // Start recording mock
       setVideoUri(null);
       setIsRecording(true);
-      console.log('CameraModule: Live Hardware Recording Started.');
+      
+      // Generate cryptographic "Weigh-in Word" equivalent watermark
+      const timestamp = new Date().toISOString();
+      const hwid = 'auth_m0b1l3'; // Mock hardware ID
+      const seed = Math.floor(Math.random() * 99999).toString(16);
+      setWatermark(`STYX//${hwid}::${timestamp}::[${seed}]`);
+      
+      console.log('CameraModule: Live Hardware Recording Started. Watermark engaged.');
     }
   };
 
@@ -69,13 +77,18 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
       {/* Mock Camera Viewfinder */}
       <View style={styles.viewfinder}>
         {isRecording ? (
-          <View style={styles.recordingIndicator}>
-            <View style={styles.redDot} />
-            <Text style={styles.recordingText}>LIVE</Text>
-          </View>
+          <>
+            <View style={styles.recordingIndicator}>
+              <View style={styles.redDot} />
+              <Text style={styles.recordingText}>LIVE</Text>
+            </View>
+            <View style={styles.watermarkOverlay}>
+              <Text style={styles.watermarkText}>{watermark}</Text>
+            </View>
+          </>
         ) : (
           <Text style={styles.viewfinderText}>
-            {videoUri ? 'Video Captured. Ready for Upload.' : 'Camera Ready (Gallery Disabled)'}
+            {videoUri ? 'Exhaust Captured. Ready for Upload.' : 'Camera Ready (Gallery Disabled)'}
           </Text>
         )}
       </View>
@@ -132,4 +145,6 @@ const styles = StyleSheet.create({
   submitText: { color: '#000', fontSize: 16, fontWeight: '900' },
   uploadingState: { alignItems: 'center' },
   uploadingText: { color: '#FFF', marginTop: 16, fontWeight: 'bold' },
+  watermarkOverlay: { position: 'absolute', bottom: 20, left: 20, right: 20, backgroundColor: 'rgba(0,0,0,0.6)', padding: 10, borderRadius: 4, borderWidth: 1, borderColor: '#fff' },
+  watermarkText: { color: '#FFF', fontFamily: 'monospace', fontSize: 10, textAlign: 'center' }
 });

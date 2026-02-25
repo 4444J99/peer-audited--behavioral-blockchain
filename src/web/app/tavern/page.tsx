@@ -15,6 +15,13 @@ interface FeedItem {
   timestamp: string;
 }
 
+interface LeaderboardEntry {
+  id: string;
+  email: string;
+  integrity_score: number;
+  created_at: string;
+}
+
 const EVENT_ICONS: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
   contract_created: { icon: ScrollText, color: 'text-blue-400', bgColor: 'bg-blue-900/30' },
   contract_completed: { icon: Trophy, color: 'text-green-400', bgColor: 'bg-green-900/30' },
@@ -119,6 +126,7 @@ function getSampleFeed(): FeedItem[] {
 
 export default function TavernPage() {
   const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -126,6 +134,8 @@ export default function TavernPage() {
 
   const loadFeed = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
+    
+    // 1. Fetch Feed
     try {
       const data = await api.getPublicFeed(50);
       if (data.events && data.events.length > 0) {
@@ -138,11 +148,19 @@ export default function TavernPage() {
     } catch {
       setFeed(getSampleFeed());
       setUsingSampleData(true);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-      setLastRefresh(new Date());
     }
+
+    // 2. Fetch Leaderboard (fail-safe)
+    try {
+      const lb = await api.getLeaderboard(10);
+      setLeaderboard(lb);
+    } catch (e) {
+      console.error('Failed to load leaderboard', e);
+    }
+
+    setLoading(false);
+    setRefreshing(false);
+    setLastRefresh(new Date());
   }, []);
 
   useEffect(() => {
@@ -254,6 +272,33 @@ export default function TavernPage() {
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           Auto-refreshing every 30 seconds
         </p>
+      </div>
+      
+      {/* Sidebar / Leaderboard Section - Desktop Only for now */}
+      <div className="hidden lg:block fixed right-8 top-32 w-64">
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4">
+           <div className="flex items-center gap-2 mb-4">
+             <Trophy className="text-yellow-500" size={16} />
+             <h3 className="font-bold text-sm uppercase tracking-wider text-neutral-400">Top Integrity</h3>
+           </div>
+           
+           <div className="space-y-3">
+             {leaderboard.map((user, i) => (
+               <div key={user.id} className="flex items-center justify-between text-sm">
+                 <div className="flex items-center gap-3">
+                   <span className={`font-mono font-bold w-4 text-center ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-neutral-300' : i === 2 ? 'text-amber-700' : 'text-neutral-600'}`}>{i + 1}</span>
+                   <div className="truncate w-24 text-neutral-300">
+                     {user.email.split('@')[0]}
+                   </div>
+                 </div>
+                 <div className="font-mono font-bold text-white">
+                   {user.integrity_score.toFixed(1)}
+                 </div>
+               </div>
+             ))}
+             {leaderboard.length === 0 && <p className="text-xs text-neutral-600 italic">No rankings yet.</p>}
+           </div>
+        </div>
       </div>
     </div>
   );

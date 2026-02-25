@@ -17,11 +17,10 @@ import { MIN_SAFE_BMI, MAX_WEEKLY_LOSS_VELOCITY_PCT } from '@styx/shared/libs/be
 type Props = NativeStackScreenProps<ContractsStackParamList, 'CreateContract'>;
 
 const OATH_CATEGORIES = [
-  { value: 'BIOLOGICAL_WEIGHT', label: 'Weight Management', stream: 'Biological' },
-  { value: 'BIOLOGICAL_CARDIO', label: 'Cardiovascular Stamina', stream: 'Biological' },
-  { value: 'BIOLOGICAL_METABOLIC', label: 'Glucose Stability', stream: 'Biological' },
-  { value: 'BIOLOGICAL_SLEEP', label: 'Sleep Integrity', stream: 'Biological' },
-  { value: 'BIOLOGICAL_SOBRIETY', label: 'Sobriety HRV', stream: 'Biological' },
+  { value: 'NO_CONTACT_TEXT', label: 'No Texting / Calling', stream: 'Behavioral' },
+  { value: 'NO_CONTACT_SOCIAL', label: 'No Social Stalking', stream: 'Behavioral' },
+  { value: 'NO_CONTACT_LOCATION', label: 'Geofence Avoidance', stream: 'Behavioral' },
+  { value: 'NO_CONTACT_RESPONSE', label: 'No Response to Reach-out', stream: 'Behavioral' },
   { value: 'COGNITIVE_DIGITAL', label: 'Digital Fasting', stream: 'Cognitive' },
   { value: 'COGNITIVE_FOCUS', label: 'Deep Work Focus', stream: 'Cognitive' },
   { value: 'COGNITIVE_QUEUE', label: 'Inbox Zero', stream: 'Cognitive' },
@@ -43,8 +42,6 @@ const OATH_CATEGORIES = [
 ];
 
 const VERIFICATION_METHODS = [
-  { value: 'HEALTHKIT', label: 'HealthKit (iOS)' },
-  { value: 'HEALTHCONNECT', label: 'Health Connect (Android)' },
   { value: 'SCREENTIME', label: 'Screen Time API' },
   { value: 'EXTERNAL_API', label: 'Third-Party API' },
   { value: 'FURY_NETWORK', label: 'Fury Peer Review' },
@@ -73,37 +70,9 @@ export function CreateContractScreen({ navigation }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Health metrics (BIOLOGICAL_WEIGHT only)
-  const [currentWeightLbs, setCurrentWeightLbs] = useState('');
-  const [heightInches, setHeightInches] = useState('');
-  const [targetWeightLbs, setTargetWeightLbs] = useState('');
-
-  const isWeightCategory = oathCategory === 'BIOLOGICAL_WEIGHT';
-
   const streamCategories = selectedStream
     ? OATH_CATEGORIES.filter((c) => c.stream === selectedStream)
     : [];
-
-  // Client-side Aegis preview for weight goals
-  const aegisWarning = (() => {
-    if (!isWeightCategory || !currentWeightLbs || !heightInches || !targetWeightLbs) return null;
-    const weight = parseFloat(currentWeightLbs);
-    const height = parseFloat(heightInches);
-    const target = parseFloat(targetWeightLbs);
-    if (!weight || !height || !target) return null;
-
-    const targetBmi = (target / (height * height)) * 703;
-    if (targetBmi < MIN_SAFE_BMI) {
-      return `Target BMI ${targetBmi.toFixed(1)} is below the safe floor of ${MIN_SAFE_BMI}. This oath will be rejected.`;
-    }
-
-    const weeklyLoss = (weight - target) / (durationDays / 7);
-    const weeklyPct = weeklyLoss / weight;
-    if (weeklyPct > MAX_WEEKLY_LOSS_VELOCITY_PCT) {
-      return `Weekly loss velocity ${(weeklyPct * 100).toFixed(1)}% exceeds the ${(MAX_WEEKLY_LOSS_VELOCITY_PCT * 100)}% safety cap. Choose a longer duration or smaller target.`;
-    }
-    return null;
-  })();
 
   const handleSubmit = async () => {
     setError('');
@@ -116,11 +85,6 @@ export function CreateContractScreen({ navigation }: Props) {
     const amount = parseFloat(stakeAmount);
     if (isNaN(amount) || amount <= 0) {
       setError('Stake amount must be a positive number.');
-      return;
-    }
-
-    if (aegisWarning) {
-      setError(aegisWarning);
       return;
     }
 
@@ -242,49 +206,6 @@ export function CreateContractScreen({ navigation }: Props) {
         ))}
       </View>
 
-      {/* Health Metrics (weight only) */}
-      {isWeightCategory && (
-        <View style={styles.healthSection}>
-          <Text style={styles.label}>HEALTH METRICS</Text>
-          <View style={styles.healthRow}>
-            <View style={styles.healthField}>
-              <Text style={styles.healthLabel}>Current (lbs)</Text>
-              <TextInput
-                style={styles.healthInput}
-                value={currentWeightLbs}
-                onChangeText={setCurrentWeightLbs}
-                keyboardType="decimal-pad"
-                placeholderTextColor="#555"
-                placeholder="180"
-              />
-            </View>
-            <View style={styles.healthField}>
-              <Text style={styles.healthLabel}>Height (in)</Text>
-              <TextInput
-                style={styles.healthInput}
-                value={heightInches}
-                onChangeText={setHeightInches}
-                keyboardType="decimal-pad"
-                placeholderTextColor="#555"
-                placeholder="70"
-              />
-            </View>
-            <View style={styles.healthField}>
-              <Text style={styles.healthLabel}>Target (lbs)</Text>
-              <TextInput
-                style={styles.healthInput}
-                value={targetWeightLbs}
-                onChangeText={setTargetWeightLbs}
-                keyboardType="decimal-pad"
-                placeholderTextColor="#555"
-                placeholder="170"
-              />
-            </View>
-          </View>
-          {aegisWarning && <Text style={styles.aegisWarning}>{aegisWarning}</Text>}
-        </View>
-      )}
-
       {/* Submit */}
       <TouchableOpacity
         style={[styles.submitButton, submitting && styles.submitDisabled]}
@@ -373,22 +294,7 @@ const styles = StyleSheet.create({
   durationChipSelected: { backgroundColor: '#ff4444', borderColor: '#ff4444' },
   durationText: { color: '#888', fontSize: 13, fontWeight: '700' },
   durationTextSelected: { color: '#fff' },
-  healthSection: { marginTop: 4 },
-  healthRow: { flexDirection: 'row', gap: 8 },
-  healthField: { flex: 1 },
-  healthLabel: { color: '#666', fontSize: 10, marginBottom: 4 },
-  healthInput: {
-    backgroundColor: '#1a1a2e',
-    borderWidth: 1,
-    borderColor: '#2a2a3e',
-    borderRadius: 8,
-    padding: 10,
-    color: '#e0e0e0',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  aegisWarning: { color: '#f39c12', fontSize: 12, marginTop: 8, lineHeight: 18 },
+
   submitButton: {
     backgroundColor: '#ff4444',
     borderRadius: 12,

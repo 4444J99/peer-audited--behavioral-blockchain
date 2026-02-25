@@ -38,6 +38,10 @@ export default function AdminPage() {
   const [resolveLoading, setResolveLoading] = useState(false);
   const [resolveResult, setResolveResult] = useState<string | null>(null);
 
+  // Disputes
+  const [disputes, setDisputes] = useState<any[]>([]);
+  const [disputesLoading, setDisputesLoading] = useState(false);
+
   useEffect(() => {
     if (authLoading) return;
     if (!authUser) {
@@ -53,6 +57,11 @@ export default function AdminPage() {
       try {
         const statsData = await api.getAdminStats();
         setStats(statsData);
+        
+        setDisputesLoading(true);
+        const disputesData = await api.getDisputes();
+        setDisputes(disputesData);
+        setDisputesLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load admin stats');
       } finally {
@@ -165,6 +174,55 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* Disputes Section */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <Gavel className="text-red-500" size={24} />
+          <h2 className="text-xl font-black uppercase tracking-tight">Active Disputes</h2>
+        </div>
+        
+        {disputesLoading ? (
+           <div className="flex items-center text-neutral-500"><Loader2 className="animate-spin mr-2" size={16} /> Loading disputes...</div>
+        ) : disputes.length === 0 ? (
+           <div className="p-8 bg-neutral-900/30 border border-neutral-800 rounded-2xl text-center">
+             <Shield className="mx-auto text-neutral-600 mb-2" size={32} />
+             <p className="text-neutral-500">No active disputes.</p>
+           </div>
+        ) : (
+          <div className="grid gap-4">
+            {disputes.map((d) => (
+              <div key={d.id} className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+                 <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                       <span className="text-sm font-bold text-white">{d.oath_category}</span>
+                       <span className="text-xs px-2 py-0.5 rounded bg-red-900/50 text-red-400 font-mono">{d.status}</span>
+                    </div>
+                    <p className="text-xs text-neutral-500">User: {d.email}</p>
+                    <p className="text-xs text-neutral-600 font-mono mt-0.5">ID: {d.id}</p>
+                    <a href={d.media_uri} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 underline mt-2 inline-flex items-center gap-1">
+                      <FileCheck size={12} /> View Proof Evidence
+                    </a>
+                 </div>
+                 <div className="flex gap-2">
+                    <button 
+                      onClick={() => { setResolveContractId(d.contract_id); setResolveOutcome('FAILED'); handleResolve(); }}
+                      className="px-4 py-2 bg-red-900/20 hover:bg-red-900/50 text-red-500 text-xs font-bold rounded-lg border border-red-900/50 transition-colors uppercase tracking-wider"
+                    >
+                      Reject (Capture)
+                    </button>
+                    <button 
+                       onClick={() => { setResolveContractId(d.contract_id); setResolveOutcome('COMPLETED'); handleResolve(); }}
+                       className="px-4 py-2 bg-green-900/20 hover:bg-green-900/50 text-green-500 text-xs font-bold rounded-lg border border-green-900/50 transition-colors uppercase tracking-wider"
+                    >
+                      Approve (Release)
+                    </button>
+                 </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Honeypot Panel */}
         <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-4">
@@ -232,6 +290,7 @@ export default function AdminPage() {
             value={resolveOutcome}
             onChange={(e) => setResolveOutcome(e.target.value as 'COMPLETED' | 'FAILED')}
             className="w-full px-4 py-2 bg-black border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-red-600 text-sm"
+            aria-label="Resolution Outcome"
           >
             <option value="COMPLETED">COMPLETED (return stake)</option>
             <option value="FAILED">FAILED (capture stake)</option>

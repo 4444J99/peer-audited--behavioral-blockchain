@@ -3,7 +3,7 @@
 ![CI](https://github.com/labores-profani-crux/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
 ![License: Private](https://img.shields.io/badge/license-private-red)
 
-A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes. Users stake money into behavioral contracts; a decentralized "Fury" network audits compliance; hardware oracles and a double-entry ledger enforce integrity.
+A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce the "No Contact" rule via financial stakes. Users stake money into behavioral contracts; a decentralized "Fury" network audits compliance; digital exhaust tracking and a double-entry ledger enforce integrity.
 
 ## Architecture
 
@@ -11,9 +11,9 @@ Turborepo monorepo with **npm** workspaces. Package scope: `@styx/*`.
 
 | Workspace | Package | Stack | Role |
 |-----------|---------|-------|------|
-| `src/api` | `@styx/api` | NestJS 10, BullMQ, Stripe, PostgreSQL | Backend — ledger, escrow, Fury Router, oracles |
-| `src/web` | `@styx/web` | Next.js 16, React 18, Tailwind, p5.js | Dashboard, Fury audit workbench, interactive pitch deck |
-| `src/mobile` | `@styx/mobile` | React Native 0.76 | Sensor bridge (HealthKit/Google Fit), camera, biometrics |
+| `src/api` | `@styx/api` | NestJS 10, BullMQ, Stripe, PostgreSQL | Backend — ledger, escrow, Fury Router, whistleblower logic |
+| `src/web` | `@styx/web` | Next.js 16, React 18, Tailwind, p5.js | Dashboard, Fury/Whistleblower audit workbench, Interactive pitch deck |
+| `src/mobile` | `@styx/mobile` | React Native 0.76 | Client telemetry, deep linking, UI notifications |
 | `src/desktop` | `@styx/desktop` | Tauri 2.0, Vite, React | "The Judge" admin dashboard |
 | `src/shared` | `@styx/shared` | TypeScript | Constants, types, algorithms (integrity score, behavioral logic) |
 
@@ -95,7 +95,7 @@ npx jest --testNamePattern="should reject"  # Single test by name
 
 ```bash
 npx tsx scripts/validation/01-phantom-money-check.ts     # Ledger balance integrity
-npx tsx scripts/validation/02-simulator-spoof-check.ts    # Hardware oracle anti-spoof
+npx tsx scripts/validation/02-simulator-spoof-check.ts    # Whistleblower link verification
 npx tsx scripts/validation/03-the-full-loop.ts            # End-to-end contract lifecycle
 bash scripts/validation/04-redacted-build-check.sh        # Production vocabulary sweep
 npx tsx scripts/validation/05-behavioral-physics-check.ts  # Algorithm constant validation
@@ -108,7 +108,7 @@ npx tsx scripts/validation/05-behavioral-physics-check.ts  # Algorithm constant 
 - **Bounty Economy** — Furies earn bounties for correct verdicts and pay penalties for false accusations or honeypot failures.
 - **Hash-Chained Audit Log** — SHA-256 linked event log for tamper-evident history.
 - **Honeypot Injection** — System injects known-fail proofs to QA reviewer accuracy.
-- **BMI/Velocity Guardrails** — Aegis Protocol enforces BMI floor (18.5) and 2% weekly loss velocity cap.
+- **Relapse Multipliers** — Aegis Protocol enforces dynamic penalty scaling (e.g., Weekend Multiplier) to match predictable emotional vulnerability windows.
 - **Geofencing** — Jurisdiction-based tier restrictions by US state.
 - **Linguistic Cloaker** — Runtime vocabulary swap (stake/vault, bet/commitment) for App Store compliance.
 - **Integrity Scoring** — `Base(50) + 5/completion - 15/fraud - 20/strike - 1/inactive_month`. Score determines financial tier access.

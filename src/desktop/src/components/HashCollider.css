@@ -1,0 +1,168 @@
+.hash-collider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.hash-collider-title {
+  font-size: 1.25rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+}
+
+.scan-button {
+  background: #222;
+  border: 1px solid #333;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: #fff;
+}
+
+.scan-button:disabled {
+  color: #666;
+  cursor: not-allowed;
+}
+
+.scan-icon-spinning {
+  animation: spin 1s linear infinite;
+}
+
+.info-box {
+  background-color: #111;
+  border: 1px solid #222;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.info-text {
+  color: #888;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.scanning-state {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+}
+
+.pulse-icon {
+  margin: 0 auto 1rem;
+  display: block;
+}
+
+.no-collisions-state {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  border: 1px dashed #333;
+}
+
+.collisions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.collision-item {
+  border: 1px solid #DC2626;
+  background-color: rgba(220,38,38,0.05);
+  padding: 1rem;
+}
+
+.collision-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(220,38,38,0.2);
+  padding-bottom: 0.5rem;
+}
+
+.collision-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #DC2626;
+  font-weight: bold;
+}
+
+.ticket-button {
+  background-color: #DC2626;
+  color: #fff;
+  border: none;
+  padding: 0.25rem 1rem;
+  font-weight: bold;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.origin-box {
+  background-color: #000;
+  padding: 1rem;
+  border: 1px solid #333;
+}
+
+.duplicate-box {
+  background-color: #000;
+  padding: 1rem;
+  border: 1px solid #DC2626;
+}
+
+.box-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.box-label.origin {
+  color: #aaa;
+}
+
+.box-label.duplicate {
+  color: #DC2626;
+  font-weight: bold;
+}
+
+.user-info {
+  font-family: monospace;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.proof-id {
+  font-family: monospace;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.phash-info {
+  font-family: monospace;
+  color: #eab308;
+  margin-top: 0.5rem;
+}
+
+.vs-divider {
+  color: #666;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

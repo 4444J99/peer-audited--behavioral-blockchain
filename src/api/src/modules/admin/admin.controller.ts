@@ -8,6 +8,7 @@ import { ModerationService } from '../../../services/security/moderation.service
 import { HoneypotInjectorService } from '../../../services/intelligence/honeypot.service';
 import { ContractsService } from '../contracts/contracts.service';
 import { BanUserDto, ResolveContractDto } from './dto';
+import { ApiQuery } from '@nestjs/swagger';
 
 @ApiTags('Admin')
 @ApiBearerAuth()
@@ -49,13 +50,28 @@ export class AdminController {
     return { status: 'resolved', contractId, outcome: body.outcome };
   }
 
+  @Get('disputes')
+  @ApiOperation({ summary: 'Get list of disputed proofs' })
+  async getDisputes() {
+    const result = await this.pool.query(
+      `SELECT p.id, p.contract_id, p.user_id, p.media_uri, p.status, p.submitted_at, 
+              u.email, c.oath_category
+       FROM proofs p
+       JOIN users u ON p.user_id = u.id
+       JOIN contracts c ON p.contract_id = c.id
+       WHERE p.status = 'DISPUTED' OR p.status = 'FLAGGED'
+       ORDER BY p.submitted_at ASC`
+    );
+    return result.rows;
+  }
+
   @Get('stats')
   @ApiOperation({ summary: 'Get platform-wide statistics' })
   async getStats() {
     const [users, contracts, proofs, integrity] = await Promise.all([
       this.pool.query(`SELECT COUNT(*) as count FROM users WHERE status = 'ACTIVE'`),
       this.pool.query(`SELECT COUNT(*) as count FROM contracts WHERE status = 'ACTIVE'`),
-      this.pool.query(`SELECT COUNT(*) as count FROM proofs WHERE status IN ('PENDING_REVIEW', 'IN_REVIEW')`),
+      this.pool.query(`SELECT COUNT(*) as count FROM proofs WHERE status IN ('PENDING_REVIEW', 'IN_REVIEW', 'DISPUTED')`),
       this.pool.query(`SELECT COALESCE(AVG(integrity_score), 0) as avg FROM users WHERE status = 'ACTIVE'`),
     ]);
     return {
