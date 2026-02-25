@@ -28,15 +28,17 @@ This is the primary chronological guide for the development of Styx. It maps the
 
 ## 3. Phase Gamma: The Panopticon (Month 3)
 **Objective**: Launch the adversarial verification network.
-- **Micro-Task**: **Fury Router**: Anonymized BullMQ distribution to 3 random Furies.
-- **Micro-Task**: **Zero-Egress Media**: Cloudflare R2 + pHash fraud detection.
-- **Micro-Task**: **Honeypot Injection**: Injected "Known-Fail" proofs to verify Fury accuracy.
+- [x] **Fury Router**: Anonymized BullMQ distribution to 3 random Furies.
+- [x] **Zero-Egress Media**: Cloudflare R2 + pHash fraud detection.
+- [x] **Honeypot Injection**: Injected "Known-Fail" proofs to verify Fury accuracy.
 
 ## 4. Phase Delta: The Arena (Month 4)
 **Objective**: Activate social dynamics and dispute resolution.
-- **Micro-Task**: **The Judge's Gavel**: Admin dashboard with metadata inspection.
-- **Micro-Task**: **Tavern Board UI**: Gamified leaderboard and investigation feed.
-- **Micro-Task**: **Geofencing**: Hard-block "Any Chance" jurisdictions.
+- [x] **The Judge's Gavel**: Admin dashboard with dispute resolution, metadata inspection, signed media playback.
+- [x] **Tavern Board UI**: Gamified leaderboard with tier badges and investigation feed.
+- [x] **Geofencing**: Hard-block "Any Chance" jurisdictions.
+- [x] **Public Activity Feed**: Real-time anonymized event stream (REST + SSE).
+- [x] **Gatekeeper Scan**: Validation gate for forbidden terminology in built binaries.
 
 ## 5. Phase Omega: The Empire (Month 5)
 **Objective**: Unlock the B2B SaaS revenue stream.

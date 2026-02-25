@@ -50,4 +50,22 @@ export class R2StorageService {
     });
     return getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
   }
+
+  /**
+   * Download a file from R2 as a Buffer.
+   * Used by PHashService for perceptual hash computation on proof media.
+   */
+  async downloadFile(key: string): Promise<Buffer> {
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+    const response = await this.s3Client.send(command);
+    const stream = response.Body as NodeJS.ReadableStream;
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  }
 }

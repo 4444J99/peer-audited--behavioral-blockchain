@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## [0.4.0] - 2026-02-25
+### Added — Phase Delta: The Arena
+- **Dispute Resolution Pipeline**: Full `DisputeService` with `initiateAppeal`, `getDisputeQueue`, `getDisputeDetail`, and `resolveDispute` (UPHELD/OVERTURNED/ESCALATED outcomes).
+- **Disputes migration** (`004_disputes.sql`): Schema for dispute tracking with appeal status, judge assignment, and resolution notes.
+- **AdminController expansion**: 9 endpoints — disputes queue, dispute detail with signed media URL, dispute resolution, user profile inspection, manual integrity score adjustment.
+- **pHash Deduplication**: `PHashService` wired into proof upload pipeline; `003_proof_hashes.sql` migration; duplicate detection in `confirm-upload` with `409 CONFLICT` rejection.
+- **R2 `downloadFile()`**: Added to `R2StorageService` for server-side media retrieval (used by pHash computation).
+- **Public Activity Feed**: `FeedController` with `GET /feed` (REST) and `GET /feed/stream` (SSE); anonymized events, no auth required.
+- **Tavern Board Leaderboard**: Tier badges (Diamond/Gold/Silver/Bronze), animated ranks, weekly/monthly/alltime filters, "Fury of the Week" spotlight.
+- **Mobile TavernFeed**: Upgraded to consume `/feed/stream` SSE with type icons, relative timestamps, and connection status indicator.
+- **Gatekeeper Scan** (`scripts/gatekeeper-scan.sh`): Validation Gate #4 — scans built bundles for forbidden gambling terminology.
+
+### Changed
+- **AdminController**: Fixed broken `HoneypotInjectorService` → `HoneypotService` import. Added rate limiting to honeypot injection.
+- **DisputeService**: Rewritten from scratch with transactional resolution, Stripe fee capture/refund, and Fury integrity penalties on overturn.
+- **Platform stats** now include `pendingDisputes` count.
+
+## [0.3.0] - 2026-02-25
+### Added — Phase Gamma: The Panopticon
+- **ProofsModule**: 3-endpoint upload pipeline (upload-url, confirm-upload, get-detail) with pre-signed R2 URLs.
+- **HoneypotService**: Cron-based synthetic proof injection every 6 hours with ±5 integrity scoring.
+- **Fury Workbench**: Video/image player from signed R2 URLs, confidence slider (0-100), FLAG AS SUSPICIOUS button, honeypot feedback overlay.
+- **ProofCaptureScreen**: Mobile live-only camera, tamper-evident watermark, direct R2 upload.
+- **R2 Lifecycle Rules**: Terraform — 30-day proof expiry, 7-day honeypot cleanup, 1-day multipart abort.
+
+### Changed
+- **FuryController**: Assignments now return signed R2 `viewUrl`, `contentType`, `description`.
+- **FuryWorker**: Replaced hard-coded honeypot penalty with `HoneypotService.gradeHoneypotPerformance()`.
+- **API Client**: `VerdictDto` includes `confidence` and `flagged`; return type includes `honeypotReveal`.
+
 ## [0.2.0] - 2026-02-25
 ### Changed
 - **GEMINI.md overhaul**: Fixed package manager (yarn→npm), desktop stack (Electron→Tauri 2.0), added `src/pitch` workspace, added Recovery Protocol, added AI tooling reference.

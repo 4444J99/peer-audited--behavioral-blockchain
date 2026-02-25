@@ -1,14 +1,16 @@
-import { Controller, Post, Get, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, UseGuards, Patch } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Pool } from 'pg';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { RoleGuard, Roles } from '../../common/guards/role.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ModerationService } from '../../../services/security/moderation.service';
-import { HoneypotInjectorService } from '../../../services/intelligence/honeypot.service';
+import { HoneypotService } from '../../../services/intelligence/honeypot.service';
 import { ContractsService } from '../contracts/contracts.service';
+import { DisputeService } from '../../../services/escrow/dispute.service';
+import { R2StorageService } from '../../../services/storage/r2.service';
 import { BanUserDto, ResolveContractDto } from './dto';
-import { ApiQuery } from '@nestjs/swagger';
 
 @ApiTags('Admin')
 @ApiBearerAuth()
@@ -18,17 +20,24 @@ import { ApiQuery } from '@nestjs/swagger';
 export class AdminController {
   constructor(
     private readonly moderation: ModerationService,
-    private readonly honeypot: HoneypotInjectorService,
+    private readonly honeypot: HoneypotService,
     private readonly contractsService: ContractsService,
+    private readonly disputeService: DisputeService,
+    private readonly r2: R2StorageService,
     private readonly pool: Pool,
   ) {}
 
+  // --- Honeypot ---
+
   @Post('honeypot')
   @ApiOperation({ summary: 'Inject a honeypot proof to QA reviewer accuracy' })
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async injectHoneypot() {
-    const jobId = await this.honeypot.injectKnownFail();
-    return { status: 'honeypot_injected', jobId };
+    await this.honeypot.injectHoneypot();
+    return { status: 'honeypot_injected' };
   }
+
+  // --- Moderation ---
 
   @Post('ban/:userId')
   @ApiOperation({ summary: 'Ban a user for policy violations' })
@@ -40,6 +49,8 @@ export class AdminController {
     return this.moderation.banUser(user.id, targetUserId, body.reason);
   }
 
+  // --- Contracts ---
+
   @Post('resolve/:contractId')
   @ApiOperation({ summary: 'Manually resolve a contract as completed or failed' })
   async resolveContract(
@@ -50,35 +61,117 @@ export class AdminController {
     return { status: 'resolved', contractId, outcome: body.outcome };
   }
 
+  // --- Disputes (The Judge's Gavel) ---
+
   @Get('disputes')
-  @ApiOperation({ summary: 'Get list of disputed proofs' })
+  @ApiOperation({ summary: 'Get queue of disputes pending judge review' })
   async getDisputes() {
-    const result = await this.pool.query(
-      `SELECT p.id, p.contract_id, p.user_id, p.media_uri, p.status, p.submitted_at, 
-              u.email, c.oath_category
-       FROM proofs p
-       JOIN users u ON p.user_id = u.id
-       JOIN contracts c ON p.contract_id = c.id
-       WHERE p.status = 'DISPUTED' OR p.status = 'FLAGGED'
-       ORDER BY p.submitted_at ASC`
-    );
-    return result.rows;
+    return this.disputeService.getDisputeQueue();
   }
+
+  @Get('disputes/:id')
+  @ApiOperation({ summary: 'Get full dispute detail with Fury vote history and signed media URL' })
+  async getDisputeDetail(@Param('id') disputeId: string) {
+    const detail = await this.disputeService.getDisputeDetail(disputeId);
+
+    // Generate signed view URL for the judge
+    let viewUrl: string | null = null;
+    if (detail.mediaUri) {
+      try {
+        viewUrl = await this.r2.generateViewUrl(detail.mediaUri);
+      } catch {
+        // R2 unavailable — degrade gracefully
+      }
+    }
+
+    return { ...detail, viewUrl };
+  }
+
+  @Post('disputes/:id/resolve')
+  @ApiOperation({ summary: 'Resolve a dispute with a judge verdict (UPHELD, OVERTURNED, ESCALATED)' })
+  async resolveDispute(
+    @Param('id') disputeId: string,
+    @CurrentUser() user: { id: string },
+    @Body() body: { outcome: 'UPHELD' | 'OVERTURNED' | 'ESCALATED'; judgeNotes: string },
+  ) {
+    return this.disputeService.resolveDispute(disputeId, user.id, body.outcome, body.judgeNotes);
+  }
+
+  // --- User Inspection ---
+
+  @Get('users/:id')
+  @ApiOperation({ summary: 'Get full user profile with contract, proof, and assignment history' })
+  async getUserProfile(@Param('id') userId: string) {
+    const [user, contracts, proofs, assignments] = await Promise.all([
+      this.pool.query(
+        `SELECT id, email, role, status, integrity_score, created_at FROM users WHERE id = $1`,
+        [userId],
+      ),
+      this.pool.query(
+        `SELECT id, oath_category, status, stake_amount, started_at, ends_at
+         FROM contracts WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20`,
+        [userId],
+      ),
+      this.pool.query(
+        `SELECT id, contract_id, status, submitted_at
+         FROM proofs WHERE user_id = $1 ORDER BY submitted_at DESC LIMIT 20`,
+        [userId],
+      ),
+      this.pool.query(
+        `SELECT fa.id, fa.verdict, fa.reviewed_at, p.contract_id
+         FROM fury_assignments fa
+         JOIN proofs p ON fa.proof_id = p.id
+         WHERE fa.fury_user_id = $1
+         ORDER BY fa.assigned_at DESC LIMIT 50`,
+        [userId],
+      ),
+    ]);
+
+    if (user.rows.length === 0) return { error: 'User not found' };
+
+    return {
+      user: user.rows[0],
+      contracts: contracts.rows,
+      proofs: proofs.rows,
+      furyAssignments: assignments.rows,
+    };
+  }
+
+  @Patch('users/:id/integrity')
+  @ApiOperation({ summary: 'Manually adjust a user integrity score (admin override)' })
+  async adjustIntegrity(
+    @Param('id') userId: string,
+    @CurrentUser() admin: { id: string },
+    @Body() body: { delta: number; reason: string },
+  ) {
+    await this.pool.query(
+      `UPDATE users
+       SET integrity_score = GREATEST(0, LEAST(100, integrity_score + $1))
+       WHERE id = $2`,
+      [body.delta, userId],
+    );
+
+    return { status: 'integrity_adjusted', userId, delta: body.delta, reason: body.reason };
+  }
+
+  // --- Platform Stats ---
 
   @Get('stats')
   @ApiOperation({ summary: 'Get platform-wide statistics' })
   async getStats() {
-    const [users, contracts, proofs, integrity] = await Promise.all([
+    const [users, contracts, proofs, integrity, disputes] = await Promise.all([
       this.pool.query(`SELECT COUNT(*) as count FROM users WHERE status = 'ACTIVE'`),
       this.pool.query(`SELECT COUNT(*) as count FROM contracts WHERE status = 'ACTIVE'`),
       this.pool.query(`SELECT COUNT(*) as count FROM proofs WHERE status IN ('PENDING_REVIEW', 'IN_REVIEW', 'DISPUTED')`),
       this.pool.query(`SELECT COALESCE(AVG(integrity_score), 0) as avg FROM users WHERE status = 'ACTIVE'`),
+      this.pool.query(`SELECT COUNT(*) as count FROM disputes WHERE appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'IN_REVIEW')`),
     ]);
     return {
       totalUsers: Number(users.rows[0].count),
       activeContracts: Number(contracts.rows[0].count),
       pendingProofs: Number(proofs.rows[0].count),
       avgIntegrity: Math.round(Number(integrity.rows[0].avg) * 100) / 100,
+      pendingDisputes: Number(disputes.rows[0].count),
     };
   }
 }

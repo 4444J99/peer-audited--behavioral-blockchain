@@ -15,6 +15,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { PaymentsModule } from './modules/payments/payments.module';
 import { AiModule } from './modules/ai/ai.module';
 import { ProofsModule } from './modules/proofs/proofs.module';
+import { FeedModule } from './modules/feed/feed.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { ProofsModule } from './modules/proofs/proofs.module';
     PaymentsModule,
     AiModule,
     ProofsModule,
+    FeedModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, UseGuards, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, UseGuards, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Pool } from 'pg';
@@ -9,6 +9,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { R2StorageService } from '../../../services/storage/r2.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { PHashService } from '../../../services/intelligence/phash.service';
 import { RequestUploadUrlDto, ConfirmUploadDto } from './dto';
 
 /**
@@ -30,6 +31,7 @@ export class ProofsController {
     private readonly r2: R2StorageService,
     private readonly furyRouter: FuryRouterService,
     private readonly truthLog: TruthLogService,
+    private readonly phash: PHashService,
   ) {}
 
   @UseGuards(GeofenceGuard, AuthGuard, BannedUserGuard)
@@ -112,6 +114,50 @@ export class ProofsController {
        WHERE id = $2`,
       [dto.storageKey, proofId],
     );
+
+    // pHash deduplication — download first frame, compute hash, check for twins
+    try {
+      const mediaBuffer = await this.r2.downloadFile(dto.storageKey);
+      const frameHash = await this.phash.computeFrameHash(mediaBuffer);
+
+      // Check against existing hashes
+      const existingHashes = await this.pool.query(
+        `SELECT phash FROM proof_hashes WHERE proof_id != $1`,
+        [proofId],
+      );
+
+      const hashStrings = existingHashes.rows.map((r: any) => r.phash);
+      const { duplicate, closestDistance } = await this.phash.isDuplicate(mediaBuffer, hashStrings);
+
+      if (duplicate) {
+        // Reject duplicate — revert proof status
+        await this.pool.query(
+          `UPDATE proofs SET status = 'REJECTED', media_uri = NULL WHERE id = $1`,
+          [proofId],
+        );
+
+        await this.truthLog.appendEvent('PROOF_DUPLICATE_REJECTED', {
+          proofId,
+          closestDistance,
+          userId: user.id,
+        });
+
+        throw new ConflictException(
+          `Duplicate proof detected (similarity distance: ${closestDistance}). Submission rejected.`,
+        );
+      }
+
+      // Store hash for future dedup
+      await this.pool.query(
+        `INSERT INTO proof_hashes (proof_id, phash) VALUES ($1, $2)
+         ON CONFLICT (proof_id) DO NOTHING`,
+        [proofId, frameHash],
+      );
+    } catch (err) {
+      // Re-throw ConflictException, swallow pHash processing errors (degrade gracefully)
+      if (err instanceof ConflictException) throw err;
+      // pHash failure should not block proof submission in dev/staging
+    }
 
     // Enqueue Fury routing immediately
     const jobId = await this.furyRouter.routeProof(proofId, user.id);
