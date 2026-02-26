@@ -171,16 +171,25 @@ CREATE TABLE contract_resolution_side_effects (
     attempts INTEGER NOT NULL DEFAULT 0,
     last_error TEXT,
     locked_at TIMESTAMPTZ,
+    next_retry_at TIMESTAMPTZ,
+    quarantined_at TIMESTAMPTZ,
+    quarantine_reason TEXT,
     processed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT chk_contract_resolution_effect_status
-      CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'))
+      CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'QUARANTINED'))
 );
 
 CREATE INDEX idx_contract_resolution_effects_contract
   ON contract_resolution_side_effects(contract_id, created_at);
 CREATE INDEX idx_contract_resolution_effects_status
   ON contract_resolution_side_effects(status, created_at);
+CREATE INDEX idx_contract_resolution_effects_retry_due
+  ON contract_resolution_side_effects(status, next_retry_at)
+  WHERE status = 'FAILED';
+CREATE INDEX idx_contract_resolution_effects_quarantined
+  ON contract_resolution_side_effects(status, quarantined_at)
+  WHERE status = 'QUARANTINED';
 
 CREATE INDEX idx_contracts_user_id ON contracts(user_id);
 CREATE INDEX idx_contracts_status ON contracts(status);

@@ -40,6 +40,7 @@ export class ContractsScheduler {
 
     if (
       summary.staleResetCount === 0 &&
+      summary.staleQuarantinedCount === 0 &&
       summary.groupsFound === 0 &&
       summary.groupsRetried === 0 &&
       summary.groupsFailed === 0
@@ -48,7 +49,7 @@ export class ContractsScheduler {
     }
 
     this.logger.log(
-      `Settlement outbox sweep: staleReset=${summary.staleResetCount}, groupsFound=${summary.groupsFound}, retried=${summary.groupsRetried}, failed=${summary.groupsFailed}`,
+      `Settlement outbox sweep: staleReset=${summary.staleResetCount}, staleQuarantined=${summary.staleQuarantinedCount}, groupsFound=${summary.groupsFound}, retried=${summary.groupsRetried}, failed=${summary.groupsFailed}, quarantinedTotal=${summary.quarantinedTotalCount}`,
     );
   }
 }

@@ -16,9 +16,11 @@ describe('ContractsScheduler', () => {
     resolveContract: jest.fn().mockResolvedValue(undefined),
     sweepFailedContractResolutionSideEffects: jest.fn().mockResolvedValue({
       staleResetCount: 0,
+      staleQuarantinedCount: 0,
       groupsFound: 0,
       groupsRetried: 0,
       groupsFailed: 0,
+      quarantinedTotalCount: 0,
     }),
   } as unknown as ContractsService;
 
@@ -85,9 +87,11 @@ describe('ContractsScheduler', () => {
       ((mockContractsService as any).sweepFailedContractResolutionSideEffects as jest.Mock)
         .mockResolvedValueOnce({
           staleResetCount: 1,
+          staleQuarantinedCount: 1,
           groupsFound: 2,
           groupsRetried: 1,
           groupsFailed: 1,
+          quarantinedTotalCount: 3,
         });
 
       await expect(scheduler.retryFailedContractResolutionSideEffects()).resolves.toBeUndefined();

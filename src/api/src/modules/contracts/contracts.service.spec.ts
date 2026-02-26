@@ -607,6 +607,97 @@ describe('ContractsService', () => {
     });
   });
 
+  // ── contract resolution outbox retries ─────────────────────────
+
+  describe('contract resolution outbox retries', () => {
+    it('should compute exponential backoff with a cap', () => {
+      expect((service as any).getContractResolutionOutboxRetryDelayMs(1)).toBe(5 * 60 * 1000);
+      expect((service as any).getContractResolutionOutboxRetryDelayMs(2)).toBe(10 * 60 * 1000);
+      expect((service as any).getContractResolutionOutboxRetryDelayMs(8)).toBe(6 * 60 * 60 * 1000);
+      expect((service as any).getContractResolutionOutboxRetryDelayMs(99)).toBe(6 * 60 * 60 * 1000);
+    });
+
+    it('should quarantine a permanently failing side effect at max attempts', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [{
+            id: 'fx-1',
+            contract_id: 'contract-1',
+            outcome: 'FAILED',
+            effect_type: 'STRIPE_CAPTURE_STAKE',
+            dedupe_key: 'dedupe-1',
+            payload: { paymentIntentId: 'pi_fail_1' },
+            status: 'FAILED',
+            attempts: 7,
+            next_retry_at: null,
+            quarantined_at: null,
+            quarantine_reason: null,
+            locked_at: null,
+          }],
+        })
+        .mockResolvedValueOnce({
+          rows: [{
+            id: 'fx-1',
+            contract_id: 'contract-1',
+            outcome: 'FAILED',
+            effect_type: 'STRIPE_CAPTURE_STAKE',
+            dedupe_key: 'dedupe-1',
+            payload: { paymentIntentId: 'pi_fail_1' },
+            status: 'PROCESSING',
+            attempts: 8,
+            next_retry_at: null,
+            quarantined_at: null,
+            quarantine_reason: null,
+            locked_at: new Date().toISOString(),
+          }],
+        })
+        .mockResolvedValueOnce({ rows: [] });
+
+      (mockStripe.captureStake as jest.Mock).mockRejectedValueOnce(new Error('stripe outage'));
+
+      await expect(
+        (service as any).drainContractResolutionSideEffects('contract-1', 'FAILED'),
+      ).rejects.toThrow('stripe outage');
+
+      const quarantineUpdateCall = mockPool.query.mock.calls[2];
+      expect(quarantineUpdateCall[0]).toContain("SET status = 'QUARANTINED'");
+      expect(quarantineUpdateCall[1][0]).toBe('fx-1');
+      expect(quarantineUpdateCall[1][2]).toMatch(/Exceeded max retry attempts/);
+    });
+
+    it('should only sweep retry groups that are due and report quarantine totals', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [{ id: 'stale-1', status: 'FAILED' }, { id: 'stale-2', status: 'QUARANTINED' }],
+        })
+        .mockResolvedValueOnce({
+          rows: [{ contract_id: 'contract-1', outcome: 'FAILED' }],
+        })
+        .mockResolvedValueOnce({
+          rows: [{ count: 2 }],
+        });
+
+      const drainSpy = jest
+        .spyOn(service as any, 'drainContractResolutionSideEffects')
+        .mockResolvedValueOnce(undefined);
+
+      const summary = await service.sweepFailedContractResolutionSideEffects(10);
+
+      expect(summary).toEqual({
+        staleResetCount: 1,
+        staleQuarantinedCount: 1,
+        groupsFound: 1,
+        groupsRetried: 1,
+        groupsFailed: 0,
+        quarantinedTotalCount: 2,
+      });
+      expect(drainSpy).toHaveBeenCalledWith('contract-1', 'FAILED');
+      expect(mockPool.query.mock.calls[1][0]).toContain('next_retry_at IS NULL OR next_retry_at <= NOW()');
+
+      drainSpy.mockRestore();
+    });
+  });
+
   // ── getContractProofs ──────────────────────────────────────────
 
   describe('getContractProofs', () => {

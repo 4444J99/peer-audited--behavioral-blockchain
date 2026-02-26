@@ -51,13 +51,20 @@ interface ContractResolutionSideEffectRow {
   effect_type: ContractResolutionSideEffectType;
   dedupe_key: string;
   payload: any;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'QUARANTINED';
   attempts: number;
+  next_retry_at?: string | null;
+  quarantined_at?: string | null;
+  quarantine_reason?: string | null;
+  locked_at?: string | null;
 }
 
 @Injectable()
 export class ContractsService {
   private readonly logger = new Logger(ContractsService.name);
+  private static readonly CONTRACT_RESOLUTION_OUTBOX_MAX_ATTEMPTS = 8;
+  private static readonly CONTRACT_RESOLUTION_OUTBOX_RETRY_BASE_MS = 5 * 60 * 1000;
+  private static readonly CONTRACT_RESOLUTION_OUTBOX_RETRY_MAX_MS = 6 * 60 * 60 * 1000;
 
   constructor(
     private readonly pool: Pool,
@@ -280,9 +287,15 @@ export class ContractsService {
     outcome: 'COMPLETED' | 'FAILED',
   ): Promise<void> {
     const pending = await this.pool.query(
-      `SELECT id, contract_id, outcome, effect_type, dedupe_key, payload, status, attempts
+      `SELECT id, contract_id, outcome, effect_type, dedupe_key, payload, status, attempts,
+              next_retry_at, quarantined_at, quarantine_reason, locked_at
        FROM contract_resolution_side_effects
-       WHERE contract_id = $1 AND outcome = $2 AND status != 'COMPLETED'
+       WHERE contract_id = $1
+         AND outcome = $2
+         AND (
+           status = 'PENDING'
+           OR (status = 'FAILED' AND (next_retry_at IS NULL OR next_retry_at <= NOW()))
+         )
        ORDER BY created_at ASC`,
       [contractId, outcome],
     );
@@ -290,9 +303,18 @@ export class ContractsService {
     for (const row of pending.rows as ContractResolutionSideEffectRow[]) {
       const claimed = await this.pool.query(
         `UPDATE contract_resolution_side_effects
-         SET status = 'PROCESSING', attempts = attempts + 1, locked_at = NOW(), last_error = NULL
-         WHERE id = $1 AND status IN ('PENDING', 'FAILED')
-         RETURNING id, contract_id, outcome, effect_type, dedupe_key, payload, status, attempts`,
+         SET status = 'PROCESSING',
+             attempts = attempts + 1,
+             locked_at = NOW(),
+             next_retry_at = NULL,
+             last_error = NULL
+         WHERE id = $1
+           AND (
+             status = 'PENDING'
+             OR (status = 'FAILED' AND (next_retry_at IS NULL OR next_retry_at <= NOW()))
+           )
+         RETURNING id, contract_id, outcome, effect_type, dedupe_key, payload, status, attempts,
+                   next_retry_at, quarantined_at, quarantine_reason, locked_at`,
         [row.id],
       );
 
@@ -305,18 +327,53 @@ export class ContractsService {
         await this.dispatchContractResolutionSideEffect(effect);
         await this.pool.query(
           `UPDATE contract_resolution_side_effects
-           SET status = 'COMPLETED', processed_at = NOW(), last_error = NULL
+           SET status = 'COMPLETED',
+               processed_at = NOW(),
+               last_error = NULL,
+               locked_at = NULL,
+               next_retry_at = NULL
            WHERE id = $1`,
           [effect.id],
         );
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        await this.pool.query(
-          `UPDATE contract_resolution_side_effects
-           SET status = 'FAILED', last_error = $2
-           WHERE id = $1`,
-          [effect.id, message.slice(0, 2000)],
-        );
+        const sanitizedError = message.slice(0, 2000);
+        const shouldQuarantine =
+          effect.attempts >= ContractsService.CONTRACT_RESOLUTION_OUTBOX_MAX_ATTEMPTS;
+
+        if (shouldQuarantine) {
+          await this.pool.query(
+            `UPDATE contract_resolution_side_effects
+             SET status = 'QUARANTINED',
+                 last_error = $2,
+                 locked_at = NULL,
+                 next_retry_at = NULL,
+                 quarantined_at = NOW(),
+                 quarantine_reason = $3
+             WHERE id = $1`,
+            [
+              effect.id,
+              sanitizedError,
+              `Exceeded max retry attempts (${ContractsService.CONTRACT_RESOLUTION_OUTBOX_MAX_ATTEMPTS})`,
+            ],
+          );
+          this.logger.error(
+            `Quarantined contract settlement outbox effect ${effect.id} (${effect.effect_type}) for contract ${effect.contract_id} after ${effect.attempts} attempts: ${sanitizedError}`,
+          );
+        } else {
+          const retryDelayMs = this.getContractResolutionOutboxRetryDelayMs(effect.attempts);
+          await this.pool.query(
+            `UPDATE contract_resolution_side_effects
+             SET status = 'FAILED',
+                 last_error = $2,
+                 locked_at = NULL,
+                 next_retry_at = NOW() + ($3::bigint * INTERVAL '1 millisecond'),
+                 quarantined_at = NULL,
+                 quarantine_reason = NULL
+             WHERE id = $1`,
+            [effect.id, sanitizedError, retryDelayMs],
+          );
+        }
         throw err;
       }
     }
@@ -324,24 +381,49 @@ export class ContractsService {
 
   async sweepFailedContractResolutionSideEffects(limit = 25): Promise<{
     staleResetCount: number;
+    staleQuarantinedCount: number;
     groupsFound: number;
     groupsRetried: number;
     groupsFailed: number;
+    quarantinedTotalCount: number;
   }> {
     const staleResetResult = await this.pool.query(
       `UPDATE contract_resolution_side_effects
-       SET status = 'FAILED',
-           last_error = COALESCE(last_error, 'Stale PROCESSING lease expired before completion')
+       SET status = CASE
+             WHEN attempts >= $1 THEN 'QUARANTINED'
+             ELSE 'FAILED'
+           END,
+           last_error = COALESCE(last_error, 'Stale PROCESSING lease expired before completion'),
+           locked_at = NULL,
+           next_retry_at = CASE
+             WHEN attempts >= $1 THEN NULL
+             ELSE NOW()
+           END,
+           quarantined_at = CASE
+             WHEN attempts >= $1 THEN NOW()
+             ELSE quarantined_at
+           END,
+           quarantine_reason = CASE
+             WHEN attempts >= $1 THEN COALESCE(
+               quarantine_reason,
+               'Stale PROCESSING lease exceeded retry limit'
+             )
+             ELSE NULL
+           END
        WHERE status = 'PROCESSING'
          AND locked_at IS NOT NULL
          AND locked_at < NOW() - INTERVAL '10 minutes'
-       RETURNING id`,
+       RETURNING id, status`,
+      [ContractsService.CONTRACT_RESOLUTION_OUTBOX_MAX_ATTEMPTS],
     );
+    const staleResetCount = staleResetResult.rows.filter((row: any) => row.status === 'FAILED').length;
+    const staleQuarantinedCount = staleResetResult.rows.filter((row: any) => row.status === 'QUARANTINED').length;
 
     const groups = await this.pool.query(
       `SELECT contract_id, outcome
        FROM contract_resolution_side_effects
        WHERE status = 'FAILED'
+         AND (next_retry_at IS NULL OR next_retry_at <= NOW())
        GROUP BY contract_id, outcome
        ORDER BY MIN(created_at) ASC
        LIMIT $1`,
@@ -365,12 +447,28 @@ export class ContractsService {
       }
     }
 
+    const quarantinedTotal = await this.pool.query(
+      `SELECT COUNT(*)::int AS count
+       FROM contract_resolution_side_effects
+       WHERE status = 'QUARANTINED'`,
+    );
+
     return {
-      staleResetCount: staleResetResult.rows.length,
+      staleResetCount,
+      staleQuarantinedCount,
       groupsFound: groups.rows.length,
       groupsRetried,
       groupsFailed,
+      quarantinedTotalCount: Number(quarantinedTotal.rows[0]?.count ?? 0),
     };
+  }
+
+  private getContractResolutionOutboxRetryDelayMs(attempts: number): number {
+    const normalizedAttempts = Math.max(1, attempts);
+    const exponentialMultiplier = 2 ** (normalizedAttempts - 1);
+    const delayMs =
+      ContractsService.CONTRACT_RESOLUTION_OUTBOX_RETRY_BASE_MS * exponentialMultiplier;
+    return Math.min(delayMs, ContractsService.CONTRACT_RESOLUTION_OUTBOX_RETRY_MAX_MS);
   }
 
   private async dispatchContractResolutionSideEffect(effect: ContractResolutionSideEffectRow): Promise<void> {
