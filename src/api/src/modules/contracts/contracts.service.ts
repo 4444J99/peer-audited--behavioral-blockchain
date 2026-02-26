@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Optional, Inject } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Optional, Inject, Logger } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
@@ -57,6 +57,8 @@ interface ContractResolutionSideEffectRow {
 
 @Injectable()
 export class ContractsService {
+  private readonly logger = new Logger(ContractsService.name);
+
   constructor(
     private readonly pool: Pool,
     private readonly ledger: LedgerService,
@@ -318,6 +320,57 @@ export class ContractsService {
         throw err;
       }
     }
+  }
+
+  async sweepFailedContractResolutionSideEffects(limit = 25): Promise<{
+    staleResetCount: number;
+    groupsFound: number;
+    groupsRetried: number;
+    groupsFailed: number;
+  }> {
+    const staleResetResult = await this.pool.query(
+      `UPDATE contract_resolution_side_effects
+       SET status = 'FAILED',
+           last_error = COALESCE(last_error, 'Stale PROCESSING lease expired before completion')
+       WHERE status = 'PROCESSING'
+         AND locked_at IS NOT NULL
+         AND locked_at < NOW() - INTERVAL '10 minutes'
+       RETURNING id`,
+    );
+
+    const groups = await this.pool.query(
+      `SELECT contract_id, outcome
+       FROM contract_resolution_side_effects
+       WHERE status = 'FAILED'
+       GROUP BY contract_id, outcome
+       ORDER BY MIN(created_at) ASC
+       LIMIT $1`,
+      [limit],
+    );
+
+    let groupsRetried = 0;
+    let groupsFailed = 0;
+
+    for (const row of groups.rows) {
+      try {
+        await this.drainContractResolutionSideEffects(row.contract_id, row.outcome);
+        groupsRetried += 1;
+      } catch (err) {
+        groupsFailed += 1;
+        this.logger.warn(
+          `Outbox retry failed for contract ${row.contract_id} (${row.outcome}): ${
+            err instanceof Error ? err.message : err
+          }`,
+        );
+      }
+    }
+
+    return {
+      staleResetCount: staleResetResult.rows.length,
+      groupsFound: groups.rows.length,
+      groupsRetried,
+      groupsFailed,
+    };
   }
 
   private async dispatchContractResolutionSideEffect(effect: ContractResolutionSideEffectRow): Promise<void> {

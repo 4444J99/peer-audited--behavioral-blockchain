@@ -33,4 +33,22 @@ export class ContractsScheduler {
       }
     }
   }
+
+  @Cron('*/5 * * * *')
+  async retryFailedContractResolutionSideEffects(): Promise<void> {
+    const summary = await this.contractsService.sweepFailedContractResolutionSideEffects();
+
+    if (
+      summary.staleResetCount === 0 &&
+      summary.groupsFound === 0 &&
+      summary.groupsRetried === 0 &&
+      summary.groupsFailed === 0
+    ) {
+      return;
+    }
+
+    this.logger.log(
+      `Settlement outbox sweep: staleReset=${summary.staleResetCount}, groupsFound=${summary.groupsFound}, retried=${summary.groupsRetried}, failed=${summary.groupsFailed}`,
+    );
+  }
 }

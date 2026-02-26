@@ -14,6 +14,12 @@ describe('ContractsScheduler', () => {
 
   const mockContractsService = {
     resolveContract: jest.fn().mockResolvedValue(undefined),
+    sweepFailedContractResolutionSideEffects: jest.fn().mockResolvedValue({
+      staleResetCount: 0,
+      groupsFound: 0,
+      groupsRetried: 0,
+      groupsFailed: 0,
+    }),
   } as unknown as ContractsService;
 
   beforeEach(() => {
@@ -63,6 +69,28 @@ describe('ContractsScheduler', () => {
       expect(mockContractsService.resolveContract).toHaveBeenCalledWith('ok-1', 'FAILED');
       expect(mockContractsService.resolveContract).toHaveBeenCalledWith('fail-1', 'FAILED');
       expect(mockContractsService.resolveContract).toHaveBeenCalledWith('ok-2', 'FAILED');
+    });
+  });
+
+  describe('retryFailedContractResolutionSideEffects', () => {
+    it('should trigger the contract resolution outbox sweep', async () => {
+      await scheduler.retryFailedContractResolutionSideEffects();
+
+      expect(
+        (mockContractsService as any).sweepFailedContractResolutionSideEffects,
+      ).toHaveBeenCalledTimes(1);
+    });
+
+    it('should tolerate sweep results with failures and not throw', async () => {
+      ((mockContractsService as any).sweepFailedContractResolutionSideEffects as jest.Mock)
+        .mockResolvedValueOnce({
+          staleResetCount: 1,
+          groupsFound: 2,
+          groupsRetried: 1,
+          groupsFailed: 1,
+        });
+
+      await expect(scheduler.retryFailedContractResolutionSideEffects()).resolves.toBeUndefined();
     });
   });
 });
