@@ -17,6 +17,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { ProofsModule } from './modules/proofs/proofs.module';
 import { FeedModule } from './modules/feed/feed.module';
 import { ComplianceModule } from './modules/compliance/compliance.module';
+import { BetaModule } from './modules/beta/beta.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ComplianceModule } from './modules/compliance/compliance.module';
       },
     }),
     ComplianceModule,
+    BetaModule,
     DatabaseModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
     AuthModule,

@@ -1,6 +1,7 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Res } from '@nestjs/common';
 import { Pool } from 'pg';
 import Redis from 'ioredis';
+import type { Response } from 'express';
 import { REDIS_CONNECTION_CONFIG } from '../../../config/queue.config';
 import { Public } from '../../common/decorators/current-user.decorator';
 
@@ -16,12 +17,9 @@ export class HealthController {
     }
   }
 
-  @Get()
-  @Public()
-  async check() {
+  private async runDependencyChecks() {
     const checks: Record<string, { status: string; latencyMs?: number }> = {};
 
-    // Database probe
     const dbStart = Date.now();
     try {
       await this.pool.query('SELECT 1');
@@ -30,7 +28,6 @@ export class HealthController {
       checks.database = { status: 'error', latencyMs: Date.now() - dbStart };
     }
 
-    // Redis probe
     const redisStart = Date.now();
     try {
       if (this.redis) {
@@ -44,6 +41,37 @@ export class HealthController {
     }
 
     const allOk = Object.values(checks).every((c) => c.status === 'ok');
+    return { checks, allOk };
+  }
+
+  @Get('live')
+  @Public()
+  live() {
+    return {
+      status: 'ok',
+      service: 'styx-api',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Get('ready')
+  @Public()
+  async ready(@Res({ passthrough: true }) res: Response) {
+    const { checks, allOk } = await this.runDependencyChecks();
+    res.status(allOk ? 200 : 503);
+
+    return {
+      status: allOk ? 'ready' : 'degraded',
+      service: 'styx-api',
+      timestamp: new Date().toISOString(),
+      checks,
+    };
+  }
+
+  @Get()
+  @Public()
+  async check() {
+    const { checks, allOk } = await this.runDependencyChecks();
 
     return {
       status: allOk ? 'ok' : 'degraded',

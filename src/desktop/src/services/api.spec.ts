@@ -8,13 +8,20 @@ function jsonOk(body: unknown) {
   return {
     ok: true,
     status: 200,
+    headers: { get: (name: string) => (name.toLowerCase() === 'content-type' ? 'application/json' : null) },
     json: async () => body,
     text: async () => JSON.stringify(body),
   };
 }
 
 function jsonFail(status: number, body: string) {
-  return { ok: false, status, json: async () => ({}), text: async () => body };
+  return {
+    ok: false,
+    status,
+    headers: { get: (name: string) => (name.toLowerCase() === 'content-type' ? 'text/plain' : null) },
+    json: async () => ({}),
+    text: async () => body,
+  };
 }
 
 beforeEach(() => {
@@ -33,6 +40,9 @@ describe('Desktop API service', () => {
       const [, opts] = mockFetch.mock.calls[0];
       expect(opts.headers['Content-Type']).toBe('application/json');
       expect(opts.headers['Authorization']).toBe('Bearer admin-jwt');
+      expect(opts.headers['x-styx-platform']).toBe('desktop');
+      expect(opts.headers['x-styx-app-version']).toBeDefined();
+      expect(opts.headers['x-styx-build']).toBeDefined();
     });
 
     it('omits Authorization when token is empty', async () => {
@@ -69,6 +79,16 @@ describe('Desktop API service', () => {
       expect(url).toContain('/auth/login');
       expect(opts.method).toBe('POST');
       expect(JSON.parse(opts.body)).toEqual({ email: 'admin@styx.io', password: 'pass' });
+    });
+  });
+
+  describe('getReleaseInfo()', () => {
+    it('hits /meta/release', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ service: 'styx-api' }));
+
+      await api.getReleaseInfo();
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/meta/release');
     });
   });
 

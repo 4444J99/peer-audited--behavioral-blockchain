@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Loader2, AlertTriangle, Shield, Ban, Gavel, FlaskConical, Users, FileCheck, Activity } from 'lucide-react';
 import { api } from '../../services/api-client';
 import { useAuth } from '../../contexts/AuthContext';
+import { SupportTraceMessage } from '../../components/support/SupportTraceMessage';
 
 interface AdminStats {
   totalUsers: number;
@@ -129,7 +130,12 @@ export default function AdminPage() {
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center space-y-4">
           <AlertTriangle className="mx-auto text-red-500" size={48} />
-          <p className="text-red-400 font-bold">{error}</p>
+          <SupportTraceMessage
+            value={error}
+            messageClassName="text-red-400 font-bold"
+            traceClassName="text-xs text-neutral-500 font-mono"
+            containerClassName="space-y-2"
+          />
           <Link href="/dashboard" className="text-neutral-400 hover:text-white underline">Back to Dashboard</Link>
         </div>
       </div>
@@ -239,7 +245,7 @@ export default function AdminPage() {
             {honeypotLoading ? <Loader2 className="animate-spin" size={16} /> : <FlaskConical size={16} />}
             Inject Honeypot
           </button>
-          {honeypotResult && <p className="text-sm text-neutral-400">{honeypotResult}</p>}
+          <SupportTraceMessage value={honeypotResult} />
         </div>
 
         {/* Ban Panel */}
@@ -270,7 +276,7 @@ export default function AdminPage() {
             {banLoading ? <Loader2 className="animate-spin" size={16} /> : <Ban size={16} />}
             Ban User
           </button>
-          {banResult && <p className="text-sm text-neutral-400">{banResult}</p>}
+          <SupportTraceMessage value={banResult} />
         </div>
 
         {/* Resolution Panel */}
@@ -303,7 +309,7 @@ export default function AdminPage() {
             {resolveLoading ? <Loader2 className="animate-spin" size={16} /> : <Gavel size={16} />}
             Resolve
           </button>
-          {resolveResult && <p className="text-sm text-neutral-400">{resolveResult}</p>}
+          <SupportTraceMessage value={resolveResult} />
         </div>
       </div>
     </div>

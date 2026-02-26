@@ -8,6 +8,16 @@ import ExilePanel from './components/ExilePanel';
 import B2BOrchestration from './components/B2BOrchestration';
 import HashCollider from './components/HashCollider';
 import { api, clearToken, getApiBase, getToken } from './services/api';
+import type { ReleaseInfoResponse } from '@styx/shared/index';
+
+const DESKTOP_ENV_LABEL =
+  (typeof process !== 'undefined' ? process.env.STYX_ENV_LABEL : undefined) || 'local';
+const DESKTOP_PRIVATE_BETA =
+  String((typeof process !== 'undefined' ? process.env.STYX_PRIVATE_BETA : undefined) || 'true').toLowerCase() === 'true';
+const DESKTOP_TEST_MONEY =
+  String((typeof process !== 'undefined' ? process.env.STYX_TEST_MONEY_MODE : undefined) || 'true').toLowerCase() === 'true';
+const DESKTOP_B2B_ENABLED =
+  String((typeof process !== 'undefined' ? process.env.STYX_FEATURE_B2B_HR_UI : undefined) || 'false').toLowerCase() === 'true';
 
 interface Notification {
   id: number;
@@ -46,6 +56,7 @@ export default function App() {
   const [userId, setUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'MACRO_QUEUE' | 'TRUTH_LOG' | 'HASH_COLLIDER' | 'EXILE' | 'B2B'>('MACRO_QUEUE');
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [releaseInfo, setReleaseInfo] = useState<ReleaseInfoResponse | null>(null);
 
   // SSE connection for real-time updates
   useEffect(() => {
@@ -117,6 +128,36 @@ export default function App() {
     };
   }, [userId]);
 
+  useEffect(() => {
+    if (!userId) {
+      setReleaseInfo(null);
+      return;
+    }
+
+    let mounted = true;
+    api.getReleaseInfo()
+      .then((info) => {
+        if (mounted) {
+          setReleaseInfo(info);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setReleaseInfo(null);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!DESKTOP_B2B_ENABLED && activeTab === 'B2B') {
+      setActiveTab('MACRO_QUEUE');
+    }
+  }, [activeTab]);
+
   // Auto-dismiss toasts after 5 seconds
   useEffect(() => {
     if (notifications.length === 0) return;
@@ -153,9 +194,40 @@ export default function App() {
           </div>
         </div>
         <div className="header-right">
+          {DESKTOP_PRIVATE_BETA ? (
+            <div
+              style={{
+                border: '1px solid #4a2a16',
+                background: '#20150d',
+                color: '#ffb26b',
+                borderRadius: 6,
+                padding: '6px 10px',
+                fontSize: 11,
+                fontWeight: 700,
+                marginRight: 10,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              {DESKTOP_TEST_MONEY ? 'Private beta • test-money' : 'Private beta'} • {DESKTOP_ENV_LABEL}
+            </div>
+          ) : null}
           <div className="level-5-badge">
             {React.createElement(Shield as any, { size: 14 })} LEVEL 5 CLEARANCE ACTIVE
           </div>
+          {releaseInfo ? (
+            <div
+              style={{
+                marginLeft: 10,
+                color: '#9ca3af',
+                fontSize: 11,
+                fontFamily: 'monospace',
+              }}
+              title={`flags:${releaseInfo.featureFlagSnapshotHash}`}
+            >
+              {releaseInfo.environment.label} · {releaseInfo.build.sha ? releaseInfo.build.sha.slice(0, 8) : 'no-sha'}
+            </div>
+          ) : null}
           <button
             onClick={() => {
               clearToken();
@@ -204,12 +276,27 @@ export default function App() {
 
           <div className="nav-divider"></div>
 
-          <button
-            onClick={() => setActiveTab('B2B')}
-            className={`nav-button ${activeTab === 'B2B' ? 'active' : ''}`}
-          >
-            Enterprise B2B Keys
-          </button>
+          {DESKTOP_B2B_ENABLED ? (
+            <button
+              onClick={() => setActiveTab('B2B')}
+              className={`nav-button ${activeTab === 'B2B' ? 'active' : ''}`}
+            >
+              Enterprise B2B Keys
+            </button>
+          ) : (
+            <div
+              style={{
+                marginTop: 8,
+                padding: '10px 12px',
+                color: '#6b7280',
+                fontSize: 11,
+                border: '1px dashed rgba(107,114,128,0.35)',
+                borderRadius: 6,
+              }}
+            >
+              B2B controls hidden in Phase 1 external beta build.
+            </div>
+          )}
         </nav>
 
         {/* Main Content Pane */}
@@ -218,7 +305,7 @@ export default function App() {
           {activeTab === 'TRUTH_LOG' && <LedgerInspector />}
           {activeTab === 'HASH_COLLIDER' && <HashCollider />}
           {activeTab === 'EXILE' && <ExilePanel />}
-          {activeTab === 'B2B' && <B2BOrchestration />}
+          {activeTab === 'B2B' && DESKTOP_B2B_ENABLED && <B2BOrchestration />}
         </main>
       </div>
     </div>

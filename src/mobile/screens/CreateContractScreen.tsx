@@ -13,6 +13,8 @@ import { ApiClient } from '../services/ApiClient';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ContractsStackParamList } from '../App';
 import { MIN_SAFE_BMI, MAX_WEEKLY_LOSS_VELOCITY_PCT } from '@styx/shared/libs/behavioral-logic';
+import { getMobileFeatureFlags } from '../config/beta';
+import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 
 type Props = NativeStackScreenProps<ContractsStackParamList, 'CreateContract'>;
 
@@ -58,9 +60,12 @@ const DURATION_OPTIONS = [
   { value: 90, label: '90d' },
 ];
 
-const STREAMS = Array.from(new Set(OATH_CATEGORIES.map((c) => c.stream)));
-
 export function CreateContractScreen({ navigation }: Props) {
+  const featureFlags = getMobileFeatureFlags();
+  const visibleCategories = featureFlags.phase1NoContactOnly
+    ? OATH_CATEGORIES.filter((c) => c.value.startsWith('NO_CONTACT_'))
+    : OATH_CATEGORIES;
+  const streams = Array.from(new Set(visibleCategories.map((c) => c.stream)));
   const [selectedStream, setSelectedStream] = useState('');
   const [oathCategory, setOathCategory] = useState('');
   const [verificationMethod, setVerificationMethod] = useState('');
@@ -71,7 +76,7 @@ export function CreateContractScreen({ navigation }: Props) {
   const [error, setError] = useState('');
 
   const streamCategories = selectedStream
-    ? OATH_CATEGORIES.filter((c) => c.stream === selectedStream)
+    ? visibleCategories.filter((c) => c.stream === selectedStream)
     : [];
 
   const handleSubmit = async () => {
@@ -106,12 +111,30 @@ export function CreateContractScreen({ navigation }: Props) {
 
   return (
     <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      <SupportTraceErrorBanner
+        value={error}
+        messageStyle={styles.error}
+        traceStyle={styles.errorTrace}
+      />
+
+      {/* Stream Picker */}
+      <View style={styles.betaNotice}>
+        <Text style={styles.betaNoticeText}>
+          {featureFlags.testMoneyMode
+            ? 'Private beta • test-money pilot'
+            : 'Private beta pilot'}
+        </Text>
+        {featureFlags.phase1NoContactOnly ? (
+          <Text style={styles.betaNoticeSubtext}>
+            Phase 1: No-Contact recovery contract flows are prioritized. Additional oath categories are hidden during beta hardening.
+          </Text>
+        ) : null}
+      </View>
 
       {/* Stream Picker */}
       <Text style={styles.label}>OATH STREAM</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-        {STREAMS.map((stream) => (
+        {streams.map((stream) => (
           <TouchableOpacity
             key={stream}
             style={[styles.chip, selectedStream === stream && styles.chipSelected]}
@@ -188,7 +211,11 @@ export function CreateContractScreen({ navigation }: Props) {
           keyboardType="decimal-pad"
         />
       </View>
-      <Text style={styles.hint}>Held in FBO escrow. Failure means forfeiture.</Text>
+      <Text style={styles.hint}>
+        {featureFlags.testMoneyMode
+          ? 'Test-money pilot: no real-money movement occurs in this beta environment.'
+          : 'Held in FBO escrow. Failure means forfeiture.'}
+      </Text>
 
       {/* Duration */}
       <Text style={styles.label}>DURATION</Text>
@@ -220,8 +247,9 @@ export function CreateContractScreen({ navigation }: Props) {
       </TouchableOpacity>
 
       <Text style={styles.disclaimer}>
-        By submitting, you authorize Styx to place an FBO hold on the specified amount.
-        Funds are returned upon verified completion or forfeited upon failure.
+        {featureFlags.testMoneyMode
+          ? 'Beta pilot only: stake amounts are simulated for product validation. KYC and production settlement controls are not enabled in this environment.'
+          : 'By submitting, you authorize Styx to place an FBO hold on the specified amount. Funds are returned upon verified completion or forfeited upon failure.'}
       </Text>
     </ScrollView>
   );
@@ -230,6 +258,17 @@ export function CreateContractScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0f', padding: 16 },
   error: { color: '#ff6666', backgroundColor: '#ff444420', padding: 10, borderRadius: 8, marginBottom: 12 },
+  errorTrace: { color: '#888', fontSize: 11, marginTop: -8, marginBottom: 12, paddingHorizontal: 4 },
+  betaNotice: {
+    backgroundColor: '#20150d',
+    borderWidth: 1,
+    borderColor: '#4a2a16',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+  },
+  betaNoticeText: { color: '#ffb26b', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+  betaNoticeSubtext: { color: '#d9b793', fontSize: 11, marginTop: 4, lineHeight: 16 },
   label: { color: '#888', fontSize: 11, fontWeight: '700', letterSpacing: 2, marginBottom: 8, marginTop: 20 },
   chipRow: { flexDirection: 'row', marginBottom: 4 },
   chip: {

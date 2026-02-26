@@ -51,4 +51,36 @@ describe('HealthController', () => {
       );
     });
   });
+
+  describe('live', () => {
+    it('returns ok status and service name', () => {
+      const result = controller.live();
+
+      expect(result.status).toBe('ok');
+      expect(result.service).toBe('styx-api');
+    });
+  });
+
+  describe('ready', () => {
+    it('returns ready and sets 200 when dependencies are healthy', async () => {
+      const res = { status: jest.fn().mockReturnThis() } as any;
+
+      const result = await controller.ready(res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(result.status).toBe('ready');
+      expect(result.checks.database.status).toBe('ok');
+    });
+
+    it('returns degraded and sets 503 when database probe fails', async () => {
+      mockPool.query.mockRejectedValueOnce(new Error('db down'));
+      const res = { status: jest.fn().mockReturnThis() } as any;
+
+      const result = await controller.ready(res);
+
+      expect(res.status).toHaveBeenCalledWith(503);
+      expect(result.status).toBe('degraded');
+      expect(result.checks.database.status).toBe('error');
+    });
+  });
 });

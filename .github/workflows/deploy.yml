@@ -14,8 +14,22 @@ permissions:
   contents: read
 
 jobs:
+  staging_promotion_gate:
+    uses: ./.github/workflows/staging-promotion.yml
+    with:
+      promotion_target: prod
+    secrets: inherit
+
+  beta_promotion_gate:
+    uses: ./.github/workflows/beta-promotion.yml
+    with:
+      promotion_target: prod
+      require_manual_approval: false
+    secrets: inherit
+
   preflight:
     runs-on: ubuntu-latest
+    needs: [staging_promotion_gate, beta_promotion_gate]
     steps:
       - name: Validate deployment trigger and ref
         run: |
@@ -76,35 +90,12 @@ jobs:
       - name: Health check API (with rollback)
         env:
           API_URL: ${{ secrets.API_URL }}
+          EXPECTED_ENV_LABEL: ${{ secrets.API_ENV_LABEL }}
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           RENDER_API_SERVICE_ID: ${{ secrets.RENDER_API_SERVICE_ID }}
         run: |
-          MAX_ATTEMPTS=12
-          INTERVAL=10
-          HEALTHY=false
-
-          for i in $(seq 1 $MAX_ATTEMPTS); do
-            echo "Health check attempt $i/$MAX_ATTEMPTS..."
-            status=$(curl -s -o /tmp/health.json -w "%{http_code}" "$API_URL/health" || echo "000")
-
-            if [ "$status" = "200" ]; then
-              # Check that the response indicates all systems ok
-              health_status=$(cat /tmp/health.json | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "")
-              if [ "$health_status" = "ok" ]; then
-                echo "✅ API health check passed (all systems ok)"
-                HEALTHY=true
-                break
-              elif [ "$health_status" = "degraded" ]; then
-                echo "⚠️  API responded but degraded — retrying..."
-              fi
-            else
-              echo "  HTTP $status — retrying in ${INTERVAL}s..."
-            fi
-            sleep $INTERVAL
-          done
-
-          if [ "$HEALTHY" != "true" ]; then
-            echo "❌ Health check failed after ${MAX_ATTEMPTS} attempts ($(( MAX_ATTEMPTS * INTERVAL ))s)"
+          if ! bash scripts/smoke/check-api-ready.sh; then
+            echo "❌ API readiness smoke check failed"
             echo "🔄 Triggering best-effort redeploy fallback (not a deterministic rollback to a known-good deploy)..."
 
             # Best-effort fallback: trigger a new deploy. This is NOT a deterministic rollback.
@@ -116,28 +107,10 @@ jobs:
             exit 1
           fi
 
+          bash scripts/smoke/check-api-release.sh
+
       - name: Health check Web
         env:
           WEB_URL: ${{ secrets.WEB_URL }}
         run: |
-          if [ -z "${WEB_URL:-}" ]; then
-            echo "::warning::Skipping web smoke test: WEB_URL secret not configured."
-            exit 0
-          fi
-
-          MAX_ATTEMPTS=12
-          INTERVAL=10
-
-          for i in $(seq 1 $MAX_ATTEMPTS); do
-            echo "Web health check attempt $i/$MAX_ATTEMPTS..."
-            status=$(curl -s -o /tmp/web.html -w "%{http_code}" "$WEB_URL" || echo "000")
-            if [ "$status" = "200" ]; then
-              echo "✅ Web smoke test passed"
-              exit 0
-            fi
-            echo "  HTTP $status — retrying in ${INTERVAL}s..."
-            sleep $INTERVAL
-          done
-
-          echo "❌ Web smoke test failed after ${MAX_ATTEMPTS} attempts"
-          exit 1
+          bash scripts/smoke/check-web.sh

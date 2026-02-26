@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { ApiClient } from '../services/ApiClient';
 import { SessionService } from '../services/SessionService';
+import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../App';
 
@@ -52,7 +53,11 @@ export function LoginScreen({ navigation, onLogin }: Props) {
         <Text style={styles.title}>STYX</Text>
         <Text style={styles.subtitle}>The Blockchain of Truth</Text>
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <SupportTraceErrorBanner
+          value={error}
+          messageStyle={styles.error}
+          traceStyle={styles.errorTrace}
+        />
 
         <TextInput
           style={styles.input}
@@ -130,6 +135,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 13,
     overflow: 'hidden',
+  },
+  errorTrace: {
+    color: '#888',
+    fontSize: 11,
+    marginTop: -8,
+    marginBottom: 12,
+    textAlign: 'center',
   },
   input: {
     backgroundColor: '#1a1a2e',

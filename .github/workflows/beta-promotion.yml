@@ -1,0 +1,132 @@
+name: Beta Promotion Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      promotion_target:
+        description: Promotion target to unlock after beta validation
+        required: true
+        default: prod
+        type: choice
+        options:
+          - prod
+          - beta
+      require_manual_approval:
+        description: Require a manual approval pause before beta deploy/smoke
+        required: true
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      promotion_target:
+        description: Promotion target to unlock after beta validation
+        required: false
+        default: prod
+        type: string
+      require_manual_approval:
+        description: Require a manual approval pause before beta deploy/smoke
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: beta-promotion-gate
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    environment: beta
+    steps:
+      - name: Validate required beta secrets
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_BETA_API_SERVICE_ID: ${{ secrets.RENDER_BETA_API_SERVICE_ID }}
+          RENDER_BETA_WEB_SERVICE_ID: ${{ secrets.RENDER_BETA_WEB_SERVICE_ID }}
+          BETA_API_URL: ${{ secrets.BETA_API_URL }}
+        run: |
+          missing=0
+          for key in RENDER_API_KEY RENDER_BETA_API_SERVICE_ID RENDER_BETA_WEB_SERVICE_ID BETA_API_URL; do
+            if [ -z "${!key:-}" ]; then
+              echo "::error::Missing required beta secret: ${key}"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Announce beta gate target
+        run: |
+          echo "Running beta promotion gate before target: ${{ inputs.promotion_target || 'prod' }}"
+          echo "Manual approval requested: ${{ inputs.require_manual_approval }}"
+
+  manual_approval:
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: ${{ inputs.require_manual_approval }}
+    environment: beta-promotion-approval
+    steps:
+      - name: Await manual approval
+        run: |
+          echo "Manual approval gate passed for beta promotion."
+
+  deploy_beta_api:
+    runs-on: ubuntu-latest
+    needs: [preflight, manual_approval]
+    if: ${{ always() && needs.preflight.result == 'success' && (!inputs.require_manual_approval || needs.manual_approval.result == 'success') }}
+    environment: beta
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy API to Render (beta)
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_BETA_API_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+  deploy_beta_web:
+    runs-on: ubuntu-latest
+    needs: [preflight, manual_approval]
+    if: ${{ always() && needs.preflight.result == 'success' && (!inputs.require_manual_approval || needs.manual_approval.result == 'success') }}
+    environment: beta
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy Web to Render (beta)
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_BETA_WEB_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+  smoke_beta:
+    runs-on: ubuntu-latest
+    needs: [deploy_beta_api, deploy_beta_web]
+    environment: beta
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Wait for beta services
+        run: sleep 30
+
+      - name: Run beta smoke suite
+        env:
+          BETA_API_URL: ${{ secrets.BETA_API_URL }}
+          BETA_WEB_URL: ${{ secrets.BETA_WEB_URL }}
+          BETA_ENV_LABEL: ${{ secrets.BETA_ENV_LABEL }}
+        run: |
+          bash scripts/smoke/beta-smoke.sh
+
+  promotion_ready:
+    runs-on: ubuntu-latest
+    needs: smoke_beta
+    steps:
+      - name: Mark beta promotion gate passed
+        run: |
+          echo "✅ Beta promotion gate passed for target: ${{ inputs.promotion_target || 'prod' }}"

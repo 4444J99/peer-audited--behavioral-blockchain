@@ -8,13 +8,20 @@ function jsonOk(body: unknown) {
   return {
     ok: true,
     status: 200,
+    headers: { get: () => 'application/json' },
     json: async () => body,
     text: async () => JSON.stringify(body),
   };
 }
 
 function jsonFail(status: number, body: string) {
-  return { ok: false, status, json: async () => ({}), text: async () => body };
+  return {
+    ok: false,
+    status,
+    headers: { get: (name: string) => (name.toLowerCase() === 'content-type' ? 'text/plain' : null) },
+    json: async () => ({}),
+    text: async () => body,
+  };
 }
 
 beforeEach(() => {
@@ -34,6 +41,9 @@ describe('ApiClient', () => {
       const [url, opts] = mockFetch.mock.calls[0];
       expect(opts.headers['Content-Type']).toBe('application/json');
       expect(opts.headers['Authorization']).toBe('Bearer tok-123');
+      expect(opts.headers['x-styx-platform']).toBe('ios');
+      expect(opts.headers['x-styx-app-version']).toBeDefined();
+      expect(opts.headers['x-styx-build']).toBeDefined();
     });
 
     it('omits Authorization when no token is set', async () => {
@@ -73,6 +83,26 @@ describe('ApiClient', () => {
       expect(opts.method).toBe('POST');
       expect(JSON.parse(opts.body)).toEqual({ email: 'user@styx.io', password: 'secret' });
       expect(res.userId).toBe('u1');
+    });
+  });
+
+  describe('getMobileBootstrap()', () => {
+    it('hits /mobile/bootstrap', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ featureFlags: {} }));
+
+      await ApiClient.getMobileBootstrap();
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/mobile/bootstrap');
+    });
+  });
+
+  describe('getReleaseInfo()', () => {
+    it('hits /meta/release', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ service: 'styx-api' }));
+
+      await ApiClient.getReleaseInfo();
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/meta/release');
     });
   });
 

@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { ApiClient } from '../services/ApiClient';
+import { parseSupportTraceMessage } from '../utils/support-trace';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ContractsStackParamList } from '../App';
 
@@ -21,6 +22,7 @@ export function ContractDetailScreen({ route }: Props) {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState('');
   const [error, setError] = useState('');
+  const parsedError = parseSupportTraceMessage(error);
 
   useEffect(() => {
     loadContract();
@@ -44,7 +46,11 @@ export function ContractDetailScreen({ route }: Props) {
       await ApiClient.submitProof(contractId, { notes: 'Submitted from mobile' });
       await loadContract();
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      const parsed = parseSupportTraceMessage(err?.message || 'Action failed');
+      Alert.alert(
+        'Error',
+        parsed.traceId ? `${parsed.message}\n\nSupport trace ID: ${parsed.traceId}` : parsed.message,
+      );
     } finally {
       setActionLoading('');
     }
@@ -57,7 +63,11 @@ export function ContractDetailScreen({ route }: Props) {
       Alert.alert('Grace Day Used', `${result.graceDaysRemaining} remaining`);
       await loadContract();
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      const parsed = parseSupportTraceMessage(err?.message || 'Action failed');
+      Alert.alert(
+        'Error',
+        parsed.traceId ? `${parsed.message}\n\nSupport trace ID: ${parsed.traceId}` : parsed.message,
+      );
     } finally {
       setActionLoading('');
     }
@@ -74,7 +84,11 @@ export function ContractDetailScreen({ route }: Props) {
           Alert.alert('Dispute Filed', 'Your dispute has been submitted for review.');
           await loadContract();
         } catch (err: any) {
-          Alert.alert('Error', err.message);
+          const parsed = parseSupportTraceMessage(err?.message || 'Action failed');
+          Alert.alert(
+            'Error',
+            parsed.traceId ? `${parsed.message}\n\nSupport trace ID: ${parsed.traceId}` : parsed.message,
+          );
         } finally {
           setActionLoading('');
         }
@@ -87,7 +101,11 @@ export function ContractDetailScreen({ route }: Props) {
         Alert.alert('Dispute Filed', 'Your dispute has been submitted for review.');
         await loadContract();
       } catch (err: any) {
-        Alert.alert('Error', err.message);
+        const parsed = parseSupportTraceMessage(err?.message || 'Action failed');
+        Alert.alert(
+          'Error',
+          parsed.traceId ? `${parsed.message}\n\nSupport trace ID: ${parsed.traceId}` : parsed.message,
+        );
       } finally {
         setActionLoading('');
       }
@@ -99,12 +117,26 @@ export function ContractDetailScreen({ route }: Props) {
   }
 
   if (!contract) {
-    return <View style={styles.center}><Text style={styles.errorText}>{error || 'Contract not found'}</Text></View>;
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>{parsedError.message || 'Contract not found'}</Text>
+        {parsedError.traceId ? (
+          <Text style={styles.errorTraceCenter}>Support trace ID: {parsedError.traceId}</Text>
+        ) : null}
+      </View>
+    );
   }
 
   return (
     <ScrollView style={styles.container}>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? (
+        <>
+          <Text style={styles.error}>{parsedError.message}</Text>
+          {parsedError.traceId ? (
+            <Text style={styles.errorTrace}>Support trace ID: {parsedError.traceId}</Text>
+          ) : null}
+        </>
+      ) : null}
 
       <View style={styles.header}>
         <Text style={styles.category}>{contract.category}</Text>
@@ -171,7 +203,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0f', padding: 16 },
   center: { flex: 1, backgroundColor: '#0a0a0f', justifyContent: 'center', alignItems: 'center' },
   errorText: { color: '#ff6666', fontSize: 16 },
+  errorTraceCenter: { color: '#888', fontSize: 11, marginTop: 8 },
   error: { color: '#ff6666', backgroundColor: '#ff444420', padding: 10, borderRadius: 8, marginBottom: 12 },
+  errorTrace: { color: '#888', fontSize: 11, marginTop: -8, marginBottom: 12, paddingHorizontal: 4 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   category: { color: '#ff4444', fontSize: 14, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
   status: { color: '#2ecc71', fontSize: 13, fontWeight: '600' },

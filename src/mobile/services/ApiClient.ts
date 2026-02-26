@@ -1,6 +1,10 @@
 import { API_BASE } from '../config/api';
+import type { MobileBootstrapResponse, ReleaseInfoResponse } from '@styx/shared/index';
 
 let authToken: string | null = null;
+
+const MOBILE_APP_VERSION = process.env.EXPO_PUBLIC_STYX_MOBILE_VERSION || '0.0.0-dev';
+const MOBILE_APP_BUILD = process.env.EXPO_PUBLIC_STYX_MOBILE_BUILD || 'dev';
 
 export function setAuthToken(token: string | null) {
   authToken = token;
@@ -10,23 +14,88 @@ export function getAuthToken(): string | null {
   return authToken;
 }
 
+function getRequestId(res: Response): string | null {
+  return (
+    res.headers?.get?.('x-styx-request-id') ||
+    res.headers?.get?.('x-request-id') ||
+    null
+  );
+}
+
+async function parseErrorMessage(res: Response): Promise<string> {
+  let message = `API ${res.status}`;
+  try {
+    const contentType = res.headers?.get?.('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const payload = await res.json();
+      const envelopeMessage =
+        payload?.message ||
+        payload?.error?.message ||
+        payload?.error_description ||
+        payload?.error;
+      const errorCode =
+        payload?.error_code ||
+        payload?.code ||
+        payload?.error?.code;
+      if (envelopeMessage) {
+        message = `API ${res.status}: ${String(envelopeMessage)}`;
+      }
+      if (errorCode) {
+        message += ` (${String(errorCode)})`;
+      }
+    } else {
+      const text = await res.text();
+      if (text) {
+        message = `API ${res.status}: ${text}`;
+      }
+    }
+  } catch {
+    const fallbackText = await res.text().catch(() => '');
+    if (fallbackText) {
+      message = `API ${res.status}: ${fallbackText}`;
+    }
+  }
+
+  const requestId = getRequestId(res);
+  if (requestId) {
+    message += ` [request_id: ${requestId}]`;
+  }
+  return message;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-styx-platform': 'ios',
+    'x-styx-app-version': MOBILE_APP_VERSION,
+    'x-styx-build': MOBILE_APP_BUILD,
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+    ...((options?.headers as Record<string, string> | undefined) || {}),
+  };
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-      ...options?.headers,
-    },
     ...options,
+    headers,
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API ${res.status}: ${text}`);
+    throw new Error(await parseErrorMessage(res));
   }
-  return res.json();
+  if (res.status === 204) {
+    return undefined as T;
+  }
+  const contentType = res.headers?.get?.('content-type') || '';
+  if (contentType.includes('application/json') || contentType === '') {
+    return res.json();
+  }
+  return (await res.text()) as T;
 }
 
 export const ApiClient = {
+  getMobileBootstrap: () =>
+    request<MobileBootstrapResponse>('/mobile/bootstrap'),
+
+  getReleaseInfo: () =>
+    request<ReleaseInfoResponse>('/meta/release'),
+
   // Auth
   login: (email: string, password: string) =>
     request<{ userId: string; token: string; integrity: number }>('/auth/login', {

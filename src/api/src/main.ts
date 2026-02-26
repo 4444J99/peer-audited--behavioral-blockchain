@@ -8,9 +8,11 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
+import { randomUUID } from 'crypto';
 import { AppModule } from './app.module';
 import { Logger } from 'nestjs-pino';
 import * as express from 'express';
+import { GlobalHttpExceptionFilter } from './common/filters/global-http-exception.filter';
 
 async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
@@ -26,11 +28,26 @@ async function bootstrap() {
   // Security headers
   app.use(helmet());
 
+  // Request correlation IDs surfaced to clients and logs
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const incomingId =
+      req.header('x-styx-request-id') ||
+      req.header('x-request-id') ||
+      undefined;
+    const requestId = incomingId || randomUUID();
+    (req as any).id = (req as any).id || requestId;
+    (req as any).traceId = requestId;
+    res.setHeader('x-request-id', requestId);
+    res.setHeader('x-styx-request-id', requestId);
+    next();
+  });
+
   // Request body size limit (prevent OOM via large payloads)
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ limit: '1mb', extended: true }));
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalFilters(new GlobalHttpExceptionFilter());
 
   // CORS — reject all if CORS_ORIGINS unset in production
   if (isProduction && !process.env.CORS_ORIGINS) {

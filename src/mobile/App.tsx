@@ -2,9 +2,20 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { SessionService } from './services/SessionService';
 import { OfflineCache } from './services/OfflineCache';
+import { ApiClient } from './services/ApiClient';
+import {
+  getMobileBetaBannerText,
+  getMobileBootstrapConfig,
+  getMobileFeatureFlags,
+  getLocalMobileBuild,
+  getLocalMobileVersion,
+  isBelowMinimumSupportedVersion,
+  setMobileBootstrapConfig,
+} from './config/beta';
+import { resolveMobileAppBootstrapViewState } from './config/app-bootstrap-state';
 
 // Screens
 import { LoginScreen } from './screens/LoginScreen';
@@ -158,19 +169,30 @@ function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
-    SessionService.isLoggedIn()
-      .then((loggedIn) => {
+    Promise.allSettled([
+      SessionService.isLoggedIn(),
+      ApiClient.getMobileBootstrap(),
+    ])
+      .then((results) => {
         if (mounted) {
-          setIsLoggedIn(loggedIn);
-        }
-      })
-      .catch(() => {
-        if (mounted) {
-          setIsLoggedIn(false);
+          const [sessionResult, bootstrapResult] = results;
+          if (sessionResult.status === 'fulfilled') {
+            setIsLoggedIn(sessionResult.value);
+          } else {
+            setIsLoggedIn(false);
+          }
+
+          if (bootstrapResult.status === 'fulfilled') {
+            setMobileBootstrapConfig(bootstrapResult.value);
+            setBootstrapError(null);
+          } else {
+            setBootstrapError('Unable to load beta configuration. Continuing with safe defaults.');
+          }
         }
       })
       .finally(() => {
@@ -195,30 +217,102 @@ export default function App() {
   }, []);
 
   if (isBootstrapping) {
-    return null;
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0a0a0f', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color="#ff4444" />
+        <Text style={{ color: '#999', marginTop: 10 }}>Loading private beta…</Text>
+      </View>
+    );
+  }
+
+  const bootstrapConfig = getMobileBootstrapConfig();
+  const appBootstrapState = resolveMobileAppBootstrapViewState({
+    betaBannerText: getMobileBetaBannerText(),
+    featureFlags: getMobileFeatureFlags(),
+    bootstrapError,
+    belowMinimumSupportedVersion: isBelowMinimumSupportedVersion(bootstrapConfig),
+    localVersion: getLocalMobileVersion(),
+    localBuild: getLocalMobileBuild(),
+  });
+
+  if (appBootstrapState.gate === 'maintenance') {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0a0a0f', padding: 24, justifyContent: 'center' }}>
+        <Text style={{ color: '#ff4444', fontSize: 22, fontWeight: '800', marginBottom: 12 }}>
+          Maintenance Mode
+        </Text>
+        <Text style={{ color: '#e0e0e0', lineHeight: 22, marginBottom: 12 }}>
+          {appBootstrapState.betaBannerText}
+        </Text>
+        <Text style={{ color: '#999', lineHeight: 20 }}>
+          The private beta is temporarily paused while we stabilize the No-Contact recovery flow. Please try again later.
+        </Text>
+      </View>
+    );
+  }
+
+  if (appBootstrapState.gate === 'update_required') {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0a0a0f', padding: 24, justifyContent: 'center' }}>
+        <Text style={{ color: '#ff4444', fontSize: 22, fontWeight: '800', marginBottom: 12 }}>
+          Update Required
+        </Text>
+        <Text style={{ color: '#e0e0e0', lineHeight: 22, marginBottom: 12 }}>
+          {appBootstrapState.betaBannerText}
+        </Text>
+        <Text style={{ color: '#999', lineHeight: 20 }}>
+          {appBootstrapState.updateMessage}
+        </Text>
+      </View>
+    );
   }
 
   return (
-    <NavigationContainer>
-      {isLoggedIn ? (
-        <MainTabNavigator onLogout={handleLogout} />
-      ) : (
-        <AuthStack.Navigator
-          screenOptions={{
-            headerStyle: { backgroundColor: '#0a0a0f' },
-            headerTintColor: '#e0e0e0',
-          }}
-        >
-          <AuthStack.Screen name="Login" options={{ headerShown: false }}>
-            {(props) => <LoginScreen {...props} onLogin={handleLogin} />}
-          </AuthStack.Screen>
-          <AuthStack.Screen
-            name="Register"
-            component={RegisterScreen}
-            options={{ title: 'Create Account' }}
-          />
-        </AuthStack.Navigator>
-      )}
-    </NavigationContainer>
+    <View style={{ flex: 1, backgroundColor: '#0a0a0f' }}>
+      <View
+        style={{
+          backgroundColor: '#20150d',
+          borderBottomColor: '#4a2a16',
+          borderBottomWidth: 1,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+        }}
+      >
+        <Text style={{ color: '#ffb26b', fontSize: 12, fontWeight: '700' }}>
+          {appBootstrapState.betaBannerText}
+        </Text>
+        {appBootstrapState.showNoContactScopeNotice ? (
+          <Text style={{ color: '#e0c7a6', fontSize: 11, marginTop: 2 }}>
+            Phase 1 scope: No-Contact recovery path prioritized; other categories may be hidden.
+          </Text>
+        ) : null}
+        {appBootstrapState.bootstrapError ? (
+          <Text style={{ color: '#ffd5d5', fontSize: 11, marginTop: 2 }}>{appBootstrapState.bootstrapError}</Text>
+        ) : null}
+      </View>
+      <View style={{ flex: 1 }}>
+        <NavigationContainer>
+          {isLoggedIn ? (
+            <MainTabNavigator onLogout={handleLogout} />
+          ) : (
+            <AuthStack.Navigator
+              screenOptions={{
+                headerStyle: { backgroundColor: '#0a0a0f' },
+                headerTintColor: '#e0e0e0',
+              }}
+            >
+              <AuthStack.Screen name="Login" options={{ headerShown: false }}>
+                {(props) => <LoginScreen {...props} onLogin={handleLogin} />}
+              </AuthStack.Screen>
+              <AuthStack.Screen
+                name="Register"
+                component={RegisterScreen}
+                options={{ title: 'Create Account' }}
+              />
+            </AuthStack.Navigator>
+          )}
+        </NavigationContainer>
+      </View>
+    </View>
   );
 }

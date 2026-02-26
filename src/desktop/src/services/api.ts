@@ -1,7 +1,15 @@
+import type { ReleaseInfoResponse } from '@styx/shared/index';
+
 const API_BASE =
   ((globalThis as any)?.__STYX_API_URL__ as string | undefined) ||
   (typeof process !== 'undefined' ? process.env.STYX_DESKTOP_API_URL : undefined) ||
   'http://localhost:3000';
+const DESKTOP_APP_VERSION =
+  (typeof process !== 'undefined' ? process.env.STYX_DESKTOP_APP_VERSION : undefined) ||
+  '0.0.0-dev';
+const DESKTOP_APP_BUILD =
+  (typeof process !== 'undefined' ? process.env.STYX_DESKTOP_BUILD : undefined) ||
+  'dev';
 
 let authToken = '';
 
@@ -21,9 +29,57 @@ export function getApiBase(): string {
   return API_BASE;
 }
 
+function getRequestId(res: Response): string | null {
+  return res.headers?.get?.('x-styx-request-id') || res.headers?.get?.('x-request-id') || null;
+}
+
+async function parseErrorMessage(res: Response): Promise<string> {
+  let message = `API ${res.status}`;
+  try {
+    const contentType = res.headers?.get?.('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const payload = await res.json();
+      const envelopeMessage =
+        payload?.message ||
+        payload?.error?.message ||
+        payload?.error_description ||
+        payload?.error;
+      const errorCode =
+        payload?.error_code ||
+        payload?.code ||
+        payload?.error?.code;
+      if (envelopeMessage) {
+        message = `API ${res.status}: ${String(envelopeMessage)}`;
+      }
+      if (errorCode) {
+        message += ` (${String(errorCode)})`;
+      }
+    } else {
+      const text = await res.text();
+      if (text) {
+        message = `API ${res.status}: ${text}`;
+      }
+    }
+  } catch {
+    const text = await res.text().catch(() => '');
+    if (text) {
+      message = `API ${res.status}: ${text}`;
+    }
+  }
+
+  const requestId = getRequestId(res);
+  if (requestId) {
+    message += ` [request_id: ${requestId}]`;
+  }
+  return message;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers = {
     'Content-Type': 'application/json',
+    'x-styx-platform': 'desktop',
+    'x-styx-app-version': DESKTOP_APP_VERSION,
+    'x-styx-build': DESKTOP_APP_BUILD,
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...((options?.headers as Record<string, string> | undefined) || {}),
   };
@@ -33,8 +89,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     headers,
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API ${res.status}: ${text}`);
+    throw new Error(await parseErrorMessage(res));
   }
   if (res.status === 204) {
     return undefined as T;
@@ -53,6 +108,9 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
+
+  getReleaseInfo: () =>
+    request<ReleaseInfoResponse>('/meta/release'),
 
   // Admin
   getAdminStats: () =>

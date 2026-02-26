@@ -1,10 +1,14 @@
 node_modules/
+**/node_modules/
 .env
 .DS_Store
 dist/
 .next/
 .turbo/
+**/.next/
+**/.turbo/
 *.log
+*.pid
 
 # TypeScript artifacts in source directories
 src/api/**/*.js
@@ -19,6 +23,25 @@ op_items.json
 op_items_raw.txt
 op_items_v2.txt
 ngrok_app.yml
+dev_final_v*.log
+ngrok_final_v*.log
+
+# Mobile / desktop local build outputs (keep source, ignore generated state)
+src/mobile/.expo/
+src/mobile/android/.gradle/
+src/mobile/android/build_output*.txt
+src/mobile/ios/Pods/
+src/mobile/ios_simulator*.png
+src/desktop/dist/
+src/desktop/src-tauri/target/
+src/web/.next/
+src/web/tsconfig.tsbuildinfo
+src/desktop/.turbo/
+src/mobile/.turbo/
+src/web/.turbo/
+src/shared/.turbo/
+src/api/.turbo/
+src/pitch/.turbo/
 
 # Pitch deck build output is committed for GitHub Pages
 # (docs/index.html + docs/assets/ are build artifacts that should be tracked)

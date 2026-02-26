@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { ApiClient } from '../services/ApiClient';
 import { useNavigation } from '@react-navigation/native';
+import { parseSupportTraceMessage } from '../utils/support-trace';
 
 export function DashboardScreen() {
   const navigation = useNavigation<any>();
@@ -18,6 +19,7 @@ export function DashboardScreen() {
   const [balance, setBalance] = useState<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [error, setError] = useState('');
+  const parsedError = parseSupportTraceMessage(error);
 
   const loadData = useCallback(async () => {
     try {
@@ -70,7 +72,14 @@ export function DashboardScreen() {
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ff4444" />}
     >
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? (
+        <>
+          <Text style={styles.error}>{parsedError.message}</Text>
+          {parsedError.traceId ? (
+            <Text style={styles.errorTrace}>Support trace ID: {parsedError.traceId}</Text>
+          ) : null}
+        </>
+      ) : null}
 
       {/* Integrity Score */}
       <View style={styles.scoreCard}>
@@ -150,6 +159,7 @@ const styles = StyleSheet.create({
   centerContainer: { flex: 1, backgroundColor: '#0a0a0f', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#888', fontSize: 16 },
   error: { color: '#ff6666', backgroundColor: '#ff444420', padding: 10, borderRadius: 8, marginBottom: 12 },
+  errorTrace: { color: '#888', fontSize: 11, marginTop: -8, marginBottom: 12, paddingHorizontal: 4 },
   scoreCard: {
     backgroundColor: '#1a1a2e',
     borderRadius: 16,

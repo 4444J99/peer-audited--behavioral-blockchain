@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { api } from '../../services/api-client';
+import { SupportTraceMessage } from '../../components/support/SupportTraceMessage';
 
 interface EnterpriseMetrics {
   enterpriseId: string;
@@ -16,11 +17,17 @@ interface EnterpriseMetrics {
 }
 
 export default function HRDashboard() {
+  const hrEnabled = process.env.NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI === 'true';
   const [metrics, setMetrics] = useState<EnterpriseMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!hrEnabled) {
+      setLoading(false);
+      return;
+    }
+
     async function load() {
       try {
         const data = await api.getEnterpriseMetrics('e0000000-0000-0000-0000-000000000001');
@@ -32,7 +39,21 @@ export default function HRDashboard() {
       }
     }
     load();
-  }, []);
+  }, [hrEnabled]);
+
+  if (!hrEnabled) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
+        <div className="max-w-xl text-center space-y-4">
+          <AlertTriangle className="mx-auto text-amber-500" size={42} />
+          <h1 className="text-xl font-bold tracking-wide uppercase text-amber-200">Internal Feature Disabled</h1>
+          <p className="text-sm text-gray-400 leading-6">
+            B2B/HR analytics is hidden in the Phase 1 private beta build. This route remains internal-only and should not be exposed to testers.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -48,7 +69,12 @@ export default function HRDashboard() {
       <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center">
         <div className="text-center space-y-4">
           <AlertTriangle className="mx-auto text-red-500" size={48} />
-          <p className="text-red-400 font-bold">{error}</p>
+          <SupportTraceMessage
+            value={error}
+            messageClassName="text-red-400 font-bold"
+            traceClassName="text-xs text-gray-500 font-mono"
+            containerClassName="space-y-2"
+          />
         </div>
       </div>
     );

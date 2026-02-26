@@ -8,6 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { ApiClient } from '../services/ApiClient';
+import { parseSupportTraceMessage } from '../utils/support-trace';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ContractsStackParamList } from '../App';
 
@@ -18,6 +19,7 @@ export function ContractListScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const parsedError = parseSupportTraceMessage(error);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -82,7 +84,14 @@ export function ContractListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? (
+        <>
+          <Text style={styles.error}>{parsedError.message}</Text>
+          {parsedError.traceId ? (
+            <Text style={styles.errorTrace}>Support trace ID: {parsedError.traceId}</Text>
+          ) : null}
+        </>
+      ) : null}
       <FlatList
         data={contracts}
         keyExtractor={(item) => item.id}
@@ -100,6 +109,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, backgroundColor: '#0a0a0f', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#888', fontSize: 16 },
   error: { color: '#ff6666', backgroundColor: '#ff444420', padding: 10, borderRadius: 8, marginBottom: 12 },
+  errorTrace: { color: '#888', fontSize: 11, marginTop: -8, marginBottom: 12, paddingHorizontal: 4 },
   card: {
     backgroundColor: '#1a1a2e',
     borderRadius: 12,

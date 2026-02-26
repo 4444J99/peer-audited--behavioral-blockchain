@@ -1,0 +1,109 @@
+name: Staging Promotion Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      promotion_target:
+        description: Promotion target to unlock after staging validation
+        required: true
+        default: prod
+        type: choice
+        options:
+          - beta
+          - prod
+  workflow_call:
+    inputs:
+      promotion_target:
+        description: Promotion target to unlock after staging validation
+        required: false
+        default: prod
+        type: string
+
+concurrency:
+  group: staging-promotion-gate
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Validate required staging secrets
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_STAGING_API_SERVICE_ID: ${{ secrets.RENDER_STAGING_API_SERVICE_ID }}
+          RENDER_STAGING_WEB_SERVICE_ID: ${{ secrets.RENDER_STAGING_WEB_SERVICE_ID }}
+          STAGING_API_URL: ${{ secrets.STAGING_API_URL }}
+        run: |
+          missing=0
+          for key in RENDER_API_KEY RENDER_STAGING_API_SERVICE_ID RENDER_STAGING_WEB_SERVICE_ID STAGING_API_URL; do
+            if [ -z "${!key:-}" ]; then
+              echo "::error::Missing required staging secret: ${key}"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Announce staging gate target
+        run: |
+          echo "Running staging promotion gate before target: ${{ inputs.promotion_target || 'prod' }}"
+
+  deploy_staging_api:
+    runs-on: ubuntu-latest
+    needs: preflight
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy API to Render (staging)
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_STAGING_API_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+  deploy_staging_web:
+    runs-on: ubuntu-latest
+    needs: preflight
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy Web to Render (staging)
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_STAGING_WEB_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+  smoke_staging:
+    runs-on: ubuntu-latest
+    needs: [deploy_staging_api, deploy_staging_web]
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Wait for staging services
+        run: sleep 30
+
+      - name: Run staging smoke suite
+        env:
+          STAGING_API_URL: ${{ secrets.STAGING_API_URL }}
+          STAGING_WEB_URL: ${{ secrets.STAGING_WEB_URL }}
+          STAGING_ENV_LABEL: ${{ secrets.STAGING_ENV_LABEL }}
+        run: |
+          bash scripts/smoke/staging-smoke.sh
+
+  promotion_ready:
+    runs-on: ubuntu-latest
+    needs: smoke_staging
+    steps:
+      - name: Mark promotion gate passed
+        run: |
+          echo "✅ Staging promotion gate passed for target: ${{ inputs.promotion_target || 'prod' }}"

@@ -1,4 +1,8 @@
+import type { MobileBootstrapResponse, ReleaseInfoResponse } from '@styx/shared/index';
+
 const API_BASE = (typeof window !== 'undefined') ? '/api' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000');
+const WEB_APP_VERSION = process.env.NEXT_PUBLIC_STYX_WEB_VERSION || process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0-dev';
+const WEB_APP_BUILD = process.env.NEXT_PUBLIC_STYX_WEB_BUILD || process.env.NEXT_PUBLIC_BUILD_SHA || 'dev';
 
 let currentToken = '';
 let currentCsrfToken = '';
@@ -31,12 +35,60 @@ function readCookie(name: string): string | null {
   return null;
 }
 
+function getRequestId(res: Response): string | null {
+  return res.headers?.get?.('x-styx-request-id') || res.headers?.get?.('x-request-id') || null;
+}
+
+async function parseErrorMessage(res: Response): Promise<string> {
+  let message = `API ${res.status}`;
+  try {
+    const contentType = res.headers?.get?.('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const payload = await res.json();
+      const envelopeMessage =
+        payload?.message ||
+        payload?.error?.message ||
+        payload?.error_description ||
+        payload?.error;
+      const errorCode =
+        payload?.error_code ||
+        payload?.code ||
+        payload?.error?.code;
+      if (envelopeMessage) {
+        message = `API ${res.status}: ${String(envelopeMessage)}`;
+      }
+      if (errorCode) {
+        message += ` (${String(errorCode)})`;
+      }
+    } else {
+      const text = await res.text();
+      if (text) {
+        message = `API ${res.status}: ${text}`;
+      }
+    }
+  } catch {
+    const text = await res.text().catch(() => '');
+    if (text) {
+      message = `API ${res.status}: ${text}`;
+    }
+  }
+
+  const requestId = getRequestId(res);
+  if (requestId) {
+    message += ` [request_id: ${requestId}]`;
+  }
+  return message;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const method = String(options?.method || 'GET').toUpperCase();
   const needsCsrf = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
   const csrfToken = currentCsrfToken || readCookie('styx_csrf_token') || '';
   const mergedHeaders = {
     'Content-Type': 'application/json',
+    'x-styx-platform': 'web',
+    'x-styx-app-version': WEB_APP_VERSION,
+    'x-styx-build': WEB_APP_BUILD,
     ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
     ...(needsCsrf && csrfToken ? { 'x-csrf-token': csrfToken } : {}),
     ...options?.headers,
@@ -46,9 +98,13 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     credentials: options?.credentials ?? 'include',
     headers: mergedHeaders,
   });
-  if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw new Error(await parseErrorMessage(res));
   if (res.status === 204) return undefined as T;
-  return res.json();
+  const contentType = res.headers?.get?.('content-type') || '';
+  if (contentType.includes('application/json') || contentType === '') {
+    return res.json();
+  }
+  return (await res.text()) as T;
 }
 
 export interface CreateContractDto {
@@ -83,6 +139,8 @@ export interface LeaderboardEntry {
 
 export const api = {
   health: () => request<{ status: string }>('/health'),
+  getMobileBootstrap: () => request<MobileBootstrapResponse>('/mobile/bootstrap'),
+  getReleaseInfo: () => request<ReleaseInfoResponse>('/meta/release'),
 
   // Auth
   register: (email: string, password: string) => // allow-secret
