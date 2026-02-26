@@ -8,7 +8,7 @@
  * patterns for regression testing.
  */
 
-import { readFileSync, readdirSync, statSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join, extname, resolve, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -39,14 +39,15 @@ const SCAN_DIRS = [
   join(REPO_ROOT, 'src/web/.next'),
 ];
 
-const SCAN_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.jsx', '.json']);
+const BUILD_SCAN_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.jsx', '.json']);
+const SOURCE_SCAN_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.mjs', '.cjs', '.jsx']);
 
 function isTestFile(filePath: string): boolean {
   const name = basename(filePath);
   return /\.(spec|test)\.(js|ts|mjs|cjs|jsx|tsx)$/.test(name);
 }
 
-function collectFiles(dir: string): string[] {
+function collectFiles(dir: string, extensions: Set<string>): string[] {
   const files: string[] = [];
   try {
     const entries = readdirSync(dir);
@@ -56,7 +57,7 @@ function collectFiles(dir: string): string[] {
         const stat = statSync(full);
         if (stat.isDirectory()) {
           files.push(...collectFiles(full));
-        } else if (SCAN_EXTENSIONS.has(extname(full)) && !isTestFile(full)) {
+        } else if (extensions.has(extname(full)) && !isTestFile(full)) {
           files.push(full);
         }
       } catch {
@@ -75,9 +76,19 @@ function runSecurityInvariantCheck() {
   const errors: { file: string; label: string; line: number }[] = [];
   const warnings: { file: string; label: string; line: number }[] = [];
   let filesScanned = 0;
+  const missingScanDirs: string[] = [];
+  const emptyScanDirs: string[] = [];
 
   for (const dir of SCAN_DIRS) {
-    const files = collectFiles(dir);
+    if (!existsSync(dir)) {
+      missingScanDirs.push(dir);
+      continue;
+    }
+
+    const files = collectFiles(dir, BUILD_SCAN_EXTENSIONS);
+    if (files.length === 0) {
+      emptyScanDirs.push(dir);
+    }
     for (const file of files) {
       filesScanned++;
       try {
@@ -103,7 +114,8 @@ function runSecurityInvariantCheck() {
   }
 
   // Also scan source guard files (non-test) for the most critical patterns
-  const sourceFiles = collectFiles(join(REPO_ROOT, 'src/api/guards'));
+  const sourceGuardsDir = join(REPO_ROOT, 'src/api/guards');
+  const sourceFiles = collectFiles(sourceGuardsDir, SOURCE_SCAN_EXTENSIONS);
   for (const file of sourceFiles) {
     if (isTestFile(file)) continue;
     filesScanned++;
@@ -118,6 +130,38 @@ function runSecurityInvariantCheck() {
   }
 
   console.log(`Scanned ${filesScanned} files across ${SCAN_DIRS.length} build directories + source guards.`);
+
+  if (missingScanDirs.length > 0) {
+    errors.push({
+      file: 'validation',
+      label: `MISSING_SCAN_DIRS (${missingScanDirs.join(', ')})`,
+      line: 0,
+    });
+  }
+
+  if (emptyScanDirs.length > 0) {
+    warnings.push({
+      file: 'validation',
+      label: `EMPTY_SCAN_DIRS (${emptyScanDirs.join(', ')})`,
+      line: 0,
+    });
+  }
+
+  if (sourceFiles.length === 0 && existsSync(sourceGuardsDir)) {
+    errors.push({
+      file: sourceGuardsDir,
+      label: 'SOURCE_GUARDS_NOT_SCANNED',
+      line: 0,
+    });
+  }
+
+  if (filesScanned === 0) {
+    errors.push({
+      file: 'validation',
+      label: 'NO_FILES_SCANNED',
+      line: 0,
+    });
+  }
 
   if (warnings.length > 0) {
     console.warn(`\n⚠️  ${warnings.length} warning(s):`);

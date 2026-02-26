@@ -93,7 +93,8 @@ describe('AdminController', () => {
         .mockResolvedValueOnce({ rows: [{ count: '42' }] })
         .mockResolvedValueOnce({ rows: [{ count: '10' }] })
         .mockResolvedValueOnce({ rows: [{ count: '5' }] })
-        .mockResolvedValueOnce({ rows: [{ avg: '67.5' }] });
+        .mockResolvedValueOnce({ rows: [{ avg: '67.5' }] })
+        .mockResolvedValueOnce({ rows: [{ count: '3' }] });
 
       const result = await controller.getStats();
 
@@ -102,6 +103,7 @@ describe('AdminController', () => {
         activeContracts: 10,
         pendingProofs: 5,
         avgIntegrity: 67.5,
+        pendingDisputes: 3,
       });
     });
   });

@@ -7,7 +7,7 @@ import MacroReview from './components/MacroReview';
 import ExilePanel from './components/ExilePanel';
 import B2BOrchestration from './components/B2BOrchestration';
 import HashCollider from './components/HashCollider';
-import { getToken } from './services/api';
+import { clearToken, getApiBase, getToken } from './services/api';
 
 interface Notification {
   id: number;
@@ -52,10 +52,11 @@ export default function App() {
     if (!userId) return;
 
     const token = getToken();
+    if (!token) return;
     let eventSource: EventSource | null = null;
 
     try {
-      eventSource = new EventSource(`http://localhost:3000/notifications/stream?token=${token}`);
+      eventSource = new EventSource(`${getApiBase()}/notifications/stream?token=${token}`);
 
       eventSource.onmessage = (event) => {
         try {
@@ -125,6 +126,7 @@ export default function App() {
           </div>
           <button
             onClick={() => {
+              clearToken();
               setUserId(null);
               setNotifications([]);
             }}

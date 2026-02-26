@@ -74,16 +74,9 @@ export class ConsensusEngine {
       flaggedFuries,
     });
 
-    // Distribute bounties (skip for SPLIT — escalated to human judge)
-    let bountyDistributed = false;
-    if (outcome !== 'SPLIT') {
-      try {
-        await this.distributeBounties(proofId, votes, outcome, isHoneypot);
-        bountyDistributed = true;
-      } catch (err) {
-        this.logger.error(`Bounty distribution failed for proof ${proofId}: ${(err as Error).message}`);
-      }
-    }
+    // Financial bounty/penalty settlement is executed in FuryWorker to keep a single
+    // authoritative side-effect path (avoids duplicate ledger writes).
+    const bountyDistributed = false;
 
     return { outcome, votes, flaggedFuries, bountyDistributed };
   }

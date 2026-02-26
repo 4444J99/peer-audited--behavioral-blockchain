@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '../../../guards/auth.guard';
+import { RoleGuard, Roles } from '../../common/guards/role.guard';
 import { BillingService } from './billing.service';
 import { WebhookService } from './webhook.service';
 import { MetricsService } from './metrics.service';
@@ -10,7 +11,8 @@ import { DataLakeService } from './datalake.service';
 @ApiTags('B2B')
 @ApiBearerAuth()
 @Controller('b2b')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RoleGuard)
+@Roles('ADMIN')
 export class B2BController {
   constructor(
     private readonly billing: BillingService,

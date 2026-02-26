@@ -159,9 +159,9 @@ runBehavioralPhysicsCheck().catch((err) => {
     message.includes('ECONNREFUSED');
 
   if (isConnectionRefused) {
-    console.log(`⚠️  GATE 05 SKIPPED: API not reachable at ${API_BASE} (no running server in this environment).`);
-    console.log('✅ GATE 05 PASSED: Integration check requires live API — skipped gracefully in CI.');
-    process.exit(0);
+    console.warn(`⚠️  GATE 05 SKIPPED: API not reachable at ${API_BASE} (no running server in this environment).`);
+    console.warn('❌ GATE 05 NOT VERIFIED: This integration gate requires a live API and should not be counted as PASS.');
+    process.exit(2);
   }
 
   console.error('❌ GATE 05 CRASHED:', err);

@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text } from 'react-native';
 import { SessionService } from './services/SessionService';
+import { OfflineCache } from './services/OfflineCache';
 
 // Screens
 import { LoginScreen } from './screens/LoginScreen';
@@ -12,7 +13,6 @@ import { DashboardScreen } from './screens/DashboardScreen';
 import { ContractListScreen } from './screens/ContractListScreen';
 import { ContractDetailScreen } from './screens/ContractDetailScreen';
 import { CreateContractScreen } from './screens/CreateContractScreen';
-import { CameraScreen } from './screens/CameraScreen';
 import { FuryScreen } from './screens/FuryScreen';
 import { WalletScreen } from './screens/WalletScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
@@ -140,14 +140,7 @@ function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>{'⚖'}</Text>,
         }}
       />
-      <MainTab.Screen
-        name="Camera"
-        component={CameraScreen}
-        options={{
-          title: 'Prove',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>{'📷'}</Text>,
-        }}
-      />
+      {/* Camera/proof capture tab intentionally hidden until native capture pipeline is production-ready */}
       <MainTab.Screen
         name="Profile"
         options={{
@@ -164,6 +157,32 @@ function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    SessionService.isLoggedIn()
+      .then((loggedIn) => {
+        if (mounted) {
+          setIsLoggedIn(loggedIn);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setIsLoggedIn(false);
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setIsBootstrapping(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleLogin = useCallback(() => {
     setIsLoggedIn(true);
@@ -171,8 +190,13 @@ export default function App() {
 
   const handleLogout = useCallback(async () => {
     await SessionService.clearSession();
+    await OfflineCache.clearAll();
     setIsLoggedIn(false);
   }, []);
+
+  if (isBootstrapping) {
+    return null;
+  }
 
   return (
     <NavigationContainer>

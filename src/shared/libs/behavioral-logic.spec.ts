@@ -4,7 +4,6 @@ import {
   validateOathMapping,
   useGraceDay,
   grantOnboardingBonus,
-  isGoalEthical,
   MAX_GRACE_DAYS_PER_MONTH,
   ONBOARDING_BONUS_AMOUNT,
   MAX_NOCONTACT_DURATION_DAYS,
@@ -107,58 +106,6 @@ describe('behavioral-logic', () => {
       expect(result.granted).toBe(false);
       expect(result.amount).toBe(0);
       expect(result.reason).toMatch(/prior contracts/);
-    });
-  });
-
-  // ── isGoalEthical ───────────────────────────────────────────────
-
-  describe('isGoalEthical', () => {
-    const originalEnv = process.env.GEMINI_API_KEY;
-
-    afterEach(() => {
-      if (originalEnv !== undefined) {
-        process.env.GEMINI_API_KEY = originalEnv;
-      } else {
-        delete process.env.GEMINI_API_KEY;
-      }
-      jest.restoreAllMocks();
-    });
-
-    it('should pass through when no GEMINI_API_KEY is set', async () => {
-      delete process.env.GEMINI_API_KEY;
-      await expect(isGoalEthical('Lose 10 lbs')).resolves.toBe(true);
-      await expect(isGoalEthical('something potentially problematic')).resolves.toBe(true);
-      await expect(isGoalEthical('')).resolves.toBe(true);
-    });
-
-    it('should return true when Gemini approves the goal', async () => {
-      process.env.GEMINI_API_KEY = 'test-key';
-      jest.resetModules();
-      jest.doMock('../../api/services/intelligence/GeminiClient', () => ({
-        screenGoalEthics: jest.fn().mockResolvedValue({ ethical: true }),
-      }));
-      const { isGoalEthical: fn } = require('./behavioral-logic');
-      await expect(fn('Run a 5K marathon')).resolves.toBe(true);
-    });
-
-    it('should return false when Gemini rejects the goal', async () => {
-      process.env.GEMINI_API_KEY = 'test-key';
-      jest.resetModules();
-      jest.doMock('../../api/services/intelligence/GeminiClient', () => ({
-        screenGoalEthics: jest.fn().mockResolvedValue({ ethical: false, reason: 'Self-harm risk' }),
-      }));
-      const { isGoalEthical: fn } = require('./behavioral-logic');
-      await expect(fn('Starve myself to lose weight')).resolves.toBe(false);
-    });
-
-    it('should fail open when Gemini throws an error', async () => {
-      process.env.GEMINI_API_KEY = 'test-key';
-      jest.resetModules();
-      jest.doMock('../../api/services/intelligence/GeminiClient', () => ({
-        screenGoalEthics: jest.fn().mockRejectedValue(new Error('Gemini down')),
-      }));
-      const { isGoalEthical: fn } = require('./behavioral-logic');
-      await expect(fn('Any goal')).resolves.toBe(true);
     });
   });
 

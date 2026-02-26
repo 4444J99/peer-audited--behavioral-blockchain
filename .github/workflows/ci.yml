@@ -42,8 +42,15 @@ jobs:
     - name: Gate 04 — Redacted Build Check
       run: bash scripts/validation/04-redacted-build-check.sh
 
-    - name: Gate 05 — Behavioral Physics Check
-      run: npx tsx scripts/validation/05-behavioral-physics-check.ts
+    - name: Gate 05 — Behavioral Physics Check (integration)
+      env:
+        API_URL: ${{ secrets.CI_GATE05_API_URL }}
+      run: |
+        if [ -z "${API_URL:-}" ]; then
+          echo "::warning::Skipping Gate 05 (NOT VERIFIED): set CI_GATE05_API_URL to a live integration API."
+          exit 0
+        fi
+        npx tsx scripts/validation/05-behavioral-physics-check.ts
 
     - name: Gate 06 — Security Invariant Check
       run: npx tsx scripts/validation/06-security-invariant-check.ts

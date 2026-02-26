@@ -36,7 +36,30 @@ describe('FuryController', () => {
 
       const result = await controller.getAssignments({ id: 'fury-user-1' });
 
-      expect(result).toEqual({ assignments });
+      expect(result).toEqual({
+        assignments: [
+          {
+            assignmentId: 'a-1',
+            proofId: 'p-1',
+            assignedAt: undefined,
+            contractId: undefined,
+            submittedAt: undefined,
+            contentType: undefined,
+            description: undefined,
+            viewUrl: null,
+          },
+          {
+            assignmentId: 'a-2',
+            proofId: 'p-2',
+            assignedAt: undefined,
+            contractId: undefined,
+            submittedAt: undefined,
+            contentType: undefined,
+            description: undefined,
+            viewUrl: null,
+          },
+        ],
+      });
       expect(mockPool.query).toHaveBeenCalledWith(
         expect.stringContaining('fury_user_id = $1'),
         ['fury-user-1'],

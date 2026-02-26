@@ -58,23 +58,18 @@ export class PaymentsController implements OnModuleInit {
       return res.status(400).json({ error: 'Invalid signature' });
     }
 
-    // Idempotency: skip already-processed events
-    const alreadyProcessed = await this.pool.query(
-      'SELECT id FROM stripe_events WHERE event_id = $1',
-      [event.id],
+    // Idempotency (race-safe): insert and process only if this request won the insert.
+    const inserted = await this.pool.query(
+      'INSERT INTO stripe_events (event_id, event_type) VALUES ($1, $2) ON CONFLICT (event_id) DO NOTHING RETURNING event_id',
+      [event.id, event.type],
     );
-    if (alreadyProcessed.rows.length > 0) {
+    if (inserted.rows.length === 0) {
       this.logger.debug(`Duplicate Stripe event ${event.id}, skipping`);
       return res.json({ received: true, duplicate: true });
     }
 
-    // Record event before processing to prevent race conditions
-    await this.pool.query(
-      'INSERT INTO stripe_events (event_id, event_type) VALUES ($1, $2) ON CONFLICT (event_id) DO NOTHING',
-      [event.id, event.type],
-    );
-
-    switch (event.type) {
+    try {
+      switch (event.type) {
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
         const contractId = pi.metadata?.contractId;
@@ -143,8 +138,14 @@ export class PaymentsController implements OnModuleInit {
         break;
       }
 
-      default:
-        this.logger.debug(`Unhandled Stripe event: ${event.type}`);
+        default:
+          this.logger.debug(`Unhandled Stripe event: ${event.type}`);
+      }
+    } catch (err) {
+      // Allow Stripe to retry if processing failed after we inserted the dedup row.
+      await this.pool.query('DELETE FROM stripe_events WHERE event_id = $1', [event.id]);
+      this.logger.error(`Stripe webhook processing failed for ${event.id}: ${err instanceof Error ? err.message : err}`);
+      return res.status(500).json({ error: 'Webhook processing failed' });
     }
 
     return res.json({ received: true });

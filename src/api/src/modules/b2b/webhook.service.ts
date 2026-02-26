@@ -37,6 +37,8 @@ export class WebhookService {
     url: string,
     payload: Record<string, unknown>,
   ): Promise<WebhookDeliveryResult> {
+    this.assertSafeWebhookUrl(url);
+
     const body = JSON.stringify(payload);
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const signature = this.sign(timestamp, body);
@@ -110,5 +112,51 @@ export class WebhookService {
 
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private assertSafeWebhookUrl(rawUrl: string): void {
+    let parsed: URL;
+    try {
+      parsed = new URL(rawUrl);
+    } catch {
+      throw new Error('Invalid webhook URL');
+    }
+
+    if (!['https:', 'http:'].includes(parsed.protocol)) {
+      throw new Error('Webhook URL protocol must be http or https');
+    }
+
+    if (parsed.username || parsed.password) {
+      throw new Error('Webhook URL must not include credentials');
+    }
+
+    const host = parsed.hostname.toLowerCase();
+    if (this.isLocalOrPrivateHost(host)) {
+      throw new Error('Webhook URL must not target localhost or private network addresses');
+    }
+  }
+
+  private isLocalOrPrivateHost(hostname: string): boolean {
+    if (
+      hostname === 'localhost' ||
+      hostname === '0.0.0.0' ||
+      hostname === '::1' ||
+      hostname.endsWith('.local')
+    ) {
+      return true;
+    }
+
+    if (/^127\./.test(hostname)) return true;
+    if (/^10\./.test(hostname)) return true;
+    if (/^192\.168\./.test(hostname)) return true;
+    if (/^169\.254\./.test(hostname)) return true;
+    if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)) return true;
+
+    // Common IPv6 local ranges
+    if (hostname.startsWith('fc') || hostname.startsWith('fd') || hostname.startsWith('fe80:')) {
+      return true;
+    }
+
+    return false;
   }
 }

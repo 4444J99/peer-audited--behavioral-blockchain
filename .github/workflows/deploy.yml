@@ -6,9 +6,41 @@ on:
     tags:
       - 'v*'
 
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate deployment trigger and ref
+        run: |
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref:   ${{ github.ref }}"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "❌ Manual production deploys are only allowed from main."
+            exit 1
+          fi
+
+          if [ "${{ github.event_name }}" = "push" ]; then
+            case "${{ github.ref }}" in
+              refs/tags/v*) ;;
+              *)
+                echo "❌ Tag deploys must use refs/tags/v*."
+                exit 1
+                ;;
+            esac
+          fi
+
   deploy_api:
     runs-on: ubuntu-latest
+    needs: preflight
+    environment: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,6 +53,8 @@ jobs:
 
   deploy_web:
     runs-on: ubuntu-latest
+    needs: preflight
+    environment: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,6 +68,7 @@ jobs:
   smoke_test:
     runs-on: ubuntu-latest
     needs: [deploy_api, deploy_web]
+    environment: production
     steps:
       - name: Wait for services
         run: sleep 30
@@ -70,10 +105,9 @@ jobs:
 
           if [ "$HEALTHY" != "true" ]; then
             echo "❌ Health check failed after ${MAX_ATTEMPTS} attempts ($(( MAX_ATTEMPTS * INTERVAL ))s)"
-            echo "🔄 Triggering rollback..."
+            echo "🔄 Triggering best-effort redeploy fallback (not a deterministic rollback to a known-good deploy)..."
 
-            # Trigger a rollback by redeploying the previous known-good deploy
-            # Render API: cancel the current deploy (which effectively rolls back)
+            # Best-effort fallback: trigger a new deploy. This is NOT a deterministic rollback.
             curl -s -X POST "https://api.render.com/v1/services/${RENDER_API_SERVICE_ID}/deploys" \
               -H "Authorization: Bearer ${RENDER_API_KEY}" \
               -H "Content-Type: application/json" \
@@ -81,3 +115,29 @@ jobs:
 
             exit 1
           fi
+
+      - name: Health check Web
+        env:
+          WEB_URL: ${{ secrets.WEB_URL }}
+        run: |
+          if [ -z "${WEB_URL:-}" ]; then
+            echo "::warning::Skipping web smoke test: WEB_URL secret not configured."
+            exit 0
+          fi
+
+          MAX_ATTEMPTS=12
+          INTERVAL=10
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "Web health check attempt $i/$MAX_ATTEMPTS..."
+            status=$(curl -s -o /tmp/web.html -w "%{http_code}" "$WEB_URL" || echo "000")
+            if [ "$status" = "200" ]; then
+              echo "✅ Web smoke test passed"
+              exit 0
+            fi
+            echo "  HTTP $status — retrying in ${INTERVAL}s..."
+            sleep $INTERVAL
+          done
+
+          echo "❌ Web smoke test failed after ${MAX_ATTEMPTS} attempts"
+          exit 1

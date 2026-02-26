@@ -4,10 +4,10 @@ import { api } from '../services/api';
 
 interface ApiKey {
   id: string;
-  key: string;
   enterprise: string;
   createdAt: string;
   active: boolean;
+  keyPreview?: string;
 }
 
 export default function B2BOrchestration() {
@@ -76,8 +76,8 @@ export default function B2BOrchestration() {
     }
   };
 
-  const handleCopyKey = (key: string) => {
-    navigator.clipboard.writeText(key).catch(() => {
+  const handleCopyKey = (value: string) => {
+    navigator.clipboard.writeText(value).catch(() => {
       // Clipboard write failed — no action needed
     });
   };
@@ -269,8 +269,9 @@ export default function B2BOrchestration() {
                   <td style={{ padding: '1rem 0', fontFamily: 'monospace', color: '#888', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {k.id}
                     <span
-                      onClick={() => handleCopyKey(k.key || k.id)}
+                      onClick={() => handleCopyKey(k.id)}
                       style={{ cursor: 'pointer' }}
+                      title="Copy key identifier"
                     >
                       {React.createElement(Copy as any, { size: 12 })}
                     </span>

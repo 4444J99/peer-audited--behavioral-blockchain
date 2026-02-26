@@ -17,11 +17,20 @@ echo "--- STARTING VALIDATION GATE 04: REDACTED BUILD CHECK ---"
 # 'stake' is permitted internally but cloaked as 'vault' client-side.
 banned_terms=("bet" "gamble" "wager")
 
-# Search targets: client-facing source directories
+# Search targets: source-level user-facing client surfaces.
+# Built bundles are intentionally excluded here because vendor payloads and minified assets
+# create persistent false positives (e.g., library identifiers containing banned substrings).
+# If we need deploy-artifact scanning, it should be a separate allowlisted artifact gate.
 search_dirs=(
-  "$REPO_ROOT/src/web"
-  "$REPO_ROOT/src/desktop"
-  "$REPO_ROOT/src/mobile"
+  "$REPO_ROOT/src/web/app"
+  "$REPO_ROOT/src/web/components"
+  "$REPO_ROOT/src/web/store"
+  "$REPO_ROOT/src/web/services"
+  "$REPO_ROOT/src/desktop/src"
+  "$REPO_ROOT/src/mobile/screens"
+  "$REPO_ROOT/src/mobile/components"
+  "$REPO_ROOT/src/mobile/services"
+  "$REPO_ROOT/src/pitch/src"
 )
 
 found_violations=false
@@ -35,21 +44,45 @@ for dir in "${search_dirs[@]}"; do
   echo "[ANALYSIS] Scanning $dir for restricted terms..."
 
   for term in "${banned_terms[@]}"; do
-    # Case insensitive, whole-word, recursive grep
-    # Exclude build artifacts, deps, and config files
-    if grep -Hrnwi \
+    # Case insensitive, whole-word, recursive grep over source-bearing files only.
+    if grep -IHrnwi \
+      --binary-files=without-match \
       --exclude-dir=node_modules \
-      --exclude-dir=.next \
-      --exclude-dir=dist \
       --exclude-dir=build \
       --exclude-dir=.turbo \
+      --exclude-dir=.expo \
+      --exclude-dir=Pods \
+      --exclude-dir=target \
+      --exclude-dir=android \
+      --exclude-dir=ios \
       --exclude='*.lock' \
       --exclude='package-lock.json' \
       --exclude='CLAUDE.md' \
       --exclude='*.md' \
       --exclude='*.sh' \
+      --exclude='*.png' \
+      --exclude='*.jpg' \
+      --exclude='*.jpeg' \
+      --exclude='*.gif' \
+      --exclude='*.webp' \
+      --exclude='*.pdf' \
+      --exclude='*.epub' \
+      --exclude='*.pptx' \
+      --exclude='*.azw3' \
+      --include='*.ts' \
+      --include='*.tsx' \
+      --include='*.js' \
+      --include='*.jsx' \
+      --include='*.json' \
+      --include='*.html' \
       --exclude='*.spec.ts' \
+      --exclude='*.spec.tsx' \
       --exclude='*.test.ts' \
+      --exclude='*.test.tsx' \
+      --exclude='*.md' \
+      --exclude='*.d.ts' \
+      --exclude='next-env.d.ts' \
+      --exclude='LinguisticMiddleware.ts' \
       "$term" "$dir" 2>/dev/null; then
       echo "  ⚠ Found restricted term '$term' in $dir"
       found_violations=true

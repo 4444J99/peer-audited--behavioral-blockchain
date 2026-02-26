@@ -382,7 +382,7 @@ export const slides: SlideData[] = [
         } satisfies CalloutBlock,
       },
     ],
-    eli5: 'Other apps either let you set goals with no real consequences (Habitica gives you points), or bet money but trust you to report honestly (HealthyWage just asks for a photo). Big corporate wellness companies charge a fortune but rely on surveys people lie on. Styx is the only platform that combines real money on the line with strangers who verify whether you actually did the thing. Nobody else has that combination.',
+    eli5: 'Other apps either let you set goals with no real consequences (Habitica gives you points), or put money at risk but trust you to report honestly (HealthyWage just asks for a photo). Big corporate wellness companies charge a fortune but rely on surveys people lie on. Styx is the only platform that combines real money on the line with strangers who verify whether you actually did the thing. Nobody else has that combination.',
     toughQuestions: [
       {
         question: 'What stops a well-funded competitor from copying this?',

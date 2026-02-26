@@ -1,7 +1,6 @@
 const API_BASE = (typeof window !== 'undefined') ? '/api' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000');
-const AUTH_TOKEN = process.env.NEXT_PUBLIC_AUTH_TOKEN || ''; // allow-secret
 
-let currentToken = AUTH_TOKEN;
+let currentToken = '';
 
 export function setAuthToken(token: string) { // allow-secret
   currentToken = token;
@@ -12,15 +11,17 @@ export function getAuthToken(): string {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const mergedHeaders = {
+    'Content-Type': 'application/json',
+    ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+    ...options?.headers,
+  };
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${currentToken}`,
-      ...options?.headers,
-    },
     ...options,
+    headers: mergedHeaders,
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 

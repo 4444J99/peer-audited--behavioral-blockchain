@@ -49,8 +49,26 @@ describe('useFuryStore Integration', () => {
   it('can remove assignments from the queue immediately upon judgment', () => {
     useFuryStore.setState({
       assignments: [
-        { assignment_id: '1', proof_id: 'a', assigned_at: '', media_uri: '', contract_id: '', submitted_at: '' },
-        { assignment_id: '2', proof_id: 'b', assigned_at: '', media_uri: '', contract_id: '', submitted_at: '' },
+        {
+          assignmentId: '1',
+          proofId: 'a',
+          assignedAt: '',
+          contractId: '',
+          submittedAt: '',
+          contentType: null,
+          description: null,
+          viewUrl: null,
+        },
+        {
+          assignmentId: '2',
+          proofId: 'b',
+          assignedAt: '',
+          contractId: '',
+          submittedAt: '',
+          contentType: null,
+          description: null,
+          viewUrl: null,
+        },
       ],
     });
 
@@ -59,6 +77,6 @@ describe('useFuryStore Integration', () => {
     useFuryStore.getState().removeAssignment('1');
 
     expect(useFuryStore.getState().assignments.length).toBe(1);
-    expect(useFuryStore.getState().assignments[0].assignment_id).toBe('2');
+    expect(useFuryStore.getState().assignments[0].assignmentId).toBe('2');
   });
 });

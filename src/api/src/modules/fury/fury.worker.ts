@@ -34,6 +34,13 @@ export class FuryWorker implements OnModuleInit {
   ) {}
 
   onModuleInit() {
+    if (process.env.STYX_ENABLE_LEGACY_FURY_QUEUE_CONSUMER !== 'true') {
+      this.logger.log(
+        'Legacy Fury queue consumer disabled; routing jobs are handled by FuryRouterWorker',
+      );
+      return;
+    }
+
     this.worker = new Worker<FuryRouteJob>(
       FURY_ROUTER_QUEUE_NAME,
       async (job: Job<FuryRouteJob>) => this.process(job),
