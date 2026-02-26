@@ -61,12 +61,12 @@ export default function App() {
       if (stopped) return;
 
       try {
-        const { ticket } = await api.requestNotificationStreamTicket();
+        await api.issueNotificationStreamCookie();
         if (stopped) return;
 
-        const source = new EventSource(
-          `${getApiBase()}/notifications/stream?ticket=${encodeURIComponent(ticket)}`,
-        );
+        const source = new EventSource(`${getApiBase()}/notifications/stream`, {
+          withCredentials: true,
+        });
         eventSource = source;
 
         source.onmessage = (event) => {

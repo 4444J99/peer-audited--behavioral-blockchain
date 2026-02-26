@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, UseGuards, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, UseGuards, BadRequestException, ConflictException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Pool } from 'pg';
@@ -44,17 +44,11 @@ export class ProofsController {
     @CurrentUser() user: { id: string },
     @Body() dto: RequestUploadUrlDto,
   ) {
-    // Verify the contract exists and belongs to the user
-    const contract = await this.pool.query(
-      `SELECT id, status FROM contracts WHERE id = $1 AND user_id = $2`,
-      [dto.contractId, user.id],
-    );
+    const contractAccess = await this.proofsService.getProofUploadContractAccess(dto.contractId, {
+      userId: user.id,
+    });
 
-    if (contract.rows.length === 0) {
-      throw new NotFoundException('Contract not found or does not belong to user');
-    }
-
-    if (contract.rows[0].status !== 'ACTIVE') {
+    if (contractAccess.status !== 'ACTIVE') {
       throw new BadRequestException('Proof submission is only allowed for active contracts');
     }
 
@@ -63,7 +57,7 @@ export class ProofsController {
       `INSERT INTO proofs (contract_id, user_id, status, content_type, description, submitted_at)
        VALUES ($1, $2, 'PENDING_UPLOAD', $3, $4, NOW())
        RETURNING id`,
-      [dto.contractId, user.id, dto.contentType, dto.description || null],
+      [dto.contractId, contractAccess.ownerUserId, dto.contentType, dto.description || null],
     );
 
     const proofId = proofResult.rows[0].id;
@@ -74,7 +68,7 @@ export class ProofsController {
     await this.truthLog.appendEvent('PROOF_UPLOAD_REQUESTED', {
       proofId,
       contractId: dto.contractId,
-      userId: user.id,
+      userId: contractAccess.ownerUserId,
       contentType: dto.contentType,
     });
 
@@ -94,19 +88,12 @@ export class ProofsController {
     @CurrentUser() user: { id: string },
     @Body() dto: ConfirmUploadDto,
   ) {
-    // Verify the proof exists, belongs to the user, and is in PENDING_UPLOAD state
-    const proof = await this.pool.query(
-      `SELECT id, contract_id, status FROM proofs
-       WHERE id = $1 AND user_id = $2`,
-      [proofId, user.id],
-    );
+    const proofAccess = await this.proofsService.getProofUploadConfirmationAccess(proofId, {
+      userId: user.id,
+    });
 
-    if (proof.rows.length === 0) {
-      throw new NotFoundException('Proof not found or does not belong to user');
-    }
-
-    if (proof.rows[0].status !== 'PENDING_UPLOAD') {
-      throw new BadRequestException(`Proof is in state '${proof.rows[0].status}', expected 'PENDING_UPLOAD'`);
+    if (proofAccess.status !== 'PENDING_UPLOAD') {
+      throw new BadRequestException(`Proof is in state '${proofAccess.status}', expected 'PENDING_UPLOAD'`);
     }
 
     // Transition proof to PENDING_REVIEW and store the R2 key
@@ -141,7 +128,7 @@ export class ProofsController {
         await this.truthLog.appendEvent('PROOF_DUPLICATE_REJECTED', {
           proofId,
           closestDistance,
-          userId: user.id,
+          userId: proofAccess.ownerUserId,
         });
 
         throw new ConflictException(
@@ -162,12 +149,12 @@ export class ProofsController {
     }
 
     // Enqueue Fury routing immediately
-    const jobId = await this.furyRouter.routeProof(proofId, user.id);
+    const jobId = await this.furyRouter.routeProof(proofId, proofAccess.ownerUserId);
 
     await this.truthLog.appendEvent('PROOF_UPLOAD_CONFIRMED', {
       proofId,
-      contractId: proof.rows[0].contract_id,
-      userId: user.id,
+      contractId: proofAccess.contractId,
+      userId: proofAccess.ownerUserId,
       storageKey: dto.storageKey,
       furyRouteJobId: jobId,
     });

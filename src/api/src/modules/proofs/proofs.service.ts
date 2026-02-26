@@ -13,6 +13,106 @@ export class ProofsService {
     private readonly r2: R2StorageService,
   ) {}
 
+  private getTenantAdminRoles(): Set<string> {
+    return new Set(['ENTERPRISE_ADMIN', 'HR_ADMIN', 'TENANT_ADMIN']);
+  }
+
+  private async getRequesterAccessAgainstOwner(ownerUserId: string, requesterUserId: string) {
+    return this.pool.query(
+      `SELECT
+         owner.enterprise_id AS owner_enterprise_id,
+         requester.role AS requester_role,
+         requester.enterprise_id AS requester_enterprise_id
+       FROM users owner
+       JOIN users requester ON requester.id = $2
+       WHERE owner.id = $1`,
+      [ownerUserId, requesterUserId],
+    );
+  }
+
+  private canTenantAdminAccess(accessRow: any): boolean {
+    const requesterRole = String(accessRow.requester_role || 'USER').toUpperCase();
+    const sameEnterprise =
+      accessRow.requester_enterprise_id &&
+      accessRow.owner_enterprise_id &&
+      accessRow.requester_enterprise_id === accessRow.owner_enterprise_id;
+    return sameEnterprise && this.getTenantAdminRoles().has(requesterRole);
+  }
+
+  async getProofUploadContractAccess(contractId: string, requester: ProofReadRequester): Promise<{
+    id: string;
+    status: string;
+    ownerUserId: string;
+  }> {
+    const contract = await this.pool.query(
+      `SELECT c.id, c.status, c.user_id
+       FROM contracts c
+       WHERE c.id = $1`,
+      [contractId],
+    );
+
+    if (contract.rows.length === 0) {
+      throw new NotFoundException('Contract not found or does not belong to user');
+    }
+
+    const row = contract.rows[0];
+    if (row.user_id !== requester.userId) {
+      const accessResult = await this.getRequesterAccessAgainstOwner(row.user_id, requester.userId);
+      if (accessResult.rows.length === 0) {
+        throw new ForbiddenException('Cannot create proof for another user\'s contract');
+      }
+
+      const requesterRole = String(accessResult.rows[0].requester_role || 'USER').toUpperCase();
+      if (requesterRole !== 'ADMIN' && !this.canTenantAdminAccess(accessResult.rows[0])) {
+        throw new ForbiddenException('Cannot create proof for another user\'s contract');
+      }
+    }
+
+    return {
+      id: row.id,
+      status: row.status,
+      ownerUserId: row.user_id,
+    };
+  }
+
+  async getProofUploadConfirmationAccess(proofId: string, requester: ProofReadRequester): Promise<{
+    id: string;
+    contractId: string;
+    status: string;
+    ownerUserId: string;
+  }> {
+    const proof = await this.pool.query(
+      `SELECT p.id, p.contract_id, p.status, p.user_id
+       FROM proofs p
+       WHERE p.id = $1`,
+      [proofId],
+    );
+
+    if (proof.rows.length === 0) {
+      throw new NotFoundException('Proof not found or does not belong to user');
+    }
+
+    const row = proof.rows[0];
+    if (row.user_id !== requester.userId) {
+      const accessResult = await this.getRequesterAccessAgainstOwner(row.user_id, requester.userId);
+      if (accessResult.rows.length === 0) {
+        throw new ForbiddenException('Cannot confirm upload for another user\'s proof');
+      }
+
+      const requesterRole = String(accessResult.rows[0].requester_role || 'USER').toUpperCase();
+      if (requesterRole !== 'ADMIN' && !this.canTenantAdminAccess(accessResult.rows[0])) {
+        throw new ForbiddenException('Cannot confirm upload for another user\'s proof');
+      }
+    }
+
+    return {
+      id: row.id,
+      contractId: row.contract_id,
+      status: row.status,
+      ownerUserId: row.user_id,
+    };
+  }
+
   async getProofDetail(proofId: string, requester: ProofReadRequester) {
     const proof = await this.pool.query(
       `SELECT p.id, p.contract_id, p.user_id, p.status, p.content_type, p.description,
@@ -41,7 +141,7 @@ export class ProofsService {
     const row = proof.rows[0];
 
     const requesterRole = String(row.requester_role || 'USER').toUpperCase();
-    const tenantAdminRoles = new Set(['ENTERPRISE_ADMIN', 'HR_ADMIN', 'TENANT_ADMIN']);
+    const tenantAdminRoles = this.getTenantAdminRoles();
     const sameEnterprise =
       row.requester_enterprise_id &&
       row.contract_owner_enterprise_id &&

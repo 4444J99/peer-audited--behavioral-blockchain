@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, UseGuards, Sse, MessageEvent } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Sse, MessageEvent, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { Observable, timer } from 'rxjs';
 import { concatMap, map } from 'rxjs/operators';
 import { Pool } from 'pg';
@@ -152,6 +153,23 @@ export class FuryController {
   @ApiOperation({ summary: 'Issue a short-lived ticket for Fury SSE subscription' })
   issueStreamTicket(@CurrentUser() user: { id: string }) {
     return issueSseTicket(user.id, 'fury');
+  }
+
+  @Post('stream-cookie')
+  @ApiOperation({ summary: 'Issue a short-lived HttpOnly cookie for Fury SSE subscription' })
+  issueStreamCookie(
+    @CurrentUser() user: { id: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const issued = issueSseTicket(user.id, 'fury');
+    res.cookie('styx_fury_sse_ticket', issued.ticket, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/fury/stream',
+      maxAge: issued.expiresInSeconds * 1000,
+    });
+    return { expiresInSeconds: issued.expiresInSeconds };
   }
 
   @Post('verdict')

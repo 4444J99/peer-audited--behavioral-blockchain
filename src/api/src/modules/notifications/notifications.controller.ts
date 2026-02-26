@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Param, Query, Sse, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Res, Sse, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { Observable } from 'rxjs';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { issueSseTicket } from '../../../guards/sse-ticket.store';
@@ -30,6 +31,23 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Issue a short-lived ticket for notification SSE subscription' })
   issueStreamTicket(@CurrentUser() user: { id: string }) {
     return issueSseTicket(user.id, 'notifications');
+  }
+
+  @Post('stream-cookie')
+  @ApiOperation({ summary: 'Issue a short-lived HttpOnly cookie for notification SSE subscription' })
+  issueStreamCookie(
+    @CurrentUser() user: { id: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const issued = issueSseTicket(user.id, 'notifications');
+    res.cookie('styx_notifications_sse_ticket', issued.ticket, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/notifications/stream',
+      maxAge: issued.expiresInSeconds * 1000,
+    });
+    return { expiresInSeconds: issued.expiresInSeconds };
   }
 
   @Sse('stream')

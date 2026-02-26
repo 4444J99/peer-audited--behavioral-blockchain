@@ -5,7 +5,7 @@ import * as apiClient from '../../services/api-client';
 jest.mock('../../services/api-client', () => ({
   getAuthToken: jest.fn(),
   api: {
-    requestFuryStreamTicket: jest.fn(),
+    issueFuryStreamCookie: jest.fn(),
   },
 }));
 
@@ -31,8 +31,7 @@ describe('useFuryStore Integration', () => {
 
   it('requests an SSE ticket before opening the stream', async () => {
     (apiClient.getAuthToken as jest.Mock).mockReturnValue('mock-jwt-token');
-    ((apiClient as any).api.requestFuryStreamTicket as jest.Mock).mockResolvedValue({
-      ticket: 'sse-ticket',
+    ((apiClient as any).api.issueFuryStreamCookie as jest.Mock).mockResolvedValue({
       expiresInSeconds: 60,
     });
 
@@ -44,7 +43,7 @@ describe('useFuryStore Integration', () => {
     // but ticket issuance should still happen before constructor failure.
     await useFuryStore.getState().connectStream();
 
-    expect((apiClient as any).api.requestFuryStreamTicket).toHaveBeenCalled();
+    expect((apiClient as any).api.issueFuryStreamCookie).toHaveBeenCalled();
     
     console.error = originalError;
   });

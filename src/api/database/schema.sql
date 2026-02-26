@@ -160,6 +160,28 @@ CREATE TABLE stripe_events (
 
 CREATE INDEX idx_stripe_events_event_id ON stripe_events(event_id);
 
+CREATE TABLE contract_resolution_side_effects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contract_id UUID REFERENCES contracts(id) ON DELETE CASCADE,
+    outcome TEXT NOT NULL,
+    effect_type TEXT NOT NULL,
+    dedupe_key TEXT NOT NULL UNIQUE,
+    payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    status TEXT NOT NULL DEFAULT 'PENDING',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT,
+    locked_at TIMESTAMPTZ,
+    processed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT chk_contract_resolution_effect_status
+      CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'))
+);
+
+CREATE INDEX idx_contract_resolution_effects_contract
+  ON contract_resolution_side_effects(contract_id, created_at);
+CREATE INDEX idx_contract_resolution_effects_status
+  ON contract_resolution_side_effects(status, created_at);
+
 CREATE INDEX idx_contracts_user_id ON contracts(user_id);
 CREATE INDEX idx_contracts_status ON contracts(status);
 CREATE INDEX idx_proofs_contract_id ON proofs(contract_id);

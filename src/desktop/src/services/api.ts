@@ -97,6 +97,12 @@ export const api = {
       method: 'POST',
     }),
 
+  issueNotificationStreamCookie: () =>
+    request<{ expiresInSeconds: number }>('/notifications/stream-cookie', {
+      method: 'POST',
+      credentials: 'include',
+    }),
+
   getEnterpriseKeys: () =>
     request<{ keys: Array<{ id: string; enterprise: string; createdAt: string; active: boolean; keyPreview?: string }> }>(
       '/b2b/keys',

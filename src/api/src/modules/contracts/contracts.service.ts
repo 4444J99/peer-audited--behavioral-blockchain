@@ -36,6 +36,25 @@ export interface ContractReadRequester {
   userId: string;
 }
 
+type ContractResolutionSideEffectType =
+  | 'STRIPE_CANCEL_HOLD'
+  | 'STRIPE_CAPTURE_STAKE'
+  | 'LEDGER_STAKE_RETURN'
+  | 'LEDGER_STAKE_CAPTURE'
+  | 'TRUTH_CONTRACT_RESOLVED'
+  | 'NOTIFY_CONTRACT_RESOLVED';
+
+interface ContractResolutionSideEffectRow {
+  id: string;
+  contract_id: string;
+  outcome: 'COMPLETED' | 'FAILED';
+  effect_type: ContractResolutionSideEffectType;
+  dedupe_key: string;
+  payload: any;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  attempts: number;
+}
+
 @Injectable()
 export class ContractsService {
   constructor(
@@ -56,16 +75,7 @@ export class ContractsService {
       return;
     }
 
-    const accessResult = await this.pool.query(
-      `SELECT
-         owner.enterprise_id AS owner_enterprise_id,
-         requester.role AS requester_role,
-         requester.enterprise_id AS requester_enterprise_id
-       FROM users owner
-       JOIN users requester ON requester.id = $2
-       WHERE owner.id = $1`,
-      [contractRow.user_id, requester.userId],
-    );
+    const accessResult = await this.getRequesterAccessForOwner(contractRow.user_id, requester.userId);
 
     if (accessResult.rows.length === 0) {
       throw new ForbiddenException('Requester is not authorized to access this contract');
@@ -89,6 +99,305 @@ export class ContractsService {
     }
 
     throw new ForbiddenException('Cannot access another user\'s contract');
+  }
+
+  private async assertCanWriteContractRow(contractRow: any, requester: ContractReadRequester): Promise<void> {
+    if (contractRow.user_id === requester.userId) {
+      return;
+    }
+
+    const accessResult = await this.getRequesterAccessForOwner(contractRow.user_id, requester.userId);
+    if (accessResult.rows.length === 0) {
+      throw new ForbiddenException('Requester is not authorized to modify this contract');
+    }
+
+    const requesterRole = String(accessResult.rows[0].requester_role || 'USER').toUpperCase();
+    if (requesterRole === 'ADMIN') {
+      return;
+    }
+
+    throw new ForbiddenException('Cannot modify another user\'s contract');
+  }
+
+  private getRequesterAccessForOwner(ownerUserId: string, requesterUserId: string) {
+    return this.pool.query(
+      `SELECT
+         owner.enterprise_id AS owner_enterprise_id,
+         requester.role AS requester_role,
+         requester.enterprise_id AS requester_enterprise_id
+       FROM users owner
+       JOIN users requester ON requester.id = $2
+       WHERE owner.id = $1`,
+      [ownerUserId, requesterUserId],
+    );
+  }
+
+  private async enqueueContractResolutionSideEffects(
+    db: { query: PoolClient['query'] },
+    effects: Array<{
+      contractId: string;
+      outcome: 'COMPLETED' | 'FAILED';
+      effectType: ContractResolutionSideEffectType;
+      dedupeKey: string;
+      payload: Record<string, any>;
+    }>,
+  ): Promise<void> {
+    for (const effect of effects) {
+      await db.query(
+        `INSERT INTO contract_resolution_side_effects
+           (contract_id, outcome, effect_type, dedupe_key, payload, status)
+         VALUES ($1, $2, $3, $4, $5, 'PENDING')
+         ON CONFLICT (dedupe_key) DO NOTHING`,
+        [
+          effect.contractId,
+          effect.outcome,
+          effect.effectType,
+          effect.dedupeKey,
+          JSON.stringify(effect.payload),
+        ],
+      );
+    }
+  }
+
+  private buildContractResolutionSideEffects(input: {
+    contractId: string;
+    outcome: 'COMPLETED' | 'FAILED';
+    contractRow: any;
+    userRow: any;
+    escrowAccountId: string | null;
+    revenueAccountId: string | null;
+  }): Array<{
+    contractId: string;
+    outcome: 'COMPLETED' | 'FAILED';
+    effectType: ContractResolutionSideEffectType;
+    dedupeKey: string;
+    payload: Record<string, any>;
+  }> {
+    const { contractId, outcome, contractRow, userRow, escrowAccountId, revenueAccountId } = input;
+    const effects: Array<{
+      contractId: string;
+      outcome: 'COMPLETED' | 'FAILED';
+      effectType: ContractResolutionSideEffectType;
+      dedupeKey: string;
+      payload: Record<string, any>;
+    }> = [];
+    const baseKey = `contract-resolution:${contractId}:${outcome}`;
+
+    if (contractRow.payment_intent_id) {
+      effects.push({
+        contractId,
+        outcome,
+        effectType: outcome === 'COMPLETED' ? 'STRIPE_CANCEL_HOLD' : 'STRIPE_CAPTURE_STAKE',
+        dedupeKey: `${baseKey}:stripe`,
+        payload: {
+          paymentIntentId: contractRow.payment_intent_id,
+        },
+      });
+    }
+
+    if (userRow?.account_id && escrowAccountId) {
+      if (outcome === 'COMPLETED') {
+        effects.push({
+          contractId,
+          outcome,
+          effectType: 'LEDGER_STAKE_RETURN',
+          dedupeKey: `${baseKey}:ledger:return`,
+          payload: {
+            debitAccountId: escrowAccountId,
+            creditAccountId: userRow.account_id,
+            amount: Number(contractRow.stake_amount),
+            metadata: {
+              type: 'STAKE_RETURN',
+              outcome,
+              sideEffectKey: `${baseKey}:ledger:return`,
+            },
+          },
+        });
+      } else if (revenueAccountId) {
+        effects.push({
+          contractId,
+          outcome,
+          effectType: 'LEDGER_STAKE_CAPTURE',
+          dedupeKey: `${baseKey}:ledger:capture`,
+          payload: {
+            debitAccountId: escrowAccountId,
+            creditAccountId: revenueAccountId,
+            amount: Number(contractRow.stake_amount),
+            metadata: {
+              type: 'STAKE_CAPTURED',
+              outcome,
+              sideEffectKey: `${baseKey}:ledger:capture`,
+            },
+          },
+        });
+      }
+    }
+
+    effects.push({
+      contractId,
+      outcome,
+      effectType: 'TRUTH_CONTRACT_RESOLVED',
+      dedupeKey: `${baseKey}:truthlog`,
+      payload: {
+        eventType: 'CONTRACT_RESOLVED',
+        payload: {
+          contractId,
+          outcome,
+          userId: contractRow.user_id,
+          stakeAmount: Number(contractRow.stake_amount),
+          sideEffectKey: `${baseKey}:truthlog`,
+        },
+      },
+    });
+
+    effects.push({
+      contractId,
+      outcome,
+      effectType: 'NOTIFY_CONTRACT_RESOLVED',
+      dedupeKey: `${baseKey}:notification`,
+      payload: {
+        userId: contractRow.user_id,
+        type: 'CONTRACT_RESOLVED',
+        title: outcome === 'COMPLETED' ? 'Contract Completed' : 'Contract Failed',
+        body: outcome === 'COMPLETED'
+          ? `Your contract has been fulfilled. $${Number(contractRow.stake_amount).toFixed(2)} returned.`
+          : `Your contract has failed. $${Number(contractRow.stake_amount).toFixed(2)} has been captured.`,
+        metadata: {
+          contractId,
+          outcome,
+          sideEffectKey: `${baseKey}:notification`,
+        },
+      },
+    });
+
+    return effects;
+  }
+
+  private async drainContractResolutionSideEffects(
+    contractId: string,
+    outcome: 'COMPLETED' | 'FAILED',
+  ): Promise<void> {
+    const pending = await this.pool.query(
+      `SELECT id, contract_id, outcome, effect_type, dedupe_key, payload, status, attempts
+       FROM contract_resolution_side_effects
+       WHERE contract_id = $1 AND outcome = $2 AND status != 'COMPLETED'
+       ORDER BY created_at ASC`,
+      [contractId, outcome],
+    );
+
+    for (const row of pending.rows as ContractResolutionSideEffectRow[]) {
+      const claimed = await this.pool.query(
+        `UPDATE contract_resolution_side_effects
+         SET status = 'PROCESSING', attempts = attempts + 1, locked_at = NOW(), last_error = NULL
+         WHERE id = $1 AND status IN ('PENDING', 'FAILED')
+         RETURNING id, contract_id, outcome, effect_type, dedupe_key, payload, status, attempts`,
+        [row.id],
+      );
+
+      if (claimed.rows.length === 0) {
+        continue;
+      }
+
+      const effect = claimed.rows[0] as ContractResolutionSideEffectRow;
+      try {
+        await this.dispatchContractResolutionSideEffect(effect);
+        await this.pool.query(
+          `UPDATE contract_resolution_side_effects
+           SET status = 'COMPLETED', processed_at = NOW(), last_error = NULL
+           WHERE id = $1`,
+          [effect.id],
+        );
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        await this.pool.query(
+          `UPDATE contract_resolution_side_effects
+           SET status = 'FAILED', last_error = $2
+           WHERE id = $1`,
+          [effect.id, message.slice(0, 2000)],
+        );
+        throw err;
+      }
+    }
+  }
+
+  private async dispatchContractResolutionSideEffect(effect: ContractResolutionSideEffectRow): Promise<void> {
+    const payload = effect.payload || {};
+
+    switch (effect.effect_type) {
+      case 'STRIPE_CANCEL_HOLD':
+        if (payload.paymentIntentId) {
+          await this.stripe.cancelHold(payload.paymentIntentId);
+        }
+        return;
+      case 'STRIPE_CAPTURE_STAKE':
+        if (payload.paymentIntentId) {
+          await this.stripe.captureStake(payload.paymentIntentId);
+        }
+        return;
+      case 'LEDGER_STAKE_RETURN':
+      case 'LEDGER_STAKE_CAPTURE': {
+        const sideEffectKey = payload?.metadata?.sideEffectKey;
+        if (sideEffectKey) {
+          const existing = await this.pool.query(
+            `SELECT id FROM entries
+             WHERE contract_id = $1
+               AND metadata->>'sideEffectKey' = $2
+             LIMIT 1`,
+            [effect.contract_id, sideEffectKey],
+          );
+          if (existing.rows.length > 0) {
+            return;
+          }
+        }
+
+        await this.ledger.recordTransaction(
+          payload.debitAccountId,
+          payload.creditAccountId,
+          Number(payload.amount),
+          effect.contract_id,
+          payload.metadata,
+        );
+        return;
+      }
+      case 'TRUTH_CONTRACT_RESOLVED': {
+        const sideEffectKey = payload?.payload?.sideEffectKey;
+        if (sideEffectKey) {
+          const existing = await this.pool.query(
+            `SELECT id FROM event_log
+             WHERE payload->>'sideEffectKey' = $1
+             LIMIT 1`,
+            [sideEffectKey],
+          );
+          if (existing.rows.length > 0) {
+            return;
+          }
+        }
+
+        await this.truthLog.appendEvent(payload.eventType, payload.payload);
+        return;
+      }
+      case 'NOTIFY_CONTRACT_RESOLVED': {
+        const sideEffectKey = payload?.metadata?.sideEffectKey;
+        if (sideEffectKey) {
+          const existing = await this.pool.query(
+            `SELECT id FROM notifications
+             WHERE user_id = $1
+               AND type = $2
+               AND metadata->>'sideEffectKey' = $3
+             LIMIT 1`,
+            [payload.userId, payload.type, sideEffectKey],
+          );
+          if (existing.rows.length > 0) {
+            return;
+          }
+        }
+
+        await this.notifications?.create(payload);
+        return;
+      }
+      default:
+        throw new Error(`Unknown contract resolution side effect type: ${(effect as any).effect_type}`);
+    }
   }
 
   async createContract(dto: CreateContractInput): Promise<{ contractId: string; paymentIntentId: string; bountyLink?: string }> {
@@ -387,9 +696,7 @@ export class ContractsService {
     if (contract.rows.length === 0) {
       throw new NotFoundException(`Contract ${contractId} not found`);
     }
-    if (contract.rows[0].user_id !== dto.userId) {
-      throw new ForbiddenException('Cannot submit proof for another user\'s contract');
-    }
+    await this.assertCanWriteContractRow(contract.rows[0], { userId: dto.userId });
     if (contract.rows[0].status !== 'ACTIVE') {
       throw new BadRequestException(`Contract is not active (status: ${contract.rows[0].status})`);
     }
@@ -483,18 +790,6 @@ export class ContractsService {
         throw new BadRequestException(`Contract ${contractId} already resolved as ${row.status}`);
       }
 
-      if (outcome === 'COMPLETED') {
-        // Release held funds back to user
-        if (row.payment_intent_id) {
-          await this.stripe.cancelHold(row.payment_intent_id);
-        }
-      } else {
-        // Capture stake — user failed
-        if (row.payment_intent_id) {
-          await this.stripe.captureStake(row.payment_intent_id);
-        }
-      }
-
       // Update contract status while the row lock is held.
       await db.query(
         'UPDATE contracts SET status = $1 WHERE id = $2',
@@ -521,46 +816,77 @@ export class ContractsService {
         );
       }
 
-      // Record in ledger if we have accounts
-      if (userResult.rows[0]?.account_id) {
+      if (useTransaction) {
         const escrowResult = await db.query(
           `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
         );
-        if (escrowResult.rows.length > 0) {
-          if (outcome === 'COMPLETED') {
-            // Return from escrow to user
-            await this.ledger.recordTransaction(
-              escrowResult.rows[0].id,
-              userResult.rows[0].account_id,
-              Number(row.stake_amount),
-              contractId,
-              { type: 'STAKE_RETURN', outcome },
-            );
-          } else {
-            // Move from escrow to revenue
-            const revenueResult = await db.query(
-              `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
-            );
-            if (revenueResult.rows.length > 0) {
+        const revenueResult = outcome === 'FAILED'
+          ? await db.query(`SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`)
+          : { rows: [] as any[] };
+
+        const effects = this.buildContractResolutionSideEffects({
+          contractId,
+          outcome,
+          contractRow: row,
+          userRow: userResult.rows[0],
+          escrowAccountId: escrowResult.rows[0]?.id ?? null,
+          revenueAccountId: revenueResult.rows[0]?.id ?? null,
+        });
+        await this.enqueueContractResolutionSideEffects(db, effects);
+      } else {
+        if (outcome === 'COMPLETED') {
+          // Release held funds back to user
+          if (row.payment_intent_id) {
+            await this.stripe.cancelHold(row.payment_intent_id);
+          }
+        } else {
+          // Capture stake — user failed
+          if (row.payment_intent_id) {
+            await this.stripe.captureStake(row.payment_intent_id);
+          }
+        }
+
+        // Record in ledger if we have accounts
+        if (userResult.rows[0]?.account_id) {
+          const escrowResult = await db.query(
+            `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
+          );
+          if (escrowResult.rows.length > 0) {
+            if (outcome === 'COMPLETED') {
+              // Return from escrow to user
               await this.ledger.recordTransaction(
                 escrowResult.rows[0].id,
-                revenueResult.rows[0].id,
+                userResult.rows[0].account_id,
                 Number(row.stake_amount),
                 contractId,
-                { type: 'STAKE_CAPTURED', outcome },
+                { type: 'STAKE_RETURN', outcome },
               );
+            } else {
+              // Move from escrow to revenue
+              const revenueResult = await db.query(
+                `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
+              );
+              if (revenueResult.rows.length > 0) {
+                await this.ledger.recordTransaction(
+                  escrowResult.rows[0].id,
+                  revenueResult.rows[0].id,
+                  Number(row.stake_amount),
+                  contractId,
+                  { type: 'STAKE_CAPTURED', outcome },
+                );
+              }
             }
           }
         }
-      }
 
-      // Log to TruthLog
-      await this.truthLog.appendEvent('CONTRACT_RESOLVED', {
-        contractId,
-        outcome,
-        userId: row.user_id,
-        stakeAmount: Number(row.stake_amount),
-      });
+        // Log to TruthLog
+        await this.truthLog.appendEvent('CONTRACT_RESOLVED', {
+          contractId,
+          outcome,
+          userId: row.user_id,
+          stakeAmount: Number(row.stake_amount),
+        });
+      }
 
       if (useTransaction) {
         await db.query('COMMIT');
@@ -576,6 +902,11 @@ export class ContractsService {
       throw err;
     } finally {
       client?.release();
+    }
+
+    if (useTransaction) {
+      await this.drainContractResolutionSideEffects(contractId, outcome);
+      return;
     }
 
     // Notify user of resolution (non-critical)
@@ -603,9 +934,7 @@ export class ContractsService {
       throw new NotFoundException(`Contract ${contractId} not found`);
     }
     const row = contract.rows[0];
-    if (row.user_id !== userId) {
-      throw new ForbiddenException('Cannot use grace day for another user\'s contract');
-    }
+    await this.assertCanWriteContractRow(row, { userId });
     if (row.status !== 'ACTIVE') {
       throw new BadRequestException(`Contract is not active (status: ${row.status})`);
     }
@@ -649,9 +978,7 @@ export class ContractsService {
     if (contract.rows.length === 0) {
       throw new NotFoundException(`Contract ${contractId} not found`);
     }
-    if (contract.rows[0].user_id !== userId) {
-      throw new ForbiddenException('Cannot dispute another user\'s contract');
-    }
+    await this.assertCanWriteContractRow(contract.rows[0], { userId });
 
     // Get user's Stripe customer ID for the appeal fee
     const userResult = await this.pool.query(

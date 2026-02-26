@@ -22,7 +22,7 @@ interface FuryState {
   removeAssignment: (assignmentId: string) => void;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE = '/api';
 
 export const useFuryStore = create<FuryState>((set, get) => ({
   assignments: [],
@@ -40,21 +40,16 @@ export const useFuryStore = create<FuryState>((set, get) => ({
       return;
     }
 
-    let ticket: string;
     try {
-      const ticketResponse = await api.requestFuryStreamTicket();
-      ticket = ticketResponse.ticket;
+      await api.issueFuryStreamCookie();
     } catch {
       set({ error: 'Unable to authorize Panopticon stream.', isConnected: false });
       return;
     }
 
-    const url = new URL(`${API_BASE}/fury/stream`);
-    url.searchParams.append('ticket', ticket);
-
     let eventSource: EventSource;
     try {
-      eventSource = new EventSource(url.toString());
+      eventSource = new EventSource(`${API_BASE}/fury/stream`, { withCredentials: true });
     } catch {
       set({ error: 'Unable to open Panopticon stream.', isConnected: false });
       return;

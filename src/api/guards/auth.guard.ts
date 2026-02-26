@@ -62,11 +62,19 @@ export class AuthGuard implements CanActivate {
       return null;
     }
 
-    if (!request.query || typeof request.query.ticket !== 'string') {
+    if (request.query && typeof request.query.ticket === 'string') {
+      return consumeSseTicket(request.query.ticket, scope);
+    }
+
+    const cookieName = scope === 'notifications'
+      ? 'styx_notifications_sse_ticket'
+      : 'styx_fury_sse_ticket';
+    const cookieTicket = this.getCookieValue(request, cookieName);
+    if (!cookieTicket) {
       return null;
     }
 
-    return consumeSseTicket(request.query.ticket, scope);
+    return consumeSseTicket(cookieTicket, scope);
   }
 
   private getSseStreamScope(request: Request): SseTicketScope | null {
@@ -77,6 +85,23 @@ export class AuthGuard implements CanActivate {
     if (rawPath.endsWith('/fury/stream')) {
       return 'fury';
     }
+    return null;
+  }
+
+  private getCookieValue(request: Request, name: string): string | null {
+    const rawCookie = request.headers.cookie;
+    if (!rawCookie) {
+      return null;
+    }
+
+    const cookies = rawCookie.split(';');
+    for (const cookie of cookies) {
+      const [rawKey, ...rawValue] = cookie.trim().split('=');
+      if (rawKey === name) {
+        return decodeURIComponent(rawValue.join('='));
+      }
+    }
+
     return null;
   }
 }

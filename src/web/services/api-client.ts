@@ -187,6 +187,12 @@ export const api = {
       method: 'POST',
     }),
 
+  issueNotificationStreamCookie: () =>
+    request<{ expiresInSeconds: number }>('/notifications/stream-cookie', {
+      method: 'POST',
+      credentials: 'include',
+    }),
+
   markNotificationRead: (id: string) =>
     request<{ status: string }>(`/notifications/${id}/read`, { method: 'POST' }),
 
@@ -325,6 +331,12 @@ export const api = {
   requestFuryStreamTicket: () =>
     request<{ ticket: string; expiresInSeconds: number }>('/fury/stream-ticket', {
       method: 'POST',
+    }),
+
+  issueFuryStreamCookie: () =>
+    request<{ expiresInSeconds: number }>('/fury/stream-cookie', {
+      method: 'POST',
+      credentials: 'include',
     }),
 
   // Attestations (Recovery stream)

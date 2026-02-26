@@ -358,6 +358,13 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{ id: 'contract-1', user_id: 'user-1', status: 'ACTIVE' }],
       });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          owner_enterprise_id: 'ent-1',
+          requester_role: 'USER',
+          requester_enterprise_id: 'ent-2',
+        }],
+      });
 
       await expect(
         service.submitProof('contract-1', { userId: 'user-impostor', mediaUri: 'uri' }),
@@ -718,6 +725,13 @@ describe('ContractsService', () => {
 
     it("should reject when user doesn't own the contract (ForbiddenException)", async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeContract] });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          owner_enterprise_id: 'ent-1',
+          requester_role: 'USER',
+          requester_enterprise_id: 'ent-2',
+        }],
+      });
 
       await expect(service.useGraceDay('contract-1', 'user-impostor')).rejects.toThrow(ForbiddenException);
     });

@@ -35,7 +35,7 @@ export default function NotificationPanel() {
     loadNotifications();
 
     // Try SSE first, fall back to polling
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const API_BASE = '/api';
     let eventSource: EventSource | null = null;
     let pollInterval: ReturnType<typeof setInterval> | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -72,12 +72,10 @@ export default function NotificationPanel() {
       }
 
       try {
-        const { ticket } = await api.requestNotificationStreamTicket();
+        await api.issueNotificationStreamCookie();
         if (stopped) return;
 
-        const source = new EventSource(
-          `${API_BASE}/notifications/stream?ticket=${encodeURIComponent(ticket)}`,
-        );
+        const source = new EventSource(`${API_BASE}/notifications/stream`, { withCredentials: true });
         eventSource = source;
 
         source.onopen = () => {
