@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE = (typeof window !== 'undefined') ? '/api' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000');
 const AUTH_TOKEN = process.env.NEXT_PUBLIC_AUTH_TOKEN || ''; // allow-secret
 
 let currentToken = AUTH_TOKEN;
