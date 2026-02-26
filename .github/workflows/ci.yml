@@ -55,6 +55,9 @@ jobs:
     - name: Gate 06 — Security Invariant Check
       run: npx tsx scripts/validation/06-security-invariant-check.ts
 
+    - name: Gate 07 — Claim Drift Check
+      run: npm run validate:claims
+
   codeql:
     runs-on: ubuntu-latest
     permissions:

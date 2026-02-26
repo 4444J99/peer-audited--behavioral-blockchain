@@ -1,4 +1,8 @@
-<img src="https://r2cdn.perplexity.ai/pplx-full-logo-primary-dark%402x.png" style="height:64px;margin-right:32px"/>
+> **Research memo (external synthesis), not legal policy.**
+>
+> This document aggregates external analysis and references for legal/compliance exploration.
+> It is **not** the authoritative implementation policy for the product. For current runtime-enforced controls,
+> refer to `/docs/legal/compliance.md` and `/docs/implementation-status.md`.
 
 # Pillar 4: Legal \& Ethical Compliance (The "Gambling" Question)
 
@@ -688,4 +692,3 @@ You do not have to pick exactly one forever. A sensible roadmap:
 ***
 
 If you want to go one level deeper, the next step is to pick **one concrete user story** (e.g., “solo salesperson using a commitment contract,” or “NYC tech company running a 90‑day wellness challenge”) and design the full funnel for that variant — from pricing and rule language all the way down to verification flows and edge‑case handling. That’s where you can see how the legal theory surfaces in actual product screens.
-

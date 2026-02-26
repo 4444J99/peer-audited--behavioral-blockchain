@@ -3,6 +3,7 @@ import { ModerationService } from '../../../services/security/moderation.service
 import { HoneypotService } from '../../../services/intelligence/honeypot.service';
 import { ContractsService } from '../contracts/contracts.service';
 import { Pool } from 'pg';
+import { IdentityVerificationService } from '../compliance/identity-verification.service';
 
 describe('AdminController', () => {
   let controller: AdminController;
@@ -20,9 +21,21 @@ describe('AdminController', () => {
     resolveContract: jest.fn(),
   } as unknown as ContractsService;
 
+  const mockIdentityVerification = {
+    completeMockVerification: jest.fn(),
+  } as unknown as IdentityVerificationService;
+
   beforeEach(() => {
     mockPool = { query: jest.fn() };
-    controller = new AdminController(mockModeration, mockHoneypot as any, mockContracts, {} as any, {} as any, mockPool as unknown as Pool);
+    controller = new AdminController(
+      mockModeration,
+      mockHoneypot as any,
+      mockContracts,
+      {} as any,
+      {} as any,
+      mockIdentityVerification,
+      mockPool as unknown as Pool,
+    );
     jest.clearAllMocks();
   });
 
@@ -105,6 +118,46 @@ describe('AdminController', () => {
         avgIntegrity: 67.5,
         pendingDisputes: 3,
       });
+    });
+  });
+
+  describe('completeIdentityVerificationForUser', () => {
+    it('should delegate to IdentityVerificationService mock completion', async () => {
+      (mockIdentityVerification.completeMockVerification as jest.Mock).mockResolvedValueOnce({
+        userId: 'user-1',
+        kycStatus: 'VERIFIED',
+        ageVerificationStatus: 'VERIFIED',
+      });
+
+      const result = await controller.completeIdentityVerificationForUser('user-1', {
+        mode: 'KYC_AND_AGE',
+        status: 'VERIFIED',
+      });
+
+      expect(result).toEqual(expect.objectContaining({ userId: 'user-1', kycStatus: 'VERIFIED' }));
+      expect(mockIdentityVerification.completeMockVerification).toHaveBeenCalledWith({
+        userId: 'user-1',
+        mode: 'KYC_AND_AGE',
+        status: 'VERIFIED',
+      });
+    });
+  });
+
+  describe('getReconciliationVisibility', () => {
+    it('should return reconciliation contracts, dispute side effects, and summary', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ id: 'c1', status: 'RECONCILE_REQUIRED' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 'fx1', outcome: 'DISPUTE_UPHELD', effect_type: 'STRIPE_CAPTURE_APPEAL_FEE' }] })
+        .mockResolvedValueOnce({ rows: [{ contract_reconcile_required_count: 1, dispute_fee_side_effect_backlog_count: 1 }] });
+
+      const result = await controller.getReconciliationVisibility('25');
+
+      expect(result.summary).toEqual({
+        contract_reconcile_required_count: 1,
+        dispute_fee_side_effect_backlog_count: 1,
+      });
+      expect(result.contracts).toHaveLength(1);
+      expect(result.disputeFeeSideEffects).toHaveLength(1);
     });
   });
 });

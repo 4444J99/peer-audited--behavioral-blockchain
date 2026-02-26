@@ -3,7 +3,10 @@ import type { NextRequest } from 'next/server';
 
 const PUBLIC_PATHS = ['/', '/login', '/register', '/pitch', '/users/leaderboard'];
 
-export function middleware(request: NextRequest) {
+// Browser auth now uses HttpOnly cookie sessions with CSRF-protected mutating requests.
+// This proxy file still performs lightweight path gating only; route-level authorization
+// remains enforced by the API and client session bootstrap.
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow public routes
@@ -15,15 +18,6 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.includes('.')) {
     return NextResponse.next();
   }
-
-  // Check for auth token in cookie or localStorage (cookie approach for SSR)
-  const token = request.cookies.get('styx_auth_token')?.value; // allow-secret
-
-  // For client-side auth (localStorage), we can't check server-side.
-  // The AuthContext handles redirect on the client. This middleware
-  // provides an additional layer for cookie-based auth if set.
-  // Since we use localStorage, we rely on a lightweight client check
-  // and let the AuthProvider handle the redirect flow.
 
   return NextResponse.next();
 }

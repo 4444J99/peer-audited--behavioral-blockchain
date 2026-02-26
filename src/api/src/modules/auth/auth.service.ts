@@ -1,5 +1,5 @@
 import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 
@@ -26,32 +26,58 @@ export class AuthService {
   constructor(private readonly pool: Pool) {}
 
   async register(email: string, password: string): Promise<{ userId: string; token: string }> { // allow-secret
-    // Check for existing user
-    const existing = await this.pool.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (existing.rows.length > 0) {
-      throw new ConflictException('Email already registered');
+    const maybeConnect = (this.pool as unknown as { connect?: () => Promise<PoolClient> }).connect;
+    const client = typeof maybeConnect === 'function' ? await maybeConnect.call(this.pool) : null;
+    const db: { query: PoolClient['query'] } = (client ?? this.pool) as any;
+    const useTransaction = !!client;
+
+    try {
+      if (useTransaction) {
+        await db.query('BEGIN');
+      }
+
+      // Check for existing user
+      const existing = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+      if (existing.rows.length > 0) {
+        throw new ConflictException('Email already registered');
+      }
+
+      const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
+      // Create ledger account for the user
+      const accountResult = await db.query(
+        `INSERT INTO accounts (name, type) VALUES ($1, 'ASSET') RETURNING id`,
+        [`USER_${email.split('@')[0]}_${Date.now()}`],
+      );
+      const accountId = accountResult.rows[0].id;
+
+      // Insert user
+      const userResult = await db.query(
+        `INSERT INTO users (email, password_hash, account_id, status, integrity_score)
+         VALUES ($1, $2, $3, 'ACTIVE', 50)
+         RETURNING id`,
+        [email, passwordHash, accountId],
+      );
+      const userId = userResult.rows[0].id;
+
+      if (useTransaction) {
+        await db.query('COMMIT');
+      }
+
+      const token = this.signToken(userId, email); // allow-secret
+      return { userId, token };
+    } catch (err) {
+      if (useTransaction) {
+        try {
+          await db.query('ROLLBACK');
+        } catch {
+          // Preserve the original error.
+        }
+      }
+      throw err;
+    } finally {
+      client?.release();
     }
-
-    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-
-    // Create ledger account for the user
-    const accountResult = await this.pool.query(
-      `INSERT INTO accounts (name, type) VALUES ($1, 'ASSET') RETURNING id`,
-      [`USER_${email.split('@')[0]}_${Date.now()}`],
-    );
-    const accountId = accountResult.rows[0].id;
-
-    // Insert user
-    const userResult = await this.pool.query(
-      `INSERT INTO users (email, password_hash, account_id, status, integrity_score)
-       VALUES ($1, $2, $3, 'ACTIVE', 50)
-       RETURNING id`,
-      [email, passwordHash, accountId],
-    );
-    const userId = userResult.rows[0].id;
-
-    const token = this.signToken(userId, email); // allow-secret
-    return { userId, token };
   }
 
   async login(email: string, password: string): Promise<{ userId: string; token: string }> { // allow-secret
@@ -67,6 +93,10 @@ export class AuthService {
     const user = result.rows[0];
 
     if (!user.password_hash) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    if (String(user.status || '').toUpperCase() !== 'ACTIVE') {
       throw new UnauthorizedException('Invalid email or password');
     }
 

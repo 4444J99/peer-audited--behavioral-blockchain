@@ -1,6 +1,7 @@
 const API_BASE = (typeof window !== 'undefined') ? '/api' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000');
 
 let currentToken = '';
+let currentCsrfToken = '';
 
 export function setAuthToken(token: string) { // allow-secret
   currentToken = token;
@@ -10,14 +11,39 @@ export function getAuthToken(): string {
   return currentToken;
 }
 
+export function setCsrfToken(token: string) {
+  currentCsrfToken = token;
+}
+
+export function getCsrfToken(): string {
+  return currentCsrfToken;
+}
+
+function readCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [rawKey, ...rawValue] = cookie.trim().split('=');
+    if (rawKey === name) {
+      return decodeURIComponent(rawValue.join('='));
+    }
+  }
+  return null;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const method = String(options?.method || 'GET').toUpperCase();
+  const needsCsrf = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
+  const csrfToken = currentCsrfToken || readCookie('styx_csrf_token') || '';
   const mergedHeaders = {
     'Content-Type': 'application/json',
     ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+    ...(needsCsrf && csrfToken ? { 'x-csrf-token': csrfToken } : {}),
     ...options?.headers,
   };
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
+    credentials: options?.credentials ?? 'include',
     headers: mergedHeaders,
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
@@ -70,6 +96,14 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
+
+  logout: () =>
+    request<{ status: string }>('/auth/logout', {
+      method: 'POST',
+    }),
+
+  getCsrf: () =>
+    request<{ csrfToken: string }>('/auth/csrf'),
 
   // Wallet — no more userId query params
   getBalance: () =>
@@ -163,7 +197,23 @@ export const api = {
     }),
 
   // Users
-  getMe: () => request<{ id: string; email: string; integrity_score: number; role: string; created_at: string }>('/users/me'),
+  getMe: () => request<{
+    id: string;
+    email: string;
+    integrity_score: number;
+    role: string;
+    status: string;
+    created_at: string;
+    compliance?: {
+      kyc_status: string;
+      age_verification_status: string;
+      identity_provider: string | null;
+      identity_verification_id: string | null;
+      identity_verified_at: string | null;
+      is_kyc_verified: boolean;
+      is_age_verified: boolean;
+    };
+  }>('/users/me'),
 
   getLeaderboard: (limit?: number) =>
     request<LeaderboardEntry[]>(`/users/leaderboard${limit ? `?limit=${limit}` : ''}`),

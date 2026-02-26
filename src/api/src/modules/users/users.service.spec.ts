@@ -16,12 +16,36 @@ describe('UsersService', () => {
 
   describe('getProfile', () => {
     it('should return user profile for valid userId', async () => {
-      const user = { id: 'user-1', email: 'demo@styx.protocol', integrity_score: 75, status: 'ACTIVE', created_at: '2025-01-01' };
+      const user = {
+        id: 'user-1',
+        email: 'demo@styx.protocol',
+        integrity_score: 75,
+        role: 'USER',
+        status: 'ACTIVE',
+        created_at: '2025-01-01',
+        kyc_status: 'NOT_STARTED',
+        age_verification_status: 'NOT_STARTED',
+        identity_provider: null,
+        identity_verification_id: null,
+        identity_verified_at: null,
+      };
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [user] });
 
       const result = await service.getProfile('user-1');
 
-      expect(result).toEqual(user);
+      expect(result).toEqual(expect.objectContaining({
+        id: 'user-1',
+        email: 'demo@styx.protocol',
+        integrity_score: 75,
+        role: 'USER',
+        status: 'ACTIVE',
+        compliance: expect.objectContaining({
+          kyc_status: 'NOT_STARTED',
+          age_verification_status: 'NOT_STARTED',
+          is_kyc_verified: false,
+          is_age_verified: false,
+        }),
+      }));
       expect(mockPool.query).toHaveBeenCalledWith(
         expect.stringContaining('SELECT id, email'),
         ['user-1'],

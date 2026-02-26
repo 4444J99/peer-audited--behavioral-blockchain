@@ -55,7 +55,7 @@ Styx implements the following security controls:
 
 - **Helmet.js** HTTP security headers (CSP, HSTS, X-Frame-Options, etc.)
 - **Rate limiting** via @nestjs/throttler (60 req/min global, 5 req/min on auth endpoints)
-- **JWT authentication** with enforced secret in production (no fallback)
+- **JWT authentication** with enforced secret in production (dev/test fallback secret still exists; do not use outside local/testing)
 - **Input validation** via class-validator with whitelist mode
 - **Geofencing** for jurisdiction compliance
 - **Double-entry ledger** with hash-chained audit log for tamper evidence
@@ -74,4 +74,3 @@ Styx implements the following security controls:
 | User PII (email, hashes) | **Account lifetime + 30 days** | Deleted upon account deletion request per CCPA/GDPR. |
 
 > **Note**: The hash-chained `event_log` cannot be truncated without breaking chain integrity. Archival involves moving rows to a separate `event_log_archive` table while preserving the chain's terminal hash for verification.
-

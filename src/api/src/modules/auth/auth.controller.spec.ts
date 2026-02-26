@@ -12,9 +12,14 @@ const mockAuthService = {
 
 describe('AuthController', () => {
   let controller: AuthController;
+  let mockResponse: any;
 
   beforeEach(() => {
     controller = new AuthController(mockAuthService);
+    mockResponse = {
+      cookie: jest.fn(),
+      clearCookie: jest.fn(),
+    };
     jest.clearAllMocks();
   });
 
@@ -30,6 +35,7 @@ describe('AuthController', () => {
           email: 'test@styx.protocol',
           password: 'secure123', // allow-secret
         }),
+        mockResponse,
       );
 
       expect(result.userId).toBe('new-user-id');
@@ -71,6 +77,7 @@ describe('AuthController', () => {
           email: 'test@styx.protocol',
           password: 'secure123', // allow-secret
         }),
+        mockResponse,
       );
 
       expect(result.userId).toBe('user-id');

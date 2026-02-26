@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
@@ -20,7 +20,10 @@ export class AuthGuard implements CanActivate {
     if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest<Request>();
-    const token = this.extractTokenFromHeader(request); // allow-secret
+    const headerToken = this.extractTokenFromHeader(request); // allow-secret
+    const cookieToken = headerToken ? undefined : this.extractTokenFromCookie(request); // allow-secret
+    const token = headerToken || cookieToken;
+    const authSource = headerToken ? 'bearer' : (cookieToken ? 'cookie' : null);
 
     if (!token) {
       const sseTicketUserId = this.consumeSseTicketForRequest(request);
@@ -34,6 +37,10 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing Authorization Bearer token');
     }
 
+    if (authSource === 'cookie' && this.requiresCsrfValidation(request) && !this.hasValidCsrfToken(request)) {
+      throw new ForbiddenException('Missing or invalid CSRF token');
+    }
+
     // Resolve secret outside try/catch so production enforcement errors propagate
     const secret = getJwtSecret();
 
@@ -41,6 +48,7 @@ export class AuthGuard implements CanActivate {
     try {
       const payload = jwt.verify(token, secret) as { sub: string; email: string };
       (request as any).user = { id: payload.sub, email: payload.email };
+      (request as any).authSource = authSource;
       return true;
     } catch {
       throw new UnauthorizedException('Invalid or expired Authentication Token');
@@ -54,6 +62,26 @@ export class AuthGuard implements CanActivate {
     }
 
     return undefined;
+  }
+
+  private extractTokenFromCookie(request: Request): string | undefined {
+    const token = this.getCookieValue(request, 'styx_auth_token');
+    return token || undefined; // allow-secret
+  }
+
+  private requiresCsrfValidation(request: Request): boolean {
+    const method = String(request.method || 'GET').toUpperCase();
+    return method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
+  }
+
+  private hasValidCsrfToken(request: Request): boolean {
+    const headerValue = request.headers['x-csrf-token'];
+    const csrfHeader = Array.isArray(headerValue) ? headerValue[0] : headerValue;
+    const csrfCookie = this.getCookieValue(request, 'styx_csrf_token');
+    if (!csrfHeader || !csrfCookie) {
+      return false;
+    }
+    return csrfHeader === csrfCookie;
   }
 
   private consumeSseTicketForRequest(request: Request): string | null {

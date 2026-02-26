@@ -16,6 +16,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { AiModule } from './modules/ai/ai.module';
 import { ProofsModule } from './modules/proofs/proofs.module';
 import { FeedModule } from './modules/feed/feed.module';
+import { ComplianceModule } from './modules/compliance/compliance.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { FeedModule } from './modules/feed/feed.module';
           : undefined,
       },
     }),
+    ComplianceModule,
     DatabaseModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
     AuthModule,

@@ -1,4 +1,4 @@
-import { api, setAuthToken, getAuthToken } from './api-client';
+import { api, setAuthToken, getAuthToken, setCsrfToken, getCsrfToken } from './api-client';
 
 // --- fetch mock setup ---
 const mockFetch = jest.fn();
@@ -20,6 +20,16 @@ function jsonFail(status: number, body: string) {
 beforeEach(() => {
   mockFetch.mockReset();
   setAuthToken('test-token');
+  setCsrfToken('');
+  try {
+    Object.defineProperty(document, 'cookie', {
+      value: '',
+      writable: true,
+      configurable: true,
+    });
+  } catch {
+    // Node test environments may not expose document; individual tests can mock as needed.
+  }
 });
 
 describe('Web API client', () => {
@@ -32,6 +42,7 @@ describe('Web API client', () => {
 
       const [, opts] = mockFetch.mock.calls[0];
       expect(opts.headers['Authorization']).toBe('Bearer my-jwt');
+      expect(opts.credentials).toBe('include');
     });
 
     it('throws on non-ok response', async () => {
@@ -45,6 +56,28 @@ describe('Web API client', () => {
     it('setAuthToken / getAuthToken round-trip', () => {
       setAuthToken('tok-xyz');
       expect(getAuthToken()).toBe('tok-xyz');
+    });
+
+    it('setCsrfToken / getCsrfToken round-trip', () => {
+      setCsrfToken('csrf-abc');
+      expect(getCsrfToken()).toBe('csrf-abc');
+    });
+  });
+
+  describe('csrf headers', () => {
+    it('adds x-csrf-token on mutating requests when csrf token is set', async () => {
+      setCsrfToken('csrf-live');
+      mockFetch.mockResolvedValueOnce(jsonOk({ contractId: 'c1', paymentIntentId: 'pi1' }));
+
+      await api.createContract({
+        oathCategory: 'BIOLOGICAL',
+        verificationMethod: 'PHOTO',
+        stakeAmount: 50,
+        durationDays: 30,
+      } as any);
+
+      const [, opts] = mockFetch.mock.calls[0];
+      expect(opts.headers['x-csrf-token']).toBe('csrf-live');
     });
   });
 

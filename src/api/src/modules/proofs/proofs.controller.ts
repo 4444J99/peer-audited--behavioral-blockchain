@@ -5,6 +5,7 @@ import { Pool } from 'pg';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { BannedUserGuard } from '../../guards/banned-user.guard';
 import { GeofenceGuard } from '../../common/guards/geofence.guard';
+import { ComplianceAccessGuard } from '../../common/guards/compliance-access.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { R2StorageService } from '../../../services/storage/r2.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
@@ -36,7 +37,7 @@ export class ProofsController {
     private readonly proofsService: ProofsService,
   ) {}
 
-  @UseGuards(GeofenceGuard, AuthGuard, BannedUserGuard)
+  @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
   @Post('upload-url')
   @ApiOperation({ summary: 'Request a pre-signed R2 upload URL for proof media' })
   @Throttle({ default: { ttl: 60000, limit: 10 } })
@@ -80,7 +81,7 @@ export class ProofsController {
     };
   }
 
-  @UseGuards(GeofenceGuard, AuthGuard, BannedUserGuard)
+  @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
   @Post(':id/confirm-upload')
   @ApiOperation({ summary: 'Confirm that proof media has been uploaded to R2' })
   async confirmUpload(

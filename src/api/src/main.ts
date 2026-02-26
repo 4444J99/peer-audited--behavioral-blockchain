@@ -1,6 +1,8 @@
 import * as dotenv from 'dotenv';
-import * as path from 'path';
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+import { resolveEnvFilePath } from './config/env-path';
+const resolvedEnvFilePath = resolveEnvFilePath();
+dotenv.config({ path: resolvedEnvFilePath });
+console.info(`[Bootstrap] Loaded environment from ${resolvedEnvFilePath}`);
 
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';

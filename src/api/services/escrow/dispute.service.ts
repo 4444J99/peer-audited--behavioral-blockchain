@@ -1,5 +1,5 @@
 import { Injectable, HttpException, HttpStatus, NotFoundException, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import { StripeFboService } from './stripe.service';
 import { TruthLogService } from '../ledger/truth-log.service';
 import { LedgerService } from '../ledger/ledger.service';
@@ -33,6 +33,59 @@ export class DisputeService {
     private readonly ledger: LedgerService,
   ) {}
 
+  private async markDisputeReconcileRequired(
+    proofId: string,
+    paymentIntentId: string | null,
+    reason: string,
+  ): Promise<void> {
+    try {
+      await this.pool.query(
+        `UPDATE disputes
+         SET appeal_status = 'RECONCILE_REQUIRED',
+             payment_intent_id = COALESCE(payment_intent_id, $2),
+             judge_notes = COALESCE(judge_notes, '') || CASE WHEN COALESCE(judge_notes, '') = '' THEN '' ELSE E'\\n' END || $3
+         WHERE proof_id = $1`,
+        [proofId, paymentIntentId, `[system] ${reason}`],
+      );
+    } catch (err) {
+      this.logger.error(
+        `Failed to mark dispute for proof ${proofId} as RECONCILE_REQUIRED: ${
+          err instanceof Error ? err.message : err
+        }`,
+      );
+    }
+  }
+
+  private async enqueueDisputeStripeSideEffect(input: {
+    contractId: string;
+    disputeId: string;
+    outcome: 'UPHELD' | 'OVERTURNED';
+    paymentIntentId: string;
+  }): Promise<void> {
+    const effectType =
+      input.outcome === 'UPHELD' ? 'STRIPE_CAPTURE_APPEAL_FEE' : 'STRIPE_CANCEL_APPEAL_FEE';
+    const dedupeKey = `dispute-resolution:${input.disputeId}:${input.outcome}:stripe`;
+
+    await this.pool.query(
+      `INSERT INTO contract_resolution_side_effects
+         (contract_id, outcome, effect_type, dedupe_key, payload, status)
+       VALUES ($1, $2, $3, $4, $5, 'PENDING')
+       ON CONFLICT (dedupe_key) DO NOTHING`,
+      [
+        input.contractId,
+        `DISPUTE_${input.outcome}`,
+        effectType,
+        dedupeKey,
+        JSON.stringify({
+          paymentIntentId: input.paymentIntentId,
+          disputeId: input.disputeId,
+          outcome: input.outcome,
+          sideEffectKey: dedupeKey,
+        }),
+      ],
+    );
+  }
+
   /**
    * Initiates an appeal for a rejected audit.
    * Mandates a $5 friction fee to prevent frivolous escalations to the human judge.
@@ -42,12 +95,30 @@ export class DisputeService {
     proofId: string,
     customerId: string,
   ): Promise<{ appealStatus: string; paymentIntentId: string }> {
+    let holdResult: { id: string };
     try {
       // Hold the $5.00 appeal fee
-      const holdResult = await this.stripeService.holdStake(customerId, APPEAL_FEE_AMOUNT, proofId);
+      holdResult = await this.stripeService.holdStake(customerId, APPEAL_FEE_AMOUNT, proofId);
+    } catch (error: any) {
+      throw new HttpException(
+        `Appeal Rejected: Could not authorize the $${APPEAL_FEE_AMOUNT} appeal fee. Reason: ${error.message}`,
+        HttpStatus.PAYMENT_REQUIRED,
+      );
+    }
 
-      // Create dispute record
-      await this.pool.query(
+    const maybeConnect = (this.pool as unknown as { connect?: () => Promise<PoolClient> }).connect;
+    const client = typeof maybeConnect === 'function' ? await maybeConnect.call(this.pool) : null;
+    const db: { query: PoolClient['query'] } = (client ?? this.pool) as any;
+    const useTransaction = !!client;
+
+    let persistenceError: unknown = null;
+
+    try {
+      if (useTransaction) {
+        await db.query('BEGIN');
+      }
+
+      await db.query(
         `INSERT INTO disputes (proof_id, user_id, appeal_status, payment_intent_id, created_at)
          VALUES ($1, $2, 'FEE_AUTHORIZED_PENDING_REVIEW', $3, NOW())
          ON CONFLICT (proof_id) DO UPDATE SET
@@ -56,29 +127,93 @@ export class DisputeService {
         [proofId, userId, holdResult.id],
       );
 
-      // Update proof status
-      await this.pool.query(
+      await db.query(
         `UPDATE proofs SET status = 'DISPUTED' WHERE id = $1`,
         [proofId],
       );
 
+      if (useTransaction) {
+        await db.query('COMMIT');
+      }
+    } catch (error) {
+      persistenceError = error;
+      if (useTransaction) {
+        try {
+          await db.query('ROLLBACK');
+        } catch {
+          // Preserve original error.
+        }
+      }
+    } finally {
+      client?.release();
+    }
+
+    if (persistenceError) {
+      try {
+        await this.stripeService.cancelHold(holdResult.id);
+      } catch (cancelErr) {
+        await this.markDisputeReconcileRequired(
+          proofId,
+          holdResult.id,
+          `appeal persistence failure; hold cancellation failed: ${
+            cancelErr instanceof Error ? cancelErr.message : cancelErr
+          }`,
+        );
+      }
+
+      this.logger.error(
+        `Appeal persistence failed after fee authorization for proof ${proofId}: ${
+          persistenceError instanceof Error ? persistenceError.message : persistenceError
+        }`,
+      );
+      throw new HttpException(
+        {
+          code: 'APPEAL_PERSISTENCE_FAILED',
+          message: 'Appeal fee authorized, but dispute persistence failed. Compensation attempted.',
+          reconciliationRequired: true,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    try {
       await this.truthLog.appendEvent('APPEAL_INITIATED', {
         proofId,
         userId,
         amount: APPEAL_FEE_AMOUNT,
         paymentIntentId: holdResult.id,
       });
-
-      return {
-        appealStatus: 'FEE_AUTHORIZED_PENDING_REVIEW',
-        paymentIntentId: holdResult.id,
-      };
-    } catch (error: any) {
+    } catch (error) {
+      await this.markDisputeReconcileRequired(
+        proofId,
+        holdResult.id,
+        `truth-log failure after appeal persistence: ${error instanceof Error ? error.message : error}`,
+      );
+      try {
+        await this.stripeService.cancelHold(holdResult.id);
+      } catch (cancelErr) {
+        await this.markDisputeReconcileRequired(
+          proofId,
+          holdResult.id,
+          `truth-log compensation cancel failed: ${
+            cancelErr instanceof Error ? cancelErr.message : cancelErr
+          }`,
+        );
+      }
       throw new HttpException(
-        `Appeal Rejected: Could not authorize the $${APPEAL_FEE_AMOUNT} appeal fee. Reason: ${error.message}`,
-        HttpStatus.PAYMENT_REQUIRED,
+        {
+          code: 'APPEAL_RECONCILIATION_REQUIRED',
+          message: 'Appeal was persisted, but audit logging failed after fee authorization.',
+          reconciliationRequired: true,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+
+    return {
+      appealStatus: 'FEE_AUTHORIZED_PENDING_REVIEW',
+      paymentIntentId: holdResult.id,
+    };
   }
 
   /**
@@ -165,6 +300,12 @@ export class DisputeService {
     judgeNotes: string,
   ): Promise<{ status: string }> {
     const client = await this.pool.connect();
+    let queuedStripeSideEffect:
+      | { contractId: string; disputeId: string; outcome: 'UPHELD' | 'OVERTURNED'; paymentIntentId: string }
+      | null = null;
+    let proofIdForEvent: string | null = null;
+    let userIdForEvent: string | null = null;
+    let contractIdForEvent: string | null = null;
 
     try {
       await client.query('BEGIN');
@@ -184,6 +325,9 @@ export class DisputeService {
       }
 
       const { proof_id, user_id, payment_intent_id, contract_id } = dispute.rows[0];
+      proofIdForEvent = proof_id;
+      userIdForEvent = user_id;
+      contractIdForEvent = contract_id;
 
       // Map outcome to final statuses
       let appealStatus: string;
@@ -193,22 +337,26 @@ export class DisputeService {
         case 'UPHELD':
           appealStatus = 'RESOLVED_UPHELD';
           proofStatus = 'REJECTED'; // Original rejection stands
-          // Capture the appeal fee as revenue
-          try {
-            await this.stripeService.captureStake(payment_intent_id);
-          } catch {
-            // Fee capture failure is non-blocking
+          if (payment_intent_id && contract_id) {
+            queuedStripeSideEffect = {
+              contractId: contract_id,
+              disputeId,
+              outcome: 'UPHELD',
+              paymentIntentId: payment_intent_id,
+            };
           }
           break;
 
         case 'OVERTURNED':
           appealStatus = 'RESOLVED_OVERTURNED';
           proofStatus = 'VERIFIED'; // Override to verified
-          // Refund the appeal fee
-          try {
-            await this.stripeService.cancelHold(payment_intent_id);
-          } catch {
-            // Refund failure is non-blocking
+          if (payment_intent_id && contract_id) {
+            queuedStripeSideEffect = {
+              contractId: contract_id,
+              disputeId,
+              outcome: 'OVERTURNED',
+              paymentIntentId: payment_intent_id,
+            };
           }
           // Penalize the Furies who voted incorrectly
           await client.query(
@@ -242,21 +390,31 @@ export class DisputeService {
         [proofStatus, proof_id],
       );
 
+      if (queuedStripeSideEffect) {
+        await client.query(
+          `INSERT INTO contract_resolution_side_effects
+             (contract_id, outcome, effect_type, dedupe_key, payload, status)
+           VALUES ($1, $2, $3, $4, $5, 'PENDING')
+           ON CONFLICT (dedupe_key) DO NOTHING`,
+          [
+            queuedStripeSideEffect.contractId,
+            `DISPUTE_${queuedStripeSideEffect.outcome}`,
+            queuedStripeSideEffect.outcome === 'UPHELD'
+              ? 'STRIPE_CAPTURE_APPEAL_FEE'
+              : 'STRIPE_CANCEL_APPEAL_FEE',
+            `dispute-resolution:${disputeId}:${queuedStripeSideEffect.outcome}:stripe`,
+            JSON.stringify({
+              paymentIntentId: queuedStripeSideEffect.paymentIntentId,
+              disputeId,
+              proofId: proof_id,
+              userId: user_id,
+              outcome,
+            }),
+          ],
+        );
+      }
+
       await client.query('COMMIT');
-
-      await this.truthLog.appendEvent('DISPUTE_RESOLVED', {
-        disputeId,
-        proofId: proof_id,
-        userId: user_id,
-        judgeUserId,
-        outcome,
-        judgeNotes,
-        contractId: contract_id,
-      });
-
-      this.logger.log(`Dispute ${disputeId} resolved: ${outcome} by judge ${judgeUserId}`);
-
-      return { status: appealStatus };
     } catch (err) {
       await client.query('ROLLBACK');
       if (err instanceof NotFoundException) throw err;
@@ -265,5 +423,27 @@ export class DisputeService {
     } finally {
       client.release();
     }
+
+    await this.truthLog.appendEvent('DISPUTE_RESOLVED', {
+      disputeId,
+      proofId: proofIdForEvent,
+      userId: userIdForEvent,
+      judgeUserId,
+      outcome,
+      judgeNotes,
+      contractId: contractIdForEvent,
+      paymentSideEffectQueued: !!queuedStripeSideEffect,
+    });
+
+    this.logger.log(`Dispute ${disputeId} resolved: ${outcome} by judge ${judgeUserId}`);
+
+    return {
+      status:
+        outcome === 'UPHELD'
+          ? 'RESOLVED_UPHELD'
+          : outcome === 'OVERTURNED'
+            ? 'RESOLVED_OVERTURNED'
+            : 'ESCALATED',
+    };
   }
 }

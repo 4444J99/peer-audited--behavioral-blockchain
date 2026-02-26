@@ -1,15 +1,29 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE =
+  typeof window !== 'undefined'
+    ? '/api'
+    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000');
+
+function readCookie(name: string): string {
+  if (typeof document === 'undefined') return '';
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [rawKey, ...rawValue] = cookie.trim().split('=');
+    if (rawKey === name) {
+      return decodeURIComponent(rawValue.join('='));
+    }
+  }
+  return '';
+}
 
 async function apiRequest<T>(path: string, body: Record<string, string>): Promise<T> {
-  const token = typeof window !== 'undefined'
-    ? localStorage.getItem('styx_token') || '' // allow-secret
-    : ''; // allow-secret
+  const csrfToken = readCookie('styx_csrf_token');
 
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
     },
     body: JSON.stringify(body),
   });

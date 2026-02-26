@@ -18,8 +18,8 @@ This is the **Primary Consumer Interface** (Next.js) and the **Fury Workbench**.
 - **Server State**: `tanstack-query` (React Query) for API data.
 
 ## 5. Security
-- **Auth**: HttpOnly Cookies (JWT). Never store tokens in localStorage.
-- **CSRF**: Next.js built-in protection.
+- **Auth (Current)**: Browser sessions use HttpOnly `styx_auth_token` cookies; bearer JWT remains supported for non-browser clients and compatibility flows.
+- **CSRF (Current)**: Mutating browser requests send `x-csrf-token` and are validated against `styx_csrf_token` (double-submit cookie pattern).
 
 ## 6. Testing
 - **E2E**: Playwright. Flow: Login -> Stake -> Upload Proof -> Logout.

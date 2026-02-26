@@ -28,7 +28,7 @@ Turborepo monorepo with **npm** workspaces. Package scope: `@styx/*`.
 - **AI**: Gemini 2.5 Flash (VC questions, ELI5, goal ethics screening)
 - **Logging**: Pino (structured JSON in production, pretty-print in dev)
 - **Security**: Helmet, rate limiting, JWT auth, geofencing
-- **CI**: GitHub Actions (5-stage pipeline)
+- **CI**: GitHub Actions (`build_and_test` + CodeQL; validation gates 04-06)
 - **API Docs**: OpenAPI/Swagger at [`/api/docs`](#api-documentation)
 
 ## Getting Started
@@ -61,6 +61,10 @@ Docker services: PostgreSQL on `5432`, Redis on `6379`, API on `3000`.
 
 Copy `.env.example` to `.env` and set: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `DATABASE_URL`, `REDIS_URL`, `CLOUDFLARE_R2_ACCESS_KEY`, `CLOUDFLARE_R2_SECRET_KEY`, `JWT_SECRET`.
 
+Compliance/geofence runtime flags:
+- `KYC_ENFORCEMENT_ENABLED=false` (default; reserved until KYC is implemented)
+- `GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS=true` (default fail-open outside CDN/header-aware environments)
+
 **Important**: `JWT_SECRET` is required in production (`NODE_ENV=production`). The API will refuse to start without it.
 
 ## API Documentation
@@ -74,7 +78,7 @@ cd src/api && npm run dev
 
 ## Testing
 
-~430 tests across all workspaces using Jest + ts-jest.
+Current baseline (February 26, 2026): **474 tests** across all workspaces using Jest + ts-jest.
 
 ```bash
 make test                    # All tests via Turborepo
@@ -83,13 +87,18 @@ cd src/shared && npx jest    # Shared algorithm tests only
 npx jest --testNamePattern="should reject"  # Single test by name
 ```
 
-### CI Pipeline (5 stages)
+### CI Pipeline (Current)
 
-1. **Test** — `turbo run test` (all workspaces)
-2. **Build** — `turbo run build` (all workspaces)
-3. **Lint** — `turbo run lint` (strict TypeScript)
-4. **Gate 04** — Redacted build check (no gambling terminology in production)
-5. **Gate 05** — Behavioral physics validation (integrity algorithm constants)
+`/.github/workflows/ci.yml` currently runs:
+
+1. **Install + Security Audit** — `npm ci`, `npm audit --audit-level=high`
+2. **Tests** — `turbo run test` (all workspaces)
+3. **Build** — `turbo run build` (all workspaces)
+4. **Lint** — `turbo run lint` (strict TypeScript)
+5. **Gate 04** — Redacted build check (no gambling terminology in production)
+6. **Gate 05** — Behavioral physics validation (conditional on `CI_GATE05_API_URL`)
+7. **Gate 06** — Security invariant check
+8. **CodeQL** — Separate `codeql` job for JS/TS analysis
 
 ### Validation Scripts
 

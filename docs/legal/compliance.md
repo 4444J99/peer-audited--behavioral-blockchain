@@ -6,9 +6,11 @@ Styx operates as a **Skill-Based Contest**, not a gambling platform.
 - **Verification**: All wins must be cryptographically verified.
 
 ## 2. Medical Guardrails
-- **Age**: 18+ strict enforcement (KYC).
+- **Age**: 18+ policy requirement (**planned** runtime enforcement; KYC/identity verification is not yet enforced in production code by default).
 - **BMI Floor**: No users with BMI < 18.5 may participate.
 - **Velocity Cap**: Weight loss > 2% bodyweight/week flags for auto-disqualification to prevent starvation/purging.
+
+> Implementation note: see `/docs/implementation-status.md` for claim-to-control status (Implemented / Partial / Planned / Research).
 
 ## 3. Financial Compliance (FBO)
 - **Zero Custody**: Styx never holds user funds in corporate accounts.

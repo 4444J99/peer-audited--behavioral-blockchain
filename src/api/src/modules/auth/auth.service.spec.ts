@@ -4,8 +4,14 @@ import { Pool } from 'pg';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 
+const mockClient = {
+  query: jest.fn(),
+  release: jest.fn(),
+};
+
 const mockPool = {
   query: jest.fn(),
+  connect: jest.fn().mockResolvedValue(mockClient),
 } as unknown as Pool;
 
 describe('AuthService', () => {
@@ -13,7 +19,11 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     service = new AuthService(mockPool);
-    jest.clearAllMocks();
+    (mockPool.query as jest.Mock).mockReset();
+    (mockPool.connect as jest.Mock).mockReset();
+    (mockClient.query as jest.Mock).mockReset();
+    (mockClient.release as jest.Mock).mockReset();
+    (mockPool.connect as jest.Mock).mockResolvedValue(mockClient);
   });
 
   describe('register', () => {
@@ -22,10 +32,12 @@ describe('AuthService', () => {
       const password = 'secure123'; // allow-secret
 
       // No existing user
-      (mockPool.query as jest.Mock)
+      (mockClient.query as jest.Mock)
+        .mockResolvedValueOnce(undefined) // BEGIN
         .mockResolvedValueOnce({ rows: [] }) // check existing
         .mockResolvedValueOnce({ rows: [{ id: 'account-uuid' }] }) // insert account
-        .mockResolvedValueOnce({ rows: [{ id: 'user-uuid' }] }); // insert user
+        .mockResolvedValueOnce({ rows: [{ id: 'user-uuid' }] }) // insert user
+        .mockResolvedValueOnce(undefined); // COMMIT
 
       const result = await service.register(email, password);
 
@@ -40,7 +52,10 @@ describe('AuthService', () => {
     });
 
     it('should reject registration with duplicate email', async () => {
-      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: 'existing-id' }] });
+      (mockClient.query as jest.Mock)
+        .mockResolvedValueOnce(undefined) // BEGIN
+        .mockResolvedValueOnce({ rows: [{ id: 'existing-id' }] }) // check existing
+        .mockResolvedValueOnce(undefined); // ROLLBACK
 
       await expect(service.register('taken@styx.protocol', 'pass123'))
         .rejects
@@ -48,18 +63,37 @@ describe('AuthService', () => {
     });
 
     it('should hash the password before storing', async () => {
-      (mockPool.query as jest.Mock)
+      (mockClient.query as jest.Mock)
+        .mockResolvedValueOnce(undefined) // BEGIN
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [{ id: 'account-uuid' }] })
-        .mockResolvedValueOnce({ rows: [{ id: 'user-uuid' }] });
+        .mockResolvedValueOnce({ rows: [{ id: 'user-uuid' }] })
+        .mockResolvedValueOnce(undefined); // COMMIT
 
       await service.register('hash-test@styx.protocol', 'plaintext-pass');
 
       // The third query (insert user) should have a bcrypt hash, not plaintext
-      const insertCall = (mockPool.query as jest.Mock).mock.calls[2];
+      const insertCall = (mockClient.query as jest.Mock).mock.calls[3];
       const storedHash = insertCall[1][1]; // password_hash parameter
       expect(storedHash).not.toBe('plaintext-pass');
       expect(storedHash.startsWith('$2b$10$')).toBe(true);
+    });
+
+    it('should roll back account creation if user insert fails', async () => {
+      (mockClient.query as jest.Mock)
+        .mockResolvedValueOnce(undefined) // BEGIN
+        .mockResolvedValueOnce({ rows: [] }) // existing user check
+        .mockResolvedValueOnce({ rows: [{ id: 'account-uuid' }] }) // account insert
+        .mockRejectedValueOnce(new Error('duplicate key value violates unique constraint users_email_key')) // user insert
+        .mockResolvedValueOnce(undefined); // ROLLBACK
+
+      await expect(service.register('race@styx.protocol', 'pass123')).rejects.toThrow(
+        'duplicate key value violates unique constraint users_email_key',
+      );
+
+      expect(mockClient.query).toHaveBeenNthCalledWith(1, 'BEGIN');
+      expect(mockClient.query).toHaveBeenNthCalledWith(5, 'ROLLBACK');
+      expect(mockClient.release).toHaveBeenCalled();
     });
   });
 
@@ -101,6 +135,16 @@ describe('AuthService', () => {
       });
 
       await expect(service.login('test@styx.protocol', 'any-password'))
+        .rejects
+        .toThrow(UnauthorizedException);
+    });
+
+    it('should reject login when user account is inactive', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [{ id: 'user-uuid', email: 'test@styx.protocol', password_hash: hashedPassword, status: 'SUSPENDED' }],
+      });
+
+      await expect(service.login('test@styx.protocol', 'correct-password'))
         .rejects
         .toThrow(UnauthorizedException);
     });

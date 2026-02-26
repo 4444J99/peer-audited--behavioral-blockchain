@@ -271,6 +271,87 @@ describe('ContractsService', () => {
 
       expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
     });
+
+    it('should cancel Stripe hold if phase-B DB finalization fails in two-phase mode', async () => {
+      mockPool.connect = jest.fn();
+
+      // Validation queries (pool.query)
+      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // total failures
+
+      const phaseAClient = {
+        query: jest.fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockResolvedValueOnce({ rows: [{ id: 'contract-tx-1' }] }) // INSERT contract
+          .mockResolvedValueOnce({ rows: [] }), // COMMIT
+        release: jest.fn(),
+      };
+
+      const phaseBClient = {
+        query: jest.fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockResolvedValueOnce({ rows: [{ id: 'contract-tx-1', status: 'PENDING_STAKE', payment_intent_id: null }] }) // SELECT FOR UPDATE
+          .mockRejectedValueOnce(new Error('db finalize exploded')) // UPDATE contracts
+          .mockResolvedValueOnce({ rows: [] }), // ROLLBACK
+        release: jest.fn(),
+      };
+
+      (mockPool.connect as jest.Mock)
+        .mockResolvedValueOnce(phaseAClient)
+        .mockResolvedValueOnce(phaseBClient);
+
+      (mockStripe.holdStake as jest.Mock).mockResolvedValueOnce({ id: 'pi_tx_fail_1' });
+      (mockStripe.cancelHold as jest.Mock).mockResolvedValueOnce({ id: 'pi_tx_fail_1' });
+
+      await expect(service.createContract(validDto)).rejects.toThrow(/Contract activation failed/);
+
+      expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test_1', 25, 'contract-tx-1');
+      expect(mockStripe.cancelHold).toHaveBeenCalledWith('pi_tx_fail_1');
+      expect(phaseAClient.release).toHaveBeenCalled();
+      expect(phaseBClient.release).toHaveBeenCalled();
+    });
+
+    it('should mark contract RECONCILE_REQUIRED when compensation cancel fails after phase-B DB failure', async () => {
+      mockPool.connect = jest.fn();
+
+      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // total failures
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // markContractReconcileRequired UPDATE
+
+      const phaseAClient = {
+        query: jest.fn()
+          .mockResolvedValueOnce({ rows: [] })
+          .mockResolvedValueOnce({ rows: [{ id: 'contract-tx-2' }] })
+          .mockResolvedValueOnce({ rows: [] }),
+        release: jest.fn(),
+      };
+
+      const phaseBClient = {
+        query: jest.fn()
+          .mockResolvedValueOnce({ rows: [] })
+          .mockResolvedValueOnce({ rows: [{ id: 'contract-tx-2', status: 'PENDING_STAKE', payment_intent_id: null }] })
+          .mockRejectedValueOnce(new Error('db finalize exploded'))
+          .mockResolvedValueOnce({ rows: [] }),
+        release: jest.fn(),
+      };
+
+      (mockPool.connect as jest.Mock)
+        .mockResolvedValueOnce(phaseAClient)
+        .mockResolvedValueOnce(phaseBClient);
+
+      (mockStripe.holdStake as jest.Mock).mockResolvedValueOnce({ id: 'pi_tx_fail_2' });
+      (mockStripe.cancelHold as jest.Mock).mockRejectedValueOnce(new Error('stripe outage'));
+
+      await expect(service.createContract(validDto)).rejects.toThrow(/Contract activation failed/);
+
+      const reconcileUpdateCall = mockPool.query.mock.calls.find(
+        ([sql]: [string]) => typeof sql === 'string' && sql.includes("SET status = 'RECONCILE_REQUIRED'"),
+      );
+      expect(reconcileUpdateCall).toBeDefined();
+      expect(mockStripe.cancelHold).toHaveBeenCalledWith('pi_tx_fail_2');
+    });
   });
 
   // ── getContract ─────────────────────────────────────────────────

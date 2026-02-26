@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, UseGuards, Patch } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, UseGuards, Patch, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Pool } from 'pg';
@@ -10,6 +10,8 @@ import { HoneypotService } from '../../../services/intelligence/honeypot.service
 import { ContractsService } from '../contracts/contracts.service';
 import { DisputeService } from '../../../services/escrow/dispute.service';
 import { R2StorageService } from '../../../services/storage/r2.service';
+import { IdentityVerificationService } from '../compliance/identity-verification.service';
+import { IdentityVerificationMode } from '../compliance/identity-provider.service';
 import { BanUserDto, ResolveContractDto } from './dto';
 
 @ApiTags('Admin')
@@ -24,6 +26,7 @@ export class AdminController {
     private readonly contractsService: ContractsService,
     private readonly disputeService: DisputeService,
     private readonly r2: R2StorageService,
+    private readonly identityVerification: IdentityVerificationService,
     private readonly pool: Pool,
   ) {}
 
@@ -152,6 +155,63 @@ export class AdminController {
     );
 
     return { status: 'integrity_adjusted', userId, delta: body.delta, reason: body.reason };
+  }
+
+  @Post('users/:id/compliance/identity/mock-complete')
+  @ApiOperation({ summary: 'Admin override: complete identity verification in mock/provider-test mode' })
+  async completeIdentityVerificationForUser(
+    @Param('id') userId: string,
+    @Body() body: { mode?: IdentityVerificationMode; status?: 'VERIFIED' | 'FAILED' | 'REJECTED' },
+  ) {
+    return this.identityVerification.completeMockVerification({
+      userId,
+      mode: body.mode || 'KYC_AND_AGE',
+      status: body.status || 'VERIFIED',
+    });
+  }
+
+  @Get('reconciliation')
+  @ApiOperation({ summary: 'Get reconciliation visibility for contract/payment inconsistencies and dispute fee side effects' })
+  async getReconciliationVisibility(@Query('limit') limit?: string) {
+    const parsedLimit = Number(limit || 25);
+    const safeLimit = Number.isFinite(parsedLimit) ? Math.max(1, Math.min(100, parsedLimit)) : 25;
+
+    const [contracts, disputeFeeSideEffects, summary] = await Promise.all([
+      this.pool.query(
+        `SELECT id, user_id, status, payment_intent_id, stake_amount, updated_at
+         FROM contracts
+         WHERE status = 'RECONCILE_REQUIRED'
+         ORDER BY updated_at DESC
+         LIMIT $1`,
+        [safeLimit],
+      ),
+      this.pool.query(
+        `SELECT id, contract_id, outcome, effect_type, status, attempts, last_error,
+                next_retry_at, quarantined_at, quarantine_reason, created_at
+         FROM contract_resolution_side_effects
+         WHERE (
+           outcome LIKE 'DISPUTE_%'
+           OR effect_type IN ('STRIPE_CAPTURE_APPEAL_FEE', 'STRIPE_CANCEL_APPEAL_FEE')
+         )
+           AND status IN ('PENDING', 'FAILED', 'QUARANTINED')
+         ORDER BY created_at DESC
+         LIMIT $1`,
+        [safeLimit],
+      ),
+      this.pool.query(
+        `SELECT
+           (SELECT COUNT(*)::int FROM contracts WHERE status = 'RECONCILE_REQUIRED') AS contract_reconcile_required_count,
+           (SELECT COUNT(*)::int FROM contract_resolution_side_effects
+             WHERE (outcome LIKE 'DISPUTE_%' OR effect_type IN ('STRIPE_CAPTURE_APPEAL_FEE', 'STRIPE_CANCEL_APPEAL_FEE'))
+               AND status IN ('PENDING', 'FAILED', 'QUARANTINED')) AS dispute_fee_side_effect_backlog_count`,
+      ),
+    ]);
+
+    return {
+      summary: summary.rows[0],
+      contracts: contracts.rows,
+      disputeFeeSideEffects: disputeFeeSideEffects.rows,
+    };
   }
 
   // --- Platform Stats ---

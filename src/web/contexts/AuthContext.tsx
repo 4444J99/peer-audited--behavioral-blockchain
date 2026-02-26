@@ -1,14 +1,21 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { api, setAuthToken, getAuthToken } from '../services/api-client';
+import { api, setAuthToken, setCsrfToken } from '../services/api-client';
 
 interface User {
   id: string;
   email: string;
   integrity_score: number;
   role: string;
+  status?: string;
   created_at?: string;
+  compliance?: {
+    kyc_status: string;
+    age_verification_status: string;
+    is_kyc_verified: boolean;
+    is_age_verified: boolean;
+  };
 }
 
 interface AuthContextValue {
@@ -16,60 +23,75 @@ interface AuthContextValue {
   token: string | null; // allow-secret
   login: (email: string, password: string) => Promise<void>; // allow-secret
   register: (email: string, password: string) => Promise<void>; // allow-secret
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const TOKEN_KEY = 'styx_auth_token';
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null); // legacy fallback visibility only
   const [isLoading, setIsLoading] = useState(true);
 
-  // On mount, restore token from localStorage and fetch user
+  // On mount, restore browser session from cookie (HttpOnly) via /users/me.
   useEffect(() => {
-    const stored = localStorage.getItem(TOKEN_KEY);
-    if (stored) {
-      setAuthToken(stored);
-      setToken(stored);
-      api.getMe()
-        .then((me) => setUser(me))
-        .catch(() => {
-          // Token expired or invalid — clear it
-          localStorage.removeItem(TOKEN_KEY);
-          setAuthToken('');
-          setToken(null);
-        })
-        .finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
-    }
+    api.getMe()
+      .then(async (me) => {
+        setUser(me);
+        try {
+          const csrf = await api.getCsrf();
+          setCsrfToken(csrf.csrfToken);
+        } catch {
+          // Non-fatal: mutating requests will refresh/retry if needed.
+        }
+      })
+      .catch(() => {
+        setAuthToken('');
+        setCsrfToken('');
+        setToken(null);
+        setUser(null);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   const login = useCallback(async (email: string, password: string) => { // allow-secret
     const result = await api.login(email, password);
-    localStorage.setItem(TOKEN_KEY, result.token);
+    // Keep bearer token in memory only as a compatibility fallback; cookie auth is primary.
     setAuthToken(result.token);
     setToken(result.token);
+    try {
+      const csrf = await api.getCsrf();
+      setCsrfToken(csrf.csrfToken);
+    } catch {
+      // Login response also sets CSRF cookie; continue if refresh endpoint fails.
+    }
     const me = await api.getMe();
     setUser(me);
   }, []);
 
   const register = useCallback(async (email: string, password: string) => { // allow-secret
     const result = await api.register(email, password);
-    localStorage.setItem(TOKEN_KEY, result.token);
     setAuthToken(result.token);
     setToken(result.token);
+    try {
+      const csrf = await api.getCsrf();
+      setCsrfToken(csrf.csrfToken);
+    } catch {
+      // Registration response also sets CSRF cookie; continue if refresh endpoint fails.
+    }
     const me = await api.getMe();
     setUser(me);
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
+  const logout = useCallback(async () => {
+    try {
+      await api.logout();
+    } catch {
+      // Clearing local state should not depend on server response.
+    }
     setAuthToken('');
+    setCsrfToken('');
     setToken(null);
     setUser(null);
   }, []);

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import { API_BASE } from '../config/api';
 
 // Note: requires react-native-camera or expo-camera to be installed.
 // Using a conditional import approach so the screen still compiles without the camera dep.
@@ -18,8 +19,6 @@ try {
 } catch {
   // Camera dep not installed — screen will show fallback
 }
-
-const API_BASE = 'http://localhost:3000'; // TODO: use env variable
 
 interface ProofCaptureScreenProps {
   route: { params: { contractId: string; token: string } };

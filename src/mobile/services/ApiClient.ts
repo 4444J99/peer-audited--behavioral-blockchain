@@ -1,4 +1,4 @@
-const API_BASE = process.env.STYX_API_URL || 'http://localhost:3000';
+import { API_BASE } from '../config/api';
 
 let authToken: string | null = null;
 

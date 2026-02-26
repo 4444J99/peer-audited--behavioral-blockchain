@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Optional, Inject, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Optional, Inject, Logger, InternalServerErrorException } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
@@ -39,6 +39,8 @@ export interface ContractReadRequester {
 type ContractResolutionSideEffectType =
   | 'STRIPE_CANCEL_HOLD'
   | 'STRIPE_CAPTURE_STAKE'
+  | 'STRIPE_CAPTURE_APPEAL_FEE'
+  | 'STRIPE_CANCEL_APPEAL_FEE'
   | 'LEDGER_STAKE_RETURN'
   | 'LEDGER_STAKE_CAPTURE'
   | 'TRUTH_CONTRACT_RESOLVED'
@@ -47,7 +49,7 @@ type ContractResolutionSideEffectType =
 interface ContractResolutionSideEffectRow {
   id: string;
   contract_id: string;
-  outcome: 'COMPLETED' | 'FAILED';
+  outcome: string;
   effect_type: ContractResolutionSideEffectType;
   dedupe_key: string;
   payload: any;
@@ -284,7 +286,7 @@ export class ContractsService {
 
   private async drainContractResolutionSideEffects(
     contractId: string,
-    outcome: 'COMPLETED' | 'FAILED',
+    outcome: string,
   ): Promise<void> {
     const pending = await this.pool.query(
       `SELECT id, contract_id, outcome, effect_type, dedupe_key, payload, status, attempts,
@@ -422,8 +424,10 @@ export class ContractsService {
     const groups = await this.pool.query(
       `SELECT contract_id, outcome
        FROM contract_resolution_side_effects
-       WHERE status = 'FAILED'
-         AND (next_retry_at IS NULL OR next_retry_at <= NOW())
+       WHERE (
+         status = 'PENDING'
+         OR (status = 'FAILED' AND (next_retry_at IS NULL OR next_retry_at <= NOW()))
+       )
        GROUP BY contract_id, outcome
        ORDER BY MIN(created_at) ASC
        LIMIT $1`,
@@ -483,6 +487,16 @@ export class ContractsService {
       case 'STRIPE_CAPTURE_STAKE':
         if (payload.paymentIntentId) {
           await this.stripe.captureStake(payload.paymentIntentId);
+        }
+        return;
+      case 'STRIPE_CAPTURE_APPEAL_FEE':
+        if (payload.paymentIntentId) {
+          await this.stripe.captureStake(payload.paymentIntentId);
+        }
+        return;
+      case 'STRIPE_CANCEL_APPEAL_FEE':
+        if (payload.paymentIntentId) {
+          await this.stripe.cancelHold(payload.paymentIntentId);
         }
         return;
       case 'LEDGER_STAKE_RETURN':
@@ -549,6 +563,321 @@ export class ContractsService {
       default:
         throw new Error(`Unknown contract resolution side effect type: ${(effect as any).effect_type}`);
     }
+  }
+
+  private buildCreateContractResponse(
+    contractId: string,
+    paymentIntentId: string,
+    bountyLinkId: string | null,
+  ): { contractId: string; paymentIntentId: string; bountyLink?: string } {
+    const response: { contractId: string; paymentIntentId: string; bountyLink?: string } = {
+      contractId,
+      paymentIntentId,
+    };
+
+    if (bountyLinkId) {
+      const publicWebUrl = process.env.STYX_WEB_PUBLIC_URL || 'http://localhost:3001';
+      response.bountyLink = `${publicWebUrl}/whistleblower/${bountyLinkId}`;
+    }
+
+    return response;
+  }
+
+  private async markContractReconcileRequired(
+    contractId: string,
+    paymentIntentId: string | null,
+    reason: string,
+  ): Promise<void> {
+    try {
+      await this.pool.query(
+        `UPDATE contracts
+         SET status = 'RECONCILE_REQUIRED',
+             payment_intent_id = COALESCE(payment_intent_id, $2)
+         WHERE id = $1`,
+        [contractId, paymentIntentId],
+      );
+    } catch (err) {
+      this.logger.error(
+        `Failed to mark contract ${contractId} as RECONCILE_REQUIRED after error "${reason}": ${
+          err instanceof Error ? err.message : err
+        }`,
+      );
+    }
+  }
+
+  private async hasContractLedgerSideEffect(contractId: string, sideEffectKey: string): Promise<boolean> {
+    const existing = await this.pool.query(
+      `SELECT id FROM entries
+       WHERE contract_id = $1
+         AND metadata->>'sideEffectKey' = $2
+       LIMIT 1`,
+      [contractId, sideEffectKey],
+    );
+    return existing.rows.length > 0;
+  }
+
+  private async hasTruthLogSideEffect(sideEffectKey: string): Promise<boolean> {
+    const existing = await this.pool.query(
+      `SELECT id FROM event_log
+       WHERE payload->>'sideEffectKey' = $1
+       LIMIT 1`,
+      [sideEffectKey],
+    );
+    return existing.rows.length > 0;
+  }
+
+  private async hasNotificationSideEffect(
+    userId: string,
+    type: string,
+    sideEffectKey: string,
+  ): Promise<boolean> {
+    const existing = await this.pool.query(
+      `SELECT id FROM notifications
+       WHERE user_id = $1
+         AND type = $2
+         AND metadata->>'sideEffectKey' = $3
+       LIMIT 1`,
+      [userId, type, sideEffectKey],
+    );
+    return existing.rows.length > 0;
+  }
+
+  private async runContractCreationActivationSideEffects(input: {
+    contractId: string;
+    dto: CreateContractInput;
+    user: any;
+    bountyLinkId: string | null;
+  }): Promise<void> {
+    const { contractId, dto, user, bountyLinkId } = input;
+    const baseKey = `contract-create:${contractId}`;
+
+    const priorContracts = await this.pool.query(
+      `SELECT COUNT(*) as count FROM contracts WHERE user_id = $1 AND id != $2`,
+      [dto.userId, contractId],
+    );
+
+    const escrowResult = await this.pool.query(
+      `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
+    );
+    const escrowAccountId = escrowResult.rows[0]?.id ?? null;
+
+    const bonus = grantOnboardingBonus(Number(priorContracts.rows[0]?.count ?? 0));
+    if (bonus.granted && user.account_id && escrowAccountId) {
+      const bonusLedgerKey = `${baseKey}:ledger:onboarding-bonus`;
+      if (!(await this.hasContractLedgerSideEffect(contractId, bonusLedgerKey))) {
+        await this.ledger.recordTransaction(
+          escrowAccountId,
+          user.account_id,
+          ONBOARDING_BONUS_AMOUNT,
+          contractId,
+          { type: 'ONBOARDING_BONUS', userId: dto.userId, sideEffectKey: bonusLedgerKey },
+        );
+      }
+
+      const bonusTruthKey = `${baseKey}:truth:onboarding-bonus`;
+      if (!(await this.hasTruthLogSideEffect(bonusTruthKey))) {
+        await this.truthLog.appendEvent('ONBOARDING_BONUS_GRANTED', {
+          userId: dto.userId,
+          amount: ONBOARDING_BONUS_AMOUNT,
+          contractId,
+          sideEffectKey: bonusTruthKey,
+        });
+      }
+    }
+
+    if (user.account_id && escrowAccountId) {
+      const stakeHoldKey = `${baseKey}:ledger:stake-hold`;
+      if (!(await this.hasContractLedgerSideEffect(contractId, stakeHoldKey))) {
+        await this.ledger.recordTransaction(
+          user.account_id,
+          escrowAccountId,
+          dto.stakeAmount,
+          contractId,
+          { type: 'STAKE_HOLD', userId: dto.userId, sideEffectKey: stakeHoldKey },
+        );
+      }
+    }
+
+    const contractCreatedTruthKey = `${baseKey}:truth:contract-created`;
+    if (!(await this.hasTruthLogSideEffect(contractCreatedTruthKey))) {
+      await this.truthLog.appendEvent('CONTRACT_CREATED', {
+        contractId,
+        userId: dto.userId,
+        oathCategory: dto.oathCategory,
+        stakeAmount: dto.stakeAmount,
+        durationDays: dto.durationDays,
+        sideEffectKey: contractCreatedTruthKey,
+      });
+    }
+
+    const notificationKey = `${baseKey}:notification:contract-created`;
+    try {
+      if (
+        this.notifications &&
+        !(await this.hasNotificationSideEffect(dto.userId, 'CONTRACT_CREATED', notificationKey))
+      ) {
+        await this.notifications.create({
+          userId: dto.userId,
+          type: 'CONTRACT_CREATED',
+          title: 'Contract Created',
+          body: `Your ${dto.oathCategory.replace(/_/g, ' ').toLowerCase()} contract ($${dto.stakeAmount}) is now active.`,
+          metadata: {
+            contractId,
+            bountyLinkId: bountyLinkId || undefined,
+            sideEffectKey: notificationKey,
+          },
+        });
+      }
+    } catch {
+      // Notification failure must never abort a successful financial transaction.
+    }
+  }
+
+  private async createContractTwoPhase(input: {
+    dto: CreateContractInput;
+    user: any;
+    bountyLinkId: string | null;
+    now: Date;
+    endsAt: Date;
+    contractMetadata: Record<string, any>;
+  }): Promise<{ contractId: string; paymentIntentId: string; bountyLink?: string }> {
+    const { dto, user, bountyLinkId, now, endsAt, contractMetadata } = input;
+    const poolWithConnect = this.pool as unknown as { connect: () => Promise<PoolClient> };
+
+    let contractId = '';
+    const phaseAClient = await poolWithConnect.connect();
+    try {
+      await phaseAClient.query('BEGIN');
+
+      const contractResult = await phaseAClient.query(
+        `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id)
+         VALUES ($1, $2, $3, $4, NULL, $5, 'PENDING_STAKE', $6, $7, $8, $9)
+         RETURNING id`,
+        [
+          dto.userId,
+          dto.oathCategory,
+          dto.verificationMethod,
+          dto.stakeAmount,
+          dto.durationDays,
+          now.toISOString(),
+          endsAt.toISOString(),
+          JSON.stringify(contractMetadata),
+          bountyLinkId,
+        ],
+      );
+      contractId = contractResult.rows[0].id;
+
+      if (bountyLinkId) {
+        await phaseAClient.query(
+          `INSERT INTO bounties (contract_id, bounty_link_id) VALUES ($1, $2)`,
+          [contractId, bountyLinkId],
+        );
+      }
+
+      if (dto.oathCategory.startsWith('RECOVERY_') && dto.recoveryMetadata) {
+        await phaseAClient.query(
+          `INSERT INTO accountability_partners (contract_id, partner_email, status)
+           VALUES ($1, $2, 'PENDING')`,
+          [contractId, dto.recoveryMetadata.accountabilityPartnerEmail],
+        );
+      }
+
+      await phaseAClient.query('COMMIT');
+    } catch (err) {
+      try {
+        await phaseAClient.query('ROLLBACK');
+      } catch {
+        // Preserve original failure.
+      }
+      throw err;
+    } finally {
+      phaseAClient.release();
+    }
+
+    const paymentIntent = await this.stripe.holdStake(
+      user.stripe_customer_id,
+      dto.stakeAmount,
+      contractId,
+    );
+
+    const phaseBClient = await poolWithConnect.connect();
+    try {
+      await phaseBClient.query('BEGIN');
+
+      const contractRow = await phaseBClient.query(
+        `SELECT id, status, payment_intent_id
+         FROM contracts
+         WHERE id = $1
+         FOR UPDATE`,
+        [contractId],
+      );
+
+      if (contractRow.rows.length === 0) {
+        throw new NotFoundException(`Contract ${contractId} not found during finalization`);
+      }
+
+      const existing = contractRow.rows[0];
+      if (!(existing.status === 'ACTIVE' && existing.payment_intent_id)) {
+        await phaseBClient.query(
+          `UPDATE contracts
+           SET payment_intent_id = $1,
+               status = 'ACTIVE',
+               started_at = COALESCE(started_at, $3),
+               ends_at = COALESCE(ends_at, $4)
+           WHERE id = $2`,
+          [paymentIntent.id, contractId, now.toISOString(), endsAt.toISOString()],
+        );
+      }
+
+      await phaseBClient.query('COMMIT');
+    } catch (err) {
+      try {
+        await phaseBClient.query('ROLLBACK');
+      } catch {
+        // Preserve original failure.
+      }
+
+      try {
+        await this.stripe.cancelHold(paymentIntent.id);
+      } catch (cancelErr) {
+        await this.markContractReconcileRequired(
+          contractId,
+          paymentIntent.id,
+          `phase_b_finalize_failed:${cancelErr instanceof Error ? cancelErr.message : cancelErr}`,
+        );
+      }
+
+      throw new InternalServerErrorException(
+        'Contract activation failed after payment authorization. Compensation attempted.',
+      );
+    } finally {
+      phaseBClient.release();
+    }
+
+    try {
+      await this.runContractCreationActivationSideEffects({
+        contractId,
+        dto,
+        user,
+        bountyLinkId,
+      });
+    } catch (err) {
+      await this.markContractReconcileRequired(
+        contractId,
+        paymentIntent.id,
+        `contract_create_side_effect_failure:${err instanceof Error ? err.message : err}`,
+      );
+      try {
+        await this.stripe.cancelHold(paymentIntent.id);
+      } catch {
+        // Reconciliation state already recorded above.
+      }
+      throw new InternalServerErrorException(
+        'Contract finalization side effects failed. Reconciliation required.',
+      );
+    }
+
+    return this.buildCreateContractResponse(contractId, paymentIntent.id, bountyLinkId);
   }
 
   async createContract(dto: CreateContractInput): Promise<{ contractId: string; paymentIntentId: string; bountyLink?: string }> {
@@ -657,6 +986,26 @@ export class ContractsService {
       throw new BadRequestException('User has no payment method on file');
     }
 
+    const now = new Date();
+    const endsAt = new Date(now.getTime() + dto.durationDays * 24 * 60 * 60 * 1000);
+    const contractMetadata = dto.recoveryMetadata
+      ? { recovery: { noContactIdentifiers: dto.recoveryMetadata.noContactIdentifiers, acknowledgments: dto.recoveryMetadata.acknowledgments } }
+      : {};
+
+    const supportsTransactionalPath =
+      typeof (this.pool as unknown as { connect?: unknown }).connect === 'function';
+
+    if (supportsTransactionalPath) {
+      return this.createContractTwoPhase({
+        dto,
+        user,
+        bountyLinkId,
+        now,
+        endsAt,
+        contractMetadata,
+      });
+    }
+
     const paymentIntent = await this.stripe.holdStake(
       user.stripe_customer_id,
       dto.stakeAmount,
@@ -664,11 +1013,6 @@ export class ContractsService {
     );
 
     // 6. Insert contract row
-    const now = new Date();
-    const endsAt = new Date(now.getTime() + dto.durationDays * 24 * 60 * 60 * 1000);
-    const contractMetadata = dto.recoveryMetadata
-      ? { recovery: { noContactIdentifiers: dto.recoveryMetadata.noContactIdentifiers, acknowledgments: dto.recoveryMetadata.acknowledgments } }
-      : {};
 
     const contractResult = await this.pool.query(
       `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id)
@@ -760,17 +1104,7 @@ export class ContractsService {
       // Notification failure must never abort a successful financial transaction
     }
 
-    const response: { contractId: string; paymentIntentId: string; bountyLink?: string } = {
-      contractId,
-      paymentIntentId: paymentIntent.id
-    };
-
-    if (bountyLinkId) {
-      const publicWebUrl = process.env.STYX_WEB_PUBLIC_URL || 'http://localhost:3001';
-      response.bountyLink = `${publicWebUrl}/whistleblower/${bountyLinkId}`;
-    }
-
-    return response;
+    return this.buildCreateContractResponse(contractId, paymentIntent.id, bountyLinkId);
   }
 
   async getContract(contractId: string, requester?: ContractReadRequester) {
@@ -1152,13 +1486,6 @@ export class ContractsService {
       proofId,
       userResult.rows[0].stripe_customer_id,
     );
-
-    await this.truthLog.appendEvent('APPEAL_INITIATED', {
-      contractId,
-      userId,
-      proofId,
-      paymentIntentId: result.paymentIntentId,
-    });
 
     return result;
   }

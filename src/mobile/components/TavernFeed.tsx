@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, Platform } from 'react-native';
-
-const API_BASE = 'http://localhost:3000'; // TODO: use env variable
+import { API_BASE } from '../config/api';
 
 interface FeedEvent {
   id: string;

@@ -10,13 +10,34 @@ export class UsersService {
 
   async getProfile(userId: string) {
     const result = await this.pool.query(
-      'SELECT id, email, integrity_score, role, status, created_at FROM users WHERE id = $1',
+      `SELECT id, email, integrity_score, role, status, created_at,
+              kyc_status, age_verification_status, identity_provider,
+              identity_verification_id, identity_verified_at
+       FROM users WHERE id = $1`,
       [userId],
     );
     if (result.rows.length === 0) {
       throw new NotFoundException(`User ${userId} not found`);
     }
-    return result.rows[0];
+
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      email: row.email,
+      integrity_score: row.integrity_score,
+      role: row.role,
+      status: row.status,
+      created_at: row.created_at,
+      compliance: {
+        kyc_status: row.kyc_status ?? 'NOT_STARTED',
+        age_verification_status: row.age_verification_status ?? 'NOT_STARTED',
+        identity_provider: row.identity_provider ?? null,
+        identity_verification_id: row.identity_verification_id ?? null,
+        identity_verified_at: row.identity_verified_at ?? null,
+        is_kyc_verified: String(row.kyc_status || '').toUpperCase() === 'VERIFIED',
+        is_age_verified: String(row.age_verification_status || '').toUpperCase() === 'VERIFIED',
+      },
+    };
   }
 
   async getUserHistory(userId: string, limit = 50) {
