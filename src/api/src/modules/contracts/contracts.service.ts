@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Optional, Inject } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { StripeFboService } from '../../../services/escrow/stripe.service';
@@ -32,6 +32,10 @@ export interface SubmitProofInput extends SubmitProofDtoBase {
   userId: string;
 }
 
+export interface ContractReadRequester {
+  userId: string;
+}
+
 @Injectable()
 export class ContractsService {
   constructor(
@@ -46,6 +50,46 @@ export class ContractsService {
     private readonly anomaly: AnomalyService,
     @Optional() @Inject(NotificationsService) private readonly notifications?: NotificationsService,
   ) {}
+
+  private async assertCanReadContractRow(contractRow: any, requester: ContractReadRequester): Promise<void> {
+    if (contractRow.user_id === requester.userId) {
+      return;
+    }
+
+    const accessResult = await this.pool.query(
+      `SELECT
+         owner.enterprise_id AS owner_enterprise_id,
+         requester.role AS requester_role,
+         requester.enterprise_id AS requester_enterprise_id
+       FROM users owner
+       JOIN users requester ON requester.id = $2
+       WHERE owner.id = $1`,
+      [contractRow.user_id, requester.userId],
+    );
+
+    if (accessResult.rows.length === 0) {
+      throw new ForbiddenException('Requester is not authorized to access this contract');
+    }
+
+    const access = accessResult.rows[0];
+    const requesterRole = String(access.requester_role || 'USER').toUpperCase();
+
+    if (requesterRole === 'ADMIN') {
+      return;
+    }
+
+    const tenantAdminRoles = new Set(['ENTERPRISE_ADMIN', 'HR_ADMIN', 'TENANT_ADMIN']);
+    const sameEnterprise =
+      access.owner_enterprise_id &&
+      access.requester_enterprise_id &&
+      access.owner_enterprise_id === access.requester_enterprise_id;
+
+    if (sameEnterprise && tenantAdminRoles.has(requesterRole)) {
+      return;
+    }
+
+    throw new ForbiddenException('Cannot access another user\'s contract');
+  }
 
   async createContract(dto: CreateContractInput): Promise<{ contractId: string; paymentIntentId: string; bountyLink?: string }> {
     // 1. Validate oath category
@@ -269,7 +313,7 @@ export class ContractsService {
     return response;
   }
 
-  async getContract(contractId: string) {
+  async getContract(contractId: string, requester?: ContractReadRequester) {
     const result = await this.pool.query(
       `SELECT c.*, u.email, u.integrity_score
        FROM contracts c JOIN users u ON c.user_id = u.id
@@ -279,7 +323,11 @@ export class ContractsService {
     if (result.rows.length === 0) {
       throw new NotFoundException(`Contract ${contractId} not found`);
     }
-    return result.rows[0];
+    const row = result.rows[0];
+    if (requester) {
+      await this.assertCanReadContractRow(row, requester);
+    }
+    return row;
   }
 
   async claimBounty(bountyLinkId: string, mediaUri: string, claimantIp: string): Promise<{ proofId: string; jobId: string }> {
@@ -400,94 +448,135 @@ export class ContractsService {
     contractId: string,
     outcome: 'COMPLETED' | 'FAILED',
   ): Promise<void> {
-    const contract = await this.pool.query(
-      'SELECT * FROM contracts WHERE id = $1',
-      [contractId],
-    );
-    if (contract.rows.length === 0) {
-      throw new NotFoundException(`Contract ${contractId} not found`);
-    }
+    const maybeConnect = (this.pool as unknown as { connect?: () => Promise<PoolClient> }).connect;
+    const client = typeof maybeConnect === 'function' ? await maybeConnect.call(this.pool) : null;
+    const db: { query: PoolClient['query'] } = (client ?? this.pool) as any;
+    const useTransaction = !!client;
 
-    const row = contract.rows[0];
+    let row: any;
 
-    if (outcome === 'COMPLETED') {
-      // Release held funds back to user
-      if (row.payment_intent_id) {
-        await this.stripe.cancelHold(row.payment_intent_id);
+    try {
+      if (useTransaction) {
+        await db.query('BEGIN');
       }
-    } else {
-      // Capture stake — user failed
-      if (row.payment_intent_id) {
-        await this.stripe.captureStake(row.payment_intent_id);
+
+      const contract = await db.query(
+        useTransaction
+          ? 'SELECT * FROM contracts WHERE id = $1 FOR UPDATE'
+          : 'SELECT * FROM contracts WHERE id = $1',
+        [contractId],
+      );
+      if (contract.rows.length === 0) {
+        throw new NotFoundException(`Contract ${contractId} not found`);
       }
-    }
 
-    // Update contract status
-    await this.pool.query(
-      'UPDATE contracts SET status = $1 WHERE id = $2',
-      [outcome, contractId],
-    );
+      row = contract.rows[0];
 
-    // Update user integrity score
-    const userResult = await this.pool.query('SELECT * FROM users WHERE id = $1', [row.user_id]);
-    if (userResult.rows.length > 0) {
-      const user = userResult.rows[0];
-      const history: UserHistory = {
-        userId: user.id,
-        completedOaths: outcome === 'COMPLETED' ? 1 : 0,
-        fraudStrikes: 0,
-        failedOaths: outcome === 'FAILED' ? 1 : 0,
-        monthsInactive: 0,
-      };
-      // Recalculate based on delta (simplified: apply bonus/penalty to current score)
-      const delta = calculateIntegrity(history) - 50; // offset from base
-      const newScore = Math.max(0, user.integrity_score + delta);
-      await this.pool.query(
-        'UPDATE users SET integrity_score = $1 WHERE id = $2',
-        [newScore, user.id],
+      if (row.status === outcome) {
+        if (useTransaction) {
+          await db.query('COMMIT');
+        }
+        return;
+      }
+
+      if (row.status === 'COMPLETED' || row.status === 'FAILED') {
+        throw new BadRequestException(`Contract ${contractId} already resolved as ${row.status}`);
+      }
+
+      if (outcome === 'COMPLETED') {
+        // Release held funds back to user
+        if (row.payment_intent_id) {
+          await this.stripe.cancelHold(row.payment_intent_id);
+        }
+      } else {
+        // Capture stake — user failed
+        if (row.payment_intent_id) {
+          await this.stripe.captureStake(row.payment_intent_id);
+        }
+      }
+
+      // Update contract status while the row lock is held.
+      await db.query(
+        'UPDATE contracts SET status = $1 WHERE id = $2',
+        [outcome, contractId],
       );
-    }
 
-    // Record in ledger if we have accounts
-    if (userResult.rows[0]?.account_id) {
-      const escrowResult = await this.pool.query(
-        `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
-      );
-      if (escrowResult.rows.length > 0) {
-        if (outcome === 'COMPLETED') {
-          // Return from escrow to user
-          await this.ledger.recordTransaction(
-            escrowResult.rows[0].id,
-            userResult.rows[0].account_id,
-            Number(row.stake_amount),
-            contractId,
-            { type: 'STAKE_RETURN', outcome },
-          );
-        } else {
-          // Move from escrow to revenue
-          const revenueResult = await this.pool.query(
-            `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
-          );
-          if (revenueResult.rows.length > 0) {
+      // Update user integrity score
+      const userResult = await db.query('SELECT * FROM users WHERE id = $1', [row.user_id]);
+      if (userResult.rows.length > 0) {
+        const user = userResult.rows[0];
+        const history: UserHistory = {
+          userId: user.id,
+          completedOaths: outcome === 'COMPLETED' ? 1 : 0,
+          fraudStrikes: 0,
+          failedOaths: outcome === 'FAILED' ? 1 : 0,
+          monthsInactive: 0,
+        };
+        // Recalculate based on delta (simplified: apply bonus/penalty to current score)
+        const delta = calculateIntegrity(history) - 50; // offset from base
+        const newScore = Math.max(0, user.integrity_score + delta);
+        await db.query(
+          'UPDATE users SET integrity_score = $1 WHERE id = $2',
+          [newScore, user.id],
+        );
+      }
+
+      // Record in ledger if we have accounts
+      if (userResult.rows[0]?.account_id) {
+        const escrowResult = await db.query(
+          `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
+        );
+        if (escrowResult.rows.length > 0) {
+          if (outcome === 'COMPLETED') {
+            // Return from escrow to user
             await this.ledger.recordTransaction(
               escrowResult.rows[0].id,
-              revenueResult.rows[0].id,
+              userResult.rows[0].account_id,
               Number(row.stake_amount),
               contractId,
-              { type: 'STAKE_CAPTURED', outcome },
+              { type: 'STAKE_RETURN', outcome },
             );
+          } else {
+            // Move from escrow to revenue
+            const revenueResult = await db.query(
+              `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
+            );
+            if (revenueResult.rows.length > 0) {
+              await this.ledger.recordTransaction(
+                escrowResult.rows[0].id,
+                revenueResult.rows[0].id,
+                Number(row.stake_amount),
+                contractId,
+                { type: 'STAKE_CAPTURED', outcome },
+              );
+            }
           }
         }
       }
-    }
 
-    // Log to TruthLog
-    await this.truthLog.appendEvent('CONTRACT_RESOLVED', {
-      contractId,
-      outcome,
-      userId: row.user_id,
-      stakeAmount: Number(row.stake_amount),
-    });
+      // Log to TruthLog
+      await this.truthLog.appendEvent('CONTRACT_RESOLVED', {
+        contractId,
+        outcome,
+        userId: row.user_id,
+        stakeAmount: Number(row.stake_amount),
+      });
+
+      if (useTransaction) {
+        await db.query('COMMIT');
+      }
+    } catch (err) {
+      if (useTransaction) {
+        try {
+          await db.query('ROLLBACK');
+        } catch {
+          // Ignore rollback errors; preserve original exception.
+        }
+      }
+      throw err;
+    } finally {
+      client?.release();
+    }
 
     // Notify user of resolution (non-critical)
     try {
@@ -596,15 +685,8 @@ export class ContractsService {
     return result;
   }
 
-  async getContractProofs(contractId: string) {
-    // Verify contract exists
-    const contract = await this.pool.query(
-      'SELECT id FROM contracts WHERE id = $1',
-      [contractId],
-    );
-    if (contract.rows.length === 0) {
-      throw new NotFoundException(`Contract ${contractId} not found`);
-    }
+  async getContractProofs(contractId: string, requester?: ContractReadRequester) {
+    await this.getContract(contractId, requester);
 
     const result = await this.pool.query(
       `SELECT id, contract_id, user_id, media_uri, status, submitted_at

@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../src/modules/auth/auth.service';
+import { consumeSseTicket, SseTicketScope } from './sse-ticket.store';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 
@@ -20,6 +21,14 @@ export class AuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractTokenFromHeader(request); // allow-secret
+
+    if (!token) {
+      const sseTicketUserId = this.consumeSseTicketForRequest(request);
+      if (sseTicketUserId) {
+        (request as any).user = { id: sseTicketUserId, email: '' };
+        return true;
+      }
+    }
 
     if (!token) {
       throw new UnauthorizedException('Missing Authorization Bearer token');
@@ -44,15 +53,30 @@ export class AuthGuard implements CanActivate {
       return token; // allow-secret
     }
 
-    // Support SSE streaming auth via query params only for known stream routes.
-    const rawPath = (request.originalUrl || request.path || '').split('?')[0];
-    const isSseStreamRoute =
-      rawPath.endsWith('/notifications/stream') || rawPath.endsWith('/fury/stream');
+    return undefined;
+  }
 
-    if (isSseStreamRoute && request.query && typeof request.query.token === 'string') {
-      return request.query.token;
+  private consumeSseTicketForRequest(request: Request): string | null {
+    const scope = this.getSseStreamScope(request);
+    if (!scope) {
+      return null;
     }
 
-    return undefined;
+    if (!request.query || typeof request.query.ticket !== 'string') {
+      return null;
+    }
+
+    return consumeSseTicket(request.query.ticket, scope);
+  }
+
+  private getSseStreamScope(request: Request): SseTicketScope | null {
+    const rawPath = (request.originalUrl || request.path || '').split('?')[0];
+    if (rawPath.endsWith('/notifications/stream')) {
+      return 'notifications';
+    }
+    if (rawPath.endsWith('/fury/stream')) {
+      return 'fury';
+    }
+    return null;
   }
 }

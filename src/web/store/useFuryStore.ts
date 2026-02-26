@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getAuthToken } from '../services/api-client';
+import { api, getAuthToken } from '../services/api-client';
 
 export interface Assignment {
   assignmentId: string;
@@ -17,7 +17,7 @@ interface FuryState {
   isConnected: boolean;
   error: string | null;
   eventSource: EventSource | null;
-  connectStream: () => void;
+  connectStream: () => Promise<void>;
   disconnectStream: () => void;
   removeAssignment: (assignmentId: string) => void;
 }
@@ -30,7 +30,7 @@ export const useFuryStore = create<FuryState>((set, get) => ({
   error: null,
   eventSource: null,
 
-  connectStream: () => {
+  connectStream: async () => {
     // Disconnect existing before reconnecting
     get().disconnectStream();
 
@@ -40,10 +40,25 @@ export const useFuryStore = create<FuryState>((set, get) => ({
       return;
     }
 
-    const url = new URL(`${API_BASE}/fury/stream`);
-    url.searchParams.append('token', token);
+    let ticket: string;
+    try {
+      const ticketResponse = await api.requestFuryStreamTicket();
+      ticket = ticketResponse.ticket;
+    } catch {
+      set({ error: 'Unable to authorize Panopticon stream.', isConnected: false });
+      return;
+    }
 
-    const eventSource = new EventSource(url.toString());
+    const url = new URL(`${API_BASE}/fury/stream`);
+    url.searchParams.append('ticket', ticket);
+
+    let eventSource: EventSource;
+    try {
+      eventSource = new EventSource(url.toString());
+    } catch {
+      set({ error: 'Unable to open Panopticon stream.', isConnected: false });
+      return;
+    }
 
     eventSource.onopen = () => {
       set({ isConnected: true, error: null });
@@ -66,7 +81,9 @@ export const useFuryStore = create<FuryState>((set, get) => ({
       eventSource.close();
       
       // Attempt reconnect after 5s
-      setTimeout(() => get().connectStream(), 5000);
+      setTimeout(() => {
+        void get().connectStream();
+      }, 5000);
     };
 
     set({ eventSource });

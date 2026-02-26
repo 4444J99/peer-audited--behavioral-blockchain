@@ -4,6 +4,7 @@ import { Observable, timer } from 'rxjs';
 import { concatMap, map } from 'rxjs/operators';
 import { Pool } from 'pg';
 import { AuthGuard } from '../../../guards/auth.guard';
+import { issueSseTicket } from '../../../guards/sse-ticket.store';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { FuryWorker } from './fury.worker';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
@@ -145,6 +146,12 @@ export class FuryController {
       concatMap(() => this.getAssignments(user)),
       map((data) => ({ data } as MessageEvent)),
     );
+  }
+
+  @Post('stream-ticket')
+  @ApiOperation({ summary: 'Issue a short-lived ticket for Fury SSE subscription' })
+  issueStreamTicket(@CurrentUser() user: { id: string }) {
+    return issueSseTicket(user.id, 'fury');
   }
 
   @Post('verdict')

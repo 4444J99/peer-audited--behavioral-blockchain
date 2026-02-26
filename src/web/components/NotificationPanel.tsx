@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Bell } from 'lucide-react';
-import { api } from '../services/api-client';
+import { api, getAuthToken } from '../services/api-client';
 
 interface Notification {
   id: string;
@@ -38,36 +38,83 @@ export default function NotificationPanel() {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     let eventSource: EventSource | null = null;
     let pollInterval: ReturnType<typeof setInterval> | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
 
-    try {
-      const { getAuthToken } = require('../services/api-client');
-      const token = getAuthToken(); // allow-secret
-      eventSource = new EventSource(`${API_BASE}/notifications/stream?token=${token}`);
+    const startPolling = () => {
+      if (pollInterval) return;
+      pollInterval = setInterval(() => {
+        void loadNotifications();
+      }, 30000);
+    };
 
-      eventSource.onmessage = (event) => {
-        try {
-          const notification = JSON.parse(event.data);
-          setNotifications((prev) => [notification, ...prev]);
-          setUnreadCount((prev) => prev + 1);
-        } catch {
-          // Invalid message — ignore
-        }
-      };
+    const stopPolling = () => {
+      if (!pollInterval) return;
+      clearInterval(pollInterval);
+      pollInterval = null;
+    };
 
-      eventSource.onerror = () => {
-        // SSE failed — close and fall back to polling
-        eventSource?.close();
-        eventSource = null;
-        pollInterval = setInterval(loadNotifications, 30000);
-      };
-    } catch {
-      // SSE not available — use polling
-      pollInterval = setInterval(loadNotifications, 30000);
-    }
+    const scheduleReconnect = () => {
+      if (stopped || reconnectTimer) return;
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        void connectStream();
+      }, 5000);
+    };
+
+    const connectStream = async () => {
+      if (stopped) return;
+
+      const token = getAuthToken();
+      if (!token) {
+        startPolling();
+        return;
+      }
+
+      try {
+        const { ticket } = await api.requestNotificationStreamTicket();
+        if (stopped) return;
+
+        const source = new EventSource(
+          `${API_BASE}/notifications/stream?ticket=${encodeURIComponent(ticket)}`,
+        );
+        eventSource = source;
+
+        source.onopen = () => {
+          stopPolling();
+        };
+
+        source.onmessage = (event) => {
+          try {
+            const notification = JSON.parse(event.data);
+            setNotifications((prev) => [notification, ...prev]);
+            setUnreadCount((prev) => prev + 1);
+          } catch {
+            // Invalid message — ignore
+          }
+        };
+
+        source.onerror = () => {
+          source.close();
+          if (eventSource === source) {
+            eventSource = null;
+          }
+          startPolling();
+          scheduleReconnect();
+        };
+      } catch {
+        // SSE not available — use polling
+        startPolling();
+      }
+    };
+
+    void connectStream();
 
     return () => {
+      stopped = true;
       eventSource?.close();
-      if (pollInterval) clearInterval(pollInterval);
+      stopPolling();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
     };
   }, [loadNotifications]);
 

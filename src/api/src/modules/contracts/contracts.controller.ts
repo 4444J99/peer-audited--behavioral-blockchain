@@ -44,15 +44,21 @@ export class ContractsController {
   @UseGuards(GeofenceGuard, AuthGuard)
   @Get(':id')
   @ApiOperation({ summary: 'Get a single contract by ID' })
-  async findOne(@Param('id') id: string) {
-    return this.contractsService.getContract(id);
+  async findOne(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.contractsService.getContract(id, { userId: user.id });
   }
 
   @UseGuards(GeofenceGuard, AuthGuard)
   @Get(':id/proofs')
   @ApiOperation({ summary: 'List proof submissions for a contract' })
-  async getProofs(@Param('id') contractId: string) {
-    return this.contractsService.getContractProofs(contractId);
+  async getProofs(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.contractsService.getContractProofs(contractId, { userId: user.id });
   }
 
   @UseGuards(GeofenceGuard, AuthGuard, BannedUserGuard)

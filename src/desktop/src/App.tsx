@@ -7,7 +7,7 @@ import MacroReview from './components/MacroReview';
 import ExilePanel from './components/ExilePanel';
 import B2BOrchestration from './components/B2BOrchestration';
 import HashCollider from './components/HashCollider';
-import { clearToken, getApiBase, getToken } from './services/api';
+import { api, clearToken, getApiBase, getToken } from './services/api';
 
 interface Notification {
   id: number;
@@ -54,33 +54,65 @@ export default function App() {
     const token = getToken();
     if (!token) return;
     let eventSource: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
 
-    try {
-      eventSource = new EventSource(`${getApiBase()}/notifications/stream?token=${token}`);
+    const connectNotifications = async () => {
+      if (stopped) return;
 
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          setNotifications((prev) => [
-            { id: Date.now(), message: data.message, timestamp: new Date() },
-            ...prev.slice(0, 19), // Keep last 20
-          ]);
-        } catch {
-          // Ignore malformed SSE messages
+      try {
+        const { ticket } = await api.requestNotificationStreamTicket();
+        if (stopped) return;
+
+        const source = new EventSource(
+          `${getApiBase()}/notifications/stream?ticket=${encodeURIComponent(ticket)}`,
+        );
+        eventSource = source;
+
+        source.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            setNotifications((prev) => [
+              { id: Date.now(), message: data.message, timestamp: new Date() },
+              ...prev.slice(0, 19), // Keep last 20
+            ]);
+          } catch {
+            // Ignore malformed SSE messages
+          }
+        };
+
+        source.onerror = () => {
+          source.close();
+          if (eventSource === source) {
+            eventSource = null;
+          }
+          if (!stopped && !reconnectTimer) {
+            reconnectTimer = setTimeout(() => {
+              reconnectTimer = null;
+              void connectNotifications();
+            }, 5000);
+          }
+        };
+      } catch {
+        // Ticket issuance or EventSource constructor failed — retry later.
+        if (!stopped && !reconnectTimer) {
+          reconnectTimer = setTimeout(() => {
+            reconnectTimer = null;
+            void connectNotifications();
+          }, 5000);
         }
-      };
+      }
+    };
 
-      eventSource.onerror = () => {
-        // SSE connection failed — silently reconnect is handled by EventSource
-        // No action needed; EventSource auto-reconnects
-      };
-    } catch {
-      // EventSource constructor failed — API may not support SSE yet
-    }
+    void connectNotifications();
 
     return () => {
+      stopped = true;
       if (eventSource) {
         eventSource.close();
+      }
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
       }
     };
   }, [userId]);

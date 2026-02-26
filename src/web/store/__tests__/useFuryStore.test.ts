@@ -4,6 +4,9 @@ import * as apiClient from '../../services/api-client';
 // Mock the API client
 jest.mock('../../services/api-client', () => ({
   getAuthToken: jest.fn(),
+  api: {
+    requestFuryStreamTicket: jest.fn(),
+  },
 }));
 
 describe('useFuryStore Integration', () => {
@@ -17,31 +20,31 @@ describe('useFuryStore Integration', () => {
     });
   });
 
-  it('fails to connect if no auth token is present', () => {
+  it('fails to connect if no auth token is present', async () => {
     (apiClient.getAuthToken as jest.Mock).mockReturnValue(null);
 
-    useFuryStore.getState().connectStream();
+    await useFuryStore.getState().connectStream();
 
     expect(useFuryStore.getState().error).toBe('No authentication token available for SSE stream');
     expect(useFuryStore.getState().isConnected).toBe(false);
   });
 
-  it('sets up the EventSource correctly with a token', () => {
+  it('requests an SSE ticket before opening the stream', async () => {
     (apiClient.getAuthToken as jest.Mock).mockReturnValue('mock-jwt-token');
+    ((apiClient as any).api.requestFuryStreamTicket as jest.Mock).mockResolvedValue({
+      ticket: 'sse-ticket',
+      expiresInSeconds: 60,
+    });
 
     // Mute console.error for this test (EventSource isn't fully mocked)
     const originalError = console.error;
     console.error = jest.fn();
 
     // In a Node/Jest environment without jsdom full-mock, EventSource might throw, 
-    // but the state should at least clear the error before trying
-    try {
-      useFuryStore.getState().connectStream();
-    } catch (e) {
-      // It's expected to fail if EventSource is undefined in raw Node check
-    }
+    // but ticket issuance should still happen before constructor failure.
+    await useFuryStore.getState().connectStream();
 
-    expect(useFuryStore.getState().error).toBeNull();
+    expect((apiClient as any).api.requestFuryStreamTicket).toHaveBeenCalled();
     
     console.error = originalError;
   });

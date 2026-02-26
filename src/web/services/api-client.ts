@@ -182,6 +182,11 @@ export const api = {
   getUnreadCount: () =>
     request<{ count: number }>('/notifications/unread-count'),
 
+  requestNotificationStreamTicket: () =>
+    request<{ ticket: string; expiresInSeconds: number }>('/notifications/stream-ticket', {
+      method: 'POST',
+    }),
+
   markNotificationRead: (id: string) =>
     request<{ status: string }>(`/notifications/${id}/read`, { method: 'POST' }),
 
@@ -316,6 +321,11 @@ export const api = {
       honeypotsCaught: number;
       honeypotsFailedOn: number;
     }>('/fury/stats'),
+
+  requestFuryStreamTicket: () =>
+    request<{ ticket: string; expiresInSeconds: number }>('/fury/stream-ticket', {
+      method: 'POST',
+    }),
 
   // Attestations (Recovery stream)
   getAttestationStatus: (contractId: string) =>

@@ -92,6 +92,11 @@ export const api = {
   getEnterpriseBilling: (id: string) =>
     request<any>(`/b2b/billing/${id}`),
 
+  requestNotificationStreamTicket: () =>
+    request<{ ticket: string; expiresInSeconds: number }>('/notifications/stream-ticket', {
+      method: 'POST',
+    }),
+
   getEnterpriseKeys: () =>
     request<{ keys: Array<{ id: string; enterprise: string; createdAt: string; active: boolean; keyPreview?: string }> }>(
       '/b2b/keys',

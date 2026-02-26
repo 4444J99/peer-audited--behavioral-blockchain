@@ -2,6 +2,7 @@ import { Controller, Get, Post, Param, Query, Sse, UseGuards } from '@nestjs/com
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { AuthGuard } from '../../../guards/auth.guard';
+import { issueSseTicket } from '../../../guards/sse-ticket.store';
 import { CurrentUser, Public } from '../../common/decorators/current-user.decorator';
 import { NotificationsService } from './notifications.service';
 
@@ -23,6 +24,12 @@ export class NotificationsController {
   async getUnreadCount(@CurrentUser() user: { id: string }) {
     const count = await this.notifications.getUnreadCount(user.id);
     return { count };
+  }
+
+  @Post('stream-ticket')
+  @ApiOperation({ summary: 'Issue a short-lived ticket for notification SSE subscription' })
+  issueStreamTicket(@CurrentUser() user: { id: string }) {
+    return issueSseTicket(user.id, 'notifications');
   }
 
   @Sse('stream')

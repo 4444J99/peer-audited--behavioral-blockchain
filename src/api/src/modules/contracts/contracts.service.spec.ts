@@ -13,7 +13,7 @@ import { Pool } from 'pg';
 
 describe('ContractsService', () => {
   let service: ContractsService;
-  let mockPool: { query: jest.Mock };
+  let mockPool: { query: jest.Mock; connect?: jest.Mock };
 
   const mockLedger = {
     recordTransaction: jest.fn().mockResolvedValue('entry-id'),
@@ -290,6 +290,39 @@ describe('ContractsService', () => {
 
       await expect(service.getContract('missing-id')).rejects.toThrow(NotFoundException);
     });
+
+    it('should deny access to another user without elevated role', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'contract-1', user_id: 'owner-1', email: 'owner@styx.app', integrity_score: 60 }],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          owner_enterprise_id: 'ent-owner',
+          requester_role: 'USER',
+          requester_enterprise_id: 'ent-other',
+        }],
+      });
+
+      await expect(
+        service.getContract('contract-1', { userId: 'requester-1' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should allow ADMIN to read another user contract', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'contract-1', user_id: 'owner-1', email: 'owner@styx.app', integrity_score: 60 }],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          owner_enterprise_id: 'ent-owner',
+          requester_role: 'ADMIN',
+          requester_enterprise_id: 'ent-other',
+        }],
+      });
+
+      const result = await service.getContract('contract-1', { userId: 'admin-1' });
+      expect(result.id).toBe('contract-1');
+    });
   });
 
   // ── submitProof ─────────────────────────────────────────────────
@@ -404,6 +437,50 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       await expect(service.resolveContract('missing', 'COMPLETED')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should short-circuit when contract is already resolved with the same outcome', async () => {
+      const client = {
+        query: jest.fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockResolvedValueOnce({ rows: [{ ...contractRow, status: 'COMPLETED' }] }) // SELECT ... FOR UPDATE
+          .mockResolvedValueOnce({ rows: [] }), // COMMIT
+        release: jest.fn(),
+      };
+      mockPool.connect = jest.fn().mockResolvedValue(client);
+
+      await service.resolveContract('contract-1', 'COMPLETED');
+
+      expect(client.query).toHaveBeenNthCalledWith(1, 'BEGIN');
+      expect(client.query).toHaveBeenNthCalledWith(
+        2,
+        expect.stringContaining('FOR UPDATE'),
+        ['contract-1'],
+      );
+      expect(client.query).toHaveBeenNthCalledWith(3, 'COMMIT');
+      expect(mockStripe.cancelHold).not.toHaveBeenCalled();
+      expect(mockStripe.captureStake).not.toHaveBeenCalled();
+      expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
+      expect(client.release).toHaveBeenCalled();
+    });
+
+    it('should reject conflicting terminal outcome and roll back', async () => {
+      const client = {
+        query: jest.fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockResolvedValueOnce({ rows: [{ ...contractRow, status: 'FAILED' }] }) // SELECT ... FOR UPDATE
+          .mockResolvedValueOnce({ rows: [] }), // ROLLBACK
+        release: jest.fn(),
+      };
+      mockPool.connect = jest.fn().mockResolvedValue(client);
+
+      await expect(service.resolveContract('contract-1', 'COMPLETED')).rejects.toThrow(BadRequestException);
+
+      expect(client.query).toHaveBeenNthCalledWith(3, 'ROLLBACK');
+      expect(client.release).toHaveBeenCalled();
+      expect(mockStripe.cancelHold).not.toHaveBeenCalled();
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
     });
 
     it('should update contract status in the database', async () => {
@@ -555,6 +632,25 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       await expect(service.getContractProofs('missing-contract')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should reject proof listing for unauthorized requester', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'contract-1', user_id: 'owner-1', email: 'owner@styx.app', integrity_score: 50 }],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          owner_enterprise_id: 'ent-1',
+          requester_role: 'USER',
+          requester_enterprise_id: 'ent-2',
+        }],
+      });
+
+      await expect(
+        service.getContractProofs('contract-1', { userId: 'intruder-1' }),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockPool.query).toHaveBeenCalledTimes(2);
     });
   });
 

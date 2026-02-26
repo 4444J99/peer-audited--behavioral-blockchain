@@ -11,6 +11,7 @@ import { FuryRouterService } from '../../../services/fury-router/fury-router.ser
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { PHashService } from '../../../services/intelligence/phash.service';
 import { RequestUploadUrlDto, ConfirmUploadDto } from './dto';
+import { ProofsService } from './proofs.service';
 
 /**
  * ProofsController — Handles the proof media upload lifecycle.
@@ -32,6 +33,7 @@ export class ProofsController {
     private readonly furyRouter: FuryRouterService,
     private readonly truthLog: TruthLogService,
     private readonly phash: PHashService,
+    private readonly proofsService: ProofsService,
   ) {}
 
   @UseGuards(GeofenceGuard, AuthGuard, BannedUserGuard)
@@ -180,37 +182,10 @@ export class ProofsController {
   @UseGuards(AuthGuard)
   @Get(':id')
   @ApiOperation({ summary: 'Get proof details with a signed view URL (for Fury auditors)' })
-  async getProofDetail(@Param('id') proofId: string) {
-    const proof = await this.pool.query(
-      `SELECT p.id, p.contract_id, p.status, p.content_type, p.description,
-              p.media_uri, p.submitted_at, p.uploaded_at, p.is_honeypot
-       FROM proofs p
-       WHERE p.id = $1`,
-      [proofId],
-    );
-
-    if (proof.rows.length === 0) {
-      throw new NotFoundException('Proof not found');
-    }
-
-    const row = proof.rows[0];
-
-    // Generate a signed view URL if media exists
-    let viewUrl: string | null = null;
-    if (row.media_uri) {
-      viewUrl = await this.r2.generateViewUrl(row.media_uri);
-    }
-
-    return {
-      id: row.id,
-      contractId: row.contract_id,
-      status: row.status,
-      contentType: row.content_type,
-      description: row.description,
-      submittedAt: row.submitted_at,
-      uploadedAt: row.uploaded_at,
-      isHoneypot: row.is_honeypot,
-      viewUrl,
-    };
+  async getProofDetail(
+    @Param('id') proofId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.proofsService.getProofDetail(proofId, { userId: user.id });
   }
 }
