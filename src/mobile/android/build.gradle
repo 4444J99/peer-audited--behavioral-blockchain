@@ -7,7 +7,7 @@ buildscript {
   }
   dependencies {
     classpath('com.android.tools.build:gradle')
-    classpath('com.facebook.react:react-native-gradle-plugin')
+    // classpath('com.facebook.react:react-native-gradle-plugin') // This is removed
     classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
   }
 }
@@ -20,5 +20,5 @@ allprojects {
   }
 }
 
-apply plugin: "expo-root-project"
-apply plugin: "com.facebook.react.rootproject"
+// apply plugin: "expo-root-project" // This is removed
+// apply plugin: "com.facebook.react.rootproject" // This is removed
