@@ -14,12 +14,16 @@
     "lint": "turbo run lint",
     "validate:claims": "node scripts/validation/07-claim-drift-check.js",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "test:e2e:headed": "npx playwright test --headed"
   },
   "devDependencies": {
-    "turbo": "latest",
-    "prettier": "^3.0.0",
+    "@playwright/test": "1.58.2",
     "eslint": "^10.0.0",
+    "prettier": "^3.0.0",
+    "turbo": "latest",
     "typescript": "^5.0.0"
   },
   "engines": {

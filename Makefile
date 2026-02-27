@@ -1,4 +1,4 @@
-.PHONY: install dev build test clean docker-up pitch
+.PHONY: install dev build test clean docker-up pitch test-e2e test-e2e-ui
 
 install:
 	npm install
@@ -20,3 +20,9 @@ docker-up:
 
 pitch:
 	cd src/pitch && npm run build
+
+test-e2e:
+	npx playwright test
+
+test-e2e-ui:
+	npx playwright test --ui

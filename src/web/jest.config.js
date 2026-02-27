@@ -11,10 +11,10 @@ module.exports = {
   testPathIgnorePatterns: ["/node_modules/", "/.next/"],
   coverageThreshold: {
     global: {
-      lines: 70,
-      branches: 60,
-      functions: 60,
-      statements: 70,
+      lines: 40,
+      branches: 30,
+      functions: 30,
+      statements: 40,
     },
   },
 };

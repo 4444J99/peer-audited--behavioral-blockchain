@@ -30,8 +30,17 @@ jobs:
     - name: Security Audit
       run: npm audit --audit-level=high
 
-    - name: Execute Tests (Turborepo)
-      run: npx turbo run test
+    - name: Execute Tests with Coverage (Turborepo)
+      run: npx turbo run test -- --coverage --ci
+
+    - name: Upload Coverage Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-reports
+        path: |
+          src/*/coverage/
+        retention-days: 14
 
     - name: Execute Build (Turborepo)
       run: npx turbo run build
@@ -57,6 +66,69 @@ jobs:
 
     - name: Gate 07 — Claim Drift Check
       run: npm run validate:claims
+
+  terraform_validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "~1.9"
+
+    - name: Terraform Format Check
+      working-directory: infra/terraform
+      run: terraform fmt -check -recursive -diff
+
+    - name: Terraform Init (validation only)
+      working-directory: infra/terraform
+      run: terraform init -backend=false -input=false
+
+    - name: Terraform Validate
+      working-directory: infra/terraform
+      run: terraform validate
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox]
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps ${{ matrix.browser }}
+
+    - name: Build Web
+      run: cd src/web && npm run build
+
+    - name: Run E2E Tests (${{ matrix.browser }})
+      run: npx playwright test --project=${{ matrix.browser }}
+      env:
+        CI: true
+
+    - name: Upload Playwright Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report-${{ matrix.browser }}
+        path: playwright-report/
+        retention-days: 14
 
   codeql:
     runs-on: ubuntu-latest
