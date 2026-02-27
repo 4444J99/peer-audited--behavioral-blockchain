@@ -1,7 +1,7 @@
 # Styx: Behavioral Engineering - The Master Synthesis
 
 ## Overview
-This document synthesizes the core principles from the "Outside Sources" library (/docs/research/outisde-sources/) into the Styx technical and psychological architecture. It weaponizes the insights of Pressfield, Clear, Brewer, and Fogg to create an inescapable habit-formation engine.
+This document synthesizes the core principles from the "Reference Library" (/docs/research/reference-library/) into the Styx technical and psychological architecture. It weaponizes the insights of Pressfield, Clear, Brewer, and Fogg to create an inescapable habit-formation engine.
 
 ---
 

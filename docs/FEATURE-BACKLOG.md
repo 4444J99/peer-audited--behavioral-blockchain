@@ -103,7 +103,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: PARTIAL
 - **Phase**: Alpha
 - **Priority**: P0 (beta-blocker)
-- **Source**: `compliance.md` §3, `legal--gatekeeper-compliance.md` §1, `legal--performance-wagering.md` §Variant 1, `roadmap.md` §Alpha
+- **Source**: `legal--aegis-protocol.md` §3, `legal--gatekeeper-compliance.md` §1, `legal--performance-wagering.md` §Variant 1, `roadmap.md` §Alpha
 - **Existing Code**: `src/api/services/escrow/stripe.service.ts`, `src/api/services/escrow/dispute.service.ts`, `src/api/src/modules/payments/`
 - **Spec**: Stripe Connect FBO routing. User stakes $X → Stripe holds in FBO. On resolution: refund to user, platform fee to house, bounty to Furies. Currently test-money only; real-money settlement path needs activation.
 - **Dependencies**: High-risk merchant account (F-INFRA-01)
@@ -134,7 +134,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Alpha
 - **Priority**: P0
-- **Source**: `Smart Contracts for Behavioral Wagers.md` §State Machine, `api/spec.md`
+- **Source**: `research--smart-contracts-behavioral-wagers.md` §State Machine, `api/spec.md`
 - **Existing Code**: `src/api/src/modules/contracts/contracts.service.ts`, `src/api/src/modules/contracts/contracts.scheduler.ts`, `src/api/database/schema.sql` (contracts table: PENDING_STAKE → ACTIVE → COMPLETED/FAILED)
 - **Spec**: Full CRUD: create contract, submit proof, use grace day, scheduler for deadline enforcement. Attestation scheduler for daily check-ins.
 - **Dependencies**: F-CORE-01, F-CORE-04
@@ -164,7 +164,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Beta
 - **Priority**: P1 (for Recovery contracts)
-- **Source**: `Breakup Psychology And Loss Aversion.md` §1
+- **Source**: `research--breakup-psychology-loss-aversion.md` §1
 - **Existing Code**: None
 - **Spec**: Friday 5PM to Sunday 9AM: penalties automatically double. Addresses heightened emotional vulnerability, DMN activation, and social isolation on weekends. Critical for No-Contact recovery contracts.
 - **Dependencies**: F-CORE-07, F-CORE-05
@@ -174,7 +174,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Beta
 - **Priority**: P1 (for Recovery contracts)
-- **Source**: `Breakup Psychology And Loss Aversion.md` §2
+- **Source**: `research--breakup-psychology-loss-aversion.md` §2
 - **Existing Code**: None
 - **Spec**: If user decides to break No Contact, mandatory 24-hour delay before communication block is released. ~95% cancellation rate after cooling period. Forces prefrontal cortex re-engagement.
 - **Dependencies**: F-CORE-07
@@ -184,7 +184,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `legal--compliance-guardrails.md` §Variant 2, `legal--performance-wagering.md`, `Gamified-Behavior-Change-App-Design.md` §C
+- **Source**: `legal--compliance-guardrails.md` §Variant 2, `legal--performance-wagering.md`, `research--gamified-behavior-change-app-design.md` §C
 - **Existing Code**: None
 - **Spec**: Time-boxed public/private challenges. Fixed entry fee ($20-50). Winners split pool pro rata minus platform fee (15-25%). "Challenge Flag" system where opponents can audit each other.
 - **Dependencies**: F-CORE-07, F-FURY-01, F-LEGAL-03
@@ -195,7 +195,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Beta
 - **Priority**: P2
-- **Source**: `Smart Contracts for Behavioral Wagers.md` §Capital Destruction, `research--behavioral-economics.md` §Anti-Charity
+- **Source**: `research--smart-contracts-behavioral-wagers.md` §Capital Destruction, `research--behavioral-economics.md` §Anti-Charity
 - **Existing Code**: None
 - **Spec**: Three forfeiture destinations: (1) charity user supports, (2) anti-charity (organization user opposes — maximizes loss aversion by compounding financial + ideological distress), (3) platform fee. User selects at contract creation.
 - **Dependencies**: F-CORE-04
@@ -216,7 +216,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `Behavior Change App Design.md` §Dynamic Gamification Algorithms
+- **Source**: `research--behavior-change-app-design.md` §Dynamic Gamification Algorithms
 - **Existing Code**: None
 - **Spec**: Variable point system where rewards decay as habit strength increases. Points = P_max * decay_function(r, H_target). Transitions user from extrinsic to intrinsic motivation as P(H) approaches 1.0.
 - **Dependencies**: F-CORE-05
@@ -240,7 +240,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Beta (deferred)
 - **Priority**: P1
-- **Source**: `architecture--feasibility-stack.md` §S2, `architecture--truth-blockchain.md` §Wearable Ecosystems, `App Verification_ Tech, Privacy, Law.md`
+- **Source**: `architecture--feasibility-stack.md` §S2, `architecture--truth-blockchain.md` §Wearable Ecosystems, `research--app-verification-tech-privacy-law.md`
 - **Existing Code**: None (explicitly deferred; mobile has placeholder stubs)
 - **Spec**: Native Swift read-only integration. Filter manual entries with `HKMetadataKeyWasUserEntered == NO`. Whitelist trusted bundle IDs (Apple Watch, known wearables). Reject `com.apple.Health` source. Must be 100% native Swift per Apple Guideline 4.7/5.3.4.
 - **Dependencies**: Xcode, native Swift development
@@ -301,7 +301,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `App Verification_ Tech, Privacy, Law.md` §Hardware-Backed Attestation
+- **Source**: `research--app-verification-tech-privacy-law.md` §Hardware-Backed Attestation
 - **Existing Code**: None
 - **Spec**: Android: Hardware Key Attestation + Play Integrity API (StrongBox TEE, X.509 chain). iOS: DeviceCheck + App Attest (Secure Enclave key pair). Verifies unmodified OS, locked bootloader, non-emulator.
 - **Dependencies**: Native mobile development
@@ -311,7 +311,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `App Verification_ Tech, Privacy, Law.md` §C2PA
+- **Source**: `research--app-verification-tech-privacy-law.md` §C2PA
 - **Existing Code**: None
 - **Spec**: Tamper-evident chain of custody for media. SHA-256 hash binding of video data + manifest (origin, location, telemetry). RFC 3161 Time-Stamp Authority for cryptographic time proof.
 - **Dependencies**: C2PA SDK, TSA server integration
@@ -321,7 +321,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `App Verification_ Tech, Privacy, Law.md` §Advanced Detection
+- **Source**: `research--app-verification-tech-privacy-law.md` §Advanced Detection
 - **Existing Code**: None
 - **Spec**: Device screen flashes randomized color patterns during capture. Front camera verifies reflections on user's face match the emitted sequence. Pre-recorded video fails. Also detects Moire patterns, temporal inconsistencies.
 - **Dependencies**: F-MOBILE-01, native camera access
@@ -331,7 +331,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `Styx_ Commitment Device Market Analysis.md` §5.1
+- **Source**: `research--commitment-device-market-analysis.md` §5.1
 - **Existing Code**: None
 - **Spec**: Runtime integrity checks (Approov/Guardsquare) to detect emulators, virtual environments, rooted/jailbroken devices, hooking frameworks (Frida, Magisk, Xposed).
 - **Dependencies**: Third-party SDK (Approov or Guardsquare)
@@ -341,7 +341,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `Digital Exhaust No Contact Contracts.md` §Mathematical Framework
+- **Source**: `research--digital-exhaust-no-contact-contracts.md` §Mathematical Framework
 - **Existing Code**: None
 - **Spec**: Calculates P(Contact | Evidence) using Bayesian inference from telemetric streams: GPS std dev, screen wake frequency, accelerometer entropy, Wi-Fi BSSID density. Kullback-Leibler divergence between real-time and baseline distributions. Five sub-features: Geofenced Proximity (1mi radius), Nocturnal Rumination Lock (1-5AM), Stalking Velocity Monitor (>20 cycles/3 apps/10min), Wi-Fi Topography, Kinematic Agitation Threshold.
 - **Dependencies**: Native mobile sensors, background processing permissions
@@ -351,9 +351,9 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `Gamified-Behavior-Change-App-Design.md` §B, `App Verification_ Tech, Privacy, Law.md`
+- **Source**: `research--gamified-behavior-change-app-design.md` §B, `research--app-verification-tech-privacy-law.md`
 - **Existing Code**: None
-- **Spec**: Daily randomized audit at 12:00 PM user local time. Selected users must provide proof by 11:59 PM. 3-Strike Rule: three missed/failed audits = expulsion. Note: screen recording variant deemed legally untenable per App Verification doc; alternative proof methods required.
+- **Spec**: Daily randomized audit at 12:00 PM user local time. Selected users must provide proof by 11:59 PM. 3-Strike Rule: three missed/failed audits = expulsion. Note: screen recording variant deemed legally untenable per app-verification-tech-privacy-law research doc; alternative proof methods required.
 - **Dependencies**: F-MOBILE-03 (push notifications)
 - **Legal/Compliance**: Screen recording approach rejected due to wiretap/GDPR issues. Must use alternative proof methods.
 
@@ -450,7 +450,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Beta
 - **Priority**: P0
-- **Source**: `compliance.md` §2, `legal--compliance-guardrails.md`, `roadmap.md` §Beta (checked)
+- **Source**: `legal--aegis-protocol.md` §2, `legal--compliance-guardrails.md`, `roadmap.md` §Beta (checked)
 - **Existing Code**: `src/api/services/health/aegis.service.ts`, `src/api/services/health/aegis.service.spec.ts`
 - **Spec**: BMI floor 18.5 (prevents underweight goals). Weight loss velocity cap 2%/week (prevents starvation). Prevents incentivizing eating disorders.
 - **Dependencies**: None
@@ -471,7 +471,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Beta
 - **Priority**: P0 (beta-blocker)
-- **Source**: `compliance.md`, `legal--compliance-guardrails.md` §4.D, `implementation-status.md` (Planned)
+- **Source**: `legal--aegis-protocol.md`, `legal--compliance-guardrails.md` §4.D, `implementation-status.md` (Planned)
 - **Existing Code**: Reserved flag `KYC_ENFORCEMENT_ENABLED` in `.env.example`, no runtime gate
 - **Spec**: Enforce 18+ age verification at registration. Collect date of birth, validate against threshold. Phase 1 scope explicitly defers but this is a legal requirement before any real-money operation.
 - **Dependencies**: None
@@ -482,7 +482,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: PARTIAL
 - **Phase**: Beta
 - **Priority**: P1
-- **Source**: `Breakup Psychology And Loss Aversion.md`, `phase1-private-beta-scope.md`
+- **Source**: `research--breakup-psychology-loss-aversion.md`, `phase1-private-beta-scope.md`
 - **Existing Code**: `src/api/services/health/recovery-protocol.service.ts`, behavioral-logic constants (max 30 days, max 3 targets)
 - **Spec**: No-contact specific guardrails: max 30 days duration, max 3 no-contact targets, 3 missed attestations = auto-fail. Day 3 & Day 21 lockdown (prevent modification during danger zones). Five rationalization countermeasures (closure trap, apology guise, logistical loophole, special occasions, "I'm healed" illusion).
 - **Dependencies**: F-CORE-07, F-CORE-05
@@ -492,7 +492,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `compliance.md`, `legal--compliance-guardrails.md` §4.D, `implementation-status.md` (Planned)
+- **Source**: `legal--aegis-protocol.md`, `legal--compliance-guardrails.md` §4.D, `implementation-status.md` (Planned)
 - **Existing Code**: `src/api/src/modules/compliance/identity-verification.service.ts`, `src/api/src/modules/compliance/identity-provider.service.ts` (spec files exist, implementation status unclear)
 - **Spec**: Collect legal name, DOB, address. Full ID verification for higher stakes. Enforces age limits. Reduces fraud/money-laundering risk.
 - **Dependencies**: Third-party KYC provider (Stripe Identity, Jumio, etc.)
@@ -639,7 +639,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `Gamified-Behavior-Change-App-Design.md` §A
+- **Source**: `research--gamified-behavior-change-app-design.md` §A
 - **Existing Code**: None
 - **Spec**: Categorized directory of habits. Users select behavior track on onboarding (No Contact, Sobriety, Binge Eating, Social Media Fasting, etc.). Each track has customized milestones and verification methods.
 - **Dependencies**: F-CORE-05
@@ -660,7 +660,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Alpha
 - **Priority**: P1
-- **Source**: `Styx_ Commitment Device Market Analysis.md` §6.3
+- **Source**: `research--commitment-device-market-analysis.md` §6.3
 - **Existing Code**: Throughout codebase (Fury, Oath, Vault, Styx terminology)
 - **Spec**: River/Goddess of Oaths from Greek mythology. "Modern digital Unbreakable Oath" / "Ulysses Contract." Elite framing: "Ironman for your brain."
 - **Dependencies**: None
@@ -674,7 +674,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: PARTIAL
 - **Phase**: Beta
 - **Priority**: P1
-- **Source**: `Breakup Psychology And Loss Aversion.md` §3, `research--psychology-behavior.md` §Flow 5
+- **Source**: `research--breakup-psychology-loss-aversion.md` §3, `research--psychology-behavior.md` §Flow 5
 - **Existing Code**: `src/api/database/schema.sql` (accountability_partners table), attestation cosigning logic
 - **Spec**: After Week 1, offer opt-in partner who sees progress (not vault amount). Partners can cosign attestations, veto No-Contact breaks, and receive weekly updates. 30% higher completion with accountability partner (stickK data). For high-stakes contracts ($500+), partners become financially incentivized adversaries (30% bounty).
 - **Dependencies**: F-CORE-07, F-VERIFY-06
@@ -823,7 +823,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: STUB
 - **Phase**: Omega
 - **Priority**: P2
-- **Source**: `roadmap--ai-workstreams.md` §WS3 Omega, `B2B Expansion From Heartbreak Niche.md`
+- **Source**: `roadmap--ai-workstreams.md` §WS3 Omega, `research--b2b-expansion-heartbreak-niche.md`
 - **Existing Code**: `src/web/app/hr/` route exists
 - **Spec**: Read-only UI for corporate managers showing aggregated, anonymized group habit metrics. No individual identification. ERISA compliance.
 - **Dependencies**: F-B2B-01, F-B2B-03
@@ -953,7 +953,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `B2B Expansion From Heartbreak Niche.md` §Enterprise Metrics
+- **Source**: `research--b2b-expansion-heartbreak-niche.md` §Enterprise Metrics
 - **Existing Code**: None
 - **Spec**: Aggregate behavioral integrity score at department/org level. HR measures wellness program ROI. $3.27 medical savings per $1 invested, $2.73 absenteeism reduction per $1.
 - **Dependencies**: F-B2B-03, F-CORE-03
@@ -963,7 +963,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `B2B Expansion From Heartbreak Niche.md` §B2B2C Enterprise Tool
+- **Source**: `research--b2b-expansion-heartbreak-niche.md` §B2B2C Enterprise Tool
 - **Existing Code**: None
 - **Spec**: Professional dashboard for therapists/coaches to monitor client behavioral contracts, adherence rates, intervention efficacy. EHR integration. Designed for Intensive Outpatient Programs (IOPs).
 - **Dependencies**: F-B2B-01, F-B2B-03
@@ -973,7 +973,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Omega
 - **Priority**: P2
-- **Source**: `there+back-again.md` §Infrastructure
+- **Source**: `architecture--alpha-to-omega-plan.md` §Infrastructure
 - **Existing Code**: `src/api/src/modules/b2b/datalake.service.ts`
 - **Spec**: Batch analytics snapshots: contract metrics, behavioral trends, cohort analysis. PostgreSQL logical replication for external analytics.
 - **Dependencies**: PostgreSQL
@@ -994,7 +994,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `B2B Expansion From Heartbreak Niche.md` §Secondary Data Monetization
+- **Source**: `research--b2b-expansion-heartbreak-niche.md` §Secondary Data Monetization
 - **Existing Code**: None
 - **Spec**: Anonymized behavioral data sold to life insurance companies, enterprise wellness programs, research institutions. "Behavioral surplus" from user activity.
 - **Dependencies**: F-B2B-03, F-AEGIS-05
@@ -1019,7 +1019,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `Gamified-Behavior-Change-App-Design.md` §D, `Prediction Markets_ Regulation & Finance.md`
+- **Source**: `research--gamified-behavior-change-app-design.md` §D, `research--prediction-markets-regulation-finance.md`
 - **Existing Code**: None
 - **Spec**: Non-participants wager on anonymous cohort outcomes. Spectators view pseudonymous groups. Betting lines: who breaks first, group success rate. Auto-payout via smart contracts. Total prediction market volume >$60B in 2025.
 - **Dependencies**: F-CORE-12, F-LEGAL-03
@@ -1030,7 +1030,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `Gamified-Behavior-Change-App-Design.md` §C
+- **Source**: `research--gamified-behavior-change-app-design.md` §C
 - **Existing Code**: None
 - **Spec**: Two tiers: Micro-Wagers (daily check-ins, low stakes) and Macro-Wagers (monthly/6-month milestones, high stakes). Locked in escrow, released on verified completion.
 - **Dependencies**: F-CORE-04, F-CORE-07
@@ -1040,7 +1040,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `Smart Contracts for Behavioral Wagers.md` §Structural Paradigms
+- **Source**: `research--smart-contracts-behavioral-wagers.md` §Structural Paradigms
 - **Existing Code**: None
 - **Spec**: CommitmentFactory deploys individual BidCommitment/Escrow contracts per user. Time-locked state machine: AWAITING_DEPOSIT → LOCKED → VERIFICATION → RESOLVED. Pull-over-push withdrawal (CEI pattern). UUPS/Diamond proxy upgradeability. Gas optimization via storage packing.
 - **Dependencies**: Solidity development, EVM deployment
@@ -1050,7 +1050,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `Smart Contracts for Behavioral Wagers.md` §ZKPs, `Bounty_Shame Protocol Safety & Legality.md` §3.3.1
+- **Source**: `research--smart-contracts-behavioral-wagers.md` §ZKPs, `research--bounty-shame-protocol-safety-legality.md` §3.3.1
 - **Existing Code**: None
 - **Spec**: User device generates zero-knowledge proof from HealthKit/Google Fit data via RISC Zero/Bonsai. Binary attestation (e.g., "User X exceeded 50 miles") without exposing GPS, HR, timestamps. Submitted to smart contract via oracle network.
 - **Dependencies**: F-MARKET-03, F-VERIFY-02, ZKP proving engine
@@ -1095,7 +1095,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Alpha
 - **Priority**: P0
-- **Source**: `there+back-again.md` §Infrastructure, `ship-baseline-report.md`
+- **Source**: `architecture--alpha-to-omega-plan.md` §Infrastructure, `ship-baseline-report.md`
 - **Existing Code**: `.github/workflows/` (CI: lint/test/build/gates/CodeQL; CD: tag-triggered deploy to Render)
 - **Spec**: CI: Node 20, security audit, turbo test + build + lint, Gates 04-06, CodeQL analysis. CD: tag-triggered deploy to Render with smoke test.
 - **Dependencies**: GitHub Actions, Render
@@ -1115,7 +1115,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Added Feb 2026
 - **Priority**: P1
-- **Source**: `there+back-again.md` §Infrastructure
+- **Source**: `architecture--alpha-to-omega-plan.md` §Infrastructure
 - **Existing Code**: `infra/terraform/`
 - **Spec**: Terraform configs for Render services + Cloudflare R2. Reproducible infrastructure deployments.
 - **Dependencies**: Terraform
@@ -1125,7 +1125,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Delta
 - **Priority**: P1
-- **Source**: `there+back-again.md` §Infrastructure, `roadmap--ai-workstreams.md` §WS5
+- **Source**: `architecture--alpha-to-omega-plan.md` §Infrastructure, `roadmap--ai-workstreams.md` §WS5
 - **Existing Code**: Terraform-managed
 - **Spec**: Rate limits: auth 5/min, financial 10/min, general 120/min. Security headers: HSTS, CSP, XSS protection. Bot management. Edge-level geofencing.
 - **Dependencies**: F-INFRA-04
@@ -1135,7 +1135,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Various
 - **Priority**: P0
-- **Source**: `roadmap.md` §Validation Gates, `there+back-again.md`
+- **Source**: `roadmap.md` §Validation Gates, `architecture--alpha-to-omega-plan.md`
 - **Existing Code**: `scripts/validation/01-07` (7 scripts)
 - **Spec**: Gate 01: phantom money check. Gate 02: simulator spoof check. Gate 03: full loop E2E. Gate 04: redacted build check (CI). Gate 05: behavioral physics constants (CI). Gate 06: security invariants (CI). Gate 07: claim drift check.
 - **Dependencies**: F-CORE-01, F-CORE-05
@@ -1165,7 +1165,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `Prediction Markets_ Regulation & Finance.md` §App Store Financials
+- **Source**: `research--prediction-markets-regulation-finance.md` §App Store Financials
 - **Existing Code**: None
 - **Spec**: External payment via Web Shop (Epic v. Apple injunction). Browser-based checkout (Stripe). 0% Apple commission on external sales in US. Route financial onboarding to web, keep mobile as "Verification Utility."
 - **Dependencies**: F-CORE-04
@@ -1233,7 +1233,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Beta
 - **Priority**: P1
-- **Source**: `legal--performance-wagering.md`, `Prediction Markets_ Regulation & Finance.md` §Dominant Factor Test
+- **Source**: `legal--performance-wagering.md`, `research--prediction-markets-regulation-finance.md` §Dominant Factor Test
 - **Existing Code**: None
 - **Spec**: Formal legal defense document: Styx is "game of skill" not "game of chance." Three differentiators: (1) dynamic entry/exit, (2) price discovery via aggregate supply/demand, (3) utility for behavioral hedging. "Dominant Factor Test" analysis per jurisdiction.
 - **Dependencies**: Legal counsel
@@ -1284,23 +1284,23 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 | `research--behavioral-physics-manifesto.md` | F-CORE-05 (design philosophy — 7 design rules) |
 | `research--behavioral-engineering-masters.md` | F-CORE-09, F-CORE-10, F-UX-01, F-UX-04, F-UX-08, F-AEGIS-08 |
 | `research--market-analysis.md` | F-B2B-04, F-B2B-07, F-CORE-15, F-SOCIAL-05 |
-| `Breakup Psychology And Loss Aversion.md` | F-CORE-10, F-CORE-11, F-AEGIS-04, F-SOCIAL-01 |
-| `App Verification_ Tech, Privacy, Law.md` | F-VERIFY-08, F-VERIFY-09, F-VERIFY-10, F-VERIFY-11, F-VERIFY-13 |
-| `B2B Expansion From Heartbreak Niche.md` | F-B2B-04, F-B2B-05, F-B2B-08 |
-| `Behavior Change App Design.md` | F-CORE-15, F-UX-09 |
-| `Bounty_Shame Protocol Safety & Legality.md` | F-MARKET-04, F-FURY-04 |
-| `Digital Exhaust No Contact Contracts.md` | F-VERIFY-12 |
-| `Gamified-Behavior-Change-App-Design.md` | F-VERIFY-13, F-MARKET-01, F-MARKET-02, F-CORE-12 |
-| `Prediction Markets_ Regulation & Finance.md` | F-MARKET-01, F-INFRA-09, F-LEGAL-05 |
-| `Smart Contracts for Behavioral Wagers.md` | F-MARKET-03, F-MARKET-04, F-CORE-13 |
-| `Styx_ Commitment Device Market Analysis.md` | F-VERIFY-11, F-UX-11 |
+| `research--breakup-psychology-loss-aversion.md` | F-CORE-10, F-CORE-11, F-AEGIS-04, F-SOCIAL-01 |
+| `research--app-verification-tech-privacy-law.md` | F-VERIFY-08, F-VERIFY-09, F-VERIFY-10, F-VERIFY-11, F-VERIFY-13 |
+| `research--b2b-expansion-heartbreak-niche.md` | F-B2B-04, F-B2B-05, F-B2B-08 |
+| `research--behavior-change-app-design.md` | F-CORE-15, F-UX-09 |
+| `research--bounty-shame-protocol-safety-legality.md` | F-MARKET-04, F-FURY-04 |
+| `research--digital-exhaust-no-contact-contracts.md` | F-VERIFY-12 |
+| `research--gamified-behavior-change-app-design.md` | F-VERIFY-13, F-MARKET-01, F-MARKET-02, F-CORE-12 |
+| `research--prediction-markets-regulation-finance.md` | F-MARKET-01, F-INFRA-09, F-LEGAL-05 |
+| `research--smart-contracts-behavioral-wagers.md` | F-MARKET-03, F-MARKET-04, F-CORE-13 |
+| `research--commitment-device-market-analysis.md` | F-VERIFY-11, F-UX-11 |
 | `evaluation-to-growth--behavioral-physics.md` | F-FURY-04, F-MARKET-06 |
 | `evaluation-to-growth--strategic-review.md` | F-FURY-03, F-FURY-07, F-FURY-08, F-AEGIS-07, F-LEGAL-04, F-B2B-09, F-INFRA-10 |
 | `architecture--feasibility-stack.md` | F-VERIFY-02, F-VERIFY-07, F-FURY-01, F-INFRA-03, F-WEB-05 |
 | `architecture--truth-blockchain.md` | F-CORE-02, F-VERIFY-01, F-INFRA-03 |
-| `technical-feasibility.md` | F-CORE-01, F-VERIFY-07, F-FURY-01 |
-| `there+back-again.md` | F-INFRA-02, F-INFRA-04, F-INFRA-05, F-B2B-06 |
-| `compliance.md` | F-AEGIS-01, F-CORE-04, F-AEGIS-03 |
+| `architecture--technical-feasibility.md` | F-CORE-01, F-VERIFY-07, F-FURY-01 |
+| `architecture--alpha-to-omega-plan.md` | F-INFRA-02, F-INFRA-04, F-INFRA-05, F-B2B-06 |
+| `legal--aegis-protocol.md` | F-AEGIS-01, F-CORE-04, F-AEGIS-03 |
 | `legal--compliance-guardrails.md` | F-AEGIS-02, F-AEGIS-05, F-AEGIS-06, F-LEGAL-01, F-LEGAL-03, F-CORE-12 |
 | `legal--gatekeeper-compliance.md` | F-INFRA-01, F-UX-10, F-LEGAL-06 |
 | `legal--performance-wagering.md` | F-CORE-04, F-LEGAL-05, F-LEGAL-08 |
@@ -1377,4 +1377,4 @@ Per `phase1-private-beta-scope.md`:
 
 ---
 
-*Generated by Claude Code from 37 source documents + codebase analysis. All features cite at least one source document. Implementation status verified against `docs/implementation-status.md` and direct codebase inspection.*
+*Generated by Claude Code from 37 source documents + codebase analysis. All features cite at least one source document. Implementation status verified against `docs/planning/implementation-status.md` and direct codebase inspection.*

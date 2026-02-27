@@ -116,16 +116,16 @@ Development threads trace the intellectual and engineering arc of the project fr
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
-| `DOC-RES-09` | `docs/research/Breakup Psychology And Loss Aversion.md` | #research #psychology #recovery | Psychological pain-point mapping: the 90-day breakup recovery timeline. Analyzes attachment-driven relapse, neurobiological withdrawal parallels, and loss aversion intervention windows for No-Contact contracts. |
-| `DOC-RES-10` | `docs/research/App Verification_ Tech, Privacy, Law.md` | #research #architecture #compliance | Cryptographic verification and the Randomized Verification Lottery (RVL) concept. Analyzes the jurisprudential viability of randomized screen recording for behavioral compliance under US wiretap law and 2026 app store policies. |
-| `DOC-RES-11` | `docs/research/B2B Expansion From Heartbreak Niche.md` | #research #b2b #strategy | Strategic GTM plan: transitioning from the heartbreak recovery niche (18K beta users) to enterprise B2B2C. Covers relationship coach/therapist SaaS licensing and behavioral data monetization. |
-| `DOC-RES-12` | `docs/research/Behavior Change App Design.md` | #research #architecture #psychology | The architecture of behavioral change in digital therapeutics. Bridges cognitive neuroscience and relational database schema for tracking habit formation, cognitive load, and gamified reward systems. |
-| `DOC-RES-13` | `docs/research/Bounty_Shame Protocol Safety & Legality.md` | #research #compliance #safety | Multidisciplinary analysis of the "Bounty/Shame" protocol. Examines app store safety guidelines (Apple/Google UGC rules), punitive accountability mechanics, and decentralized legal frameworks for peer review. |
-| `DOC-RES-14` | `docs/research/Digital Exhaust No Contact Contracts.md` | #research #architecture #recovery | Quantifying "No Contact" via digital exhaust. Explores telemetry-driven behavioral enforcement using secondary indicators (screen time, app usage) when direct communication log access is sandboxed by mobile OS privacy. |
-| `DOC-RES-15` | `docs/research/Gamified-Behavior-Change-App-Design.md` | #research #brainstorm #architecture | Feature specifications for the "Blockchain of Truth" app. Transcript-derived feature ingestion broken into specifications with deep research prompts. Covers PvE/PvP pathways, verification, and gamification layers. |
-| `DOC-RES-16` | `docs/research/Prediction Markets_ Regulation & Finance.md` | #research #legal #regulation | Spectator prediction markets in 2026. Analyzes the convergence of federal derivatives regulation (CFTC), state gaming law, and decentralized tokenomics. Covers $60B+ trading volume and the Kalshi precedent. |
-| `DOC-RES-17` | `docs/research/Smart Contracts for Behavioral Wagers.md` | #research #architecture #legal | Architecture and legal classification of milestone-based commitment contracts. Covers DeFi escrow patterns, cryptographic proof of behavioral milestones, and the skill-based contest legal distinction. |
-| `DOC-RES-18` | `docs/research/Styx_ Commitment Device Market Analysis.md` | #research #market #retention | Market gap analysis: the digital detox angle. Exposes the structural failure of behavioral health apps — $7.48B market with 3.9% 15-day retention. Positions Styx's verification layer as the missing piece. |
+| `DOC-RES-09` | `docs/research/research--breakup-psychology-loss-aversion.md` | #research #psychology #recovery | Psychological pain-point mapping: the 90-day breakup recovery timeline. Analyzes attachment-driven relapse, neurobiological withdrawal parallels, and loss aversion intervention windows for No-Contact contracts. |
+| `DOC-RES-10` | `docs/research/research--app-verification-tech-privacy-law.md` | #research #architecture #compliance | Cryptographic verification and the Randomized Verification Lottery (RVL) concept. Analyzes the jurisprudential viability of randomized screen recording for behavioral compliance under US wiretap law and 2026 app store policies. |
+| `DOC-RES-11` | `docs/research/research--b2b-expansion-heartbreak-niche.md` | #research #b2b #strategy | Strategic GTM plan: transitioning from the heartbreak recovery niche (18K beta users) to enterprise B2B2C. Covers relationship coach/therapist SaaS licensing and behavioral data monetization. |
+| `DOC-RES-12` | `docs/research/research--behavior-change-app-design.md` | #research #architecture #psychology | The architecture of behavioral change in digital therapeutics. Bridges cognitive neuroscience and relational database schema for tracking habit formation, cognitive load, and gamified reward systems. |
+| `DOC-RES-13` | `docs/research/research--bounty-shame-protocol-safety-legality.md` | #research #compliance #safety | Multidisciplinary analysis of the "Bounty/Shame" protocol. Examines app store safety guidelines (Apple/Google UGC rules), punitive accountability mechanics, and decentralized legal frameworks for peer review. |
+| `DOC-RES-14` | `docs/research/research--digital-exhaust-no-contact-contracts.md` | #research #architecture #recovery | Quantifying "No Contact" via digital exhaust. Explores telemetry-driven behavioral enforcement using secondary indicators (screen time, app usage) when direct communication log access is sandboxed by mobile OS privacy. |
+| `DOC-RES-15` | `docs/research/research--gamified-behavior-change-app-design.md` | #research #brainstorm #architecture | Feature specifications for the "Blockchain of Truth" app. Transcript-derived feature ingestion broken into specifications with deep research prompts. Covers PvE/PvP pathways, verification, and gamification layers. |
+| `DOC-RES-16` | `docs/research/research--prediction-markets-regulation-finance.md` | #research #legal #regulation | Spectator prediction markets in 2026. Analyzes the convergence of federal derivatives regulation (CFTC), state gaming law, and decentralized tokenomics. Covers $60B+ trading volume and the Kalshi precedent. |
+| `DOC-RES-17` | `docs/research/research--smart-contracts-behavioral-wagers.md` | #research #architecture #legal | Architecture and legal classification of milestone-based commitment contracts. Covers DeFi escrow patterns, cryptographic proof of behavioral milestones, and the skill-based contest legal distinction. |
+| `DOC-RES-18` | `docs/research/research--commitment-device-market-analysis.md` | #research #market #retention | Market gap analysis: the digital detox angle. Exposes the structural failure of behavioral health apps — $7.48B market with 3.9% 15-day retention. Positions Styx's verification layer as the missing piece. |
 
 ### 3. Research — Evaluation-to-Growth Reviews
 
@@ -134,16 +134,16 @@ Development threads trace the intellectual and engineering arc of the project fr
 | `DOC-E2G-01` | `docs/research/evaluation-to-growth--behavioral-physics.md` | #research #E2G #philosophy | E2G review of the Behavioral Physics Manifesto. Analyzes the systemic and philosophical foundations of the Styx engine, treating vices as interacting drive nodes in a cybernetic control loop. |
 | `DOC-E2G-02` | `docs/research/evaluation-to-growth--strategic-review.md` | #research #E2G #strategy | E2G Strategic Review. Evaluation phase critique, reinforcement analysis, risk assessment, and growth recommendations for the overall Styx project trajectory. |
 
-### 4. Research — Outside Sources (Reference Library)
+### 4. Research — Reference Library
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
-| `DOC-EXT-01` | `docs/research/outisde-sources/pressfield_the-war-of-art.txt` | #research #reference #creativity | Full text of Steven Pressfield's "The War of Art." Source material for the Resistance concept and Creative Stream codification. Plain text format. |
-| `DOC-EXT-02` | `docs/research/outisde-sources/The War of Art (HowEntrepreneur.com) By   Steven Pressfield.epub` | #research #reference #creativity | EPUB edition of "The War of Art" by Steven Pressfield. Alternate format of `DOC-EXT-01` for annotated reading. Binary file. |
-| `DOC-EXT-03` | `docs/research/outisde-sources/Atomic Habits_djvu.txt` | #research #reference #habits | DjVu-extracted text of James Clear's "Atomic Habits." Source material for Identity-Based habit formation and the 1% improvement compound model. |
-| `DOC-EXT-04` | `docs/research/outisde-sources/dokumen.pub_good-habits-bad-habits-the-science-of-making-positive-changes-that-stick-hardcovernbsped-1250159075-9781250159076.epub` | #research #reference #habits | EPUB of Wendy Wood's "Good Habits, Bad Habits." Research source on automaticity, context cues, and the science of habit persistence. Binary file. |
-| `DOC-EXT-05` | `docs/research/outisde-sources/dokumen.pub_the-craving-mind-from-cigarettes-to-smartphones-to-lovewhy-we-get-hooked-and-how-we-can-break-bad-habits-9780300227604.pdf` | #research #reference #mindfulness | PDF of Judson Brewer's "The Craving Mind." Source material for the RAIN method (Recognize, Allow, Investigate, Note) and mindfulness-based behavioral change. Binary file. |
-| `DOC-EXT-06` | `docs/research/outisde-sources/dokumen.pub_tiny-habits-the-small-changes-that-change-everything-9780358003991-9780358003328-9780358362777.azw3` | #research #reference #habits | AZW3 (Kindle) of BJ Fogg's "Tiny Habits." Source material for the MAP model (Motivation, Ability, Prompt) and micro-habit design. Binary file. |
+| `DOC-EXT-01` | `docs/research/reference-library/pressfield--the-war-of-art.txt` | #research #reference #creativity | Full text of Steven Pressfield's "The War of Art." Source material for the Resistance concept and Creative Stream codification. Plain text format. |
+| `DOC-EXT-02` | `docs/research/reference-library/pressfield--the-war-of-art.epub` | #research #reference #creativity | EPUB edition of "The War of Art" by Steven Pressfield. Alternate format of `DOC-EXT-01` for annotated reading. Binary file. |
+| `DOC-EXT-03` | `docs/research/reference-library/clear--atomic-habits.txt` | #research #reference #habits | DjVu-extracted text of James Clear's "Atomic Habits." Source material for Identity-Based habit formation and the 1% improvement compound model. |
+| `DOC-EXT-04` | `docs/research/reference-library/wood--good-habits-bad-habits.epub` | #research #reference #habits | EPUB of Wendy Wood's "Good Habits, Bad Habits." Research source on automaticity, context cues, and the science of habit persistence. Binary file. |
+| `DOC-EXT-05` | `docs/research/reference-library/brewer--the-craving-mind.pdf` | #research #reference #mindfulness | PDF of Judson Brewer's "The Craving Mind." Source material for the RAIN method (Recognize, Allow, Investigate, Note) and mindfulness-based behavioral change. Binary file. |
+| `DOC-EXT-06` | `docs/research/reference-library/fogg--tiny-habits.azw3` | #research #reference #habits | AZW3 (Kindle) of BJ Fogg's "Tiny Habits." Source material for the MAP model (Motivation, Ability, Prompt) and micro-habit design. Binary file. |
 
 ### 5. Legal & Compliance
 
@@ -152,7 +152,7 @@ Development threads trace the intellectual and engineering arc of the project fr
 | `DOC-LEG-01` | `docs/legal/legal--performance-wagering.md` | #legal #compliance #gambling | Exhaustive legal analysis of personal performance wagering and skill-based deposit contracts in the United States. Establishes the "Dominant Factor Test" defense, FBO account requirements, CFTC boundary analysis, and state-by-state regulatory landscape. |
 | `DOC-LEG-02` | `docs/legal/legal--compliance-guardrails.md` | #legal #compliance #research | Research memo (external synthesis). Aggregates external analysis and references for legal/compliance exploration. Covers the Aegis Protocol guardrails, stake limits, geofencing requirements, and FTC consumer protection considerations. Labeled as research, not operational policy. |
 | `DOC-LEG-03` | `docs/legal/legal--gatekeeper-compliance.md` | #legal #compliance #platforms | Forensic report on platform survival. Defines the "Linguistic Cloaking" strategy to bypass App Store Guideline 5.3 rejections and payment processor restricted business list bans. Covers Apple, Google Play, Stripe, and high-risk merchant underwriting. |
-| `DOC-LEG-04` | `docs/legal/compliance.md` | #legal #compliance #governance | Styx Legal Compliance Guardrails (The Aegis Protocol) — operational policy document. Defines skill-based contest classification, BMI floors (18.5), velocity caps (2%/week), age gates, and geofencing jurisdiction tiers. The authoritative compliance reference. |
+| `DOC-LEG-04` | `docs/legal/legal--aegis-protocol.md` | #legal #compliance #governance | Styx Legal Compliance Guardrails (The Aegis Protocol) — operational policy document. Defines skill-based contest classification, BMI floors (18.5), velocity caps (2%/week), age gates, and geofencing jurisdiction tiers. The authoritative compliance reference. |
 
 ### 6. Architecture & Design
 
@@ -160,8 +160,8 @@ Development threads trace the intellectual and engineering arc of the project fr
 |----|------|------|------------|
 | `DOC-ARC-01` | `docs/architecture/architecture--truth-blockchain.md` | #architecture #research #oracles | Technical feasibility and architecture report for the "Blockchain of Truth." Exhaustive blueprint covering HealthKit/Google Fit hardware oracle integration, financial escrow validation, pHash video pipeline, double-anonymized peer review routing, and the recommended technology stack. |
 | `DOC-ARC-02` | `docs/architecture/architecture--feasibility-stack.md` | #architecture #research #techstack | Pillar 5: Technical Feasibility & Architecture. Perplexity-generated Lead Software Architect analysis. Covers wearable API integration (read-only enforcement, manual entry filtering), financial API design (Plaid), video validation costs, and the cost-effective stack recommendation ($2K/year burn). |
-| `DOC-ARC-03` | `docs/architecture/technical-feasibility.md` | #architecture #summary | Condensed technical feasibility summary. Core systems (PostgreSQL double-entry ledger, Cloudflare R2 zero-egress media, BullMQ proof routing), biometric integration strategy (HealthKit `HKMetadataKeyWasUserEntered`, Health Connect `recordingMethod`), and scalability notes. |
-| `DOC-ARC-04` | `docs/architecture/there+back-again.md` | #architecture #roadmap #validation | "There and Back Again" — the Alpha-to-Omega implementation plan (v3.0). Five-phase timeline (Iron Core → Shield → Panopticon → Arena → Empire) with micro-tasks, plus Technical Validation Gates (Phantom Money Test, Simulator Spoof, Twin Upload, Gatekeeper Test). Tracks completion status with checkmarks. |
+| `DOC-ARC-03` | `docs/architecture/architecture--technical-feasibility.md` | #architecture #summary | Condensed technical feasibility summary. Core systems (PostgreSQL double-entry ledger, Cloudflare R2 zero-egress media, BullMQ proof routing), biometric integration strategy (HealthKit `HKMetadataKeyWasUserEntered`, Health Connect `recordingMethod`), and scalability notes. |
+| `DOC-ARC-04` | `docs/architecture/architecture--alpha-to-omega-plan.md` | #architecture #roadmap #validation | "There and Back Again" — the Alpha-to-Omega implementation plan (v3.0). Five-phase timeline (Iron Core → Shield → Panopticon → Arena → Empire) with micro-tasks, plus Technical Validation Gates (Phantom Money Test, Simulator Spoof, Twin Upload, Gatekeeper Test). Tracks completion status with checkmarks. |
 | `DOC-ADR-01` | `docs/adr/001-dual-layer-services-modules.md` | #architecture #adr #api | ADR-001: Accepted decision to use dual-layer architecture — `services/` (pure domain logic) and `src/modules/` (NestJS HTTP/DI wiring). Establishes unidirectional dependency (modules → services, never reverse) and testing strategy. |
 
 ### 7. API Specification
@@ -174,16 +174,16 @@ Development threads trace the intellectual and engineering arc of the project fr
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
-| `DOC-ROAD-01` | `docs/roadmap.md` | #roadmap #architecture #planning | Alpha-to-Omega Roadmap (v3.0). Primary chronological development guide with 5 phases and completion checkmarks. Maps the transition from philosophical manifesto to global B2B behavioral marketplace. |
-| `DOC-ROAD-02` | `docs/roadmap--ai-workstreams.md` | #roadmap #architecture #planning | Parallel AI-Engineer Workstreams. Phase-by-phase execution plan for autonomous parallel AI engineers. Defines 5 concurrent workstreams (API/Ledger, Web Dashboard, Mobile Client, Desktop Admin, Pitch Deck) with strict boundary management for independent execution. |
+| `DOC-ROAD-01` | `docs/planning/roadmap.md` | #roadmap #architecture #planning | Alpha-to-Omega Roadmap (v3.0). Primary chronological development guide with 5 phases and completion checkmarks. Maps the transition from philosophical manifesto to global B2B behavioral marketplace. |
+| `DOC-ROAD-02` | `docs/planning/roadmap--ai-workstreams.md` | #roadmap #architecture #planning | Parallel AI-Engineer Workstreams. Phase-by-phase execution plan for autonomous parallel AI engineers. Defines 5 concurrent workstreams (API/Ledger, Web Dashboard, Mobile Client, Desktop Admin, Pitch Deck) with strict boundary management for independent execution. |
 
 ### 9. Implementation & Ship Status
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
-| `DOC-IMPL-01` | `docs/implementation-status.md` | #compliance #governance #validation | Claim-to-Control Matrix. Maps high-level product/security/compliance claims to runtime implementation status (Implemented / Partial / Planned / Research). Covers rate limiting, JWT enforcement, geofencing, KYC, and web auth migration. |
-| `DOC-IMPL-02` | `docs/phase1-private-beta-scope.md` | #roadmap #beta #governance | Phase 1 Private Beta scope lock. Defines iOS-first TestFlight external beta targeting No-Contact recovery contracts. Specifies test-money mode, US allowlist, web as admin companion, desktop as internal judge tool, B2B as internal demo only. |
-| `DOC-IMPL-03` | `docs/ship-baseline-report.md` | #validation #beta #governance | Ship Baseline Report for Phase 1 Private Beta. Documents lint/test/build pass status, identifies non-blocking reliability smells (open-handle warning, large-chunk pitch build), and seeds the red-list for ship-readiness work. Generated 2026-02-26. |
+| `DOC-IMPL-01` | `docs/planning/implementation-status.md` | #compliance #governance #validation | Claim-to-Control Matrix. Maps high-level product/security/compliance claims to runtime implementation status (Implemented / Partial / Planned / Research). Covers rate limiting, JWT enforcement, geofencing, KYC, and web auth migration. |
+| `DOC-IMPL-02` | `docs/planning/phase1-private-beta-scope.md` | #roadmap #beta #governance | Phase 1 Private Beta scope lock. Defines iOS-first TestFlight external beta targeting No-Contact recovery contracts. Specifies test-money mode, US allowlist, web as admin companion, desktop as internal judge tool, B2B as internal demo only. |
+| `DOC-IMPL-03` | `docs/planning/ship-baseline-report.md` | #validation #beta #governance | Ship Baseline Report for Phase 1 Private Beta. Documents lint/test/build pass status, identifies non-blocking reliability smells (open-handle warning, large-chunk pitch build), and seeds the red-list for ship-readiness work. Generated 2026-02-26. |
 
 ### 10. Brainstorm
 
@@ -251,7 +251,7 @@ Development threads trace the intellectual and engineering arc of the project fr
 | #market / #b2b | `DOC-RES-04`, `DOC-RES-07`, `DOC-RES-08`, `DOC-RES-11`, `DOC-RES-18` |
 | #pitch / #branding | `DOC-PIT-01`–`DOC-PIT-06` |
 | #beta / #validation | `DOC-IMPL-02`, `DOC-IMPL-03` |
-| #reference (outside sources) | `DOC-EXT-01`–`DOC-EXT-06` |
+| #reference (reference library) | `DOC-EXT-01`–`DOC-EXT-06` |
 
 ### Thread → File Mapping
 
@@ -277,7 +277,7 @@ Development threads trace the intellectual and engineering arc of the project fr
 | Binary reference books (`.epub`, `.pdf`, `.azw3`) | 4 |
 | Plain text sources (`.txt`) | 2 |
 | Pitch assets (`.pptx`, `.html`, `.js`, `.css`) | 6 |
-| Research documents | 24 (18 original + 6 outside sources) |
+| Research documents | 24 (18 original + 6 reference library) |
 | Legal/compliance documents | 4 |
 | Architecture/ADR documents | 5 |
 | Roadmap/planning documents | 2 |
