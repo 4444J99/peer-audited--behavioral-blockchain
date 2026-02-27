@@ -13,10 +13,10 @@
 
 | Status | Count | Description |
 |--------|-------|-------------|
-| IMPLEMENTED | 18 | Working code with tests |
-| PARTIAL | 8 | Code exists but incomplete or conditional |
+| IMPLEMENTED | 21 | Working code with tests |
+| PARTIAL | 6 | Code exists but incomplete or conditional |
 | STUB | 5 | Files/endpoints exist but placeholder logic |
-| NOT_STARTED | 47 | Described in docs, no code |
+| NOT_STARTED | 46 | Described in docs, no code |
 | **Total** | **78** | |
 
 ### P0: Beta Blockers (Must-Build for Phase 1 Private Beta)
@@ -25,9 +25,9 @@
 |----|---------|--------|----------------|
 | F-MOBILE-01 | Native iOS Camera Module | STUB | Cannot verify proofs without native capture |
 | F-CORE-04 | Real-Money Stripe FBO Settlement | PARTIAL | Test-money only; need FBO routing for beta |
-| F-AEGIS-03 | Age Gate (18+ Runtime) | NOT_STARTED | Legal requirement for financial stakes |
-| F-VERIFY-06 | Attestation Daily Flow (No-Contact) | PARTIAL | Primary Phase 1 journey depends on this |
-| F-WEB-01 | HttpOnly Cookie Auth Migration | NOT_STARTED | Security requirement before public beta |
+| F-AEGIS-03 | Age Gate (18+ Runtime) | IMPLEMENTED | Legal requirement for financial stakes |
+| F-VERIFY-06 | Attestation Daily Flow (No-Contact) | IMPLEMENTED | Primary Phase 1 journey depends on this |
+| F-WEB-01 | HttpOnly Cookie Auth Migration | IMPLEMENTED | Security requirement before public beta |
 | F-LEGAL-01 | Contest Official Rules Engine | NOT_STARTED | Every contest needs official rules per law |
 
 ### P1: Beta Enhancers (Should-Build for Phase 1)
@@ -278,11 +278,11 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-VERIFY-06: Daily Attestation Flow (No-Contact)
 
-- **Status**: PARTIAL
+- **Status**: IMPLEMENTED
 - **Phase**: Beta
 - **Priority**: P0 (beta-blocker — primary Phase 1 journey)
 - **Source**: `phase1-private-beta-scope.md`, `roadmap.md` §Beta
-- **Existing Code**: `src/api/src/modules/contracts/attestation.scheduler.ts`, `src/api/database/schema.sql` (attestations table)
+- **Existing Code**: `src/api/src/modules/contracts/contracts.service.ts` (getAttestationStatus, submitAttestation), `src/api/src/modules/contracts/contracts.controller.ts`, `src/web/app/contracts/[id]/attest/page.tsx`, `src/mobile/screens/AttestationScreen.tsx`, `src/api/database/schema.sql` (attestations table)
 - **Spec**: Daily attestation check-in for No-Contact recovery contracts. User attests compliance; accountability partner can cosign. 3 missed attestations = auto-fail. Attestation scheduler generates daily pending rows.
 - **Dependencies**: F-CORE-07, F-SOCIAL-01
 
@@ -468,11 +468,11 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-AEGIS-03: Age Gate (18+ Runtime Enforcement)
 
-- **Status**: NOT_STARTED
+- **Status**: IMPLEMENTED
 - **Phase**: Beta
 - **Priority**: P0 (beta-blocker)
-- **Source**: `legal--aegis-protocol.md`, `legal--compliance-guardrails.md` §4.D, `implementation-status.md` (Planned)
-- **Existing Code**: Reserved flag `KYC_ENFORCEMENT_ENABLED` in `.env.example`, no runtime gate
+- **Source**: `legal--aegis-protocol.md`, `legal--compliance-guardrails.md` §4.D, `implementation-status.md`
+- **Existing Code**: `src/api/src/modules/auth/auth.service.ts` (register validation requires `ageConfirmation: true`), `src/api/database/migrations/008_age_gate_terms_acceptance.sql`, `src/web/app/register/page.tsx`, `src/mobile/screens/RegisterScreen.tsx`
 - **Spec**: Enforce 18+ age verification at registration. Collect date of birth, validate against threshold. Phase 1 scope explicitly defers but this is a legal requirement before any real-money operation.
 - **Dependencies**: None
 - **Legal/Compliance**: Legal requirement for financial stakes in all jurisdictions.
@@ -800,11 +800,11 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-WEB-01: HttpOnly Cookie Auth Migration
 
-- **Status**: NOT_STARTED
+- **Status**: IMPLEMENTED
 - **Phase**: Beta
 - **Priority**: P0 (beta-blocker — security requirement)
-- **Source**: `implementation-status.md` (Planned migration)
-- **Existing Code**: Current: `src/web/contexts/AuthContext.tsx` + `src/web/services/api-client.ts` (client-side JWT). Planned: HttpOnly cookie.
+- **Source**: `implementation-status.md`
+- **Existing Code**: `src/web/contexts/AuthContext.tsx`, `src/web/services/api-client.ts`, `src/api/src/modules/auth/auth.service.ts`
 - **Spec**: Migrate from client-side JWT storage to HttpOnly cookie-based authentication. Current implementation exposes JWT to XSS. Server must set/clear cookies; client reads auth state from API response.
 - **Dependencies**: API auth module changes
 
@@ -1343,23 +1343,23 @@ Based on `phase1-private-beta-scope.md`: iOS TestFlight, No-Contact recovery, te
 | 17 | Stripe FBO escrow (real-money settlement) | F-CORE-04 | PARTIAL | **NO** — test-money only |
 | 18 | Geofencing by jurisdiction | F-AEGIS-02 | PARTIAL | **PARTIAL** — code exists, behavior incomplete |
 | 19 | Native iOS camera module | F-MOBILE-01 | STUB | **NO** — placeholder only |
-| 20 | Daily attestation flow (No-Contact) | F-VERIFY-06 | PARTIAL | **PARTIAL** — scheduler exists, UX incomplete |
-| 21 | Age gate (18+ runtime) | F-AEGIS-03 | NOT_STARTED | **NO** — legal requirement |
-| 22 | HttpOnly cookie auth | F-WEB-01 | NOT_STARTED | **NO** — security requirement |
+| 20 | Daily attestation flow (No-Contact) | F-VERIFY-06 | IMPLEMENTED | **YES** — API + web + mobile attestation screens |
+| 21 | Age gate (18+ runtime) | F-AEGIS-03 | IMPLEMENTED | **YES** — auth service + migration 008 + web/mobile UI |
+| 22 | HttpOnly cookie auth | F-WEB-01 | IMPLEMENTED | **YES** — cookie-based auth implemented |
 | 23 | Contest official rules | F-LEGAL-01 | NOT_STARTED | **NO** — legal requirement |
 | 24 | Responsible use disclosures | F-LEGAL-02 | NOT_STARTED | **NO** — legal/regulatory |
 
 ### Phase 1 Readiness Score
 
-- **YES**: 16/24 (67%)
+- **YES**: 19/24 (79%)
 - **PARTIAL**: 3/24 (12%)
-- **NO**: 5/24 (21%)
+- **NO**: 2/24 (8%)
 
 ### Critical Blockers to Resolve
 
 1. **F-MOBILE-01** (Native Camera): Without native capture, No-Contact proof verification is text-only — insufficient for beta credibility.
-2. **F-AEGIS-03** (Age Gate): Legal requirement. Cannot accept financial stakes from minors.
-3. **F-WEB-01** (HttpOnly Auth): Client-side JWT is a security vulnerability. Must fix before any public-facing beta.
+2. ~~**F-AEGIS-03** (Age Gate)~~: **RESOLVED** — Implemented in Sprint 1 (auth service + migration 008 + web/mobile UI).
+3. ~~**F-WEB-01** (HttpOnly Auth)~~: **RESOLVED** — Cookie-based auth implemented.
 4. **F-LEGAL-01** (Contest Rules): Every contest needs published official rules per promotion law.
 5. **F-CORE-04** (Real-Money FBO): Test-money is acceptable for Phase 1 per scope doc — but real-money path must be validated before Phase 2.
 

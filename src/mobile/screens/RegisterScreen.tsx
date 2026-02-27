@@ -21,6 +21,8 @@ export function RegisterScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -37,12 +39,23 @@ export function RegisterScreen({ navigation }: Props) {
       setError('Password must be at least 8 characters');
       return;
     }
+    if (!ageConfirmed) {
+      setError('You must confirm you are 18 or older');
+      return;
+    }
+    if (!termsAccepted) {
+      setError('You must accept the Terms of Service and Privacy Policy');
+      return;
+    }
 
     setError('');
     setLoading(true);
 
     try {
-      await ApiClient.register(email, password);
+      await ApiClient.register(email, password, {
+        ageConfirmation: true,
+        termsAccepted: true,
+      });
       Alert.alert('Account Created', 'You can now log in.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
@@ -97,9 +110,33 @@ export function RegisterScreen({ navigation }: Props) {
         />
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={styles.checkboxRow}
+          onPress={() => setAgeConfirmed(!ageConfirmed)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.checkbox, ageConfirmed && styles.checkboxChecked]}>
+            {ageConfirmed ? <Text style={styles.checkmark}>{'✓'}</Text> : null}
+          </View>
+          <Text style={styles.checkboxLabel}>I confirm I am 18 years of age or older</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.checkboxRow}
+          onPress={() => setTermsAccepted(!termsAccepted)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
+            {termsAccepted ? <Text style={styles.checkmark}>{'✓'}</Text> : null}
+          </View>
+          <Text style={styles.checkboxLabel}>
+            I accept the Terms of Service and Privacy Policy
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, (loading || !ageConfirmed || !termsAccepted) && styles.buttonDisabled]}
           onPress={handleRegister}
-          disabled={loading}
+          disabled={loading || !ageConfirmed || !termsAccepted}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
@@ -192,5 +229,36 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#ff4444',
     fontSize: 14,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 2,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#2a2a3e',
+    backgroundColor: '#1a1a2e',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  checkboxChecked: {
+    backgroundColor: '#ff4444',
+    borderColor: '#ff4444',
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  checkboxLabel: {
+    color: '#ccc',
+    fontSize: 13,
+    flex: 1,
   },
 });

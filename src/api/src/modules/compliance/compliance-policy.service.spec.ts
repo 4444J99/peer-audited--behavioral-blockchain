@@ -53,8 +53,8 @@ describe('CompliancePolicyService', () => {
   });
 
   describe('isAgeEnforcementImplemented', () => {
-    it('should return false (not yet implemented)', () => {
-      expect(service.isAgeEnforcementImplemented()).toBe(false);
+    it('should return true (implemented via registration age gate)', () => {
+      expect(service.isAgeEnforcementImplemented()).toBe(true);
     });
   });
 
@@ -229,7 +229,7 @@ describe('CompliancePolicyService', () => {
       const req = makeRequest({ headers: { 'cf-ipstate': 'CA' } });
       const result = service.getEligibility(req);
       expect(result.controls.kycEnforcementEnabled).toBe(true);
-      expect(result.controls.ageEnforcementImplemented).toBe(false);
+      expect(result.controls.ageEnforcementImplemented).toBe(true);
     });
   });
 

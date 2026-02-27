@@ -18,11 +18,17 @@ interface User {
   };
 }
 
+interface RegisterOpts {
+  ageConfirmation: boolean;
+  termsAccepted: boolean;
+  dateOfBirth?: string;
+}
+
 interface AuthContextValue {
   user: User | null;
   token: string | null; // allow-secret
   login: (email: string, password: string) => Promise<void>; // allow-secret
-  register: (email: string, password: string) => Promise<void>; // allow-secret
+  register: (email: string, password: string, opts: RegisterOpts) => Promise<void>; // allow-secret
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -70,8 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me);
   }, []);
 
-  const register = useCallback(async (email: string, password: string) => { // allow-secret
-    const result = await api.register(email, password);
+  const register = useCallback(async (email: string, password: string, opts: RegisterOpts) => { // allow-secret
+    const result = await api.register(email, password, opts);
     setAuthToken(result.token);
     setToken(result.token);
     try {

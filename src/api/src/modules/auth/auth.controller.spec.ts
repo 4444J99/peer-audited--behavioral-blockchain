@@ -34,13 +34,19 @@ describe('AuthController', () => {
         plainToInstance(RegisterDto, {
           email: 'test@styx.protocol',
           password: 'secure123', // allow-secret
+          ageConfirmation: true,
+          termsAccepted: true,
         }),
         mockResponse,
       );
 
       expect(result.userId).toBe('new-user-id');
       expect(result.token).toBe('jwt-token');
-      expect(mockAuthService.register).toHaveBeenCalledWith('test@styx.protocol', 'secure123'); // allow-secret
+      expect(mockAuthService.register).toHaveBeenCalledWith('test@styx.protocol', 'secure123', { // allow-secret
+        ageConfirmation: true,
+        termsAccepted: true,
+        dateOfBirth: undefined,
+      });
     });
 
     it('should reject missing email via DTO validation', async () => {

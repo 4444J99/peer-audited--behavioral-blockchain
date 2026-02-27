@@ -104,6 +104,27 @@ export class ContractsController {
     return processIAP(this.pool, this.stripe, this.ledger, this.truthLog, user.id, contractId);
   }
 
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get(':id/attestation')
+  @ApiOperation({ summary: 'Get attestation status for a recovery contract' })
+  async getAttestationStatus(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.contractsService.getAttestationStatus(contractId, user.id);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
+  @Post(':id/attestation')
+  @ApiOperation({ summary: 'Submit daily attestation for a recovery contract' })
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  async submitAttestation(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.contractsService.submitAttestation(contractId, user.id);
+  }
+
   // --- No Auth Guard for Bounty Claims (Ex-partner access) ---
   @Post('bounty/:linkId')
   @ApiOperation({ summary: 'Submit evidence against a user via their unique whistleblower bounty link' })

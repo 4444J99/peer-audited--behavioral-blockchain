@@ -12,7 +12,8 @@ export class UsersService {
     const result = await this.pool.query(
       `SELECT id, email, integrity_score, role, status, created_at,
               kyc_status, age_verification_status, identity_provider,
-              identity_verification_id, identity_verified_at
+              identity_verification_id, identity_verified_at,
+              terms_accepted_at, terms_version
        FROM users WHERE id = $1`,
       [userId],
     );
@@ -35,7 +36,9 @@ export class UsersService {
         identity_verification_id: row.identity_verification_id ?? null,
         identity_verified_at: row.identity_verified_at ?? null,
         is_kyc_verified: String(row.kyc_status || '').toUpperCase() === 'VERIFIED',
-        is_age_verified: String(row.age_verification_status || '').toUpperCase() === 'VERIFIED',
+        is_age_verified: ['VERIFIED', 'SELF_DECLARED'].includes(String(row.age_verification_status || '').toUpperCase()),
+        terms_accepted_at: row.terms_accepted_at ?? null,
+        terms_version: row.terms_version ?? null,
       },
     };
   }

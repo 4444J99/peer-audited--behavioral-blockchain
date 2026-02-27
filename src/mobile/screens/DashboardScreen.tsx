@@ -18,19 +18,47 @@ export function DashboardScreen() {
   const [profile, setProfile] = useState<any>(null);
   const [balance, setBalance] = useState<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [attestationInfo, setAttestationInfo] = useState<{
+    contractId: string;
+    streakDays: number;
+    todayAttested: boolean;
+    daysRemaining: number;
+  } | null>(null);
   const [error, setError] = useState('');
   const parsedError = parseSupportTraceMessage(error);
 
   const loadData = useCallback(async () => {
     try {
-      const [me, balanceData, notifs] = await Promise.all([
+      const [me, balanceData, notifs, contractsData] = await Promise.all([
         ApiClient.getMe(),
         ApiClient.getBalance().catch(() => null),
         ApiClient.getNotifications().catch(() => ({ notifications: [] })),
+        ApiClient.getContracts().catch(() => ({ contracts: [] })),
       ]);
       setProfile(me);
       setBalance(balanceData);
       setNotifications(notifs.notifications.slice(0, 5));
+
+      // Find active recovery contract and fetch attestation status
+      const activeRecovery = contractsData.contracts.find(
+        (c: any) => c.status === 'ACTIVE' && String(c.category || '').startsWith('RECOVERY_'),
+      );
+      if (activeRecovery) {
+        try {
+          const attStatus = await ApiClient.getAttestationStatus(activeRecovery.id);
+          setAttestationInfo({
+            contractId: activeRecovery.id,
+            streakDays: attStatus.streakDays,
+            todayAttested: attStatus.todayAttested,
+            daysRemaining: attStatus.daysRemaining,
+          });
+        } catch {
+          setAttestationInfo(null);
+        }
+      } else {
+        setAttestationInfo(null);
+      }
+
       setError('');
     } catch (err: any) {
       setError(err.message);
@@ -105,6 +133,43 @@ export function DashboardScreen() {
           <Text style={styles.statLabel}>Balance</Text>
         </View>
       </View>
+
+      {/* Attestation Status Card */}
+      {attestationInfo && (
+        <TouchableOpacity
+          style={styles.attestCard}
+          onPress={() =>
+            navigation.navigate('Contracts', {
+              screen: 'Attestation',
+              params: { contractId: attestationInfo.contractId },
+            } as any)
+          }
+        >
+          <View style={styles.attestCardHeader}>
+            <Text style={styles.attestCardIcon}>{attestationInfo.todayAttested ? '✓' : '🛡'}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.attestCardTitle}>
+                {attestationInfo.todayAttested ? 'Checked In Today' : 'Daily Check-In'}
+              </Text>
+              <Text style={styles.attestCardSubtitle}>
+                {attestationInfo.todayAttested
+                  ? `${attestationInfo.streakDays}-day streak · ${attestationInfo.daysRemaining} days left`
+                  : 'Tap to submit your daily attestation'}
+              </Text>
+            </View>
+            {!attestationInfo.todayAttested && (
+              <View style={styles.attestBadge}>
+                <Text style={styles.attestBadgeText}>DUE</Text>
+              </View>
+            )}
+          </View>
+          {!attestationInfo.todayAttested && attestationInfo.streakDays > 0 && (
+            <Text style={styles.attestStreakHint}>
+              {attestationInfo.streakDays}-day streak at risk
+            </Text>
+          )}
+        </TouchableOpacity>
+      )}
 
       {/* Quick Actions */}
       <View style={styles.section}>
@@ -210,4 +275,34 @@ const styles = StyleSheet.create({
   },
   notifMessage: { color: '#e0e0e0', fontSize: 14 },
   notifTime: { color: '#666', fontSize: 11, marginTop: 4 },
+  attestCard: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#f59e0b30',
+  },
+  attestCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  attestCardIcon: { fontSize: 28 },
+  attestCardTitle: { color: '#e0e0e0', fontSize: 15, fontWeight: '700' },
+  attestCardSubtitle: { color: '#888', fontSize: 12, marginTop: 2 },
+  attestBadge: {
+    backgroundColor: '#f59e0b',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  attestBadgeText: { color: '#000', fontSize: 11, fontWeight: '800' },
+  attestStreakHint: {
+    color: '#f59e0b',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 8,
+    textAlign: 'center',
+  },
 });

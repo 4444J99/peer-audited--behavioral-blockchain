@@ -103,10 +103,10 @@ export const ApiClient = {
       body: JSON.stringify({ email, password }),
     }),
 
-  register: (email: string, password: string) =>
+  register: (email: string, password: string, opts?: { ageConfirmation?: boolean; termsAccepted?: boolean }) =>
     request<{ userId: string; token: string }>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, ...opts }),
     }),
 
   // User
@@ -250,6 +250,23 @@ export const ApiClient = {
   deleteAccount: () =>
     request<{ status: string }>('/users/me', {
       method: 'DELETE',
+    }),
+
+  // Attestations (Recovery stream)
+  getAttestationStatus: (contractId: string) =>
+    request<{
+      contractId: string;
+      oathCategory: string;
+      streakDays: number;
+      daysRemaining: number;
+      graceDaysAvailable: number;
+      todayAttested: boolean;
+      totalStrikes: number;
+    }>(`/contracts/${contractId}/attestation`),
+
+  submitAttestation: (contractId: string) =>
+    request<{ status: string }>(`/contracts/${contractId}/attestation`, {
+      method: 'POST',
     }),
 
   // Enterprise SSO

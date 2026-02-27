@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { captureException } from '../monitoring/sentry';
 
 type ErrorEnvelope = {
   error_code: string;
@@ -137,6 +138,9 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       exception instanceof Error ? exception.stack || exception.message : String(exception),
       traceId ? `trace_id=${traceId}` : undefined,
     );
+
+    // Report unhandled errors to Sentry (if configured)
+    captureException(exception, { trace_id: traceId, path: request.url, method: request.method });
 
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(body);
   }

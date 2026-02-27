@@ -861,6 +861,222 @@ describe('ContractsService', () => {
     });
   });
 
+  // ── getAttestationStatus ───────────────────────────────────────
+
+  describe('getAttestationStatus', () => {
+    it('should return streak, today status, and days remaining for a recovery contract', async () => {
+      const recoveryContract = {
+        id: 'contract-recovery-1',
+        user_id: 'user-1',
+        oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+        status: 'ACTIVE',
+        duration_days: 30,
+        started_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+        ends_at: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+        strikes: 1,
+        grace_days_used: 0,
+      };
+
+      // Contract lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [recoveryContract] });
+      // Streak query
+      mockPool.query.mockResolvedValueOnce({ rows: [{ streak: '5' }] });
+      // Today check
+      mockPool.query.mockResolvedValueOnce({ rows: [{ status: 'ATTESTED' }] });
+
+      const result = await service.getAttestationStatus('contract-recovery-1', 'user-1');
+
+      expect(result.contractId).toBe('contract-recovery-1');
+      expect(result.oathCategory).toBe('RECOVERY_NO_CONTACT_TEXT');
+      expect(result.streakDays).toBe(5);
+      expect(result.todayAttested).toBe(true);
+      expect(result.daysRemaining).toBeGreaterThan(0);
+      expect(result.graceDaysAvailable).toBe(2);
+      expect(result.totalStrikes).toBe(1);
+    });
+
+    it('should show todayAttested false when no attestation today', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'contract-r2',
+          user_id: 'user-1',
+          oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+          status: 'ACTIVE',
+          duration_days: 30,
+          started_at: new Date().toISOString(),
+          ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          strikes: 0,
+          grace_days_used: 1,
+        }],
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ streak: '0' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // No attestation today
+
+      const result = await service.getAttestationStatus('contract-r2', 'user-1');
+
+      expect(result.todayAttested).toBe(false);
+      expect(result.streakDays).toBe(0);
+      expect(result.graceDaysAvailable).toBe(1);
+    });
+
+    it('should throw NotFoundException for missing contract', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(service.getAttestationStatus('missing', 'user-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException for non-owner', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'contract-r3',
+          user_id: 'user-1',
+          oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+          status: 'ACTIVE',
+          duration_days: 30,
+          started_at: new Date().toISOString(),
+          ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          strikes: 0,
+          grace_days_used: 0,
+        }],
+      });
+
+      await expect(service.getAttestationStatus('contract-r3', 'user-impostor')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw BadRequestException for non-recovery contracts', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'contract-bio',
+          user_id: 'user-1',
+          oath_category: 'BIOLOGICAL_CARDIO',
+          status: 'ACTIVE',
+          duration_days: 30,
+          started_at: new Date().toISOString(),
+          ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          strikes: 0,
+          grace_days_used: 0,
+        }],
+      });
+
+      await expect(service.getAttestationStatus('contract-bio', 'user-1')).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // ── submitAttestation ─────────────────────────────────────────
+
+  describe('submitAttestation', () => {
+    it('should create a new attestation row when none exists today', async () => {
+      // Contract lookup
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'contract-r1',
+          user_id: 'user-1',
+          oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+          status: 'ACTIVE',
+        }],
+      });
+      // Existing attestation check (none today)
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // INSERT attestation
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Truth log
+      // Partner notification query
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.submitAttestation('contract-r1', 'user-1');
+
+      expect(result.status).toBe('attested');
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('ATTESTATION_SUBMITTED', expect.objectContaining({
+        contractId: 'contract-r1',
+        userId: 'user-1',
+      }));
+    });
+
+    it('should update a PENDING attestation row to ATTESTED', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'contract-r1',
+          user_id: 'user-1',
+          oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+          status: 'ACTIVE',
+        }],
+      });
+      // Existing PENDING attestation
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'attest-1', status: 'PENDING' }] });
+      // UPDATE attestation
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Partner notification query
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.submitAttestation('contract-r1', 'user-1');
+
+      expect(result.status).toBe('attested');
+      // The third query should be the UPDATE
+      const updateCall = mockPool.query.mock.calls[2];
+      expect(updateCall[0]).toContain("SET status = 'ATTESTED'");
+      expect(updateCall[1]).toEqual(['attest-1']);
+    });
+
+    it('should reject if already attested today', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'contract-r1',
+          user_id: 'user-1',
+          oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+          status: 'ACTIVE',
+        }],
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'attest-1', status: 'ATTESTED' }] });
+
+      await expect(service.submitAttestation('contract-r1', 'user-1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw ForbiddenException for non-owner', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'contract-r1',
+          user_id: 'user-1',
+          oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+          status: 'ACTIVE',
+        }],
+      });
+
+      await expect(service.submitAttestation('contract-r1', 'user-impostor')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw NotFoundException for missing contract', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(service.submitAttestation('missing', 'user-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException for non-ACTIVE contract', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'contract-r1',
+          user_id: 'user-1',
+          oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+          status: 'COMPLETED',
+        }],
+      });
+
+      await expect(service.submitAttestation('contract-r1', 'user-1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException for non-recovery contract', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'contract-bio',
+          user_id: 'user-1',
+          oath_category: 'BIOLOGICAL_CARDIO',
+          status: 'ACTIVE',
+        }],
+      });
+
+      await expect(service.submitAttestation('contract-bio', 'user-1')).rejects.toThrow(BadRequestException);
+    });
+  });
+
   // ── useGraceDay ───────────────────────────────────────────────
 
   describe('useGraceDay', () => {

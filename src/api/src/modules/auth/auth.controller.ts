@@ -45,7 +45,11 @@ export class AuthController {
   @ApiOperation({ summary: 'Register a new user account' })
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.register(dto.email, dto.password);
+    const result = await this.authService.register(dto.email, dto.password, {
+      ageConfirmation: dto.ageConfirmation,
+      termsAccepted: dto.termsAccepted,
+      dateOfBirth: dto.dateOfBirth,
+    });
     this.issueBrowserSessionCookies(res, result.token);
     return result;
   }

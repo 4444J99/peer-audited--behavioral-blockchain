@@ -16,7 +16,7 @@ import type { ContractsStackParamList } from '../App';
 
 type Props = NativeStackScreenProps<ContractsStackParamList, 'ContractDetail'>;
 
-export function ContractDetailScreen({ route }: Props) {
+export function ContractDetailScreen({ route, navigation }: Props) {
   const { contractId } = route.params;
   const [contract, setContract] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -165,6 +165,15 @@ export function ContractDetailScreen({ route }: Props) {
         <Text style={styles.dateText}>End: {new Date(contract.endDate).toLocaleDateString()}</Text>
       </View>
 
+      {contract.status === 'ACTIVE' && String(contract.category || '').startsWith('RECOVERY_') && (
+        <TouchableOpacity
+          style={styles.attestButton}
+          onPress={() => navigation.navigate('Attestation', { contractId })}
+        >
+          <Text style={styles.attestButtonText}>Daily Check-In</Text>
+        </TouchableOpacity>
+      )}
+
       {contract.status === 'ACTIVE' && (
         <View style={styles.actions}>
           <TouchableOpacity style={styles.primaryButton} onPress={handleSubmitProof} disabled={!!actionLoading}>
@@ -230,4 +239,6 @@ const styles = StyleSheet.create({
   proofItem: { backgroundColor: '#1a1a2e', borderRadius: 8, padding: 12, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', borderWidth: 1, borderColor: '#2a2a3e' },
   proofStatus: { color: '#2ecc71', fontSize: 13, fontWeight: '600' },
   proofDate: { color: '#888', fontSize: 12 },
+  attestButton: { backgroundColor: '#f59e0b', borderRadius: 10, padding: 16, alignItems: 'center', marginBottom: 16 },
+  attestButtonText: { color: '#000', fontSize: 16, fontWeight: '800', letterSpacing: 1 },
 });

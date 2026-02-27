@@ -340,6 +340,11 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
 
               <p className="text-sm text-neutral-500">
                 Clicking below will take you to the contract creation form with your selections pre-filled.
+                {selectedCategory.startsWith('RECOVERY_') && (
+                  <span className="block mt-2 text-amber-400">
+                    Recovery contracts use daily attestations. You&apos;ll check in each day to maintain your streak.
+                  </span>
+                )}
               </p>
             </div>
           )}

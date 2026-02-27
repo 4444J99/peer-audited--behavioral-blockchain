@@ -13,8 +13,11 @@ import { AppModule } from './app.module';
 import { Logger } from 'nestjs-pino';
 import * as express from 'express';
 import { GlobalHttpExceptionFilter } from './common/filters/global-http-exception.filter';
+import { initSentry } from './common/monitoring/sentry';
 
 async function bootstrap() {
+  // Initialize Sentry before NestFactory (requires SENTRY_DSN in .env)
+  initSentry();
   const isProduction = process.env.NODE_ENV === 'production';
 
   const app = await NestFactory.create(AppModule, {

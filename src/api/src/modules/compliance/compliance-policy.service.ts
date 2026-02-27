@@ -52,7 +52,7 @@ export class CompliancePolicyService {
   }
 
   isAgeEnforcementImplemented(): boolean {
-    return false;
+    return true;
   }
 
   shouldFailOpenOnMissingLocation(): boolean {

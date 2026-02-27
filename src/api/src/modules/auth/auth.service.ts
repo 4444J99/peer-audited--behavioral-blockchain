@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
@@ -25,7 +25,11 @@ export interface AuthPayload {
 export class AuthService {
   constructor(private readonly pool: Pool) {}
 
-  async register(email: string, password: string): Promise<{ userId: string; token: string }> { // allow-secret
+  async register(
+    email: string,
+    password: string, // allow-secret
+    opts?: { ageConfirmation?: boolean; termsAccepted?: boolean; dateOfBirth?: string },
+  ): Promise<{ userId: string; token: string }> { // allow-secret
     const maybeConnect = (this.pool as unknown as { connect?: () => Promise<PoolClient> }).connect;
     const client = typeof maybeConnect === 'function' ? await maybeConnect.call(this.pool) : null;
     const db: { query: PoolClient['query'] } = (client ?? this.pool) as any;
@@ -34,6 +38,23 @@ export class AuthService {
     try {
       if (useTransaction) {
         await db.query('BEGIN');
+      }
+
+      // Enforce age gate and terms acceptance
+      if (!opts?.ageConfirmation) {
+        throw new BadRequestException('You must confirm you are 18 years or older');
+      }
+      if (!opts?.termsAccepted) {
+        throw new BadRequestException('You must accept the Terms of Service and Privacy Policy');
+      }
+      if (opts?.dateOfBirth) {
+        const dob = new Date(opts.dateOfBirth);
+        const now = new Date();
+        const age = now.getFullYear() - dob.getFullYear() -
+          (now < new Date(now.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
+        if (age < 18) {
+          throw new BadRequestException('You must be at least 18 years old to use Styx');
+        }
       }
 
       // Check for existing user
@@ -53,10 +74,11 @@ export class AuthService {
 
       // Insert user
       const userResult = await db.query(
-        `INSERT INTO users (email, password_hash, account_id, status, integrity_score)
-         VALUES ($1, $2, $3, 'ACTIVE', 50)
+        `INSERT INTO users (email, password_hash, account_id, status, integrity_score,
+                            age_verification_status, terms_accepted_at, terms_version, date_of_birth)
+         VALUES ($1, $2, $3, 'ACTIVE', 50, 'SELF_DECLARED', NOW(), '1.0', $4)
          RETURNING id`,
-        [email, passwordHash, accountId],
+        [email, passwordHash, accountId, opts?.dateOfBirth || null],
       );
       const userId = userResult.rows[0].id;
 

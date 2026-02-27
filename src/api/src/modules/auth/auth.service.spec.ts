@@ -1,8 +1,10 @@
 import { AuthService } from './auth.service';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { Pool } from 'pg';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
+
+const validRegisterOpts = { ageConfirmation: true, termsAccepted: true };
 
 const mockClient = {
   query: jest.fn(),
@@ -39,7 +41,7 @@ describe('AuthService', () => {
         .mockResolvedValueOnce({ rows: [{ id: 'user-uuid' }] }) // insert user
         .mockResolvedValueOnce(undefined); // COMMIT
 
-      const result = await service.register(email, password);
+      const result = await service.register(email, password, validRegisterOpts);
 
       expect(result.userId).toBe('user-uuid');
       expect(result.token).toBeDefined();
@@ -57,7 +59,7 @@ describe('AuthService', () => {
         .mockResolvedValueOnce({ rows: [{ id: 'existing-id' }] }) // check existing
         .mockResolvedValueOnce(undefined); // ROLLBACK
 
-      await expect(service.register('taken@styx.protocol', 'pass123'))
+      await expect(service.register('taken@styx.protocol', 'pass123', validRegisterOpts))
         .rejects
         .toThrow(ConflictException);
     });
@@ -70,7 +72,7 @@ describe('AuthService', () => {
         .mockResolvedValueOnce({ rows: [{ id: 'user-uuid' }] })
         .mockResolvedValueOnce(undefined); // COMMIT
 
-      await service.register('hash-test@styx.protocol', 'plaintext-pass');
+      await service.register('hash-test@styx.protocol', 'plaintext-pass', validRegisterOpts);
 
       // The third query (insert user) should have a bcrypt hash, not plaintext
       const insertCall = (mockClient.query as jest.Mock).mock.calls[3];
@@ -87,7 +89,7 @@ describe('AuthService', () => {
         .mockRejectedValueOnce(new Error('duplicate key value violates unique constraint users_email_key')) // user insert
         .mockResolvedValueOnce(undefined); // ROLLBACK
 
-      await expect(service.register('race@styx.protocol', 'pass123')).rejects.toThrow(
+      await expect(service.register('race@styx.protocol', 'pass123', validRegisterOpts)).rejects.toThrow(
         'duplicate key value violates unique constraint users_email_key',
       );
 

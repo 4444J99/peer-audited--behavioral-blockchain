@@ -143,10 +143,10 @@ export const api = {
   getReleaseInfo: () => request<ReleaseInfoResponse>('/meta/release'),
 
   // Auth
-  register: (email: string, password: string) => // allow-secret
+  register: (email: string, password: string, opts?: { ageConfirmation?: boolean; termsAccepted?: boolean; dateOfBirth?: string }) => // allow-secret
     request<{ userId: string; token: string }>('/auth/register', { // allow-secret
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, ...opts }),
     }),
 
   login: (email: string, password: string) => // allow-secret

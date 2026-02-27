@@ -1509,4 +1509,151 @@ export class ContractsService {
     );
     return result.rows;
   }
+
+  // ===== Attestation Flow (Recovery Stream) =====
+
+  async getAttestationStatus(contractId: string, userId: string) {
+    const contract = await this.pool.query(
+      `SELECT id, user_id, oath_category, status, duration_days, started_at, ends_at, strikes, grace_days_used
+       FROM contracts WHERE id = $1`,
+      [contractId],
+    );
+
+    if (contract.rows.length === 0) {
+      throw new NotFoundException(`Contract ${contractId} not found`);
+    }
+
+    const c = contract.rows[0];
+    if (c.user_id !== userId) {
+      throw new ForbiddenException('You do not own this contract');
+    }
+
+    if (!String(c.oath_category || '').startsWith('RECOVERY_')) {
+      throw new BadRequestException('Attestation is only available for Recovery stream contracts');
+    }
+
+    // Get streak: count consecutive ATTESTED/COSIGNED days ending at today
+    const streakResult = await this.pool.query(
+      `SELECT COUNT(*) as streak FROM (
+         SELECT attestation_date, status,
+                ROW_NUMBER() OVER (ORDER BY attestation_date DESC) -
+                (attestation_date - CURRENT_DATE)::int as grp
+         FROM attestations
+         WHERE contract_id = $1 AND status IN ('ATTESTED', 'COSIGNED')
+         ORDER BY attestation_date DESC
+       ) sub WHERE grp = 1`,
+      [contractId],
+    );
+    const streakDays = parseInt(streakResult.rows[0]?.streak || '0', 10);
+
+    // Check if today has been attested
+    const todayResult = await this.pool.query(
+      `SELECT status FROM attestations
+       WHERE contract_id = $1 AND attestation_date = CURRENT_DATE`,
+      [contractId],
+    );
+    const todayAttested = todayResult.rows.length > 0 &&
+      ['ATTESTED', 'COSIGNED'].includes(todayResult.rows[0].status);
+
+    // Calculate days remaining
+    const endsAt = c.ends_at ? new Date(c.ends_at) : null;
+    const now = new Date();
+    const daysRemaining = endsAt ? Math.max(0, Math.ceil((endsAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))) : 0;
+
+    // Grace days available this month
+    const graceDaysAvailable = Math.max(0, 2 - (c.grace_days_used || 0));
+
+    return {
+      contractId: c.id,
+      oathCategory: c.oath_category,
+      streakDays,
+      daysRemaining,
+      graceDaysAvailable,
+      todayAttested,
+      totalStrikes: c.strikes || 0,
+    };
+  }
+
+  async submitAttestation(contractId: string, userId: string) {
+    const contract = await this.pool.query(
+      `SELECT id, user_id, oath_category, status
+       FROM contracts WHERE id = $1`,
+      [contractId],
+    );
+
+    if (contract.rows.length === 0) {
+      throw new NotFoundException(`Contract ${contractId} not found`);
+    }
+
+    const c = contract.rows[0];
+    if (c.user_id !== userId) {
+      throw new ForbiddenException('You do not own this contract');
+    }
+
+    if (c.status !== 'ACTIVE') {
+      throw new BadRequestException('Contract is not active');
+    }
+
+    if (!String(c.oath_category || '').startsWith('RECOVERY_')) {
+      throw new BadRequestException('Attestation is only available for Recovery stream contracts');
+    }
+
+    // Check if already attested today
+    const existing = await this.pool.query(
+      `SELECT id, status FROM attestations
+       WHERE contract_id = $1 AND attestation_date = CURRENT_DATE`,
+      [contractId],
+    );
+
+    if (existing.rows.length > 0) {
+      const row = existing.rows[0];
+      if (['ATTESTED', 'COSIGNED'].includes(row.status)) {
+        throw new BadRequestException('Already attested today');
+      }
+      // Update the PENDING row to ATTESTED
+      await this.pool.query(
+        `UPDATE attestations SET status = 'ATTESTED', attested_at = NOW()
+         WHERE id = $1`,
+        [row.id],
+      );
+    } else {
+      // Create and immediately attest (scheduler hasn't run yet today)
+      await this.pool.query(
+        `INSERT INTO attestations (contract_id, user_id, attestation_date, status, attested_at)
+         VALUES ($1, $2, CURRENT_DATE, 'ATTESTED', NOW())
+         ON CONFLICT (contract_id, attestation_date) DO UPDATE SET status = 'ATTESTED', attested_at = NOW()`,
+        [contractId, userId],
+      );
+    }
+
+    // Log to truth log
+    await this.truthLog.appendEvent('ATTESTATION_SUBMITTED', {
+      contractId,
+      userId,
+      date: new Date().toISOString().split('T')[0],
+    });
+
+    // Notify accountability partner (non-critical)
+    try {
+      const partners = await this.pool.query(
+        `SELECT partner_user_id FROM accountability_partners
+         WHERE contract_id = $1 AND status = 'ACTIVE' AND partner_user_id IS NOT NULL`,
+        [contractId],
+      );
+
+      for (const partner of partners.rows) {
+        await this.notifications?.create({
+          userId: partner.partner_user_id,
+          type: 'PARTNER_ATTESTATION',
+          title: 'Partner Check-In',
+          body: 'Your accountability partner has submitted their daily attestation and is requesting your co-sign.',
+          metadata: { contractId },
+        });
+      }
+    } catch {
+      // Notification failure must never abort attestation
+    }
+
+    return { status: 'attested' };
+  }
 }

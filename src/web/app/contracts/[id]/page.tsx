@@ -279,6 +279,16 @@ export default function ContractDetailPage() {
             </div>
           )}
 
+          {/* Daily Attestation — Recovery stream only */}
+          {contract.status === 'ACTIVE' && contract.oath_category.startsWith('RECOVERY_') && (
+            <Link
+              href={`/contracts/${contract.id}/attest`}
+              className="block w-full py-4 bg-amber-600 hover:bg-amber-700 text-black font-black rounded-xl transition-colors text-center text-lg"
+            >
+              Daily Check-In
+            </Link>
+          )}
+
           {/* Proof Submission — only when ACTIVE */}
           {contract.status === 'ACTIVE' && (
             <div className="space-y-3">
