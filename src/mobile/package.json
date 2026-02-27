@@ -5,6 +5,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "start": "react-native start",
+    "build": "tsc --noEmit",
+    "lint": "tsc --noEmit",
     "test": "jest"
   },
   "dependencies": {

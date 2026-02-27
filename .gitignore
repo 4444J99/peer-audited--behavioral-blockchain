@@ -43,6 +43,9 @@ src/shared/.turbo/
 src/api/.turbo/
 src/pitch/.turbo/
 
+# Test coverage reports
+**/coverage/
+
 # Pitch deck build output is committed for GitHub Pages
 # (docs/index.html + docs/assets/ are build artifacts that should be tracked)
 !docs/

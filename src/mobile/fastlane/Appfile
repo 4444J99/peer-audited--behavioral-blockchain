@@ -1,0 +1,5 @@
+app_identifier("com.anonymous.styxmobile")
+
+# Apple credentials (set via env or CI secrets)
+# apple_id(ENV["APPLE_ID"])
+# team_id(ENV["TEAM_ID"])
