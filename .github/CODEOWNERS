@@ -1,0 +1,29 @@
+# CODEOWNERS — Styx: peer-audited behavioral blockchain
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default: all changes require review from core team
+*                           @labores-profani-crux/styx-core
+
+# API domain services (ledger, escrow, fury, health)
+src/api/services/           @labores-profani-crux/styx-core
+src/api/src/modules/        @labores-profani-crux/styx-core
+
+# Shared algorithms (integrity score, behavioral logic)
+src/shared/                 @labores-profani-crux/styx-core
+
+# Web frontend
+src/web/                    @labores-profani-crux/styx-core
+
+# Mobile
+src/mobile/                 @labores-profani-crux/styx-core
+
+# Infrastructure & CI
+.github/                    @labores-profani-crux/styx-core
+infra/                      @labores-profani-crux/styx-core
+Dockerfile                  @labores-profani-crux/styx-core
+docker-compose.yml          @labores-profani-crux/styx-core
+
+# Security-sensitive files
+.github/SECURITY.md         @labores-profani-crux/styx-core
+src/api/guards/             @labores-profani-crux/styx-core
+src/api/services/security/  @labores-profani-crux/styx-core

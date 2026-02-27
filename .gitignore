@@ -10,6 +10,10 @@ dist/
 *.log
 *.pid
 
+# IDE / editor artifacts
+.idea/
+.codex-review/
+
 # TypeScript artifacts in source directories
 src/api/**/*.js
 src/api/**/*.js.map

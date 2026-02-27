@@ -1,18 +1,19 @@
 # Base Node image
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
 # Install dependencies
-COPY package.json yarn.lock ./
+COPY package.json package-lock.json ./
 COPY src/api/package.json ./src/api/
-RUN yarn install --frozen-lockfile
+COPY src/shared/package.json ./src/shared/
+RUN npm ci --workspace=@styx/api --workspace=@styx/shared --include-workspace-root
 
 # Copy source
 COPY . .
 
-# Build
-RUN yarn build
+# Build shared + API
+RUN npx turbo run build --filter=@styx/api
 
 # Expose API port
 EXPOSE 3000
