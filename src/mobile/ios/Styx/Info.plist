@@ -45,10 +45,6 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
-    <key>NSCameraUsageDescription</key>
-    <string>Styx uses the camera to capture live proof submissions for contract verification.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Styx uses the microphone when recording video proofs for contract verification.</string>
     <key>RCTNewArchEnabled</key>
     <true/>
     <key>UILaunchStoryboardName</key>
