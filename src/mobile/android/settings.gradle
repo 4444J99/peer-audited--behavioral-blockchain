@@ -1,20 +1,9 @@
 pluginManagement {
-  def reactNativeGradlePlugin = new File(
-    providers.exec {
-      workingDir(rootDir.parentFile)
-      commandLine("node", "--print", "require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })")
-    }.standardOutput.asText.get().trim()
-  ).getParentFile().absolutePath
-  includeBuild(reactNativeGradlePlugin)
+  def rn_gradle_plugin_path = new File(rootDir.parentFile, "node_modules/@react-native/gradle-plugin").absolutePath
+  includeBuild(rn_gradle_plugin_path)
 
-  def expoPluginsPath = new File(
-    providers.exec {
-      workingDir(rootDir.parentFile)
-      commandLine("node", "--print", "require.resolve('expo-modules-autolinking/package.json', { paths: [require.resolve('expo/package.json')] })")
-    }.standardOutput.asText.get().trim(),
-    "../android/expo-gradle-plugin"
-  ).absolutePath
-  includeBuild(expoPluginsPath)
+  def expo_modules_autolinking_path = new File(rootDir.parentFile, "node_modules/expo-modules-autolinking/android/expo-gradle-plugin").absolutePath
+  includeBuild(expo_modules_autolinking_path)
 }
 
 plugins {
@@ -36,4 +25,4 @@ rootProject.name = 'Styx'
 expoAutolinking.useExpoVersionCatalog()
 
 include ':app'
-includeBuild(expoAutolinking.reactNativeGradlePlugin)
+// includeBuild(expoAutolinking.reactNativeGradlePlugin) // This is likely redundant
