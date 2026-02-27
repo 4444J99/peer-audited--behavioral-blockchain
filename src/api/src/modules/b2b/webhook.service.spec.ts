@@ -2,9 +2,16 @@ import { WebhookService } from './webhook.service';
 
 describe('WebhookService', () => {
   let service: WebhookService;
+  const originalFetch = global.fetch;
 
   beforeEach(() => {
+    jest.useFakeTimers();
     service = new WebhookService();
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    jest.useRealTimers();
   });
 
   describe('HMAC signing', () => {
@@ -90,15 +97,18 @@ describe('WebhookService', () => {
       const mockFetch = jest.fn().mockResolvedValue({ ok: false, status: 500 });
       global.fetch = mockFetch as any;
 
-      const result = await service.deliverWithRetry(
+      const promise = service.deliverWithRetry(
         'https://example.com/webhook',
         { event: 'test' },
       );
 
+      await jest.advanceTimersByTimeAsync(5000);
+      const result = await promise;
+
       expect(result.success).toBe(false);
       expect(result.attempts).toBe(3);
       expect(mockFetch).toHaveBeenCalledTimes(3);
-    }, 15000);
+    });
 
     it('should retry on network errors', async () => {
       const mockFetch = jest
@@ -107,14 +117,17 @@ describe('WebhookService', () => {
         .mockResolvedValueOnce({ ok: true, status: 200 });
       global.fetch = mockFetch as any;
 
-      const result = await service.deliverWithRetry(
+      const promise = service.deliverWithRetry(
         'https://example.com/webhook',
         { event: 'test' },
       );
 
+      await jest.advanceTimersByTimeAsync(2000);
+      const result = await promise;
+
       expect(result.success).toBe(true);
       expect(result.attempts).toBe(2);
-    }, 10000);
+    });
 
     it('should retry on 429 Too Many Requests', async () => {
       const mockFetch = jest
@@ -123,14 +136,17 @@ describe('WebhookService', () => {
         .mockResolvedValueOnce({ ok: true, status: 200 });
       global.fetch = mockFetch as any;
 
-      const result = await service.deliverWithRetry(
+      const promise = service.deliverWithRetry(
         'https://example.com/webhook',
         { event: 'test' },
       );
 
+      await jest.advanceTimersByTimeAsync(2000);
+      const result = await promise;
+
       expect(result.success).toBe(true);
       expect(result.attempts).toBe(2);
-    }, 10000);
+    });
   });
 
   describe('dispatchEnterpriseMetricEvent', () => {

@@ -30,10 +30,15 @@ export class AnomalyService {
   async analyze(mediaUri: string, userId: string): Promise<AnomalyResult> {
     const flags: string[] = [];
 
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error('Analysis timeout')), ANALYSIS_TIMEOUT_MS);
+    });
+
     try {
       const result = await Promise.race([
         this.runAnalysis(mediaUri, userId, flags),
-        this.timeout(ANALYSIS_TIMEOUT_MS),
+        timeoutPromise,
       ]);
 
       return result as AnomalyResult;
@@ -41,6 +46,8 @@ export class AnomalyService {
       // Fail-open on timeout — pass to Fury with unverified flag
       this.logger.warn(`Anomaly analysis timed out for ${mediaUri}, failing open`);
       return { rejected: false, flags: ['ANALYSIS_TIMEOUT', 'UNVERIFIED'] };
+    } finally {
+      clearTimeout(timeoutId!);
     }
   }
 
@@ -198,9 +205,4 @@ export class AnomalyService {
     }
   }
 
-  private timeout(ms: number): Promise<never> {
-    return new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Analysis timeout')), ms),
-    );
-  }
 }
