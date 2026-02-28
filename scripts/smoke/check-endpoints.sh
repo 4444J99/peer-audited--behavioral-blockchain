@@ -23,8 +23,9 @@ check() {
   shift 4
   local extra_args=("$@")
 
-  http_code="$(curl -sS -o "$tmp_body" -w "%{http_code}" \
-    -X "$method" "${extra_args[@]}" "$url" 2>/dev/null || echo "000")"
+  http_code="$(curl -sS --no-fail -o "$tmp_body" -w "%{http_code}" \
+    -X "$method" "${extra_args[@]}" "$url" 2>/dev/null || true)"
+  [ -z "$http_code" ] && http_code="000"
 
   if [ "$http_code" = "$expected_code" ]; then
     echo "  ✅ ${label} → HTTP ${http_code}"
@@ -40,7 +41,8 @@ check_body_contains() {
   local url="$2"
   local needle="$3"
 
-  http_code="$(curl -sS -o "$tmp_body" -w "%{http_code}" "$url" 2>/dev/null || echo "000")"
+  http_code="$(curl -sS --no-fail -o "$tmp_body" -w "%{http_code}" "$url" 2>/dev/null || true)"
+  [ -z "$http_code" ] && http_code="000"
 
   if [ "$http_code" != "200" ]; then
     echo "  ❌ ${label} → HTTP ${http_code} (expected 200)"
@@ -103,7 +105,7 @@ check "GET /users/leaderboard" GET "${API_URL}/users/leaderboard" 200
 # ── Rate limiting headers present ──
 echo ""
 echo "Rate Limiting"
-rate_headers="$(curl -sS -I "${API_URL}/health" 2>/dev/null || true)"
+rate_headers="$(curl -sS --no-fail -I "${API_URL}/health" 2>/dev/null || true)"
 if echo "$rate_headers" | grep -qi "x-ratelimit\|retry-after\|ratelimit"; then
   echo "  ✅ Rate limit headers present"
   PASS=$((PASS + 1))

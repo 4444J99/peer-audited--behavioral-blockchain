@@ -28,6 +28,8 @@ Statuses:
 | Site-wide footer with legal page links | UX / compliance discoverability | Implemented | `/src/web/components/SiteFooter.tsx`, `/src/web/app/layout.tsx` | Web build; all 4 legal routes linked in footer | Web |
 | Legal pages cross-linked ("Related Policies") | UX / compliance discoverability | Implemented | `/src/web/app/legal/terms/page.tsx`, `/src/web/app/legal/privacy/page.tsx`, `/src/web/app/legal/rules/page.tsx`, `/src/web/app/legal/responsible-use/page.tsx` | Web build; each page links to the other 3 | Web / Legal |
 | Push notifications (local scheduling) | `research--behavioral-engineering-masters.md` | Partial | `/src/mobile/services/NotificationService.ts` (expo-notifications), `/src/mobile/services/ApiClient.ts` (registerPushToken) | `/src/mobile/services/NotificationService.spec.ts`; graceful degradation when package unavailable | Mobile |
+| Mobile deep linking (styx:// URL scheme) | UX / push notification routing | Implemented | `/src/mobile/config/linking.ts` (LinkingOptions + resolveNotificationDeepLink), `/src/mobile/App.tsx` (NavigationContainer linking prop + notification tap handler) | `/src/mobile/config/linking.spec.ts` (18 tests) | Mobile |
+| Endpoint smoke tests (staging + beta) | Operational / CI | Implemented | `/scripts/smoke/check-endpoints.sh`, `/scripts/smoke/staging-smoke.sh`, `/scripts/smoke/beta-smoke.sh` | Script validates health, auth guards, public routes, rate limiting, legal pages | Platform |
 | Legal compliance guardrails long-form memo is product policy | `docs/legal/legal--compliance-guardrails.md` (old presentation) | Research | `/docs/legal/legal--compliance-guardrails.md` | Labeled as research memo | Compliance |
 
 ## Notes

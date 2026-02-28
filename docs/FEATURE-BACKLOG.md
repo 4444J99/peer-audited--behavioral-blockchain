@@ -1,8 +1,8 @@
 # Styx Feature Backlog: Documentation → Implementation
 
-**Version**: 1.2.0
+**Version**: 1.3.0
 **Generated**: 2026-02-27
-**Codebase Baseline**: v0.6.0 (798 tests, 6 workspaces)
+**Codebase Baseline**: v0.7.0 (816 tests, 6 workspaces)
 **Source Documents Ingested**: 37 markdown files across research, architecture, legal, planning, and brainstorm categories
 
 ---
