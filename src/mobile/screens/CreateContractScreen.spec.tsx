@@ -1,4 +1,5 @@
 import React from 'react';
+import { render } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 
 function collectText(node: any): string {
@@ -105,47 +106,37 @@ jest.mock('../config/beta', () => ({
 }));
 
 describe('CreateContractScreen – render', () => {
-  const renderer = require('react-test-renderer');
-  const { act } = renderer;
   const { CreateContractScreen } = require('../screens/CreateContractScreen');
-
-  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
-  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
 
   const mockRoute = { params: {} } as any;
   const mockNav = { navigate: jest.fn(), goBack: jest.fn(), setOptions: jest.fn() } as any;
 
-  function render(): any {
-    let component: any;
-    act(() => {
-      component = renderer.create(
-        React.createElement(CreateContractScreen, { route: mockRoute, navigation: mockNav }),
-      );
-    });
-    return component;
+  function renderScreen() {
+    return render(
+      React.createElement(CreateContractScreen, { route: mockRoute, navigation: mockNav }),
+    );
   }
 
-  function allText(component: any): string {
-    const spans = component.root.findAllByType('span');
-    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  function allText(container: HTMLElement): string {
+    return container.textContent || '';
   }
 
   it('renders the beta notice text', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).toContain('Private beta');
     expect(text).toContain('test-money pilot');
   });
 
   it('renders the oath stream label', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).toContain('OATH STREAM');
   });
 
   it('renders verification method options', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).toContain('VERIFICATION METHOD');
     expect(text).toContain('Screen Time API');
     expect(text).toContain('Fury Peer Review');
@@ -153,15 +144,15 @@ describe('CreateContractScreen – render', () => {
   });
 
   it('renders stake amount input section', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).toContain('STAKE AMOUNT (USD)');
     expect(text).toContain('$');
   });
 
   it('renders duration options', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).toContain('DURATION');
     expect(text).toContain('7d');
     expect(text).toContain('14d');
@@ -171,20 +162,20 @@ describe('CreateContractScreen – render', () => {
   });
 
   it('renders submit button', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).toContain('STAKE AND COMMIT');
   });
 
   it('renders test-money disclaimer in beta mode', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).toContain('stake amounts are simulated');
   });
 
   it('only shows Behavioral stream when phase1NoContactOnly is true', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).toContain('Behavioral');
     expect(text).not.toContain('Cognitive');
     expect(text).not.toContain('Professional');
@@ -192,6 +183,6 @@ describe('CreateContractScreen – render', () => {
   });
 
   it('renders without crashing', () => {
-    expect(() => { render(); }).not.toThrow();
+    expect(() => { renderScreen(); }).not.toThrow();
   });
 });

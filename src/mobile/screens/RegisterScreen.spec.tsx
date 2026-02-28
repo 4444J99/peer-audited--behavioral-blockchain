@@ -1,4 +1,5 @@
 import React from 'react';
+import { render } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 
 jest.mock('../services/ApiClient', () => ({
@@ -124,12 +125,7 @@ describe('RegisterScreen – age gate & terms validation errors', () => {
 });
 
 describe('RegisterScreen – render tests', () => {
-  const renderer = require('react-test-renderer');
-  const { act } = renderer;
   const { RegisterScreen } = require('../screens/RegisterScreen');
-
-  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
-  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
 
   const mockNavigation = {
     navigate: jest.fn(),
@@ -139,39 +135,34 @@ describe('RegisterScreen – render tests', () => {
 
   const mockRoute = { params: undefined, key: 'Register', name: 'Register' as const } as any;
 
-  function renderRegister(): any {
-    let component: any;
-    act(() => {
-      component = renderer.create(
-        React.createElement(RegisterScreen, {
-          navigation: mockNavigation,
-          route: mockRoute,
-        }),
-      );
-    });
-    return component;
+  function renderRegister() {
+    return render(
+      React.createElement(RegisterScreen, {
+        navigation: mockNavigation,
+        route: mockRoute,
+      }),
+    );
   }
 
-  function allText(component: any): string {
-    const spans = component.root.findAllByType('span');
-    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  function allText(container: HTMLElement): string {
+    return container.textContent || '';
   }
 
-  function allPlaceholders(component: any): string[] {
-    const inputs = component.root.findAllByType('input');
-    return inputs.map((n: any) => n.props.placeholder).filter(Boolean);
+  function allPlaceholders(container: HTMLElement): string[] {
+    const inputs = container.querySelectorAll('input');
+    return Array.from(inputs).map(n => n.getAttribute('placeholder')).filter(Boolean) as string[];
   }
 
   it('renders "Join Styx" title', () => {
-    const c = renderRegister();
-    const text = allText(c);
+    const { container } = renderRegister();
+    const text = allText(container);
 
     expect(text).toContain('Join Styx');
   });
 
   it('renders email, password, and confirm password inputs', () => {
-    const c = renderRegister();
-    const placeholders = allPlaceholders(c);
+    const { container } = renderRegister();
+    const placeholders = allPlaceholders(container);
 
     expect(placeholders).toContain('Email');
     expect(placeholders).toContain('Password');
@@ -179,23 +170,23 @@ describe('RegisterScreen – render tests', () => {
   });
 
   it('renders age confirmation and terms checkboxes', () => {
-    const c = renderRegister();
-    const text = allText(c);
+    const { container } = renderRegister();
+    const text = allText(container);
 
     expect(text).toContain('I confirm I am 18 years of age or older');
     expect(text).toContain('I accept the Terms of Service and Privacy Policy');
   });
 
   it('renders "Create Account" button', () => {
-    const c = renderRegister();
-    const text = allText(c);
+    const { container } = renderRegister();
+    const text = allText(container);
 
     expect(text).toContain('Create Account');
   });
 
   it('renders "Already have an account?" link', () => {
-    const c = renderRegister();
-    const text = allText(c);
+    const { container } = renderRegister();
+    const text = allText(container);
 
     expect(text).toContain('Already have an account?');
   });

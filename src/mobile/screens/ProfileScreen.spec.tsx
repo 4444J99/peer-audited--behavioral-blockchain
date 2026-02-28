@@ -1,4 +1,5 @@
 import React from 'react';
+import { render } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
@@ -102,35 +103,26 @@ jest.mock('@react-navigation/native', () => ({
 }));
 
 describe('ProfileScreen – render', () => {
-  const renderer = require('react-test-renderer');
-  const { act } = renderer;
   const { ProfileScreen } = require('../screens/ProfileScreen');
 
-  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
-  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
-
-  function render(): any {
-    let component: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function renderProfileScreen() {
     const el = (React.createElement as any)(ProfileScreen, { onLogout: jest.fn() });
-    act(() => { component = renderer.create(el); });
-    return component;
+    return render(el);
   }
 
-  function allText(component: any): string {
-    const spans = component.root.findAllByType('span');
-    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  function allText(container: HTMLElement): string {
+    return container.textContent || '';
   }
 
   it('renders loading state on initial render', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderProfileScreen();
+    const text = allText(container);
     expect(text).toContain('Loading profile...');
   });
 
   it('does not render profile content while loading', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderProfileScreen();
+    const text = allText(container);
     expect(text).not.toContain('INTEGRITY');
     expect(text).not.toContain('Log Out');
     expect(text).not.toContain('Settings');

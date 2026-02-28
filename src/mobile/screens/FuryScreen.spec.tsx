@@ -1,4 +1,5 @@
 import React from 'react';
+import { render } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
@@ -110,31 +111,21 @@ describe('FuryScreen – parseSupportTraceMessage edge cases', () => {
 });
 
 describe('FuryScreen – render tests', () => {
-  const renderer = require('react-test-renderer');
-  const { act } = renderer;
   const { FuryScreen } = require('../screens/FuryScreen');
 
-  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
-  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
-
-  function renderFury(): any {
-    let component: any;
-    act(() => {
-      component = renderer.create(React.createElement(FuryScreen));
-    });
-    return component;
+  function renderFury() {
+    return render(React.createElement(FuryScreen));
   }
 
-  function allText(component: any): string {
-    const spans = component.root.findAllByType('span');
-    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  function allText(container: HTMLElement): string {
+    return container.textContent || '';
   }
 
   it('shows loading indicator initially', () => {
     // On initial render, loading=true, so the component returns the
     // ActivityIndicator loading view. It should not contain queue-specific text.
-    const c = renderFury();
-    const text = allText(c);
+    const { container } = renderFury();
+    const text = allText(container);
 
     expect(text).not.toContain('Queue Empty');
     expect(text).not.toContain('VERIFY');
@@ -142,8 +133,8 @@ describe('FuryScreen – render tests', () => {
   });
 
   it('does not render verdict buttons while loading', () => {
-    const c = renderFury();
-    const text = allText(c);
+    const { container } = renderFury();
+    const text = allText(container);
 
     expect(text).not.toContain('VERIFY');
     expect(text).not.toContain('BURN');
@@ -151,8 +142,8 @@ describe('FuryScreen – render tests', () => {
   });
 
   it('does not render stats bar while loading', () => {
-    const c = renderFury();
-    const text = allText(c);
+    const { container } = renderFury();
+    const text = allText(container);
 
     expect(text).not.toContain('Audits');
     expect(text).not.toContain('Accuracy');

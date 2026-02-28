@@ -1006,21 +1006,27 @@ export class ContractsService {
       });
     }
 
+    // Insert contract first with PENDING_STAKE status (mirrors two-phase pattern)
+    const contractResult = await this.pool.query(
+      `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id)
+       VALUES ($1, $2, $3, $4, NULL, $5, 'PENDING_STAKE', $6, $7, $8, $9)
+       RETURNING id`,
+      [dto.userId, dto.oathCategory, dto.verificationMethod, dto.stakeAmount, dto.durationDays, now.toISOString(), endsAt.toISOString(), JSON.stringify(contractMetadata), bountyLinkId],
+    );
+    const contractId = contractResult.rows[0].id;
+
+    // Hold stake with real contract ID
     const paymentIntent = await this.stripe.holdStake(
       user.stripe_customer_id,
       dto.stakeAmount,
-      'pending', // temporary — will update with contract ID
+      contractId,
     );
 
-    // 6. Insert contract row
-
-    const contractResult = await this.pool.query(
-      `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id)
-       VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE', $7, $8, $9, $10)
-       RETURNING id`,
-      [dto.userId, dto.oathCategory, dto.verificationMethod, dto.stakeAmount, paymentIntent.id, dto.durationDays, now.toISOString(), endsAt.toISOString(), JSON.stringify(contractMetadata), bountyLinkId],
+    // Activate contract with payment intent
+    await this.pool.query(
+      `UPDATE contracts SET status = 'ACTIVE', payment_intent_id = $1 WHERE id = $2`,
+      [paymentIntent.id, contractId],
     );
-    const contractId = contractResult.rows[0].id;
 
     if (bountyLinkId) {
       // Insert corresponding bounty record to track the link's state

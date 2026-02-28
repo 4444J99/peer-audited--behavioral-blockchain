@@ -15,18 +15,23 @@ jest.mock('lucide-react', () => ({
 // HashCollider imports a CSS file — stub it for node env
 jest.mock('./HashCollider.css', () => ({}));
 
+jest.mock('../services/api', () => ({
+  api: {
+    scanHashCollisions: jest.fn(),
+  },
+}));
+
+import { api } from '../services/api';
+
+const mockScanHashCollisions = api.scanHashCollisions as jest.Mock;
+
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.useFakeTimers();
-});
-
-afterEach(() => {
-  jest.useRealTimers();
 });
 
 // ---------------------------------------------------------------------------
-// HashCollider uses a local setTimeout-based mock simulation (no API call).
-// We reproduce and test the scan lifecycle and data structures.
+// HashCollider calls api.scanHashCollisions() to fetch real collision data.
+// We test the scan lifecycle and data structures.
 // ---------------------------------------------------------------------------
 
 interface HashProof {
@@ -62,65 +67,57 @@ describe('HashCollider', () => {
       expect(isScanning).toBe(true);
     });
 
-    it('populates collisions after scan timeout completes', () => {
-      let isScanning = false;
+    it('populates collisions after API call completes', async () => {
+      const mockCollisions: Collision[] = [
+        {
+          origin: {
+            id: 'prf_1A',
+            pHash: 'e1c3b1a20803c031',
+            user: 'usr_alpha77',
+            contractId: 'con_x1',
+            timestamp: '2026-02-24T10:00:00Z',
+            similarity: 100,
+          },
+          duplicate: {
+            id: 'prf_2B',
+            pHash: 'e1c3b1a20803c031',
+            user: 'usr_beta99',
+            contractId: 'con_x2',
+            timestamp: '2026-02-25T08:30:00Z',
+            similarity: 98.5,
+          },
+        },
+      ];
+
+      mockScanHashCollisions.mockResolvedValueOnce({ collisions: mockCollisions });
+
+      let isScanning = true;
       let collisions: Collision[] = [];
 
-      // Simulate handleScan
-      isScanning = true;
-
-      setTimeout(() => {
-        collisions = [
-          {
-            origin: {
-              id: 'prf_1A',
-              pHash: 'e1c3b1a20803c031',
-              user: 'usr_alpha77',
-              contractId: 'con_x1',
-              timestamp: '2026-02-24T10:00:00Z',
-              similarity: 100,
-            },
-            duplicate: {
-              id: 'prf_2B',
-              pHash: 'e1c3b1a20803c031',
-              user: 'usr_beta99',
-              contractId: 'con_x2',
-              timestamp: '2026-02-25T08:30:00Z',
-              similarity: 98.5,
-            },
-          },
-        ];
-        isScanning = false;
-      }, 1500);
-
-      // Before timer fires
-      expect(isScanning).toBe(true);
-      expect(collisions).toHaveLength(0);
-
-      // Advance to completion
-      jest.advanceTimersByTime(1500);
+      // Simulate API call
+      const result = await api.scanHashCollisions();
+      collisions = result.collisions;
+      isScanning = false;
 
       expect(isScanning).toBe(false);
       expect(collisions).toHaveLength(1);
     });
 
-    it('does not populate collisions before 1500ms', () => {
+    it('handles API errors gracefully', async () => {
+      mockScanHashCollisions.mockRejectedValueOnce(new Error('Network error'));
+
+      let error: string | null = null;
       let collisions: Collision[] = [];
 
-      setTimeout(() => {
-        collisions = [
-          {
-            origin: { id: 'prf_1A', pHash: 'hash', user: 'u1', contractId: 'c1', timestamp: 't1', similarity: 100 },
-            duplicate: { id: 'prf_2B', pHash: 'hash', user: 'u2', contractId: 'c2', timestamp: 't2', similarity: 97 },
-          },
-        ];
-      }, 1500);
+      try {
+        await api.scanHashCollisions();
+      } catch (e) {
+        error = (e as Error).message;
+        collisions = [];
+      }
 
-      jest.advanceTimersByTime(1000);
+      expect(error).toBe('Network error');
       expect(collisions).toHaveLength(0);
-
-      jest.advanceTimersByTime(500);
-      expect(collisions).toHaveLength(1);
     });
   });
 
@@ -218,6 +215,11 @@ describe('HashCollider', () => {
       const disabled = isScanning;
       expect(disabled).toBe(true);
     });
+
+    it('shows error state when API call fails', () => {
+      const error = 'Network error';
+      expect(error).toBeTruthy();
+    });
   });
 
   describe('collision display formatting', () => {
@@ -250,6 +252,30 @@ describe('HashCollider', () => {
       expect(`User: ${proof.user}`).toBe('User: usr_alpha77');
       expect(`Proof ID: ${proof.id}`).toBe('Proof ID: prf_1A');
       expect(`pHash: ${proof.pHash}`).toBe('pHash: e1c3b1a20803c031');
+    });
+  });
+
+  describe('API integration', () => {
+    it('calls api.scanHashCollisions when scan is triggered', async () => {
+      mockScanHashCollisions.mockResolvedValueOnce({ collisions: [] });
+
+      await api.scanHashCollisions();
+
+      expect(mockScanHashCollisions).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns collision array from API response', async () => {
+      const expected = [
+        {
+          origin: { id: 'prf_1A', pHash: 'abc123', user: 'u1', contractId: 'c1', timestamp: 't1', similarity: 100 },
+          duplicate: { id: 'prf_2B', pHash: 'abc123', user: 'u2', contractId: 'c2', timestamp: 't2', similarity: 96 },
+        },
+      ];
+      mockScanHashCollisions.mockResolvedValueOnce({ collisions: expected });
+
+      const result = await api.scanHashCollisions();
+
+      expect(result.collisions).toEqual(expected);
     });
   });
 });

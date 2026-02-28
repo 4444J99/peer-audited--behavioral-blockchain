@@ -176,4 +176,10 @@ export const api = {
     request<{ success: boolean }>(`/b2b/keys/${keyId}`, {
       method: 'DELETE',
     }),
+
+  // Anomaly
+  scanHashCollisions: () =>
+    request<{ collisions: Array<{ origin: { id: string; pHash: string; user: string; contractId: string; timestamp: string; similarity: number }; duplicate: { id: string; pHash: string; user: string; contractId: string; timestamp: string; similarity: number } }> }>('/admin/anomaly/scan', {
+      method: 'POST',
+    }),
 };

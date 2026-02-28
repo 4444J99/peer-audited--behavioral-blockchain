@@ -3,6 +3,9 @@
  * from the mobile buffer to the Cloudflare R2 bucket holding pen.
  */
 
+import { SessionService } from './SessionService';
+import { API_BASE } from '../config/api';
+
 export class UploadService {
   /**
    * Contacts the NestJS backend to retrieve an authenticated, pre-signed Cloudflare R2 URL.
@@ -10,15 +13,24 @@ export class UploadService {
    */
   static async requestPreSignedUrl(fileType: string): Promise<{ uploadUrl: string; proofId: string }> {
     console.log(`UploadService: Requesting Pre-Signed URL for ${fileType}...`);
-    
-    // MOCK API REQUEST TO NESTJS BACKEND
-    // In production, this uses SessionService.getToken() as a Bearer auth header
-    await new Promise(resolve => setTimeout(resolve, 500)); 
 
-    return {
-      uploadUrl: `https://mock-r2.cloudflare.styx.net/bucket/upload?signature=xyz123`,
-      proofId: `proof_${new Date().getTime()}`
-    };
+    const token = await SessionService.getToken();
+    const res = await fetch(`${API_BASE}/contracts/proof/upload-url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ contentType: fileType }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to request pre-signed URL: ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log(`UploadService: Pre-Signed URL received for proof [${data.proofId}]`);
+    return { uploadUrl: data.uploadUrl, proofId: data.proofId };
   }
 
   /**
@@ -28,11 +40,19 @@ export class UploadService {
    */
   static async uploadVideoBuffer(localUri: string, presignedUrl: string): Promise<boolean> {
     console.log(`UploadService: Transmitting video buffer [${localUri}] to [${presignedUrl.substring(0, 30)}...]`);
-    
+
     try {
-      // MOCK UPLOAD SEQUENCE
-      // In production, use RNFetchBlob or Expo FileSystem to chunk/stream the video
-      await new Promise(resolve => setTimeout(resolve, 1500)); 
+      const response = await fetch(localUri);
+      const blob = await response.blob();
+
+      const uploadRes = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: blob,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error(`Upload failed: ${uploadRes.status}`);
+      }
 
       console.log('UploadService: Transmission verified. Payload secured in R2.');
       return true;
@@ -48,9 +68,20 @@ export class UploadService {
   static async confirmUploadDispatch(proofId: string): Promise<boolean> {
     console.log(`UploadService: Confirming upload for Proof [${proofId}]. Dispatching to Fury Router...`);
 
-    // MOCK API DISPATCH
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
+    const token = await SessionService.getToken();
+    const res = await fetch(`${API_BASE}/contracts/${proofId}/dispatch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (!res.ok) {
+      console.error(`UploadService: Dispatch failed with status ${res.status}`);
+      return false;
+    }
+
     return true;
   }
 }

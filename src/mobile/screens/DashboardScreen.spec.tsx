@@ -1,4 +1,5 @@
 import React from 'react';
+import { render } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
@@ -112,22 +113,10 @@ describe('DashboardScreen – parseSupportTraceMessage edge cases', () => {
 });
 
 describe('DashboardScreen – render tests', () => {
-  const renderer = require('react-test-renderer');
-  const { act } = renderer;
   const { DashboardScreen } = require('../screens/DashboardScreen');
 
-  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
-  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
-
   it('shows "Loading..." when loading', () => {
-    // On initial render, loading=true, so the component returns the loading view.
-    let component: any;
-    act(() => {
-      component = renderer.create(React.createElement(DashboardScreen));
-    });
-    const spans = component.root.findAllByType('span');
-    const text = spans.map((n: any) => (n.children || []).join('')).join(' ');
-
-    expect(text).toContain('Loading...');
+    const { container } = render(React.createElement(DashboardScreen));
+    expect(container.textContent).toContain('Loading...');
   });
 });

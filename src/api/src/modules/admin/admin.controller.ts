@@ -10,6 +10,7 @@ import { HoneypotService } from '../../../services/intelligence/honeypot.service
 import { ContractsService } from '../contracts/contracts.service';
 import { DisputeService } from '../../../services/escrow/dispute.service';
 import { R2StorageService } from '../../../services/storage/r2.service';
+import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { IdentityVerificationService } from '../compliance/identity-verification.service';
 import { IdentityVerificationMode } from '../compliance/identity-provider.service';
 import { BanUserDto, ResolveContractDto } from './dto';
@@ -26,6 +27,7 @@ export class AdminController {
     private readonly contractsService: ContractsService,
     private readonly disputeService: DisputeService,
     private readonly r2: R2StorageService,
+    private readonly anomaly: AnomalyService,
     private readonly identityVerification: IdentityVerificationService,
     private readonly pool: Pool,
   ) {}
@@ -212,6 +214,59 @@ export class AdminController {
       contracts: contracts.rows,
       disputeFeeSideEffects: disputeFeeSideEffects.rows,
     };
+  }
+
+  // --- Anomaly Detection ---
+
+  @Post('anomaly/scan')
+  @ApiOperation({ summary: 'Scan all stored proof hashes for pHash collisions' })
+  async scanHashCollisions() {
+    const proofs = await this.pool.query(
+      `SELECT p.id, p.user_id, p.contract_id, p.media_uri, p.submitted_at
+       FROM proofs p
+       WHERE p.media_uri IS NOT NULL
+       ORDER BY p.submitted_at DESC
+       LIMIT 1000`,
+    );
+
+    const collisions: Array<{
+      origin: { id: string; pHash: string; user: string; contractId: string; timestamp: string; similarity: number };
+      duplicate: { id: string; pHash: string; user: string; contractId: string; timestamp: string; similarity: number };
+    }> = [];
+
+    const hashed = proofs.rows.map((row: any) => ({
+      ...row,
+      pHash: this.anomaly.computePHash(row.media_uri),
+    }));
+
+    for (let i = 0; i < hashed.length; i++) {
+      for (let j = i + 1; j < hashed.length; j++) {
+        const distance = this.anomaly.hammingDistance(hashed[i].pHash, hashed[j].pHash);
+        if (distance < 5) {
+          const similarity = Math.round((1 - distance / 64) * 1000) / 10;
+          collisions.push({
+            origin: {
+              id: hashed[i].id,
+              pHash: hashed[i].pHash,
+              user: hashed[i].user_id,
+              contractId: hashed[i].contract_id,
+              timestamp: hashed[i].submitted_at,
+              similarity: 100,
+            },
+            duplicate: {
+              id: hashed[j].id,
+              pHash: hashed[j].pHash,
+              user: hashed[j].user_id,
+              contractId: hashed[j].contract_id,
+              timestamp: hashed[j].submitted_at,
+              similarity,
+            },
+          });
+        }
+      }
+    }
+
+    return { collisions };
   }
 
   // --- Platform Stats ---

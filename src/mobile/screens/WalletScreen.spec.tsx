@@ -1,4 +1,5 @@
 import React from 'react';
+import { render } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
@@ -109,33 +110,25 @@ jest.mock('@react-navigation/native', () => ({
 }));
 
 describe('WalletScreen – render', () => {
-  const renderer = require('react-test-renderer');
-  const { act } = renderer;
   const { WalletScreen } = require('../screens/WalletScreen');
 
-  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
-  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
-
-  function render(): any {
-    let component: any;
-    act(() => { component = renderer.create(React.createElement(WalletScreen)); });
-    return component;
+  function renderWalletScreen() {
+    return render(React.createElement(WalletScreen));
   }
 
-  function allText(component: any): string {
-    const spans = component.root.findAllByType('span');
-    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  function allText(container: HTMLElement): string {
+    return container.textContent || '';
   }
 
   it('renders loading state on initial render', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderWalletScreen();
+    const text = allText(container);
     expect(text).toContain('Loading wallet...');
   });
 
   it('does not show balance card while loading', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderWalletScreen();
+    const text = allText(container);
     expect(text).not.toContain('LEDGER BALANCE');
     expect(text).not.toContain('INTEGRITY');
     expect(text).not.toContain('Transaction History');

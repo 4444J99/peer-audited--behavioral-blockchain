@@ -1,4 +1,5 @@
 import React from 'react';
+import { render } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
@@ -121,12 +122,7 @@ describe('ContractDetailScreen – parseSupportTraceMessage edge cases', () => {
 });
 
 describe('ContractDetailScreen – render tests', () => {
-  const renderer = require('react-test-renderer');
-  const { act } = renderer;
   const { ContractDetailScreen } = require('../screens/ContractDetailScreen');
-
-  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
-  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
 
   const mockNavigation = {
     navigate: jest.fn(),
@@ -143,21 +139,16 @@ describe('ContractDetailScreen – render tests', () => {
   it('shows loading indicator initially', () => {
     // On initial render, loading=true, so the component returns the
     // ActivityIndicator loading view (rendered as a span via the mock).
-    let component: any;
-    act(() => {
-      component = renderer.create(
-        React.createElement(ContractDetailScreen, {
-          navigation: mockNavigation,
-          route: mockRoute,
-        }),
-      );
-    });
+    const { container } = render(
+      React.createElement(ContractDetailScreen, {
+        navigation: mockNavigation,
+        route: mockRoute,
+      }),
+    );
 
     // The loading state returns: <View><ActivityIndicator /></View>
     // The tree should not contain any contract-specific text since data hasn't loaded.
-    const spans = component.root.findAllByType('span');
-    const text = spans.map((n: any) => (n.children || []).join('')).join(' ');
-    expect(text).not.toContain('Proof History');
-    expect(text).not.toContain('Contract not found');
+    expect(container.textContent).not.toContain('Proof History');
+    expect(container.textContent).not.toContain('Contract not found');
   });
 });

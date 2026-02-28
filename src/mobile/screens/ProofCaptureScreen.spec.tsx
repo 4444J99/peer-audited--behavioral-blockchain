@@ -1,4 +1,5 @@
 import React from 'react';
+import { render } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
@@ -102,55 +103,45 @@ jest.mock('../config/api', () => ({
 }));
 
 describe('ProofCaptureScreen – render', () => {
-  const renderer = require('react-test-renderer');
-  const { act } = renderer;
   const ProofCaptureScreen = require('../screens/ProofCaptureScreen').default;
-
-  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
-  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
 
   const mockRoute = {
     params: { contractId: 'contract-abc-123', token: 'test-jwt-token' },
   } as any;
   const mockNav = { navigate: jest.fn(), goBack: jest.fn(), setOptions: jest.fn() } as any;
 
-  function render(): any {
-    let component: any;
-    act(() => {
-      component = renderer.create(
-        React.createElement(ProofCaptureScreen, { route: mockRoute, navigation: mockNav }),
-      );
-    });
-    return component;
+  function renderScreen() {
+    return render(
+      React.createElement(ProofCaptureScreen, { route: mockRoute, navigation: mockNav }),
+    );
   }
 
-  function allText(component: any): string {
-    const spans = component.root.findAllByType('span');
-    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  function allText(container: HTMLElement): string {
+    return container.textContent || '';
   }
 
   it('renders the camera unavailable fallback', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).toContain('Camera Unavailable');
   });
 
   it('renders the fallback explanation text', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).toContain('camera module is not installed');
     expect(text).toContain('react-native-camera');
   });
 
   it('renders a Go Back button in fallback mode', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).toContain('Go Back');
   });
 
   it('does not render camera controls in fallback mode', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).not.toContain('Uploading...');
     expect(text).not.toContain('REC');
     expect(text).not.toContain('Live capture only');

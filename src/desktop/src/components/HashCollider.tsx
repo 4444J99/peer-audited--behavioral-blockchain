@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Fingerprint, Search, AlertCircle } from 'lucide-react';
+import { api } from '../services/api';
 import './HashCollider.css';
 
 interface HashProof {
@@ -14,19 +15,20 @@ interface HashProof {
 export default function HashCollider() {
   const [isScanning, setIsScanning] = useState(false);
   const [collisions, setCollisions] = useState<{ origin: HashProof, duplicate: HashProof }[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleScan = () => {
+  const handleScan = async () => {
     setIsScanning(true);
-    // Mock simulation of pHash collision detection across the R2 storage metadata
-    setTimeout(() => {
-      setCollisions([
-        {
-          origin: { id: 'prf_1A', pHash: 'e1c3b1a20803c031', user: 'usr_alpha77', contractId: 'con_x1', timestamp: '2026-02-24T10:00:00Z', similarity: 100 },
-          duplicate: { id: 'prf_2B', pHash: 'e1c3b1a20803c031', user: 'usr_beta99', contractId: 'con_x2', timestamp: '2026-02-25T08:30:00Z', similarity: 98.5 }
-        }
-      ]);
+    setError(null);
+    try {
+      const result = await api.scanHashCollisions();
+      setCollisions(result.collisions);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Scan failed');
+      setCollisions([]);
+    } finally {
       setIsScanning(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -50,7 +52,11 @@ export default function HashCollider() {
           This sub-system calculates perceptual hashes (pHash) against all uploaded media proofs in Cloudflare R2 to detect duplicate whistle-blower submissions across different user accounts.
         </p>
 
-        {isScanning ? (
+        {error ? (
+          <div className="error-state">
+            <AlertCircle size={16} /> {error}
+          </div>
+        ) : isScanning ? (
           <div className="scanning-state">
             <Fingerprint size={48} className="animate-pulse pulse-icon" />
             Cross-referencing 42,000+ hashes...
@@ -71,7 +77,7 @@ export default function HashCollider() {
                     OPEN TICKETS
                   </button>
                 </div>
-                
+
                 <div className="comparison-grid">
                   {/* Origin */}
                   <div className="origin-box">

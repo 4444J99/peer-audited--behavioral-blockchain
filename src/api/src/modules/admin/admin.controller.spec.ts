@@ -1,6 +1,7 @@
 import { AdminController } from './admin.controller';
 import { ModerationService } from '../../../services/security/moderation.service';
 import { HoneypotService } from '../../../services/intelligence/honeypot.service';
+import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { ContractsService } from '../contracts/contracts.service';
 import { Pool } from 'pg';
 import { IdentityVerificationService } from '../compliance/identity-verification.service';
@@ -8,6 +9,7 @@ import { IdentityVerificationService } from '../compliance/identity-verification
 describe('AdminController', () => {
   let controller: AdminController;
   let mockPool: { query: jest.Mock };
+  let mockAnomaly: { computePHash: jest.Mock; hammingDistance: jest.Mock };
 
   const mockModeration = {
     banUser: jest.fn(),
@@ -27,12 +29,17 @@ describe('AdminController', () => {
 
   beforeEach(() => {
     mockPool = { query: jest.fn() };
+    mockAnomaly = {
+      computePHash: jest.fn().mockReturnValue('0000000000000000'),
+      hammingDistance: jest.fn().mockReturnValue(10),
+    };
     controller = new AdminController(
       mockModeration,
       mockHoneypot as any,
       mockContracts,
       {} as any,
       {} as any,
+      mockAnomaly as unknown as AnomalyService,
       mockIdentityVerification,
       mockPool as unknown as Pool,
     );
@@ -140,6 +147,40 @@ describe('AdminController', () => {
         mode: 'KYC_AND_AGE',
         status: 'VERIFIED',
       });
+    });
+  });
+
+  describe('scanHashCollisions', () => {
+    it('should return empty collisions when no proofs have close hashes', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { id: 'p1', user_id: 'u1', contract_id: 'c1', media_uri: 'file://a.mp4', submitted_at: '2026-01-01' },
+          { id: 'p2', user_id: 'u2', contract_id: 'c2', media_uri: 'file://b.mp4', submitted_at: '2026-01-02' },
+        ],
+      });
+      mockAnomaly.computePHash.mockReturnValueOnce('aaaa').mockReturnValueOnce('bbbb');
+      mockAnomaly.hammingDistance.mockReturnValueOnce(30);
+
+      const result = await controller.scanHashCollisions();
+
+      expect(result.collisions).toHaveLength(0);
+    });
+
+    it('should detect collisions when hashes are within threshold', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { id: 'p1', user_id: 'u1', contract_id: 'c1', media_uri: 'file://a.mp4', submitted_at: '2026-01-01' },
+          { id: 'p2', user_id: 'u2', contract_id: 'c2', media_uri: 'file://a-copy.mp4', submitted_at: '2026-01-02' },
+        ],
+      });
+      mockAnomaly.computePHash.mockReturnValueOnce('aaaa').mockReturnValueOnce('aaaa');
+      mockAnomaly.hammingDistance.mockReturnValueOnce(0);
+
+      const result = await controller.scanHashCollisions();
+
+      expect(result.collisions).toHaveLength(1);
+      expect(result.collisions[0].origin.id).toBe('p1');
+      expect(result.collisions[0].duplicate.id).toBe('p2');
     });
   });
 

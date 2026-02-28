@@ -87,6 +87,8 @@ describe('ContractsService — Behavioral Physics', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       // Contract insert
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      // UPDATE contracts SET status = 'ACTIVE'
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
       // Prior contracts (onboarding)
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       // Escrow lookup
@@ -124,6 +126,8 @@ describe('ContractsService — Behavioral Physics', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       // Contract insert
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-2' }] });
+      // UPDATE contracts SET status = 'ACTIVE'
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
       // Prior contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       // Escrow lookup
@@ -162,6 +166,8 @@ describe('ContractsService — Behavioral Physics', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 3 }] });
       // Contract insert
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-3' }] });
+      // UPDATE contracts SET status = 'ACTIVE'
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
       // Prior contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       // Escrow lookup
@@ -212,6 +218,7 @@ describe('ContractsService — Behavioral Physics', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Total failures
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-r1' }] }); // Contract insert
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts SET status = 'ACTIVE'
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // Bounty insert (for NOCONTACT)
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // AP insert
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] }); // Prior contracts
@@ -253,7 +260,7 @@ describe('ContractsService — Behavioral Physics', () => {
         ([sql]: [string]) => typeof sql === 'string' && sql.includes('INSERT INTO contracts'),
       );
       expect(insertCall).toBeDefined();
-      const metadataParam = insertCall![1][8]; // 9th parameter ($9)
+      const metadataParam = insertCall![1][7]; // 8th parameter ($8) — metadata
       const parsed = JSON.parse(metadataParam);
       expect(parsed.recovery.noContactIdentifiers).toEqual(['hash_abc']);
       expect(parsed.recovery.acknowledgments.voluntary).toBe(true);
@@ -265,6 +272,7 @@ describe('ContractsService — Behavioral Physics', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-c1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
 
@@ -312,6 +320,7 @@ describe('ContractsService — Behavioral Physics', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-r2' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // AP insert (no bounty for SUBSTANCE)
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });

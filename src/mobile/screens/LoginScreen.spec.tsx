@@ -1,4 +1,5 @@
 import React from 'react';
+import { render } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 
 jest.mock('../services/ApiClient', () => ({
@@ -73,12 +74,7 @@ describe('LoginScreen – trace-ID display', () => {
 });
 
 describe('LoginScreen – render tests', () => {
-  const renderer = require('react-test-renderer');
-  const { act } = renderer;
   const { LoginScreen } = require('../screens/LoginScreen');
-
-  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
-  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
 
   const mockNavigation = {
     navigate: jest.fn(),
@@ -88,51 +84,46 @@ describe('LoginScreen – render tests', () => {
 
   const mockRoute = { params: undefined, key: 'Login', name: 'Login' as const } as any;
 
-  function renderLogin(): any {
-    let component: any;
+  function renderLogin() {
     const props = { navigation: mockNavigation, route: mockRoute, onLogin: jest.fn() };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const el = (React.createElement as any)(LoginScreen, props);
-    act(() => { component = renderer.create(el); });
-    return component;
+    return render(React.createElement(LoginScreen, props));
   }
 
-  function allText(component: any): string {
-    const spans = component.root.findAllByType('span');
-    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  function allText(container: HTMLElement): string {
+    return container.textContent || '';
   }
 
-  function allPlaceholders(component: any): string[] {
-    const inputs = component.root.findAllByType('input');
-    return inputs.map((n: any) => n.props.placeholder).filter(Boolean);
+  function allPlaceholders(container: HTMLElement): string[] {
+    const inputs = container.querySelectorAll('input');
+    return Array.from(inputs).map(n => n.getAttribute('placeholder')).filter(Boolean) as string[];
   }
 
   it('renders title "STYX" and subtitle', () => {
-    const c = renderLogin();
-    const text = allText(c);
+    const { container } = renderLogin();
+    const text = allText(container);
 
     expect(text).toContain('STYX');
     expect(text).toContain('The Blockchain of Truth');
   });
 
   it('renders email and password inputs', () => {
-    const c = renderLogin();
-    const placeholders = allPlaceholders(c);
+    const { container } = renderLogin();
+    const placeholders = allPlaceholders(container);
 
     expect(placeholders).toContain('Email');
     expect(placeholders).toContain('Password');
   });
 
   it('renders "Enter the River" button text', () => {
-    const c = renderLogin();
-    const text = allText(c);
+    const { container } = renderLogin();
+    const text = allText(container);
 
     expect(text).toContain('Enter the River');
   });
 
   it('renders "New here?" link', () => {
-    const c = renderLogin();
-    const text = allText(c);
+    const { container } = renderLogin();
+    const text = allText(container);
 
     expect(text).toContain('New here?');
   });

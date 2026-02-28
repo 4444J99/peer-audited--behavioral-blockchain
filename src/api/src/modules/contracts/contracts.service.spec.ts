@@ -170,6 +170,8 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       // Contract insert
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-bio' }] });
+      // UPDATE contracts SET status = 'ACTIVE'
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
       // Prior contracts count (onboarding bonus check)
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       // Escrow account lookup
@@ -185,6 +187,7 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
 
@@ -199,12 +202,13 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
 
       await service.createContract(validDto);
 
-      expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test_1', 25, 'pending');
+      expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test_1', 25, 'contract-1');
     });
 
     it('should insert the contract and return contractId + paymentIntentId', async () => {
@@ -212,6 +216,7 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'new-contract-id' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
 
@@ -226,6 +231,7 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct-id' }] });
 
@@ -245,6 +251,7 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
 
@@ -265,6 +272,7 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
 
       await service.createContract(validDto);

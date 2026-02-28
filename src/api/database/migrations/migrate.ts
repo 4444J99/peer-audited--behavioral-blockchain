@@ -67,7 +67,7 @@ export async function runMigrations(pool: Pool): Promise<string[]> {
 
 // CLI entry point — run directly with `tsx database/migrations/migrate.ts`
 if (require.main === module) {
-  const databaseUrl = process.env.DATABASE_URL || 'postgresql://styx:styx@localhost:5432/styx';
+  const databaseUrl = process.env.DATABASE_URL || 'postgresql://styx_admin:styx_local_secret@localhost:5432/styx_ledger';
   const pool = new Pool({ connectionString: databaseUrl });
 
   runMigrations(pool)

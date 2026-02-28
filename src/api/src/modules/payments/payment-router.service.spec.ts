@@ -61,16 +61,27 @@ describe('PaymentRouterService', () => {
       userId: 'user-2',
     };
 
-    it('should create a Stripe payment intent with mock client secret', async () => {
+    it('should create a Stripe payment intent with mock client secret in dev', async () => {
       const result = await service.createPaymentIntent(baseOptions, 'STRIPE');
       expect(result.processor).toBe('STRIPE');
       expect(result.clientSecret).toMatch(/^pi_stripe_mock_/);
     });
 
-    it('should create a Corepay payment intent with mock token', async () => {
+    it('should create a Corepay payment intent with mock token in dev', async () => {
       const result = await service.createPaymentIntent(baseOptions, 'HIGH_RISK_COREPAY');
       expect(result.processor).toBe('HIGH_RISK_COREPAY');
       expect(result.clientSecret).toMatch(/^tok_corepay_mock_/);
+    });
+
+    it('should throw ServiceUnavailableException in production', async () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      try {
+        await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
+          .rejects.toThrow('Payment processor not configured');
+      } finally {
+        process.env.NODE_ENV = originalEnv;
+      }
     });
   });
 });

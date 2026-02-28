@@ -1,4 +1,5 @@
 import React from 'react';
+import { render } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
@@ -113,47 +114,37 @@ jest.mock('../services/ApiClient', () => ({
 }));
 
 describe('AttestationScreen – render', () => {
-  const renderer = require('react-test-renderer');
-  const { act } = renderer;
   const { AttestationScreen } = require('../screens/AttestationScreen');
   const { ApiClient } = require('../services/ApiClient');
-
-  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
-  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
 
   const mockRoute = { params: { contractId: 'test-contract-123' } } as any;
   const mockNav = { navigate: jest.fn(), goBack: jest.fn(), setOptions: jest.fn() } as any;
 
-  function render(): any {
-    let component: any;
-    act(() => {
-      component = renderer.create(
-        React.createElement(AttestationScreen, { route: mockRoute, navigation: mockNav }),
-      );
-    });
-    return component;
+  function renderScreen() {
+    return render(
+      React.createElement(AttestationScreen, { route: mockRoute, navigation: mockNav }),
+    );
   }
 
-  function allText(component: any): string {
-    const spans = component.root.findAllByType('span');
-    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  function allText(container: HTMLElement): string {
+    return container.textContent || '';
   }
 
   it('does not render attestation content while loading', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).not.toContain('Daily Attestation');
     expect(text).not.toContain('I HELD THE LINE');
   });
 
   it('calls getAttestationStatus with the correct contractId', () => {
-    render();
+    renderScreen();
     expect(ApiClient.getAttestationStatus).toHaveBeenCalledWith('test-contract-123');
   });
 
   it('does not render attestation stats while loading', () => {
-    const c = render();
-    const text = allText(c);
+    const { container } = renderScreen();
+    const text = allText(container);
     expect(text).not.toContain('Day Streak');
     expect(text).not.toContain('Days Left');
     expect(text).not.toContain('Grace Days');
