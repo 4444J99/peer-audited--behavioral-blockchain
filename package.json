@@ -35,6 +35,7 @@
     "minimatch": ">=10.2.1",
     "@angular-devkit/core": {
       "ajv": "8.18.0"
-    }
+    },
+    "serialize-javascript": ">=7.0.3"
   }
 }
