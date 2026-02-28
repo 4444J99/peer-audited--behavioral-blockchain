@@ -1,27 +1,28 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
+import * as geoip from 'geoip-lite';
 import { STATE_TIERS, JurisdictionTier } from '../geofencing';
 
 @Injectable()
 export class GeofenceService {
-  
+
   /**
-   * Mocks a physical MaxMind / IP lookup database to map an IP to a US State.
-   * In production, this would use MaxMind GeoLite2 or a similar service.
+   * Resolves an IP address to a US state using the GeoLite2 database (via geoip-lite).
+   * Returns null for non-US or unresolvable IPs.
    */
-  private lookupStateMOCK(ip: string): string {
-    // Simulated deterministic mapping for testing purposes
-    if (ip.startsWith('192.168.1.')) return 'WA'; // Map to Washington (which is TIER_3)
-    if (ip.startsWith('10.0.0.')) return 'AR';    // Map to Arkansas (which is TIER_3)
-    if (ip.startsWith('172.16.')) return 'NY';    // Map to New York (TIER_2)
-    return 'CA'; // Map to California (TIER_1 - default safe)
+  lookupState(ip: string): string | null {
+    const geo = geoip.lookup(ip);
+    if (!geo || geo.country !== 'US') return null;
+    return geo.region || null;
   }
 
   /**
    * Checks if an incoming request is legally permitted to transact based on IP location.
    */
   checkJurisdiction(ip: string): boolean {
-    const state = this.lookupStateMOCK(ip);
-    const tier = STATE_TIERS[state] || JurisdictionTier.TIER_1; // Default to permissive if unknown, or strict depending on risk profile
+    const state = this.lookupState(ip);
+    const tier = state
+      ? (STATE_TIERS[state] || JurisdictionTier.TIER_1)
+      : JurisdictionTier.TIER_1;
 
     if (tier === JurisdictionTier.TIER_3) {
       throw new ForbiddenException(
