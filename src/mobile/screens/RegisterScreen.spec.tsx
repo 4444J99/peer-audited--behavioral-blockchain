@@ -63,3 +63,56 @@ describe('RegisterScreen – trace-ID display', () => {
     expect(tree).toBeNull();
   });
 });
+
+describe('RegisterScreen – age gate & terms validation errors', () => {
+  it('renders age confirmation error without trace ID', () => {
+    const tree = SupportTraceErrorBanner({
+      value: 'You must confirm you are 18 or older',
+    }) as any;
+    const text = collectText(tree);
+
+    expect(text).toContain('You must confirm you are 18 or older');
+    expect(text).not.toContain('Support trace ID');
+  });
+
+  it('renders terms acceptance error without trace ID', () => {
+    const tree = SupportTraceErrorBanner({
+      value: 'You must accept the Terms of Service and Privacy Policy',
+    }) as any;
+    const text = collectText(tree);
+
+    expect(text).toContain('You must accept the Terms of Service and Privacy Policy');
+    expect(text).not.toContain('Support trace ID');
+  });
+
+  it('renders age-related API error with trace ID', () => {
+    const tree = SupportTraceErrorBanner({
+      value: 'Age confirmation is required [request_id: reg-age-gate-001]',
+    }) as any;
+    const text = collectText(tree);
+
+    expect(text).toContain('Age confirmation is required');
+    expect(text).toContain('reg-age-gate-001');
+    expect(text).not.toContain('[request_id:');
+  });
+
+  it('renders terms-related API error with trace ID', () => {
+    const tree = SupportTraceErrorBanner({
+      value: 'Terms acceptance is required [request_id: reg-terms-002]',
+    }) as any;
+    const text = collectText(tree);
+
+    expect(text).toContain('Terms acceptance is required');
+    expect(text).toContain('reg-terms-002');
+  });
+
+  it('renders underage rejection error with trace ID', () => {
+    const tree = SupportTraceErrorBanner({
+      value: 'You must be at least 18 years old to use Styx [request_id: reg-underage-xyz]',
+    }) as any;
+    const text = collectText(tree);
+
+    expect(text).toContain('You must be at least 18 years old to use Styx');
+    expect(text).toContain('reg-underage-xyz');
+  });
+});

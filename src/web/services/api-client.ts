@@ -273,8 +273,13 @@ export const api = {
     };
   }>('/users/me'),
 
-  getLeaderboard: (limit?: number) =>
-    request<LeaderboardEntry[]>(`/users/leaderboard${limit ? `?limit=${limit}` : ''}`),
+  getLeaderboard: (limit?: number, period?: string) => {
+    const params = new URLSearchParams();
+    if (limit) params.set('limit', String(limit));
+    if (period) params.set('period', period);
+    const qs = params.toString();
+    return request<LeaderboardEntry[]>(`/users/leaderboard${qs ? `?${qs}` : ''}`);
+  },
 
   // Notifications
   getNotifications: () =>

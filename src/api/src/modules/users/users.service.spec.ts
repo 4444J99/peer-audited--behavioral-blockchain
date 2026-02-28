@@ -118,5 +118,49 @@ describe('UsersService', () => {
         [100],
       );
     });
+
+    it('should filter by weekly activity when period is "weekly"', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
+
+      await service.getLeaderboard(10, 'weekly');
+
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining("INTERVAL '7 days'"),
+        [10],
+      );
+    });
+
+    it('should filter by monthly activity when period is "monthly"', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
+
+      await service.getLeaderboard(10, 'monthly');
+
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining("INTERVAL '30 days'"),
+        [10],
+      );
+    });
+
+    it('should not add interval filter for alltime period', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
+
+      await service.getLeaderboard(10, 'alltime');
+
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.not.stringContaining('INTERVAL'),
+        [10],
+      );
+    });
+
+    it('should not add interval filter when period is undefined', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
+
+      await service.getLeaderboard(10);
+
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.not.stringContaining('INTERVAL'),
+        [10],
+      );
+    });
   });
 });

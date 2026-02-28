@@ -1,0 +1,88 @@
+# Render Blueprint — Styx Peer-Audited Behavioral Market
+# https://render.com/docs/blueprint-spec
+
+services:
+  # --- API (NestJS) ---
+  - type: web
+    name: styx-api
+    runtime: node
+    region: oregon
+    plan: starter
+    buildCommand: npm install && npx turbo run build --filter=@styx/api
+    startCommand: cd src/api && node dist/main.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: styx-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: styx-redis
+          type: redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: CLOUDFLARE_R2_ACCESS_KEY
+        sync: false
+      - key: CLOUDFLARE_R2_SECRET_KEY
+        sync: false
+      - key: CLOUDFLARE_R2_BUCKET
+        sync: false
+      - key: CLOUDFLARE_R2_ENDPOINT
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: GEO_MISSING_HEADER_ACTION
+        value: allow
+      - key: KYC_ENFORCEMENT_ENABLED
+        value: "false"
+
+  # --- Web (Next.js) ---
+  - type: web
+    name: styx-web
+    runtime: node
+    region: oregon
+    plan: starter
+    buildCommand: npm install && npx turbo run build --filter=@styx/web
+    startCommand: cd src/web && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          name: styx-api
+          type: web
+          property: hostport
+      - key: NEXT_PUBLIC_STYX_WEB_VERSION
+        value: "0.1.0"
+      - key: SENTRY_DSN
+        sync: false
+
+databases:
+  - name: styx-db
+    plan: starter
+    region: oregon
+    postgresMajorVersion: "15"
+    ipAllowList: []  # Allow all (Render internal networking)
+
+redis:
+  - name: styx-redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []

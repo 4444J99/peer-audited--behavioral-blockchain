@@ -157,11 +157,33 @@ export class UsersService {
     return result.rows[0];
   }
 
-  async getLeaderboard(limit: number = 10) {
+  async getLeaderboard(limit: number = 10, period?: string) {
     const maxLimit = Math.min(limit, 100);
+
+    let intervalFilter = '';
+    if (period === 'weekly') {
+      intervalFilter = `AND id IN (
+        SELECT DISTINCT user_id FROM contracts
+        WHERE created_at >= NOW() - INTERVAL '7 days'
+        UNION
+        SELECT DISTINCT c.user_id FROM attestations a
+        JOIN contracts c ON c.id = a.contract_id
+        WHERE a.attestation_date >= CURRENT_DATE - 7
+      )`;
+    } else if (period === 'monthly') {
+      intervalFilter = `AND id IN (
+        SELECT DISTINCT user_id FROM contracts
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+        UNION
+        SELECT DISTINCT c.user_id FROM attestations a
+        JOIN contracts c ON c.id = a.contract_id
+        WHERE a.attestation_date >= CURRENT_DATE - 30
+      )`;
+    }
+
     const result = await this.pool.query(
       `SELECT id, email, integrity_score, created_at
-       FROM users WHERE status = 'ACTIVE'
+       FROM users WHERE status = 'ACTIVE' ${intervalFilter}
        ORDER BY integrity_score DESC
        LIMIT $1`,
       [maxLimit],

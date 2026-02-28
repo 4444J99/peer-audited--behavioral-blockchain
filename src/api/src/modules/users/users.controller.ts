@@ -112,8 +112,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Get the public integrity leaderboard' })
   @Public()
   @Throttle({ default: { ttl: 60000, limit: 30 } })
-  async getLeaderboard(@Query('limit') limit?: string) {
-    return this.usersService.getLeaderboard(limit ? parseInt(limit, 10) : 10);
+  async getLeaderboard(@Query('limit') limit?: string, @Query('period') period?: string) {
+    return this.usersService.getLeaderboard(limit ? parseInt(limit, 10) : 10, period);
   }
 
   @Get(':id')

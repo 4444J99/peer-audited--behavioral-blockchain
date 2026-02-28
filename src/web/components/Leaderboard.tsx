@@ -43,8 +43,7 @@ export default function Leaderboard() {
 
   useEffect(() => {
     setLoading(true);
-    // TODO: when backend supports ?period= filter, pass it here
-    api.getLeaderboard(10)
+    api.getLeaderboard(10, period === 'alltime' ? undefined : period)
       .then((data) => {
         setLeaders(data);
         // Fury of the Week = highest integrity score (first in sorted list)
