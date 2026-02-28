@@ -25,6 +25,9 @@ Statuses:
 | Daily attestation flow (Recovery stream) | `phase1-private-beta-scope.md` | Implemented | `/src/api/src/modules/contracts/contracts.service.ts` (getAttestationStatus, submitAttestation), `/src/api/src/modules/contracts/contracts.controller.ts`, `/src/web/app/contracts/[id]/attest/page.tsx`, `/src/mobile/screens/AttestationScreen.tsx` | `/src/api/src/modules/contracts/contracts.service.spec.ts` | Product |
 | Contest official rules published | `docs/legal/legal--compliance-guardrails.md` §4.C | Implemented | `/src/web/app/legal/rules/page.tsx` | Web build; route `/legal/rules` | Legal |
 | Responsible use disclosures published | `docs/legal/legal--compliance-guardrails.md` §4.E | Implemented | `/src/web/app/legal/responsible-use/page.tsx` | Web build; route `/legal/responsible-use`; links to NCPG, SAMHSA, NEDA, NDVH | Legal |
+| Site-wide footer with legal page links | UX / compliance discoverability | Implemented | `/src/web/components/SiteFooter.tsx`, `/src/web/app/layout.tsx` | Web build; all 4 legal routes linked in footer | Web |
+| Legal pages cross-linked ("Related Policies") | UX / compliance discoverability | Implemented | `/src/web/app/legal/terms/page.tsx`, `/src/web/app/legal/privacy/page.tsx`, `/src/web/app/legal/rules/page.tsx`, `/src/web/app/legal/responsible-use/page.tsx` | Web build; each page links to the other 3 | Web / Legal |
+| Push notifications (local scheduling) | `research--behavioral-engineering-masters.md` | Partial | `/src/mobile/services/NotificationService.ts` (expo-notifications), `/src/mobile/services/ApiClient.ts` (registerPushToken) | `/src/mobile/services/NotificationService.spec.ts`; graceful degradation when package unavailable | Mobile |
 | Legal compliance guardrails long-form memo is product policy | `docs/legal/legal--compliance-guardrails.md` (old presentation) | Research | `/docs/legal/legal--compliance-guardrails.md` | Labeled as research memo | Compliance |
 
 ## Notes

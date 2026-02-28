@@ -1,8 +1,8 @@
 # Styx Feature Backlog: Documentation → Implementation
 
-**Version**: 1.1.0
+**Version**: 1.2.0
 **Generated**: 2026-02-27
-**Codebase Baseline**: v0.5.0 (713 tests, 6 workspaces)
+**Codebase Baseline**: v0.6.0 (798 tests, 6 workspaces)
 **Source Documents Ingested**: 37 markdown files across research, architecture, legal, planning, and brainstorm categories
 
 ---
@@ -14,8 +14,8 @@
 | Status | Count | Description |
 |--------|-------|-------------|
 | IMPLEMENTED | 23 | Working code with tests |
-| PARTIAL | 6 | Code exists but incomplete or conditional |
-| STUB | 5 | Files/endpoints exist but placeholder logic |
+| PARTIAL | 7 | Code exists but incomplete or conditional |
+| STUB | 4 | Files/endpoints exist but placeholder logic |
 | NOT_STARTED | 44 | Described in docs, no code |
 | **Total** | **78** | |
 
@@ -39,7 +39,7 @@
 | F-UX-03 | Dynamic Downscale Intervention | PARTIAL |
 | F-FURY-03 | Cross-Lobby Auditing | NOT_STARTED |
 | F-AEGIS-04 | Recovery Protocol Guardrails | PARTIAL |
-| F-MOBILE-03 | Push Notifications | STUB |
+| F-MOBILE-03 | Push Notifications | PARTIAL |
 | F-SOCIAL-01 | Accountability Partner Protocol | PARTIAL |
 
 ### P2: Post-Beta (Phase 2+)
@@ -756,13 +756,14 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-MOBILE-03: Push Notifications
 
-- **Status**: STUB
+- **Status**: PARTIAL
 - **Phase**: Beta
 - **Priority**: P1
 - **Source**: `research--behavioral-engineering-masters.md` §RAIN, general UX
-- **Existing Code**: `src/mobile/services/NotificationService.ts` (service exists)
+- **Existing Code**: `src/mobile/services/NotificationService.ts` (expo-notifications wiring: local scheduling, permission request, Android channel, graceful degradation), `src/mobile/services/ApiClient.ts` (registerPushToken)
 - **Spec**: Push notifications for: grace day reminders, Fury review assignments, verdict reports, endowed progress alerts, RAIN intercessions, attestation reminders.
 - **Dependencies**: APNs (iOS), FCM (Android)
+- **What's done**: Local notifications (grace day, attestation, deadline), permission flow, Expo push token retrieval, device token registration API. **What remains**: Remote push via APNs/FCM (requires Apple/Google credentials), server-side push dispatch.
 
 #### F-MOBILE-04: Biometric Lock (Voice/Face)
 

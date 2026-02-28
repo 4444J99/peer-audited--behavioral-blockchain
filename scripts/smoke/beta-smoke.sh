@@ -16,3 +16,5 @@ if [ -n "${BETA_WEB_URL:-}" ]; then
 else
   echo "::warning::BETA_WEB_URL not set; skipping beta web smoke."
 fi
+
+bash "${SCRIPT_DIR}/check-endpoints.sh"

@@ -16,3 +16,5 @@ if [ -n "${STAGING_WEB_URL:-}" ]; then
 else
   echo "::warning::STAGING_WEB_URL not set; skipping staging web smoke."
 fi
+
+bash "${SCRIPT_DIR}/check-endpoints.sh"

@@ -1,11 +1,14 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import type { NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Text, View } from 'react-native';
 import { SessionService } from './services/SessionService';
 import { OfflineCache } from './services/OfflineCache';
 import { ApiClient } from './services/ApiClient';
+import { NotificationService } from './services/NotificationService';
+import { linking, resolveNotificationDeepLink } from './config/linking';
 import {
   getMobileBetaBannerText,
   getMobileBootstrapConfig,
@@ -177,6 +180,7 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+  const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -184,6 +188,7 @@ export default function App() {
     Promise.allSettled([
       SessionService.isLoggedIn(),
       ApiClient.getMobileBootstrap(),
+      NotificationService.initialize(),
     ])
       .then((results) => {
         if (mounted) {
@@ -211,6 +216,27 @@ export default function App() {
     return () => {
       mounted = false;
     };
+  }, []);
+
+  // Handle push notification taps → navigate via deep link
+  useEffect(() => {
+    let Notifications: typeof import('expo-notifications') | null = null;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      Notifications = require('expo-notifications');
+    } catch {
+      return; // expo-notifications not available
+    }
+
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+      const deepLink = resolveNotificationDeepLink(data as Record<string, any>);
+      if (deepLink) {
+        Linking.openURL(deepLink);
+      }
+    });
+
+    return () => subscription.remove();
   }, []);
 
   const handleLogin = useCallback(() => {
@@ -298,7 +324,7 @@ export default function App() {
         ) : null}
       </View>
       <View style={{ flex: 1 }}>
-        <NavigationContainer>
+        <NavigationContainer linking={linking} ref={navigationRef}>
           {isLoggedIn ? (
             <MainTabNavigator onLogout={handleLogout} />
           ) : (
