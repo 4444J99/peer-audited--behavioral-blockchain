@@ -145,10 +145,12 @@ export default function RegisterPage() {
                 I accept the{' '}
                 <Link href="/legal/terms" className="text-red-500 hover:text-red-400 underline" target="_blank">
                   Terms of Service
-                </Link>{' '}
-                and{' '}
+                </Link>,{' '}
                 <Link href="/legal/privacy" className="text-red-500 hover:text-red-400 underline" target="_blank">
                   Privacy Policy
+                </Link>, and{' '}
+                <Link href="/legal/rules" className="text-red-500 hover:text-red-400 underline" target="_blank">
+                  Contest Rules
                 </Link>.
               </span>
             </label>

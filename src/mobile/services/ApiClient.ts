@@ -269,6 +269,13 @@ export const ApiClient = {
       method: 'POST',
     }),
 
+  // Push notifications
+  registerPushToken: (pushToken: string) => // allow-secret
+    request<{ status: string }>('/users/me/push-token', {
+      method: 'PUT',
+      body: JSON.stringify({ token: pushToken }), // allow-secret
+    }),
+
   // Enterprise SSO
   exchangeEnterpriseToken: (enterpriseToken: string) => // allow-secret
     request<{ userId: string; token: string }>('/auth/enterprise', {

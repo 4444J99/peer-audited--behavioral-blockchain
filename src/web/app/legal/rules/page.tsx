@@ -174,6 +174,15 @@ export default function ContestRulesPage() {
               <a href="mailto:legal@styx.protocol" className="text-red-500 hover:text-red-400">legal@styx.protocol</a>.
             </p>
           </section>
+
+          <section className="border-t border-neutral-800 pt-8">
+            <h2 className="text-lg font-bold text-white mb-3">Related Policies</h2>
+            <ul className="space-y-2">
+              <li><Link href="/legal/terms" className="text-red-500 hover:text-red-400">Terms of Service</Link></li>
+              <li><Link href="/legal/privacy" className="text-red-500 hover:text-red-400">Privacy Policy</Link></li>
+              <li><Link href="/legal/responsible-use" className="text-red-500 hover:text-red-400">Responsible Use</Link></li>
+            </ul>
+          </section>
         </div>
       </div>
     </div>

@@ -19,6 +19,16 @@
         "NSPhotoLibraryUsageDescription": "Styx needs photo library access to select proof images for contract verification."
       }
     },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ff4444",
+          "sounds": []
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": ""

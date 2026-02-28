@@ -55,9 +55,38 @@ describe('NotificationService', () => {
   });
 
   describe('requestPermissions()', () => {
-    it('returns true', async () => {
+    it('returns false when expo-notifications is not available', async () => {
       const granted = await NotificationService.requestPermissions();
-      expect(granted).toBe(true);
+      expect(granted).toBe(false);
+    });
+  });
+
+  describe('scheduleGraceDayReminder()', () => {
+    it('does not throw when expo-notifications is not available', async () => {
+      await expect(
+        NotificationService.scheduleGraceDayReminder('user-1'),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('scheduleAttestationReminder()', () => {
+    it('does not throw when expo-notifications is not available', async () => {
+      await expect(
+        NotificationService.scheduleAttestationReminder('contract-1'),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('cancelAll()', () => {
+    it('does not throw when expo-notifications is not available', async () => {
+      await expect(NotificationService.cancelAll()).resolves.toBeUndefined();
+    });
+  });
+
+  describe('getExpoPushToken()', () => {
+    it('returns null when expo-notifications is not available', async () => {
+      const token = await NotificationService.getExpoPushToken();
+      expect(token).toBeNull();
     });
   });
 });

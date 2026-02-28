@@ -141,6 +141,15 @@ export default function ResponsibleUsePage() {
               We will work with you to pause, modify, or cancel active contracts if your well-being is at risk.
             </p>
           </section>
+
+          <section className="border-t border-neutral-800 pt-8">
+            <h2 className="text-lg font-bold text-white mb-3">Related Policies</h2>
+            <ul className="space-y-2">
+              <li><Link href="/legal/terms" className="text-red-500 hover:text-red-400">Terms of Service</Link></li>
+              <li><Link href="/legal/privacy" className="text-red-500 hover:text-red-400">Privacy Policy</Link></li>
+              <li><Link href="/legal/rules" className="text-red-500 hover:text-red-400">Contest Official Rules</Link></li>
+            </ul>
+          </section>
         </div>
       </div>
     </div>

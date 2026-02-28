@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import { SiteFooter } from "../components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Styx | The Blockchain of Truth",
@@ -18,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body className="antialiased min-h-screen flex flex-col">
         {PRIVATE_BETA ? (
           <div className="w-full border-b border-amber-700/40 bg-amber-950/80 px-4 py-2 text-xs text-amber-200">
             <span className="font-semibold uppercase tracking-wide">Private Beta</span>
@@ -28,7 +29,8 @@ export default function RootLayout({
             <span className="uppercase tracking-wide">{ENV_LABEL}</span>
           </div>
         ) : null}
-        <Providers>{children}</Providers>
+        <Providers><main className="flex-1">{children}</main></Providers>
+        <SiteFooter />
       </body>
     </html>
   );
