@@ -2,6 +2,12 @@ import React from 'react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
+jest.mock('../services/ApiClient', () => ({
+  ApiClient: {
+    submitProof: jest.fn(),
+  },
+}));
+
 function collectText(node: any): string {
   if (node == null || typeof node === 'boolean') return '';
   if (typeof node === 'string' || typeof node === 'number') return String(node);
@@ -90,5 +96,60 @@ describe('CameraScreen – parseSupportTraceMessage edge cases', () => {
     const result = parseSupportTraceMessage(undefined);
     expect(result.message).toBe('');
     expect(result.traceId).toBeNull();
+  });
+});
+
+describe('CameraScreen – render tests', () => {
+  const renderer = require('react-test-renderer');
+  const { act } = renderer;
+  const { CameraScreen } = require('../screens/CameraScreen');
+
+  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
+  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
+
+  function renderCamera(): any {
+    let component: any;
+    act(() => {
+      component = renderer.create(React.createElement(CameraScreen));
+    });
+    return component;
+  }
+
+  function allText(component: any): string {
+    const spans = component.root.findAllByType('span');
+    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  }
+
+  function allPlaceholders(component: any): string[] {
+    const inputs = component.root.findAllByType('input');
+    return inputs.map((n: any) => n.props.placeholder).filter(Boolean);
+  }
+
+  it('renders camera placeholder with "Camera Preview" text', () => {
+    const c = renderCamera();
+    const text = allText(c);
+
+    expect(text).toContain('Camera Preview');
+  });
+
+  it('renders contract ID input', () => {
+    const c = renderCamera();
+    const placeholders = allPlaceholders(c);
+
+    expect(placeholders).toContain('Contract ID');
+  });
+
+  it('renders "SUBMIT PROOF" button', () => {
+    const c = renderCamera();
+    const text = allText(c);
+
+    expect(text).toContain('SUBMIT PROOF');
+  });
+
+  it('shows native module notice text', () => {
+    const c = renderCamera();
+    const text = allText(c);
+
+    expect(text).toContain('Camera integration requires native module');
   });
 });

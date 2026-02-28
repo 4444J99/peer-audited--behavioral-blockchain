@@ -68,3 +68,130 @@ describe('CreateContractScreen – trace-ID display', () => {
     expect(tree).toBeNull();
   });
 });
+
+/* ------------------------------------------------------------------ */
+/*  CreateContractScreen – render tests                               */
+/* ------------------------------------------------------------------ */
+
+jest.mock('../services/ApiClient', () => ({
+  ApiClient: {
+    createContract: jest.fn(),
+  },
+}));
+
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({
+    navigate: jest.fn(),
+    goBack: jest.fn(),
+    setOptions: jest.fn(),
+  }),
+}));
+
+jest.mock('@styx/shared/libs/behavioral-logic', () => ({
+  MIN_SAFE_BMI: 18.5,
+  MAX_WEEKLY_LOSS_VELOCITY_PCT: 0.02,
+}));
+
+jest.mock('../config/beta', () => ({
+  getMobileFeatureFlags: () => ({
+    phase1NoContactOnly: true,
+    testMoneyMode: true,
+    phase1MobilePrimary: true,
+    enableB2bHrUi: false,
+    maintenanceMode: false,
+    privateBeta: true,
+    allowlistUsOnly: true,
+  }),
+}));
+
+describe('CreateContractScreen – render', () => {
+  const renderer = require('react-test-renderer');
+  const { act } = renderer;
+  const { CreateContractScreen } = require('../screens/CreateContractScreen');
+
+  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
+  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
+
+  const mockRoute = { params: {} } as any;
+  const mockNav = { navigate: jest.fn(), goBack: jest.fn(), setOptions: jest.fn() } as any;
+
+  function render(): any {
+    let component: any;
+    act(() => {
+      component = renderer.create(
+        React.createElement(CreateContractScreen, { route: mockRoute, navigation: mockNav }),
+      );
+    });
+    return component;
+  }
+
+  function allText(component: any): string {
+    const spans = component.root.findAllByType('span');
+    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  }
+
+  it('renders the beta notice text', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('Private beta');
+    expect(text).toContain('test-money pilot');
+  });
+
+  it('renders the oath stream label', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('OATH STREAM');
+  });
+
+  it('renders verification method options', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('VERIFICATION METHOD');
+    expect(text).toContain('Screen Time API');
+    expect(text).toContain('Fury Peer Review');
+    expect(text).toContain('GPS Geofence');
+  });
+
+  it('renders stake amount input section', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('STAKE AMOUNT (USD)');
+    expect(text).toContain('$');
+  });
+
+  it('renders duration options', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('DURATION');
+    expect(text).toContain('7d');
+    expect(text).toContain('14d');
+    expect(text).toContain('30d');
+    expect(text).toContain('60d');
+    expect(text).toContain('90d');
+  });
+
+  it('renders submit button', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('STAKE AND COMMIT');
+  });
+
+  it('renders test-money disclaimer in beta mode', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('stake amounts are simulated');
+  });
+
+  it('only shows Behavioral stream when phase1NoContactOnly is true', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('Behavioral');
+    expect(text).not.toContain('Cognitive');
+    expect(text).not.toContain('Professional');
+    expect(text).not.toContain('Creative');
+  });
+
+  it('renders without crashing', () => {
+    expect(() => { render(); }).not.toThrow();
+  });
+});

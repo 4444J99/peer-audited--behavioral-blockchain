@@ -92,3 +92,58 @@ describe('WalletScreen – parseSupportTraceMessage edge cases', () => {
     expect(result.traceId).toBeNull();
   });
 });
+
+/* ------------------------------------------------------------------ */
+/*  WalletScreen – render tests                                       */
+/* ------------------------------------------------------------------ */
+
+jest.mock('../services/ApiClient', () => ({
+  ApiClient: {
+    getBalance: jest.fn().mockReturnValue(new Promise(() => {})),
+    getWalletHistory: jest.fn().mockReturnValue(new Promise(() => {})),
+  },
+}));
+
+jest.mock('@react-navigation/native', () => ({
+  useFocusEffect: jest.fn(),
+}));
+
+describe('WalletScreen – render', () => {
+  const renderer = require('react-test-renderer');
+  const { act } = renderer;
+  const { WalletScreen } = require('../screens/WalletScreen');
+
+  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
+  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
+
+  function render(): any {
+    let component: any;
+    act(() => { component = renderer.create(React.createElement(WalletScreen)); });
+    return component;
+  }
+
+  function allText(component: any): string {
+    const spans = component.root.findAllByType('span');
+    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  }
+
+  it('renders loading state on initial render', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('Loading wallet...');
+  });
+
+  it('does not show balance card while loading', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).not.toContain('LEDGER BALANCE');
+    expect(text).not.toContain('INTEGRITY');
+    expect(text).not.toContain('Transaction History');
+  });
+
+  it('exports WalletScreen as a named function', () => {
+    expect(WalletScreen).toBeDefined();
+    expect(typeof WalletScreen).toBe('function');
+    expect(WalletScreen.name).toBe('WalletScreen');
+  });
+});

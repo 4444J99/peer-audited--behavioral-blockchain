@@ -82,3 +82,63 @@ describe('ProfileScreen – parseSupportTraceMessage edge cases', () => {
     expect(result.traceId).toBeNull();
   });
 });
+
+/* ------------------------------------------------------------------ */
+/*  ProfileScreen – render tests                                      */
+/* ------------------------------------------------------------------ */
+
+jest.mock('../services/ApiClient', () => ({
+  ApiClient: {
+    getMe: jest.fn().mockReturnValue(new Promise(() => {})),
+  },
+}));
+
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({
+    navigate: jest.fn(),
+    goBack: jest.fn(),
+    setOptions: jest.fn(),
+  }),
+}));
+
+describe('ProfileScreen – render', () => {
+  const renderer = require('react-test-renderer');
+  const { act } = renderer;
+  const { ProfileScreen } = require('../screens/ProfileScreen');
+
+  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
+  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
+
+  function render(): any {
+    let component: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const el = (React.createElement as any)(ProfileScreen, { onLogout: jest.fn() });
+    act(() => { component = renderer.create(el); });
+    return component;
+  }
+
+  function allText(component: any): string {
+    const spans = component.root.findAllByType('span');
+    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  }
+
+  it('renders loading state on initial render', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('Loading profile...');
+  });
+
+  it('does not render profile content while loading', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).not.toContain('INTEGRITY');
+    expect(text).not.toContain('Log Out');
+    expect(text).not.toContain('Settings');
+  });
+
+  it('exports ProfileScreen as a named function', () => {
+    expect(ProfileScreen).toBeDefined();
+    expect(typeof ProfileScreen).toBe('function');
+    expect(ProfileScreen.name).toBe('ProfileScreen');
+  });
+});

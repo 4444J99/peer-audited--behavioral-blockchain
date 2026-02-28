@@ -191,6 +191,20 @@ CREATE INDEX idx_contract_resolution_effects_quarantined
   ON contract_resolution_side_effects(status, quarantined_at)
   WHERE status = 'QUARANTINED';
 
+-- B2B Consumption Billing
+CREATE TABLE consumption_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enterprise_id UUID NOT NULL,
+    event_type TEXT NOT NULL,
+    units INTEGER NOT NULL DEFAULT 1,
+    recorded_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_consumption_logs_enterprise_period
+  ON consumption_logs(enterprise_id, recorded_at);
+CREATE INDEX idx_consumption_logs_event_type
+  ON consumption_logs(enterprise_id, event_type, recorded_at);
+
 CREATE INDEX idx_contracts_user_id ON contracts(user_id);
 CREATE INDEX idx_contracts_status ON contracts(status);
 CREATE INDEX idx_proofs_contract_id ON proofs(contract_id);

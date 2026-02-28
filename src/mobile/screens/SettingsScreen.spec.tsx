@@ -92,3 +92,89 @@ describe('SettingsScreen – parseSupportTraceMessage edge cases', () => {
     expect(result.traceId).toBeNull();
   });
 });
+
+/* ------------------------------------------------------------------ */
+/*  SettingsScreen – render tests                                     */
+/* ------------------------------------------------------------------ */
+
+jest.mock('../services/ApiClient', () => ({
+  ApiClient: {
+    changePassword: jest.fn(),
+    updateSettings: jest.fn(),
+    deleteAccount: jest.fn(),
+  },
+}));
+
+describe('SettingsScreen – render', () => {
+  const renderer = require('react-test-renderer');
+  const { act } = renderer;
+  const { SettingsScreen } = require('../screens/SettingsScreen');
+
+  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
+  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
+
+  function render(): any {
+    let component: any;
+    act(() => { component = renderer.create(React.createElement(SettingsScreen)); });
+    return component;
+  }
+
+  function allText(component: any): string {
+    const spans = component.root.findAllByType('span');
+    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  }
+
+  function allPlaceholders(component: any): string[] {
+    const inputs = component.root.findAllByType('input');
+    return inputs.map((n: any) => n.props.placeholder).filter(Boolean);
+  }
+
+  it('renders the Change Password section', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('Change Password');
+    expect(text).toContain('Update Password');
+  });
+
+  it('renders the Notifications section with toggle labels', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('Notifications');
+    expect(text).toContain('Email Notifications');
+    expect(text).toContain('Push Notifications');
+    expect(text).toContain('Save Preferences');
+  });
+
+  it('renders the Danger Zone section', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('Danger Zone');
+    expect(text).toContain('Delete My Account');
+    expect(text).toContain('Permanently delete');
+  });
+
+  it('renders the version string', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('Styx Mobile v1.0.0');
+  });
+
+  it('renders password input placeholders', () => {
+    const c = render();
+    const placeholders = allPlaceholders(c);
+    expect(placeholders).toContain('Current password');
+    expect(placeholders).toContain('New password (min. 8 characters)');
+    expect(placeholders).toContain('Confirm new password');
+  });
+
+  it('renders without crashing', () => {
+    expect(() => { render(); }).not.toThrow();
+  });
+
+  it('does not render error messages initially', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).not.toContain('Password updated successfully');
+    expect(text).not.toContain('Current password is required');
+  });
+});

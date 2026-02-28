@@ -92,3 +92,72 @@ describe('ProofCaptureScreen – parseSupportTraceMessage edge cases', () => {
     expect(result.traceId).toBeNull();
   });
 });
+
+/* ------------------------------------------------------------------ */
+/*  ProofCaptureScreen – render tests                                 */
+/* ------------------------------------------------------------------ */
+
+jest.mock('../config/api', () => ({
+  API_BASE: 'https://api.styx.test',
+}));
+
+describe('ProofCaptureScreen – render', () => {
+  const renderer = require('react-test-renderer');
+  const { act } = renderer;
+  const ProofCaptureScreen = require('../screens/ProofCaptureScreen').default;
+
+  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
+  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
+
+  const mockRoute = {
+    params: { contractId: 'contract-abc-123', token: 'test-jwt-token' },
+  } as any;
+  const mockNav = { navigate: jest.fn(), goBack: jest.fn(), setOptions: jest.fn() } as any;
+
+  function render(): any {
+    let component: any;
+    act(() => {
+      component = renderer.create(
+        React.createElement(ProofCaptureScreen, { route: mockRoute, navigation: mockNav }),
+      );
+    });
+    return component;
+  }
+
+  function allText(component: any): string {
+    const spans = component.root.findAllByType('span');
+    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  }
+
+  it('renders the camera unavailable fallback', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('Camera Unavailable');
+  });
+
+  it('renders the fallback explanation text', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('camera module is not installed');
+    expect(text).toContain('react-native-camera');
+  });
+
+  it('renders a Go Back button in fallback mode', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).toContain('Go Back');
+  });
+
+  it('does not render camera controls in fallback mode', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).not.toContain('Uploading...');
+    expect(text).not.toContain('REC');
+    expect(text).not.toContain('Live capture only');
+  });
+
+  it('exports ProofCaptureScreen as a default export', () => {
+    expect(ProofCaptureScreen).toBeDefined();
+    expect(typeof ProofCaptureScreen).toBe('function');
+  });
+});

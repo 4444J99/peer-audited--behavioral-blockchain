@@ -1,6 +1,12 @@
 import React from 'react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 
+jest.mock('../services/ApiClient', () => ({
+  ApiClient: {
+    register: jest.fn(),
+  },
+}));
+
 function collectText(node: any): string {
   if (node == null || typeof node === 'boolean') return '';
   if (typeof node === 'string' || typeof node === 'number') return String(node);
@@ -114,5 +120,83 @@ describe('RegisterScreen – age gate & terms validation errors', () => {
 
     expect(text).toContain('You must be at least 18 years old to use Styx');
     expect(text).toContain('reg-underage-xyz');
+  });
+});
+
+describe('RegisterScreen – render tests', () => {
+  const renderer = require('react-test-renderer');
+  const { act } = renderer;
+  const { RegisterScreen } = require('../screens/RegisterScreen');
+
+  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
+  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
+
+  const mockNavigation = {
+    navigate: jest.fn(),
+    goBack: jest.fn(),
+    setOptions: jest.fn(),
+  } as any;
+
+  const mockRoute = { params: undefined, key: 'Register', name: 'Register' as const } as any;
+
+  function renderRegister(): any {
+    let component: any;
+    act(() => {
+      component = renderer.create(
+        React.createElement(RegisterScreen, {
+          navigation: mockNavigation,
+          route: mockRoute,
+        }),
+      );
+    });
+    return component;
+  }
+
+  function allText(component: any): string {
+    const spans = component.root.findAllByType('span');
+    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  }
+
+  function allPlaceholders(component: any): string[] {
+    const inputs = component.root.findAllByType('input');
+    return inputs.map((n: any) => n.props.placeholder).filter(Boolean);
+  }
+
+  it('renders "Join Styx" title', () => {
+    const c = renderRegister();
+    const text = allText(c);
+
+    expect(text).toContain('Join Styx');
+  });
+
+  it('renders email, password, and confirm password inputs', () => {
+    const c = renderRegister();
+    const placeholders = allPlaceholders(c);
+
+    expect(placeholders).toContain('Email');
+    expect(placeholders).toContain('Password');
+    expect(placeholders).toContain('Confirm Password');
+  });
+
+  it('renders age confirmation and terms checkboxes', () => {
+    const c = renderRegister();
+    const text = allText(c);
+
+    expect(text).toContain('I confirm I am 18 years of age or older');
+    expect(text).toContain('I accept the Terms of Service and Privacy Policy');
+  });
+
+  it('renders "Create Account" button', () => {
+    const c = renderRegister();
+    const text = allText(c);
+
+    expect(text).toContain('Create Account');
+  });
+
+  it('renders "Already have an account?" link', () => {
+    const c = renderRegister();
+    const text = allText(c);
+
+    expect(text).toContain('Already have an account?');
   });
 });

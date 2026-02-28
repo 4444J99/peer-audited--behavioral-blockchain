@@ -2,6 +2,14 @@ import React from 'react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
+jest.mock('../services/ApiClient', () => ({
+  ApiClient: {
+    getFuryQueue: jest.fn(),
+    getFuryStats: jest.fn(),
+    submitVerdict: jest.fn(),
+  },
+}));
+
 function collectText(node: any): string {
   if (node == null || typeof node === 'boolean') return '';
   if (typeof node === 'string' || typeof node === 'number') return String(node);
@@ -98,5 +106,56 @@ describe('FuryScreen – parseSupportTraceMessage edge cases', () => {
     const result = parseSupportTraceMessage(undefined);
     expect(result.message).toBe('');
     expect(result.traceId).toBeNull();
+  });
+});
+
+describe('FuryScreen – render tests', () => {
+  const renderer = require('react-test-renderer');
+  const { act } = renderer;
+  const { FuryScreen } = require('../screens/FuryScreen');
+
+  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
+  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
+
+  function renderFury(): any {
+    let component: any;
+    act(() => {
+      component = renderer.create(React.createElement(FuryScreen));
+    });
+    return component;
+  }
+
+  function allText(component: any): string {
+    const spans = component.root.findAllByType('span');
+    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  }
+
+  it('shows loading indicator initially', () => {
+    // On initial render, loading=true, so the component returns the
+    // ActivityIndicator loading view. It should not contain queue-specific text.
+    const c = renderFury();
+    const text = allText(c);
+
+    expect(text).not.toContain('Queue Empty');
+    expect(text).not.toContain('VERIFY');
+    expect(text).not.toContain('BURN');
+  });
+
+  it('does not render verdict buttons while loading', () => {
+    const c = renderFury();
+    const text = allText(c);
+
+    expect(text).not.toContain('VERIFY');
+    expect(text).not.toContain('BURN');
+    expect(text).not.toContain('Video Proof');
+  });
+
+  it('does not render stats bar while loading', () => {
+    const c = renderFury();
+    const text = allText(c);
+
+    expect(text).not.toContain('Audits');
+    expect(text).not.toContain('Accuracy');
+    expect(text).not.toContain('Earnings');
   });
 });

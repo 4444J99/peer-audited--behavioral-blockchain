@@ -2,6 +2,24 @@ import React from 'react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
+jest.mock('../services/ApiClient', () => ({
+  ApiClient: {
+    getMe: jest.fn(() => new Promise(() => {})),
+    getBalance: jest.fn(() => new Promise(() => {})),
+    getNotifications: jest.fn(() => new Promise(() => {})),
+    getContracts: jest.fn(() => new Promise(() => {})),
+    getAttestationStatus: jest.fn(() => new Promise(() => {})),
+  },
+}));
+
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({
+    navigate: jest.fn(),
+    goBack: jest.fn(),
+    setOptions: jest.fn(),
+  }),
+}));
+
 function collectText(node: any): string {
   if (node == null || typeof node === 'boolean') return '';
   if (typeof node === 'string' || typeof node === 'number') return String(node);
@@ -90,5 +108,26 @@ describe('DashboardScreen – parseSupportTraceMessage edge cases', () => {
     const result = parseSupportTraceMessage(null);
     expect(result.message).toBe('');
     expect(result.traceId).toBeNull();
+  });
+});
+
+describe('DashboardScreen – render tests', () => {
+  const renderer = require('react-test-renderer');
+  const { act } = renderer;
+  const { DashboardScreen } = require('../screens/DashboardScreen');
+
+  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
+  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
+
+  it('shows "Loading..." when loading', () => {
+    // On initial render, loading=true, so the component returns the loading view.
+    let component: any;
+    act(() => {
+      component = renderer.create(React.createElement(DashboardScreen));
+    });
+    const spans = component.root.findAllByType('span');
+    const text = spans.map((n: any) => (n.children || []).join('')).join(' ');
+
+    expect(text).toContain('Loading...');
   });
 });

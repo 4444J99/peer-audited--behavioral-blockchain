@@ -100,3 +100,68 @@ describe('AttestationScreen – parseSupportTraceMessage edge cases', () => {
     expect(result.traceId).toBeNull();
   });
 });
+
+/* ------------------------------------------------------------------ */
+/*  AttestationScreen – render tests                                  */
+/* ------------------------------------------------------------------ */
+
+jest.mock('../services/ApiClient', () => ({
+  ApiClient: {
+    getAttestationStatus: jest.fn().mockReturnValue(new Promise(() => {})),
+    submitAttestation: jest.fn(),
+  },
+}));
+
+describe('AttestationScreen – render', () => {
+  const renderer = require('react-test-renderer');
+  const { act } = renderer;
+  const { AttestationScreen } = require('../screens/AttestationScreen');
+  const { ApiClient } = require('../services/ApiClient');
+
+  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
+  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
+
+  const mockRoute = { params: { contractId: 'test-contract-123' } } as any;
+  const mockNav = { navigate: jest.fn(), goBack: jest.fn(), setOptions: jest.fn() } as any;
+
+  function render(): any {
+    let component: any;
+    act(() => {
+      component = renderer.create(
+        React.createElement(AttestationScreen, { route: mockRoute, navigation: mockNav }),
+      );
+    });
+    return component;
+  }
+
+  function allText(component: any): string {
+    const spans = component.root.findAllByType('span');
+    return spans.map((n: any) => (n.children || []).join('')).join(' ');
+  }
+
+  it('does not render attestation content while loading', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).not.toContain('Daily Attestation');
+    expect(text).not.toContain('I HELD THE LINE');
+  });
+
+  it('calls getAttestationStatus with the correct contractId', () => {
+    render();
+    expect(ApiClient.getAttestationStatus).toHaveBeenCalledWith('test-contract-123');
+  });
+
+  it('does not render attestation stats while loading', () => {
+    const c = render();
+    const text = allText(c);
+    expect(text).not.toContain('Day Streak');
+    expect(text).not.toContain('Days Left');
+    expect(text).not.toContain('Grace Days');
+  });
+
+  it('exports AttestationScreen as a named function', () => {
+    expect(AttestationScreen).toBeDefined();
+    expect(typeof AttestationScreen).toBe('function');
+    expect(AttestationScreen.name).toBe('AttestationScreen');
+  });
+});

@@ -2,6 +2,15 @@ import React from 'react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
+jest.mock('../services/ApiClient', () => ({
+  ApiClient: {
+    getContract: jest.fn(),
+    submitProof: jest.fn(),
+    useGraceDay: jest.fn(),
+    fileDispute: jest.fn(),
+  },
+}));
+
 function collectText(node: any): string {
   if (node == null || typeof node === 'boolean') return '';
   if (typeof node === 'string' || typeof node === 'number') return String(node);
@@ -108,5 +117,47 @@ describe('ContractDetailScreen – parseSupportTraceMessage edge cases', () => {
     const result = parseSupportTraceMessage(undefined);
     expect(result.message).toBe('');
     expect(result.traceId).toBeNull();
+  });
+});
+
+describe('ContractDetailScreen – render tests', () => {
+  const renderer = require('react-test-renderer');
+  const { act } = renderer;
+  const { ContractDetailScreen } = require('../screens/ContractDetailScreen');
+
+  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
+  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
+
+  const mockNavigation = {
+    navigate: jest.fn(),
+    goBack: jest.fn(),
+    setOptions: jest.fn(),
+  } as any;
+
+  const mockRoute = {
+    params: { contractId: 'test-contract-123' },
+    key: 'ContractDetail',
+    name: 'ContractDetail' as const,
+  } as any;
+
+  it('shows loading indicator initially', () => {
+    // On initial render, loading=true, so the component returns the
+    // ActivityIndicator loading view (rendered as a span via the mock).
+    let component: any;
+    act(() => {
+      component = renderer.create(
+        React.createElement(ContractDetailScreen, {
+          navigation: mockNavigation,
+          route: mockRoute,
+        }),
+      );
+    });
+
+    // The loading state returns: <View><ActivityIndicator /></View>
+    // The tree should not contain any contract-specific text since data hasn't loaded.
+    const spans = component.root.findAllByType('span');
+    const text = spans.map((n: any) => (n.children || []).join('')).join(' ');
+    expect(text).not.toContain('Proof History');
+    expect(text).not.toContain('Contract not found');
   });
 });

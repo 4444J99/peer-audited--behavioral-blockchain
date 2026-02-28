@@ -2,6 +2,12 @@ import React from 'react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
+jest.mock('../services/ApiClient', () => ({
+  ApiClient: {
+    getContracts: jest.fn(),
+  },
+}));
+
 function collectText(node: any): string {
   if (node == null || typeof node === 'boolean') return '';
   if (typeof node === 'string' || typeof node === 'number') return String(node);
@@ -80,5 +86,40 @@ describe('ContractListScreen – parseSupportTraceMessage edge cases', () => {
     const result = parseSupportTraceMessage(undefined);
     expect(result.message).toBe('');
     expect(result.traceId).toBeNull();
+  });
+});
+
+describe('ContractListScreen – render tests', () => {
+  const renderer = require('react-test-renderer');
+  const { act } = renderer;
+  const { ContractListScreen } = require('../screens/ContractListScreen');
+
+  beforeAll(() => { (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true; });
+  afterAll(() => { delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT; });
+
+  const mockNavigation = {
+    navigate: jest.fn(),
+    goBack: jest.fn(),
+    setOptions: jest.fn(),
+  } as any;
+
+  const mockRoute = { params: undefined, key: 'ContractList', name: 'ContractList' as const } as any;
+
+  it('shows "Loading oaths..." when loading', () => {
+    // On initial render, loading=true so useEffect/useCallback have not resolved.
+    // The component returns the loading view.
+    let component: any;
+    act(() => {
+      component = renderer.create(
+        React.createElement(ContractListScreen, {
+          navigation: mockNavigation,
+          route: mockRoute,
+        }),
+      );
+    });
+    const spans = component.root.findAllByType('span');
+    const text = spans.map((n: any) => (n.children || []).join('')).join(' ');
+
+    expect(text).toContain('Loading oaths...');
   });
 });
