@@ -23,6 +23,8 @@ Statuses:
 | Web auth is client-side JWT today | Current runtime | Implemented | `/src/web/contexts/AuthContext.tsx`, `/src/web/services/api-client.ts`, `/src/web/proxy.ts` | Web typecheck (`/src/web`), runtime code path | Web |
 | Sentry error monitoring | Operational requirement | Implemented | `/src/api/src/main.ts` (Sentry.init), `/src/web/app/error.tsx`, `/src/api/src/common/monitoring/` | Runtime integration; error boundaries in web | Platform |
 | Daily attestation flow (Recovery stream) | `phase1-private-beta-scope.md` | Implemented | `/src/api/src/modules/contracts/contracts.service.ts` (getAttestationStatus, submitAttestation), `/src/api/src/modules/contracts/contracts.controller.ts`, `/src/web/app/contracts/[id]/attest/page.tsx`, `/src/mobile/screens/AttestationScreen.tsx` | `/src/api/src/modules/contracts/contracts.service.spec.ts` | Product |
+| Contest official rules published | `docs/legal/legal--compliance-guardrails.md` §4.C | Implemented | `/src/web/app/legal/rules/page.tsx` | Web build; route `/legal/rules` | Legal |
+| Responsible use disclosures published | `docs/legal/legal--compliance-guardrails.md` §4.E | Implemented | `/src/web/app/legal/responsible-use/page.tsx` | Web build; route `/legal/responsible-use`; links to NCPG, SAMHSA, NEDA, NDVH | Legal |
 | Legal compliance guardrails long-form memo is product policy | `docs/legal/legal--compliance-guardrails.md` (old presentation) | Research | `/docs/legal/legal--compliance-guardrails.md` | Labeled as research memo | Compliance |
 
 ## Notes

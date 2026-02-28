@@ -7,11 +7,22 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "styx",
+    "newArchEnabled": true,
     "android": {
-      "package": "com.anonymous.styxmobile"
+      "package": "com.styxprotocol.app"
     },
     "ios": {
-      "bundleIdentifier": "com.anonymous.styxmobile"
+      "bundleIdentifier": "com.styxprotocol.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Styx needs camera access to capture proof submissions for behavioral contract verification.",
+        "NSPhotoLibraryUsageDescription": "Styx needs photo library access to select proof images for contract verification."
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
     }
   }
 }

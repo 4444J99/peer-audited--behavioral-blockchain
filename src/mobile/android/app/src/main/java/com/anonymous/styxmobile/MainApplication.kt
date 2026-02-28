@@ -1,4 +1,4 @@
-package com.anonymous.styxmobile
+package com.styxprotocol.app
 
 import android.app.Application
 import android.content.res.Configuration

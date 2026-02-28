@@ -1,4 +1,4 @@
-app_identifier("com.anonymous.styxmobile")
+app_identifier("com.styxprotocol.app")
 
 # Apple credentials (set via env or CI secrets)
 # apple_id(ENV["APPLE_ID"])

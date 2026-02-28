@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>styx</string>
-          <string>com.anonymous.styxmobile</string>
+          <string>com.styxprotocol.app</string>
         </array>
       </dict>
     </array>

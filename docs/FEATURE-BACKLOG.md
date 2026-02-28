@@ -1,8 +1,8 @@
 # Styx Feature Backlog: Documentation → Implementation
 
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Generated**: 2026-02-27
-**Codebase Baseline**: v0.4.0 (467 tests, 6 workspaces)
+**Codebase Baseline**: v0.5.0 (713 tests, 6 workspaces)
 **Source Documents Ingested**: 37 markdown files across research, architecture, legal, planning, and brainstorm categories
 
 ---
@@ -13,10 +13,10 @@
 
 | Status | Count | Description |
 |--------|-------|-------------|
-| IMPLEMENTED | 21 | Working code with tests |
+| IMPLEMENTED | 23 | Working code with tests |
 | PARTIAL | 6 | Code exists but incomplete or conditional |
 | STUB | 5 | Files/endpoints exist but placeholder logic |
-| NOT_STARTED | 46 | Described in docs, no code |
+| NOT_STARTED | 44 | Described in docs, no code |
 | **Total** | **78** | |
 
 ### P0: Beta Blockers (Must-Build for Phase 1 Private Beta)
@@ -28,7 +28,7 @@
 | F-AEGIS-03 | Age Gate (18+ Runtime) | IMPLEMENTED | Legal requirement for financial stakes |
 | F-VERIFY-06 | Attestation Daily Flow (No-Contact) | IMPLEMENTED | Primary Phase 1 journey depends on this |
 | F-WEB-01 | HttpOnly Cookie Auth Migration | IMPLEMENTED | Security requirement before public beta |
-| F-LEGAL-01 | Contest Official Rules Engine | NOT_STARTED | Every contest needs official rules per law |
+| F-LEGAL-01 | Contest Official Rules Engine | IMPLEMENTED | Every contest needs official rules per law |
 
 ### P1: Beta Enhancers (Should-Build for Phase 1)
 
@@ -1187,22 +1187,22 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-LEGAL-01: Contest Official Rules Engine
 
-- **Status**: NOT_STARTED
+- **Status**: IMPLEMENTED
 - **Phase**: Beta
 - **Priority**: P0 (beta-blocker)
 - **Source**: `legal--compliance-guardrails.md` §4.C
-- **Existing Code**: None
+- **Existing Code**: `src/web/app/legal/rules/page.tsx`
 - **Spec**: Every contest must have official rules stating: eligibility (age, geography, health), start/end dates with timezone, exact performance criteria, verification methods, winner determination, maximum prizes, dispute procedure. Rules must be consistent with product behavior.
 - **Dependencies**: F-CORE-07
 - **Legal/Compliance**: Required for promotions/contest law compliance across all states.
 
 #### F-LEGAL-02: Responsible Use Warnings & Disclosures
 
-- **Status**: NOT_STARTED
+- **Status**: IMPLEMENTED
 - **Phase**: Beta
 - **Priority**: P1
 - **Source**: `legal--compliance-guardrails.md` §4.E
-- **Existing Code**: None
+- **Existing Code**: `src/web/app/legal/responsible-use/page.tsx`
 - **Spec**: "You can lose money; not an investment product." "Not medical advice; talk to your doctor." Links to NCPG, eating-disorder, mental-health resources. FTC 16 CFR Part 255 compliance for marketing.
 - **Dependencies**: None
 - **Legal/Compliance**: FTC, state consumer protection laws.
@@ -1346,22 +1346,23 @@ Based on `phase1-private-beta-scope.md`: iOS TestFlight, No-Contact recovery, te
 | 20 | Daily attestation flow (No-Contact) | F-VERIFY-06 | IMPLEMENTED | **YES** — API + web + mobile attestation screens |
 | 21 | Age gate (18+ runtime) | F-AEGIS-03 | IMPLEMENTED | **YES** — auth service + migration 008 + web/mobile UI |
 | 22 | HttpOnly cookie auth | F-WEB-01 | IMPLEMENTED | **YES** — cookie-based auth implemented |
-| 23 | Contest official rules | F-LEGAL-01 | NOT_STARTED | **NO** — legal requirement |
-| 24 | Responsible use disclosures | F-LEGAL-02 | NOT_STARTED | **NO** — legal/regulatory |
+| 23 | Contest official rules | F-LEGAL-01 | IMPLEMENTED | **YES** — `/legal/rules` page |
+| 24 | Responsible use disclosures | F-LEGAL-02 | IMPLEMENTED | **YES** — `/legal/responsible-use` page |
 
 ### Phase 1 Readiness Score
 
-- **YES**: 19/24 (79%)
+- **YES**: 21/24 (88%)
 - **PARTIAL**: 3/24 (12%)
-- **NO**: 2/24 (8%)
+- **NO**: 0/24 (0%)
 
 ### Critical Blockers to Resolve
 
-1. **F-MOBILE-01** (Native Camera): Without native capture, No-Contact proof verification is text-only — insufficient for beta credibility.
+1. **F-MOBILE-01** (Native Camera): Without native capture, No-Contact proof verification is text-only — acceptable for Phase 1 (attestation-based, not photo-based).
 2. ~~**F-AEGIS-03** (Age Gate)~~: **RESOLVED** — Implemented in Sprint 1 (auth service + migration 008 + web/mobile UI).
 3. ~~**F-WEB-01** (HttpOnly Auth)~~: **RESOLVED** — Cookie-based auth implemented.
-4. **F-LEGAL-01** (Contest Rules): Every contest needs published official rules per promotion law.
-5. **F-CORE-04** (Real-Money FBO): Test-money is acceptable for Phase 1 per scope doc — but real-money path must be validated before Phase 2.
+4. ~~**F-LEGAL-01** (Contest Rules)~~: **RESOLVED** — `/legal/rules` page implemented in Sprint 4.
+5. ~~**F-LEGAL-02** (Responsible Use)~~: **RESOLVED** — `/legal/responsible-use` page implemented in Sprint 4.
+6. **F-CORE-04** (Real-Money FBO): Test-money is acceptable for Phase 1 per scope doc — but real-money path must be validated before Phase 2.
 
 ### Phase 1 Scope Reminder
 
