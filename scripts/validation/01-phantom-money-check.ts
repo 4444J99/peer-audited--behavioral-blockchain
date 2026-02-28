@@ -6,32 +6,45 @@
  */
 
 const API_BASE = process.env.API_URL || 'http://localhost:3000';
-const USER_ID = 'd0000000-0000-0000-0000-000000000001';
+const DEMO_USER = { email: 'demo@styx.protocol', password: 'demo-password-123' }; // allow-secret
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
+async function request<T>(path: string, token: string, options?: RequestInit): Promise<T> { // allow-secret
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer dev-mock-jwt-token-alpha-omega', ...options?.headers }, // allow-secret
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...options?.headers }, // allow-secret
     ...options,
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
+async function login(email: string, password: string): Promise<{ userId: string; token: string }> { // allow-secret
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) throw new Error(`Login failed for ${email}: ${res.status}`);
+  return res.json();
+}
+
 async function runPhantomMoneyCheck() {
   console.log('--- STARTING VALIDATION GATE 01: PHANTOM MONEY CHECK ---');
 
+  // Authenticate as demo user
+  const auth = await login(DEMO_USER.email, DEMO_USER.password);
+  console.log(`[AUTH] Logged in as ${DEMO_USER.email} (${auth.userId})`);
+
   // 1. Snapshot initial ledger balance
-  const before = await request<{ ledgerBalance: number }>(`/wallet/balance?userId=${USER_ID}`);
+  const before = await request<{ ledgerBalance: number }>(`/wallet/balance`, auth.token);
   console.log(`[STATE] Initial ledger balance: $${before.ledgerBalance.toFixed(2)}`);
 
   // 2. Attempt to create a contract (will stake funds)
   console.log(`[ACTION] Creating a $10 contract to verify ledger integrity...`);
   let contractId: string;
   try {
-    const result = await request<{ contractId: string }>('/contracts', {
+    const result = await request<{ contractId: string }>('/contracts', auth.token, {
       method: 'POST',
       body: JSON.stringify({
-        userId: USER_ID,
         oathCategory: 'COGNITIVE_FOCUS',
         verificationMethod: 'SCREENTIME',
         stakeAmount: 10,
@@ -45,7 +58,7 @@ async function runPhantomMoneyCheck() {
     console.log(`[DEFENSE] Contract creation rejected (expected if no Stripe): ${message}`);
     console.log('--- Checking ledger balance was not affected ---');
 
-    const after = await request<{ ledgerBalance: number }>(`/wallet/balance?userId=${USER_ID}`);
+    const after = await request<{ ledgerBalance: number }>(`/wallet/balance`, auth.token);
     const delta = Math.abs(after.ledgerBalance - before.ledgerBalance);
 
     if (delta === 0) {
@@ -58,7 +71,7 @@ async function runPhantomMoneyCheck() {
   }
 
   // 3. Verify balance changed by exactly the stake amount
-  const after = await request<{ ledgerBalance: number }>(`/wallet/balance?userId=${USER_ID}`);
+  const after = await request<{ ledgerBalance: number }>(`/wallet/balance`, auth.token);
   const delta = before.ledgerBalance - after.ledgerBalance;
   console.log(`[STATE] Final ledger balance: $${after.ledgerBalance.toFixed(2)} (delta: $${delta.toFixed(2)})`);
 
