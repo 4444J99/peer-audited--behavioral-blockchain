@@ -3,10 +3,10 @@
 A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes.
 
 ![CI](https://github.com/labores-profani-crux/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
-![Tests](https://img.shields.io/badge/tests-751-brightgreen)
+![Tests](https://img.shields.io/badge/tests-1%2C107-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-339933)
-![License](https://img.shields.io/badge/license-private-red)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 ---
 
@@ -50,7 +50,7 @@ Turborepo monorepo with **npm** workspaces. Package scope: `@styx/*`.
 |-----------|---------|-------|------|
 | `src/api` | `@styx/api` | NestJS 11, BullMQ, Stripe, PostgreSQL | Backend — ledger, escrow, Fury Router, oracles |
 | `src/web` | `@styx/web` | Next.js 16, React 18, Tailwind | Dashboard, Fury workbench |
-| `src/mobile` | `@styx/mobile` | React Native 0.76 | Sensor bridge, camera, biometrics |
+| `src/mobile` | `@styx/mobile` | React Native 0.81 | Sensor bridge, camera, biometrics |
 | `src/desktop` | `@styx/desktop` | Tauri 2.0, Vite, React | "The Judge" admin dashboard |
 | `src/shared` | `@styx/shared` | TypeScript | Constants, types, algorithms |
 | `src/pitch` | `@styx/pitch` | Vite, React 18, p5.js | Interactive pitch deck |
@@ -129,12 +129,14 @@ flowchart TB
 
 ## Testing
 
-**751 tests** across all workspaces (Jest + ts-jest) plus Playwright E2E.
+**1,107 tests** across all workspaces (Jest + ts-jest) plus Playwright E2E.
 
 ```bash
 make test                                        # All unit/integration tests via Turborepo
-cd src/api && npx jest                           # API tests only (569)
-cd src/shared && npx jest                        # Shared algorithm tests only (47)
+cd src/api && npx jest                           # API tests only (640)
+cd src/mobile && npx jest                        # Mobile tests only (273)
+cd src/web && npx jest                           # Web tests only (166)
+cd src/desktop && npx jest                       # Desktop tests only (128)
 npx jest --testNamePattern="should reject"       # Single test by name
 
 # E2E (Playwright)
@@ -201,7 +203,7 @@ Copy `.env.example` to `.env` and set:
 `.github/workflows/ci.yml` runs on every push and PR:
 
 1. **Install + Security Audit** — `npm ci`, `npm audit --audit-level=high`
-2. **Tests + Coverage** — `turbo run test --coverage --ci` (751 tests, per-workspace thresholds)
+2. **Tests + Coverage** — `turbo run test --coverage --ci` (1,107 tests, per-workspace thresholds)
 3. **Build** — `turbo run build` (all workspaces)
 4. **Lint** — `turbo run lint` (strict TypeScript)
 5. **Gate 04** — Redacted build check (no gambling terminology in production)
@@ -217,4 +219,4 @@ See [SECURITY.md](.github/SECURITY.md) for vulnerability disclosure policy and s
 
 ## License
 
-Private. See `docs/legal/` for compliance guardrails.
+MIT. See [LICENSE](LICENSE) for details.
