@@ -2,7 +2,7 @@
 
 A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes.
 
-![CI](https://github.com/labores-profani-crux/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/organvm-iii-ergon/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
 ![Tests](https://img.shields.io/badge/tests-1%2C107-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-339933)
