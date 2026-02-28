@@ -228,7 +228,7 @@ export default function App() {
       return; // expo-notifications not available
     }
 
-    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+    const subscription = Notifications!.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data;
       const deepLink = resolveNotificationDeepLink(data as Record<string, any>);
       if (deepLink) {
