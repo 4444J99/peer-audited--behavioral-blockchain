@@ -69,11 +69,7 @@ export default function WalletDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!authUser) {
-      router.push('/login');
-      return;
-    }
+    if (authLoading || !authUser) return;
     async function load() {
       try {
         const [contractsData, balanceData, historyData] = await Promise.all([
@@ -91,7 +87,7 @@ export default function WalletDashboard() {
       }
     }
     load();
-  }, [authUser, authLoading, router]);
+  }, [authUser, authLoading]);
 
   const handleLogout = () => {
     logout();

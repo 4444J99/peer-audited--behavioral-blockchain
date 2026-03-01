@@ -3,7 +3,7 @@ export const FRAUD_PENALTY = 15;
 export const STRIKE_PENALTY = 20;
 export const COMPLETION_BONUS = 5;
 
-export const AUDITOR_STAKE_AMOUNT = 2.00;
+export const AUDITOR_STAKE_AMOUNT = 200; // cents ($2.00)
 export const AUDITOR_HARASSMENT_THRESHOLD = 3;
 
 // Base Models
@@ -77,10 +77,11 @@ export function shouldDemoteFury(history: FuryHistory): boolean {
 /**
  * Returns the maximum stake amount for a given set of allowed tiers.
  */
+/** Returns the maximum stake amount in cents for a given set of allowed tiers. */
 export function getTierMaxStake(tiers: string[]): number {
   if (tiers.includes('TIER_4_WHALE_VAULTS')) return Infinity;
-  if (tiers.includes('TIER_3_HIGH_ROLLER')) return 1000;
-  if (tiers.includes('TIER_2_STANDARD')) return 100;
-  if (tiers.includes('TIER_1_MICRO_STAKES')) return 20;
+  if (tiers.includes('TIER_3_HIGH_ROLLER')) return 100000; // $1,000
+  if (tiers.includes('TIER_2_STANDARD')) return 10000; // $100
+  if (tiers.includes('TIER_1_MICRO_STAKES')) return 2000; // $20
   return 0;
 }

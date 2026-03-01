@@ -1,10 +1,15 @@
 import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
+import { randomBytes, createHash } from 'crypto';
 
 const BCRYPT_ROUNDS = 10;
-const TOKEN_EXPIRY = '24h';
+const ACCESS_TOKEN_EXPIRY = '15m';
+const TOKEN_EXPIRY = ACCESS_TOKEN_EXPIRY; // alias for backward compat
+const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MINUTES = 15;
 
 export function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET; // allow-secret
@@ -49,6 +54,9 @@ export class AuthService {
       }
       if (opts?.dateOfBirth) {
         const dob = new Date(opts.dateOfBirth);
+        if (isNaN(dob.getTime())) {
+          throw new BadRequestException('Invalid date of birth format');
+        }
         const now = new Date();
         const age = now.getFullYear() - dob.getFullYear() -
           (now < new Date(now.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
@@ -104,7 +112,7 @@ export class AuthService {
 
   async login(email: string, password: string): Promise<{ userId: string; token: string }> { // allow-secret
     const result = await this.pool.query(
-      'SELECT id, email, password_hash, status FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, status, failed_login_attempts, locked_until FROM users WHERE email = $1',
       [email],
     );
 
@@ -113,6 +121,11 @@ export class AuthService {
     }
 
     const user = result.rows[0];
+
+    // Check account lockout
+    if (user.locked_until && new Date(user.locked_until) > new Date()) {
+      throw new UnauthorizedException('Account temporarily locked. Try again later.');
+    }
 
     if (!user.password_hash) {
       throw new UnauthorizedException('Invalid email or password');
@@ -124,14 +137,34 @@ export class AuthService {
 
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
+      const attempts = (user.failed_login_attempts || 0) + 1;
+      if (attempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+        await this.pool.query(
+          `UPDATE users SET failed_login_attempts = $1, locked_until = NOW() + INTERVAL '${LOCKOUT_DURATION_MINUTES} minutes' WHERE id = $2`,
+          [attempts, user.id],
+        );
+      } else {
+        await this.pool.query(
+          'UPDATE users SET failed_login_attempts = $1 WHERE id = $2',
+          [attempts, user.id],
+        );
+      }
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Successful login — reset lockout counters
+    if (user.failed_login_attempts > 0 || user.locked_until) {
+      await this.pool.query(
+        'UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1',
+        [user.id],
+      );
     }
 
     const token = this.signToken(user.id, user.email); // allow-secret
     return { userId: user.id, token };
   }
 
-  signToken(userId: string, email: string): string {
+  private signToken(userId: string, email: string): string {
     return jwt.sign({ sub: userId, email }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY });
   }
 
@@ -139,7 +172,7 @@ export class AuthService {
     // Verify the enterprise token is a valid JWT signed with our secret
     let payload: AuthPayload;
     try {
-      payload = jwt.verify(enterpriseToken, getJwtSecret()) as AuthPayload;
+      payload = jwt.verify(enterpriseToken, getJwtSecret(), { algorithms: ['HS256'] }) as AuthPayload;
     } catch {
       throw new UnauthorizedException('Invalid enterprise token');
     }
@@ -164,6 +197,71 @@ export class AuthService {
   }
 
   verifyToken(token: string): AuthPayload { // allow-secret
-    return jwt.verify(token, getJwtSecret()) as AuthPayload;
+    return jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as AuthPayload;
+  }
+
+  /** Generate a refresh token, store its hash in DB, return the raw token. */
+  async generateRefreshToken(userId: string): Promise<string> {
+    const rawToken = randomBytes(32).toString('hex'); // allow-secret
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+
+    await this.pool.query(
+      `INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`,
+      [userId, tokenHash, expiresAt],
+    );
+
+    return rawToken;
+  }
+
+  /** Validate a refresh token, rotate it (revoke old, issue new), and return a new access + refresh token pair. */
+  async refreshAccessToken(refreshToken: string): Promise<{ userId: string; token: string; refreshToken: string }> { // allow-secret
+    const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
+
+    const result = await this.pool.query(
+      `SELECT rt.id, rt.user_id, rt.expires_at, rt.revoked, u.email, u.status
+       FROM refresh_tokens rt
+       JOIN users u ON rt.user_id = u.id
+       WHERE rt.token_hash = $1`,
+      [tokenHash],
+    );
+
+    if (result.rows.length === 0) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const row = result.rows[0];
+
+    if (row.revoked) {
+      throw new UnauthorizedException('Refresh token has been revoked');
+    }
+
+    if (new Date(row.expires_at) < new Date()) {
+      throw new UnauthorizedException('Refresh token has expired');
+    }
+
+    if (String(row.status || '').toUpperCase() !== 'ACTIVE') {
+      throw new UnauthorizedException('User account is not active');
+    }
+
+    // Revoke the old refresh token (rotation)
+    await this.pool.query(
+      `UPDATE refresh_tokens SET revoked = TRUE WHERE id = $1`,
+      [row.id],
+    );
+
+    // Issue new tokens
+    const accessToken = this.signToken(row.user_id, row.email); // allow-secret
+    const newRefreshToken = await this.generateRefreshToken(row.user_id); // allow-secret
+
+    return { userId: row.user_id, token: accessToken, refreshToken: newRefreshToken };
+  }
+
+  /** Revoke all refresh tokens for a user (used on logout and password change). */
+  async revokeRefreshTokensForUser(userId: string): Promise<void> {
+    await this.pool.query(
+      `UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = $1 AND revoked = FALSE`,
+      [userId],
+    );
   }
 }

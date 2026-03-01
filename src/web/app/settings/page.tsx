@@ -33,11 +33,7 @@ export default function SettingsPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!authUser) {
-      router.push('/login');
-      return;
-    }
+    if (authLoading || !authUser) return;
     // Load saved settings from localStorage
     const savedCloak = localStorage.getItem('styx_cloak_enabled');
     if (savedCloak !== null) {
@@ -51,7 +47,7 @@ export default function SettingsPage() {
     if (savedPushNotifs !== null) {
       setPushNotifs(savedPushNotifs === 'true');
     }
-  }, [authUser, authLoading, router]);
+  }, [authUser, authLoading]);
 
   const clearMessage = () => {
     setTimeout(() => setMessage(null), 5000);

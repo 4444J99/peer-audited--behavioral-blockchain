@@ -3,9 +3,20 @@ import type { NextRequest } from 'next/server';
 
 const PUBLIC_PATHS = ['/', '/login', '/register', '/pitch', '/users/leaderboard'];
 
-// Browser auth now uses HttpOnly cookie sessions with CSRF-protected mutating requests.
-// This proxy file still performs lightweight path gating only; route-level authorization
-// remains enforced by the API and client session bootstrap.
+const PROTECTED_PATHS = [
+  '/dashboard',
+  '/fury',
+  '/wallet',
+  '/settings',
+  '/profile',
+  '/admin',
+  '/contracts',
+  '/hr',
+  '/tavern',
+];
+
+// Browser auth uses HttpOnly cookie sessions. This proxy enforces auth-gating
+// on protected routes and redirects unauthenticated users to /login.
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -17,6 +28,18 @@ export function proxy(request: NextRequest) {
   // Allow static assets and API routes
   if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.includes('.')) {
     return NextResponse.next();
+  }
+
+  // Check if the path is protected
+  const isProtected = PROTECTED_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(p + '/'),
+  );
+
+  if (isProtected) {
+    const token = request.cookies.get('styx_auth_token');
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
   }
 
   return NextResponse.next();

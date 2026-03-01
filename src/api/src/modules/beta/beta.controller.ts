@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { createHash } from 'crypto';
-import type { MobileBootstrapResponse, ReleaseInfoResponse, StyxFeatureFlags } from '@styx/shared/index';
+import type { MobileBootstrapResponse, ReleaseInfoResponse, StyxFeatureFlags } from '../../../../shared/index';
 import { Public } from '../../common/decorators/current-user.decorator';
 
 function envFlag(name: string, fallback = false): boolean {

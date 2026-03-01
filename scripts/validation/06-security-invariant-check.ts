@@ -56,7 +56,7 @@ function collectFiles(dir: string, extensions: Set<string>): string[] {
       try {
         const stat = statSync(full);
         if (stat.isDirectory()) {
-          files.push(...collectFiles(full));
+          files.push(...collectFiles(full, extensions));
         } else if (extensions.has(extname(full)) && !isTestFile(full)) {
           files.push(full);
         }

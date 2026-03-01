@@ -47,11 +47,7 @@ export default function IdentityDashboard() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!authUser) {
-      router.push('/login');
-      return;
-    }
+    if (authLoading || !authUser) return;
     async function load() {
       try {
         const [balanceData, historyData, contractData] = await Promise.all([
@@ -70,7 +66,7 @@ export default function IdentityDashboard() {
       }
     }
     load();
-  }, [authUser, authLoading, router]);
+  }, [authUser, authLoading]);
 
   const handleLogout = () => {
     logout();

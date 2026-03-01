@@ -1,6 +1,6 @@
 import type { MobileBootstrapResponse, ReleaseInfoResponse } from '@styx/shared/index';
 
-const API_BASE = (typeof window !== 'undefined') ? '/api' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000');
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 const WEB_APP_VERSION = process.env.NEXT_PUBLIC_STYX_WEB_VERSION || process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0-dev';
 const WEB_APP_BUILD = process.env.NEXT_PUBLIC_STYX_WEB_BUILD || process.env.NEXT_PUBLIC_BUILD_SHA || 'dev';
 
@@ -80,6 +80,8 @@ async function parseErrorMessage(res: Response): Promise<string> {
   return message;
 }
 
+let isRefreshing = false;
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const method = String(options?.method || 'GET').toUpperCase();
   const needsCsrf = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
@@ -98,6 +100,21 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     credentials: options?.credentials ?? 'include',
     headers: mergedHeaders,
   });
+
+  // Auto-refresh on 401 (except for the refresh endpoint itself)
+  if (res.status === 401 && path !== '/auth/refresh' && !isRefreshing) {
+    isRefreshing = true;
+    try {
+      await refreshToken();
+      isRefreshing = false;
+      // Retry the original request
+      return request<T>(path, options);
+    } catch {
+      isRefreshing = false;
+      throw new Error(await parseErrorMessage(res));
+    }
+  }
+
   if (!res.ok) throw new Error(await parseErrorMessage(res));
   if (res.status === 204) return undefined as T;
   const contentType = res.headers?.get?.('content-type') || '';
@@ -105,6 +122,15 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     return res.json();
   }
   return (await res.text()) as T;
+}
+
+async function refreshToken(): Promise<void> {
+  const res = await fetch(`${API_BASE}/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) throw new Error('Refresh failed');
 }
 
 export interface CreateContractDto {

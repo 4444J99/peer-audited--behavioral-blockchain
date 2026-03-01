@@ -25,9 +25,9 @@ import { BetaModule } from './modules/beta/beta.module';
       pinoHttp: {
         autoLogging: true,
         level: process.env.LOG_LEVEL || 'info',
-        transport: process.env.NODE_ENV !== 'production'
-          ? { target: 'pino-pretty', options: { colorize: true } }
-          : undefined,
+        ...(process.env.PINO_TRANSPORT
+          ? { transport: { target: process.env.PINO_TRANSPORT, options: { colorize: true } } }
+          : {}),
       },
     }),
     ComplianceModule,

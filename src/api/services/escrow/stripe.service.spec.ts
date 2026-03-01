@@ -24,11 +24,11 @@ describe('StripeFboService (dev mode)', () => {
 
   describe('holdStake', () => {
     it('should return mock PaymentIntent in dev mode', async () => {
-      const result = await service.holdStake('cus_test_1', 50, 'contract-1');
+      const result = await service.holdStake('cus_test_1', 5000, 'contract-1');
 
       expect(result.id).toMatch(/^pi_dev_/);
       expect(result.status).toBe('requires_capture');
-      expect(result.amount).toBe(5000); // $50 * 100 cents
+      expect(result.amount).toBe(5000); // 5000 cents = $50
       expect(result.currency).toBe('usd');
     });
   });

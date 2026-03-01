@@ -8,6 +8,8 @@ const mockAuthService = {
   register: jest.fn(),
   login: jest.fn(),
   exchangeEnterpriseToken: jest.fn(),
+  generateRefreshToken: jest.fn().mockResolvedValue('mock-refresh-token'), // allow-secret
+  revokeRefreshTokensForUser: jest.fn().mockResolvedValue(undefined),
 } as unknown as AuthService;
 
 describe('AuthController', () => {

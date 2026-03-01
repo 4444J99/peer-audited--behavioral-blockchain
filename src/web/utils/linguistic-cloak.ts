@@ -10,13 +10,13 @@ const b = String.fromCharCode; // character builder
 // Store pattern sources and replacements — regexes are created per call to avoid
 // global flag lastIndex state leaking between invocations.
 const REPLACEMENT_SOURCES: Array<[string, string, string]> = [
-  [`sta${b(107)}e`, 'gi', 'vault'],
-  [`${b(98)}e${b(116)}`, 'gi', 'commitment'],
-  [`gam${b(98)}l[ei]ng?`, 'gi', 'investing'],
-  [`wa${b(103)}er`, 'gi', 'deposit'],
-  ['fury', 'gi', 'peer review'],
-  [`no.?contact`, 'gi', 'personal boundary'],
-  [`relapse`, 'gi', 'setback'],
+  [`\\bsta${b(107)}e\\b`, 'gi', 'vault'],
+  [`\\b${b(98)}e${b(116)}\\b`, 'gi', 'commitment'],
+  [`\\bgam${b(98)}l[ei]ng?\\b`, 'gi', 'investing'],
+  [`\\bwa${b(103)}er\\b`, 'gi', 'deposit'],
+  ['\\bfury\\b', 'gi', 'peer review'],
+  [`\\bno.?contact\\b`, 'gi', 'personal boundary'],
+  [`\\brelapse\\b`, 'gi', 'setback'],
 ];
 
 export const cloakVocabulary = (input: string, context: 'APP_STORE' | 'STRIPE' | 'NATIVE'): string => {

@@ -198,16 +198,16 @@ describe('getTierMaxStake', () => {
     expect(getTierMaxStake(['TIER_1_MICRO_STAKES', 'TIER_2_STANDARD', 'TIER_3_HIGH_ROLLER', 'TIER_4_WHALE_VAULTS'])).toBe(Infinity);
   });
 
-  it('should return 1000 for HIGH_ROLLER tier', () => {
-    expect(getTierMaxStake(['TIER_1_MICRO_STAKES', 'TIER_2_STANDARD', 'TIER_3_HIGH_ROLLER'])).toBe(1000);
+  it('should return 100000 cents for HIGH_ROLLER tier', () => {
+    expect(getTierMaxStake(['TIER_1_MICRO_STAKES', 'TIER_2_STANDARD', 'TIER_3_HIGH_ROLLER'])).toBe(100000);
   });
 
-  it('should return 100 for STANDARD tier', () => {
-    expect(getTierMaxStake(['TIER_1_MICRO_STAKES', 'TIER_2_STANDARD'])).toBe(100);
+  it('should return 10000 cents for STANDARD tier', () => {
+    expect(getTierMaxStake(['TIER_1_MICRO_STAKES', 'TIER_2_STANDARD'])).toBe(10000);
   });
 
-  it('should return 20 for MICRO tier', () => {
-    expect(getTierMaxStake(['TIER_1_MICRO_STAKES'])).toBe(20);
+  it('should return 2000 cents for MICRO tier', () => {
+    expect(getTierMaxStake(['TIER_1_MICRO_STAKES'])).toBe(2000);
   });
 
   it('should return 0 for RESTRICTED (no recognized tiers)', () => {

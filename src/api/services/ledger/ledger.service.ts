@@ -19,6 +19,9 @@ export class LedgerService {
     if (amount <= 0) {
       throw new Error('Transaction amount must be strictly positive.');
     }
+    if (!Number.isInteger(amount)) {
+      throw new Error('Transaction amount must be an integer (cents).');
+    }
     if (debitAccountId === creditAccountId) {
       throw new Error('Debit and credit accounts must be different.');
     }
@@ -142,7 +145,7 @@ export class LedgerService {
 
     const totalAmount = parseFloat(result.rows[0].total);
     return {
-      balanced: Math.abs(netBalance) < 0.0001, // floating point tolerance
+      balanced: Math.abs(netBalance) < 1, // 1 cent tolerance (amounts stored as integer cents)
       totalDebits: totalAmount,
       totalCredits: totalAmount,
     };

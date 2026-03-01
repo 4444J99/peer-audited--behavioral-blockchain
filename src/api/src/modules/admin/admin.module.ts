@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AdminController } from './admin.controller';
+import { AdminScheduler } from './admin.scheduler';
 import { ModerationService } from '../../../services/security/moderation.service';
 import { HoneypotService } from '../../../services/intelligence/honeypot.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
@@ -10,7 +12,7 @@ import { ContractsModule } from '../contracts/contracts.module';
 import { ProofsModule } from '../proofs/proofs.module';
 
 @Module({
-  imports: [ContractsModule, ProofsModule],
+  imports: [ScheduleModule.forRoot(), ContractsModule, ProofsModule],
   controllers: [AdminController],
   providers: [
     ModerationService,
@@ -19,6 +21,7 @@ import { ProofsModule } from '../proofs/proofs.module';
     TruthLogService,
     FuryRouterService,
     RoleGuard,
+    AdminScheduler,
   ],
 })
 export class AdminModule {}

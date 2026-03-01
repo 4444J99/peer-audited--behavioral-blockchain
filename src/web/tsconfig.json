@@ -29,7 +29,9 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/web/.next/types/**/*.ts",
+    "/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/web/.next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

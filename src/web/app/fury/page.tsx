@@ -44,12 +44,8 @@ export default function FuryWorkbench() {
   }, []);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!authUser) {
-      router.push('/login');
-      return;
-    }
-    
+    if (authLoading || !authUser) return;
+
     // Connect to SSE stream
     connectStream();
     loadStats();
@@ -57,7 +53,7 @@ export default function FuryWorkbench() {
     return () => {
       disconnectStream();
     };
-  }, [authUser, authLoading, router, connectStream, disconnectStream, loadStats]);
+  }, [authUser, authLoading, connectStream, disconnectStream, loadStats]);
 
   const handleLogout = () => {
     disconnectStream();

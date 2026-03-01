@@ -2,6 +2,7 @@ import { Controller, Get, Patch, Delete, Param, Query, Body, UseGuards, Forbidde
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { UsersService } from './users.service';
+import { GdprService } from './gdpr.service';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { CurrentUser, Public } from '../../common/decorators/current-user.decorator';
 import { IdentityVerificationService } from '../compliance/identity-verification.service';
@@ -12,6 +13,7 @@ import { IdentityVerificationMode } from '../compliance/identity-provider.servic
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
+    private readonly gdprService: GdprService,
     private readonly identityVerification: IdentityVerificationService,
   ) {}
 
@@ -98,6 +100,15 @@ export class UsersController {
     @Body() body: { emailNotifications?: boolean; pushNotifications?: boolean },
   ) {
     return this.usersService.updateSettings(user.id, body);
+  }
+
+  @Get('me/data-export')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Export all user data (GDPR Article 20)' })
+  @UseGuards(AuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
+  async exportData(@CurrentUser() user: { id: string }) {
+    return this.gdprService.exportUserData(user.id);
   }
 
   @Delete('me')

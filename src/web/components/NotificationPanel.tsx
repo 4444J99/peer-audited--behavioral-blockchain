@@ -35,7 +35,7 @@ export default function NotificationPanel() {
     loadNotifications();
 
     // Try SSE first, fall back to polling
-    const API_BASE = '/api';
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     let eventSource: EventSource | null = null;
     let pollInterval: ReturnType<typeof setInterval> | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;

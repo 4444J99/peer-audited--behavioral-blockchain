@@ -41,7 +41,7 @@ describe('ContractsService — Behavioral Physics', () => {
     userId: 'user-1',
     oathCategory: OathCategory.DEEP_WORK_FOCUS,
     verificationMethod: VerificationMethod.API_SCREEN_TIME,
-    stakeAmount: 15,
+    stakeAmount: 1500,
     durationDays: 30,
   };
 
@@ -103,8 +103,8 @@ describe('ContractsService — Behavioral Physics', () => {
 
   describe('stake tier limits', () => {
     it('should reject stake exceeding tier max for TIER_2_STANDARD', async () => {
-      // Score 50 → tiers = [TIER_1_MICRO_STAKES, TIER_2_STANDARD] → max $100
-      const dto = { ...validDto, stakeAmount: 150 };
+      // Score 50 → tiers = [TIER_1_MICRO_STAKES, TIER_2_STANDARD] → max 10000 cents ($100)
+      const dto = { ...validDto, stakeAmount: 15000 };
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Cool-off: no recent failures
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
@@ -118,7 +118,7 @@ describe('ContractsService — Behavioral Physics', () => {
     });
 
     it('should allow stake within tier limit', async () => {
-      const dto = { ...validDto, stakeAmount: 80 }; // under $100 TIER_2 limit
+      const dto = { ...validDto, stakeAmount: 8000 }; // under 10000 cents ($100) TIER_2 limit
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Cool-off: no failures
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
@@ -142,7 +142,7 @@ describe('ContractsService — Behavioral Physics', () => {
 
   describe('dynamic downscaling', () => {
     it('should reject high stake after 3+ failures', async () => {
-      const dto = { ...validDto, stakeAmount: 80 }; // Under tier max (100) but over downscaled max
+      const dto = { ...validDto, stakeAmount: 8000 }; // Under tier max (10000) but over downscaled max
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Cool-off: no recent failures (failures are older than 7 days)
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
@@ -158,7 +158,7 @@ describe('ContractsService — Behavioral Physics', () => {
     });
 
     it('should allow stake within downscaled limit', async () => {
-      const dto = { ...validDto, stakeAmount: 10 }; // Well under downscaled max of $50
+      const dto = { ...validDto, stakeAmount: 1000 }; // Well under downscaled max of 5000 cents ($50)
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
@@ -178,7 +178,7 @@ describe('ContractsService — Behavioral Physics', () => {
     });
 
     it('should apply exponential downscaling for 6+ failures', async () => {
-      const dto = { ...validDto, stakeAmount: 30 }; // 6 failures → 0.5^2 = 0.25 → max = 100 * 0.25 = 25
+      const dto = { ...validDto, stakeAmount: 3000 }; // 6 failures → 0.5^2 = 0.25 → max = 10000 * 0.25 = 2500
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 6 }] }); // Total failures
@@ -199,7 +199,7 @@ describe('ContractsService — Behavioral Physics', () => {
       userId: 'user-1',
       oathCategory: OathCategory.NO_CONTACT_BOUNDARY,
       verificationMethod: VerificationMethod.DAILY_ATTESTATION,
-      stakeAmount: 15,
+      stakeAmount: 1500,
       durationDays: 14,
       recoveryMetadata: {
         accountabilityPartnerEmail: 'friend@example.com',

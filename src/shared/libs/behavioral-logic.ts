@@ -67,7 +67,7 @@ export enum VerificationMethod {
 }
 
 export const MAX_GRACE_DAYS_PER_MONTH = 2;
-export const ONBOARDING_BONUS_AMOUNT = 5.00;
+export const ONBOARDING_BONUS_AMOUNT = 500; // cents ($5.00)
 
 /**
  * BE-01: Loss Aversion Anchor

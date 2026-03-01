@@ -68,7 +68,7 @@ describe('DisputeService', () => {
 
       const holdCallArgs = (mockStripeService.holdStake as jest.Mock).mock.calls[0];
       expect(holdCallArgs[0]).toBe('cus_123');
-      expect(holdCallArgs[1]).toBe(5); // Asserts the APPEAL_FEE_AMOUNT is exactly 5
+      expect(holdCallArgs[1]).toBe(500); // Asserts the APPEAL_FEE_AMOUNT is 500 cents ($5.00)
     });
 
     it('should throw HttpException (402) if the appeal fee cannot be authorized', async () => {
@@ -76,7 +76,7 @@ describe('DisputeService', () => {
 
       const promise = disputeService.initiateAppeal('user-2', 'proof-2', 'cus_456');
       await expect(promise).rejects.toThrow(HttpException);
-      await expect(promise).rejects.toThrow(/Could not authorize the \$5 appeal fee/);
+      await expect(promise).rejects.toThrow(/Could not authorize the \$5\.00 appeal fee/);
     });
 
     it('should return 500 and attempt compensation when DB persistence fails after fee authorization', async () => {

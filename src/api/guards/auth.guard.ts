@@ -46,7 +46,7 @@ export class AuthGuard implements CanActivate {
 
     // Decode real JWT — single source of truth for secret via auth.service.ts
     try {
-      const payload = jwt.verify(token, secret) as { sub: string; email: string };
+      const payload = jwt.verify(token, secret, { algorithms: ['HS256'] }) as { sub: string; email: string };
       (request as any).user = { id: payload.sub, email: payload.email };
       (request as any).authSource = authSource;
       return true;

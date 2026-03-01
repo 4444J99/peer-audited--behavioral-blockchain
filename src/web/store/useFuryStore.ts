@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { api, getAuthToken } from '../services/api-client';
+import { api } from '../services/api-client';
 
 export interface Assignment {
   assignmentId: string;
@@ -16,80 +16,125 @@ interface FuryState {
   assignments: Assignment[];
   isConnected: boolean;
   error: string | null;
-  eventSource: EventSource | null;
   connectStream: () => Promise<void>;
   disconnectStream: () => void;
   removeAssignment: (assignmentId: string) => void;
 }
 
-const API_BASE = '/api';
+const POLL_INTERVAL_MS = 5_000;
+const SSE_RECONNECT_MS = 5_000;
+const API_BASE = typeof window !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000')
+  : 'http://localhost:3000';
+
+// Closure refs — kept outside Zustand state to avoid unnecessary re-renders
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+let eventSource: EventSource | null = null;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let stopped = false;
+
+function startPolling(poll: () => Promise<void>) {
+  if (pollTimer) return;
+  pollTimer = setInterval(() => { void poll(); }, POLL_INTERVAL_MS);
+}
+
+function stopPolling() {
+  if (!pollTimer) return;
+  clearInterval(pollTimer);
+  pollTimer = null;
+}
+
+function cleanup() {
+  stopped = true;
+  eventSource?.close();
+  eventSource = null;
+  stopPolling();
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+}
 
 export const useFuryStore = create<FuryState>((set, get) => ({
   assignments: [],
   isConnected: false,
   error: null,
-  eventSource: null,
 
   connectStream: async () => {
-    // Disconnect existing before reconnecting
     get().disconnectStream();
+    stopped = false;
 
-    const token = getAuthToken();
-    if (!token) {
-      set({ error: 'No authentication token available for SSE stream' });
-      return;
-    }
-
-    try {
-      await api.issueFuryStreamCookie();
-    } catch {
-      set({ error: 'Unable to authorize Panopticon stream.', isConnected: false });
-      return;
-    }
-
-    let eventSource: EventSource;
-    try {
-      eventSource = new EventSource(`${API_BASE}/fury/stream`, { withCredentials: true });
-    } catch {
-      set({ error: 'Unable to open Panopticon stream.', isConnected: false });
-      return;
-    }
-
-    eventSource.onopen = () => {
-      set({ isConnected: true, error: null });
-    };
-
-    eventSource.onmessage = (event) => {
+    const poll = async () => {
       try {
-        const data = JSON.parse(event.data);
+        const data = await api.getFuryAssignments();
         if (data && Array.isArray(data.assignments)) {
-          set({ assignments: data.assignments });
+          set({ assignments: data.assignments, isConnected: true, error: null });
         }
-      } catch (err) {
-        console.error('Failed to parse SSE message', err);
+      } catch {
+        set({ isConnected: false, error: 'Connection to Panopticon stream lost.' });
       }
     };
 
-    eventSource.onerror = (err) => {
-      console.error('SSE Error:', err);
-      set({ isConnected: false, error: 'Connection to Panopticon stream lost.' });
-      eventSource.close();
-      
-      // Attempt reconnect after 5s
-      setTimeout(() => {
-        void get().connectStream();
-      }, 5000);
+    const scheduleReconnect = () => {
+      if (stopped || reconnectTimer) return;
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        void connectSSE();
+      }, SSE_RECONNECT_MS);
     };
 
-    set({ eventSource });
+    const connectSSE = async () => {
+      if (stopped) return;
+
+      try {
+        await api.issueFuryStreamCookie();
+        if (stopped) return;
+
+        const source = new EventSource(`${API_BASE}/fury/stream`, { withCredentials: true });
+        eventSource = source;
+
+        source.onopen = () => {
+          stopPolling();
+          set({ isConnected: true, error: null });
+        };
+
+        source.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (Array.isArray(data.assignments)) {
+              set({ assignments: data.assignments });
+            } else if (data.assignmentId) {
+              set((state) => {
+                const exists = state.assignments.some((a) => a.assignmentId === data.assignmentId);
+                if (exists) return state;
+                return { assignments: [...state.assignments, data] };
+              });
+            }
+          } catch {
+            // Invalid message — ignore
+          }
+        };
+
+        source.onerror = () => {
+          source.close();
+          if (eventSource === source) eventSource = null;
+          startPolling(poll);
+          scheduleReconnect();
+        };
+      } catch {
+        // SSE not available — use polling
+        startPolling(poll);
+      }
+    };
+
+    // Fetch immediately, then try SSE
+    await poll();
+    void connectSSE();
   },
 
   disconnectStream: () => {
-    const { eventSource } = get();
-    if (eventSource) {
-      eventSource.close();
-      set({ eventSource: null, isConnected: false });
-    }
+    cleanup();
+    set({ isConnected: false });
   },
 
   removeAssignment: (assignmentId: string) => {

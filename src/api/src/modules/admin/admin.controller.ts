@@ -11,6 +11,7 @@ import { ContractsService } from '../contracts/contracts.service';
 import { DisputeService } from '../../../services/escrow/dispute.service';
 import { R2StorageService } from '../../../services/storage/r2.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
+import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { IdentityVerificationService } from '../compliance/identity-verification.service';
 import { IdentityVerificationMode } from '../compliance/identity-provider.service';
 import { BanUserDto, ResolveContractDto } from './dto';
@@ -28,9 +29,18 @@ export class AdminController {
     private readonly disputeService: DisputeService,
     private readonly r2: R2StorageService,
     private readonly anomaly: AnomalyService,
+    private readonly truthLog: TruthLogService,
     private readonly identityVerification: IdentityVerificationService,
     private readonly pool: Pool,
   ) {}
+
+  // --- Integrity ---
+
+  @Get('integrity/chain')
+  @ApiOperation({ summary: 'Verify event_log hash chain integrity' })
+  async verifyChain() {
+    return this.truthLog.verifyChain();
+  }
 
   // --- Honeypot ---
 

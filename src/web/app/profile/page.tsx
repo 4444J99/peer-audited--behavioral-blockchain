@@ -34,11 +34,7 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!authUser) {
-      router.push('/login');
-      return;
-    }
+    if (authLoading || !authUser) return;
     async function load() {
       try {
         const [historyData, contractData] = await Promise.all([
@@ -66,7 +62,7 @@ export default function ProfilePage() {
       }
     }
     load();
-  }, [authUser, authLoading, router]);
+  }, [authUser, authLoading]);
 
   if (loading) {
     return (

@@ -40,6 +40,7 @@ describe('AdminController', () => {
       {} as any,
       {} as any,
       mockAnomaly as unknown as AnomalyService,
+      { verifyChain: jest.fn() } as any,
       mockIdentityVerification,
       mockPool as unknown as Pool,
     );

@@ -63,4 +63,34 @@ describe('Linguistic Cloaker', () => {
     const result = cloakVocabulary(input, 'NATIVE');
     expect(result).toBe(input);
   });
+
+  describe('word boundary safety', () => {
+    it('should not transform "stakeholder" (contains "stake")', () => {
+      const result = cloakVocabulary('The stakeholder meeting is at 3pm', 'APP_STORE');
+      expect(result).toContain('stakeholder');
+    });
+
+    it('should not transform "between" (contains "bet")', () => {
+      const result = cloakVocabulary('Choose between option A and B', 'APP_STORE');
+      expect(result).toContain('between');
+    });
+
+    it('should not transform "better" (contains "bet")', () => {
+      const result = cloakVocabulary('This is a better approach', 'STRIPE');
+      expect(result).toContain('better');
+    });
+
+    it('should not transform "mistake" (contains "stake")', () => {
+      const result = cloakVocabulary('That was a mistake', 'APP_STORE');
+      expect(result).toContain('mistake');
+    });
+
+    it('should still transform exact standalone terms', () => {
+      const result = cloakVocabulary('Place your stake and bet now', 'APP_STORE');
+      expect(result).toContain('vault');
+      expect(result).toContain('commitment');
+      expect(result).not.toMatch(/\bstake\b/i);
+      expect(result).not.toMatch(/\bbet\b/i);
+    });
+  });
 });

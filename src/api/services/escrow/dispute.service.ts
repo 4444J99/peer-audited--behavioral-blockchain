@@ -101,7 +101,7 @@ export class DisputeService {
       holdResult = await this.stripeService.holdStake(customerId, APPEAL_FEE_AMOUNT, proofId);
     } catch (error: any) {
       throw new HttpException(
-        `Appeal Rejected: Could not authorize the $${APPEAL_FEE_AMOUNT} appeal fee. Reason: ${error.message}`,
+        `Appeal Rejected: Could not authorize the $${(APPEAL_FEE_AMOUNT / 100).toFixed(2)} appeal fee. Reason: ${error.message}`,
         HttpStatus.PAYMENT_REQUIRED,
       );
     }

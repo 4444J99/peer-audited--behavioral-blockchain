@@ -32,6 +32,18 @@ CREATE TABLE event_log (
 -- Index for rapid sequential verification of the chain.
 CREATE INDEX idx_event_log_created_at ON event_log(created_at);
 
+-- Immutability: prevent UPDATE/DELETE on event_log (append-only audit trail)
+CREATE OR REPLACE FUNCTION prevent_event_log_mutation()
+RETURNS TRIGGER AS $$
+BEGIN
+  RAISE EXCEPTION 'event_log is immutable: UPDATE and DELETE are prohibited';
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_event_log_immutable
+  BEFORE UPDATE OR DELETE ON event_log
+  FOR EACH ROW EXECUTE FUNCTION prevent_event_log_mutation();
+
 -- ============================================================
 -- Domain Tables: Users, Contracts, Proofs, Fury Assignments
 -- ============================================================
@@ -211,3 +223,26 @@ CREATE INDEX idx_proofs_contract_id ON proofs(contract_id);
 CREATE INDEX idx_proofs_status ON proofs(status);
 CREATE INDEX idx_fury_assignments_proof_id ON fury_assignments(proof_id);
 CREATE INDEX idx_fury_assignments_fury_user_id ON fury_assignments(fury_user_id);
+
+-- Ledger performance indexes
+-- Refresh tokens for JWT rotation
+CREATE TABLE refresh_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
+
+-- Account lockout columns
+ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;
+
+CREATE INDEX idx_entries_debit_account_id ON entries(debit_account_id);
+CREATE INDEX idx_entries_credit_account_id ON entries(credit_account_id);
+CREATE INDEX idx_entries_contract_id ON entries(contract_id);
+CREATE INDEX idx_users_enterprise_id ON users(enterprise_id);

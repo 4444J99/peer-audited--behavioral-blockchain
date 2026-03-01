@@ -26,7 +26,7 @@ describe('LedgerService', () => {
       .mockResolvedValueOnce({ rows: [{ id: 'mock-uuid-123' }] }) // INSERT
       .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
-    const resultId = await service.recordTransaction('account-A', 'account-B', 50.0);
+    const resultId = await service.recordTransaction('account-A', 'account-B', 5000);
 
     expect(resultId).toBe('mock-uuid-123');
     expect(mockClient.query).toHaveBeenNthCalledWith(1, 'BEGIN');
@@ -39,7 +39,7 @@ describe('LedgerService', () => {
       .mockResolvedValueOnce({ rows: [] }) // BEGIN
       .mockRejectedValueOnce(new Error('Simulated Database Error')); // INSERT fails
 
-    await expect(service.recordTransaction('account-A', 'account-B', 50.0))
+    await expect(service.recordTransaction('account-A', 'account-B', 5000))
       .rejects
       .toThrow('Simulated Database Error');
 

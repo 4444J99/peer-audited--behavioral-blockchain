@@ -41,23 +41,26 @@ export class StripeFboService {
     return customer.id;
   }
 
-  async holdStake(customerId: string, amountDollars: number, contractId: string): Promise<Stripe.PaymentIntent> {
+  async holdStake(customerId: string, amountCents: number, contractId: string): Promise<Stripe.PaymentIntent> {
     if (this.isDevMode) {
-      this.logger.debug(`[DEV] Mock hold $${amountDollars} for contract ${contractId}`);
+      this.logger.debug(`[DEV] Mock hold ${amountCents}¢ for contract ${contractId}`);
       return {
         id: `pi_dev_${randomUUID().slice(0, 8)}`,
         status: 'requires_capture',
-        amount: Math.round(amountDollars * 100),
+        amount: amountCents,
         currency: 'usd',
       } as any;
     }
-    const intent = await this.stripe.paymentIntents.create({
-      amount: Math.round(amountDollars * 100),
-      currency: 'usd',
-      customer: customerId,
-      capture_method: 'manual',
-      metadata: { contractId },
-    });
+    const intent = await this.stripe.paymentIntents.create(
+      {
+        amount: amountCents,
+        currency: 'usd',
+        customer: customerId,
+        capture_method: 'manual',
+        metadata: { contractId },
+      },
+      { idempotencyKey: `styx_hold_${contractId}` },
+    );
     return intent;
   }
 
@@ -66,7 +69,9 @@ export class StripeFboService {
       this.logger.debug(`[DEV] Mock capture ${paymentIntentId}`);
       return { id: paymentIntentId, status: 'succeeded' } as any;
     }
-    return this.stripe.paymentIntents.capture(paymentIntentId);
+    return this.stripe.paymentIntents.capture(paymentIntentId, undefined, {
+      idempotencyKey: `styx_capture_${paymentIntentId}`,
+    });
   }
 
   async cancelHold(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
@@ -74,6 +79,8 @@ export class StripeFboService {
       this.logger.debug(`[DEV] Mock cancel ${paymentIntentId}`);
       return { id: paymentIntentId, status: 'canceled' } as any;
     }
-    return this.stripe.paymentIntents.cancel(paymentIntentId);
+    return this.stripe.paymentIntents.cancel(paymentIntentId, undefined, {
+      idempotencyKey: `styx_cancel_${paymentIntentId}`,
+    });
   }
 }

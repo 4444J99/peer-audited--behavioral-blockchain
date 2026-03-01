@@ -68,11 +68,7 @@ export default function ContractDetailPage() {
   const [disputeResult, setDisputeResult] = useState<string | null>(null);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!authUser) {
-      router.push('/login');
-      return;
-    }
+    if (authLoading || !authUser) return;
     async function load() {
       try {
         const contractData = await api.getContract(contractId);
@@ -92,7 +88,7 @@ export default function ContractDetailPage() {
       }
     }
     load();
-  }, [contractId, authUser, authLoading, router]);
+  }, [contractId, authUser, authLoading]);
 
   const handleSubmitProof = async () => {
     if (!mediaUri.trim()) return;

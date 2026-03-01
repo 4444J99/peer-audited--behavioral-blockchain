@@ -44,11 +44,7 @@ export default function AdminPage() {
   const [disputesLoading, setDisputesLoading] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!authUser) {
-      router.push('/login');
-      return;
-    }
+    if (authLoading || !authUser) return;
     if (authUser.role !== 'ADMIN') {
       setError('Forbidden: ADMIN role required');
       setLoading(false);
@@ -70,7 +66,7 @@ export default function AdminPage() {
       }
     }
     load();
-  }, [authUser, authLoading, router]);
+  }, [authUser, authLoading]);
 
   const handleHoneypot = async () => {
     setHoneypotLoading(true);
