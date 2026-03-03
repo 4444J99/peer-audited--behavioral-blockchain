@@ -40,7 +40,9 @@ The project uses a `Makefile` for high-level operations and **npm** (with worksp
 ## Development Conventions
 
 * **Modular Theory**: Every element should be one function logically. Small, focused, and testable modules are mandatory.
+* **Privacy-First Verification**: Digital Exhaust verification (Texts/Logs) must prioritize privacy. Research and prioritize Zero-Knowledge Proofs (ZKPs) or local-only processing to prevent server-side exposure of sensitive metadata.
 * **Zero Trust**: Never trust client-side data. All critical validation (Whistleblower artifacts, Financial status) must occur server-side.
+* **Auditor Integrity**: The Fury Network is the system's "Shatter Point." Implementation must include anti-collusion logic, honeypot injection, and aggressive slashing for dishonest reviewers.
 * **Conventional Commits**: All git commits must follow the Conventional Commits 1.0.0 specification.
 * **Test-Driven Development (TDD)**: No feature implementation is complete without corresponding test coverage.
 * **Naming Convention**: Use kebab-case for filenames and functional descriptors (e.g., `research--behavioral-economics.md`).

@@ -3,6 +3,7 @@ import { Pool, PoolClient } from 'pg';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { StripeFboService } from '../../../services/escrow/stripe.service';
+import { StripeFBOService as RealStripeFBOService } from '../payments/stripe-fbo.service';
 import { DisputeService } from '../../../services/escrow/dispute.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { AegisProtocolService } from '../../../services/health/aegis.service';
@@ -73,6 +74,7 @@ export class ContractsService {
     private readonly ledger: LedgerService,
     private readonly truthLog: TruthLogService,
     private readonly stripe: StripeFboService,
+    private readonly realStripe: RealStripeFBOService,
     private readonly dispute: DisputeService,
     private readonly furyRouter: FuryRouterService,
     private readonly aegis: AegisProtocolService,
@@ -1328,12 +1330,13 @@ export class ContractsService {
         if (outcome === 'COMPLETED') {
           // Release held funds back to user
           if (row.payment_intent_id) {
-            await this.stripe.cancelHold(row.payment_intent_id);
+            await this.realStripe.resolveEscrow(row.payment_intent_id, 'PASS');
           }
         } else {
           // Capture stake — user failed
           if (row.payment_intent_id) {
-            await this.stripe.captureStake(row.payment_intent_id);
+            // In production, we'd fetch the furies who audited this
+            await this.realStripe.resolveEscrow(row.payment_intent_id, 'FAIL');
           }
         }
 

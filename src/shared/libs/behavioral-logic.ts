@@ -70,6 +70,12 @@ export const MAX_GRACE_DAYS_PER_MONTH = 2;
 export const ONBOARDING_BONUS_AMOUNT = 500; // cents ($5.00)
 
 /**
+ * AEGIS-04: Dispute Grace Period
+ * Hours allowed to file a dispute before final stake liquidation.
+ */
+export const DISPUTE_GRACE_PERIOD_HOURS = 24;
+
+/**
  * BE-01: Loss Aversion Anchor
  * Perceived pain of loss is ~2x pleasure of gain (λ = 1.955).
  * Reserved: Dynamic stake messaging (Phase Omega)

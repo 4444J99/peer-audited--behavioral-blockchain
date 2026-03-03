@@ -90,6 +90,20 @@ resource "cloudflare_ruleset" "rate_limiting" {
     enabled     = true
   }
 
+  # Whistleblower endpoints: 3 submissions per hour (prevent evidence flooding)
+  rules {
+    action = "block"
+    ratelimit {
+      characteristics     = ["ip.src"]
+      period              = 3600
+      requests_per_period = 3
+      mitigation_timeout  = 86400 # 24-hour lockout for repeat abusers
+    }
+    expression  = "(http.request.uri.path contains \"/whistleblower\" and http.request.method eq \"POST\")"
+    description = "Rate limit whistleblower submissions — 3 per hour per IP"
+    enabled     = true
+  }
+
   # General API: 120 requests per minute
   rules {
     action = "block"

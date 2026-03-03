@@ -29,6 +29,10 @@ describe('ContractsService', () => {
     cancelHold: jest.fn().mockResolvedValue({ id: 'pi_test_123' }),
   } as unknown as StripeFboService;
 
+  const mockRealStripe = {
+    resolveEscrow: jest.fn().mockResolvedValue(true),
+  };
+
   const mockFuryRouter = {
     routeProof: jest.fn().mockResolvedValue('job-id-1'),
   } as unknown as FuryRouterService;
@@ -73,6 +77,7 @@ describe('ContractsService', () => {
       mockLedger,
       mockTruthLog,
       mockStripe,
+      mockRealStripe as any,
       mockDispute,
       mockFuryRouter,
       mockAegis,
@@ -511,8 +516,8 @@ describe('ContractsService', () => {
 
       await service.resolveContract('contract-1', 'COMPLETED');
 
-      expect(mockStripe.cancelHold).toHaveBeenCalledWith('pi_test_123');
-      expect(mockStripe.captureStake).not.toHaveBeenCalled();
+      expect(mockRealStripe.resolveEscrow).toHaveBeenCalledWith('pi_test_123', 'PASS');
+      expect(mockStripe.cancelHold).not.toHaveBeenCalled();
     });
 
     it('should capture stake on FAILED outcome', async () => {
@@ -525,8 +530,8 @@ describe('ContractsService', () => {
 
       await service.resolveContract('contract-1', 'FAILED');
 
-      expect(mockStripe.captureStake).toHaveBeenCalledWith('pi_test_123');
-      expect(mockStripe.cancelHold).not.toHaveBeenCalled();
+      expect(mockRealStripe.resolveEscrow).toHaveBeenCalledWith('pi_test_123', 'FAIL');
+      expect(mockStripe.captureStake).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException for missing contract', async () => {

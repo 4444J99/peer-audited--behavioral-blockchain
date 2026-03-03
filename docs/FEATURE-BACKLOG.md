@@ -357,6 +357,15 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Dependencies**: F-MOBILE-03 (push notifications)
 - **Legal/Compliance**: Screen recording approach rejected due to wiretap/GDPR issues. Must use alternative proof methods.
 
+#### F-VERIFY-14: ZK-Privacy Layer for Digital Exhaust
+
+- **Status**: NOT_STARTED
+- **Phase**: Phase3+
+- **Priority**: P3
+- **Source**: `evaluation-to-growth--strategic-review.md` §1.1
+- **Spec**: Implement Zero-Knowledge Proofs (ZKPs) for validating SMS/Call logs without transmitting sensitive metadata to the server. Verification happens locally on-device, and only the binary "Breach Detected" proof is transmitted.
+- **Dependencies**: F-VERIFY-12, ZK-proving engine.
+
 ---
 
 ### Domain 3: FURY — Peer Audit Network
@@ -440,6 +449,15 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Existing Code**: None
 - **Spec**: Weighted voting where high-accuracy Furies' verdicts count more. In split decisions, Master Furies break ties. Prevents low-quality reviewers from swaying outcomes.
 - **Dependencies**: F-FURY-02, F-FURY-07
+
+#### F-FURY-09: Collusion Slashing & Honey-Traps
+
+- **Status**: NOT_STARTED
+- **Phase**: Phase2+
+- **Priority**: P1
+- **Source**: `evaluation-to-growth--strategic-review.md` §3.2
+- **Spec**: Advanced honey-trap logic where "Bad Actors" are identified via intentional failure-injection. Reviewers identified as colluding or "rubber-stamping" face immediate stake slashing and permanent exile.
+- **Dependencies**: F-FURY-05.
 
 ---
 
@@ -549,6 +567,15 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Spec**: Limits on deposit/withdrawal frequency and amounts. Monitor for unusual patterns (rapid in-and-out transfers with no real participation). Written policy for suspicious activity handling.
 - **Dependencies**: F-CORE-04
 - **Legal/Compliance**: Recommended even without MSB classification.
+
+#### F-AEGIS-11: Sobriety/Addiction Track Expansion
+
+- **Status**: NOT_STARTED
+- **Phase**: Phase2+
+- **Priority**: P2
+- **Source**: `evaluation-to-growth--strategic-review.md` §4.1
+- **Spec**: Expand the Aegis Protocol to support sobriety tracks (alcohol, nicotine, etc.) with specialized verification (IoT breathalyzers, geofencing for vice locations).
+- **Dependencies**: F-AEGIS-08.
 
 ---
 
@@ -664,6 +691,15 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Existing Code**: Throughout codebase (Fury, Oath, Vault, Styx terminology)
 - **Spec**: River/Goddess of Oaths from Greek mythology. "Modern digital Unbreakable Oath" / "Ulysses Contract." Elite framing: "Ironman for your brain."
 - **Dependencies**: None
+
+#### F-UX-12: The Mirror Mirror (Sentiment Visualization)
+
+- **Status**: NOT_STARTED
+- **Phase**: Phase2+
+- **Priority**: P2
+- **Source**: `evaluation-to-growth--strategic-review.md` §4.1
+- **Spec**: Use sentiment analysis on "Digital Exhaust" artifacts (strictly local processing) to provide users with a "Mirror" of their emotional recovery progress over the 30-day contract.
+- **Dependencies**: F-VERIFY-12.
 
 ---
 

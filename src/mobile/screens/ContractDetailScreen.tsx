@@ -166,12 +166,24 @@ export function ContractDetailScreen({ route, navigation }: Props) {
       </View>
 
       {contract.status === 'ACTIVE' && String(contract.category || '').startsWith('RECOVERY_') && (
-        <TouchableOpacity
-          style={styles.attestButton}
-          onPress={() => navigation.navigate('Attestation', { contractId })}
-        >
-          <Text style={styles.attestButtonText}>Daily Check-In</Text>
-        </TouchableOpacity>
+        <View style={{ gap: 12, marginBottom: 16 }}>
+          <TouchableOpacity
+            style={styles.attestButton}
+            onPress={() => navigation.navigate('Attestation', { contractId })}
+          >
+            <Text style={styles.attestButtonText}>Daily Check-In</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.attestButton, { backgroundColor: '#1a1a2e', borderWidth: 1, borderColor: '#ef444430' }]}
+            onPress={() => navigation.navigate('DigitalExhaust', { 
+              contractId, 
+              targetPhoneNumber: contract.metadata?.targetPhoneNumber || 'Restricted Target' 
+            })}
+          >
+            <Text style={[styles.attestButtonText, { color: '#ef4444' }]}>Automatic Scan</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {contract.status === 'ACTIVE' && (

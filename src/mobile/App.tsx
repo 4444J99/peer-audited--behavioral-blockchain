@@ -27,6 +27,7 @@ import { DashboardScreen } from './screens/DashboardScreen';
 import { ContractListScreen } from './screens/ContractListScreen';
 import { ContractDetailScreen } from './screens/ContractDetailScreen';
 import { AttestationScreen } from './screens/AttestationScreen';
+import DigitalExhaustScreen from './screens/DigitalExhaustScreen';
 import { CreateContractScreen } from './screens/CreateContractScreen';
 import { FuryScreen } from './screens/FuryScreen';
 import { WalletScreen } from './screens/WalletScreen';
@@ -42,6 +43,7 @@ export type ContractsStackParamList = {
   ContractList: undefined;
   ContractDetail: { contractId: string };
   Attestation: { contractId: string };
+  DigitalExhaust: { contractId: string; targetPhoneNumber: string };
   CreateContract: undefined;
   SubmitProof: { contractId: string };
 };
@@ -87,6 +89,11 @@ function ContractsNavigator() {
         name="Attestation"
         component={AttestationScreen}
         options={{ title: 'Daily Check-In' }}
+      />
+      <ContractsStack.Screen
+        name="DigitalExhaust"
+        component={DigitalExhaustScreen}
+        options={{ title: 'Automatic Verification' }}
       />
       <ContractsStack.Screen
         name="CreateContract"

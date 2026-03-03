@@ -22,6 +22,7 @@ describe('ContractsService — Behavioral Physics', () => {
     captureStake: jest.fn().mockResolvedValue({ id: 'pi_test_123' }),
     cancelHold: jest.fn().mockResolvedValue({ id: 'pi_test_123' }),
   } as unknown as StripeFboService;
+  const mockRealStripe = { resolveEscrow: jest.fn().mockResolvedValue(true) };
   const mockFuryRouter = { routeProof: jest.fn().mockResolvedValue('job-id-1') } as unknown as FuryRouterService;
   const mockDispute = { initiateAppeal: jest.fn() } as unknown as DisputeService;
   const mockAegis = { validatePsychologicalGuardrails: jest.fn() } as unknown as AegisProtocolService;
@@ -52,6 +53,7 @@ describe('ContractsService — Behavioral Physics', () => {
       mockLedger,
       mockTruthLog,
       mockStripe,
+      mockRealStripe as any,
       mockDispute,
       mockFuryRouter,
       mockAegis,

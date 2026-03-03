@@ -101,9 +101,25 @@ async function runBehavioralPhysicsCheck() {
   );
   if (tierResult) passed++;
 
-  // Test 2: Cool-off period enforcement
+  // Test 2: Behavioral Physics Constants Verification
+  // Verifies that the internal λ and Dispute Grace Period match the spec
+  console.log('\n[TEST 2] Behavioral Physics Constants Verification');
+  total++;
+  try {
+    const { LOSS_AVERSION_COEFFICIENT, DISPUTE_GRACE_PERIOD_HOURS } = await import('../../src/shared/libs/behavioral-logic');
+    if (LOSS_AVERSION_COEFFICIENT === 1.955 && DISPUTE_GRACE_PERIOD_HOURS === 24) {
+      console.log(`  ✅ Constants match: λ=${LOSS_AVERSION_COEFFICIENT}, Dispute Window=${DISPUTE_GRACE_PERIOD_HOURS}h`);
+      passed++;
+    } else {
+      console.error(`  ❌ Constants mismatch: λ=${LOSS_AVERSION_COEFFICIENT}, Dispute Window=${DISPUTE_GRACE_PERIOD_HOURS}h`);
+    }
+  } catch (err) {
+    console.error('  ❌ Failed to import behavioral logic constants:', err);
+  }
+
+  // Test 3: Cool-off period enforcement
   // Requires user to have a recent FAILED contract in the DB
-  console.log('\n[TEST 2] Cool-off period enforcement');
+  console.log('\n[TEST 3] Cool-off period enforcement');
   total++;
   const coolOffResult = await expectReject(
     'Cool-off after recent failure',
@@ -121,8 +137,8 @@ async function runBehavioralPhysicsCheck() {
   if (coolOffResult) passed++;
   else console.log('  ⚠️  Skipped: User may not have a recent failure. Expected for fresh DBs.');
 
-  // Test 3: Dynamic downscaling after 3+ failures
-  console.log('\n[TEST 3] Dynamic downscaling');
+  // Test 4: Dynamic downscaling after 3+ failures
+  console.log('\n[TEST 4] Dynamic downscaling');
   total++;
   const downscaleResult = await expectReject(
     'Dynamic downscaling after failures',
