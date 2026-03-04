@@ -16,7 +16,7 @@ docs/
 ├── MANIFEST.md                 # Annotated bibliography with DOC-* IDs (keep at root)
 ├── index.html + assets/        # GitHub Pages pitch deck (built from src/pitch)
 ├── adr/                        # Architecture Decision Records
-├── api/                        # API specification (spec.md)
+├── api/                        # API specification (api--spec.md)
 ├── architecture/               # Technical architecture & feasibility docs
 ├── brainstorm/                 # Raw brainstorm transcripts
 ├── legal/                      # Compliance, wagering law, platform gatekeeper analysis
@@ -29,7 +29,7 @@ docs/
 ## Naming Conventions
 
 - **Double-hyphen kebab-case**: `{category}--{descriptor}.md` — the single hyphen separates words, the double hyphen separates the category prefix from the topic. Examples: `research--behavioral-economics.md`, `legal--aegis-protocol.md`, `architecture--alpha-to-omega-plan.md`.
-- **Reference library**: `{author-surname}--{short-title}.{ext}` — e.g., `pressfield--the-war-of-art.txt`, `clear--atomic-habits.txt`.
+- **Reference library**: `{author-surname}--{short-title}.{ext}` — e.g., `research--ref--pressfield--the-war-of-art.txt`, `research--ref--clear--atomic-habits.txt`.
 - **Evaluation-to-Growth reviews**: `evaluation-to-growth--{topic}.md` (no `research--` prefix).
 - **Root-level files**: UPPERCASE for governance (`FEATURE-BACKLOG.md`, `MANIFEST.md`).
 - **No Title Case or spaces in filenames.** All doc filenames are lowercase kebab-case.
@@ -52,7 +52,7 @@ Claim-to-Control Matrix mapping product/security/compliance claims to runtime en
 
 - **FEATURE-BACKLOG.md** references doc filenames by basename (e.g., `` `research--behavioral-economics.md` ``). When renaming a doc, update all `**Source**:` lines and the appendix mapping table.
 - **MANIFEST.md** references docs by full relative path (e.g., `` `docs/research/research--behavioral-economics.md` ``). When moving or renaming a doc, update the File column in the inventory tables.
-- **07-claim-drift-check.js** validates that file paths mentioned in `docs/planning/implementation-status.md` exist on disk. If you move files referenced there, update the paths or the check will fail in CI.
+- **07-claim-drift-check.js** validates that file paths mentioned in `docs/planning/planning--implementation-status.md` exist on disk. If you move files referenced there, update the paths or the check will fail in CI.
 
 ## Adding New Documents
 

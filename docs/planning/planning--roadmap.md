@@ -1,4 +1,6 @@
-# Styx: Alpha-to-Omega Roadmap (v3.0)
+# Styx: Alpha-to-Omega Roadmap (v3.1)
+
+**LAUNCH TARGET: MARCH 6, 2026 (MVP Private Beta)**
 
 This is the primary chronological guide for the development of Styx. It maps the transition from a philosophical manifesto to a global B2B behavioral marketplace.
 
@@ -10,6 +12,7 @@ This is the primary chronological guide for the development of Styx. It maps the
 
 - **Task**: Map the "Inter-regulation Matrix" to the `integrity.ts` score weights.
 - **Task**: Define "Fury" as the Negative Feedback Gain signal.
+- [x] **Launch Strategy**: Define MVP launch for March 6, 2026. Focus on No-Contact recovery path.
 
 ## 1. Phase Alpha: The Iron Core (Month 1)
 
@@ -21,6 +24,7 @@ This is the primary chronological guide for the development of Styx. It maps the
 - **Micro-Task**: Stripe FBO routing & `BankDataProvider` interface.
 - [x] **Truth Log (Hash-Chained)**: Cryptographic audit trail of all behavioral events.
 - [x] **Weaponized Whistleblower**: Implement the anonymous bounty link generation for "No Contact" contracts.
+- [x] **Blockchain of Truth v2**: Hardware immutability focus (Apple HealthKit metadata filtering, Whoop SCORED state).
 
 ## 2. Phase Beta: The Shield (Month 2)
 
@@ -31,6 +35,7 @@ This is the primary chronological guide for the development of Styx. It maps the
 - [x] **IP-Based Geofencing**: Hard-block "Any Chance" jurisdictions (AZ, AR, DE, etc.) at the API level.
 - [x] **Digital Oracles**: DeviceActivity tracking and the Whistleblower Bounty as primary verification mechanics.
 - [x] **Micro-Task**: **Grace Days & Endowed Progress**: Manufacture psychological momentum.
+- [x] **Cohort Structures**: Implement Individual and Pod-based (max 5) cohorts for launch.
 
 ## 3. Phase Gamma: The Panopticon (Month 3)
 

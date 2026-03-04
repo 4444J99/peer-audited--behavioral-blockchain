@@ -1,0 +1,1110 @@
+# Architecture and Legal Classification of Milestone-Based Commitment Contracts
+
+## Introduction
+
+The convergence of decentralized finance (DeFi) architecture,
+cryptographic verification, and behavioral economics has facilitated the
+creation of trustless, automated systems designed to incentivize human
+behavior. Among the most promising applications of this intersection is
+the decentralized milestone wagering system. In these architectures,
+users stake their own capital within a time-locked smart contract
+escrow. Upon providing cryptographic proof of a predefined behavioral
+milestone---such as a verified fitness activity, a biometric health
+metric, or a productivity goal---the base wager is refunded or
+algorithmically augmented. In the event of a failure state, the wager is
+either irrevocably destroyed, sent to an anti-charity, or redistributed
+among successful participants.
+
+Deploying such a system requires navigating two distinct but equally
+complex domains: the legal classification of the activity under United
+States law and the technical execution of the smart contract
+architecture. Legally, the platform must be meticulously structured to
+avoid classification as an unregulated game of chance, an illegal
+gambling enterprise, or an unregistered commodity swap, relying instead
+on the established legal framework of \"commitment contracts\".^1^
+Technically, the platform requires a robust Ethereum Virtual Machine
+(EVM) compatible architecture capable of processing zero-knowledge
+proofs (ZKPs), managing decentralized oracles, handling execution
+failures gracefully, and preventing economic exploits such as Sybil
+attacks or state bloating.^3^
+
+This report provides an exhaustive analysis of the legal distinctions
+between commitment contracts and regulated gambling under United States
+federal and state law, with a specific focus on the stringent regulatory
+environment of New York State. Furthermore, it outlines a comprehensive
+technical blueprint for deploying an EVM-compatible smart contract
+architecture designed to enforce behavioral milestones through
+time-locked escrows, algorithmic redistribution, and privacy-preserving
+cryptographic verification.
+
+## Part I: The Legal Landscape of Behavioral Wagers
+
+The primary existential threat to any milestone wagering system is the
+risk of regulatory enforcement actions stemming from illegal gambling
+classifications. Historically, gambling has been heavily regulated at
+the state level under the police powers of individual jurisdictions,
+with federal laws intervening primarily in interstate commerce,
+organized crime, or digital contexts.^5^ To successfully deploy a
+behavioral milestone system, the underlying economic exchange must be
+legally classified as a bilateral or unilateral \"commitment contract\"
+rather than a wager on a game of chance.^1^
+
+### The Common Law Anatomy of Gambling
+
+Unless modified by specific state statutes, the common law defines
+gambling as any activity that includes three essential and concurrent
+elements: (1) consideration, (2) chance, and (3) a prize.^2^ The
+fundamental legal strategy for sweepstakes, contests, and commitment
+platforms is to deliberately eliminate at least one of these three
+elements from the operational model.^8^
+
+**Consideration** Consideration requires that the participant stake
+something of value---typically fiat currency, cryptocurrency, or
+property---in exchange for the opportunity to participate in the
+activity.^2^ If no consideration is required, the activity is legally
+categorized as a sweepstakes rather than gambling.^2^ In a milestone
+wagering system, the initial deposit placed into the smart contract
+escrow firmly satisfies the element of consideration, as the user is
+placing their own capital at risk.^2^
+
+**Prize (Reward)** The participant must have the expectation of
+receiving a reward of value, which is usually proportional to the risk
+taken.^10^ In a self-wager, the prize is the return of the initial
+consideration upon successful completion of the goal, potentially
+augmented by a portion of the funds forfeited by unsuccessful
+participants in a redistribution model.^1^ Because the platform
+distributes financial value based on outcomes, the prize element is
+unequivocally present.
+
+**Chance** A game of chance dictates that the outcome depends largely on
+luck, random events, or variables outside the participant\'s direct
+control, rather than on the participant\'s skill, knowledge, or physical
+effort.^6^ Because a commitment contract inherently requires
+consideration and offers a financial return, the legal viability of
+platforms like DietBet, StickK, and Beeminder hinges entirely on
+neutralizing the element of \"chance\".^12^ If the outcome is determined
+by skill or personal effort, the activity ceases to be gambling and
+becomes an enforceable performance contract.^12^
+
+### New York Penal Law and the \"Control and Influence\" Doctrine
+
+New York State maintains strict constitutional and statutory
+prohibitions against unregulated gambling.^13^ The state\'s history
+demonstrates a long-standing bias against unauthorized betting, dating
+back to the 1894 Constitution, with modern exceptions carved out only
+through specific constitutional amendments for state lotteries,
+pari-mutuel horse racing, and licensed commercial casinos.^14^ Given
+this hostile regulatory environment, analyzing a milestone wagering
+system under New York law provides a rigorous stress test for nationwide
+compliance.
+
+Under New York Penal Law § 225.00(2), a person engages in gambling when
+they stake or risk something of value upon the outcome of a \"contest of
+chance\" or a \"future contingent event not under his control or
+influence,\" upon an agreement that they will receive something of value
+in the event of a certain outcome.^15^ A \"contest of chance\" is
+further defined in § 225.00(1) as any contest or gaming scheme where the
+outcome depends in a \"material degree upon an element of chance,
+notwithstanding that skill of the contestants may also be a factor
+therein\".^16^
+
+The legality of personal growth bets and self-wagers relies heavily on
+the \"control or influence\" clause of this statute. In a fitness or
+health-based commitment contract, the participant wagers on their own
+future behavior---such as losing a specific percentage of body weight,
+achieving a verified physical activity milestone, or completing a
+biometric target.^12^ The outcome of this event is neither random nor
+determined by external actors; it is entirely within the participant\'s
+direct personal \"control or influence\".^12^ Because the participant
+exercises dominion over the outcome through their own dietary or
+physical effort, the wager fails the statutory definition of
+gambling.^12^
+
+Platforms operating under this model represent the textbook definition
+of skill-based or effort-based contests. DietBet, for example,
+explicitly defends its legality by stating that weight loss is entirely
+under the user\'s control and involves no luck, effectively classifying
+the platform as a healthy race rather than a game of chance.^12^
+Furthermore, these systems are not banked by a \"house\" acting as a
+counterparty with a built-in mathematical edge, distinguishing them
+fundamentally from casino operations or sportsbooks.^22^ The smart
+contract acts merely as a neutral escrow agent enforcing a bilateral
+agreement between the user\'s present self and future self.^23^
+
+### Precedents in Skill vs. Chance: The Dominant Factor Test
+
+To further insulate a behavioral smart contract from gambling
+classifications, developers must understand how courts interpret the
+intersection of skill and chance. While New York employs the \"material
+degree\" standard, many other jurisdictions utilize the \"Dominant
+Factor Test\" to determine whether an activity constitutes gambling.^24^
+
+Under the Dominant Factor Test, a game is considered a contest of skill
+if skill accounts for more than fifty percent of the outcome,
+predominating over chance.^24^ This framework was famously litigated in
+*United States v. DiCristina*, where a federal district court in New
+York initially ruled that poker was predominated by skill and therefore
+did not constitute illegal gambling under the Illegal Gambling Business
+Act (IGBA), though this was later reversed on different grounds.^24^
+
+Similarly, the legal battles surrounding Daily Fantasy Sports (DFS)
+platforms like DraftKings and FanDuel in New York highlight the state\'s
+aggressive regulatory posture. In 2016, the New York legislature passed
+Chapter 237, specifically excluding Interactive Fantasy Sports from the
+penal law definition of gambling by declaring that the outcomes in DFS
+do not depend on a material degree of chance.^17^ This legislative
+action underscores that state authorities possess the power to interpret
+the boundaries of chance and skill.
+
+For a milestone wagering system, the design must ensure that the user\'s
+effort is the sole determining factor of success. If a smart contract
+relies on an external oracle for verification (e.g., pulling weather
+data to determine if a user *could* run outside), it inadvertently
+introduces a \"future contingent event not under \[the user\'s\]
+control,\" thereby jeopardizing the contract\'s legal standing under NY
+Penal Law § 225.00.^15^ Therefore, the milestone parameters must be
+strictly confined to internal user actions (e.g., GPS distance covered,
+heart rate achieved) to maintain the shield of the skill/control
+exemption.
+
+### Federal Preemption and the Commodity Exchange Act
+
+At the federal level, the legal discourse surrounding event-based
+contracts has shifted significantly due to the rise of prediction
+markets. Platforms like Kalshi and Polymarket allow users to trade
+binary event contracts on political elections, sports outcomes, and
+cultural events.^5^
+
+The Commodity Futures Trading Commission (CFTC) regulates derivatives,
+futures, and swaps under the Commodity Exchange Act (CEA).^5^ In
+landmark 2024 litigation, federal courts ruled that Kalshi\'s event
+contracts were financial swaps subject to exclusive CFTC jurisdiction,
+thereby preempting state gambling laws under the Supremacy Clause.^5^
+This ruling effectively allowed prediction markets to offer nationwide
+trading on events, bypassing state-level gambling prohibitions in
+jurisdictions like Texas and New York.^5^ In retaliation, the New York
+State legislature introduced the ORACLE Act (Assembly Bill A09251),
+seeking to aggressively ban prediction markets from offering speculative
+positions on athletic events and other categories within the state.^7^
+
+While this federal preemption provides a safe harbor for prediction
+markets, this framework is largely inapplicable---and unnecessary---for
+individualized commitment contracts. The CEA\'s regulatory mandate
+focuses on tradable products that provide macroeconomic hedging utility
+or price discovery in underlying cash markets.^32^ A smart contract
+locking a user\'s personal funds against their own verified biometric
+data does not constitute a tradable derivative, nor is it a swap
+designed to transfer preexisting economic risk between
+counterparties.^2^
+
+Because a personal growth bet is not an economic good exchanged in a
+market for uniform quality and value, it falls outside the CFTC\'s
+jurisdiction.^2^ Consequently, behavioral milestone systems are
+insulated from both state gambling definitions (due to the absolute
+absence of chance and reliance on personal control) and federal
+commodities regulations (due to their individualized, non-tradable,
+non-financial nature).^15^
+
+### Contractual Enforceability: Liquidated Damages vs. Unenforceable Penalties
+
+If a commitment contract successfully avoids classification as a
+gambling wager, its enforcement falls squarely under standard contract
+law. In the architecture of a milestone system, when a user fails to
+meet a behavioral goal and their funds are burned or redistributed, this
+mechanism must be scrutinized under the legal doctrines of liquidated
+damages and forfeitures.^21^
+
+Under New York contract law, parties may agree to a predetermined damage
+calculation in the event of a breach, known as a liquidated damages
+clause.^34^ However, courts will not enforce a liquidated damages clause
+if it is deemed a disguised \"penalty\" designed merely to coerce
+performance through conspicuously disproportionate financial
+consequences.^21^ A clause is classified as an unenforceable penalty if
+the damages resulting from a breach were easily ascertainable at the
+time the contract was executed, or if the fixed damages are manifestly
+disproportionate to the actual or probable harm suffered.^21^
+
+In a unilateral commitment contract, the \"breach\" is the user\'s
+failure to achieve their personal milestone. If the smart contract
+simply confiscates and burns the funds upon failure, a court could
+theoretically view this as an unenforceable penalty. This is because no
+counterparty---neither the protocol nor other users---suffered actual,
+quantifiable financial damages as a result of the user failing to
+exercise or lose weight.^21^ In cases like *LeRoy v. Sayers*, New York
+courts have nullified forfeiture provisions when they fail to account
+for actual harm or circumstances.^21^
+
+To mitigate this specific legal risk, smart contracts should be drafted
+and presented to the user not as bilateral contracts with breach
+penalties, but as conditional grants or alternative modes of
+performance.^36^ Furthermore, if the platform utilizes a
+\"Burn/Anti-Charity\" model, the terms of service should frame the
+deposit as a voluntary, irrevocable pledge to a specified organization,
+conditioned upon a condition precedent (the failure of the milestone).
+By legally framing the transaction as a conditional charitable pledge
+rather than a penalty for breach of contract, developers can bypass the
+stringent proportionality tests applied to liquidated damages under New
+York law.
+
+## Part II: Behavioral Economics and System Design
+
+The psychological efficacy of the milestone wagering system relies
+heavily on principles derived from behavioral economics. Standard
+neo-classical economic models assume rational actors who maximize
+utility over time by objectively weighing costs and benefits.^37^
+However, behavioral economics demonstrates that human decision-making is
+deeply flawed, characterized by present bias (hyperbolic discounting),
+bounded willpower, and non-standard preferences.^1^
+
+Individuals frequently desire long-term health benefits but succumb to
+the immediate gratification of sedentary behavior or poor diet. A
+commitment contract serves as a structural remedy to present bias by
+allowing the \"present self\" to bind the \"future self\" to a specific
+course of action, altering the incentive structure at the exact moment
+of temptation.^23^
+
+### Loss Aversion as a Catalyst for Action
+
+The foundational mechanism of a commitment contract is \"loss
+aversion,\" a core tenet of Kahneman and Tversky\'s Prospect Theory.^1^
+Loss aversion posits that the psychological pain of losing a specific
+asset is significantly greater---often estimated to be twice as
+powerful---than the satisfaction gained from acquiring an asset of
+equivalent value.^38^
+
+By forcing a user to deposit their own capital into an immutable smart
+contract, the system intentionally manufactures an artificial, immediate
+risk.^1^ The user is no longer striving merely to gain an abstract,
+distant health benefit; they are fighting to prevent an immediate,
+tangible financial loss.^38^ Empirical studies, such as those conducted
+by Jeffery et al., demonstrate that self-funded deposit contracts yield
+significantly greater adherence to behavioral interventions relative to
+the same behavioral interventions without financial stakes.^38^
+
+When a user triggers a failure state within the smart contract, the
+protocol must execute a predefined action regarding the locked capital.
+The architecture of this failure state generally falls into two dominant
+models: Redistribution and Capital Destruction.
+
+### The Redistribution Model
+
+In a redistribution model, the funds forfeited by unsuccessful
+participants are pooled and divided pro-rata among the participants who
+successfully achieved their milestones.^1^ This is the model popularized
+by Web2 platforms like GymPact and DietBet.^1^
+
+- **Behavioral Impact:** This model gamifies the experience, creating a
+  social, non-zero-sum environment where successful behavior is
+  financially subsidized by unsuccessful behavior. It creates a positive
+  expected value for diligent users, adding a layer of financial gain on
+  top of loss aversion.^12^
+
+- **Systemic Vulnerabilities:** From a blockchain engineering
+  perspective, redistribution systems are highly susceptible to Sybil
+  attacks and collusion.^3^ Because the financial reward scales with the
+  failure rate of others, malicious actors have a direct economic
+  incentive to exploit the system. An attacker could theoretically spin
+  up thousands of fake wallet identities (Sybils) and populate the smart
+  contract pool with wagers. If the attacker can reliably generate fake
+  proofs of success for a subset of wallets while allowing the rest to
+  intentionally fail, they can algorithmically drain the protocol\'s
+  liquidity and steal legitimate users\' deposits.^3^ Consequently,
+  redistribution models require intense off-chain KYC (Know Your
+  Customer) or advanced on-chain Proof-of-Personhood mechanisms to
+  maintain economic security.^42^
+
+### The Capital Destruction (Burn/Anti-Charity) Model
+
+In the capital destruction model, the forfeited funds are not
+distributed to other users. Instead, they are either sent to an external
+entity, donated to an \"anti-charity\" (an organization the user
+ideologically opposes), or algorithmically burned (permanently removed
+from circulation on the blockchain).^1^ This model is utilized by
+accountability apps like StickK and Beeminder.^1^
+
+- **Behavioral Impact:** The use of an anti-charity maximizes loss
+  aversion by compounding financial loss with severe ideological
+  distress. For example, a pro-environment user might stipulate that
+  failure results in their funds being donated to a fossil fuel lobbying
+  group.^44^ This creates an overwhelming psychological deterrent
+  against failure.
+
+- **Systemic Vulnerabilities:** Burning the base wager or sending it to
+  a third party entirely eliminates the financial incentive for external
+  actors to attack the system. There is no pooled reward to siphon;
+  therefore, Sybil attacks are economically useless, as an attacker
+  would only be burning their own capital.^42^ However, true capital
+  burning (sending native tokens to address(0)) permanently reduces the
+  circulating supply of an asset. While this creates deflationary
+  pressure, it provides zero direct financial reward to successful
+  users, requiring participants to possess extremely high intrinsic
+  motivation to engage with the protocol.^45^
+
+  -----------------------------------------------------------------------
+  **Architectural         **Redistribution        **Capital Destruction /
+  Feature**               Model**                 Anti-Charity Model**
+  ----------------------- ----------------------- -----------------------
+  **Primary Psychological Loss aversion +         Extreme loss aversion +
+  Motivator**             Positive financial gain Ideological distress
+
+  **Sybil Attack          High (Economic          Low (No financial gain
+  Vulnerability**         incentive to exploit    for malicious
+                          failure pools)          attackers)
+
+  **Regulatory Risk       Moderate (Resembles     Low (Functions as a
+  Profile**               pooled, pari-mutuel     unilateral, individual
+                          betting)                forfeiture)
+
+  **User Acquisition &    High (Profit potential  Moderate (Requires high
+  Retention**             attracts broader user   intrinsic motivation to
+                          base)                   lock funds)
+  -----------------------------------------------------------------------
+
+## Part III: EVM Smart Contract Architecture for Time-Locked Escrows
+
+To enforce commitment contracts without centralized intermediaries, the
+platform must utilize a time-locked escrow architecture deployed on an
+Ethereum Virtual Machine (EVM) compatible network (e.g., Ethereum,
+Arbitrum, Base, or Optimism).^46^ The EVM acts as a decentralized,
+deterministic state machine.^4^ Once a smart contract is deployed, its
+rules become immutable, and funds locked within its storage cannot be
+moved unless explicit, cryptographically verified conditions are met.^4^
+
+### Structural Paradigms: Modularity and Proxy Upgradeability
+
+The architecture should eschew monolithic contract designs in favor of a
+modular, dual-layer approach to separate logic from state and allow for
+secure upgradability.^46^
+
+1.  **The Factory Pattern:** Deploying a single smart contract that
+    manages all user funds creates a massive honeypot, highly attractive
+    to hackers.^49^ Instead, the protocol should utilize a Factory
+    Pattern. A central CommitmentFactory contract is responsible for
+    deploying individual, lightweight BidCommitment or Escrow contracts
+    for each specific user or temporal cohort.^49^ This isolates state
+    variables, limits systemic risk in the event of a localized exploit,
+    and ensures clean ledgering of user commitments.
+
+2.  **Proxy Upgradability:** Because EVM smart contracts are
+    fundamentally immutable, vulnerabilities cannot be hotfixed after
+    deployment, and logic cannot be natively altered.^49^ If the
+    protocol needs to integrate a new fitness API or update its
+    verification logic, it requires a proxy architecture. The system
+    must implement the Universal Upgradeable Proxy Standard (UUPS) or
+    the Diamond Pattern (ERC-2535).^51^ In these architectures, user
+    balances and critical state variables reside in the persistent
+    storage of a proxy contract.^53^ When a user calls a function, the
+    proxy forwards the call via the DELEGATECALL opcode to a separate
+    logic contract, executing the logic within the proxy\'s storage
+    context.^53^ If the logic requires updating, the protocol\'s
+    decentralized governance (DAO) can point the proxy to a newly
+    deployed logic contract without losing the locked funds or
+    disrupting the existing storage layout, effectively upgrading the
+    protocol while preventing storage collisions.^53^
+
+### The State Machine: Time-Locks and Event Triggers
+
+The core of the commitment contract is a finite state machine managed by
+strict temporal parameters. Time-locked contracts use specific modifiers
+to restrict function execution to defined windows, verified against the
+blockchain\'s current block.timestamp.^56^
+
+The lifecycle of the decentralized escrow follows a strict deterministic
+flow:
+
+1.  **AWAITING_DEPOSIT:** The contract is initialized. The user defines
+    the behavioral milestone parameter, the temporal deadline
+    (\_timelockTime), and deposits the base wager.^58^ The wager should
+    typically be placed in a fiat-pegged stablecoin (e.g., USDC or USDT)
+    rather than volatile assets like ETH, isolating the commitment from
+    external market volatility.^58^
+
+2.  **LOCKED:** The funds are securely held in the contract. Custom
+    modifiers, such as modifier onlyBefore(uint time) or modifier
+    onlyAfter(uint time), ensure that any withdrawal or refund functions
+    immediately revert if called prematurely.^56^ The EVM guarantees
+    that no entity---not even the protocol administrators or the
+    contract creator---can access the funds during this phase.^47^
+
+3.  **VERIFICATION:** Prior to the deadline expiration, the user must
+    submit cryptographic proof of milestone completion. If the
+    verification logic processes the proof successfully, the contract
+    state transitions to RESOLVED_SUCCESS.
+
+4.  **RESOLVED:** If the deadline passes (block.timestamp \>=
+    \_timelockTime) without valid proof being submitted, the contract
+    automatically assumes a failure and transitions to RESOLVED_FAILURE.
+
+### Executing Failure States: Burn and Redistribute Logic
+
+When a failure state is triggered, the smart contract must execute the
+economic penalty. Handling this financial routing on the EVM requires
+careful attention to gas mechanics and established security
+vulnerabilities.^61^
+
+**The Burn Pattern** Implementing a capital destruction mechanism in
+Solidity requires interacting with standard token interfaces (e.g.,
+ERC-20). The most secure method of burning a digital asset is to
+transfer the failed wager to the zero address (address(0)) or a
+verifiable, mathematically unspendable \"dead\" address (e.g.,
+0x000000000000000000000000000000000000dEaD).^62^
+
+This action is cryptographically permanent and verifiable by all network
+participants. Importantly, transferring tokens to address(0) requires
+minimal gas and poses absolutely no risk of reentrancy attacks, as the
+zero address is an Externally Owned Account (EOA) entirely devoid of
+fallback logic capable of hijacking the execution thread.^63^
+Historically, developers used the selfdestruct opcode to destroy
+contracts and force-send native funds; however, selfdestruct is
+deprecated in modern Solidity development, and developers are encouraged
+to use explicit transfer functions combined with a pausable contract
+state to manage end-of-life scenarios.^64^
+
+**The Redistribution Pattern and Denial of Service (DoS) Mitigation**
+Redistributing failed wagers among successful participants is
+technically hazardous and requires sophisticated architectural planning.
+A naive implementation would iterate through an array of successful user
+addresses and \"push\" the funds to each user via a for loop.^65^
+
+This \"push\" methodology introduces a critical EVM vulnerability:
+Denial of Service (DoS) via Block Gas Limit exhaustion.^61^ The EVM
+imposes a strict, hardcoded limit on the amount of computational work
+(gas) allowed in a single block to ensure network stability.^66^ If the
+array of successful users grows too large, a loop attempting to process
+hundreds of transfers simultaneously will consume more gas than the
+block limit allows. This will cause the transaction to inevitably revert
+with an \"Out-of-Gas\" error.^67^ Consequently, the funds become
+permanently trapped inside the smart contract because the redistribution
+function can never successfully execute.
+
+Furthermore, if the contract utilizes a low-level .call{value: x}(\"\")
+to send native tokens directly to a participant\'s address, a malicious
+user could intentionally deploy a recipient smart contract that simply
+reverts upon receiving funds.^54^ In a naive loop, a single reverting
+address will cause the entire transaction to fail, effectively blocking
+all other legitimate users from receiving their earned payouts.^65^
+
+To secure the redistribution logic, the architecture must abandon loops
+and implement the **\"Pull over Push\"** pattern (frequently referred to
+as the Withdrawal Pattern).^49^
+
+1.  Upon a failure state being resolved, the contract algorithmically
+    calculates the pro-rata share of the pool for each successful
+    participant.
+
+2.  It then updates a mathematical ledger within the contract\'s
+    storage---specifically, a mapping(address =\> uint256) that
+    attributes a specific balance to each winner.
+
+3.  The protocol does *not* automatically send the funds.
+
+4.  Instead, each successful participant must individually initiate a
+    transaction by calling a withdraw() function to claim their specific
+    share.
+
+This design completely isolates the execution context. If one user\'s
+withdrawal transaction fails, runs out of gas, or contains malicious
+reverting logic, it has zero impact on the state of the contract or the
+ability of other users to securely claim their funds.^49^
+
+### Mitigating Execution Reversions and State Vulnerabilities
+
+Smart contract execution on the EVM heavily relies on a state-reverting
+mechanism for robust access control and error handling, utilizing
+functions like require(), assert(), and revert().^67^ If a predefined
+condition fails (e.g., a user attempting to withdraw funds before the
+time-lock expires), the EVM immediately halts execution and rolls back
+all state changes made during that specific transaction, ensuring atomic
+consistency.^67^
+
+However, adversaries can exploit State-Reverting Vulnerabilities (SRVs)
+to manipulate critical contract states, locking functionality or
+extracting illegal profit.^69^ The most devastating of these is the
+Reentrancy Attack. When a contract transfers funds to an external
+address using the CALL opcode, it inadvertently hands over control of
+the execution thread to the recipient.^54^ A malicious recipient
+contract can use its fallback() function to recursively call the
+vulnerable withdrawal function again and again, draining the contract\'s
+entire balance before the initial transaction can finish executing and
+update the user\'s balance to zero.^54^
+
+To categorically defend against reentrancy and SRVs, the milestone
+architecture must adhere strictly to the **Checks-Effects-Interactions
+(CEI)** pattern ^49^:
+
+1.  **Checks:** Validate all necessary conditions first
+    (require(block.timestamp \>= deadline),
+    require(balances\[msg.sender\] \> 0)).
+
+2.  **Effects:** Update the contract\'s internal state variables
+    immediately (balances\[msg.sender\] = 0).
+
+3.  **Interactions:** Only after the state is securely updated, execute
+    external calls or transfer tokens (token.transfer(\...)).
+
+By updating the internal state *before* interacting with external,
+potentially untrusted addresses, the contract neutralizes attackers
+attempting to re-enter the function, as subsequent checks will identify
+that the user\'s balance has already been zeroed out.^54^
+
+### Gas Optimization Strategies
+
+Because every single operation on the EVM---from simple arithmetic to
+memory allocation---requires a fee paid in gas, inefficient smart
+contract architecture directly penalizes users with exorbitant
+transaction costs.^66^ The most expensive operations on the EVM involve
+reading from (SLOAD) and writing to (SSTORE) the blockchain\'s
+persistent storage, as defined by the gas cost rules of EIP-2200.^53^
+
+To minimize costs for users committing to behavioral wagers, developers
+must aggressively optimize the contract\'s data footprint:
+
+- **Storage Packing:** The EVM reads and writes data in chunks of
+  256-bit storage slots. Declaring a single boolean value explicitly as
+  a uint256 wastes 31 bytes of expensive storage.^72^ By grouping
+  smaller data types together---such as placing a bool, a uint8 for
+  milestone type, and an address (which is 20 bytes) consecutively in
+  the code---the Solidity compiler will pack them into a single 256-bit
+  slot. This allows the EVM to read and write all three variables in a
+  single, vastly cheaper operation, drastically reducing the gas costs
+  associated with initializing the escrow.^72^
+
+- **Calldata vs. Memory:** When verifying off-chain data or processing
+  complex arrays of parameters, external functions should declare
+  reference types as calldata rather than memory. Calldata is a
+  read-only, highly gas-efficient data location that stores the raw
+  input data of a transaction directly from the caller, preventing the
+  EVM from performing expensive data copying operations during
+  execution.^53^
+
+## Part IV: Cryptographic Verification and The Oracle Problem
+
+The fundamental, inescapable limitation of blockchain technology is that
+smart contracts are entirely blind to the outside world. An EVM contract
+exists in a deterministic vacuum; it cannot organically ascertain
+whether a user walked 10,000 steps, adhered to a caloric deficit, or
+logged specific biometric data into their Apple Health application.^73^
+This disconnect between off-chain reality and on-chain execution is
+universally known as the \"Oracle Problem\".^74^ Overcoming this barrier
+requires a highly secure data pipeline to relay real-world actions to
+the blockchain without compromising the immutability of the escrow or
+the strict privacy rights of the user.
+
+### Decentralized Oracles and API Integrations
+
+To bridge this gap, the architecture must utilize Decentralized Oracle
+Networks (DONs), with Chainlink being the industry standard. Oracles
+function as middleware, fetching off-chain data from external
+Application Programming Interfaces (APIs)---such as Google Fit, Strava,
+or Apple HealthKit---and broadcasting that data into the smart
+contract\'s execution environment.^73^
+
+However, routing personal health and fitness telemetry through standard
+oracles introduces catastrophic privacy risks. Health data is highly
+sensitive and protected by stringent legal frameworks, including the
+Health Insurance Portability and Accountability Act (HIPAA) in the
+United States and the General Data Protection Regulation (GDPR) in the
+European Union.^78^ Standard oracle operations post data transparently
+and immutably to the public ledger.^79^ Broadcasting a user\'s exact GPS
+coordinates, heart rate logs, or sleep patterns to a public EVM chain
+would constitute a severe privacy violation, rendering the platform
+legally unviable and deterring user adoption.^79^
+
+### Zero-Knowledge Proofs (ZKPs) for Privacy-Preserving Attestation
+
+To resolve the inherent conflict between the need for on-chain
+transparency and the legal mandate for personal privacy, the
+architecture must implement Zero-Knowledge Proofs (ZKPs). A ZKP is an
+advanced cryptographic protocol that allows one party (the \"prover\")
+to demonstrate to another party (the \"verifier\") that a specific
+statement is objectively true, without conveying any of the underlying
+information that led to the conclusion.^79^
+
+In the context of the milestone wagering system, the user\'s local
+mobile device (or a trusted execution enclave) generates a
+zero-knowledge proof---typically a zk-SNARK (Succinct Non-Interactive
+Argument of Knowledge) or a zk-STARK (Scalable Transparent Argument of
+Knowledge)---confirming that the data fetched from the Apple Health or
+Google Fit API mathematically satisfies the conditions of the commitment
+contract.^79^
+
+For example, consider a user who wagers \$500 that they will run 50
+miles in a single month:
+
+1.  The user\'s mobile device securely accesses the encrypted Apple
+    HealthKit database, which locally stores their pedometer and GPS
+    metrics.^84^
+
+2.  An off-chain proving engine, compiled using frameworks like RISC
+    Zero or Bonsai, processes this data.^86^ These advanced zkVM
+    (Zero-Knowledge Virtual Machine) environments allow developers to
+    write standard verification logic in Rust or C, which is then
+    automatically compiled into a complex cryptographic circuit.^86^
+
+3.  The proving engine generates a mathematically sound cryptographic
+    proof attesting exclusively to a binary statement: *\"User X has
+    exceeded 50 miles.\"*
+
+4.  This highly compact proof---entirely devoid of GPS coordinates,
+    specific heart rate logs, or identifying timestamps---is submitted
+    to the smart contract via the decentralized oracle network.^78^
+
+### Protocols for Verifiable Web Data
+
+Generating ZKPs from arbitrary Web2 APIs requires specialized
+cryptographic infrastructure to ensure the user hasn\'t simply spoofed
+the data locally before generating the proof. Protocols like
+Chainlink\'s DECO or TLSNotary extend the standard HTTPS/TLS protocols
+used for secure web browsing.^78^
+
+These systems utilize secure multiparty computation to allow a user to
+cryptographically prove that specific JSON data came directly from a
+specific web server (e.g., Strava\'s secure servers) without the oracle
+nodes, the public blockchain, or the DECO protocol itself ever seeing
+the plaintext API keys or the private payload data.^78^ This guarantees
+the provenance and integrity of the off-chain data prior to it being
+folded into the ZK circuit.
+
+Once the succinct proof is submitted on-chain, a dedicated
+zkFusionExecutor or equivalent verifier contract executes a rapid,
+highly gas-efficient mathematical check.^50^ If the underlying
+mathematical constraints of the SNARK hold true, the smart contract
+implicitly trusts that the real-world milestone was achieved without
+ever viewing the telemetry.^89^ The state machine then automatically
+triggers the RESOLVED_SUCCESS flow, unlocking the user\'s funds and
+completing the commitment contract lifecycle trustlessly.^82^
+
+### Handling Oracle Failure and Data Integrity
+
+While cryptographic proofs guarantee that the data submitted matches the
+data held by the API provider, they do not inherently prevent
+physical-layer fraud---the classic \"garbage in, garbage out\" problem.
+A ZKP cannot detect if a user attached their smartwatch to a dog or a
+ceiling fan to artificially inflate their step count.
+
+Consequently, the smart contract architecture must still rely on the
+platform\'s off-chain heuristic and anti-cheat algorithms. Platforms
+like DietBet actively utilize prespecified algorithms to detect unusual
+outcomes, such as physically impossible weight loss velocities, flagging
+these accounts for manual review before payouts are authorized.^40^ A
+fully decentralized protocol must balance algorithmic autonomy with
+basic fraud prevention, potentially utilizing a staked arbiter network
+or decentralized dispute resolution mechanisms (like Kleros) to
+challenge highly suspicious cryptographic proofs.^58^
+
+Furthermore, if an oracle network fails to report, or an API connection
+drops due to Web2 server outages, the smart contract must contain robust
+fallback mechanisms to protect user funds.^92^ A \"pausable\" circuit
+breaker pattern, utilizing OpenZeppelin\'s Pausable.sol, can temporarily
+halt the time-lock countdown if the oracle network experiences a
+verifiable outage.^49^ This ensures that users do not suffer a
+catastrophic financial forfeiture due to infrastructural downtime or
+network latency rather than an actual failure to meet their behavioral
+commitments.^64^
+
+## Conclusion
+
+Developing a decentralized milestone wagering system fundamentally
+requires balancing the strictures of legal compliance with the
+unforgiving determinism of blockchain infrastructure. By structuring the
+economic exchange as an individualized, skill-based commitment contract,
+developers can effectively bypass the stringent definitions of games of
+chance found in state frameworks, such as New York Penal Law § 225.00,
+while remaining entirely outside the purview of federal commodities
+regulation enforced by the CFTC. To ensure these mechanisms are not
+struck down as unenforceable penalties under state contract law,
+platforms must frame capital destruction models as conditional
+charitable pledges rather than punitive damages for breach of contract.
+
+Technically, the integration of EVM-compatible time-locked escrows
+ensures that the execution of these behavioral contracts remains
+entirely trustless. By leveraging modular proxy upgradeability,
+implementing the Pull-over-Push redistribution pattern, and aggressively
+utilizing storage packing mechanics, the protocol can scale efficiently
+while defending against sophisticated state-bloating vectors and
+denial-of-service attacks. Most critically, the deployment of
+zero-knowledge proofs and privacy-preserving oracle networks (such as
+DECO and RISC Zero) allows the blockchain to verify sensitive real-world
+behavioral milestones securely. This cryptographic architecture
+successfully bridges the off-chain reality of human effort with the
+immutable on-chain finality of smart contract execution, providing a
+robust, legally sound foundation for the future of decentralized
+behavioral economics.
+
+#### Works cited
+
+1.  An Economic Framework for User Financial Incentives for \... - CORE,
+    accessed February 26, 2026,
+    [[https://core.ac.uk/download/pdf/42606279.pdf]{.underline}](https://core.ac.uk/download/pdf/42606279.pdf)
+
+2.  a better legal definition of gambling: with applications to
+    synthetic financial instruments and cryptocurrency - Albany Law
+    Review, accessed February 26, 2026,
+    [[https://www.albanylawreview.org/article/74023-a-better-legal-definition-of-gambling-with-applications-to-synthetic-financial-instruments-and-cryptocurrency.pdf]{.underline}](https://www.albanylawreview.org/article/74023-a-better-legal-definition-of-gambling-with-applications-to-synthetic-financial-instruments-and-cryptocurrency.pdf)
+
+3.  Sybil Attacks in Crypto & DeFi: Risks, Examples, and How to Prevent
+    Them - Formo, accessed February 26, 2026,
+    [[https://formo.so/blog/what-are-sybil-attacks-in-crypto-and-how-to-prevent-them]{.underline}](https://formo.so/blog/what-are-sybil-attacks-in-crypto-and-how-to-prevent-them)
+
+4.  How the EVM Works. Introduction \| by Dilara Hatipoğlu - CoinsBench,
+    accessed February 26, 2026,
+    [[https://coinsbench.com/how-the-evm-works-e5a866a0c9a5]{.underline}](https://coinsbench.com/how-the-evm-works-e5a866a0c9a5)
+
+5.  Prediction Markets Are Upending U.S. Gambling: What It Could Mean
+    for Non-Investment Grade Credit \| Neuberger Berman, accessed
+    February 26, 2026,
+    [[https://www.nb.com/en/se/insights/article-prediction-markets-are-upending-us-gambling]{.underline}](https://www.nb.com/en/se/insights/article-prediction-markets-are-upending-us-gambling)
+
+6.  SCCG Research: Drawing the line between prediction markets and
+    gambling, accessed February 26, 2026,
+    [[https://www.gamblinginsider.com/news/29724/sccg-research-drawing-the-line-between-prediction-markets-and-gambling]{.underline}](https://www.gamblinginsider.com/news/29724/sccg-research-drawing-the-line-between-prediction-markets-and-gambling)
+
+7.  Bill Search and Legislative Information \| New York State Assembly,
+    accessed February 26, 2026,
+    [[https://assembly.state.ny.us/leg/?default_fld=&leg_video=&bn=A09251&term=2025&Summary=Y&Actions=Y&Memo=Y&Text=Y]{.underline}](https://assembly.state.ny.us/leg/?default_fld&leg_video&bn=A09251&term=2025&Summary=Y&Actions=Y&Memo=Y&Text=Y)
+
+8.  Shield your sweepstakes from gambling laws - Thompson Coburn LLP,
+    accessed February 26, 2026,
+    [[https://www.thompsoncoburn.com/insights/shield-your-sweepstakes-from-gambling-laws/]{.underline}](https://www.thompsoncoburn.com/insights/shield-your-sweepstakes-from-gambling-laws/)
+
+9.  Gambling - Wikipedia, accessed February 26, 2026,
+    [[https://en.wikipedia.org/wiki/Gambling]{.underline}](https://en.wikipedia.org/wiki/Gambling)
+
+10. Understanding Gambling: Key Elements of Consideration, Chance, and
+    Rewards and the Need for a iGaming License - Tradepass Tax, accessed
+    February 26, 2026,
+    [[https://www.tradepass.tax/post/understanding-gambling-key-elements-of-consideration-chance-and-rewards-and-igaming-license]{.underline}](https://www.tradepass.tax/post/understanding-gambling-key-elements-of-consideration-chance-and-rewards-and-igaming-license)
+
+11. (PDF) DietBet: A Web-Based Program that Uses Social Gaming and
+    Financial Incentives to Promote Weight Loss - ResearchGate, accessed
+    February 26, 2026,
+    [[https://www.researchgate.net/publication/273953794_DietBet_A_Web-Based_Program_that_Uses_Social_Gaming_and_Financial_Incentives_to_Promote_Weight_Loss]{.underline}](https://www.researchgate.net/publication/273953794_DietBet_A_Web-Based_Program_that_Uses_Social_Gaming_and_Financial_Incentives_to_Promote_Weight_Loss)
+
+12. Why DietBet is not gambling, accessed February 26, 2026,
+    [[https://www.dietbet.com/dietbet-not-gambling]{.underline}](https://www.dietbet.com/dietbet-not-gambling)
+
+13. NY Penal Law § 225.10: Promoting gambling in the first degree -
+    Criminal Lawyer, accessed February 26, 2026,
+    [[https://criminaldefense.1800nynylaw.com/new-york-penal-code/new-york-penal-law-225-10-promoting-gambling-in-the-first-degree/]{.underline}](https://criminaldefense.1800nynylaw.com/new-york-penal-code/new-york-penal-law-225-10-promoting-gambling-in-the-first-degree/)
+
+14. United States -- New York: Gambling Law -- Country Comparative
+    Guides - Legal 500, accessed February 26, 2026,
+    [[https://www.legal500.com/guides/chapter/united-states-new-york-gambling-law/]{.underline}](https://www.legal500.com/guides/chapter/united-states-new-york-gambling-law/)
+
+15. New York Consolidated Laws, Penal Law - PEN § 225.00 - Codes -
+    FindLaw, accessed February 26, 2026,
+    [[https://codes.findlaw.com/ny/penal-law/pen-sect-225-00/]{.underline}](https://codes.findlaw.com/ny/penal-law/pen-sect-225-00/)
+
+16. Article 225 \| Penal Law \| Gambling Offenses \| NYS Laws - New York
+    Laws, accessed February 26, 2026,
+    [[https://ypdcrime.com/penal.law/article225.php]{.underline}](https://ypdcrime.com/penal.law/article225.php)
+
+17. STATE OF NEW YORK- SUPREME COURT APPELLATE DIVISION -THIRD
+    DEPARTMENT, accessed February 26, 2026,
+    [[https://nysappeals.com/wp-content/uploads/2019/05/opening-brief-for-respondents-cross-appellants-o0388227xd07f1.pdf]{.underline}](https://nysappeals.com/wp-content/uploads/2019/05/opening-brief-for-respondents-cross-appellants-o0388227xd07f1.pdf)
+
+18. United States - New York: Gambling Law - Legal 500 Country
+    Comparative Guides 2025, accessed February 26, 2026,
+    [[https://www.legal500.com/guides/chapter/united-states-new-york-gambling-law/?export-pdf&\_gl=1\*1usuh3j\*\_up\*MQ..\*\_ga\*MzU3NjM0MDc5LjE3NjM0ODM3MzY.\*\_ga_JFNJC5V947\*czE3NjM0ODM3MzUkbzEkZzEkdDE3NjM0ODM3NTMkajQyJGwwJGgw]{.underline}](https://www.legal500.com/guides/chapter/united-states-new-york-gambling-law/?export-pdf&_gl=1*1usuh3j*_up*MQ..*_ga*MzU3NjM0MDc5LjE3NjM0ODM3MzY.*_ga_JFNJC5V947*czE3NjM0ODM3MzUkbzEkZzEkdDE3NjM0ODM3NTMkajQyJGwwJGgw)
+
+19. section 225.00 - Legislation - NYS Senate, accessed February 26,
+    2026,
+    [[https://www.nysenate.gov/legislation/laws/PEN/225.00]{.underline}](https://www.nysenate.gov/legislation/laws/PEN/225.00)
+
+20. DietBet: A Web-Based Program that Uses Social Gaming and Financial
+    Incentives to Promote Weight Loss - PubMed, accessed February 26,
+    2026,
+    [[https://pubmed.ncbi.nlm.nih.gov/25658966/]{.underline}](https://pubmed.ncbi.nlm.nih.gov/25658966/)
+
+21. Court Holds Liquidated Damages Clause to be an Unenforceable \...,
+    accessed February 26, 2026,
+    [[https://fhnylaw.com/court-holds-liquidated-damages-clause-unenforceable-penalty/]{.underline}](https://fhnylaw.com/court-holds-liquidated-damages-clause-unenforceable-penalty/)
+
+22. Diego v. Blockratize Inc. et al. - 1:26-cv-00973, accessed February
+    26, 2026,
+    [[https://www.classaction.org/media/diego-v-blockratize-inc-et-al-complaint.pdf]{.underline}](https://www.classaction.org/media/diego-v-blockratize-inc-et-al-complaint.pdf)
+
+23. An Introduction to Personal Growth Bets: Using Contract Law to Lose
+    Weight and Quit Smoking - NDLScholarship, accessed February 26,
+    2026,
+    [[https://scholarship.law.nd.edu/cgi/viewcontent.cgi?article=1046&context=ndlsjet]{.underline}](https://scholarship.law.nd.edu/cgi/viewcontent.cgi?article=1046&context=ndlsjet)
+
+24. Better Good Than Lucky: A Legal Analysis Of Poker As A Skill Game In
+    A Changing Gambling Climate, accessed February 26, 2026,
+    [[https://wustllawreview.org/2024/07/01/better-good-than-lucky-a-legal-analysis-of-poker-as-a-skill-game-in-a-changing-gambling-climate/]{.underline}](https://wustllawreview.org/2024/07/01/better-good-than-lucky-a-legal-analysis-of-poker-as-a-skill-game-in-a-changing-gambling-climate/)
+
+25. The Legality of Daily Fantasy Sports is in Gamble in Some States: A
+    Closer Look at New York and Delaware\'s Response to this, accessed
+    February 26, 2026,
+    [[https://digitalcommons.law.villanova.edu/cgi/viewcontent.cgi?article=1360&context=mslj]{.underline}](https://digitalcommons.law.villanova.edu/cgi/viewcontent.cgi?article=1360&context=mslj)
+
+26. When is Gambling Not Gambling? - K&L Gates, accessed February 26,
+    2026,
+    [[https://files.klgates.com/files/publication/afd527df-b093-482d-b392-9190a860ccde/presentation/publicationattachment/19451d71-9e30-4f60-8c4e-2143d42487fa/white_paper_betting_gaming_september_2012.pdf]{.underline}](https://files.klgates.com/files/publication/afd527df-b093-482d-b392-9190a860ccde/presentation/publicationattachment/19451d71-9e30-4f60-8c4e-2143d42487fa/white_paper_betting_gaming_september_2012.pdf)
+
+27. Sportsbooks or Commodity Exchanges? The Rising Legal Tensions
+    Between Sports Betting and Prediction Markets - Stinson LLP,
+    accessed February 26, 2026,
+    [[https://www.stinson.com/newsroom-publications-sportsbooks-or-commodity-exchanges-the-rising-legal-tensions-between-sports-betting-and-prediction-markets]{.underline}](https://www.stinson.com/newsroom-publications-sportsbooks-or-commodity-exchanges-the-rising-legal-tensions-between-sports-betting-and-prediction-markets)
+
+28. The complicated and contentious regulatory treatment of event
+    contracts - Reed Smith LLP, accessed February 26, 2026,
+    [[https://www.reedsmith.com/articles/the-complicated-and-contentious-regulatory-treatment-of-event-contracts/]{.underline}](https://www.reedsmith.com/articles/the-complicated-and-contentious-regulatory-treatment-of-event-contracts/)
+
+29. Are We Investing or Gambling? -- CLS Blue Sky Blog, accessed
+    February 26, 2026,
+    [[https://clsbluesky.law.columbia.edu/2025/07/28/are-we-investing-or-gambling/]{.underline}](https://clsbluesky.law.columbia.edu/2025/07/28/are-we-investing-or-gambling/)
+
+30. Sports Event Contracts - American Gaming Association, accessed
+    February 26, 2026,
+    [[https://www.americangaming.org/sports-event-contracts/]{.underline}](https://www.americangaming.org/sports-event-contracts/)
+
+31. New York Lawmakers Open 2026 Session With Proposal to Ban Prediction
+    Market Sports Betting \| Gambling Insider, accessed February 26,
+    2026,
+    [[https://www.gamblinginsider.com/news/102657/new-york-lawmakers-open-2026-session-with-proposal-to-ban-prediction-market-sports-betting]{.underline}](https://www.gamblinginsider.com/news/102657/new-york-lawmakers-open-2026-session-with-proposal-to-ban-prediction-market-sports-betting)
+
+32. Event Contracts Are a Step Too Far for Derivatives Regulation,
+    accessed February 26, 2026,
+    [[https://businesslawreview.uchicago.edu/print-archive/event-contracts-are-step-too-far-derivatives-regulation]{.underline}](https://businesslawreview.uchicago.edu/print-archive/event-contracts-are-step-too-far-derivatives-regulation)
+
+33. Is a "Liquidated Damages Clause" Enforceable in NYC? - Wright Law
+    Firm NYC, accessed February 26, 2026,
+    [[https://wrightlawfirmnyc.com/liquidated-damages-clause/]{.underline}](https://wrightlawfirmnyc.com/liquidated-damages-clause/)
+
+34. Enforcement of Liquidated Damages Clauses in NY? - The New York Law
+    Blog, accessed February 26, 2026,
+    [[https://www.thenewyorklawblog.com/2017/03/new-york-liquidated-damages-in-ny.html]{.underline}](https://www.thenewyorklawblog.com/2017/03/new-york-liquidated-damages-in-ny.html)
+
+35. New York Breach of Contract Attorney \| Romano Law, accessed
+    February 26, 2026,
+    [[https://www.romanolaw.com/disputes/breach-of-contract/]{.underline}](https://www.romanolaw.com/disputes/breach-of-contract/)
+
+36. CONTRACT FORMATION - NYU School of Law, accessed February 26, 2026,
+    [[https://www.law.nyu.edu/sites/default/files/upload_documents/Davis.Contracts.Fall13%282%29.pdf]{.underline}](https://www.law.nyu.edu/sites/default/files/upload_documents/Davis.Contracts.Fall13%282%29.pdf)
+
+37. Chapter 5 - Behavioral development economics, accessed February 26,
+    2026,
+    [[https://economics.mit.edu/sites/default/files/2022-09/behavioral-development-economics.pdf]{.underline}](https://economics.mit.edu/sites/default/files/2022-09/behavioral-development-economics.pdf)
+
+38. Investigating Rewards and Deposit Contract Financial Incentives for
+    Physical Activity Behavior Change Using a Smartphone App: Randomized
+    Controlled Trial - PMC, accessed February 26, 2026,
+    [[https://pmc.ncbi.nlm.nih.gov/articles/PMC11042509/]{.underline}](https://pmc.ncbi.nlm.nih.gov/articles/PMC11042509/)
+
+39. Changing health behaviors using financial incentives: a review from
+    behavioral economics, accessed February 26, 2026,
+    [[https://pmc.ncbi.nlm.nih.gov/articles/PMC6686221/]{.underline}](https://pmc.ncbi.nlm.nih.gov/articles/PMC6686221/)
+
+40. DietBet: A Web-Based Program that Uses Social Gaming and Financial
+    Incentives to Promote Weight Loss - PMC, accessed February 26, 2026,
+    [[https://pmc.ncbi.nlm.nih.gov/articles/PMC4307813/]{.underline}](https://pmc.ncbi.nlm.nih.gov/articles/PMC4307813/)
+
+41. PSA do not use Dietbet! : r/loseit - Reddit, accessed February 26,
+    2026,
+    [[https://www.reddit.com/r/loseit/comments/ewra4q/psa_do_not_use_dietbet/]{.underline}](https://www.reddit.com/r/loseit/comments/ewra4q/psa_do_not_use_dietbet/)
+
+42. What is Sybil Resistance? Crypto security in Web3 explained \| Cube
+    Exchange, accessed February 26, 2026,
+    [[https://www.cube.exchange/what-is/sybil-resistance]{.underline}](https://www.cube.exchange/what-is/sybil-resistance)
+
+43. Sybil Attack-Resistant Blockchain-Based Proof-of-Location Mechanism
+    with Privacy Protection in VANET - MDPI, accessed February 26, 2026,
+    [[https://www.mdpi.com/1424-8220/24/24/8140]{.underline}](https://www.mdpi.com/1424-8220/24/24/8140)
+
+44. articles an introduction to personal growth bets: using contract law
+    to lose weight and quit smoking - Notre Dame Journal on Emerging
+    Technologies, accessed February 26, 2026,
+    [[https://ndlsjet.com/wp-content/uploads/2024/04/4-2_Full-Issue.pdf]{.underline}](https://ndlsjet.com/wp-content/uploads/2024/04/4-2_Full-Issue.pdf)
+
+45. Token Burning -- Blockchain Patterns - CSIRO Research, accessed
+    February 26, 2026,
+    [[https://research.csiro.au/blockchainpatterns/general-patterns/migration-patterns/token-burning/]{.underline}](https://research.csiro.au/blockchainpatterns/general-patterns/migration-patterns/token-burning/)
+
+46. TimeLock: Decentralized Time-Based Escrow Protocol - GitHub,
+    accessed February 26, 2026,
+    [[https://github.com/MYounesDev/Time-Lock]{.underline}](https://github.com/MYounesDev/Time-Lock)
+
+47. Smart contract story: how money waits when code decides \| by Ali
+    Karim \| Medium, accessed February 26, 2026,
+    [[https://medium.com/@alikerim012/smart-contract-story-how-money-waits-when-code-decides-bbf95fff008c]{.underline}](https://medium.com/@alikerim012/smart-contract-story-how-money-waits-when-code-decides-bbf95fff008c)
+
+48. Modular Smart Contract Architecture - Emergent Mind, accessed
+    February 26, 2026,
+    [[https://www.emergentmind.com/topics/modular-smart-contract-architecture]{.underline}](https://www.emergentmind.com/topics/modular-smart-contract-architecture)
+
+49. Solidity 2026: Smart Contract Patterns Every Developer Should Know
+    \| by Adekola Olawale, accessed February 26, 2026,
+    [[https://medium.com/@Adekola_Olawale/solidity-2026-smart-contract-patterns-every-developer-should-know-a285923010e3]{.underline}](https://medium.com/@Adekola_Olawale/solidity-2026-smart-contract-patterns-every-developer-should-know-a285923010e3)
+
+50. zkFusion \| ETHGlobal, accessed February 26, 2026,
+    [[https://ethglobal.com/showcase/zkfusion-u2d0g]{.underline}](https://ethglobal.com/showcase/zkfusion-u2d0g)
+
+51. Smart Contract Proxy Patterns: Security Guide 2026 - Zealynx,
+    accessed February 26, 2026,
+    [[https://www.zealynx.io/blogs/upgrade-patterns-security]{.underline}](https://www.zealynx.io/blogs/upgrade-patterns-security)
+
+52. A Comparative Gas Cost Analysis of Proxy and Diamond Patterns in EVM
+    Blockchains for Trusted Smart Contract Engineering - arXiv.org,
+    accessed February 26, 2026,
+    [[https://arxiv.org/html/2312.08945v2]{.underline}](https://arxiv.org/html/2312.08945v2)
+
+53. RareSkills Solidity Interview Questions (Medium) --- Solutions \| by
+    Sidarth S, accessed February 26, 2026,
+    [[https://medium.com/@sidarths/rareskills-solidity-interview-questions-medium-solutions-ab3930736762]{.underline}](https://medium.com/@sidarths/rareskills-solidity-interview-questions-medium-solutions-ab3930736762)
+
+54. 10 Critical EVM Opcodes in Smart Contract Attacks \| by John Okoye
+    \| Medium, accessed February 26, 2026,
+    [[https://medium.com/@okoyejp/10-critical-evm-opcodes-in-smart-contract-attacks-1f3d0d23963b]{.underline}](https://medium.com/@okoyejp/10-critical-evm-opcodes-in-smart-contract-attacks-1f3d0d23963b)
+
+55. How do you use the Diamond Pattern for escrow upgrades? - Ethereum
+    Stack Exchange, accessed February 26, 2026,
+    [[https://ethereum.stackexchange.com/questions/154879/how-do-you-use-the-diamond-pattern-for-escrow-upgrades]{.underline}](https://ethereum.stackexchange.com/questions/154879/how-do-you-use-the-diamond-pattern-for-escrow-upgrades)
+
+56. Timelock Contracts and DeFi Security: Lessons from Compound \| by
+    Srinivas Joshi, accessed February 26, 2026,
+    [[https://medium.com/@srinivasjoshi66/timelock-contracts-and-defi-security-lessons-from-compound-fe24f3e4574b]{.underline}](https://medium.com/@srinivasjoshi66/timelock-contracts-and-defi-security-lessons-from-compound-fe24f3e4574b)
+
+57. Timelock Smart Contract » Tutorial - Chainlink Blog, accessed
+    February 26, 2026,
+    [[https://blog.chain.link/timelock-smart-contracts/]{.underline}](https://blog.chain.link/timelock-smart-contracts/)
+
+58. What is Crypto Escrow? The Complete Guide for 2026 - Zenland Blog,
+    accessed February 26, 2026,
+    [[https://zen.land/blog/what-is-crypto-escrow/]{.underline}](https://zen.land/blog/what-is-crypto-escrow/)
+
+59. Code An Escrow Smart Contract In Solidity - Codementor, accessed
+    February 26, 2026,
+    [[https://www.codementor.io/@edzynda/code-an-escrow-smart-contract-in-solidity-14piv60xb6]{.underline}](https://www.codementor.io/@edzynda/code-an-escrow-smart-contract-in-solidity-14piv60xb6)
+
+60. Time-Locked Contracts Explained: A Bitcoin Essential - Lightspark,
+    accessed February 26, 2026,
+    [[https://www.lightspark.com/glossary/time-locked-contract]{.underline}](https://www.lightspark.com/glossary/time-locked-contract)
+
+61. Smart Contract Vulnerabilities and Mitigation Strategies \|
+    Nethermind, accessed February 26, 2026,
+    [[https://www.nethermind.io/blog/smart-contract-vulnerabilities-and-mitigation-strategies]{.underline}](https://www.nethermind.io/blog/smart-contract-vulnerabilities-and-mitigation-strategies)
+
+62. Address: 0x8f01bb82\...822747042 \| Etherscan, accessed February 26,
+    2026,
+    [[https://etherscan.io/address/0x8f01bb820BcD0b0B7d873862c531A88822747042]{.underline}](https://etherscan.io/address/0x8f01bb820BcD0b0B7d873862c531A88822747042)
+
+63. Understanding EVM Transactions \| by David L - Medium, accessed
+    February 26, 2026,
+    [[https://medium.com/@dsylebee/understanding-evm-transactions-063d05ceec20]{.underline}](https://medium.com/@dsylebee/understanding-evm-transactions-063d05ceec20)
+
+64. solidity - Self Destruct Design pattern - Loss of funds issue -
+    Ethereum Stack Exchange, accessed February 26, 2026,
+    [[https://ethereum.stackexchange.com/questions/67997/self-destruct-design-pattern-loss-of-funds-issue]{.underline}](https://ethereum.stackexchange.com/questions/67997/self-destruct-design-pattern-loss-of-funds-issue)
+
+65. Part 2: How to Protect Your Smart Contracts from State Bloating and
+    Gas Griefing Attacks, accessed February 26, 2026,
+    [[https://medium.com/@ankitacode11/part-2-how-to-protect-your-smart-contracts-from-state-bloating-and-gas-griefing-attacks-2a0be91e249e]{.underline}](https://medium.com/@ankitacode11/part-2-how-to-protect-your-smart-contracts-from-state-bloating-and-gas-griefing-attacks-2a0be91e249e)
+
+66. What Every Blockchain Developer Should Know About EVM Internals---
+    Part 1. - Medium, accessed February 26, 2026,
+    [[https://medium.com/@andrey_obruchkov/what-every-blockchain-developer-should-know-about-evm-internals-part-1-83a93c618257]{.underline}](https://medium.com/@andrey_obruchkov/what-every-blockchain-developer-should-know-about-evm-internals-part-1-83a93c618257)
+
+67. Solidity Smart Contract Reverts: A Comprehensive Guide - Cyfrin,
+    accessed February 26, 2026,
+    [[https://www.cyfrin.io/blog/what-happens-when-a-smart-contract-reverts]{.underline}](https://www.cyfrin.io/blog/what-happens-when-a-smart-contract-reverts)
+
+68. How to Debug the Most Common Solidity Smart Contract Errors - Blog,
+    accessed February 26, 2026,
+    [[https://blog.tenderly.co/how-to-debug-common-smart-contract-errors/]{.underline}](https://blog.tenderly.co/how-to-debug-common-smart-contract-errors/)
+
+69. SmartState: Detecting State-Reverting Vulnerabilities in Smart
+    Contracts via Fine-Grained State-Dependency Analysis - arXiv,
+    accessed February 26, 2026,
+    [[https://arxiv.org/html/2406.15988v1]{.underline}](https://arxiv.org/html/2406.15988v1)
+
+70. How does the EVM internally revert the contract to the initial state
+    when exceptions are present? - Ethereum Stack Exchange, accessed
+    February 26, 2026,
+    [[https://ethereum.stackexchange.com/questions/140943/how-does-the-evm-internally-revert-the-contract-to-the-initial-state-when-except]{.underline}](https://ethereum.stackexchange.com/questions/140943/how-does-the-evm-internally-revert-the-contract-to-the-initial-state-when-except)
+
+71. Understanding Inconsistent State Update Vulnerabilities in Smart
+    Contracts - arXiv, accessed February 26, 2026,
+    [[https://arxiv.org/html/2508.06192v2]{.underline}](https://arxiv.org/html/2508.06192v2)
+
+72. Stop Burning Money: A Developer\'s Guide to Smart Contract Gas
+    Optimization - Medium, accessed February 26, 2026,
+    [[https://medium.com/@ancilartech/stop-burning-money-a-developers-guide-to-smart-contract-gas-optimization-3b5c6c3ce519]{.underline}](https://medium.com/@ancilartech/stop-burning-money-a-developers-guide-to-smart-contract-gas-optimization-3b5c6c3ce519)
+
+73. Itheum WhitePaper - DEV Community, accessed February 26, 2026,
+    [[https://dev.to/itheum/itheum-data-dex-whitepaper-ooo]{.underline}](https://dev.to/itheum/itheum-data-dex-whitepaper-ooo)
+
+74. A Taxonomy of Blockchain Oracles: The Truth Depends on the
+    Question - Aron Laszka, accessed February 26, 2026,
+    [[https://aronlaszka.com/papers/bartholic2022taxonomy.pdf]{.underline}](https://aronlaszka.com/papers/bartholic2022taxonomy.pdf)
+
+75. Can Artificial Intelligence solve the blockchain oracle problem?
+    Unpacking the Challenges and Possibilities - arXiv, accessed
+    February 26, 2026,
+    [[https://arxiv.org/pdf/2507.02125]{.underline}](https://arxiv.org/pdf/2507.02125)
+
+76. Fitbit and Strava, accessed February 26, 2026,
+    [[https://support.strava.com/hc/en-us/articles/216918087-Fitbit-and-Strava]{.underline}](https://support.strava.com/hc/en-us/articles/216918087-Fitbit-and-Strava)
+
+77. awesome-mcp-servers - Ecosyste.ms, accessed February 26, 2026,
+    [[https://awesome.ecosyste.ms/lists/ever-works%2Fawesome-mcp-servers]{.underline}](https://awesome.ecosyste.ms/lists/ever-works%2Fawesome-mcp-servers)
+
+78. Zero-Knowledge Proof (ZKP) --- Explained - Chainlink, accessed
+    February 26, 2026,
+    [[https://chain.link/education/zero-knowledge-proof-zkp]{.underline}](https://chain.link/education/zero-knowledge-proof-zkp)
+
+79. Zk Proofs to Verify Off-chain Data \| Space and Time, accessed
+    February 26, 2026,
+    [[https://www.spaceandtime.io/blog/zk-proofs-to-verify-off-chain-data]{.underline}](https://www.spaceandtime.io/blog/zk-proofs-to-verify-off-chain-data)
+
+80. A Blockchain-Based Consent Mechanism for Access to Fitness Data in
+    the Healthcare Context - arXiv.org, accessed February 26, 2026,
+    [[https://arxiv.org/pdf/2202.12582]{.underline}](https://arxiv.org/pdf/2202.12582)
+
+81. Zero-knowledge proof - Wikipedia, accessed February 26, 2026,
+    [[https://en.wikipedia.org/wiki/Zero-knowledge_proof]{.underline}](https://en.wikipedia.org/wiki/Zero-knowledge_proof)
+
+82. On-chain Integration \| ZK Email Architecture, accessed February 26,
+    2026,
+    [[https://docs.zk.email/architecture/on-chain]{.underline}](https://docs.zk.email/architecture/on-chain)
+
+83. Zero-Knowledge Proof -- How It Works - Hacken.io, accessed February
+    26, 2026,
+    [[https://hacken.io/discover/zero-knowledge-proof/]{.underline}](https://hacken.io/discover/zero-knowledge-proof/)
+
+84. Protecting access to user\'s health data - Apple Support, accessed
+    February 26, 2026,
+    [[https://support.apple.com/guide/security/protecting-access-to-users-health-data-sec88be9900f/web]{.underline}](https://support.apple.com/guide/security/protecting-access-to-users-health-data-sec88be9900f/web)
+
+85. Securing and Extracting Health Data: Apple Health vs. Google Fit \|
+    ElcomSoft blog, accessed February 26, 2026,
+    [[https://blog.elcomsoft.com/2019/01/securing-and-extracting-health-data-apple-health-vs-google-fit/]{.underline}](https://blog.elcomsoft.com/2019/01/securing-and-extracting-health-data-apple-health-vs-google-fit/)
+
+86. BRNO UNIVERSITY OF TECHNOLOGY PROOF-OF-USEFUL-WORK CONSENSUS
+    PROTOCOL FOR COMPUTING ZK-SNARK PROOFS - Theses, accessed February
+    26, 2026,
+    [[https://theses.cz/id/9ugnud/xgazdi05_DP.pdf?lang=cs]{.underline}](https://theses.cz/id/9ugnud/xgazdi05_DP.pdf?lang=cs)
+
+87. A Two-Part Approach to Understanding zk Coprocessors \| Levi Sledd,
+    Sam Lehman, and Chad Liu - Symbolic Capital, accessed February 26,
+    2026,
+    [[https://www.symbolic.capital/writing/a-two-part-approach-to-understanding-zk-coprocessors]{.underline}](https://www.symbolic.capital/writing/a-two-part-approach-to-understanding-zk-coprocessors)
+
+88. Blog - Mikko Ikola, accessed February 26, 2026,
+    [[https://www.mikkoikola.com/blog]{.underline}](https://www.mikkoikola.com/blog)
+
+89. Enhancing Trust in AI Marketplaces: Evaluating On-Chain Verification
+    of Personalized AI Models using zk-SNARKs - arXiv, accessed February
+    26, 2026,
+    [[https://arxiv.org/html/2504.04794v1]{.underline}](https://arxiv.org/html/2504.04794v1)
+
+90. DietBet: A Web-Based Program that Uses Social Gaming and Financial
+    Incentives to Promote Weight Loss, accessed February 26, 2026,
+    [[https://games.jmir.org/2014/1/e2/]{.underline}](https://games.jmir.org/2014/1/e2/)
+
+91. ArbiSecure - HackQuest, accessed February 26, 2026,
+    [[https://www.hackquest.io/projects/ArbiSecure]{.underline}](https://www.hackquest.io/projects/ArbiSecure)
+
+92. Build an Escrow Smart Contract on Stellar\'s Soroban \| by
+    Shapeshifter Technologies, accessed February 26, 2026,
+    [[https://medium.com/@devs_92491/how-to-build-an-escrow-smart-contract-on-stellars-soroban-917c1e69bc9b]{.underline}](https://medium.com/@devs_92491/how-to-build-an-escrow-smart-contract-on-stellars-soroban-917c1e69bc9b)

@@ -1,99 +1,93 @@
 # Styx Project Manifest: Complete Annotated Bibliography
 
-**Version**: 2.0.0
+**Version**: 3.0.0
 **Project**: Styx (The Blockchain of Truth)
-**Document Count**: 65 entries (47 markdown, 4 binary books, 2 plain text, 6 pitch/build assets, 5 non-md governance, 1 API spec)
-**Generated**: 2026-02-27
+**Document Count**: 79 entries (61 markdown, 4 binary books, 2 plain text, 6 pitch/build assets, 5 non-md governance, 1 API spec)
+**Generated**: 2026-03-04
 
 ---
 
 ## Part I: Development Threads (Process Narrative)
 
-Development threads trace the intellectual and engineering arc of the project from initial brainstorm through five release cycles (v0.0.1 → v0.4.0).
+Development threads trace the intellectual and engineering arc of the project from initial brainstorm through five release cycles (v0.0.1 → v0.4.0) and into the Alpha Launch sprint.
 
 ### [TH-01] The Initial Intake & Systematic Review
-
 - **ID**: `TH-01`
 - **Tags**: #research #ingestion #analysis
 - **Description**: 100% top-to-bottom review of 13 foundational documents including behavioral science, legal consultation, and raw brainstorming. Extracted ~50 distinct architectural mandates and established the project's core psychological and technical requirements.
 - **Files**: `DOC-RES-01` through `DOC-RES-07`, `DOC-BRN-01`
 
 ### [TH-02] Monorepo Scaffolding & Skeleton Generation
-
 - **ID**: `TH-02`
 - **Tags**: #architecture #monorepo #scaffolding
 - **Description**: Creation of the Turborepo monorepo structure with npm workspaces to support 6 workspaces (API, Web, Mobile, Desktop, Pitch, Shared). Established the dual-layer services/modules architecture.
 - **Files**: `DOC-ADR-01`, `DOC-ARC-01` through `DOC-ARC-04`
 
 ### [TH-03] Thematic Re-alignment (The Stygian Shift)
-
 - **ID**: `TH-03`
 - **Tags**: #branding #theming #renaming
 - **Description**: Project-wide renaming of "Rat Bounty" mechanics to "Fury Bounty," aligning terminology with the mythic themes of the River Styx. Replaced 100+ instances across docs and code stubs.
 - **Files**: `DOC-RES-04`, `DOC-RES-13`
 
 ### [TH-04] Philosophical Codification (HVCS)
-
 - **ID**: `TH-04`
 - **Tags**: #philosophy #cybernetics #logic
 - **Description**: Ingestion of the "LaVeyan/Sin" document and its transformation into the "Human Vice Control System" (HVCS) behavioral engine. Redefined "Fury" as systemic feedback gain.
 - **Files**: `DOC-RES-05`
 
 ### [TH-05] Strategic Auditing & Roadmap Execution
-
 - **ID**: `TH-05`
 - **Tags**: #strategy #E2G #roadmap
 - **Description**: Execution of the "Evaluation-to-Growth" (E2G) framework and the "There and Back Again" Alpha-to-Omega implementation plan. Produced v3.0 roadmap with Phase Zero (Manifesto) and TCO forecasts.
 - **Files**: `DOC-E2G-01`, `DOC-E2G-02`, `DOC-ARC-03`, `DOC-ARC-04`, `DOC-ROAD-01`, `DOC-ROAD-02`
 
 ### [TH-06] Gatekeeper & Intermediary Forensics
-
 - **ID**: `TH-06`
 - **Tags**: #compliance #risk #platforms
 - **Description**: Tactical stress-test of external gatekeepers (App Store Guideline 5.3, Payment Processor Restricted Business lists). Identified "Linguistic Cloaking" and "High-Risk Merchant Underwriting" as critical survival requirements.
 - **Files**: `DOC-LEG-03`, `DOC-RES-10`
 
 ### [TH-07] Behavioral Engineering Master Synthesis
-
 - **ID**: `TH-07`
 - **Tags**: #creativity #resistance #habits
 - **Description**: Exhaustive review of external masterpieces (Pressfield, Clear, Brewer, Fogg) to weaponize habit-formation mechanics. Codified the Creative Stream (The Muse) and the "Finish Line Stake Spike."
 - **Files**: `DOC-RES-06`, `DOC-EXT-01` through `DOC-EXT-06`
 
 ### [TH-08] v0.0.1 — Initial Monorepo (2026-02-22)
-
 - **ID**: `TH-08`
 - **Tags**: #architecture #scaffolding #changelog
 - **Description**: Initial monorepo skeleton, architecture documentation, legal guardrail definitions, platform-specific build instructions.
 - **Files**: `DOC-GOV-03`
 
 ### [TH-09] v0.1.0 — Security Hardening & OpenAPI (2026-02-23)
-
 - **ID**: `TH-09`
 - **Tags**: #security #api #migration
 - **Description**: Security hardening (Helmet, JWT enforcement), OpenAPI/Swagger documentation, database migration runner, structured Pino logging, README rewrite (~430 tests).
 - **Files**: `DOC-GOV-03`, `DOC-GH-04`
 
 ### [TH-10] v0.2.0 — Fury Worker & Ethics Service (2026-02-25)
-
 - **ID**: `TH-10`
 - **Tags**: #fury #ethics #compliance
 - **Description**: GEMINI.md overhaul, deprecated BIOLOGICAL oath stream, GoalEthicsService extraction, FuryRouterWorker, BannedUserGuard, LedgerService read-path, Terraform remote state.
 - **Files**: `DOC-GOV-02`, `DOC-GOV-03`
 
 ### [TH-11] v0.3.0 — The Panopticon (2026-02-25)
-
 - **ID**: `TH-11`
 - **Tags**: #proofs #fury #honeypot #storage
 - **Description**: ProofsModule (3-endpoint upload pipeline), HoneypotService (cron injection), Fury Workbench with R2 signed URLs, ProofCaptureScreen mobile camera, R2 Terraform lifecycle rules.
 - **Files**: `DOC-GOV-03`
 
 ### [TH-12] v0.4.0 — The Arena (2026-02-25)
-
 - **ID**: `TH-12`
 - **Tags**: #disputes #feed #b2b #compliance-mod
 - **Description**: Dispute Resolution Pipeline, pHash deduplication, Public Activity Feed + Tavern Board, Gatekeeper Scan script, Enterprise CRM Connectors (Salesforce/HubSpot), Payment Routing scaffold, Consumption Billing, Linguistic Middleware for mobile.
 - **Files**: `DOC-GOV-03`
+
+### [TH-13] The Sprint to Alpha (March 6 Launch)
+- **ID**: `TH-13`
+- **Tags**: #launch #alpha #ingestion #sync
+- **Description**: 100% ingestion and digestion of 14 new strategic documents from the co-founder Google Drive. Established the March 6, 2026 launch deadline. Integrated Pod-based cohort structures (max 5) and the $39 pricing model ($9 fee + $30 stake). Refined the "Blockchain of Truth" hardware oracle requirements (HealthKit `HKMetadataKeyWasUserEntered`, Whoop `SCORED` webhooks).
+- **Files**: `DOC-BRN-02` through `DOC-BRN-05`, `DOC-LEG-05`, `DOC-LEG-06`, `DOC-PLAN-01`, `DOC-PLAN-02`, `DOC-ARC-05`, `DOC-RES-19` through `DOC-RES-21`, `DOC-EXT-07`, `DOC-EXT-08`
 
 ---
 
@@ -111,11 +105,6 @@ Development threads trace the intellectual and engineering arc of the project fr
 | `DOC-RES-06` | `docs/research/research--behavioral-engineering-masters.md` | #research #habits #creativity | Master synthesis of Pressfield (The War of Art / Resistance), Clear (Atomic Habits / Identity), Brewer (The Craving Mind / RAIN), and Fogg (Tiny Habits / MAP). Codifies the Creative Stream and "Finish Line Stake Spike." |
 | `DOC-RES-07` | `docs/research/research--market-analysis.md` | #research #market #b2b | The Gamification and Habit Tracking App Market: 2025-2035 Strategic Outlook. Validates the $50B market size (Grand View Research) and identifies the B2B Corporate Wellness pivot as the high-valuation path. |
 | `DOC-RES-08` | `docs/research/research--differentiation-competitor.md` | #research #market #differentiation | Pillar 2: Market Differentiation & Competitor Analysis. Perplexity-generated teardown of existing players in the habit-tracking space, identifying weaknesses in self-reporting, retention, and verification. |
-
-### 2. Research — Extended (Deep-Dive Topics)
-
-| ID | File | Tags | Annotation |
-|----|------|------|------------|
 | `DOC-RES-09` | `docs/research/research--breakup-psychology-loss-aversion.md` | #research #psychology #recovery | Psychological pain-point mapping: the 90-day breakup recovery timeline. Analyzes attachment-driven relapse, neurobiological withdrawal parallels, and loss aversion intervention windows for No-Contact contracts. |
 | `DOC-RES-10` | `docs/research/research--app-verification-tech-privacy-law.md` | #research #architecture #compliance | Cryptographic verification and the Randomized Verification Lottery (RVL) concept. Analyzes the jurisprudential viability of randomized screen recording for behavioral compliance under US wiretap law and 2026 app store policies. |
 | `DOC-RES-11` | `docs/research/research--b2b-expansion-heartbreak-niche.md` | #research #b2b #strategy | Strategic GTM plan: transitioning from the heartbreak recovery niche (18K beta users) to enterprise B2B2C. Covers relationship coach/therapist SaaS licensing and behavioral data monetization. |
@@ -126,26 +115,24 @@ Development threads trace the intellectual and engineering arc of the project fr
 | `DOC-RES-16` | `docs/research/research--prediction-markets-regulation-finance.md` | #research #legal #regulation | Spectator prediction markets in 2026. Analyzes the convergence of federal derivatives regulation (CFTC), state gaming law, and decentralized tokenomics. Covers $60B+ trading volume and the Kalshi precedent. |
 | `DOC-RES-17` | `docs/research/research--smart-contracts-behavioral-wagers.md` | #research #architecture #legal | Architecture and legal classification of milestone-based commitment contracts. Covers DeFi escrow patterns, cryptographic proof of behavioral milestones, and the skill-based contest legal distinction. |
 | `DOC-RES-18` | `docs/research/research--commitment-device-market-analysis.md` | #research #market #retention | Market gap analysis: the digital detox angle. Exposes the structural failure of behavioral health apps — $7.48B market with 3.9% 15-day retention. Positions Styx's verification layer as the missing piece. |
+| `DOC-RES-19` | `docs/research/research--competitor-teardown-v2.md` | #research #market #differentiation | Enhanced strategic teardown (v2). Deep dive into virtual vs. financial paradigms with comprehensive citations. |
+| `DOC-RES-20` | `docs/research/research--market-analysis-v2.md` | #research #market #b2b | Strategic Outlook (v2). Refined market size data and B2B wellness pivot logic. |
+| `DOC-RES-21` | `docs/research/research--smart-contracts-behavioral-wagers-v2.md` | #research #architecture #legal | Milestone-based commitment contracts (v2). Detailed cryptographic proof logic for behavioral milestones. |
 
-### 3. Research — Evaluation-to-Growth Reviews
-
-| ID | File | Tags | Annotation |
-|----|------|------|------------|
-| `DOC-E2G-01` | `docs/research/evaluation-to-growth--behavioral-physics.md` | #research #E2G #philosophy | E2G review of the Behavioral Physics Manifesto. Analyzes the systemic and philosophical foundations of the Styx engine, treating vices as interacting drive nodes in a cybernetic control loop. |
-| `DOC-E2G-02` | `docs/research/evaluation-to-growth--strategic-review.md` | #research #E2G #strategy | E2G Strategic Review. Evaluation phase critique, reinforcement analysis, risk assessment, and growth recommendations for the overall Styx project trajectory. |
-
-### 4. Research — Reference Library
+### 2. Research — Reference Library
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
-| `DOC-EXT-01` | `docs/research/reference-library/pressfield--the-war-of-art.txt` | #research #reference #creativity | Full text of Steven Pressfield's "The War of Art." Source material for the Resistance concept and Creative Stream codification. Plain text format. |
-| `DOC-EXT-02` | `docs/research/reference-library/pressfield--the-war-of-art.epub` | #research #reference #creativity | EPUB edition of "The War of Art" by Steven Pressfield. Alternate format of `DOC-EXT-01` for annotated reading. Binary file. |
-| `DOC-EXT-03` | `docs/research/reference-library/clear--atomic-habits.txt` | #research #reference #habits | DjVu-extracted text of James Clear's "Atomic Habits." Source material for Identity-Based habit formation and the 1% improvement compound model. |
-| `DOC-EXT-04` | `docs/research/reference-library/wood--good-habits-bad-habits.epub` | #research #reference #habits | EPUB of Wendy Wood's "Good Habits, Bad Habits." Research source on automaticity, context cues, and the science of habit persistence. Binary file. |
-| `DOC-EXT-05` | `docs/research/reference-library/brewer--the-craving-mind.pdf` | #research #reference #mindfulness | PDF of Judson Brewer's "The Craving Mind." Source material for the RAIN method (Recognize, Allow, Investigate, Note) and mindfulness-based behavioral change. Binary file. |
-| `DOC-EXT-06` | `docs/research/reference-library/fogg--tiny-habits.azw3` | #research #reference #habits | AZW3 (Kindle) of BJ Fogg's "Tiny Habits." Source material for the MAP model (Motivation, Ability, Prompt) and micro-habit design. Binary file. |
+| `DOC-EXT-01` | `docs/research/reference-library/research--ref--pressfield--the-war-of-art.txt` | #research #reference #creativity | Full text of Steven Pressfield's "The War of Art." Source material for the Resistance concept and Creative Stream codification. Plain text format. |
+| `DOC-EXT-02` | `docs/research/reference-library/research--ref--pressfield--the-war-of-art.epub` | #research #reference #creativity | EPUB edition of "The War of Art" by Steven Pressfield. Alternate format of `DOC-EXT-01` for annotated reading. Binary file. |
+| `DOC-EXT-03` | `docs/research/reference-library/research--ref--clear--atomic-habits.txt` | #research #reference #habits | DjVu-extracted text of James Clear's "Atomic Habits." Source material for Identity-Based habit formation and the 1% improvement compound model. |
+| `DOC-EXT-04` | `docs/research/reference-library/research--ref--wood--good-habits-bad-habits.epub` | #research #reference #habits | EPUB of Wendy Wood's "Good Habits, Bad Habits." Research source on automaticity, context cues, and the science of habit persistence. Binary file. |
+| `DOC-EXT-05` | `docs/research/reference-library/research--ref--brewer--the-craving-mind.pdf` | #research #reference #mindfulness | PDF of Judson Brewer's "The Craving Mind." Source material for the RAIN method (Recognize, Allow, Investigate, Note) and mindfulness-based behavioral change. Binary file. |
+| `DOC-EXT-06` | `docs/research/reference-library/research--ref--fogg--tiny-habits.azw3` | #research #reference #habits | AZW3 (Kindle) of BJ Fogg's "Tiny Habits." Source material for the MAP model (Motivation, Ability, Prompt) and micro-habit design. Binary file. |
+| `DOC-EXT-07` | `docs/research/reference-library/research--ref--clear--atomic-habits-v2.md` | #research #reference #habits | Enhanced Markdown version of Atomic Habits insights. |
+| `DOC-EXT-08` | `docs/research/reference-library/research--ref--pressfield--the-war-of-art-v2.md` | #research #reference #creativity | Enhanced Markdown version of The War of Art insights. |
 
-### 5. Legal & Compliance
+### 3. Legal & Compliance
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
@@ -153,8 +140,10 @@ Development threads trace the intellectual and engineering arc of the project fr
 | `DOC-LEG-02` | `docs/legal/legal--compliance-guardrails.md` | #legal #compliance #research | Research memo (external synthesis). Aggregates external analysis and references for legal/compliance exploration. Covers the Aegis Protocol guardrails, stake limits, geofencing requirements, and FTC consumer protection considerations. Labeled as research, not operational policy. |
 | `DOC-LEG-03` | `docs/legal/legal--gatekeeper-compliance.md` | #legal #compliance #platforms | Forensic report on platform survival. Defines the "Linguistic Cloaking" strategy to bypass App Store Guideline 5.3 rejections and payment processor restricted business list bans. Covers Apple, Google Play, Stripe, and high-risk merchant underwriting. |
 | `DOC-LEG-04` | `docs/legal/legal--aegis-protocol.md` | #legal #compliance #governance | Styx Legal Compliance Guardrails (The Aegis Protocol) — operational policy document. Defines skill-based contest classification, BMI floors (18.5), velocity caps (2%/week), age gates, and geofencing jurisdiction tiers. The authoritative compliance reference. |
+| `DOC-LEG-05` | `docs/legal/legal--founder-agreement-draft.md` | #legal #governance | 50/50 Founder Equity Split agreement between Jessica (Marketing) and Partner (Technical). |
+| `DOC-LEG-06` | `docs/legal/legal--consultation-personal-goals.md` | #legal #consultation | Legal advice on the "Betting on Personal Goals" model and regulatory boundaries. |
 
-### 6. Architecture & Design
+### 4. Architecture & Design
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
@@ -162,36 +151,37 @@ Development threads trace the intellectual and engineering arc of the project fr
 | `DOC-ARC-02` | `docs/architecture/architecture--feasibility-stack.md` | #architecture #research #techstack | Pillar 5: Technical Feasibility & Architecture. Perplexity-generated Lead Software Architect analysis. Covers wearable API integration (read-only enforcement, manual entry filtering), financial API design (Plaid), video validation costs, and the cost-effective stack recommendation ($2K/year burn). |
 | `DOC-ARC-03` | `docs/architecture/architecture--technical-feasibility.md` | #architecture #summary | Condensed technical feasibility summary. Core systems (PostgreSQL double-entry ledger, Cloudflare R2 zero-egress media, BullMQ proof routing), biometric integration strategy (HealthKit `HKMetadataKeyWasUserEntered`, Health Connect `recordingMethod`), and scalability notes. |
 | `DOC-ARC-04` | `docs/architecture/architecture--alpha-to-omega-plan.md` | #architecture #roadmap #validation | "There and Back Again" — the Alpha-to-Omega implementation plan (v3.0). Five-phase timeline (Iron Core → Shield → Panopticon → Arena → Empire) with micro-tasks, plus Technical Validation Gates (Phantom Money Test, Simulator Spoof, Twin Upload, Gatekeeper Test). Tracks completion status with checkmarks. |
-| `DOC-ADR-01` | `docs/adr/001-dual-layer-services-modules.md` | #architecture #adr #api | ADR-001: Accepted decision to use dual-layer architecture — `services/` (pure domain logic) and `src/modules/` (NestJS HTTP/DI wiring). Establishes unidirectional dependency (modules → services, never reverse) and testing strategy. |
+| `DOC-ARC-05` | `docs/architecture/architecture--truth-blockchain-v2.md` | #architecture #oracles #research | Blockchain of Truth v2. Detailed hardware oracle integration (HealthKit, Whoop, Fitbit) and Cloudflare R2 video pipeline. |
+| `DOC-ADR-01` | `docs/adr/adr--001-dual-layer-services-modules.md` | #architecture #adr #api | ADR-001: Accepted decision to use dual-layer architecture — `services/` (pure domain logic) and `src/modules/` (NestJS HTTP/DI wiring). Establishes unidirectional dependency (modules → services, never reverse) and testing strategy. |
 
-### 7. API Specification
-
-| ID | File | Tags | Annotation |
-|----|------|------|------------|
-| `DOC-API-01` | `docs/api/spec.md` | #api #architecture #reference | Styx API specification. Comprehensive endpoint reference covering Health, Auth, Users, Contracts, Fury, Wallet, Proofs, Admin, AI, B2B, Notifications, Feed, Payments, Compliance, and Beta modules. Includes auth requirements, rate limits, and request/response shapes. |
-
-### 8. Roadmap & Planning
+### 5. Roadmap & Planning
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
-| `DOC-ROAD-01` | `docs/planning/roadmap.md` | #roadmap #architecture #planning | Alpha-to-Omega Roadmap (v3.0). Primary chronological development guide with 5 phases and completion checkmarks. Maps the transition from philosophical manifesto to global B2B behavioral marketplace. |
-| `DOC-ROAD-02` | `docs/planning/roadmap--ai-workstreams.md` | #roadmap #architecture #planning | Parallel AI-Engineer Workstreams. Phase-by-phase execution plan for autonomous parallel AI engineers. Defines 5 concurrent workstreams (API/Ledger, Web Dashboard, Mobile Client, Desktop Admin, Pitch Deck) with strict boundary management for independent execution. |
+| `DOC-ROAD-01` | `docs/planning/planning--roadmap.md` | #roadmap #architecture #planning | Alpha-to-Omega Roadmap (v3.1). Includes March 6, 2026 launch deadline and Pod-based cohort structure. |
+| `DOC-ROAD-02` | `docs/planning/planning--roadmap--ai-workstreams.md` | #roadmap #architecture #planning | Parallel AI-Engineer Workstreams. Phase-by-phase execution plan for autonomous parallel AI engineers. |
+| `DOC-PLAN-01` | `docs/planning/planning--meeting-notes--2026-02.md` | #planning #brainstorm | Consolidated February 2026 meeting notes covering Pod structures and MVP launch strategy. |
+| `DOC-PLAN-02` | `docs/planning/planning--roadmap--mvp-drive.md` | #planning #roadmap | Drive-sourced MVP roadmap table. |
 
-### 9. Implementation & Ship Status
-
-| ID | File | Tags | Annotation |
-|----|------|------|------------|
-| `DOC-IMPL-01` | `docs/planning/implementation-status.md` | #compliance #governance #validation | Claim-to-Control Matrix. Maps high-level product/security/compliance claims to runtime implementation status (Implemented / Partial / Planned / Research). Covers rate limiting, JWT enforcement, geofencing, KYC, and web auth migration. |
-| `DOC-IMPL-02` | `docs/planning/phase1-private-beta-scope.md` | #roadmap #beta #governance | Phase 1 Private Beta scope lock. Defines iOS-first TestFlight external beta targeting No-Contact recovery contracts. Specifies test-money mode, US allowlist, web as admin companion, desktop as internal judge tool, B2B as internal demo only. |
-| `DOC-IMPL-03` | `docs/planning/ship-baseline-report.md` | #validation #beta #governance | Ship Baseline Report for Phase 1 Private Beta. Documents lint/test/build pass status, identifies non-blocking reliability smells (open-handle warning, large-chunk pitch build), and seeds the red-list for ship-readiness work. Generated 2026-02-26. |
-
-### 10. Brainstorm
+### 6. Implementation & Ship Status
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
-| `DOC-BRN-01` | `docs/brainstorm/brainstorm--motivation-validation.md` | #brainstorm #research #ingestion | Raw transcript of the original co-founder brainstorming session, plus Gemini AI synthesis. Covers the genesis of the "Blockchain of Truth" concept: motivation psychology, PvE/PvP pathways, the "checker/fury" bounty idea, ethical constraints, financial staking, gamification levels, and the validation problem. The project's origin document. |
+| `DOC-IMPL-01` | `docs/planning/planning--implementation-status.md` | #compliance #governance #validation | Claim-to-Control Matrix. Maps high-level product/security/compliance claims to runtime implementation status (Implemented / Partial / Planned / Research). Covers rate limiting, JWT enforcement, geofencing, KYC, and web auth migration. |
+| `DOC-IMPL-02` | `docs/planning/planning--phase1-private-beta-scope.md` | #roadmap #beta #governance | Phase 1 Private Beta scope lock. Defines iOS-first TestFlight external beta targeting No-Contact recovery contracts. Specifies test-money mode, US allowlist, web as admin companion, desktop as internal judge tool, B2B as internal demo only. |
+| `DOC-IMPL-03` | `docs/planning/planning--ship-baseline-report.md` | #validation #beta #governance | Ship Baseline Report for Phase 1 Private Beta. Documents lint/test/build pass status, identifies non-blocking reliability smells (open-handle warning, large-chunk pitch build), and seeds the red-list for ship-readiness work. Generated 2026-02-26. |
 
-### 11. Pitch & Assets
+### 7. Brainstorm
+
+| ID | File | Tags | Annotation |
+|----|------|------|------------|
+| `DOC-BRN-01` | `docs/brainstorm/brainstorm--motivation-validation.md` | #brainstorm #research #ingestion | Raw transcript of the original co-founder brainstorming session. The project's origin document. |
+| `DOC-BRN-02` | `docs/brainstorm/brainstorm--transcript--2026-02-20.md` | #brainstorm #pods | Brainstorm on Pod structures and reputation levers. |
+| `DOC-BRN-03` | `docs/brainstorm/brainstorm--transcript--2026-02-25.md` | #brainstorm #pricing | Brainstorm on pricing models and failure definitions. |
+| `DOC-BRN-04` | `docs/brainstorm/brainstorm--transcript--2026-02-27.md` | #brainstorm #launch | Brainstorm on March 6 launch strategy and cohort testing. |
+| `DOC-BRN-05` | `docs/brainstorm/brainstorm--chatgpt--2026-03-03.md` | #brainstorm #ai | ChatGPT consultation on branding ("Styxit") and naming linguistics. |
+
+### 8. Pitch & Assets
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
@@ -202,7 +192,7 @@ Development threads trace the intellectual and engineering arc of the project fr
 | `DOC-PIT-05` | `docs/assets/index-DJFROXte.css` | #pitch #asset #style | Vite-built CSS bundle for the pitch deck static site. Generated output. |
 | `DOC-PIT-06` | `docs/assets/index-DmHllcqr.js` | #pitch #asset #binary | Vite-built JavaScript bundle (tertiary chunk) for the pitch deck static site. Generated output. |
 
-### 12. Root Governance Documents
+### 9. Root Governance Documents
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
@@ -212,7 +202,7 @@ Development threads trace the intellectual and engineering arc of the project fr
 | `DOC-GOV-04` | `README.md` | #governance #readme #reference | Project README. Describes the peer-audited behavioral market concept, monorepo structure, tech stack, test count (~467), quick start instructions, and CI/CD pipeline overview. |
 | `DOC-GOV-05` | `LICENSE` | #governance #license | Project license file. |
 
-### 13. GitHub Community Health
+### 10. GitHub Community Health
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
@@ -221,7 +211,7 @@ Development threads trace the intellectual and engineering arc of the project fr
 | `DOC-GH-03` | `.github/SUPPORT.md` | #governance #github #community | Support guide. Describes channels for getting help with the Styx project. |
 | `DOC-GH-04` | `.github/SECURITY.md` | #governance #security #compliance | Security policy. Covers supported versions, vulnerability disclosure process, and data retention schedule (event_log, proofs, notifications, fury_assignments, stripe_events, user PII). |
 
-### 14. Workspace README Documents
+### 11. Workspace README Documents
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
@@ -242,16 +232,16 @@ Development threads trace the intellectual and engineering arc of the project fr
 
 | Tag | File IDs |
 |-----|----------|
-| #research | `DOC-RES-01`–`DOC-RES-18`, `DOC-E2G-01`, `DOC-E2G-02`, `DOC-EXT-01`–`DOC-EXT-06`, `DOC-BRN-01` |
-| #legal / #compliance | `DOC-LEG-01`–`DOC-LEG-04`, `DOC-RES-10`, `DOC-RES-13`, `DOC-RES-16`, `DOC-RES-17`, `DOC-GH-04`, `DOC-IMPL-01` |
-| #architecture | `DOC-ARC-01`–`DOC-ARC-04`, `DOC-ADR-01`, `DOC-RES-10`, `DOC-RES-12`, `DOC-RES-14`, `DOC-ROAD-01`, `DOC-ROAD-02` |
-| #roadmap / #planning | `DOC-ROAD-01`, `DOC-ROAD-02`, `DOC-ARC-04`, `DOC-IMPL-02` |
-| #governance | `DOC-GOV-01`–`DOC-GOV-05`, `DOC-GH-01`–`DOC-GH-04`, `DOC-WS-01`–`DOC-WS-08`, `DOC-IMPL-01`–`DOC-IMPL-03` |
+| #research | `DOC-RES-01`–`DOC-RES-21`, `DOC-E2G-01`, `DOC-E2G-02`, `DOC-EXT-01`–`DOC-EXT-08`, `DOC-BRN-01`–`DOC-BRN-05` |
+| #legal / #compliance | `DOC-LEG-01`–`DOC-LEG-06`, `DOC-RES-10`, `DOC-RES-13`, `DOC-RES-16`, `DOC-RES-17`, `DOC-GH-04`, `DOC-IMPL-01` |
+| #architecture | `DOC-ARC-01`–`DOC-ARC-05`, `DOC-ADR-01`, `DOC-RES-10`, `DOC-RES-12`, `DOC-RES-14`, `DOC-ROAD-01`, `DOC-ROAD-02` |
+| #roadmap / #planning | `DOC-ROAD-01`, `DOC-ROAD-02`, `DOC-ARC-04`, `DOC-IMPL-02`, `DOC-PLAN-01`, `DOC-PLAN-02` |
+| #governance | `DOC-GOV-01`–`DOC-GOV-05`, `DOC-GH-01`–`DOC-GH-04`, `DOC-WS-01`–`DOC-WS-08`, `DOC-IMPL-01`–`DOC-IMPL-03`, `DOC-LEG-05` |
 | #psychology | `DOC-RES-01`–`DOC-RES-03`, `DOC-RES-09`, `DOC-RES-12` |
-| #market / #b2b | `DOC-RES-04`, `DOC-RES-07`, `DOC-RES-08`, `DOC-RES-11`, `DOC-RES-18` |
+| #market / #b2b | `DOC-RES-04`, `DOC-RES-07`, `DOC-RES-08`, `DOC-RES-11`, `DOC-RES-18`–`DOC-RES-20` |
 | #pitch / #branding | `DOC-PIT-01`–`DOC-PIT-06` |
 | #beta / #validation | `DOC-IMPL-02`, `DOC-IMPL-03` |
-| #reference (reference library) | `DOC-EXT-01`–`DOC-EXT-06` |
+| #reference (reference library) | `DOC-EXT-01`–`DOC-EXT-08` |
 
 ### Thread → File Mapping
 
@@ -265,6 +255,7 @@ Development threads trace the intellectual and engineering arc of the project fr
 | TH-06 Gatekeeper | `DOC-LEG-03`, `DOC-RES-10` |
 | TH-07 Master Synthesis | `DOC-RES-06`, `DOC-EXT-01`–`DOC-EXT-06` |
 | TH-08–12 Release Cycle | `DOC-GOV-03`, `DOC-GOV-04`, `DOC-GH-04` |
+| TH-13 Alpha Launch Sprint | `DOC-BRN-02`–`DOC-BRN-05`, `DOC-LEG-05`, `DOC-LEG-06`, `DOC-PLAN-01`, `DOC-PLAN-02`, `DOC-ARC-05`, `DOC-RES-19`–`DOC-RES-21` |
 
 ---
 
@@ -272,22 +263,22 @@ Development threads trace the intellectual and engineering arc of the project fr
 
 | Metric | Value |
 |--------|-------|
-| Total manifest entries | 65 (excluding this manifest) |
-| Markdown files (`.md`) | 47 |
+| Total manifest entries | 79 (excluding this manifest) |
+| Markdown files (`.md`) | 61 |
 | Binary reference books (`.epub`, `.pdf`, `.azw3`) | 4 |
 | Plain text sources (`.txt`) | 2 |
 | Pitch assets (`.pptx`, `.html`, `.js`, `.css`) | 6 |
-| Research documents | 24 (18 original + 6 reference library) |
-| Legal/compliance documents | 4 |
-| Architecture/ADR documents | 5 |
-| Roadmap/planning documents | 2 |
+| Research documents | 29 (21 original + 8 reference library) |
+| Legal/compliance documents | 6 |
+| Architecture/ADR documents | 6 |
+| Roadmap/planning documents | 4 |
 | Implementation status documents | 3 |
 | Governance documents (root) | 5 |
 | GitHub community health files | 4 |
 | Workspace README files | 8 |
-| Development threads documented | 12 |
+| Development threads documented | 13 |
 
 ---
 
 **Document Status**: Complete. All documentation files inventoried and annotated.
-**Supersedes**: v1.1.0 (which covered ~15 files and 7 threads)
+**Supersedes**: v2.0.0

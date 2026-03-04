@@ -2,7 +2,7 @@
 >
 > This document aggregates external analysis and references for legal/compliance exploration.
 > It is **not** the authoritative implementation policy for the product. For current runtime-enforced controls,
-> refer to `/docs/legal/legal--aegis-protocol.md` and `/docs/planning/implementation-status.md`.
+> refer to `/docs/legal/legal--aegis-protocol.md` and `/docs/planning/planning--implementation-status.md`.
 
 # Pillar 4: Legal \& Ethical Compliance (The "Gambling" Question)
 

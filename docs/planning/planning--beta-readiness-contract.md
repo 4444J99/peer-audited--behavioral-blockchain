@@ -104,5 +104,5 @@ Schema:
 Any change to gate definitions, required/optional policy, or readiness env behavior must update:
 
 - this contract,
-- `docs/planning/phase1-private-beta-scope.md`,
-- `docs/planning/implementation-status.md`.
+- `docs/planning/planning--phase1-private-beta-scope.md`,
+- `docs/planning/planning--implementation-status.md`.

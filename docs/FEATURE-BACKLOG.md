@@ -40,7 +40,13 @@
 | F-FURY-03 | Cross-Lobby Auditing | NOT_STARTED |
 | F-AEGIS-04 | Recovery Protocol Guardrails | PARTIAL |
 | F-MOBILE-03 | Push Notifications | PARTIAL |
-| F-SOCIAL-01 | Accountability Partner Protocol | PARTIAL |
+| F-SOCIAL-07 | Pod-Based Cohorts (Max 5) | NOT_STARTED | New for March 6 Launch |
+| F-SOCIAL-08 | Pod-Level Visibility (Active/Out) | NOT_STARTED | Real-time failure broadcast within pod |
+| F-SOCIAL-09 | Anonymous Peer Disclosure (First Name) | NOT_STARTED | Pod-only identity for accountability |
+| F-FIN-05 | $39 Entry Model ($9 Fee + $30 Stake) | NOT_STARTED | Standardized MVP pricing |
+| F-VERIFY-17 | Binary Daily Check-in (Self-Report) | NOT_STARTED | Initial verification fallback for MVP |
+| F-VERIFY-15 | Whoop SCORED State Webhooks | NOT_STARTED | Part of Blockchain of Truth v2 |
+| F-VERIFY-16 | HealthKit Metadata WasUserEntered | NOT_STARTED | Part of Blockchain of Truth v2 |
 
 ### P2: Post-Beta (Phase 2+)
 
@@ -72,7 +78,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Alpha
 - **Priority**: P0 (foundation)
-- **Source**: `architecture--feasibility-stack.md` §S5, `architecture--truth-blockchain.md` §Financial Database, `roadmap.md` §Alpha
+- **Source**: `architecture--feasibility-stack.md` §S5, `architecture--truth-blockchain.md` §Financial Database, `planning--roadmap.md` §Alpha
 - **Existing Code**: `src/api/services/ledger/ledger.service.ts`, `src/api/database/schema.sql` (accounts, entries tables)
 - **Spec**: PostgreSQL double-entry accounting. Every financial transaction requires equal debit + credit entries. Money is never created or deleted. Core tables: `accounts` (ASSET/LIABILITY/EQUITY/REVENUE/EXPENSE), `entries` (debit/credit FKs, `CHECK(amount > 0)`), `event_log`. Zero-balance invariant enforced at SQL level, not application. `ON DELETE RESTRICT` prevents deletion of historical data.
 - **Dependencies**: PostgreSQL
@@ -83,7 +89,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Alpha
 - **Priority**: P0 (foundation)
-- **Source**: `architecture--feasibility-stack.md` §S2.4, `architecture--truth-blockchain.md`, `roadmap.md` §Alpha (checked)
+- **Source**: `architecture--feasibility-stack.md` §S2.4, `architecture--truth-blockchain.md`, `planning--roadmap.md` §Alpha (checked)
 - **Existing Code**: `src/api/services/ledger/truth-log.service.ts`, `src/api/database/schema.sql` (event_log table)
 - **Spec**: Append-only `event_log` table. Each row's `current_hash` = hash(previous_hash || payload || timestamp). SHA-256 chain creates tamper-evident log. Optional future: anchor head hash to public blockchain.
 - **Dependencies**: F-CORE-01
@@ -93,7 +99,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Alpha
 - **Priority**: P0 (foundation)
-- **Source**: `research--differentiation-competitor.md` §Gap 3, `evaluation-to-growth--strategic-review.md` §1.1
+- **Source**: `research--differentiation-competitor.md` §Gap 3, `research--evaluation-to-growth--strategic-review.md` §1.1
 - **Existing Code**: `src/shared/libs/integrity.ts`, `src/shared/libs/integrity.spec.ts`
 - **Spec**: `Base(50) + 5*completions - 15*frauds - 20*strikes - 1*inactive_months`. Floor 0. Tiers: RESTRICTED_MODE (<20, $0 max), TIER_1 (<50, $20), TIER_2 (<100, $100), TIER_3 (<500, $1K), TIER_4 (>=500, unlimited).
 - **Dependencies**: None (pure algorithm)
@@ -103,7 +109,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: PARTIAL
 - **Phase**: Alpha
 - **Priority**: P0 (beta-blocker)
-- **Source**: `legal--aegis-protocol.md` §3, `legal--gatekeeper-compliance.md` §1, `legal--performance-wagering.md` §Variant 1, `roadmap.md` §Alpha
+- **Source**: `legal--aegis-protocol.md` §3, `legal--gatekeeper-compliance.md` §1, `legal--performance-wagering.md` §Variant 1, `planning--roadmap.md` §Alpha
 - **Existing Code**: `src/api/services/escrow/stripe.service.ts`, `src/api/services/escrow/dispute.service.ts`, `src/api/src/modules/payments/`
 - **Spec**: Stripe Connect FBO routing. User stakes $X → Stripe holds in FBO. On resolution: refund to user, platform fee to house, bounty to Furies. Currently test-money only; real-money settlement path needs activation.
 - **Dependencies**: High-risk merchant account (F-INFRA-01)
@@ -230,7 +236,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Gamma
 - **Priority**: P0
-- **Source**: `architecture--truth-blockchain.md` §Anti-Fraud, `roadmap.md` §Gamma (checked)
+- **Source**: `architecture--truth-blockchain.md` §Anti-Fraud, `planning--roadmap.md` §Gamma (checked)
 - **Existing Code**: `src/api/services/intelligence/phash.service.ts`, `src/api/services/anomaly/anomaly.service.ts`
 - **Spec**: 64-bit perceptual hash via spatial + temporal hashing. Before proof enters review queue, Hamming distance compared against all previous uploads. Below threshold = auto-reject as duplicate.
 - **Dependencies**: FFmpeg, R2 storage
@@ -271,7 +277,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Beta
 - **Priority**: P1
-- **Source**: `evaluation-to-growth--strategic-review.md` §1.1
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §1.1
 - **Existing Code**: None
 - **Spec**: Server-side filtering: `HKMetadataKeyWasUserEntered == NO`. Only accepts hardware-generated health data. Pragmatic Oracle Problem solution without custom hardware.
 - **Dependencies**: F-VERIFY-02 or F-VERIFY-03
@@ -281,7 +287,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Beta
 - **Priority**: P0 (beta-blocker — primary Phase 1 journey)
-- **Source**: `phase1-private-beta-scope.md`, `roadmap.md` §Beta
+- **Source**: `planning--phase1-private-beta-scope.md`, `planning--roadmap.md` §Beta
 - **Existing Code**: `src/api/src/modules/contracts/contracts.service.ts` (getAttestationStatus, submitAttestation), `src/api/src/modules/contracts/contracts.controller.ts`, `src/web/app/contracts/[id]/attest/page.tsx`, `src/mobile/screens/AttestationScreen.tsx`, `src/api/database/schema.sql` (attestations table)
 - **Spec**: Daily attestation check-in for No-Contact recovery contracts. User attests compliance; accountability partner can cosign. 3 missed attestations = auto-fail. Attestation scheduler generates daily pending rows.
 - **Dependencies**: F-CORE-07, F-SOCIAL-01
@@ -362,7 +368,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase3+
 - **Priority**: P3
-- **Source**: `evaluation-to-growth--strategic-review.md` §1.1
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §1.1
 - **Spec**: Implement Zero-Knowledge Proofs (ZKPs) for validating SMS/Call logs without transmitting sensitive metadata to the server. Verification happens locally on-device, and only the binary "Breach Detected" proof is transmitted.
 - **Dependencies**: F-VERIFY-12, ZK-proving engine.
 
@@ -375,7 +381,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Gamma
 - **Priority**: P0
-- **Source**: `architecture--feasibility-stack.md` §S4.3, `roadmap.md` §Gamma (checked)
+- **Source**: `architecture--feasibility-stack.md` §S4.3, `planning--roadmap.md` §Gamma (checked)
 - **Existing Code**: `src/api/services/fury-router/fury-router.service.ts`, `src/api/services/fury-router/fury-router.worker.ts`, `src/api/src/modules/fury/`
 - **Spec**: Anonymized BullMQ distribution to 3 random Furies. Double-anonymized: author hidden from reviewers, reviewers hidden from each other. Consensus: 3/3 pass → user passes; 3/3 fail → stake liquidated; split → Judge escalation. All identifying metadata stripped via FFmpeg.
 - **Dependencies**: Redis, BullMQ, F-INFRA-03
@@ -385,7 +391,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Gamma
 - **Priority**: P0
-- **Source**: `evaluation-to-growth--strategic-review.md` §1.1
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §1.1
 - **Existing Code**: `src/shared/libs/integrity.ts`, `src/api/src/modules/fury/fury.worker.demotion.spec.ts`, `src/api/src/modules/fury/fury.stats.spec.ts`
 - **Spec**: Accuracy = (successful - false_accusations*3) / total. Demotion below 0.8 after 10-audit burn-in. Auditor stake: $2.00 per audit. False accusation: stake forfeited, integrity score drops.
 - **Dependencies**: F-CORE-03
@@ -395,7 +401,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Gamma
 - **Priority**: P1
-- **Source**: `evaluation-to-growth--strategic-review.md` §3.2
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §3.2
 - **Existing Code**: None
 - **Spec**: Furies can never audit users in their same geographic region or social guild. Prevents systemic collusion via external coordination (e.g., Discord groups). Routing algorithm must exclude social graph connections and geographic proximity.
 - **Dependencies**: F-FURY-01, geolocation data
@@ -405,7 +411,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Gamma
 - **Priority**: P1
-- **Source**: `evaluation-to-growth--behavioral-physics.md` §Risk Mitigations
+- **Source**: `research--evaluation-to-growth--behavioral-physics.md` §Risk Mitigations
 - **Existing Code**: None
 - **Spec**: Automated face-blurring and avatar-masking during peer review. User's avatar and name replaced with generic "Target_UUID." Prevents dominance over-amplification and biometric privacy risks.
 - **Dependencies**: F-INFRA-03, edge processing (Cloudflare Workers or FFmpeg)
@@ -415,7 +421,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Gamma
 - **Priority**: P0
-- **Source**: `roadmap.md` §Gamma (checked), `evaluation-to-growth--strategic-review.md` §Sprint 3
+- **Source**: `planning--roadmap.md` §Gamma (checked), `research--evaluation-to-growth--strategic-review.md` §Sprint 3
 - **Existing Code**: `src/api/services/intelligence/honeypot.service.ts`, admin endpoint `POST /admin/honeypot`
 - **Spec**: Cron-injected "known-fail" and "known-pass" proofs into Fury queue. Furies who consistently misjudge honeypots get Trust Score reduction, voting weight zeroed, potential ban.
 - **Dependencies**: F-FURY-01
@@ -435,7 +441,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `evaluation-to-growth--strategic-review.md` §4.1 Bloom
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §4.1 Bloom
 - **Existing Code**: None
 - **Spec**: Career progression from Novice → Journeyman → Master Fury. Master Furies' votes count more in split decisions. Could earn living wage via auditing ("Work-from-Home" micro-economy). Bounty percentages modeled on DOJ whistleblower rewards (15-30%).
 - **Dependencies**: F-FURY-02, F-CORE-03
@@ -445,7 +451,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `evaluation-to-growth--strategic-review.md` §1.1
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §1.1
 - **Existing Code**: None
 - **Spec**: Weighted voting where high-accuracy Furies' verdicts count more. In split decisions, Master Furies break ties. Prevents low-quality reviewers from swaying outcomes.
 - **Dependencies**: F-FURY-02, F-FURY-07
@@ -455,7 +461,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P1
-- **Source**: `evaluation-to-growth--strategic-review.md` §3.2
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §3.2
 - **Spec**: Advanced honey-trap logic where "Bad Actors" are identified via intentional failure-injection. Reviewers identified as colluding or "rubber-stamping" face immediate stake slashing and permanent exile.
 - **Dependencies**: F-FURY-05.
 
@@ -468,7 +474,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Beta
 - **Priority**: P0
-- **Source**: `legal--aegis-protocol.md` §2, `legal--compliance-guardrails.md`, `roadmap.md` §Beta (checked)
+- **Source**: `legal--aegis-protocol.md` §2, `legal--compliance-guardrails.md`, `planning--roadmap.md` §Beta (checked)
 - **Existing Code**: `src/api/services/health/aegis.service.ts`, `src/api/services/health/aegis.service.spec.ts`
 - **Spec**: BMI floor 18.5 (prevents underweight goals). Weight loss velocity cap 2%/week (prevents starvation). Prevents incentivizing eating disorders.
 - **Dependencies**: None
@@ -478,7 +484,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: PARTIAL
 - **Phase**: Beta
 - **Priority**: P0
-- **Source**: `legal--compliance-guardrails.md` §50-State, `legal--gatekeeper-compliance.md` §2, `roadmap.md` §Beta (checked)
+- **Source**: `legal--compliance-guardrails.md` §50-State, `legal--gatekeeper-compliance.md` §2, `planning--roadmap.md` §Beta (checked)
 - **Existing Code**: `src/api/services/geofencing.ts`, `src/api/src/common/guards/geofence.guard.ts`, `src/api/src/modules/compliance/compliance-policy.service.ts`
 - **Spec**: Three tiers: TIER_1 (full access, predominance-test states), TIER_2 (refund-only, material-element states), TIER_3 (hard-blocked, any-chance states: AZ, AR, DE, etc.). IP-based + address verification. TIER_2 refund-only restrictions implemented. Missing geolocation defaults fail-open (configurable).
 - **Dependencies**: IP geolocation service
@@ -489,7 +495,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Beta
 - **Priority**: P0 (beta-blocker)
-- **Source**: `legal--aegis-protocol.md`, `legal--compliance-guardrails.md` §4.D, `implementation-status.md`
+- **Source**: `legal--aegis-protocol.md`, `legal--compliance-guardrails.md` §4.D, `planning--implementation-status.md`
 - **Existing Code**: `src/api/src/modules/auth/auth.service.ts` (register validation requires `ageConfirmation: true`), `src/api/database/migrations/008_age_gate_terms_acceptance.sql`, `src/web/app/register/page.tsx`, `src/mobile/screens/RegisterScreen.tsx`
 - **Spec**: Enforce 18+ age verification at registration. Collect date of birth, validate against threshold. Phase 1 scope explicitly defers but this is a legal requirement before any real-money operation.
 - **Dependencies**: None
@@ -500,7 +506,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: PARTIAL
 - **Phase**: Beta
 - **Priority**: P1
-- **Source**: `research--breakup-psychology-loss-aversion.md`, `phase1-private-beta-scope.md`
+- **Source**: `research--breakup-psychology-loss-aversion.md`, `planning--phase1-private-beta-scope.md`
 - **Existing Code**: `src/api/services/health/recovery-protocol.service.ts`, behavioral-logic constants (max 30 days, max 3 targets)
 - **Spec**: No-contact specific guardrails: max 30 days duration, max 3 no-contact targets, 3 missed attestations = auto-fail. Day 3 & Day 21 lockdown (prevent modification during danger zones). Five rationalization countermeasures (closure trap, apology guise, logistical loophole, special occasions, "I'm healed" illusion).
 - **Dependencies**: F-CORE-07, F-CORE-05
@@ -510,7 +516,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `legal--aegis-protocol.md`, `legal--compliance-guardrails.md` §4.D, `implementation-status.md` (Planned)
+- **Source**: `legal--aegis-protocol.md`, `legal--compliance-guardrails.md` §4.D, `planning--implementation-status.md` (Planned)
 - **Existing Code**: `src/api/src/modules/compliance/identity-verification.service.ts`, `src/api/src/modules/compliance/identity-provider.service.ts` (spec files exist, implementation status unclear)
 - **Spec**: Collect legal name, DOB, address. Full ID verification for higher stakes. Enforces age limits. Reduces fraud/money-laundering risk.
 - **Dependencies**: Third-party KYC provider (Stripe Identity, Jumio, etc.)
@@ -532,7 +538,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Delta
 - **Priority**: P2
-- **Source**: `evaluation-to-growth--strategic-review.md` §2.1
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §2.1
 - **Existing Code**: None
 - **Spec**: Handles verified medical emergencies via Judge panel. Prevents "Ostrich" abandonment where users with genuine emergencies leave rather than lose their stake. Medical documentation review by trusted admin.
 - **Dependencies**: F-CORE-07, Judge system (F-DESKTOP-01)
@@ -573,7 +579,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `evaluation-to-growth--strategic-review.md` §4.1
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §4.1
 - **Spec**: Expand the Aegis Protocol to support sobriety tracks (alcohol, nicotine, etc.) with specialized verification (IoT breathalyzers, geofencing for vice locations).
 - **Dependencies**: F-AEGIS-08.
 
@@ -596,7 +602,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: PARTIAL
 - **Phase**: Beta
 - **Priority**: P0
-- **Source**: `research--behavioral-economics.md` §Endowed Progress, `roadmap.md` §Beta (checked)
+- **Source**: `research--behavioral-economics.md` §Endowed Progress, `planning--roadmap.md` §Beta (checked)
 - **Existing Code**: Constant defined in `behavioral-logic.ts` ($5 onboarding bonus), grace day endpoint exists
 - **Spec**: Pre-credit 20% progress on sign-up. Lock a portion of stake as "protected" upon completing initial tasks. Manufacture psychological momentum to combat Day 3 churn.
 - **Dependencies**: F-CORE-04, F-CORE-07
@@ -676,7 +682,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Alpha
 - **Priority**: P0
-- **Source**: `legal--gatekeeper-compliance.md` §2, `roadmap.md` §Alpha (checked)
+- **Source**: `legal--gatekeeper-compliance.md` §2, `planning--roadmap.md` §Alpha (checked)
 - **Existing Code**: `src/web/utils/linguistic-cloak.ts`, `src/web/utils/linguistic-cloak.test.ts`, `src/mobile/services/LinguisticMiddleware.ts`
 - **Spec**: Runtime vocabulary swap: stake→vault, bet→commitment, fury→peer review, wager→pledge, pot→pool, odds→likelihood, casino→platform. Validation Gate 04 scans production build for forbidden strings.
 - **Dependencies**: None
@@ -697,7 +703,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `evaluation-to-growth--strategic-review.md` §4.1
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §4.1
 - **Spec**: Use sentiment analysis on "Digital Exhaust" artifacts (strictly local processing) to provide users with a "Mirror" of their emotional recovery progress over the 30-day contract.
 - **Dependencies**: F-VERIFY-12.
 
@@ -720,7 +726,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Alpha
 - **Priority**: P0
-- **Source**: `roadmap.md` §Alpha (checked)
+- **Source**: `planning--roadmap.md` §Alpha (checked)
 - **Existing Code**: `src/web/app/whistleblower/` route exists
 - **Spec**: Anonymous bounty link generation for No-Contact contracts. Third parties can submit evidence of violations via anonymous link. Validated evidence earns bounty from violator's forfeited stake.
 - **Dependencies**: F-CORE-04, F-CORE-07
@@ -730,7 +736,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Delta
 - **Priority**: P1
-- **Source**: `roadmap.md` §Delta (checked)
+- **Source**: `planning--roadmap.md` §Delta (checked)
 - **Existing Code**: `src/web/app/tavern/`, API endpoint `GET /users/leaderboard`, `src/web/store/useFuryStore.ts`
 - **Spec**: Gamified leaderboard with tier badges. Redis Sorted Sets for O(log N) insertions. Anonymized integrity leaderboard. Real-time via SSE.
 - **Dependencies**: Redis
@@ -740,7 +746,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Delta
 - **Priority**: P1
-- **Source**: `roadmap.md` §Delta (checked)
+- **Source**: `planning--roadmap.md` §Delta (checked)
 - **Existing Code**: `src/api/src/modules/feed/feed.controller.ts`, API endpoint `GET /feed`
 - **Spec**: Anonymized real-time event stream (REST + SSE). Shows platform activity without exposing user identities. `?limit=50` (max 100).
 - **Dependencies**: F-CORE-07
@@ -750,7 +756,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `evaluation-to-growth--strategic-review.md` §Sprint 4, `research--market-analysis.md`
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §Sprint 4, `research--market-analysis.md`
 - **Existing Code**: None
 - **Spec**: Social arena with player-vs-player lobbies. Group challenges with shared pots. Cross-party competitive leagues with audited scoring ("esport-like, spectator-friendly layer").
 - **Dependencies**: F-CORE-12, F-FURY-01
@@ -806,7 +812,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `evaluation-to-growth--strategic-review.md` §3.1
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §3.1
 - **Existing Code**: None
 - **Spec**: Camera verifies person matches account owner. Prevents "Device Sharing" fraud (wearing another user's wearable).
 - **Dependencies**: F-MOBILE-01, biometric SDK
@@ -816,7 +822,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Omega
 - **Priority**: P2
-- **Source**: `roadmap--ai-workstreams.md` §WS2 Omega
+- **Source**: `planning--roadmap--ai-workstreams.md` §WS2 Omega
 - **Existing Code**: `src/mobile/services/OfflineCache.ts`, `src/mobile/services/OfflineCache.spec.ts`
 - **Spec**: TTL-based response caching. Mutation queue replays when connectivity returns. "Dark Device Default": if offline >24 hours, defaults to failure state.
 - **Dependencies**: None
@@ -826,7 +832,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Omega
 - **Priority**: P2
-- **Source**: `api/spec.md`, `roadmap--ai-workstreams.md`
+- **Source**: `api/spec.md`, `planning--roadmap--ai-workstreams.md`
 - **Existing Code**: `src/mobile/services/EnterpriseSSO.ts`, `src/mobile/services/EnterpriseSSO.spec.ts`
 - **Spec**: Enterprise SSO token exchange via deep links. Corporate employees transition seamlessly from internal portals.
 - **Dependencies**: F-B2B-01
@@ -840,7 +846,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Beta
 - **Priority**: P0 (beta-blocker — security requirement)
-- **Source**: `implementation-status.md`
+- **Source**: `planning--implementation-status.md`
 - **Existing Code**: `src/web/contexts/AuthContext.tsx`, `src/web/services/api-client.ts`, `src/api/src/modules/auth/auth.service.ts`
 - **Spec**: Migrate from client-side JWT storage to HttpOnly cookie-based authentication. Current implementation exposes JWT to XSS. Server must set/clear cookies; client reads auth state from API response.
 - **Dependencies**: API auth module changes
@@ -850,7 +856,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Gamma
 - **Priority**: P0
-- **Source**: `roadmap--ai-workstreams.md` §WS3 Gamma
+- **Source**: `planning--roadmap--ai-workstreams.md` §WS3 Gamma
 - **Existing Code**: `src/web/app/fury/`, `src/web/store/useFuryStore.ts`
 - **Spec**: Anonymous peer-review workbench. HLS video playback. Pass/Fail/Flag with confidence scores. Side-by-side: baseline (Day 1) vs final proof (Day 30). Tools: zoom, contrast filter, clothing comparison.
 - **Dependencies**: F-FURY-01, F-INFRA-03
@@ -860,7 +866,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: STUB
 - **Phase**: Omega
 - **Priority**: P2
-- **Source**: `roadmap--ai-workstreams.md` §WS3 Omega, `research--b2b-expansion-heartbreak-niche.md`
+- **Source**: `planning--roadmap--ai-workstreams.md` §WS3 Omega, `research--b2b-expansion-heartbreak-niche.md`
 - **Existing Code**: `src/web/app/hr/` route exists
 - **Spec**: Read-only UI for corporate managers showing aggregated, anonymized group habit metrics. No individual identification. ERISA compliance.
 - **Dependencies**: F-B2B-01, F-B2B-03
@@ -870,7 +876,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: PARTIAL
 - **Phase**: Delta
 - **Priority**: P1
-- **Source**: `roadmap--ai-workstreams.md` §WS3 Delta
+- **Source**: `planning--roadmap--ai-workstreams.md` §WS3 Delta
 - **Existing Code**: `src/api/services/realtime/`, SSE-based notification stream exists
 - **Spec**: Real-time updates via SSE/WebSocket. Redis Sorted Sets power the leaderboard. Sub-millisecond latency for rank queries.
 - **Dependencies**: Redis, F-SOCIAL-03
@@ -895,7 +901,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Delta
 - **Priority**: P0
-- **Source**: `roadmap.md` §Delta (checked), `roadmap--ai-workstreams.md` §WS4 Delta
+- **Source**: `planning--roadmap.md` §Delta (checked), `planning--roadmap--ai-workstreams.md` §WS4 Delta
 - **Existing Code**: `src/desktop/src/components/MacroReview.tsx`, admin endpoints (`POST /admin/resolve/:contractId`)
 - **Spec**: Secure Tauri 2.0 desktop app for dispute resolution. $5 appeal fee. Judge sees baseline photo, final proof, violation code, user plea text. Override Fury verdicts. Handle refunds.
 - **Dependencies**: F-FURY-01
@@ -905,7 +911,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Beta
 - **Priority**: P1 (internal tool)
-- **Source**: `roadmap--ai-workstreams.md` §WS4 Beta
+- **Source**: `planning--roadmap--ai-workstreams.md` §WS4 Beta
 - **Existing Code**: `src/desktop/src/components/LedgerInspector.tsx`
 - **Spec**: Raw read-only view into PostgreSQL Truth Log. Instantly identify balance mismatches or transaction failures.
 - **Dependencies**: F-CORE-01, F-CORE-02
@@ -915,7 +921,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Delta
 - **Priority**: P1
-- **Source**: `roadmap--ai-workstreams.md` §WS4 Delta
+- **Source**: `planning--roadmap--ai-workstreams.md` §WS4 Delta
 - **Existing Code**: `src/desktop/src/components/ExilePanel.tsx`, `src/api/services/security/moderation.service.ts`
 - **Spec**: Permanent system exile management. Admin can ban users with reason. Links to moderation service.
 - **Dependencies**: F-CORE-03
@@ -925,7 +931,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: STUB
 - **Phase**: Delta
 - **Priority**: P2
-- **Source**: `roadmap--ai-workstreams.md` §WS4
+- **Source**: `planning--roadmap--ai-workstreams.md` §WS4
 - **Existing Code**: `src/desktop/src/components/HashCollider.tsx`
 - **Spec**: Tool for comparing pHash values and investigating suspected duplicate proofs.
 - **Dependencies**: F-VERIFY-01
@@ -935,7 +941,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: STUB
 - **Phase**: Omega
 - **Priority**: P2
-- **Source**: `roadmap--ai-workstreams.md` §WS4 Omega
+- **Source**: `planning--roadmap--ai-workstreams.md` §WS4 Omega
 - **Existing Code**: `src/desktop/src/components/B2BOrchestration.tsx`
 - **Spec**: Controls for generating Enterprise API keys and managing billing parameters.
 - **Dependencies**: F-B2B-01
@@ -945,7 +951,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `evaluation-to-growth--strategic-review.md` §2.1
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §2.1
 - **Existing Code**: None
 - **Spec**: Judge panel for reviewing medical exemption requests. Display medical documentation, contract details, and recommended action.
 - **Dependencies**: F-AEGIS-07, F-DESKTOP-01
@@ -959,7 +965,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Omega
 - **Priority**: P1
-- **Source**: `roadmap.md` §Omega (checked), `roadmap--ai-workstreams.md` §WS1 Omega
+- **Source**: `planning--roadmap.md` §Omega (checked), `planning--roadmap--ai-workstreams.md` §WS1 Omega
 - **Existing Code**: `src/api/src/modules/b2b/connectors/salesforce.connector.ts`, `src/api/src/modules/b2b/connectors/hubspot.connector.ts`, `src/api/src/modules/b2b/crm.service.ts`
 - **Spec**: Enterprise webhook endpoints returning anonymized behavioral velocity stats. Webhook registration, testing, and delivery. CRM interface pattern for swappable connectors.
 - **Dependencies**: F-B2B-03
@@ -969,7 +975,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Omega
 - **Priority**: P1
-- **Source**: `roadmap.md` §Omega (checked)
+- **Source**: `planning--roadmap.md` §Omega (checked)
 - **Existing Code**: `src/api/src/modules/b2b/billing.service.ts`
 - **Spec**: Revenue based on "AI Insights generated." Consumption-based billing for enterprise customers.
 - **Dependencies**: F-B2B-01
@@ -979,7 +985,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Omega
 - **Priority**: P0 (B2B requirement)
-- **Source**: `roadmap.md` §Omega (checked)
+- **Source**: `planning--roadmap.md` §Omega (checked)
 - **Existing Code**: `src/api/src/modules/b2b/anonymize.service.ts`, `src/api/services/security/anonymization.service.ts`
 - **Spec**: One-way hashing of identifiers, date coarsening, anonymized HR exports. Employers see aggregated metrics without individual identification.
 - **Dependencies**: None
@@ -1042,7 +1048,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `evaluation-to-growth--strategic-review.md` §4.1 Bloom
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §4.1 Bloom
 - **Existing Code**: None
 - **Spec**: Anonymized Styx verification data shared with life insurance companies to lower premiums for "Verified Achievers."
 - **Dependencies**: F-B2B-03, insurance partnership
@@ -1107,7 +1113,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `evaluation-to-growth--behavioral-physics.md` §Growth Opportunities
+- **Source**: `research--evaluation-to-growth--behavioral-physics.md` §Growth Opportunities
 - **Existing Code**: None
 - **Spec**: License Styx audit engine to external social platforms to restore reputational decay loops. White-label verification infrastructure.
 - **Dependencies**: F-FURY-01, API gateway
@@ -1121,7 +1127,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Alpha
 - **Priority**: P0
-- **Source**: `legal--gatekeeper-compliance.md` §1, `roadmap.md` §Alpha (checked)
+- **Source**: `legal--gatekeeper-compliance.md` §1, `planning--roadmap.md` §Alpha (checked)
 - **Existing Code**: N/A (business/legal process, not code)
 - **Spec**: Apply for Corepay/Allied Wallet. Transaction fees: 3-6% + $0.30 + 5-10% rolling reserve. Standard Stripe triggers Risk Review within 48 hours of first $1K volume → permanent freeze.
 - **Dependencies**: Legal counsel
@@ -1132,7 +1138,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Alpha
 - **Priority**: P0
-- **Source**: `architecture--alpha-to-omega-plan.md` §Infrastructure, `ship-baseline-report.md`
+- **Source**: `architecture--alpha-to-omega-plan.md` §Infrastructure, `planning--ship-baseline-report.md`
 - **Existing Code**: `.github/workflows/` (CI: lint/test/build/gates/CodeQL; CD: tag-triggered deploy to Render)
 - **Spec**: CI: Node 20, security audit, turbo test + build + lint, Gates 04-06, CodeQL analysis. CD: tag-triggered deploy to Render with smoke test.
 - **Dependencies**: GitHub Actions, Render
@@ -1142,7 +1148,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Gamma
 - **Priority**: P0
-- **Source**: `architecture--feasibility-stack.md` §S4.1, `roadmap.md` §Gamma (checked)
+- **Source**: `architecture--feasibility-stack.md` §S4.1, `planning--roadmap.md` §Gamma (checked)
 - **Existing Code**: `src/api/services/storage/r2.service.ts`
 - **Spec**: S3-compatible, zero egress fees. At 100TB: AWS ~$10K/mo vs R2 ~$150/mo. Signed URLs only. Pre-signed upload links. 30-day auto-delete lifecycle after review.
 - **Dependencies**: Cloudflare account
@@ -1162,7 +1168,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Delta
 - **Priority**: P1
-- **Source**: `architecture--alpha-to-omega-plan.md` §Infrastructure, `roadmap--ai-workstreams.md` §WS5
+- **Source**: `architecture--alpha-to-omega-plan.md` §Infrastructure, `planning--roadmap--ai-workstreams.md` §WS5
 - **Existing Code**: Terraform-managed
 - **Spec**: Rate limits: auth 5/min, financial 10/min, general 120/min. Security headers: HSTS, CSP, XSS protection. Bot management. Edge-level geofencing.
 - **Dependencies**: F-INFRA-04
@@ -1172,7 +1178,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: IMPLEMENTED
 - **Phase**: Various
 - **Priority**: P0
-- **Source**: `roadmap.md` §Validation Gates, `architecture--alpha-to-omega-plan.md`
+- **Source**: `planning--roadmap.md` §Validation Gates, `architecture--alpha-to-omega-plan.md`
 - **Existing Code**: `scripts/validation/01-07` (7 scripts)
 - **Spec**: Gate 01: phantom money check. Gate 02: simulator spoof check. Gate 03: full loop E2E. Gate 04: redacted build check (CI). Gate 05: behavioral physics constants (CI). Gate 06: security invariants (CI). Gate 07: claim drift check.
 - **Dependencies**: F-CORE-01, F-CORE-05
@@ -1192,7 +1198,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P2
-- **Source**: `evaluation-to-growth--strategic-review.md` §3.1
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §3.1
 - **Existing Code**: None
 - **Spec**: Cloudflare Workers process uploaded videos at edge to blur faces. Mitigates biometric privacy risk under GDPR/CCPA.
 - **Dependencies**: F-INFRA-03, Cloudflare Workers
@@ -1213,7 +1219,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: NOT_STARTED
 - **Phase**: Phase2+
 - **Priority**: P3
-- **Source**: `evaluation-to-growth--strategic-review.md` §4.1 Bloom
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §4.1 Bloom
 - **Existing Code**: None
 - **Spec**: Partner with scale/wearable manufacturers for deeper hardware-level cryptographic signing.
 - **Dependencies**: Business development
@@ -1260,7 +1266,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Status**: PARTIAL
 - **Phase**: Beta
 - **Priority**: P1
-- **Source**: `evaluation-to-growth--strategic-review.md` §3.2, `legal--compliance-guardrails.md` §Variant 1
+- **Source**: `research--evaluation-to-growth--strategic-review.md` §3.2, `legal--compliance-guardrails.md` §Variant 1
 - **Existing Code**: TIER_2 refund-only restrictions implemented in compliance-policy service
 - **Spec**: If "Dominant Factor Test" is rejected in a major market, instantly activate per-state "Refund-Only Mode" — stakes returned regardless of outcome. Legal kill switch for gambling prohibition compliance.
 - **Dependencies**: F-AEGIS-02, F-LEGAL-03
@@ -1331,8 +1337,8 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 | `research--prediction-markets-regulation-finance.md` | F-MARKET-01, F-INFRA-09, F-LEGAL-05 |
 | `research--smart-contracts-behavioral-wagers.md` | F-MARKET-03, F-MARKET-04, F-CORE-13 |
 | `research--commitment-device-market-analysis.md` | F-VERIFY-11, F-UX-11 |
-| `evaluation-to-growth--behavioral-physics.md` | F-FURY-04, F-MARKET-06 |
-| `evaluation-to-growth--strategic-review.md` | F-FURY-03, F-FURY-07, F-FURY-08, F-AEGIS-07, F-LEGAL-04, F-B2B-09, F-INFRA-10 |
+| `research--evaluation-to-growth--behavioral-physics.md` | F-FURY-04, F-MARKET-06 |
+| `research--evaluation-to-growth--strategic-review.md` | F-FURY-03, F-FURY-07, F-FURY-08, F-AEGIS-07, F-LEGAL-04, F-B2B-09, F-INFRA-10 |
 | `architecture--feasibility-stack.md` | F-VERIFY-02, F-VERIFY-07, F-FURY-01, F-INFRA-03, F-WEB-05 |
 | `architecture--truth-blockchain.md` | F-CORE-02, F-VERIFY-01, F-INFRA-03 |
 | `architecture--technical-feasibility.md` | F-CORE-01, F-VERIFY-07, F-FURY-01 |
@@ -1341,11 +1347,11 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 | `legal--compliance-guardrails.md` | F-AEGIS-02, F-AEGIS-05, F-AEGIS-06, F-LEGAL-01, F-LEGAL-03, F-CORE-12 |
 | `legal--gatekeeper-compliance.md` | F-INFRA-01, F-UX-10, F-LEGAL-06 |
 | `legal--performance-wagering.md` | F-CORE-04, F-LEGAL-05, F-LEGAL-08 |
-| `roadmap.md` | F-CORE-01 through F-CORE-07, F-FURY-01 through F-FURY-06, F-AEGIS-01, F-AEGIS-02, F-B2B-01 through F-B2B-03 |
-| `roadmap--ai-workstreams.md` | F-WEB-02, F-WEB-03, F-WEB-04, F-DESKTOP-01 through F-DESKTOP-05 |
-| `phase1-private-beta-scope.md` | F-VERIFY-06, F-AEGIS-04, F-MOBILE-01 |
-| `ship-baseline-report.md` | F-INFRA-02 |
-| `implementation-status.md` | F-AEGIS-02, F-AEGIS-03, F-AEGIS-05, F-WEB-01 |
+| `planning--roadmap.md` | F-CORE-01 through F-CORE-07, F-FURY-01 through F-FURY-06, F-AEGIS-01, F-AEGIS-02, F-B2B-01 through F-B2B-03 |
+| `planning--roadmap--ai-workstreams.md` | F-WEB-02, F-WEB-03, F-WEB-04, F-DESKTOP-01 through F-DESKTOP-05 |
+| `planning--phase1-private-beta-scope.md` | F-VERIFY-06, F-AEGIS-04, F-MOBILE-01 |
+| `planning--ship-baseline-report.md` | F-INFRA-02 |
+| `planning--implementation-status.md` | F-AEGIS-02, F-AEGIS-03, F-AEGIS-05, F-WEB-01 |
 | `brainstorm--motivation-validation.md` | F-CORE-13, F-UX-02, F-LEGAL-08 |
 | `adr/001-dual-layer-services-modules.md` | (Architecture — dual-layer services/modules pattern) |
 | `api/spec.md` | F-CORE-06, F-CORE-07, F-FURY-02, F-SOCIAL-04, F-MOBILE-06 |
@@ -1355,7 +1361,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 ## Part III: Phase 1 Private Beta Readiness Checklist
 
-Based on `phase1-private-beta-scope.md`: iOS TestFlight, No-Contact recovery, test-money, US-only.
+Based on `planning--phase1-private-beta-scope.md`: iOS TestFlight, No-Contact recovery, test-money, US-only.
 
 ### P0 Go/No-Go Items
 
@@ -1403,7 +1409,7 @@ Based on `phase1-private-beta-scope.md`: iOS TestFlight, No-Contact recovery, te
 
 ### Phase 1 Scope Reminder
 
-Per `phase1-private-beta-scope.md`:
+Per `planning--phase1-private-beta-scope.md`:
 - Primary surface: iOS (TestFlight)
 - Primary journey: No-Contact recovery only
 - Money mode: **Test-money pilot** (no real settlement)
@@ -1415,4 +1421,4 @@ Per `phase1-private-beta-scope.md`:
 
 ---
 
-*Generated by Claude Code from 37 source documents + codebase analysis. All features cite at least one source document. Implementation status verified against `docs/planning/implementation-status.md` and direct codebase inspection.*
+*Generated by Claude Code from 37 source documents + codebase analysis. All features cite at least one source document. Implementation status verified against `docs/planning/planning--implementation-status.md` and direct codebase inspection.*
