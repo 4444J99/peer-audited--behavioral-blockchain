@@ -446,4 +446,54 @@ export class DisputeService {
             : 'ESCALATED',
     };
   }
+
+  /**
+   * Generates a comprehensive audit trail for a dispute.
+   * Reconstructs the timeline of truth events, ledger entries, and fury audits.
+   */
+  async getAuditTrail(disputeId: string): Promise<any> {
+    const detail = await this.getDisputeDetail(disputeId);
+
+    // Fetch related events from immutable log
+    const events = await this.pool.query(
+      `SELECT id, event_type, payload, created_at
+       FROM event_log
+       WHERE payload->>'contractId' = $1 
+          OR payload->>'proofId' = $2 
+          OR payload->>'disputeId' = $3
+       ORDER BY created_at ASC`,
+      [detail.contractId, detail.proofId, disputeId],
+    );
+
+    // Fetch related ledger entries
+    const entries = await this.pool.query(
+      `SELECT e.*, da.name as debit_account, ca.name as credit_account
+       FROM entries e
+       LEFT JOIN accounts da ON e.debit_account_id = da.id
+       LEFT JOIN accounts ca ON e.credit_account_id = ca.id
+       WHERE e.contract_id = $1
+       ORDER BY e.created_at ASC`,
+      [detail.contractId],
+    );
+
+    return {
+      dispute: detail,
+      timeline: events.rows.map((row: any) => ({
+        type: 'EVENT',
+        id: row.id,
+        eventType: row.event_type,
+        timestamp: row.created_at,
+        data: row.payload,
+      })),
+      ledger: entries.rows.map((row: any) => ({
+        type: 'LEDGER',
+        id: row.id,
+        amount: row.amount,
+        debit: row.debit_account,
+        credit: row.credit_account,
+        timestamp: row.created_at,
+        metadata: row.metadata,
+      })),
+    };
+  }
 }

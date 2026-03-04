@@ -7,6 +7,7 @@ export const REDIS_CONNECTION_CONFIG = {
 };
 
 export const FURY_ROUTER_QUEUE_NAME = 'FURY_ROUTER_QUEUE';
+export const SETTLEMENT_QUEUE_NAME = 'SETTLEMENT_QUEUE';
 
 export const getDefaultQueueOptions = (): QueueOptions => ({
   connection: REDIS_CONNECTION_CONFIG,

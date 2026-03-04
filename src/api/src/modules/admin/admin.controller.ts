@@ -112,6 +112,12 @@ export class AdminController {
     return this.disputeService.resolveDispute(disputeId, user.id, body.outcome, body.judgeNotes);
   }
 
+  @Get('disputes/:id/audit-trail')
+  @ApiOperation({ summary: 'Get the full audit trail (timeline + ledger) for a dispute' })
+  async getAuditTrail(@Param('id') disputeId: string) {
+    return this.disputeService.getAuditTrail(disputeId);
+  }
+
   // --- User Inspection ---
 
   @Get('users/:id')

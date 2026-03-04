@@ -2164,4 +2164,55 @@ export class ContractsService {
       }
     }
   }
+
+  async doubleDownStake(contractId: string, userId: string, additionalAmount: number) {
+    const contract = await this.pool.query('SELECT * FROM contracts WHERE id = $1', [contractId]);
+    if (contract.rows.length === 0) throw new NotFoundException('Contract not found');
+    const row = contract.rows[0];
+
+    if (row.user_id !== userId) throw new ForbiddenException('Not your contract');
+    if (row.status !== 'ACTIVE') throw new BadRequestException('Contract is not active');
+
+    const userResult = await this.pool.query('SELECT stripe_customer_id, account_id FROM users WHERE id = $1', [userId]);
+    const user = userResult.rows[0];
+
+    if (!user.stripe_customer_id) throw new BadRequestException('No payment method on file');
+
+    // 1. Hold additional funds via Stripe
+    const paymentIntent = await this.stripe.holdStake(user.stripe_customer_id, additionalAmount, contractId);
+
+    // 2. Update contract total stake and record the additional PI in metadata
+    const newTotal = Number(row.stake_amount) + additionalAmount;
+    await this.pool.query(
+      `UPDATE contracts 
+       SET stake_amount = $1, 
+           metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{additional_payouts}', 
+                               COALESCE(metadata->'additional_payouts', '[]'::jsonb) || $3::jsonb)
+       WHERE id = $2`,
+      [newTotal, contractId, JSON.stringify([paymentIntent.id])],
+    );
+
+    // 3. Ledger entry for the increase
+    const escrowResult = await this.pool.query(`SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`);
+    if (user.account_id && escrowResult.rows.length > 0) {
+      await this.ledger.recordTransaction(
+        user.account_id,
+        escrowResult.rows[0].id,
+        additionalAmount,
+        contractId,
+        { type: 'STAKE_DOUBLE_DOWN', previousTotal: row.stake_amount },
+      );
+    }
+
+    // 4. Audit Log
+    await this.truthLog.appendEvent('STAKE_DOUBLED_DOWN', {
+      contractId,
+      userId,
+      additionalAmount,
+      newTotal,
+      paymentIntentId: paymentIntent.id,
+    });
+
+    return { contractId, newTotal, paymentIntentId: paymentIntent.id };
+  }
 }

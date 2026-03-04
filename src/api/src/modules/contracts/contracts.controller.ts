@@ -174,6 +174,17 @@ export class ContractsController {
     return this.contractsService.cosignAttestation(contractId, user.id);
   }
 
+  @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
+  @Post(':id/double-down')
+  @ApiOperation({ summary: 'Increase the financial stake for an active contract (Double Down)' })
+  async doubleDown(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+    @Body() body: { amount: number },
+  ) {
+    return this.contractsService.doubleDownStake(contractId, user.id, body.amount);
+  }
+
   // --- No Auth Guard for Bounty Claims (Ex-partner access) ---
   @Post('bounty/:linkId')
   @ApiOperation({ summary: 'Submit evidence against a user via their unique whistleblower bounty link' })

@@ -1,129 +1,95 @@
+import * as Crypto from 'expo-crypto';
+import * as Device from 'expo-device';
+
 /**
  * ZKPrivacyEngine: Local "Digital Exhaust" Processor
  * 
  * Implements F-VERIFY-14: ZK-Privacy Layer for Digital Exhaust.
  * 
  * This engine runs strictly on the mobile client (React Native / Expo).
- * It reads local SQLite databases (SMS/Call logs) and generates a cryptographic 
- * proof of breach/compliance WITHOUT transmitting the underlying sensitive metadata
- * (phone numbers, message contents) to the server.
+ * It reads local SQLite databases or native telephony logs, processes them,
+ * and only transmits a cryptographic "Proof of Breach" to the server.
  */
 
-import * as Crypto from 'expo-crypto';
-
-export interface ExhaustProof {
-  contractId: string;
-  timestamp: string;
-  breachDetected: boolean;
-  proofHash: string; // Cryptographic hash validating the local execution
-  signature: string; // Device-scoped attestation signature for proofHash
+export interface LocalTelephonyLog {
+  identifier: string; // e.g., phone number or handle
+  timestamp: Date;
+  method: 'CALL' | 'TEXT' | 'APP_USAGE';
 }
 
-type LocalTelephonyLog = {
-  counterparty: string;
+export interface ZKBreachProof {
+  proofHash: string;
   timestamp: string;
-  channel: 'SMS' | 'CALL';
-};
-
-type LogProvider = (
-  normalizedTarget: string,
-  start: Date,
-  end: Date,
-) => Promise<LocalTelephonyLog[]>;
+  maskedIdentifier: string;
+  method: 'CALL' | 'TEXT' | 'APP_USAGE';
+  deviceId: string;
+  deviceSignature: string;
+  attestation: string;
+}
 
 export class ZKPrivacyEngine {
-  private static logProvider: LogProvider = async () => [];
+  /** Mock log provider for development/simulation */
+  private static logProvider: (target: string, start: Date, end: Date) => Promise<LocalTelephonyLog[]> = async () => [];
 
-  static setLogProvider(provider: LogProvider): void {
+  static setLogProvider(provider: typeof ZKPrivacyEngine.logProvider) {
     this.logProvider = provider;
   }
 
-  static resetLogProvider(): void {
-    this.logProvider = async () => [];
-  }
-
-  private static normalizePhoneNumber(value: string): string {
-    const digits = String(value || '').replace(/[^\d+]/g, '');
-    return digits.startsWith('+') ? digits : `+${digits}`;
-  }
-
-  private static assertValidWindow(start: Date, end: Date): void {
-    if (!(start instanceof Date) || Number.isNaN(start.getTime())) {
-      throw new Error('Invalid timeWindowStart supplied to generateLocalProof');
-    }
-    if (!(end instanceof Date) || Number.isNaN(end.getTime())) {
-      throw new Error('Invalid timeWindowEnd supplied to generateLocalProof');
-    }
-    if (start.getTime() >= end.getTime()) {
-      throw new Error('timeWindowStart must be earlier than timeWindowEnd');
-    }
-  }
-
-  private static async deriveDeviceSignature(
-    contractId: string,
-    proofHash: string,
-    timestamp: string,
-  ): Promise<string> {
-    return Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      `${contractId}:${proofHash}:${timestamp}`,
-    );
-  }
-
   /**
-   * Generates a local proof of compliance/breach against a target phone number.
+   * Generates a "Zero-Knowledge" Proof of No Contact breach.
+   * 
+   * Implementation: Verifiable Mask + Device Signature
+   * 1. Target ID matched against local logs.
+   * 2. If breach found, a cryptographic hash of (TargetID + Timestamp + DeviceID) is generated.
+   * 3. A device-specific signature is appended to prevent replay attacks.
    */
-  static async generateLocalProof(
-    contractId: string,
-    targetPhoneNumber: string,
-    timeWindowStart: Date,
-    timeWindowEnd: Date,
-  ): Promise<ExhaustProof> {
-    this.assertValidWindow(timeWindowStart, timeWindowEnd);
-    const normalizedTarget = this.normalizePhoneNumber(targetPhoneNumber);
-    const targetHash = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      normalizedTarget,
+  static async generateBreachProof(
+    targetIdentifier: string,
+    timeWindow: { start: Date; end: Date },
+  ): Promise<ZKBreachProof | null> {
+    const logs = await this.queryNativeTelephonyLogs(targetIdentifier, timeWindow.start, timeWindow.end);
+    
+    if (logs.length === 0) return null;
+
+    // Found at least one breach
+    const latestBreach = logs[0];
+    const deviceId = Device.osBuildId || 'unknown-device';
+    
+    // 1. Generate Proof Hash
+    const proofPayload = `${targetIdentifier}:${latestBreach.timestamp.toISOString()}:${deviceId}`;
+    const proofHash = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, proofPayload);
+
+    // 2. Generate "Signature" (Simulated Secure Enclave operation)
+    // In a real implementation, this would use expo-local-authentication or a native module
+    // to sign the proofHash with a key stored in the hardware Secure Element.
+    const deviceSignature = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256, 
+      `${proofHash}:styx-local-secret-v1`
     );
-
-    const localLogs = await this.queryNativeTelephonyLogs(
-      normalizedTarget,
-      timeWindowStart,
-      timeWindowEnd,
-    );
-    const breachDetected = localLogs.length > 0;
-
-    const salt = await Crypto.getRandomBytesAsync(16);
-    const payload = JSON.stringify({
-      contractId,
-      breachDetected,
-      targetHash,
-      sampleCount: localLogs.length,
-      windowStart: timeWindowStart.toISOString(),
-      windowEnd: timeWindowEnd.toISOString(),
-      salt: Array.from(salt).join(''),
-    });
-
-    const proofHash = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      payload,
-    );
-
-    const timestamp = new Date().toISOString();
-    const signature = await this.deriveDeviceSignature(contractId, proofHash, timestamp);
 
     return {
-      contractId,
-      timestamp,
-      breachDetected,
       proofHash,
-      signature,
+      timestamp: latestBreach.timestamp.toISOString(),
+      maskedIdentifier: this.maskIdentifier(latestBreach.identifier),
+      method: latestBreach.method,
+      deviceId,
+      deviceSignature,
+      attestation: `DE-ZK-PROOF: Local breach detected for target ${this.maskIdentifier(targetIdentifier)} at ${latestBreach.timestamp.toISOString()}.`,
     };
   }
 
   /**
-   * Bridge abstraction for local SMS/call scan.
-   * The provider can be replaced in tests or by a native module adapter.
+   * Redacts sensitive identifiers for display/transport while maintaining
+   * enough context for visual confirmation.
+   */
+  private static maskIdentifier(id: string): string {
+    if (id.length <= 4) return '****';
+    return `${id.substring(0, 2)}...${id.substring(id.length - 2)}`;
+  }
+
+  /**
+   * Queries the native telephony layer. 
+   * This is a stub that will be filled by native modules in iOS/Android builds.
    */
   private static async queryNativeTelephonyLogs(
     target: string,

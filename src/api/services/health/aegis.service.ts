@@ -92,4 +92,25 @@ export class AegisProtocolService {
 
     return true;
   }
+
+  /**
+   * Calculates the penalty multiplier based on the time of breach.
+   * Behavioral physics: breaches on weekend nights (Fri/Sat 9PM-4AM) represent
+   * a significant loss of discipline and carry a 1.5x penalty.
+   */
+  getVolatilityMultiplier(date: Date = new Date()): number {
+    const day = date.getDay(); // 0 (Sun) to 6 (Sat)
+    const hour = date.getHours(); // 0-23
+
+    // Friday night (day 5) or Saturday night (day 6)
+    const isFriSat = (day === 5 || day === 6);
+    // 9 PM (21) to 4 AM (4)
+    const isNight = (hour >= 21 || hour < 4);
+
+    if (isFriSat && isNight) {
+      return 1.5;
+    }
+
+    return 1.0;
+  }
 }

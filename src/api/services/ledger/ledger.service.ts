@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional, Inject } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
+import { QuarantineService } from '../../src/modules/ledger/quarantine.service';
 
 @Injectable()
 export class LedgerService {
-  constructor(private readonly pool: Pool) {}
+  constructor(
+    private readonly pool: Pool,
+    @Optional() @Inject(QuarantineService) private readonly quarantine?: QuarantineService,
+  ) {}
 
   /**
    * Records a double-entry transaction linking a debit and credit account.
@@ -51,6 +55,14 @@ export class LedgerService {
       if (process.env.STYX_ENFORCE_HARD_INTEGRITY === 'true') {
         const integrity = await this.verifyLedgerIntegrity(dbClient);
         if (!integrity.balanced) {
+          if (this.quarantine) {
+            await this.quarantine.activateQuarantine(debitAccountId, 'PHANTOM_MONEY_DETECTED_IN_TX', {
+              amount,
+              creditAccountId,
+              contractId,
+              integrityResults: integrity,
+            });
+          }
           throw new Error(`Phantom money detected! Ledger unbalanced: ${integrity.totalDebits} vs ${integrity.totalCredits}`);
         }
       }
