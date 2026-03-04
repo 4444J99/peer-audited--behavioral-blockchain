@@ -216,6 +216,53 @@ describe('ContractsService', () => {
       expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test_1', 25, 'contract-1');
     });
 
+    it('should enforce MVP_39 pricing stake at $30 and return pricing metadata', async () => {
+      const mvpDto: CreateContractInput = {
+        ...validDto,
+        stakeAmount: 5,
+        pricing: { plan: 'MVP_39' as any },
+      };
+
+      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] }); // Insert
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // Update active
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] }); // Prior contracts
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] }); // Escrow
+
+      const result = await service.createContract(mvpDto);
+
+      expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test_1', 30, 'contract-1');
+      expect(result.pricing).toEqual({
+        plan: 'MVP_39',
+        totalEntryUsd: 39,
+        platformFeeUsd: 9,
+        refundableStakeUsd: 30,
+      });
+    });
+
+    it('should reject POD_BASED cohort enrollment when podId is missing', async () => {
+      const podDto: CreateContractInput = {
+        ...validDto,
+        cohort: {
+          cohortId: 'launch-2026-03-a',
+          mode: 'POD_BASED' as any,
+        },
+      };
+
+      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // failures
+
+      await expect(service.createContract(podDto)).rejects.toThrow(
+        expect.objectContaining({
+          constructor: BadRequestException,
+          message: expect.stringMatching(/podId/i),
+        }),
+      );
+    });
+
     it('should insert the contract and return contractId + paymentIntentId', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
@@ -874,6 +921,77 @@ describe('ContractsService', () => {
     });
   });
 
+  // ── getCohortSnapshot ──────────────────────────────────────────
+
+  describe('getCohortSnapshot', () => {
+    it('should return participant visibility and pod breakdown', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [{ role: 'USER' }] }); // requester role
+      mockPool.query.mockResolvedValueOnce({ rows: [{ '?column?': 1 }] }); // requester is a cohort participant
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            contract_id: 'c-1',
+            user_id: 'user-1',
+            status: 'ACTIVE',
+            created_at: '2026-03-04T00:00:00.000Z',
+            cohort_mode: 'POD_BASED',
+            pod_id: 'pod-1',
+            display_alias: 'Jess',
+            cohort_id: 'launch-2026-03-a',
+            email: 'jess@example.com',
+            streak_days: 5,
+          },
+          {
+            contract_id: 'c-2',
+            user_id: 'user-2',
+            status: 'FAILED',
+            created_at: '2026-03-03T00:00:00.000Z',
+            cohort_mode: 'POD_BASED',
+            pod_id: 'pod-1',
+            display_alias: 'Alex',
+            cohort_id: 'launch-2026-03-a',
+            email: 'alex@example.com',
+            streak_days: 1,
+          },
+        ],
+      });
+
+      const snapshot = await service.getCohortSnapshot('launch-2026-03-a', 'user-1');
+
+      expect(snapshot.cohortId).toBe('launch-2026-03-a');
+      expect(snapshot.participantCount).toBe(2);
+      expect(snapshot.activeCount).toBe(1);
+      expect(snapshot.outCount).toBe(1);
+      expect(snapshot.pods).toHaveLength(1);
+      expect(snapshot.pods[0].podId).toBe('pod-1');
+      expect(snapshot.pods[0].activeCount).toBe(1);
+      expect(snapshot.pods[0].outCount).toBe(1);
+      expect(snapshot.participants[0]).toEqual(
+        expect.objectContaining({
+          alias: 'Jess',
+          status: 'ACTIVE',
+          streakDays: 5,
+          isRequester: true,
+        }),
+      );
+      expect(snapshot.participants[1]).toEqual(
+        expect.objectContaining({
+          alias: 'Alex',
+          status: 'OUT',
+        }),
+      );
+    });
+
+    it('should reject non-participants unless requester is admin', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [{ role: 'USER' }] }); // requester role
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // membership lookup
+
+      await expect(service.getCohortSnapshot('launch-2026-03-a', 'intruder-1')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+  });
+
   // ── getAttestationStatus ───────────────────────────────────────
 
   describe('getAttestationStatus', () => {
@@ -1087,6 +1205,84 @@ describe('ContractsService', () => {
       });
 
       await expect(service.submitAttestation('contract-bio', 'user-1')).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // ── submitWhoopScoredState ────────────────────────────────────
+
+  describe('submitWhoopScoredState', () => {
+    it('should record SCORED state and apply attestation credit', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [{
+            id: 'contract-r1',
+            user_id: 'user-1',
+            oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+            status: 'ACTIVE',
+          }],
+        }) // whoop contract lookup
+        .mockResolvedValueOnce({
+          rows: [{
+            id: 'contract-r1',
+            user_id: 'user-1',
+            oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+            status: 'ACTIVE',
+          }],
+        }) // submitAttestation contract lookup
+        .mockResolvedValueOnce({ rows: [] }) // existing attestation check
+        .mockResolvedValueOnce({ rows: [] }) // insert attestation
+        .mockResolvedValueOnce({ rows: [] }); // partner lookup
+
+      const result = await service.submitWhoopScoredState('contract-r1', {
+        userId: 'user-1',
+        state: 'SCORED' as any,
+        source: 'whoop-webhook-v1',
+      });
+
+      expect(result).toEqual({
+        status: 'recorded',
+        state: 'SCORED',
+        attestationApplied: true,
+      });
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        'WHOOP_SCORED_STATE_RECEIVED',
+        expect.objectContaining({
+          contractId: 'contract-r1',
+          userId: 'user-1',
+          state: 'SCORED',
+          attestationApplied: true,
+        }),
+      );
+    });
+
+    it('should ignore UNSCORED state without attestation credit', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'contract-r1',
+          user_id: 'user-1',
+          oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+          status: 'ACTIVE',
+        }],
+      });
+
+      const result = await service.submitWhoopScoredState('contract-r1', {
+        userId: 'user-1',
+        state: 'UNSCORED' as any,
+        source: 'whoop-webhook-v1',
+      });
+
+      expect(result).toEqual({
+        status: 'ignored',
+        state: 'UNSCORED',
+        attestationApplied: false,
+      });
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        'WHOOP_STATE_IGNORED',
+        expect.objectContaining({
+          contractId: 'contract-r1',
+          state: 'UNSCORED',
+        }),
+      );
     });
   });
 

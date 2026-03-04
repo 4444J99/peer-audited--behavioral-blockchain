@@ -1,0 +1,587 @@
+{
+  "generated_on": "2026-03-04",
+  "source_documents": [
+    "docs/FEATURE-BACKLOG.md",
+    "docs/planning/planning--implementation-status.md",
+    "docs/planning/planning--drift-check--2026-03-04.md",
+    "docs/planning/planning--unity-contention-register--2026-03-04.md"
+  ],
+  "tickets": [
+    {
+      "id": "TKT-P0-001",
+      "title": "Real-Money FBO Settlement Activation",
+      "priority": "P0",
+      "status": "proposed",
+      "dependencies": [],
+      "api": [
+        "POST /payments/settlements/:contractId/preview",
+        "POST /payments/settlements/:contractId/execute",
+        "GET /payments/settlements/:contractId/status"
+      ],
+      "schema": [
+        "settlement_runs table",
+        "entries metadata settlement indexes"
+      ],
+      "ui": [
+        "Desktop settlement card",
+        "Web admin settlement timeline"
+      ],
+      "legal_gates": [
+        "custody model review",
+        "processor terms validation",
+        "auditability sign-off"
+      ]
+    },
+    {
+      "id": "TKT-P0-002",
+      "title": "Native iOS Camera Proof Capture (Gallery Disabled)",
+      "priority": "P0",
+      "status": "proposed",
+      "dependencies": [],
+      "api": [
+        "POST /proofs/upload-url with captureSource + nonce"
+      ],
+      "schema": [
+        "proofs.capture_source",
+        "proofs.capture_nonce",
+        "proofs.capture_verified"
+      ],
+      "ui": [
+        "Mobile native camera-only flow",
+        "Nonce challenge overlay"
+      ],
+      "legal_gates": [
+        "camera disclosure check",
+        "privacy copy update"
+      ]
+    },
+    {
+      "id": "TKT-P0-003",
+      "title": "KYC Runtime Enforcement + Progressive Stake Tiers",
+      "priority": "P0",
+      "status": "proposed",
+      "dependencies": [
+        "TKT-P0-001"
+      ],
+      "api": [
+        "POST /compliance/kyc/start",
+        "GET /compliance/kyc/status"
+      ],
+      "schema": [
+        "users.kyc_status",
+        "users.kyc_level",
+        "kyc_events table"
+      ],
+      "ui": [
+        "Web/mobile KYC step",
+        "Tiered stake cap display"
+      ],
+      "legal_gates": [
+        "vendor DPA",
+        "jurisdiction policy check"
+      ]
+    },
+    {
+      "id": "TKT-P0-004",
+      "title": "Geofence Fail-Closed Hardening + Policy Registry",
+      "priority": "P0",
+      "status": "proposed",
+      "dependencies": [],
+      "api": [
+        "GET /compliance/policy/effective"
+      ],
+      "schema": [
+        "compliance_decisions table"
+      ],
+      "ui": [
+        "State availability UX"
+      ],
+      "legal_gates": [
+        "state matrix counsel approval"
+      ]
+    },
+    {
+      "id": "TKT-P1-005",
+      "title": "Recovery Danger-Zone Lockdowns + 24h Timelock",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [],
+      "api": [
+        "POST /contracts/:id/recovery/break-request",
+        "POST /contracts/:id/recovery/break-cancel",
+        "GET /contracts/:id/recovery/lock-status"
+      ],
+      "schema": [
+        "recovery_break_requests table"
+      ],
+      "ui": [
+        "Cooldown countdown",
+        "Day 3/21 lock banners"
+      ],
+      "legal_gates": [
+        "non-coercive contract language review"
+      ]
+    },
+    {
+      "id": "TKT-P1-006",
+      "title": "Remote Push Pipeline (APNs/FCM) + Policy Matrix",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [],
+      "api": [
+        "POST /notifications/push/register"
+      ],
+      "schema": [
+        "push_tokens table",
+        "push_deliveries table"
+      ],
+      "ui": [
+        "Mobile notification preferences"
+      ],
+      "legal_gates": [
+        "consent and preference policy review"
+      ]
+    },
+    {
+      "id": "TKT-P1-007",
+      "title": "Native HealthKit Bridge + Server Metadata Filter",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [],
+      "api": [
+        "POST /oracles/healthkit/samples"
+      ],
+      "schema": [
+        "health_oracle_samples table"
+      ],
+      "ui": [
+        "Mobile bridge permissions/status"
+      ],
+      "legal_gates": [
+        "health-data minimization and disclosure review"
+      ]
+    },
+    {
+      "id": "TKT-P1-008",
+      "title": "Cross-Lobby Anti-Collusion Routing",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [],
+      "api": [
+        "Fury assignment exclusion controls"
+      ],
+      "schema": [
+        "fury_assignment_edges table",
+        "social_exclusion_edges table"
+      ],
+      "ui": [
+        "Admin collusion monitoring panel"
+      ],
+      "legal_gates": [
+        "fairness/bias review"
+      ]
+    },
+    {
+      "id": "TKT-P1-009",
+      "title": "Self-Exclusion + Responsible-Use Runtime Controls",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [],
+      "api": [
+        "POST /compliance/self-exclusion",
+        "GET /compliance/self-exclusion/status"
+      ],
+      "schema": [
+        "self_exclusions table"
+      ],
+      "ui": [
+        "Web/mobile self-exclusion controls"
+      ],
+      "legal_gates": [
+        "terms/responsible-use legal review"
+      ]
+    },
+    {
+      "id": "TKT-P1-010",
+      "title": "Endowed Progress + Downscale UX Completion",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [
+        "TKT-P0-001"
+      ],
+      "api": [
+        "GET /contracts/:id/progress-model"
+      ],
+      "schema": [
+        "contract_progress_events table"
+      ],
+      "ui": [
+        "Bounded stake selector",
+        "Protected vs active vault visualization",
+        "Downscale recommendation UX"
+      ],
+      "legal_gates": [
+        "skill/commitment framing copy review"
+      ]
+    },
+    {
+      "id": "TKT-P0-011",
+      "title": "Forfeit Disposition Policy Engine + Refund-Only Kill Switch",
+      "priority": "P0",
+      "status": "proposed",
+      "dependencies": [
+        "TKT-P0-001",
+        "TKT-P0-004"
+      ],
+      "api": [
+        "GET /payments/disposition-policy/effective",
+        "POST /payments/disposition-policy/simulate",
+        "PUT /compliance/jurisdictions/:code/disposition-mode"
+      ],
+      "schema": [
+        "jurisdiction_disposition_modes table",
+        "settlement_runs.disposition_mode",
+        "settlement_runs.legal_basis_ref"
+      ],
+      "ui": [
+        "Compliance admin disposition controls",
+        "Settlement timeline legal-mode badges"
+      ],
+      "legal_gates": [
+        "per-state mode mapping sign-off",
+        "refund-only trigger criteria approval"
+      ]
+    },
+    {
+      "id": "TKT-P1-012",
+      "title": "Weekend Multiplier Policy Engine (Recovery Stream)",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [
+        "TKT-P1-005"
+      ],
+      "api": [
+        "GET /contracts/:id/attestation riskWindow metadata",
+        "GET /contracts/:id/recovery/penalty-preview"
+      ],
+      "schema": [
+        "contract_penalty_windows table"
+      ],
+      "ui": [
+        "Weekend risk badge",
+        "Penalty delta disclosure"
+      ],
+      "legal_gates": [
+        "penalty disclosure copy review"
+      ]
+    },
+    {
+      "id": "TKT-P1-013",
+      "title": "Video Proof Processing Pipeline Completion",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [
+        "TKT-P0-002"
+      ],
+      "api": [
+        "GET /proofs/:id/processing-status",
+        "POST /proofs/:id/processing-complete"
+      ],
+      "schema": [
+        "proof_processing_jobs table",
+        "proofs.processing_status",
+        "proofs.challenge_token",
+        "proofs.metadata_hash"
+      ],
+      "ui": [
+        "Proof processing state timeline",
+        "Retry/recovery action for failed processing"
+      ],
+      "legal_gates": [
+        "raw-media retention policy approval"
+      ]
+    },
+    {
+      "id": "TKT-P1-014",
+      "title": "Fury Audit Masks (Identity Redaction) Runtime",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [
+        "TKT-P1-013"
+      ],
+      "api": [
+        "Masked media URL for Fury proof detail",
+        "GET /fury/review/:assignmentId/mask-audit"
+      ],
+      "schema": [
+        "proofs.masked_media_uri",
+        "proofs.redaction_status",
+        "proofs.redaction_profile",
+        "fury_assignments.subject_alias"
+      ],
+      "ui": [
+        "Alias-only reviewer surface",
+        "Mask audit visibility for admins"
+      ],
+      "legal_gates": [
+        "biometric redaction policy review"
+      ]
+    },
+    {
+      "id": "TKT-P1-015",
+      "title": "Collusion Slashing + Honey-Trap Enforcement",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [
+        "TKT-P1-008",
+        "TKT-P1-014"
+      ],
+      "api": [
+        "POST /fury/enforcement/evaluate",
+        "POST /fury/enforcement/appeals/:caseId"
+      ],
+      "schema": [
+        "fury_enforcement_cases table",
+        "fury_penalties table"
+      ],
+      "ui": [
+        "Moderation enforcement queue",
+        "Appeal outcome controls"
+      ],
+      "legal_gates": [
+        "reviewer sanctions and appeal policy approval"
+      ]
+    },
+    {
+      "id": "TKT-P1-016",
+      "title": "Identity-Based Oath Onboarding Flow",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [
+        "TKT-P1-010"
+      ],
+      "api": [
+        "POST /onboarding/identity-oath",
+        "GET /onboarding/identity-oath"
+      ],
+      "schema": [
+        "user_identity_oaths table"
+      ],
+      "ui": [
+        "Identity-to-oath onboarding wizard"
+      ],
+      "legal_gates": [
+        "onboarding language compliance review"
+      ]
+    },
+    {
+      "id": "TKT-P1-017",
+      "title": "Accountability Partner Protocol Completion",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [
+        "TKT-P1-005"
+      ],
+      "api": [
+        "POST /contracts/:id/accountability/invite",
+        "POST /contracts/:id/accountability/respond",
+        "POST /contracts/:id/recovery/veto-break",
+        "GET /contracts/:id/accountability/status"
+      ],
+      "schema": [
+        "accountability_partner_events table",
+        "accountability_partners status enum hardening"
+      ],
+      "ui": [
+        "Partner invite/response flow",
+        "Partner veto visibility in contract detail"
+      ],
+      "legal_gates": [
+        "partner authority and visibility disclosure approval"
+      ]
+    },
+    {
+      "id": "TKT-P1-018",
+      "title": "Goal-Gradient Dashboard + Live Leaderboard Completion",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [
+        "TKT-P1-010",
+        "TKT-P1-006"
+      ],
+      "api": [
+        "GET /dashboard/progress",
+        "GET /users/leaderboard/stream"
+      ],
+      "schema": [
+        "leaderboard_events table",
+        "dashboard_progress_snapshots table"
+      ],
+      "ui": [
+        "Multi-layer goal-gradient dashboard",
+        "SSE-powered leaderboard updates with polling fallback"
+      ],
+      "legal_gates": [
+        "terminology sanitization pass for new labels"
+      ]
+    },
+    {
+      "id": "TKT-P1-019",
+      "title": "Skill-Contest Whitepaper + Release Gate",
+      "priority": "P1",
+      "status": "proposed",
+      "dependencies": [
+        "TKT-P0-011"
+      ],
+      "api": [
+        "GET /compliance/artifacts/skill-whitepaper"
+      ],
+      "schema": [
+        "compliance_artifacts table"
+      ],
+      "ui": [
+        "Legal site whitepaper artifact panel"
+      ],
+      "legal_gates": [
+        "counsel-signed whitepaper version approval",
+        "release gate enforcement for missing artifact"
+      ]
+    }
+  ],
+  "coverage_delta": [
+    {
+      "source_feature": "F-CORE-10",
+      "ticket_id": "TKT-P1-012"
+    },
+    {
+      "source_feature": "F-VERIFY-07",
+      "ticket_id": "TKT-P1-013"
+    },
+    {
+      "source_feature": "F-FURY-04",
+      "ticket_id": "TKT-P1-014"
+    },
+    {
+      "source_feature": "F-FURY-09",
+      "ticket_id": "TKT-P1-015"
+    },
+    {
+      "source_feature": "F-UX-01",
+      "ticket_id": "TKT-P1-016"
+    },
+    {
+      "source_feature": "F-SOCIAL-01",
+      "ticket_id": "TKT-P1-017"
+    },
+    {
+      "source_feature": "F-UX-05,F-WEB-04",
+      "ticket_id": "TKT-P1-018"
+    },
+    {
+      "source_feature": "F-LEGAL-04",
+      "ticket_id": "TKT-P0-011"
+    },
+    {
+      "source_feature": "F-LEGAL-05",
+      "ticket_id": "TKT-P1-019"
+    }
+  ],
+  "full_unresolved_coverage": [
+    {
+      "source_feature": "F-CORE-04",
+      "ticket_id": "TKT-P0-001"
+    },
+    {
+      "source_feature": "F-CORE-10",
+      "ticket_id": "TKT-P1-012"
+    },
+    {
+      "source_feature": "F-CORE-11",
+      "ticket_id": "TKT-P1-005"
+    },
+    {
+      "source_feature": "F-VERIFY-02",
+      "ticket_id": "TKT-P1-007"
+    },
+    {
+      "source_feature": "F-VERIFY-05",
+      "ticket_id": "TKT-P1-007"
+    },
+    {
+      "source_feature": "F-VERIFY-07",
+      "ticket_id": "TKT-P1-013"
+    },
+    {
+      "source_feature": "F-FURY-03",
+      "ticket_id": "TKT-P1-008"
+    },
+    {
+      "source_feature": "F-FURY-04",
+      "ticket_id": "TKT-P1-014"
+    },
+    {
+      "source_feature": "F-FURY-09",
+      "ticket_id": "TKT-P1-015"
+    },
+    {
+      "source_feature": "F-AEGIS-02",
+      "ticket_id": "TKT-P0-004"
+    },
+    {
+      "source_feature": "F-AEGIS-04",
+      "ticket_id": "TKT-P1-005"
+    },
+    {
+      "source_feature": "F-AEGIS-06",
+      "ticket_id": "TKT-P1-009"
+    },
+    {
+      "source_feature": "F-UX-01",
+      "ticket_id": "TKT-P1-016"
+    },
+    {
+      "source_feature": "F-UX-02",
+      "ticket_id": "TKT-P1-010"
+    },
+    {
+      "source_feature": "F-UX-03",
+      "ticket_id": "TKT-P1-010"
+    },
+    {
+      "source_feature": "F-UX-05",
+      "ticket_id": "TKT-P1-018"
+    },
+    {
+      "source_feature": "F-UX-06",
+      "ticket_id": "TKT-P1-010"
+    },
+    {
+      "source_feature": "F-SOCIAL-01",
+      "ticket_id": "TKT-P1-017"
+    },
+    {
+      "source_feature": "F-MOBILE-01",
+      "ticket_id": "TKT-P0-002"
+    },
+    {
+      "source_feature": "F-MOBILE-03",
+      "ticket_id": "TKT-P1-006"
+    },
+    {
+      "source_feature": "F-WEB-04",
+      "ticket_id": "TKT-P1-018"
+    },
+    {
+      "source_feature": "F-LEGAL-03",
+      "ticket_id": "TKT-P0-004,TKT-P0-011"
+    },
+    {
+      "source_feature": "F-LEGAL-04",
+      "ticket_id": "TKT-P0-011"
+    },
+    {
+      "source_feature": "F-LEGAL-05",
+      "ticket_id": "TKT-P1-019"
+    }
+  ]
+}

@@ -12,6 +12,7 @@ import { CreateContractDto, SubmitProofDto } from './dto';
 const mockContractsService = {
   getUserContracts: jest.fn(),
   createContract: jest.fn(),
+  getCohortSnapshot: jest.fn(),
   getContract: jest.fn(),
   getContractProofs: jest.fn(),
   submitProof: jest.fn(),
@@ -19,6 +20,7 @@ const mockContractsService = {
   fileDispute: jest.fn(),
   getAttestationStatus: jest.fn(),
   submitAttestation: jest.fn(),
+  submitWhoopScoredState: jest.fn(),
   claimBounty: jest.fn(),
 } as unknown as ContractsService;
 
@@ -109,6 +111,27 @@ describe('ContractsController', () => {
       );
 
       await expect(controller.findOne('nonexistent', testUser)).rejects.toThrow('Contract not found');
+    });
+  });
+
+  describe('GET /contracts/cohorts/:cohortId/snapshot', () => {
+    it('should call contractsService.getCohortSnapshot with cohortId and userId', async () => {
+      const mockSnapshot = {
+        cohortId: 'launch-2026-03-a',
+        participantCount: 2,
+        activeCount: 1,
+        outCount: 1,
+        participants: [],
+      };
+      (mockContractsService.getCohortSnapshot as jest.Mock).mockResolvedValue(mockSnapshot);
+
+      const result = await controller.getCohortSnapshot('launch-2026-03-a', testUser);
+
+      expect(mockContractsService.getCohortSnapshot).toHaveBeenCalledWith(
+        'launch-2026-03-a',
+        'user-1',
+      );
+      expect(result).toEqual(mockSnapshot);
     });
   });
 
@@ -247,6 +270,23 @@ describe('ContractsController', () => {
     });
   });
 
+  describe('POST /contracts/:id/whoop/scored', () => {
+    it('should call contractsService.submitWhoopScoredState with contractId + userId', async () => {
+      const whoopDto = { state: 'SCORED', source: 'whoop-webhook-v1' };
+      const mockResult = { status: 'recorded', state: 'SCORED', attestationApplied: true };
+      (mockContractsService.submitWhoopScoredState as jest.Mock).mockResolvedValue(mockResult);
+
+      const result = await controller.submitWhoopScored('c1', testUser, whoopDto as any);
+
+      expect(mockContractsService.submitWhoopScoredState).toHaveBeenCalledWith('c1', {
+        state: 'SCORED',
+        source: 'whoop-webhook-v1',
+        userId: 'user-1',
+      });
+      expect(result).toEqual(mockResult);
+    });
+  });
+
   describe('POST /bounty/:linkId', () => {
     it('should call contractsService.claimBounty with linkId, mediaUri, and IP', async () => {
       const mockResult = { bountyId: 'b1', status: 'SUBMITTED' };
@@ -321,6 +361,38 @@ describe('ContractsController', () => {
         verificationMethod: 'photo',
         stakeAmount: 50,
         durationDays: 30,
+      });
+      const errors = await validate(dto);
+      expect(errors.length).toBe(0);
+    });
+
+    it('should reject cohort.maxPodSize above 5', async () => {
+      const dto = plainToInstance(CreateContractDto, {
+        oathCategory: 'Biological',
+        verificationMethod: 'photo',
+        stakeAmount: 50,
+        durationDays: 30,
+        cohort: {
+          cohortId: 'launch-2026-03-a',
+          mode: 'POD_BASED',
+          podId: 'pod-1',
+          maxPodSize: 6,
+        },
+      });
+      const errors = await validate(dto);
+      const cohortError = errors.find((e) => e.property === 'cohort');
+      expect(cohortError).toBeDefined();
+    });
+
+    it('should accept CreateContractDto with MVP_39 pricing metadata', async () => {
+      const dto = plainToInstance(CreateContractDto, {
+        oathCategory: 'Recovery',
+        verificationMethod: 'ATTESTATION',
+        stakeAmount: 30,
+        durationDays: 30,
+        pricing: {
+          plan: 'MVP_39',
+        },
       });
       const errors = await validate(dto);
       expect(errors.length).toBe(0);

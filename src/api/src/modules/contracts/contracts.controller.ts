@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Pool } from 'pg';
 import { ContractsService } from './contracts.service';
-import { CreateContractDto, SubmitProofDto } from './dto';
+import { CreateContractDto, SubmitProofDto, SubmitWhoopScoredDto } from './dto';
 import { DisputeService } from '../../../services/escrow/dispute.service';
 import { StripeFboService } from '../../../services/escrow/stripe.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
@@ -40,6 +40,16 @@ export class ContractsController {
   @ApiOperation({ summary: 'Create a new behavioral contract with a financial stake' })
   async create(@CurrentUser() user: { id: string }, @Body() dto: CreateContractDto) {
     return this.contractsService.createContract({ ...dto, userId: user.id });
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get('cohorts/:cohortId/snapshot')
+  @ApiOperation({ summary: 'Get cohort snapshot (roster, Active/Out visibility, pod breakdown)' })
+  async getCohortSnapshot(
+    @Param('cohortId') cohortId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.contractsService.getCohortSnapshot(cohortId, user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard)
@@ -123,6 +133,18 @@ export class ContractsController {
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.submitAttestation(contractId, user.id);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
+  @Post(':id/whoop/scored')
+  @ApiOperation({ summary: 'Ingest Whoop SCORED state and optionally credit daily attestation' })
+  @Throttle({ default: { ttl: 60000, limit: 20 } })
+  async submitWhoopScored(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+    @Body() dto: SubmitWhoopScoredDto,
+  ) {
+    return this.contractsService.submitWhoopScoredState(contractId, { ...dto, userId: user.id });
   }
 
   // --- No Auth Guard for Bounty Claims (Ex-partner access) ---

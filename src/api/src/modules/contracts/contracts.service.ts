@@ -23,13 +23,24 @@ import {
   MAX_NOCONTACT_DURATION_DAYS,
 } from '../../../../shared/libs/behavioral-logic';
 
-import { CreateContractDto as CreateContractDtoBase, SubmitProofDto as SubmitProofDtoBase } from './dto';
+import {
+  CreateContractDto as CreateContractDtoBase,
+  SubmitProofDto as SubmitProofDtoBase,
+  SubmitWhoopScoredDto as SubmitWhoopScoredDtoBase,
+  CohortMode,
+  PricingPlan,
+  WhoopScoredState,
+} from './dto';
 
 export interface CreateContractInput extends CreateContractDtoBase {
   userId: string;
 }
 
 export interface SubmitProofInput extends SubmitProofDtoBase {
+  userId: string;
+}
+
+export interface SubmitWhoopScoredInput extends SubmitWhoopScoredDtoBase {
   userId: string;
 }
 
@@ -61,6 +72,19 @@ interface ContractResolutionSideEffectRow {
   quarantine_reason?: string | null;
   locked_at?: string | null;
 }
+
+const DEFAULT_COHORT_MAX_MEMBERS = 50;
+const DEFAULT_POD_MAX_MEMBERS = 5;
+const MVP_39_TOTAL_USD = 39;
+const MVP_39_PLATFORM_FEE_USD = 9;
+const MVP_39_STAKE_USD = 30;
+
+type PricingMetadata = {
+  plan: PricingPlan;
+  totalEntryUsd: number;
+  platformFeeUsd: number;
+  refundableStakeUsd: number;
+};
 
 @Injectable()
 export class ContractsService {
@@ -571,8 +595,9 @@ export class ContractsService {
     contractId: string,
     paymentIntentId: string,
     bountyLinkId: string | null,
-  ): { contractId: string; paymentIntentId: string; bountyLink?: string } {
-    const response: { contractId: string; paymentIntentId: string; bountyLink?: string } = {
+    pricing?: PricingMetadata,
+  ): { contractId: string; paymentIntentId: string; bountyLink?: string; pricing?: PricingMetadata } {
+    const response: { contractId: string; paymentIntentId: string; bountyLink?: string; pricing?: PricingMetadata } = {
       contractId,
       paymentIntentId,
     };
@@ -582,7 +607,125 @@ export class ContractsService {
       response.bountyLink = `${publicWebUrl}/whistleblower/${bountyLinkId}`;
     }
 
+    if (pricing) {
+      response.pricing = pricing;
+    }
+
     return response;
+  }
+
+  private normalizeContractPricing(dto: CreateContractInput): {
+    dto: CreateContractInput;
+    pricingMetadata?: PricingMetadata;
+  } {
+    const plan = dto.pricing?.plan ?? PricingPlan.CUSTOM;
+    if (plan === PricingPlan.MVP_39) {
+      return {
+        dto: {
+          ...dto,
+          stakeAmount: MVP_39_STAKE_USD,
+        },
+        pricingMetadata: {
+          plan: PricingPlan.MVP_39,
+          totalEntryUsd: MVP_39_TOTAL_USD,
+          platformFeeUsd: MVP_39_PLATFORM_FEE_USD,
+          refundableStakeUsd: MVP_39_STAKE_USD,
+        },
+      };
+    }
+
+    return { dto };
+  }
+
+  private deriveCohortAlias(email: string | null | undefined, providedAlias?: string): string {
+    const candidate = String(providedAlias || '').trim();
+    if (candidate) {
+      return candidate.slice(0, 32);
+    }
+
+    const local = String(email || '').split('@')[0] || 'anonymous';
+    const first = local.split(/[._-]/)[0] || local;
+    const cleaned = first.replace(/[^a-zA-Z]/g, '');
+    if (!cleaned) {
+      return 'Anonymous';
+    }
+
+    return `${cleaned.charAt(0).toUpperCase()}${cleaned.slice(1, 31).toLowerCase()}`;
+  }
+
+  private async buildCohortMetadata(dto: CreateContractInput, user: any): Promise<Record<string, any> | null> {
+    if (!dto.cohort) {
+      return null;
+    }
+
+    const cohortId = String(dto.cohort.cohortId || '').trim();
+    if (!cohortId) {
+      throw new BadRequestException('cohort.cohortId is required when cohort metadata is provided');
+    }
+
+    const mode = dto.cohort.mode;
+    const maxCohortSize = dto.cohort.maxCohortSize ?? DEFAULT_COHORT_MAX_MEMBERS;
+    const maxPodSize = dto.cohort.maxPodSize ?? DEFAULT_POD_MAX_MEMBERS;
+    const podId = dto.cohort.podId ? String(dto.cohort.podId).trim() : null;
+
+    if (mode === CohortMode.POD_BASED && !podId) {
+      throw new BadRequestException('cohort.podId is required for POD_BASED cohorts');
+    }
+
+    if (mode === CohortMode.POD_BASED && maxPodSize > DEFAULT_POD_MAX_MEMBERS) {
+      throw new BadRequestException(`POD_BASED cohorts cap pod size at ${DEFAULT_POD_MAX_MEMBERS}`);
+    }
+
+    const existingEnrollment = await this.pool.query(
+      `SELECT COUNT(*) AS count
+       FROM contracts
+       WHERE user_id = $1
+         AND metadata->'cohort'->>'cohortId' = $2
+         AND status IN ('PENDING_STAKE', 'ACTIVE')`,
+      [dto.userId, cohortId],
+    );
+
+    if (Number(existingEnrollment.rows[0]?.count || 0) > 0) {
+      throw new BadRequestException('User already has an active/pending contract in this cohort');
+    }
+
+    const cohortOccupancy = await this.pool.query(
+      `SELECT COUNT(DISTINCT user_id) AS count
+       FROM contracts
+       WHERE metadata->'cohort'->>'cohortId' = $1
+         AND status IN ('PENDING_STAKE', 'ACTIVE')`,
+      [cohortId],
+    );
+
+    if (Number(cohortOccupancy.rows[0]?.count || 0) >= maxCohortSize) {
+      throw new BadRequestException(`Cohort ${cohortId} is full (max ${maxCohortSize})`);
+    }
+
+    if (mode === CohortMode.POD_BASED && podId) {
+      const podOccupancy = await this.pool.query(
+        `SELECT COUNT(DISTINCT user_id) AS count
+         FROM contracts
+         WHERE metadata->'cohort'->>'cohortId' = $1
+           AND metadata->'cohort'->>'podId' = $2
+           AND status IN ('PENDING_STAKE', 'ACTIVE')`,
+        [cohortId, podId],
+      );
+
+      if (Number(podOccupancy.rows[0]?.count || 0) >= maxPodSize) {
+        throw new BadRequestException(`Pod ${podId} is full (max ${maxPodSize})`);
+      }
+    }
+
+    return {
+      cohortId,
+      mode,
+      podId,
+      status: 'ACTIVE',
+      maxCohortSize,
+      maxPodSize,
+      displayAlias: this.deriveCohortAlias(user.email, dto.cohort.displayAlias),
+      joinedAt: new Date().toISOString(),
+    };
   }
 
   private async markContractReconcileRequired(
@@ -742,8 +885,9 @@ export class ContractsService {
     now: Date;
     endsAt: Date;
     contractMetadata: Record<string, any>;
-  }): Promise<{ contractId: string; paymentIntentId: string; bountyLink?: string }> {
-    const { dto, user, bountyLinkId, now, endsAt, contractMetadata } = input;
+    pricingMetadata?: PricingMetadata;
+  }): Promise<{ contractId: string; paymentIntentId: string; bountyLink?: string; pricing?: PricingMetadata }> {
+    const { dto, user, bountyLinkId, now, endsAt, contractMetadata, pricingMetadata } = input;
     const poolWithConnect = this.pool as unknown as { connect: () => Promise<PoolClient> };
 
     let contractId = '';
@@ -879,10 +1023,10 @@ export class ContractsService {
       );
     }
 
-    return this.buildCreateContractResponse(contractId, paymentIntent.id, bountyLinkId);
+    return this.buildCreateContractResponse(contractId, paymentIntent.id, bountyLinkId, pricingMetadata);
   }
 
-  async createContract(dto: CreateContractInput): Promise<{ contractId: string; paymentIntentId: string; bountyLink?: string }> {
+  async createContract(dto: CreateContractInput): Promise<{ contractId: string; paymentIntentId: string; bountyLink?: string; pricing?: PricingMetadata }> {
     // 1. Validate oath category
     const validCategories = Object.values(OathCategory) as string[];
     if (!validCategories.includes(dto.oathCategory)) {
@@ -900,6 +1044,9 @@ export class ContractsService {
         `Verification method ${dto.verificationMethod} is not valid for oath category ${dto.oathCategory}`,
       );
     }
+
+    const pricingPlan = this.normalizeContractPricing(dto);
+    dto = pricingPlan.dto;
 
     // 2. Fetch user
     const userResult = await this.pool.query('SELECT * FROM users WHERE id = $1', [dto.userId]);
@@ -988,11 +1135,23 @@ export class ContractsService {
       throw new BadRequestException('User has no payment method on file');
     }
 
+    const cohortMetadata = await this.buildCohortMetadata(dto, user);
+
     const now = new Date();
     const endsAt = new Date(now.getTime() + dto.durationDays * 24 * 60 * 60 * 1000);
-    const contractMetadata = dto.recoveryMetadata
-      ? { recovery: { noContactIdentifiers: dto.recoveryMetadata.noContactIdentifiers, acknowledgments: dto.recoveryMetadata.acknowledgments } }
-      : {};
+    const contractMetadata: Record<string, any> = {};
+    if (dto.recoveryMetadata) {
+      contractMetadata.recovery = {
+        noContactIdentifiers: dto.recoveryMetadata.noContactIdentifiers,
+        acknowledgments: dto.recoveryMetadata.acknowledgments,
+      };
+    }
+    if (cohortMetadata) {
+      contractMetadata.cohort = cohortMetadata;
+    }
+    if (pricingPlan.pricingMetadata) {
+      contractMetadata.pricing = pricingPlan.pricingMetadata;
+    }
 
     const supportsTransactionalPath =
       typeof (this.pool as unknown as { connect?: unknown }).connect === 'function';
@@ -1005,6 +1164,7 @@ export class ContractsService {
         now,
         endsAt,
         contractMetadata,
+        pricingMetadata: pricingPlan.pricingMetadata,
       });
     }
 
@@ -1112,7 +1272,12 @@ export class ContractsService {
       // Notification failure must never abort a successful financial transaction
     }
 
-    return this.buildCreateContractResponse(contractId, paymentIntent.id, bountyLinkId);
+    return this.buildCreateContractResponse(
+      contractId,
+      paymentIntent.id,
+      bountyLinkId,
+      pricingPlan.pricingMetadata,
+    );
   }
 
   async getContract(contractId: string, requester?: ContractReadRequester) {
@@ -1519,6 +1684,127 @@ export class ContractsService {
     return result.rows;
   }
 
+  async getCohortSnapshot(cohortId: string, requesterUserId: string) {
+    const requesterRoleResult = await this.pool.query(
+      `SELECT role FROM users WHERE id = $1`,
+      [requesterUserId],
+    );
+    const requesterRole = String(requesterRoleResult.rows[0]?.role || 'USER').toUpperCase();
+
+    if (requesterRole !== 'ADMIN') {
+      const membership = await this.pool.query(
+        `SELECT 1
+         FROM contracts
+         WHERE user_id = $1
+           AND metadata->'cohort'->>'cohortId' = $2
+           AND status IN ('PENDING_STAKE', 'ACTIVE', 'COMPLETED', 'FAILED')
+         LIMIT 1`,
+        [requesterUserId, cohortId],
+      );
+      if (membership.rows.length === 0) {
+        throw new ForbiddenException('Requester is not a participant in this cohort');
+      }
+    }
+
+    const result = await this.pool.query(
+      `WITH latest_contracts AS (
+         SELECT DISTINCT ON (c.user_id)
+           c.id AS contract_id,
+           c.user_id,
+           c.status,
+           c.created_at,
+           c.metadata->'cohort'->>'mode' AS cohort_mode,
+           c.metadata->'cohort'->>'podId' AS pod_id,
+           c.metadata->'cohort'->>'displayAlias' AS display_alias,
+           c.metadata->'cohort'->>'cohortId' AS cohort_id
+         FROM contracts c
+         WHERE c.metadata->'cohort'->>'cohortId' = $1
+         ORDER BY c.user_id, c.created_at DESC
+       )
+       SELECT
+         lc.contract_id,
+         lc.user_id,
+         lc.status,
+         lc.created_at,
+         lc.cohort_mode,
+         lc.pod_id,
+         lc.display_alias,
+         lc.cohort_id,
+         u.email,
+         COALESCE(streak.streak_days, 0) AS streak_days
+       FROM latest_contracts lc
+       JOIN users u ON u.id = lc.user_id
+       LEFT JOIN LATERAL (
+         SELECT COUNT(*)::int AS streak_days
+         FROM (
+           SELECT
+             a.attestation_date,
+             ROW_NUMBER() OVER (ORDER BY a.attestation_date DESC) -
+             (a.attestation_date - CURRENT_DATE)::int AS grp
+           FROM attestations a
+           WHERE a.contract_id = lc.contract_id
+             AND a.status IN ('ATTESTED', 'COSIGNED')
+           ORDER BY a.attestation_date DESC
+         ) streak_rows
+         WHERE streak_rows.grp = 1
+       ) streak ON TRUE
+       ORDER BY lc.created_at DESC`,
+      [cohortId],
+    );
+
+    const participants = result.rows.map((row: any) => {
+      const status = row.status === 'ACTIVE' ? 'ACTIVE' : 'OUT';
+      return {
+        userId: row.user_id,
+        alias: this.deriveCohortAlias(row.email, row.display_alias),
+        status,
+        streakDays: Number(row.streak_days || 0),
+        podId: row.pod_id || null,
+        mode: row.cohort_mode || null,
+        isRequester: row.user_id === requesterUserId,
+      };
+    });
+
+    const podMap = new Map<string, { podId: string; activeCount: number; outCount: number; members: any[] }>();
+    for (const participant of participants) {
+      if (!participant.podId) continue;
+      if (!podMap.has(participant.podId)) {
+        podMap.set(participant.podId, {
+          podId: participant.podId,
+          activeCount: 0,
+          outCount: 0,
+          members: [],
+        });
+      }
+
+      const pod = podMap.get(participant.podId)!;
+      pod.members.push({
+        alias: participant.alias,
+        status: participant.status,
+        streakDays: participant.streakDays,
+        isRequester: participant.isRequester,
+      });
+      if (participant.status === 'ACTIVE') {
+        pod.activeCount += 1;
+      } else {
+        pod.outCount += 1;
+      }
+    }
+
+    const activeCount = participants.filter((p) => p.status === 'ACTIVE').length;
+    const outCount = participants.length - activeCount;
+
+    return {
+      cohortId,
+      participantCount: participants.length,
+      activeCount,
+      outCount,
+      pods: Array.from(podMap.values()),
+      participants,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
   // ===== Attestation Flow (Recovery Stream) =====
 
   async getAttestationStatus(contractId: string, userId: string) {
@@ -1664,5 +1950,77 @@ export class ContractsService {
     }
 
     return { status: 'attested' };
+  }
+
+  async submitWhoopScoredState(contractId: string, dto: SubmitWhoopScoredInput): Promise<{
+    status: 'recorded' | 'ignored';
+    state: WhoopScoredState;
+    attestationApplied: boolean;
+  }> {
+    const contract = await this.pool.query(
+      `SELECT id, user_id, oath_category, status
+       FROM contracts WHERE id = $1`,
+      [contractId],
+    );
+
+    if (contract.rows.length === 0) {
+      throw new NotFoundException(`Contract ${contractId} not found`);
+    }
+
+    const c = contract.rows[0];
+    if (c.user_id !== dto.userId) {
+      throw new ForbiddenException('You do not own this contract');
+    }
+
+    if (c.status !== 'ACTIVE') {
+      throw new BadRequestException('Contract is not active');
+    }
+
+    if (!String(c.oath_category || '').startsWith('RECOVERY_')) {
+      throw new BadRequestException('Whoop SCORED ingestion is only available for Recovery stream contracts');
+    }
+
+    const state = String(dto.state || '').toUpperCase() as WhoopScoredState;
+    if (state !== WhoopScoredState.SCORED) {
+      await this.truthLog.appendEvent('WHOOP_STATE_IGNORED', {
+        contractId,
+        userId: dto.userId,
+        state,
+        source: dto.source || 'whoop-webhook',
+        recordedAt: dto.recordedAt || new Date().toISOString(),
+      });
+      return {
+        status: 'ignored',
+        state,
+        attestationApplied: false,
+      };
+    }
+
+    let attestationApplied = false;
+    try {
+      await this.submitAttestation(contractId, dto.userId);
+      attestationApplied = true;
+    } catch (err) {
+      if (err instanceof BadRequestException && /Already attested today/i.test(err.message)) {
+        attestationApplied = false;
+      } else {
+        throw err;
+      }
+    }
+
+    await this.truthLog.appendEvent('WHOOP_SCORED_STATE_RECEIVED', {
+      contractId,
+      userId: dto.userId,
+      state,
+      source: dto.source || 'whoop-webhook',
+      recordedAt: dto.recordedAt || new Date().toISOString(),
+      attestationApplied,
+    });
+
+    return {
+      status: 'recorded',
+      state,
+      attestationApplied,
+    };
   }
 }
