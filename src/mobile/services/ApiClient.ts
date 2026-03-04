@@ -282,4 +282,25 @@ export const ApiClient = {
       method: 'POST',
       body: JSON.stringify({ enterpriseToken }), // allow-secret
     }),
+
+  // Accountability Partner
+  getPendingInvitations: () =>
+    request<any[]>('/contracts/invitations'),
+
+  acceptPartnerInvitation: (contractId: string) =>
+    request<{ status: string }>(`/contracts/${contractId}/partner/accept`, {
+      method: 'POST',
+    }),
+
+  cosignAttestation: (contractId: string) =>
+    request<{ status: string }>(`/contracts/${contractId}/attestation/cosign`, {
+      method: 'POST',
+    }),
+
+  // Self-Exclusion
+  setSelfExclusion: (durationDays: number) =>
+    request<{ status: string; expiresAt: string }>('/users/me/self-exclusion', {
+      method: 'POST',
+      body: JSON.stringify({ durationDays }),
+    }),
 };
