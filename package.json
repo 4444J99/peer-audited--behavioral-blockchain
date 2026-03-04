@@ -38,6 +38,7 @@
     "@angular-devkit/core": {
       "ajv": "8.18.0"
     },
-    "serialize-javascript": ">=7.0.3"
+    "serialize-javascript": ">=7.0.3",
+    "multer": ">=2.1.0"
   }
 }
