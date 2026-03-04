@@ -183,7 +183,8 @@ Expo-managed React Native app. `src/mobile/screens/`: Dashboard, Login, Register
 - **Queue**: Redis 7-alpine + BullMQ (`FURY_ROUTER_QUEUE`)
 - **Storage**: Cloudflare R2 (zero-egress, signed URLs only)
 - **Payments**: Stripe FBO escrow (hold/capture/cancel)
-- **AI**: Gemini 2.5 Flash (`gemini-2.5-flash-preview-09-2025`)
+- **AI (API services)**: Gemini 2.5 Flash (`gemini-2.5-flash-preview-09-2025`) for grill-me/ELI5
+- **AI (Chat)**: Groq free tier + Llama 3.3 70B via OpenAI-compatible SDK (`src/web/app/api/chat/route.ts`). Configurable via `GROQ_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` env vars — works with any OpenAI-compatible endpoint (Groq, Together, Ollama, etc.)
 - **CI**: GitHub Actions (`ci.yml`) — Node 20, security audit, turbo test + build + lint, Gates 04–07, beta readiness, Terraform validate, Playwright E2E (chromium + firefox), CodeQL
 - **CD**: GitHub Actions (`deploy.yml`) — tag-triggered deploy to Render with smoke test. Also: `beta-promotion.yml`, `staging-promotion.yml`
 - **IaC**: Terraform (`infra/terraform/`) — Render services, Cloudflare R2, WAF rules. Also `scripts/infra/` for R2 lifecycle, WAF rules, pg data lake extract

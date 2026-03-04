@@ -15,6 +15,7 @@ metadata:
   last_validated: "2026-02-23"
   generated: "2026-02-22"
   language: typescript
+  tags: [nestjs, nextjs, react-native, tauri, stripe, groq, llama, postgresql, redis]
 
 agents:
   - name: ci
