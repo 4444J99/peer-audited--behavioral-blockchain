@@ -1,11 +1,13 @@
-import { Controller, Post, Req, Res, Logger, RawBodyRequest, OnModuleInit } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
+import { Controller, Get, Post, Req, Res, Logger, RawBodyRequest, OnModuleInit, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiExcludeEndpoint, ApiBearerAuth } from '@nestjs/swagger';
 import { Pool } from 'pg';
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { ContractsService } from '../contracts/contracts.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { CompliancePolicyService } from '../compliance/compliance-policy.service';
 import { Public } from '../../common/decorators/current-user.decorator';
+import { AuthGuard } from '../../../guards/auth.guard';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -18,6 +20,7 @@ export class PaymentsController implements OnModuleInit {
     private readonly pool: Pool,
     private readonly contractsService: ContractsService,
     private readonly notifications: NotificationsService,
+    private readonly compliancePolicy: CompliancePolicyService,
   ) {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
     this.stripe = new Stripe(apiKey, { apiVersion: '2023-10-16' });
@@ -29,6 +32,29 @@ export class PaymentsController implements OnModuleInit {
     if (process.env.NODE_ENV === 'production' && !this.webhookSecret) {
       throw new Error('STRIPE_WEBHOOK_SECRET must be set in production');
     }
+  }
+
+  @Get('disposition-policy/effective')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get the effective payout disposition policy for the current jurisdiction' })
+  async getEffectiveDispositionPolicy(@Req() req: Request) {
+    const decision = this.compliancePolicy.evaluateRequestPolicy(req);
+    let dispositionMode = 'HOUSE_RETAINED';
+
+    if (decision.state) {
+      const policy = await this.compliancePolicy.getJurisdictionPolicy(decision.state);
+      if (policy) {
+        dispositionMode = policy.dispositionMode;
+      }
+    }
+
+    return {
+      jurisdiction: decision.state,
+      tier: decision.tier,
+      dispositionMode,
+      legalBasisRef: dispositionMode === 'REFUND_ONLY' ? 'REGULATORY_RESTRICTION' : 'STANDARD_TERMS',
+    };
   }
 
   @Post('webhook')

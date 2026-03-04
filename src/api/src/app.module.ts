@@ -18,6 +18,7 @@ import { ProofsModule } from './modules/proofs/proofs.module';
 import { FeedModule } from './modules/feed/feed.module';
 import { ComplianceModule } from './modules/compliance/compliance.module';
 import { BetaModule } from './modules/beta/beta.module';
+import { OraclesModule } from './modules/oracles/oracles.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { BetaModule } from './modules/beta/beta.module';
     }),
     ComplianceModule,
     BetaModule,
+    OraclesModule,
     DatabaseModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
     AuthModule,

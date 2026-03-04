@@ -74,11 +74,11 @@ export class FuryWorker implements OnModuleInit {
       return;
     }
 
-    // 2. Create fury_assignments
+    // 2. Create fury_assignments with anonymized subject_alias
     for (const row of eligibleResult.rows) {
       await this.pool.query(
-        `INSERT INTO fury_assignments (proof_id, fury_user_id) VALUES ($1, $2)`,
-        [proofId, row.id],
+        `INSERT INTO fury_assignments (proof_id, fury_user_id, subject_alias) VALUES ($1, $2, $3)`,
+        [proofId, row.id, `Subject_${submitterUserId.substring(0, 8)}`],
       );
     }
 

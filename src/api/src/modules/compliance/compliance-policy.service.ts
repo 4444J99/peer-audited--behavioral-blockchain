@@ -1,5 +1,6 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { Request } from 'express';
+import { Pool } from 'pg';
 import { JurisdictionTier, STATE_TIERS } from '../../../services/geofencing';
 import { IdentityVerificationService } from './identity-verification.service';
 
@@ -44,8 +45,21 @@ export class CompliancePolicyService {
   ]);
 
   constructor(
+    private readonly pool: Pool,
     @Optional() private readonly identityVerification?: IdentityVerificationService,
   ) {}
+
+  async getJurisdictionPolicy(code: string): Promise<{ tier: JurisdictionTier; dispositionMode: string } | null> {
+    const result = await this.pool.query(
+      'SELECT tier, disposition_mode FROM jurisdictions WHERE code = $1',
+      [code.toUpperCase()]
+    );
+    if (result.rows.length === 0) return null;
+    return {
+      tier: result.rows[0].tier as JurisdictionTier,
+      dispositionMode: result.rows[0].disposition_mode,
+    };
+  }
 
   isKycEnforcementEnabled(): boolean {
     return String(process.env.KYC_ENFORCEMENT_ENABLED || 'false').toLowerCase() === 'true';
@@ -56,6 +70,9 @@ export class CompliancePolicyService {
   }
 
   shouldFailOpenOnMissingLocation(): boolean {
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction) return false;
+
     const raw = process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
     if (raw == null) return true;
     return String(raw).toLowerCase() !== 'false';

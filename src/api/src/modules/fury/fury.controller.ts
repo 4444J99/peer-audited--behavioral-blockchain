@@ -103,8 +103,8 @@ export class FuryController {
   @ApiOperation({ summary: 'Get pending audit assignments for the current Fury reviewer' })
   async getAssignments(@CurrentUser() user: { id: string }) {
     const result = await this.pool.query(
-      `SELECT fa.id AS assignment_id, fa.proof_id, fa.assigned_at,
-              p.media_uri, p.content_type, p.contract_id, p.submitted_at, p.description
+      `SELECT fa.id AS assignment_id, fa.proof_id, fa.assigned_at, fa.subject_alias,
+              p.media_uri, p.masked_media_uri, p.redaction_status, p.content_type, p.contract_id, p.submitted_at, p.description
        FROM fury_assignments fa
        JOIN proofs p ON fa.proof_id = p.id
        WHERE fa.fury_user_id = $1 AND fa.verdict IS NULL
@@ -116,9 +116,15 @@ export class FuryController {
     const assignments = await Promise.all(
       result.rows.map(async (row: any) => {
         let viewUrl: string | null = null;
-        if (row.media_uri) {
+
+        // Prefer masked media if redaction is completed
+        const mediaToView = (row.redaction_status === 'COMPLETED' && row.masked_media_uri)
+          ? row.masked_media_uri
+          : row.media_uri;
+
+        if (mediaToView) {
           try {
-            viewUrl = await this.r2.generateViewUrl(row.media_uri);
+            viewUrl = await this.r2.generateViewUrl(mediaToView);
           } catch {
             // R2 may be unavailable in dev — degrade gracefully
           }
@@ -127,10 +133,12 @@ export class FuryController {
           assignmentId: row.assignment_id,
           proofId: row.proof_id,
           assignedAt: row.assigned_at,
+          subjectAlias: row.subject_alias,
           contractId: row.contract_id,
           submittedAt: row.submitted_at,
           contentType: row.content_type,
           description: row.description,
+          redactionStatus: row.redaction_status,
           viewUrl,
         };
       }),
