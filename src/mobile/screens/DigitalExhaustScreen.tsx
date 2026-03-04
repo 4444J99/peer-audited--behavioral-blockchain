@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { ZKPrivacyEngine, ExhaustProof } from '../services/ZKPrivacyEngine';
 import { ApiClient } from '../services/ApiClient';
+import { createZkProofMediaUri } from '../utils/proof-media';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ContractsStackParamList } from '../App';
 
@@ -46,14 +47,19 @@ export default function DigitalExhaustScreen({ route, navigation }: Props) {
     if (!proof) return;
     setSubmitting(true);
     try {
-      // In a real app, we'd have a specific endpoint for ZK proofs
-      // await ApiClient.submitZKProof(contractId, proof);
-      
+      const mediaUri = createZkProofMediaUri(
+        contractId,
+        proof.proofHash,
+        proof.breachDetected,
+        proof.timestamp,
+      );
+      const result = await ApiClient.submitProof(contractId, { mediaUri });
+
       Alert.alert(
         'Verification Complete',
-        proof.breachDetected 
-          ? 'A breach was detected. The Aegis Protocol has been notified.' 
-          : 'Compliance verified. Your privacy was preserved during the scan.',
+        proof.breachDetected
+          ? `A breach was detected. Proof ${result.proofId} has been routed for review.`
+          : `Compliance verified. Proof ${result.proofId} has been routed while preserving private logs.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (err: any) {

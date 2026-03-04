@@ -156,8 +156,8 @@ export const ApiClient = {
       body: JSON.stringify(data),
     }),
 
-  submitProof: (contractId: string, data: { mediaUri?: string; notes?: string }) =>
-    request<{ proofId: string; status: string }>(`/contracts/${contractId}/proof`, {
+  submitProof: (contractId: string, data: { mediaUri: string }) =>
+    request<{ proofId: string; jobId: string; rejected?: boolean; reason?: string }>(`/contracts/${contractId}/proof`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),

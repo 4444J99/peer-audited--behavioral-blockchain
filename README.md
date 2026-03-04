@@ -156,6 +156,21 @@ npx tsx scripts/validation/05-behavioral-physics-check.ts  # Algorithm constant 
 node scripts/validation/07-claim-drift-check.js           # Claim drift detection
 ```
 
+### Beta Readiness
+
+```bash
+# Beta profile (default)
+BETA_API_URL=https://api-beta.example.com npm run beta:readiness
+
+# Staging profile
+READINESS_PROFILE=staging \
+STAGING_API_URL=https://api-staging.example.com \
+npm run beta:readiness
+```
+
+This writes `artifacts/beta-readiness-summary.json` with gate-level `passed`/`failed`/`skipped` statuses.
+Full policy and gate ownership live in `docs/planning/beta-readiness-contract.md`.
+
 ## Commands
 
 | Command | Description |
@@ -169,6 +184,7 @@ node scripts/validation/07-claim-drift-check.js           # Claim drift detectio
 | `npx turbo run lint` | TypeScript strict lint |
 | `npm run format` | Prettier across all workspaces |
 | `npm run clean` | Clean build artifacts + node_modules |
+| `npm run beta:readiness` | Run Phase 1 beta readiness contract + emit JSON artifact |
 | `cd src/api && npm run migrate` | Run database migrations |
 | `bash scripts/setup.sh` | Full bootstrap (docker + install + build + test) |
 
@@ -197,6 +213,9 @@ Copy `.env.example` to `.env` and set:
 | `GEMINI_API_KEY` | No | Gemini AI for goal ethics screening |
 | `KYC_ENFORCEMENT_ENABLED` | No | Enable KYC gating (default: `false`) |
 | `GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS` | No | Fail-open when geo headers missing (default: `true`) |
+| `BETA_API_URL` | No (required for full beta readiness verification) | Target API URL for `npm run beta:readiness` |
+| `BETA_WEB_URL` | No | Optional target web URL for beta readiness |
+| `BETA_ENV_LABEL` | No | Expected environment label for `/meta/release` (default: `beta`) |
 
 ## CI Pipeline
 
@@ -209,9 +228,10 @@ Copy `.env.example` to `.env` and set:
 5. **Gate 04** — Redacted build check (no gambling terminology in production)
 6. **Gate 06** — Security invariant check (no hardcoded secrets)
 7. **Gate 07** — Claim drift detection
-8. **Terraform** — `terraform fmt -check`, `terraform validate`
-9. **E2E** — Playwright (chromium + firefox matrix)
-10. **CodeQL** — JS/TS static analysis
+8. **Beta Readiness** — `npm run beta:readiness` (strict target enforcement in CI) + upload `artifacts/beta-readiness-summary.json`
+9. **Terraform** — `terraform fmt -check`, `terraform validate`
+10. **E2E** — Playwright (chromium + firefox matrix)
+11. **CodeQL** — JS/TS static analysis
 
 ## Security
 

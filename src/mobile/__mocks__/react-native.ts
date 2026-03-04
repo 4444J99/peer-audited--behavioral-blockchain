@@ -16,6 +16,14 @@ function createPrimitive(tag: string) {
     const safeProps: Record<string, any> = {};
     for (const key of Object.keys(props)) {
       const val = props[key];
+      if (key === 'onPress' && typeof val === 'function') {
+        safeProps.onClick = val;
+        continue;
+      }
+      if (key === 'onChangeText' && typeof val === 'function') {
+        safeProps.onChange = (event: any) => val(event?.target?.value ?? '');
+        continue;
+      }
       if (SAFE_HTML_PROPS.has(key) && (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean')) {
         safeProps[key] = val;
       }

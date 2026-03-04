@@ -40,6 +40,13 @@ The following are operator/internal-only in Phase 1:
 Any PR that expands tester-facing scope beyond this document must:
 
 - update this file,
-- update `docs/implementation-status.md` if claims change,
+- update `docs/planning/implementation-status.md` if claims change,
+- update `docs/planning/beta-readiness-contract.md` if release gates or readiness policy change,
 - include an explicit rationale for the scope change.
 
+## Readiness Source of Truth
+
+Phase 1 release go/no-go is defined by `docs/planning/beta-readiness-contract.md`.
+
+- Operational checks must run via `npm run beta:readiness`.
+- The generated artifact at `artifacts/beta-readiness-summary.json` is the canonical evidence format.

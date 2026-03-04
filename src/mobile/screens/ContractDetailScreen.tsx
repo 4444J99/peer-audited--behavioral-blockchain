@@ -40,20 +40,8 @@ export function ContractDetailScreen({ route, navigation }: Props) {
     }
   };
 
-  const handleSubmitProof = async () => {
-    setActionLoading('proof');
-    try {
-      await ApiClient.submitProof(contractId, { notes: 'Submitted from mobile' });
-      await loadContract();
-    } catch (err: any) {
-      const parsed = parseSupportTraceMessage(err?.message || 'Action failed');
-      Alert.alert(
-        'Error',
-        parsed.traceId ? `${parsed.message}\n\nSupport trace ID: ${parsed.traceId}` : parsed.message,
-      );
-    } finally {
-      setActionLoading('');
-    }
+  const handleSubmitProof = () => {
+    navigation.navigate('SubmitProof', { contractId });
   };
 
   const handleGraceDay = async () => {
@@ -189,7 +177,7 @@ export function ContractDetailScreen({ route, navigation }: Props) {
       {contract.status === 'ACTIVE' && (
         <View style={styles.actions}>
           <TouchableOpacity style={styles.primaryButton} onPress={handleSubmitProof} disabled={!!actionLoading}>
-            {actionLoading === 'proof' ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Submit Proof</Text>}
+            <Text style={styles.buttonText}>Capture Proof</Text>
           </TouchableOpacity>
           <View style={styles.secondaryActions}>
             <TouchableOpacity style={styles.secondaryButton} onPress={handleGraceDay} disabled={!!actionLoading}>

@@ -26,6 +26,7 @@ import { RegisterScreen } from './screens/RegisterScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { ContractListScreen } from './screens/ContractListScreen';
 import { ContractDetailScreen } from './screens/ContractDetailScreen';
+import { CameraScreen } from './screens/CameraScreen';
 import { AttestationScreen } from './screens/AttestationScreen';
 import DigitalExhaustScreen from './screens/DigitalExhaustScreen';
 import { CreateContractScreen } from './screens/CreateContractScreen';
@@ -99,6 +100,11 @@ function ContractsNavigator() {
         name="CreateContract"
         component={CreateContractScreen}
         options={{ title: 'New Oath' }}
+      />
+      <ContractsStack.Screen
+        name="SubmitProof"
+        component={CameraScreen}
+        options={{ title: 'Submit Proof' }}
       />
     </ContractsStack.Navigator>
   );

@@ -14,26 +14,37 @@ beforeEach(() => {
 });
 
 describe('UploadService', () => {
-  it('requestPreSignedUrl() calls API and returns uploadUrl and proofId', async () => {
+  it('requestPreSignedUrl() calls API and returns uploadUrl, proofId, and storageKey', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         uploadUrl: 'https://r2.example.com/upload?sig=abc',
         proofId: 'proof_123',
+        storageKey: 'proofs/proof_123/video.mp4',
       }),
     });
 
-    const result = await UploadService.requestPreSignedUrl('video/mp4');
+    const result = await UploadService.requestPreSignedUrl(
+      'contract_123',
+      'video/mp4',
+      'Camera capture from mobile',
+    );
 
     expect(result).toEqual({
       uploadUrl: 'https://r2.example.com/upload?sig=abc',
       proofId: 'proof_123',
+      storageKey: 'proofs/proof_123/video.mp4',
     });
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/contracts/proof/upload-url'),
+      expect.stringContaining('/proofs/upload-url'),
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({ Authorization: 'Bearer mock-jwt-token' }),
+        body: JSON.stringify({
+          contractId: 'contract_123',
+          contentType: 'video/mp4',
+          description: 'Camera capture from mobile',
+        }),
       }),
     );
   });
@@ -41,7 +52,7 @@ describe('UploadService', () => {
   it('requestPreSignedUrl() throws on non-OK response', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
 
-    await expect(UploadService.requestPreSignedUrl('video/mp4'))
+    await expect(UploadService.requestPreSignedUrl('contract_123', 'video/mp4'))
       .rejects.toThrow('Failed to request pre-signed URL: 401');
   });
 
@@ -82,25 +93,26 @@ describe('UploadService', () => {
     expect(ok).toBe(false);
   });
 
-  it('confirmUploadDispatch() calls dispatch endpoint and returns true', async () => {
+  it('confirmUpload() calls confirmation endpoint and returns true', async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
-    const ok = await UploadService.confirmUploadDispatch('proof_123');
+    const ok = await UploadService.confirmUpload('proof_123', 'proofs/proof_123/video.mp4');
 
     expect(ok).toBe(true);
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/contracts/proof_123/dispatch'),
+      expect.stringContaining('/proofs/proof_123/confirm-upload'),
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({ Authorization: 'Bearer mock-jwt-token' }),
+        body: JSON.stringify({ storageKey: 'proofs/proof_123/video.mp4' }),
       }),
     );
   });
 
-  it('confirmUploadDispatch() returns false on failure', async () => {
+  it('confirmUpload() returns false on failure', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
-    const ok = await UploadService.confirmUploadDispatch('proof_123');
+    const ok = await UploadService.confirmUpload('proof_123', 'proofs/proof_123/video.mp4');
 
     expect(ok).toBe(false);
   });

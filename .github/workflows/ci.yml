@@ -67,6 +67,39 @@ jobs:
     - name: Gate 07 — Claim Drift Check
       run: npm run validate:claims
 
+  beta_readiness:
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Run Beta Readiness Suite
+      env:
+        READINESS_PROFILE: beta
+        READINESS_REQUIRE_TARGETS: "true"
+        BETA_API_URL: ${{ secrets.CI_BETA_API_URL || secrets.CI_GATE05_API_URL }}
+        BETA_WEB_URL: ${{ secrets.BETA_WEB_URL }}
+        BETA_ENV_LABEL: ${{ secrets.BETA_ENV_LABEL }}
+      run: npm run beta:readiness
+
+    - name: Upload Beta Readiness Summary
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: beta-readiness-summary
+        path: artifacts/beta-readiness-summary.json
+        retention-days: 14
+
   terraform_validate:
     runs-on: ubuntu-latest
 
@@ -93,7 +126,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    needs: build_and_test
+    needs: [build_and_test, beta_readiness]
     strategy:
       fail-fast: false
       matrix:

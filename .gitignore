@@ -9,6 +9,7 @@ dist/
 **/.turbo/
 *.log
 *.pid
+artifacts/
 
 # IDE / editor artifacts
 .idea/

@@ -120,6 +120,21 @@ describe('ApiClient', () => {
     });
   });
 
+  describe('submitProof()', () => {
+    it('sends POST to /contracts/:id/proof with mediaUri', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ proofId: 'p1', jobId: 'j1' }));
+
+      const result = await ApiClient.submitProof('contract-42', { mediaUri: 'local://proof/camera/abc' });
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/contracts/contract-42/proof');
+      expect(opts.method).toBe('POST');
+      expect(JSON.parse(opts.body)).toEqual({ mediaUri: 'local://proof/camera/abc' });
+      expect(result.proofId).toBe('p1');
+      expect(result.jobId).toBe('j1');
+    });
+  });
+
   describe('getBalance()', () => {
     it('hits /wallet/balance', async () => {
       mockFetch.mockResolvedValueOnce(jsonOk({ ledgerBalance: 100 }));

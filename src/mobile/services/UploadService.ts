@@ -11,17 +11,25 @@ export class UploadService {
    * Contacts the NestJS backend to retrieve an authenticated, pre-signed Cloudflare R2 URL.
    * This authorizes a direct client-to-storage upload, bypassing API bottlenecking.
    */
-  static async requestPreSignedUrl(fileType: string): Promise<{ uploadUrl: string; proofId: string }> {
-    console.log(`UploadService: Requesting Pre-Signed URL for ${fileType}...`);
+  static async requestPreSignedUrl(
+    contractId: string,
+    fileType: string,
+    description?: string,
+  ): Promise<{ uploadUrl: string; proofId: string; storageKey: string }> {
+    console.log(`UploadService: Requesting Pre-Signed URL for ${fileType} (contract=${contractId})...`);
 
     const token = await SessionService.getToken();
-    const res = await fetch(`${API_BASE}/contracts/proof/upload-url`, {
+    const res = await fetch(`${API_BASE}/proofs/upload-url`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ contentType: fileType }),
+      body: JSON.stringify({
+        contractId,
+        contentType: fileType,
+        description: description || undefined,
+      }),
     });
 
     if (!res.ok) {
@@ -30,7 +38,11 @@ export class UploadService {
 
     const data = await res.json();
     console.log(`UploadService: Pre-Signed URL received for proof [${data.proofId}]`);
-    return { uploadUrl: data.uploadUrl, proofId: data.proofId };
+    return {
+      uploadUrl: data.uploadUrl,
+      proofId: data.proofId,
+      storageKey: data.storageKey,
+    };
   }
 
   /**
@@ -65,16 +77,17 @@ export class UploadService {
   /**
    * Notifies the Styx API that the upload is complete, dispatching the job to the BullMQ Fury Router.
    */
-  static async confirmUploadDispatch(proofId: string): Promise<boolean> {
+  static async confirmUpload(proofId: string, storageKey: string): Promise<boolean> {
     console.log(`UploadService: Confirming upload for Proof [${proofId}]. Dispatching to Fury Router...`);
 
     const token = await SessionService.getToken();
-    const res = await fetch(`${API_BASE}/contracts/${proofId}/dispatch`, {
+    const res = await fetch(`${API_BASE}/proofs/${proofId}/confirm-upload`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
+      body: JSON.stringify({ storageKey }),
     });
 
     if (!res.ok) {

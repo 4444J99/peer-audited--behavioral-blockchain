@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { UploadService } from '../services/UploadService';
 import { ApiClient } from '../services/ApiClient';
+import { createCameraWatermark, createSimulatedCaptureUri } from '../utils/proof-media';
 
 /**
  * The Styx Camera Module.
@@ -14,57 +15,58 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [watermark, setWatermark] = useState<string | null>(null);
+  const [captureStartedAt, setCaptureStartedAt] = useState<number | null>(null);
+  const [captureLabel, setCaptureLabel] = useState<string | null>(null);
 
   const toggleRecording = () => {
     if (isRecording) {
-      // Stop recording mock
       setIsRecording(false);
-      const mockCachedVideoUri = 'file:///data/user/0/com.styx.mobile/cache/live_proof_123.mp4';
-      setVideoUri(mockCachedVideoUri);
-      console.log('CameraModule: Recording stopped permanently at', mockCachedVideoUri);
+      const recordedUri = createSimulatedCaptureUri(contractId);
+      const elapsedMs = captureStartedAt ? Date.now() - captureStartedAt : 0;
+      setVideoUri(recordedUri);
+      setCaptureLabel(elapsedMs > 0 ? `${(elapsedMs / 1000).toFixed(1)}s capture` : null);
     } else {
-      // Start recording mock
       setVideoUri(null);
+      setCaptureLabel(null);
       setIsRecording(true);
-      
-      // Generate cryptographic "Weigh-in Word" equivalent watermark
-      const timestamp = new Date().toISOString();
-      const hwid = 'auth_m0b1l3'; // Mock hardware ID
-      const seed = Math.floor(Math.random() * 99999).toString(16);
-      setWatermark(`STYX//${hwid}::${timestamp}::[${seed}]`);
-      
-      console.log('CameraModule: Live Hardware Recording Started. Watermark engaged.');
+      setCaptureStartedAt(Date.now());
+      setWatermark(createCameraWatermark(contractId));
     }
   };
 
   const submitProof = async () => {
-    if (!videoUri) return;
+    if (!videoUri || !contractId) {
+      Alert.alert('Upload Failed', 'A contract ID is required to submit proof.');
+      return;
+    }
 
     setIsUploading(true);
     try {
-      // Step 1: Secure Upload URL
-      const { uploadUrl, proofId } = await UploadService.requestPreSignedUrl('video/mp4');
+      const { uploadUrl, proofId, storageKey } = await UploadService.requestPreSignedUrl(
+        contractId,
+        'video/mp4',
+        'Live camera submission',
+      );
 
-      // Step 2: Binary Transmission
       const transmissionSuccess = await UploadService.uploadVideoBuffer(videoUri, uploadUrl);
-
       if (!transmissionSuccess) {
         throw new Error('Video blob failed to transmit to Cloudflare R2.');
       }
 
-      // Step 3: API Dispatch via UploadService
-      await UploadService.confirmUploadDispatch(proofId);
-
-      // Step 4: Submit proof to API if contractId is provided
-      if (contractId) {
-        await ApiClient.submitProof(contractId, {
-          mediaUri: videoUri,
-          notes: `Video proof ${proofId} uploaded via CameraModule`,
-        });
+      const dispatchSuccess = await UploadService.confirmUpload(proofId, storageKey);
+      if (!dispatchSuccess) {
+        throw new Error('Proof upload confirmed failed during queue dispatch.');
       }
 
+      await ApiClient.submitProof(contractId, {
+        mediaUri: storageKey,
+      });
+
       Alert.alert('Proof Secured', 'Your recording has been sent to the Fury Router for anonymous validation.');
-      setVideoUri(null); // Clear buffer
+      setVideoUri(null);
+      setWatermark(null);
+      setCaptureStartedAt(null);
+      setCaptureLabel(null);
     } catch (error: any) {
       Alert.alert('Upload Failed', error.message);
     } finally {
@@ -111,7 +113,15 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
               </TouchableOpacity>
             ) : (
               <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.discardButton} onPress={() => setVideoUri(null)}>
+                <TouchableOpacity
+                  style={styles.discardButton}
+                  onPress={() => {
+                    setVideoUri(null);
+                    setWatermark(null);
+                    setCaptureStartedAt(null);
+                    setCaptureLabel(null);
+                  }}
+                >
                   <Text style={styles.discardText}>DISCARD</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.submitButton} onPress={submitProof}>
@@ -122,6 +132,11 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
           </>
         )}
       </View>
+      {captureLabel ? (
+        <View style={styles.captureMeta}>
+          <Text style={styles.captureMetaText}>{captureLabel}</Text>
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -146,5 +161,7 @@ const styles = StyleSheet.create({
   uploadingState: { alignItems: 'center' },
   uploadingText: { color: '#FFF', marginTop: 16, fontWeight: 'bold' },
   watermarkOverlay: { position: 'absolute', bottom: 20, left: 20, right: 20, backgroundColor: 'rgba(0,0,0,0.6)', padding: 10, borderRadius: 4, borderWidth: 1, borderColor: '#fff' },
-  watermarkText: { color: '#FFF', fontFamily: 'monospace', fontSize: 10, textAlign: 'center' }
+  watermarkText: { color: '#FFF', fontFamily: 'monospace', fontSize: 10, textAlign: 'center' },
+  captureMeta: { alignItems: 'center', paddingBottom: 10 },
+  captureMetaText: { color: '#888', fontSize: 12 },
 });
