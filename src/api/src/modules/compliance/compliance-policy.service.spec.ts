@@ -21,6 +21,7 @@ describe('CompliancePolicyService', () => {
       getUserComplianceStatus: jest.fn(),
     };
     service = new CompliancePolicyService(
+      {} as any, // pool (not used in policy evaluation tests)
       mockIdentityVerification as unknown as IdentityVerificationService,
     );
     jest.clearAllMocks();
@@ -430,7 +431,7 @@ describe('CompliancePolicyService', () => {
 
     it('should handle missing identityVerification service gracefully', async () => {
       process.env.KYC_ENFORCEMENT_ENABLED = 'true';
-      const serviceNoVerification = new CompliancePolicyService(undefined);
+      const serviceNoVerification = new CompliancePolicyService({} as any);
       const req = makeRequest({
         method: 'POST',
         originalUrl: '/contracts',

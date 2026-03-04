@@ -76,7 +76,15 @@ export class StripeFBOService {
       if (furies.length > 0) {
         const bountyPerFury = Math.floor(furyBountyPool / furies.length);
         for (const furyId of furies) {
-          // await this.stripe.transfers.create({ ... })
+          await this.stripe.transfers.create({
+            amount: bountyPerFury,
+            currency: 'usd',
+            destination: furyId,
+            metadata: {
+              paymentIntentId,
+              purpose: 'FURY_BOUNTY',
+            },
+          });
           this.logger.log(`Transferred $${bountyPerFury / 100} bounty to Fury ${furyId}`);
         }
       }

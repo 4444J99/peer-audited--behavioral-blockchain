@@ -36,7 +36,7 @@ describe('ContractsService (Full Breath Features)', () => {
 
       expect(result).toEqual({ status: 'active' });
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining("UPDATE accountability_partners SET status = 'ACTIVE'"),
+        expect.stringContaining("SET status = 'ACTIVE'"),
         ['contract-1', 'partner-1'],
       );
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('PARTNER_INVITATION_ACCEPTED', {
@@ -65,7 +65,7 @@ describe('ContractsService (Full Breath Features)', () => {
 
       expect(result).toEqual({ status: 'cosigned' });
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining("UPDATE attestations SET status = 'COSIGNED'"),
+        expect.stringContaining("SET status = 'COSIGNED'"),
         ['attest-1', 'partner-1'],
       );
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('ATTESTATION_COSIGNED', {

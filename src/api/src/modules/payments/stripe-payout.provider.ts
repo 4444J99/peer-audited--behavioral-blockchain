@@ -43,9 +43,25 @@ export class StripePayoutProvider implements PayoutProvider {
     }
   }
 
-  async getTransactionStatus(_providerTransactionId: string): Promise<PayoutStatus> {
-    // For MVP, we assume success if the operation didn't throw.
-    // Real-world implementation would fetch the PI from Stripe and check status.
-    return PayoutStatus.SUCCESS;
+  async getTransactionStatus(providerTransactionId: string): Promise<PayoutStatus> {
+    try {
+      const intent = await this.stripeService.retrieveIntent(providerTransactionId);
+      switch (intent.status) {
+        case 'succeeded':
+        case 'canceled': // cancel = successful release
+          return PayoutStatus.SUCCESS;
+        case 'requires_capture':
+        case 'processing':
+        case 'requires_payment_method':
+        case 'requires_confirmation':
+        case 'requires_action':
+          return PayoutStatus.PENDING;
+        default:
+          return PayoutStatus.FAILED;
+      }
+    } catch (err: any) {
+      this.logger.error(`Failed to check transaction status: ${err.message}`);
+      return PayoutStatus.FAILED;
+    }
   }
 }

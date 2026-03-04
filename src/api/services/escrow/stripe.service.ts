@@ -74,6 +74,14 @@ export class StripeFboService {
     });
   }
 
+  async retrieveIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
+    if (this.isDevMode) {
+      this.logger.debug(`[DEV] Mock retrieve ${paymentIntentId}`);
+      return { id: paymentIntentId, status: 'succeeded' } as any;
+    }
+    return this.stripe.paymentIntents.retrieve(paymentIntentId);
+  }
+
   async cancelHold(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
     if (this.isDevMode) {
       this.logger.debug(`[DEV] Mock cancel ${paymentIntentId}`);

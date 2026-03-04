@@ -89,7 +89,9 @@ describe('GeofenceGuard', () => {
       method: 'GET',
     });
 
-    expect(guard.canActivate(context)).toBe(true);
+    // In production with no real location headers (x-styx-state ignored),
+    // shouldFailOpenOnMissingLocation() returns false → guard blocks.
+    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
     expect(warnSpy).toHaveBeenCalled();
   });
 
