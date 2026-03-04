@@ -14,7 +14,8 @@ export class LedgerService {
     creditAccountId: string,
     amount: number,
     contractId?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
+    client?: PoolClient
   ): Promise<string> {
     if (amount <= 0) {
       throw new Error('Transaction amount must be strictly positive.');
@@ -26,10 +27,10 @@ export class LedgerService {
       throw new Error('Debit and credit accounts must be different.');
     }
 
-    const client: PoolClient = await this.pool.connect();
+    const dbClient: PoolClient = client || await this.pool.connect();
 
     try {
-      await client.query('BEGIN');
+      if (!client) await dbClient.query('BEGIN');
 
       // 1. Insert the entry record
       const insertEntryQuery = `
@@ -37,7 +38,7 @@ export class LedgerService {
         VALUES ($1, $2, $3, $4, $5)
         RETURNING id;
       `;
-      const entryResult = await client.query(insertEntryQuery, [
+      const entryResult = await dbClient.query(insertEntryQuery, [
         debitAccountId,
         creditAccountId,
         amount,
@@ -47,15 +48,20 @@ export class LedgerService {
       const entryId = entryResult.rows[0].id;
 
       // Ensure zero money printing manually at application layer (Phantom Money Test safeguard)
-      // Note: Triggers/Views should ideally enforce this at the DB level too.
+      if (process.env.STYX_ENFORCE_HARD_INTEGRITY === 'true') {
+        const integrity = await this.verifyLedgerIntegrity(dbClient);
+        if (!integrity.balanced) {
+          throw new Error(`Phantom money detected! Ledger unbalanced: ${integrity.totalDebits} vs ${integrity.totalCredits}`);
+        }
+      }
 
-      await client.query('COMMIT');
+      if (!client) await dbClient.query('COMMIT');
       return entryId;
     } catch (e) {
-      await client.query('ROLLBACK');
+      if (!client) await dbClient.query('ROLLBACK');
       throw e;
     } finally {
-      client.release();
+      if (!client) dbClient.release();
     }
   }
 
@@ -109,8 +115,9 @@ export class LedgerService {
    * Phantom Money Test: verifies that all debits equal all credits across
    * the entire ledger. Returns true if balanced, false if phantom money detected.
    */
-  async verifyLedgerIntegrity(): Promise<{ balanced: boolean; totalDebits: number; totalCredits: number }> {
-    const result = await this.pool.query(
+  async verifyLedgerIntegrity(client?: PoolClient | Pool): Promise<{ balanced: boolean; totalDebits: number; totalCredits: number }> {
+    const db = client || this.pool;
+    const result = await db.query(
       `SELECT
         COALESCE(SUM(amount), 0) AS total
       FROM entries`,
@@ -118,7 +125,7 @@ export class LedgerService {
     // In a double-entry system, every entry has equal debit and credit,
     // so the sum of amounts represents money flowing in both directions equally.
     // True integrity check: sum of debit-side == sum of credit-side.
-    const detailResult = await this.pool.query(
+    const detailResult = await db.query(
       `SELECT
         debit_account_id,
         credit_account_id,

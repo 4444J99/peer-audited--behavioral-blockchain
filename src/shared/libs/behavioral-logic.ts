@@ -6,15 +6,10 @@
 
 export enum OathCategory {
   // 1. Biological Stream (Hardware Oracle)
-  /** @deprecated Deferred — native HealthKit/HealthConnect bridges not implemented in MVP */
   WEIGHT_MANAGEMENT = "BIOLOGICAL_WEIGHT",
-  /** @deprecated Deferred — native HealthKit/HealthConnect bridges not implemented in MVP */
   CARDIOVASCULAR_STAMINA = "BIOLOGICAL_CARDIO",
-  /** @deprecated Deferred — native HealthKit/HealthConnect bridges not implemented in MVP */
   GLUCOSE_STABILITY = "BIOLOGICAL_METABOLIC",
-  /** @deprecated Deferred — native HealthKit/HealthConnect bridges not implemented in MVP */
   SLEEP_INTEGRITY = "BIOLOGICAL_SLEEP",
-  /** @deprecated Deferred — native HealthKit/HealthConnect bridges not implemented in MVP */
   SOBRIETY_HRV = "BIOLOGICAL_SOBRIETY",
 
   // 2. Cognitive Stream (Device Oracle)
@@ -53,9 +48,7 @@ export enum OathCategory {
 }
 
 export enum VerificationMethod {
-  /** @deprecated Deferred — native HealthKit bridge not implemented in MVP */
   HARDWARE_HEALTHKIT = "HEALTHKIT",
-  /** @deprecated Deferred — native HealthConnect bridge not implemented in MVP */
   HARDWARE_HEALTHCONNECT = "HEALTHCONNECT",
   API_SCREEN_TIME = "SCREENTIME",
   API_THIRD_PARTY = "EXTERNAL_API",
@@ -183,9 +176,12 @@ export function grantOnboardingBonus(totalContracts: number): OnboardingBonusRes
 
 /** Active oath streams supported in MVP */
 export const ACTIVE_OATH_STREAMS = [
+  'BIOLOGICAL',
   'COGNITIVE',
   'PROFESSIONAL',
   'CREATIVE',
+  'VISUAL',
+  'SOCIAL',
   'RECOVERY',
 ] as const;
 

@@ -61,6 +61,9 @@ export class OraclesController {
         metadata: sample.metadata,
       });
 
+      // Process sample to fulfill active contracts
+      await this.contractsService.processHealthKitSample(user.id, sample);
+
       results.push({ type: sample.type, accepted: true });
     }
 

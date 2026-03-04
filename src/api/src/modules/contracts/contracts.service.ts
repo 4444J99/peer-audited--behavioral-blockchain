@@ -855,7 +855,6 @@ export class ContractsService {
       });
     }
 
-    const notificationKey = `${baseKey}:notification:contract-created`;
     try {
       if (
         this.notifications &&
@@ -872,6 +871,30 @@ export class ContractsService {
             sideEffectKey: notificationKey,
           },
         });
+      }
+
+      // Partner notification
+      if (dto.oathCategory.startsWith('RECOVERY_') && dto.recoveryMetadata) {
+        const partnerTruthKey = `${baseKey}:notification:partner-invited`;
+        const partnerResult = await this.pool.query(
+          `SELECT partner_user_id FROM accountability_partners WHERE contract_id = $1 LIMIT 1`,
+          [contractId],
+        );
+        const partnerUserId = partnerResult.rows[0]?.partner_user_id;
+
+        if (
+          partnerUserId &&
+          this.notifications &&
+          !(await this.hasNotificationSideEffect(partnerUserId, 'PARTNER_INVITATION', partnerTruthKey))
+        ) {
+          await this.notifications.create({
+            userId: partnerUserId,
+            type: 'PARTNER_INVITATION',
+            title: 'Partner Invitation',
+            body: `${user.email} invited you to be their accountability partner for a recovery contract.`,
+            metadata: { contractId, ownerEmail: user.email, sideEffectKey: partnerTruthKey },
+          });
+        }
       }
     } catch {
       // Notification failure must never abort a successful financial transaction.
@@ -921,10 +944,17 @@ export class ContractsService {
       }
 
       if (dto.oathCategory.startsWith('RECOVERY_') && dto.recoveryMetadata) {
+        // Find existing user if any
+        const partnerUserResult = await phaseAClient.query(
+          `SELECT id FROM users WHERE email = $1 LIMIT 1`,
+          [dto.recoveryMetadata.accountabilityPartnerEmail],
+        );
+        const partnerUserId = partnerUserResult.rows[0]?.id || null;
+
         await phaseAClient.query(
-          `INSERT INTO accountability_partners (contract_id, partner_email, status)
-           VALUES ($1, $2, 'PENDING')`,
-          [contractId, dto.recoveryMetadata.accountabilityPartnerEmail],
+          `INSERT INTO accountability_partners (contract_id, partner_email, partner_user_id, status)
+           VALUES ($1, $2, $3, 'PENDING')`,
+          [contractId, dto.recoveryMetadata.accountabilityPartnerEmail, partnerUserId],
         );
       }
 
@@ -1069,6 +1099,13 @@ export class ContractsService {
     if (Number(recentFailures.rows[0].count) > 0) {
       throw new ForbiddenException(
         `Cool-off period active: ${FAILURE_COOL_OFF_DAYS}-day lockout after contract failure`,
+      );
+    }
+
+    // 2c. Self-Exclusion Protocol: check if user is voluntarily locked out
+    if (user.self_exclusion_expires_at && new Date(user.self_exclusion_expires_at) > new Date()) {
+      throw new ForbiddenException(
+        `Self-exclusion active until ${new Date(user.self_exclusion_expires_at).toLocaleDateString()}`,
       );
     }
 
@@ -2022,5 +2059,109 @@ export class ContractsService {
       state,
       attestationApplied,
     };
+  }
+
+  async getPendingInvitations(userId: string) {
+    const result = await this.pool.query(
+      `SELECT ap.*, c.oath_category, c.stake_amount, u.email as owner_email
+       FROM accountability_partners ap
+       JOIN contracts c ON ap.contract_id = c.id
+       JOIN users u ON c.user_id = u.id
+       WHERE (ap.partner_user_id = $1 OR ap.partner_email = (SELECT email FROM users WHERE id = $1))
+         AND ap.status = 'PENDING'`,
+      [userId],
+    );
+    return result.rows;
+  }
+
+  async acceptPartnerInvitation(contractId: string, partnerUserId: string) {
+    const result = await this.pool.query(
+      `UPDATE accountability_partners
+       SET status = 'ACTIVE', accepted_at = NOW(), partner_user_id = $2
+       WHERE contract_id = $1 AND (partner_user_id = $2 OR partner_email = (SELECT email FROM users WHERE id = $2))
+       RETURNING id`,
+      [contractId, partnerUserId],
+    );
+
+    if (result.rows.length === 0) {
+      throw new NotFoundException('Invitation not found or already accepted');
+    }
+
+    await this.truthLog.appendEvent('PARTNER_INVITATION_ACCEPTED', {
+      contractId,
+      partnerUserId,
+    });
+
+    return { status: 'active' };
+  }
+
+  async cosignAttestation(contractId: string, partnerUserId: string) {
+    const partnerCheck = await this.pool.query(
+      `SELECT 1 FROM accountability_partners
+       WHERE contract_id = $1 AND partner_user_id = $2 AND status = 'ACTIVE'`,
+      [contractId, partnerUserId],
+    );
+
+    if (partnerCheck.rows.length === 0) {
+      throw new ForbiddenException('You are not an active accountability partner for this contract');
+    }
+
+    const attestation = await this.pool.query(
+      `SELECT id FROM attestations
+       WHERE contract_id = $1 AND status = 'ATTESTED'
+       ORDER BY attestation_date DESC LIMIT 1`,
+      [contractId],
+    );
+
+    if (attestation.rows.length === 0) {
+      throw new BadRequestException('No pending attestation found to co-sign');
+    }
+
+    const attestationId = attestation.rows[0].id;
+
+    await this.pool.query(
+      `UPDATE attestations
+       SET status = 'COSIGNED', cosigned_by = $2, cosigned_at = NOW()
+       WHERE id = $1`,
+      [attestationId, partnerUserId],
+    );
+
+    await this.truthLog.appendEvent('ATTESTATION_COSIGNED', {
+      attestationId,
+      contractId,
+      partnerUserId,
+    });
+
+    return { status: 'cosigned' };
+  }
+
+  async processHealthKitSample(userId: string, sample: { type: string; value: number; startDate: string; endDate: string }) {
+    const streamMap: Record<string, string> = {
+      'HKQuantityTypeIdentifierBodyMass': 'BIOLOGICAL_WEIGHT',
+      'HKQuantityTypeIdentifierStepCount': 'BIOLOGICAL_CARDIO',
+      'HKCategoryTypeIdentifierSleepAnalysis': 'BIOLOGICAL_SLEEP',
+    };
+    
+    const targetCategory = streamMap[sample.type];
+    if (!targetCategory) return;
+
+    const activeContracts = await this.pool.query(
+      `SELECT id FROM contracts
+       WHERE user_id = $1 AND status = 'ACTIVE'
+         AND oath_category = $2
+         AND verification_method = 'HEALTHKIT'`,
+      [userId, targetCategory]
+    );
+
+    for (const contract of activeContracts.rows) {
+      try {
+        await this.submitAttestation(contract.id, userId);
+        this.logger.log(`Auto-attested contract ${contract.id} via HealthKit sample ${sample.type}`);
+      } catch (err) {
+        if (!(err instanceof BadRequestException && /Already attested today/i.test(err.message))) {
+          this.logger.error(`Failed to auto-attest contract ${contract.id}: ${err}`);
+        }
+      }
+    }
   }
 }

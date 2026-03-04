@@ -119,6 +119,17 @@ export class UsersController {
     return this.usersService.requestDeletion(user.id);
   }
 
+  @Post('me/self-exclusion')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Activate self-exclusion for a specified duration (days)' })
+  @UseGuards(AuthGuard)
+  async setSelfExclusion(
+    @CurrentUser() user: { id: string },
+    @Body() body: { durationDays: number },
+  ) {
+    return this.usersService.setSelfExclusion(user.id, body.durationDays);
+  }
+
   @Get('leaderboard')
   @ApiOperation({ summary: 'Get the public integrity leaderboard' })
   @Public()

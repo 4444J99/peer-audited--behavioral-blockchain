@@ -147,6 +147,33 @@ export class ContractsController {
     return this.contractsService.submitWhoopScoredState(contractId, { ...dto, userId: user.id });
   }
 
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get('invitations')
+  @ApiOperation({ summary: 'List pending accountability partner invitations' })
+  async getInvitations(@CurrentUser() user: { id: string }) {
+    return this.contractsService.getPendingInvitations(user.id);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
+  @Post(':id/partner/accept')
+  @ApiOperation({ summary: 'Accept an accountability partner invitation' })
+  async acceptInvitation(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.contractsService.acceptPartnerInvitation(contractId, user.id);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
+  @Post(':id/attestation/cosign')
+  @ApiOperation({ summary: 'Co-sign a daily attestation as an accountability partner' })
+  async cosignAttestation(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.contractsService.cosignAttestation(contractId, user.id);
+  }
+
   // --- No Auth Guard for Bounty Claims (Ex-partner access) ---
   @Post('bounty/:linkId')
   @ApiOperation({ summary: 'Submit evidence against a user via their unique whistleblower bounty link' })

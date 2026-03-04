@@ -190,4 +190,27 @@ export class UsersService {
     );
     return result.rows;
   }
+
+  async setSelfExclusion(userId: string, durationDays: number) {
+    if (durationDays < 1 || durationDays > 365) {
+      throw new BadRequestException('Duration must be between 1 and 365 days');
+    }
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + durationDays);
+
+    await this.pool.query(
+      'UPDATE users SET self_exclusion_expires_at = $1 WHERE id = $2',
+      [expiresAt.toISOString(), userId],
+    );
+
+    // Log to audit log
+    await this.pool.query(
+      `INSERT INTO event_log (event_type, payload, previous_hash, current_hash)
+       VALUES ('SELF_EXCLUSION_ACTIVATED', $1, 'n/a', 'n/a')`,
+      [JSON.stringify({ userId, durationDays, expiresAt: expiresAt.toISOString() })],
+    );
+
+    return { status: 'self_exclusion_activated', expiresAt };
+  }
 }
