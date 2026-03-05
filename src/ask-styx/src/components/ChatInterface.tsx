@@ -1,0 +1,323 @@
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { ChatMessage, ChatMessageProps } from './ChatMessage';
+
+const WORKER_URL = import.meta.env.VITE_WORKER_URL as string | undefined;
+
+const STORAGE_KEY = 'styx-chat-messages';
+const MAX_HISTORY_MESSAGES = 20;
+
+const SUGGESTED_QUESTIONS = [
+  'How does the integrity score work?',
+  'What are the 7 oath categories?',
+  'How does the Fury peer audit network work?',
+  "What's the revenue model?",
+  "What's included in the Phase 1 beta?",
+  'How does the escrow system handle payments?',
+  'What tech stack powers Styx?',
+  "What's the current implementation status?",
+];
+
+function loadMessages(): ChatMessageProps[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveMessages(messages: ChatMessageProps[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+  } catch {
+    // localStorage full or unavailable
+  }
+}
+
+export function ChatInterface() {
+  const [messages, setMessages] = useState<ChatMessageProps[]>([]);
+  const [input, setInput] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true;
+      setMessages(loadMessages());
+    }
+  }, []);
+
+  useEffect(() => {
+    if (initialized.current && messages.length > 0) {
+      saveMessages(messages);
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const sendMessage = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || isStreaming) return;
+
+      if (!WORKER_URL) {
+        setError('Chat endpoint not configured (missing VITE_WORKER_URL).');
+        return;
+      }
+
+      setError(null);
+      setInput('');
+
+      const userMessage: ChatMessageProps = {
+        role: 'user',
+        content: trimmed,
+        timestamp: Date.now(),
+      };
+
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+
+      const history = updatedMessages.slice(-MAX_HISTORY_MESSAGES).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      setIsStreaming(true);
+
+      const assistantMessage: ChatMessageProps = {
+        role: 'assistant',
+        content: '',
+        timestamp: Date.now(),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      try {
+        const response = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: history }),
+        });
+
+        if (!response.ok) {
+          const errBody = await response.json().catch(() => ({}));
+          throw new Error(
+            (errBody as { error?: string }).error || `Request failed (${response.status})`
+          );
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error('No response stream');
+
+        const decoder = new TextDecoder();
+        let accumulated = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data) as { content?: string; error?: string };
+              if (parsed.error) {
+                throw new Error(parsed.error);
+              }
+              if (parsed.content) {
+                accumulated += parsed.content;
+                setMessages((prev) => {
+                  const next = [...prev];
+                  next[next.length - 1] = {
+                    ...next[next.length - 1]!,
+                    content: accumulated,
+                  };
+                  return next;
+                });
+              }
+            } catch (parseErr) {
+              if (
+                parseErr instanceof Error &&
+                parseErr.message !== 'Unexpected end of JSON input'
+              ) {
+                // genuine stream error from server — skip partial chunks
+              }
+            }
+          }
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Something went wrong';
+        setError(msg);
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant' && !last.content) {
+            return prev.slice(0, -1);
+          }
+          return prev;
+        });
+      } finally {
+        setIsStreaming(false);
+      }
+    },
+    [messages, isStreaming]
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage(input);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(input);
+    }
+  };
+
+  const exportConversation = () => {
+    const lines = messages.map((msg) => {
+      const role = msg.role === 'user' ? 'You' : 'Styx';
+      const time = new Date(msg.timestamp).toLocaleString();
+      return `### ${role} (${time})\n\n${msg.content}`;
+    });
+    const markdown = `# Ask Styx — Conversation Export\n\nExported: ${new Date().toLocaleString()}\n\n---\n\n${lines.join('\n\n---\n\n')}\n`;
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `styx-chat-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const clearConversation = () => {
+    setMessages([]);
+    setError(null);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    textareaRef.current?.focus();
+  };
+
+  const showSuggestions = messages.length === 0 && !isStreaming;
+
+  return (
+    <div className="flex flex-col h-full max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+            <span className="text-sm font-black text-black">S</span>
+          </div>
+          <h1 className="text-lg font-bold text-white tracking-tight">
+            ASK STYX
+          </h1>
+          {messages.length > 0 && (
+            <span className="text-xs text-neutral-500">
+              {messages.length} {messages.length === 1 ? 'message' : 'messages'}
+            </span>
+          )}
+        </div>
+        {messages.length > 0 && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={exportConversation}
+              className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors px-3 py-1 border border-neutral-800 rounded-full"
+            >
+              Export
+            </button>
+            <button
+              onClick={clearConversation}
+              className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors px-3 py-1 border border-neutral-800 rounded-full"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        {showSuggestions && (
+          <div className="mb-8">
+            <p className="text-neutral-400 text-sm mb-4 text-center">
+              Ask anything about Styx — how it works, the tech stack,
+              implementation status, or business model.
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {SUGGESTED_QUESTIONS.map((q) => (
+                <button
+                  key={q}
+                  onClick={() => sendMessage(q)}
+                  className="px-3 py-2 text-xs text-neutral-300 bg-neutral-900 border border-neutral-800 rounded-full hover:border-red-600/50 hover:text-white transition-colors"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {messages.map((msg, i) => (
+          <ChatMessage key={i} {...msg} />
+        ))}
+
+        {isStreaming && messages[messages.length - 1]?.content === '' && (
+          <div className="flex justify-start mb-4">
+            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl px-4 py-3">
+              <span className="text-neutral-500 text-sm animate-pulse">
+                Thinking...
+              </span>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-4 px-4 py-3 bg-red-900/20 border border-red-900/40 rounded-2xl text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input */}
+      <form
+        onSubmit={handleSubmit}
+        className="px-4 py-3 border-t border-neutral-800"
+      >
+        <div className="flex gap-2">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask about Styx..."
+            rows={1}
+            className="flex-1 bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 resize-none focus:outline-none focus:border-red-600/50 transition-colors"
+            disabled={isStreaming}
+          />
+          <button
+            type="submit"
+            disabled={isStreaming || !input.trim()}
+            className="px-4 py-3 bg-red-600 text-black font-bold rounded-xl hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+          >
+            Send
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

@@ -1,0 +1,11 @@
+name = "ask-styx-proxy"
+main = "index.ts"
+compatibility_date = "2026-03-04"
+
+[vars]
+ALLOWED_ORIGIN = "https://organvm-iii-ergon.github.io"
+LLM_MODEL = "llama-3.3-70b-versatile"
+LLM_BASE_URL = "https://api.groq.com/openai/v1"
+
+# Secret (set via: npx wrangler secret put GROQ_API_KEY):
+# GROQ_API_KEY
