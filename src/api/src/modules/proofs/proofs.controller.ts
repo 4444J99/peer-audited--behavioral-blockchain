@@ -11,19 +11,10 @@ import { R2StorageService } from '../../../services/storage/r2.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { PHashService } from '../../../services/intelligence/phash.service';
+import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { RequestUploadUrlDto, ConfirmUploadDto } from './dto';
 import { ProofsService } from './proofs.service';
 
-/**
- * ProofsController — Handles the proof media upload lifecycle.
- *
- * Flow:
- *   1. Client requests a pre-signed upload URL via POST /proofs/upload-url
- *   2. Client uploads media directly to R2 using the signed URL
- *   3. Client confirms upload via POST /proofs/:id/confirm-upload
- *   4. Proof transitions to PENDING_REVIEW → FuryRouterService enqueues routing
- *   5. Fury auditors retrieve proof details with signed view URLs via GET /proofs/:id
- */
 @ApiTags('Proofs')
 @ApiBearerAuth()
 @Controller('proofs')
@@ -34,6 +25,7 @@ export class ProofsController {
     private readonly furyRouter: FuryRouterService,
     private readonly truthLog: TruthLogService,
     private readonly phash: PHashService,
+    private readonly anomaly: AnomalyService,
     private readonly proofsService: ProofsService,
   ) {}
 
@@ -53,7 +45,6 @@ export class ProofsController {
       throw new BadRequestException('Proof submission is only allowed for active contracts');
     }
 
-    // Create a pending proof row
     const proofResult = await this.pool.query(
       `INSERT INTO proofs (contract_id, user_id, status, content_type, description, submitted_at)
        VALUES ($1, $2, 'PENDING_UPLOAD', $3, $4, NOW())
@@ -62,8 +53,6 @@ export class ProofsController {
     );
 
     const proofId = proofResult.rows[0].id;
-
-    // Generate pre-signed upload URL
     const { uploadUrl, key } = await this.r2.generateUploadUrl(proofId, dto.contentType);
 
     await this.truthLog.appendEvent('PROOF_UPLOAD_REQUESTED', {
@@ -73,12 +62,7 @@ export class ProofsController {
       contentType: dto.contentType,
     });
 
-    return {
-      proofId,
-      uploadUrl,
-      storageKey: key,
-      expiresInSeconds: 300,
-    };
+    return { proofId, uploadUrl, storageKey: key, expiresInSeconds: 300 };
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
@@ -97,78 +81,74 @@ export class ProofsController {
       throw new BadRequestException(`Proof is in state '${proofAccess.status}', expected 'PENDING_UPLOAD'`);
     }
 
-    // Transition proof to PENDING_REVIEW and store the R2 key + biometric flags
+    // TKT-P0-002: Native Camera Proof Integrity
+    const mediaBuffer = await this.r2.downloadFile(dto.storageKey);
+    
+    // 1. Anomaly & Sensory Integrity Check
+    const anomalyResult = await this.anomaly.analyze(mediaBuffer, user.id, dto.storageKey);
+    const combinedFlags = [...(anomalyResult.flags || [])];
+
+    // 2. pHash Duplicate Detection
+    let isDuplicate = false;
+    try {
+      const frameHash = await this.phash.computeFrameHash(mediaBuffer);
+      const existingHashes = await this.pool.query(
+        'SELECT phash FROM proof_hashes WHERE proof_id != $1',
+        [proofId],
+      );
+      const hashStrings = existingHashes.rows.map((r: any) => r.phash);
+      const { duplicate } = await this.phash.isDuplicate(mediaBuffer, hashStrings);
+      
+      if (duplicate) {
+        isDuplicate = true;
+        combinedFlags.push('PHASH_DUPLICATE');
+      } else {
+        await this.pool.query(
+          'INSERT INTO proof_hashes (proof_id, phash) VALUES ($1, $2) ON CONFLICT (proof_id) DO NOTHING',
+          [proofId, frameHash],
+        );
+      }
+    } catch (e) {
+      combinedFlags.push('PHASH_PROCESSING_ERROR');
+    }
+
+    if (isDuplicate) {
+      await this.pool.query("UPDATE proofs SET status = 'REJECTED' WHERE id = $1", [proofId]);
+      throw new ConflictException('Duplicate proof detected. Submission rejected.');
+    }
+
+    // 3. Finalize Proof with Biometric + Anomaly Metadata
     await this.pool.query(
       `UPDATE proofs
        SET status = 'PENDING_REVIEW', 
            media_uri = $1, 
            uploaded_at = NOW(),
            biometric_verified = $3,
-           biometric_type = $4
+           biometric_type = $4,
+           anomaly_flags = $5,
+           device_metadata = $6
        WHERE id = $2`,
-      [dto.storageKey, proofId, dto.biometricVerified || false, dto.biometricType || null],
+      [
+        dto.storageKey, 
+        proofId, 
+        dto.biometricVerified || false, 
+        dto.biometricType || null, 
+        JSON.stringify(combinedFlags),
+        JSON.stringify(dto.deviceMetadata || {})
+      ],
     );
 
-    // pHash deduplication — download first frame, compute hash, check for twins
-    try {
-      const mediaBuffer = await this.r2.downloadFile(dto.storageKey);
-      const frameHash = await this.phash.computeFrameHash(mediaBuffer);
-
-      // Check against existing hashes
-      const existingHashes = await this.pool.query(
-        `SELECT phash FROM proof_hashes WHERE proof_id != $1`,
-        [proofId],
-      );
-
-      const hashStrings = existingHashes.rows.map((r: any) => r.phash);
-      const { duplicate, closestDistance } = await this.phash.isDuplicate(mediaBuffer, hashStrings);
-
-      if (duplicate) {
-        // Reject duplicate — revert proof status
-        await this.pool.query(
-          `UPDATE proofs SET status = 'REJECTED', media_uri = NULL WHERE id = $1`,
-          [proofId],
-        );
-
-        await this.truthLog.appendEvent('PROOF_DUPLICATE_REJECTED', {
-          proofId,
-          closestDistance,
-          userId: proofAccess.ownerUserId,
-        });
-
-        throw new ConflictException(
-          `Duplicate proof detected (similarity distance: ${closestDistance}). Submission rejected.`,
-        );
-      }
-
-      // Store hash for future dedup
-      await this.pool.query(
-        `INSERT INTO proof_hashes (proof_id, phash) VALUES ($1, $2)
-         ON CONFLICT (proof_id) DO NOTHING`,
-        [proofId, frameHash],
-      );
-    } catch (err) {
-      // Re-throw ConflictException, swallow pHash processing errors (degrade gracefully)
-      if (err instanceof ConflictException) throw err;
-      // pHash failure should not block proof submission in dev/staging
-    }
-
-    // Enqueue Fury routing immediately
     const jobId = await this.furyRouter.routeProof(proofId, proofAccess.ownerUserId);
 
     await this.truthLog.appendEvent('PROOF_UPLOAD_CONFIRMED', {
       proofId,
       contractId: proofAccess.contractId,
       userId: proofAccess.ownerUserId,
-      storageKey: dto.storageKey,
-      furyRouteJobId: jobId,
+      anomalyFlags: combinedFlags,
+      biometricVerified: dto.biometricVerified,
     });
 
-    return {
-      proofId,
-      status: 'PENDING_REVIEW',
-      furyRouteJobId: jobId,
-    };
+    return { proofId, status: 'PENDING_REVIEW', furyRouteJobId: jobId, flags: combinedFlags };
   }
 
   @UseGuards(AuthGuard)

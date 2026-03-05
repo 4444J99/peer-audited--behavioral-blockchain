@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsBoolean, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum ProofMediaType {
@@ -37,4 +37,9 @@ export class ConfirmUploadDto {
   @IsOptional()
   @IsString()
   biometricType?: 'FACE' | 'VOICE';
+
+  @ApiPropertyOptional({ description: 'Hardware/Device metadata for sensory integrity verification' })
+  @IsOptional()
+  @IsObject()
+  deviceMetadata?: Record<string, any>;
 }

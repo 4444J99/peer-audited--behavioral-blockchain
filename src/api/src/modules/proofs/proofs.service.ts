@@ -115,8 +115,7 @@ export class ProofsService {
 
   async getProofDetail(proofId: string, requester: ProofReadRequester) {
     const proof = await this.pool.query(
-      `SELECT p.id, p.contract_id, p.user_id, p.status, p.content_type, p.description,
-              p.media_uri, p.submitted_at, p.uploaded_at, p.is_honeypot,
+      `SELECT p.*,
               c.user_id AS contract_owner_id,
               requester.role AS requester_role,
               requester.enterprise_id AS requester_enterprise_id,
@@ -166,12 +165,17 @@ export class ProofsService {
     return {
       id: row.id,
       contractId: row.contract_id,
+      userId: row.user_id,
       status: row.status,
       contentType: row.content_type,
       description: row.description,
       submittedAt: row.submitted_at,
       uploadedAt: row.uploaded_at,
       isHoneypot: row.is_honeypot,
+      biometricVerified: row.biometric_verified,
+      biometricType: row.biometric_type,
+      anomalyFlags: row.anomaly_flags,
+      deviceMetadata: row.device_metadata,
       viewUrl,
     };
   }
