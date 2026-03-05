@@ -101,38 +101,40 @@ jobs:
               .map((r) => `| [#${r.number}](${r.url}) | ${r.title.replace(/\|/g, '\\|')} | ${r.milestoneTitle} | ${r.owner} | ${r.dueDate || '-'} | ${r.ageDays} |`)
               .join('\n');
 
-            const body = `${marker}
-
-# Weekly Blocked Handoff Burn-down
-
-Date: ${isoDate}
-Repository: ${owner}/${repo}
-
-## Snapshot
-- Total blocked handoff issues in tracked range (#123-#144): ${total}
-- Overdue against milestone target date: ${overdueCount}
-- Average age (days): ${avgAge}
-- Oldest age (days): ${oldest}
-
-## By Milestone
-| Milestone | Count |
-|---|---|
-${milestoneTable || '| (none) | 0 |'}
-
-## By Owner Role
-| Owner Role Label | Count |
-|---|---|
-${ownerTable || '| owner:unassigned | 0 |'}
-
-## Detailed Issue List
-| Issue | Title | Milestone | Owner Role(s) | Target Date | Age (days) |
-|---|---|---|---|---|---|
-${issueTable || '| - | - | - | - | - | - |'}
-
-## Notes
-- This report is generated automatically via \\`.github/workflows/blocked-handoff-burndown.yml\\`.
-- Tracked issue set currently targets the explicit blocked handoff register (#123-#144).
-`;
+            const body = [
+              marker,
+              '',
+              '# Weekly Blocked Handoff Burn-down',
+              '',
+              `Date: ${isoDate}`,
+              `Repository: ${owner}/${repo}`,
+              '',
+              '## Snapshot',
+              `- Total blocked handoff issues in tracked range (#123-#144): ${total}`,
+              `- Overdue against milestone target date: ${overdueCount}`,
+              `- Average age (days): ${avgAge}`,
+              `- Oldest age (days): ${oldest}`,
+              '',
+              '## By Milestone',
+              '| Milestone | Count |',
+              '|---|---|',
+              milestoneTable || '| (none) | 0 |',
+              '',
+              '## By Owner Role',
+              '| Owner Role Label | Count |',
+              '|---|---|',
+              ownerTable || '| owner:unassigned | 0 |',
+              '',
+              '## Detailed Issue List',
+              '| Issue | Title | Milestone | Owner Role(s) | Target Date | Age (days) |',
+              '|---|---|---|---|---|---|',
+              issueTable || '| - | - | - | - | - | - |',
+              '',
+              '## Notes',
+              '- This report is generated automatically via `.github/workflows/blocked-handoff-burndown.yml`.',
+              '- Tracked issue set currently targets the explicit blocked handoff register (#123-#144).',
+              '',
+            ].join('\n');
 
             const existing = await github.rest.search.issuesAndPullRequests({
               q: `repo:${owner}/${repo} is:issue in:title "${title}"`,
