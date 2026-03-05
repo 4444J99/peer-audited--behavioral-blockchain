@@ -202,4 +202,229 @@ describe("POST /api/chat", () => {
       { status: 500 },
     );
   });
+
+  // ================================================================
+  // Knowledge base integration tests
+  // ================================================================
+
+  describe("system prompt with knowledge base", () => {
+    beforeEach(() => {
+      mockCreate.mockResolvedValue(makeFakeStream("ok"));
+    });
+
+    it("system prompt contains KNOWLEDGE BASE section", async () => {
+      await POST(makeRequest(
+        { messages: [{ role: "user", content: "hi" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const systemContent = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(systemContent).toContain("KNOWLEDGE BASE:");
+    });
+
+    it("system prompt contains GUIDELINES section", async () => {
+      await POST(makeRequest(
+        { messages: [{ role: "user", content: "hi" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const systemContent = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(systemContent).toContain("GUIDELINES:");
+      expect(systemContent).toContain("plain, accessible language");
+    });
+
+    it("system prompt identifies the assistant as Styx AI", async () => {
+      await POST(makeRequest(
+        { messages: [{ role: "user", content: "hi" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const systemContent = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(systemContent).toContain("Styx AI assistant");
+    });
+
+    it("system prompt includes behavioral logic constants", async () => {
+      await POST(makeRequest(
+        { messages: [{ role: "user", content: "hi" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const systemContent = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(systemContent).toContain("LOSS_AVERSION_COEFFICIENT");
+      expect(systemContent).toContain("1.955");
+    });
+
+    it("system prompt includes integrity score algorithm", async () => {
+      await POST(makeRequest(
+        { messages: [{ role: "user", content: "hi" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const systemContent = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(systemContent).toContain("calculateIntegrity");
+      expect(systemContent).toContain("BASE_INTEGRITY");
+    });
+
+    it("system prompt includes database schema", async () => {
+      await POST(makeRequest(
+        { messages: [{ role: "user", content: "hi" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const systemContent = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(systemContent).toContain("CREATE TABLE");
+      expect(systemContent).toContain("contracts");
+    });
+
+    it("system prompt includes oath categories", async () => {
+      await POST(makeRequest(
+        { messages: [{ role: "user", content: "hi" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const systemContent = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(systemContent).toContain("OathCategory");
+      expect(systemContent).toContain("BIOLOGICAL");
+      expect(systemContent).toContain("RECOVERY");
+    });
+
+    it("system prompt includes Phase 1 beta scope", async () => {
+      await POST(makeRequest(
+        { messages: [{ role: "user", content: "hi" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const systemContent = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(systemContent).toContain("Phase 1 Private Beta");
+    });
+
+    it("system prompt includes seed.yaml project metadata", async () => {
+      await POST(makeRequest(
+        { messages: [{ role: "user", content: "hi" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const systemContent = mockCreate.mock.calls[0][0].messages[0].content;
+      expect(systemContent).toContain("peer-audited--behavioral-blockchain");
+    });
+  });
+
+  // ================================================================
+  // Conversation history tests
+  // ================================================================
+
+  describe("conversation history handling", () => {
+    beforeEach(() => {
+      mockCreate.mockResolvedValue(makeFakeStream("ok"));
+    });
+
+    it("passes multi-turn conversation to the model", async () => {
+      const messages = [
+        { role: "user", content: "What is Styx?" },
+        { role: "assistant", content: "Styx is a behavioral market." },
+        { role: "user", content: "Tell me more." },
+      ];
+      await POST(makeRequest(
+        { messages },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+
+      const args = mockCreate.mock.calls[0][0];
+      // System prompt + 3 conversation messages
+      expect(args.messages).toHaveLength(4);
+      expect(args.messages[0].role).toBe("system");
+      expect(args.messages[1]).toMatchObject({ role: "user", content: "What is Styx?" });
+      expect(args.messages[2]).toMatchObject({ role: "assistant", content: "Styx is a behavioral market." });
+      expect(args.messages[3]).toMatchObject({ role: "user", content: "Tell me more." });
+    });
+
+    it("uses max_tokens of 2048", async () => {
+      await POST(makeRequest(
+        { messages: [{ role: "user", content: "hi" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const args = mockCreate.mock.calls[0][0];
+      expect(args.max_tokens).toBe(2048);
+    });
+
+    it("uses temperature of 0.7", async () => {
+      await POST(makeRequest(
+        { messages: [{ role: "user", content: "hi" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const args = mockCreate.mock.calls[0][0];
+      expect(args.temperature).toBe(0.7);
+    });
+
+    it("uses the correct model identifier", async () => {
+      await POST(makeRequest(
+        { messages: [{ role: "user", content: "hi" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const args = mockCreate.mock.calls[0][0];
+      expect(args.model).toBe("llama-3.3-70b-versatile");
+    });
+  });
+
+  // ================================================================
+  // Edge case tests
+  // ================================================================
+
+  describe("edge cases", () => {
+    it("handles request with missing x-forwarded-for header", async () => {
+      mockCreate.mockResolvedValue(makeFakeStream("ok"));
+      const req = {
+        json: async () => ({ messages: [{ role: "user", content: "hi" }] }),
+        headers: new Headers({}),
+      } as unknown as NextRequest;
+
+      const res = await POST(req);
+      // Should still work — falls back to "unknown" IP
+      expect(res).toBeInstanceOf(Response);
+    });
+
+    it("handles stream with empty delta content", async () => {
+      const stream = {
+        [Symbol.asyncIterator]: async function* () {
+          yield { choices: [{ delta: { content: undefined } }] };
+          yield { choices: [{ delta: { content: "actual" } }] };
+        },
+      };
+      mockCreate.mockResolvedValue(stream);
+
+      const res = await POST(makeRequest(
+        { messages: [{ role: "user", content: "test" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const text = await res.text();
+      expect(text).toContain(`data: ${JSON.stringify({ content: "actual" })}`);
+      expect(text).toContain("data: [DONE]");
+    });
+
+    it("handles stream error mid-response", async () => {
+      const stream = {
+        [Symbol.asyncIterator]: async function* () {
+          yield { choices: [{ delta: { content: "partial" } }] };
+          throw new Error("stream died");
+        },
+      };
+      mockCreate.mockResolvedValue(stream);
+
+      const res = await POST(makeRequest(
+        { messages: [{ role: "user", content: "test" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const text = await res.text();
+      expect(text).toContain(`data: ${JSON.stringify({ content: "partial" })}`);
+      expect(text).toContain(`"error":"stream died"`);
+    });
+
+    it("handles empty choices array in stream chunk", async () => {
+      const stream = {
+        [Symbol.asyncIterator]: async function* () {
+          yield { choices: [] };
+          yield { choices: [{ delta: { content: "ok" } }] };
+        },
+      };
+      mockCreate.mockResolvedValue(stream);
+
+      const res = await POST(makeRequest(
+        { messages: [{ role: "user", content: "test" }] },
+        { "x-forwarded-for": uniqueIp() },
+      ));
+      const text = await res.text();
+      expect(text).toContain("data: [DONE]");
+    });
+  });
 });

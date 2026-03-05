@@ -109,6 +109,129 @@ describe('DisputeService', () => {
     });
   });
 
+  describe('getDisputeQueue', () => {
+    it('should return pending disputes ordered by creation date', async () => {
+      const rows = [
+        { id: 'dispute-1', proof_id: 'proof-1', user_id: 'user-1', appeal_status: 'FEE_AUTHORIZED_PENDING_REVIEW', created_at: '2026-03-01' },
+        { id: 'dispute-2', proof_id: 'proof-2', user_id: 'user-2', appeal_status: 'IN_REVIEW', created_at: '2026-03-02' },
+      ];
+      mockPool.query.mockResolvedValueOnce({ rows });
+
+      const result = await disputeService.getDisputeQueue();
+
+      expect(result).toEqual(rows);
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('FEE_AUTHORIZED_PENDING_REVIEW'),
+      );
+    });
+
+    it('should return empty array when no pending disputes', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      const result = await disputeService.getDisputeQueue();
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getDisputeDetail', () => {
+    it('should return full dispute detail with fury votes', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [{
+            id: 'dispute-1',
+            proof_id: 'proof-1',
+            contract_id: 'contract-1',
+            user_id: 'user-1',
+            user_email: 'user@styx.app',
+            oath_category: 'DEEP_WORK_FOCUS',
+            proof_status: 'DISPUTED',
+            media_uri: 'proofs/123.mp4',
+            submitted_at: '2026-03-01',
+            appeal_status: 'FEE_AUTHORIZED_PENDING_REVIEW',
+            judge_user_id: null,
+            judge_notes: null,
+            resolved_at: null,
+          }],
+        })
+        .mockResolvedValueOnce({
+          rows: [
+            { furyUserId: 'fury-1', verdict: 'FAIL', reviewedAt: '2026-03-01' },
+            { furyUserId: 'fury-2', verdict: 'PASS', reviewedAt: '2026-03-01' },
+          ],
+        });
+
+      const result = await disputeService.getDisputeDetail('dispute-1');
+
+      expect(result.id).toBe('dispute-1');
+      expect(result.proofId).toBe('proof-1');
+      expect(result.contractId).toBe('contract-1');
+      expect(result.userEmail).toBe('user@styx.app');
+      expect(result.furyVotes).toHaveLength(2);
+    });
+
+    it('should throw NotFoundException when dispute does not exist', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(disputeService.getDisputeDetail('nonexistent'))
+        .rejects
+        .toThrow('Dispute not found');
+    });
+  });
+
+  describe('getAuditTrail', () => {
+    it('should compose dispute detail with event log and ledger entries', async () => {
+      // Mock getDisputeDetail (two queries: dispute + fury votes)
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [{
+            id: 'dispute-1',
+            proof_id: 'proof-1',
+            contract_id: 'contract-1',
+            user_id: 'user-1',
+            user_email: 'user@styx.app',
+            oath_category: 'DEEP_WORK_FOCUS',
+            proof_status: 'DISPUTED',
+            media_uri: null,
+            submitted_at: '2026-03-01',
+            appeal_status: 'FEE_AUTHORIZED_PENDING_REVIEW',
+            judge_user_id: null,
+            judge_notes: null,
+            resolved_at: null,
+          }],
+        })
+        .mockResolvedValueOnce({ rows: [] }) // fury votes
+        .mockResolvedValueOnce({
+          rows: [
+            { id: 'evt-1', event_type: 'APPEAL_INITIATED', payload: { proofId: 'proof-1' }, created_at: '2026-03-01' },
+          ],
+        }) // event_log
+        .mockResolvedValueOnce({
+          rows: [
+            { id: 'entry-1', amount: 500, debit_account: 'user-acct', credit_account: 'escrow', created_at: '2026-03-01', metadata: null },
+          ],
+        }); // ledger entries
+
+      const result = await disputeService.getAuditTrail('dispute-1');
+
+      expect(result.dispute.id).toBe('dispute-1');
+      expect(result.timeline).toHaveLength(1);
+      expect(result.timeline[0].type).toBe('EVENT');
+      expect(result.timeline[0].eventType).toBe('APPEAL_INITIATED');
+      expect(result.ledger).toHaveLength(1);
+      expect(result.ledger[0].type).toBe('LEDGER');
+      expect(result.ledger[0].amount).toBe(500);
+    });
+
+    it('should propagate NotFoundException if dispute does not exist', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(disputeService.getAuditTrail('nonexistent'))
+        .rejects
+        .toThrow('Dispute not found');
+    });
+  });
+
   describe('resolveDispute', () => {
     it('should queue appeal-fee capture in outbox and avoid Stripe call inside resolution transaction', async () => {
       const client = {

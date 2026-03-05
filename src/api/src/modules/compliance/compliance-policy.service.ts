@@ -69,13 +69,47 @@ export class CompliancePolicyService {
     return true;
   }
 
+  /**
+   * Phase Beta P0-003: KYC tier gating.
+   * TIER_1 ($20 max) is always allowed without KYC.
+   * Above TIER_1, if KYC enforcement is enabled, identity must be verified.
+   */
+  async evaluateKycRequirement(
+    userId: string,
+    stakeAmount: number,
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    if (!this.isKycEnforcementEnabled()) {
+      return { allowed: true };
+    }
+
+    // TIER_1 micro-stakes ($20 max) are always exempt from KYC
+    const TIER_1_MAX = 20;
+    if (stakeAmount <= TIER_1_MAX) {
+      return { allowed: true };
+    }
+
+    // Check user's identity verification status
+    const compliance = this.identityVerification
+      ? await this.identityVerification.getUserComplianceStatus(userId)
+      : null;
+
+    if (!compliance?.isKycVerified) {
+      return {
+        allowed: false,
+        reason: `Identity verification required for stakes above $${TIER_1_MAX}. Complete KYC to continue.`,
+      };
+    }
+
+    return { allowed: true };
+  }
+
   shouldFailOpenOnMissingLocation(): boolean {
     const isProduction = process.env.NODE_ENV === 'production';
     if (isProduction) return false;
 
     const raw = process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
-    if (raw == null) return true;
-    return String(raw).toLowerCase() !== 'false';
+    if (raw == null) return false; // fail-closed by default (Phase Beta P0-004)
+    return String(raw).toLowerCase() === 'true';
   }
 
   canCreateContract(input: { tier: JurisdictionTier; state: string | null }): ComplianceActionDecisionCore {

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" font-family="'Helvetica Neue', Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="fb" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#334155"/>
+    </marker>
+    <marker id="fb-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#dc2626"/>
+    </marker>
+    <marker id="fb-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#16a34a"/>
+    </marker>
+  </defs>
+
+  <title>Figure 4: HVCS Cybernetic Block Diagram</title>
+  <text x="450" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">Figure 4: Human Vice Control System (HVCS)</text>
+  <text x="450" y="48" text-anchor="middle" font-size="11" fill="#64748b">Cybernetic Model — Negative Feedback Regulation of Behavioral Drives</text>
+
+  <!-- Reference Signal (Desired Behavior) -->
+  <rect x="30" y="120" width="140" height="60" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="100" y="145" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e40af">Reference Signal</text>
+  <text x="100" y="160" text-anchor="middle" font-size="9" fill="#3b82f6">Behavioral Goal</text>
+  <text x="100" y="172" text-anchor="middle" font-size="8" fill="#3b82f6">(oath commitment)</text>
+
+  <!-- Comparator (Error Detection) -->
+  <circle cx="260" cy="150" r="30" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+  <text x="260" y="145" text-anchor="middle" font-size="18" fill="#334155">Σ</text>
+  <text x="260" y="160" text-anchor="middle" font-size="8" fill="#64748b">comparator</text>
+
+  <!-- Arrow: Reference → Comparator (+) -->
+  <line x1="170" y1="150" x2="226" y2="150" stroke="#334155" stroke-width="1.5" marker-end="url(#fb)"/>
+  <text x="216" y="142" font-size="10" fill="#16a34a" font-weight="bold">+</text>
+
+  <!-- Controller (Styx Platform) -->
+  <rect x="340" y="100" width="180" height="100" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+  <text x="430" y="125" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">Controller</text>
+  <text x="430" y="142" text-anchor="middle" font-size="9" fill="#92400e">STYX PLATFORM</text>
+  <line x1="355" y1="150" x2="505" y2="150" stroke="#f59e0b" stroke-width="0.5"/>
+  <text x="430" y="167" text-anchor="middle" font-size="8" fill="#b45309">Financial stakes (λ=1.955)</text>
+  <text x="430" y="180" text-anchor="middle" font-size="8" fill="#b45309">Fury verification</text>
+  <text x="430" y="193" text-anchor="middle" font-size="8" fill="#b45309">Aegis safety guards</text>
+
+  <!-- Arrow: Comparator → Controller -->
+  <line x1="290" y1="150" x2="336" y2="150" stroke="#334155" stroke-width="1.5" marker-end="url(#fb)"/>
+  <text x="313" y="142" text-anchor="middle" font-size="8" fill="#64748b">error signal</text>
+
+  <!-- Plant (Human Behavior) -->
+  <rect x="600" y="110" width="160" height="80" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="680" y="140" text-anchor="middle" font-size="12" font-weight="bold" fill="#15803d">Plant</text>
+  <text x="680" y="157" text-anchor="middle" font-size="9" fill="#15803d">HUMAN BEHAVIOR</text>
+  <text x="680" y="172" text-anchor="middle" font-size="8" fill="#16a34a">7 drive streams</text>
+  <text x="680" y="184" text-anchor="middle" font-size="8" fill="#16a34a">27 oath categories</text>
+
+  <!-- Arrow: Controller → Plant -->
+  <line x1="520" y1="150" x2="596" y2="150" stroke="#334155" stroke-width="1.5" marker-end="url(#fb)"/>
+  <text x="558" y="142" text-anchor="middle" font-size="8" fill="#64748b">intervention</text>
+
+  <!-- Output (Measured Behavior) -->
+  <rect x="810" y="120" width="70" height="60" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="845" y="148" text-anchor="middle" font-size="10" fill="#475569">Output</text>
+  <text x="845" y="162" text-anchor="middle" font-size="8" fill="#94a3b8">behavior</text>
+
+  <!-- Arrow: Plant → Output -->
+  <line x1="760" y1="150" x2="806" y2="150" stroke="#334155" stroke-width="1.5" marker-end="url(#fb)"/>
+
+  <!-- Sensor (Proof Verification) — feedback path -->
+  <rect x="400" y="280" width="180" height="80" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="490" y="305" text-anchor="middle" font-size="11" font-weight="bold" fill="#4338ca">Sensor</text>
+  <text x="490" y="320" text-anchor="middle" font-size="9" fill="#4338ca">PROOF VERIFICATION</text>
+  <text x="490" y="335" text-anchor="middle" font-size="8" fill="#6366f1">pHash + EXIF (T9)</text>
+  <text x="490" y="348" text-anchor="middle" font-size="8" fill="#6366f1">Fury audit (T4) + Honeypot (T7)</text>
+
+  <!-- Feedback path: Output → Sensor -->
+  <path d="M 845,180 L 845,320 L 584,320" fill="none" stroke="#dc2626" stroke-width="1.5" marker-end="url(#fb-red)"/>
+  <text x="730" y="310" font-size="9" fill="#dc2626">proof submission</text>
+
+  <!-- Feedback path: Sensor → Comparator (−) -->
+  <path d="M 400,320 L 260,320 L 260,184" fill="none" stroke="#dc2626" stroke-width="1.5" marker-end="url(#fb-red)"/>
+  <text x="250" y="300" font-size="10" fill="#dc2626" font-weight="bold">−</text>
+  <text x="320" y="310" font-size="9" fill="#dc2626">measured behavior</text>
+
+  <!-- Disturbance (Vice Drives) -->
+  <rect x="600" y="10" width="160" height="70" rx="8" fill="#fecaca" stroke="#dc2626" stroke-width="1.5"/>
+  <text x="680" y="35" text-anchor="middle" font-size="11" font-weight="bold" fill="#991b1b">Disturbance</text>
+  <text x="680" y="52" text-anchor="middle" font-size="9" fill="#991b1b">VICE DRIVES</text>
+  <text x="680" y="65" text-anchor="middle" font-size="8" fill="#dc2626">Present bias, temptation,</text>
+  <text x="680" y="76" text-anchor="middle" font-size="8" fill="#dc2626">ego depletion, social pressure</text>
+
+  <!-- Arrow: Disturbance → Plant -->
+  <line x1="680" y1="80" x2="680" y2="106" stroke="#dc2626" stroke-width="1.5" marker-end="url(#fb-red)"/>
+  <text x="710" y="98" font-size="8" fill="#dc2626">d(t)</text>
+
+  <!-- Safety Limiter (Aegis) -->
+  <rect x="340" y="430" width="180" height="60" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="2"/>
+  <text x="430" y="455" text-anchor="middle" font-size="11" font-weight="bold" fill="#854d0e">Safety Limiter</text>
+  <text x="430" y="470" text-anchor="middle" font-size="9" fill="#854d0e">AEGIS PROTOCOL (T5)</text>
+  <text x="430" y="483" text-anchor="middle" font-size="8" fill="#ca8a04">+ Recovery Protocol (T8)</text>
+
+  <!-- Arrow: Safety Limiter → Controller -->
+  <line x1="430" y1="430" x2="430" y2="204" stroke="#ca8a04" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#fb)"/>
+  <text x="445" y="380" font-size="8" fill="#ca8a04">constraint signal</text>
+
+  <!-- Arrow: Sensor → Safety Limiter -->
+  <path d="M 490,360 L 490,426" fill="none" stroke="#6366f1" stroke-width="1" stroke-dasharray="4" marker-end="url(#fb)"/>
+  <text x="510" y="400" font-size="8" fill="#6366f1">health metrics</text>
+
+  <!-- Truth Log (T2) -->
+  <rect x="690" y="280" width="120" height="50" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="750" y="303" text-anchor="middle" font-size="10" font-weight="bold" fill="#15803d">Truth Log (T2)</text>
+  <text x="750" y="318" text-anchor="middle" font-size="8" fill="#16a34a">Immutable audit trail</text>
+
+  <!-- Arrow: Sensor → Truth Log -->
+  <line x1="580" y1="310" x2="686" y2="305" stroke="#16a34a" stroke-width="1" marker-end="url(#fb-green)"/>
+
+  <!-- Ledger (T1) -->
+  <rect x="690" y="350" width="120" height="50" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="750" y="373" text-anchor="middle" font-size="10" font-weight="bold" fill="#15803d">Ledger (T1)</text>
+  <text x="750" y="388" text-anchor="middle" font-size="8" fill="#16a34a">Double-entry balance</text>
+
+  <!-- Arrow: Controller → Ledger -->
+  <path d="M 520,180 L 560,375 L 686,375" fill="none" stroke="#16a34a" stroke-width="1" stroke-dasharray="4" marker-end="url(#fb-green)"/>
+
+  <!-- Conant-Ashby annotation -->
+  <rect x="30" y="510" width="840" height="50" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="450" y="530" text-anchor="middle" font-size="10" fill="#475569" font-style="italic">"Every good regulator of a system must be a model of that system" — Conant &amp; Ashby (1970)</text>
+  <text x="450" y="548" text-anchor="middle" font-size="9" fill="#94a3b8">The Styx controller (financial stakes + peer audit) is a model of the human behavioral system it regulates.</text>
+</svg>

@@ -60,8 +60,8 @@ describe('CompliancePolicyService', () => {
   });
 
   describe('shouldFailOpenOnMissingLocation', () => {
-    it('should return true by default (no env var set)', () => {
-      expect(service.shouldFailOpenOnMissingLocation()).toBe(true);
+    it('should return false by default (fail-closed, Phase Beta P0-004)', () => {
+      expect(service.shouldFailOpenOnMissingLocation()).toBe(false);
     });
 
     it('should return false when env var is "false"', () => {
@@ -69,9 +69,14 @@ describe('CompliancePolicyService', () => {
       expect(service.shouldFailOpenOnMissingLocation()).toBe(false);
     });
 
-    it('should return true for any other value', () => {
+    it('should return true only when explicitly set to "true"', () => {
       process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'true';
       expect(service.shouldFailOpenOnMissingLocation()).toBe(true);
+    });
+
+    it('should return false for non-"true" values', () => {
+      process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'yes';
+      expect(service.shouldFailOpenOnMissingLocation()).toBe(false);
     });
   });
 
@@ -318,8 +323,7 @@ describe('CompliancePolicyService', () => {
       expect(result.action).toBe('UNKNOWN');
     });
 
-    it('should block when fail-open is disabled and no location headers', () => {
-      process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'false';
+    it('should block when fail-closed (default) and no location headers', () => {
       const req = makeRequest({ method: 'POST', originalUrl: '/contracts' });
       const result = service.evaluateRequestPolicy(req);
       expect(result.allowed).toBe(false);
@@ -327,7 +331,8 @@ describe('CompliancePolicyService', () => {
       expect(result.missingLocation).toBe(true);
     });
 
-    it('should allow when fail-open is enabled (default) and no location headers', () => {
+    it('should allow when fail-open is explicitly enabled and no location headers', () => {
+      process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'true';
       const req = makeRequest({ method: 'POST', originalUrl: '/contracts' });
       const result = service.evaluateRequestPolicy(req);
       expect(result.allowed).toBe(true);
@@ -344,6 +349,89 @@ describe('CompliancePolicyService', () => {
       const result = service.evaluateRequestPolicy(req);
       expect(result.overrideIgnoredInProduction).toBe(true);
       expect(result.state).toBe(null);
+    });
+  });
+
+  // ─── evaluateKycRequirement (Phase Beta P0-003) ───
+
+  describe('evaluateKycRequirement', () => {
+    it('should always allow when KYC enforcement is disabled', async () => {
+      const result = await service.evaluateKycRequirement('user-1', 500);
+      expect(result.allowed).toBe(true);
+    });
+
+    it('should allow TIER_1 stakes ($20 or less) without KYC even when enforcement enabled', async () => {
+      process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+      const result = await service.evaluateKycRequirement('user-1', 20);
+      expect(result.allowed).toBe(true);
+      expect(mockIdentityVerification.getUserComplianceStatus).not.toHaveBeenCalled();
+    });
+
+    it('should block stakes above $20 when KYC enabled and user unverified', async () => {
+      process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+      mockIdentityVerification.getUserComplianceStatus.mockResolvedValue({
+        userId: 'user-1',
+        kycStatus: 'NOT_STARTED',
+        ageVerificationStatus: 'NOT_STARTED',
+        identityProvider: null,
+        identityVerificationId: null,
+        identityVerifiedAt: null,
+        isKycVerified: false,
+        isAgeVerified: false,
+      });
+
+      const result = await service.evaluateKycRequirement('user-1', 25);
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toContain('Identity verification required');
+      expect(result.reason).toContain('$20');
+    });
+
+    it('should allow stakes above $20 when KYC enabled and user is verified', async () => {
+      process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+      mockIdentityVerification.getUserComplianceStatus.mockResolvedValue({
+        userId: 'user-1',
+        kycStatus: 'VERIFIED',
+        ageVerificationStatus: 'NOT_STARTED',
+        identityProvider: 'STRIPE_IDENTITY',
+        identityVerificationId: 'ivs_123',
+        identityVerifiedAt: '2026-01-01T00:00:00Z',
+        isKycVerified: true,
+        isAgeVerified: false,
+      });
+
+      const result = await service.evaluateKycRequirement('user-1', 100);
+      expect(result.allowed).toBe(true);
+    });
+
+    it('should block when identity verification service is missing', async () => {
+      process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+      const serviceNoVerification = new CompliancePolicyService({} as any);
+      const result = await serviceNoVerification.evaluateKycRequirement('user-1', 50);
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toContain('Identity verification required');
+    });
+
+    it('should allow exactly $20 without KYC (boundary)', async () => {
+      process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+      const result = await service.evaluateKycRequirement('user-1', 20);
+      expect(result.allowed).toBe(true);
+    });
+
+    it('should block $20.01 without KYC (boundary)', async () => {
+      process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+      mockIdentityVerification.getUserComplianceStatus.mockResolvedValue({
+        userId: 'user-1',
+        kycStatus: 'NOT_STARTED',
+        ageVerificationStatus: 'NOT_STARTED',
+        identityProvider: null,
+        identityVerificationId: null,
+        identityVerifiedAt: null,
+        isKycVerified: false,
+        isAgeVerified: false,
+      });
+
+      const result = await service.evaluateKycRequirement('user-1', 20.01);
+      expect(result.allowed).toBe(false);
     });
   });
 

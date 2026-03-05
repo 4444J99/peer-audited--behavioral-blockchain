@@ -190,6 +190,22 @@ export function ChatInterface() {
     }
   };
 
+  const exportConversation = () => {
+    const lines = messages.map((msg) => {
+      const role = msg.role === 'user' ? 'You' : 'Styx';
+      const time = new Date(msg.timestamp).toLocaleString();
+      return `### ${role} (${time})\n\n${msg.content}`;
+    });
+    const markdown = `# Ask Styx — Conversation Export\n\nExported: ${new Date().toLocaleString()}\n\n---\n\n${lines.join('\n\n---\n\n')}\n`;
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `styx-chat-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const clearConversation = () => {
     setMessages([]);
     setError(null);
@@ -214,14 +230,27 @@ export function ChatInterface() {
           <h1 className="text-lg font-bold text-white tracking-tight">
             ASK STYX
           </h1>
+          {messages.length > 0 && (
+            <span className="text-xs text-neutral-500">
+              {messages.length} {messages.length === 1 ? 'message' : 'messages'}
+            </span>
+          )}
         </div>
         {messages.length > 0 && (
-          <button
-            onClick={clearConversation}
-            className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors px-3 py-1 border border-neutral-800 rounded-full"
-          >
-            Clear
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={exportConversation}
+              className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors px-3 py-1 border border-neutral-800 rounded-full"
+            >
+              Export
+            </button>
+            <button
+              onClick={clearConversation}
+              className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors px-3 py-1 border border-neutral-800 rounded-full"
+            >
+              Clear
+            </button>
+          </div>
         )}
       </div>
 

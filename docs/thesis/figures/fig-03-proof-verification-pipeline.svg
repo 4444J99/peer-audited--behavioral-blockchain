@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 280" font-family="'Helvetica Neue', Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="a" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#334155"/>
+    </marker>
+  </defs>
+
+  <title>Figure 3: Proof Verification Pipeline (5-Layer Stack)</title>
+  <text x="450" y="22" text-anchor="middle" font-size="15" font-weight="bold" fill="#1e293b">Figure 3: Proof Verification Pipeline</text>
+  <text x="450" y="40" text-anchor="middle" font-size="11" fill="#64748b">Theorems T2, T4, T6, T7, T9</text>
+
+  <!-- Layer 1: Pre-screening (T9) -->
+  <rect x="30" y="70" width="150" height="70" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="105" y="92" text-anchor="middle" font-size="11" font-weight="bold" fill="#92400e">Layer 1: Pre-Screen</text>
+  <text x="105" y="108" text-anchor="middle" font-size="9" fill="#92400e">pHash (T9)</text>
+  <text x="105" y="120" text-anchor="middle" font-size="9" fill="#92400e">EXIF Validation</text>
+  <text x="105" y="132" text-anchor="middle" font-size="8" fill="#b45309">anomaly.service.ts</text>
+
+  <!-- Arrow 1→2 -->
+  <line x1="180" y1="105" x2="210" y2="105" stroke="#334155" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="195" y="98" text-anchor="middle" font-size="8" fill="#16a34a">PASS</text>
+
+  <!-- Layer 2: Peer Audit (T4) -->
+  <rect x="215" y="70" width="150" height="70" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="290" y="92" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e40af">Layer 2: Peer Audit</text>
+  <text x="290" y="108" text-anchor="middle" font-size="9" fill="#1e40af">Fury Consensus (T4)</text>
+  <text x="290" y="120" text-anchor="middle" font-size="9" fill="#1e40af">3–7 auditors/proof</text>
+  <text x="290" y="132" text-anchor="middle" font-size="8" fill="#3b82f6">fury-router.service.ts</text>
+
+  <!-- Arrow 2→3 -->
+  <line x1="365" y1="105" x2="395" y2="105" stroke="#334155" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- Layer 3: Quality Assurance (T7) -->
+  <rect x="400" y="70" width="150" height="70" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="475" y="92" text-anchor="middle" font-size="11" font-weight="bold" fill="#4338ca">Layer 3: QA</text>
+  <text x="475" y="108" text-anchor="middle" font-size="9" fill="#4338ca">Honeypot Injection (T7)</text>
+  <text x="475" y="120" text-anchor="middle" font-size="9" fill="#4338ca">Every 6 hours</text>
+  <text x="475" y="132" text-anchor="middle" font-size="8" fill="#6366f1">honeypot.service.ts</text>
+
+  <!-- Arrow 3→4 -->
+  <line x1="550" y1="105" x2="580" y2="105" stroke="#334155" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- Layer 4: Dispute Resolution (T6) -->
+  <rect x="585" y="70" width="150" height="70" rx="6" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="660" y="92" text-anchor="middle" font-size="11" font-weight="bold" fill="#9d174d">Layer 4: Disputes</text>
+  <text x="660" y="108" text-anchor="middle" font-size="9" fill="#9d174d">Judge Appeal (T6)</text>
+  <text x="660" y="120" text-anchor="middle" font-size="9" fill="#9d174d">$5 friction fee</text>
+  <text x="660" y="132" text-anchor="middle" font-size="8" fill="#ec4899">dispute.service.ts</text>
+
+  <!-- Arrow 4→5 -->
+  <line x1="735" y1="105" x2="765" y2="105" stroke="#334155" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- Layer 5: Audit Trail (T2) -->
+  <rect x="770" y="70" width="110" height="70" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="825" y="92" text-anchor="middle" font-size="11" font-weight="bold" fill="#15803d">Layer 5: Audit</text>
+  <text x="825" y="108" text-anchor="middle" font-size="9" fill="#15803d">Truth Log (T2)</text>
+  <text x="825" y="120" text-anchor="middle" font-size="9" fill="#15803d">SHA-256 chain</text>
+  <text x="825" y="132" text-anchor="middle" font-size="8" fill="#16a34a">truth-log.service.ts</text>
+
+  <!-- Rejection paths -->
+  <!-- Layer 1 reject -->
+  <line x1="105" y1="140" x2="105" y2="185" stroke="#dc2626" stroke-width="1.2" marker-end="url(#a)"/>
+  <rect x="50" y="190" width="110" height="30" rx="4" fill="#fecaca" stroke="#dc2626" stroke-width="1"/>
+  <text x="105" y="210" text-anchor="middle" font-size="10" fill="#991b1b">REJECT (duplicate)</text>
+
+  <!-- Layer 2 reject -->
+  <line x1="290" y1="140" x2="290" y2="185" stroke="#dc2626" stroke-width="1.2" marker-end="url(#a)"/>
+  <rect x="235" y="190" width="110" height="30" rx="4" fill="#fecaca" stroke="#dc2626" stroke-width="1"/>
+  <text x="290" y="210" text-anchor="middle" font-size="10" fill="#991b1b">REJECT (consensus)</text>
+
+  <!-- Layer 3 feedback loop -->
+  <path d="M 475,140 L 475,170 L 290,170 L 290,143" fill="none" stroke="#6366f1" stroke-width="1" stroke-dasharray="4" marker-end="url(#a)"/>
+  <text x="383" y="165" text-anchor="middle" font-size="8" fill="#6366f1">calibrate auditor accuracy</text>
+
+  <!-- Layer 4 overturned path -->
+  <path d="M 610,140 L 610,245 L 290,245 L 290,143" fill="none" stroke="#16a34a" stroke-width="1" stroke-dasharray="4" marker-end="url(#a)"/>
+  <text x="450" y="253" text-anchor="middle" font-size="8" fill="#16a34a">OVERTURNED → re-verify</text>
+
+  <!-- Ledger connection (T1) -->
+  <rect x="770" y="190" width="110" height="30" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="1"/>
+  <text x="825" y="210" text-anchor="middle" font-size="10" fill="#15803d">Ledger (T1)</text>
+  <line x1="825" y1="140" x2="825" y2="185" stroke="#16a34a" stroke-width="1.2" marker-end="url(#a)"/>
+</svg>

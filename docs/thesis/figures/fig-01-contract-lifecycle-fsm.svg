@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" font-family="'Helvetica Neue', Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#334155"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+    </marker>
+  </defs>
+
+  <title>Figure 1: Contract Lifecycle State Machine</title>
+
+  <!-- Title -->
+  <text x="450" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">Figure 1: Contract Lifecycle State Machine</text>
+
+  <!-- States -->
+  <!-- DRAFT -->
+  <rect x="30" y="80" width="120" height="50" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="90" y="110" text-anchor="middle" font-size="12" fill="#475569">DRAFT</text>
+
+  <!-- PENDING_ESCROW -->
+  <rect x="200" y="80" width="150" height="50" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="275" y="110" text-anchor="middle" font-size="12" fill="#92400e">PENDING_ESCROW</text>
+
+  <!-- ACTIVE -->
+  <rect x="400" y="80" width="120" height="50" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="460" y="110" text-anchor="middle" font-size="13" font-weight="bold" fill="#15803d">ACTIVE</text>
+
+  <!-- PROOF_SUBMITTED -->
+  <rect x="400" y="200" width="150" height="50" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="475" y="230" text-anchor="middle" font-size="12" fill="#1e40af">PROOF_SUBMITTED</text>
+
+  <!-- FURY_REVIEW -->
+  <rect x="400" y="320" width="140" height="50" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="470" y="350" text-anchor="middle" font-size="12" fill="#4338ca">FURY_REVIEW</text>
+
+  <!-- COMPLETED -->
+  <rect x="680" y="80" width="130" height="50" rx="8" fill="#bbf7d0" stroke="#16a34a" stroke-width="2.5"/>
+  <text x="745" y="110" text-anchor="middle" font-size="13" font-weight="bold" fill="#15803d">COMPLETED</text>
+  <rect x="680" y="80" width="130" height="50" rx="8" fill="none" stroke="#16a34a" stroke-width="1" stroke-dasharray="3"/>
+
+  <!-- FAILED -->
+  <rect x="680" y="200" width="130" height="50" rx="8" fill="#fecaca" stroke="#dc2626" stroke-width="2.5"/>
+  <text x="745" y="230" text-anchor="middle" font-size="13" font-weight="bold" fill="#991b1b">FAILED</text>
+  <rect x="680" y="200" width="130" height="50" rx="8" fill="none" stroke="#dc2626" stroke-width="1" stroke-dasharray="3"/>
+
+  <!-- DISPUTED -->
+  <rect x="680" y="320" width="130" height="50" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+  <text x="745" y="350" text-anchor="middle" font-size="12" fill="#854d0e">DISPUTED</text>
+
+  <!-- CANCELLED -->
+  <rect x="200" y="420" width="120" height="50" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="260" y="450" text-anchor="middle" font-size="12" fill="#475569">CANCELLED</text>
+
+  <!-- Arrows -->
+  <!-- DRAFT → PENDING_ESCROW -->
+  <line x1="150" y1="105" x2="195" y2="105" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="173" y="98" text-anchor="middle" font-size="10" fill="#64748b">submit</text>
+
+  <!-- PENDING_ESCROW → ACTIVE -->
+  <line x1="350" y1="105" x2="395" y2="105" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="373" y="98" text-anchor="middle" font-size="10" fill="#64748b">escrow held</text>
+
+  <!-- ACTIVE → PROOF_SUBMITTED -->
+  <line x1="460" y1="130" x2="470" y2="195" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="440" y="168" font-size="10" fill="#64748b">submit proof</text>
+
+  <!-- PROOF_SUBMITTED → FURY_REVIEW -->
+  <line x1="475" y1="250" x2="472" y2="315" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="505" y="288" font-size="10" fill="#64748b">routed</text>
+
+  <!-- FURY_REVIEW → ACTIVE (PASS) -->
+  <path d="M 400,340 C 340,340 340,120 400,110" fill="none" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="330" y="230" font-size="10" fill="#16a34a" font-weight="bold">PASS</text>
+
+  <!-- FURY_REVIEW → FAILED -->
+  <line x1="540" y1="340" x2="675" y2="230" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+  <text x="620" y="275" font-size="10" fill="#dc2626" font-weight="bold">FAIL</text>
+
+  <!-- FURY_REVIEW → DISPUTED -->
+  <line x1="540" y1="345" x2="675" y2="345" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="608" y="338" font-size="10" fill="#64748b">appeal</text>
+
+  <!-- ACTIVE → COMPLETED (all proofs passed) -->
+  <line x1="520" y1="95" x2="675" y2="95" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="598" y="88" font-size="10" fill="#16a34a">all proofs verified</text>
+
+  <!-- ACTIVE → FAILED (deadline expired) -->
+  <line x1="520" y1="120" x2="675" y2="210" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+  <text x="610" y="155" font-size="10" fill="#dc2626">deadline expired</text>
+
+  <!-- DRAFT → CANCELLED -->
+  <line x1="90" y1="130" x2="240" y2="415" stroke="#94a3b8" stroke-width="1" marker-end="url(#arrow)"/>
+  <text x="130" y="280" font-size="10" fill="#94a3b8">cancel</text>
+
+  <!-- DISPUTED → COMPLETED or FAILED (via T6) -->
+  <line x1="745" y1="320" x2="745" y2="255" stroke="#dc2626" stroke-width="1" stroke-dasharray="4" marker-end="url(#arrow-red)"/>
+  <text x="770" y="290" font-size="9" fill="#854d0e">upheld</text>
+  <line x1="810" y1="340" x2="850" y2="340" stroke="none"/>
+  <path d="M 745,320 C 820,280 830,150 755,135" fill="none" stroke="#16a34a" stroke-width="1" stroke-dasharray="4" marker-end="url(#arrow-green)"/>
+  <text x="810" y="230" font-size="9" fill="#16a34a">overturned</text>
+
+  <!-- Legend -->
+  <rect x="30" y="430" width="12" height="12" fill="#dcfce7" stroke="#16a34a" stroke-width="1"/>
+  <text x="48" y="441" font-size="10" fill="#475569">Active state</text>
+  <rect x="30" y="448" width="12" height="12" fill="#bbf7d0" stroke="#16a34a" stroke-width="2"/>
+  <text x="48" y="459" font-size="10" fill="#475569">Terminal (success)</text>
+  <rect x="30" y="466" width="12" height="12" fill="#fecaca" stroke="#dc2626" stroke-width="2"/>
+  <text x="48" y="477" font-size="10" fill="#475569">Terminal (failure)</text>
+</svg>

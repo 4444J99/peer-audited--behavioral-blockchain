@@ -9,6 +9,8 @@ describe('GeofenceGuard', () => {
 
   beforeEach(() => {
     process.env = { ...envSnapshot };
+    delete process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
+    delete process.env.NODE_ENV;
     compliancePolicy = new CompliancePolicyService();
     guard = new GeofenceGuard(compliancePolicy);
   });
@@ -69,6 +71,16 @@ describe('GeofenceGuard', () => {
     }
   });
 
+  it('should allow TIER_1 requests with valid state', () => {
+    const context = createContext({
+      headers: { 'cf-ipstate': 'CA' },
+      originalUrl: '/contracts',
+      method: 'GET',
+    });
+
+    expect(guard.canActivate(context)).toBe(true);
+  });
+
   it('should allow TIER_2 safe read/proof actions', () => {
     const context = createContext({
       headers: { 'cf-ipstate': 'NY' },
@@ -79,8 +91,59 @@ describe('GeofenceGuard', () => {
     expect(guard.canActivate(context)).toBe(true);
   });
 
+  // Phase Beta P0-004: Fail-closed geofencing
+
+  it('should block when no geo headers and fail-closed (default)', () => {
+    const warnSpy = jest.spyOn((guard as any).logger, 'warn').mockImplementation(() => undefined);
+
+    const context = createContext({
+      headers: {},
+      originalUrl: '/contracts',
+      method: 'GET',
+    });
+
+    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+    expect(warnSpy).toHaveBeenCalled();
+  });
+
+  it('should return 403 with JURISDICTION_BLOCKED code on fail-closed', () => {
+    jest.spyOn((guard as any).logger, 'warn').mockImplementation(() => undefined);
+
+    const context = createContext({
+      headers: {},
+      originalUrl: '/contracts',
+      method: 'POST',
+    });
+
+    try {
+      guard.canActivate(context);
+      fail('Expected guard to throw');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ForbiddenException);
+      const response = (err as ForbiddenException).getResponse() as any;
+      expect(response.code).toBe('JURISDICTION_BLOCKED');
+      expect(response.message).toContain('Location verification');
+    }
+  });
+
+  it('should allow when fail-open is explicitly enabled and no headers', () => {
+    process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'true';
+    compliancePolicy = new CompliancePolicyService();
+    guard = new GeofenceGuard(compliancePolicy);
+
+    const context = createContext({
+      headers: {},
+      originalUrl: '/contracts',
+      method: 'GET',
+    });
+
+    expect(guard.canActivate(context)).toBe(true);
+  });
+
   it('should ignore x-styx-state override in production', () => {
     process.env.NODE_ENV = 'production';
+    compliancePolicy = new CompliancePolicyService();
+    guard = new GeofenceGuard(compliancePolicy);
     const warnSpy = jest.spyOn((guard as any).logger, 'warn').mockImplementation(() => undefined);
 
     const context = createContext({
@@ -95,21 +158,19 @@ describe('GeofenceGuard', () => {
     expect(warnSpy).toHaveBeenCalled();
   });
 
-  it('should log missing geolocation and follow configured fail-closed policy', () => {
-    process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'false';
-    // Recreate service+guard so the latest env is read during evaluation.
+  it('should allow x-styx-state override in non-production when fail-open enabled', () => {
+    process.env.NODE_ENV = 'development';
+    process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'true';
     compliancePolicy = new CompliancePolicyService();
     guard = new GeofenceGuard(compliancePolicy);
-    const warnSpy = jest.spyOn((guard as any).logger, 'warn').mockImplementation(() => undefined);
 
     const context = createContext({
-      headers: {},
+      headers: { 'x-styx-state': 'CA' },
       originalUrl: '/contracts',
       method: 'GET',
     });
 
-    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
-    expect(warnSpy).toHaveBeenCalled();
+    expect(guard.canActivate(context)).toBe(true);
   });
 });
 

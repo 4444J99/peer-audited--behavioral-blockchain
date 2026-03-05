@@ -10,6 +10,7 @@ import { AegisProtocolService } from '../../../services/health/aegis.service';
 import { RecoveryProtocolService } from '../../../services/health/recovery-protocol.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { CompliancePolicyService } from '../compliance/compliance-policy.service';
 import { calculateIntegrity, getAllowedTiers, getTierMaxStake, UserHistory } from '../../../../shared/libs/integrity';
 import {
   OathCategory,
@@ -105,6 +106,7 @@ export class ContractsService {
     private readonly recovery: RecoveryProtocolService,
     private readonly anomaly: AnomalyService,
     @Optional() @Inject(NotificationsService) private readonly notifications?: NotificationsService,
+    @Optional() @Inject(CompliancePolicyService) private readonly compliancePolicy?: CompliancePolicyService,
   ) {}
 
   private async assertCanReadContractRow(contractRow: any, requester: ContractReadRequester): Promise<void> {
@@ -203,6 +205,7 @@ export class ContractsService {
     userRow: any;
     escrowAccountId: string | null;
     revenueAccountId: string | null;
+    jurisdictionTier?: import('../../../services/geofencing').JurisdictionTier;
   }): Array<{
     contractId: string;
     outcome: 'COMPLETED' | 'FAILED';
@@ -210,7 +213,7 @@ export class ContractsService {
     dedupeKey: string;
     payload: Record<string, any>;
   }> {
-    const { contractId, outcome, contractRow, userRow, escrowAccountId, revenueAccountId } = input;
+    const { contractId, outcome, contractRow, userRow, escrowAccountId, revenueAccountId, jurisdictionTier } = input;
     const effects: Array<{
       contractId: string;
       outcome: 'COMPLETED' | 'FAILED';
@@ -220,11 +223,20 @@ export class ContractsService {
     }> = [];
     const baseKey = `contract-resolution:${contractId}:${outcome}`;
 
+    // Phase Beta P0-011: Resolve disposition via escrow service
+    const disposition = jurisdictionTier
+      ? this.stripe.resolveDisposition(outcome, jurisdictionTier)
+      : (outcome === 'COMPLETED' ? 'REFUND' as const : 'CAPTURE' as const);
+
     if (contractRow.payment_intent_id) {
+      // For REFUND disposition on failure, cancel the hold instead of capturing
+      const stripeEffect = disposition === 'REFUND'
+        ? 'STRIPE_CANCEL_HOLD' as const
+        : 'STRIPE_CAPTURE_STAKE' as const;
       effects.push({
         contractId,
         outcome,
-        effectType: outcome === 'COMPLETED' ? 'STRIPE_CANCEL_HOLD' : 'STRIPE_CAPTURE_STAKE',
+        effectType: stripeEffect,
         dedupeKey: `${baseKey}:stripe`,
         payload: {
           paymentIntentId: contractRow.payment_intent_id,
@@ -233,7 +245,9 @@ export class ContractsService {
     }
 
     if (userRow?.account_id && escrowAccountId) {
-      if (outcome === 'COMPLETED') {
+      if (disposition === 'REFUND') {
+        // Return stake to user (success, or TIER_2 refund-only failure)
+        const isRefundOnly = outcome === 'FAILED';
         effects.push({
           contractId,
           outcome,
@@ -244,13 +258,15 @@ export class ContractsService {
             creditAccountId: userRow.account_id,
             amount: Number(contractRow.stake_amount),
             metadata: {
-              type: 'STAKE_RETURN',
+              type: isRefundOnly ? 'REFUND_ONLY_DISPOSITION' : 'STAKE_RETURN',
               outcome,
+              jurisdictionTier: jurisdictionTier || null,
               sideEffectKey: `${baseKey}:ledger:return`,
             },
           },
         });
       } else if (revenueAccountId) {
+        // Capture stake as platform revenue (TIER_1 failure)
         effects.push({
           contractId,
           outcome,
@@ -1146,6 +1162,17 @@ export class ContractsService {
       user.integrity_score,
       totalFailures.rows[0].count
     );
+
+    // 3d. KYC tier gating (Phase Beta P0-003)
+    if (this.compliancePolicy) {
+      const kycResult = await this.compliancePolicy.evaluateKycRequirement(
+        dto.userId,
+        dto.stakeAmount,
+      );
+      if (!kycResult.allowed) {
+        throw new ForbiddenException(kycResult.reason || 'KYC verification required');
+      }
+    }
 
     // 4b. If recovery oath, run Recovery Protocol guardrails
     if (dto.oathCategory.startsWith('RECOVERY_')) {

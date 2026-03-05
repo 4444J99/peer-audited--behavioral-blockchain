@@ -1350,4 +1350,341 @@ describe('ContractsService', () => {
       await expect(service.useGraceDay('contract-1', 'user-1')).rejects.toThrow(BadRequestException);
     });
   });
+
+  // ── claimBounty ──────────────────────────────────────────────
+
+  describe('claimBounty', () => {
+    it('should claim an active bounty and route proof to Fury', async () => {
+      // 1. bounty lookup
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'bounty-1',
+          bounty_link_id: 'link-abc',
+          contract_id: 'contract-1',
+          user_id: 'user-1',
+          status: 'ACTIVE',
+          contract_status: 'ACTIVE',
+        }],
+      });
+      // 2. update bounty status
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // 3. insert proof
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-bounty-1' }] });
+
+      const result = await service.claimBounty('link-abc', 'proofs/bounty.mp4', '192.168.1.1');
+
+      expect(result.proofId).toBe('proof-bounty-1');
+      expect(result.jobId).toBe('job-id-1');
+      expect(mockFuryRouter.routeProof).toHaveBeenCalledWith('proof-bounty-1', 'user-1', 5);
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('BOUNTY_CLAIMED', expect.objectContaining({
+        bountyId: 'bounty-1',
+        proofId: 'proof-bounty-1',
+      }));
+    });
+
+    it('should throw NotFoundException for invalid bounty link', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(service.claimBounty('invalid-link', 'media.mp4', '1.2.3.4'))
+        .rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException for inactive bounty', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'bounty-2',
+          status: 'CLAIMED',
+          contract_status: 'ACTIVE',
+        }],
+      });
+
+      await expect(service.claimBounty('link-used', 'media.mp4', '1.2.3.4'))
+        .rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when contract is not active', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'bounty-3',
+          status: 'ACTIVE',
+          contract_status: 'COMPLETED',
+        }],
+      });
+
+      await expect(service.claimBounty('link-expired', 'media.mp4', '1.2.3.4'))
+        .rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // ── fileDispute ──────────────────────────────────────────────
+
+  describe('fileDispute', () => {
+    it('should file a dispute using the latest proof and user stripe customer', async () => {
+      // contract lookup
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'contract-1', user_id: 'user-1', status: 'ACTIVE' }],
+      });
+      // user lookup (stripe customer)
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ stripe_customer_id: 'cus_test_1' }],
+      });
+      // latest proof
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'proof-latest' }],
+      });
+
+      const result = await service.fileDispute('user-1', 'contract-1');
+
+      expect(result.appealStatus).toBe('FEE_AUTHORIZED_PENDING_REVIEW');
+      expect(mockDispute.initiateAppeal).toHaveBeenCalledWith('user-1', 'proof-latest', 'cus_test_1');
+    });
+
+    it('should throw NotFoundException when contract does not exist', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(service.fileDispute('user-1', 'missing'))
+        .rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException when user has no stripe customer', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'contract-1', user_id: 'user-1' }],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ stripe_customer_id: null }],
+      });
+
+      await expect(service.fileDispute('user-1', 'contract-1'))
+        .rejects.toThrow(BadRequestException);
+    });
+
+    it('should use contractId as fallback proofId when no proofs exist', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'contract-1', user_id: 'user-1' }],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ stripe_customer_id: 'cus_1' }],
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // no proofs
+
+      await service.fileDispute('user-1', 'contract-1');
+
+      expect(mockDispute.initiateAppeal).toHaveBeenCalledWith('user-1', 'contract-1', 'cus_1');
+    });
+  });
+
+  // ── getPendingInvitations ────────────────────────────────────
+
+  describe('getPendingInvitations', () => {
+    it('should return pending partner invitations for a user', async () => {
+      const invitations = [
+        { id: 'inv-1', contract_id: 'c-1', oath_category: 'DEEP_WORK_FOCUS', stake_amount: 25, owner_email: 'owner@styx.app' },
+      ];
+      mockPool.query.mockResolvedValueOnce({ rows: invitations });
+
+      const result = await service.getPendingInvitations('user-2');
+
+      expect(result).toEqual(invitations);
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('PENDING'),
+        ['user-2'],
+      );
+    });
+
+    it('should return empty array when no invitations', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.getPendingInvitations('user-lonely');
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  // ── acceptPartnerInvitation ──────────────────────────────────
+
+  describe('acceptPartnerInvitation', () => {
+    it('should accept invitation and log event', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'partner-1' }] }); // UPDATE RETURNING
+
+      const result = await service.acceptPartnerInvitation('contract-1', 'partner-user-1');
+
+      expect(result.status).toBe('active');
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('PARTNER_INVITATION_ACCEPTED', {
+        contractId: 'contract-1',
+        partnerUserId: 'partner-user-1',
+      });
+    });
+
+    it('should throw NotFoundException when invitation not found', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(service.acceptPartnerInvitation('contract-1', 'stranger'))
+        .rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // ── cosignAttestation ────────────────────────────────────────
+
+  describe('cosignAttestation', () => {
+    it('should cosign attestation when partner is active', async () => {
+      // partner check
+      mockPool.query.mockResolvedValueOnce({ rows: [{ '?column?': 1 }] });
+      // latest attestation
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'attest-1' }] });
+      // update attestation
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.cosignAttestation('contract-1', 'partner-1');
+
+      expect(result.status).toBe('cosigned');
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('ATTESTATION_COSIGNED', expect.objectContaining({
+        attestationId: 'attest-1',
+        contractId: 'contract-1',
+        partnerUserId: 'partner-1',
+      }));
+    });
+
+    it('should throw ForbiddenException when not an active partner', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(service.cosignAttestation('contract-1', 'not-partner'))
+        .rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw BadRequestException when no pending attestation exists', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [{ '?column?': 1 }] }); // partner check OK
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // no attestation
+
+      await expect(service.cosignAttestation('contract-1', 'partner-1'))
+        .rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // ── processHealthKitSample ───────────────────────────────────
+
+  describe('processHealthKitSample', () => {
+    it('should auto-attest matching HealthKit contracts', async () => {
+      // Find active contracts with matching oath_category + HEALTHKIT verification
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'contract-hk-1' }],
+      });
+      // submitAttestation internals: contract lookup
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'contract-hk-1', user_id: 'user-1', status: 'ACTIVE',
+          oath_category: 'BIOLOGICAL_WEIGHT', duration_days: 30,
+        }],
+      });
+      // submitAttestation: check existing attestation today
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // submitAttestation: insert attestation
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'attest-hk-1' }] });
+
+      await service.processHealthKitSample('user-1', {
+        type: 'HKQuantityTypeIdentifierBodyMass',
+        value: 75,
+        startDate: '2026-03-04T10:00:00Z',
+        endDate: '2026-03-04T10:00:00Z',
+      });
+
+      // Should have queried for matching contracts
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('HEALTHKIT'),
+        ['user-1', 'BIOLOGICAL_WEIGHT'],
+      );
+    });
+
+    it('should silently return for unrecognized HealthKit sample types', async () => {
+      await service.processHealthKitSample('user-1', {
+        type: 'HKQuantityTypeIdentifierUnknown',
+        value: 100,
+        startDate: '2026-03-04T10:00:00Z',
+        endDate: '2026-03-04T10:00:00Z',
+      });
+
+      expect(mockPool.query).not.toHaveBeenCalled();
+    });
+
+    it('should not throw when no active contracts match', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // no matching contracts
+
+      await expect(service.processHealthKitSample('user-1', {
+        type: 'HKQuantityTypeIdentifierStepCount',
+        value: 10000,
+        startDate: '2026-03-04T10:00:00Z',
+        endDate: '2026-03-04T10:00:00Z',
+      })).resolves.not.toThrow();
+    });
+  });
+
+  // ── doubleDownStake ──────────────────────────────────────────
+
+  describe('doubleDownStake', () => {
+    it('should double down on an active contract', async () => {
+      // contract lookup
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'contract-1', user_id: 'user-1', status: 'ACTIVE', stake_amount: 3000 }],
+      });
+      // user lookup
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ stripe_customer_id: 'cus_1', account_id: 'acct-1' }],
+      });
+      // update contract
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // escrow account lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
+
+      const result = await service.doubleDownStake('contract-1', 'user-1', 2000);
+
+      expect(result.contractId).toBe('contract-1');
+      expect(result.newTotal).toBe(5000);
+      expect(result.paymentIntentId).toBe('pi_test_123');
+      expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_1', 2000, 'contract-1');
+      expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
+        'acct-1', 'escrow-acct', 2000, 'contract-1',
+        expect.objectContaining({ type: 'STAKE_DOUBLE_DOWN' }),
+      );
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('STAKE_DOUBLED_DOWN', expect.objectContaining({
+        additionalAmount: 2000,
+        newTotal: 5000,
+      }));
+    });
+
+    it('should throw NotFoundException when contract missing', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(service.doubleDownStake('missing', 'user-1', 1000))
+        .rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException when not owner', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'contract-1', user_id: 'other-user', status: 'ACTIVE' }],
+      });
+
+      await expect(service.doubleDownStake('contract-1', 'user-1', 1000))
+        .rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw BadRequestException when contract not active', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'contract-1', user_id: 'user-1', status: 'COMPLETED' }],
+      });
+
+      await expect(service.doubleDownStake('contract-1', 'user-1', 1000))
+        .rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when no payment method on file', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'contract-1', user_id: 'user-1', status: 'ACTIVE', stake_amount: 3000 }],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ stripe_customer_id: null, account_id: 'acct-1' }],
+      });
+
+      await expect(service.doubleDownStake('contract-1', 'user-1', 1000))
+        .rejects.toThrow(BadRequestException);
+    });
+  });
 });

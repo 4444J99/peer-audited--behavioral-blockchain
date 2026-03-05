@@ -73,6 +73,28 @@ describe('Landing Page', () => {
     expect(html).toContain('>S</span>');
   });
 
+  it('renders the ASK STYX AI link to ask page', () => {
+    const html = renderToStaticMarkup(<Home />);
+
+    expect(html).toContain('ASK STYX AI');
+    expect(html).toContain('href="/ask"');
+  });
+
+  it('styles ASK STYX AI button with red hover border', () => {
+    const html = renderToStaticMarkup(<Home />);
+
+    // The /ask link has hover:border-red-600 to differentiate from the manifesto link
+    expect(html).toContain('hover:border-red-600');
+  });
+
+  it('renders all three CTA buttons', () => {
+    const html = renderToStaticMarkup(<Home />);
+
+    expect(html).toContain('ENTER THE ARENA');
+    expect(html).toContain('VIEW THE MANIFESTO');
+    expect(html).toContain('ASK STYX AI');
+  });
+
   it('links to dashboard when user is authenticated', () => {
     // Reset modules to apply new mock
     jest.resetModules();
