@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ContractsController } from './contracts.controller';
 import { ContractsService } from './contracts.service';
@@ -14,6 +14,7 @@ import { RecoveryProtocolService } from '../../../services/health/recovery-proto
 import { HoneypotService } from '../../../services/intelligence/honeypot.service';
 import { AnomalyService, ANOMALY_REDIS_CLIENT } from '../../../services/anomaly/anomaly.service';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { PaymentsModule } from '../payments/payments.module';
 import Redis from 'ioredis';
 import { REDIS_CONNECTION_CONFIG } from '../../../config/queue.config';
 
@@ -29,7 +30,11 @@ const redisProvider = {
 };
 
 @Module({
-  imports: [ScheduleModule.forRoot(), NotificationsModule],
+  imports: [
+    ScheduleModule.forRoot(), 
+    NotificationsModule,
+    forwardRef(() => PaymentsModule),
+  ],
   controllers: [ContractsController],
   providers: [
     ContractsService,

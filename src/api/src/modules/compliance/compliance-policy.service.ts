@@ -171,6 +171,13 @@ export class CompliancePolicyService {
       };
     }
 
+    if (baseDecision.state) {
+      await this.pool.query(
+        'UPDATE users SET last_known_state = $1 WHERE id = $2',
+        [baseDecision.state, userId]
+      );
+    }
+
     if (
       !this.isKycEnforcementEnabled() ||
       !CompliancePolicyService.KYC_GATED_ACTIONS.has(baseDecision.action)

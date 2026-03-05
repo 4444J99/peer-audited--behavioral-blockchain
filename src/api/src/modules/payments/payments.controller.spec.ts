@@ -18,6 +18,7 @@ describe('PaymentsController', () => {
       mockPool as unknown as Pool,
       mockContractsService as unknown as ContractsService,
       mockNotifications as unknown as NotificationsService,
+      {} as any, // mockCompliancePolicy
     );
   });
 
@@ -63,6 +64,7 @@ describe('PaymentsController', () => {
       mockPool as unknown as Pool,
       mockContractsService as unknown as ContractsService,
       mockNotifications as unknown as NotificationsService,
+      {} as any, // mockCompliancePolicy
     );
 
     expect(() => prodController.onModuleInit()).toThrow(

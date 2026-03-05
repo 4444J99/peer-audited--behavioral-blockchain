@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Pool } from 'pg';
 import { CrmConnector, EmployeeEvent } from '../../src/modules/b2b/connectors/crm-connector.interface';
 import { SalesforceConnector } from '../../src/modules/b2b/connectors/salesforce.connector';
 import { HubSpotConnector } from '../../src/modules/b2b/connectors/hubspot.connector';
@@ -16,6 +17,7 @@ export class CrmService {
   private readonly connector: CrmConnector | null;
 
   constructor(
+    private readonly pool: Pool,
     private readonly salesforce: SalesforceConnector,
     private readonly hubspot: HubSpotConnector,
   ) {
@@ -63,5 +65,39 @@ export class CrmService {
     } catch (error: any) {
       this.logger.error(`[CRM_INTERACTION] Push failed: ${error.message}`);
     }
+  }
+
+  /**
+   * F-B2B-04: Corporate Integrity Score
+   * Aggregates anonymized integrity metrics for a specific enterprise.
+   * Returns average integrity, total active contracts, and behavioral velocity.
+   */
+  async calculateCorporateIntegrityScore(enterpriseId: string): Promise<{
+    averageIntegrity: number;
+    activeContracts: number;
+    behavioralVelocity: number;
+  }> {
+    const stats = await this.pool.query(
+      `SELECT 
+        AVG(integrity_score) as avg_integrity,
+        COUNT(c.id) as active_contracts,
+        (SELECT COUNT(*) FROM event_log WHERE event_type = 'CONTRACT_RESOLVED' AND created_at > NOW() - interval '30 days') as velocity
+       FROM users u
+       LEFT JOIN contracts c ON u.id = c.user_id AND c.status = 'ACTIVE'
+       WHERE u.enterprise_id = $1
+       GROUP BY u.enterprise_id`,
+      [enterpriseId]
+    );
+
+    if (stats.rows.length === 0) {
+      return { averageIntegrity: 0, activeContracts: 0, behavioralVelocity: 0 };
+    }
+
+    const row = stats.rows[0];
+    return {
+      averageIntegrity: parseFloat(row.avg_integrity) || 0,
+      activeContracts: parseInt(row.active_contracts) || 0,
+      behavioralVelocity: parseInt(row.velocity) || 0,
+    };
   }
 }

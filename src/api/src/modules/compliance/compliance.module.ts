@@ -10,6 +10,7 @@ import {
   MockIdentityProviderAdapter,
   StripeIdentityProviderAdapter,
 } from './identity-provider.service';
+import { MedicalExemptionService } from './medical-exemption.service';
 
 @Global()
 @Module({
@@ -23,7 +24,14 @@ import {
     StripeIdentityProviderAdapter,
     GeofenceGuard,
     ComplianceAccessGuard,
+    MedicalExemptionService,
   ],
-  exports: [CompliancePolicyService, IdentityVerificationService, GeofenceGuard, ComplianceAccessGuard],
+  exports: [
+    CompliancePolicyService,
+    IdentityVerificationService,
+    GeofenceGuard,
+    ComplianceAccessGuard,
+    MedicalExemptionService,
+  ],
 })
 export class ComplianceModule {}

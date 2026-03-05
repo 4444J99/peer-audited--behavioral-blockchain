@@ -1,9 +1,11 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Optional, Inject, Logger, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Optional, Inject, Logger, InternalServerErrorException, forwardRef } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { StripeFboService } from '../../../services/escrow/stripe.service';
+import { JurisdictionTier } from '../../../services/geofencing';
 import { StripeFBOService as RealStripeFBOService } from '../payments/stripe-fbo.service';
+import { SettlementService } from '../payments/settlement.service';
 import { DisputeService } from '../../../services/escrow/dispute.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { AegisProtocolService } from '../../../services/health/aegis.service';
@@ -107,6 +109,7 @@ export class ContractsService {
     private readonly anomaly: AnomalyService,
     @Optional() @Inject(NotificationsService) private readonly notifications?: NotificationsService,
     @Optional() @Inject(CompliancePolicyService) private readonly compliancePolicy?: CompliancePolicyService,
+    @Optional() @Inject(forwardRef(() => SettlementService)) private readonly settlementService?: SettlementService,
   ) {}
 
   private async assertCanReadContractRow(contractRow: any, requester: ContractReadRequester): Promise<void> {
@@ -871,6 +874,7 @@ export class ContractsService {
       });
     }
 
+    const notificationKey = `${baseKey}:notification:contract-created`;
     try {
       if (
         this.notifications &&
@@ -1162,6 +1166,11 @@ export class ContractsService {
       user.integrity_score,
       totalFailures.rows[0].count
     );
+
+    // 3e. Aegis Health Guard: Enforce BMI floor and velocity caps for BIOLOGICAL oaths
+    if (dto.oathCategory === 'BIOLOGICAL' && dto.healthMetrics) {
+      this.aegis.validateHealthMetrics(dto.healthMetrics, dto.durationDays);
+    }
 
     // 3d. KYC tier gating (Phase Beta P0-003)
     if (this.compliancePolicy) {
@@ -1556,17 +1565,28 @@ export class ContractsService {
         });
         await this.enqueueContractResolutionSideEffects(db, effects);
       } else {
-        if (outcome === 'COMPLETED') {
-          // Release held funds back to user
-          if (row.payment_intent_id) {
-            await this.realStripe.resolveEscrow(row.payment_intent_id, 'PASS');
-          }
-        } else {
-          // Capture stake — user failed
-          if (row.payment_intent_id) {
-            // In production, we'd fetch the furies who audited this
-            await this.realStripe.resolveEscrow(row.payment_intent_id, 'FAIL');
-          }
+        // TKT-P0-001: Background Settlement via BullMQ
+        if (row.payment_intent_id && this.settlementService) {
+          // Resolve jurisdiction tier for P0-011 disposition logic
+          const jurisdiction = await db.query(
+            'SELECT tier FROM jurisdictions WHERE code = $1',
+            [userResult.rows[0]?.last_known_state || 'UNKNOWN']
+          );
+          const tier = (jurisdiction.rows[0]?.tier || 'FULL_ACCESS') as JurisdictionTier;
+          
+          const dispositionMode = this.stripe.resolveDisposition(
+            outcome === 'COMPLETED' ? 'COMPLETED' : 'FAILED',
+            tier
+          );
+
+          await this.settlementService.dispatchSettlement({
+            contractId,
+            outcome: outcome === 'COMPLETED' ? 'PASS' : 'FAIL',
+            paymentIntentId: row.payment_intent_id,
+            amountCents: Math.round(Number(row.stake_amount) * 100),
+            dispositionMode,
+            // In a future Gamma sprint, we'd include furies array here
+          });
         }
 
         // Record in ledger if we have accounts
@@ -1761,7 +1781,7 @@ export class ContractsService {
          FROM contracts
          WHERE user_id = $1
            AND metadata->'cohort'->>'cohortId' = $2
-           AND status IN ('PENDING_STAKE', 'ACTIVE', 'COMPLETED', 'FAILED')
+           AND status IN ('PENDING_STAKE', 'ACTIVE', 'COMPLETED', 'FAILED', 'EXEMPT_PENDING', 'EXEMPTED')
          LIMIT 1`,
         [requesterUserId, cohortId],
       );

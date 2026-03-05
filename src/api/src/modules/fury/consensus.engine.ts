@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Pool } from 'pg';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
-import { AUDITOR_STAKE_AMOUNT } from '../../../../shared/libs/integrity';
+import { AUDITOR_STAKE_AMOUNT, calculateReviewerWeight, FuryHistory } from '../../../../shared/libs/integrity';
 
 export type Verdict = 'PASS' | 'FAIL';
 
@@ -16,6 +16,11 @@ export type ConsensusOutcome = 'VERIFIED' | 'REJECTED' | 'SPLIT';
 export interface ConsensusResult {
   outcome: ConsensusOutcome;
   votes: FuryVote[];
+  weightedStats?: {
+    totalPower: number;
+    passPower: number;
+    failPower: number;
+  };
   flaggedFuries: string[]; // Furies who passed a honeypot (known-fail)
   bountyDistributed: boolean;
 }
@@ -31,23 +36,56 @@ export class ConsensusEngine {
   ) {}
 
   /**
-   * Aggregates Fury verdicts for a proof using simple majority (2/3 threshold).
-   * If the proof is a honeypot, flags Furies who voted PASS on a known-fail.
-   * After consensus, distributes bounties to correct voters via LedgerService.
+   * Aggregates Fury verdicts for a proof using weighted majority (66% power threshold).
+   * F-FURY-08: Reviewer voting power scales with experience and accuracy (1.0 - 2.0x).
    */
   async evaluate(
     proofId: string,
     votes: FuryVote[],
     isHoneypot: boolean,
   ): Promise<ConsensusResult> {
-    const passCount = votes.filter((v) => v.verdict === 'PASS').length;
-    const failCount = votes.filter((v) => v.verdict === 'FAIL').length;
-    const total = votes.length;
+    let totalPower = 0;
+    let passPower = 0;
+    let failPower = 0;
+
+    for (const vote of votes) {
+      // Fetch Fury history to calculate weight
+      const statsResult = await this.pool.query(
+        `SELECT 
+          COUNT(*) FILTER (WHERE verdict = 'PASS' AND status = 'COMPLETED') as successful_passes,
+          COUNT(*) FILTER (WHERE verdict = 'FAIL' AND status = 'COMPLETED') as successful_fails,
+          COUNT(*) FILTER (WHERE is_false_accusation = true) as false_accusations,
+          COUNT(*) as total_audits
+         FROM fury_assignments
+         JOIN proofs ON fury_assignments.proof_id = proofs.id
+         WHERE fury_user_id = $1`,
+        [vote.furyUserId]
+      );
+
+      const stats = statsResult.rows[0];
+      const history: FuryHistory = {
+        furyId: vote.furyUserId,
+        successfulAudits: parseInt(stats.successful_passes) + parseInt(stats.successful_fails),
+        falseAccusations: parseInt(stats.false_accusations),
+        totalAudits: parseInt(stats.total_audits),
+      };
+
+      const weight = calculateReviewerWeight(history);
+      totalPower += weight;
+      
+      if (vote.verdict === 'PASS') {
+        passPower += weight;
+      } else {
+        failPower += weight;
+      }
+    }
 
     let outcome: ConsensusOutcome;
-    if (passCount >= Math.ceil((total * 2) / 3)) {
+    const THRESHOLD = 0.66; // 66% of total power required
+
+    if (passPower / totalPower >= THRESHOLD) {
       outcome = 'VERIFIED';
-    } else if (failCount >= Math.ceil((total * 2) / 3)) {
+    } else if (failPower / totalPower >= THRESHOLD) {
       outcome = 'REJECTED';
     } else {
       outcome = 'SPLIT'; // escalate to human judge
@@ -67,18 +105,37 @@ export class ConsensusEngine {
     await this.truthLog.appendEvent('CONSENSUS_REACHED', {
       proofId,
       outcome,
-      passCount,
-      failCount,
-      total,
+      weightedStats: {
+        totalPower,
+        passPower,
+        failPower,
+      },
+      rawCounts: {
+        pass: votes.filter(v => v.verdict === 'PASS').length,
+        fail: votes.filter(v => v.verdict === 'FAIL').length,
+      },
       isHoneypot,
       flaggedFuries,
     });
 
-    // Financial bounty/penalty settlement is executed in FuryWorker to keep a single
-    // authoritative side-effect path (avoids duplicate ledger writes).
-    const bountyDistributed = false;
+    let bountyDistributed = false;
+    if (outcome !== 'SPLIT') {
+      try {
+        await this.distributeBounties(proofId, votes, outcome, isHoneypot);
+        bountyDistributed = true;
+      } catch (e: any) {
+        this.logger.error(`Failed to distribute bounties for proof ${proofId}: ${e.message}`);
+      }
 
-    return { outcome, votes, flaggedFuries, bountyDistributed };
+    }
+
+    return { 
+      outcome, 
+      votes, 
+      weightedStats: { totalPower, passPower, failPower },
+      flaggedFuries, 
+      bountyDistributed 
+    };
   }
 
   /**

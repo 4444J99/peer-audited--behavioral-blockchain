@@ -37,6 +37,7 @@ describe('ContractsController', () => {
   beforeEach(() => {
     controller = new ContractsController(
       mockContractsService,
+      {} as any, // mockMedicalExemption
       mockDisputeService,
       mockPool,
       mockStripe,

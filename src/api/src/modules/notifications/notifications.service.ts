@@ -77,6 +77,20 @@ export class NotificationsService {
   }
 
   /**
+   * F-AEGIS-08: RAIN Mindfulness Notification
+   * Triggers a specialized mindfulness intercession sequence.
+   */
+  async createRainNotification(userId: string, contractId: string, reason: string): Promise<Notification> {
+    return this.create({
+      userId,
+      type: 'RAIN_INTERCESSION',
+      title: 'Take a Breath: RAIN Protocol',
+      body: 'You missed a check-in. Before proceeding, use RAIN: Recognize the urge, Allow it to be there, Investigate the feeling, Note the experience.',
+      metadata: { contractId, reason, protocol: 'RAIN' },
+    });
+  }
+
+  /**
    * Returns anonymized public feed events from the event_log.
    * Strips all PII — returns only event types and anonymized descriptions.
    */

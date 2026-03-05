@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum ProofMediaType {
@@ -27,4 +27,14 @@ export class ConfirmUploadDto {
   @ApiProperty({ description: 'R2 storage key returned from the upload URL request', example: 'proofs/abc123/1709123456789.mp4' })
   @IsString()
   storageKey!: string;
+
+  @ApiPropertyOptional({ description: 'Flag indicating if the proof was captured with biometric lock active' })
+  @IsOptional()
+  @IsBoolean()
+  biometricVerified?: boolean;
+
+  @ApiPropertyOptional({ description: 'Type of biometric used', enum: ['FACE', 'VOICE'] })
+  @IsOptional()
+  @IsString()
+  biometricType?: 'FACE' | 'VOICE';
 }

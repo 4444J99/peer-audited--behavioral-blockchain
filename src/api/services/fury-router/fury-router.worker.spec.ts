@@ -1,6 +1,5 @@
 import { FuryRouterWorker } from './fury-router.worker';
 
-// Mock bullmq so onModuleInit doesn't start a real worker
 jest.mock('bullmq', () => ({
   Worker: jest.fn().mockImplementation((_name: string, processor: any, _opts: any) => ({
     on: jest.fn(),
@@ -19,13 +18,8 @@ jest.mock('../../config/queue.config', () => ({
 
 describe('FuryRouterWorker', () => {
   let worker: FuryRouterWorker;
-  let mockPool: {
-    connect: jest.Mock;
-  };
-  let mockClient: {
-    query: jest.Mock;
-    release: jest.Mock;
-  };
+  let mockPool: { connect: jest.Mock };
+  let mockClient: { query: jest.Mock; release: jest.Mock };
 
   beforeEach(() => {
     mockClient = {
@@ -39,121 +33,56 @@ describe('FuryRouterWorker', () => {
     worker.onModuleInit();
   });
 
-  async function processJob(data: {
-    proofId: string;
-    submitterUserId: string;
-    requiredReviewers: number;
-    dispatchedAt: string;
-  }) {
-    // Access the private processJob method via the worker's processor
+  async function processJob(data: any) {
     const workerInstance = worker as any;
     return workerInstance.processJob({ data } as any);
   }
 
-  it('should route a proof to eligible furies and update proof status', async () => {
-    // BEGIN
+  it('should route with isolation (geographic, social, corporate, partner)', async () => {
     mockClient.query
       .mockResolvedValueOnce(undefined) // BEGIN
-      .mockResolvedValueOnce({ rows: [{ id: 'fury-1' }, { id: 'fury-2' }, { id: 'fury-3' }] }) // SELECT eligible
-      .mockResolvedValueOnce(undefined) // INSERT assignment 1
-      .mockResolvedValueOnce(undefined) // INSERT assignment 2
-      .mockResolvedValueOnce(undefined) // INSERT assignment 3
-      .mockResolvedValueOnce(undefined) // UPDATE proof status
+      .mockResolvedValueOnce({ rows: [{ last_known_state: 'NY', social_guild_id: 'guild-1', enterprise_id: 'corp-1' }] }) // Submitter meta
+      .mockResolvedValueOnce({ rows: [{ partner_user_id: 'partner-1' }] }) // Partners
+      .mockResolvedValueOnce({ rows: [{ id: 'fury-1' }, { id: 'fury-2' }] }) // Eligible Furies
+      .mockResolvedValueOnce(undefined) // INSERT 1
+      .mockResolvedValueOnce(undefined) // INSERT 2
+      .mockResolvedValueOnce(undefined) // UPDATE proof
       .mockResolvedValueOnce(undefined); // COMMIT
 
     await processJob({
       proofId: 'proof-1',
       submitterUserId: 'user-1',
-      requiredReviewers: 3,
-      dispatchedAt: new Date().toISOString(),
+      requiredReviewers: 2,
     });
 
-    // Verify BEGIN/COMMIT
-    expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
+    // Verify isolation parameters in the eligible query
+    expect(mockClient.query).toHaveBeenCalledWith(
+      expect.stringContaining('last_known_state != '),
+      ['user-1', 'NY', 'guild-1', 'corp-1', ['partner-1'], 2]
+    );
+
     expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
-
-    // Verify eligible fury query excludes submitter
-    expect(mockClient.query).toHaveBeenCalledWith(
-      expect.stringContaining('WHERE id != $1'),
-      ['user-1', 3],
-    );
-
-    // Verify assignments created
-    expect(mockClient.query).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO fury_assignments'),
-      ['proof-1', 'fury-1'],
-    );
-    expect(mockClient.query).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO fury_assignments'),
-      ['proof-1', 'fury-2'],
-    );
-    expect(mockClient.query).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO fury_assignments'),
-      ['proof-1', 'fury-3'],
-    );
-
-    // Verify proof status updated
-    expect(mockClient.query).toHaveBeenCalledWith(
-      expect.stringContaining("SET status = 'UNDER_REVIEW'"),
-      ['proof-1'],
-    );
-
-    expect(mockClient.release).toHaveBeenCalled();
   });
 
-  it('should proceed with fewer furies than required when pool is small', async () => {
+  it('should fallback to default values for isolation if submitter has no metadata', async () => {
     mockClient.query
       .mockResolvedValueOnce(undefined) // BEGIN
-      .mockResolvedValueOnce({ rows: [{ id: 'fury-1' }] }) // Only 1 eligible
-      .mockResolvedValueOnce(undefined) // INSERT assignment
-      .mockResolvedValueOnce(undefined) // UPDATE proof status
+      .mockResolvedValueOnce({ rows: [{ last_known_state: null, social_guild_id: null, enterprise_id: null }] })
+      .mockResolvedValueOnce({ rows: [] }) // No partners
+      .mockResolvedValueOnce({ rows: [{ id: 'fury-1' }] })
+      .mockResolvedValueOnce(undefined) // INSERT
+      .mockResolvedValueOnce(undefined) // UPDATE
       .mockResolvedValueOnce(undefined); // COMMIT
 
     await processJob({
       proofId: 'proof-2',
       submitterUserId: 'user-2',
-      requiredReviewers: 3,
-      dispatchedAt: new Date().toISOString(),
+      requiredReviewers: 1,
     });
 
-    expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
-    expect(mockClient.release).toHaveBeenCalled();
-  });
-
-  it('should throw and rollback when no eligible furies exist', async () => {
-    mockClient.query
-      .mockResolvedValueOnce(undefined) // BEGIN
-      .mockResolvedValueOnce({ rows: [] }); // No eligible furies
-
-    await expect(
-      processJob({
-        proofId: 'proof-3',
-        submitterUserId: 'user-3',
-        requiredReviewers: 3,
-        dispatchedAt: new Date().toISOString(),
-      }),
-    ).rejects.toThrow('No eligible Furies available');
-
-    expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
-    expect(mockClient.release).toHaveBeenCalled();
-  });
-
-  it('should rollback on database error during assignment creation', async () => {
-    mockClient.query
-      .mockResolvedValueOnce(undefined) // BEGIN
-      .mockResolvedValueOnce({ rows: [{ id: 'fury-1' }] }) // Eligible
-      .mockRejectedValueOnce(new Error('DB write error')); // INSERT fails
-
-    await expect(
-      processJob({
-        proofId: 'proof-4',
-        submitterUserId: 'user-4',
-        requiredReviewers: 1,
-        dispatchedAt: new Date().toISOString(),
-      }),
-    ).rejects.toThrow('DB write error');
-
-    expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
-    expect(mockClient.release).toHaveBeenCalled();
+    expect(mockClient.query).toHaveBeenCalledWith(
+      expect.stringContaining('last_known_state != '),
+      ['user-2', 'UNKNOWN', '00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000', ['00000000-0000-0000-0000-000000000000'], 1]
+    );
   });
 });

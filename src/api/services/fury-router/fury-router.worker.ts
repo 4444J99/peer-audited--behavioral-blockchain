@@ -71,16 +71,52 @@ export class FuryRouterWorker implements OnModuleInit {
     try {
       await client.query('BEGIN');
 
-      // Find eligible Furies: active users with sufficient integrity, not the submitter
+      // 1. Get submitter's metadata for isolation
+      const submitterResult = await client.query(
+        `SELECT last_known_state, social_guild_id, enterprise_id FROM users WHERE id = $1`,
+        [submitterUserId]
+      );
+      const submitter = submitterResult.rows[0];
+
+      // 2. Get all users who are accountability partners for this submitter
+      const partnerResult = await client.query(
+        `SELECT partner_user_id FROM accountability_partners 
+         JOIN contracts ON accountability_partners.contract_id = contracts.id
+         WHERE contracts.user_id = $1 AND partner_user_id IS NOT NULL`,
+        [submitterUserId]
+      );
+      const partners = partnerResult.rows.map(r => r.partner_user_id);
+
+      // 3. Find eligible Furies with isolation:
+      // - Not the submitter
+      // - Not in the same state (Geographic isolation)
+      // - Not in the same social guild (Social isolation)
+      // - Not in the same enterprise (Corporate isolation)
+      // - Not an accountability partner
+      // - Integrity score >= 20
       const eligibleResult = await client.query(
         `SELECT id FROM users
          WHERE id != $1
            AND status = 'ACTIVE'
            AND role IN ('USER', 'FURY', 'ADMIN')
            AND integrity_score >= 20
+           -- Geographic isolation
+           AND (last_known_state IS NULL OR last_known_state != $2)
+           -- Social/Corporate isolation
+           AND (social_guild_id IS NULL OR social_guild_id != $3)
+           AND (enterprise_id IS NULL OR enterprise_id != $4)
+           -- Accountability partner isolation
+           AND id != ALL($5::uuid[])
          ORDER BY RANDOM()
-         LIMIT $2`,
-        [submitterUserId, requiredReviewers],
+         LIMIT $6`,
+        [
+          submitterUserId, 
+          submitter?.last_known_state || 'UNKNOWN', 
+          submitter?.social_guild_id || '00000000-0000-0000-0000-000000000000',
+          submitter?.enterprise_id || '00000000-0000-0000-0000-000000000000',
+          partners.length > 0 ? partners : ['00000000-0000-0000-0000-000000000000'],
+          requiredReviewers
+        ],
       );
 
       const selectedFuries = eligibleResult.rows;
@@ -95,12 +131,13 @@ export class FuryRouterWorker implements OnModuleInit {
         throw new Error(`No eligible Furies available for proof ${proofId}`);
       }
 
-      // Create fury_assignments for each selected reviewer
+      // Create fury_assignments for each selected reviewer with an identity mask
       for (const fury of selectedFuries) {
+        const alias = `Target_${Math.random().toString(36).substring(2, 6)}`;
         await client.query(
-          `INSERT INTO fury_assignments (proof_id, fury_user_id)
-           VALUES ($1, $2)`,
-          [proofId, fury.id],
+          `INSERT INTO fury_assignments (proof_id, fury_user_id, subject_alias)
+           VALUES ($1, $2, $3)`,
+          [proofId, fury.id, alias],
         );
       }
 

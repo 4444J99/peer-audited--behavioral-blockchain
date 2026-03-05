@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Pool } from 'pg';
 import { ContractsService } from './contracts.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { NOCONTACT_MISS_STRIKE_THRESHOLD } from '../../../../shared/libs/behavioral-logic';
 
 @Injectable()
@@ -11,6 +12,8 @@ export class AttestationScheduler {
   constructor(
     private readonly pool: Pool,
     private readonly contractsService: ContractsService,
+    @Optional() @Inject(NotificationsService)
+    private readonly notifications?: NotificationsService,
   ) {}
 
   /**
@@ -63,20 +66,23 @@ export class AttestationScheduler {
     for (const contractId of contractIds) {
       try {
         // Increment strike
-        await this.pool.query(
-          `UPDATE contracts SET strikes = strikes + 1 WHERE id = $1`,
+        const updated = await this.pool.query(
+          `UPDATE contracts SET strikes = strikes + 1 WHERE id = $1 AND status = 'ACTIVE' RETURNING user_id, strikes`,
           [contractId],
         );
 
-        // Check if strikes hit threshold
-        const contract = await this.pool.query(
-          `SELECT id, strikes FROM contracts WHERE id = $1`,
-          [contractId],
-        );
+        if (updated.rows.length > 0) {
+          const { user_id, strikes } = updated.rows[0];
+          
+          // F-AEGIS-08: Trigger RAIN Mindfulness intercession on first and second miss
+          if (this.notifications && strikes < NOCONTACT_MISS_STRIKE_THRESHOLD) {
+            await this.notifications.createRainNotification(user_id, contractId, 'MISSED_ATTESTATION');
+          }
 
-        if (contract.rows.length > 0 && contract.rows[0].strikes >= NOCONTACT_MISS_STRIKE_THRESHOLD) {
-          this.logger.log(`Contract ${contractId} hit ${NOCONTACT_MISS_STRIKE_THRESHOLD} missed attestations — auto-FAIL.`);
-          await this.contractsService.resolveContract(contractId, 'FAILED');
+          if (strikes >= NOCONTACT_MISS_STRIKE_THRESHOLD) {
+            this.logger.log(`Contract ${contractId} hit ${NOCONTACT_MISS_STRIKE_THRESHOLD} missed attestations — auto-FAIL.`);
+            await this.contractsService.resolveContract(contractId, 'FAILED');
+          }
         }
       } catch (err) {
         this.logger.error(

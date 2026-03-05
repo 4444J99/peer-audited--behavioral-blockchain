@@ -14,6 +14,7 @@ import { GeofenceGuard } from '../../common/guards/geofence.guard';
 import { ComplianceAccessGuard } from '../../common/guards/compliance-access.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { processIAP } from '../../../services/billing';
+import { MedicalExemptionService } from '../compliance/medical-exemption.service';
 
 @ApiTags('Contracts')
 @ApiBearerAuth()
@@ -21,6 +22,7 @@ import { processIAP } from '../../../services/billing';
 export class ContractsController {
   constructor(
     private readonly contractsService: ContractsService,
+    private readonly medicalExemption: MedicalExemptionService,
     private readonly disputeService: DisputeService,
     private readonly pool: Pool,
     private readonly stripe: StripeFboService,
@@ -183,6 +185,22 @@ export class ContractsController {
     @Body() body: { amount: number },
   ) {
     return this.contractsService.doubleDownStake(contractId, user.id, body.amount);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
+  @Post(':id/medical-exemption')
+  @ApiOperation({ summary: 'Request a compassionate medical exemption for a contract' })
+  async requestMedicalExemption(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+    @Body() dto: { reason: string; documentationUri?: string },
+  ) {
+    return this.medicalExemption.requestExemption({
+      contractId,
+      userId: user.id,
+      reason: dto.reason,
+      documentationUri: dto.documentationUri,
+    });
   }
 
   // --- No Auth Guard for Bounty Claims (Ex-partner access) ---

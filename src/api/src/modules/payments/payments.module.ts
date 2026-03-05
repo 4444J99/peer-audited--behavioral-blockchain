@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PaymentsController } from './payments.controller';
 import { ContractsModule } from '../contracts/contracts.module';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -12,7 +12,11 @@ import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 
 @Module({
-  imports: [ContractsModule, NotificationsModule, ComplianceModule],
+  imports: [
+    forwardRef(() => ContractsModule), 
+    NotificationsModule, 
+    ComplianceModule
+  ],
   controllers: [PaymentsController],
   providers: [
     PaymentRouterService,

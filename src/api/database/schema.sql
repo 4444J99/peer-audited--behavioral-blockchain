@@ -58,7 +58,7 @@ CREATE TABLE users (
     account_id UUID REFERENCES accounts(id),
     role TEXT DEFAULT 'USER',
     enterprise_id UUID,
-    status TEXT DEFAULT 'ACTIVE',
+    status TEXT DEFAULT 'ACTIVE', last_known_state TEXT, social_guild_id UUID,
     deletion_requested_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -249,3 +249,6 @@ CREATE INDEX idx_entries_credit_account_id ON entries(credit_account_id);
 CREATE INDEX idx_entries_contract_id ON entries(contract_id);
 CREATE INDEX idx_users_enterprise_id ON users(enterprise_id);
 CREATE INDEX idx_users_deletion_requested_at ON users(deletion_requested_at);
+
+CREATE INDEX idx_users_last_known_state ON users(last_known_state);
+CREATE INDEX idx_users_social_guild_id ON users(social_guild_id);

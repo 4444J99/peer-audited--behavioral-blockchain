@@ -29,10 +29,10 @@ export class SettlementWorker implements OnModuleInit {
   }
 
   private async process(job: Job): Promise<void> {
-    const { contractId, outcome, paymentIntentId, amountCents, furies } = job.data;
+    const { contractId, outcome, paymentIntentId, amountCents, furies, dispositionMode } = job.data;
     this.logger.log(`Processing settlement for contract ${contractId} (${outcome})...`);
 
-    // Check if settlement was already completed (Idempotency)
+    // ... existing idempotency check ...
     const existing = await this.pool.query(
       `SELECT id FROM settlement_runs WHERE contract_id = $1 AND outcome = $2 AND status = 'SUCCESS'`,
       [contractId, outcome]
@@ -44,16 +44,19 @@ export class SettlementWorker implements OnModuleInit {
 
     // Start a new settlement run record
     const runResult = await this.pool.query(
-      `INSERT INTO settlement_runs (contract_id, outcome, amount_cents, status, started_at)
-       VALUES ($1, $2, $3, 'PROCESSING', NOW())
+      `INSERT INTO settlement_runs (contract_id, outcome, amount_cents, status, started_at, disposition_mode)
+       VALUES ($1, $2, $3, 'PROCESSING', NOW(), $4)
        RETURNING id`,
-      [contractId, outcome, amountCents]
+      [contractId, outcome, amountCents, dispositionMode || (outcome === 'PASS' ? 'REFUND' : 'CAPTURE')]
     );
     const runId = runResult.rows[0].id;
 
     try {
       let result;
-      if (outcome === 'PASS') {
+      // P0-011: Override outcome if in refund-only mode
+      const actualAction = (outcome === 'PASS' || dispositionMode === 'REFUND') ? 'RELEASE' : 'CAPTURE';
+
+      if (actualAction === 'RELEASE') {
         result = await this.stripeProvider.releaseFunds(paymentIntentId, amountCents);
       } else {
         result = await this.stripeProvider.captureFunds(paymentIntentId, amountCents, { furies });
@@ -61,7 +64,7 @@ export class SettlementWorker implements OnModuleInit {
 
       if (result.status === PayoutStatus.SUCCESS) {
         // Atomic ledger finalization
-        await this.finalizeLedger(contractId, outcome, amountCents);
+        await this.finalizeLedger(contractId, outcome, amountCents, dispositionMode);
         
         // Update run record
         await this.pool.query(
@@ -73,9 +76,11 @@ export class SettlementWorker implements OnModuleInit {
           contractId,
           outcome,
           runId,
+          dispositionMode,
+          actualAction,
           providerTransactionId: result.providerTransactionId,
         });
-        this.logger.log(`Settlement successful for contract ${contractId}`);
+        this.logger.log(`Settlement successful for contract ${contractId} (Action: ${actualAction})`);
       } else {
         throw new Error(result.error || 'Provider returned failure status without error message');
       }
@@ -89,7 +94,7 @@ export class SettlementWorker implements OnModuleInit {
     }
   }
 
-  private async finalizeLedger(contractId: string, outcome: string, amountCents: number) {
+  private async finalizeLedger(contractId: string, outcome: string, amountCents: number, dispositionMode?: string) {
     const contractResult = await this.pool.query(
       `SELECT c.user_id, u.account_id, a_escrow.id as escrow_account_id, a_revenue.id as revenue_account_id
        FROM contracts c
@@ -105,14 +110,22 @@ export class SettlementWorker implements OnModuleInit {
     }
     const row = contractResult.rows[0];
 
-    if (outcome === 'PASS') {
+    // P0-011: If refund-only mode is active, even FAIL outcome routes back to user account
+    const shouldReturnToUser = outcome === 'PASS' || dispositionMode === 'REFUND';
+
+    if (shouldReturnToUser) {
       // Release from Escrow back to User
       await this.ledger.recordTransaction(
         row.escrow_account_id,
         row.account_id,
         amountCents,
         contractId,
-        { type: 'REAL_MONEY_SETTLEMENT_RELEASE', outcome: 'PASS' }
+        { 
+          type: 'REAL_MONEY_SETTLEMENT_RELEASE', 
+          outcome, 
+          dispositionMode, 
+          reason: outcome === 'FAILED' ? 'REFUND_ONLY_JURISDICTION' : 'CONTRACT_SUCCESS' 
+        }
       );
     } else {
       // Capture from Escrow to Revenue

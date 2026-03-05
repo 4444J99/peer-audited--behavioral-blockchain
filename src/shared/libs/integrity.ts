@@ -68,6 +68,23 @@ export function calculateAccuracy(history: FuryHistory): number {
   return Math.max(0.0, Math.min(1.0, ratio));
 }
 
+/**
+ * F-FURY-08: Reviewer Quality Weights
+ * Determines the voting power of an auditor based on their reputation.
+ */
+export function calculateReviewerWeight(history: FuryHistory): number {
+  const accuracy = calculateAccuracy(history);
+  
+  // Master Tier: >200 audits, >= 95% accuracy
+  if (history.totalAudits >= 200 && accuracy >= 0.95) return 2.0;
+  
+  // Journeyman Tier: >50 audits, >= 90% accuracy
+  if (history.totalAudits >= 50 && accuracy >= 0.90) return 1.5;
+  
+  // Novice Tier: Default
+  return 1.0;
+}
+
 export function shouldDemoteFury(history: FuryHistory): boolean {
   // Triggers demotion if accuracy falls below 80% after a 10 case burn-in period.
   if (history.totalAudits < 10) return false;

@@ -97,12 +97,16 @@ export class ProofsController {
       throw new BadRequestException(`Proof is in state '${proofAccess.status}', expected 'PENDING_UPLOAD'`);
     }
 
-    // Transition proof to PENDING_REVIEW and store the R2 key
+    // Transition proof to PENDING_REVIEW and store the R2 key + biometric flags
     await this.pool.query(
       `UPDATE proofs
-       SET status = 'PENDING_REVIEW', media_uri = $1, uploaded_at = NOW()
+       SET status = 'PENDING_REVIEW', 
+           media_uri = $1, 
+           uploaded_at = NOW(),
+           biometric_verified = $3,
+           biometric_type = $4
        WHERE id = $2`,
-      [dto.storageKey, proofId],
+      [dto.storageKey, proofId, dto.biometricVerified || false, dto.biometricType || null],
     );
 
     // pHash deduplication — download first frame, compute hash, check for twins

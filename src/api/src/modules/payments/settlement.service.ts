@@ -7,6 +7,7 @@ export interface SettlementJob {
   outcome: 'PASS' | 'FAIL';
   paymentIntentId: string;
   amountCents: number;
+  dispositionMode?: 'CAPTURE' | 'REFUND';
   furies?: string[];
 }
 

@@ -2,7 +2,7 @@ import {
   calculateIntegrity,
   getAllowedTiers,
   calculateAccuracy,
-  shouldDemoteFury,
+  shouldDemoteFury, calculateReviewerWeight,
   getTierMaxStake,
   BASE_INTEGRITY,
   COMPLETION_BONUS,
@@ -213,5 +213,46 @@ describe('getTierMaxStake', () => {
   it('should return 0 for RESTRICTED (no recognized tiers)', () => {
     expect(getTierMaxStake(['RESTRICTED_MODE'])).toBe(0);
     expect(getTierMaxStake([])).toBe(0);
+  });
+});
+
+describe('calculateReviewerWeight', () => {
+  it('should return 1.0 for a Novice (fresh fury)', () => {
+    expect(calculateReviewerWeight(makeFury())).toBe(1.0);
+  });
+
+  it('should return 1.0 for a Novice with < 50 audits', () => {
+    expect(calculateReviewerWeight(makeFury({
+      successfulAudits: 49,
+      totalAudits: 49,
+    }))).toBe(1.0);
+  });
+
+  it('should return 1.5 for a Journeyman (50+ audits, >= 90% accuracy)', () => {
+    expect(calculateReviewerWeight(makeFury({
+      successfulAudits: 50,
+      totalAudits: 50,
+    }))).toBe(1.5);
+  });
+
+  it('should return 1.0 for a Journeyman with < 90% accuracy', () => {
+    expect(calculateReviewerWeight(makeFury({
+      successfulAudits: 44, // 44/50 = 88%
+      totalAudits: 50,
+    }))).toBe(1.0);
+  });
+
+  it('should return 2.0 for a Master (200+ audits, >= 95% accuracy)', () => {
+    expect(calculateReviewerWeight(makeFury({
+      successfulAudits: 200,
+      totalAudits: 200,
+    }))).toBe(2.0);
+  });
+
+  it('should return 1.5 for a Master with 94% accuracy (drops to Journeyman tier)', () => {
+    expect(calculateReviewerWeight(makeFury({
+      successfulAudits: 188,
+      totalAudits: 200,
+    }))).toBe(1.5);
   });
 });

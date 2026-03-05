@@ -8,6 +8,7 @@ import { FuryRouterService } from '../../../services/fury-router/fury-router.ser
 import { AegisProtocolService } from '../../../services/health/aegis.service';
 import { RecoveryProtocolService } from '../../../services/health/recovery-protocol.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
+import { SettlementService } from '../payments/settlement.service';
 import { OathCategory, VerificationMethod } from '../../../../shared/libs/behavioral-logic';
 import { Pool } from 'pg';
 
@@ -27,6 +28,7 @@ describe('ContractsService', () => {
     holdStake: jest.fn().mockResolvedValue({ id: 'pi_test_123' }),
     captureStake: jest.fn().mockResolvedValue({ id: 'pi_test_123' }),
     cancelHold: jest.fn().mockResolvedValue({ id: 'pi_test_123' }),
+    resolveDisposition: jest.fn().mockReturnValue('REFUND'),
   } as unknown as StripeFboService;
 
   const mockRealStripe = {
@@ -53,6 +55,10 @@ describe('ContractsService', () => {
     analyze: jest.fn().mockResolvedValue({ rejected: false, flags: [] }),
   } as unknown as AnomalyService;
 
+  const mockSettlement = {
+    dispatchSettlement: jest.fn().mockResolvedValue({ jobId: 'job-1' }),
+  } as unknown as SettlementService;
+
   const activeUser = {
     id: 'user-1',
     email: 'user@styx.app',
@@ -71,7 +77,11 @@ describe('ContractsService', () => {
   };
 
   beforeEach(() => {
-    mockPool = { query: jest.fn() };
+    mockPool = { query: jest.fn().mockImplementation((sql) => {
+      if (sql.includes('FROM jurisdictions')) return Promise.resolve({ rows: [{ tier: 'FULL_ACCESS' }] });
+      if (sql.includes('SYSTEM_ESCROW')) return Promise.resolve({ rows: [{ id: 'escrow-acct' }] }); if (sql.includes('SYSTEM_REVENUE')) return Promise.resolve({ rows: [{ id: 'revenue-acct' }] });
+      return Promise.resolve({ rows: [] });
+    }) };
     service = new ContractsService(
       mockPool as unknown as Pool,
       mockLedger,
@@ -83,6 +93,9 @@ describe('ContractsService', () => {
       mockAegis,
       mockRecovery,
       mockAnomaly,
+      undefined, // notifications
+      undefined, // compliancePolicy
+      mockSettlement,
     );
     jest.clearAllMocks();
   });
@@ -563,7 +576,7 @@ describe('ContractsService', () => {
 
       await service.resolveContract('contract-1', 'COMPLETED');
 
-      expect(mockRealStripe.resolveEscrow).toHaveBeenCalledWith('pi_test_123', 'PASS');
+      expect(mockSettlement.dispatchSettlement).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'PASS' }));
       expect(mockStripe.cancelHold).not.toHaveBeenCalled();
     });
 
@@ -573,11 +586,11 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'revenue-acct' }] });
+      
 
       await service.resolveContract('contract-1', 'FAILED');
 
-      expect(mockRealStripe.resolveEscrow).toHaveBeenCalledWith('pi_test_123', 'FAIL');
+      expect(mockSettlement.dispatchSettlement).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'FAIL' }));
       expect(mockStripe.captureStake).not.toHaveBeenCalled();
     });
 
@@ -668,7 +681,7 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeUser, integrity_score: 50 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE users
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'revenue-acct' }] });
+      
 
       await service.resolveContract('contract-1', 'FAILED');
 
@@ -684,7 +697,7 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeUser, integrity_score: 10 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'revenue-acct' }] });
+      
 
       await service.resolveContract('contract-1', 'FAILED');
 
@@ -734,7 +747,7 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'revenue-acct' }] });
+      
 
       await service.resolveContract('contract-1', 'FAILED');
 

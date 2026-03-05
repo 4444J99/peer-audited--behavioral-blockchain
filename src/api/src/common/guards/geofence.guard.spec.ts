@@ -11,7 +11,7 @@ describe('GeofenceGuard', () => {
     process.env = { ...envSnapshot };
     delete process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
     delete process.env.NODE_ENV;
-    compliancePolicy = new CompliancePolicyService();
+    compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
   });
 
@@ -128,7 +128,7 @@ describe('GeofenceGuard', () => {
 
   it('should allow when fail-open is explicitly enabled and no headers', () => {
     process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'true';
-    compliancePolicy = new CompliancePolicyService();
+    compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
 
     const context = createContext({
@@ -142,7 +142,7 @@ describe('GeofenceGuard', () => {
 
   it('should ignore x-styx-state override in production', () => {
     process.env.NODE_ENV = 'production';
-    compliancePolicy = new CompliancePolicyService();
+    compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
     const warnSpy = jest.spyOn((guard as any).logger, 'warn').mockImplementation(() => undefined);
 
@@ -161,7 +161,7 @@ describe('GeofenceGuard', () => {
   it('should allow x-styx-state override in non-production when fail-open enabled', () => {
     process.env.NODE_ENV = 'development';
     process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'true';
-    compliancePolicy = new CompliancePolicyService();
+    compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
 
     const context = createContext({

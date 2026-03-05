@@ -39,3 +39,11 @@ The 18 remediation tasks identified in the Evaluation-to-Growth review have been
 
 ## Conclusion
 The repository is now aligned with the "Evaluation-to-Growth" security and compliance standards. All critical gaps have been closed.
+## Bonus Exhaustive Enhancements
+
+| # | Feature | Status | Implementation Details |
+|---|---------|--------|------------------------|
+| 19 | Medical Exemption Service (F-AEGIS-07) | **Implemented** | End-to-end compassionate audit flow with Judge approval and strike protection. |
+| 20 | Anti-Collusion Auditing (TKT-P1-008) | **Implemented** | Cross-lobby isolation (geographic, social, corporate, and partner) in Fury router. |
+| 21 | Reviewer Quality Weights (F-FURY-08) | **Implemented** | Voting power scaling (1.0x-2.0x) and automated bounty distribution logic. |
+| 22 | Biometric Verification Stubs (TKT-P1-016) | **Implemented** | Database schema support for biometric-verified proofs. |
