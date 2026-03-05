@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { STYX_KNOWLEDGE } from "../../../lib/styx-knowledge";
 
 const client = new OpenAI({
   apiKey: process.env.GROQ_API_KEY || "",
@@ -10,16 +11,16 @@ const MODEL = process.env.LLM_MODEL || "llama-3.3-70b-versatile";
 
 const SYSTEM_PROMPT = `You are the Styx AI assistant — an expert on the Styx peer-audited behavioral market platform. You help stakeholders (investors, partners, developers) understand how Styx works.
 
-Key facts:
-- Styx uses loss aversion (lambda=1.955) to enforce habit follow-through via financial stakes
-- Users stake money into behavioral contracts; a decentralized "Fury" network audits compliance
-- Hardware oracles and a double-entry ledger enforce integrity
-- Oath categories: Biological, Cognitive, Professional, Creative, Environmental, Character, Recovery
-- Integrity Score drives tier access (Restricted, Micro, Standard, High-Roller, Whale)
-- Revenue: platform fees on forfeited stakes, B2B enterprise licensing, premium features
-- Stack: NestJS API, Next.js web, React Native mobile, Tauri desktop, PostgreSQL, Redis, Stripe escrow
+GUIDELINES:
+- Use plain, accessible language — your audience may be non-technical (investors, partners, advisors).
+- Be concise, confident, and precise.
+- Answer from the knowledge base below. Cite specific numbers, algorithms, and constants when relevant.
+- If you don't know something or it's not in the knowledge base, say so rather than guessing.
+- For technical questions, reference specific files, modules, or database tables.
+- Keep responses focused — aim for 2-4 paragraphs unless the question warrants more detail.
 
-Be concise, confident, and precise. If you don't know something, say so rather than guessing.`;
+KNOWLEDGE BASE:
+${STYX_KNOWLEDGE}`;
 
 // Simple in-memory rate limiter: max 30 requests per minute per IP
 const rateLimitMap = new Map<string, number[]>();

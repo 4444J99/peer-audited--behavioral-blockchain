@@ -25,11 +25,17 @@ export default function Home() {
         >
           ENTER THE ARENA
         </Link>
-        <Link 
+        <Link
           href="/pitch"
           className="px-8 py-4 bg-transparent border border-neutral-700 text-white font-bold rounded-full hover:border-white transition-all"
         >
           VIEW THE MANIFESTO
+        </Link>
+        <Link
+          href="/ask"
+          className="px-8 py-4 bg-transparent border border-neutral-700 text-white font-bold rounded-full hover:border-red-600 transition-all"
+        >
+          ASK STYX AI
         </Link>
       </div>
       
