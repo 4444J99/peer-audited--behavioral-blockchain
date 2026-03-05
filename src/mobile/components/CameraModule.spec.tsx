@@ -57,9 +57,12 @@ describe('CameraModule', () => {
       expect(UploadService.requestPreSignedUrl).toHaveBeenCalledWith(
         'contract-1',
         'video/mp4',
-        'Live camera submission',
+        expect.stringContaining('capture-hash:'),
       );
-      expect(UploadService.uploadVideoBuffer).toHaveBeenCalled();
+      expect(UploadService.uploadVideoBuffer).toHaveBeenCalledWith(
+        expect.stringContaining('data:video/mp4;base64,'),
+        'https://r2.example.com/upload',
+      );
       expect(UploadService.confirmUpload).toHaveBeenCalledWith(
         'proof_123',
         'proofs/proof_123/video.mp4',

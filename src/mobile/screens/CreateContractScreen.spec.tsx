@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 
 function collectText(node: any): string {
@@ -107,9 +107,15 @@ jest.mock('../config/beta', () => ({
 
 describe('CreateContractScreen – render', () => {
   const { CreateContractScreen } = require('../screens/CreateContractScreen');
+  const { ApiClient } = require('../services/ApiClient');
 
   const mockRoute = { params: {} } as any;
   const mockNav = { navigate: jest.fn(), goBack: jest.fn(), setOptions: jest.fn() } as any;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (ApiClient.createContract as jest.Mock).mockResolvedValue({ contractId: 'contract-123' });
+  });
 
   function renderScreen() {
     return render(
@@ -148,6 +154,9 @@ describe('CreateContractScreen – render', () => {
     const text = allText(container);
     expect(text).toContain('STAKE AMOUNT (USD)');
     expect(text).toContain('$');
+    expect(text).toContain('$20 Light');
+    expect(text).toContain('$50 Default');
+    expect(text).toContain('$100 Serious');
   });
 
   it('renders duration options', () => {
@@ -184,5 +193,56 @@ describe('CreateContractScreen – render', () => {
 
   it('renders without crashing', () => {
     expect(() => { renderScreen(); }).not.toThrow();
+  });
+
+  it('applies preset stake selection to the amount input', () => {
+    const { getByText, getByPlaceholderText } = renderScreen();
+
+    fireEvent.click(getByText('$50 Default').closest('button') as HTMLElement);
+
+    const amountInput = getByPlaceholderText('0.00') as HTMLInputElement;
+    expect(amountInput.value).toBe('50.00');
+  });
+
+  it('blocks submit when stake is below minimum bound', async () => {
+    const { getByText, getByPlaceholderText, container } = renderScreen();
+
+    fireEvent.click(getByText('Behavioral').closest('button') as HTMLElement);
+    fireEvent.click(getByText('No Texting / Calling').closest('button') as HTMLElement);
+    fireEvent.click(getByText('Screen Time API').closest('button') as HTMLElement);
+    fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
+      target: { value: 'No contact for 30 days.' },
+    });
+    fireEvent.change(getByPlaceholderText('0.00'), { target: { value: '5' } });
+    fireEvent.click(getByText('STAKE AND COMMIT').closest('button') as HTMLElement);
+
+    await waitFor(() => {
+      expect(container.textContent).toContain('Stake amount must be between $10 and $200.');
+      expect(ApiClient.createContract).not.toHaveBeenCalled();
+    });
+  });
+
+  it('submits valid bounded stake and navigates to contract detail', async () => {
+    const { getByText, getByPlaceholderText, container } = renderScreen();
+
+    fireEvent.click(getByText('Behavioral').closest('button') as HTMLElement);
+    fireEvent.click(getByText('No Texting / Calling').closest('button') as HTMLElement);
+    fireEvent.click(getByText('Fury Peer Review').closest('button') as HTMLElement);
+    fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
+      target: { value: 'No social stalking for 30 days.' },
+    });
+    fireEvent.click(getByText('$50 Default').closest('button') as HTMLElement);
+    fireEvent.click(getByText('STAKE AND COMMIT').closest('button') as HTMLElement);
+
+    await waitFor(() => {
+      expect(ApiClient.createContract).toHaveBeenCalledWith(
+        expect.objectContaining({ stakeAmount: 50 }),
+      );
+      expect(mockNav.navigate).toHaveBeenCalledWith('ContractDetail', {
+        contractId: 'contract-123',
+      });
+      expect(container.textContent).toContain('Loss Math Preview');
+      expect(container.textContent).toContain('Weekly loss cap policy');
+    });
   });
 });

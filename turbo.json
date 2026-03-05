@@ -5,6 +5,12 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
+    "@styx/mobile#build": {
+      "outputs": []
+    },
+    "@styx/pitch#build": {
+      "outputs": ["../../docs/**"]
+    },
     "lint": {},
     "dev": {
       "cache": false,

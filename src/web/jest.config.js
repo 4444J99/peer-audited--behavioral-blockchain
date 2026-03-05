@@ -9,6 +9,8 @@ module.exports = {
     ...tsJestTransformCfg,
   },
   testPathIgnorePatterns: ["/node_modules/", "/.next/"],
+  modulePathIgnorePatterns: ["<rootDir>/.next/"],
+  watchPathIgnorePatterns: ["<rootDir>/.next/"],
   coverageThreshold: {
     global: {
       lines: 40,

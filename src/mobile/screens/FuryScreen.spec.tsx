@@ -112,6 +112,13 @@ describe('FuryScreen – parseSupportTraceMessage edge cases', () => {
 
 describe('FuryScreen – render tests', () => {
   const { FuryScreen } = require('../screens/FuryScreen');
+  const { ApiClient } = require('../services/ApiClient');
+
+  beforeEach(() => {
+    // Keep render tests in a stable loading state to avoid post-assertion async updates.
+    (ApiClient.getFuryQueue as jest.Mock).mockReturnValue(new Promise(() => {}));
+    (ApiClient.getFuryStats as jest.Mock).mockReturnValue(new Promise(() => {}));
+  });
 
   function renderFury() {
     return render(React.createElement(FuryScreen));

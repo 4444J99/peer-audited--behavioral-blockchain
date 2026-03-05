@@ -14,6 +14,7 @@ function createPrimitive(tag: string) {
   return ({ children, ...props }: any) => {
     // Filter out non-DOM-safe props to avoid React DOM warnings/errors
     const safeProps: Record<string, any> = {};
+    let hasOnChange = false;
     for (const key of Object.keys(props)) {
       const val = props[key];
       if (key === 'onPress' && typeof val === 'function') {
@@ -21,12 +22,19 @@ function createPrimitive(tag: string) {
         continue;
       }
       if (key === 'onChangeText' && typeof val === 'function') {
+        hasOnChange = true;
         safeProps.onChange = (event: any) => val(event?.target?.value ?? '');
         continue;
+      }
+      if (key === 'onChange' && typeof val === 'function') {
+        hasOnChange = true;
       }
       if (SAFE_HTML_PROPS.has(key) && (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean')) {
         safeProps[key] = val;
       }
+    }
+    if (tag === 'input' && 'value' in safeProps && !hasOnChange) {
+      safeProps.readOnly = true;
     }
     return React.createElement(tag, safeProps, children);
   };

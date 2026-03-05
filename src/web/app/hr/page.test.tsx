@@ -1,79 +1,120 @@
+/** @jest-environment jsdom */
+
 import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { SupportTraceMessage } from '../../components/support/SupportTraceMessage';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
-/**
- * Regression tests for trace-ID rendering on the HR dashboard page.
- *
- * The HR page uses <SupportTraceMessage> in the error banner when
- * enterprise metrics fail to load. These tests verify that the
- * trace-ID rendering integration works with HR-specific error patterns.
- */
-describe('HR page – trace-ID rendering (SupportTraceMessage)', () => {
-  it('renders trace ID for a "Failed to load metrics" error with request_id suffix', () => {
-    const html = renderToStaticMarkup(
-      <SupportTraceMessage
-        value="Failed to load metrics [request_id: hr-trace-001]"
-        messageClassName="text-red-400 font-bold"
-        traceClassName="text-xs text-gray-500 font-mono"
-        containerClassName="space-y-2"
-      />,
-    );
+const mockGetEnterpriseMetrics = jest.fn();
 
-    expect(html).toContain('Failed to load metrics');
-    expect(html).toContain('Support trace ID');
-    expect(html).toContain('hr-trace-001');
-    expect(html).not.toContain('[request_id:');
+jest.mock('../../services/api-client', () => ({
+  api: {
+    getEnterpriseMetrics: (...args: unknown[]) => mockGetEnterpriseMetrics(...args),
+  },
+}));
+
+import HRDashboard from './page';
+
+describe('HR dashboard page', () => {
+  const originalFlag = process.env.NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI = 'true';
+    window.history.pushState({}, '', '/hr');
   });
 
-  it('does not render trace ID for plain error without request_id suffix', () => {
-    const html = renderToStaticMarkup(
-      <SupportTraceMessage
-        value="Failed to load metrics"
-        messageClassName="text-red-400 font-bold"
-      />,
-    );
-
-    expect(html).toContain('Failed to load metrics');
-    expect(html).not.toContain('Support trace ID');
+  afterAll(() => {
+    process.env.NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI = originalFlag;
   });
 
-  it('renders trace ID for a network timeout error with request_id', () => {
-    const html = renderToStaticMarkup(
-      <SupportTraceMessage value="Request timeout [request_id: hr-timeout-abc]" />,
-    );
+  it('renders internal-disabled gate and skips API calls when flag is off', () => {
+    process.env.NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI = 'false';
 
-    expect(html).toContain('Request timeout');
-    expect(html).toContain('hr-timeout-abc');
+    render(<HRDashboard />);
+
+    expect(screen.getByText('Internal Feature Disabled')).toBeTruthy();
+    expect(mockGetEnterpriseMetrics).not.toHaveBeenCalled();
   });
 
-  it('renders trace ID for unauthorized error with request_id', () => {
-    const html = renderToStaticMarkup(
-      <SupportTraceMessage value="Unauthorized [request_id: hr-auth-xyz]" />,
-    );
+  it('loads default enterprise metrics and renders KPI cards', async () => {
+    mockGetEnterpriseMetrics.mockResolvedValue({
+      enterpriseId: 'e0000000-0000-0000-0000-000000000001',
+      totalContracts: 25,
+      completedContracts: 18,
+      failedContracts: 4,
+      activeContracts: 3,
+      completionRate: 72,
+      avgIntegrityScore: 87,
+      totalEmployees: 40,
+    });
 
-    expect(html).toContain('Unauthorized');
-    expect(html).toContain('hr-auth-xyz');
+    render(<HRDashboard />);
+
+    await waitFor(() => {
+      expect(mockGetEnterpriseMetrics).toHaveBeenCalledWith('e0000000-0000-0000-0000-000000000001');
+    });
+
+    expect(screen.getByText('Total Contracts')).toBeTruthy();
+    expect(screen.getByText('25')).toBeTruthy();
+    expect(screen.getByText('Open Risk Exposure')).toBeTruthy();
+    expect(screen.getByText('7')).toBeTruthy();
   });
 
-  it('renders nothing for empty/null values', () => {
-    expect(renderToStaticMarkup(<SupportTraceMessage value={null} />)).toBe('');
-    expect(renderToStaticMarkup(<SupportTraceMessage value="" />)).toBe('');
-  });
-
-  it('preserves custom className props when rendering with trace ID', () => {
-    const html = renderToStaticMarkup(
-      <SupportTraceMessage
-        value="Error [request_id: hr-cls-test]"
-        messageClassName="custom-msg-class"
-        traceClassName="custom-trace-class"
-        containerClassName="custom-container"
-      />,
+  it('renders support trace parsing for request_id formatted errors', async () => {
+    mockGetEnterpriseMetrics.mockRejectedValue(
+      new Error('Failed to load metrics [request_id: hr-load-001]'),
     );
 
-    expect(html).toContain('custom-msg-class');
-    expect(html).toContain('custom-trace-class');
-    expect(html).toContain('custom-container');
-    expect(html).toContain('hr-cls-test');
+    render(<HRDashboard />);
+
+    expect(await screen.findByText('Failed to load metrics')).toBeTruthy();
+    expect(screen.getByText(/Support trace ID/)).toBeTruthy();
+    expect(screen.getByText(/hr-load-001/)).toBeTruthy();
+  });
+
+  it('loads metrics for a selected enterprise ID', async () => {
+    mockGetEnterpriseMetrics.mockResolvedValue({
+      enterpriseId: 'ent-alpha-01',
+      totalContracts: 10,
+      completedContracts: 8,
+      failedContracts: 1,
+      activeContracts: 1,
+      completionRate: 80,
+      avgIntegrityScore: 91,
+      totalEmployees: 15,
+    });
+
+    render(<HRDashboard />);
+
+    await waitFor(() => {
+      expect(mockGetEnterpriseMetrics).toHaveBeenCalledWith('e0000000-0000-0000-0000-000000000001');
+    });
+
+    const input = screen.getByLabelText('Enterprise ID') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'ent-alpha-01' } });
+    fireEvent.click(screen.getByText('Load Enterprise'));
+
+    await waitFor(() => {
+      expect(mockGetEnterpriseMetrics).toHaveBeenCalledWith('ent-alpha-01');
+    });
+  });
+
+  it('initializes enterprise selection from query parameter', async () => {
+    window.history.pushState({}, '', '/hr?enterprise=ent-query-77');
+    mockGetEnterpriseMetrics.mockResolvedValue({
+      enterpriseId: 'ent-query-77',
+      totalContracts: 5,
+      completedContracts: 4,
+      failedContracts: 0,
+      activeContracts: 1,
+      completionRate: 80,
+      avgIntegrityScore: 95,
+      totalEmployees: 7,
+    });
+
+    render(<HRDashboard />);
+
+    await waitFor(() => {
+      expect(mockGetEnterpriseMetrics).toHaveBeenCalledWith('ent-query-77');
+    });
   });
 });

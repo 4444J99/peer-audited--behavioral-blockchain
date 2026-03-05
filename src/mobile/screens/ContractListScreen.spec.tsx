@@ -92,6 +92,7 @@ describe('ContractListScreen – parseSupportTraceMessage edge cases', () => {
 
 describe('ContractListScreen – render tests', () => {
   const { ContractListScreen } = require('../screens/ContractListScreen');
+  const { ApiClient } = require('../services/ApiClient');
 
   const mockNavigation = {
     navigate: jest.fn(),
@@ -100,6 +101,11 @@ describe('ContractListScreen – render tests', () => {
   } as any;
 
   const mockRoute = { params: undefined, key: 'ContractList', name: 'ContractList' as const } as any;
+
+  beforeEach(() => {
+    // Keep render tests in a stable loading state to avoid post-assertion async updates.
+    (ApiClient.getContracts as jest.Mock).mockReturnValue(new Promise(() => {}));
+  });
 
   it('shows "Loading oaths..." when loading', () => {
     const { container } = render(

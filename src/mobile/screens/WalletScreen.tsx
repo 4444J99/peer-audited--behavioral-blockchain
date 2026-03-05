@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   FlatList,
   RefreshControl,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 import { ApiClient } from '../services/ApiClient';
 
 const TX_TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -38,7 +37,11 @@ interface Transaction {
   description: string;
 }
 
-export function WalletScreen() {
+interface WalletScreenProps {
+  navigation: any;
+}
+
+export function WalletScreen({ navigation }: WalletScreenProps) {
   const [balance, setBalance] = useState<Balance | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,12 +65,20 @@ export function WalletScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
+  useEffect(() => {
+    const refreshOnFocus = () => {
       setLoading(true);
       loadData();
-    }, [loadData]),
-  );
+    };
+
+    refreshOnFocus();
+    const unsubscribe = navigation?.addListener?.('focus', refreshOnFocus);
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, [loadData, navigation]);
 
   const onRefresh = () => {
     setRefreshing(true);

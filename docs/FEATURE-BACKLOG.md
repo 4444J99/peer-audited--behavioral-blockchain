@@ -13,11 +13,11 @@
 
 | Status | Count | Description |
 |--------|-------|-------------|
-| IMPLEMENTED | 23 | Working code with tests |
-| PARTIAL | 7 | Code exists but incomplete or conditional |
-| STUB | 4 | Files/endpoints exist but placeholder logic |
-| NOT_STARTED | 44 | Described in docs, no code |
-| **Total** | **78** | |
+| IMPLEMENTED | 40 | Working code with tests |
+| PARTIAL | 16 | Code exists but incomplete or conditional |
+| STUB | 1 | Files/endpoints exist but placeholder logic |
+| NOT_STARTED | 60 | Described in docs, no code |
+| **Total** | **117** | |
 
 ### P0: Beta Blockers (Must-Build for Phase 1 Private Beta)
 
@@ -629,23 +629,26 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-UX-05: Daily Dashboard with Goal-Gradient Visualization
 
-- **Status**: STUB
+- **Status**: PARTIAL
 - **Phase**: Delta
 - **Priority**: P1
 - **Source**: `research--psychology-behavior.md` §Flow 2
-- **Existing Code**: `src/web/app/dashboard/` exists but basic implementation
+- **Existing Code**: `src/web/app/dashboard/page.tsx`, `src/web/app/dashboard/page.test.tsx`, `src/mobile/screens/DashboardScreen.tsx`, `src/mobile/screens/DashboardScreen.spec.tsx`
 - **Spec**: Large progress circle (weekly completion). Vault status (protected vs active split). One-tap logging. Multiple nested progress bars: daily, weekly streak, seasonal. Effort increases as users approach goal (goal-gradient effect).
 - **Dependencies**: F-CORE-07
+- **Gap Remaining**: Progress-circle visualization and nested streak layers are still simplified; goal-gradient nudges need dedicated UX treatment.
 
 #### F-UX-06: Bounded Stake Selection UI
 
-- **Status**: STUB
+- **Status**: PARTIAL
 - **Phase**: Beta
 - **Priority**: P1
 - **Source**: `research--psychology-behavior.md` §Flow 1
-- **Existing Code**: `src/web/app/contracts/new/` exists, `src/mobile/screens/CreateContractScreen.tsx` exists
+- **Existing Code**: `src/web/app/contracts/new/`, `src/mobile/screens/CreateContractScreen.tsx`, `src/mobile/screens/CreateContractScreen.spec.tsx`
 - **Spec**: Slider with three suggested amounts: $20 (Light nudge), $50 (Meaningful — default), $100 (Serious). Custom allowed. Cap $200 max, $10 min. Transparent loss math shown upfront: vault amount, cost per missed day, weekly loss cap, grace days.
 - **Dependencies**: F-CORE-04
+- **What's Done**: Mobile now enforces min/max stake validation ($10-$200), includes quick-select presets ($20/$50/$100), and renders explicit loss-math preview (vault hold, per-day exposure, weekly cap).
+- **Gap Remaining**: Web contract-creation parity and true slider control remain to be implemented.
 
 #### F-UX-07: Weekly Vault Lock-In Milestone
 
@@ -863,12 +866,13 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-WEB-03: HR Dashboard
 
-- **Status**: STUB
+- **Status**: PARTIAL
 - **Phase**: Omega
 - **Priority**: P2
 - **Source**: `planning--roadmap--ai-workstreams.md` §WS3 Omega, `research--b2b-expansion-heartbreak-niche.md`
-- **Existing Code**: `src/web/app/hr/` route exists
+- **Existing Code**: `src/web/app/hr/page.tsx` (feature-flag gate, enterprise-scoped metrics loader, support-trace error rendering)
 - **Spec**: Read-only UI for corporate managers showing aggregated, anonymized group habit metrics. No individual identification. ERISA compliance.
+- **Gap Remaining**: Role-based access + org-scoped authz enforcement still required before external rollout.
 - **Dependencies**: F-B2B-01, F-B2B-03
 
 #### F-WEB-04: Real-Time Leaderboard (WebSocket/SSE)
@@ -928,22 +932,24 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-DESKTOP-04: Hash Collider Tool
 
-- **Status**: STUB
+- **Status**: PARTIAL
 - **Phase**: Delta
 - **Priority**: P2
 - **Source**: `planning--roadmap--ai-workstreams.md` §WS4
-- **Existing Code**: `src/desktop/src/components/HashCollider.tsx`
+- **Existing Code**: `src/desktop/src/components/HashCollider.tsx`, `src/desktop/src/components/hash-collider.utils.ts`
 - **Spec**: Tool for comparing pHash values and investigating suspected duplicate proofs.
+- **Gap Remaining**: Backend-side automated ticket creation/escalation path not yet wired.
 - **Dependencies**: F-VERIFY-01
 
 #### F-DESKTOP-05: B2B Orchestration Panel
 
-- **Status**: STUB
+- **Status**: PARTIAL
 - **Phase**: Omega
 - **Priority**: P2
 - **Source**: `planning--roadmap--ai-workstreams.md` §WS4 Omega
-- **Existing Code**: `src/desktop/src/components/B2BOrchestration.tsx`
+- **Existing Code**: `src/desktop/src/components/B2BOrchestration.tsx` (list/generate/revoke API keys, clipboard-safe key reveal, operator feedback states)
 - **Spec**: Controls for generating Enterprise API keys and managing billing parameters.
+- **Gap Remaining**: Billing plan controls and per-key scope restrictions still pending.
 - **Dependencies**: F-B2B-01
 
 #### F-DESKTOP-06: Medical Exemption Review UI

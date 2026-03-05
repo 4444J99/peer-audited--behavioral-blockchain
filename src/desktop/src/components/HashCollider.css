@@ -49,6 +49,55 @@
   font-size: 0.9rem;
 }
 
+.threshold-controls {
+  border: 1px solid #24243a;
+  background: #09090f;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.threshold-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.threshold-label {
+  color: #c4c4d4;
+  font-size: 0.8rem;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.threshold-value {
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.threshold-slider {
+  width: 100%;
+}
+
+.threshold-caption {
+  margin-top: 0.5rem;
+  color: #6f728f;
+  font-size: 0.78rem;
+}
+
+.feedback-state {
+  border: 1px solid #2f7f45;
+  background: rgba(34, 197, 94, 0.12);
+  color: #7be8a4;
+  font-size: 0.82rem;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 1rem;
+}
+
 .scanning-state {
   text-align: center;
   padding: 3rem;
@@ -75,8 +124,23 @@
 
 .collision-item {
   border: 1px solid #DC2626;
-  background-color: rgba(220,38,38,0.05);
+  background-color: rgba(220, 38, 38, 0.05);
   padding: 1rem;
+}
+
+.collision-item.severity-high {
+  border-color: #f97316;
+  background-color: rgba(249, 115, 22, 0.08);
+}
+
+.collision-item.severity-medium {
+  border-color: #facc15;
+  background-color: rgba(250, 204, 21, 0.08);
+}
+
+.collision-item.severity-low {
+  border-color: #64748b;
+  background-color: rgba(100, 116, 139, 0.08);
 }
 
 .collision-header {
@@ -84,7 +148,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
-  border-bottom: 1px solid rgba(220,38,38,0.2);
+  border-bottom: 1px solid rgba(220, 38, 38, 0.2);
   padding-bottom: 0.5rem;
 }
 
@@ -94,16 +158,44 @@
   gap: 0.5rem;
   color: #DC2626;
   font-weight: bold;
+  flex-wrap: wrap;
+}
+
+.severity-chip {
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid currentColor;
+}
+
+.severity-chip.severity-critical {
+  color: #f87171;
+}
+
+.severity-chip.severity-high {
+  color: #fb923c;
+}
+
+.severity-chip.severity-medium {
+  color: #facc15;
+}
+
+.severity-chip.severity-low {
+  color: #94a3b8;
 }
 
 .ticket-button {
   background-color: #DC2626;
   color: #fff;
   border: none;
-  padding: 0.25rem 1rem;
+  padding: 0.25rem 0.8rem;
   font-weight: bold;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .comparison-grid {
@@ -156,10 +248,21 @@
   font-family: monospace;
   color: #eab308;
   margin-top: 0.5rem;
+  word-break: break-all;
 }
 
 .vs-divider {
   color: #666;
+}
+
+.error-state {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid #dc2626;
+  color: #fca5a5;
+  padding: 0.6rem 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 @keyframes spin {

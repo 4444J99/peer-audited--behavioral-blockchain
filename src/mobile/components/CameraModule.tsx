@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { UploadService } from '../services/UploadService';
 import { ApiClient } from '../services/ApiClient';
-import { createCameraWatermark, createSimulatedCaptureUri } from '../utils/proof-media';
+import { createCameraWatermark, createSyntheticCaptureSession } from '../utils/proof-media';
 
 /**
  * The Styx Camera Module.
@@ -14,6 +14,7 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [videoUri, setVideoUri] = useState<string | null>(null);
+  const [captureHash, setCaptureHash] = useState<string | null>(null);
   const [watermark, setWatermark] = useState<string | null>(null);
   const [captureStartedAt, setCaptureStartedAt] = useState<number | null>(null);
   const [captureLabel, setCaptureLabel] = useState<string | null>(null);
@@ -21,12 +22,20 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
   const toggleRecording = () => {
     if (isRecording) {
       setIsRecording(false);
-      const recordedUri = createSimulatedCaptureUri(contractId);
-      const elapsedMs = captureStartedAt ? Date.now() - captureStartedAt : 0;
-      setVideoUri(recordedUri);
-      setCaptureLabel(elapsedMs > 0 ? `${(elapsedMs / 1000).toFixed(1)}s capture` : null);
+      const captureSession = createSyntheticCaptureSession(
+        contractId,
+        watermark,
+        captureStartedAt,
+        Date.now(),
+      );
+      setVideoUri(captureSession.mediaUri);
+      setCaptureHash(captureSession.captureHash);
+      setCaptureLabel(
+        `${(captureSession.durationMs / 1000).toFixed(1)}s capture • ${captureSession.captureId}`,
+      );
     } else {
       setVideoUri(null);
+      setCaptureHash(null);
       setCaptureLabel(null);
       setIsRecording(true);
       setCaptureStartedAt(Date.now());
@@ -45,7 +54,7 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
       const { uploadUrl, proofId, storageKey } = await UploadService.requestPreSignedUrl(
         contractId,
         'video/mp4',
-        'Live camera submission',
+        `Live camera submission | capture-hash:${captureHash || 'none'} | ${captureLabel || 'n/a'}`,
       );
 
       const transmissionSuccess = await UploadService.uploadVideoBuffer(videoUri, uploadUrl);
@@ -64,6 +73,7 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
 
       Alert.alert('Proof Secured', 'Your recording has been sent to the Fury Router for anonymous validation.');
       setVideoUri(null);
+      setCaptureHash(null);
       setWatermark(null);
       setCaptureStartedAt(null);
       setCaptureLabel(null);
@@ -117,6 +127,7 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
                   style={styles.discardButton}
                   onPress={() => {
                     setVideoUri(null);
+                    setCaptureHash(null);
                     setWatermark(null);
                     setCaptureStartedAt(null);
                     setCaptureLabel(null);

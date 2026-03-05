@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import type { NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, Linking, Text, View } from 'react-native';
@@ -68,7 +67,7 @@ const ContractsStack = createNativeStackNavigator<ContractsStackParamList>();
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 
-function ContractsNavigator() {
+export function ContractsNavigator() {
   return (
     <ContractsStack.Navigator
       screenOptions={{
@@ -110,7 +109,7 @@ function ContractsNavigator() {
   );
 }
 
-function ProfileNavigator({ onLogout }: { onLogout: () => void }) {
+export function ProfileNavigator({ onLogout }: { onLogout: () => void }) {
   return (
     <ProfileStack.Navigator
       screenOptions={{
@@ -119,7 +118,7 @@ function ProfileNavigator({ onLogout }: { onLogout: () => void }) {
       }}
     >
       <ProfileStack.Screen name="ProfileMain" options={{ title: 'Profile' }}>
-        {(props) => <ProfileScreen {...props} onLogout={onLogout} />}
+        {(props: any) => <ProfileScreen {...props} onLogout={onLogout} />}
       </ProfileStack.Screen>
       <ProfileStack.Screen
         name="Settings"
@@ -130,7 +129,7 @@ function ProfileNavigator({ onLogout }: { onLogout: () => void }) {
   );
 }
 
-function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
+export function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
   return (
     <MainTab.Navigator
       screenOptions={{
@@ -146,7 +145,7 @@ function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
         component={DashboardScreen}
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>{'⌂'}</Text>,
+          tabBarIcon: ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>{'⌂'}</Text>,
         }}
       />
       <MainTab.Screen
@@ -155,7 +154,7 @@ function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
         options={{
           headerShown: false,
           title: 'Oaths',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>{'📜'}</Text>,
+          tabBarIcon: ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>{'📜'}</Text>,
         }}
       />
       <MainTab.Screen
@@ -163,7 +162,7 @@ function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
         component={WalletScreen}
         options={{
           title: 'Wallet',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>{'💰'}</Text>,
+          tabBarIcon: ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>{'💰'}</Text>,
         }}
       />
       <MainTab.Screen
@@ -171,7 +170,7 @@ function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
         component={FuryScreen}
         options={{
           title: 'Fury',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>{'⚖'}</Text>,
+          tabBarIcon: ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>{'⚖'}</Text>,
         }}
       />
       {/* Camera/proof capture tab intentionally hidden until native capture pipeline is production-ready */}
@@ -180,7 +179,7 @@ function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
         options={{
           headerShown: false,
           title: 'Profile',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>{'👤'}</Text>,
+          tabBarIcon: ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>{'👤'}</Text>,
         }}
       >
         {() => <ProfileNavigator onLogout={onLogout} />}
@@ -193,7 +192,7 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
-  const navigationRef = useRef<NavigationContainerRef<any>>(null);
+  const navigationRef = useRef<any>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -348,7 +347,7 @@ export default function App() {
               }}
             >
               <AuthStack.Screen name="Login" options={{ headerShown: false }}>
-                {(props) => <LoginScreen {...props} onLogin={handleLogin} />}
+                {(props: any) => <LoginScreen {...props} onLogin={handleLogin} />}
               </AuthStack.Screen>
               <AuthStack.Screen
                 name="Register"

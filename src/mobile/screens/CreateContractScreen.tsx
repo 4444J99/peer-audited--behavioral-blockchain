@@ -12,7 +12,7 @@ import {
 import { ApiClient } from '../services/ApiClient';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ContractsStackParamList } from '../App';
-import { MIN_SAFE_BMI, MAX_WEEKLY_LOSS_VELOCITY_PCT } from '@styx/shared/libs/behavioral-logic';
+import { MAX_WEEKLY_LOSS_VELOCITY_PCT } from '@styx/shared/libs/behavioral-logic';
 import { getMobileFeatureFlags } from '../config/beta';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 
@@ -60,6 +60,14 @@ const DURATION_OPTIONS = [
   { value: 90, label: '90d' },
 ];
 
+const MIN_STAKE_USD = 10;
+const MAX_STAKE_USD = 200;
+const STAKE_PRESETS = [
+  { value: 20, label: '$20 Light' },
+  { value: 50, label: '$50 Default' },
+  { value: 100, label: '$100 Serious' },
+];
+
 export function CreateContractScreen({ navigation }: Props) {
   const featureFlags = getMobileFeatureFlags();
   const visibleCategories = featureFlags.phase1NoContactOnly
@@ -78,6 +86,12 @@ export function CreateContractScreen({ navigation }: Props) {
   const streamCategories = selectedStream
     ? visibleCategories.filter((c) => c.stream === selectedStream)
     : [];
+  const parsedStake = Number.parseFloat(stakeAmount);
+  const hasStake = Number.isFinite(parsedStake) && parsedStake > 0;
+  const normalizedStake = hasStake ? parsedStake : 0;
+  const boundedStake = Math.min(MAX_STAKE_USD, Math.max(MIN_STAKE_USD, normalizedStake));
+  const perDayExposure = boundedStake / Math.max(durationDays, 1);
+  const weeklyLossCap = boundedStake * MAX_WEEKLY_LOSS_VELOCITY_PCT;
 
   const handleSubmit = async () => {
     setError('');
@@ -92,13 +106,17 @@ export function CreateContractScreen({ navigation }: Props) {
       setError('Stake amount must be a positive number.');
       return;
     }
+    if (amount < MIN_STAKE_USD || amount > MAX_STAKE_USD) {
+      setError(`Stake amount must be between $${MIN_STAKE_USD} and $${MAX_STAKE_USD}.`);
+      return;
+    }
 
     setSubmitting(true);
     try {
       const result = await ApiClient.createContract({
         category: oathCategory,
         description,
-        stakeAmount: amount,
+        stakeAmount: Number(amount.toFixed(2)),
         durationDays,
       });
       navigation.navigate('ContractDetail', { contractId: result.contractId });
@@ -200,6 +218,27 @@ export function CreateContractScreen({ navigation }: Props) {
 
       {/* Stake Amount */}
       <Text style={styles.label}>STAKE AMOUNT (USD)</Text>
+      <View style={styles.presetRow}>
+        {STAKE_PRESETS.map((preset) => (
+          <TouchableOpacity
+            key={preset.value}
+            style={[
+              styles.presetChip,
+              Number(stakeAmount || 0) === preset.value && styles.presetChipSelected,
+            ]}
+            onPress={() => setStakeAmount(preset.value.toFixed(2))}
+          >
+            <Text
+              style={[
+                styles.presetText,
+                Number(stakeAmount || 0) === preset.value && styles.presetTextSelected,
+              ]}
+            >
+              {preset.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       <View style={styles.inputRow}>
         <Text style={styles.dollarSign}>$</Text>
         <TextInput
@@ -212,10 +251,23 @@ export function CreateContractScreen({ navigation }: Props) {
         />
       </View>
       <Text style={styles.hint}>
+        Bounded range: ${MIN_STAKE_USD} to ${MAX_STAKE_USD}. Choose a commitment that is meaningful but sustainable.
+      </Text>
+      <Text style={styles.hint}>
         {featureFlags.testMoneyMode
           ? 'Test-money pilot: no real-money movement occurs in this beta environment.'
           : 'Held in FBO escrow. Failure means forfeiture.'}
       </Text>
+      {hasStake ? (
+        <View style={styles.lossPanel}>
+          <Text style={styles.lossTitle}>Loss Math Preview</Text>
+          <Text style={styles.lossLine}>Vault hold: ${boundedStake.toFixed(2)}</Text>
+          <Text style={styles.lossLine}>Per-day exposure ({durationDays}d): ${perDayExposure.toFixed(2)}</Text>
+          <Text style={styles.lossLine}>
+            Weekly loss cap policy ({Math.round(MAX_WEEKLY_LOSS_VELOCITY_PCT * 100)}%): ${weeklyLossCap.toFixed(2)}
+          </Text>
+        </View>
+      ) : null}
 
       {/* Duration */}
       <Text style={styles.label}>DURATION</Text>
@@ -307,6 +359,21 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   inputRow: { flexDirection: 'row', alignItems: 'center' },
+  presetRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  presetChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#2a2a3e',
+    backgroundColor: '#151523',
+  },
+  presetChipSelected: {
+    borderColor: '#ff4444',
+    backgroundColor: '#ff444420',
+  },
+  presetText: { color: '#9b9bb5', fontSize: 12, fontWeight: '700' },
+  presetTextSelected: { color: '#ff6666' },
   dollarSign: { color: '#ff4444', fontSize: 24, fontWeight: '800', marginRight: 8 },
   amountInput: {
     flex: 1,
@@ -320,6 +387,16 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   hint: { color: '#555', fontSize: 11, marginTop: 6 },
+  lossPanel: {
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#2a2a3e',
+    borderRadius: 10,
+    padding: 10,
+    backgroundColor: '#12121c',
+  },
+  lossTitle: { color: '#d6d6ea', fontSize: 11, fontWeight: '800', marginBottom: 6, letterSpacing: 0.3 },
+  lossLine: { color: '#9a9ab3', fontSize: 11, lineHeight: 16 },
   durationRow: { flexDirection: 'row', gap: 8 },
   durationChip: {
     flex: 1,

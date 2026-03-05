@@ -8,11 +8,13 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { ApiClient } from '../services/ApiClient';
-import { useNavigation } from '@react-navigation/native';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
-export function DashboardScreen() {
-  const navigation = useNavigation<any>();
+interface DashboardScreenProps {
+  navigation: any;
+}
+
+export function DashboardScreen({ navigation }: DashboardScreenProps) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState<any>(null);

@@ -7,17 +7,14 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ApiClient } from '../services/ApiClient';
-import type { ProfileStackParamList } from '../App';
 
 interface ProfileScreenProps {
+  navigation: any;
   onLogout: () => void;
 }
 
-export function ProfileScreen({ onLogout }: ProfileScreenProps) {
-  const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
+export function ProfileScreen({ onLogout, navigation }: ProfileScreenProps) {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

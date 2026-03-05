@@ -1,11 +1,12 @@
 const path = require('path');
+const repoRoot = path.join(__dirname, '../../');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  outputFileTracingRoot: path.join(__dirname, '../../'),
+  outputFileTracingRoot: repoRoot,
   turbopack: {
-    root: '../../',
+    root: repoRoot,
   },
   async rewrites() {
     return [

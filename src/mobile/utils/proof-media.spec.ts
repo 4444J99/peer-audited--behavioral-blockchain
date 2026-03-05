@@ -1,6 +1,7 @@
 import {
   createCameraWatermark,
   createSimulatedCaptureUri,
+  createSyntheticCaptureSession,
   createSyntheticProofMediaUri,
   createZkProofMediaUri,
 } from './proof-media';
@@ -21,6 +22,20 @@ describe('proof-media utils', () => {
   it('creates local synthetic proof uri for camera-screen source', () => {
     const uri = createSyntheticProofMediaUri('contract-1', 'camera-screen');
     expect(uri).toContain('local://proof/camera-screen/contract-1/');
+  });
+
+  it('creates uploadable synthetic capture session media with deterministic metadata', () => {
+    const session = createSyntheticCaptureSession(
+      'contract-1',
+      'STYX//contract-1::2026-03-05T00:00:00.000Z::abc123',
+      1_700_000_000_000,
+      1_700_000_000_900,
+    );
+
+    expect(session.mediaUri).toContain('data:video/mp4;base64,');
+    expect(session.captureId).toContain('syn-contract-1-');
+    expect(session.captureHash).toHaveLength(8);
+    expect(session.durationMs).toBe(900);
   });
 
   it('creates zk proof uri with breach and timestamp metadata', () => {
