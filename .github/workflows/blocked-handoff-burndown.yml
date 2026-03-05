@@ -1,0 +1,160 @@
+name: Blocked Handoff Burn-down
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 13 * * 1'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  publish_report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate weekly blocked handoff report issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- blocked-handoff-burndown-v1 -->';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const now = new Date();
+            const isoDate = now.toISOString().slice(0, 10);
+            const title = `Blocked Handoff Burn-down - ${isoDate}`;
+
+            const allBlocked = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              labels: 'blocked',
+              per_page: 100,
+            });
+
+            const blocked = allBlocked
+              .filter((issue) => !issue.pull_request)
+              .filter((issue) => issue.number >= 123 && issue.number <= 144)
+              .sort((a, b) => a.number - b.number);
+
+            const msCounts = new Map();
+            const ownerCounts = new Map();
+            const todayMs = Date.now();
+            const rows = [];
+            let overdueCount = 0;
+
+            for (const issue of blocked) {
+              const milestoneTitle = issue.milestone?.title ?? 'No milestone';
+              msCounts.set(milestoneTitle, (msCounts.get(milestoneTitle) ?? 0) + 1);
+
+              const ownerLabels = issue.labels
+                .map((l) => typeof l === 'string' ? l : l.name)
+                .filter((name) => name.startsWith('owner:'));
+              if (ownerLabels.length === 0) {
+                ownerCounts.set('owner:unassigned', (ownerCounts.get('owner:unassigned') ?? 0) + 1);
+              } else {
+                for (const lbl of ownerLabels) {
+                  ownerCounts.set(lbl, (ownerCounts.get(lbl) ?? 0) + 1);
+                }
+              }
+
+              const createdAt = new Date(issue.created_at).getTime();
+              const ageDays = Math.floor((todayMs - createdAt) / (1000 * 60 * 60 * 24));
+
+              let dueDate = '';
+              let dueIso = '';
+              const m = milestoneTitle.match(/\((\d{4}-\d{2}-\d{2})\)$/);
+              if (m) {
+                dueIso = m[1];
+                dueDate = m[1];
+                const dueMs = new Date(`${m[1]}T23:59:59Z`).getTime();
+                if (todayMs > dueMs) overdueCount += 1;
+              }
+
+              rows.push({
+                number: issue.number,
+                title: issue.title,
+                milestoneTitle,
+                owner: ownerLabels.join(', ') || 'owner:unassigned',
+                ageDays,
+                dueDate,
+                url: issue.html_url,
+              });
+            }
+
+            const total = blocked.length;
+            const oldest = rows.reduce((max, r) => Math.max(max, r.ageDays), 0);
+            const avgAge = total > 0 ? (rows.reduce((sum, r) => sum + r.ageDays, 0) / total).toFixed(1) : '0.0';
+
+            const milestoneTable = [...msCounts.entries()]
+              .sort((a, b) => a[0].localeCompare(b[0]))
+              .map(([name, count]) => `| ${name} | ${count} |`)
+              .join('\n');
+
+            const ownerTable = [...ownerCounts.entries()]
+              .sort((a, b) => a[0].localeCompare(b[0]))
+              .map(([name, count]) => `| ${name} | ${count} |`)
+              .join('\n');
+
+            const issueTable = rows
+              .map((r) => `| [#${r.number}](${r.url}) | ${r.title.replace(/\|/g, '\\|')} | ${r.milestoneTitle} | ${r.owner} | ${r.dueDate || '-'} | ${r.ageDays} |`)
+              .join('\n');
+
+            const body = `${marker}
+
+# Weekly Blocked Handoff Burn-down
+
+Date: ${isoDate}
+Repository: ${owner}/${repo}
+
+## Snapshot
+- Total blocked handoff issues in tracked range (#123-#144): ${total}
+- Overdue against milestone target date: ${overdueCount}
+- Average age (days): ${avgAge}
+- Oldest age (days): ${oldest}
+
+## By Milestone
+| Milestone | Count |
+|---|---|
+${milestoneTable || '| (none) | 0 |'}
+
+## By Owner Role
+| Owner Role Label | Count |
+|---|---|
+${ownerTable || '| owner:unassigned | 0 |'}
+
+## Detailed Issue List
+| Issue | Title | Milestone | Owner Role(s) | Target Date | Age (days) |
+|---|---|---|---|---|---|
+${issueTable || '| - | - | - | - | - | - |'}
+
+## Notes
+- This report is generated automatically via \\`.github/workflows/blocked-handoff-burndown.yml\\`.
+- Tracked issue set currently targets the explicit blocked handoff register (#123-#144).
+`;
+
+            const existing = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${owner}/${repo} is:issue in:title "${title}"`,
+              per_page: 5,
+            });
+
+            const maybeIssue = existing.data.items.find((i) => !i.pull_request);
+            if (maybeIssue) {
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: maybeIssue.number,
+                body,
+              });
+              core.info(`Updated existing burn-down issue #${maybeIssue.number}`);
+            } else {
+              const created = await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body,
+                labels: ['documentation', 'devops', 'blocked'],
+              });
+              core.info(`Created burn-down issue #${created.data.number}`);
+            }
