@@ -66,7 +66,7 @@ describe('ProofsController', () => {
       mockR2.downloadFile.mockResolvedValue(Buffer.from('fake-media'));
       mockAnomaly.analyze.mockResolvedValue({ rejected: false, flags: ['EXIF_TIMESTAMP_DISCREPANCY'] });
       mockPhash.computeFrameHash.mockResolvedValue('hash-123');
-      mockPhash.isDuplicate.mockResolvedValue({ duplicate: false });
+      mockPhash.isDuplicate.mockResolvedValue({ duplicate: false, closestDistance: 64 });
       mockPool.query.mockResolvedValue({ rows: [] }); // select existing hashes
       
       const result = await controller.confirmUpload('p-1', user, dto);
@@ -88,7 +88,7 @@ describe('ProofsController', () => {
       
       mockR2.downloadFile.mockResolvedValue(Buffer.from('fake-media'));
       mockAnomaly.analyze.mockResolvedValue({ rejected: false, flags: [] });
-      mockPhash.isDuplicate.mockResolvedValue({ duplicate: true });
+      mockPhash.isDuplicate.mockResolvedValue({ duplicate: true, closestDistance: 0 });
       mockPool.query.mockResolvedValue({ rows: [{ phash: 'hash-123' }] });
 
       await expect(controller.confirmUpload('p-1', user, dto)).rejects.toThrow(ConflictException);

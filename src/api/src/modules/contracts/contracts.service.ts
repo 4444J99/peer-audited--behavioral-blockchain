@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Optional, Inject, Logger, InternalServerErrorException, forwardRef } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Optional, Inject, Logger, InternalServerErrorException, forwardRef, ConflictException } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
@@ -2315,7 +2315,7 @@ export class ContractsService {
     if (contract.rows[0].status !== "ACTIVE") throw new BadRequestException("Contract must be active");
 
     const existing = await this.pool.query(
-      "SELECT id FROM recovery_break_requests WHERE contract_id = \$1 AND status = 'PENDING_COOLDOWN\\'",
+      "SELECT id FROM recovery_break_requests WHERE contract_id = \$1 AND status = 'PENDING_COOLDOWN'",
       [contractId]
     );
     if (existing.rows.length > 0) throw new ConflictException("A break request is already in cooldown");
@@ -2324,7 +2324,7 @@ export class ContractsService {
     unlockAt.setHours(unlockAt.getHours() + 24);
 
     const result = await this.pool.query(
-      "INSERT INTO recovery_break_requests (contract_id, unlock_at, reason, status) VALUES (\$1, \$2, \$3, 'PENDING_COOLDOWN\\' ) RETURNING *",
+      "INSERT INTO recovery_break_requests (contract_id, unlock_at, reason, status) VALUES (\$1, \$2, \$3, 'PENDING_COOLDOWN' ) RETURNING *",
       [contractId, unlockAt.toISOString(), reason]
     );
 
@@ -2346,7 +2346,7 @@ export class ContractsService {
     if (contract.rows.length === 0) throw new NotFoundException("Contract not found");
 
     const result = await this.pool.query(
-      "UPDATE recovery_break_requests SET status = 'CANCELLED\\' WHERE contract_id = \$1 AND status = 'PENDING_COOLDOWN\\' RETURNING *",
+      "UPDATE recovery_break_requests SET status = 'CANCELLED' WHERE contract_id = \$1 AND status = 'PENDING_COOLDOWN' RETURNING *",
       [contractId]
     );
 
@@ -2368,12 +2368,12 @@ export class ContractsService {
     const partnerId = partner.rows[0].id;
 
     await this.pool.query(
-      "INSERT INTO accountability_partners (contract_id, partner_user_id, status) VALUES (\$1, \$2, 'PENDING\\' ) ON CONFLICT DO NOTHING",
+      "INSERT INTO accountability_partners (contract_id, partner_user_id, status) VALUES (\$1, \$2, 'PENDING' ) ON CONFLICT DO NOTHING",
       [contractId, partnerId]
     );
 
     await this.pool.query(
-      "INSERT INTO accountability_partner_events (contract_id, actor_id, event_type, payload) VALUES (\$1, \$2, 'INVITE_SENT\\', \$3)",
+      "INSERT INTO accountability_partner_events (contract_id, actor_id, event_type, payload) VALUES (\$1, \$2, 'INVITE_SENT', \$3)",
       [contractId, userId, JSON.stringify({ partnerId })]
     );
 
@@ -2399,18 +2399,18 @@ export class ContractsService {
 
   async vetoRecoveryBreak(contractId: string, partnerId: string) {
     const partner = await this.pool.query(
-      "SELECT id FROM accountability_partners WHERE contract_id = \$1 AND partner_user_id = \$2 AND status = 'ACTIVE\\'",
+      "SELECT id FROM accountability_partners WHERE contract_id = \$1 AND partner_user_id = \$2 AND status = 'ACTIVE'",
       [contractId, partnerId]
     );
     if (partner.rows.length === 0) throw new ForbiddenException("Only active accountability partners can veto");
 
     await this.pool.query(
-      "UPDATE recovery_break_requests SET status = 'CANCELLED\\' WHERE contract_id = \$1 AND status = 'PENDING_COOLDOWN\\'",
+      "UPDATE recovery_break_requests SET status = 'CANCELLED' WHERE contract_id = \$1 AND status = 'PENDING_COOLDOWN'",
       [contractId]
     );
 
     await this.pool.query(
-      "INSERT INTO accountability_partner_events (contract_id, actor_id, event_type) VALUES (\$1, \$2, 'VETO_TRIGGERED\\')",
+      "INSERT INTO accountability_partner_events (contract_id, actor_id, event_type) VALUES (\$1, \$2, 'VETO_TRIGGERED')",
       [contractId, partnerId]
     );
 
@@ -2462,4 +2462,3 @@ export class ContractsService {
     return false;
   }
 }
-
