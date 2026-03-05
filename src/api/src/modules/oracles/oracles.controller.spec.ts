@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { OraclesController } from './oracles.controller';
 import { HealthKitGuardService } from '../compliance/healthkit-guard.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { Pool } from 'pg';
 import { ContractsService } from '../contracts/contracts.service';
 
 describe('OraclesController', () => {
@@ -24,6 +25,7 @@ describe('OraclesController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [OraclesController],
       providers: [
+        { provide: Pool, useValue: { query: jest.fn().mockResolvedValue({ rows: [] }) } },
         { provide: HealthKitGuardService, useValue: mockHealthKitGuard },
         { provide: TruthLogService, useValue: mockTruthLog },
         { provide: ContractsService, useValue: mockContractsService },

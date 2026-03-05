@@ -138,6 +138,12 @@ CREATE TABLE proofs (
     proof_type TEXT DEFAULT 'MEDIA',  -- MEDIA, ATTESTATION
     is_honeypot BOOLEAN DEFAULT FALSE,
     status TEXT DEFAULT 'PENDING_REVIEW',
+    processing_status TEXT DEFAULT 'NOT_STARTED',
+    challenge_token TEXT,
+    metadata_hash TEXT,
+    masked_media_uri TEXT,
+    redaction_status TEXT DEFAULT 'NOT_APPLICABLE',
+    redaction_profile TEXT,
     submitted_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -147,7 +153,8 @@ CREATE TABLE fury_assignments (
     fury_user_id UUID REFERENCES users(id),
     verdict TEXT,
     reviewed_at TIMESTAMPTZ,
-    assigned_at TIMESTAMPTZ DEFAULT NOW()
+    assigned_at TIMESTAMPTZ DEFAULT NOW(),
+    subject_alias TEXT
 );
 
 CREATE TABLE notifications (
@@ -274,3 +281,32 @@ CREATE INDEX IF NOT EXISTS idx_settlement_runs_status ON settlement_runs(status)
 -- Settlement auditability indexes for ledger entries
 CREATE INDEX IF NOT EXISTS idx_entries_settlement_run_id ON entries ((metadata->>'settlement_run_id'));
 CREATE INDEX IF NOT EXISTS idx_entries_provider ON entries ((metadata->>'provider'));
+
+-- Phase Gamma: Trust Chain (TKT-P1-007, TKT-P1-013, TKT-P1-014)
+
+CREATE TABLE IF NOT EXISTS health_oracle_samples (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    contract_id UUID REFERENCES contracts(id),
+    source_bundle_id TEXT NOT NULL,
+    was_user_entered BOOLEAN NOT NULL DEFAULT FALSE,
+    sample_hash TEXT NOT NULL UNIQUE,
+    accepted BOOLEAN NOT NULL,
+    reason TEXT,
+    payload JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_health_oracle_samples_user_id ON health_oracle_samples(user_id);
+
+CREATE TABLE IF NOT EXISTS proof_processing_jobs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    proof_id UUID REFERENCES proofs(id),
+    stage TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'QUEUED',
+    attempts INTEGER DEFAULT 0,
+    worker_ref TEXT,
+    error TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_proof_processing_jobs_proof_id ON proof_processing_jobs(proof_id);

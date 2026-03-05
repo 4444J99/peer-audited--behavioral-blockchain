@@ -28,7 +28,7 @@ export class HealthKitGuardService {
     return { accepted: true };
   }
 
-  private isLikelyManualEntry(metadata: HealthKitSampleMetadata): boolean {
+  public isLikelyManualEntry(metadata: HealthKitSampleMetadata): boolean {
     if (!metadata) {
       return false;
     }
