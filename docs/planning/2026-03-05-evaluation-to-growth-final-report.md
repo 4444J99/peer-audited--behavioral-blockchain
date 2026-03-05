@@ -47,3 +47,7 @@ The repository is now aligned with the "Evaluation-to-Growth" security and compl
 | 20 | Anti-Collusion Auditing (TKT-P1-008) | **Implemented** | Cross-lobby isolation (geographic, social, corporate, and partner) in Fury router. |
 | 21 | Reviewer Quality Weights (F-FURY-08) | **Implemented** | Voting power scaling (1.0x-2.0x) and automated bounty distribution logic. |
 | 22 | Biometric Verification Stubs (TKT-P1-016) | **Implemented** | Database schema support for biometric-verified proofs. |
+
+| 23 | Health Data Bridge (TKT-P1-007) | **Implemented** | Added POST /oracles/healthkit/samples and health_oracle_samples schema. |
+| 24 | Video Proof Pipeline (TKT-P1-013) | **Implemented** | Added processing endpoints and proof_processing_jobs schema. |
+| 25 | Identity Redaction (TKT-P1-014) | **Implemented** | Added mask-audit endpoint and schema for masked media + subject aliases. |

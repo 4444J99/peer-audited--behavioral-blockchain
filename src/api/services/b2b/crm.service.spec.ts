@@ -1,4 +1,5 @@
 import { CrmService } from './crm.service';
+import { Pool } from 'pg';
 import { SalesforceConnector } from '../../src/modules/b2b/connectors/salesforce.connector';
 import { HubSpotConnector } from '../../src/modules/b2b/connectors/hubspot.connector';
 
@@ -31,6 +32,7 @@ describe('CrmService (domain)', () => {
 
   function createService(): CrmService {
     return new CrmService(
+      { query: jest.fn().mockResolvedValue({ rows: [] }) } as unknown as Pool,
       mockSalesforce as unknown as SalesforceConnector,
       mockHubspot as unknown as HubSpotConnector,
     );

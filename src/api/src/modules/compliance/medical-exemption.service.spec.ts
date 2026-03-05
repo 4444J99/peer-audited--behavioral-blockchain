@@ -20,7 +20,7 @@ describe('MedicalExemptionService', () => {
       appendEvent: jest.fn().mockResolvedValue('event-id'),
     };
 
-    service = new MedicalExemptionService(mockPool as any, mockTruthLog as any, {} as any);
+    service = new MedicalExemptionService(mockPool as any, mockTruthLog as any, { resolveContract: jest.fn().mockResolvedValue(undefined) } as any);
   });
 
   describe('requestExemption', () => {
@@ -67,7 +67,7 @@ describe('MedicalExemptionService', () => {
       await service.approveExemption('contract-1', 'judge-1');
 
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining("SET status = 'EXEMPTED'"),
+        expect.stringContaining("medical_exemption_approved_at"),
         ['contract-1', 'judge-1']
       );
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('MEDICAL_EXEMPTION_APPROVED', expect.any(Object));

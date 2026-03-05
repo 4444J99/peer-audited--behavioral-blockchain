@@ -160,4 +160,60 @@ export class ProofsController {
   ) {
     return this.proofsService.getProofDetail(proofId, { userId: user.id });
   }
+
+  @UseGuards(AuthGuard)
+  @Get(':id/processing-status')
+  @ApiOperation({ summary: 'Get video processing pipeline status' })
+  async getProcessingStatus(
+    @Param('id') proofId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const proofAccess = await this.proofsService.getProofUploadConfirmationAccess(proofId, {
+      userId: user.id,
+    });
+
+    const jobs = await this.pool.query(
+      'SELECT stage, status, error, updated_at FROM proof_processing_jobs WHERE proof_id = $1 ORDER BY created_at DESC',
+      [proofId]
+    );
+
+    const proofInfo = await this.pool.query(
+      'SELECT processing_status FROM proofs WHERE id = $1',
+      [proofId]
+    );
+
+    return {
+      proofId,
+      overallStatus: proofInfo.rows[0]?.processing_status || 'NOT_STARTED',
+      jobs: jobs.rows,
+    };
+  }
+
+  @UseGuards(AuthGuard)
+  @Post(':id/processing-complete')
+  @ApiOperation({ summary: 'Internal callback for video processing completion' })
+  async processingComplete(
+    @Param('id') proofId: string,
+    @Body() dto: { status: 'COMPLETED' | 'FAILED', error?: string, maskedMediaUri?: string },
+  ) {
+    // In production, this would be authenticated via service-to-service token
+    await this.pool.query(
+      `UPDATE proofs 
+       SET processing_status = $1,
+           masked_media_uri = COALESCE($2, masked_media_uri),
+           redaction_status = CASE WHEN $2 IS NOT NULL THEN 'MASKED' ELSE redaction_status END
+       WHERE id = $3`,
+      [dto.status, dto.maskedMediaUri || null, proofId]
+    );
+
+    if (dto.status === 'COMPLETED') {
+      // Check if it's ready for Fury routing (has challenge token etc)
+      const proofResult = await this.pool.query('SELECT user_id, challenge_token FROM proofs WHERE id = $1', [proofId]);
+      if (proofResult.rows.length > 0 && proofResult.rows[0].challenge_token) {
+        // Need to wait until challenge token validation is implemented in the controller
+      }
+    }
+
+    return { success: true };
+  }
 }

@@ -21,7 +21,7 @@ describe('CompliancePolicyService', () => {
       getUserComplianceStatus: jest.fn(),
     };
     service = new CompliancePolicyService(
-      {} as any, // pool (not used in policy evaluation tests)
+      { query: jest.fn().mockResolvedValue({ rows: [] }) } as any,
       mockIdentityVerification as unknown as IdentityVerificationService,
     );
     jest.clearAllMocks();
@@ -405,7 +405,7 @@ describe('CompliancePolicyService', () => {
 
     it('should block when identity verification service is missing', async () => {
       process.env.KYC_ENFORCEMENT_ENABLED = 'true';
-      const serviceNoVerification = new CompliancePolicyService({} as any);
+      const serviceNoVerification = new CompliancePolicyService({ query: jest.fn().mockResolvedValue({ rows: [] }) } as any);
       const result = await serviceNoVerification.evaluateKycRequirement('user-1', 50);
       expect(result.allowed).toBe(false);
       expect(result.reason).toContain('Identity verification required');
@@ -519,7 +519,7 @@ describe('CompliancePolicyService', () => {
 
     it('should handle missing identityVerification service gracefully', async () => {
       process.env.KYC_ENFORCEMENT_ENABLED = 'true';
-      const serviceNoVerification = new CompliancePolicyService({} as any);
+      const serviceNoVerification = new CompliancePolicyService({ query: jest.fn().mockResolvedValue({ rows: [] }) } as any);
       const req = makeRequest({
         method: 'POST',
         originalUrl: '/contracts',

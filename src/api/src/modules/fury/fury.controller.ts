@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Sse, MessageEvent, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Sse, MessageEvent, Res, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { Observable, timer } from 'rxjs';
@@ -208,5 +208,31 @@ export class FuryController {
     }
 
     return { status: 'verdict_recorded' };
+  }
+
+  @Get('review/:assignmentId/mask-audit')
+  @ApiOperation({ summary: 'Get identity redaction provenance for a specific assignment' })
+  async getMaskAudit(@Param('assignmentId') assignmentId: string, @CurrentUser() user: { id: string }) {
+    const assignment = await this.pool.query(
+      `SELECT p.redaction_status, p.redaction_profile, p.media_uri, p.masked_media_uri, fa.subject_alias
+       FROM fury_assignments fa
+       JOIN proofs p ON fa.proof_id = p.id
+       WHERE fa.id = \$1 AND fa.fury_user_id = \$2`,
+      [assignmentId, user.id]
+    );
+    
+    if (assignment.rows.length === 0) {
+      throw new Error('Assignment not found');
+    }
+
+    const row = assignment.rows[0];
+    return {
+      assignmentId,
+      subjectAlias: row.subject_alias,
+      redactionStatus: row.redaction_status,
+      redactionProfile: row.redaction_profile,
+      originalMediaHash: row.media_uri ? 'redacted-for-fury-privacy' : null,
+      maskedMediaHash: row.masked_media_uri ? 'available-for-fury-review' : null,
+    };
   }
 }

@@ -670,7 +670,7 @@ describe('ContractsService', () => {
 
       // calculateIntegrity({completedOaths:1, ...}) = 50 + 5 = 55, delta = +5
       // newScore = max(0, 50 + 5) = 55
-      const updateUserCall = mockPool.query.mock.calls[3];
+      const updateUserCall = mockPool.query.mock.calls.find(c => c[0].includes('UPDATE users SET integrity_score'));
       expect(updateUserCall[0]).toMatch(/UPDATE users SET integrity_score/);
       expect(updateUserCall[1][0]).toBe(55); // new score
     });
@@ -687,7 +687,7 @@ describe('ContractsService', () => {
 
       // calculateIntegrity({failedOaths:1, ...}) = 50 + 0 - 0 - 20 - 0 = 30, delta = -20
       // newScore = max(0, 50 + (-20)) = 30
-      const updateUserCall = mockPool.query.mock.calls[3];
+      const updateUserCall = mockPool.query.mock.calls.find(c => c[0].includes('UPDATE users SET integrity_score'));
       expect(updateUserCall[1][0]).toBe(30);
     });
 
@@ -702,7 +702,7 @@ describe('ContractsService', () => {
       await service.resolveContract('contract-1', 'FAILED');
 
       // delta = -20, newScore = max(0, 10 + (-20)) = max(0, -10) = 0
-      const updateUserCall = mockPool.query.mock.calls[3];
+      const updateUserCall = mockPool.query.mock.calls.find(c => c[0].includes('UPDATE users SET integrity_score'));
       expect(updateUserCall[1][0]).toBe(0);
     });
 
