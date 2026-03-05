@@ -1,8 +1,10 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { FuryController } from './fury.controller';
+import { EnforcementController } from './enforcement.controller';
 import { FuryWorker } from './fury.worker';
 import { FuryRouterWorker } from '../../../services/fury-router/fury-router.worker';
 import { ConsensusEngine } from './consensus.engine';
+import { EnforcementService } from './enforcement.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { R2StorageService } from '../../../services/storage/r2.service';
@@ -14,11 +16,12 @@ import { JudgeService } from './judge.service';
 
 @Module({
   imports: [forwardRef(() => ContractsModule), NotificationsModule],
-  controllers: [FuryController],
+  controllers: [FuryController, EnforcementController],
   providers: [
     FuryWorker, 
     FuryRouterWorker, 
     ConsensusEngine, 
+    EnforcementService,
     LedgerService, 
     TruthLogService, 
     R2StorageService, 
@@ -30,6 +33,7 @@ import { JudgeService } from './judge.service';
     FuryWorker, 
     FuryRouterWorker, 
     ConsensusEngine, 
+    EnforcementService,
     R2StorageService,
     JudgeService,
   ],

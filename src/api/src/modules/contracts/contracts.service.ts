@@ -2282,4 +2282,184 @@ export class ContractsService {
 
     return { contractId, newTotal, paymentIntentId: paymentIntent.id };
   }
+
+  // --- Phase Delta: Recovery Timelocks (TKT-P1-005) ---
+
+  async getRecoveryLockStatus(contractId: string, userId: string) {
+    const contract = await this.pool.query("SELECT status, user_id FROM contracts WHERE id = \$1", [contractId]);
+    if (contract.rows.length === 0 || contract.rows[0].user_id !== userId) throw new NotFoundException("Contract not found");
+
+    const result = await this.pool.query(
+      "SELECT * FROM recovery_break_requests WHERE contract_id = \$1 ORDER BY requested_at DESC LIMIT 1",
+      [contractId]
+    );
+    
+    if (result.rows.length === 0) return { activeRequest: null };
+    
+    const req = result.rows[0];
+    const now = new Date();
+    const unlockAt = new Date(req.unlock_at);
+    
+    if (req.status === "PENDING_COOLDOWN" && now >= unlockAt) {
+      return { activeRequest: { ...req, status: "UNLOCKED" } };
+    }
+    return { activeRequest: req };
+  }
+
+  async requestRecoveryBreak(contractId: string, userId: string, reason: string) {
+    const contract = await this.pool.query(
+      "SELECT id, status, user_id FROM contracts WHERE id = \$1 AND user_id = \$2",
+      [contractId, userId]
+    );
+    if (contract.rows.length === 0) throw new NotFoundException("Contract not found");
+    if (contract.rows[0].status !== "ACTIVE") throw new BadRequestException("Contract must be active");
+
+    const existing = await this.pool.query(
+      "SELECT id FROM recovery_break_requests WHERE contract_id = \$1 AND status = 'PENDING_COOLDOWN\\'",
+      [contractId]
+    );
+    if (existing.rows.length > 0) throw new ConflictException("A break request is already in cooldown");
+
+    const unlockAt = new Date();
+    unlockAt.setHours(unlockAt.getHours() + 24);
+
+    const result = await this.pool.query(
+      "INSERT INTO recovery_break_requests (contract_id, unlock_at, reason, status) VALUES (\$1, \$2, \$3, 'PENDING_COOLDOWN\\' ) RETURNING *",
+      [contractId, unlockAt.toISOString(), reason]
+    );
+
+    await this.truthLog.appendEvent("RECOVERY_BREAK_REQUESTED", {
+      contractId,
+      userId,
+      unlockAt: unlockAt.toISOString(),
+      reason
+    });
+
+    return result.rows[0];
+  }
+
+  async cancelRecoveryBreak(contractId: string, userId: string) {
+    const contract = await this.pool.query(
+      "SELECT id FROM contracts WHERE id = \$1 AND user_id = \$2",
+      [contractId, userId]
+    );
+    if (contract.rows.length === 0) throw new NotFoundException("Contract not found");
+
+    const result = await this.pool.query(
+      "UPDATE recovery_break_requests SET status = 'CANCELLED\\' WHERE contract_id = \$1 AND status = 'PENDING_COOLDOWN\\' RETURNING *",
+      [contractId]
+    );
+
+    if (result.rows.length === 0) throw new BadRequestException("No pending cooldown to cancel");
+
+    await this.truthLog.appendEvent("RECOVERY_BREAK_CANCELLED", {
+      contractId,
+      userId,
+    });
+
+    return { success: true, request: result.rows[0] };
+  }
+
+  // --- Phase Delta: Accountability Partners (TKT-P1-017) ---
+
+  async invitePartner(contractId: string, userId: string, partnerEmail: string) {
+    const partner = await this.pool.query("SELECT id FROM users WHERE email = \$1", [partnerEmail]);
+    if (partner.rows.length === 0) throw new NotFoundException("Partner user not found");
+    const partnerId = partner.rows[0].id;
+
+    await this.pool.query(
+      "INSERT INTO accountability_partners (contract_id, partner_user_id, status) VALUES (\$1, \$2, 'PENDING\\' ) ON CONFLICT DO NOTHING",
+      [contractId, partnerId]
+    );
+
+    await this.pool.query(
+      "INSERT INTO accountability_partner_events (contract_id, actor_id, event_type, payload) VALUES (\$1, \$2, 'INVITE_SENT\\', \$3)",
+      [contractId, userId, JSON.stringify({ partnerId })]
+    );
+
+    return { success: true, partnerId };
+  }
+
+  async respondToInvite(contractId: string, partnerId: string, accept: boolean) {
+    const status = accept ? "ACTIVE" : "DECLINED";
+    const result = await this.pool.query(
+      "UPDATE accountability_partners SET status = \$1 WHERE contract_id = \$2 AND partner_user_id = \$3 RETURNING *",
+      [status, contractId, partnerId]
+    );
+
+    if (result.rows.length === 0) throw new NotFoundException("Invitation not found");
+
+    await this.pool.query(
+      "INSERT INTO accountability_partner_events (contract_id, actor_id, event_type) VALUES (\$1, \$2, \$3)",
+      [contractId, partnerId, accept ? "INVITE_ACCEPTED" : "INVITE_DECLINED"]
+    );
+
+    return { success: true, status };
+  }
+
+  async vetoRecoveryBreak(contractId: string, partnerId: string) {
+    const partner = await this.pool.query(
+      "SELECT id FROM accountability_partners WHERE contract_id = \$1 AND partner_user_id = \$2 AND status = 'ACTIVE\\'",
+      [contractId, partnerId]
+    );
+    if (partner.rows.length === 0) throw new ForbiddenException("Only active accountability partners can veto");
+
+    await this.pool.query(
+      "UPDATE recovery_break_requests SET status = 'CANCELLED\\' WHERE contract_id = \$1 AND status = 'PENDING_COOLDOWN\\'",
+      [contractId]
+    );
+
+    await this.pool.query(
+      "INSERT INTO accountability_partner_events (contract_id, actor_id, event_type) VALUES (\$1, \$2, 'VETO_TRIGGERED\\')",
+      [contractId, partnerId]
+    );
+
+    return { success: true, message: "Recovery break vetoed by partner" };
+  }
+
+  async getAccountabilityStatus(contractId: string, userId: string) {
+    const partners = await this.pool.query(
+      "SELECT u.email, ap.status, ap.partner_user_id FROM accountability_partners ap JOIN users u ON ap.partner_user_id = u.id WHERE ap.contract_id = \$1",
+      [contractId]
+    );
+    const events = await this.pool.query(
+      "SELECT * FROM accountability_partner_events WHERE contract_id = \$1 ORDER BY created_at DESC",
+      [contractId]
+    );
+    return { partners: partners.rows, history: events.rows };
+  }
+
+  // --- Phase Delta: Weekend Multipliers (TKT-P1-012) ---
+
+  async getRecoveryPenaltyPreview(contractId: string, userId: string) {
+    const contract = await this.pool.query(
+      "SELECT stake_amount FROM contracts WHERE id = \$1 AND user_id = \$2",
+      [contractId, userId]
+    );
+    if (contract.rows.length === 0) throw new NotFoundException("Contract not found");
+
+    const stakeAmount = parseFloat(contract.rows[0].stake_amount);
+    const isWeekend = this.isWeekendRiskWindow(new Date());
+    const multiplier = isWeekend ? 2.0 : 1.0;
+
+    return {
+      basePenaltyUsd: stakeAmount,
+      multiplier,
+      effectivePenaltyUsd: stakeAmount * multiplier,
+      riskWindow: isWeekend ? "WEEKEND_MULTIPLIER" : "NORMAL",
+    };
+  }
+
+  private isWeekendRiskWindow(date: Date): boolean {
+    const day = date.getDay(); // 0=Sun, 5=Fri, 6=Sat
+    const hour = date.getHours();
+
+    // Friday 5PM (17:00) to Sunday 9AM (09:00)
+    if (day === 5 && hour >= 17) return true;
+    if (day === 6) return true;
+    if (day === 0 && hour < 9) return true;
+
+    return false;
+  }
 }
+

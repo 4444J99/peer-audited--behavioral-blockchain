@@ -310,3 +310,86 @@ CREATE TABLE IF NOT EXISTS proof_processing_jobs (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_proof_processing_jobs_proof_id ON proof_processing_jobs(proof_id);
+-- Migration 021: Phase Gamma Enforcement and Recovery (TKT-P1-015, TKT-P1-005)
+
+-- TKT-P1-015: Collusion Slashing
+CREATE TABLE IF NOT EXISTS fury_enforcement_cases (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    reviewer_id UUID REFERENCES users(id),
+    case_type TEXT NOT NULL, -- HONEYPOT_FAILURE, COLLUSION_RING
+    confidence FLOAT NOT NULL,
+    status TEXT DEFAULT 'PENDING_REVIEW', -- PENDING_REVIEW, PENALTY_APPLIED, APPEALED, REVERSED
+    evidence_json JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_fury_enforcement_cases_reviewer ON fury_enforcement_cases(reviewer_id);
+
+CREATE TABLE IF NOT EXISTS fury_penalties (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    case_id UUID REFERENCES fury_enforcement_cases(id),
+    penalty_type TEXT NOT NULL, -- STAKE_SLASH, REP_BURN, BAN
+    amount_cents INTEGER,
+    applied_at TIMESTAMPTZ DEFAULT NOW(),
+    reversed_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_fury_penalties_case ON fury_penalties(case_id);
+
+-- TKT-P1-005: Recovery Timelock
+CREATE TABLE IF NOT EXISTS recovery_break_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contract_id UUID REFERENCES contracts(id),
+    requested_at TIMESTAMPTZ DEFAULT NOW(),
+    unlock_at TIMESTAMPTZ NOT NULL,
+    reason TEXT,
+    status TEXT DEFAULT 'PENDING_COOLDOWN' -- PENDING_COOLDOWN, UNLOCKED, CANCELLED, CONSUMED
+);
+CREATE INDEX IF NOT EXISTS idx_recovery_break_requests_contract ON recovery_break_requests(contract_id);
+-- Migration 022: Weekend Multiplier Policy (TKT-P1-012)
+
+CREATE TABLE IF NOT EXISTS contract_penalty_windows (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contract_id UUID REFERENCES contracts(id),
+    starts_at TIMESTAMPTZ NOT NULL,
+    ends_at TIMESTAMPTZ NOT NULL,
+    multiplier FLOAT NOT NULL DEFAULT 2.0,
+    source_policy TEXT NOT NULL -- WEEKEND_RELAPSE_PREVENTION
+);
+CREATE INDEX IF NOT EXISTS idx_contract_penalty_windows_contract ON contract_penalty_windows(contract_id);
+
+-- Migration 023: Accountability Partner Protocol (TKT-P1-017)
+
+CREATE TABLE IF NOT EXISTS accountability_partner_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contract_id UUID REFERENCES contracts(id),
+    actor_id UUID REFERENCES users(id),
+    event_type TEXT NOT NULL, -- INVITE_SENT, INVITE_ACCEPTED, INVITE_DECLINED, VETO_TRIGGERED
+    payload JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE accountability_partners 
+ALTER COLUMN status TYPE TEXT,
+ALTER COLUMN status SET DEFAULT 'PENDING';
+
+-- Ensure status is one of: PENDING, ACTIVE, DECLINED, REVOKED
+
+-- Migration 024: Goal-Gradient Dashboard and Live Leaderboard (TKT-P1-018)
+
+CREATE TABLE IF NOT EXISTS leaderboard_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    score_delta INTEGER NOT NULL,
+    reason TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_events_user ON leaderboard_events(user_id);
+
+CREATE TABLE IF NOT EXISTS dashboard_progress_snapshots (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    payload_json JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, snapshot_date)
+);
+

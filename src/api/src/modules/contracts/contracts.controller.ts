@@ -217,4 +217,87 @@ export class ContractsController {
     const result = await this.contractsService.claimBounty(linkId, dto.mediaUri, claimantIp);
     return res.json(result);
   }
+
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get(':id/recovery/lock-status')
+  @ApiOperation({ summary: 'Get the 24h timelock status for an intentional recovery break' })
+  async getRecoveryLockStatus(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.contractsService.getRecoveryLockStatus(contractId, user.id);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
+  @Post(':id/recovery/break-request')
+  @ApiOperation({ summary: 'Queue a 24h timelocked intentional break for a recovery contract' })
+  async requestRecoveryBreak(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+    @Body() dto: { reason: string },
+  ) {
+    return this.contractsService.requestRecoveryBreak(contractId, user.id, dto.reason);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
+  @Post(':id/recovery/break-cancel')
+  @ApiOperation({ summary: 'Cancel a pending intentional break during the cooldown period' })
+  async cancelRecoveryBreak(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.contractsService.cancelRecoveryBreak(contractId, user.id);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get(':id/recovery/penalty-preview')
+  @ApiOperation({ summary: 'Preview the potential penalty amount including weekend multipliers' })
+  async getPenaltyPreview(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.contractsService.getRecoveryPenaltyPreview(contractId, user.id);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
+  @Post(':id/accountability/invite')
+  @ApiOperation({ summary: 'Invite an accountability partner to a contract' })
+  async inviteAccountabilityPartner(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+    @Body() body: { email: string },
+  ) {
+    return this.contractsService.invitePartner(contractId, user.id, body.email);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
+  @Post(':id/accountability/respond')
+  @ApiOperation({ summary: 'Respond to an accountability partner invitation' })
+  async respondToAccountabilityInvite(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+    @Body() body: { accept: boolean },
+  ) {
+    return this.contractsService.respondToInvite(contractId, user.id, body.accept);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
+  @Post(':id/recovery/veto-break')
+  @ApiOperation({ summary: 'Veto a pending recovery break as an accountability partner' })
+  async vetoRecoveryBreak(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.contractsService.vetoRecoveryBreak(contractId, user.id);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get(':id/accountability/status')
+  @ApiOperation({ summary: 'Get accountability partner status and history for a contract' })
+  async getAccountabilityStatus(
+    @Param('id') contractId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.contractsService.getAccountabilityStatus(contractId, user.id);
+  }
 }
