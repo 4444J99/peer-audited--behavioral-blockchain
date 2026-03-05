@@ -37,14 +37,14 @@ describe('geofencing', () => {
   });
 
   describe('classifyJurisdiction', () => {
-    it('should return TIER_1 with null state for null geo', () => {
+    it('should return TIER_3 with null state for null geo', () => {
       const result = classifyJurisdiction(null);
-      expect(result).toEqual({ tier: JurisdictionTier.TIER_1, state: null });
+      expect(result).toEqual({ tier: JurisdictionTier.TIER_3, state: null });
     });
 
-    it('should return TIER_1 with null state for non-US country', () => {
+    it('should return TIER_3 with null state for non-US country', () => {
       const result = classifyJurisdiction({ country: 'DE', region: 'BE' });
-      expect(result).toEqual({ tier: JurisdictionTier.TIER_1, state: null });
+      expect(result).toEqual({ tier: JurisdictionTier.TIER_3, state: null });
     });
 
     it('should return TIER_1 for a US permissive state', () => {
@@ -62,9 +62,9 @@ describe('geofencing', () => {
       expect(result).toEqual({ tier: JurisdictionTier.TIER_3, state: 'WA' });
     });
 
-    it('should default to TIER_1 for an unknown US state code', () => {
+    it('should default to TIER_3 for an unknown US state code', () => {
       const result = classifyJurisdiction({ country: 'US', region: 'ZZ' });
-      expect(result).toEqual({ tier: JurisdictionTier.TIER_1, state: 'ZZ' });
+      expect(result).toEqual({ tier: JurisdictionTier.TIER_3, state: 'ZZ' });
     });
   });
 });

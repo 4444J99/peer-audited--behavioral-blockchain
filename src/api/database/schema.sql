@@ -14,7 +14,8 @@ CREATE TABLE entries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     debit_account_id UUID REFERENCES accounts(id) ON DELETE RESTRICT,
     credit_account_id UUID REFERENCES accounts(id) ON DELETE RESTRICT,
-    amount DECIMAL(19, 4) NOT NULL CHECK (amount > 0),
+    -- Stored as integer cents to avoid floating-point drift.
+    amount BIGINT NOT NULL CHECK (amount > 0),
     contract_id UUID,
     metadata JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -58,6 +59,7 @@ CREATE TABLE users (
     role TEXT DEFAULT 'USER',
     enterprise_id UUID,
     status TEXT DEFAULT 'ACTIVE',
+    deletion_requested_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -246,3 +248,4 @@ CREATE INDEX idx_entries_debit_account_id ON entries(debit_account_id);
 CREATE INDEX idx_entries_credit_account_id ON entries(credit_account_id);
 CREATE INDEX idx_entries_contract_id ON entries(contract_id);
 CREATE INDEX idx_users_enterprise_id ON users(enterprise_id);
+CREATE INDEX idx_users_deletion_requested_at ON users(deletion_requested_at);

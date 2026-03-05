@@ -16,7 +16,7 @@ export class LedgerService {
   async recordTransaction(
     debitAccountId: string,
     creditAccountId: string,
-    amount: number,
+    amount: number, // integer cents
     contractId?: string,
     metadata?: Record<string, any>,
     client?: PoolClient
@@ -78,7 +78,7 @@ export class LedgerService {
   }
 
   /**
-   * Returns the net balance for an account (total debits - total credits).
+   * Returns the net balance for an account in integer cents (total debits - total credits).
    * Debit entries increase the account; credit entries decrease it.
    */
   async getAccountBalance(accountId: string): Promise<number> {
@@ -91,7 +91,7 @@ export class LedgerService {
       WHERE debit_account_id = $1 OR credit_account_id = $1`,
       [accountId],
     );
-    return parseFloat(result.rows[0].balance);
+    return Number.parseInt(String(result.rows[0].balance), 10);
   }
 
   /**
@@ -117,7 +117,7 @@ export class LedgerService {
       id: row.id,
       debitAccountId: row.debit_account_id,
       creditAccountId: row.credit_account_id,
-      amount: parseFloat(row.amount),
+      amount: Number.parseInt(String(row.amount), 10),
       metadata: row.metadata,
       createdAt: row.created_at,
     }));
@@ -149,7 +149,7 @@ export class LedgerService {
     // Aggregate debits and credits per account
     const accountBalances = new Map<string, number>();
     for (const row of detailResult.rows) {
-      const amount = parseFloat(row.total);
+      const amount = Number.parseInt(String(row.total), 10);
       const debitId = row.debit_account_id;
       const creditId = row.credit_account_id;
       accountBalances.set(debitId, (accountBalances.get(debitId) || 0) + amount);
@@ -162,9 +162,9 @@ export class LedgerService {
       netBalance += balance;
     }
 
-    const totalAmount = parseFloat(result.rows[0].total);
+    const totalAmount = Number.parseInt(String(result.rows[0].total), 10);
     return {
-      balanced: Math.abs(netBalance) < 1, // 1 cent tolerance (amounts stored as integer cents)
+      balanced: netBalance === 0,
       totalDebits: totalAmount,
       totalCredits: totalAmount,
     };

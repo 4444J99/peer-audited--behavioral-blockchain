@@ -130,9 +130,9 @@ export class UsersService {
       throw new NotFoundException(`User ${userId} not found`);
     }
 
-    // Mark user for deletion — actual deletion handled by a scheduled job
+    // Mark user for deletion — actual anonymization handled by scheduled GDPR job
     await this.pool.query(
-      "UPDATE users SET status = 'PENDING_DELETION' WHERE id = $1",
+      "UPDATE users SET status = 'PENDING_DELETION', deletion_requested_at = NOW() WHERE id = $1",
       [userId],
     );
 

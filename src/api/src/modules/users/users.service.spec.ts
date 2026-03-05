@@ -163,4 +163,27 @@ describe('UsersService', () => {
       );
     });
   });
+
+  describe('requestDeletion', () => {
+    it('should mark user as pending deletion and stamp deletion_requested_at', async () => {
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ id: 'user-1', status: 'ACTIVE' }] }) // SELECT
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE
+        .mockResolvedValueOnce({ rows: [] }); // event log
+
+      const result = await service.requestDeletion('user-1');
+
+      expect(result).toEqual({ status: 'deletion_requested' });
+      expect((mockPool.query as jest.Mock).mock.calls[1][0]).toContain(
+        "UPDATE users SET status = 'PENDING_DELETION', deletion_requested_at = NOW() WHERE id = $1",
+      );
+      expect((mockPool.query as jest.Mock).mock.calls[1][1]).toEqual(['user-1']);
+    });
+
+    it('should throw NotFoundException when requesting deletion for unknown user', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
+
+      await expect(service.requestDeletion('missing-user')).rejects.toThrow(NotFoundException);
+    });
+  });
 });

@@ -58,7 +58,8 @@ export class GdprService {
     const pendingUsers = await this.pool.query(
       `SELECT id FROM users
        WHERE status = 'PENDING_DELETION'
-       AND created_at <= NOW() - INTERVAL '30 days'`,
+       AND deletion_requested_at IS NOT NULL
+       AND deletion_requested_at <= NOW() - INTERVAL '30 days'`,
     );
 
     let processed = 0;
@@ -85,7 +86,8 @@ export class GdprService {
       `UPDATE users SET
         email = $2,
         password_hash = NULL,
-        status = 'DELETED'
+        status = 'DELETED',
+        deletion_requested_at = NULL
        WHERE id = $1`,
       [userId, `deleted-${userId}@anonymized.styx`],
     );

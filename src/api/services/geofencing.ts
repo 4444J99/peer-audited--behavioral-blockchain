@@ -84,12 +84,17 @@ export const STATE_TIERS: Record<string, JurisdictionTier> = {
 
 /**
  * Classify a resolved geo result into a jurisdiction tier.
- * Non-US or unknown geos default to TIER_1 (permissive).
+ * Safety-First (Fail-Closed): Non-US or unknown geos default to TIER_3 (HARD_BLOCK).
+ * Phase Beta P0-004: Harden jurisdiction policy to prevent unauthorized cross-border activity.
  * IP-to-geo resolution is the caller's responsibility (see GeofenceService).
  */
 export function classifyJurisdiction(geo: { country: string; region: string } | null): { tier: JurisdictionTier; state: string | null } {
-    if (!geo || geo.country !== 'US') return { tier: JurisdictionTier.TIER_1, state: null };
+    // Unknown or non-US locations are hard-blocked by default
+    if (!geo || geo.country !== 'US') return { tier: JurisdictionTier.TIER_3, state: null };
+    
     const state = geo.region;
-    const tier = STATE_TIERS[state] ?? JurisdictionTier.TIER_1;
+    // Unknown US states (e.g. military bases, territories) are hard-blocked by default
+    const tier = STATE_TIERS[state] ?? JurisdictionTier.TIER_3;
+    
     return { tier, state };
 }

@@ -75,6 +75,7 @@ describe('GdprService', () => {
 
       expect(result.processed).toBe(1);
       expect(result.skipped).toBe(0);
+      expect((mockPool.query as jest.Mock).mock.calls[0][0]).toContain('deletion_requested_at');
     });
 
     it('should report skipped users on anonymization failure', async () => {

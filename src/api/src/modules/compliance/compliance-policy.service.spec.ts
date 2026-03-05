@@ -217,11 +217,11 @@ describe('CompliancePolicyService', () => {
       expect(result.jurisdiction.source).toBe('none');
     });
 
-    it('should default unknown states to TIER_1', () => {
+    it('should default unknown states to TIER_3', () => {
       const req = makeRequest({ headers: { 'cf-ipstate': 'ZZ' } });
       const result = service.getEligibility(req);
-      expect(result.requiredMode).toBe('FULL_ACCESS');
-      expect(result.jurisdiction.tier).toBe(JurisdictionTier.TIER_1);
+      expect(result.requiredMode).toBe('BLOCKED');
+      expect(result.jurisdiction.tier).toBe(JurisdictionTier.TIER_3);
     });
 
     it('should normalize state header to uppercase', () => {

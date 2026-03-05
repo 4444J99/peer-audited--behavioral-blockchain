@@ -126,7 +126,9 @@ export class CompliancePolicyService {
 
   getEligibility(req: Request) {
     const location = this.resolveStateFromRequest(req);
-    const tier = location.state ? (STATE_TIERS[location.state] ?? JurisdictionTier.TIER_1) : JurisdictionTier.TIER_1;
+    const tier = location.state 
+      ? (STATE_TIERS[location.state] ?? JurisdictionTier.TIER_3) 
+      : (this.shouldFailOpenOnMissingLocation() ? JurisdictionTier.TIER_1 : JurisdictionTier.TIER_3);
 
     const create = this.canCreateContract({ tier, state: location.state });
     const proof = this.canSubmitProof({ tier, state: location.state });
@@ -201,7 +203,9 @@ export class CompliancePolicyService {
   evaluateRequestPolicy(req: Request): ComplianceDecision {
     const location = this.resolveStateFromRequest(req);
     const state = location.state;
-    const tier = state ? (STATE_TIERS[state] ?? JurisdictionTier.TIER_1) : JurisdictionTier.TIER_1;
+    const tier = state 
+      ? (STATE_TIERS[state] ?? JurisdictionTier.TIER_3) 
+      : (this.shouldFailOpenOnMissingLocation() ? JurisdictionTier.TIER_1 : JurisdictionTier.TIER_3);
     const action = this.resolveActionFromRequest(req);
 
     if (!state && !this.shouldFailOpenOnMissingLocation()) {

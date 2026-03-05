@@ -4,10 +4,16 @@ const fs = require('fs');
 const path = require('path');
 
 const repoRoot = path.resolve(__dirname, '../..');
-const matrixPath = path.join(repoRoot, 'docs/planning/implementation-status.md');
+const matrixCandidates = [
+  path.join(repoRoot, 'docs/planning/implementation-status.md'),
+  path.join(repoRoot, 'docs/planning/planning--implementation-status.md'),
+];
+const matrixPath = matrixCandidates.find((candidate) => fs.existsSync(candidate));
 
-if (!fs.existsSync(matrixPath)) {
-  console.error(`Claim drift check failed: missing ${matrixPath}`);
+if (!matrixPath) {
+  console.error(
+    `Claim drift check failed: missing implementation status file (${matrixCandidates.join(' OR ')})`
+  );
   process.exit(1);
 }
 
@@ -32,7 +38,7 @@ for (const token of candidatePaths) {
 }
 
 if (missing.length > 0) {
-  console.error('Claim drift check failed: referenced file paths not found in docs/planning/implementation-status.md');
+  console.error(`Claim drift check failed: referenced file paths not found in ${path.relative(repoRoot, matrixPath)}`);
   for (const item of missing) {
     console.error(`- ${item.token} -> ${item.fsPath}`);
   }
