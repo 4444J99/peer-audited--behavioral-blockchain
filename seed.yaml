@@ -22,6 +22,14 @@ agents:
     trigger: on_push
     workflow: .github/workflows/ci.yml
     description: "Continuous integration pipeline"
+  - name: governance-auditor
+    trigger: schedule
+    workflow: .github/workflows/blocked-handoff-burndown.yml
+    description: "Weekly automated audit and index generation for blocked handoffs"
+  - name: governance-intake
+    trigger: on_issue
+    workflow: .github/workflows/blocked-handoff-intake.yml
+    description: "Normalizes blocked handoff metadata during issue intake"
 
 produces:
   - type: product

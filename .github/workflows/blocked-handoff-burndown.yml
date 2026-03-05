@@ -3,11 +3,15 @@ name: Blocked Handoff Burn-down
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 13 * * 1'
+    - cron: "0 13 * * 1"
 
 permissions:
-  contents: read
+  contents: write
   issues: write
+
+concurrency:
+  group: blocked-handoff-burndown
+  cancel-in-progress: false
 
 jobs:
   publish_report:
@@ -17,131 +21,184 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const marker = '<!-- blocked-handoff-burndown-v1 -->';
+            const marker = "<!-- blocked-handoff-burndown-v1 -->";
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-
             const now = new Date();
             const isoDate = now.toISOString().slice(0, 10);
             const title = `Blocked Handoff Burn-down - ${isoDate}`;
 
+            const labelName = (label) => {
+              if (typeof label === "string") return label;
+              return label?.name ?? "";
+            };
+
             const allBlocked = await github.paginate(github.rest.issues.listForRepo, {
               owner,
               repo,
-              state: 'open',
-              labels: 'blocked',
+              state: "open",
+              labels: "blocked",
               per_page: 100,
             });
 
             const blocked = allBlocked
               .filter((issue) => !issue.pull_request)
-              .filter((issue) => issue.number >= 123 && issue.number <= 144)
+              .filter((issue) => {
+                const labels = issue.labels.map(labelName);
+                const hasOwnerLabel = labels.some((name) => name.startsWith("owner:"));
+                const isLegacyRange = issue.number >= 123 && issue.number <= 144;
+                return hasOwnerLabel || isLegacyRange;
+              })
               .sort((a, b) => a.number - b.number);
 
-            const msCounts = new Map();
+            const milestoneCounts = new Map();
             const ownerCounts = new Map();
-            const todayMs = Date.now();
+            const healthGaps = [];
             const rows = [];
+            const todayMs = Date.now();
             let overdueCount = 0;
 
             for (const issue of blocked) {
-              const milestoneTitle = issue.milestone?.title ?? 'No milestone';
-              msCounts.set(milestoneTitle, (msCounts.get(milestoneTitle) ?? 0) + 1);
+              const labels = issue.labels.map(labelName);
+              const ownerLabels = labels.filter((name) => name.startsWith("owner:"));
+              const milestoneTitle = issue.milestone?.title ?? "No milestone";
 
-              const ownerLabels = issue.labels
-                .map((l) => typeof l === 'string' ? l : l.name)
-                .filter((name) => name.startsWith('owner:'));
+              milestoneCounts.set(
+                milestoneTitle,
+                (milestoneCounts.get(milestoneTitle) ?? 0) + 1,
+              );
+
               if (ownerLabels.length === 0) {
-                ownerCounts.set('owner:unassigned', (ownerCounts.get('owner:unassigned') ?? 0) + 1);
+                ownerCounts.set(
+                  "owner:unassigned",
+                  (ownerCounts.get("owner:unassigned") ?? 0) + 1,
+                );
+                healthGaps.push(
+                  `- [#${issue.number}](${issue.html_url}) is missing an \`owner:*\` label.`,
+                );
               } else {
-                for (const lbl of ownerLabels) {
-                  ownerCounts.set(lbl, (ownerCounts.get(lbl) ?? 0) + 1);
+                for (const ownerLabel of ownerLabels) {
+                  ownerCounts.set(
+                    ownerLabel,
+                    (ownerCounts.get(ownerLabel) ?? 0) + 1,
+                  );
                 }
               }
 
-              const createdAt = new Date(issue.created_at).getTime();
-              const ageDays = Math.floor((todayMs - createdAt) / (1000 * 60 * 60 * 24));
-
-              let dueDate = '';
-              let dueIso = '';
-              const m = milestoneTitle.match(/\((\d{4}-\d{2}-\d{2})\)$/);
-              if (m) {
-                dueIso = m[1];
-                dueDate = m[1];
-                const dueMs = new Date(`${m[1]}T23:59:59Z`).getTime();
-                if (todayMs > dueMs) overdueCount += 1;
+              if (!issue.milestone) {
+                healthGaps.push(
+                  `- [#${issue.number}](${issue.html_url}) is missing a Milestone.`,
+                );
               }
+
+              if (!issue.body?.includes("target-date-v1")) {
+                healthGaps.push(
+                  `- [#${issue.number}](${issue.html_url}) is missing the \`target-date-v1\` marker in its body.`,
+                );
+              }
+
+              let dueDate = "-";
+              if (issue.milestone?.due_on) {
+                dueDate = new Date(issue.milestone.due_on).toISOString().split("T")[0];
+                const dueMs = new Date(issue.milestone.due_on).getTime();
+                if (todayMs > dueMs) overdueCount += 1;
+              } else {
+                const fallbackDate = milestoneTitle.match(/\((\d{4}-\d{2}-\d{2})\)$/)?.[1];
+                if (fallbackDate) {
+                  dueDate = fallbackDate;
+                  const dueMs = new Date(`${fallbackDate}T23:59:59Z`).getTime();
+                  if (todayMs > dueMs) overdueCount += 1;
+                }
+              }
+
+              const createdAtMs = new Date(issue.created_at).getTime();
+              const ageDays = Math.floor((todayMs - createdAtMs) / (1000 * 60 * 60 * 24));
 
               rows.push({
                 number: issue.number,
                 title: issue.title,
                 milestoneTitle,
-                owner: ownerLabels.join(', ') || 'owner:unassigned',
-                ageDays,
+                ownerLabels: ownerLabels.join(", ") || "owner:unassigned",
                 dueDate,
+                ageDays,
                 url: issue.html_url,
               });
             }
 
-            const total = blocked.length;
-            const oldest = rows.reduce((max, r) => Math.max(max, r.ageDays), 0);
-            const avgAge = total > 0 ? (rows.reduce((sum, r) => sum + r.ageDays, 0) / total).toFixed(1) : '0.0';
+            const total = rows.length;
+            const oldest = rows.reduce((max, row) => Math.max(max, row.ageDays), 0);
+            const avgAge =
+              total > 0
+                ? (rows.reduce((sum, row) => sum + row.ageDays, 0) / total).toFixed(1)
+                : "0.0";
 
-            const milestoneTable = [...msCounts.entries()]
+            const milestoneTable = [...milestoneCounts.entries()]
               .sort((a, b) => a[0].localeCompare(b[0]))
               .map(([name, count]) => `| ${name} | ${count} |`)
-              .join('\n');
+              .join("\n");
 
             const ownerTable = [...ownerCounts.entries()]
               .sort((a, b) => a[0].localeCompare(b[0]))
               .map(([name, count]) => `| ${name} | ${count} |`)
-              .join('\n');
+              .join("\n");
 
             const issueTable = rows
-              .map((r) => `| [#${r.number}](${r.url}) | ${r.title.replace(/\|/g, '\\|')} | ${r.milestoneTitle} | ${r.owner} | ${r.dueDate || '-'} | ${r.ageDays} |`)
-              .join('\n');
+              .map(
+                (row) =>
+                  `| [#${row.number}](${row.url}) | ${row.title.replace(/\|/g, "\\|")} | ${row.milestoneTitle} | ${row.ownerLabels} | ${row.dueDate} | ${row.ageDays} |`,
+              )
+              .join("\n");
+
+            const healthSection =
+              healthGaps.length > 0
+                ? "The following items are missing mandatory governance metadata:\n" +
+                  healthGaps.join("\n")
+                : "✅ All tracked issues meet mandatory governance metadata requirements.";
 
             const body = [
               marker,
-              '',
-              '# Weekly Blocked Handoff Burn-down',
-              '',
+              "",
+              "# Weekly Blocked Handoff Burn-down",
+              "",
               `Date: ${isoDate}`,
               `Repository: ${owner}/${repo}`,
-              '',
-              '## Snapshot',
-              `- Total blocked handoff issues in tracked range (#123-#144): ${total}`,
+              "",
+              "## Snapshot",
+              `- Total tracked blocked handoff issues: ${total}`,
               `- Overdue against milestone target date: ${overdueCount}`,
               `- Average age (days): ${avgAge}`,
               `- Oldest age (days): ${oldest}`,
-              '',
-              '## By Milestone',
-              '| Milestone | Count |',
-              '|---|---|',
-              milestoneTable || '| (none) | 0 |',
-              '',
-              '## By Owner Role',
-              '| Owner Role Label | Count |',
-              '|---|---|',
-              ownerTable || '| owner:unassigned | 0 |',
-              '',
-              '## Detailed Issue List',
-              '| Issue | Title | Milestone | Owner Role(s) | Target Date | Age (days) |',
-              '|---|---|---|---|---|---|',
-              issueTable || '| - | - | - | - | - | - |',
-              '',
-              '## Notes',
-              '- This report is generated automatically via `.github/workflows/blocked-handoff-burndown.yml`.',
-              '- Tracked issue set currently targets the explicit blocked handoff register (#123-#144).',
-              '',
-            ].join('\n');
+              "",
+              "## Governance Health Audit",
+              healthSection,
+              "",
+              "## By Milestone",
+              "| Milestone | Count |",
+              "|---|---|",
+              milestoneTable || "| (none) | 0 |",
+              "",
+              "## By Owner Role",
+              "| Owner Role Label | Count |",
+              "|---|---|",
+              ownerTable || "| owner:unassigned | 0 |",
+              "",
+              "## Detailed Issue List",
+              "| Issue | Title | Milestone | Owner Role(s) | Target Date | Age (days) |",
+              "|---|---|---|---|---|---|",
+              issueTable || "| - | - | - | - | - | - |",
+              "",
+              "## Notes",
+              "- This report is generated automatically via `.github/workflows/blocked-handoff-burndown.yml`.",
+              "- Tracking criteria: `label:blocked` AND (`owner:*` label OR legacy issue range #123-#144).",
+              "",
+            ].join("\n");
 
             const existing = await github.rest.search.issuesAndPullRequests({
               q: `repo:${owner}/${repo} is:issue in:title "${title}"`,
               per_page: 5,
             });
 
-            const maybeIssue = existing.data.items.find((i) => !i.pull_request);
+            const maybeIssue = existing.data.items.find((item) => !item.pull_request);
             if (maybeIssue) {
               await github.rest.issues.update({
                 owner,
@@ -156,7 +213,33 @@ jobs:
                 repo,
                 title,
                 body,
-                labels: ['documentation', 'devops', 'blocked'],
+                labels: ["documentation", "devops", "blocked"],
               });
               core.info(`Created burn-down issue #${created.data.number}`);
             }
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Generate blocked handoff index
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/validation/generate-handoff-index.js
+
+      - name: Commit updated index
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/planning/planning--blocked-handoff-index--*.md
+          if git diff --staged --quiet; then
+            echo "No changes to index."
+          else
+            git commit -m "docs: auto-update blocked handoff index [skip ci]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi

@@ -1,0 +1,162 @@
+name: Blocked Handoff Intake Guard
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+
+jobs:
+  normalize:
+    if: ${{ github.actor != 'github-actions[bot]' && contains(github.event.issue.labels.*.name, 'blocked') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Normalize blocked handoff metadata
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issueNumber = context.payload.issue.number;
+            const issue = context.payload.issue;
+            const body = issue.body || "";
+            const marker = "<!-- blocked-handoff-intake-v1 -->";
+
+            const validOwnerLabels = new Set([
+              "owner:legal-compliance",
+              "owner:mobile-native",
+              "owner:business-development",
+              "owner:release-ops",
+              "owner:backend-platform",
+              "owner:cryptography",
+            ]);
+
+            const escapeRegExp = (value) =>
+              value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+            const parseField = (fieldLabel) => {
+              const pattern = new RegExp(
+                `(?:^|\\n)###\\s*${escapeRegExp(fieldLabel)}\\s*\\n+([\\s\\S]*?)(?=\\n###\\s|$)`,
+                "i",
+              );
+              const match = body.match(pattern);
+              if (!match?.[1]) return null;
+              return match[1].trim().split("\n").find((line) => line.trim())?.trim() ?? null;
+            };
+
+            const selectedOwnerRole = parseField("Owner Role Label");
+            const selectedMilestoneTitle = parseField("Target Milestone");
+
+            // Legacy/manual issues may not use the issue form fields.
+            if (!selectedOwnerRole && !selectedMilestoneTitle) {
+              core.info("Issue body has no blocked-handoff form fields; skipping normalization.");
+              return;
+            }
+
+            const existingLabels = issue.labels.map((label) =>
+              typeof label === "string" ? label : label.name,
+            );
+            const labelsToAdd = [];
+
+            if (selectedOwnerRole && validOwnerLabels.has(selectedOwnerRole)) {
+              if (!existingLabels.includes(selectedOwnerRole)) {
+                labelsToAdd.push(selectedOwnerRole);
+              }
+            } else {
+              core.warning(`Selected owner role is missing or invalid: ${selectedOwnerRole}`);
+            }
+
+            if (labelsToAdd.length > 0) {
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                labels: labelsToAdd,
+              });
+            }
+
+            let matchedMilestone = null;
+            if (selectedMilestoneTitle) {
+              const milestones = await github.paginate(github.rest.issues.listMilestones, {
+                owner,
+                repo,
+                state: "open",
+                per_page: 100,
+              });
+              matchedMilestone =
+                milestones.find((milestone) => milestone.title === selectedMilestoneTitle) ?? null;
+
+              if (matchedMilestone && issue.milestone?.number !== matchedMilestone.number) {
+                await github.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: issueNumber,
+                  milestone: matchedMilestone.number,
+                });
+              }
+            }
+
+            let updatedBody = body;
+            if (!body.includes("target-date-v1")) {
+              const dueIso = matchedMilestone?.due_on
+                ? new Date(matchedMilestone.due_on).toISOString().split("T")[0]
+                : "TBD";
+              const milestoneLabel =
+                matchedMilestone?.title || selectedMilestoneTitle || "Unassigned milestone";
+
+              updatedBody =
+                `${body.trim()}\n\n<!-- target-date-v1 -->\n\n` +
+                `## Target Date\n` +
+                `- Target Date: ${dueIso}\n` +
+                `- Source: Milestone \`${milestoneLabel}\`\n` +
+                `- Note: This item remains blocked pending external human intervention.\n\n` +
+                `<!-- /target-date-v1 -->\n`;
+            }
+
+            if (updatedBody !== body) {
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                body: updatedBody,
+              });
+            }
+
+            const summaryLines = [
+              marker,
+              "### Blocked Handoff Intake Normalization",
+              "",
+              `- Owner Role parsed: ${selectedOwnerRole || "not provided"}`,
+              `- Owner label applied: ${labelsToAdd.length > 0 ? labelsToAdd.join(", ") : "none (already present or not parseable)"}`,
+              `- Milestone parsed: ${selectedMilestoneTitle || "not provided"}`,
+              `- Milestone applied: ${matchedMilestone ? matchedMilestone.title : "none (not parseable or not found)"}`,
+              `- target-date-v1 marker: ${updatedBody.includes("target-date-v1") ? "present" : "missing"}`,
+              "",
+              "If parsing failed, update issue body headings to match the blocked handoff form exactly.",
+            ];
+            const summaryBody = summaryLines.join("\n");
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number: issueNumber,
+              per_page: 100,
+            });
+
+            const prior = comments.find((comment) => comment.body?.includes(marker));
+            if (prior) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: prior.id,
+                body: summaryBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                body: summaryBody,
+              });
+            }

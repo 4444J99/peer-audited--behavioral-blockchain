@@ -1,0 +1,83 @@
+name: Blocked Handoff Report
+description: Register a task requiring external human intervention.
+title: "[Blocked] <feature/ticket>: <brief title>"
+labels: ["blocked"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for blockers that cannot be completed by code changes alone.
+
+        <!-- target-date-v1 -->
+        The target date marker is required for governance auditing.
+        <!-- /target-date-v1 -->
+
+  - type: dropdown
+    id: owner_role
+    attributes:
+      label: Owner Role Label
+      description: Domain responsible for unblocking this item.
+      options:
+        - owner:legal-compliance
+        - owner:mobile-native
+        - owner:business-development
+        - owner:release-ops
+        - owner:backend-platform
+        - owner:cryptography
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target_gate
+    attributes:
+      label: Target Milestone
+      description: Gate date this blocker must satisfy.
+      options:
+        - Blocked Handoff - Beta Gate (2026-04-30)
+        - Blocked Handoff - Gamma Gate (2026-06-30)
+        - Blocked Handoff - Delta Gate (2026-09-30)
+        - Blocked Handoff - Omega/Phase2+ (2026-12-31)
+    validations:
+      required: true
+
+  - type: input
+    id: interference_type
+    attributes:
+      label: Human Interference Type
+      placeholder: e.g., App Store Review, Regulatory Counsel Review, Vendor Procurement
+    validations:
+      required: true
+
+  - type: textarea
+    id: first_action
+    attributes:
+      label: First Action
+      description: The first concrete action expected from the external owner.
+      placeholder: e.g., Schedule legal counsel review call by 2026-03-12
+    validations:
+      required: true
+
+  - type: textarea
+    id: required_external_stakeholders
+    attributes:
+      label: Required External Stakeholder(s)
+      description: Specific external teams, vendors, counsel, or partners needed.
+      placeholder: e.g., Outside counsel, Stripe risk ops, Apple App Review
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context & Problem Statement
+      description: Why is this blocked and what non-code action is required?
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Downstream Dependencies
+      description: Features, milestones, and releases blocked by this issue.
+    validations:
+      required: true
