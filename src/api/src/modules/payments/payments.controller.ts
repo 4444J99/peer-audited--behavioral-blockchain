@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Req, Res, Logger, RawBodyRequest, OnModuleInit, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, Logger, RawBodyRequest, OnModuleInit, UseGuards, Param, Body, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint, ApiBearerAuth } from '@nestjs/swagger';
 import { Pool } from 'pg';
 import { Request, Response } from 'express';
@@ -6,6 +6,7 @@ import Stripe from 'stripe';
 import { ContractsService } from '../contracts/contracts.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CompliancePolicyService } from '../compliance/compliance-policy.service';
+import { SettlementService } from './settlement.service';
 import { Public } from '../../common/decorators/current-user.decorator';
 import { AuthGuard } from '../../../guards/auth.guard';
 
@@ -21,6 +22,7 @@ export class PaymentsController implements OnModuleInit {
     private readonly contractsService: ContractsService,
     private readonly notifications: NotificationsService,
     private readonly compliancePolicy: CompliancePolicyService,
+    private readonly settlementService: SettlementService,
   ) {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
     this.stripe = new Stripe(apiKey, { apiVersion: '2023-10-16' });
@@ -57,6 +59,46 @@ export class PaymentsController implements OnModuleInit {
     };
   }
 
+  @Get('settlement/:contractId/preview')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Preview the financial breakdown of a contract settlement' })
+  async previewSettlement(@Param('contractId') contractId: string) {
+    return this.settlementService.getSettlementPreview(contractId);
+  }
+
+  @Get('settlement/:contractId/status')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get the status of all settlement runs and ledger entries for a contract' })
+  async getSettlementStatus(@Param('contractId') contractId: string) {
+    return this.settlementService.getSettlementStatus(contractId);
+  }
+
+  @Post('settlement/:contractId/execute')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Manually trigger settlement dispatch for a resolved contract (Admin/Internal only)' })
+  async executeSettlement(
+    @Param('contractId') contractId: string,
+    @Body() body: { force?: boolean }
+  ) {
+    const contract = await this.contractsService.getContract(contractId);
+    if (contract.status !== 'COMPLETED' && contract.status !== 'FAILED' && !body.force) {
+      throw new BadRequestException('Contract must be in a resolved state to execute settlement');
+    }
+
+    // This manually enqueues the job that is normally enqueued by ContractsService.resolveContract
+    await this.settlementService.dispatchSettlement({
+      contractId,
+      outcome: contract.status === 'COMPLETED' ? 'PASS' : 'FAIL',
+      paymentIntentId: (contract as any).payment_intent_id,
+      amountCents: Math.round(Number((contract as any).stake_amount) * 100),
+    });
+
+    return { message: 'Settlement job dispatched' };
+  }
+
   @Post('webhook')
   @ApiOperation({ summary: 'Handle Stripe webhook events (payment, dispute)' })
   @ApiExcludeEndpoint()
@@ -76,11 +118,11 @@ export class PaymentsController implements OnModuleInit {
     try {
       event = this.stripe.webhooks.constructEvent(
         req.rawBody!,
-        sig,
+        sig as string,
         this.webhookSecret,
       );
-    } catch (err) {
-      this.logger.error(`Webhook signature verification failed: ${err instanceof Error ? err.message : err}`);
+    } catch (err: any) {
+      this.logger.error(`Webhook signature verification failed: ${err.message}`);
       return res.status(400).json({ error: 'Invalid signature' });
     }
 
@@ -101,8 +143,6 @@ export class PaymentsController implements OnModuleInit {
         const contractId = pi.metadata?.contractId;
         if (contractId) {
           this.logger.log(`Payment succeeded for contract ${contractId}`);
-          // Contract activation confirmed — no additional action needed since
-          // contracts are created as ACTIVE with a hold. This confirms capture.
         }
         break;
       }
@@ -139,7 +179,7 @@ export class PaymentsController implements OnModuleInit {
         const dispute = event.data.object as Stripe.Dispute;
         const piId = typeof dispute.payment_intent === 'string'
           ? dispute.payment_intent
-          : dispute.payment_intent?.id;
+          : (dispute.payment_intent as any)?.id;
 
         if (piId) {
           const contract = await this.pool.query(
@@ -167,10 +207,10 @@ export class PaymentsController implements OnModuleInit {
         default:
           this.logger.debug(`Unhandled Stripe event: ${event.type}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       // Allow Stripe to retry if processing failed after we inserted the dedup row.
       await this.pool.query('DELETE FROM stripe_events WHERE event_id = $1', [event.id]);
-      this.logger.error(`Stripe webhook processing failed for ${event.id}: ${err instanceof Error ? err.message : err}`);
+      this.logger.error(`Stripe webhook processing failed for ${event.id}: ${err.message}`);
       return res.status(500).json({ error: 'Webhook processing failed' });
     }
 

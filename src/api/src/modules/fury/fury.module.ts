@@ -10,11 +10,28 @@ import { HoneypotService } from '../../../services/intelligence/honeypot.service
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { ContractsModule } from '../contracts/contracts.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { JudgeService } from './judge.service';
 
 @Module({
   imports: [forwardRef(() => ContractsModule), NotificationsModule],
   controllers: [FuryController],
-  providers: [FuryWorker, FuryRouterWorker, ConsensusEngine, LedgerService, TruthLogService, R2StorageService, HoneypotService, FuryRouterService],
-  exports: [FuryWorker, FuryRouterWorker, ConsensusEngine, R2StorageService],
+  providers: [
+    FuryWorker, 
+    FuryRouterWorker, 
+    ConsensusEngine, 
+    LedgerService, 
+    TruthLogService, 
+    R2StorageService, 
+    HoneypotService, 
+    FuryRouterService,
+    JudgeService,
+  ],
+  exports: [
+    FuryWorker, 
+    FuryRouterWorker, 
+    ConsensusEngine, 
+    R2StorageService,
+    JudgeService,
+  ],
 })
 export class FuryModule {}

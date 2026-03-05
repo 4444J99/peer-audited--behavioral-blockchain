@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Pool } from 'pg';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { ContractsService } from '../contracts/contracts.service';
 
 export interface MedicalExemptionRequest {
   contractId: string;
@@ -16,6 +17,7 @@ export class MedicalExemptionService {
   constructor(
     private readonly pool: Pool,
     private readonly truthLog: TruthLogService,
+    private readonly contractsService: ContractsService,
   ) {}
 
   /**
@@ -71,18 +73,20 @@ export class MedicalExemptionService {
 
   /**
    * Finalizes an exemption after Judge review.
+   * Resolves the contract as COMPLETED to trigger the refund settlement flow.
    */
   async approveExemption(contractId: string, judgeId: string): Promise<void> {
     await this.pool.query(
       `UPDATE contracts 
-       SET status = 'EXEMPTED',
-           metadata = metadata || jsonb_build_object(
+       SET metadata = metadata || jsonb_build_object(
              'medical_exemption_approved_at', NOW(),
              'approved_by_judge', $2
            )
        WHERE id = $1`,
       [contractId, judgeId]
     );
+
+    await this.contractsService.resolveContract(contractId, 'COMPLETED');
 
     await this.truthLog.appendEvent('MEDICAL_EXEMPTION_APPROVED', {
       contractId,

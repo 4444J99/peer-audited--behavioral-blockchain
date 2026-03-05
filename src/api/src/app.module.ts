@@ -19,6 +19,7 @@ import { FeedModule } from './modules/feed/feed.module';
 import { ComplianceModule } from './modules/compliance/compliance.module';
 import { BetaModule } from './modules/beta/beta.module';
 import { OraclesModule } from './modules/oracles/oracles.module';
+import { SocialModule } from './modules/social/social.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { OraclesModule } from './modules/oracles/oracles.module';
     AiModule,
     ProofsModule,
     FeedModule,
+    SocialModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

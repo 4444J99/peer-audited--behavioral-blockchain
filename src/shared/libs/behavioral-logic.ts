@@ -101,6 +101,23 @@ export const MAX_NOCONTACT_TARGETS = 3;
 export const NOCONTACT_MISS_STRIKE_THRESHOLD = 3;
 
 /**
+ * F-UX-09: Resilience Badge System
+ * Psychological reframing of failure as a pivot point.
+ */
+export enum BadgeType {
+  PHOENIX_RECOVERY = 'PHOENIX_RECOVERY', // Completed contract after a failure
+  CONSISTENCY_KING = 'CONSISTENCY_KING', // 30-day streak
+  FURY_MASTER = 'FURY_MASTER', // >200 audits with high accuracy
+  EARLY_ADOPTER = 'EARLY_ADOPTER', // Beta participant
+}
+
+export interface Badge {
+  type: BadgeType;
+  grantedAt: Date;
+  metadata?: Record<string, any>;
+}
+
+/**
  * Oracle mapping: which verification methods are allowed for each oath stream.
  * BIOLOGICAL requires hardware oracles; COGNITIVE uses device APIs; etc.
  */

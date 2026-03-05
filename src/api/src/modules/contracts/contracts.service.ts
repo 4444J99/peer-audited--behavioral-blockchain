@@ -1541,6 +1541,26 @@ export class ContractsService {
         // Recalculate based on delta (simplified: apply bonus/penalty to current score)
         const delta = calculateIntegrity(history) - 50; // offset from base
         const newScore = Math.max(0, user.integrity_score + delta);
+        
+        // F-UX-09: Grant Phoenix Recovery badge if completing after a failure
+        if (outcome === 'COMPLETED') {
+          const lastContract = await db.query(
+            `SELECT status FROM contracts 
+             WHERE user_id = $1 AND id != $2 AND status IN ('COMPLETED', 'FAILED')
+             ORDER BY updated_at DESC LIMIT 1`,
+            [user.id, contractId]
+          );
+          
+          if (lastContract.rows.length > 0 && lastContract.rows[0].status === 'FAILED') {
+            await db.query(
+              `UPDATE users 
+               SET badges = badges || jsonb_build_object('type', 'PHOENIX_RECOVERY', 'grantedAt', NOW())
+               WHERE id = $1 AND NOT (badges @> '[{"type": "PHOENIX_RECOVERY"}]')`,
+              [user.id]
+            );
+          }
+        }
+
         await db.query(
           'UPDATE users SET integrity_score = $1 WHERE id = $2',
           [newScore, user.id],

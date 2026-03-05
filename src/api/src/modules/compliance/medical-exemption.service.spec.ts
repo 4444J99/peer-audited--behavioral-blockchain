@@ -20,7 +20,7 @@ describe('MedicalExemptionService', () => {
       appendEvent: jest.fn().mockResolvedValue('event-id'),
     };
 
-    service = new MedicalExemptionService(mockPool as any, mockTruthLog as any);
+    service = new MedicalExemptionService(mockPool as any, mockTruthLog as any, {} as any);
   });
 
   describe('requestExemption', () => {

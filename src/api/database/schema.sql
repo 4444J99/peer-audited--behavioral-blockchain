@@ -252,3 +252,25 @@ CREATE INDEX idx_users_deletion_requested_at ON users(deletion_requested_at);
 
 CREATE INDEX idx_users_last_known_state ON users(last_known_state);
 CREATE INDEX idx_users_social_guild_id ON users(social_guild_id);
+
+-- Real-money settlement tracking (TKT-P0-001)
+CREATE TABLE IF NOT EXISTS settlement_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contract_id UUID REFERENCES contracts(id),
+    outcome TEXT NOT NULL,
+    amount_cents INTEGER NOT NULL,
+    status TEXT NOT NULL, -- PROCESSING, SUCCESS, FAILED
+    disposition_mode TEXT, -- CAPTURE, REFUND
+    quote_json JSONB, -- Deterministic payout breakdown
+    provider_tx_id TEXT,
+    last_error TEXT,
+    started_at TIMESTAMPTZ DEFAULT NOW(),
+    completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_settlement_runs_contract_id ON settlement_runs(contract_id);
+CREATE INDEX IF NOT EXISTS idx_settlement_runs_status ON settlement_runs(status);
+
+-- Settlement auditability indexes for ledger entries
+CREATE INDEX IF NOT EXISTS idx_entries_settlement_run_id ON entries ((metadata->>'settlement_run_id'));
+CREATE INDEX IF NOT EXISTS idx_entries_provider ON entries ((metadata->>'provider'));

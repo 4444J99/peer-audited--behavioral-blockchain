@@ -32,9 +32,8 @@ export class SettlementWorker implements OnModuleInit {
     const { contractId, outcome, paymentIntentId, amountCents, furies, dispositionMode } = job.data;
     this.logger.log(`Processing settlement for contract ${contractId} (${outcome})...`);
 
-    // ... existing idempotency check ...
     const existing = await this.pool.query(
-      `SELECT id FROM settlement_runs WHERE contract_id = $1 AND outcome = $2 AND status = 'SUCCESS'`,
+      `SELECT id FROM settlement_runs WHERE contract_id = $1 AND status = 'SUCCESS' AND outcome = $2`,
       [contractId, outcome]
     );
     if (existing.rows.length > 0) {
@@ -42,31 +41,35 @@ export class SettlementWorker implements OnModuleInit {
       return;
     }
 
-    // Start a new settlement run record
+    // TKT-P0-001: Deterministic Payout Breakdown
+    const quote = {
+      totalCents: amountCents,
+      platformFeeCents: Math.round(amountCents * 0.1),
+      bountyPoolCents: Math.round(amountCents * 0.2),
+      userRefundCents: (outcome === 'PASS' || dispositionMode === 'REFUND') ? amountCents : 0,
+    };
+
     const runResult = await this.pool.query(
-      `INSERT INTO settlement_runs (contract_id, outcome, amount_cents, status, started_at, disposition_mode)
-       VALUES ($1, $2, $3, 'PROCESSING', NOW(), $4)
+      `INSERT INTO settlement_runs (contract_id, outcome, amount_cents, status, started_at, disposition_mode, quote_json)
+       VALUES ($1, $2, $3, 'PROCESSING', NOW(), $4, $5)
        RETURNING id`,
-      [contractId, outcome, amountCents, dispositionMode || (outcome === 'PASS' ? 'REFUND' : 'CAPTURE')]
+      [contractId, outcome, amountCents, dispositionMode || (outcome === 'PASS' ? 'REFUND' : 'CAPTURE'), JSON.stringify(quote)]
     );
     const runId = runResult.rows[0].id;
 
     try {
       let result;
-      // P0-011: Override outcome if in refund-only mode
       const actualAction = (outcome === 'PASS' || dispositionMode === 'REFUND') ? 'RELEASE' : 'CAPTURE';
 
       if (actualAction === 'RELEASE') {
         result = await this.stripeProvider.releaseFunds(paymentIntentId, amountCents);
       } else {
-        result = await this.stripeProvider.captureFunds(paymentIntentId, amountCents, { furies });
+        result = await this.stripeProvider.captureFunds(paymentIntentId, amountCents, { furies, runId });
       }
 
       if (result.status === PayoutStatus.SUCCESS) {
-        // Atomic ledger finalization
-        await this.finalizeLedger(contractId, outcome, amountCents, dispositionMode);
+        await this.finalizeLedger(contractId, outcome, amountCents, runId, dispositionMode, quote);
         
-        // Update run record
         await this.pool.query(
           `UPDATE settlement_runs SET status = 'SUCCESS', provider_tx_id = $1, completed_at = NOW() WHERE id = $2`,
           [result.providerTransactionId, runId]
@@ -79,6 +82,7 @@ export class SettlementWorker implements OnModuleInit {
           dispositionMode,
           actualAction,
           providerTransactionId: result.providerTransactionId,
+          quote,
         });
         this.logger.log(`Settlement successful for contract ${contractId} (Action: ${actualAction})`);
       } else {
@@ -90,17 +94,25 @@ export class SettlementWorker implements OnModuleInit {
         [err.message, runId]
       );
       this.logger.error(`Settlement failed for ${contractId}: ${err.message}`);
-      throw err; // Re-throw for BullMQ retry
+      throw err;
     }
   }
 
-  private async finalizeLedger(contractId: string, outcome: string, amountCents: number, dispositionMode?: string) {
+  private async finalizeLedger(
+    contractId: string, 
+    outcome: string, 
+    amountCents: number, 
+    runId: string,
+    dispositionMode?: string,
+    quote?: any
+  ) {
     const contractResult = await this.pool.query(
-      `SELECT c.user_id, u.account_id, a_escrow.id as escrow_account_id, a_revenue.id as revenue_account_id
+      `SELECT c.user_id, u.account_id, a_escrow.id as escrow_account_id, a_revenue.id as revenue_account_id, a_bounty.id as bounty_pool_account_id
        FROM contracts c
        JOIN users u ON c.user_id = u.id
        CROSS JOIN accounts a_escrow WHERE a_escrow.name = 'SYSTEM_ESCROW'
        CROSS JOIN accounts a_revenue WHERE a_revenue.name = 'SYSTEM_REVENUE'
+       CROSS JOIN accounts a_bounty WHERE a_bounty.name = 'FURY_BOUNTY_POOL'
        WHERE c.id = $1`,
       [contractId]
     );
@@ -110,32 +122,43 @@ export class SettlementWorker implements OnModuleInit {
     }
     const row = contractResult.rows[0];
 
-    // P0-011: If refund-only mode is active, even FAIL outcome routes back to user account
     const shouldReturnToUser = outcome === 'PASS' || dispositionMode === 'REFUND';
 
+    const metadata = {
+      settlement_run_id: runId,
+      provider: 'stripe',
+      outcome,
+      dispositionMode
+    };
+
     if (shouldReturnToUser) {
-      // Release from Escrow back to User
       await this.ledger.recordTransaction(
         row.escrow_account_id,
         row.account_id,
         amountCents,
         contractId,
-        { 
-          type: 'REAL_MONEY_SETTLEMENT_RELEASE', 
-          outcome, 
-          dispositionMode, 
-          reason: outcome === 'FAILED' ? 'REFUND_ONLY_JURISDICTION' : 'CONTRACT_SUCCESS' 
-        }
+        { ...metadata, type: 'REAL_MONEY_SETTLEMENT_RELEASE', reason: outcome === 'FAILED' ? 'REFUND_ONLY_JURISDICTION' : 'CONTRACT_SUCCESS' }
       );
     } else {
-      // Capture from Escrow to Revenue
+      // Capture to Revenue
       await this.ledger.recordTransaction(
         row.escrow_account_id,
         row.revenue_account_id,
         amountCents,
         contractId,
-        { type: 'REAL_MONEY_SETTLEMENT_CAPTURE', outcome: 'FAIL' }
+        { ...metadata, type: 'REAL_MONEY_SETTLEMENT_CAPTURE' }
       );
+
+      // Move portion to Bounty Pool
+      if (quote?.bountyPoolCents > 0) {
+        await this.ledger.recordTransaction(
+          row.revenue_account_id,
+          row.bounty_pool_account_id,
+          quote.bountyPoolCents,
+          contractId,
+          { ...metadata, type: 'BOUNTY_POOL_TOPUP' }
+        );
+      }
     }
   }
 }

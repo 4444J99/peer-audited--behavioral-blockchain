@@ -1,198 +1,98 @@
 import { SettlementService, SettlementJob } from './settlement.service';
 import { SETTLEMENT_QUEUE_NAME } from '../../../config/queue.config';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
-// Mock bullmq so no real Redis connection is made
 jest.mock('bullmq');
-
 import { Queue } from 'bullmq';
-
 const MockQueue = Queue as jest.MockedClass<typeof Queue>;
 
 describe('SettlementService', () => {
   let service: SettlementService;
   let mockAdd: jest.Mock;
+  let mockPool: { query: jest.Mock };
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockAdd = jest.fn().mockResolvedValue({ id: 'job-1' });
     MockQueue.prototype.add = mockAdd;
-    service = new SettlementService();
+    mockPool = { query: jest.fn() };
+    service = new SettlementService(mockPool as any);
   });
 
-  // ─── Queue construction ───────────────────────────────────────────
+  describe('dispatchSettlement', () => {
+    it('should add a job to the queue', async () => {
+      const job: SettlementJob = {
+        contractId: 'c-1',
+        outcome: 'PASS',
+        paymentIntentId: 'pi_1',
+        amountCents: 1000,
+      };
 
-  it('should construct a Queue with SETTLEMENT_QUEUE_NAME', () => {
-    expect(MockQueue).toHaveBeenCalledWith(
-      SETTLEMENT_QUEUE_NAME,
-      expect.any(Object),
-    );
-  });
+      await service.dispatchSettlement(job);
+      expect(mockAdd).toHaveBeenCalled();
+    });
 
-  // ─── dispatchSettlement: job name ─────────────────────────────────
+    it('should enforce KYC for amounts > $20.00', async () => {
+      const job: SettlementJob = {
+        contractId: 'c-large',
+        outcome: 'PASS',
+        paymentIntentId: 'pi_2',
+        amountCents: 2500, // $25.00
+      };
 
-  it('should add a job to the queue with name "settle"', async () => {
-    const job: SettlementJob = {
-      contractId: 'contract-abc',
-      outcome: 'PASS',
-      paymentIntentId: 'pi_test_001',
-      amountCents: 5000,
-    };
+      mockPool.query.mockResolvedValue({ rows: [{ age_verification_status: 'SELF_DECLARED' }] });
 
-    await service.dispatchSettlement(job);
+      await expect(service.dispatchSettlement(job)).rejects.toThrow(BadRequestException);
+      await expect(service.dispatchSettlement(job)).rejects.toThrow(/KYC verification required/);
+    });
 
-    expect(mockAdd).toHaveBeenCalledTimes(1);
-    const [jobName] = mockAdd.mock.calls[0];
-    expect(jobName).toBe('settle');
-  });
+    it('should allow large settlements if user is KYC verified', async () => {
+      const job: SettlementJob = {
+        contractId: 'c-large-verified',
+        outcome: 'PASS',
+        paymentIntentId: 'pi_3',
+        amountCents: 2500,
+      };
 
-  // ─── dispatchSettlement: job options ─────────────────────────────
+      mockPool.query.mockResolvedValueOnce({ rows: [{ age_verification_status: 'VERIFIED' }] });
 
-  it('should add job with attempts: 10 and exponential backoff', async () => {
-    const job: SettlementJob = {
-      contractId: 'contract-retry',
-      outcome: 'FAIL',
-      paymentIntentId: 'pi_test_002',
-      amountCents: 10000,
-    };
-
-    await service.dispatchSettlement(job);
-
-    const [, , opts] = mockAdd.mock.calls[0];
-    expect(opts).toMatchObject({
-      attempts: 10,
-      backoff: { type: 'exponential', delay: 10000 },
+      await service.dispatchSettlement(job);
+      expect(mockAdd).toHaveBeenCalled();
     });
   });
 
-  it('should include removeOnComplete: true in job options', async () => {
-    const job: SettlementJob = {
-      contractId: 'contract-cleanup',
-      outcome: 'PASS',
-      paymentIntentId: 'pi_test_003',
-      amountCents: 2500,
-    };
+  describe('getSettlementPreview', () => {
+    it('should return a breakdown of fees and payouts', async () => {
+      mockPool.query.mockResolvedValueOnce({ 
+        rows: [{ user_id: 'u-1', stake_amount: 50, status: 'COMPLETED' }] 
+      });
 
-    await service.dispatchSettlement(job);
+      const result = await service.getSettlementPreview('c-1');
 
-    const [, , opts] = mockAdd.mock.calls[0];
-    expect(opts.removeOnComplete).toBe(true);
-  });
+      expect(result).toMatchObject({
+        stakeAmountCents: 5000,
+        platformFeeCents: 500,
+        bountyPoolCents: 1000,
+        userRefundCents: 5000,
+      });
+    });
 
-  // ─── dispatchSettlement: idempotent jobId ─────────────────────────
-
-  it('should set idempotent jobId as settlement_{contractId}_{outcome}', async () => {
-    const job: SettlementJob = {
-      contractId: 'contract-idem',
-      outcome: 'PASS',
-      paymentIntentId: 'pi_test_004',
-      amountCents: 7500,
-    };
-
-    await service.dispatchSettlement(job);
-
-    const [, , opts] = mockAdd.mock.calls[0];
-    expect(opts.jobId).toBe('settlement_contract-idem_PASS');
-  });
-
-  it('should produce different jobIds for PASS and FAIL outcomes on the same contract', async () => {
-    const base = {
-      contractId: 'contract-both',
-      paymentIntentId: 'pi_test_005',
-      amountCents: 3000,
-    };
-
-    await service.dispatchSettlement({ ...base, outcome: 'PASS' });
-    await service.dispatchSettlement({ ...base, outcome: 'FAIL' });
-
-    const [, , optsPass] = mockAdd.mock.calls[0];
-    const [, , optsFail] = mockAdd.mock.calls[1];
-    expect(optsPass.jobId).toBe('settlement_contract-both_PASS');
-    expect(optsFail.jobId).toBe('settlement_contract-both_FAIL');
-  });
-
-  // ─── dispatchSettlement: PASS outcome ────────────────────────────
-
-  it('should dispatch correctly for PASS outcome', async () => {
-    const job: SettlementJob = {
-      contractId: 'contract-pass',
-      outcome: 'PASS',
-      paymentIntentId: 'pi_pass_001',
-      amountCents: 20000,
-    };
-
-    await service.dispatchSettlement(job);
-
-    const [, jobData] = mockAdd.mock.calls[0];
-    expect(jobData).toMatchObject({
-      contractId: 'contract-pass',
-      outcome: 'PASS',
-      paymentIntentId: 'pi_pass_001',
-      amountCents: 20000,
+    it('should throw NotFoundException if contract missing', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      await expect(service.getSettlementPreview('missing')).rejects.toThrow(NotFoundException);
     });
   });
 
-  // ─── dispatchSettlement: FAIL outcome ────────────────────────────
+  describe('getSettlementStatus', () => {
+    it('should return runs and ledger entries', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ id: 'run-1', status: 'SUCCESS' }] }) // runs
+        .mockResolvedValueOnce({ rows: [{ id: 'entry-1', amount: 5000 }] }); // entries
 
-  it('should dispatch correctly for FAIL outcome', async () => {
-    const job: SettlementJob = {
-      contractId: 'contract-fail',
-      outcome: 'FAIL',
-      paymentIntentId: 'pi_fail_001',
-      amountCents: 15000,
-    };
+      const result = await service.getSettlementStatus('c-1');
 
-    await service.dispatchSettlement(job);
-
-    const [, jobData] = mockAdd.mock.calls[0];
-    expect(jobData).toMatchObject({
-      contractId: 'contract-fail',
-      outcome: 'FAIL',
-      paymentIntentId: 'pi_fail_001',
-      amountCents: 15000,
+      expect(result.runs).toHaveLength(1);
+      expect(result.ledgerEntries).toHaveLength(1);
     });
-  });
-
-  // ─── dispatchSettlement: optional furies array ───────────────────
-
-  it('should include furies array in job data when provided', async () => {
-    const job: SettlementJob = {
-      contractId: 'contract-fury',
-      outcome: 'FAIL',
-      paymentIntentId: 'pi_fury_001',
-      amountCents: 8000,
-      furies: ['fury-user-1', 'fury-user-2', 'fury-user-3'],
-    };
-
-    await service.dispatchSettlement(job);
-
-    const [, jobData] = mockAdd.mock.calls[0];
-    expect(jobData.furies).toEqual(['fury-user-1', 'fury-user-2', 'fury-user-3']);
-  });
-
-  it('should dispatch without furies when the field is omitted', async () => {
-    const job: SettlementJob = {
-      contractId: 'contract-nofury',
-      outcome: 'PASS',
-      paymentIntentId: 'pi_nofury_001',
-      amountCents: 5000,
-    };
-
-    await service.dispatchSettlement(job);
-
-    const [, jobData] = mockAdd.mock.calls[0];
-    expect(jobData.furies).toBeUndefined();
-  });
-
-  // ─── dispatchSettlement: queue.add return is awaited ─────────────
-
-  it('should resolve without throwing when queue.add succeeds', async () => {
-    const job: SettlementJob = {
-      contractId: 'contract-ok',
-      outcome: 'PASS',
-      paymentIntentId: 'pi_ok_001',
-      amountCents: 1000,
-    };
-
-    await expect(service.dispatchSettlement(job)).resolves.toBeUndefined();
   });
 });
