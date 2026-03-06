@@ -62,6 +62,35 @@ To combat this rampant self-deception, Beeminder historically introduced "Weasel
 
 However, these rigid solutions generate immense user friction. Users find the implied distrust of Weaselproofing insulting, while No-Excuses Mode creates extreme anxiety, as users fear being charged exorbitant fees for genuine emergencies.20 The development of the platform is frequently paralyzed by what the founders term "user-squeaming"—an excessive squeamishness about deploying features out of fear that hypothetical users might complain or encounter edge-case penalties.22 If the system is too lenient, the psychological threat of the financial sting evaporates and the commitment contract becomes worthless; if it is too draconian, users permanently abandon the platform out of anger and financial distress.21
 
+## **The Academic Commitment Engine: stickK.com**
+
+Born directly out of behavioral economics research at Yale University, stickK is the market's most prominent application of the "Commitment Contract." It positions itself as a scientific tool rather than a standard productivity app, leveraging academic authority to build trust for a platform that requires users to bet against themselves.
+
+### **Core Mechanic: Commitment Contracts and The "Anti-Charity"**
+
+stickK’s architecture is built on a direct, binary commitment: users set a goal, a timeframe, and a financial stake. The platform’s primary differentiator is the "Anti-Charity"—a recipient for failed stakes that the user actively dislikes (e.g., a rival political party or sports team). This maximizes loss aversion by ensuring that failure doesn't just result in a loss of funds, but in the active support of a cause the user finds abhorrent.
+
+The platform employs a "Referee" system, where users designate a third party to verify their progress. This creates a social accountability layer, though it remains a manual, non-automated verification process.
+
+### **Skeleton, Bones, and Meat: A Structural Breakdown**
+
+*   **The Skeleton (Layout):** A segmented funnel that separates Individuals (B2C), Groups (Social), and Workplaces (B2B). The landing page features a minimalist "Goal Selector" hero and a "Wall of Goals" live-feed to demonstrate social proof.
+*   **The Bones (Value Prop):** "Ready to finally stickK to your Goals?" The core logic is built on the validated **1.955 loss aversion coefficient**, emphasizing that "dollars on the line" increases success rates by up to 300%.
+*   **The Meat (Features):**
+    *   **Stakes & Escrow:** Managed via Stripe; $69M+ committed to date.
+    *   **Video Stories:** "Commitment Stories" that humanize the data for social proof.
+    *   **B2B Wellness Portals:** Private-label corporate platforms for Fortune 500 companies.
+
+### **History & Life Course: From Academic Pilot to Corporate Wellness**
+
+Founded in 2007 by Yale professors Dean Karlan and Ian Ayres, stickK raised approximately $2.2M across several early rounds. While it gained viral fame as a B2C "anti-charity" betting platform, its long-term survival was secured through a strategic pivot to **B2B Enterprise Solutions**. Since 2009, stickK for Workplaces has become a core revenue driver, charging significant implementation and admin fees to provide corporate wellness and productivity incentives.
+
+### **Primary Vulnerability: The "Ref-Loop" and Verification Friction**
+
+Despite its academic pedigree, stickK remains vulnerable to the **Oracle Problem**. Because "Referees" are manually appointed friends, the system is susceptible to social collusion (the "Ref-Loop"), where friends simply verify success out of social obligation or laziness. Furthermore, stickK lacks automated, real-world proof; users must manually report their status, creating a high-friction, low-integrity data loop that can be easily exploited without the threat of a secondary, decentralized audit.
+
+---
+
 ## **The Pooled-Stakes Competition Model: DietBet and StepBet**
 
 Operated by the parent company WayBetter, DietBet and StepBet transform solitary financial commitments into peer-funded, social competitions. By pooling the financial risk among large groups of players, these platforms attempt to dilute the punitive, solitary nature of loss aversion with the positive reinforcement and gamified thrill of winning a collective cash pot.
