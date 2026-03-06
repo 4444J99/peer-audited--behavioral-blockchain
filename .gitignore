@@ -64,3 +64,9 @@ infra/terraform/*.tfstate.backup
 infra/terraform/terraform.tfvars
 infra/terraform/.terraform.lock.hcl
 .vercel
+
+# Cross-project portfolio audit artifacts (generated outside this repo)
+audit_report.md
+portfolio_analysis_summary.md
+portfolio_plans_combined.md
+portfolio_files.txt
