@@ -1,4 +1,6 @@
-# SOP: Deep-Dive Product & Competitor Analysis (The "Styx" Method)
+# SOP: Deep-Dive Product & Competitor Analysis
+
+> **Note:** This is a project-specific instance of the system-wide SOP at `meta-organvm/SOP--market-gap-analysis.md`. Customize the Reporting Template columns for your product.
 
 This Standard Operating Procedure (SOP) defines the rigorous, multi-dimensional research framework used to analyze competitors, parallel products, and market niches. It is designed to move beyond surface-level feature lists into the "Skeleton, Bones, and Meat" of a product's existence.
 
@@ -64,12 +66,12 @@ Identify where the product is "broken" or "vulnerable."
 ## 5. Reporting Template
 Every deep dive should conclude with a table:
 
-| Dimension | [Competitor Name] | Styx Strategy (The Counter) |
+| Dimension | [Competitor Name] | [Our Counter-Strategy] |
 | :--- | :--- | :--- |
-| **Verification** | [Self-Report/API] | **Digital Exhaust + Fury Bounty** |
-| **Stakes** | [Subscription] | **Weaponized Loss Aversion (1.955)** |
-| **Audit** | [Internal Referees] | **Decentralized Peer-Audit Network** |
-| **Trust** | [Brand/PR] | **Double-Entry Ledger + ZKP Privacy** |
+| **Verification** | [Self-Report/API] | [Our verification approach] |
+| **Stakes** | [Subscription] | [Our stakes/incentive model] |
+| **Audit** | [Internal Referees] | [Our audit approach] |
+| **Trust** | [Brand/PR] | [Our trust architecture] |
 
 ---
-*Version: 1.0.0 | Compiled: March 5, 2026*
+*Version: 1.1.0 | Compiled: March 6, 2026*
