@@ -25,6 +25,8 @@ Analyze the target product using this three-layer framework:
 
 ### A. The Skeleton (Technical Architecture)
 *   **Tech Stack:** Frontend (React, Next, Vue), Backend (Node, Rails, Python), Mobile (Native, Flutter, React Native).
+*   **Technical Deduction Checklist:** For closed-source products, deduce the stack by checking past Job Postings (e.g., "React Developer"), looking at platform-specific Integrations, and running BuiltWith scans. 
+    *   *Note: When exact technical details are unknown, theorize. Use the unknown as an opportunity to tease out ideas and explore multiple architectural paths, eventually converging on superior procession strategies for our own build.*
 *   **Data Integrity:** How do they handle transactions? (Postgres, Blockchain, Double-entry).
 *   **Verification Engine:** How do they verify user claims? (Self-reporting, API/Sensor, Human Audit).
 *   **Infrastructure:** Hosting (AWS, Vercel), Payment (Stripe, PayPal).
@@ -38,6 +40,7 @@ Analyze the target product using this three-layer framework:
 ### C. The Meat (Features & Social Proof)
 *   **Core Features:** List the top 3-5 functional elements.
 *   **Marketing Funnel:** How do users enter? (Ads -> Landing Page -> Wizard -> Signup).
+*   **Evidence of Failure:** Dig beneath the marketing. Hunt for Reddit "rants", Trustpilot 1-star reviews, and "Why I quit" blog posts to find the product's actual rot.
 *   **Social Proof:** Specific stats ($ on the line, user count, PR logos).
 *   **Pricing:** Subscription vs. One-time vs. Commission-based.
 
@@ -50,6 +53,7 @@ Trace the product's history and growth trajectory.
 *   **Funding:** Seed -> Series A -> Exit. Who are the investors?
 *   **Pivots:** Did they start B2C and move to B2B? (e.g., stickK's move to corporate wellness).
 *   **Ad History:** What were their early ads vs. current ads? Use the Wayback Machine or Ads Library.
+*   **Brand & SEO Sensitivity Check:** Audit for naming collisions. Does the product name or core terminology conflict with high-risk or illicit industries (e.g., dark-web marketplaces) that could damage trust?
 
 ---
 
@@ -57,21 +61,29 @@ Trace the product's history and growth trajectory.
 Identify where the product is "broken" or "vulnerable."
 
 *   **The Oracle Problem:** Can the user cheat? (e.g., hardware spoofing on StepBet).
+*   **The Weasel Point:** Identify exactly where the user is most likely to lie because it's easier than complying, and how the system attempts—and fails—to stop them.
 *   **Economic Flaws:** Does the house take too much? (e.g., DietBet's high commission).
 *   **UX Friction:** Is it too technical/intimidating? (e.g., Beeminder's "data nerdery").
 *   **Emotional Gaps:** Is it too "soft" or too "cold"?
 
 ---
 
-## 5. Reporting Template
+## 5. Phase V: Synthesis
+After individual analyses are complete, aggregate all findings into a single **Market Matrix** (CSV or Markdown table). Map all competitors against the product's primary Core Drives to identify unifying market vulnerabilities and broad white-space opportunities.
+
+---
+
+## 6. Reporting Template
 Every deep dive should conclude with a table:
 
 | Dimension | [Competitor Name] | [Our Counter-Strategy] |
 | :--- | :--- | :--- |
 | **Verification** | [Self-Report/API] | [Our verification approach] |
-| **Stakes** | [Subscription] | [Our stakes/incentive model] |
-| **Audit** | [Internal Referees] | [Our audit approach] |
+| **The Weasel Point** | [Where users lie/cheat] | [How we close the loophole] |
+| **Stakes** | [Subscription/Pledges] | [Our stakes/incentive model] |
+| **Enforcement Economics** | [Who gets the money on failure: House/Charity?] | [Our audit/payout distribution] |
+| **Audit** | [Internal Referees/Staff] | [Our audit approach] |
 | **Trust** | [Brand/PR] | [Our trust architecture] |
 
 ---
-*Version: 1.1.0 | Compiled: March 6, 2026*
+*Version: 1.2.0 | Compiled: March 6, 2026*

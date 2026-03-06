@@ -1,3 +1,4 @@
+/// <reference types="@cloudflare/workers-types" />
 import { STYX_KNOWLEDGE } from '../../web/lib/styx-knowledge';
 
 interface Env {

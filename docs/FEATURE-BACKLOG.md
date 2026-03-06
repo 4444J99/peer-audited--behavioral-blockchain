@@ -13,11 +13,11 @@
 
 | Status | Count | Description |
 |--------|-------|-------------|
-| IMPLEMENTED | 40 | Working code with tests |
-| PARTIAL | 16 | Code exists but incomplete or conditional |
+| IMPLEMENTED | 23 | Working code with tests |
+| PARTIAL | 12 | Code exists but incomplete or conditional |
 | STUB | 1 | Files/endpoints exist but placeholder logic |
-| NOT_STARTED | 60 | Described in docs, no code |
-| **Total** | **117** | |
+| NOT_STARTED | 44 | Described in docs, no code |
+| **Total** | **78** | |
 
 ### P0: Beta Blockers (Must-Build for Phase 1 Private Beta)
 
