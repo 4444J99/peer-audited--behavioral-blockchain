@@ -33,6 +33,10 @@ Per research doc pricing architecture:
 - Stripe as payment processor — production keys not yet configured
 - Financial reconciliation needed: double-entry ledger <> Stripe settlements
 
+## Cross-Department Dependencies
+- **legal**: FBO escrow disposition rules vary by jurisdiction; high-risk merchant classification affects interchange fees
+- **growth**: CAC targets must stay under unit economics thresholds ($10 organic, $30 paid)
+
 ## First Task
 Build unit economics model for a $39 consumer contract: revenue per contract, COGS (Stripe fees, auditor compensation, infrastructure), gross margin, and break-even analysis.
 

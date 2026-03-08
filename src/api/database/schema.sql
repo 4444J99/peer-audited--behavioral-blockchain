@@ -393,3 +393,41 @@ CREATE TABLE IF NOT EXISTS dashboard_progress_snapshots (
     UNIQUE(user_id, snapshot_date)
 );
 
+-- Migration 025: Realms — Portal-Based Behavioral Domain Separation
+
+CREATE TABLE IF NOT EXISTS realms (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    stream_prefix TEXT NOT NULL,
+    config JSONB NOT NULL DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO realms (id, name, slug, stream_prefix, config) VALUES
+  ('BIOLOGICAL_HARDWARE',  'Biological Hardware',  'biological-hardware',  'BIOLOGICAL',   '{}'),
+  ('COGNITIVE_DEVICE',     'Cognitive Device',     'cognitive-device',     'COGNITIVE',    '{}'),
+  ('PROFESSIONAL_API',     'Professional API',     'professional-api',     'PROFESSIONAL', '{}'),
+  ('CREATIVE_PROCESS',     'Creative Process',     'creative-process',     'CREATIVE',     '{}'),
+  ('ENVIRONMENTAL_VISUAL', 'Environmental Visual', 'environmental-visual', 'VISUAL',       '{}'),
+  ('CHARACTER_SOCIAL',     'Character Social',     'character-social',     'SOCIAL',       '{}'),
+  ('RECOVERY_ABSTINENCE',  'Recovery Abstinence',  'recovery-abstinence',  'RECOVERY',     '{}')
+ON CONFLICT (id) DO NOTHING;
+
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS realm_id TEXT REFERENCES realms(id);
+CREATE INDEX IF NOT EXISTS idx_contracts_realm_id ON contracts(realm_id);
+
+CREATE TABLE IF NOT EXISTS fury_realm_expertise (
+    fury_user_id UUID REFERENCES users(id),
+    realm_id TEXT REFERENCES realms(id),
+    audits_completed INTEGER DEFAULT 0,
+    accuracy FLOAT DEFAULT 1.0,
+    specialization_level TEXT DEFAULT 'NOVICE',
+    PRIMARY KEY (fury_user_id, realm_id)
+);
+
+ALTER TABLE fury_assignments ADD COLUMN IF NOT EXISTS realm_id TEXT REFERENCES realms(id);
+CREATE INDEX IF NOT EXISTS idx_fury_assignments_realm_id ON fury_assignments(realm_id);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS realm_preferences JSONB DEFAULT '{}';
+

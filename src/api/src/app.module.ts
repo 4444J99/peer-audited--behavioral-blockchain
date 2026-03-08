@@ -21,6 +21,7 @@ import { BetaModule } from './modules/beta/beta.module';
 import { OraclesModule } from './modules/oracles/oracles.module';
 import { SocialModule } from './modules/social/social.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { RealmsModule } from './modules/realms/realms.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     FeedModule,
     DashboardModule,
     SocialModule,
+    RealmsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

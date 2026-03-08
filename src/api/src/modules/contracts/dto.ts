@@ -154,6 +154,11 @@ export class CreateContractDto {
   @ValidateNested()
   @Type(() => PricingPlanDto)
   pricing?: PricingPlanDto;
+
+  @ApiPropertyOptional({ description: 'Realm ID (auto-derived from oath category if omitted)', example: 'BIOLOGICAL_HARDWARE' })
+  @IsOptional()
+  @IsString()
+  realmId?: string;
 }
 
 export class SubmitProofDto {

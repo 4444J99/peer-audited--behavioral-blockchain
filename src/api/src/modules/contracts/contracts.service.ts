@@ -25,6 +25,7 @@ import {
   DOWNSCALE_STRIKE_THRESHOLD,
   MAX_NOCONTACT_DURATION_DAYS,
 } from '../../../../shared/libs/behavioral-logic';
+import { getRealmForCategory, RealmId } from '../../../../shared/libs/realm-registry';
 
 import {
   CreateContractDto as CreateContractDtoBase,
@@ -938,9 +939,12 @@ export class ContractsService {
     try {
       await phaseAClient.query('BEGIN');
 
+      // Derive realm_id from explicit DTO field or auto-derive from oath category
+      const realmId = dto.realmId ?? getRealmForCategory(dto.oathCategory as OathCategory);
+
       const contractResult = await phaseAClient.query(
-        `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id)
-         VALUES ($1, $2, $3, $4, NULL, $5, 'PENDING_STAKE', $6, $7, $8, $9)
+        `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id, realm_id)
+         VALUES ($1, $2, $3, $4, NULL, $5, 'PENDING_STAKE', $6, $7, $8, $9, $10)
          RETURNING id`,
         [
           dto.userId,
@@ -952,6 +956,7 @@ export class ContractsService {
           endsAt.toISOString(),
           JSON.stringify(contractMetadata),
           bountyLinkId,
+          realmId,
         ],
       );
       contractId = contractResult.rows[0].id;

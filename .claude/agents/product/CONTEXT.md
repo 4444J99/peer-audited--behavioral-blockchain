@@ -25,6 +25,10 @@ UX research, feature prioritization, and user experience design for a behavioral
 - Bounded stake selection — users see preset amounts, not free-form input
 - Recovery contracts: sensitive UX for heartbreak/relationship contexts
 
+## Cross-Department Dependencies
+- **support**: UX flows directly determine FAQ topics and churn signals
+- **legal**: Recovery contract UX (max 30 days, max 3 targets) constrained by Aegis Protocol health safety rules
+
 ## First Task
 Audit 5 critical UX flows for No-Contact recovery contracts. For each flow, identify: (1) friction points, (2) emotional safety concerns, (3) accessibility gaps, (4) copy improvements.
 

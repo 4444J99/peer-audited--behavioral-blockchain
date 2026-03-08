@@ -28,6 +28,10 @@ Customer support, help documentation, onboarding sequences, churn detection, and
 - Long gaps between proof submissions
 - Support ticket about cancellation or refund
 
+## Cross-Department Dependencies
+- **product**: FAQ copy must use linguistic cloaker vocabulary consistently
+- **legal**: Forfeit disposition answers vary by user jurisdiction (see geofencing.ts)
+
 ## First Task
 Draft FAQ v1: 10 help articles covering the topics listed above, using the linguistic cloaker vocabulary (vault, commitment, peer review) consistently.
 

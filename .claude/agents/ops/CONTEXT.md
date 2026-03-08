@@ -33,6 +33,10 @@ Deployment, monitoring, incident response, and infrastructure reliability for th
 - Database backup policy must be tested, not just configured
 - Load testing targets: 500 concurrent (Gamma), 1,000 (App Store launch), 5,000 (Omega)
 
+## Cross-Department Dependencies
+- **legal**: Production deploy blocked on legal sign-offs (#133 merchant account, #136 whitepaper)
+- **finance**: Starter plan resource limits must support projected load before real-money settlement
+
 ## First Task
 Draft incident response runbook v1 covering: severity levels (P0-P3), escalation paths, communication templates, rollback procedures, and post-incident review process.
 

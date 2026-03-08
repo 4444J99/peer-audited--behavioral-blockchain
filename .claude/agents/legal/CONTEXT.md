@@ -30,6 +30,10 @@ Legal and regulatory compliance for a peer-audited behavioral staking platform o
 - #137: Prize indemnity insurance procurement
 - #147: Stablecoin stakes regulatory + banking pathway
 
+## Cross-Department Dependencies
+- **ops**: Blocked handoffs (#132-#148) gate production deploy timeline
+- **product**: Linguistic cloaker vocabulary must be legally defensible in every jurisdiction
+
 ## First Task
 Draft an App Store UGC moderation policy checklist covering: content types requiring moderation, escalation paths, response time SLAs, and Apple-specific requirements for apps with user-generated content.
 

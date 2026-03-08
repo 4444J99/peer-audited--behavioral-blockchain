@@ -1,0 +1,25 @@
+<!-- ORGANVM:AUTO:START -->
+## Agent Context (auto-generated — do not edit)
+
+This repo participates in the **ORGAN-III (Commerce)** swarm.
+
+### Active Subscriptions
+- Event: `governance.updated` → Action: Check compliance with updated governance rules
+- Event: `health-audit.completed` → Action: Review audit findings for this repo
+- Event: `community.event_created` → Action: Community event registered for this product
+- Event: `distribution.dispatched` → Action: Announcement distributed via POSSE pipeline
+
+### Production Responsibilities
+- **Produce** `product` for unspecified
+- **Produce** `community_signal` for organvm-vi-koinonia/community-hub
+- **Produce** `distribution_signal` for organvm-vii-kerygma/social-automation
+
+### External Dependencies
+- **Consume** `governance-rules` from `ORGAN-IV`
+
+### Governance Constraints
+- Adhere to unidirectional flow: I→II→III
+- Never commit secrets or credentials
+
+*Last synced: 2026-03-08T13:18:18Z*
+<!-- ORGANVM:AUTO:END -->

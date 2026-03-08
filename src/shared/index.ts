@@ -8,6 +8,23 @@ export interface BaseStyxResponse {
 
 export type StyxClientPlatform = 'ios' | 'android' | 'web' | 'desktop' | 'unknown';
 
+// Realm types
+export {
+  RealmId,
+  type RealmDefinition,
+  type RealmBridge,
+  type RealmGuardrail,
+  type RealmTheme,
+  type OracleType,
+  REALM_REGISTRY,
+  getRealmForCategory,
+  getRealmBySlug,
+  getRealmById,
+  getOathCategoriesForRealm,
+  getAllRealmIds,
+  getAllRealmSlugs,
+} from './libs/realm-registry';
+
 export interface StyxClientBuildMetadata {
   platform: StyxClientPlatform;
   appVersion: string;

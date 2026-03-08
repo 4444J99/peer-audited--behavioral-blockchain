@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Flame, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '../../../services/api-client';
+import { getRealmBySlug } from '../../../../shared/libs/realm-registry';
 
 const OATH_CATEGORIES = [
   { value: 'BIOLOGICAL_WEIGHT', label: 'Weight Management', stream: 'Biological' },
@@ -58,6 +59,9 @@ const DURATION_OPTIONS = [
 
 export default function NewContractPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const realmSlug = searchParams.get('realm');
+  const realmFilter = realmSlug ? getRealmBySlug(realmSlug) : null;
   const [oathCategory, setOathCategory] = useState('');
   const [verificationMethod, setVerificationMethod] = useState('');
   const [stakeAmount, setStakeAmount] = useState('');
@@ -109,6 +113,7 @@ export default function NewContractPage() {
         verificationMethod,
         stakeAmount: amount,
         durationDays: effectiveDuration,
+        ...(realmFilter ? { realmId: realmFilter.id } : {}),
       };
 
       if (isRecovery) {
@@ -135,8 +140,12 @@ export default function NewContractPage() {
     }
   };
 
-  // Group categories by stream
-  const streams = OATH_CATEGORIES.reduce((acc, cat) => {
+  // Group categories by stream, optionally filtered by realm
+  const filteredCategories = realmFilter
+    ? OATH_CATEGORIES.filter((cat) => cat.value.startsWith(realmFilter.streamPrefix + '_'))
+    : OATH_CATEGORIES;
+
+  const streams = filteredCategories.reduce((acc, cat) => {
     if (!acc[cat.stream]) acc[cat.stream] = [];
     acc[cat.stream].push(cat);
     return acc;

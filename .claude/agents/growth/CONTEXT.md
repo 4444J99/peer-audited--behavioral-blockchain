@@ -28,6 +28,10 @@ User acquisition, content marketing, SEO, community building, and referral progr
 - Referral coefficient (invites sent per active user)
 - Content conversion (blog visit to signup)
 
+## Cross-Department Dependencies
+- **finance**: CAC must stay under unit economics break-even ($10 organic, $30 paid per $9 platform fee)
+- **legal**: Marketing copy must avoid gambling terminology; claims must be defensible per skill-contest classification
+
 ## First Task
 SEO keyword research: identify 10 high-intent, achievable keywords for the No-Contact recovery niche with estimated monthly search volume and competition level.
 

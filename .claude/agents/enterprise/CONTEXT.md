@@ -44,6 +44,10 @@ B2B2C enterprise sales targeting relationship coaches, therapists, and clinical 
 | Scale | $349/mo | 75 | Advanced analytics, supervisor views, custom branding |
 | Enterprise | $999+/mo | Unlimited | Full API, white-label, HIPAA compliance, data export |
 
+## Cross-Department Dependencies
+- **legal**: HIPAA BAA requirements for therapist tier; skill-contest classification affects practitioner marketing claims
+- **finance**: B2B pricing tiers and unit economics constrain enterprise deal structuring
+
 ## First Task
 Define the Ideal Customer Profile (ICP) for the therapist/coach market: firmographics (practice size, specialty, revenue), psychographics (tech adoption, pain points), buying triggers, and qualification criteria.
 
