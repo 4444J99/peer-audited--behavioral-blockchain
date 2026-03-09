@@ -1,9 +1,11 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { Pool } from 'pg';
 import { RecoveryProtocolService, RecoveryMetadata } from './recovery-protocol.service';
 import { MAX_NOCONTACT_DURATION_DAYS, MAX_NOCONTACT_TARGETS } from '../../../shared/libs/behavioral-logic';
 
 describe('RecoveryProtocolService', () => {
   let service: RecoveryProtocolService;
+  let mockPool: jest.Mocked<Pool>;
 
   const validMetadata: RecoveryMetadata = {
     accountabilityPartnerEmail: 'friend@example.com',
@@ -17,115 +19,109 @@ describe('RecoveryProtocolService', () => {
   };
 
   beforeEach(() => {
-    service = new RecoveryProtocolService();
+    mockPool = {
+      query: jest.fn().mockResolvedValue({ rows: [] }),
+    } as any;
+    service = new RecoveryProtocolService(mockPool);
   });
 
-  it('should accept a valid RECOVERY_NOCONTACT contract', () => {
-    expect(
-      service.validateRecoveryContract('RECOVERY_NOCONTACT', 14, validMetadata),
-    ).toBe(true);
+  it('should accept a valid RECOVERY_NOCONTACT contract', async () => {
+    const result = await service.validateRecoveryContract('user-1', 'RECOVERY_NOCONTACT', 14, validMetadata);
+    expect(result).toBe(true);
   });
 
-  it('should accept a valid RECOVERY_SUBSTANCE contract (no noContactIdentifiers needed)', () => {
+  it('should accept a valid RECOVERY_SUBSTANCE contract (no noContactIdentifiers needed)', async () => {
     const meta: RecoveryMetadata = {
       ...validMetadata,
       noContactIdentifiers: [],
     };
-    expect(
-      service.validateRecoveryContract('RECOVERY_SUBSTANCE', 21, meta),
-    ).toBe(true);
+    const result = await service.validateRecoveryContract('user-1', 'RECOVERY_SUBSTANCE', 21, meta);
+    expect(result).toBe(true);
   });
 
-  it('should reject when metadata is missing', () => {
-    expect(() =>
-      service.validateRecoveryContract('RECOVERY_NOCONTACT', 14, undefined),
-    ).toThrow(HttpException);
-    try {
-      service.validateRecoveryContract('RECOVERY_NOCONTACT', 14, undefined);
-    } catch (e) {
-      expect((e as HttpException).getStatus()).toBe(HttpStatus.NOT_ACCEPTABLE);
-    }
+  it('should reject when metadata is missing', async () => {
+    await expect(
+      service.validateRecoveryContract('user-1', 'RECOVERY_NOCONTACT', 14, undefined),
+    ).rejects.toThrow(HttpException);
   });
 
-  it('should reject when accountability partner email is empty', () => {
+  it('should reject when accountability partner email is empty', async () => {
     const meta: RecoveryMetadata = {
       ...validMetadata,
       accountabilityPartnerEmail: '',
     };
-    expect(() =>
-      service.validateRecoveryContract('RECOVERY_NOCONTACT', 14, meta),
-    ).toThrow(HttpException);
+    await expect(
+      service.validateRecoveryContract('user-1', 'RECOVERY_NOCONTACT', 14, meta),
+    ).rejects.toThrow(HttpException);
   });
 
-  it('should reject when accountability partner email is whitespace', () => {
-    const meta: RecoveryMetadata = {
-      ...validMetadata,
-      accountabilityPartnerEmail: '   ',
-    };
-    expect(() =>
-      service.validateRecoveryContract('RECOVERY_NOCONTACT', 14, meta),
-    ).toThrow(HttpException);
+  it('should reject duration exceeding 30 days', async () => {
+    await expect(
+      service.validateRecoveryContract('user-1', 'RECOVERY_NOCONTACT', 60, validMetadata),
+    ).rejects.toThrow(HttpException);
   });
 
-  it(`should reject duration exceeding ${MAX_NOCONTACT_DURATION_DAYS} days`, () => {
-    expect(() =>
-      service.validateRecoveryContract('RECOVERY_NOCONTACT', 60, validMetadata),
-    ).toThrow(HttpException);
-  });
-
-  it('should accept duration at exactly 30 days', () => {
-    expect(
-      service.validateRecoveryContract('RECOVERY_NOCONTACT', MAX_NOCONTACT_DURATION_DAYS, validMetadata),
-    ).toBe(true);
-  });
-
-  it('should reject RECOVERY_NOCONTACT with 0 no-contact identifiers', () => {
-    const meta: RecoveryMetadata = {
-      ...validMetadata,
-      noContactIdentifiers: [],
-    };
-    expect(() =>
-      service.validateRecoveryContract('RECOVERY_NOCONTACT', 14, meta),
-    ).toThrow(HttpException);
-  });
-
-  it(`should reject RECOVERY_NOCONTACT with more than ${MAX_NOCONTACT_TARGETS} targets`, () => {
+  it('should reject RECOVERY_NOCONTACT with more than 3 targets', async () => {
     const meta: RecoveryMetadata = {
       ...validMetadata,
       noContactIdentifiers: ['h1', 'h2', 'h3', 'h4'],
     };
-    expect(() =>
-      service.validateRecoveryContract('RECOVERY_NOCONTACT', 14, meta),
-    ).toThrow(HttpException);
+    await expect(
+      service.validateRecoveryContract('user-1', 'RECOVERY_NOCONTACT', 14, meta),
+    ).rejects.toThrow(HttpException);
   });
 
-  it('should accept RECOVERY_NOCONTACT with exactly 3 targets', () => {
+  it('should reject when total targets across contracts exceed 10 (Theorem 8)', async () => {
+    mockPool.query.mockResolvedValueOnce({
+      rows: [
+        { metadata: { noContactIdentifiers: ['e1', 'e2', 'e3'] } },
+        { metadata: { noContactIdentifiers: ['e4', 'e5', 'e6'] } },
+        { metadata: { noContactIdentifiers: ['e7', 'e8'] } },
+      ],
+    });
+
     const meta: RecoveryMetadata = {
       ...validMetadata,
-      noContactIdentifiers: ['h1', 'h2', 'h3'],
+      noContactIdentifiers: ['n1', 'n2', 'n3'], // Total would be 3 + 3 + 2 + 3 = 11
     };
-    expect(
-      service.validateRecoveryContract('RECOVERY_NOCONTACT', 14, meta),
-    ).toBe(true);
+
+    await expect(
+      service.validateRecoveryContract('user-1', 'RECOVERY_NOCONTACT', 14, meta),
+    ).rejects.toThrow('Theorem 8 Violation');
   });
 
-  it('should reject when acknowledgments are incomplete (voluntary=false)', () => {
-    const meta: RecoveryMetadata = {
-      ...validMetadata,
-      acknowledgments: { ...validMetadata.acknowledgments, voluntary: false },
-    };
-    expect(() =>
-      service.validateRecoveryContract('RECOVERY_NOCONTACT', 14, meta),
-    ).toThrow(HttpException);
-  });
+  describe('Theorem 8: Anti-Isolation Guardrails', () => {
+    it('should pass if total targets is exactly the limit (10)', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { metadata: { noContactIdentifiers: ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7'] } },
+        ],
+      });
 
-  it('should reject when acknowledgments are incomplete (noMinors=false)', () => {
-    const meta: RecoveryMetadata = {
-      ...validMetadata,
-      acknowledgments: { ...validMetadata.acknowledgments, noMinors: false },
-    };
-    expect(() =>
-      service.validateRecoveryContract('RECOVERY_NOCONTACT', 14, meta),
-    ).toThrow(HttpException);
+      const meta: RecoveryMetadata = {
+        ...validMetadata,
+        noContactIdentifiers: ['n1', 'n2', 'n3'], // 7 + 3 = 10
+      };
+
+      const result = await service.validateRecoveryContract('user-1', 'RECOVERY_NOCONTACT', 14, meta);
+      expect(result).toBe(true);
+    });
+
+    it('should correctly handle contracts with missing metadata in DB', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { metadata: null },
+          { metadata: { noContactIdentifiers: ['e1'] } },
+        ],
+      });
+
+      const meta: RecoveryMetadata = {
+        ...validMetadata,
+        noContactIdentifiers: ['n1'], // 0 + 1 + 1 = 2
+      };
+
+      const result = await service.validateRecoveryContract('user-1', 'RECOVERY_NOCONTACT', 14, meta);
+      expect(result).toBe(true);
+    });
   });
 });

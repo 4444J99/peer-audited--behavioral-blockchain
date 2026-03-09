@@ -17,10 +17,21 @@ describe('HoneypotInjectorService', () => {
   });
 
   describe('injectHoneypot', () => {
+    beforeEach(() => {
+      jest.spyOn(Math, 'random').mockReturnValue(0); // Force probability to pass
+    });
+
+    afterEach(() => {
+      jest.spyOn(Math, 'random').mockRestore();
+    });
+
     it('should query for furies and inject honeypot proof', async () => {
-      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ count: '10' }] });
-      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: 'contract-abc', user_id: 'user-xyz' }] });
-      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: 'proof-hp-123' }] });
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ count: '0' }] }) // shouldInject volume
+        .mockResolvedValueOnce({ rows: [{ count: '10' }] }) // active furies
+        .mockResolvedValueOnce({ rows: [{ id: 'contract-abc', user_id: 'user-xyz' }] }) // host contract
+        .mockResolvedValueOnce({ rows: [{ id: 'proof-hp-123' }] }); // proof insert
+      
       (mockRouter.routeProof as jest.Mock).mockResolvedValueOnce('mock-job-123');
 
       await honeypotService.injectHoneypot();
@@ -29,8 +40,48 @@ describe('HoneypotInjectorService', () => {
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('HONEYPOT_INJECTED', expect.any(Object));
     });
 
+    it('should scale injection probability with volume (Theorem 7)', async () => {
+      // With 50 recent audits, probability should be 0.1 + (50/100) = 0.6, capped at 0.5
+      // With 5 recent audits, probability should be 0.1 + 0.05 = 0.15
+      
+      // Case A: Low volume (5 audits) -> 0.15 prob
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ count: '5' }] });
+      jest.spyOn(Math, 'random').mockReturnValue(0.14); // Passes
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ count: '10' }] }); // active furies
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: 'c1', user_id: 'u1' }] });
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: 'p1' }] });
+      await honeypotService.injectHoneypot();
+      expect(mockRouter.routeProof).toHaveBeenCalledTimes(1);
+
+      // Case B: High volume (100 audits) -> 0.5 prob cap
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ count: '100' }] });
+      jest.spyOn(Math, 'random').mockReturnValue(0.49); // Passes
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ count: '10' }] }); // active furies
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: 'c2', user_id: 'u2' }] });
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: 'p2' }] });
+      await honeypotService.injectHoneypot();
+      expect(mockRouter.routeProof).toHaveBeenCalledTimes(2);
+
+      // Case C: Just above cap
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ count: '100' }] });
+      jest.spyOn(Math, 'random').mockReturnValue(0.51); // Fails
+      await honeypotService.injectHoneypot();
+      expect(mockRouter.routeProof).toHaveBeenCalledTimes(2); // No increase
+    });
+
+    it('should skip injection if probability check fails', async () => {
+      jest.spyOn(Math, 'random').mockReturnValue(0.9); // Probability check fails
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ count: '0' }] }); // low volume -> 10% prob
+
+      await honeypotService.injectHoneypot();
+
+      expect(mockRouter.routeProof).not.toHaveBeenCalled();
+    });
+
     it('should skip injection if not enough furies', async () => {
-      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ count: '1' }] });
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ count: '0' }] })
+        .mockResolvedValueOnce({ rows: [{ count: '1' }] });
 
       await honeypotService.injectHoneypot();
 
@@ -38,8 +89,10 @@ describe('HoneypotInjectorService', () => {
     });
 
     it('should skip injection if no active contracts', async () => {
-      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ count: '5' }] }); // enough furies
-      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] }); // no contracts
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ count: '0' }] })
+        .mockResolvedValueOnce({ rows: [{ count: '5' }] }) // enough furies
+        .mockResolvedValueOnce({ rows: [] }); // no contracts
 
       await honeypotService.injectHoneypot();
 
@@ -64,8 +117,8 @@ describe('HoneypotInjectorService', () => {
             { fury_user_id: 'fury-2', verdict: 'FAIL' },
           ],
         }) // SELECT assignments
-        .mockResolvedValueOnce({ rows: [] }) // UPDATE fury-1 (+5)
-        .mockResolvedValueOnce({ rows: [] }) // UPDATE fury-2 (+5)
+        .mockResolvedValueOnce({ rows: [{ integrity_score: 55 }] }) // UPDATE fury-1 (+5)
+        .mockResolvedValueOnce({ rows: [{ integrity_score: 60 }] }) // UPDATE fury-2 (+5)
         .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
       await honeypotService.gradeHoneypotPerformance('proof-hp-1', []);
@@ -89,7 +142,7 @@ describe('HoneypotInjectorService', () => {
             { fury_user_id: 'fury-3', verdict: 'PASS' },
           ],
         }) // SELECT assignments
-        .mockResolvedValueOnce({ rows: [] }) // UPDATE fury-3 (-5)
+        .mockResolvedValueOnce({ rows: [{ integrity_score: 15 }] }) // UPDATE fury-3 (-5)
         .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
       await honeypotService.gradeHoneypotPerformance('proof-hp-2', ['fury-3']);
@@ -111,9 +164,9 @@ describe('HoneypotInjectorService', () => {
             { fury_user_id: 'fury-c', verdict: 'FAIL' }, // correct
           ],
         })
-        .mockResolvedValueOnce({ rows: [] }) // UPDATE fury-a (+5)
-        .mockResolvedValueOnce({ rows: [] }) // UPDATE fury-b (-5)
-        .mockResolvedValueOnce({ rows: [] }) // UPDATE fury-c (+5)
+        .mockResolvedValueOnce({ rows: [{ integrity_score: 55 }] }) // UPDATE fury-a (+5)
+        .mockResolvedValueOnce({ rows: [{ integrity_score: 15 }] }) // UPDATE fury-b (-5)
+        .mockResolvedValueOnce({ rows: [{ integrity_score: 60 }] }) // UPDATE fury-c (+5)
         .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
       await honeypotService.gradeHoneypotPerformance('proof-hp-3', ['fury-b']);
@@ -133,6 +186,7 @@ describe('HoneypotInjectorService', () => {
         incorrectCount: 1,
       }));
     });
+
 
     it('should ROLLBACK and re-throw on database error', async () => {
       gradeClient.query

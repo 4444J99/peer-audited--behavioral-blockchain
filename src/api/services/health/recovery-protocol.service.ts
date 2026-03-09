@@ -1,4 +1,5 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Pool } from 'pg';
 import {
   MAX_NOCONTACT_DURATION_DAYS,
   MAX_NOCONTACT_TARGETS,
@@ -17,16 +18,44 @@ export interface RecoveryMetadata {
 
 @Injectable()
 export class RecoveryProtocolService {
+  constructor(private readonly pool: Pool) {}
+
+  /**
+   * Theorem 8: Anti-Isolation Guardrails.
+   * Checks if the user is attempting to block too many people across all active contracts.
+   */
+  async checkIsolationRisk(userId: string, newTargetCount: number): Promise<void> {
+    const activeContracts = await this.pool.query(
+      `SELECT metadata FROM contracts 
+       WHERE user_id = $1 AND status = 'ACTIVE' AND oath_category = 'RECOVERY_NOCONTACT'`,
+      [userId],
+    );
+
+    let totalTargets = newTargetCount;
+    for (const contract of activeContracts.rows) {
+      const targets = contract.metadata?.noContactIdentifiers || [];
+      totalTargets += targets.length;
+    }
+
+    const ABSOLUTE_MAX_ISOLATION_TARGETS = 10;
+    if (totalTargets > ABSOLUTE_MAX_ISOLATION_TARGETS) {
+      throw new HttpException(
+        `Theorem 8 Violation: Total no-contact targets (${totalTargets}) exceeds safety limit. Excessive social isolation detected.`,
+        HttpStatus.NOT_ACCEPTABLE,
+      );
+    }
+  }
 
   /**
    * Validates that a recovery contract meets all ethical guardrails.
    * Throws 406 Not Acceptable on violation (mirrors AegisProtocolService).
    */
-  validateRecoveryContract(
+  async validateRecoveryContract(
+    userId: string,
     oathCategory: string,
     durationDays: number,
     metadata?: RecoveryMetadata,
-  ): boolean {
+  ): Promise<boolean> {
     // All RECOVERY_ oaths require metadata
     if (!metadata) {
       throw new HttpException(
@@ -65,6 +94,9 @@ export class RecoveryProtocolService {
           HttpStatus.NOT_ACCEPTABLE,
         );
       }
+
+      // Theorem 8: Check global isolation risk across all contracts
+      await this.checkIsolationRisk(userId, metadata.noContactIdentifiers.length);
     }
 
     // Safety acknowledgments — all must be true
@@ -79,3 +111,4 @@ export class RecoveryProtocolService {
     return true;
   }
 }
+

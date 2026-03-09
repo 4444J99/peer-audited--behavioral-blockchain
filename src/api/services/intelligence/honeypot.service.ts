@@ -27,6 +27,9 @@ export class HoneypotService {
   /** Minimum number of active Furies required before injecting */
   private static readonly MIN_FURIES_FOR_INJECTION = 3;
 
+  /** Integrity score threshold below which a Fury is shadow-banned */
+  private static readonly SHADOW_BAN_THRESHOLD = 20;
+
   constructor(
     private readonly pool: Pool,
     private readonly furyRouter: FuryRouterService,
@@ -34,19 +37,41 @@ export class HoneypotService {
   ) {}
 
   /**
-   * Inject a honeypot proof every 6 hours if there are enough active Furies.
-   * Uses a random active contract as the "host" for the synthetic proof.
+   * Calculate probability of injection based on recent audit volume.
+   * Theorem 7: Probabilistic detection maintains adversarial equilibrium.
+   */
+  private async shouldInject(): Promise<boolean> {
+    const recentAudits = await this.pool.query(
+      `SELECT COUNT(*) as count FROM fury_assignments 
+       WHERE assigned_at > NOW() - INTERVAL '1 hour'`,
+    );
+    const volume = parseInt(recentAudits.rows[0].count);
+    // Base 10% chance, scales with volume to maintain density
+    const probability = Math.min(0.5, 0.1 + (volume / 100));
+    return Math.random() < probability;
+  }
+
+  /**
+   * Inject a honeypot proof periodically if conditions are met.
+   * Theorem 7 Convergence: Uses dynamic probability to ensure coverage without predictability.
    */
   @Cron(CronExpression.EVERY_6_HOURS)
   async injectHoneypot(): Promise<void> {
     try {
-      // Check if there are enough active Furies
+      if (!(await this.shouldInject())) {
+        this.logger.debug('Skipping honeypot: probability check failed');
+        return;
+      }
+
+      // Check if there are enough active Furies above shadow-ban threshold
       const furyCount = await this.pool.query(
         `SELECT COUNT(*) as count FROM users
          WHERE status = 'ACTIVE'
            AND role IN ('USER', 'FURY', 'ADMIN')
-           AND integrity_score >= 20`,
+           AND integrity_score >= $1`,
+        [HoneypotService.SHADOW_BAN_THRESHOLD],
       );
+
 
       const activeFuries = Number(furyCount.rows[0].count);
       if (activeFuries < HoneypotService.MIN_FURIES_FOR_INJECTION) {
@@ -135,18 +160,27 @@ export class HoneypotService {
           : -HoneypotService.HONEYPOT_MISS_PENALTY;
 
         // Adjust integrity score (clamped to 0–100)
-        await client.query(
+        const updateRes = await client.query(
           `UPDATE users
            SET integrity_score = GREATEST(0, LEAST(100, integrity_score + $1))
-           WHERE id = $2`,
+           WHERE id = $2
+           RETURNING integrity_score`,
           [delta, assignment.fury_user_id],
         );
 
+        const newScore = updateRes.rows[0].integrity_score;
+        if (newScore < HoneypotService.SHADOW_BAN_THRESHOLD) {
+          this.logger.warn(
+            `Fury ${assignment.fury_user_id} SHADOW-BANNED (Score: ${newScore})`,
+          );
+        }
+
         this.logger.log(
           `Fury ${assignment.fury_user_id}: honeypot verdict=${assignment.verdict}, ` +
-          `correct=${isCorrect}, integrity_delta=${delta}`,
+          `correct=${isCorrect}, integrity_delta=${delta}, new_score=${newScore}`,
         );
       }
+
 
       await client.query('COMMIT');
 
