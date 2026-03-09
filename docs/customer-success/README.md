@@ -1,5 +1,7 @@
 # Customer Success
 
+> **Department artifacts have moved to [`departments/cxs/`](../departments/cxs/).** See [`departments/cxs/REGE.md`](../departments/cxs/REGE.md) for the generative entity definition. This directory retains its README for historical context.
+
 Support playbooks, FAQ content, onboarding sequences, and user satisfaction tracking for Styx.
 
 ## What Lives Here

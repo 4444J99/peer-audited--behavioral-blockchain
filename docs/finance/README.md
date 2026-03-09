@@ -1,5 +1,7 @@
 # Finance & Revenue
 
+> **Department artifacts have moved to [`departments/fin/`](../departments/fin/).** See [`departments/fin/REGE.md`](../departments/fin/REGE.md) for the generative entity definition. This directory retains its README for historical context.
+
 Financial models, pricing strategy, unit economics, and revenue tracking for Styx.
 
 ## What Lives Here

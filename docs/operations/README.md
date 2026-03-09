@@ -1,5 +1,7 @@
 # Operations & Infrastructure
 
+> **Department artifacts have moved to [`departments/ops/`](../departments/ops/).** See [`departments/ops/REGE.md`](../departments/ops/REGE.md) for the generative entity definition. This directory retains its README for historical context.
+
 Playbooks, runbooks, and procedures for running Styx in production.
 
 ## What Lives Here

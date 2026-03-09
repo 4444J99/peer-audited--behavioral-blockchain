@@ -1,5 +1,7 @@
 # Enterprise Sales / B2B
 
+> **Department artifacts have moved to [`departments/b2b/`](../departments/b2b/).** See [`departments/b2b/REGE.md`](../departments/b2b/REGE.md) for the generative entity definition. This directory retains its README for historical context.
+
 Materials for selling Styx to therapists, coaches, clinics, and corporate wellness programs.
 
 ## What Lives Here

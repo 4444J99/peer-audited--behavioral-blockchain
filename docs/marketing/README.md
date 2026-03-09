@@ -1,5 +1,7 @@
 # Growth & Marketing
 
+> **Department artifacts have moved to [`departments/gro/`](../departments/gro/).** See [`departments/gro/REGE.md`](../departments/gro/REGE.md) for the generative entity definition. This directory retains its README for historical context.
+
 Strategy, content plans, and user acquisition materials for Styx.
 
 ## What Lives Here

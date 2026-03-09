@@ -1,0 +1,69 @@
+schema_version: '1.0'
+repo: peer-audited--behavioral-blockchain
+organ: III
+display_name: "Styx — The Blockchain of Truth"
+
+delivery:
+- platform: web_app
+  status: in_progress
+  priority: critical
+  notes: "Next.js 16 frontend"
+- platform: api
+  status: in_progress
+  priority: critical
+  notes: "NestJS 11 backend"
+- platform: mobile_app_ios
+  status: planned
+  priority: high
+  notes: "React Native"
+- platform: mobile_app_android
+  status: planned
+  priority: high
+  notes: "React Native"
+- platform: desktop_app
+  status: planned
+  priority: low
+  notes: "Tauri"
+
+revenue:
+- platform: subscription
+  status: planned
+  priority: critical
+  notes: "B2B practitioner tiers ($49/$199/$999)"
+- platform: marketplace_commission
+  status: planned
+  priority: critical
+  notes: "B2C platform fee ($9 per $39 contract)"
+
+marketing:
+- platform: seo
+  status: planned
+  priority: high
+  notes: "No-contact recovery niche keyword targeting"
+- platform: content_marketing
+  status: planned
+  priority: high
+  notes: "Blog: behavioral economics, loss aversion, habit formation"
+- platform: social_organic
+  status: not_started
+  priority: medium
+
+community:
+- platform: discord
+  status: not_started
+  priority: medium
+  notes: "Beta testers, Fury auditor community"
+
+content:
+- platform: blog
+  status: planned
+  priority: high
+- platform: docs_site
+  status: not_started
+  priority: medium
+
+listings:
+- platform: product_hunt
+  status: planned
+  priority: high
+  target_date: "2026-Q3"
