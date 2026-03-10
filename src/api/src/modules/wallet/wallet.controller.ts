@@ -4,13 +4,17 @@ import { Pool } from 'pg';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { getAllowedTiers } from '../../../../shared/libs/integrity';
+import { LedgerService } from '../../../services/ledger/ledger.service';
 
 @ApiTags('Wallet')
 @ApiBearerAuth()
 @Controller('wallet')
 @UseGuards(AuthGuard)
 export class WalletController {
-  constructor(private readonly pool: Pool) {}
+  constructor(
+    private readonly pool: Pool,
+    private readonly ledger: LedgerService,
+  ) {}
 
   @Get('balance')
   @ApiOperation({ summary: 'Get ledger balance and integrity tier for the current user' })
@@ -26,26 +30,18 @@ export class WalletController {
     const row = userResult.rows[0];
     const tiers = getAllowedTiers(row.integrity_score);
 
-    // Calculate net balance from ledger entries
+    // Calculate net balance from ledger service (uses canonical sign convention)
     let balance = 0;
     if (row.account_id) {
-      const creditResult = await this.pool.query(
-        `SELECT COALESCE(SUM(amount), 0) AS total FROM entries WHERE credit_account_id = $1`,
-        [row.account_id],
-      );
-      const debitResult = await this.pool.query(
-        `SELECT COALESCE(SUM(amount), 0) AS total FROM entries WHERE debit_account_id = $1`,
-        [row.account_id],
-      );
-      balance = Number(creditResult.rows[0].total) - Number(debitResult.rows[0].total);
+      balance = await this.ledger.getAccountBalance(row.account_id);
     }
 
     return {
-      userId: row.id,
+      id: row.id,
       email: row.email,
-      integrityScore: row.integrity_score,
-      allowedTiers: tiers,
-      ledgerBalance: balance,
+      integrity_score: row.integrity_score,
+      allowed_tiers: tiers,
+      ledger_balance: balance / 100, // convert cents to dollars
       status: row.status,
     };
   }
@@ -68,17 +64,22 @@ export class WalletController {
 
     const maxRows = Math.min(parseInt(limit || '50', 10), 100);
     const result = await this.pool.query(
-      `SELECT e.id, e.debit_account_id, e.credit_account_id, e.amount, e.contract_id, e.metadata, e.created_at,
-              da.name AS debit_account_name, ca.name AS credit_account_name
+      `SELECT e.id, e.amount, e.metadata, e.created_at
        FROM entries e
-       LEFT JOIN accounts da ON e.debit_account_id = da.id
-       LEFT JOIN accounts ca ON e.credit_account_id = ca.id
        WHERE e.debit_account_id = $1 OR e.credit_account_id = $1
        ORDER BY e.created_at DESC
        LIMIT $2`,
       [accountId, maxRows],
     );
 
-    return { transactions: result.rows };
+    const transactions = result.rows.map(row => ({
+      id: row.id,
+      type: row.metadata?.type || 'TRANSACTION',
+      amount: parseFloat(row.amount) / 100, // convert cents to dollars
+      timestamp: row.created_at,
+      description: row.metadata?.description || row.metadata?.type || 'Ledger entry',
+    }));
+
+    return { transactions };
   }
 }

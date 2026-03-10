@@ -29,7 +29,9 @@ describe('UsersService', () => {
         identity_verification_id: null,
         identity_verified_at: null,
       };
-      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [user] });
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [user] })
+        .mockResolvedValueOnce({ rows: [{ count: '2', total: '150.00' }] });
 
       const result = await service.getProfile('user-1');
 
@@ -37,6 +39,9 @@ describe('UsersService', () => {
         id: 'user-1',
         email: 'demo@styx.protocol',
         integrity_score: 75,
+        tier: 'STANDARD',
+        contract_count: 2,
+        total_staked: 150.00,
         role: 'USER',
         status: 'ACTIVE',
         compliance: expect.objectContaining({

@@ -6,11 +6,14 @@ import { StripeFboService } from '../../../services/escrow/stripe.service';
 import { JurisdictionTier } from '../../../services/geofencing';
 import { StripeFBOService as RealStripeFBOService } from '../payments/stripe-fbo.service';
 import { SettlementService } from '../payments/settlement.service';
+import { buildSettlementQuote } from '../payments/settlement-quote';
 import { DisputeService } from '../../../services/escrow/dispute.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { AegisProtocolService } from '../../../services/health/aegis.service';
 import { RecoveryProtocolService } from '../../../services/health/recovery-protocol.service';
+import { DynamicPenaltyService } from '../../../services/health/dynamic-penalty.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
+
 import { NotificationsService } from '../notifications/notifications.service';
 import { CompliancePolicyService } from '../compliance/compliance-policy.service';
 import { calculateIntegrity, getAllowedTiers, getTierMaxStake, UserHistory } from '../../../../shared/libs/integrity';
@@ -59,6 +62,7 @@ type ContractResolutionSideEffectType =
   | 'STRIPE_CANCEL_APPEAL_FEE'
   | 'LEDGER_STAKE_RETURN'
   | 'LEDGER_STAKE_CAPTURE'
+  | 'LEDGER_BOUNTY_POOL_TOPUP'
   | 'TRUTH_CONTRACT_RESOLVED'
   | 'NOTIFY_CONTRACT_RESOLVED';
 
@@ -90,6 +94,8 @@ type PricingMetadata = {
   refundableStakeUsd: number;
 };
 
+import { toCents, toDollars } from '../../../../shared/libs/money';
+
 @Injectable()
 export class ContractsService {
   private readonly logger = new Logger(ContractsService.name);
@@ -107,11 +113,17 @@ export class ContractsService {
     private readonly furyRouter: FuryRouterService,
     private readonly aegis: AegisProtocolService,
     private readonly recovery: RecoveryProtocolService,
+    private readonly dynamicPenalty: DynamicPenaltyService,
     private readonly anomaly: AnomalyService,
+
     @Optional() @Inject(NotificationsService) private readonly notifications?: NotificationsService,
     @Optional() @Inject(CompliancePolicyService) private readonly compliancePolicy?: CompliancePolicyService,
     @Optional() @Inject(forwardRef(() => SettlementService)) private readonly settlementService?: SettlementService,
   ) {}
+
+  private stakeAmountToCents(stakeAmount: number | string): number {
+    return toCents(Number(stakeAmount));
+  }
 
   private async assertCanReadContractRow(contractRow: any, requester: ContractReadRequester): Promise<void> {
     if (contractRow.user_id === requester.userId) {
@@ -209,6 +221,7 @@ export class ContractsService {
     userRow: any;
     escrowAccountId: string | null;
     revenueAccountId: string | null;
+    bountyPoolAccountId?: string | null;
     jurisdictionTier?: import('../../../services/geofencing').JurisdictionTier;
   }): Array<{
     contractId: string;
@@ -217,7 +230,16 @@ export class ContractsService {
     dedupeKey: string;
     payload: Record<string, any>;
   }> {
-    const { contractId, outcome, contractRow, userRow, escrowAccountId, revenueAccountId, jurisdictionTier } = input;
+    const {
+      contractId,
+      outcome,
+      contractRow,
+      userRow,
+      escrowAccountId,
+      revenueAccountId,
+      bountyPoolAccountId,
+      jurisdictionTier,
+    } = input;
     const effects: Array<{
       contractId: string;
       outcome: 'COMPLETED' | 'FAILED';
@@ -231,6 +253,12 @@ export class ContractsService {
     const disposition = jurisdictionTier
       ? this.stripe.resolveDisposition(outcome, jurisdictionTier)
       : (outcome === 'COMPLETED' ? 'REFUND' as const : 'CAPTURE' as const);
+    const amountCents = this.stakeAmountToCents(contractRow.stake_amount);
+    const quote = buildSettlementQuote(
+      amountCents,
+      outcome === 'COMPLETED' ? 'PASS' : 'FAIL',
+      disposition,
+    );
 
     if (contractRow.payment_intent_id) {
       // For REFUND disposition on failure, cancel the hold instead of capturing
@@ -249,7 +277,7 @@ export class ContractsService {
     }
 
     if (userRow?.account_id && escrowAccountId) {
-      if (disposition === 'REFUND') {
+      if (quote.actualAction === 'RELEASE') {
         // Return stake to user (success, or TIER_2 refund-only failure)
         const isRefundOnly = outcome === 'FAILED';
         effects.push({
@@ -260,7 +288,7 @@ export class ContractsService {
           payload: {
             debitAccountId: escrowAccountId,
             creditAccountId: userRow.account_id,
-            amount: Number(contractRow.stake_amount),
+            amount: amountCents,
             metadata: {
               type: isRefundOnly ? 'REFUND_ONLY_DISPOSITION' : 'STAKE_RETURN',
               outcome,
@@ -279,14 +307,35 @@ export class ContractsService {
           payload: {
             debitAccountId: escrowAccountId,
             creditAccountId: revenueAccountId,
-            amount: Number(contractRow.stake_amount),
+            amount: amountCents,
             metadata: {
               type: 'STAKE_CAPTURED',
               outcome,
+              platformFeeCents: quote.platformFeeCents,
+              bountyPoolCents: quote.bountyPoolCents,
               sideEffectKey: `${baseKey}:ledger:capture`,
             },
           },
         });
+
+        if (quote.bountyPoolCents > 0 && bountyPoolAccountId) {
+          effects.push({
+            contractId,
+            outcome,
+            effectType: 'LEDGER_BOUNTY_POOL_TOPUP',
+            dedupeKey: `${baseKey}:ledger:bounty-topup`,
+            payload: {
+              debitAccountId: revenueAccountId,
+              creditAccountId: bountyPoolAccountId,
+              amount: quote.bountyPoolCents,
+              metadata: {
+                type: 'BOUNTY_POOL_TOPUP',
+                outcome,
+                sideEffectKey: `${baseKey}:ledger:bounty-topup`,
+              },
+            },
+          });
+        }
       }
     }
 
@@ -318,10 +367,13 @@ export class ContractsService {
         title: outcome === 'COMPLETED' ? 'Contract Completed' : 'Contract Failed',
         body: outcome === 'COMPLETED'
           ? `Your contract has been fulfilled. $${Number(contractRow.stake_amount).toFixed(2)} returned.`
-          : `Your contract has failed. $${Number(contractRow.stake_amount).toFixed(2)} has been captured.`,
+          : quote.actualAction === 'RELEASE'
+            ? `Your contract has failed, but $${Number(contractRow.stake_amount).toFixed(2)} was returned under the jurisdictional refund rule.`
+            : `Your contract has failed. $${Number(contractRow.stake_amount).toFixed(2)} has been captured.`,
         metadata: {
           contractId,
           outcome,
+          actualAction: quote.actualAction,
           sideEffectKey: `${baseKey}:notification`,
         },
       },
@@ -546,7 +598,8 @@ export class ContractsService {
         }
         return;
       case 'LEDGER_STAKE_RETURN':
-      case 'LEDGER_STAKE_CAPTURE': {
+      case 'LEDGER_STAKE_CAPTURE':
+      case 'LEDGER_BOUNTY_POOL_TOPUP': {
         const sideEffectKey = payload?.metadata?.sideEffectKey;
         if (sideEffectKey) {
           const existing = await this.pool.query(
@@ -856,7 +909,7 @@ export class ContractsService {
         await this.ledger.recordTransaction(
           user.account_id,
           escrowAccountId,
-          dto.stakeAmount,
+          toCents(dto.stakeAmount),
           contractId,
           { type: 'STAKE_HOLD', userId: dto.userId, sideEffectKey: stakeHoldKey },
         );
@@ -997,7 +1050,7 @@ export class ContractsService {
 
     const paymentIntent = await this.stripe.holdStake(
       user.stripe_customer_id,
-      dto.stakeAmount,
+      toCents(dto.stakeAmount),
       contractId,
     );
 
@@ -1141,10 +1194,11 @@ export class ContractsService {
     }
 
     // 3b. Stake tier limit
+    const stakeAmountCents = toCents(dto.stakeAmount);
     const tierMax = getTierMaxStake(tiers);
-    if (dto.stakeAmount > tierMax) {
+    if (stakeAmountCents > tierMax) {
       throw new BadRequestException(
-        `Stake amount $${dto.stakeAmount} exceeds tier limit of $${tierMax}`,
+        `Stake amount $${dto.stakeAmount} exceeds tier limit of $${toDollars(tierMax)}`,
       );
     }
 
@@ -1157,19 +1211,19 @@ export class ContractsService {
     if (failCount >= DOWNSCALE_STRIKE_THRESHOLD) {
       const downscaleFactor = Math.pow(0.5, Math.floor(failCount / DOWNSCALE_STRIKE_THRESHOLD));
       const maxStake = tierMax * downscaleFactor;
-      if (dto.stakeAmount > maxStake) {
+      if (stakeAmountCents > maxStake) {
         throw new BadRequestException(
-          `Dynamic downscaling: max stake is $${maxStake.toFixed(2)} after ${failCount} failures`,
+          `Dynamic downscaling: max stake is $${toDollars(maxStake).toFixed(2)} after ${failCount} failures`,
         );
       }
     }
 
     // 3. Aegis Protocol Verification (Psychological / Financial Guardrails)
     this.aegis.validatePsychologicalGuardrails(
-      dto.stakeAmount,
+      stakeAmountCents,
       dto.durationDays,
       user.integrity_score,
-      totalFailures.rows[0].count
+      Number(totalFailures.rows[0].count)
     );
 
     // 3e. Aegis Health Guard: Enforce BMI floor and velocity caps for BIOLOGICAL oaths
@@ -1190,7 +1244,8 @@ export class ContractsService {
 
     // 4b. If recovery oath, run Recovery Protocol guardrails
     if (dto.oathCategory.startsWith('RECOVERY_')) {
-      this.recovery.validateRecoveryContract(
+      await this.recovery.validateRecoveryContract(
+        dto.userId,
         dto.oathCategory,
         dto.durationDays,
         dto.recoveryMetadata,
@@ -1200,6 +1255,7 @@ export class ContractsService {
         dto = { ...dto, durationDays: MAX_NOCONTACT_DURATION_DAYS };
       }
     }
+
 
     // Generate unique Whistleblower Bounty Link for No Contact
     let bountyLinkId: string | null = null;
@@ -1258,7 +1314,7 @@ export class ContractsService {
     // Hold stake with real contract ID
     const paymentIntent = await this.stripe.holdStake(
       user.stripe_customer_id,
-      dto.stakeAmount,
+      toCents(dto.stakeAmount),
       contractId,
     );
 
@@ -1321,7 +1377,7 @@ export class ContractsService {
         await this.ledger.recordTransaction(
           user.account_id,
           escrowResult.rows[0].id,
-          dto.stakeAmount,
+          toCents(dto.stakeAmount),
           contractId,
           { type: 'STAKE_HOLD', userId: dto.userId },
         );
@@ -1360,8 +1416,10 @@ export class ContractsService {
 
   async getContract(contractId: string, requester?: ContractReadRequester) {
     const result = await this.pool.query(
-      `SELECT c.*, u.email, u.integrity_score
-       FROM contracts c JOIN users u ON c.user_id = u.id
+      `SELECT c.*, u.email, u.integrity_score,
+              (SELECT COUNT(*) FROM proofs p WHERE p.contract_id = c.id) as proof_count
+       FROM contracts c 
+       JOIN users u ON c.user_id = u.id
        WHERE c.id = $1`,
       [contractId],
     );
@@ -1372,7 +1430,20 @@ export class ContractsService {
     if (requester) {
       await this.assertCanReadContractRow(row, requester);
     }
-    return row;
+
+    // Fetch proof details
+    const proofsResult = await this.pool.query(
+      `SELECT id, submitted_at as timestamp, status, media_uri as media_url 
+       FROM proofs WHERE contract_id = $1 ORDER BY submitted_at DESC`,
+      [contractId],
+    );
+
+    return {
+      ...row,
+      proof_count: parseInt(row.proof_count, 10),
+      proofs: proofsResult.rows,
+      grace_days_max: 2, // Hardcoded for beta
+    };
   }
 
   async claimBounty(bountyLinkId: string, mediaUri: string, claimantIp: string): Promise<{ proofId: string; jobId: string }> {
@@ -1497,6 +1568,7 @@ export class ContractsService {
     const useTransaction = !!client;
 
     let row: any;
+    let resolutionQuote: ReturnType<typeof buildSettlementQuote> | null = null;
 
     try {
       if (useTransaction) {
@@ -1573,11 +1645,23 @@ export class ContractsService {
       }
 
       if (useTransaction) {
+        let jurisdictionTier: JurisdictionTier | undefined;
+        if (outcome === 'FAILED') {
+          const jurisdiction = await db.query(
+            'SELECT tier FROM jurisdictions WHERE code = $1',
+            [userResult.rows[0]?.last_known_state || 'UNKNOWN']
+          );
+          jurisdictionTier = (jurisdiction.rows[0]?.tier || JurisdictionTier.TIER_3) as JurisdictionTier;
+        }
+
         const escrowResult = await db.query(
           `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
         );
         const revenueResult = outcome === 'FAILED'
           ? await db.query(`SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`)
+          : { rows: [] as any[] };
+        const bountyPoolResult = outcome === 'FAILED'
+          ? await db.query(`SELECT id FROM accounts WHERE name = 'FURY_BOUNTY_POOL' LIMIT 1`)
           : { rows: [] as any[] };
 
         const effects = this.buildContractResolutionSideEffects({
@@ -1587,47 +1671,58 @@ export class ContractsService {
           userRow: userResult.rows[0],
           escrowAccountId: escrowResult.rows[0]?.id ?? null,
           revenueAccountId: revenueResult.rows[0]?.id ?? null,
+          bountyPoolAccountId: bountyPoolResult.rows[0]?.id ?? null,
+          jurisdictionTier,
         });
         await this.enqueueContractResolutionSideEffects(db, effects);
       } else {
+        const stakeAmountCents = this.stakeAmountToCents(row.stake_amount);
+        let dispositionMode: 'CAPTURE' | 'REFUND' =
+          outcome === 'COMPLETED' ? 'REFUND' : 'CAPTURE';
+
         // TKT-P0-001: Background Settlement via BullMQ
-        if (row.payment_intent_id && this.settlementService) {
+        if (outcome === 'FAILED') {
           // Resolve jurisdiction tier for P0-011 disposition logic
           const jurisdiction = await db.query(
             'SELECT tier FROM jurisdictions WHERE code = $1',
             [userResult.rows[0]?.last_known_state || 'UNKNOWN']
           );
-          const tier = (jurisdiction.rows[0]?.tier || 'FULL_ACCESS') as JurisdictionTier;
-          
-          const dispositionMode = this.stripe.resolveDisposition(
-            outcome === 'COMPLETED' ? 'COMPLETED' : 'FAILED',
-            tier
-          );
+          const tier = (jurisdiction.rows[0]?.tier || JurisdictionTier.TIER_3) as JurisdictionTier;
+          dispositionMode = this.stripe.resolveDisposition('FAILED', tier);
+        }
+        const quote = buildSettlementQuote(
+          stakeAmountCents,
+          outcome === 'COMPLETED' ? 'PASS' : 'FAIL',
+          dispositionMode,
+        );
+        resolutionQuote = quote;
 
+        if (row.payment_intent_id && this.settlementService) {
           await this.settlementService.dispatchSettlement({
             contractId,
             outcome: outcome === 'COMPLETED' ? 'PASS' : 'FAIL',
             paymentIntentId: row.payment_intent_id,
-            amountCents: Math.round(Number(row.stake_amount) * 100),
+            amountCents: stakeAmountCents,
             dispositionMode,
             // In a future Gamma sprint, we'd include furies array here
           });
-        }
-
-        // Record in ledger if we have accounts
-        if (userResult.rows[0]?.account_id) {
+        } else if (userResult.rows[0]?.account_id) {
           const escrowResult = await db.query(
             `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
           );
           if (escrowResult.rows.length > 0) {
-            if (outcome === 'COMPLETED') {
+            if (quote.actualAction === 'RELEASE') {
               // Return from escrow to user
               await this.ledger.recordTransaction(
                 escrowResult.rows[0].id,
                 userResult.rows[0].account_id,
-                Number(row.stake_amount),
+                stakeAmountCents,
                 contractId,
-                { type: 'STAKE_RETURN', outcome },
+                {
+                  type: outcome === 'FAILED' ? 'REFUND_ONLY_DISPOSITION' : 'STAKE_RETURN',
+                  outcome,
+                  actualAction: quote.actualAction,
+                },
               );
             } else {
               // Move from escrow to revenue
@@ -1638,10 +1733,30 @@ export class ContractsService {
                 await this.ledger.recordTransaction(
                   escrowResult.rows[0].id,
                   revenueResult.rows[0].id,
-                  Number(row.stake_amount),
+                  stakeAmountCents,
                   contractId,
-                  { type: 'STAKE_CAPTURED', outcome },
+                  {
+                    type: 'STAKE_CAPTURED',
+                    outcome,
+                    platformFeeCents: quote.platformFeeCents,
+                    bountyPoolCents: quote.bountyPoolCents,
+                  },
                 );
+
+                if (quote.bountyPoolCents > 0) {
+                  const bountyResult = await db.query(
+                    `SELECT id FROM accounts WHERE name = 'FURY_BOUNTY_POOL' LIMIT 1`,
+                  );
+                  if (bountyResult.rows.length > 0) {
+                    await this.ledger.recordTransaction(
+                      revenueResult.rows[0].id,
+                      bountyResult.rows[0].id,
+                      quote.bountyPoolCents,
+                      contractId,
+                      { type: 'BOUNTY_POOL_TOPUP', outcome },
+                    );
+                  }
+                }
               }
             }
           }
@@ -1685,7 +1800,9 @@ export class ContractsService {
         title: outcome === 'COMPLETED' ? 'Contract Completed' : 'Contract Failed',
         body: outcome === 'COMPLETED'
           ? `Your contract has been fulfilled. $${Number(row.stake_amount).toFixed(2)} returned.`
-          : `Your contract has failed. $${Number(row.stake_amount).toFixed(2)} has been captured.`,
+          : resolutionQuote?.actualAction === 'RELEASE'
+            ? `Your contract has failed, but $${Number(row.stake_amount).toFixed(2)} was returned under the jurisdictional refund rule.`
+            : `Your contract has failed. $${Number(row.stake_amount).toFixed(2)} has been captured.`,
         metadata: { contractId, outcome },
       });
     } catch {
@@ -1787,10 +1904,17 @@ export class ContractsService {
 
   async getUserContracts(userId: string) {
     const result = await this.pool.query(
-      `SELECT * FROM contracts WHERE user_id = $1 ORDER BY created_at DESC`,
+      `SELECT c.*, 
+              (SELECT COUNT(*) FROM proofs p WHERE p.contract_id = c.id) as proof_count
+       FROM contracts c 
+       WHERE c.user_id = $1 
+       ORDER BY c.created_at DESC`,
       [userId],
     );
-    return result.rows;
+    return result.rows.map(row => ({
+      ...row,
+      proof_count: parseInt(row.proof_count, 10),
+    }));
   }
 
   async getCohortSnapshot(cohortId: string, requesterUserId: string) {
@@ -1970,10 +2094,10 @@ export class ContractsService {
     return {
       contractId: c.id,
       oathCategory: c.oath_category,
-      streakDays,
-      daysRemaining,
-      graceDaysAvailable,
-      todayAttested,
+      streakDays: streakDays,
+      daysRemaining: daysRemaining,
+      graceDaysAvailable: graceDaysAvailable,
+      todayAttested: todayAttested,
       totalStrikes: c.strikes || 0,
     };
   }
@@ -2251,7 +2375,7 @@ export class ContractsService {
     if (!user.stripe_customer_id) throw new BadRequestException('No payment method on file');
 
     // 1. Hold additional funds via Stripe
-    const paymentIntent = await this.stripe.holdStake(user.stripe_customer_id, additionalAmount, contractId);
+    const paymentIntent = await this.stripe.holdStake(user.stripe_customer_id, toCents(additionalAmount), contractId);
 
     // 2. Update contract total stake and record the additional PI in metadata
     const newTotal = Number(row.stake_amount) + additionalAmount;
@@ -2270,7 +2394,7 @@ export class ContractsService {
       await this.ledger.recordTransaction(
         user.account_id,
         escrowResult.rows[0].id,
-        additionalAmount,
+        toCents(additionalAmount),
         contractId,
         { type: 'STAKE_DOUBLE_DOWN', previousTotal: row.stake_amount },
       );
@@ -2438,32 +2562,35 @@ export class ContractsService {
 
   async getRecoveryPenaltyPreview(contractId: string, userId: string) {
     const contract = await this.pool.query(
-      "SELECT stake_amount FROM contracts WHERE id = \$1 AND user_id = \$2",
+      "SELECT stake_amount, started_at, oath_category FROM contracts WHERE id = $1 AND user_id = $2",
       [contractId, userId]
     );
     if (contract.rows.length === 0) throw new NotFoundException("Contract not found");
 
-    const stakeAmount = parseFloat(contract.rows[0].stake_amount);
-    const isWeekend = this.isWeekendRiskWindow(new Date());
-    const multiplier = isWeekend ? 2.0 : 1.0;
+    const row = contract.rows[0];
+    const stakeAmount = parseFloat(row.stake_amount);
+    
+    // Only RECOVERY stream contracts use the dynamic state machine
+    if (!String(row.oath_category || '').startsWith('RECOVERY_')) {
+      return {
+        basePenaltyUsd: stakeAmount,
+        multiplier: 1.0,
+        effectivePenaltyUsd: stakeAmount,
+        riskWindow: "NORMAL",
+      };
+    }
+
+    const startedAt = row.started_at ? new Date(row.started_at) : new Date();
+    const penaltyState = this.dynamicPenalty.calculateState(startedAt);
 
     return {
       basePenaltyUsd: stakeAmount,
-      multiplier,
-      effectivePenaltyUsd: stakeAmount * multiplier,
-      riskWindow: isWeekend ? "WEEKEND_MULTIPLIER" : "NORMAL",
+      multiplier: penaltyState.multiplier,
+      effectivePenaltyUsd: stakeAmount * penaltyState.multiplier,
+      riskWindow: penaltyState.state,
+      description: penaltyState.description,
+      delayHrs: penaltyState.delayHrs,
+      refundPct: penaltyState.refundPct,
     };
-  }
-
-  private isWeekendRiskWindow(date: Date): boolean {
-    const day = date.getDay(); // 0=Sun, 5=Fri, 6=Sat
-    const hour = date.getHours();
-
-    // Friday 5PM (17:00) to Sunday 9AM (09:00)
-    if (day === 5 && hour >= 17) return true;
-    if (day === 6) return true;
-    if (day === 0 && hour < 9) return true;
-
-    return false;
   }
 }

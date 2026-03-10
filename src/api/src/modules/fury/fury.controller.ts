@@ -93,7 +93,7 @@ export class FuryController {
       accuracy: Math.round(accuracy * 1000) / 1000,
       totalBountiesEarned,
       totalPenaltiesPaid,
-      netEarnings: totalBountiesEarned - totalPenaltiesPaid,
+      netEarnings: (totalBountiesEarned - totalPenaltiesPaid) / 100,
       honeypotsCaught,
       honeypotsFailedOn,
     };
@@ -104,9 +104,11 @@ export class FuryController {
   async getAssignments(@CurrentUser() user: { id: string }) {
     const result = await this.pool.query(
       `SELECT fa.id AS assignment_id, fa.proof_id, fa.assigned_at, fa.subject_alias,
-              p.media_uri, p.masked_media_uri, p.redaction_status, p.content_type, p.contract_id, p.submitted_at, p.description
+              p.media_uri, p.masked_media_uri, p.redaction_status, p.content_type, p.contract_id, p.submitted_at, p.description,
+              c.oath_category
        FROM fury_assignments fa
        JOIN proofs p ON fa.proof_id = p.id
+       JOIN contracts c ON p.contract_id = c.id
        WHERE fa.fury_user_id = $1 AND fa.verdict IS NULL
        ORDER BY fa.assigned_at ASC`,
       [user.id],
@@ -130,12 +132,14 @@ export class FuryController {
           }
         }
         return {
+          id: row.assignment_id, // Map to 'id' for mobile
           assignmentId: row.assignment_id,
           proofId: row.proof_id,
           assignedAt: row.assigned_at,
           subjectAlias: row.subject_alias,
           contractId: row.contract_id,
           submittedAt: row.submitted_at,
+          category: row.oath_category, // Map to 'category' for mobile
           contentType: row.content_type,
           description: row.description,
           redactionStatus: row.redaction_status,

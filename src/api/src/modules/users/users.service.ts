@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { Pool } from 'pg';
 import * as bcrypt from 'bcryptjs';
+import { getDisplayTier } from '../../../../shared/libs/integrity';
 
 const BCRYPT_ROUNDS = 10;
 
@@ -22,10 +23,24 @@ export class UsersService {
     }
 
     const row = result.rows[0];
+
+    // Fetch active contract stats
+    const statsResult = await this.pool.query(
+      `SELECT COUNT(*) as count, COALESCE(SUM(stake_amount), 0) as total 
+       FROM contracts 
+       WHERE user_id = $1 AND status = 'ACTIVE'`,
+      [userId],
+    );
+    const contractCount = parseInt(statsResult.rows[0].count, 10);
+    const totalStaked = parseFloat(statsResult.rows[0].total);
+
     return {
       id: row.id,
       email: row.email,
       integrity_score: row.integrity_score,
+      tier: getDisplayTier(row.integrity_score),
+      contract_count: contractCount,
+      total_staked: totalStaked,
       role: row.role,
       status: row.status,
       created_at: row.created_at,

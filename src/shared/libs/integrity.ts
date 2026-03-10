@@ -94,6 +94,17 @@ export function shouldDemoteFury(history: FuryHistory): boolean {
 /**
  * Returns the maximum stake amount for a given set of allowed tiers.
  */
+/**
+ * Returns a display-friendly tier name for the frontend based on Integrity Score.
+ */
+export function getDisplayTier(score: number): string {
+  if (score >= 500) return 'WHALE';
+  if (score >= 100) return 'HIGH_ROLLER';
+  if (score >= 50) return 'STANDARD';
+  if (score >= 20) return 'MICRO';
+  return 'RESTRICTED';
+}
+
 /** Returns the maximum stake amount in cents for a given set of allowed tiers. */
 export function getTierMaxStake(tiers: string[]): number {
   if (tiers.includes('TIER_4_WHALE_VAULTS')) return Infinity;

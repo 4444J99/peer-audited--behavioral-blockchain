@@ -48,10 +48,20 @@ describe('ContractsService', () => {
   } as unknown as AegisProtocolService;
 
   const mockRecovery = {
-    validateRecoveryContract: jest.fn().mockReturnValue(true),
+    validateRecoveryContract: jest.fn().mockResolvedValue(true),
   } as unknown as RecoveryProtocolService;
 
+  const mockDynamicPenalty = {
+    calculateState: jest.fn().mockReturnValue({
+      state: 'STATE_NORMAL',
+      multiplier: 1.0,
+      description: 'Baseline stability',
+    }),
+  };
+
   const mockAnomaly = {
+
+
     analyze: jest.fn().mockResolvedValue({ rejected: false, flags: [] }),
   } as unknown as AnomalyService;
 
@@ -79,7 +89,9 @@ describe('ContractsService', () => {
   beforeEach(() => {
     mockPool = { query: jest.fn().mockImplementation((sql) => {
       if (sql.includes('FROM jurisdictions')) return Promise.resolve({ rows: [{ tier: 'FULL_ACCESS' }] });
-      if (sql.includes('SYSTEM_ESCROW')) return Promise.resolve({ rows: [{ id: 'escrow-acct' }] }); if (sql.includes('SYSTEM_REVENUE')) return Promise.resolve({ rows: [{ id: 'revenue-acct' }] });
+      if (sql.includes('SYSTEM_ESCROW')) return Promise.resolve({ rows: [{ id: 'escrow-acct' }] });
+      if (sql.includes('SYSTEM_REVENUE')) return Promise.resolve({ rows: [{ id: 'revenue-acct' }] });
+      if (sql.includes('FURY_BOUNTY_POOL')) return Promise.resolve({ rows: [{ id: 'bounty-acct' }] });
       return Promise.resolve({ rows: [] });
     }) };
     service = new ContractsService(
@@ -92,8 +104,10 @@ describe('ContractsService', () => {
       mockFuryRouter,
       mockAegis,
       mockRecovery,
+      mockDynamicPenalty as any,
       mockAnomaly,
       undefined, // notifications
+
       undefined, // compliancePolicy
       mockSettlement,
     );
@@ -197,10 +211,10 @@ describe('ContractsService', () => {
 
       await service.createContract(bioDto);
 
-      expect(mockAegis.validatePsychologicalGuardrails).toHaveBeenCalledWith(25, 30, 50, 0);
+      expect(mockAegis.validatePsychologicalGuardrails).toHaveBeenCalledWith(2500, 30, 50, 0);
     });
 
-    it('should NOT call Aegis validation for non-biological oaths', async () => {
+    it('should run Aegis psychological validation for non-biological oaths in cents', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
@@ -212,7 +226,7 @@ describe('ContractsService', () => {
       await service.createContract(validDto);
 
       // Aegis is run for ALL contracts now (psychological stakes), so this test checks that it IS called.
-      expect(mockAegis.validatePsychologicalGuardrails).toHaveBeenCalledWith(25, 30, 50, 0);
+      expect(mockAegis.validatePsychologicalGuardrails).toHaveBeenCalledWith(2500, 30, 50, 0);
     });
 
     it('should hold stake via Stripe with correct amount', async () => {
@@ -226,7 +240,7 @@ describe('ContractsService', () => {
 
       await service.createContract(validDto);
 
-      expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test_1', 25, 'contract-1');
+      expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test_1', 2500, 'contract-1');
     });
 
     it('should enforce MVP_39 pricing stake at $30 and return pricing metadata', async () => {
@@ -246,7 +260,7 @@ describe('ContractsService', () => {
 
       const result = await service.createContract(mvpDto);
 
-      expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test_1', 30, 'contract-1');
+      expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test_1', 3000, 'contract-1');
       expect(result.pricing).toEqual({
         plan: 'MVP_39',
         totalEntryUsd: 39,
@@ -305,7 +319,7 @@ describe('ContractsService', () => {
       expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
         'acct-1',
         'escrow-acct-id',
-        25,
+        2500,
         'contract-1',
         { type: 'STAKE_HOLD', userId: 'user-1' },
       );
@@ -379,7 +393,7 @@ describe('ContractsService', () => {
 
       await expect(service.createContract(validDto)).rejects.toThrow(/Contract activation failed/);
 
-      expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test_1', 25, 'contract-tx-1');
+      expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test_1', 2500, 'contract-tx-1');
       expect(mockStripe.cancelHold).toHaveBeenCalledWith('pi_tx_fail_1');
       expect(phaseAClient.release).toHaveBeenCalled();
       expect(phaseBClient.release).toHaveBeenCalled();
@@ -431,12 +445,21 @@ describe('ContractsService', () => {
 
   describe('getContract', () => {
     it('should return the contract joined with user info', async () => {
-      const row = { id: 'contract-1', user_id: 'user-1', email: 'user@styx.app', integrity_score: 55 };
+      const row = { id: 'contract-1', user_id: 'user-1', email: 'user@styx.app', integrity_score: 55, proof_count: '0' };
       mockPool.query.mockResolvedValueOnce({ rows: [row] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // proofs list
 
       const result = await service.getContract('contract-1');
 
-      expect(result).toEqual(row);
+      expect(result).toEqual({
+        id: 'contract-1',
+        user_id: 'user-1',
+        email: 'user@styx.app',
+        integrity_score: 55,
+        proof_count: 0,
+        proofs: [],
+        grace_days_max: 2,
+      });
     });
 
     it('should throw NotFoundException for missing contract', async () => {
@@ -594,6 +617,29 @@ describe('ContractsService', () => {
       expect(mockStripe.captureStake).not.toHaveBeenCalled();
     });
 
+    it('should default failed settlement disposition to REFUND when jurisdiction is unknown', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeUser, last_known_state: null }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
+      mockPool.query.mockImplementation((sql) => {
+        if (sql.includes('FROM jurisdictions')) return Promise.resolve({ rows: [] });
+        if (sql.includes('SYSTEM_ESCROW')) return Promise.resolve({ rows: [{ id: 'escrow-acct' }] });
+        if (sql.includes('SYSTEM_REVENUE')) return Promise.resolve({ rows: [{ id: 'revenue-acct' }] });
+        return Promise.resolve({ rows: [] });
+      });
+
+      await service.resolveContract('contract-1', 'FAILED');
+
+      expect(mockSettlement.dispatchSettlement).toHaveBeenCalledWith(expect.objectContaining({
+        contractId: 'contract-1',
+        outcome: 'FAIL',
+        amountCents: 5000,
+        dispositionMode: 'REFUND',
+      }));
+    });
+
     it('should throw NotFoundException for missing contract', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
@@ -723,7 +769,7 @@ describe('ContractsService', () => {
       });
     });
 
-    it('should record ledger return from escrow to user on COMPLETED', async () => {
+    it('should not directly write ledger entries when settlement processing has been delegated', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
@@ -732,32 +778,12 @@ describe('ContractsService', () => {
 
       await service.resolveContract('contract-1', 'COMPLETED');
 
-      expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
-        'escrow-acct',
-        'acct-1',
-        50,
-        'contract-1',
-        { type: 'STAKE_RETURN', outcome: 'COMPLETED' },
-      );
-    });
-
-    it('should record ledger capture from escrow to revenue on FAILED', async () => {
-      mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
-      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
-      
-
-      await service.resolveContract('contract-1', 'FAILED');
-
-      expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
-        'escrow-acct',
-        'revenue-acct',
-        50,
-        'contract-1',
-        { type: 'STAKE_CAPTURED', outcome: 'FAILED' },
-      );
+      expect(mockSettlement.dispatchSettlement).toHaveBeenCalledWith(expect.objectContaining({
+        contractId: 'contract-1',
+        outcome: 'PASS',
+        amountCents: 5000,
+      }));
+      expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
     });
   });
 
@@ -856,9 +882,11 @@ describe('ContractsService', () => {
 
   describe('getContractProofs', () => {
     it('should return proofs for an existing contract', async () => {
-      // Contract exists
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
-      // Proofs query
+      // getContract calls:
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1', user_id: 'user-1', proof_count: '2' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // internal proofs list in getContract
+      
+      // getContractProofs its own query:
       const proofs = [
         { id: 'proof-1', contract_id: 'contract-1', user_id: 'user-1', media_uri: 'uri-1', status: 'PENDING_REVIEW', submitted_at: '2026-01-01' },
         { id: 'proof-2', contract_id: 'contract-1', user_id: 'user-1', media_uri: 'uri-2', status: 'APPROVED', submitted_at: '2026-01-02' },
@@ -911,18 +939,17 @@ describe('ContractsService', () => {
   describe('getUserContracts', () => {
     it('should return all contracts for a user', async () => {
       const contracts = [
-        { id: 'c1', status: 'ACTIVE' },
-        { id: 'c2', status: 'COMPLETED' },
+        { id: 'c1', user_id: 'user-1', status: 'ACTIVE', proof_count: '0' },
+        { id: 'c2', user_id: 'user-1', status: 'COMPLETED', proof_count: '5' },
       ];
       mockPool.query.mockResolvedValueOnce({ rows: contracts });
 
       const result = await service.getUserContracts('user-1');
 
-      expect(result).toEqual(contracts);
-      expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE user_id = $1'),
-        ['user-1'],
-      );
+      expect(result).toEqual([
+        expect.objectContaining({ id: 'c1', status: 'ACTIVE', proof_count: 0 }),
+        expect.objectContaining({ id: 'c2', status: 'COMPLETED', proof_count: 5 }),
+      ]);
     });
 
     it('should return empty array when user has no contracts', async () => {
@@ -1040,19 +1067,19 @@ describe('ContractsService', () => {
     });
 
     it('should show todayAttested false when no attestation today', async () => {
-      mockPool.query.mockResolvedValueOnce({
-        rows: [{
-          id: 'contract-r2',
-          user_id: 'user-1',
-          oath_category: 'RECOVERY_NO_CONTACT_TEXT',
-          status: 'ACTIVE',
-          duration_days: 30,
-          started_at: new Date().toISOString(),
-          ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          strikes: 0,
-          grace_days_used: 1,
-        }],
-      });
+      const recoveryContract = {
+        id: 'contract-r2',
+        user_id: 'user-1',
+        oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+        status: 'ACTIVE',
+        duration_days: 30,
+        started_at: new Date().toISOString(),
+        ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        strikes: 0,
+        grace_days_used: 1,
+      };
+
+      mockPool.query.mockResolvedValueOnce({ rows: [recoveryContract] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ streak: '0' }] });
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // No attestation today
 
@@ -1636,7 +1663,7 @@ describe('ContractsService', () => {
     it('should double down on an active contract', async () => {
       // contract lookup
       mockPool.query.mockResolvedValueOnce({
-        rows: [{ id: 'contract-1', user_id: 'user-1', status: 'ACTIVE', stake_amount: 3000 }],
+        rows: [{ id: 'contract-1', user_id: 'user-1', status: 'ACTIVE', stake_amount: 30 }],
       });
       // user lookup
       mockPool.query.mockResolvedValueOnce({
@@ -1647,10 +1674,10 @@ describe('ContractsService', () => {
       // escrow account lookup
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
 
-      const result = await service.doubleDownStake('contract-1', 'user-1', 2000);
+      const result = await service.doubleDownStake('contract-1', 'user-1', 20);
 
       expect(result.contractId).toBe('contract-1');
-      expect(result.newTotal).toBe(5000);
+      expect(result.newTotal).toBe(50);
       expect(result.paymentIntentId).toBe('pi_test_123');
       expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_1', 2000, 'contract-1');
       expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
@@ -1658,8 +1685,8 @@ describe('ContractsService', () => {
         expect.objectContaining({ type: 'STAKE_DOUBLE_DOWN' }),
       );
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('STAKE_DOUBLED_DOWN', expect.objectContaining({
-        additionalAmount: 2000,
-        newTotal: 5000,
+        additionalAmount: 20,
+        newTotal: 50,
       }));
     });
 

@@ -4,7 +4,7 @@ import { Pool } from 'pg';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 
-const validRegisterOpts = { ageConfirmation: true, termsAccepted: true };
+const validRegisterOpts = { ageConfirmation: true, termsAccepted: true, dateOfBirth: '1990-01-01' };
 
 const mockClient = {
   query: jest.fn(),
@@ -113,13 +113,14 @@ describe('AuthService', () => {
 
     it('should return userId + token for valid credentials', async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ id: 'user-uuid', email: 'test@styx.protocol', password_hash: hashedPassword, status: 'ACTIVE', failed_login_attempts: 0, locked_until: null }],
+        rows: [{ id: 'user-uuid', email: 'test@styx.protocol', password_hash: hashedPassword, status: 'ACTIVE', integrity_score: 50, failed_login_attempts: 0, locked_until: null }],
       });
 
       const result = await service.login('test@styx.protocol', 'correct-password');
 
       expect(result.userId).toBe('user-uuid');
       expect(result.token).toBeDefined();
+      expect(result.integrity).toBe(50);
     });
 
     it('should reject login with wrong password', async () => {

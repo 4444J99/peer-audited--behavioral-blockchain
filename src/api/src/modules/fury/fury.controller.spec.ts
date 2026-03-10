@@ -29,8 +29,8 @@ describe('FuryController', () => {
   describe('getAssignments', () => {
     it('should return pending assignments for a Fury user', async () => {
       const assignments = [
-        { assignment_id: 'a-1', proof_id: 'p-1', media_uri: 'https://r2.styx.app/video.mp4' },
-        { assignment_id: 'a-2', proof_id: 'p-2', media_uri: 'https://r2.styx.app/video2.mp4' },
+        { assignment_id: 'a-1', proof_id: 'p-1', media_uri: 'https://r2.styx.app/video.mp4', oath_category: 'RECOVERY_NOCONTACT' },
+        { assignment_id: 'a-2', proof_id: 'p-2', media_uri: 'https://r2.styx.app/video2.mp4', oath_category: 'BIOLOGICAL_WEIGHT' },
       ];
       mockPool.query.mockResolvedValueOnce({ rows: assignments });
 
@@ -39,24 +39,32 @@ describe('FuryController', () => {
       expect(result).toEqual({
         assignments: [
           {
+            id: 'a-1',
             assignmentId: 'a-1',
             proofId: 'p-1',
             assignedAt: undefined,
             contractId: undefined,
             submittedAt: undefined,
+            category: 'RECOVERY_NOCONTACT',
             contentType: undefined,
             description: undefined,
+            redactionStatus: undefined,
             viewUrl: null,
+            subjectAlias: undefined,
           },
           {
+            id: 'a-2',
             assignmentId: 'a-2',
             proofId: 'p-2',
             assignedAt: undefined,
             contractId: undefined,
             submittedAt: undefined,
+            category: 'BIOLOGICAL_WEIGHT',
             contentType: undefined,
             description: undefined,
+            redactionStatus: undefined,
             viewUrl: null,
+            subjectAlias: undefined,
           },
         ],
       });

@@ -33,7 +33,7 @@ export class AuthService {
   async register(
     email: string,
     password: string, // allow-secret
-    opts?: { ageConfirmation?: boolean; termsAccepted?: boolean; dateOfBirth?: string },
+    opts: { ageConfirmation: boolean; termsAccepted: boolean; dateOfBirth: string },
   ): Promise<{ userId: string; token: string }> { // allow-secret
     const maybeConnect = (this.pool as unknown as { connect?: () => Promise<PoolClient> }).connect;
     const client = typeof maybeConnect === 'function' ? await maybeConnect.call(this.pool) : null;
@@ -52,17 +52,19 @@ export class AuthService {
       if (!opts?.termsAccepted) {
         throw new BadRequestException('You must accept the Terms of Service and Privacy Policy');
       }
-      if (opts?.dateOfBirth) {
-        const dob = new Date(opts.dateOfBirth);
-        if (isNaN(dob.getTime())) {
-          throw new BadRequestException('Invalid date of birth format');
-        }
-        const now = new Date();
-        const age = now.getFullYear() - dob.getFullYear() -
-          (now < new Date(now.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
-        if (age < 18) {
-          throw new BadRequestException('You must be at least 18 years old to use Styx');
-        }
+      if (!opts?.dateOfBirth) {
+        throw new BadRequestException('Date of birth is required');
+      }
+      
+      const dob = new Date(opts.dateOfBirth);
+      if (isNaN(dob.getTime())) {
+        throw new BadRequestException('Invalid date of birth format');
+      }
+      const now = new Date();
+      const age = now.getFullYear() - dob.getFullYear() -
+        (now < new Date(now.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
+      if (age < 18) {
+        throw new BadRequestException('You must be at least 18 years old to use Styx');
       }
 
       // Check for existing user
@@ -110,9 +112,9 @@ export class AuthService {
     }
   }
 
-  async login(email: string, password: string): Promise<{ userId: string; token: string }> { // allow-secret
+  async login(email: string, password: string): Promise<{ userId: string; token: string; integrity: number }> { // allow-secret
     const result = await this.pool.query(
-      'SELECT id, email, password_hash, status, failed_login_attempts, locked_until FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, status, integrity_score, failed_login_attempts, locked_until FROM users WHERE email = $1',
       [email],
     );
 
@@ -161,7 +163,7 @@ export class AuthService {
     }
 
     const token = this.signToken(user.id, user.email); // allow-secret
-    return { userId: user.id, token };
+    return { userId: user.id, token, integrity: user.integrity_score };
   }
 
   private signToken(userId: string, email: string): string {
