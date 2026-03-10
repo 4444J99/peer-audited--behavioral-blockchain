@@ -1,5 +1,6 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { Request } from 'express';
+import * as geoip from 'geoip-lite';
 import { Pool } from 'pg';
 import { JurisdictionTier, STATE_TIERS } from '../../../services/geofencing';
 import { IdentityVerificationService } from './identity-verification.service';
@@ -23,7 +24,7 @@ export interface ComplianceDecision {
   action: ComplianceAction;
   tier: JurisdictionTier;
   state: string | null;
-  stateSource: 'cf-ipstate' | 'x-styx-state' | 'none';
+  stateSource: 'cf-ipstate' | 'x-styx-state' | 'ip-lookup' | 'none';
   missingLocation: boolean;
   overrideIgnoredInProduction: boolean;
 }
@@ -104,8 +105,10 @@ export class CompliancePolicyService {
   }
 
   shouldFailOpenOnMissingLocation(): boolean {
-    const isProduction = process.env.NODE_ENV === 'production';
-    if (isProduction) return false;
+    const explicitAction = String(process.env.GEO_MISSING_HEADER_ACTION || '').trim().toLowerCase();
+    if (explicitAction) {
+      return explicitAction === 'allow' || explicitAction === 'open' || explicitAction === 'true';
+    }
 
     const raw = process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
     if (raw == null) return false; // fail-closed by default (Phase Beta P0-004)
@@ -273,7 +276,7 @@ export class CompliancePolicyService {
 
   private resolveStateFromRequest(req: Request): {
     state: string | null;
-    source: 'cf-ipstate' | 'x-styx-state' | 'none';
+    source: 'cf-ipstate' | 'x-styx-state' | 'ip-lookup' | 'none';
     overrideIgnoredInProduction: boolean;
   } {
     const cfIpState = this.toSingleHeaderValue(req.headers['cf-ipstate']);
@@ -292,6 +295,15 @@ export class CompliancePolicyService {
         state: override.toUpperCase(),
         source: 'x-styx-state',
         overrideIgnoredInProduction: false,
+      };
+    }
+
+    const ipState = this.lookupStateFromRequestIp(req);
+    if (ipState) {
+      return {
+        state: ipState,
+        source: 'ip-lookup',
+        overrideIgnoredInProduction: !!override && isProduction,
       };
     }
 
@@ -320,5 +332,32 @@ export class CompliancePolicyService {
     if (!value) return null;
     if (Array.isArray(value)) return value[0] ?? null;
     return value;
+  }
+
+  private lookupStateFromRequestIp(req: Request): string | null {
+    const ip = this.extractClientIp(req);
+    if (!ip) return null;
+
+    const geo = geoip.lookup(ip);
+    if (!geo || geo.country !== 'US' || !geo.region) {
+      return null;
+    }
+
+    return String(geo.region).toUpperCase();
+  }
+
+  private extractClientIp(req: Request): string | null {
+    const forwardedFor = this.toSingleHeaderValue(req.headers['x-forwarded-for']);
+    const candidate =
+      this.toSingleHeaderValue(req.headers['cf-connecting-ip']) ||
+      forwardedFor?.split(',')[0]?.trim() ||
+      this.toSingleHeaderValue(req.headers['x-real-ip']) ||
+      req.ip ||
+      req.socket?.remoteAddress ||
+      (req.connection as { remoteAddress?: string } | undefined)?.remoteAddress ||
+      null;
+
+    if (!candidate) return null;
+    return candidate.replace(/^::ffff:/, '').trim() || null;
   }
 }

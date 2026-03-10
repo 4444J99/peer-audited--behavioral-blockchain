@@ -1,6 +1,11 @@
+jest.mock('geoip-lite', () => ({ lookup: jest.fn() }));
+
 import { ForbiddenException } from '@nestjs/common';
 import { GeofenceGuard } from './geofence.guard';
 import { CompliancePolicyService } from '../../modules/compliance/compliance-policy.service';
+import * as geoip from 'geoip-lite';
+
+const mockLookup = geoip.lookup as jest.Mock;
 
 describe('GeofenceGuard', () => {
   let guard: GeofenceGuard;
@@ -9,6 +14,8 @@ describe('GeofenceGuard', () => {
 
   beforeEach(() => {
     process.env = { ...envSnapshot };
+    mockLookup.mockReset();
+    delete process.env.GEO_MISSING_HEADER_ACTION;
     delete process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
     delete process.env.NODE_ENV;
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
@@ -156,6 +163,33 @@ describe('GeofenceGuard', () => {
     // shouldFailOpenOnMissingLocation() returns false → guard blocks.
     expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
     expect(warnSpy).toHaveBeenCalled();
+  });
+
+  it('should allow in production when missing-location policy is explicitly allow', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.GEO_MISSING_HEADER_ACTION = 'allow';
+    compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
+    guard = new GeofenceGuard(compliancePolicy);
+
+    const context = createContext({
+      headers: {},
+      originalUrl: '/contracts',
+      method: 'GET',
+    });
+
+    expect(guard.canActivate(context)).toBe(true);
+  });
+
+  it('should allow when request IP resolves to a permitted state', () => {
+    mockLookup.mockReturnValue({ country: 'US', region: 'CA' });
+
+    const context = createContext({
+      headers: { 'x-forwarded-for': '8.8.8.8' },
+      originalUrl: '/contracts',
+      method: 'GET',
+    });
+
+    expect(guard.canActivate(context)).toBe(true);
   });
 
   it('should allow x-styx-state override in non-production when fail-open enabled', () => {

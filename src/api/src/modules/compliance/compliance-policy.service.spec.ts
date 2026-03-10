@@ -1,7 +1,12 @@
+jest.mock('geoip-lite', () => ({ lookup: jest.fn() }));
+
 import { CompliancePolicyService, ComplianceMode, ComplianceAction } from './compliance-policy.service';
 import { IdentityVerificationService, UserComplianceStatus } from './identity-verification.service';
 import { JurisdictionTier } from '../../../services/geofencing';
 import { Request } from 'express';
+import * as geoip from 'geoip-lite';
+
+const mockLookup = geoip.lookup as jest.Mock;
 
 describe('CompliancePolicyService', () => {
   let service: CompliancePolicyService;
@@ -25,6 +30,8 @@ describe('CompliancePolicyService', () => {
       mockIdentityVerification as unknown as IdentityVerificationService,
     );
     jest.clearAllMocks();
+    mockLookup.mockReset();
+    delete process.env.GEO_MISSING_HEADER_ACTION;
     delete process.env.KYC_ENFORCEMENT_ENABLED;
     delete process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
     delete process.env.NODE_ENV;
@@ -76,6 +83,18 @@ describe('CompliancePolicyService', () => {
 
     it('should return false for non-"true" values', () => {
       process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'yes';
+      expect(service.shouldFailOpenOnMissingLocation()).toBe(false);
+    });
+
+    it('should honor GEO_MISSING_HEADER_ACTION=allow in production', () => {
+      process.env.NODE_ENV = 'production';
+      process.env.GEO_MISSING_HEADER_ACTION = 'allow';
+      expect(service.shouldFailOpenOnMissingLocation()).toBe(true);
+    });
+
+    it('should honor GEO_MISSING_HEADER_ACTION=block in production', () => {
+      process.env.NODE_ENV = 'production';
+      process.env.GEO_MISSING_HEADER_ACTION = 'block';
       expect(service.shouldFailOpenOnMissingLocation()).toBe(false);
     });
   });
@@ -337,6 +356,48 @@ describe('CompliancePolicyService', () => {
       const result = service.evaluateRequestPolicy(req);
       expect(result.allowed).toBe(true);
       expect(result.missingLocation).toBe(true);
+    });
+
+    it('should allow in production when GEO_MISSING_HEADER_ACTION=allow and no location headers', () => {
+      process.env.NODE_ENV = 'production';
+      process.env.GEO_MISSING_HEADER_ACTION = 'allow';
+      const req = makeRequest({ method: 'POST', originalUrl: '/contracts' });
+      const result = service.evaluateRequestPolicy(req);
+      expect(result.allowed).toBe(true);
+      expect(result.missingLocation).toBe(true);
+    });
+
+    it('should resolve state from request IP when location headers are missing', () => {
+      mockLookup.mockReturnValue({ country: 'US', region: 'CA' });
+      const req = makeRequest({
+        method: 'GET',
+        originalUrl: '/contracts',
+        headers: { 'x-forwarded-for': '8.8.8.8' },
+      });
+      const result = service.evaluateRequestPolicy(req);
+      expect(result.allowed).toBe(true);
+      expect(result.state).toBe('CA');
+      expect(result.stateSource).toBe('ip-lookup');
+      expect(result.missingLocation).toBe(false);
+    });
+
+    it('should use IP lookup in production even when x-styx-state override is ignored', () => {
+      process.env.NODE_ENV = 'production';
+      mockLookup.mockReturnValue({ country: 'US', region: 'NY' });
+      const req = makeRequest({
+        method: 'GET',
+        originalUrl: '/contracts',
+        headers: {
+          'x-styx-state': 'WA',
+          'x-forwarded-for': '8.8.4.4',
+        },
+      });
+      const result = service.evaluateRequestPolicy(req);
+      expect(result.allowed).toBe(true);
+      expect(result.state).toBe('NY');
+      expect(result.stateSource).toBe('ip-lookup');
+      expect(result.overrideIgnoredInProduction).toBe(true);
+      expect(result.missingLocation).toBe(false);
     });
 
     it('should set overrideIgnoredInProduction when override header present in production', () => {
