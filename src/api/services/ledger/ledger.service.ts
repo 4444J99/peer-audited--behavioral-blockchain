@@ -78,14 +78,15 @@ export class LedgerService {
   }
 
   /**
-   * Returns the net balance for an account in integer cents (total debits - total credits).
-   * Debit entries increase the account; credit entries decrease it.
+   * Returns the net balance for an account in integer cents (total credits - total debits).
+   * Credit entries increase the balance (liability/equity increase); debit entries decrease it.
+   * This is the canonical sign convention for all user and system accounts in Styx.
    */
   async getAccountBalance(accountId: string): Promise<number> {
     const result = await this.pool.query(
       `SELECT
-        COALESCE(SUM(CASE WHEN debit_account_id = $1 THEN amount ELSE 0 END), 0)
-        - COALESCE(SUM(CASE WHEN credit_account_id = $1 THEN amount ELSE 0 END), 0)
+        COALESCE(SUM(CASE WHEN credit_account_id = $1 THEN amount ELSE 0 END), 0)
+        - COALESCE(SUM(CASE WHEN debit_account_id = $1 THEN amount ELSE 0 END), 0)
         AS balance
       FROM entries
       WHERE debit_account_id = $1 OR credit_account_id = $1`,

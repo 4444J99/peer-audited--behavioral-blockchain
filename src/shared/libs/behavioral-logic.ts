@@ -63,6 +63,18 @@ export const MAX_GRACE_DAYS_PER_MONTH = 2;
 export const ONBOARDING_BONUS_AMOUNT = 500; // cents ($5.00)
 
 /**
+ * Theorem 2: Genesis Hash
+ * Fixed 64-char hex value for the start of the tamper-evident log.
+ */
+export const GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+
+/**
+ * Theorem 8: Isolation Guardrails
+ * Maximum aggregate no-contact targets allowed across all active contracts.
+ */
+export const ABSOLUTE_MAX_ISOLATION_TARGETS = 10;
+
+/**
  * AEGIS-04: Dispute Grace Period
  * Hours allowed to file a dispute before final stake liquidation.
  */
@@ -74,6 +86,18 @@ export const DISPUTE_GRACE_PERIOD_HOURS = 24;
  * Reserved: Dynamic stake messaging (Phase Omega)
  */
 export const LOSS_AVERSION_COEFFICIENT = 1.955;
+
+/**
+ * Theorem 7: Shadow-Ban Threshold
+ * Integrity score below which a Fury is excluded from job rotation.
+ */
+export const SHADOW_BAN_THRESHOLD = 20;
+
+/**
+ * Theorem 7: Default Consensus Size
+ * Standard number of Furies assigned to each proof audit.
+ */
+export const FURY_CONSENSUS_SIZE = 3;
 
 /**
  * BE-05: Dynamic Downscaling Threshold
@@ -207,3 +231,47 @@ export function isOathStreamActive(category: OathCategory): boolean {
   const stream = (category as string).split('_')[0];
   return (ACTIVE_OATH_STREAMS as readonly string[]).includes(stream);
 }
+
+/**
+ * RECOVERY-02: 90-Day Execution Matrix (Theorem 9)
+ * Maps psychological vulnerability peaks to system state triggers.
+ */
+export enum RecoveryState {
+  LOCKDOWN = 'STATE_LOCKDOWN',
+  WEEKEND_SHIELD = 'STATE_WEEKEND_SHIELD',
+  REWARD_INJECTION = 'STATE_REWARD_INJECTION',
+  FRICTION_DELAY = 'STATE_FRICTION_DELAY',
+  ALPHA_COMPLETE = 'STATE_ALPHA_COMPLETE',
+  NORMAL = 'STATE_NORMAL',
+}
+
+export const RECOVERY_MATRIX = {
+  [RecoveryState.LOCKDOWN]: {
+    startDay: 0,
+    endDay: 14,
+    multiplier: 2.5,
+    description: 'Acute Withdrawal (Panic Phase)',
+  },
+  [RecoveryState.WEEKEND_SHIELD]: {
+    multiplier: 2.0,
+    description: 'Structural Isolation (Weekend Void)',
+  },
+  [RecoveryState.REWARD_INJECTION]: {
+    triggerDay: 21,
+    refundPct: 0.05,
+    description: 'Dopamine Trough (Anhedonia Pivot)',
+  },
+  [RecoveryState.FRICTION_DELAY]: {
+    startDay: 45,
+    endDay: 60,
+    multiplier: 1.5,
+    delayHrs: 48,
+    description: 'Bargaining Stage',
+  },
+  [RecoveryState.ALPHA_COMPLETE]: {
+    triggerDay: 90,
+    feePct: 0,
+    description: 'Identity Reconstruction (Omega Milestone)',
+  },
+};
+

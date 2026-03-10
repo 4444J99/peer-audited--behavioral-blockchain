@@ -16,13 +16,13 @@ import type { ContractsStackParamList } from '../App';
 type Props = NativeStackScreenProps<ContractsStackParamList, 'Attestation'>;
 
 interface AttestationStatus {
-  contractId: string;
-  oathCategory: string;
-  streakDays: number;
-  daysRemaining: number;
-  graceDaysAvailable: number;
-  todayAttested: boolean;
-  totalStrikes: number;
+  contract_id: string;
+  oath_category: string;
+  streak_days: number;
+  days_remaining: number;
+  grace_days_available: number;
+  today_attested: boolean;
+  total_strikes: number;
 }
 
 export function AttestationScreen({ route, navigation }: Props) {
@@ -109,30 +109,30 @@ export function AttestationScreen({ route, navigation }: Props) {
           {/* Stats Grid */}
           <View style={styles.statsGrid}>
             <View style={styles.statBox}>
-              <Text style={[styles.statValue, { color: '#f59e0b' }]}>{status.streakDays}</Text>
+              <Text style={[styles.statValue, { color: '#f59e0b' }]}>{status.streak_days}</Text>
               <Text style={styles.statLabel}>Day Streak</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statValue}>{status.daysRemaining}</Text>
+              <Text style={styles.statValue}>{status.days_remaining}</Text>
               <Text style={styles.statLabel}>Days Left</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={[styles.statValue, { color: '#888' }]}>{status.graceDaysAvailable}</Text>
+              <Text style={[styles.statValue, { color: '#888' }]}>{status.grace_days_available}</Text>
               <Text style={styles.statLabel}>Grace Days</Text>
             </View>
           </View>
 
           {/* Strike Warning */}
-          {status.totalStrikes > 0 && (
+          {status.total_strikes > 0 && (
             <View style={styles.strikeWarning}>
               <Text style={styles.strikeText}>
-                {status.totalStrikes} missed attestation{status.totalStrikes > 1 ? 's' : ''} — {3 - status.totalStrikes} remaining before auto-fail
+                {status.total_strikes} missed attestation{status.total_strikes > 1 ? 's' : ''} — {3 - status.total_strikes} remaining before auto-fail
               </Text>
             </View>
           )}
 
           {/* Already Attested Today */}
-          {status.todayAttested ? (
+          {status.today_attested ? (
             <View style={styles.successCard}>
               <Text style={styles.successIcon}>{'✓'}</Text>
               <Text style={styles.successTitle}>Already attested today</Text>

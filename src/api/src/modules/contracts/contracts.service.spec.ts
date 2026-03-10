@@ -45,6 +45,7 @@ describe('ContractsService', () => {
 
   const mockAegis = {
     validatePsychologicalGuardrails: jest.fn().mockReturnValue(true),
+    getVolatilityMultiplier: jest.fn().mockReturnValue(1.0),
   } as unknown as AegisProtocolService;
 
   const mockRecovery = {
@@ -743,7 +744,7 @@ describe('ContractsService', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeUser, integrity_score: 10 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
-      
+
 
       await service.resolveContract('contract-1', 'FAILED');
 
@@ -752,6 +753,28 @@ describe('ContractsService', () => {
       expect(updateUserCall[1][0]).toBe(0);
     });
 
+    it('should apply 1.5x Aegis multiplier on weekend failures', async () => {
+      // Mock weekend night: Saturday 11 PM
+      const weekendDate = new Date('2026-03-07T23:00:00Z');
+      jest.useFakeTimers().setSystemTime(weekendDate);
+      (mockAegis.getVolatilityMultiplier as jest.Mock).mockReturnValue(1.5);
+
+      mockPool.query.mockResolvedValueOnce({ rows: [contractRow] }); // contract lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // status update
+      mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeUser, integrity_score: 50 }] }); // user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // score update
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] }); // escrow lookup
+
+      await service.resolveContract('contract-1', 'FAILED');
+
+      // base penalty = -20. multiplier = 1.5. total penalty = -30.
+      // newScore = 50 - 30 = 20.
+      const scoreCall = mockPool.query.mock.calls.find(c => c[0].includes('UPDATE users SET integrity_score'));
+      expect(scoreCall[1][0]).toBe(20);
+
+      (mockAegis.getVolatilityMultiplier as jest.Mock).mockReturnValue(1.0); // Reset
+      jest.useRealTimers();
+    });
     it('should log CONTRACT_RESOLVED to TruthLog', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
@@ -1342,6 +1365,8 @@ describe('ContractsService', () => {
       // Grace days count query
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       // UPDATE contracts
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // UPDATE attestations
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       const result = await service.useGraceDay('contract-1', 'user-1');

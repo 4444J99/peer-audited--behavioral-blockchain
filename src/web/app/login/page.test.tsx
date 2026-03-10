@@ -41,7 +41,7 @@ describe('LoginPage', () => {
   it('renders the page heading', () => {
     const html = renderToStaticMarkup(<LoginPage />);
 
-    expect(html).toContain('Enter the Arena');
+    expect(html).toContain('Access Your Recovery');
   });
 
   it('renders the submit button with SIGN IN text', () => {

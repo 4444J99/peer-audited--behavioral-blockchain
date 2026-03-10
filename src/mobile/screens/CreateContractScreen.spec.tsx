@@ -182,10 +182,11 @@ describe('CreateContractScreen – render', () => {
     expect(text).toContain('stake amounts are simulated');
   });
 
-  it('only shows Behavioral stream when phase1NoContactOnly is true', () => {
+  it('only shows Recovery stream when phase1NoContactOnly is true', () => {
     const { container } = renderScreen();
     const text = allText(container);
-    expect(text).toContain('Behavioral');
+    expect(text).toContain('Recovery');
+    expect(text).not.toContain('Biological');
     expect(text).not.toContain('Cognitive');
     expect(text).not.toContain('Professional');
     expect(text).not.toContain('Creative');
@@ -207,12 +208,30 @@ describe('CreateContractScreen – render', () => {
   it('blocks submit when stake is below minimum bound', async () => {
     const { getByText, getByPlaceholderText, container } = renderScreen();
 
-    fireEvent.click(getByText('Behavioral').closest('button') as HTMLElement);
-    fireEvent.click(getByText('No Texting / Calling').closest('button') as HTMLElement);
+    fireEvent.click(getByText('Recovery').closest('button') as HTMLElement);
+    fireEvent.click(getByText('No Contact Boundary').closest('button') as HTMLElement);
     fireEvent.click(getByText('Screen Time API').closest('button') as HTMLElement);
     fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
       target: { value: 'No contact for 30 days.' },
     });
+    fireEvent.change(getByPlaceholderText('partner@example.com'), {
+      target: { value: 'ally@styx.io' },
+    });
+    fireEvent.change(getByPlaceholderText('Target #1'), {
+      target: { value: 'Former Partner' },
+    });
+    fireEvent.click(
+      getByText('I am entering this contract voluntarily.').closest('button') as HTMLElement,
+    );
+    fireEvent.click(
+      getByText('No minors are involved in this contract.').closest('button') as HTMLElement,
+    );
+    fireEvent.click(
+      getByText('No dependents are affected by this commitment.').closest('button') as HTMLElement,
+    );
+    fireEvent.click(
+      getByText('This does not violate any legal obligations.').closest('button') as HTMLElement,
+    );
     fireEvent.change(getByPlaceholderText('0.00'), { target: { value: '5' } });
     fireEvent.click(getByText('STAKE AND COMMIT').closest('button') as HTMLElement);
 
@@ -225,19 +244,51 @@ describe('CreateContractScreen – render', () => {
   it('submits valid bounded stake and navigates to contract detail', async () => {
     const { getByText, getByPlaceholderText, container } = renderScreen();
 
-    fireEvent.click(getByText('Behavioral').closest('button') as HTMLElement);
-    fireEvent.click(getByText('No Texting / Calling').closest('button') as HTMLElement);
+    fireEvent.click(getByText('Recovery').closest('button') as HTMLElement);
+    fireEvent.click(getByText('No Contact Boundary').closest('button') as HTMLElement);
     fireEvent.click(getByText('Fury Peer Review').closest('button') as HTMLElement);
     fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
       target: { value: 'No social stalking for 30 days.' },
     });
+    fireEvent.change(getByPlaceholderText('partner@example.com'), {
+      target: { value: 'ally@styx.io' },
+    });
+    fireEvent.change(getByPlaceholderText('Target #1'), {
+      target: { value: 'Former Partner' },
+    });
+    fireEvent.click(
+      getByText('I am entering this contract voluntarily.').closest('button') as HTMLElement,
+    );
+    fireEvent.click(
+      getByText('No minors are involved in this contract.').closest('button') as HTMLElement,
+    );
+    fireEvent.click(
+      getByText('No dependents are affected by this commitment.').closest('button') as HTMLElement,
+    );
+    fireEvent.click(
+      getByText('This does not violate any legal obligations.').closest('button') as HTMLElement,
+    );
     fireEvent.click(getByText('$50 Default').closest('button') as HTMLElement);
     fireEvent.click(getByText('STAKE AND COMMIT').closest('button') as HTMLElement);
 
     await waitFor(() => {
-      expect(ApiClient.createContract).toHaveBeenCalledWith(
-        expect.objectContaining({ stakeAmount: 50 }),
-      );
+      expect(ApiClient.createContract).toHaveBeenCalledWith({
+        oathCategory: 'RECOVERY_NOCONTACT',
+        verificationMethod: 'FURY_NETWORK',
+        description: 'No social stalking for 30 days.',
+        stakeAmount: 50,
+        durationDays: 30,
+        recoveryMetadata: {
+          accountabilityPartnerEmail: 'ally@styx.io',
+          noContactIdentifiers: ['Former Partner'],
+          acknowledgments: {
+            voluntary: true,
+            noMinors: true,
+            noDependents: true,
+            noLegalObligations: true,
+          },
+        },
+      });
       expect(mockNav.navigate).toHaveBeenCalledWith('ContractDetail', {
         contractId: 'contract-123',
       });

@@ -8,25 +8,29 @@ import { StripeFBOService } from './stripe-fbo.service';
 import { StripePayoutProvider } from './stripe-payout.provider';
 import { SettlementService } from './settlement.service';
 import { SettlementWorker } from './settlement.worker';
+import { ReconciliationService } from './reconciliation.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { StripeFboService } from '../../../services/escrow/stripe.service';
 
 @Module({
   imports: [
     forwardRef(() => ContractsModule), 
     NotificationsModule, 
-    ComplianceModule
+    forwardRef(() => ComplianceModule),
   ],
   controllers: [PaymentsController],
   providers: [
     PaymentRouterService,
     StripeFBOService,
+    StripeFboService,
     StripePayoutProvider,
     SettlementService,
     SettlementWorker,
+    ReconciliationService,
     LedgerService,
     TruthLogService,
   ],
-  exports: [PaymentRouterService, StripeFBOService, SettlementService],
+  exports: [PaymentRouterService, StripeFBOService, StripeFboService, SettlementService, ReconciliationService],
 })
 export class PaymentsModule {}

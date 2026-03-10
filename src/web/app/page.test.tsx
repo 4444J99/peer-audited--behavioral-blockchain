@@ -2,8 +2,16 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 jest.mock('next/link', () => {
-  return function MockLink({ children, href }: { children: React.ReactNode; href: string }) {
-    return <a href={href}>{children}</a>;
+  return function MockLink({
+    children,
+    href,
+    className,
+  }: {
+    children: React.ReactNode;
+    href: string;
+    className?: string;
+  }) {
+    return <a href={href} className={className}>{children}</a>;
   };
 });
 
@@ -27,16 +35,18 @@ describe('Landing Page', () => {
     expect(html).toContain('STYX');
   });
 
-  it('renders the tagline about Blockchain of Truth', () => {
+  it('renders the relationship-recovery beta tagline', () => {
     const html = renderToStaticMarkup(<Home />);
 
-    expect(html).toContain('Blockchain of Truth');
+    expect(html).toContain('Private beta for no-contact recovery.');
+    expect(html).toContain('test-money commitments');
+    expect(html).toContain('small US allowlist');
   });
 
-  it('renders the ENTER THE ARENA button', () => {
+  it('renders the START RECOVERY button', () => {
     const html = renderToStaticMarkup(<Home />);
 
-    expect(html).toContain('ENTER THE ARENA');
+    expect(html).toContain('START RECOVERY');
   });
 
   it('links to login when user is not authenticated', () => {
@@ -45,26 +55,29 @@ describe('Landing Page', () => {
     expect(html).toContain('href="/login"');
   });
 
-  it('renders the VIEW THE MANIFESTO link to pitch page', () => {
+  it('does not render the removed manifesto or ask CTAs', () => {
     const html = renderToStaticMarkup(<Home />);
 
-    expect(html).toContain('VIEW THE MANIFESTO');
-    expect(html).toContain('href="/pitch"');
+    expect(html).not.toContain('VIEW THE MANIFESTO');
+    expect(html).not.toContain('ASK STYX AI');
+    expect(html).not.toContain('href="/pitch"');
+    expect(html).not.toContain('href="/ask"');
   });
 
   it('renders the feature grid cards', () => {
     const html = renderToStaticMarkup(<Home />);
 
-    expect(html).toContain('ZERO TRUST');
-    expect(html).toContain('WEAPONIZED WHISTLEBLOWER');
-    expect(html).toContain('HARD LEDGER');
+    expect(html).toContain('DAILY CHECK-INS');
+    expect(html).toContain('ACCOUNTABILITY PARTNER');
+    expect(html).toContain('TEST-MONEY PILOT');
   });
 
-  it('describes the loss aversion mechanism', () => {
+  it('describes the recovery commitment model', () => {
     const html = renderToStaticMarkup(<Home />);
 
-    expect(html).toContain('loss aversion');
-    expect(html).toContain('No Contact');
+    expect(html).toContain('daily attestations');
+    expect(html).toContain('trusted person into the loop');
+    expect(html).toContain('No real funds move in this beta');
   });
 
   it('renders the Styx logo circle', () => {
@@ -73,26 +86,24 @@ describe('Landing Page', () => {
     expect(html).toContain('>S</span>');
   });
 
-  it('renders the ASK STYX AI link to ask page', () => {
+  it('links only to login when the user is unauthenticated', () => {
     const html = renderToStaticMarkup(<Home />);
 
-    expect(html).toContain('ASK STYX AI');
-    expect(html).toContain('href="/ask"');
+    expect(html).toContain('href="/login"');
+    expect(html.match(/href=\"\//g)?.length).toBe(1);
   });
 
-  it('styles ASK STYX AI button with red hover border', () => {
+  it('styles the primary recovery CTA as a white pill button', () => {
     const html = renderToStaticMarkup(<Home />);
 
-    // The /ask link has hover:border-red-600 to differentiate from the manifesto link
-    expect(html).toContain('hover:border-red-600');
+    expect(html).toContain('class="px-8 py-4 bg-white text-black font-extrabold rounded-full hover:bg-neutral-200 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"');
   });
 
-  it('renders all three CTA buttons', () => {
+  it('renders a single recovery CTA', () => {
     const html = renderToStaticMarkup(<Home />);
 
-    expect(html).toContain('ENTER THE ARENA');
-    expect(html).toContain('VIEW THE MANIFESTO');
-    expect(html).toContain('ASK STYX AI');
+    expect(html).toContain('START RECOVERY');
+    expect(html.match(/<a /g)?.length).toBe(1);
   });
 
   it('links to dashboard when user is authenticated', () => {
@@ -106,8 +117,16 @@ describe('Landing Page', () => {
       }),
     }));
     jest.doMock('next/link', () => {
-      return function MockLink({ children, href }: { children: React.ReactNode; href: string }) {
-        return <a href={href}>{children}</a>;
+      return function MockLink({
+        children,
+        href,
+        className,
+      }: {
+        children: React.ReactNode;
+        href: string;
+        className?: string;
+      }) {
+        return <a href={href} className={className}>{children}</a>;
       };
     });
 

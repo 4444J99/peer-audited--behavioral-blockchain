@@ -9,7 +9,7 @@
  * controlled by displayName — not baked into enum keys or DB columns.
  */
 
-import { OathCategory, ACTIVE_OATH_STREAMS, VerificationMethod } from './behavioral-logic';
+import { OathCategory } from './behavioral-logic';
 
 // ---------------------------------------------------------------------------
 // Realm ID enum — compile-time constants, no DB roundtrip for UI rendering

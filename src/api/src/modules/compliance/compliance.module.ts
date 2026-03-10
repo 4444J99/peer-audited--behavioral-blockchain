@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, Module, forwardRef } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
 import { ComplianceController } from './compliance.controller';
 import { CompliancePolicyService } from './compliance-policy.service';
@@ -11,10 +11,11 @@ import {
   StripeIdentityProviderAdapter,
 } from './identity-provider.service';
 import { MedicalExemptionService } from './medical-exemption.service';
+import { ContractsModule } from '../contracts/contracts.module';
 
 @Global()
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, forwardRef(() => ContractsModule)],
   controllers: [ComplianceController],
   providers: [
     CompliancePolicyService,

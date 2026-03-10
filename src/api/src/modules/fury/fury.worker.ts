@@ -253,15 +253,15 @@ export class FuryWorker implements OnModuleInit {
     proofId: string,
   ): Promise<void> {
     // Look up system accounts
-    const escrowResult = await this.pool.query(
-      `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
+    const bountyPoolResult = await this.pool.query(
+      `SELECT id FROM accounts WHERE name = 'FURY_BOUNTY_POOL' LIMIT 1`,
     );
     const revenueResult = await this.pool.query(
       `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
     );
-    if (escrowResult.rows.length === 0 || revenueResult.rows.length === 0) return;
+    if (bountyPoolResult.rows.length === 0 || revenueResult.rows.length === 0) return;
 
-    const escrowAccountId = escrowResult.rows[0].id;
+    const bountyPoolAccountId = bountyPoolResult.rows[0].id;
     const revenueAccountId = revenueResult.rows[0].id;
 
     // For honeypot proofs, penalize flagged Furies financially
@@ -311,7 +311,7 @@ export class FuryWorker implements OnModuleInit {
       try {
         if (wasCorrect) {
           await this.ledger!.recordTransaction(
-            escrowAccountId,
+            bountyPoolAccountId,
             furyAccountId,
             AUDITOR_STAKE_AMOUNT,
             contractId ?? undefined,

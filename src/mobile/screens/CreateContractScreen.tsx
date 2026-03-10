@@ -19,37 +19,25 @@ import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 type Props = NativeStackScreenProps<ContractsStackParamList, 'CreateContract'>;
 
 const OATH_CATEGORIES = [
-  { value: 'NO_CONTACT_TEXT', label: 'No Texting / Calling', stream: 'Behavioral' },
-  { value: 'NO_CONTACT_SOCIAL', label: 'No Social Stalking', stream: 'Behavioral' },
-  { value: 'NO_CONTACT_LOCATION', label: 'Geofence Avoidance', stream: 'Behavioral' },
-  { value: 'NO_CONTACT_RESPONSE', label: 'No Response to Reach-out', stream: 'Behavioral' },
+  { value: 'RECOVERY_NOCONTACT', label: 'No Contact Boundary', stream: 'Recovery' },
+  { value: 'RECOVERY_SUBSTANCE', label: 'Substance Abstinence', stream: 'Recovery' },
+  { value: 'RECOVERY_DETOX', label: 'Behavioral Detox', stream: 'Recovery' },
+  { value: 'BIOLOGICAL_WEIGHT', label: 'Weight Management', stream: 'Biological' },
+  { value: 'BIOLOGICAL_CARDIO', label: 'Cardiovascular Stamina', stream: 'Biological' },
   { value: 'COGNITIVE_DIGITAL', label: 'Digital Fasting', stream: 'Cognitive' },
   { value: 'COGNITIVE_FOCUS', label: 'Deep Work Focus', stream: 'Cognitive' },
-  { value: 'COGNITIVE_QUEUE', label: 'Inbox Zero', stream: 'Cognitive' },
-  { value: 'COGNITIVE_LEARNING', label: 'Learning Retention', stream: 'Cognitive' },
   { value: 'PROFESSIONAL_SALES', label: 'Sales Velocity', stream: 'Professional' },
   { value: 'PROFESSIONAL_CODE', label: 'Developer Throughput', stream: 'Professional' },
-  { value: 'PROFESSIONAL_TIME', label: 'Punctuality', stream: 'Professional' },
   { value: 'CREATIVE_WRITING', label: 'Deep Writing', stream: 'Creative' },
-  { value: 'CREATIVE_ART', label: 'Visual Arts', stream: 'Creative' },
-  { value: 'CREATIVE_MUSIC', label: 'Music Practice', stream: 'Creative' },
   { value: 'CREATIVE_BUILD', label: 'Maker Build', stream: 'Creative' },
-  { value: 'VISUAL_NUTRITION', label: 'Nutritional Transparency', stream: 'Environmental' },
-  { value: 'VISUAL_ENVIRONMENT', label: 'Tidiness & Minimalism', stream: 'Environmental' },
-  { value: 'VISUAL_IMAGE', label: 'Personal Presentation', stream: 'Environmental' },
-  { value: 'VISUAL_LITERACY', label: 'Active Reading', stream: 'Environmental' },
-  { value: 'SOCIAL_COMMUNITY', label: 'Civic Engagement', stream: 'Character' },
-  { value: 'SOCIAL_CHARITY', label: 'Philanthropic Velocity', stream: 'Character' },
-  { value: 'SOCIAL_CONNECTION', label: 'Family Presence', stream: 'Character' },
 ];
 
 const VERIFICATION_METHODS = [
-  { value: 'SCREENTIME', label: 'Screen Time API' },
-  { value: 'EXTERNAL_API', label: 'Third-Party API' },
+  { value: 'ATTESTATION', label: 'Daily Check-In' },
   { value: 'FURY_NETWORK', label: 'Fury Peer Review' },
-  { value: 'TIME_LAPSE_PROOF', label: 'Time-Lapse Proof' },
+  { value: 'SCREENTIME', label: 'Screen Time API' },
+  { value: 'HEALTHKIT', label: 'Apple HealthKit' },
   { value: 'GPS', label: 'GPS Geofence' },
-  { value: 'LEDGER', label: 'Financial Ledger' },
 ];
 
 const DURATION_OPTIONS = [
@@ -71,7 +59,7 @@ const STAKE_PRESETS = [
 export function CreateContractScreen({ navigation }: Props) {
   const featureFlags = getMobileFeatureFlags();
   const visibleCategories = featureFlags.phase1NoContactOnly
-    ? OATH_CATEGORIES.filter((c) => c.value.startsWith('NO_CONTACT_'))
+    ? OATH_CATEGORIES.filter((c) => c.value.startsWith('RECOVERY_'))
     : OATH_CATEGORIES;
   const streams = Array.from(new Set(visibleCategories.map((c) => c.stream)));
   const [selectedStream, setSelectedStream] = useState('');
@@ -80,6 +68,14 @@ export function CreateContractScreen({ navigation }: Props) {
   const [stakeAmount, setStakeAmount] = useState('');
   const [durationDays, setDurationDays] = useState(30);
   const [description, setDescription] = useState('');
+  const [partnerEmail, setPartnerEmail] = useState('');
+  const [targetIdentifiers, setTargetIdentifiers] = useState(['']);
+  const [acks, setAcks] = useState({
+    voluntary: false,
+    noMinors: false,
+    noDependents: false,
+    noLegalObligations: false,
+  });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -101,6 +97,18 @@ export function CreateContractScreen({ navigation }: Props) {
       return;
     }
 
+    const isRecovery = oathCategory.startsWith('RECOVERY_');
+    if (isRecovery) {
+      if (!partnerEmail) {
+        setError('Accountability partner email is required for recovery contracts.');
+        return;
+      }
+      if (!acks.voluntary || !acks.noMinors || !acks.noDependents || !acks.noLegalObligations) {
+        setError('All safety acknowledgments must be confirmed.');
+        return;
+      }
+    }
+
     const amount = parseFloat(stakeAmount);
     if (isNaN(amount) || amount <= 0) {
       setError('Stake amount must be a positive number.');
@@ -114,10 +122,18 @@ export function CreateContractScreen({ navigation }: Props) {
     setSubmitting(true);
     try {
       const result = await ApiClient.createContract({
-        category: oathCategory,
+        oathCategory,
+        verificationMethod,
         description,
         stakeAmount: Number(amount.toFixed(2)),
         durationDays,
+        recoveryMetadata: isRecovery
+          ? {
+              accountabilityPartnerEmail: partnerEmail,
+              noContactIdentifiers: targetIdentifiers.filter((id) => id.trim() !== ''),
+              acknowledgments: acks,
+            }
+          : undefined,
       });
       navigation.navigate('ContractDetail', { contractId: result.contractId });
     } catch (err: any) {
@@ -215,6 +231,79 @@ export function CreateContractScreen({ navigation }: Props) {
         multiline
         numberOfLines={3}
       />
+
+      {/* Recovery Sections */}
+      {oathCategory.startsWith('RECOVERY_') ? (
+        <>
+          <Text style={styles.label}>ACCOUNTABILITY PARTNER EMAIL</Text>
+          <TextInput
+            style={styles.textInput}
+            value={partnerEmail}
+            onChangeText={setPartnerEmail}
+            placeholder="partner@example.com"
+            placeholderTextColor="#555"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+          {oathCategory === 'RECOVERY_NOCONTACT' ? (
+            <>
+              <Text style={styles.label}>NO-CONTACT TARGETS (NAME/LABEL)</Text>
+              <Text style={styles.hint}>List up to 3 people/entities you are avoiding. These will be hashed before storage.</Text>
+              {targetIdentifiers.map((val, idx) => (
+                <View key={idx} style={styles.identifierRow}>
+                  <TextInput
+                    style={[styles.textInput, { flex: 1 }]}
+                    value={val}
+                    onChangeText={(text) => {
+                      const newIds = [...targetIdentifiers];
+                      newIds[idx] = text;
+                      setTargetIdentifiers(newIds);
+                    }}
+                    placeholder={`Target #${idx + 1}`}
+                    placeholderTextColor="#555"
+                  />
+                  {targetIdentifiers.length > 1 && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => setTargetIdentifiers(targetIdentifiers.filter((_, i) => i !== idx))}
+                    >
+                      <Text style={styles.removeButtonText}>✕</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))}
+              {targetIdentifiers.length < 3 && (
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={() => setTargetIdentifiers([...targetIdentifiers, ''])}
+                >
+                  <Text style={styles.addButtonText}>+ ADD TARGET</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          ) : null}
+
+          <Text style={styles.label}>SAFETY ACKNOWLEDGMENTS</Text>
+          {[
+            { key: 'voluntary', label: 'I am entering this contract voluntarily.' },
+            { key: 'noMinors', label: 'No minors are involved in this contract.' },
+            { key: 'noDependents', label: 'No dependents are affected by this commitment.' },
+            { key: 'noLegalObligations', label: 'This does not violate any legal obligations.' },
+          ].map((ack) => (
+            <TouchableOpacity
+              key={ack.key}
+              style={styles.ackRow}
+              onPress={() => setAcks({ ...acks, [ack.key]: !acks[ack.key as keyof typeof acks] })}
+            >
+              <View style={[styles.checkbox, acks[ack.key as keyof typeof acks] && styles.checkboxSelected]}>
+                {acks[ack.key as keyof typeof acks] && <Text style={styles.checkMark}>✓</Text>}
+              </View>
+              <Text style={styles.ackLabel}>{ack.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </>
+      ) : null}
 
       {/* Stake Amount */}
       <Text style={styles.label}>STAKE AMOUNT (USD)</Text>
@@ -347,6 +436,50 @@ const styles = StyleSheet.create({
   categoryChipSelected: { backgroundColor: '#ff444430', borderColor: '#ff4444' },
   categoryText: { color: '#888', fontSize: 12, fontWeight: '500' },
   categoryTextSelected: { color: '#ff4444' },
+  textInput: {
+    backgroundColor: '#1a1a2e',
+    borderWidth: 1,
+    borderColor: '#2a2a3e',
+    borderRadius: 10,
+    padding: 14,
+    color: '#e0e0e0',
+    fontSize: 14,
+  },
+  identifierRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  removeButton: {
+    backgroundColor: '#1a1a2e',
+    width: 48,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ff444430',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  removeButtonText: { color: '#ff4444', fontSize: 18 },
+  addButton: {
+    padding: 12,
+    backgroundColor: '#1a1a2e',
+    borderWidth: 1,
+    borderColor: '#2a2a3e',
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  addButtonText: { color: '#ff4444', fontSize: 11, fontWeight: '800' },
+  ackRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 12 },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#2a2a3e',
+    backgroundColor: '#1a1a2e',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSelected: { borderColor: '#ff4444', backgroundColor: '#ff444420' },
+  checkMark: { color: '#ff4444', fontWeight: 'bold' },
+  ackLabel: { color: '#9a9ab3', fontSize: 13, flex: 1 },
   textArea: {
     backgroundColor: '#1a1a2e',
     borderWidth: 1,

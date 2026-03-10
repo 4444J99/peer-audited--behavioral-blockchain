@@ -62,7 +62,7 @@ export class AuthController {
     const result = await this.authService.register(dto.email, dto.password, {
       ageConfirmation: dto.ageConfirmation,
       termsAccepted: dto.termsAccepted,
-      dateOfBirth: dto.dateOfBirth,
+      dateOfBirth: dto.dateOfBirth ?? '',
     });
     await this.issueBrowserSessionCookies(res, result.userId, result.token);
     return result;

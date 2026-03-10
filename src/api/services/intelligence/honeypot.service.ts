@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Pool } from 'pg';
 import { FuryRouterService } from '../fury-router/fury-router.service';
 import { TruthLogService } from '../ledger/truth-log.service';
+import { SHADOW_BAN_THRESHOLD, FURY_CONSENSUS_SIZE } from '../../../shared/libs/behavioral-logic';
 
 /**
  * HoneypotService — Cron-based synthetic proof injector for Fury accuracy grading.
@@ -26,9 +27,6 @@ export class HoneypotService {
 
   /** Minimum number of active Furies required before injecting */
   private static readonly MIN_FURIES_FOR_INJECTION = 3;
-
-  /** Integrity score threshold below which a Fury is shadow-banned */
-  private static readonly SHADOW_BAN_THRESHOLD = 20;
 
   constructor(
     private readonly pool: Pool,
@@ -69,7 +67,7 @@ export class HoneypotService {
          WHERE status = 'ACTIVE'
            AND role IN ('USER', 'FURY', 'ADMIN')
            AND integrity_score >= $1`,
-        [HoneypotService.SHADOW_BAN_THRESHOLD],
+        [SHADOW_BAN_THRESHOLD],
       );
 
 
@@ -118,7 +116,7 @@ export class HoneypotService {
       const jobId = await this.furyRouter.routeProof(
         honeypotProofId,
         hostContract.user_id,
-        3,
+        FURY_CONSENSUS_SIZE,
       );
 
       await this.truthLog.appendEvent('HONEYPOT_INJECTED', {
@@ -169,14 +167,14 @@ export class HoneypotService {
         );
 
         const newScore = updateRes.rows[0].integrity_score;
-        if (newScore < HoneypotService.SHADOW_BAN_THRESHOLD) {
+        if (newScore < SHADOW_BAN_THRESHOLD) {
           this.logger.warn(
             `Fury ${assignment.fury_user_id} SHADOW-BANNED (Score: ${newScore})`,
           );
           
           // Theorem 7: Formally update status to SHADOW_BANNED if below threshold
           await client.query(
-            `UPDATE users SET status = 'SHADOW_BANNED' WHERE id = $1`,
+            `UPDATE users SET status = 'SHADOW_BANNED' WHERE id = $1 AND status != 'SHADOW_BANNED'`,
             [assignment.fury_user_id],
           );
         }

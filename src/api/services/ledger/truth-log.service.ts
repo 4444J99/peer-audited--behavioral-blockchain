@@ -4,7 +4,7 @@ import { createHash } from 'crypto';
 
 @Injectable()
 export class TruthLogService {
-  private static readonly GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+  public static readonly GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
 
   constructor(private readonly pool: Pool) {}
 

@@ -71,7 +71,10 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
         mediaUri: storageKey,
       });
 
-      Alert.alert('Proof Secured', 'Your recording has been sent to the Fury Router for anonymous validation.');
+      Alert.alert(
+        'Beta Proof Secured',
+        'Your recording has been sent to the Fury Router for validation. NOTE: This is a synthetic capture path for the Phase 1 Beta pilot.',
+      );
       setVideoUri(null);
       setCaptureHash(null);
       setWatermark(null);
@@ -86,6 +89,13 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
 
   return (
     <View style={styles.container}>
+      {/* Beta Preview Banner */}
+      <View style={styles.betaBanner}>
+        <Text style={styles.betaBannerText}>
+          NON-PRODUCTION CAPTURE PREVIEW
+        </Text>
+      </View>
+
       {/* Mock Camera Viewfinder */}
       <View style={styles.viewfinder}>
         {isRecording ? (
@@ -175,4 +185,6 @@ const styles = StyleSheet.create({
   watermarkText: { color: '#FFF', fontFamily: 'monospace', fontSize: 10, textAlign: 'center' },
   captureMeta: { alignItems: 'center', paddingBottom: 10 },
   captureMetaText: { color: '#888', fontSize: 12 },
+  betaBanner: { backgroundColor: '#20150d', padding: 8, borderBottomWidth: 1, borderBottomColor: '#4a2a16' },
+  betaBannerText: { color: '#ffb26b', fontSize: 10, fontWeight: '800', textAlign: 'center', letterSpacing: 1 },
 });

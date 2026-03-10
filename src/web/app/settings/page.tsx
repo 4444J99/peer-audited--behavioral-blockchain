@@ -310,11 +310,11 @@ export default function SettingsPage() {
         <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-2xl">
           <div className="flex items-center gap-3 mb-6">
             <Wallet className="text-neutral-500" size={20} />
-            <h2 className="font-bold uppercase tracking-widest text-sm">Payment Methods</h2>
+            <h2 className="font-bold uppercase tracking-widest text-sm">Recovery Commitments</h2>
           </div>
 
           <p className="text-neutral-400 text-sm mb-4">
-            Manage your connected payment methods, escrow balances, and Stripe configuration in the Capital Escrow dashboard.
+            Manage your simulated stakes, test-money balance, and Stripe configuration in the Commitment Wallet.
           </p>
 
           <Link
@@ -322,7 +322,7 @@ export default function SettingsPage() {
             className="inline-flex items-center gap-2 px-6 py-3 bg-lime-600 hover:bg-lime-700 text-white font-bold rounded-xl transition-colors"
           >
             <Wallet size={16} />
-            Open Capital Escrow
+            Open Commitment Wallet
             <ExternalLink size={14} />
           </Link>
         </div>
@@ -331,12 +331,12 @@ export default function SettingsPage() {
         <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-2xl">
           <div className="flex items-center gap-3 mb-4">
             <Eye className="text-neutral-500" size={20} />
-            <h2 className="font-bold uppercase tracking-widest text-sm">Linguistic Cloak</h2>
+            <h2 className="font-bold uppercase tracking-widest text-sm">Terminology</h2>
           </div>
 
           <p className="text-neutral-400 text-sm mb-4">
-            Toggle between Stygian terminology (Fury, Oath, Stake, Vault) and neutral App Store-compliant wording
-            (Peer Review, Commitment, Deposit). Affects all UI text across the app.
+            Toggle between recovery-focused terminology (Commitment, Peer Review, Deposit) and 
+            native Stygian wording (Oath, Fury, Stake). Affects all UI text across the app.
           </p>
 
           <div className="flex items-center justify-between p-4 bg-black rounded-xl border border-neutral-800 max-w-md">

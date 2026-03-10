@@ -165,15 +165,7 @@ export function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
           tabBarIcon: ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>{'💰'}</Text>,
         }}
       />
-      <MainTab.Screen
-        name="Fury"
-        component={FuryScreen}
-        options={{
-          title: 'Fury',
-          tabBarIcon: ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>{'⚖'}</Text>,
-        }}
-      />
-      {/* Camera/proof capture tab intentionally hidden until native capture pipeline is production-ready */}
+      {/* Fury / Auditor workbench intentionally hidden for Phase 1 Beta lockdown */}
       <MainTab.Screen
         name="Profile"
         options={{

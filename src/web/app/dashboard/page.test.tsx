@@ -55,13 +55,13 @@ describe('Dashboard Page', () => {
     const html = renderToStaticMarkup(<IdentityDashboard />);
 
     // Component starts with loading=true, showing the loading indicator
-    expect(html).toContain('Loading Identity Oracle');
+    expect(html).toContain('Loading Recovery Dashboard');
   });
 
-  it('renders the Identity Oracle heading', () => {
+  it('renders the Recovery Dashboard heading', () => {
     const html = renderToStaticMarkup(<IdentityDashboard />);
 
-    expect(html).toContain('Identity Oracle');
+    expect(html).toContain('Recovery Dashboard');
   });
 
   it('renders nav links to key sections', () => {
@@ -69,6 +69,6 @@ describe('Dashboard Page', () => {
 
     // These appear in the loading state because the header renders immediately
     // Actually the loading state is a separate branch. Let's verify the loading UI elements.
-    expect(html).toContain('Loading Identity Oracle');
+    expect(html).toContain('Loading Recovery Dashboard');
   });
 });

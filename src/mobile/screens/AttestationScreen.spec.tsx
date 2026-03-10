@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
@@ -130,6 +130,10 @@ describe('AttestationScreen – render', () => {
     return container.textContent || '';
   }
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('does not render attestation content while loading', () => {
     const { container } = renderScreen();
     const text = allText(container);
@@ -154,5 +158,52 @@ describe('AttestationScreen – render', () => {
     expect(AttestationScreen).toBeDefined();
     expect(typeof AttestationScreen).toBe('function');
     expect(AttestationScreen.name).toBe('AttestationScreen');
+  });
+
+  it('renders snake_case attestation status data from the API', async () => {
+    (ApiClient.getAttestationStatus as jest.Mock).mockResolvedValueOnce({
+      contract_id: 'test-contract-123',
+      oath_category: 'RECOVERY_NOCONTACT',
+      streak_days: 12,
+      days_remaining: 18,
+      grace_days_available: 2,
+      today_attested: false,
+      total_strikes: 1,
+    });
+
+    const { getByText } = renderScreen();
+
+    expect(await waitFor(() => getByText('Daily Attestation'))).toBeTruthy();
+    expect(getByText('12')).toBeTruthy();
+    expect(getByText('18')).toBeTruthy();
+    expect(getByText('2')).toBeTruthy();
+    expect(getByText('1 missed attestation — 2 remaining before auto-fail')).toBeTruthy();
+    expect(getByText('I HELD THE LINE')).toBeTruthy();
+  });
+
+  it('submits a daily attestation and renders the confirmed state', async () => {
+    (ApiClient.getAttestationStatus as jest.Mock).mockResolvedValueOnce({
+      contract_id: 'test-contract-123',
+      oath_category: 'RECOVERY_NOCONTACT',
+      streak_days: 4,
+      days_remaining: 10,
+      grace_days_available: 3,
+      today_attested: false,
+      total_strikes: 0,
+    });
+    (ApiClient.submitAttestation as jest.Mock).mockResolvedValueOnce({
+      status: 'ok',
+    });
+
+    const { getByText } = renderScreen();
+
+    await waitFor(() => expect(getByText('I HELD THE LINE')).toBeTruthy());
+    fireEvent.click(getByText('I HELD THE LINE').closest('button') as HTMLElement);
+
+    await waitFor(() => {
+      expect(ApiClient.submitAttestation).toHaveBeenCalledWith('test-contract-123');
+      expect(getByText('Attestation Recorded')).toBeTruthy();
+      expect(getByText('Back to Contract')).toBeTruthy();
+    });
   });
 });

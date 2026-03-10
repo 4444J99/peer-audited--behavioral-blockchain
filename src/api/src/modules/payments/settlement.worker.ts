@@ -6,6 +6,7 @@ import { StripePayoutProvider } from './stripe-payout.provider';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { PayoutStatus } from '../../common/interfaces/payout-provider.interface';
+import { buildSettlementQuote } from './settlement-quote';
 
 @Injectable()
 export class SettlementWorker implements OnModuleInit {
@@ -42,12 +43,7 @@ export class SettlementWorker implements OnModuleInit {
     }
 
     // TKT-P0-001: Deterministic Payout Breakdown
-    const quote = {
-      totalCents: amountCents,
-      platformFeeCents: Math.round(amountCents * 0.1),
-      bountyPoolCents: Math.round(amountCents * 0.2),
-      userRefundCents: (outcome === 'PASS' || dispositionMode === 'REFUND') ? amountCents : 0,
-    };
+    const quote = buildSettlementQuote(amountCents, outcome, dispositionMode);
 
     const runResult = await this.pool.query(
       `INSERT INTO settlement_runs (contract_id, outcome, amount_cents, status, started_at, disposition_mode, quote_json)
@@ -59,7 +55,7 @@ export class SettlementWorker implements OnModuleInit {
 
     try {
       let result;
-      const actualAction = (outcome === 'PASS' || dispositionMode === 'REFUND') ? 'RELEASE' : 'CAPTURE';
+      const actualAction = quote.actualAction;
 
       if (actualAction === 'RELEASE') {
         result = await this.stripeProvider.releaseFunds(paymentIntentId, amountCents);
@@ -122,7 +118,9 @@ export class SettlementWorker implements OnModuleInit {
     }
     const row = contractResult.rows[0];
 
-    const shouldReturnToUser = outcome === 'PASS' || dispositionMode === 'REFUND';
+    const shouldReturnToUser = quote?.actualAction === 'RELEASE'
+      || outcome === 'PASS'
+      || dispositionMode === 'REFUND';
 
     const metadata = {
       settlement_run_id: runId,
@@ -132,32 +130,53 @@ export class SettlementWorker implements OnModuleInit {
     };
 
     if (shouldReturnToUser) {
-      await this.ledger.recordTransaction(
-        row.escrow_account_id,
-        row.account_id,
-        amountCents,
-        contractId,
-        { ...metadata, type: 'REAL_MONEY_SETTLEMENT_RELEASE', reason: outcome === 'FAILED' ? 'REFUND_ONLY_JURISDICTION' : 'CONTRACT_SUCCESS' }
+      const txType = 'REAL_MONEY_SETTLEMENT_RELEASE';
+      const existing = await this.pool.query(
+        "SELECT id FROM entries WHERE metadata->>'settlement_run_id' = $1 AND metadata->>'type' = $2",
+        [runId, txType]
       );
+      if (existing.rows.length === 0) {
+        await this.ledger.recordTransaction(
+          row.escrow_account_id,
+          row.account_id,
+          amountCents,
+          contractId,
+          { ...metadata, type: txType, reason: outcome === 'FAILED' ? 'REFUND_ONLY_JURISDICTION' : 'CONTRACT_SUCCESS' }
+        );
+      }
     } else {
       // Capture to Revenue
-      await this.ledger.recordTransaction(
-        row.escrow_account_id,
-        row.revenue_account_id,
-        amountCents,
-        contractId,
-        { ...metadata, type: 'REAL_MONEY_SETTLEMENT_CAPTURE' }
+      const captureType = 'REAL_MONEY_SETTLEMENT_CAPTURE';
+      const existingCapture = await this.pool.query(
+        "SELECT id FROM entries WHERE metadata->>'settlement_run_id' = $1 AND metadata->>'type' = $2",
+        [runId, captureType]
       );
+      if (existingCapture.rows.length === 0) {
+        await this.ledger.recordTransaction(
+          row.escrow_account_id,
+          row.revenue_account_id,
+          amountCents,
+          contractId,
+          { ...metadata, type: captureType }
+        );
+      }
 
       // Move portion to Bounty Pool
       if (quote?.bountyPoolCents > 0) {
-        await this.ledger.recordTransaction(
-          row.revenue_account_id,
-          row.bounty_pool_account_id,
-          quote.bountyPoolCents,
-          contractId,
-          { ...metadata, type: 'BOUNTY_POOL_TOPUP' }
+        const topupType = 'BOUNTY_POOL_TOPUP';
+        const existingTopup = await this.pool.query(
+          "SELECT id FROM entries WHERE metadata->>'settlement_run_id' = $1 AND metadata->>'type' = $2",
+          [runId, topupType]
         );
+        if (existingTopup.rows.length === 0) {
+          await this.ledger.recordTransaction(
+            row.revenue_account_id,
+            row.bounty_pool_account_id,
+            quote.bountyPoolCents,
+            contractId,
+            { ...metadata, type: topupType }
+          );
+        }
       }
     }
   }

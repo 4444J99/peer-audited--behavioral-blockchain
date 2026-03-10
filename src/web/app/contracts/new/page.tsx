@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Flame, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -8,44 +8,44 @@ import { api } from '../../../services/api-client';
 import { getRealmBySlug } from '../../../../shared/libs/realm-registry';
 
 const OATH_CATEGORIES = [
-  { value: 'BIOLOGICAL_WEIGHT', label: 'Weight Management', stream: 'Biological' },
-  { value: 'BIOLOGICAL_CARDIO', label: 'Cardiovascular Stamina', stream: 'Biological' },
-  { value: 'BIOLOGICAL_METABOLIC', label: 'Glucose Stability', stream: 'Biological' },
-  { value: 'BIOLOGICAL_SLEEP', label: 'Sleep Integrity', stream: 'Biological' },
-  { value: 'BIOLOGICAL_SOBRIETY', label: 'Sobriety HRV', stream: 'Biological' },
-  { value: 'COGNITIVE_DIGITAL', label: 'Digital Fasting', stream: 'Cognitive' },
-  { value: 'COGNITIVE_FOCUS', label: 'Deep Work Focus', stream: 'Cognitive' },
-  { value: 'COGNITIVE_QUEUE', label: 'Inbox Zero', stream: 'Cognitive' },
-  { value: 'COGNITIVE_LEARNING', label: 'Learning Retention', stream: 'Cognitive' },
-  { value: 'PROFESSIONAL_SALES', label: 'Sales Velocity', stream: 'Professional' },
-  { value: 'PROFESSIONAL_CODE', label: 'Developer Throughput', stream: 'Professional' },
-  { value: 'PROFESSIONAL_TIME', label: 'Punctuality', stream: 'Professional' },
-  { value: 'CREATIVE_WRITING', label: 'Deep Writing', stream: 'Creative' },
-  { value: 'CREATIVE_ART', label: 'Visual Arts', stream: 'Creative' },
-  { value: 'CREATIVE_MUSIC', label: 'Music Practice', stream: 'Creative' },
-  { value: 'CREATIVE_BUILD', label: 'Maker Build', stream: 'Creative' },
-  { value: 'VISUAL_NUTRITION', label: 'Nutritional Transparency', stream: 'Environmental' },
-  { value: 'VISUAL_ENVIRONMENT', label: 'Tidiness & Minimalism', stream: 'Environmental' },
-  { value: 'VISUAL_IMAGE', label: 'Personal Presentation', stream: 'Environmental' },
-  { value: 'VISUAL_LITERACY', label: 'Active Reading', stream: 'Environmental' },
-  { value: 'SOCIAL_COMMUNITY', label: 'Civic Engagement', stream: 'Character' },
-  { value: 'SOCIAL_CHARITY', label: 'Philanthropic Velocity', stream: 'Character' },
-  { value: 'SOCIAL_CONNECTION', label: 'Family Presence', stream: 'Character' },
+  // { value: 'BIOLOGICAL_WEIGHT', label: 'Weight Management', stream: 'Biological' },
+  // { value: 'BIOLOGICAL_CARDIO', label: 'Cardiovascular Stamina', stream: 'Biological' },
+  // { value: 'BIOLOGICAL_METABOLIC', label: 'Glucose Stability', stream: 'Biological' },
+  // { value: 'BIOLOGICAL_SLEEP', label: 'Sleep Integrity', stream: 'Biological' },
+  // { value: 'BIOLOGICAL_SOBRIETY', label: 'Sobriety HRV', stream: 'Biological' },
+  // { value: 'COGNITIVE_DIGITAL', label: 'Digital Fasting', stream: 'Cognitive' },
+  // { value: 'COGNITIVE_FOCUS', label: 'Deep Work Focus', stream: 'Cognitive' },
+  // { value: 'COGNITIVE_QUEUE', label: 'Inbox Zero', stream: 'Cognitive' },
+  // { value: 'COGNITIVE_LEARNING', label: 'Learning Retention', stream: 'Cognitive' },
+  // { value: 'PROFESSIONAL_SALES', label: 'Sales Velocity', stream: 'Professional' },
+  // { value: 'PROFESSIONAL_CODE', label: 'Developer Throughput', stream: 'Professional' },
+  // { value: 'PROFESSIONAL_TIME', label: 'Punctuality', stream: 'Professional' },
+  // { value: 'CREATIVE_WRITING', label: 'Deep Writing', stream: 'Creative' },
+  // { value: 'CREATIVE_ART', label: 'Visual Arts', stream: 'Creative' },
+  // { value: 'CREATIVE_MUSIC', label: 'Music Practice', stream: 'Creative' },
+  // { value: 'CREATIVE_BUILD', label: 'Maker Build', stream: 'Creative' },
+  // { value: 'VISUAL_NUTRITION', label: 'Nutritional Transparency', stream: 'Environmental' },
+  // { value: 'VISUAL_ENVIRONMENT', label: 'Tidiness & Minimalism', stream: 'Environmental' },
+  // { value: 'VISUAL_IMAGE', label: 'Personal Presentation', stream: 'Environmental' },
+  // { value: 'VISUAL_LITERACY', label: 'Active Reading', stream: 'Environmental' },
+  // { value: 'SOCIAL_COMMUNITY', label: 'Civic Engagement', stream: 'Character' },
+  // { value: 'SOCIAL_CHARITY', label: 'Philanthropic Velocity', stream: 'Character' },
+  // { value: 'SOCIAL_CONNECTION', label: 'Family Presence', stream: 'Character' },
   { value: 'RECOVERY_NOCONTACT', label: 'No-Contact Boundary', stream: 'Recovery' },
-  { value: 'RECOVERY_SUBSTANCE', label: 'Substance Abstinence', stream: 'Recovery' },
-  { value: 'RECOVERY_DETOX', label: 'Behavioral Detox', stream: 'Recovery' },
-  { value: 'RECOVERY_AVOIDANCE', label: 'Environment Avoidance', stream: 'Recovery' },
+  // { value: 'RECOVERY_SUBSTANCE', label: 'Substance Abstinence', stream: 'Recovery' },
+  // { value: 'RECOVERY_DETOX', label: 'Behavioral Detox', stream: 'Recovery' },
+  // { value: 'RECOVERY_AVOIDANCE', label: 'Environment Avoidance', stream: 'Recovery' },
 ];
 
 const VERIFICATION_METHODS = [
-  { value: 'HEALTHKIT', label: 'HealthKit (iOS)' },
-  { value: 'HEALTHCONNECT', label: 'Health Connect (Android)' },
-  { value: 'SCREENTIME', label: 'Screen Time API' },
-  { value: 'EXTERNAL_API', label: 'Third-Party API' },
+  // { value: 'HEALTHKIT', label: 'HealthKit (iOS)' },
+  // { value: 'HEALTHCONNECT', label: 'Health Connect (Android)' },
+  // { value: 'SCREENTIME', label: 'Screen Time API' },
+  // { value: 'EXTERNAL_API', label: 'Third-Party API' },
   { value: 'FURY_NETWORK', label: 'Fury Peer Review' },
-  { value: 'TIME_LAPSE_PROOF', label: 'Time-Lapse Proof' },
-  { value: 'GPS', label: 'GPS Geofence' },
-  { value: 'LEDGER', label: 'Financial Ledger' },
+  // { value: 'TIME_LAPSE_PROOF', label: 'Time-Lapse Proof' },
+  // { value: 'GPS', label: 'GPS Geofence' },
+  // { value: 'LEDGER', label: 'Financial Ledger' },
   { value: 'ATTESTATION', label: 'Daily Attestation' },
 ];
 
@@ -57,7 +57,7 @@ const DURATION_OPTIONS = [
   { value: 90, label: '90 days' },
 ];
 
-export default function NewContractPage() {
+function NewContractPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const realmSlug = searchParams.get('realm');
@@ -90,8 +90,8 @@ export default function NewContractPage() {
     }
 
     const amount = parseFloat(stakeAmount);
-    if (isNaN(amount) || amount <= 0) {
-      setError('Stake amount must be a positive number.');
+    if (isNaN(amount) || amount <= 0 || amount > 20) {
+      setError('Stake amount must be between $1 and $20 for the current beta phase.');
       return;
     }
 
@@ -163,7 +163,7 @@ export default function NewContractPage() {
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight uppercase">New Behavioral Contract</h1>
-            <p className="text-xs text-neutral-500 uppercase tracking-widest">Stake capital against your commitment</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-widest">Commit test-money against your recovery goal</p>
           </div>
         </div>
       </header>
@@ -221,6 +221,7 @@ export default function NewContractPage() {
             <input
               type="number"
               min="1"
+              max="20"
               step="0.01"
               value={stakeAmount}
               onChange={(e) => setStakeAmount(e.target.value)}
@@ -228,7 +229,7 @@ export default function NewContractPage() {
               className="w-full p-4 pl-10 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-black text-2xl placeholder:text-neutral-700 focus:border-red-600 focus:outline-none"
             />
           </div>
-          <p className="text-xs text-neutral-600 mt-2">This amount will be held in FBO escrow. Failure means forfeiture.</p>
+          <p className="text-xs text-neutral-600 mt-2">Test-money only ($20 cap). Failure means simulated forfeiture.</p>
         </div>
 
         {/* Duration */}
@@ -348,5 +349,20 @@ export default function NewContractPage() {
         </p>
       </form>
     </div>
+  );
+}
+
+export default function NewContractPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+          <Loader2 className="animate-spin mr-3" size={24} />
+          <span className="text-neutral-400 font-bold">Loading contract builder...</span>
+        </div>
+      }
+    >
+      <NewContractPageContent />
+    </Suspense>
   );
 }

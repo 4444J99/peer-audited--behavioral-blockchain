@@ -47,9 +47,25 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         <h1 style={{ margin: '0 0 0.5rem', fontSize: '1.5rem', color: '#ff4444' }}>
           STYX ADMIN
         </h1>
-        <p style={{ margin: '0 0 1.5rem', fontSize: '0.875rem', color: '#888' }}>
+        <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#888' }}>
           The Judge — Administrative Console
         </p>
+
+        <div style={{
+          background: '#450a0a',
+          color: '#f87171',
+          border: '1px solid #7f1d1d',
+          padding: '0.75rem',
+          borderRadius: '6px',
+          marginBottom: '1.5rem',
+          fontSize: '0.75rem',
+          fontWeight: 700,
+          textAlign: 'center',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em'
+        }}>
+          Authorized Personnel Only. All access attempts are cryptographically logged to the Truth Ledger.
+        </div>
 
         {error && (
           <div style={{

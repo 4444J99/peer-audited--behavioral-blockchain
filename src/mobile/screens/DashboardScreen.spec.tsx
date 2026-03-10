@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
@@ -114,9 +114,70 @@ describe('DashboardScreen – parseSupportTraceMessage edge cases', () => {
 
 describe('DashboardScreen – render tests', () => {
   const { DashboardScreen } = require('../screens/DashboardScreen');
+  const { ApiClient } = require('../services/ApiClient');
+
+  const navigation = {
+    navigate: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('shows "Loading..." when loading', () => {
     const { container } = render(React.createElement(DashboardScreen));
     expect(container.textContent).toContain('Loading...');
+  });
+
+  it('renders the locked beta quick actions without a Fury route', async () => {
+    ApiClient.getMe.mockResolvedValueOnce({
+      integrity_score: 77,
+      tier: 'STANDARD',
+      contract_count: 1,
+      total_staked: 50,
+    });
+    ApiClient.getBalance.mockResolvedValueOnce({
+      ledger_balance: 12.34,
+    });
+    ApiClient.getNotifications.mockResolvedValueOnce({
+      notifications: [],
+    });
+    ApiClient.getContracts.mockResolvedValueOnce([]);
+
+    const { getByText, queryByText } = render(
+      React.createElement(DashboardScreen, { navigation }),
+    );
+
+    await waitFor(() => expect(getByText('Quick Actions')).toBeTruthy());
+
+    expect(getByText('New Oath')).toBeTruthy();
+    expect(getByText('Wallet')).toBeTruthy();
+    expect(getByText('Profile')).toBeTruthy();
+    expect(queryByText('Fury Queue')).toBeNull();
+  });
+
+  it('navigates the profile quick action to the profile tab', async () => {
+    ApiClient.getMe.mockResolvedValueOnce({
+      integrity_score: 77,
+      tier: 'STANDARD',
+      contract_count: 1,
+      total_staked: 50,
+    });
+    ApiClient.getBalance.mockResolvedValueOnce({
+      ledger_balance: 12.34,
+    });
+    ApiClient.getNotifications.mockResolvedValueOnce({
+      notifications: [],
+    });
+    ApiClient.getContracts.mockResolvedValueOnce([]);
+
+    const { getByText } = render(
+      React.createElement(DashboardScreen, { navigation }),
+    );
+
+    await waitFor(() => expect(getByText('Profile')).toBeTruthy());
+    fireEvent.click(getByText('Profile').closest('button') as HTMLElement);
+
+    expect(navigation.navigate).toHaveBeenCalledWith('Profile');
   });
 });

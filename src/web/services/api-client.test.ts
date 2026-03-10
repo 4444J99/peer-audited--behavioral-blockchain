@@ -60,6 +60,12 @@ describe('Web API client', () => {
 
       await expect(api.health()).rejects.toThrow('API 500: Internal Server Error');
     });
+
+    it('maps network failures to a product-safe unavailable message', async () => {
+      mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+      await expect(api.health()).rejects.toThrow('Styx service is temporarily unavailable. Please try again shortly.');
+    });
   });
 
   describe('token management', () => {

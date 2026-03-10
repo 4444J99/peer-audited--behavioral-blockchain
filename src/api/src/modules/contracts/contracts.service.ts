@@ -1616,7 +1616,13 @@ export class ContractsService {
           monthsInactive: 0,
         };
         // Recalculate based on delta (simplified: apply bonus/penalty to current score)
-        const delta = calculateIntegrity(history) - 50; // offset from base
+        // Aegis: Apply 1.5x volatility multiplier for weekend breaches
+        const volatilityMultiplier = this.aegis.getVolatilityMultiplier();
+        const baseDelta = calculateIntegrity(history) - 50; // offset from base
+        const delta = (outcome === 'FAILED' && volatilityMultiplier > 1)
+          ? Math.round(baseDelta * volatilityMultiplier)
+          : baseDelta;
+
         const newScore = Math.max(0, user.integrity_score + delta);
         
         // F-UX-09: Grant Phoenix Recovery badge if completing after a failure
@@ -1843,6 +1849,15 @@ export class ContractsService {
     await this.pool.query(
       'UPDATE contracts SET ends_at = $1 WHERE id = $2',
       [result.newDeadline!.toISOString(), contractId],
+    );
+
+    // F-AEGIS-09: Prevent strike by marking today's attestation as ATTESTED via Grace Day
+    const today = new Date().toISOString().split('T')[0];
+    await this.pool.query(
+      `UPDATE attestations 
+       SET status = 'ATTESTED', attested_at = NOW() 
+       WHERE contract_id = $1 AND attestation_date = $2 AND status = 'PENDING'`,
+      [contractId, today],
     );
 
     await this.truthLog.appendEvent('GRACE_DAY_USED', {

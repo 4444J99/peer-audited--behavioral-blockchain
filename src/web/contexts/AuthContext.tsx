@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { api, setAuthToken, setCsrfToken } from '../services/api-client';
 
 interface User {
@@ -35,31 +36,62 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const PUBLIC_SESSION_OPTIONAL_PREFIXES = ['/legal', '/login', '/register', '/whistleblower'];
+
+function isPublicSessionOptionalPath(pathname: string | null): boolean {
+  if (!pathname || pathname === '/') {
+    return true;
+  }
+
+  return PUBLIC_SESSION_OPTIONAL_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null); // legacy fallback visibility only
   const [isLoading, setIsLoading] = useState(true);
+  const hydrateSession = !isPublicSessionOptionalPath(pathname);
 
   // On mount, restore browser session from cookie (HttpOnly) via /users/me.
   useEffect(() => {
+    if (!hydrateSession) {
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoading(true);
+
     api.getMe()
       .then(async (me) => {
+        if (cancelled) return;
         setUser(me);
         try {
           const csrf = await api.getCsrf();
+          if (cancelled) return;
           setCsrfToken(csrf.csrfToken);
         } catch {
           // Non-fatal: mutating requests will refresh/retry if needed.
         }
       })
       .catch(() => {
+        if (cancelled) return;
         setAuthToken('');
         setCsrfToken('');
         setToken(null);
         setUser(null);
       })
-      .finally(() => setIsLoading(false));
-  }, []);
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrateSession]);
 
   const login = useCallback(async (email: string, password: string) => { // allow-secret
     const result = await api.login(email, password);

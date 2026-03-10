@@ -114,7 +114,7 @@ export class CreateContractDto {
   @IsString()
   verificationMethod!: string;
 
-  @ApiProperty({ description: 'Financial stake amount in USD', example: 50, minimum: 0.01 })
+  @ApiProperty({ description: 'Financial stake amount in USD (will be converted to cents internally)', example: 50, minimum: 0.01 })
   @IsNumber()
   @Min(0.01)
   stakeAmount!: number;

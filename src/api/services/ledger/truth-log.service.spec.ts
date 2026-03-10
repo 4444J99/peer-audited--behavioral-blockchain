@@ -1,6 +1,7 @@
 import { TruthLogService } from './truth-log.service';
 import { Pool } from 'pg';
 import { createHash } from 'crypto';
+import { GENESIS_HASH } from '../../../shared/libs/behavioral-logic';
 
 const mockClient = {
   query: jest.fn(),
@@ -38,13 +39,13 @@ describe('TruthLogService', () => {
 
     // Calculate expected hash (Theorem 2 Preimage)
     const expectedHash = createHash('sha256')
-      .update(`1|${fixedDate.toISOString()}|${TruthLogService.GENESIS_HASH}|${JSON.stringify(payload)}`)
+      .update(`1|${fixedDate.toISOString()}|${GENESIS_HASH}|${JSON.stringify(payload)}`)
       .digest('hex');
 
     // Verify INSERT statement arguments
     const insertCallArgs = (mockClient.query as jest.Mock).mock.calls[2];
     expect(insertCallArgs[0]).toContain('INSERT INTO event_log');
-    expect(insertCallArgs[1][2]).toBe(TruthLogService.GENESIS_HASH); // previous hash
+    expect(insertCallArgs[1][2]).toBe(GENESIS_HASH); // previous hash
     expect(insertCallArgs[1][3]).toBe(expectedHash); // current hash
 
     jest.useRealTimers();
@@ -80,7 +81,7 @@ describe('TruthLogService', () => {
       const fixedDate = new Date('2026-03-09T00:00:00.000Z');
       const payload1 = { a: 1 };
       const hash1 = createHash('sha256')
-        .update(`1|${fixedDate.toISOString()}|${TruthLogService.GENESIS_HASH}|${JSON.stringify(payload1)}`)
+        .update(`1|${fixedDate.toISOString()}|${GENESIS_HASH}|${JSON.stringify(payload1)}`)
         .digest('hex');
 
       const payload2 = { b: 2 };
@@ -90,7 +91,7 @@ describe('TruthLogService', () => {
 
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
         rows: [
-          { id: '1', sequence_index: 1, event_type: 'E1', payload: payload1, previous_hash: TruthLogService.GENESIS_HASH, current_hash: hash1, created_at: fixedDate },
+          { id: '1', sequence_index: 1, event_type: 'E1', payload: payload1, previous_hash: GENESIS_HASH, current_hash: hash1, created_at: fixedDate },
           { id: '2', sequence_index: 2, event_type: 'E2', payload: payload2, previous_hash: hash1, current_hash: hash2, created_at: fixedDate },
         ]
       });
@@ -108,7 +109,7 @@ describe('TruthLogService', () => {
 
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
         rows: [
-          { id: '1', sequence_index: 1, event_type: 'E1', payload: payload1, previous_hash: TruthLogService.GENESIS_HASH, current_hash: hash1, created_at: fixedDate },
+          { id: '1', sequence_index: 1, event_type: 'E1', payload: payload1, previous_hash: GENESIS_HASH, current_hash: hash1, created_at: fixedDate },
         ]
       });
 

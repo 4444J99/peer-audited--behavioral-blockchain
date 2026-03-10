@@ -103,54 +103,68 @@ export const ApiClient = {
       body: JSON.stringify({ email, password }),
     }),
 
-  register: (email: string, password: string, opts?: { ageConfirmation?: boolean; termsAccepted?: boolean }) =>
+  register: (data: { email: string; password: string; ageConfirmation: boolean; termsAccepted: boolean; dateOfBirth: string }) =>
     request<{ userId: string; token: string }>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, ...opts }),
+      body: JSON.stringify(data),
     }),
 
   // User
   getMe: () =>
     request<{
-      userId: string;
+      id: string;
       email: string;
-      integrity: number;
+      integrity_score: number;
       tier: string;
-      contractCount: number;
-      totalStaked: number;
+      contract_count: number;
+      total_staked: number;
     }>('/users/me'),
-
-  // Contracts
-  getContracts: () =>
-    request<{
-      contracts: Array<{
-        id: string;
-        category: string;
-        description: string;
-        stakeAmount: number;
-        status: string;
-        startDate: string;
-        endDate: string;
-        proofCount: number;
-        graceDaysUsed: number;
-      }>;
-    }>('/contracts'),
+getContracts: () =>
+  request<Array<{
+    id: string;
+    oath_category: string;
+    description: string;
+    stake_amount: number;
+    status: string;
+    started_at: string;
+    ends_at: string;
+    proof_count: number;
+    grace_days_used: number;
+  }>>('/contracts'),
 
   getContract: (id: string) =>
     request<{
       id: string;
-      category: string;
+      oath_category: string;
       description: string;
-      stakeAmount: number;
+      stake_amount: number;
       status: string;
-      startDate: string;
-      endDate: string;
-      proofs: Array<{ id: string; timestamp: string; status: string; mediaUrl?: string }>;
-      graceDaysUsed: number;
-      graceDaysMax: number;
+      started_at: string;
+      ends_at: string;
+      metadata: any;
+      proof_count: number;
+      proofs: Array<{ id: string; timestamp: string; status: string; media_url?: string }>;
+      grace_days_used: number;
+      grace_days_max: number;
     }>(`/contracts/${id}`),
 
-  createContract: (data: { category: string; description: string; stakeAmount: number; durationDays: number }) =>
+  createContract: (data: {
+    oathCategory: string;
+    verificationMethod: string;
+    stakeAmount: number;
+    durationDays: number;
+    description: string;
+    recoveryMetadata?: {
+      accountabilityPartnerEmail: string;
+      noContactIdentifiers?: string[];
+      acknowledgments: {
+        voluntary: boolean;
+        noMinors: boolean;
+        noDependents: boolean;
+        noLegalObligations: boolean;
+      };
+    };
+  }) =>
     request<{ contractId: string; bountyLink?: string }>('/contracts', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -209,11 +223,11 @@ export const ApiClient = {
   // Wallet
   getBalance: () =>
     request<{
-      userId: string;
+      id: string;
       email: string;
-      integrityScore: number;
-      allowedTiers: string[];
-      ledgerBalance: number;
+      integrity_score: number;
+      allowed_tiers: string[];
+      ledger_balance: number;
       status: string;
     }>('/wallet/balance'),
 
@@ -255,13 +269,13 @@ export const ApiClient = {
   // Attestations (Recovery stream)
   getAttestationStatus: (contractId: string) =>
     request<{
-      contractId: string;
-      oathCategory: string;
-      streakDays: number;
-      daysRemaining: number;
-      graceDaysAvailable: number;
-      todayAttested: boolean;
-      totalStrikes: number;
+      contract_id: string;
+      oath_category: string;
+      streak_days: number;
+      days_remaining: number;
+      grace_days_available: number;
+      today_attested: boolean;
+      total_strikes: number;
     }>(`/contracts/${contractId}/attestation`),
 
   submitAttestation: (contractId: string) =>

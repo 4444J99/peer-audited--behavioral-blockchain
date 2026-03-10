@@ -35,14 +35,17 @@ export default function LoginPage() {
           <div className="w-16 h-16 bg-red-600 rounded-full mx-auto mb-6 flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.4)]">
             <span className="text-2xl font-black text-black">S</span>
           </div>
-          <h1 className="text-4xl font-black tracking-tighter uppercase">Enter the Arena</h1>
-          <p className="text-neutral-400 mt-2">Authenticate to access the Styx protocol.</p>
+          <h1 className="text-4xl font-black tracking-tighter uppercase">Access Your Recovery</h1>
+          <p className="text-neutral-400 mt-2">Authenticate to access the Styx private beta.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="p-4 bg-red-900/30 border border-red-800 rounded-xl text-red-400 text-sm font-medium">
-              {error}
+            <div className="space-y-2">
+              <div className="p-4 bg-red-900/30 border border-red-800 rounded-xl text-red-400 text-sm font-medium">
+                {error}
+              </div>
+              <p className="text-neutral-500 text-xs text-center italic">If this persists, contact the beta team.</p>
             </div>
           )}
 
@@ -54,6 +57,7 @@ export default function LoginPage() {
               id="email"
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 bg-black border border-neutral-800 rounded-xl text-white placeholder-neutral-600 focus:outline-none focus:border-red-600 transition-colors"
@@ -69,6 +73,7 @@ export default function LoginPage() {
               id="password"
               type="password"
               required
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 bg-black border border-neutral-800 rounded-xl text-white placeholder-neutral-600 focus:outline-none focus:border-red-600 transition-colors"

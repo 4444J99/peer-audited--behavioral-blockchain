@@ -40,10 +40,6 @@ export function ContractDetailScreen({ route, navigation }: Props) {
     }
   };
 
-  const handleSubmitProof = () => {
-    navigation.navigate('SubmitProof', { contractId });
-  };
-
   const handleGraceDay = async () => {
     setActionLoading('grace');
     try {
@@ -127,7 +123,7 @@ export function ContractDetailScreen({ route, navigation }: Props) {
       ) : null}
 
       <View style={styles.header}>
-        <Text style={styles.category}>{contract.category}</Text>
+        <Text style={styles.category}>{contract.oath_category}</Text>
         <Text style={styles.status}>{contract.status}</Text>
       </View>
 
@@ -135,25 +131,25 @@ export function ContractDetailScreen({ route, navigation }: Props) {
 
       <View style={styles.statsGrid}>
         <View style={styles.statBox}>
-          <Text style={styles.statValue}>${contract.stakeAmount.toFixed(2)}</Text>
+          <Text style={styles.statValue}>${(contract.stake_amount || 0).toFixed(2)}</Text>
           <Text style={styles.statLabel}>Staked</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statValue}>{contract.proofs?.length || 0}</Text>
+          <Text style={styles.statValue}>{contract.proof_count || 0}</Text>
           <Text style={styles.statLabel}>Proofs</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statValue}>{contract.graceDaysUsed}/{contract.graceDaysMax}</Text>
+          <Text style={styles.statValue}>{contract.grace_days_used || 0}/{contract.grace_days_max || 3}</Text>
           <Text style={styles.statLabel}>Grace Days</Text>
         </View>
       </View>
 
       <View style={styles.dates}>
-        <Text style={styles.dateText}>Start: {new Date(contract.startDate).toLocaleDateString()}</Text>
-        <Text style={styles.dateText}>End: {new Date(contract.endDate).toLocaleDateString()}</Text>
+        <Text style={styles.dateText}>Start: {contract.started_at ? new Date(contract.started_at).toLocaleDateString() : 'Pending'}</Text>
+        <Text style={styles.dateText}>End: {contract.ends_at ? new Date(contract.ends_at).toLocaleDateString() : 'TBD'}</Text>
       </View>
 
-      {contract.status === 'ACTIVE' && String(contract.category || '').startsWith('RECOVERY_') && (
+      {contract.status === 'ACTIVE' && String(contract.oath_category || '').startsWith('RECOVERY_') && (
         <View style={{ gap: 12, marginBottom: 16 }}>
           <TouchableOpacity
             style={styles.attestButton}
@@ -164,10 +160,18 @@ export function ContractDetailScreen({ route, navigation }: Props) {
           
           <TouchableOpacity
             style={[styles.attestButton, { backgroundColor: '#1a1a2e', borderWidth: 1, borderColor: '#ef444430' }]}
-            onPress={() => navigation.navigate('DigitalExhaust', { 
-              contractId, 
-              targetPhoneNumber: contract.metadata?.targetPhoneNumber || 'Restricted Target' 
-            })}
+            onPress={() => {
+              // SECURITY: Never pass the raw hash/identifier string as a UI label.
+              // Fallback to "Target #1" if recovery metadata is available, otherwise "Restricted Target".
+              const targetLabel = contract.metadata?.recovery?.noContactIdentifiers?.length > 0
+                ? 'Target #1' 
+                : 'Restricted Target';
+              
+              navigation.navigate('DigitalExhaust', { 
+                contractId, 
+                targetPhoneNumber: targetLabel 
+              });
+            }}
           >
             <Text style={[styles.attestButtonText, { color: '#ef4444' }]}>Automatic Scan</Text>
           </TouchableOpacity>
@@ -176,9 +180,6 @@ export function ContractDetailScreen({ route, navigation }: Props) {
 
       {contract.status === 'ACTIVE' && (
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.primaryButton} onPress={handleSubmitProof} disabled={!!actionLoading}>
-            <Text style={styles.buttonText}>Capture Proof</Text>
-          </TouchableOpacity>
           <View style={styles.secondaryActions}>
             <TouchableOpacity style={styles.secondaryButton} onPress={handleGraceDay} disabled={!!actionLoading}>
               <Text style={styles.secondaryButtonText}>Use Grace Day</Text>

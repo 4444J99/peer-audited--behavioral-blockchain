@@ -98,17 +98,17 @@ describe('StripeFBOService', () => {
   // ─── resolveEscrow — FAIL ───
 
   describe('resolveEscrow (FAIL)', () => {
-    it('should retrieve the intent and apply the 85/15 fee split on FAIL', async () => {
-      // totalAmount = 10000 => platformFee = floor(10000 * 0.15) = 1500, furyPool = 8500
+    it('should retrieve the intent and apply the canonical 80/20 split on FAIL', async () => {
+      // totalAmount = 10000 => platformFee = 8000, furyPool = 2000
       mockPaymentIntentsRetrieve.mockResolvedValue({ id: 'pi_test_fail', amount: 10000 });
       mockTransfersCreate.mockResolvedValue({ id: 'tr_test_001' });
 
       const result = await service.resolveEscrow('pi_test_fail', 'FAIL', ['fury-1']);
 
       expect(mockPaymentIntentsRetrieve).toHaveBeenCalledWith('pi_test_fail');
-      // bountyPerFury = floor(8500 / 1) = 8500
+      // bountyPerFury = floor(2000 / 1) = 2000
       expect(mockTransfersCreate).toHaveBeenCalledWith({
-        amount: 8500,
+        amount: 2000,
         currency: 'usd',
         destination: 'fury-1',
         metadata: {
@@ -120,8 +120,8 @@ describe('StripeFBOService', () => {
     });
 
     it('should create Stripe transfers for each Fury on FAIL', async () => {
-      // totalAmount = 20000 => platformFee = 3000, furyPool = 17000
-      // bountyPerFury = floor(17000 / 2) = 8500
+      // totalAmount = 20000 => platformFee = 16000, furyPool = 4000
+      // bountyPerFury = floor(4000 / 2) = 2000
       mockPaymentIntentsRetrieve.mockResolvedValue({ id: 'pi_test_multi_fury', amount: 20000 });
       mockTransfersCreate.mockResolvedValue({ id: 'tr_test_multi' });
 
@@ -129,7 +129,7 @@ describe('StripeFBOService', () => {
 
       expect(mockTransfersCreate).toHaveBeenCalledTimes(2);
       expect(mockTransfersCreate).toHaveBeenNthCalledWith(1, {
-        amount: 8500,
+        amount: 2000,
         currency: 'usd',
         destination: 'fury-A',
         metadata: {
@@ -138,7 +138,7 @@ describe('StripeFBOService', () => {
         },
       });
       expect(mockTransfersCreate).toHaveBeenNthCalledWith(2, {
-        amount: 8500,
+        amount: 2000,
         currency: 'usd',
         destination: 'fury-B',
         metadata: {
@@ -170,11 +170,11 @@ describe('StripeFBOService', () => {
   // ─── Fee-split math ───
 
   describe('fee split math', () => {
-    it('should apply 15% platform fee and distribute 85% bounty pool across Furies using floor division', async () => {
+    it('should apply the canonical 80/20 split and distribute the bounty pool across Furies using floor division', async () => {
       // totalAmount = 10000
-      // platformFee = floor(10000 * 0.15) = 1500
-      // furyBountyPool = 10000 - 1500 = 8500
-      // bountyPerFury (3 furies) = floor(8500 / 3) = 2833
+      // platformFee = 8000
+      // furyBountyPool = 2000
+      // bountyPerFury (3 furies) = floor(2000 / 3) = 666
       mockPaymentIntentsRetrieve.mockResolvedValue({ id: 'pi_test_math', amount: 10000 });
       mockTransfersCreate.mockResolvedValue({ id: 'tr_math' });
 
@@ -182,14 +182,14 @@ describe('StripeFBOService', () => {
 
       expect(mockTransfersCreate).toHaveBeenCalledTimes(3);
       const firstCallArgs = mockTransfersCreate.mock.calls[0][0];
-      expect(firstCallArgs.amount).toBe(2833); // floor(8500 / 3)
+      expect(firstCallArgs.amount).toBe(666); // floor(2000 / 3)
     });
 
     it('should compute bountyPerFury as floor of furyPool divided by number of Furies', async () => {
       // totalAmount = 1000
-      // platformFee = floor(1000 * 0.15) = 150
-      // furyBountyPool = 850
-      // bountyPerFury (4 furies) = floor(850 / 4) = 212
+      // platformFee = 800
+      // furyBountyPool = 200
+      // bountyPerFury (4 furies) = floor(200 / 4) = 50
       mockPaymentIntentsRetrieve.mockResolvedValue({ id: 'pi_test_floor', amount: 1000 });
       mockTransfersCreate.mockResolvedValue({ id: 'tr_floor' });
 
@@ -197,7 +197,7 @@ describe('StripeFBOService', () => {
 
       expect(mockTransfersCreate).toHaveBeenCalledTimes(4);
       const callAmount = mockTransfersCreate.mock.calls[0][0].amount;
-      expect(callAmount).toBe(212); // floor(850 / 4)
+      expect(callAmount).toBe(50); // floor(200 / 4)
     });
   });
 });

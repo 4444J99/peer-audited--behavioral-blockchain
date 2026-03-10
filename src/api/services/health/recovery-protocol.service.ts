@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import {
   MAX_NOCONTACT_DURATION_DAYS,
   MAX_NOCONTACT_TARGETS,
+  ABSOLUTE_MAX_ISOLATION_TARGETS,
 } from '../../../shared/libs/behavioral-logic';
 
 export interface RecoveryMetadata {
@@ -26,21 +27,27 @@ export class RecoveryProtocolService {
    */
   async checkIsolationRisk(userId: string, newTargetCount: number): Promise<void> {
     const activeContracts = await this.pool.query(
-      `SELECT metadata FROM contracts 
-       WHERE user_id = $1 AND status = 'ACTIVE' AND oath_category = 'RECOVERY_NOCONTACT'`,
+      `SELECT metadata, oath_category FROM contracts 
+       WHERE user_id = $1 AND status = 'ACTIVE' 
+       AND oath_category IN ('RECOVERY_NOCONTACT', 'RECOVERY_SUBSTANCE', 'RECOVERY_DETOX')`,
       [userId],
     );
 
     let totalTargets = newTargetCount;
     for (const contract of activeContracts.rows) {
+      // No-contact identifiers count directly
       const targets = contract.metadata?.noContactIdentifiers || [];
       totalTargets += targets.length;
+
+      // Substance/Detox oaths count as 1 virtual "isolation point" each
+      if (contract.oath_category !== 'RECOVERY_NOCONTACT') {
+        totalTargets += 1;
+      }
     }
 
-    const ABSOLUTE_MAX_ISOLATION_TARGETS = 10;
     if (totalTargets > ABSOLUTE_MAX_ISOLATION_TARGETS) {
       throw new HttpException(
-        `Theorem 8 Violation: Total no-contact targets (${totalTargets}) exceeds safety limit. Excessive social isolation detected.`,
+        `Theorem 8 Violation: Total behavioral targets (${totalTargets}) exceeds safety limit. Excessive social isolation or psychological burden detected.`,
         HttpStatus.NOT_ACCEPTABLE,
       );
     }

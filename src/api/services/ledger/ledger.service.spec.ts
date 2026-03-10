@@ -114,7 +114,7 @@ describe('LedgerService', () => {
   // ── getAccountBalance ──────────────────────────────────────────
 
   describe('getAccountBalance', () => {
-    it('should return positive balance when debits exceed credits', async () => {
+    it('should return positive balance when credits exceed debits (liability model)', async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
         rows: [{ balance: '5000' }],
       });
@@ -123,12 +123,12 @@ describe('LedgerService', () => {
 
       expect(balance).toBe(5000);
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('debit_account_id'),
+        expect.stringContaining('credit_account_id'),
         ['acct-1'],
       );
     });
 
-    it('should return negative balance when credits exceed debits', async () => {
+    it('should return negative balance when debits exceed credits', async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
         rows: [{ balance: '-2500' }],
       });

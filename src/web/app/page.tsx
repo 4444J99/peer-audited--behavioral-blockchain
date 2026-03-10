@@ -14,7 +14,7 @@ export default function Home() {
       </div>
       <h1 className="text-7xl font-black tracking-tighter mb-6 uppercase text-transparent bg-clip-text bg-gradient-to-br from-white to-neutral-600">STYX</h1>
       <p className="text-2xl text-neutral-300 max-w-2xl mb-12 font-medium leading-relaxed">
-        The Blockchain of Truth for Relationship Recovery. We weaponize loss aversion to enforce the No Contact rule. Stake your money. Maintain your distance. Earn back your emotional resilience.
+        Private beta for no-contact recovery. Daily accountability, test-money commitments, and a small US allowlist help you keep the boundary intact without pretending this phase is more than it is.
       </p>
 
       {/* Primary Actions */}
@@ -23,35 +23,23 @@ export default function Home() {
           href={user ? '/dashboard' : '/login'}
           className="px-8 py-4 bg-white text-black font-extrabold rounded-full hover:bg-neutral-200 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
         >
-          ENTER THE ARENA
-        </Link>
-        <Link
-          href="/pitch"
-          className="px-8 py-4 bg-transparent border border-neutral-700 text-white font-bold rounded-full hover:border-white transition-all"
-        >
-          VIEW THE MANIFESTO
-        </Link>
-        <Link
-          href="/ask"
-          className="px-8 py-4 bg-transparent border border-neutral-700 text-white font-bold rounded-full hover:border-red-600 transition-all"
-        >
-          ASK STYX AI
+          START RECOVERY
         </Link>
       </div>
       
       {/* Feature Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left w-full max-w-5xl">
         <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-red-600/50 transition-colors">
-          <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">ZERO TRUST</h3>
-          <p className="text-neutral-400 leading-relaxed">Hardware-only oracles. No manual entries. Your biometric data is pulled directly from the silicon. You cannot lie to Styx.</p>
+          <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">DAILY CHECK-INS</h3>
+          <p className="text-neutral-400 leading-relaxed">A focused iOS beta for no-contact recovery, built around daily attestations and a simple accountability rhythm.</p>
         </div>
         <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-red-600/50 transition-colors">
-          <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">WEAPONIZED WHISTLEBLOWER</h3>
-          <p className="text-neutral-400 leading-relaxed">The Ex Bounty. Generate a unique, anonymous link for your ex-partner. If you break No Contact, their proof immediately burns your staked funds.</p>
+          <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">ACCOUNTABILITY PARTNER</h3>
+          <p className="text-neutral-400 leading-relaxed">Invite one trusted person into the loop so the recovery boundary is reinforced by real accountability, not just good intentions.</p>
         </div>
         <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-red-600/50 transition-colors">
-          <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">HARD LEDGER</h3>
-          <p className="text-neutral-400 leading-relaxed">ACID-compliant PostgreSQL double-entry bookkeeping. Every penny staked, lost, and refunded is cryptographically securely logged.</p>
+          <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">TEST-MONEY PILOT</h3>
+          <p className="text-neutral-400 leading-relaxed">Phase 1 uses test-money only. No real funds move in this beta, and access is limited to a small US allowlist while the core path is hardened.</p>
         </div>
       </div>
     </div>

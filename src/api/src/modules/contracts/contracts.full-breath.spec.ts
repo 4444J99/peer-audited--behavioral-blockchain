@@ -23,6 +23,7 @@ describe('ContractsService (Full Breath Features)', () => {
       {} as any, // furyRouter
       {} as any, // aegis
       {} as any, // recovery
+      {} as any, // dynamicPenalty
       {} as any, // anomaly
     );
     jest.clearAllMocks();

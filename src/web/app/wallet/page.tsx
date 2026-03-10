@@ -171,7 +171,7 @@ export default function WalletDashboard() {
                 <p className="text-red-400 text-sm">{error}</p>
               </div>
             ) : contracts.length === 0 ? (
-              <p className="text-neutral-500 text-center py-8">No contracts yet. Create one to begin.</p>
+              <p className="text-neutral-500 text-center py-8">Your recovery journey starts here. Create your first contract.</p>
             ) : (
               contracts.map((contract) => (
                 <div key={contract.id} className="p-4 bg-black border border-neutral-800 rounded-2xl flex justify-between items-center">

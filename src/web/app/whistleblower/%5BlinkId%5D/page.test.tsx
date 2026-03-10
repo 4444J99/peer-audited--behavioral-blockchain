@@ -21,14 +21,14 @@ describe('WhistleblowerPage', () => {
   it('renders the page heading', () => {
     const html = renderToStaticMarkup(<WhistleblowerPage />);
     expect(html).toContain('STYX');
-    expect(html).toContain('Whistleblower Intake');
+    expect(html).toContain('Ex-Bounty Intake');
   });
 
   it('renders the evidence submission form', () => {
     const html = renderToStaticMarkup(<WhistleblowerPage />);
     expect(html).toContain('<form');
     expect(html).toContain('Evidence Artifact URL');
-    expect(html).toContain('r2://styx-proofs/artifact-001.jpg');
+    expect(html).toContain('https://shared-link.com/screenshot.jpg');
   });
 
   it('renders the submit button', () => {

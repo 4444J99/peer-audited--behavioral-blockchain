@@ -37,6 +37,7 @@ describe('CameraModule', () => {
 
   it('renders initial camera ready state', () => {
     const { container } = render(<CameraModule contractId="contract-1" />);
+    expect(container.textContent).toContain('NON-PRODUCTION CAPTURE PREVIEW');
     expect(container.textContent).toContain('Camera Ready (Gallery Disabled)');
   });
 
@@ -71,8 +72,8 @@ describe('CameraModule', () => {
         mediaUri: 'proofs/proof_123/video.mp4',
       });
       expect(alertSpy).toHaveBeenCalledWith(
-        'Proof Secured',
-        'Your recording has been sent to the Fury Router for anonymous validation.',
+        'Beta Proof Secured',
+        'Your recording has been sent to the Fury Router for validation. NOTE: This is a synthetic capture path for the Phase 1 Beta pilot.',
       );
     });
   });

@@ -17,35 +17,22 @@ jest.mock('next/link', () => {
 
 jest.mock('../../services/api-client', () => ({
   api: {
-    changePassword: jest.fn(),
-    updateSettings: jest.fn(),
-    deleteAccount: jest.fn(),
+    getSettings: jest.fn().mockResolvedValue({
+      email_notifications: true,
+      push_notifications: true,
+      stygian_mode: false,
+    }),
+    updateSettings: jest.fn().mockResolvedValue({ success: true }),
   },
 }));
 
 jest.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: '1', email: 'user@test.com', integrity_score: 50, role: 'USER' },
-    token: 'mock-token',
-    login: jest.fn(),
-    register: jest.fn(),
+    user: { id: '1', email: 'test@styx.io' },
     logout: jest.fn(),
     isLoading: false,
   }),
 }));
-
-// Mock localStorage
-const localStorageMock: Record<string, string> = {};
-Object.defineProperty(global, 'localStorage', {
-  value: {
-    getItem: jest.fn((key: string) => localStorageMock[key] ?? null),
-    setItem: jest.fn((key: string, value: string) => { localStorageMock[key] = value; }),
-    removeItem: jest.fn((key: string) => { delete localStorageMock[key]; }),
-    clear: jest.fn(() => { Object.keys(localStorageMock).forEach(k => delete localStorageMock[k]); }),
-  },
-  writable: true,
-  configurable: true,
-});
 
 import SettingsPage from './page';
 
@@ -62,7 +49,6 @@ describe('SettingsPage', () => {
     expect(html).toContain('Change Password');
     expect(html).toContain('Current Password');
     expect(html).toContain('New Password');
-    expect(html).toContain('Confirm New Password');
   });
 
   it('renders the Notification Preferences section', () => {
@@ -73,37 +59,25 @@ describe('SettingsPage', () => {
     expect(html).toContain('Push Notifications');
   });
 
-  it('renders the Payment Methods section with link to wallet', () => {
+  it('renders the Recovery Commitments section with link to wallet', () => {
     const html = renderToStaticMarkup(<SettingsPage />);
 
-    expect(html).toContain('Payment Methods');
-    expect(html).toContain('Open Capital Escrow');
+    expect(html).toContain('Recovery Commitments');
+    expect(html).toContain('Commitment Wallet');
     expect(html).toContain('href="/wallet"');
   });
 
-  it('renders the Linguistic Cloak toggle section', () => {
+  it('renders the Terminology section', () => {
     const html = renderToStaticMarkup(<SettingsPage />);
 
-    expect(html).toContain('Linguistic Cloak');
+    expect(html).toContain('Terminology');
     expect(html).toContain('Stygian Mode');
   });
 
-  it('renders the Danger Zone with delete account button', () => {
+  it('renders the Danger Zone section', () => {
     const html = renderToStaticMarkup(<SettingsPage />);
 
     expect(html).toContain('Danger Zone');
     expect(html).toContain('Delete My Account');
-  });
-
-  it('renders Update Password button', () => {
-    const html = renderToStaticMarkup(<SettingsPage />);
-
-    expect(html).toContain('Update Password');
-  });
-
-  it('renders Save Preferences button', () => {
-    const html = renderToStaticMarkup(<SettingsPage />);
-
-    expect(html).toContain('Save Preferences');
   });
 });

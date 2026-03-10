@@ -148,6 +148,9 @@ export default function AdminPage() {
           <Shield className="text-red-500" size={28} />
           <h1 className="text-2xl font-black tracking-tight uppercase">Admin Panel</h1>
         </div>
+        <div className="ml-auto px-4 py-2 bg-red-950 border border-red-900 rounded-lg text-red-400 text-xs font-black uppercase tracking-widest">
+          Internal Access Only
+        </div>
       </div>
 
       {/* Stats */}

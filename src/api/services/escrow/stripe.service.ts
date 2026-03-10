@@ -96,6 +96,19 @@ export class StripeFboService {
     });
   }
 
+  async transferFunds(amountCents: number, destinationAccountId: string, metadata?: Record<string, any>): Promise<Stripe.Transfer> {
+    if (this.isDevMode) {
+      this.logger.debug(`[DEV] Mock transfer ${amountCents}¢ to ${destinationAccountId}`);
+      return { id: `tr_dev_${randomUUID().slice(0, 8)}`, amount: amountCents } as any;
+    }
+    return this.stripe.transfers.create({
+      amount: amountCents,
+      currency: 'usd',
+      destination: destinationAccountId,
+      metadata,
+    });
+  }
+
   /**
    * Phase Beta P0-011: Refund-only disposition engine.
    * In TIER_2 (REFUND_ONLY) jurisdictions, forfeited stakes MUST route back to the user

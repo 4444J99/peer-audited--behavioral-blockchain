@@ -24,24 +24,29 @@ const mockRoute = {
   name: 'ContractDetail' as const,
 } as any;
 
-const activeContract = {
+const activeRecoveryContract = {
   id: 'contract-123',
-  category: 'FITNESS',
+  oath_category: 'RECOVERY_NOCONTACT',
   status: 'ACTIVE',
-  description: 'Train daily',
-  stakeAmount: 75,
-  graceDaysUsed: 0,
-  graceDaysMax: 3,
+  description: 'Maintain no contact for 30 days.',
+  stake_amount: 75,
+  grace_days_used: 0,
+  grace_days_max: 3,
+  proof_count: 0,
   proofs: [],
-  startDate: '2026-01-01T00:00:00.000Z',
-  endDate: '2026-12-31T00:00:00.000Z',
-  metadata: {},
+  started_at: '2026-01-01T00:00:00.000Z',
+  ends_at: '2026-01-31T00:00:00.000Z',
+  metadata: {
+    recovery: {
+      noContactIdentifiers: ['hashed-target-1'],
+    },
+  },
 };
 
 describe('ContractDetailScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (ApiClient.getContract as jest.Mock).mockResolvedValue(activeContract);
+    (ApiClient.getContract as jest.Mock).mockResolvedValue(activeRecoveryContract);
     (ApiClient.useGraceDay as jest.Mock).mockResolvedValue({
       graceDaysRemaining: 2,
     });
@@ -53,19 +58,46 @@ describe('ContractDetailScreen', () => {
       <ContractDetailScreen navigation={mockNavigation} route={mockRoute} />,
     );
 
-    expect(container.textContent).not.toContain('Capture Proof');
+    expect(container.textContent).not.toContain('Daily Check-In');
     expect(container.textContent).not.toContain('Contract not found');
   });
 
-  it('routes proof submission into SubmitProof capture flow', async () => {
+  it('renders snake_case contract fields from the mobile API payload', async () => {
     const { getByText } = render(
       <ContractDetailScreen navigation={mockNavigation} route={mockRoute} />,
     );
 
-    await waitFor(() => expect(getByText('Capture Proof')).toBeTruthy());
-    fireEvent.click(getByText('Capture Proof').closest('button') as HTMLElement);
+    await waitFor(() => {
+      expect(getByText('RECOVERY_NOCONTACT')).toBeTruthy();
+      expect(getByText('$75.00')).toBeTruthy();
+      expect(getByText('Maintain no contact for 30 days.')).toBeTruthy();
+      expect(getByText('0/3')).toBeTruthy();
+    });
+  });
 
-    expect(mockNavigation.navigate).toHaveBeenCalledWith('SubmitProof', { contractId: 'contract-123' });
+  it('routes recovery check-in into the Attestation flow', async () => {
+    const { getByText } = render(
+      <ContractDetailScreen navigation={mockNavigation} route={mockRoute} />,
+    );
+
+    await waitFor(() => expect(getByText('Daily Check-In')).toBeTruthy());
+    fireEvent.click(getByText('Daily Check-In').closest('button') as HTMLElement);
+
+    expect(mockNavigation.navigate).toHaveBeenCalledWith('Attestation', { contractId: 'contract-123' });
+  });
+
+  it('routes automatic scan into DigitalExhaust with a safe label', async () => {
+    const { getByText } = render(
+      <ContractDetailScreen navigation={mockNavigation} route={mockRoute} />,
+    );
+
+    await waitFor(() => expect(getByText('Automatic Scan')).toBeTruthy());
+    fireEvent.click(getByText('Automatic Scan').closest('button') as HTMLElement);
+
+    expect(mockNavigation.navigate).toHaveBeenCalledWith('DigitalExhaust', {
+      contractId: 'contract-123',
+      targetPhoneNumber: 'Target #1',
+    });
   });
 
   it('uses a grace day and reloads contract', async () => {

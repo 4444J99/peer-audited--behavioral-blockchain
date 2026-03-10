@@ -21,13 +21,14 @@ export function RegisterScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!email || !password) {
+    if (!email || !password || !dateOfBirth) {
       setError('All fields are required');
       return;
     }
@@ -52,9 +53,12 @@ export function RegisterScreen({ navigation }: Props) {
     setLoading(true);
 
     try {
-      await ApiClient.register(email, password, {
-        ageConfirmation: true,
-        termsAccepted: true,
+      await ApiClient.register({
+        email,
+        password,
+        dateOfBirth,
+        ageConfirmation: ageConfirmed,
+        termsAccepted: termsAccepted,
       });
       Alert.alert('Account Created', 'You can now log in.', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -89,6 +93,15 @@ export function RegisterScreen({ navigation }: Props) {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Date of Birth (YYYY-MM-DD)"
+          placeholderTextColor="#666"
+          value={dateOfBirth}
+          onChangeText={setDateOfBirth}
+          autoCapitalize="none"
         />
 
         <TextInput

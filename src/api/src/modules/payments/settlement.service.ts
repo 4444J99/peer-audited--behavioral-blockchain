@@ -2,6 +2,11 @@ import { Injectable, Logger, BadRequestException, NotFoundException } from '@nes
 import { Queue } from 'bullmq';
 import { Pool } from 'pg';
 import { SETTLEMENT_QUEUE_NAME, getDefaultQueueOptions } from '../../../config/queue.config';
+import { CompliancePolicyService } from '../compliance/compliance-policy.service';
+import { buildSettlementQuote } from './settlement-quote';
+import { isKycRequired } from '../../../../shared/config/stake-tiers';
+import { JurisdictionDispositionMapper } from '../compliance/jurisdiction-disposition.mapper';
+import { toCents } from '../../../../shared/libs/money';
 
 export interface SettlementJob {
   contractId: string;
@@ -17,21 +22,32 @@ export class SettlementService {
   private readonly logger = new Logger(SettlementService.name);
   private queue: Queue;
 
-  constructor(private readonly pool: Pool) {
+  constructor(
+    private readonly pool: Pool,
+    private readonly compliancePolicy: CompliancePolicyService,
+  ) {
     this.queue = new Queue(SETTLEMENT_QUEUE_NAME, getDefaultQueueOptions());
   }
 
   async dispatchSettlement(job: SettlementJob) {
     this.logger.log(`Dispatching settlement for contract ${job.contractId} (${job.outcome})`);
     
-    // TKT-P0-003: KYC Runtime Enforcement
-    if (job.amountCents > 2000) { // > $20.00
-      const kycResult = await this.pool.query(
-        "SELECT age_verification_status FROM users u JOIN contracts c ON c.user_id = u.id WHERE c.id = $1",
-        [job.contractId]
+    // Route settlement-time KYC decisions through the same policy used at contract creation.
+    if (isKycRequired(job.amountCents)) {
+      const contractResult = await this.pool.query(
+        "SELECT user_id FROM contracts WHERE id = $1",
+        [job.contractId],
       );
-      if (kycResult.rows[0]?.age_verification_status !== 'VERIFIED') {
-        throw new BadRequestException('KYC verification required for settlements above $20.00');
+      if (contractResult.rows.length === 0) {
+        throw new NotFoundException('Contract not found');
+      }
+
+      const kycResult = await this.compliancePolicy.evaluateKycRequirement(
+        contractResult.rows[0].user_id,
+        job.amountCents / 100,
+      );
+      if (!kycResult.allowed) {
+        throw new BadRequestException(kycResult.reason || 'KYC verification required for settlements above threshold');
       }
     }
 
@@ -51,15 +67,37 @@ export class SettlementService {
     if (contract.rows.length === 0) throw new NotFoundException('Contract not found');
     
     const row = contract.rows[0];
-    const amountCents = Math.round(Number(row.stake_amount) * 100);
+    if (row.status !== 'COMPLETED' && row.status !== 'FAILED') {
+      throw new BadRequestException('Settlement preview is only available for resolved contracts');
+    }
+
+    const amountCents = toCents(Number(row.stake_amount));
+    const outcome: 'PASS' | 'FAIL' = row.status === 'COMPLETED' ? 'PASS' : 'FAIL';
+    let dispositionMode: 'CAPTURE' | 'REFUND' | undefined;
+
+    if (outcome === 'FAIL') {
+      const userResult = await this.pool.query(
+        'SELECT last_known_state FROM users WHERE id = $1',
+        [row.user_id],
+      );
+      const lastKnownState = userResult.rows[0]?.last_known_state ?? null;
+      const jurisdictionPolicy = lastKnownState
+        ? await this.compliancePolicy.getJurisdictionPolicy(lastKnownState)
+        : null;
+      
+      dispositionMode = JurisdictionDispositionMapper.getDispositionMode(jurisdictionPolicy?.tier);
+    }
+
+    const quote = buildSettlementQuote(amountCents, outcome, dispositionMode);
     
-    // Simplified breakdown for MVP
     return {
       contractId,
       stakeAmountCents: amountCents,
-      platformFeeCents: Math.round(amountCents * 0.1), // 10% fee
-      bountyPoolCents: Math.round(amountCents * 0.2), // 20% bounty
-      userRefundCents: row.status === 'COMPLETED' ? amountCents : 0,
+      platformFeeCents: quote.platformFeeCents,
+      bountyPoolCents: quote.bountyPoolCents,
+      userRefundCents: quote.userRefundCents,
+      dispositionMode: dispositionMode ?? 'REFUND',
+      actualAction: quote.actualAction,
       status: row.status,
     };
   }
@@ -77,8 +115,28 @@ export class SettlementService {
 
     return {
       contractId,
-      runs: runs.rows,
-      ledgerEntries: ledgerEntries.rows,
+      runs: runs.rows.map(run => ({
+        id: run.id,
+        contractId: run.contract_id,
+        outcome: run.outcome,
+        amountCents: run.amount_cents,
+        status: run.status,
+        dispositionMode: run.disposition_mode,
+        quote: run.quote_json,
+        providerTxId: run.provider_tx_id,
+        lastError: run.last_error,
+        startedAt: run.started_at,
+        completedAt: run.completed_at,
+      })),
+      ledgerEntries: ledgerEntries.rows.map(entry => ({
+        id: entry.id,
+        debitAccountId: entry.debit_account_id,
+        creditAccountId: entry.credit_account_id,
+        amount: entry.amount,
+        contractId: entry.contract_id,
+        metadata: entry.metadata,
+        createdAt: entry.created_at,
+      })),
     };
   }
 }

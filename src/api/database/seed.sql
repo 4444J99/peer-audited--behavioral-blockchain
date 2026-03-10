@@ -73,7 +73,7 @@ INSERT INTO entries (id, debit_account_id, credit_account_id, amount, contract_i
     'ee000000-0000-0000-0000-000000000001',
     'a0000000-0000-0000-0000-000000000010',
     'a0000000-0000-0000-0000-000000000001',
-    50.00,
+    5000, -- $50.00
     'c0000000-0000-0000-0000-000000000001',
     '{"type": "STAKE_HOLD", "userId": "d0000000-0000-0000-0000-000000000001"}'::jsonb
   ),
@@ -81,7 +81,7 @@ INSERT INTO entries (id, debit_account_id, credit_account_id, amount, contract_i
     'ee000000-0000-0000-0000-000000000002',
     'a0000000-0000-0000-0000-000000000001',
     'a0000000-0000-0000-0000-000000000010',
-    25.00,
+    2500, -- $25.00
     'c0000000-0000-0000-0000-000000000002',
     '{"type": "STAKE_RETURN", "outcome": "COMPLETED"}'::jsonb
   )
@@ -161,7 +161,7 @@ INSERT INTO event_log (id, event_type, payload, previous_hash, current_hash) VAL
     'e1000000-0000-0000-0000-000000000001',
     'CONTRACT_CREATED',
     '{"contractId": "c0000000-0000-0000-0000-000000000001", "userId": "d0000000-0000-0000-0000-000000000001", "stakeAmount": 50}'::jsonb,
-    'GENESIS',
+    '0000000000000000000000000000000000000000000000000000000000000000',
     'a1b2c3d4e5f6'
   ),
   (

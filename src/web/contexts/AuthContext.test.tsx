@@ -14,6 +14,10 @@ jest.mock('../services/api-client', () => ({
   setCsrfToken: jest.fn(),
 }));
 
+jest.mock('next/navigation', () => ({
+  usePathname: () => '/',
+}));
+
 import { AuthProvider, useAuth } from './AuthContext';
 import { api, setAuthToken, setCsrfToken } from '../services/api-client';
 

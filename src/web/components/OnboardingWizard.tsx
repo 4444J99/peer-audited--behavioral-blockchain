@@ -9,12 +9,14 @@ import {
 
 const OATH_CATEGORIES = [
   { id: 'RECOVERY_NOCONTACT', label: 'No Contact', icon: '\u{1F6AB}', description: 'Absolute severance. No texts, calls, or DMs.', color: 'border-red-700 hover:border-red-500' },
-  { id: 'RECOVERY_DETOX', label: 'Digital Detox', icon: '\u{1F4F4}', description: 'Strict limits on social media doom-scrolling.', color: 'border-purple-700 hover:border-purple-500' },
-  { id: 'RECOVERY_ENDORPHIN', label: 'Endorphin Recovery', icon: '\u{1F3CB}\u{FE0F}', description: 'Physical exertion to process stress (Gym/Steps).', color: 'border-green-700 hover:border-green-500' },
-  { id: 'RECOVERY_DIVERSION', label: 'Venting Vault', icon: '\u{1F512}', description: 'Send toxic urges here instead of to them.', color: 'border-blue-700 hover:border-blue-500' },
+  // { id: 'RECOVERY_DETOX', label: 'Digital Detox', icon: '\u{1F4F4}', description: 'Strict limits on social media doom-scrolling.', color: 'border-purple-700 hover:border-purple-500' },
+  // { id: 'RECOVERY_ENDORPHIN', label: 'Endorphin Recovery', icon: '\u{1F3CB}\u{FE0F}', description: 'Physical exertion to process stress (Gym/Steps).', color: 'border-green-700 hover:border-green-500' },
+  // { id: 'RECOVERY_DIVERSION', label: 'Venting Vault', icon: '\u{1F512}', description: 'Send toxic urges here instead of to them.', color: 'border-blue-700 hover:border-blue-500' },
 ];
 
-const STAKE_PRESETS = [5, 10, 25, 50, 100, 250, 500];
+const STAKE_PRESETS = [5, 10, 15, 20];
+
+const MAX_BETA_STAKE = 20;
 
 const LOSS_AVERSION_LAMBDA = 1.955;
 
@@ -36,7 +38,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
     switch (step) {
       case 0: return true; // Welcome — always
       case 1: return selectedCategory !== ''; // Must select category
-      case 2: return stakeAmount >= 5 && stakeAmount <= 500; // Valid stake
+      case 2: return stakeAmount >= 5 && stakeAmount <= MAX_BETA_STAKE; // Valid stake
       case 3: return true; // Payment info — always
       case 4: return true; // Redirect
       default: return true;
@@ -65,7 +67,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
   const handleCustomStake = (value: string) => {
     setCustomStake(value);
     const num = parseFloat(value);
-    if (!isNaN(num) && num >= 5 && num <= 500) {
+    if (!isNaN(num) && num >= 5 && num <= MAX_BETA_STAKE) {
       setStakeAmount(num);
     }
   };
@@ -112,37 +114,37 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                 </div>
                 <div>
                   <h2 className="text-3xl font-black tracking-tight">Welcome to Styx</h2>
-                  <p className="text-neutral-400 text-sm">The Blockchain of Truth</p>
+                  <p className="text-neutral-400 text-sm">Relationship Recovery Beta</p>
                 </div>
               </div>
 
               <div className="space-y-4 text-neutral-300">
                 <p>
-                  Styx is a <strong className="text-white">peer-audited behavioral market</strong> that
-                  uses real financial stakes to enforce habit follow-through.
+                  Styx is a <strong className="text-white">behavioral accountability tool</strong> that
+                  uses financial commitments to help you maintain the No Contact rule.
                 </p>
 
                 <div className="p-4 bg-black rounded-xl border border-neutral-800 space-y-3">
                   <div className="flex items-start gap-3">
                     <Shield size={18} className="text-red-500 mt-0.5 shrink-0" />
                     <p className="text-sm">
-                      <strong className="text-white">Loss Aversion:</strong> Humans feel losses ~2x more
-                      intensely than equivalent gains. Styx weaponizes this psychological principle to drive
-                      real behavioral change.
+                      <strong className="text-white">Emotional Resilience:</strong> By creating a real 
+                      cost for breaking No Contact, we help you overcome the temporary urges that set back 
+                      your long-term recovery.
                     </p>
                   </div>
                   <div className="flex items-start gap-3">
                     <Flame size={18} className="text-red-500 mt-0.5 shrink-0" />
                     <p className="text-sm">
-                      <strong className="text-white">Fury Network:</strong> Anonymous peer reviewers
-                      verify your proof submissions. Fraudulent proofs are caught and stakes are burned.
+                      <strong className="text-white">Verified Progress:</strong> Your check-ins are 
+                      validated to ensure you are staying on track with your recovery goals.
                     </p>
                   </div>
                   <div className="flex items-start gap-3">
                     <DollarSign size={18} className="text-red-500 mt-0.5 shrink-0" />
                     <p className="text-sm">
-                      <strong className="text-white">Financial Stakes:</strong> Commit real money to your
-                      goals. Succeed and your capital returns. Fail and it is redistributed.
+                      <strong className="text-white">Micro-Stakes:</strong> Commit a small amount ($5 - $20) 
+                      to your goal. Succeed and your capital returns. Fail and the stake is forfeited.
                     </p>
                   </div>
                 </div>
@@ -223,14 +225,14 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               {/* Custom Amount */}
               <div>
                 <label className="block text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2">
-                  Custom Amount ($5 - $500)
+                  Custom Amount ($5 - $20)
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-red-500 font-black text-xl">$</span>
                   <input
                     type="number"
                     min="5"
-                    max="500"
+                    max="20"
                     step="1"
                     value={customStake}
                     onChange={(e) => handleCustomStake(e.target.value)}
@@ -244,11 +246,11 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-neutral-500">
                   <span>Low Risk</span>
-                  <span>High Risk</span>
+                  <span>Max Beta Stake</span>
                 </div>
                 <style>{`
                   .dynamic-stake-width {
-                    width: ${Math.min((stakeAmount / 500) * 100, 100)}%;
+                    width: ${Math.min((stakeAmount / MAX_BETA_STAKE) * 100, 100)}%;
                   }
                 `}</style>
                 <div className="w-full h-3 bg-neutral-800 rounded-full overflow-hidden">

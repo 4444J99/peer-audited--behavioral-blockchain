@@ -37,7 +37,8 @@ export function ContractListScreen({ navigation }: Props) {
   const loadContracts = useCallback(async () => {
     try {
       const data = await ApiClient.getContracts();
-      setContracts(data.contracts);
+      // data is directly the array of contracts
+      setContracts(Array.isArray(data) ? data : []);
       setError('');
     } catch (err: any) {
       setError(err.message);
@@ -65,15 +66,15 @@ export function ContractListScreen({ navigation }: Props) {
       onPress={() => navigation.navigate('ContractDetail', { contractId: item.id })}
     >
       <View style={styles.cardHeader}>
-        <Text style={styles.category}>{item.category}</Text>
+        <Text style={styles.category}>{item.oath_category}</Text>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '30' }]}>
           <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
         </View>
       </View>
       <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
       <View style={styles.cardFooter}>
-        <Text style={styles.stake}>${item.stakeAmount.toFixed(2)} staked</Text>
-        <Text style={styles.proofs}>{item.proofCount} proofs</Text>
+        <Text style={styles.stake}>${item.stake_amount.toFixed(2)} staked</Text>
+        <Text style={styles.proofs}>{item.proof_count} proofs</Text>
       </View>
     </TouchableOpacity>
   );

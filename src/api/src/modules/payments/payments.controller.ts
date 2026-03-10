@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Req, Res, Logger, RawBodyRequest, OnModuleInit, UseGuards, Param, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, Logger, RawBodyRequest, OnModuleInit, UseGuards, Param, Body, BadRequestException, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint, ApiBearerAuth } from '@nestjs/swagger';
 import { Pool } from 'pg';
 import { Request, Response } from 'express';
@@ -7,8 +7,10 @@ import { ContractsService } from '../contracts/contracts.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CompliancePolicyService } from '../compliance/compliance-policy.service';
 import { SettlementService } from './settlement.service';
+import { ReconciliationService } from './reconciliation.service';
 import { Public } from '../../common/decorators/current-user.decorator';
 import { AuthGuard } from '../../../guards/auth.guard';
+import { JurisdictionDispositionMapper } from '../compliance/jurisdiction-disposition.mapper';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -23,6 +25,7 @@ export class PaymentsController implements OnModuleInit {
     private readonly notifications: NotificationsService,
     private readonly compliancePolicy: CompliancePolicyService,
     private readonly settlementService: SettlementService,
+    private readonly reconciliationService: ReconciliationService,
   ) {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
     this.stripe = new Stripe(apiKey, { apiVersion: '2023-10-16' });
@@ -75,25 +78,71 @@ export class PaymentsController implements OnModuleInit {
     return this.settlementService.getSettlementStatus(contractId);
   }
 
+  @Get('reconcile/:contractId')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Verify that real-money rails and double-entry ledger are balanced for a contract' })
+  async reconcile(@Param('contractId') contractId: string) {
+    return this.reconciliationService.reconcileContract(contractId);
+  }
+
+  @Get('custody-report')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate a custody review report for legal counsel' })
+  async getCustodyReport(
+    @Query('start') start?: string,
+    @Query('end') end?: string
+  ) {
+    const startDate = start ? new Date(start) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const endDate = end ? new Date(end) : new Date();
+    return this.reconciliationService.generateCustodyReport(startDate, endDate);
+  }
+
   @Post('settlement/:contractId/execute')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Manually trigger settlement dispatch for a resolved contract (Admin/Internal only)' })
   async executeSettlement(
     @Param('contractId') contractId: string,
-    @Body() body: { force?: boolean }
+    @Body() body: { force?: boolean; outcome?: 'PASS' | 'FAIL' }
   ) {
     const contract = await this.contractsService.getContract(contractId);
     if (contract.status !== 'COMPLETED' && contract.status !== 'FAILED' && !body.force) {
       throw new BadRequestException('Contract must be in a resolved state to execute settlement');
     }
+    if (body.force && contract.status !== 'COMPLETED' && contract.status !== 'FAILED' && !body.outcome) {
+      throw new BadRequestException('Forced settlement on unresolved contracts requires an explicit outcome');
+    }
+
+    const settlementOutcome =
+      contract.status === 'COMPLETED'
+        ? 'PASS'
+        : contract.status === 'FAILED'
+          ? 'FAIL'
+          : body.outcome!;
+
+    let dispositionMode: 'CAPTURE' | 'REFUND' | undefined;
+    if (settlementOutcome === 'FAIL') {
+      const userResult = await this.pool.query(
+        'SELECT last_known_state FROM users WHERE id = $1',
+        [(contract as any).user_id],
+      );
+      const lastKnownState = userResult.rows[0]?.last_known_state ?? null;
+      const jurisdictionPolicy = lastKnownState
+        ? await this.compliancePolicy.getJurisdictionPolicy(lastKnownState)
+        : null;
+      
+      dispositionMode = JurisdictionDispositionMapper.getDispositionMode(jurisdictionPolicy?.tier);
+    }
 
     // This manually enqueues the job that is normally enqueued by ContractsService.resolveContract
     await this.settlementService.dispatchSettlement({
       contractId,
-      outcome: contract.status === 'COMPLETED' ? 'PASS' : 'FAIL',
+      outcome: settlementOutcome,
       paymentIntentId: (contract as any).payment_intent_id,
       amountCents: Math.round(Number((contract as any).stake_amount) * 100),
+      dispositionMode,
     });
 
     return { message: 'Settlement job dispatched' };

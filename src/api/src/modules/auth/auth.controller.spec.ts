@@ -47,7 +47,7 @@ describe('AuthController', () => {
       expect(mockAuthService.register).toHaveBeenCalledWith('test@styx.protocol', 'secure123', { // allow-secret
         ageConfirmation: true,
         termsAccepted: true,
-        dateOfBirth: undefined,
+        dateOfBirth: '',
       });
     });
 

@@ -4,8 +4,8 @@ import { Providers } from "./providers";
 import { SiteFooter } from "../components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Styx | The Blockchain of Truth",
-  description: "A decentralized, peer-audited behavioral market.",
+  title: "Styx | Relationship Recovery",
+  description: "Maintain No Contact. Reclaim your resilience.",
 };
 
 const ENV_LABEL = process.env.NEXT_PUBLIC_STYX_ENV_LABEL || process.env.NODE_ENV || 'local';

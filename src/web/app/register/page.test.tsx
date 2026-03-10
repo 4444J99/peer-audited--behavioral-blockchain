@@ -40,7 +40,7 @@ describe('RegisterPage', () => {
   it('renders the page heading', () => {
     const html = renderToStaticMarkup(<RegisterPage />);
 
-    expect(html).toContain('Join the Protocol');
+    expect(html).toContain('Start Your Recovery');
   });
 
   it('renders the submit button', () => {

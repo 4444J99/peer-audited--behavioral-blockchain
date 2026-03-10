@@ -95,11 +95,16 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ...(needsCsrf && csrfToken ? { 'x-csrf-token': csrfToken } : {}),
     ...options?.headers,
   };
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    credentials: options?.credentials ?? 'include',
-    headers: mergedHeaders,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      credentials: options?.credentials ?? 'include',
+      headers: mergedHeaders,
+    });
+  } catch {
+    throw new Error('Styx service is temporarily unavailable. Please try again shortly.');
+  }
 
   // Auto-refresh on 401 (except for the refresh endpoint itself)
   if (res.status === 401 && path !== '/auth/refresh' && !isRefreshing) {

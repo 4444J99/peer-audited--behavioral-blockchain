@@ -54,14 +54,16 @@ describe('GeofenceService', () => {
       expect(() => service.checkJurisdiction('1.2.3.4')).toThrow(/Jurisdiction Violation.*AR/);
     });
 
-    it('should pass for a non-US IP (defaults to TIER_1)', () => {
+    it('should throw ForbiddenException for a non-US IP (fail-closed)', () => {
       mockLookup.mockReturnValue({ country: 'DE', region: 'BE' });
-      expect(service.checkJurisdiction('1.2.3.4')).toBe(true);
+      expect(() => service.checkJurisdiction('1.2.3.4')).toThrow(ForbiddenException);
+      expect(() => service.checkJurisdiction('1.2.3.4')).toThrow(/Jurisdiction Violation.*Non-US\/Unknown/);
     });
 
-    it('should pass for an unresolvable IP (defaults to TIER_1)', () => {
+    it('should throw ForbiddenException for an unresolvable IP (fail-closed)', () => {
       mockLookup.mockReturnValue(null);
-      expect(service.checkJurisdiction('0.0.0.0')).toBe(true);
+      expect(() => service.checkJurisdiction('0.0.0.0')).toThrow(ForbiddenException);
+      expect(() => service.checkJurisdiction('0.0.0.0')).toThrow(/Jurisdiction Violation.*Non-US\/Unknown/);
     });
   });
 });

@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
+import { buildSettlementQuote } from './settlement-quote';
 
 /**
- * Stripe FBO (For Benefit Of) Escrow Service
- * Implements F-CORE-04: Real-Money Settlement & Escrow
+ * @deprecated Use SettlementModule and SettlementWorker for contract resolution.
+ * The canonical truth for payout math is now in settlement-quote.ts, and this
+ * legacy service must mirror that logic until it is fully removed.
  * 
- * Ensures Styx never takes custody of user funds. Funds are held in a Stripe FBO
- * account and routed to the platform (fee), the Furies (bounty), or refunded 
- * based on the cryptographic outcome of the contract.
+ * Stripe FBO (For Benefit Of) Escrow Service
  */
 @Injectable()
 export class StripeFBOService {
@@ -49,7 +49,7 @@ export class StripeFBOService {
   /**
    * Resolves a contract. 
    * If PASS: Refunds the stake to the user.
-   * If FAIL: Distributes the stake to Furies (85%) and Platform (15%).
+   * If FAIL: Uses the canonical provisional failed-capture split from settlement-quote.ts.
    */
   async resolveEscrow(paymentIntentId: string, outcome: 'PASS' | 'FAIL', furies: string[] = []): Promise<boolean> {
     this.logger.log(`Resolving Escrow for PI: ${paymentIntentId}. Outcome: ${outcome}`);
@@ -68,9 +68,10 @@ export class StripeFBOService {
       
       const intent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
       const totalAmount = intent.amount;
+      const quote = buildSettlementQuote(totalAmount, outcome);
 
-      const platformFee = Math.floor(totalAmount * 0.15);
-      const furyBountyPool = totalAmount - platformFee;
+      const platformFee = quote.platformFeeCents;
+      const furyBountyPool = quote.bountyPoolCents;
 
       // Transfer bounties to Fury connected accounts
       if (furies.length > 0) {

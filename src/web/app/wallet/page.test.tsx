@@ -44,24 +44,24 @@ jest.mock('../../contexts/AuthContext', () => ({
 import WalletDashboard from './page';
 
 describe('Wallet Page', () => {
-  it('renders the Capital Escrow heading', () => {
+  it('renders the Commitment Wallet heading', () => {
     const html = renderToStaticMarkup(<WalletDashboard />);
 
-    expect(html).toContain('Capital Escrow');
+    expect(html).toContain('Commitment Wallet');
   });
 
-  it('renders the financial identity description', () => {
+  it('renders the recovery commitment description', () => {
     const html = renderToStaticMarkup(<WalletDashboard />);
 
-    expect(html).toContain('Your Financial Identity');
-    expect(html).toContain('loss aversion');
+    expect(html).toContain('Your Recovery Commitment');
+    expect(html).toContain('test-money');
   });
 
-  it('renders the RETURN TO IDENTITY link', () => {
+  it('renders the RETURN TO DASHBOARD link', () => {
     const html = renderToStaticMarkup(<WalletDashboard />);
 
     expect(html).toContain('href="/dashboard"');
-    expect(html).toContain('RETURN TO IDENTITY');
+    expect(html).toContain('RETURN TO DASHBOARD');
   });
 
   it('renders the EscrowConnect component', () => {

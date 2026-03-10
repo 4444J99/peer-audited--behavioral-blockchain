@@ -25,9 +25,15 @@ describe('ContractsService — Behavioral Physics', () => {
   const mockRealStripe = { resolveEscrow: jest.fn().mockResolvedValue(true) };
   const mockFuryRouter = { routeProof: jest.fn().mockResolvedValue('job-id-1') } as unknown as FuryRouterService;
   const mockDispute = { initiateAppeal: jest.fn() } as unknown as DisputeService;
-  const mockAegis = { validatePsychologicalGuardrails: jest.fn() } as unknown as AegisProtocolService;
-  const mockRecovery = { validateRecoveryContract: jest.fn() } as unknown as RecoveryProtocolService;
+  const mockAegis = {
+    validatePsychologicalGuardrails: jest.fn(),
+    getVolatilityMultiplier: jest.fn().mockReturnValue(1.0),
+  } as unknown as AegisProtocolService;
+  const mockRecovery = { validateRecoveryContract: jest.fn().mockResolvedValue(true) } as unknown as RecoveryProtocolService;
+  const mockDynamicPenalty = { calculateState: jest.fn().mockReturnValue({ state: 'STATE_NORMAL', multiplier: 1.0 }) };
   const mockAnomaly = { analyze: jest.fn().mockResolvedValue({ rejected: false, flags: [] }) } as unknown as AnomalyService;
+
+
 
   const activeUser = {
     id: 'user-1',
@@ -58,8 +64,10 @@ describe('ContractsService — Behavioral Physics', () => {
       mockFuryRouter,
       mockAegis,
       mockRecovery,
+      mockDynamicPenalty as any,
       mockAnomaly,
     );
+
     jest.clearAllMocks();
   });
 
@@ -233,11 +241,13 @@ describe('ContractsService — Behavioral Physics', () => {
       await service.createContract(recoveryDto);
 
       expect(mockRecovery.validateRecoveryContract).toHaveBeenCalledWith(
+        'user-1',
         'RECOVERY_NOCONTACT',
         14,
         recoveryDto.recoveryMetadata,
       );
     });
+
 
     it('should create accountability partner row for RECOVERY contracts', async () => {
       mockSuccessfulRecoveryFlow();
@@ -300,11 +310,12 @@ describe('ContractsService — Behavioral Physics', () => {
 
     it('should propagate RecoveryProtocol 406 errors', async () => {
       const { HttpException, HttpStatus } = require('@nestjs/common');
-      (mockRecovery.validateRecoveryContract as jest.Mock).mockImplementationOnce(() => {
-        throw new HttpException('Recovery Protocol: Duration exceeded', HttpStatus.NOT_ACCEPTABLE);
-      });
+      (mockRecovery.validateRecoveryContract as jest.Mock).mockRejectedValueOnce(
+        new HttpException('Recovery Protocol: Duration exceeded', HttpStatus.NOT_ACCEPTABLE)
+      );
 
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
+
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
 

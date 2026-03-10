@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import * as geoip from 'geoip-lite';
-import { STATE_TIERS, JurisdictionTier } from '../geofencing';
+import { JurisdictionTier, classifyJurisdiction } from '../geofencing';
 
 @Injectable()
 export class GeofenceService {
@@ -19,14 +19,12 @@ export class GeofenceService {
    * Checks if an incoming request is legally permitted to transact based on IP location.
    */
   checkJurisdiction(ip: string): boolean {
-    const state = this.lookupState(ip);
-    const tier = state
-      ? (STATE_TIERS[state] || JurisdictionTier.TIER_1)
-      : JurisdictionTier.TIER_1;
+    const geo = geoip.lookup(ip);
+    const { tier, state } = classifyJurisdiction(geo as any);
 
     if (tier === JurisdictionTier.TIER_3) {
       throw new ForbiddenException(
-        `Jurisdiction Violation: IP address originates from a restricted 'Any Chance' region (${state}). Transactions are strictly prohibited.`
+        `Jurisdiction Violation: IP address originates from a restricted or unresolvable region (${state || 'Non-US/Unknown'}). Transactions are strictly prohibited.`
       );
     }
 

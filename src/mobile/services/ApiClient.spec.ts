@@ -24,6 +24,23 @@ function jsonFail(status: number, body: string) {
   };
 }
 
+function jsonFailWithRequestId(status: number, body: unknown, requestId: string) {
+  return {
+    ok: false,
+    status,
+    headers: {
+      get: (name: string) => {
+        const key = name.toLowerCase();
+        if (key === 'content-type') return 'application/json';
+        if (key === 'x-styx-request-id') return requestId;
+        return null;
+      },
+    },
+    json: async () => body,
+    text: async () => JSON.stringify(body),
+  };
+}
+
 beforeEach(() => {
   mockFetch.mockReset();
   setAuthToken(null);
@@ -107,16 +124,55 @@ describe('ApiClient', () => {
   });
 
   describe('createContract()', () => {
-    it('sends POST to /contracts with correct body', async () => {
+    it('sends POST to /contracts with the phase-1 beta payload shape', async () => {
       mockFetch.mockResolvedValueOnce(jsonOk({ contractId: 'c1' }));
 
-      const data = { category: 'BIOLOGICAL', description: 'Run daily', stakeAmount: 50, durationDays: 30 };
+      const data = {
+        oathCategory: 'RECOVERY_NOCONTACT',
+        verificationMethod: 'FURY_NETWORK',
+        description: 'No contact for 30 days.',
+        stakeAmount: 50,
+        durationDays: 30,
+        recoveryMetadata: {
+          accountabilityPartnerEmail: 'ally@styx.io',
+          noContactIdentifiers: ['Former Partner'],
+          acknowledgments: {
+            voluntary: true,
+            noMinors: true,
+            noDependents: true,
+            noLegalObligations: true,
+          },
+        },
+      };
       await ApiClient.createContract(data);
 
       const [url, opts] = mockFetch.mock.calls[0];
       expect(url).toContain('/contracts');
       expect(opts.method).toBe('POST');
       expect(JSON.parse(opts.body)).toEqual(data);
+    });
+  });
+
+  describe('getContract()', () => {
+    it('hits /contracts/:id and preserves the snake_case response shape', async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonOk({
+          id: 'c1',
+          oath_category: 'RECOVERY_NOCONTACT',
+          stake_amount: 50,
+          grace_days_used: 1,
+          grace_days_max: 3,
+          proof_count: 2,
+          proofs: [],
+        }),
+      );
+
+      const result = await ApiClient.getContract('c1');
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/contracts/c1');
+      expect(result.oath_category).toBe('RECOVERY_NOCONTACT');
+      expect(result.stake_amount).toBe(50);
+      expect(result.grace_days_used).toBe(1);
     });
   });
 
@@ -136,12 +192,13 @@ describe('ApiClient', () => {
   });
 
   describe('getBalance()', () => {
-    it('hits /wallet/balance', async () => {
-      mockFetch.mockResolvedValueOnce(jsonOk({ ledgerBalance: 100 }));
+    it('hits /wallet/balance and preserves snake_case fields', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ ledger_balance: 100 }));
 
-      await ApiClient.getBalance();
+      const result = await ApiClient.getBalance();
 
       expect(mockFetch.mock.calls[0][0]).toContain('/wallet/balance');
+      expect(result.ledger_balance).toBe(100);
     });
   });
 
@@ -223,6 +280,54 @@ describe('ApiClient', () => {
       expect(url).toContain('/auth/enterprise');
       expect(opts.method).toBe('POST');
       expect(JSON.parse(opts.body)).toEqual({ enterpriseToken: 'ent-tok' });
+    });
+  });
+
+  describe('attestation endpoints', () => {
+    it('gets attestation status from the recovery endpoint', async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonOk({
+          contract_id: 'c1',
+          oath_category: 'RECOVERY_NOCONTACT',
+          streak_days: 7,
+          days_remaining: 23,
+          grace_days_available: 2,
+          today_attested: false,
+          total_strikes: 1,
+        }),
+      );
+
+      const result = await ApiClient.getAttestationStatus('c1');
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/contracts/c1/attestation');
+      expect(result.streak_days).toBe(7);
+      expect(result.today_attested).toBe(false);
+    });
+
+    it('submits attestation to the recovery endpoint', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ status: 'ok' }));
+
+      await ApiClient.submitAttestation('c1');
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/contracts/c1/attestation');
+      expect(opts.method).toBe('POST');
+    });
+  });
+
+  describe('error parsing', () => {
+    it('appends support trace IDs from response headers', async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonFailWithRequestId(
+          409,
+          { message: 'Already attested today', error_code: 'ATT_DUPLICATE' },
+          'req-att-409',
+        ),
+      );
+
+      await expect(ApiClient.submitAttestation('c1')).rejects.toThrow(
+        'API 409: Already attested today (ATT_DUPLICATE) [request_id: req-att-409]',
+      );
     });
   });
 });

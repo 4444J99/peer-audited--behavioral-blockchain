@@ -64,16 +64,16 @@ export function ProfileScreen({ onLogout, navigation }: ProfileScreenProps) {
 
       <View style={styles.scoreSection}>
         <Text style={styles.scoreLabel}>INTEGRITY</Text>
-        <Text style={styles.scoreValue}>{profile?.integrity ?? 0}</Text>
+        <Text style={styles.scoreValue}>{profile?.integrity_score ?? 0}</Text>
       </View>
 
       <View style={styles.statsGrid}>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{profile?.contractCount ?? 0}</Text>
+          <Text style={styles.statValue}>{profile?.contract_count ?? 0}</Text>
           <Text style={styles.statLabel}>Contracts</Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>${profile?.totalStaked?.toFixed(2) ?? '0.00'}</Text>
+          <Text style={styles.statValue}>${profile?.total_staked?.toFixed(2) ?? '0.00'}</Text>
           <Text style={styles.statLabel}>Total Staked</Text>
         </View>
       </View>

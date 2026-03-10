@@ -215,6 +215,23 @@ export default function App() {
           <div className="level-5-badge">
             {React.createElement(Shield as any, { size: 14 })} LEVEL 5 CLEARANCE ACTIVE
           </div>
+          <div
+            className="internal-warning-pulse"
+            style={{
+              marginLeft: 10,
+              backgroundColor: '#7f1d1d',
+              color: '#fee2e2',
+              border: '2px solid #ef4444',
+              padding: '6px 12px',
+              borderRadius: 4,
+              fontSize: 11,
+              fontWeight: 900,
+              letterSpacing: '0.15em',
+              boxShadow: '0 0 15px rgba(239, 68, 68, 0.4)'
+            }}
+          >
+            RESTRICTED: INTERNAL USE ONLY
+          </div>
           {releaseInfo ? (
             <div
               style={{

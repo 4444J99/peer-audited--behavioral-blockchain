@@ -59,10 +59,12 @@ describe('SettlementWorker', () => {
 
   it('should calculate deterministic quote and top up bounty pool on capture', async () => {
     mockPool.query
-      .mockResolvedValueOnce({ rows: [] }) // existing
-      .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] }) // insert run
-      .mockResolvedValueOnce(makeContractRow()) // finalizeLedger
-      .mockResolvedValueOnce({ rows: [] }); // update success
+      .mockResolvedValueOnce({ rows: [] }) // 1. existing run check
+      .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] }) // 2. insert run
+      .mockResolvedValueOnce(makeContractRow()) // 3. finalizeLedger: contract lookup
+      .mockResolvedValueOnce({ rows: [] }) // 4. finalizeLedger: idempotency check (capture)
+      .mockResolvedValueOnce({ rows: [] }) // 5. finalizeLedger: idempotency check (topup)
+      .mockResolvedValueOnce({ rows: [] }); // 6. update success
 
     mockStripeProvider.captureFunds.mockResolvedValue(successResult);
 
@@ -75,12 +77,14 @@ describe('SettlementWorker', () => {
 
     await callProcess(worker, job);
 
-    // 1. Check quote in insert
+    // ... rest of the test ...
     const insertCall = mockPool.query.mock.calls[1];
     const quote = JSON.parse(insertCall[1][4]);
+    expect(quote.platformFeeCents).toBe(8000);
     expect(quote.bountyPoolCents).toBe(2000);
+    expect(quote.userRefundCents).toBe(0);
 
-    // 2. Check ledger calls (capture + bounty topup)
+    // Ledger calls
     expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
       'acct-escrow',
       'acct-revenue',
@@ -100,27 +104,34 @@ describe('SettlementWorker', () => {
 
   it('should override actual action to RELEASE if dispositionMode is REFUND', async () => {
     mockPool.query
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ id: 'run-2' }] })
-      .mockResolvedValueOnce(makeContractRow())
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [] }) // 1. existing run check
+      .mockResolvedValueOnce({ rows: [{ id: 'run-2' }] }) // 2. insert run
+      .mockResolvedValueOnce(makeContractRow()) // 3. finalizeLedger: contract lookup
+      .mockResolvedValueOnce({ rows: [] }) // 4. finalizeLedger: idempotency check (release)
+      .mockResolvedValueOnce({ rows: [] }); // 5. update success
 
     mockStripeProvider.releaseFunds.mockResolvedValue(successResult);
 
     const job = makeJob({
       contractId: 'c-2',
-      outcome: 'FAIL', // User failed but...
+      outcome: 'FAIL',
       paymentIntentId: 'pi_2',
       amountCents: 5000,
-      dispositionMode: 'REFUND' // ...restricted jurisdiction forces refund
+      dispositionMode: 'REFUND'
     });
 
     await callProcess(worker, job);
 
+    // ... rest of the test ...
     expect(mockStripeProvider.releaseFunds).toHaveBeenCalled();
     expect(mockStripeProvider.captureFunds).not.toHaveBeenCalled();
+
+    const insertCall = mockPool.query.mock.calls[1];
+    const quote = JSON.parse(insertCall[1][4]);
+    expect(quote.platformFeeCents).toBe(0);
+    expect(quote.bountyPoolCents).toBe(0);
+    expect(quote.userRefundCents).toBe(5000);
     
-    // Ledger should reflect refund
     expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
       'acct-escrow',
       'acct-user-1',

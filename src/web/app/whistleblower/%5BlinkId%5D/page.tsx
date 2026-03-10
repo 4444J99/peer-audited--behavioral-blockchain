@@ -62,7 +62,7 @@ export default function WhistleblowerPage() {
             <Shield size={32} className="text-black" />
           </div>
           <h1 className="text-3xl font-black tracking-tighter uppercase mb-2">STYX</h1>
-          <p className="text-red-500 font-bold tracking-widest text-xs uppercase">Whistleblower Intake</p>
+          <p className="text-red-500 font-bold tracking-widest text-xs uppercase">Ex-Bounty Intake</p>
         </div>
 
         {result?.success ? (
@@ -90,7 +90,7 @@ export default function WhistleblowerPage() {
                 type="text"
                 value={mediaUri}
                 onChange={(e) => setMediaUri(e.target.value)}
-                placeholder="r2://styx-proofs/artifact-001.jpg"
+                placeholder="https://shared-link.com/screenshot.jpg"
                 className="w-full px-5 py-4 bg-black border border-neutral-800 rounded-2xl text-white placeholder-neutral-700 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600/30 transition-all"
                 required
               />
