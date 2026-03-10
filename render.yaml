@@ -14,8 +14,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: "3000"
       - key: DATABASE_URL
         fromDatabase:
           name: styx-db
@@ -27,6 +25,11 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
+      - key: CORS_ORIGINS
+        fromService:
+          name: styx-web
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY
@@ -61,13 +64,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: "3001"
       - key: NEXT_PUBLIC_API_URL
         fromService:
           name: styx-api
           type: web
-          property: hostport
+          envVarKey: RENDER_EXTERNAL_URL
       - key: NEXT_PUBLIC_STYX_WEB_VERSION
         value: "0.1.0"
       - key: SENTRY_DSN

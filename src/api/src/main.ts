@@ -27,6 +27,7 @@ async function bootstrap() {
 
   // Structured logging — replace default NestJS logger with pino
   app.useLogger(app.get(Logger));
+  const logger = app.get(Logger);
 
   // Security headers
   app.use(helmet());
@@ -52,17 +53,25 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new GlobalHttpExceptionFilter());
 
-  // CORS — reject all if CORS_ORIGINS unset in production
-  if (isProduction && !process.env.CORS_ORIGINS) {
-    throw new Error('CORS_ORIGINS must be set in production');
-  }
   const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',')
-    : ['http://localhost:3001', 'http://localhost:5173'];
-  app.enableCors({
-    origin: allowedOrigins,
-    credentials: true,
-  });
+        .map((origin) => origin.trim())
+        .filter(Boolean)
+    : isProduction
+      ? []
+      : ['http://localhost:3001', 'http://localhost:5173'];
+
+  if (allowedOrigins.length > 0) {
+    app.enableCors({
+      origin: allowedOrigins,
+      credentials: true,
+    });
+  } else if (isProduction) {
+    logger.warn(
+      'CORS_ORIGINS is not configured in production; starting without cross-origin browser access.',
+      'Bootstrap',
+    );
+  }
 
   // OpenAPI/Swagger documentation — only in non-production environments
   if (!isProduction) {
@@ -79,9 +88,8 @@ async function bootstrap() {
   // Graceful shutdown — drain in-flight requests before exit
   app.enableShutdownHooks();
 
-  const port = process.env.API_PORT || 3000;
+  const port = Number(process.env.PORT || process.env.API_PORT || 3000);
   await app.listen(port);
-  const logger = app.get(Logger);
   logger.log(`Styx API running on http://localhost:${port}`, 'Bootstrap');
   if (!isProduction) {
     logger.log(`Swagger docs at http://localhost:${port}/api/docs`, 'Bootstrap');

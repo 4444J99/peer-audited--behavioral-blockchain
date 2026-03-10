@@ -20,9 +20,7 @@ export default function WhistleblowerPage() {
     setResult(null);
 
     try {
-      // Use the public API URL if available, otherwise relative for same-host deployment
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
-      const response = await fetch(`${apiBase}/api/contracts/bounty/${linkId}`, {
+      const response = await fetch(`/api/contracts/bounty/${linkId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

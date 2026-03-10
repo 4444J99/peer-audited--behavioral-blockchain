@@ -33,9 +33,10 @@ export class PaymentsController implements OnModuleInit {
   }
 
   onModuleInit() {
-    // Enforce webhook secret in production — fail fast at startup
+    // Keep the API up even when webhook configuration is absent; the webhook
+    // endpoint will reject requests until the secret is configured.
     if (process.env.NODE_ENV === 'production' && !this.webhookSecret) {
-      throw new Error('STRIPE_WEBHOOK_SECRET must be set in production');
+      this.logger.warn('STRIPE_WEBHOOK_SECRET is unset; Stripe webhook handling is disabled.');
     }
   }
 
@@ -158,8 +159,13 @@ export class PaymentsController implements OnModuleInit {
   ) {
     const sig = req.headers['stripe-signature'];
 
-    if (!sig || !this.webhookSecret) {
-      this.logger.warn('Stripe webhook received without signature or secret');
+    if (!this.webhookSecret) {
+      this.logger.error('Stripe webhook invoked before STRIPE_WEBHOOK_SECRET was configured');
+      return res.status(503).json({ error: 'Webhook unavailable' });
+    }
+
+    if (!sig) {
+      this.logger.warn('Stripe webhook received without signature');
       return res.status(400).json({ error: 'Missing signature' });
     }
 

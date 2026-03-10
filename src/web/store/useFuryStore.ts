@@ -24,7 +24,7 @@ interface FuryState {
 const POLL_INTERVAL_MS = 5_000;
 const SSE_RECONNECT_MS = 5_000;
 const API_BASE = typeof window !== 'undefined'
-  ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000')
+  ? '/api'
   : 'http://localhost:3000';
 
 // Closure refs — kept outside Zustand state to avoid unnecessary re-renders
