@@ -73,16 +73,17 @@ services:
       - key: SENTRY_DSN
         sync: false
 
-databases:
-  - name: styx-db
-    plan: starter
-    region: oregon
-    postgresMajorVersion: "15"
-    ipAllowList: []  # Allow all (Render internal networking)
-
-redis:
-  - name: styx-redis
+  # --- Key-Value (Redis) ---
+  - type: redis
+    name: styx-redis
     plan: starter
     region: oregon
     maxmemoryPolicy: allkeys-lru
     ipAllowList: []
+
+databases:
+  - name: styx-db
+    plan: free
+    region: oregon
+    postgresMajorVersion: "16"
+    ipAllowList: []  # Allow all (Render internal networking)
