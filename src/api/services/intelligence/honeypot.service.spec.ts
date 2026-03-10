@@ -125,7 +125,7 @@ describe('HoneypotInjectorService', () => {
 
       // Two correct furies → two UPDATE calls with +5
       const updateCalls = gradeClient.query.mock.calls.filter(
-        ([sql]: [string]) => typeof sql === 'string' && sql.includes('UPDATE users'),
+        ([sql]: [string]) => typeof sql === 'string' && sql.includes('UPDATE users') && sql.includes('integrity_score'),
       );
       expect(updateCalls).toHaveLength(2);
       expect(updateCalls[0][1][0]).toBe(5); // +5 bonus
@@ -134,7 +134,7 @@ describe('HoneypotInjectorService', () => {
       expect(gradeClient.release).toHaveBeenCalled();
     });
 
-    it('should penalize furies who incorrectly voted PASS on honeypot', async () => {
+    it('should penalize furies who incorrectly voted PASS on honeypot and SHADOW_BAN if below threshold', async () => {
       gradeClient.query
         .mockResolvedValueOnce({ rows: [] }) // BEGIN
         .mockResolvedValueOnce({
@@ -143,15 +143,22 @@ describe('HoneypotInjectorService', () => {
           ],
         }) // SELECT assignments
         .mockResolvedValueOnce({ rows: [{ integrity_score: 15 }] }) // UPDATE fury-3 (-5)
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE status SHADOW_BANNED
         .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
       await honeypotService.gradeHoneypotPerformance('proof-hp-2', ['fury-3']);
 
-      const updateCalls = gradeClient.query.mock.calls.filter(
-        ([sql]: [string]) => typeof sql === 'string' && sql.includes('UPDATE users'),
+      const scoreUpdateCalls = gradeClient.query.mock.calls.filter(
+        ([sql]: [string]) => typeof sql === 'string' && sql.includes('UPDATE users') && sql.includes('integrity_score'),
       );
-      expect(updateCalls).toHaveLength(1);
-      expect(updateCalls[0][1][0]).toBe(-5); // -5 penalty
+      expect(scoreUpdateCalls).toHaveLength(1);
+      expect(scoreUpdateCalls[0][1][0]).toBe(-5); // -5 penalty
+
+      const statusUpdateCalls = gradeClient.query.mock.calls.filter(
+        ([sql]: [string]) => typeof sql === 'string' && sql.includes("status = 'SHADOW_BANNED'"),
+      );
+      expect(statusUpdateCalls).toHaveLength(1);
+      expect(statusUpdateCalls[0][1][0]).toBe('fury-3');
     });
 
     it('should handle mixed correct and incorrect verdicts', async () => {
@@ -166,18 +173,25 @@ describe('HoneypotInjectorService', () => {
         })
         .mockResolvedValueOnce({ rows: [{ integrity_score: 55 }] }) // UPDATE fury-a (+5)
         .mockResolvedValueOnce({ rows: [{ integrity_score: 15 }] }) // UPDATE fury-b (-5)
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE status SHADOW_BANNED for fury-b
         .mockResolvedValueOnce({ rows: [{ integrity_score: 60 }] }) // UPDATE fury-c (+5)
         .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
       await honeypotService.gradeHoneypotPerformance('proof-hp-3', ['fury-b']);
 
-      const updateCalls = gradeClient.query.mock.calls.filter(
-        ([sql]: [string]) => typeof sql === 'string' && sql.includes('UPDATE users'),
+      const scoreUpdateCalls = gradeClient.query.mock.calls.filter(
+        ([sql]: [string]) => typeof sql === 'string' && sql.includes('UPDATE users') && sql.includes('integrity_score'),
       );
-      expect(updateCalls).toHaveLength(3);
-      expect(updateCalls[0][1][0]).toBe(5);   // fury-a correct
-      expect(updateCalls[1][1][0]).toBe(-5);  // fury-b incorrect
-      expect(updateCalls[2][1][0]).toBe(5);   // fury-c correct
+      expect(scoreUpdateCalls).toHaveLength(3);
+      expect(scoreUpdateCalls[0][1][0]).toBe(5);   // fury-a correct
+      expect(scoreUpdateCalls[1][1][0]).toBe(-5);  // fury-b incorrect
+      expect(scoreUpdateCalls[2][1][0]).toBe(5);   // fury-c correct
+
+      const statusUpdateCalls = gradeClient.query.mock.calls.filter(
+        ([sql]: [string]) => typeof sql === 'string' && sql.includes("status = 'SHADOW_BANNED'"),
+      );
+      expect(statusUpdateCalls).toHaveLength(1);
+      expect(statusUpdateCalls[0][1][0]).toBe('fury-b');
 
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('HONEYPOT_GRADED', expect.objectContaining({
         proofId: 'proof-hp-3',

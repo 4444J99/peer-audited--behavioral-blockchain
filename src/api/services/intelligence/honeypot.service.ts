@@ -173,6 +173,12 @@ export class HoneypotService {
           this.logger.warn(
             `Fury ${assignment.fury_user_id} SHADOW-BANNED (Score: ${newScore})`,
           );
+          
+          // Theorem 7: Formally update status to SHADOW_BANNED if below threshold
+          await client.query(
+            `UPDATE users SET status = 'SHADOW_BANNED' WHERE id = $1`,
+            [assignment.fury_user_id],
+          );
         }
 
         this.logger.log(

@@ -72,6 +72,19 @@ export class RecoveryProtocolService {
       );
     }
 
+    // Theorem 8: Validate accountability partner status (must be verified/active)
+    const partner = await this.pool.query(
+      `SELECT status FROM users WHERE email = $1`,
+      [metadata.accountabilityPartnerEmail.toLowerCase()],
+    );
+
+    if (partner.rows.length === 0 || partner.rows[0].status !== 'ACTIVE') {
+      throw new HttpException(
+        'Recovery Protocol: Accountability partner must be an active, registered user. Please ensure they have verified their account.',
+        HttpStatus.NOT_ACCEPTABLE,
+      );
+    }
+
     // Duration cap: max 30 days (forces re-evaluation)
     if (durationDays > MAX_NOCONTACT_DURATION_DAYS) {
       throw new HttpException(

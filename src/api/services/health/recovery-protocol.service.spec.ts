@@ -1,7 +1,6 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { RecoveryProtocolService, RecoveryMetadata } from './recovery-protocol.service';
-import { MAX_NOCONTACT_DURATION_DAYS, MAX_NOCONTACT_TARGETS } from '../../../shared/libs/behavioral-logic';
 
 describe('RecoveryProtocolService', () => {
   let service: RecoveryProtocolService;
@@ -20,7 +19,12 @@ describe('RecoveryProtocolService', () => {
 
   beforeEach(() => {
     mockPool = {
-      query: jest.fn().mockResolvedValue({ rows: [] }),
+      query: jest.fn().mockImplementation((sql: string) => {
+        if (sql.includes('FROM users')) {
+          return Promise.resolve({ rows: [{ status: 'ACTIVE' }] });
+        }
+        return Promise.resolve({ rows: [] });
+      }),
     } as any;
     service = new RecoveryProtocolService(mockPool);
   });
@@ -55,6 +59,19 @@ describe('RecoveryProtocolService', () => {
     ).rejects.toThrow(HttpException);
   });
 
+  it('should reject when accountability partner is not an active user', async () => {
+    mockPool.query.mockImplementationOnce((sql: string) => {
+      if (sql.includes('FROM users')) {
+        return Promise.resolve({ rows: [] }); // User not found
+      }
+      return Promise.resolve({ rows: [] });
+    });
+
+    await expect(
+      service.validateRecoveryContract('user-1', 'RECOVERY_NOCONTACT', 14, validMetadata),
+    ).rejects.toThrow('Accountability partner must be an active, registered user');
+  });
+
   it('should reject duration exceeding 30 days', async () => {
     await expect(
       service.validateRecoveryContract('user-1', 'RECOVERY_NOCONTACT', 60, validMetadata),
@@ -72,12 +89,20 @@ describe('RecoveryProtocolService', () => {
   });
 
   it('should reject when total targets across contracts exceed 10 (Theorem 8)', async () => {
-    mockPool.query.mockResolvedValueOnce({
-      rows: [
-        { metadata: { noContactIdentifiers: ['e1', 'e2', 'e3'] } },
-        { metadata: { noContactIdentifiers: ['e4', 'e5', 'e6'] } },
-        { metadata: { noContactIdentifiers: ['e7', 'e8'] } },
-      ],
+    mockPool.query.mockImplementation((sql: string) => {
+      if (sql.includes('FROM users')) {
+        return Promise.resolve({ rows: [{ status: 'ACTIVE' }] });
+      }
+      if (sql.includes('FROM contracts')) {
+        return Promise.resolve({
+          rows: [
+            { metadata: { noContactIdentifiers: ['e1', 'e2', 'e3'] } },
+            { metadata: { noContactIdentifiers: ['e4', 'e5', 'e6'] } },
+            { metadata: { noContactIdentifiers: ['e7', 'e8'] } },
+          ],
+        });
+      }
+      return Promise.resolve({ rows: [] });
     });
 
     const meta: RecoveryMetadata = {
@@ -92,10 +117,18 @@ describe('RecoveryProtocolService', () => {
 
   describe('Theorem 8: Anti-Isolation Guardrails', () => {
     it('should pass if total targets is exactly the limit (10)', async () => {
-      mockPool.query.mockResolvedValueOnce({
-        rows: [
-          { metadata: { noContactIdentifiers: ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7'] } },
-        ],
+      mockPool.query.mockImplementation((sql: string) => {
+        if (sql.includes('FROM users')) {
+          return Promise.resolve({ rows: [{ status: 'ACTIVE' }] });
+        }
+        if (sql.includes('FROM contracts')) {
+          return Promise.resolve({
+            rows: [
+              { metadata: { noContactIdentifiers: ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7'] } },
+            ],
+          });
+        }
+        return Promise.resolve({ rows: [] });
       });
 
       const meta: RecoveryMetadata = {
@@ -108,11 +141,19 @@ describe('RecoveryProtocolService', () => {
     });
 
     it('should correctly handle contracts with missing metadata in DB', async () => {
-      mockPool.query.mockResolvedValueOnce({
-        rows: [
-          { metadata: null },
-          { metadata: { noContactIdentifiers: ['e1'] } },
-        ],
+      mockPool.query.mockImplementation((sql: string) => {
+        if (sql.includes('FROM users')) {
+          return Promise.resolve({ rows: [{ status: 'ACTIVE' }] });
+        }
+        if (sql.includes('FROM contracts')) {
+          return Promise.resolve({
+            rows: [
+              { metadata: null },
+              { metadata: { noContactIdentifiers: ['e1'] } },
+            ],
+          });
+        }
+        return Promise.resolve({ rows: [] });
       });
 
       const meta: RecoveryMetadata = {

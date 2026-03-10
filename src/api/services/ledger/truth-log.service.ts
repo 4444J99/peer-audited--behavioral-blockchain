@@ -4,6 +4,8 @@ import { createHash } from 'crypto';
 
 @Injectable()
 export class TruthLogService {
+  private static readonly GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+
   constructor(private readonly pool: Pool) {}
 
   /**
@@ -19,7 +21,7 @@ export class TruthLogService {
     );
 
     const corrupted: string[] = [];
-    let expectedPreviousHash = '0000000000000000000000000000000000000000000000000000000000000000';
+    let expectedPreviousHash = TruthLogService.GENESIS_HASH;
 
     for (const row of result.rows) {
       // Verify the previous_hash link
@@ -68,7 +70,7 @@ export class TruthLogService {
       `;
       const latestRes = await client.query(latestLogQuery);
       
-      const previousHash = latestRes.rows.length > 0 ? latestRes.rows[0].current_hash : '0000000000000000000000000000000000000000000000000000000000000000';
+      const previousHash = latestRes.rows.length > 0 ? latestRes.rows[0].current_hash : TruthLogService.GENESIS_HASH;
       const nextIndex = latestRes.rows.length > 0 ? parseInt(latestRes.rows[0].sequence_index) + 1 : 1;
       const timestamp = new Date().toISOString();
 
