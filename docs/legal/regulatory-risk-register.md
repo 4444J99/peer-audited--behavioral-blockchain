@@ -44,7 +44,7 @@ Comprehensive risk register for Styx covering regulatory, financial, operational
 | **Likelihood** | 3 (Possible) |
 | **Impact** | 5 (Critical) |
 | **Score** | 15 |
-| **Mitigation** | (1) Legal analysis establishing commitment-device distinction (see `docs/legal/legal--performance-wagering.md`). (2) User controls outcome (not chance-based). (3) Linguistic cloaker removes gambling-adjacent terminology. (4) No house edge on deposits (platform fee is a service fee, not a take rate on wagers). (5) Pre-launch legal opinion from gaming law specialist. |
+| **Mitigation** | (1) Legal analysis establishing commitment-device distinction (see `docs/legal/legal--skill-based-contest-whitepaper.md` and `docs/legal/legal--performance-wagering.md`). (2) User controls outcome (not chance-based). (3) Linguistic cloaker removes gambling-adjacent terminology. (4) No house edge on deposits (platform fee is a service fee, not a take rate on wagers). (5) Pre-launch legal opinion from gaming law specialist. (6) Aegis Protocol guardrails (see `docs/legal/legal--aegis-protocol.md`). |
 | **Owner** | Legal Counsel (external) |
 | **Status** | Active -- legal analysis complete, formal opinion pending |
 
@@ -58,7 +58,7 @@ Comprehensive risk register for Styx covering regulatory, financial, operational
 | **Likelihood** | 4 (Likely) |
 | **Impact** | 4 (Major) |
 | **Score** | 16 |
-| **Mitigation** | (1) FBO escrow structure through Stripe shifts transmitter liability to Stripe as the licensed entity. (2) Styx never holds or controls user funds directly -- Stripe manages the FBO account. (3) Obtain written confirmation from Stripe that the FBO structure does not require Styx to hold an MTL. (4) Monitor FinCEN guidance on escrow-as-a-service models. (5) Budget for MTL application if Stripe confirmation is insufficient. |
+| **Mitigation** | (1) FBO escrow structure through Stripe shifts transmitter liability to Stripe as the licensed entity (see `docs/legal/legal--aegis-protocol.md` § 4 and `docs/legal/legal--real-money-activation-brief.md` § 3). (2) Styx never holds or controls user funds directly -- Stripe manages the FBO account. (3) Obtain written confirmation from Stripe that the FBO structure does not require Styx to hold an MTL. (4) Monitor FinCEN guidance on escrow-as-a-service models. (5) Budget for MTL application if Stripe confirmation is insufficient. |
 | **Owner** | Legal Counsel (external) + Stripe Account Manager |
 | **Status** | Active -- Stripe confirmation requested |
 
@@ -142,7 +142,7 @@ Comprehensive risk register for Styx covering regulatory, financial, operational
 | **Likelihood** | 4 (Likely) |
 | **Impact** | 3 (Moderate) |
 | **Score** | 12 |
-| **Mitigation** | (1) Linguistic cloaker removes all gambling-adjacent terminology from user-facing strings and app store metadata. (2) App store description emphasizes "behavioral commitment" and "accountability", not financial stakes. (3) Submit with detailed explanation to review team pre-emptively. (4) Web app (Next.js PWA) as fallback distribution channel if native apps are rejected. (5) Consider Expo web export as intermediate step. (6) Study how stickK, Beeminder, and DietBet passed app store review. |
+| **Mitigation** | (1) Linguistic cloaker removes all gambling-adjacent terminology from user-facing strings and app store metadata (see `docs/legal/legal--gatekeeper-compliance.md` § 1.4). (2) App store description emphasizes "behavioral commitment" and "accountability", not financial stakes. (3) Submit with detailed explanation to review team pre-emptively (see `docs/legal/legal--app-store-ugc-moderation-packet.md` § 6). (4) Web app (Next.js PWA) as fallback distribution channel if native apps are rejected. (5) Consider Expo web export as intermediate step. (6) Study how stickK, Beeminder, and DietBet passed app store review. |
 | **Owner** | Product + Mobile Engineering |
 | **Status** | Active -- linguistic cloaker implemented, app store submission not yet attempted |
 
@@ -156,7 +156,7 @@ Comprehensive risk register for Styx covering regulatory, financial, operational
 | **Likelihood** | 3 (Possible) |
 | **Impact** | 3 (Moderate) |
 | **Score** | 9 |
-| **Mitigation** | (1) Privacy policy drafted with CCPA section (see `docs/legal/privacy-policy.md`). (2) Data deletion and portability mechanisms planned. (3) No biometric data collection currently (future HealthKit is opt-in). (4) EXIF/GPS consent disclosed in privacy policy and at proof upload. (5) Cookie consent banner for web app. (6) Privacy impact assessment before B2B practitioner launch (therapist-client data sensitivity). |
+| **Mitigation** | (1) Privacy policy drafted with CCPA section (see `docs/legal/privacy-policy.md`). (2) Data deletion and portability mechanisms planned. (3) No biometric data collection currently (future HealthKit is opt-in). (4) EXIF/GPS consent disclosed in privacy policy and at proof upload. (5) Cookie consent banner for web app. (6) Privacy impact assessment before B2B practitioner launch (therapist-client data sensitivity). (7) Cross-jurisdictional consent matrix (see `docs/legal/legal--cross-jurisdictional-consent-matrix.md`). |
 | **Owner** | Legal + Engineering |
 | **Status** | Active -- privacy policy drafted, deletion mechanism planned |
 
@@ -170,7 +170,7 @@ Comprehensive risk register for Styx covering regulatory, financial, operational
 | **Likelihood** | 2 (Unlikely) |
 | **Impact** | 5 (Critical) |
 | **Score** | 10 |
-| **Mitigation** | (1) Pre-approval from Stripe's high-risk team before processing production transactions. (2) FBO structure explicitly supported by Stripe Connect for platforms. (3) Written confirmation that commitment devices are not on Stripe's restricted list. (4) Maintain backup processor evaluation (Adyen, Square). (5) Keep operational reserve for 30-day fund migration if Stripe terminates. (6) Transparent communication with Stripe about business model evolution. |
+| **Mitigation** | (1) Pre-approval from Stripe's high-risk team before processing production transactions (see `docs/legal/legal--gatekeeper-compliance.md` § 1.3 and `docs/legal/legal--real-money-activation-brief.md` § 4). (2) FBO structure explicitly supported by Stripe Connect for platforms. (3) Written confirmation that commitment devices are not on Stripe's restricted list. (4) Maintain backup processor evaluation (Adyen, Square). (5) Keep operational reserve for 30-day fund migration if Stripe terminates. (6) Transparent communication with Stripe about business model evolution. |
 | **Owner** | Finance + Stripe Account Manager |
 | **Status** | Active -- pre-approval conversation initiated |
 

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280" role="img" aria-labelledby="title desc">
+  <title id="title">Consent flow mockup</title>
+  <desc id="desc">Mobile screen showing a proof-media consent dialog with disclosure of camera, metadata, and reviewer access.</desc>
+  <rect width="720" height="1280" fill="#0b1020"/>
+  <rect x="70" y="40" width="580" height="1200" rx="44" fill="#111827" stroke="#334155" stroke-width="6"/>
+  <text x="360" y="130" fill="#f8fafc" font-size="34" font-family="Arial" text-anchor="middle" font-weight="700">Proof Upload Consent</text>
+  <text x="360" y="170" fill="#94a3b8" font-size="18" font-family="Arial" text-anchor="middle">Standalone disclosure before first proof capture</text>
+
+  <rect x="110" y="230" width="500" height="500" rx="28" fill="#172033" stroke="#60a5fa"/>
+  <text x="145" y="285" fill="#f8fafc" font-size="28" font-family="Arial" font-weight="700">What you are consenting to</text>
+  <text x="145" y="340" fill="#e2e8f0" font-size="20" font-family="Arial">• camera capture for commitment verification</text>
+  <text x="145" y="388" fill="#e2e8f0" font-size="20" font-family="Arial">• metadata review for authenticity checks</text>
+  <text x="145" y="436" fill="#e2e8f0" font-size="20" font-family="Arial">• limited auditor access to assigned proof only</text>
+  <text x="145" y="484" fill="#e2e8f0" font-size="20" font-family="Arial">• no public sharing of your media</text>
+  <text x="145" y="532" fill="#e2e8f0" font-size="20" font-family="Arial">• withdrawal available from Settings -&gt; Privacy</text>
+  <text x="145" y="598" fill="#94a3b8" font-size="18" font-family="Arial">By continuing, you provide specific consent for this</text>
+  <text x="145" y="626" fill="#94a3b8" font-size="18" font-family="Arial">verification method. This consent is separate from</text>
+  <text x="145" y="654" fill="#94a3b8" font-size="18" font-family="Arial">general Terms acceptance.</text>
+
+  <rect x="110" y="790" width="240" height="84" rx="22" fill="#1f2937" stroke="#64748b"/>
+  <text x="230" y="842" fill="#e5e7eb" font-size="24" font-family="Arial" text-anchor="middle" font-weight="700">Cancel</text>
+  <rect x="370" y="790" width="240" height="84" rx="22" fill="#f59e0b"/>
+  <text x="490" y="842" fill="#111827" font-size="24" font-family="Arial" text-anchor="middle" font-weight="700">I Consent</text>
+</svg>

@@ -1,3 +1,15 @@
+---
+artifact_id: L-CG-01
+title: "Legal & Ethical Compliance — The Gambling Question (Research Memo)"
+date: "2026-02-21"
+version: "1.0.0"
+owner: "agent/research-support"
+approval_status: "research-memo"
+citation_format: "research-memo"
+source_documents: []
+linked_issues: []
+---
+
 > **Research memo (external synthesis), not legal policy.**
 >
 > This document aggregates external analysis and references for legal/compliance exploration.
@@ -692,3 +704,21 @@ You do not have to pick exactly one forever. A sensible roadmap:
 ***
 
 If you want to go one level deeper, the next step is to pick **one concrete user story** (e.g., “solo salesperson using a commitment contract,” or “NYC tech company running a 90‑day wellness challenge”) and design the full funnel for that variant — from pricing and rule language all the way down to verification flows and edge‑case handling. That’s where you can see how the legal theory surfaces in actual product screens.
+
+---
+
+## Table of Authorities
+
+### Cases
+
+- *Dew-Becker v. Wu*, 2020 IL 124472 (Ill. 2020)
+- *Murphy v. NCAA*, 584 U.S. 453 (2018)
+- *White v. Cuomo*, 38 N.Y.3d 311 (2022)
+
+### Statutes and Regulations
+
+- 31 U.S.C. §§ 5361-5367 (Unlawful Internet Gambling Enforcement Act of 2006)
+- 31 U.S.C. § 5362(1)(E)(ix) (UIGEA — skill-based contest exclusion)
+- Cal. Civ. Code §§ 1798.100-1798.199.100 (CCPA/CPRA)
+- 740 Ill. Comp. Stat. 14/15 (Illinois Biometric Information Privacy Act)
+- N.Y. Gen. Bus. Law § 391-oo (weight-loss supplement restrictions for minors)

@@ -17,6 +17,8 @@ _Effective date: [TBD -- prior to beta launch]_
 
 **IMPORTANT:** This is an internal draft for legal review. It is not a finalized, legally binding document. All provisions are subject to revision by qualified legal counsel before publication.
 
+Companion markup for counsel review: `docs/legal/appendices/appendix-b--terms-of-service-aegis-markup.md`.
+
 ---
 
 ## 1. Definitions
@@ -67,6 +69,8 @@ You must be at least 18 years old to use Styx. By creating an account, you repre
 ### 3.2 Geographic Restriction
 
 Styx is currently available only to Users located in the United States. This restriction is enforced by the `STYX_ALLOWLIST_US_ONLY` feature flag. Users who attempt to access the Platform from outside the United States will be denied registration. VPN circumvention of this restriction is a violation of these Terms and grounds for account termination with deposit forfeit.
+
+Launch-state rationale companion: `docs/legal/appendices/appendix-d--state-blocklist-justification-table.md`.
 
 ### 3.3 Identity Verification
 
@@ -129,6 +133,7 @@ You may cancel an active Oath at any time. Cancellation forfeits your Vault depo
 - No-contact target identities are never disclosed to Furies
 
 See `docs/legal/legal--aegis-protocol.md` for Aegis Protocol details.
+See `docs/legal/appendices/appendix-b--terms-of-service-aegis-markup.md` for the clause-to-guardrail mapping used in the counsel packet.
 
 ## 5. Fury Auditor Obligations
 
@@ -161,6 +166,8 @@ A minimum of 3-of-5 assigned Furies must agree for a verdict to stand. If quorum
 ### 6.1 Escrow Structure
 
 All Vault deposits are held in a For Benefit Of (FBO) segregated account through Stripe. User funds are not commingled with Company operating funds. The Company does not use, invest, or derive interest from escrowed user funds.
+
+Fund-flow diagram used in the counsel and processor packet: `docs/legal/appendices/appendix-a--fbo-architecture-diagram.md`.
 
 ### 6.2 Payment Processing
 

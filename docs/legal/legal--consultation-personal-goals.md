@@ -1,3 +1,15 @@
+---
+artifact_id: L-CPG-01
+title: "Legal Analysis of Personal Performance Wagering — Consultation Version"
+date: "2026-02-21"
+version: "1.0.0"
+owner: "agent/research-support"
+approval_status: "research-memo"
+citation_format: "research-memo"
+source_documents: []
+linked_issues: []
+---
+
 # Legal Analysis of Personal Performance Wagering and Skill-Based Deposit Contracts in the United States
 
 The intersection of digital gamification, health technology, and
@@ -1135,3 +1147,24 @@ deceptive advertising, and unregistered commodities trading.
 79. Sportsbooks Could Use Derivatives Market, But Is It Betting? -
     Morgan Lewis, accessed February 21, 2026,
     [[https://www.morganlewis.com/-/media/files/news/2021/law360-sportsbooks-could-use-derivatives-market\--but-is-it-betting.pdf]{.underline}](https://www.morganlewis.com/-/media/files/news/2021/law360-sportsbooks-could-use-derivatives-market--but-is-it-betting.pdf)
+
+---
+
+## Table of Authorities
+
+### Cases
+
+- *Dew-Becker v. Wu*, 2020 IL 124472 (Ill. 2020)
+- *Murphy v. NCAA*, 584 U.S. 453 (2018)
+- *White v. Cuomo*, 38 N.Y.3d 311 (2022)
+
+### Statutes and Regulations
+
+- 7 U.S.C. § 1 *et seq.* (Commodity Exchange Act)
+- 15 U.S.C. § 45 (FTC Act — unfair or deceptive practices)
+- 16 C.F.R. pt. 255 (FTC Endorsement Guides)
+- 17 C.F.R. § 40.11 (CFTC event contract review procedures)
+- 31 U.S.C. §§ 5311-5330 (Bank Secrecy Act)
+- 31 U.S.C. §§ 5361-5367 (Unlawful Internet Gambling Enforcement Act of 2006)
+- 31 U.S.C. § 5362(1)(E)(ix) (UIGEA — skill-based contest exclusion)
+- 820 Ill. Comp. Stat. 40/1 *et seq.* (Illinois Sports Wagering Act)

@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">Styx FBO fund-flow diagram</title>
+  <desc id="desc">Diagram showing the user, Stripe, FBO account, Styx API, ledger, payout, bounty pool, revenue, and reconciliation flows.</desc>
+  <defs>
+    <style>
+      .bg { fill: #0f172a; }
+      .card { fill: #111827; stroke: #60a5fa; stroke-width: 2; rx: 18; ry: 18; }
+      .accent { fill: #1f2937; stroke: #f59e0b; stroke-width: 2; rx: 18; ry: 18; }
+      .ops { fill: #111827; stroke: #34d399; stroke-width: 2; rx: 18; ry: 18; }
+      .txt { fill: #e5e7eb; font: 600 24px Arial, sans-serif; text-anchor: middle; }
+      .sub { fill: #cbd5e1; font: 400 16px Arial, sans-serif; text-anchor: middle; }
+      .label { fill: #f8fafc; font: 600 16px Arial, sans-serif; }
+      .arrow { stroke: #94a3b8; stroke-width: 3; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+      <polygon points="0 0, 10 4, 0 8" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1200" height="620" />
+
+  <rect class="card" x="60" y="80" width="180" height="90" />
+  <text class="txt" x="150" y="118">User</text>
+  <text class="sub" x="150" y="148">authorizes deposit</text>
+
+  <rect class="card" x="330" y="80" width="230" height="90" />
+  <text class="txt" x="445" y="118">Stripe Connect</text>
+  <text class="sub" x="445" y="148">checkout / payment intent</text>
+
+  <rect class="accent" x="670" y="70" width="250" height="110" />
+  <text class="txt" x="795" y="112">Partner Bank FBO</text>
+  <text class="sub" x="795" y="140">segregated custody account</text>
+
+  <rect class="ops" x="330" y="260" width="230" height="90" />
+  <text class="txt" x="445" y="298">Styx API</text>
+  <text class="sub" x="445" y="328">rules engine + webhook logic</text>
+
+  <rect class="ops" x="670" y="250" width="250" height="110" />
+  <text class="txt" x="795" y="292">Ledger + Truth Log</text>
+  <text class="sub" x="795" y="320">immutable internal record</text>
+
+  <rect class="card" x="1000" y="60" width="150" height="80" />
+  <text class="txt" x="1075" y="98">Payout</text>
+  <text class="sub" x="1075" y="124">user linked method</text>
+
+  <rect class="card" x="970" y="210" width="180" height="80" />
+  <text class="txt" x="1060" y="248">Bounty Pool</text>
+  <text class="sub" x="1060" y="274">forfeiture allocation</text>
+
+  <rect class="card" x="970" y="340" width="180" height="80" />
+  <text class="txt" x="1060" y="378">Revenue</text>
+  <text class="sub" x="1060" y="404">platform fee</text>
+
+  <rect class="ops" x="670" y="460" width="250" height="100" />
+  <text class="txt" x="795" y="500">Reconciliation</text>
+  <text class="sub" x="795" y="528">Stripe balances vs ledger</text>
+
+  <path class="arrow" d="M240 125 H320" />
+  <text class="label" x="260" y="110">authorize deposit</text>
+
+  <path class="arrow" d="M560 125 H660" />
+  <text class="label" x="585" y="110">settle funds</text>
+
+  <path class="arrow" d="M445 170 V250" />
+  <text class="label" x="462" y="220">webhook confirmation</text>
+
+  <path class="arrow" d="M560 300 H660" />
+  <text class="label" x="565" y="285">record events</text>
+
+  <path class="arrow" d="M560 280 C620 230, 620 170, 670 125" />
+  <text class="label" x="560" y="205">release / fee instruction</text>
+
+  <path class="arrow" d="M920 110 H990" />
+  <text class="label" x="930" y="95">success payout</text>
+
+  <path class="arrow" d="M920 235 H960" />
+  <text class="label" x="915" y="220">failed oath</text>
+
+  <path class="arrow" d="M920 370 H960" />
+  <text class="label" x="930" y="355">platform fee</text>
+
+  <path class="arrow" d="M795 360 V450" />
+  <text class="label" x="812" y="418">compare balances</text>
+</svg>

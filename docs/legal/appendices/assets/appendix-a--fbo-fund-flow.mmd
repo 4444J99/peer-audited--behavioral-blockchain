@@ -1,0 +1,21 @@
+flowchart LR
+    U[User]
+    S[Stripe Checkout / PaymentIntent]
+    F[FBO Account at Partner Bank]
+    A[Styx API / Rules Engine]
+    L[PostgreSQL Ledger + Truth Log]
+    P[User Payout Method]
+    B[Fury Bounty Pool]
+    R[Platform Revenue]
+    X[Reconciliation / Audit Reports]
+
+    U -->|Authorize deposit| S
+    S -->|Settle funds| F
+    S -->|Webhook confirmation| A
+    A -->|Record immutable events| L
+    A -->|Issue payout / release / fee instructions| S
+    F -->|Successful completion payout| P
+    F -->|Forfeiture distribution| B
+    F -->|Platform fee| R
+    F -->|Balance report| X
+    L -->|Compare balances| X

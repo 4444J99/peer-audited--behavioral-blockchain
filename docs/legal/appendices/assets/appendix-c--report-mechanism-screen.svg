@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280" role="img" aria-labelledby="title desc">
+  <title id="title">Reporting mechanism mockup</title>
+  <desc id="desc">Mobile report content form with selectable categories and escalation note.</desc>
+  <rect width="720" height="1280" fill="#0b1020"/>
+  <rect x="70" y="40" width="580" height="1200" rx="44" fill="#111827" stroke="#334155" stroke-width="6"/>
+  <text x="360" y="130" fill="#f8fafc" font-size="34" font-family="Arial" text-anchor="middle" font-weight="700">Report This Content</text>
+  <text x="360" y="170" fill="#94a3b8" font-size="18" font-family="Arial" text-anchor="middle">In-app reporting flow for UGC and reviewer misconduct</text>
+
+  <g font-family="Arial">
+    <rect x="110" y="230" width="500" height="80" rx="20" fill="#172033" stroke="#60a5fa"/>
+    <text x="145" y="280" fill="#e5e7eb" font-size="24" font-weight="700">Harassment or retaliation</text>
+
+    <rect x="110" y="330" width="500" height="80" rx="20" fill="#172033" stroke="#60a5fa"/>
+    <text x="145" y="380" fill="#e5e7eb" font-size="24" font-weight="700">Nudity / graphic content</text>
+
+    <rect x="110" y="430" width="500" height="80" rx="20" fill="#172033" stroke="#60a5fa"/>
+    <text x="145" y="480" fill="#e5e7eb" font-size="24" font-weight="700">Threat / self-harm concern</text>
+
+    <rect x="110" y="530" width="500" height="80" rx="20" fill="#172033" stroke="#60a5fa"/>
+    <text x="145" y="580" fill="#e5e7eb" font-size="24" font-weight="700">Fraudulent proof or manipulation</text>
+
+    <rect x="110" y="660" width="500" height="220" rx="24" fill="#1f2937" stroke="#f59e0b"/>
+    <text x="145" y="715" fill="#f8fafc" font-size="26" font-weight="700">Report details</text>
+    <text x="145" y="760" fill="#cbd5e1" font-size="18">Assigned reviewer used threatening language and contacted me outside the app.</text>
+    <text x="145" y="812" fill="#94a3b8" font-size="18">Urgent safety reports trigger immediate escalation.</text>
+
+    <rect x="110" y="930" width="500" height="90" rx="22" fill="#ef4444"/>
+    <text x="360" y="986" fill="#f8fafc" font-size="26" text-anchor="middle" font-weight="700">Submit Report</text>
+  </g>
+</svg>

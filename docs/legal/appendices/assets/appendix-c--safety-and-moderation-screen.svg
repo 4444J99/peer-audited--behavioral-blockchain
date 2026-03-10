@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280" role="img" aria-labelledby="title desc">
+  <title id="title">Safety and Moderation mockup</title>
+  <desc id="desc">Mobile screen showing safety and moderation settings including report content, block user, content guidelines, and contact options.</desc>
+  <rect width="720" height="1280" fill="#0b1020"/>
+  <rect x="70" y="40" width="580" height="1200" rx="44" fill="#111827" stroke="#334155" stroke-width="6"/>
+  <text x="360" y="130" fill="#f8fafc" font-size="34" font-family="Arial" text-anchor="middle" font-weight="700">Safety &amp; Moderation</text>
+  <text x="360" y="170" fill="#94a3b8" font-size="18" font-family="Arial" text-anchor="middle">Reviewer walkthrough surface for App Review</text>
+
+  <g font-family="Arial">
+    <rect x="110" y="230" width="500" height="110" rx="24" fill="#172033" stroke="#60a5fa"/>
+    <text x="145" y="275" fill="#e5e7eb" font-size="26" font-weight="700">Report Content</text>
+    <text x="145" y="310" fill="#cbd5e1" font-size="18">Flag proof media, comments, harassment, or self-harm risk.</text>
+
+    <rect x="110" y="370" width="500" height="110" rx="24" fill="#172033" stroke="#60a5fa"/>
+    <text x="145" y="415" fill="#e5e7eb" font-size="26" font-weight="700">Block Reviewer</text>
+    <text x="145" y="450" fill="#cbd5e1" font-size="18">Prevent future auditor assignment from abusive or unsafe users.</text>
+
+    <rect x="110" y="510" width="500" height="110" rx="24" fill="#172033" stroke="#34d399"/>
+    <text x="145" y="555" fill="#e5e7eb" font-size="26" font-weight="700">Content Guidelines</text>
+    <text x="145" y="590" fill="#cbd5e1" font-size="18">Body-image, nudity, threats, and retaliation rules.</text>
+
+    <rect x="110" y="650" width="500" height="110" rx="24" fill="#172033" stroke="#34d399"/>
+    <text x="145" y="695" fill="#e5e7eb" font-size="26" font-weight="700">Developer Contact</text>
+    <text x="145" y="730" fill="#cbd5e1" font-size="18">legal@styx.app • safety@styx.app • support trace flow.</text>
+
+    <rect x="110" y="810" width="500" height="220" rx="28" fill="#1f2937" stroke="#f59e0b"/>
+    <text x="145" y="860" fill="#f8fafc" font-size="26" font-weight="700">Moderation Promise</text>
+    <text x="145" y="902" fill="#e2e8f0" font-size="18">• urgent self-harm / threat reports escalated immediately</text>
+    <text x="145" y="938" fill="#e2e8f0" font-size="18">• nudity and graphic content reviewed within 4 hours</text>
+    <text x="145" y="974" fill="#e2e8f0" font-size="18">• harassment and retaliation reviewed within 24 hours</text>
+  </g>
+</svg>
