@@ -12,6 +12,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,20 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!dateOfBirth) {
+      setError('Date of birth is required');
+      return;
+    }
+
+    // Verify user is at least 18
+    const dob = new Date(dateOfBirth);
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear() - (today < new Date(today.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
+    if (age < 18) {
+      setError('You must be 18 years or older to use Styx');
+      return;
+    }
+
     if (!ageConfirmed) {
       setError('You must confirm you are 18 years or older');
       return;
@@ -43,7 +58,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(email, password, { ageConfirmation: true, termsAccepted: true });
+      await register(email, password, { ageConfirmation: true, termsAccepted: true, dateOfBirth });
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
@@ -115,6 +130,20 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full px-4 py-3 bg-black border border-neutral-800 rounded-xl text-white placeholder-neutral-600 focus:outline-none focus:border-red-600 transition-colors"
               placeholder="••••••••"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="dob" className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2">
+              Date of Birth
+            </label>
+            <input
+              id="dob"
+              type="date"
+              required
+              value={dateOfBirth}
+              onChange={(e) => setDateOfBirth(e.target.value)}
+              className="w-full px-4 py-3 bg-black border border-neutral-800 rounded-xl text-white placeholder-neutral-600 focus:outline-none focus:border-red-600 transition-colors [color-scheme:dark]"
             />
           </div>
 

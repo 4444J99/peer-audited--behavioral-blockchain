@@ -1,6 +1,12 @@
 import type { MobileBootstrapResponse, ReleaseInfoResponse } from '@styx/shared/index';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+// In the browser, route through the Next.js /api rewrite proxy (same-origin)
+// to avoid cross-origin cookie/CORS issues.  On the server (SSR), call the
+// API directly since there's no browser cookie sandbox to worry about.
+const API_BASE =
+  typeof window !== 'undefined'
+    ? '/api'
+    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000');
 const WEB_APP_VERSION = process.env.NEXT_PUBLIC_STYX_WEB_VERSION || process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0-dev';
 const WEB_APP_BUILD = process.env.NEXT_PUBLIC_STYX_WEB_BUILD || process.env.NEXT_PUBLIC_BUILD_SHA || 'dev';
 
