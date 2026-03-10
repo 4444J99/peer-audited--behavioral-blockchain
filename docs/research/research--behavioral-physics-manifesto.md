@@ -187,6 +187,18 @@ It prevents runaway escalation and collapse.
 
 * * *
 
+### §2.3 Cross-Regulation Dynamics (Mathematical constraints)
+
+In the HVCS model, the stability of the system is defined by the **Inter-Vice Transfer Function**. No drive operates in a vacuum; every increase in Signal $V_1$ (e.g., Greed) generates a proportional inhibitory signal in $V_2$ (e.g., Sloth/Burnout) or $V_3$ (e.g., Pride/Reputation).
+
+**The Equation of Constraint:**
+$$ \Sigma(Drives) - \Sigma(Constraints) \le StabilityThreshold $$
+
+If the sum of internal drives exceeds the sum of feedback-driven constraints (Reputational cost + Physical cost + Resource depletion), the system enters **Dynamic Instability**. Software in the Styx ecosystem must act as an artificial constraint signal where natural feedback (e.g., social shame) is too slow or too weak to counteract the drive.
+
+
+* * *
+
 ## II. Where modern systems break
 
 Modern failures are not caused by vice.  
@@ -725,5 +737,17 @@ Software that **respects feedback** becomes stabilizing and durable.
 You are not designing tools.  
 You are designing **behavioral physics**.
 
-If you want, next we can take a specific product idea you are working on and run it through this model end-to-end, identifying exactly where it will stabilize, drift, or break before it ever ships.
+* * *
+
+## §5.3 Entropy and Signal Decay (The Rot)
+
+Systemic failure occurs when the **Temporal Lag ($\tau$)** between action and consequence exceeds the organism's memory capacity. When $\tau \to \infty$, drives operate in an open-loop configuration, consuming the environment without limit. 
+
+Styx combats this entropy by:
+1. **Collapsing $\tau$:** Converting long-term relational pain into immediate financial loss.
+2. **Signal Hardening:** Ensuring that "Whistleblower" signals (The Fury Network) cannot be ignored or filtered by the user's internal denial mechanisms.
+3. **Entropy Reversal:** Using "Honeypot" mechanics to actively probe for system leaks before they lead to full attachment relapse.
+
+If you want next we can take a specific product idea you are working on and run it through this model end-to-end, identifying exactly where it will stabilize, drift, or break before it ever ships.
+
 

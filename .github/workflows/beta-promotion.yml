@@ -47,9 +47,11 @@ jobs:
           RENDER_BETA_API_SERVICE_ID: ${{ secrets.RENDER_BETA_API_SERVICE_ID }}
           RENDER_BETA_WEB_SERVICE_ID: ${{ secrets.RENDER_BETA_WEB_SERVICE_ID }}
           BETA_API_URL: ${{ secrets.BETA_API_URL }}
+          BETA_WEB_URL: ${{ secrets.BETA_WEB_URL }}
+          BETA_DATABASE_URL: ${{ secrets.BETA_DATABASE_URL }}
         run: |
           missing=0
-          for key in RENDER_API_KEY RENDER_BETA_API_SERVICE_ID RENDER_BETA_WEB_SERVICE_ID BETA_API_URL; do
+          for key in RENDER_API_KEY RENDER_BETA_API_SERVICE_ID RENDER_BETA_WEB_SERVICE_ID BETA_API_URL BETA_WEB_URL BETA_DATABASE_URL; do
             if [ -z "${!key:-}" ]; then
               echo "::error::Missing required beta secret: ${key}"
               missing=1

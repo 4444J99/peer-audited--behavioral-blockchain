@@ -60,12 +60,13 @@ Control flags:
 ## Status Semantics
 
 - Gate statuses: `passed`, `failed`, `skipped`
-- Overall statuses: `pass`, `fail`
+- Overall statuses: `pass`, `fail`, `incomplete`
 
 Rules:
 
 - Any failed required gate sets overall status to `fail`.
 - Optional gate failures are recorded but do not fail overall.
+- A skipped required gate sets overall status to `incomplete` when `READINESS_REQUIRE_TARGETS=false`.
 - Missing target URLs are recorded as `skipped`; they fail overall only when `READINESS_REQUIRE_TARGETS=true`.
 
 ## Output Artifact

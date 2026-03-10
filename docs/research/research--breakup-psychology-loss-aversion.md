@@ -178,7 +178,20 @@ A physical relapse is not strictly limited to sending a direct text message or m
 | **Logistical/Apology Excuses** | Fabricating highly practical reasons to text to alleviate guilt or force an interaction. | **Accountability Override:** User must pitch the logistical excuse to a trusted third party who holds the power to veto the communication and lock the funds. |
 | **Cyber-Stalking / Proximity Seeking** | Attempting to acquire dopamine without breaking the strict "No Texting" rule. | **Geofencing & API Blocks:** Financial penalties applied for breaching physical GPS boundaries or attempting to view blocked social media profiles. |
 
+### §5.4 The 90-Day Execution Matrix (API Integration)
+
+The Styx system architecture must treat the 90-day recovery timeline not as a suggestion, but as a **Variable-State Machine**. The application state changes dynamically based on the user's chronological distance from the "Contact Breach" event.
+
+| Milestone | Psychological Vulnerability | API / Smart Contract State | Penalty Multiplier |
+| :---- | :---- | :---- | :---- |
+| **Day 1–14** | Primary Withdrawal (Panic) | `STATE_LOCKDOWN: ON` | 2.5x (Peak) |
+| **Fri/Sat** | Structural Isolation | `STATE_WEEKEND_SHIELD: ON` | 2.0x (Multiplier) |
+| **Day 21** | Dopamine Trough (Anhedonia) | `STATE_REWARD_INJECTION: ON` | +5% Stake Refund |
+| **Day 45–60** | Bargaining Stage | `STATE_FRICTION_DELAY: 48HR` | 1.5x |
+| **Day 90** | Identity Reconstruction | `STATE_ALPHA_COMPLETE: ON` | 0% (Full Settlement) |
+
 ## **Conclusion**
+
 
 The dissolution of a romantic attachment for an anxiously attached individual is not a mere emotional hurdle; it is a profound physiological crisis that creates a highly predictable, biologically driven pattern of extreme distress over a 90-day period. The failure to maintain the No Contact protocol is not an unpredictable moral failing or a lack of character, but rather a systematic, mathematical collapse of executive willpower against overwhelming neurochemical withdrawal and attachment trauma. The statistical danger zones—specifically the acute panic of Day 3, the devastating dopamine trough of Day 21, the unstructured, ruminative void of the weekend, and the illusory bargaining phase of Month 2—represent the exact chronological coordinates where internal impulse control disintegrates. During these critical windows, the desperate human brain fabricates incredibly intricate cognitive rationalizations, ranging from the myth of therapeutic closure to weaponized logistical loopholes, all designed to permit destructive proximity-seeking behavior.
 

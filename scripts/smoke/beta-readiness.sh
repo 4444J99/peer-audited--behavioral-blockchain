@@ -58,6 +58,13 @@ mark_failure_if_required() {
   fi
 }
 
+mark_incomplete_if_required() {
+  local required="$1"
+  if [[ "${required}" == "true" && "${OVERALL_STATUS}" != "fail" ]]; then
+    OVERALL_STATUS="incomplete"
+  fi
+}
+
 run_gate() {
   local name="$1"
   local required="$2"
@@ -82,6 +89,8 @@ run_gate() {
     message="not verified (exit code 2)"
     if [[ "${required}" == "true" && "${REQUIRE_TARGETS}" == "true" ]]; then
       OVERALL_STATUS="fail"
+    else
+      mark_incomplete_if_required "${required}"
     fi
   else
     status="failed"
@@ -100,6 +109,8 @@ skip_gate() {
   add_gate "${name}" "skipped" "0" "${message}"
   if [[ "${required}" == "true" && "${REQUIRE_TARGETS}" == "true" ]]; then
     OVERALL_STATUS="fail"
+  else
+    mark_incomplete_if_required "${required}"
   fi
 }
 
@@ -112,6 +123,8 @@ echo "  Profile: ${PROFILE}"
 echo "  Require targets: ${REQUIRE_TARGETS}"
 echo "-------------------------------------------"
 echo ""
+
+# ── Remote target gates (require deployed environment) ──
 
 if [[ -z "${TARGET_API_URL}" ]]; then
   skip_gate "target_api" "true" "missing target API URL for profile '${PROFILE}'"
@@ -131,11 +144,16 @@ else
 
   run_gate "critical_endpoints" "true" bash "${SCRIPT_DIR}/check-endpoints.sh"
 
+  # Integration gates (require live API)
   run_gate "ledger_invariant" "true" npx tsx scripts/validation/01-phantom-money-check.ts
   run_gate "behavioral_constants" "false" npx tsx scripts/validation/05-behavioral-physics-check.ts
-  run_gate "security_invariants" "true" npx tsx scripts/validation/06-security-invariant-check.ts
-  run_gate "claim_drift" "true" node scripts/validation/07-claim-drift-check.js
 fi
+
+# ── Local gates (run regardless of remote targets) ──
+
+run_gate "build_check" "true" bash scripts/validation/04-redacted-build-check.sh
+run_gate "security_invariants" "true" npx tsx scripts/validation/06-security-invariant-check.ts
+run_gate "claim_drift" "true" node scripts/validation/07-claim-drift-check.js
 
 FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 

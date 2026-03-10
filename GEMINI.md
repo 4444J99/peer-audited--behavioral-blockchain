@@ -136,14 +136,15 @@ Linked skills: evaluation-to-growth
 
 **242** pending tasks | Last pipeline: unknown
 
-- `7c5780b94db0` docs/research/research--behavioral-physics-manifesto.md — HVCS model → §2.3, §5.3 [playwright, postgresql, typescript]
-- `cc9fec9ebcba` src/api/services/ledger/truth-log.service.ts — Theorem 2 (hash chain) [playwright, postgresql, typescript]
-- `b2e58d4a4055` src/api/services/intelligence/honeypot.service.ts — Theorem 7 (honeypot convergence) [playwright, postgresql, typescript]
-- `3a657dbcc3d2` src/api/services/health/recovery-protocol.service.ts — Theorem 8 (anti-isolation) [playwright, postgresql, typescript]
-- `9122ae50f1b3` docs/legal/legal--performance-wagering.md — §2.8, §5.5 (legal classification) [playwright, postgresql, typescript]
-- `550225719750` docs/research/research--breakup-psychology-loss-aversion.md — §5.4 (90-day recovery timeline) [playwright, postgresql, typescript]
+- [x] `7c5780b94db0` docs/research/research--behavioral-physics-manifesto.md — HVCS model → §2.3, §5.3 [DONE]
+- [x] `cc9fec9ebcba` src/api/services/ledger/truth-log.service.ts — Theorem 2 (hash chain) [DONE]
+- [x] `b2e58d4a4055` src/api/services/intelligence/honeypot.service.ts — Theorem 7 (honeypot convergence) [DONE]
+- [x] `3a657dbcc3d2` src/api/services/health/recovery-protocol.service.ts — Theorem 8 (anti-isolation) [DONE]
+- [x] `9122ae50f1b3` docs/legal/legal--performance-wagering.md — §2.8, §5.5 (legal classification) [DONE]
+- [x] `550225719750` docs/research/research--breakup-psychology-loss-aversion.md — §5.4 (90-day recovery timeline) [DONE]
 - `a2f77f7eaa40` Plan: Tame the Styx GitHub Project — from chaotic sprawl to operational board [graphql]
-- `941f9d6e576a` organvm-corpvs-testamentvm/registry-v2.json — Add Styx entry, bump counts [terraform]
+- [x] `941f9d6e576a` organvm-corpvs-testamentvm/registry-v2.json — Add Styx entry, bump counts [DONE]
+
 - ... and 234 more
 
 Cross-organ links: 115 | Top tags: `bash`, `typescript`, `react`, `terraform`, `mcp`

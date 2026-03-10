@@ -1,9 +1,10 @@
 # Styx Project Manifest: Complete Annotated Bibliography
 
-**Version**: 3.0.0
+**Version**: 3.1.0
 **Project**: Styx (The Blockchain of Truth)
 **Document Count**: 79 entries (61 markdown, 4 binary books, 2 plain text, 6 pitch/build assets, 5 non-md governance, 1 API spec)
-**Generated**: 2026-03-04
+**Generated**: 2026-03-09
+
 
 ---
 
@@ -101,11 +102,11 @@ Development threads trace the intellectual and engineering arc of the project fr
 | `DOC-RES-02` | `docs/research/research--psychology-behavior.md` | #research #psychology #behavior | Pillar 1 deep-dive: user psychology and behavior. Covers loss aversion mechanisms, endowed progress, social proof, and motivation dynamics specific to financial commitment applications. Perplexity-generated research synthesis. |
 | `DOC-RES-03` | `docs/research/research--habit-application.md` | #research #psychology #habits | Practical application of loss aversion and endowed progress in habit-building apps. Covers framing user deposits as earned endowments, progress bars, and micro-milestone design. Includes citation evidence from pedometer-based gamified studies. |
 | `DOC-RES-04` | `docs/research/research--competitor-teardown.md` | #research #market #differentiation | Strategic teardown of the gamified habit-tracking and financial-stakes ecosystem. Analyzes the two paradigms (virtual progression vs. punitive financial models) and identifies structural weaknesses across all incumbents. |
-| `DOC-RES-05` | `docs/research/research--behavioral-physics-manifesto.md` | #research #philosophy #cybernetics | The "HVCS" document. Maps the seven deadly sins as interacting drive nodes in a cybernetic control loop. Derived from LaVeyan philosophy; establishes the "Fury" concept as systemic negative feedback gain. |
+| `DOC-RES-05` | `docs/research/research--behavioral-physics-manifesto.md` | #research #philosophy #cybernetics | The "HVCS" document. Maps the seven deadly sins as interacting drive nodes. Includes §2.3 (Inter-Vice Transfer Function) and §5.3 (Temporal Lag $\tau$ and systemic rot). Establishes "Fury" as systemic feedback gain. |
 | `DOC-RES-06` | `docs/research/research--behavioral-engineering-masters.md` | #research #habits #creativity | Master synthesis of Pressfield (The War of Art / Resistance), Clear (Atomic Habits / Identity), Brewer (The Craving Mind / RAIN), and Fogg (Tiny Habits / MAP). Codifies the Creative Stream and "Finish Line Stake Spike." |
 | `DOC-RES-07` | `docs/research/research--market-analysis.md` | #research #market #b2b | The Gamification and Habit Tracking App Market: 2025-2035 Strategic Outlook. Validates the $50B market size (Grand View Research) and identifies the B2B Corporate Wellness pivot as the high-valuation path. |
 | `DOC-RES-08` | `docs/research/research--differentiation-competitor.md` | #research #market #differentiation | Pillar 2: Market Differentiation & Competitor Analysis. Perplexity-generated teardown of existing players in the habit-tracking space, identifying weaknesses in self-reporting, retention, and verification. |
-| `DOC-RES-09` | `docs/research/research--breakup-psychology-loss-aversion.md` | #research #psychology #recovery | Psychological pain-point mapping: the 90-day breakup recovery timeline. Analyzes attachment-driven relapse, neurobiological withdrawal parallels, and loss aversion intervention windows for No-Contact contracts. |
+| `DOC-RES-09` | `docs/research/research--breakup-psychology-loss-aversion.md` | #research #psychology #recovery | Psychological pain-point mapping: the 90-day breakup recovery timeline. Includes §5.4 (90-Day Execution Matrix) mapping psychological vulnerability peaks to dynamic API/Contract states. |
 | `DOC-RES-10` | `docs/research/research--app-verification-tech-privacy-law.md` | #research #architecture #compliance | Cryptographic verification and the Randomized Verification Lottery (RVL) concept. Analyzes the jurisprudential viability of randomized screen recording for behavioral compliance under US wiretap law and 2026 app store policies. |
 | `DOC-RES-11` | `docs/research/research--b2b-expansion-heartbreak-niche.md` | #research #b2b #strategy | Strategic GTM plan: transitioning from the heartbreak recovery niche (18K beta users) to enterprise B2B2C. Covers relationship coach/therapist SaaS licensing and behavioral data monetization. |
 | `DOC-RES-12` | `docs/research/research--behavior-change-app-design.md` | #research #architecture #psychology | The architecture of behavioral change in digital therapeutics. Bridges cognitive neuroscience and relational database schema for tracking habit formation, cognitive load, and gamified reward systems. |
@@ -136,7 +137,7 @@ Development threads trace the intellectual and engineering arc of the project fr
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
-| `DOC-LEG-01` | `docs/legal/legal--performance-wagering.md` | #legal #compliance #gambling | Exhaustive legal analysis of personal performance wagering and skill-based deposit contracts in the United States. Establishes the "Dominant Factor Test" defense, FBO account requirements, CFTC boundary analysis, and state-by-state regulatory landscape. |
+| `DOC-LEG-01` | `docs/legal/legal--performance-wagering.md` | #legal #compliance #gambling | Exhaustive legal analysis of personal performance wagering. Includes §2.8 (Regulatory Arbitrage) and §5.5 (Global Safe Harbors: Cayman SPV/MiCA). Establishes the "Dominant Factor Test" defense and FBO requirements. |
 | `DOC-LEG-02` | `docs/legal/legal--compliance-guardrails.md` | #legal #compliance #research | Research memo (external synthesis). Aggregates external analysis and references for legal/compliance exploration. Covers the Aegis Protocol guardrails, stake limits, geofencing requirements, and FTC consumer protection considerations. Labeled as research, not operational policy. |
 | `DOC-LEG-03` | `docs/legal/legal--gatekeeper-compliance.md` | #legal #compliance #platforms | Forensic report on platform survival. Defines the "Linguistic Cloaking" strategy to bypass App Store Guideline 5.3 rejections and payment processor restricted business list bans. Covers Apple, Google Play, Stripe, and high-risk merchant underwriting. |
 | `DOC-LEG-04` | `docs/legal/legal--aegis-protocol.md` | #legal #compliance #governance | Styx Legal Compliance Guardrails (The Aegis Protocol) — operational policy document. Defines skill-based contest classification, BMI floors (18.5), velocity caps (2%/week), age gates, and geofencing jurisdiction tiers. The authoritative compliance reference. |
