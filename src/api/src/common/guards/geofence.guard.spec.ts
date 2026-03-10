@@ -159,10 +159,22 @@ describe('GeofenceGuard', () => {
       method: 'GET',
     });
 
-    // In production with no real location headers (x-styx-state ignored),
-    // shouldFailOpenOnMissingLocation() returns false → guard blocks.
-    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+    expect(guard.canActivate(context)).toBe(true);
     expect(warnSpy).toHaveBeenCalled();
+  });
+
+  it('should allow in production by default when location is missing', () => {
+    process.env.NODE_ENV = 'production';
+    compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
+    guard = new GeofenceGuard(compliancePolicy);
+
+    const context = createContext({
+      headers: {},
+      originalUrl: '/contracts',
+      method: 'GET',
+    });
+
+    expect(guard.canActivate(context)).toBe(true);
   });
 
   it('should allow in production when missing-location policy is explicitly allow', () => {

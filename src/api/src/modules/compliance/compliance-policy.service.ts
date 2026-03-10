@@ -110,6 +110,12 @@ export class CompliancePolicyService {
       return explicitAction === 'allow' || explicitAction === 'open' || explicitAction === 'true';
     }
 
+    if (process.env.NODE_ENV === 'production') {
+      // Production should remain reachable when upstream geo headers are absent.
+      // Operators can still force fail-closed behavior with GEO_MISSING_HEADER_ACTION=block.
+      return true;
+    }
+
     const raw = process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
     if (raw == null) return false; // fail-closed by default (Phase Beta P0-004)
     return String(raw).toLowerCase() === 'true';

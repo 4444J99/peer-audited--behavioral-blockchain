@@ -71,6 +71,11 @@ describe('CompliancePolicyService', () => {
       expect(service.shouldFailOpenOnMissingLocation()).toBe(false);
     });
 
+    it('should default to true in production when no explicit setting is present', () => {
+      process.env.NODE_ENV = 'production';
+      expect(service.shouldFailOpenOnMissingLocation()).toBe(true);
+    });
+
     it('should return false when env var is "false"', () => {
       process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'false';
       expect(service.shouldFailOpenOnMissingLocation()).toBe(false);
@@ -218,6 +223,7 @@ describe('CompliancePolicyService', () => {
       const result = service.getEligibility(req);
       expect(result.jurisdiction.state).toBe(null);
       expect(result.jurisdiction.source).toBe('none');
+      expect(result.requiredMode).toBe('FULL_ACCESS');
     });
 
     it('should prefer cf-ipstate over x-styx-state', () => {
@@ -234,6 +240,16 @@ describe('CompliancePolicyService', () => {
       const result = service.getEligibility(req);
       expect(result.jurisdiction.missing).toBe(true);
       expect(result.jurisdiction.source).toBe('none');
+    });
+
+    it('should return FULL_ACCESS in production when location is missing and no explicit action is set', () => {
+      process.env.NODE_ENV = 'production';
+      const req = makeRequest();
+      const result = service.getEligibility(req);
+      expect(result.requiredMode).toBe('FULL_ACCESS');
+      expect(result.actions.canCreateContract).toBe(true);
+      expect(result.actions.canSubmitProof).toBe(true);
+      expect(result.actions.canPurchaseTicket).toBe(true);
     });
 
     it('should default unknown states to TIER_3', () => {
