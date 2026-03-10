@@ -11,21 +11,20 @@ import NotificationPanel from '../../components/NotificationPanel';
 import { OnboardingWizard } from '../../components/OnboardingWizard';
 
 interface BalanceData {
-  userId: string;
+  id: string;
   email: string;
-  integrityScore: number;
-  allowedTiers: string[];
-  ledgerBalance: number;
+  integrity_score: number;
+  allowed_tiers: string[];
+  ledger_balance: number;
   status: string;
 }
 
 interface Transaction {
   id: string;
-  amount: string;
-  metadata: Record<string, unknown>;
-  created_at: string;
-  debit_account_name: string;
-  credit_account_name: string;
+  amount: number;
+  timestamp: string;
+  type: string;
+  description: string;
 }
 
 interface Contract {
@@ -51,9 +50,9 @@ export default function IdentityDashboard() {
     async function load() {
       try {
         const [balanceData, historyData, contractData] = await Promise.all([
-          api.getBalance(),
-          api.getHistory(10),
-          api.getUserContracts(),
+          api.getBalance() as any,
+          api.getHistory(10) as any,
+          api.getUserContracts() as any,
         ]);
         setBalance(balanceData);
         setTransactions(historyData.transactions);
@@ -77,7 +76,7 @@ export default function IdentityDashboard() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <Loader2 className="animate-spin mr-3" size={24} />
-        <span className="text-neutral-400 font-bold">Loading Identity Oracle...</span>
+        <span className="text-neutral-400 font-bold">Loading Recovery Dashboard...</span>
       </div>
     );
   }
@@ -88,13 +87,13 @@ export default function IdentityDashboard() {
         <div className="text-center space-y-4">
           <AlertTriangle className="mx-auto text-red-500" size={48} />
           <p className="text-red-400 font-bold">{error}</p>
-          <p className="text-neutral-500 text-sm">Ensure the API is running on port 3000.</p>
+          <p className="text-neutral-500 text-sm">Ensure the backend service is reachable.</p>
         </div>
       </div>
     );
   }
 
-  const integrityScore = balance?.integrityScore ?? 0;
+  const integrityScore = balance?.integrity_score ?? 0;
   const activeStake = contracts
     .filter((c) => c.status === 'ACTIVE')
     .reduce((sum, c) => sum + Number(c.stake_amount), 0);
@@ -113,18 +112,11 @@ export default function IdentityDashboard() {
           <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
             <span className="text-xl font-black text-black">S</span>
           </div>
-          <h1 className="text-2xl font-black tracking-tight uppercase">Identity Oracle</h1>
+          <h1 className="text-2xl font-black tracking-tight uppercase">Recovery Dashboard</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2 md:gap-3">
-          <Link href="/fury" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors">
-            FURY WORKBENCH
-          </Link>
           <Link href="/wallet" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors">
             WALLET
-          </Link>
-          <Link href="/tavern" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors flex items-center gap-1">
-            <ScrollText size={14} />
-            <span className="hidden sm:inline">TAVERN</span>
           </Link>
           <Link href="/settings" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors flex items-center gap-1">
             <Settings size={14} />
@@ -162,14 +154,10 @@ export default function IdentityDashboard() {
               <span className="text-6xl font-black tracking-tighter">{integrityScore}</span>
             </div>
             <p className="text-neutral-400 text-sm">
-              {balance?.allowedTiers?.includes('TIER_4_WHALE_VAULTS')
-                ? 'Whale tier. Maximum trust.'
-                : balance?.allowedTiers?.includes('TIER_3_HIGH_ROLLER')
-                ? 'High roller tier. Up to $1000 stakes.'
-                : balance?.allowedTiers?.includes('TIER_2_STANDARD')
-                ? 'Standard tier. Up to $100 stakes.'
-                : balance?.allowedTiers?.includes('TIER_1_MICRO_STAKES')
-                ? 'Micro stakes tier. Up to $20 stakes.'
+              {balance?.allowed_tiers?.includes('TIER_2_STANDARD')
+                ? 'Standard tier. Up to $100 test stakes.'
+                : balance?.allowed_tiers?.includes('TIER_1_MICRO_STAKES')
+                ? 'Micro stakes tier. Up to $20 test stakes.'
                 : 'Restricted mode. Build integrity to unlock stakes.'}
             </p>
           </div>
@@ -179,19 +167,19 @@ export default function IdentityDashboard() {
             <div className="absolute -right-4 -top-4 opacity-5">
               <Flame size={120} />
             </div>
-            <h2 className="text-neutral-500 font-bold tracking-widest text-sm mb-4">CAPITAL AT RISK</h2>
+            <h2 className="text-neutral-500 font-bold tracking-widest text-sm mb-4">CAPITAL AT RISK (TEST CREDITS)</h2>
             <div className="flex items-baseline gap-1 mb-2">
-              <span className="text-3xl text-red-500 font-medium">$</span>
+              <span className="text-2xl text-red-500 font-medium">TEST-$</span>
               <span className="text-5xl font-black text-white">{activeStake.toFixed(2)}</span>
             </div>
-            <p className="text-neutral-500 text-sm mb-6">{activeCount} active contract{activeCount !== 1 ? 's' : ''}</p>
+            <p className="text-neutral-500 text-sm mb-6">{activeCount} active beta contract{activeCount !== 1 ? 's' : ''}</p>
             <Link href="/contracts/new" className="block w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl transition-colors text-center">
               CREATE NEW CONTRACT
             </Link>
           </div>
 
-          {/* Leaderboard */}
-          <Leaderboard />
+          {/* Leaderboard hidden in Phase 1 Beta */}
+          {/* <Leaderboard /> */}
         </div>
 
         {/* Right Column: Ledger & Actions */}
@@ -208,23 +196,22 @@ export default function IdentityDashboard() {
             ) : (
               <div className="space-y-4">
                 {transactions.map((tx) => {
-                  const type = (tx.metadata as Record<string, string>)?.type ?? 'TRANSACTION';
-                  const amount = Number(tx.amount);
-                  const isDebit = tx.debit_account_name && !tx.debit_account_name.startsWith('SYSTEM');
+                  const type = tx.type || 'TRANSACTION';
+                  const amount = tx.amount;
                   return (
                     <div key={tx.id} className="flex items-center justify-between p-4 bg-black rounded-2xl border border-neutral-800">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center">
-                          <Activity size={16} className={isDebit ? 'text-red-500' : 'text-green-400'} />
+                          <Activity size={16} className={amount < 0 ? 'text-red-500' : 'text-green-400'} />
                         </div>
                         <div>
                           <p className="font-bold">{type.replace(/_/g, ' ')}</p>
-                          <p className="text-xs text-neutral-500">{new Date(tx.created_at).toLocaleDateString()} &bull; {tx.id.slice(0, 8)}</p>
+                          <p className="text-xs text-neutral-500">{new Date(tx.timestamp).toLocaleDateString()} &bull; {tx.id.slice(0, 8)}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`font-black ${isDebit ? 'text-red-500' : 'text-green-500'}`}>
-                          {isDebit ? '-' : '+'}${amount.toFixed(2)}
+                        <p className={`font-black ${amount < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                          {amount < 0 ? '-' : '+'}TEST-${Math.abs(amount).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -247,7 +234,7 @@ export default function IdentityDashboard() {
             </div>
 
             {contracts.length === 0 ? (
-              <p className="text-neutral-500 text-center py-8">No contracts yet. Create one to begin.</p>
+              <p className="text-neutral-500 text-center py-8">Your recovery journey starts here. Create your first contract.</p>
             ) : (
               <div className="space-y-3">
                 {contracts.map((c) => {
@@ -267,7 +254,7 @@ export default function IdentityDashboard() {
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="font-black text-white">${Number(c.stake_amount).toFixed(2)}</span>
+                        <span className="font-black text-white">TEST-${Number(c.stake_amount).toFixed(2)}</span>
                         <span className={`text-xs font-bold px-3 py-1 rounded-full ${statusBg} ${statusColor}`}>
                           {status}
                         </span>

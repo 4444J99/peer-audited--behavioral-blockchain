@@ -17,24 +17,20 @@ interface Contract {
 }
 
 interface Balance {
-  userId: string;
+  id: string;
   email: string;
-  integrityScore: number;
-  allowedTiers: string[];
-  ledgerBalance: number;
+  integrity_score: number;
+  allowed_tiers: string[];
+  ledger_balance: number;
   status: string;
 }
 
 interface Transaction {
   id: string;
-  debit_account_id: string;
-  credit_account_id: string;
-  amount: string;
-  contract_id: string;
-  metadata: Record<string, unknown>;
-  created_at: string;
-  debit_account_name: string;
-  credit_account_name: string;
+  type: string;
+  amount: number;
+  timestamp: string;
+  description: string;
 }
 
 const TX_TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -54,8 +50,7 @@ const STATUS_COLORS: Record<string, string> = {
   PENDING_STAKE: 'text-yellow-500',
 };
 
-function getTxLabel(metadata: Record<string, unknown>): { label: string; color: string } {
-  const type = (metadata?.type as string) || '';
+function getTxLabel(type: string): { label: string; color: string } {
   return TX_TYPE_LABELS[type] || { label: type || 'Transaction', color: 'text-neutral-400' };
 }
 
@@ -73,9 +68,9 @@ export default function WalletDashboard() {
     async function load() {
       try {
         const [contractsData, balanceData, historyData] = await Promise.all([
-          api.getUserContracts(),
-          api.getBalance().catch(() => null),
-          api.getHistory(20).catch(() => ({ transactions: [] })),
+          api.getUserContracts() as any,
+          api.getBalance().catch(() => null) as any,
+          api.getHistory(20).catch(() => ({ transactions: [] })) as any,
         ]);
         setContracts(contractsData);
         setBalance(balanceData);
@@ -101,11 +96,11 @@ export default function WalletDashboard() {
           <div className="w-12 h-12 bg-lime-500 rounded-full flex items-center justify-center">
             <WalletIcon className="text-black" />
           </div>
-          <h1 className="text-2xl font-black tracking-tight uppercase">Capital Escrow</h1>
+          <h1 className="text-2xl font-black tracking-tight uppercase">Commitment Wallet</h1>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="text-sm font-bold text-neutral-400 hover:text-white transition-colors">
-            RETURN TO IDENTITY &rarr;
+            RETURN TO DASHBOARD &rarr;
           </Link>
           <button
             onClick={handleLogout}
@@ -117,19 +112,22 @@ export default function WalletDashboard() {
       </header>
 
       {/* Balance Summary */}
+      <div className="max-w-5xl mx-auto mb-6 p-4 bg-amber-950/30 border border-amber-900/50 rounded-xl text-amber-200 text-xs font-bold uppercase tracking-widest text-center">
+        Test-Money Pilot Active: No actual capital is being transferred in this phase.
+      </div>
       {balance && (
         <div className="max-w-5xl mx-auto mb-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="px-5 py-4 bg-neutral-900 border border-neutral-800 rounded-xl">
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Ledger Balance</p>
-            <p className="font-black text-2xl text-lime-400">${balance.ledgerBalance.toFixed(2)}</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">Ledger Balance (TEST)</p>
+            <p className="font-black text-2xl text-lime-400">TEST-${balance.ledger_balance.toFixed(2)}</p>
           </div>
           <div className="px-5 py-4 bg-neutral-900 border border-neutral-800 rounded-xl">
             <p className="text-xs text-neutral-500 uppercase tracking-wider">Integrity Score</p>
-            <p className="font-black text-2xl text-white">{balance.integrityScore}</p>
+            <p className="font-black text-2xl text-white">{balance.integrity_score}</p>
           </div>
           <div className="px-5 py-4 bg-neutral-900 border border-neutral-800 rounded-xl">
             <p className="text-xs text-neutral-500 uppercase tracking-wider">Tiers Allowed</p>
-            <p className="font-bold text-sm text-neutral-300 mt-1">{balance.allowedTiers.join(', ')}</p>
+            <p className="font-bold text-sm text-neutral-300 mt-1">{balance.allowed_tiers.join(', ')}</p>
           </div>
           <div className="px-5 py-4 bg-neutral-900 border border-neutral-800 rounded-xl">
             <p className="text-xs text-neutral-500 uppercase tracking-wider">Account Status</p>
@@ -142,9 +140,11 @@ export default function WalletDashboard() {
         {/* Connection Flow */}
         <div className="space-y-8">
           <div>
-            <h2 className="text-3xl font-black mb-4 tracking-tighter">Your Financial Identity</h2>
+            <h2 className="text-3xl font-black mb-4 tracking-tighter">Your Recovery Commitment</h2>
             <p className="text-neutral-400 mb-8 leading-relaxed">
-              Styx operates on actual loss aversion. You must pledge real capital. When you commit to a behavioral contract, your funds are placed in a hard cryptographic hold. Fulfill the contract, your funds resolve. Break the contract, it is burned and redistributed to the Fury.
+              Styx helps you commit to your recovery goals. In this beta, you are using test-money to simulate the psychological 
+              impact of a stake. Fulfill your contract to return your commitment to your wallet. Break the contract, and the 
+              simulated stake is forfeited to the audit pool.
             </p>
           </div>
 
@@ -163,7 +163,7 @@ export default function WalletDashboard() {
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="animate-spin mr-3 text-neutral-500" size={24} />
-                <span className="text-neutral-500 font-bold">Loading contracts...</span>
+                <span className="text-neutral-400 font-bold">Loading contracts...</span>
               </div>
             ) : error ? (
               <div className="text-center py-8">
@@ -188,7 +188,7 @@ export default function WalletDashboard() {
                   </div>
                   <div className="text-right">
                     <p className="font-medium text-neutral-400">Pledged</p>
-                    <p className="font-black text-2xl text-red-500">${Number(contract.stake_amount).toFixed(2)}</p>
+                    <p className="font-black text-2xl text-red-500">TEST-${Number(contract.stake_amount).toFixed(2)}</p>
                   </div>
                 </div>
               ))
@@ -210,19 +210,19 @@ export default function WalletDashboard() {
           </h3>
           <div className="bg-neutral-900 border border-neutral-800 rounded-2xl divide-y divide-neutral-800">
             {transactions.map((tx) => {
-              const { label, color } = getTxLabel(tx.metadata);
+              const { label, color } = getTxLabel(tx.type);
               return (
                 <div key={tx.id} className="px-6 py-4 flex justify-between items-center">
                   <div>
                     <p className={`font-bold text-sm ${color}`}>{label}</p>
                     <p className="text-xs text-neutral-600 mt-1">
-                      {tx.debit_account_name} &rarr; {tx.credit_account_name}
-                      {tx.contract_id && <span className="ml-2 text-neutral-700">Contract: {tx.contract_id.slice(0, 8)}...</span>}
+                      {tx.description}
+                      {tx.id && <span className="ml-2 text-neutral-700">ID: {tx.id.slice(0, 8)}...</span>}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-black text-white">${Number(tx.amount).toFixed(2)}</p>
-                    <p className="text-xs text-neutral-600">{new Date(tx.created_at).toLocaleDateString()}</p>
+                    <p className="font-black text-white">TEST-${Number(tx.amount).toFixed(2)}</p>
+                    <p className="text-xs text-neutral-600">{new Date(tx.timestamp).toLocaleDateString()}</p>
                   </div>
                 </div>
               );

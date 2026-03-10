@@ -7,13 +7,13 @@ import Link from 'next/link';
 import { api } from '../../../../services/api-client';
 
 interface AttestationStatus {
-  contractId: string;
-  oathCategory: string;
-  streakDays: number;
-  daysRemaining: number;
-  graceDaysAvailable: number;
-  todayAttested: boolean;
-  totalStrikes: number;
+  contract_id: string;
+  oath_category: string;
+  streak_days: number;
+  days_remaining: number;
+  grace_days_available: number;
+  today_attested: boolean;
+  total_strikes: number;
 }
 
 export default function AttestPage() {
@@ -30,7 +30,7 @@ export default function AttestPage() {
     async function fetchStatus() {
       try {
         const data = await api.getAttestationStatus(contractId);
-        setStatus(data);
+        setStatus(data as any);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load attestation status');
       } finally {
@@ -84,26 +84,26 @@ export default function AttestPage() {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 text-center">
-                <p className="text-3xl font-black text-amber-500">{status.streakDays}</p>
+                <p className="text-3xl font-black text-amber-500">{status.streak_days}</p>
                 <p className="text-xs text-neutral-500 uppercase tracking-widest mt-1">Day Streak</p>
               </div>
               <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 text-center">
-                <p className="text-3xl font-black text-white">{status.daysRemaining}</p>
+                <p className="text-3xl font-black text-white">{status.days_remaining}</p>
                 <p className="text-xs text-neutral-500 uppercase tracking-widest mt-1">Days Left</p>
               </div>
               <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 text-center">
-                <p className="text-3xl font-black text-neutral-400">{status.graceDaysAvailable}</p>
+                <p className="text-3xl font-black text-neutral-400">{status.grace_days_available}</p>
                 <p className="text-xs text-neutral-500 uppercase tracking-widest mt-1">Grace Days</p>
               </div>
             </div>
 
-            {status.totalStrikes > 0 && (
+            {status.total_strikes > 0 && (
               <div className="p-3 bg-red-600/10 border border-red-600/30 rounded-xl text-center">
-                <p className="text-sm text-red-400 font-bold">{status.totalStrikes} missed attestation{status.totalStrikes > 1 ? 's' : ''} — {3 - status.totalStrikes} remaining before auto-fail</p>
+                <p className="text-sm text-red-400 font-bold">{status.total_strikes} missed attestation{status.total_strikes > 1 ? 's' : ''} — {3 - status.total_strikes} remaining before auto-fail</p>
               </div>
             )}
 
-            {status.todayAttested ? (
+            {status.today_attested ? (
               <div className="p-8 bg-green-900/20 border border-green-600/30 rounded-xl text-center">
                 <CheckCircle className="mx-auto text-green-500 mb-4" size={48} />
                 <p className="text-lg font-black text-green-400">Already attested today</p>

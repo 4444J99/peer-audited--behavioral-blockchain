@@ -35,24 +35,25 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
         ApiClient.getMe(),
         ApiClient.getBalance().catch(() => null),
         ApiClient.getNotifications().catch(() => ({ notifications: [] })),
-        ApiClient.getContracts().catch(() => ({ contracts: [] })),
+        ApiClient.getContracts().catch(() => []),
       ]);
       setProfile(me);
       setBalance(balanceData);
       setNotifications(notifs.notifications.slice(0, 5));
 
       // Find active recovery contract and fetch attestation status
-      const activeRecovery = contractsData.contracts.find(
-        (c: any) => c.status === 'ACTIVE' && String(c.category || '').startsWith('RECOVERY_'),
-      );
+      const activeRecovery = Array.isArray(contractsData)
+        ? contractsData.find((c: any) => c.status === 'ACTIVE' && String(c.oath_category || '').startsWith('RECOVERY_'))
+        : null;
+
       if (activeRecovery) {
         try {
           const attStatus = await ApiClient.getAttestationStatus(activeRecovery.id);
           setAttestationInfo({
             contractId: activeRecovery.id,
-            streakDays: attStatus.streakDays,
-            todayAttested: attStatus.todayAttested,
-            daysRemaining: attStatus.daysRemaining,
+            streakDays: attStatus.streak_days,
+            todayAttested: attStatus.today_attested,
+            daysRemaining: attStatus.days_remaining,
           });
         } catch {
           setAttestationInfo(null);
@@ -114,7 +115,7 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
       {/* Integrity Score */}
       <View style={styles.scoreCard}>
         <Text style={styles.scoreLabel}>INTEGRITY SCORE</Text>
-        <Text style={styles.scoreValue}>{profile?.integrity ?? 0}</Text>
+        <Text style={styles.scoreValue}>{profile?.integrity_score ?? 0}</Text>
         <View style={[styles.tierBadge, { backgroundColor: getTierColor(profile?.tier || '') }]}>
           <Text style={styles.tierText}>{profile?.tier || 'UNKNOWN'}</Text>
         </View>
@@ -123,15 +124,15 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
       {/* Stats Row */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{profile?.contractCount ?? 0}</Text>
+          <Text style={styles.statValue}>{profile?.contract_count ?? 0}</Text>
           <Text style={styles.statLabel}>Active Oaths</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>${profile?.totalStaked?.toFixed(2) ?? '0.00'}</Text>
+          <Text style={styles.statValue}>TEST-${profile?.total_staked?.toFixed(2) ?? '0.00'}</Text>
           <Text style={styles.statLabel}>Total Staked</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={[styles.statValue, { color: '#84cc16' }]}>${balance?.ledgerBalance?.toFixed(2) ?? '0.00'}</Text>
+          <Text style={[styles.statValue, { color: '#84cc16' }]}>TEST-${balance?.ledger_balance?.toFixed(2) ?? '0.00'}</Text>
           <Text style={styles.statLabel}>Balance</Text>
         </View>
       </View>
@@ -193,10 +194,10 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => navigation.navigate('Fury')}
+            onPress={() => navigation.navigate('Profile')}
           >
-            <Text style={styles.actionIcon}>{'⚖'}</Text>
-            <Text style={styles.actionLabel}>Fury Queue</Text>
+            <Text style={styles.actionIcon}>{'👤'}</Text>
+            <Text style={styles.actionLabel}>Profile</Text>
           </TouchableOpacity>
         </View>
       </View>

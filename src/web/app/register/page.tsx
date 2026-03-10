@@ -59,8 +59,8 @@ export default function RegisterPage() {
           <div className="w-16 h-16 bg-red-600 rounded-full mx-auto mb-6 flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.4)]">
             <span className="text-2xl font-black text-black">S</span>
           </div>
-          <h1 className="text-4xl font-black tracking-tighter uppercase">Join the Protocol</h1>
-          <p className="text-neutral-400 mt-2">Create your identity on the Styx truth ledger.</p>
+          <h1 className="text-4xl font-black tracking-tighter uppercase">Start Your Recovery</h1>
+          <p className="text-neutral-400 mt-2">Create your account for the Styx private beta.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -130,7 +130,7 @@ export default function RegisterPage() {
                 className="mt-1 w-4 h-4 rounded border-neutral-600 bg-black text-red-600 focus:ring-red-600 focus:ring-offset-0 cursor-pointer"
               />
               <span className="text-sm text-neutral-400 group-hover:text-neutral-300 transition-colors">
-                I confirm that I am <strong className="text-white">18 years of age or older</strong>. Styx involves real financial stakes and is restricted to adults.
+                I confirm that I am <strong className="text-white">18 years of age or older</strong>. Styx involves financial stakes (simulated test-money in this beta) and is restricted to adults.
               </span>
             </label>
 

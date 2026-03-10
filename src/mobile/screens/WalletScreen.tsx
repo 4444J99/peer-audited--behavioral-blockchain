@@ -23,9 +23,9 @@ function getTxLabel(type: string): { label: string; color: string } {
 }
 
 interface Balance {
-  integrityScore: number;
-  allowedTiers: string[];
-  ledgerBalance: number;
+  integrity_score: number;
+  allowed_tiers: string[];
+  ledger_balance: number;
   status: string;
 }
 
@@ -106,7 +106,7 @@ export function WalletScreen({ navigation }: WalletScreenProps) {
           ) : null}
         </View>
         <View style={styles.txRight}>
-          <Text style={styles.txAmount}>${item.amount.toFixed(2)}</Text>
+          <Text style={styles.txAmount}>TEST-${item.amount.toFixed(2)}</Text>
           <Text style={styles.txDate}>{new Date(item.timestamp).toLocaleDateString()}</Text>
         </View>
       </View>
@@ -121,8 +121,8 @@ export function WalletScreen({ navigation }: WalletScreenProps) {
         <>
           {/* Balance Card */}
           <View style={styles.balanceCard}>
-            <Text style={styles.balanceLabel}>LEDGER BALANCE</Text>
-            <Text style={styles.balanceValue}>${balance.ledgerBalance.toFixed(2)}</Text>
+            <Text style={styles.balanceLabel}>LEDGER BALANCE (TEST)</Text>
+            <Text style={styles.balanceValue}>TEST-${balance.ledger_balance.toFixed(2)}</Text>
             <Text style={[styles.statusText, { color: balance.status === 'ACTIVE' ? '#84cc16' : '#ef4444' }]}>
               {balance.status}
             </Text>
@@ -132,12 +132,12 @@ export function WalletScreen({ navigation }: WalletScreenProps) {
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Text style={styles.statLabel}>INTEGRITY</Text>
-              <Text style={styles.statValue}>{balance.integrityScore}</Text>
+              <Text style={styles.statValue}>{balance.integrity_score}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statLabel}>TIERS</Text>
               <View style={styles.tiersContainer}>
-                {balance.allowedTiers.map((tier) => (
+                {balance.allowed_tiers.map((tier) => (
                   <View key={tier} style={[styles.tierBadge, { backgroundColor: getTierColor(tier) + '30' }]}>
                     <Text style={[styles.tierText, { color: getTierColor(tier) }]}>{tier}</Text>
                   </View>

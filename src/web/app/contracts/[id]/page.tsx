@@ -12,6 +12,15 @@ import { useAuth } from '../../../contexts/AuthContext';
 
 type ContractStatus = 'ACTIVE' | 'COMPLETED' | 'FAILED' | 'PENDING_REVIEW' | 'PAYMENT_FAILED' | 'DISPUTED';
 
+const STATUS_CONFIG: Record<string, { icon: typeof Clock; bg: string; color: string; label: string }> = {
+  ACTIVE: { icon: Clock, bg: 'bg-blue-500/20 border-blue-500/40', color: 'text-blue-400', label: 'Active' },
+  COMPLETED: { icon: CheckCircle, bg: 'bg-green-500/20 border-green-500/40', color: 'text-green-400', label: 'Completed' },
+  FAILED: { icon: XCircle, bg: 'bg-red-500/20 border-red-500/40', color: 'text-red-400', label: 'Failed' },
+  PENDING_REVIEW: { icon: Clock, bg: 'bg-yellow-500/20 border-yellow-500/40', color: 'text-yellow-400', label: 'Pending Review' },
+  PAYMENT_FAILED: { icon: AlertTriangle, bg: 'bg-orange-500/20 border-orange-500/40', color: 'text-orange-400', label: 'Payment Failed' },
+  DISPUTED: { icon: Shield, bg: 'bg-purple-500/20 border-purple-500/40', color: 'text-purple-400', label: 'Disputed' },
+};
+
 interface ContractData {
   id: string;
   user_id: string;
@@ -25,23 +34,17 @@ interface ContractData {
   created_at: string;
   email: string;
   integrity_score: number;
+  proofs?: Proof[];
 }
 
 interface Proof {
   id: string;
   status: string;
-  media_uri: string;
-  submitted_at: string;
+  media_url: string;
+  timestamp: string;
 }
 
-const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: React.ElementType; label: string }> = {
-  ACTIVE: { color: 'text-yellow-400', bg: 'bg-yellow-900/30 border-yellow-800', icon: Clock, label: 'Active' },
-  COMPLETED: { color: 'text-green-400', bg: 'bg-green-900/30 border-green-800', icon: CheckCircle, label: 'Completed' },
-  FAILED: { color: 'text-red-400', bg: 'bg-red-900/30 border-red-800', icon: XCircle, label: 'Failed' },
-  PENDING_REVIEW: { color: 'text-blue-400', bg: 'bg-blue-900/30 border-blue-800', icon: Shield, label: 'Pending Review' },
-  PAYMENT_FAILED: { color: 'text-orange-400', bg: 'bg-orange-900/30 border-orange-800', icon: AlertTriangle, label: 'Payment Failed' },
-  DISPUTED: { color: 'text-purple-400', bg: 'bg-purple-900/30 border-purple-800', icon: FileText, label: 'Disputed' },
-};
+// ... rest of the component ...
 
 export default function ContractDetailPage() {
   const params = useParams();
@@ -72,15 +75,8 @@ export default function ContractDetailPage() {
     async function load() {
       try {
         const contractData = await api.getContract(contractId);
-        setContract(contractData as unknown as ContractData);
-
-        // Try to load proofs (endpoint may not exist yet)
-        try {
-          const proofData = await api.getContractProofs(contractId);
-          setProofs(proofData);
-        } catch {
-          // Proofs endpoint not available — no-op
-        }
+        setContract(contractData as any);
+        setProofs(contractData.proofs as any || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load contract');
       } finally {
@@ -116,7 +112,7 @@ export default function ContractDetailPage() {
     try {
       const result = await api.useGraceDay(contractId);
       setGraceResult(`Deadline extended to ${new Date(result.newDeadline).toLocaleDateString()}`);
-      setContract((prev) => prev ? { ...prev, ends_at: result.newDeadline } : prev);
+      setContract((prev) => prev ? { ...prev, endsAt: new Date(result.newDeadline).toISOString() } : prev);
     } catch (err) {
       setGraceResult(err instanceof Error ? err.message : 'Failed to use grace day');
     } finally {
@@ -335,7 +331,7 @@ export default function ContractDetailPage() {
                 <div>
                   <p className="font-bold text-sm">{proof.id.slice(0, 12)}...</p>
                   <p className="text-xs text-neutral-500">
-                    {proof.submitted_at ? new Date(proof.submitted_at).toLocaleString() : 'Pending'}
+                    {proof.timestamp ? new Date(proof.timestamp).toLocaleString() : 'Pending'}
                   </p>
                 </div>
                 <span className={`text-xs font-bold px-3 py-1 rounded-full ${

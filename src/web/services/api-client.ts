@@ -192,25 +192,21 @@ export const api = {
   // Wallet — no more userId query params
   getBalance: () =>
     request<{
-      userId: string;
+      id: string;
       email: string;
-      integrityScore: number;
-      allowedTiers: string[];
-      ledgerBalance: number;
+      integrity_score: number;
+      allowed_tiers: string[];
+      ledger_balance: number;
       status: string;
     }>('/wallet/balance'),
 
   getHistory: (limit?: number) =>
     request<{ transactions: Array<{
       id: string;
-      debit_account_id: string;
-      credit_account_id: string;
-      amount: string;
-      contract_id: string;
-      metadata: Record<string, unknown>;
-      created_at: string;
-      debit_account_name: string;
-      credit_account_name: string;
+      type: string;
+      amount: number;
+      timestamp: string;
+      description: string;
     }> }>(`/wallet/history${limit ? `?limit=${limit}` : ''}`),
 
   // Contracts — userId comes from JWT
@@ -226,6 +222,7 @@ export const api = {
       started_at: string;
       ends_at: string;
       created_at: string;
+      proof_count: number;
     }>>('/contracts'),
 
   getContract: (id: string) => request<{
@@ -242,6 +239,14 @@ export const api = {
     email: string;
     integrity_score: number;
     grace_days_used?: number;
+    proof_count: number;
+    proofs: Array<{
+      id: string;
+      timestamp: string;
+      status: string;
+      media_url: string | null;
+    }>;
+    grace_days_max: number;
   }>(`/contracts/${id}`),
 
   createContract: (dto: CreateContractDto | Record<string, unknown>) =>
@@ -481,13 +486,13 @@ export const api = {
   // Attestations (Recovery stream)
   getAttestationStatus: (contractId: string) =>
     request<{
-      contractId: string;
-      oathCategory: string;
-      streakDays: number;
-      daysRemaining: number;
-      graceDaysAvailable: number;
-      todayAttested: boolean;
-      totalStrikes: number;
+      contract_id: string;
+      oath_category: string;
+      streak_days: number;
+      days_remaining: number;
+      grace_days_available: number;
+      today_attested: boolean;
+      total_strikes: number;
     }>(`/contracts/${contractId}/attestation`),
 
   submitAttestation: (contractId: string) =>
