@@ -8,7 +8,7 @@ services:
     runtime: node
     region: oregon
     plan: starter
-    buildCommand: npm install && npx turbo run build --filter=@styx/api
+    buildCommand: npm install --include=dev && npx turbo run build --filter=@styx/api
     startCommand: cd src/api && node dist/api/src/main.js
     healthCheckPath: /health
     envVars:
@@ -56,7 +56,7 @@ services:
     runtime: node
     region: oregon
     plan: starter
-    buildCommand: npm install && npx turbo run build --filter=@styx/web
+    buildCommand: npm install --include=dev && npx turbo run build --filter=@styx/web
     startCommand: cd src/web && npm start
     envVars:
       - key: NODE_ENV
