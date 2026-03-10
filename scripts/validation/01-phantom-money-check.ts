@@ -35,8 +35,8 @@ async function runPhantomMoneyCheck() {
   console.log(`[AUTH] Logged in as ${DEMO_USER.email} (${auth.userId})`);
 
   // 1. Snapshot initial ledger balance
-  const before = await request<{ ledgerBalance: number }>(`/wallet/balance`, auth.token);
-  console.log(`[STATE] Initial ledger balance: $${before.ledgerBalance.toFixed(2)}`);
+  const before = await request<{ ledger_balance: number }>(`/wallet/balance`, auth.token);
+  console.log(`[STATE] Initial ledger balance: $${before.ledger_balance.toFixed(2)}`);
 
   // 2. Attempt to create a contract (will stake funds)
   console.log(`[ACTION] Creating a $10 contract to verify ledger integrity...`);
@@ -58,8 +58,8 @@ async function runPhantomMoneyCheck() {
     console.log(`[DEFENSE] Contract creation rejected (expected if no Stripe): ${message}`);
     console.log('--- Checking ledger balance was not affected ---');
 
-    const after = await request<{ ledgerBalance: number }>(`/wallet/balance`, auth.token);
-    const delta = Math.abs(after.ledgerBalance - before.ledgerBalance);
+    const after = await request<{ ledger_balance: number }>(`/wallet/balance`, auth.token);
+    const delta = Math.abs(after.ledger_balance - before.ledger_balance);
 
     if (delta === 0) {
       console.log('✅ GATE 01 PASSED: Phantom Money Delta is $0.00. Failed contract did not alter ledger.');
@@ -71,9 +71,9 @@ async function runPhantomMoneyCheck() {
   }
 
   // 3. Verify balance changed by exactly the stake amount
-  const after = await request<{ ledgerBalance: number }>(`/wallet/balance`, auth.token);
-  const delta = before.ledgerBalance - after.ledgerBalance;
-  console.log(`[STATE] Final ledger balance: $${after.ledgerBalance.toFixed(2)} (delta: $${delta.toFixed(2)})`);
+  const after = await request<{ ledger_balance: number }>(`/wallet/balance`, auth.token);
+  const delta = before.ledger_balance - after.ledger_balance;
+  console.log(`[STATE] Final ledger balance: $${after.ledger_balance.toFixed(2)} (delta: $${delta.toFixed(2)})`);
 
   if (delta === 10) {
     console.log('✅ GATE 01 PASSED: Ledger delta matches stake amount exactly. No phantom money.');

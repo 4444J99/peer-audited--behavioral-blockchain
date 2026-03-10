@@ -45,7 +45,7 @@ async function loginOrRegister(email: string, password: string): Promise<{ userI
   const regRes = await fetch(`${API_BASE}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, ageConfirmation: true, termsAccepted: true }),
+    body: JSON.stringify({ email, password, ageConfirmation: true, termsAccepted: true, dateOfBirth: '1990-01-15' }),
   });
   if (!regRes.ok) throw new Error(`Registration failed for ${email}: ${regRes.status}`);
   return regRes.json();
