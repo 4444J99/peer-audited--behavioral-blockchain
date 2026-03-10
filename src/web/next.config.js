@@ -3,7 +3,6 @@ const repoRoot = path.join(__dirname, '../../');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   outputFileTracingRoot: repoRoot,
   turbopack: {
     root: repoRoot,

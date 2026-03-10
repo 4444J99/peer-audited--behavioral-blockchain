@@ -60,7 +60,7 @@ services:
     region: oregon
     plan: starter
     buildCommand: npm install --include=dev && npx turbo run build --filter=@styx/web
-    startCommand: cd src/web && npm start
+    startCommand: cd src/web && npm start -- --port $PORT
     envVars:
       - key: NODE_ENV
         value: production

@@ -5,7 +5,7 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "lint": "tsc --noEmit",
-    "start": "node .next/standalone/src/web/server.js",
+    "start": "next start",
     "test": "jest"
   },
   "dependencies": {
