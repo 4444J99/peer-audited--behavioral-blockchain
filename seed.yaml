@@ -1,6 +1,6 @@
 # seed.yaml — Automation Contract for organvm-iii-ergon/peer-audited--behavioral-blockchain
 # Schema: seed/v1.0
-# Generated: 2026-02-22
+# Updated: 2026-03-11 (organ-chain-reset: real edges replace boilerplate)
 
 schema_version: "1.0"
 organ: III
@@ -12,7 +12,7 @@ metadata:
   implementation_status: ACTIVE
   tier: flagship
   promotion_status: PUBLIC_PROCESS
-  last_validated: "2026-03-06"
+  last_validated: "2026-03-11"
   generated: "2026-02-22"
   language: typescript
   tags: [nestjs, nextjs, react-native, tauri, stripe, groq, llama, postgresql, redis]
@@ -31,28 +31,37 @@ agents:
     workflow: .github/workflows/blocked-handoff-intake.yml
     description: "Normalizes blocked handoff metadata during issue intake"
 
+consumes:
+  - type: theory
+    source: organvm-i-theoria/styx-behavioral-economics-theory
+    description: "Behavioral economics models (loss aversion coefficient 1.955, prospect theory) and game-theoretic peer audit proofs"
+  - type: creative-artifact
+    source: organvm-ii-poiesis/styx-behavioral-art
+    description: "Artistic visualization of stake/commitment/audit cycles informing UX design"
+  - type: governance-rules
+    source: organvm-iv-taxis/orchestration-start-here
+    description: "CI/CD and promotion governance rules"
+
 produces:
   - type: product
     description: "Styx: peer-audited behavioral market platform (NestJS API, Next.js web, React Native mobile, Tauri desktop)"
-
   - type: community_signal
-    description: "Product milestones and releases generate community events"
+    description: "Product milestones trigger community events"
     consumers: [organvm-vi-koinonia/community-hub]
   - type: distribution_signal
-    description: "Product updates trigger POSSE distribution via kerygma profile"
-    consumers: [organvm-vii-kerygma/social-automation]
-consumes:
-  - type: governance-rules
-    source: ORGAN-IV
-    description: Commerce operations follow governance policies
+    description: "Releases trigger POSSE distribution"
+    consumers: [organvm-vii-kerygma/kerygma-pipeline]
+  - type: essay_material
+    description: "Development milestones feed essay topics"
+    consumers: [organvm-v-logos/essay-pipeline]
 
 subscriptions:
+  - event: theory.updated
+    source: organvm-i-theoria/styx-behavioral-economics-theory
+    action: Review theory changes for product implications
   - event: governance.updated
     source: ORGAN-IV
     action: Check compliance with updated governance rules
-  - event: health-audit.completed
-    source: ORGAN-IV
-    action: Review audit findings for this repo
   - event: community.event_created
     source: ORGAN-VI
     action: Community event registered for this product
