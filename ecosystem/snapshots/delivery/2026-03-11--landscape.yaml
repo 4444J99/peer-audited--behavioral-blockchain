@@ -1,0 +1,19 @@
+date: '2026-03-11'
+snapshot_type: landscape
+competitors:
+  - name: Chainlink (reputation oracles)
+    relevance: Decentralized oracle network with reputation scoring primitives
+  - name: Civic (identity verification)
+    relevance: Blockchain-based identity layer, overlaps with behavioral attestation
+  - name: Gitcoin Passport (sybil resistance)
+    relevance: Composable identity stamps for trust scoring in Web3
+market_context: >-
+  Behavioral blockchain marketplace combining peer audit mechanisms with
+  on-chain reputation. The decentralized identity and trust-scoring space
+  is consolidating around composable attestation models (EAS, Verax) while
+  enterprise compliance demand for behavioral verification is growing.
+trends:
+  - EIP-4337 account abstraction enabling richer behavioral metadata on-chain
+  - Ethereum Attestation Service (EAS) gaining adoption as a neutral attestation layer
+  - Regulatory push for verifiable credentials in DeFi compliance
+notes: "Initial snapshot — baseline for staleness tracking"

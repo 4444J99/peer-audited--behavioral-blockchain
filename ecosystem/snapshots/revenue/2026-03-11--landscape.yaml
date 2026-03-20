@@ -1,0 +1,16 @@
+date: '2026-03-11'
+snapshot_type: landscape
+competitors:
+  - name: Gitcoin Grants (marketplace commission)
+    relevance: Quadratic-funding marketplace taking platform fees on grant rounds
+  - name: Layer3 (quest marketplace)
+    relevance: Commission-based Web3 quest platform with behavioral verification
+market_context: >-
+  Revenue via marketplace commission on behavioral audit transactions.
+  Web3 marketplace fee models are converging on 1-5% take rates with
+  volume-based tiering. The peer-audit niche has no dominant fee benchmark yet.
+trends:
+  - Web3 marketplace fees trending downward under competitive pressure
+  - Subscription + commission hybrid models gaining traction over pure transaction fees
+  - Enterprise compliance budgets expanding for third-party behavioral verification
+notes: "Initial snapshot — baseline for staleness tracking"
