@@ -1,4 +1,4 @@
-# Blocked Handoff Index (2026-03-16)
+# Blocked Handoff Index (2026-03-23)
 
 Canonical register of tasks requiring external human intervention (native engineering, legal/commercial approvals, procurement, or cryptographic specialization).
 
