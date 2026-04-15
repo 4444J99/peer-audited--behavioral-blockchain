@@ -1,0 +1,177 @@
+{
+  "owner": "organvm-iii-ergon",
+  "repo": "organvm-iii-ergon/peer-audited--behavioral-blockchain",
+  "project_num": 2,
+  "project_id": "PVT_kwDODwtKPs4BRAoV",
+  "audit_log": "docs/audit/transitions.log",
+  "fields": {
+    "status": {
+      "id": "PVTSSF_lADODwtKPs4BRAoVzg-9v8U",
+      "options": {
+        "Todo": "f75ad846",
+        "In Progress": "47fc9ee4",
+        "Done": "98236657"
+      }
+    },
+    "category": {
+      "id": "PVTSSF_lADODwtKPs4BRAoVzg-9v84",
+      "options": {
+        "A-Plans": "7e9b51eb",
+        "B-Sessions": "6ceb4192",
+        "C-Cache": "4d90fdca",
+        "D-Infra": "38c92e07"
+      }
+    },
+    "source_plan": {
+      "id": "PVTSSF_lADODwtKPs4BRAoVzg-9v88",
+      "options": {
+        "A1-Dissertation": "4b5be755",
+        "A2-AskStyx": "2a379b65",
+        "A3-BizOps": "a29f0c7d",
+        "A4-StubInventory": "be2c1ee0",
+        "A5-ArchMatrix": "80a4b262",
+        "A6-AuditSummary": "56046e92",
+        "A7-Governance": "7be23c0e",
+        "A8-SessionAudit": "cc26afc9",
+        "A9-Agents": "f291f593",
+        "B-Session": "b7491895",
+        "C-Cache": "2a92cd93",
+        "D-Infra": "728b576d"
+      }
+    },
+    "priority": {
+      "id": "PVTSSF_lADODwtKPs4BRAoVzg-95Ic",
+      "options": {
+        "P0-blocker": "7f047ed8",
+        "P1-high": "2b7a8c20",
+        "P2-medium": "8c2aba7f",
+        "P3-backlog": "78d54d91"
+      }
+    },
+    "effort": {
+      "id": "PVTSSF_lADODwtKPs4BRAoVzg-95Ig",
+      "options": {
+        "XS": "91d7cede",
+        "S": "c016e31a",
+        "M": "7c655623",
+        "L": "e07d4f63",
+        "XL": "bf1c5c97"
+      }
+    },
+    "target_date": {
+      "id": "PVTF_lADODwtKPs4BRAoVzg-95JM"
+    },
+    "department": {
+      "id": "PVTSSF_lADODwtKPs4BRAoVzg_DmFg",
+      "options": {
+        "ENG": "088d65b9",
+        "LEG": "95bd0a77",
+        "PRD": "c05be1c5",
+        "OPS": "62059be3",
+        "GRO": "02a543c2",
+        "FIN": "066e1371",
+        "CXS": "b6ebaa4f",
+        "B2B": "72728ff7"
+      }
+    },
+    "owner_role": {
+      "id": "PVTSSF_lADODwtKPs4BRAoVzg_DmG0",
+      "options": {
+        "styx-eng": "418492d1",
+        "styx-legal": "7d55dc59",
+        "styx-product": "aa94a564",
+        "styx-ops": "56c003ce",
+        "styx-growth": "0b5d217f",
+        "styx-finance": "bbc4a72f",
+        "styx-support": "6d56c081",
+        "styx-enterprise": "4935eb5f",
+        "H:MN": "11645594",
+        "H:LC": "f2069acd",
+        "H:BD": "5c13d405",
+        "H:RO": "c0e10683",
+        "H:CR": "7ee7c41e",
+        "H:FO": "f21e3f62"
+      }
+    },
+    "token_budget": {
+      "id": "PVTF_lADODwtKPs4BRAoVzg_DmIY"
+    },
+    "phase_energy": {
+      "id": "PVTF_lADODwtKPs4BRAoVzg_DmKE"
+    },
+    "review_persona": {
+      "id": "PVTSSF_lADODwtKPs4BRAoVzg_EERs",
+      "options": {
+        "styx-eng": "81987ee5",
+        "styx-legal": "f6117528",
+        "styx-product": "c02879b8",
+        "styx-ops": "701e46ec",
+        "styx-growth": "2b492a66",
+        "styx-finance": "1cc3ea18",
+        "styx-support": "e8c13665",
+        "styx-enterprise": "5509c69f",
+        "H:MN": "dd537cb7",
+        "H:LC": "863eb404",
+        "H:BD": "a5f8dd3f",
+        "H:RO": "62f71061",
+        "H:CR": "f5621a0a",
+        "H:FO": "5c4b13fe"
+      }
+    },
+    "review_stage": {
+      "id": "PVTSSF_lADODwtKPs4BRAoVzg_EERw",
+      "options": {
+        "1-Draft": "37faffcd",
+        "2-Cross-Review": "daa3d4fa",
+        "3-Revision": "caca263c",
+        "4-Approved": "466882d8"
+      }
+    },
+    "next_action": {
+      "id": "PVTF_lADODwtKPs4BRAoVzg_H1Rw"
+    },
+    "work_type": {
+      "id": "PVTSSF_lADODwtKPs4BRAoVzg_H1R0",
+      "options": {
+        "Epic": "3d7f8334",
+        "Feature": "c6d244fe",
+        "Blocked Handoff": "130b3bc7",
+        "Decision": "f191477f",
+        "Bug": "155d669e",
+        "Artifact": "fb088012",
+        "Ops": "031ab8ee"
+      }
+    },
+    "lane": {
+      "id": "PVTSSF_lADODwtKPs4BRAoVzg_H1R4",
+      "options": {
+        "Partner": "9da98b32",
+        "Engineering": "35c964f8",
+        "Shared": "092da886",
+        "Archive": "b9e731fb"
+      }
+    },
+    "external_party": {
+      "id": "PVTF_lADODwtKPs4BRAoVzg_H1R8"
+    },
+    "sprint": {
+      "id": "PVTSSF_lADODwtKPs4BRAoVzg_H-Ao",
+      "options": {
+        "S1 - Beta Core Assault": "d251909b",
+        "S2 - Beta Gate Lock": "6f05b144",
+        "S3 - External Beta Prep": "8377a0a1",
+        "S4 - Gamma Shadow Queue": "917f9d13",
+        "Later": "a0cf9457"
+      }
+    }
+  },
+  "transitions": {
+    "Todo": [
+      "In Progress"
+    ],
+    "In Progress": [
+      "Done"
+    ],
+    "Done": []
+  }
+}
