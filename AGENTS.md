@@ -1,28 +1,94 @@
 <!-- ORGANVM:AUTO:START -->
-## Agent Context (auto-generated — do not edit)
+## System Context (auto-generated — do not edit)
 
-This repo participates in the **ORGAN-III (Commerce)** swarm.
+**Organ:** ORGAN-III (Commerce) | **Tier:** flagship | **Status:** GRADUATED
+**Org:** `organvm-iii-ergon` | **Repo:** `peer-audited--behavioral-blockchain`
 
-### Active Subscriptions
-- Event: `theory.updated` → Action: Review theory changes for product implications
-- Event: `governance.updated` → Action: Check compliance with updated governance rules
-- Event: `community.event_created` → Action: Community event registered for this product
-- Event: `distribution.dispatched` → Action: Announcement distributed via POSSE pipeline
+### Edges
+- **Produces** → `unspecified`: product
+- **Produces** → `organvm-vi-koinonia/community-hub`: community_signal
+- **Produces** → `organvm-vii-kerygma/kerygma-pipeline`: distribution_signal
+- **Produces** → `organvm-v-logos/essay-pipeline`: essay_material
+- **Consumes** ← `organvm-i-theoria/styx-behavioral-economics-theory`: theory
+- **Consumes** ← `organvm-ii-poiesis/styx-behavioral-art`: creative-artifact
+- **Consumes** ← `organvm-iv-taxis/orchestration-start-here`: governance-rules
 
-### Production Responsibilities
-- **Produce** `product` for unspecified
-- **Produce** `community_signal` for organvm-vi-koinonia/community-hub
-- **Produce** `distribution_signal` for organvm-vii-kerygma/kerygma-pipeline
-- **Produce** `essay_material` for organvm-v-logos/essay-pipeline
+### Siblings in Commerce
+`classroom-rpg-aetheria`, `gamified-coach-interface`, `trade-perpetual-future`, `fetch-familiar-friends`, `sovereign-ecosystem--real-estate-luxury`, `public-record-data-scrapper`, `search-local--happy-hour`, `multi-camera--livestream--framework`, `universal-mail--automation`, `mirror-mirror`, `the-invisible-ledger`, `enterprise-plugin`, `virgil-training-overlay`, `tab-bookmark-manager`, `a-i-chat--exporter` ... and 16 more
 
-### External Dependencies
-- **Consume** `theory` from [`organvm-i-theoria/styx-behavioral-economics-theory`](../../organvm-i-theoria/styx-behavioral-economics-theory/CLAUDE.md)
-- **Consume** `creative-artifact` from [`organvm-ii-poiesis/styx-behavioral-art`](../../organvm-ii-poiesis/styx-behavioral-art/CLAUDE.md)
-- **Consume** `governance-rules` from [`organvm-iv-taxis/orchestration-start-here`](../../organvm-iv-taxis/orchestration-start-here/CLAUDE.md)
+### Governance
+- Strictly unidirectional flow: I→II→III. No dependencies on Theory (I).
 
-### Governance Constraints
-- Adhere to unidirectional flow: I→II→III
-- Never commit secrets or credentials
+*Last synced: 2026-05-16T19:48:11Z*
 
-*Last synced: 2026-04-14T21:31:57Z*
+## Active Handoff Protocol
+
+If `.conductor/active-handoff.md` exists, **READ IT FIRST** before doing any work.
+It contains constraints, locked files, conventions, and completed work from the
+originating agent. You MUST honor all constraints listed there.
+
+If the handoff says "CROSS-VERIFICATION REQUIRED", your self-assessment will
+NOT be trusted. A different agent will verify your output against these constraints.
+
+## Session Review Protocol
+
+At the end of each session that produces or modifies files:
+1. Run `organvm session review --latest` to get a session summary
+2. Check for unimplemented plans: `organvm session plans --project .`
+3. Export significant sessions: `organvm session export <id> --slug <slug>`
+4. Run `organvm prompts distill --dry-run` to detect uncovered operational patterns
+
+Transcripts are on-demand (never committed):
+- `organvm session transcript <id>` — conversation summary
+- `organvm session transcript <id> --unabridged` — full audit trail
+- `organvm session prompts <id>` — human prompts only
+
+
+## System Library
+
+Plans: 269 indexed | Chains: 5 available | SOPs: 8 active
+Discover: `organvm plans search <query>` | `organvm chains list` | `organvm sop lifecycle`
+Library: `/Users/4jp/Code/organvm/praxis-perpetua/library`
+
+
+## Atomization Pipeline
+
+Run `organvm atoms pipeline --write && organvm atoms fanout --write` to generate task queue.
+
+
+## System Density (auto-generated)
+
+AMMOI: 25% | Edges: 0 | Tensions: 0 | Clusters: 0 | Adv: 27 | Events(24h): 37356
+Structure: 8 organs / 148 repos / 1654 components (depth 17) | Inference: 0% | Organs: META-ORGANVM:63%, ORGAN-I:53%, ORGAN-II:48%, ORGAN-III:54% +5 more
+Last pulse: 2026-05-16T19:47:45 | Δ24h: n/a | Δ7d: n/a
+
+
+## Dialect Identity (Trivium)
+
+**Dialect:** EXECUTABLE_ALGORITHM | **Classical Parallel:** Arithmetic | **Translation Role:** The Engineering — proves that proofs compute
+
+Strongest translations: I (formal), II (structural), VII (structural)
+
+Scan: `organvm trivium scan III <OTHER>` | Matrix: `organvm trivium matrix` | Synthesize: `organvm trivium synthesize`
+
+
+## Logos Documentation Layer
+
+**Status:** MISSING | **Symmetry:** 0.5 (GHOST)
+
+Nature demands a documentation counterpart. This formation maintains its narrative record in `docs/logos/`.
+
+### The Tetradic Counterpart
+- **[Telos (Idealized Form)](../docs/logos/telos.md)** — The dream and theoretical grounding.
+- **[Pragma (Concrete State)](../docs/logos/pragma.md)** — The honest account of what exists.
+- **[Praxis (Remediation Plan)](../docs/logos/praxis.md)** — The attack vectors for evolution.
+- **[Receptio (Reception)](../docs/logos/receptio.md)** — The account of the constructed polis.
+
+### Alchemical I/O
+- **[Source & Transmutation](../docs/logos/alchemical-io.md)** — Narrative of inputs, process, and returns.
+
+- **[Public Essay](https://organvm-v-logos.github.io/public-process/)** — System-wide narrative entry.
+
+*Compliance: Implementation exists without record.*
+
 <!-- ORGANVM:AUTO:END -->

@@ -78,13 +78,25 @@ Config: `playwright.config.ts`. Tests in `e2e/`. Base URL defaults to `http://lo
 6. `06-security-invariant-check.ts` — no hardcoded secrets or debug backdoors in production output
 7. `07-claim-drift-check.js` — verifies file paths referenced in `docs/planning/implementation-status.md` still exist (`npm run validate:claims`)
 8. `08-fury-crucible-simulation.ts` — Fury network simulation
+9. `09-realm-sync-check.ts` — dual-source-of-truth check: `REALM_REGISTRY` (TS constant) and `realms` DB table must agree on IDs and stream-prefix mappings
+10. `generate-handoff-index.js` — regenerates `docs/handoffs/INDEX.md` from blocked-handoff GH issues; invoked by the `docs: auto-update blocked handoff index` CI commits
 
 ### Smoke / Readiness Scripts
 
 `scripts/smoke/` — deployment verification:
 - `beta-readiness.sh` — comprehensive beta readiness suite (`npm run beta:readiness`); outputs `artifacts/beta-readiness-summary.json`
+- `beta-smoke.sh`, `staging-smoke.sh` — environment-specific smoke runs
+- `beta-deploy-preflight.sh` — pre-deploy gate (`npm run beta:deploy-preflight`)
 - `check-endpoints.sh`, `check-api-ready.sh`, `check-api-release.sh`, `check-web.sh` — individual endpoint checks
 - `vanguard-ignition.sh` — vanguard deployment ignition
+
+### Project-Board & Audit Scripts (top-level `scripts/`)
+
+Automation around the GitHub Projects board (config at `board.config.json` — project ID, field IDs, status/category option IDs):
+- `audit-board.sh`, `setup-board.sh`, `sync-tracking-table.sh`, `transition-issue.sh` — board state transitions; audit trail at `docs/audit/transitions.log`
+- `gatekeeper-scan.sh` — Stygian-terminology scan (paired with Gate 04)
+- `detect-redundancy.{sh,py}` — duplicate-content scanner across docs/plans
+- `build-chat-context.ts` — bundles repo state into a context payload for external agents
 
 ## Architecture
 
@@ -98,8 +110,14 @@ Config: `playwright.config.ts`. Tests in `e2e/`. Base URL defaults to `http://lo
 | `src/shared` | `@styx/shared` | TypeScript (pure) | Constants, types, algorithms |
 | `src/desktop` | `@styx/desktop` | Tauri 2.0 beta, Vite, React | "The Judge" admin dashboard |
 | `src/pitch` | `@styx/pitch` | Vite, React 18, p5.js, Tailwind | Interactive pitch deck (builds to `docs/` for GitHub Pages). No test/lint scripts. |
+| `src/ask-styx` | `@styx/ask-styx` | Vite 6, React 18, Tailwind, Cloudflare Workers, Vitest | "Ask Styx" conversational front-end deployed as a Worker; tests via `vitest run` (not Jest) |
+| `src/test-harness` | `@styx/test-harness` | TypeScript, Vitest, Playwright, zod, commander | ORGAN-III quality gate. Exposes the `ergon-test` CLI (`bin/ergon-test`). Audit suites: contract validator, aesthetic auditor (headless Playwright), seed.yaml/edge contracts |
+
+Workspace globs (root `package.json`): `src/*` and `packages/*` (the `packages/` directory is currently empty but reserved).
 
 Path alias: `@styx/shared/*` → `./src/shared/*` (root `tsconfig.json`).
+
+**Test-runner heterogeneity**: most workspaces use Jest, but `ask-styx` and `test-harness` use **Vitest**. When invoking a single workspace's tests directly, use that workspace's `npm test` rather than assuming `npx jest`.
 
 ### API: Dual-Layer Structure
 
@@ -206,6 +224,16 @@ Expo-managed React Native app. `src/mobile/screens/`: Dashboard, Login, Register
 - **TypeScript**: strict mode, named exports, async/await
 - **NestJS testing pattern**: `@Injectable()` classes with constructor DI; mock `Pool` or service via `as any` cast in tests (see any `*.spec.ts` in `src/api/src/modules/`)
 
+## Companion Governance Files (root)
+
+These files at the repo root carry constraints that tooling reads but are easy to miss:
+
+- **`AGENTS.md`** — Auto-generated org-context block (`<!-- ORGANVM:AUTO:START/END -->`) describing this repo's event subscriptions, production responsibilities, and external organ dependencies. Treated as a contract by the ORGANVM swarm; do not hand-edit between the auto markers.
+- **`GEMINI.md`** — Parallel context file consumed by Gemini-based agents during dispatch. Kept in sync via `docs: context sync refresh` commits.
+- **`board.config.json`** — GitHub Projects (V2) board IDs, field IDs, and option IDs used by the board-automation scripts. Editing requires re-resolving IDs via the GH GraphQL API; do not handcraft.
+- **`seed.yaml`** — Organ membership, edges, governance constraints (consumed by `organvm` CLI and the auto-generated section at the bottom of this file).
+- **`ecosystem.yaml`**, **`network-map.yaml`** — Ecosystem inventory and external-mirror map used by `organvm ecosystem show` and `organvm network map`.
+
 ## Environment
 
 Copy `.env.example` → `.env`. Required vars: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `DATABASE_URL`, `REDIS_URL`, `CLOUDFLARE_R2_ACCESS_KEY`, `CLOUDFLARE_R2_SECRET_KEY`, `JWT_SECRET`. Optional: `GEMINI_API_KEY`, `ANONYMIZE_SALT`, `SENTRY_DSN`, Salesforce/HubSpot keys.
@@ -248,7 +276,7 @@ The `.env` includes a beta configuration system (all `STYX_*` and `NEXT_PUBLIC_S
 ### Governance
 - Strictly unidirectional flow: I→II→III. No dependencies on Theory (I).
 
-*Last synced: 2026-04-14T21:31:56Z*
+*Last synced: 2026-05-16T19:47:45Z*
 
 ## Active Handoff Protocol
 
@@ -275,156 +303,24 @@ Transcripts are on-demand (never committed):
 
 ## System Library
 
-Plans: 269 indexed | Chains: 5 available | SOPs: 121 active
+Plans: 269 indexed | Chains: 5 available | SOPs: 8 active
 Discover: `organvm plans search <query>` | `organvm chains list` | `organvm sop lifecycle`
-Library: `meta-organvm/praxis-perpetua/library/`
-
-
-## Active Directives
-
-| Scope | Phase | Name | Description |
-|-------|-------|------|-------------|
-| system | any | atomic-clock | The Atomic Clock |
-| system | any | execution-sequence | Execution Sequence |
-| system | any | multi-agent-dispatch | Multi-Agent Dispatch |
-| system | any | session-handoff-avalanche | Session Handoff Avalanche |
-| system | any | system-loops | System Loops |
-| system | any | prompting-standards | Prompting Standards |
-| system | any | research-standards-bibliography | APPENDIX: Research Standards Bibliography |
-| system | any | phase-closing-and-forward-plan | METADOC: Phase-Closing Commemoration & Forward Attack Plan |
-| system | any | research-standards | METADOC: Architectural Typology & Research Standards |
-| system | any | sop-ecosystem | METADOC: SOP Ecosystem — Taxonomy, Inventory & Coverage |
-| system | any | autonomous-content-syndication | SOP: Autonomous Content Syndication (The Broadcast Protocol) |
-| system | any | autopoietic-systems-diagnostics | SOP: Autopoietic Systems Diagnostics (The Mirror of Eternity) |
-| system | any | background-task-resilience | background-task-resilience |
-| system | any | cicd-resilience-and-recovery | SOP: CI/CD Pipeline Resilience & Recovery |
-| system | any | community-event-facilitation | SOP: Community Event Facilitation (The Dialectic Crucible) |
-| system | any | context-window-conservation | context-window-conservation |
-| system | any | conversation-to-content-pipeline | SOP — Conversation-to-Content Pipeline |
-| system | any | cross-agent-handoff | SOP: Cross-Agent Session Handoff |
-| system | any | cross-channel-publishing-metrics | SOP: Cross-Channel Publishing Metrics (The Echo Protocol) |
-| system | any | data-migration-and-backup | SOP: Data Migration and Backup Protocol (The Memory Vault) |
-| system | any | document-audit-feature-extraction | SOP: Document Audit & Feature Extraction |
-| system | any | dynamic-lens-assembly | SOP: Dynamic Lens Assembly |
-| system | any | essay-publishing-and-distribution | SOP: Essay Publishing & Distribution |
-| system | any | formal-methods-applied-protocols | SOP: Formal Methods Applied Protocols |
-| system | any | formal-methods-master-taxonomy | SOP: Formal Methods Master Taxonomy (The Blueprint of Proof) |
-| system | any | formal-methods-tla-pluscal | SOP: Formal Methods — TLA+ and PlusCal Verification (The Blueprint Verifier) |
-| system | any | generative-art-deployment | SOP: Generative Art Deployment (The Gallery Protocol) |
-| system | any | market-gap-analysis | SOP: Full-Breath Market-Gap Analysis & Defensive Parrying |
-| system | any | mcp-server-fleet-management | SOP: MCP Server Fleet Management (The Server Protocol) |
-| system | any | multi-agent-swarm-orchestration | SOP: Multi-Agent Swarm Orchestration (The Polymorphic Swarm) |
-| system | any | network-testament-protocol | SOP: Network Testament Protocol (The Mirror Protocol) |
-| system | any | open-source-licensing-and-ip | SOP: Open Source Licensing and IP (The Commons Protocol) |
-| system | any | performance-interface-design | SOP: Performance Interface Design (The Stage Protocol) |
-| system | any | pitch-deck-rollout | SOP: Pitch Deck Generation & Rollout |
-| system | any | polymorphic-agent-testing | SOP: Polymorphic Agent Testing (The Adversarial Protocol) |
-| system | any | promotion-and-state-transitions | SOP: Promotion & State Transitions |
-| system | any | recursive-study-feedback | SOP: Recursive Study & Feedback Loop (The Ouroboros) |
-| system | any | repo-onboarding-and-habitat-creation | SOP: Repo Onboarding & Habitat Creation |
-| system | any | research-to-implementation-pipeline | SOP: Research-to-Implementation Pipeline (The Gold Path) |
-| system | any | security-and-accessibility-audit | SOP: Security & Accessibility Audit |
-| system | any | session-self-critique | session-self-critique |
-| system | any | smart-contract-audit-and-legal-wrap | SOP: Smart Contract Audit and Legal Wrap (The Ledger Protocol) |
-| system | any | source-evaluation-and-bibliography | SOP: Source Evaluation & Annotated Bibliography (The Refinery) |
-| system | any | stranger-test-protocol | SOP: Stranger Test Protocol |
-| system | any | strategic-foresight-and-futures | SOP: Strategic Foresight & Futures (The Telescope) |
-| system | any | styx-pipeline-traversal | SOP: Styx Pipeline Traversal (The 7-Organ Transmutation) |
-| system | any | system-dashboard-telemetry | SOP: System Dashboard Telemetry (The Panopticon Protocol) |
-| system | any | the-descent-protocol | the-descent-protocol |
-| system | any | the-membrane-protocol | the-membrane-protocol |
-| system | any | theoretical-concept-versioning | SOP: Theoretical Concept Versioning (The Epistemic Protocol) |
-| system | any | theory-to-concrete-gate | theory-to-concrete-gate |
-| system | any | typological-hermeneutic-analysis | SOP: Typological & Hermeneutic Analysis (The Archaeology) |
-| unknown | any | SOP-SS-ATM-001_001-atomic-decomposition | SOP-SS-ATM-001_001: Atomic Decomposition & Coverage Proof |
-| unknown | any | SOP-SS-CLT-001_001-ontology_client_decisions | SOP-SS-CLT-001_001-ontology_client_decisions |
-| unknown | any | SOP-SS-CNT-001_001-content-extraction-and-node-injection | SOP-SS-CNT-001_001: Content Extraction & Node Injection |
-| unknown | any | SOP-SS-ISS-001-001-ontology-issue-specification | SOP-SS-ISS-001-001-ontology-issue-specification |
-| unknown | any | SOP-SS-PRC-001_001-ontology_meta_process | SOP-SS-PRC-001-001-ontology-meta-process |
-| unknown | any | SOP-SS-QAB-001_001-project-board-qa | SOP-SS-QAB-001_001-project-board-qa |
-| unknown | any | SOP-SS-TRK-001_001-ontology_issue_tracking | SOP-SS-TRK-001_001-ontology_issue_tracking |
-| unknown | any | registry | SOP Registry — Sovereign Systems |
-
-Linked skills: cicd-resilience-and-recovery, continuous-learning-agent, evaluation-to-growth, genesis-dna, multi-agent-workforce-planner, promotion-and-state-transitions, quality-gate-baseline-calibration, repo-onboarding-and-habitat-creation, structural-integrity-audit
+Library: `/Users/4jp/Code/organvm/praxis-perpetua/library`
 
 
 **Prompting (Anthropic)**: context 200K tokens, format: XML tags, thinking: extended thinking (budget_tokens)
 
 
-## Ecosystem Status
+## Atomization Pipeline
 
-- **delivery**: 0/5 live, 3 planned
-- **revenue**: 0/2 live, 2 planned
-- **marketing**: 0/3 live, 2 planned
-- **community**: 0/1 live, 0 planned
-- **content**: 0/2 live, 1 planned
-- **listings**: 0/1 live, 1 planned
-
-Run: `organvm ecosystem show peer-audited--behavioral-blockchain` | `organvm ecosystem validate --organ III`
-
-
-## External Mirrors (Network Testament)
-
-- **technical** (3): eslint/eslint, prettier/prettier, microsoft/TypeScript
-
-Convergences: 20 | Run: `organvm network map --repo peer-audited--behavioral-blockchain` | `organvm network suggest`
-
-
-## Task Queue (from pipeline)
-
-**246** pending tasks | Last pipeline: unknown
-
-- `648328e8cbaf` Plan: 30-Day GTM Strike Plan
-- `ad6bb8bb3bb6` #563 `Add adverse authority analysis section to whitepaper` [graphql]
-- `a47ed8fbde6b` #562 `Expand case law coverage to 15-25 cases in whitepaper and supporting docs` [graphql]
-- `02ae89f21ff6` Plan: Market Attack Plan
-- `357b5cdbdfd7` Untitled Plan
-- `de0237f83aa9` Plan: Phase 1 Copy Pack
-- `7562b9c482c4` Plan: Positioning Core
-- `21f701276a66` Untitled Plan
-- ... and 238 more
-
-Cross-organ links: 132 | Top tags: `bash`, `react`, `typescript`, `python`, `node`
-
-Run: `organvm atoms pipeline --write && organvm atoms fanout --write`
-
-
-## Entity Identity (Ontologia)
-
-**UID:** `ent_repo_01KKKX3RVP5HZ63E8FCT65RBYR` | **Matched by:** primary_name
-
-Resolve: `organvm ontologia resolve peer-audited--behavioral-blockchain` | History: `organvm ontologia history ent_repo_01KKKX3RVP5HZ63E8FCT65RBYR`
-
-
-## Live System Variables (Ontologia)
-
-| Variable | Value | Scope | Updated |
-|----------|-------|-------|---------|
-| `active_repos` | 89 | global | 2026-04-14 |
-| `archived_repos` | 54 | global | 2026-04-14 |
-| `ci_workflows` | 107 | global | 2026-04-14 |
-| `code_files` | 0 | global | 2026-04-14 |
-| `dependency_edges` | 60 | global | 2026-04-14 |
-| `operational_organs` | 10 | global | 2026-04-14 |
-| `published_essays` | 29 | global | 2026-04-14 |
-| `repos_with_tests` | 0 | global | 2026-04-14 |
-| `sprints_completed` | 33 | global | 2026-04-14 |
-| `test_files` | 0 | global | 2026-04-14 |
-| `total_organs` | 10 | global | 2026-04-14 |
-| `total_repos` | 145 | global | 2026-04-14 |
-| `total_words_formatted` | 0 | global | 2026-04-14 |
-| `total_words_numeric` | 0 | global | 2026-04-14 |
-| `total_words_short` | 0K+ | global | 2026-04-14 |
-
-Metrics: 9 registered | Observations: 32128 recorded
-Resolve: `organvm ontologia status` | Refresh: `organvm refresh`
+Run `organvm atoms pipeline --write && organvm atoms fanout --write` to generate task queue.
 
 
 ## System Density (auto-generated)
 
-AMMOI: 58% | Edges: 42 | Tensions: 33 | Clusters: 5 | Adv: 23 | Events(24h): 32336
-Structure: 8 organs / 145 repos / 1654 components (depth 17) | Inference: 98% | Organs: META-ORGANVM:65%, ORGAN-I:53%, ORGAN-II:48%, ORGAN-III:54% +5 more
-Last pulse: 2026-04-14T21:31:36 | Δ24h: -1.0% | Δ7d: n/a
+AMMOI: 25% | Edges: 0 | Tensions: 0 | Clusters: 0 | Adv: 27 | Events(24h): 37356
+Structure: 8 organs / 148 repos / 1654 components (depth 17) | Inference: 0% | Organs: META-ORGANVM:63%, ORGAN-I:53%, ORGAN-II:48%, ORGAN-III:54% +5 more
+Last pulse: 2026-05-16T19:47:45 | Δ24h: n/a | Δ7d: n/a
 
 
 ## Dialect Identity (Trivium)
