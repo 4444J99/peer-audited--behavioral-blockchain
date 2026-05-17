@@ -82,3 +82,6 @@ Thumbs.db
 .conductor/
 .opencode/
 docs/evaluation/
+# Large export files
+docs/EXPORT-*.md
+docs/audit/document-audit-*.md
