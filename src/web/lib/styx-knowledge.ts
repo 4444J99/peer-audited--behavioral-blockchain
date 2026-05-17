@@ -71,7 +71,7 @@ make test-e2e-ui                  # Playwright UI mode
 npm run test:e2e:headed           # headed mode
 \`\`\`
 
-Config: \`playwright.config.ts\`. Tests in \`e2e/\`. Base URL defaults to \`http://localhost:3001\`. Web server auto-starts via \`webServer\` config. E2E suites: auth, auth-guards, contract-lifecycle, dashboard, fury-workbench, recovery-contracts, wallet.
+Config: \`.config/playwright/playwright.config.ts\`. Tests in \`e2e/\`. Base URL defaults to \`http://localhost:3001\`. Web server auto-starts via \`webServer\` config. E2E suites: auth, auth-guards, contract-lifecycle, dashboard, fury-workbench, recovery-contracts, wallet.
 
 ### Validation Gates
 
@@ -195,7 +195,7 @@ Expo-managed React Native app. \`src/mobile/screens/\`: Dashboard, Login, Regist
 - **CD**: GitHub Actions (\`deploy.yml\`) — tag-triggered deploy to Render with smoke test. Also: \`beta-promotion.yml\`, \`staging-promotion.yml\`
 - **IaC**: Terraform (\`infra/terraform/\`) — Render services, Cloudflare R2, WAF rules. Also \`scripts/infra/\` for R2 lifecycle, WAF rules, pg data lake extract
 - **Render Blueprint**: \`render.yaml\` — API + Web + PostgreSQL + Redis (Oregon region, starter plan)
-- **Docker**: \`docker-compose.yml\` (4 services: styx-api, styx-postgres, styx-redis, styx-web) and root \`Dockerfile\` (API-only image)
+- **Docker**: \`.config/docker/docker-compose.yml\` (4 services: styx-api, styx-postgres, styx-redis, styx-web) and \`.config/docker/Dockerfile\` (API-only image)
 
 ### Key Design Constraints
 

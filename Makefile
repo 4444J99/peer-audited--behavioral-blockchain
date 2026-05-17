@@ -16,7 +16,7 @@ clean:
 	npx turbo run clean
 
 docker-up:
-	docker-compose up -d
+	docker compose -f .config/docker/docker-compose.yml up -d
 
 pitch:
 	cd src/pitch && npm run build

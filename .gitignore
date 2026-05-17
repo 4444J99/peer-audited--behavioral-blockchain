@@ -14,6 +14,8 @@ artifacts/
 # IDE / editor artifacts
 .idea/
 .codex-review/
+.lh/
+.vscode/
 
 # TypeScript artifacts in source directories
 src/api/**/*.js
@@ -22,14 +24,6 @@ src/api/**/*.d.ts
 src/shared/**/*.js
 src/shared/**/*.js.map
 src/shared/**/*.d.ts
-
-# Project-specific temporary files
-op_items.json
-op_items_raw.txt
-op_items_v2.txt
-ngrok_app.yml
-dev_final_v*.log
-ngrok_final_v*.log
 
 # Mobile / desktop local build outputs (keep source, ignore generated state)
 src/mobile/.expo/
@@ -63,11 +57,23 @@ infra/terraform/*.tfstate
 infra/terraform/*.tfstate.backup
 infra/terraform/terraform.tfvars
 infra/terraform/.terraform.lock.hcl
-.vercel
 
-# Cross-project portfolio audit artifacts (generated outside this repo)
-audit_report.md
-portfolio_analysis_summary.md
-portfolio_plans_combined.md
-portfolio_files.txt
-.lh/
+# .config/ local state
+.config/vercel/.vercel/
+
+# Session exports and transient output (organvm CLI generates these)
+exports/
+output/
+
+# E2E test results
+playwright-report/
+test-results/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

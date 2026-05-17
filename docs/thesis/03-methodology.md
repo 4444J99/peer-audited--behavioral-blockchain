@@ -352,7 +352,7 @@ Beyond unit and integration tests, the Styx system enforces eight validation gat
 
 ### 3.4.3 End-to-End Testing
 
-The Styx web application is tested end-to-end using Playwright (`playwright.config.ts`), which executes browser-based test suites across four engines: Chromium, Firefox, WebKit, and Mobile Chrome. The E2E test suites cover critical user journeys:
+The Styx web application is tested end-to-end using Playwright (`.config/playwright/playwright.config.ts`), which executes browser-based test suites across four engines: Chromium, Firefox, WebKit, and Mobile Chrome. The E2E test suites cover critical user journeys:
 
 - **Authentication**: registration, login, session persistence, and logout flows.
 - **Auth Guards**: verification that protected routes redirect unauthenticated users.

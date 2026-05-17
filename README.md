@@ -28,7 +28,7 @@ A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to 
 # Prerequisites: Node.js >= 20, Docker, npm 10+
 
 # Start infrastructure (PostgreSQL + Redis)
-docker-compose up -d
+docker compose -f .config/docker/docker-compose.yml up -d
 
 # Install dependencies across all workspaces
 make install

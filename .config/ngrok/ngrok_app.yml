@@ -1,0 +1,11 @@
+authtoken: ${NGROK_AUTHTOKEN}
+version: "2"
+tunnels:
+  styx-api-tunnel:
+    proto: http
+    addr: 3000
+    host_header: localhost:3000
+  styx-web-tunnel:
+    proto: http
+    addr: 3001
+    host_header: localhost:3001
