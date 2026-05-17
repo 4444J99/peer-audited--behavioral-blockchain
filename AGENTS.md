@@ -21,6 +21,8 @@
 
 *Last synced: 2026-05-16T19:48:11Z*
 
+<!-- ORGANVM:AUTO:END -->
+
 ## Active Handoff Protocol
 
 If `.conductor/active-handoff.md` exists, **READ IT FIRST** before doing any work.
@@ -43,52 +45,101 @@ Transcripts are on-demand (never committed):
 - `organvm session transcript <id> --unabridged` — full audit trail
 - `organvm session prompts <id>` — human prompts only
 
+## Repo Facts
 
-## System Library
+### Monorepo Structure
 
-Plans: 269 indexed | Chains: 5 available | SOPs: 8 active
-Discover: `organvm plans search <query>` | `organvm chains list` | `organvm sop lifecycle`
-Library: `/Users/4jp/Code/organvm/praxis-perpetua/library`
+Turborepo + npm workspaces. Package scope: `@styx/*`. Root `tsconfig.json` maps `@styx/shared/*` → `src/shared/*`.
 
+| Workspace | Stack | Entry | Notes |
+|-----------|-------|-------|-------|
+| `src/api` | NestJS 11, BullMQ, Stripe, pg | `nest-cli.json` entryFile: `api/src/main` | Double-entry ledger, Fury router, escrow |
+| `src/web` | Next.js 16, React 18, Tailwind | dev on port **3001** | Dashboard, Fury workbench |
+| `src/mobile` | React Native 0.81, Expo 54 | `expo run:ios` / `expo run:android` | Sensor bridge, camera, biometrics |
+| `src/desktop` | Tauri 2, Vite, React | `src-tauri/tauri.conf.json` | "The Judge" admin dashboard |
+| `src/shared` | TypeScript | `dist/index.js` | Constants, types, algorithms — **must build before others** |
+| `src/pitch` | Vite, React, p5.js | interactive pitch deck | build outputs to `docs/` |
+| `src/ask-styx` | Cloudflare Worker (wrangler) | `worker/index.ts` | LLM proxy for Ask Styx UI |
+| `src/test-harness` | Vitest, Commander CLI | `bin/ergon-test` | Validation & simulation suite |
 
-## Atomization Pipeline
+### Setup & Dev Commands
 
-Run `organvm atoms pipeline --write && organvm atoms fanout --write` to generate task queue.
+```bash
+# Prerequisites: Node.js >= 20, Docker, npm 10+
+docker-compose up -d                    # PostgreSQL (5432) + Redis (6379)
+make install                            # npm install (all workspaces)
+cd src/api && npm run migrate && cd ../..  # DB migrations (required before API works)
+make dev                                # npx turbo run dev (API + Web + Mobile)
+```
 
+### Verification Commands
 
-## System Density (auto-generated)
+```bash
+make test                               # All unit/integration tests via turbo
+cd src/api && npx jest                  # API tests only (640)
+cd src/web && npx jest                  # Web tests only (166)
+cd src/mobile && npx jest               # Mobile tests only (273)
+cd src/desktop && npx jest              # Desktop tests only (128)
+cd src/test-harness && npx vitest       # Test-harness uses Vitest, not Jest
+npx jest --testNamePattern="pattern"    # Single test by name pattern
 
-AMMOI: 25% | Edges: 0 | Tensions: 0 | Clusters: 0 | Adv: 27 | Events(24h): 37356
-Structure: 8 organs / 148 repos / 1654 components (depth 17) | Inference: 0% | Organs: META-ORGANVM:63%, ORGAN-I:53%, ORGAN-II:48%, ORGAN-III:54% +5 more
-Last pulse: 2026-05-16T19:47:45 | Δ24h: n/a | Δ7d: n/a
+make test-e2e                           # Playwright (chromium + firefox)
+make test-e2e-ui                        # Playwright interactive UI
 
+npx turbo run lint                      # TypeScript strict check (tsc --noEmit per workspace)
+npm run format                          # Prettier: **/*.{ts,tsx,md}
+```
 
-## Dialect Identity (Trivium)
+### CI Pipeline Order (`.github/workflows/ci.yml`)
 
-**Dialect:** EXECUTABLE_ALGORITHM | **Classical Parallel:** Arithmetic | **Translation Role:** The Engineering — proves that proofs compute
+1. `npm ci` + `npm audit --audit-level=high`
+2. `turbo run test -- --coverage --ci`
+3. `turbo run build`
+4. `turbo run lint`
+5. Gate 04: redacted build check (no gambling vocabulary in production build)
+6. Gate 05: behavioral physics check (skipped if `CI_GATE05_API_URL` not set)
+7. Gate 06: security invariant check
+8. Gate 07: claim drift check (`npm run validate:claims`)
+9. Beta readiness (uploads `artifacts/beta-readiness-summary.json`)
+10. Terraform validate (`infra/terraform/`)
+11. E2E Playwright (chromium + firefox matrix)
+12. CodeQL
 
-Strongest translations: I (formal), II (structural), VII (structural)
+### Deployment
 
-Scan: `organvm trivium scan III <OTHER>` | Matrix: `organvm trivium matrix` | Synthesize: `organvm trivium synthesize`
+- **Production**: triggered by `v*` tag or `workflow_dispatch` on `main`
+- Deploys API + Web to **Render** (Oregon region) via `render.yaml` blueprint
+- Migrations run **after** API deploy, **before** smoke tests
+- Smoke test includes best-effort redeploy fallback on API readiness failure (not true rollback)
+- **Ask Styx**: deploys to GitHub Pages on push to `src/ask-styx/**`; worker uses Cloudflare Wrangler
+- Staging/beta promotion workflows gate production deploy
 
+### Key Conventions & Gotchas
 
-## Logos Documentation Layer
+- **Lint = `tsc --noEmit`** — no ESLint config at workspace level. TypeScript strict mode is the lint.
+- **`turbo.json`**: `test` dependsOn `build` — you cannot run tests without building first via turbo.
+- **Linguistic Cloaker**: production builds swap gambling terms (stake→commitment, bet→vault). Gate 04 validates this. Run `bash scripts/validation/04-redacted-build-check.sh` locally to check.
+- **`@styx/shared`** must be built before any workspace that imports from it can build or test.
+- **Playwright** auto-starts the web server (`cd src/web && npm run dev`) unless `CI=true`, then uses `npm run start`. Base URL: `http://localhost:3001`.
+- **EditorConfig**: 2-space indent for TS/TSX, LF line endings, final newline required.
+- **Mobile `build` and `lint` are both `tsc --noEmit`** — no actual bundle build. Native builds use `expo run:*`.
+- **Pitch build outputs to `docs/`** (see `turbo.json` `@styx/pitch#build` outputs) — not `dist/`.
+- **Environment**: copy `.env.example` → `.env`. `GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS` defaults to `false` (fail-closed in beta); set to `true` for local dev without geo headers.
 
-**Status:** MISSING | **Symmetry:** 0.5 (GHOST)
+### Validation Gates (local)
 
-Nature demands a documentation counterpart. This formation maintains its narrative record in `docs/logos/`.
+```bash
+npx tsx scripts/validation/01-phantom-money-check.ts      # Ledger balance integrity
+npx tsx scripts/validation/02-simulator-spoof-check.ts     # Oracle spoof detection
+npx tsx scripts/validation/03-the-full-loop.ts             # End-to-end contract lifecycle
+bash scripts/validation/04-redacted-build-check.sh         # Production vocabulary sweep
+npx tsx scripts/validation/05-behavioral-physics-check.ts   # Algorithm constants
+node scripts/validation/07-claim-drift-check.js            # Claim drift
+```
 
-### The Tetradic Counterpart
-- **[Telos (Idealized Form)](../docs/logos/telos.md)** — The dream and theoretical grounding.
-- **[Pragma (Concrete State)](../docs/logos/pragma.md)** — The honest account of what exists.
-- **[Praxis (Remediation Plan)](../docs/logos/praxis.md)** — The attack vectors for evolution.
-- **[Receptio (Reception)](../docs/logos/receptio.md)** — The account of the constructed polis.
+### Beta Readiness
 
-### Alchemical I/O
-- **[Source & Transmutation](../docs/logos/alchemical-io.md)** — Narrative of inputs, process, and returns.
-
-- **[Public Essay](https://organvm-v-logos.github.io/public-process/)** — System-wide narrative entry.
-
-*Compliance: Implementation exists without record.*
-
-<!-- ORGANVM:AUTO:END -->
+```bash
+BETA_API_URL=https://api-beta.example.com npm run beta:readiness
+```
+Writes `artifacts/beta-readiness-summary.json`. Full policy: `docs/planning/beta-readiness-contract.md`.
