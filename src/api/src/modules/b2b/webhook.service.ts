@@ -1,8 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
+// Reject signatures whose signed timestamp is older/newer than this skew window
+// to defeat replay of captured webhook deliveries.
+const MAX_TIMESTAMP_SKEW_SECONDS = 5 * 60;
+
+function requireWebhookSecret(): string {
+  const secret = process.env.STYX_WEBHOOK_SECRET; // allow-secret
+  if (!secret) {
+    throw new Error('STYX_WEBHOOK_SECRET must be set');
+  }
+  return secret;
+}
 
 export interface WebhookDeliveryResult {
   success: boolean;
@@ -14,7 +25,11 @@ export interface WebhookDeliveryResult {
 @Injectable()
 export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
-  private webhookSecret = process.env.STYX_WEBHOOK_SECRET || 'styx-webhook-dev-secret'; // allow-secret
+  // Resolved lazily (not in a field initializer) so a missing STYX_WEBHOOK_SECRET
+  // fails webhook signing/verification at use-time rather than crashing app boot.
+  private get webhookSecret(): string {
+    return requireWebhookSecret(); // allow-secret
+  }
 
   /**
    * Pushes anonymized behavioral velocity changes to an enterprise CRM endpoint.
@@ -104,10 +119,28 @@ export class WebhookService {
 
   /**
    * Verify an incoming webhook signature (for consumers to validate).
+   * Rejects stale/replayed deliveries outside the allowed timestamp skew and
+   * compares the HMAC in constant time.
    */
   verify(timestamp: string, body: string, signature: string): boolean {
+    // Reject deliveries whose signed timestamp is too far from now (replay guard).
+    const ts = Number(timestamp);
+    if (!Number.isFinite(ts)) {
+      return false;
+    }
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (Math.abs(nowSeconds - ts) > MAX_TIMESTAMP_SKEW_SECONDS) {
+      return false;
+    }
+
     const expected = this.sign(timestamp, body);
-    return expected === signature;
+    const expectedBuf = Buffer.from(expected);
+    const providedBuf = Buffer.from(signature);
+    // timingSafeEqual requires equal-length buffers.
+    if (expectedBuf.length !== providedBuf.length) {
+      return false;
+    }
+    return timingSafeEqual(expectedBuf, providedBuf);
   }
 
   private delay(ms: number): Promise<void> {

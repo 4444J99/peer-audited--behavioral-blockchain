@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 
+export type MeteredEventType = 'phash_scan' | 'gemini_call' | 'anomaly_detection';
+
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
@@ -15,10 +17,13 @@ export class BillingService {
   /**
    * Enterprise "Consumption Based" billing. Companies are charged per metric generation/insight.
    * Driven by Phase Omega "The Empire" B2B strategy.
+   *
+   * eventType is constrained to the known metered metrics rather than an arbitrary
+   * string cast through `as any`, so callers cannot record bogus/free-text events.
    */
-  async recordConsumptionEvent(enterpriseId: string, eventType: string): Promise<void> {
+  async recordConsumptionEvent(enterpriseId: string, eventType: MeteredEventType): Promise<void> {
     this.logger.log(`Recorded consumption event [${eventType}] for Enterprise: ${enterpriseId}`);
-    await this.recordUsage(enterpriseId, eventType as any);
+    await this.recordUsage(enterpriseId, eventType);
   }
 
   /**
@@ -46,12 +51,30 @@ export class BillingService {
   }
 
   /**
+   * Validate a value that will be interpolated into a Stripe Search query string.
+   * Only allows the characters that legitimately appear in our identifiers
+   * (UUID-style: alphanumerics and hyphen). Rejects quotes, backslashes and any
+   * other character that could alter the query semantics.
+   */
+  private assertSafeQueryValue(value: string): string {
+    if (typeof value !== 'string' || !/^[A-Za-z0-9-]{1,64}$/.test(value)) {
+      throw new Error('Invalid enterpriseId: contains characters not permitted in a billing lookup');
+    }
+    return value;
+  }
+
+  /**
    * Find the metered subscription item for an enterprise.
    * Looks up the active subscription with the matching enterpriseId metadata.
    */
   private async getMeteredSubscriptionItem(enterpriseId: string): Promise<string | null> {
+    // Guard against Stripe Search Query Language injection. enterpriseId is a UUID
+    // in our schema; anything containing quotes/backslashes/control chars could
+    // break out of the quoted string literal and alter the query, so reject it.
+    const safeEnterpriseId = this.assertSafeQueryValue(enterpriseId);
+
     const subscriptions = await this.stripe.subscriptions.search({
-      query: `metadata["enterpriseId"]:"${enterpriseId}" AND status:"active"`,
+      query: `metadata["enterpriseId"]:"${safeEnterpriseId}" AND status:"active"`,
       limit: 1,
     });
 

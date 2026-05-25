@@ -3,10 +3,12 @@
  * Use toCents() at system boundaries (user input) and toDollars() for display.
  */
 
-/** Convert a dollar amount to integer cents. Throws if the result is not an integer. */
+/** Convert a dollar amount to integer cents. Throws if the input is not a finite number. */
 export function toCents(dollars: number): number {
-  const cents = Math.round(dollars * 100);
-  return cents;
+  if (!Number.isFinite(dollars)) {
+    throw new Error(`toCents: expected a finite number, received ${dollars}`);
+  }
+  return Math.round(dollars * 100);
 }
 
 /** Convert integer cents to a dollar amount for display. */

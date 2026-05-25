@@ -29,10 +29,30 @@ export class PHashService {
   }
 
   /**
+   * Validate that a stored/candidate hash is a well-formed hex pHash before it is
+   * parsed. Malformed input (non-hex chars, empty, or wrong length) must NOT be
+   * silently coerced — it is a processing failure that the caller treats as
+   * fail-closed (see ProofsController dedup). Throwing here, rather than letting
+   * BigInt throw on partially-valid input, makes the failure explicit.
+   */
+  private assertValidHash(hash: string): void {
+    if (typeof hash !== 'string' || !/^[0-9a-fA-F]+$/.test(hash)) {
+      throw new Error('Malformed pHash: expected a non-empty hex string');
+    }
+    // Average-hash over an 8x8 grid is 64 bits = 16 hex chars. Reject anything that
+    // is not exactly that length so a truncated/over-long hash cannot be compared.
+    if (hash.length !== this.HASH_SIZE * 2) {
+      throw new Error(`Malformed pHash: expected ${this.HASH_SIZE * 2} hex chars, got ${hash.length}`);
+    }
+  }
+
+  /**
    * Compute hamming distance between two hex hash strings.
    * Lower distance = more similar images. 0 = identical.
    */
   hammingDistance(hash1: string, hash2: string): number {
+    this.assertValidHash(hash1);
+    this.assertValidHash(hash2);
     const a = BigInt('0x' + hash1);
     const b = BigInt('0x' + hash2);
     let xor = a ^ b;

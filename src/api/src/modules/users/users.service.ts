@@ -1,13 +1,57 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import * as bcrypt from 'bcryptjs';
+import { createHash } from 'crypto';
 import { getDisplayTier } from '../../../../shared/libs/integrity';
 
 const BCRYPT_ROUNDS = 10;
+// Matches TruthLogService.GENESIS_HASH / APPEND_LOCK_KEY so audit events written
+// here stay part of the same tamper-evident chain.
+const GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+const TRUTH_LOG_APPEND_LOCK_KEY = 0x57_54_4c_47; // 'WTLG'
 
 @Injectable()
 export class UsersService {
   constructor(private readonly pool: Pool) {}
+
+  /**
+   * Appends an audit event to the tamper-evident event_log, keeping it linked to
+   * the hash chain. Replicates TruthLogService.appendEvent here because the
+   * UsersModule does not provide TruthLogService for injection. Uses the same
+   * advisory lock and SHA256(index|event_type|timestamp|prev|payload) preimage so
+   * the chain stays consistent regardless of which writer appends.
+   */
+  private async appendTruthLogEvent(eventType: string, payload: Record<string, unknown>): Promise<void> {
+    const client: PoolClient = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock($1)', [TRUTH_LOG_APPEND_LOCK_KEY]);
+
+      const latestRes = await client.query(
+        `SELECT sequence_index, current_hash FROM event_log ORDER BY sequence_index DESC LIMIT 1 FOR UPDATE`,
+      );
+      const previousHash = latestRes.rows.length > 0 ? latestRes.rows[0].current_hash : GENESIS_HASH;
+      const nextIndex = latestRes.rows.length > 0 ? parseInt(latestRes.rows[0].sequence_index, 10) + 1 : 1;
+      const timestamp = new Date().toISOString();
+
+      const payloadString = JSON.stringify(payload);
+      const hashInput = `${nextIndex}|${eventType}|${timestamp}|${previousHash}|${payloadString}`;
+      const currentHash = createHash('sha256').update(hashInput).digest('hex');
+
+      await client.query(
+        `INSERT INTO event_log (sequence_index, event_type, payload, previous_hash, current_hash, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [nextIndex, eventType, payload, previousHash, currentHash, timestamp],
+      );
+
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
 
   async getProfile(userId: string) {
     const result = await this.pool.query(
@@ -126,12 +170,8 @@ export class UsersService {
       pushNotifications: settings.pushNotifications ?? true,
     };
 
-    // Use a lightweight approach: store in event_log as a settings event
-    await this.pool.query(
-      `INSERT INTO event_log (event_type, payload, previous_hash, current_hash)
-       VALUES ('SETTINGS_UPDATED', $1, 'n/a', 'n/a')`,
-      [JSON.stringify(payload)],
-    );
+    // Append to the tamper-evident chain so the audit trail stays linked.
+    await this.appendTruthLogEvent('SETTINGS_UPDATED', payload);
 
     return { status: 'settings_updated' };
   }
@@ -151,12 +191,8 @@ export class UsersService {
       [userId],
     );
 
-    // Log the deletion request
-    await this.pool.query(
-      `INSERT INTO event_log (event_type, payload, previous_hash, current_hash)
-       VALUES ('ACCOUNT_DELETION_REQUESTED', $1, 'n/a', 'n/a')`,
-      [JSON.stringify({ userId })],
-    );
+    // Log the deletion request to the tamper-evident chain.
+    await this.appendTruthLogEvent('ACCOUNT_DELETION_REQUESTED', { userId });
 
     return { status: 'deletion_requested' };
   }
@@ -219,12 +255,12 @@ export class UsersService {
       [expiresAt.toISOString(), userId],
     );
 
-    // Log to audit log
-    await this.pool.query(
-      `INSERT INTO event_log (event_type, payload, previous_hash, current_hash)
-       VALUES ('SELF_EXCLUSION_ACTIVATED', $1, 'n/a', 'n/a')`,
-      [JSON.stringify({ userId, durationDays, expiresAt: expiresAt.toISOString() })],
-    );
+    // Log to the tamper-evident audit chain.
+    await this.appendTruthLogEvent('SELF_EXCLUSION_ACTIVATED', {
+      userId,
+      durationDays,
+      expiresAt: expiresAt.toISOString(),
+    });
 
     return { status: 'self_exclusion_activated', expiresAt };
   }

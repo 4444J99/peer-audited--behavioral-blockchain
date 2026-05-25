@@ -62,9 +62,14 @@ export class WalletController {
       return { transactions: [] };
     }
 
-    const maxRows = Math.min(parseInt(limit || '50', 10), 100);
+    // Guard against NaN/negative limits (parseInt('abc') === NaN → LIMIT NaN).
+    const parsedLimit = parseInt(limit || '', 10);
+    const maxRows = Number.isFinite(parsedLimit)
+      ? Math.min(Math.max(parsedLimit, 1), 100)
+      : 50;
+
     const result = await this.pool.query(
-      `SELECT e.id, e.amount, e.metadata, e.created_at
+      `SELECT e.id, e.amount, e.debit_account_id, e.credit_account_id, e.metadata, e.created_at
        FROM entries e
        WHERE e.debit_account_id = $1 OR e.credit_account_id = $1
        ORDER BY e.created_at DESC
@@ -72,13 +77,20 @@ export class WalletController {
       [accountId, maxRows],
     );
 
-    const transactions = result.rows.map(row => ({
-      id: row.id,
-      type: row.metadata?.type || 'TRANSACTION',
-      amount: parseFloat(row.amount) / 100, // convert cents to dollars
-      timestamp: row.created_at,
-      description: row.metadata?.description || row.metadata?.type || 'Ledger entry',
-    }));
+    const transactions = result.rows.map(row => {
+      // Canonical sign convention (matches getAccountBalance): credit increases
+      // this account's balance (+), debit decreases it (−). So a stake hold debits
+      // the user account → shows negative; a refund credits it → shows positive.
+      const magnitude = parseFloat(row.amount) / 100; // convert cents to dollars
+      const signed = row.credit_account_id === accountId ? magnitude : -magnitude;
+      return {
+        id: row.id,
+        type: row.metadata?.type || 'TRANSACTION',
+        amount: signed,
+        timestamp: row.created_at,
+        description: row.metadata?.description || row.metadata?.type || 'Ledger entry',
+      };
+    });
 
     return { transactions };
   }

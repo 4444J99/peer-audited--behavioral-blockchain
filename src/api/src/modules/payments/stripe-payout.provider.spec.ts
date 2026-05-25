@@ -59,7 +59,7 @@ describe('StripePayoutProvider', () => {
 
       const result = await provider.captureFunds('pi_capture_001', 10000);
 
-      expect(mockStripeService.captureStake).toHaveBeenCalledWith('pi_capture_001');
+      expect(mockStripeService.captureStake).toHaveBeenCalledWith('pi_capture_001', 10000);
       expect(result.status).toBe(PayoutStatus.SUCCESS);
       expect(result.providerTransactionId).toBe('pi_capture_001');
       expect(result.rawResponse).toEqual(mockIntent);
@@ -88,12 +88,24 @@ describe('StripePayoutProvider', () => {
       expect(status).toBe(PayoutStatus.SUCCESS);
     });
 
-    it('should map "canceled" intent status to PayoutStatus.SUCCESS', async () => {
+    it('should map a deliberately "canceled" intent (no abandonment reason) to PayoutStatus.SUCCESS', async () => {
       mockStripeService.retrieveIntent.mockResolvedValue({ id: 'pi_status_002', status: 'canceled' });
 
       const status = await provider.getTransactionStatus('pi_status_002');
 
       expect(status).toBe(PayoutStatus.SUCCESS);
+    });
+
+    it('should map an "abandoned" cancellation to PayoutStatus.FAILED', async () => {
+      mockStripeService.retrieveIntent.mockResolvedValue({
+        id: 'pi_status_002b',
+        status: 'canceled',
+        cancellation_reason: 'abandoned',
+      });
+
+      const status = await provider.getTransactionStatus('pi_status_002b');
+
+      expect(status).toBe(PayoutStatus.FAILED);
     });
 
     it('should map "requires_capture" intent status to PayoutStatus.PENDING', async () => {

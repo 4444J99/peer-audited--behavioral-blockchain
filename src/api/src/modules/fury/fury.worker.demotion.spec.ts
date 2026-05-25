@@ -34,6 +34,8 @@ describe('FuryWorker — Demotion', () => {
         { fury_user_id: 'fury-good-2', verdict: 'PASS' },
       ],
     });
+    // claim resolution
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-demotion' }] });
     mockPool.query.mockResolvedValueOnce({
       rows: [{ is_honeypot: false, contract_id: 'c-1' }],
     });
@@ -90,6 +92,8 @@ describe('FuryWorker — Demotion', () => {
         { fury_user_id: 'fury-ace-2', verdict: 'PASS' },
       ],
     });
+    // claim resolution
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-no-demotion' }] });
     mockPool.query.mockResolvedValueOnce({
       rows: [{ is_honeypot: false, contract_id: 'c-2' }],
     });
@@ -131,6 +135,8 @@ describe('FuryWorker — Demotion', () => {
     mockPool.query.mockResolvedValueOnce({
       rows: [{ fury_user_id: 'fury-new', verdict: 'FAIL' }],
     });
+    // claim resolution
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-burn-in' }] });
     mockPool.query.mockResolvedValueOnce({
       rows: [{ is_honeypot: false, contract_id: 'c-3' }],
     });

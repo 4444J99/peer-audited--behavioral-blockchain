@@ -39,9 +39,10 @@ describe('ReconciliationService', () => {
       const contractId = 'c1';
       mockPool.query.mockResolvedValueOnce({ rows: [{ stake_amount: '10.00', status: 'COMPLETED' }] }); // Contract
       mockPool.query.mockResolvedValueOnce({ rows: [{ status: 'SUCCESS' }] }); // Settlement Run
-      
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'acct-escrow' }] }); // SYSTEM_ESCROW account
+
       mockLedger.getContractLedger.mockResolvedValue([
-        { amount: 1000, metadata: { type: 'REAL_MONEY_SETTLEMENT_RELEASE' } }
+        { amount: 1000, debitAccountId: 'acct-escrow', creditAccountId: 'acct-user', metadata: { type: 'REAL_MONEY_SETTLEMENT_RELEASE' } }
       ]);
 
       const result = await service.reconcileContract(contractId);
@@ -53,14 +54,32 @@ describe('ReconciliationService', () => {
       const contractId = 'c2';
       mockPool.query.mockResolvedValueOnce({ rows: [{ stake_amount: '50.00', status: 'FAILED' }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ status: 'SUCCESS' }] });
-      
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'acct-escrow' }] }); // SYSTEM_ESCROW account
+
       mockLedger.getContractLedger.mockResolvedValue([
-        { amount: 2500, metadata: { type: 'REAL_MONEY_SETTLEMENT_CAPTURE' } } // Only captured half!
+        { amount: 2500, debitAccountId: 'acct-escrow', creditAccountId: 'acct-revenue', metadata: { type: 'REAL_MONEY_SETTLEMENT_CAPTURE' } } // Only captured half!
       ]);
 
       const result = await service.reconcileContract(contractId);
       expect(result.isBalanced).toBe(false);
       expect(result.discrepancies).toContain('Ledger imbalance: Expected 5000 withdrew 2500');
+    });
+
+    it('should detect a wrong-direction settlement entry of equal magnitude', async () => {
+      const contractId = 'c3';
+      mockPool.query.mockResolvedValueOnce({ rows: [{ stake_amount: '10.00', status: 'FAILED' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ status: 'SUCCESS' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'acct-escrow' }] }); // SYSTEM_ESCROW account
+
+      mockLedger.getContractLedger.mockResolvedValue([
+        // Equal magnitude but CREDITS escrow instead of debiting it: must not balance.
+        { amount: 1000, debitAccountId: 'acct-revenue', creditAccountId: 'acct-escrow', metadata: { type: 'REAL_MONEY_SETTLEMENT_CAPTURE' } }
+      ]);
+
+      const result = await service.reconcileContract(contractId);
+      expect(result.isBalanced).toBe(false);
+      expect(result.ledgerTotalCents).toBe(0);
+      expect(result.discrepancies.some(d => d.includes('Wrong-direction'))).toBe(true);
     });
   });
 });

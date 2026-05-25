@@ -1,12 +1,13 @@
-import { Controller, Post, Get, Param, Body, UseGuards, BadRequestException, ConflictException } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Headers, UseGuards, BadRequestException, ConflictException, ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { timingSafeEqual } from 'crypto';
 import { Pool } from 'pg';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { BannedUserGuard } from '../../guards/banned-user.guard';
 import { GeofenceGuard } from '../../common/guards/geofence.guard';
 import { ComplianceAccessGuard } from '../../common/guards/compliance-access.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUser, Public } from '../../common/decorators/current-user.decorator';
 import { R2StorageService } from '../../../services/storage/r2.service';
 import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
@@ -89,16 +90,22 @@ export class ProofsController {
     const combinedFlags = [...(anomalyResult.flags || [])];
 
     // 2. pHash Duplicate Detection
+    // Scope dedup to the same contract so one user's proof cannot collide-block
+    // another's, and so cross-contract media reuse is what we actually screen for.
     let isDuplicate = false;
+    let pHashFailed = false;
     try {
       const frameHash = await this.phash.computeFrameHash(mediaBuffer);
       const existingHashes = await this.pool.query(
-        'SELECT phash FROM proof_hashes WHERE proof_id != $1',
-        [proofId],
+        `SELECT ph.phash
+         FROM proof_hashes ph
+         JOIN proofs p ON p.id = ph.proof_id
+         WHERE p.contract_id = $1 AND ph.proof_id != $2`,
+        [proofAccess.contractId, proofId],
       );
       const hashStrings = existingHashes.rows.map((r: any) => r.phash);
       const { duplicate } = await this.phash.isDuplicate(mediaBuffer, hashStrings);
-      
+
       if (duplicate) {
         isDuplicate = true;
         combinedFlags.push('PHASH_DUPLICATE');
@@ -109,6 +116,10 @@ export class ProofsController {
         );
       }
     } catch (e) {
+      // Fail closed: if we cannot compute/compare a perceptual hash (e.g. malformed
+      // or unparseable media), we must NOT silently accept the proof — that would
+      // let an attacker bypass dedup by submitting media that breaks hashing.
+      pHashFailed = true;
       combinedFlags.push('PHASH_PROCESSING_ERROR');
     }
 
@@ -117,24 +128,40 @@ export class ProofsController {
       throw new ConflictException('Duplicate proof detected. Submission rejected.');
     }
 
-    // 3. Finalize Proof with Biometric + Anomaly Metadata
+    if (pHashFailed) {
+      // Quarantine for manual review rather than auto-accepting unhashable media.
+      await this.pool.query(
+        "UPDATE proofs SET status = 'PENDING_REVIEW', media_uri = $1, anomaly_flags = $3 WHERE id = $2",
+        [dto.storageKey, proofId, JSON.stringify(combinedFlags)],
+      );
+      await this.truthLog.appendEvent('PROOF_DEDUP_FAILED', {
+        proofId,
+        contractId: proofAccess.contractId,
+        userId: proofAccess.ownerUserId,
+        flags: combinedFlags,
+      });
+      throw new BadRequestException(
+        'Proof media could not be processed for duplicate detection. Submission held for manual review.',
+      );
+    }
+
+    // 3. Finalize Proof with Anomaly Metadata.
+    // Client-asserted biometric verification is NOT trusted: a client could set
+    // biometricVerified/biometricType arbitrarily. These are only meaningful when
+    // backed by server-side attestation, so we do not persist them here.
     await this.pool.query(
       `UPDATE proofs
-       SET status = 'PENDING_REVIEW', 
-           media_uri = $1, 
+       SET status = 'PENDING_REVIEW',
+           media_uri = $1,
            uploaded_at = NOW(),
-           biometric_verified = $3,
-           biometric_type = $4,
-           anomaly_flags = $5,
-           device_metadata = $6
+           anomaly_flags = $3,
+           device_metadata = $4
        WHERE id = $2`,
       [
-        dto.storageKey, 
-        proofId, 
-        dto.biometricVerified || false, 
-        dto.biometricType || null, 
+        dto.storageKey,
+        proofId,
         JSON.stringify(combinedFlags),
-        JSON.stringify(dto.deviceMetadata || {})
+        JSON.stringify(dto.deviceMetadata || {}),
       ],
     );
 
@@ -145,7 +172,6 @@ export class ProofsController {
       contractId: proofAccess.contractId,
       userId: proofAccess.ownerUserId,
       anomalyFlags: combinedFlags,
-      biometricVerified: dto.biometricVerified,
     });
 
     return { proofId, status: 'PENDING_REVIEW', furyRouteJobId: jobId, flags: combinedFlags };
@@ -189,14 +215,20 @@ export class ProofsController {
     };
   }
 
-  @UseGuards(AuthGuard)
+  @Public()
   @Post(':id/processing-complete')
   @ApiOperation({ summary: 'Internal callback for video processing completion' })
   async processingComplete(
     @Param('id') proofId: string,
+    @Headers('x-internal-token') internalToken: string | undefined,
     @Body() dto: { status: 'COMPLETED' | 'FAILED', error?: string, maskedMediaUri?: string },
   ) {
-    // In production, this would be authenticated via service-to-service token
+    // Service-to-service only: this callback marks proofs COMPLETED and must NOT be
+    // reachable by arbitrary end users (IDOR). It is no longer behind the user
+    // AuthGuard; instead it requires a shared internal token verified in constant
+    // time. Fail closed if the token is not configured.
+    this.assertInternalCaller(internalToken);
+
     await this.pool.query(
       `UPDATE proofs 
        SET processing_status = $1,
@@ -215,5 +247,26 @@ export class ProofsController {
     }
 
     return { success: true };
+  }
+
+  /**
+   * Validate a service-to-service caller for internal callbacks.
+   * Fails closed (503) when the internal token is not configured, and rejects
+   * (403) any caller that does not present the exact token (constant-time compare).
+   */
+  private assertInternalCaller(presentedToken: string | undefined): void {
+    const expected = process.env.INTERNAL_SERVICE_TOKEN;
+    if (!expected) {
+      throw new ServiceUnavailableException('Internal callback endpoint is not configured');
+    }
+    if (!presentedToken) {
+      throw new ForbiddenException('Missing internal service token');
+    }
+
+    const presentedBuf = Buffer.from(presentedToken);
+    const expectedBuf = Buffer.from(expected);
+    if (presentedBuf.length !== expectedBuf.length || !timingSafeEqual(presentedBuf, expectedBuf)) {
+      throw new ForbiddenException('Invalid internal service token');
+    }
   }
 }

@@ -54,28 +54,30 @@ describe('ProofsController', () => {
 
   describe('confirmUpload', () => {
     const user = { id: 'user-1' };
-    const dto = { storageKey: 'proofs/p1', biometricVerified: true, biometricType: 'FACE' as const };
+    // Client-asserted biometric fields are intentionally no longer trusted/persisted.
+    const dto = { storageKey: 'proofs/p1' };
 
-    it('should finalize proof with anomaly flags and biometric data', async () => {
+    it('should finalize proof with anomaly flags (no client biometric data persisted)', async () => {
       mockProofsService.getProofUploadConfirmationAccess.mockResolvedValue({
         status: 'PENDING_UPLOAD',
         contractId: 'c-1',
         ownerUserId: 'user-1',
       } as any);
-      
+
       mockR2.downloadFile.mockResolvedValue(Buffer.from('fake-media'));
       mockAnomaly.analyze.mockResolvedValue({ rejected: false, flags: ['EXIF_TIMESTAMP_DISCREPANCY'] });
       mockPhash.computeFrameHash.mockResolvedValue('hash-123');
       mockPhash.isDuplicate.mockResolvedValue({ duplicate: false, closestDistance: 64 });
       mockPool.query.mockResolvedValue({ rows: [] }); // select existing hashes
-      
+
       const result = await controller.confirmUpload('p-1', user, dto);
 
       expect(result.status).toBe('PENDING_REVIEW');
       expect(result.flags).toContain('EXIF_TIMESTAMP_DISCREPANCY');
+      // Finalize UPDATE now only persists storageKey, proofId, anomaly flags and device metadata.
       expect(mockPool.query).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE proofs'),
-        expect.arrayContaining([expect.any(String), 'p-1', true, 'FACE', '["EXIF_TIMESTAMP_DISCREPANCY"]', '{}'])
+        expect.arrayContaining([expect.any(String), 'p-1', '["EXIF_TIMESTAMP_DISCREPANCY"]', '{}'])
       );
     });
 

@@ -91,10 +91,25 @@ export const STATE_TIERS: Record<string, JurisdictionTier> = {
 export function classifyJurisdiction(geo: { country: string; region: string } | null): { tier: JurisdictionTier; state: string | null } {
     // Unknown or non-US locations are hard-blocked by default
     if (!geo || geo.country !== 'US') return { tier: JurisdictionTier.TIER_3, state: null };
-    
-    const state = geo.region;
+
+    // Normalize the state code (trim + uppercase) so values like " ut " or "ca"
+    // resolve to the correct tier instead of silently missing the lookup.
+    const state = normalizeStateCode(geo.region);
+    if (!state) return { tier: JurisdictionTier.TIER_3, state: null };
+
     // Unknown US states (e.g. military bases, territories) are hard-blocked by default
     const tier = STATE_TIERS[state] ?? JurisdictionTier.TIER_3;
-    
+
     return { tier, state };
+}
+
+/**
+ * Normalize a raw state/region code into a canonical 2-letter key.
+ * Trims surrounding whitespace and uppercases. Returns null for empty/invalid input
+ * so callers can fail closed (most-restrictive tier) rather than defaulting to TIER_1.
+ */
+export function normalizeStateCode(code: string | null | undefined): string | null {
+    if (code == null) return null;
+    const normalized = String(code).trim().toUpperCase();
+    return normalized.length > 0 ? normalized : null;
 }

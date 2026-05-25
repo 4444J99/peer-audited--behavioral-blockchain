@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsOptional, IsBoolean, IsObject } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum ProofMediaType {
@@ -28,16 +28,9 @@ export class ConfirmUploadDto {
   @IsString()
   storageKey!: string;
 
-  @ApiPropertyOptional({ description: 'Flag indicating if the proof was captured with biometric lock active' })
-  @IsOptional()
-  @IsBoolean()
-  biometricVerified?: boolean;
-
-  @ApiPropertyOptional({ description: 'Type of biometric used', enum: ['FACE', 'VOICE'] })
-  @IsOptional()
-  @IsString()
-  biometricType?: 'FACE' | 'VOICE';
-
+  // NOTE: client-asserted biometric verification (biometricVerified/biometricType)
+  // was intentionally removed. The server must not trust a client claiming its own
+  // biometric check passed; that requires server-side attestation to be meaningful.
   @ApiPropertyOptional({ description: 'Hardware/Device metadata for sensory integrity verification' })
   @IsOptional()
   @IsObject()

@@ -151,17 +151,19 @@ async function runBehavioralPhysicsCheck() {
         durationDays: 7,
       }),
     }),
-    /downscaling|Dynamic downscaling|tier limit|Cool-off|stake/i,
+    /downscaling/i,
   );
   if (downscaleResult) passed++;
   else console.log('  ⚠️  May pass if user has < 3 failures or no cool-off. Expected for fresh DBs.');
 
-  // Summary — deterministic: Test 1 must always pass
-  console.log(`\n--- GATE 05 RESULTS: ${passed}/${total} behavioral physics checks enforced ---`);
-  if (passed >= 1) {
-    console.log('✅ GATE 05 PASSED: Core behavioral physics rules are enforced.');
+  // Summary — Test 1 (stake-tier limit) is deterministic and state-independent, so it MUST
+  // pass. Tests 3 and 4 depend on prior DB state (recent failures) and are advisory only;
+  // they no longer let the gate pass for the wrong reason.
+  console.log(`\n--- GATE 05 RESULTS: ${passed}/${total} behavioral physics checks enforced (Test 1 deterministic) ---`);
+  if (tierResult) {
+    console.log('✅ GATE 05 PASSED: Deterministic stake-tier limit is enforced.');
   } else {
-    console.error('❌ GATE 05 FAILED: No behavioral physics rules detected.');
+    console.error('❌ GATE 05 FAILED: Deterministic stake-tier limit was not enforced.');
     process.exit(1);
   }
 }

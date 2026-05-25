@@ -22,38 +22,39 @@ describe('ConsensusEngine', () => {
   });
 
   describe('evaluate', () => {
-    it('should return VERIFIED when weights reach 66% threshold', async () => {
+    it('should return VERIFIED when a quorum of voters exceeds the 66% power threshold', async () => {
+      // Quorum is FURY_CONSENSUS_SIZE (3). Three PASS voters → unanimous PASS.
       const votes: FuryVote[] = [
-        { furyUserId: 'master-fury', verdict: 'PASS' }, // weight 2.0
-        { furyUserId: 'novice-fury', verdict: 'FAIL' }, // weight 1.0
+        { furyUserId: 'fury-1', verdict: 'PASS' },
+        { furyUserId: 'fury-2', verdict: 'PASS' },
+        { furyUserId: 'fury-3', verdict: 'PASS' },
       ];
 
-      // Mock Master Fury stats
+      const noviceStats = { rows: [{ successful_audits: '0', false_accusations: '0', total_audits: '0' }] };
       mockPool.query
-        .mockResolvedValueOnce({ rows: [{ successful_passes: '190', successful_fails: '10', false_accusations: '0', total_audits: '200' }] })
-        .mockResolvedValueOnce({ rows: [{ successful_passes: '0', successful_fails: '0', false_accusations: '0', total_audits: '0' }] });
-
-      // Mock bounty distribution queries
-      mockPool.query
-        .mockResolvedValueOnce({ rows: [{ id: 'bounty-pool-id' }] }) // FURY_BOUNTY_POOL account
-        .mockResolvedValueOnce({ rows: [{ account_id: 'fury-account-id' }] }); // Master fury account
+        .mockResolvedValueOnce(noviceStats)
+        .mockResolvedValueOnce(noviceStats)
+        .mockResolvedValueOnce(noviceStats);
 
       const result = await engine.evaluate('proof-1', votes, false);
 
       expect(result.outcome).toBe('VERIFIED');
-      expect(result.bountyDistributed).toBe(true);
-      expect(mockLedger.recordTransaction).toHaveBeenCalled();
+      // The engine never moves funds itself — bounty disbursement is the worker's job.
+      expect(result.bountyDistributed).toBe(false);
+      expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
     });
 
-    it('should return SPLIT and NOT distribute bounties', async () => {
+    it('should return SPLIT below quorum even when one side has a majority', async () => {
+      // Only 2 distinct voters → below quorum → SPLIT regardless of split.
       const votes: FuryVote[] = [
         { furyUserId: 'novice-1', verdict: 'PASS' },
-        { furyUserId: 'novice-2', verdict: 'FAIL' },
+        { furyUserId: 'novice-2', verdict: 'PASS' },
       ];
 
+      const noviceStats = { rows: [{ successful_audits: '0', false_accusations: '0', total_audits: '0' }] };
       mockPool.query
-        .mockResolvedValueOnce({ rows: [{ successful_passes: '0', successful_fails: '0', false_accusations: '0', total_audits: '0' }] })
-        .mockResolvedValueOnce({ rows: [{ successful_passes: '0', successful_fails: '0', false_accusations: '0', total_audits: '0' }] });
+        .mockResolvedValueOnce(noviceStats)
+        .mockResolvedValueOnce(noviceStats);
 
       const result = await engine.evaluate('proof-2', votes, false);
 
@@ -62,20 +63,56 @@ describe('ConsensusEngine', () => {
       expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
     });
 
-    it('should flag corrupt reviewers on honeypots', async () => {
+    it('should return SPLIT when no side exceeds the threshold at quorum', async () => {
+      // 3 equal-weight novices, 1 PASS vs 2 FAIL... use 2 PASS / 1 FAIL but ensure
+      // a balanced enough split. Here 1 PASS / 2 FAIL → failPower 2/3 = 0.667 > 0.66 → REJECTED.
+      // To force SPLIT we need neither side > 0.66: not achievable with 3 equal votes,
+      // so this test uses a weighted balance that lands inside the band.
+      const votes: FuryVote[] = [
+        { furyUserId: 'a', verdict: 'PASS' }, // master weight 2.0
+        { furyUserId: 'b', verdict: 'FAIL' }, // novice 1.0
+        { furyUserId: 'c', verdict: 'FAIL' }, // novice 1.0
+      ];
+      const masterStats = { rows: [{ successful_audits: '200', false_accusations: '0', total_audits: '200' }] };
+      const noviceStats = { rows: [{ successful_audits: '0', false_accusations: '0', total_audits: '0' }] };
+      mockPool.query
+        .mockResolvedValueOnce(masterStats) // a → weight 2.0
+        .mockResolvedValueOnce(noviceStats) // b → 1.0
+        .mockResolvedValueOnce(noviceStats); // c → 1.0
+
+      // passPower 2.0, failPower 2.0, total 4.0 → 0.5 each → neither > 0.66 → SPLIT.
+      const result = await engine.evaluate('proof-3', votes, false);
+
+      expect(result.outcome).toBe('SPLIT');
+      expect(result.bountyDistributed).toBe(false);
+    });
+
+    it('should flag reviewers who disagreed with the honeypot expected verdict', async () => {
       const votes: FuryVote[] = [
         { furyUserId: 'corrupt', verdict: 'PASS' },
       ];
 
-      mockPool.query.mockResolvedValueOnce({ rows: [{ successful_passes: '0', successful_fails: '0', false_accusations: '0', total_audits: '0' }] });
-      
-      // Mock bounty distribution (fails silently in test due to no consensus, but honeypot outcome is REJECTED if votes are FAIL... wait)
-      // Actually if only 1 vote and it is PASS, consensus is VERIFIED.
-      // But if it's a honeypot, we EXPECT a FAIL.
-      
+      const noviceStats = { rows: [{ successful_audits: '0', false_accusations: '0', total_audits: '0' }] };
+      mockPool.query.mockResolvedValueOnce(noviceStats);
+
+      // Honeypot expects FAIL (default) — a PASS vote is wrong and must be flagged.
       const result = await engine.evaluate('honeypot-1', votes, true);
 
       expect(result.flaggedFuries).toContain('corrupt');
+    });
+
+    it('should NOT flag reviewers who matched a CLEAN honeypot expected verdict', async () => {
+      const votes: FuryVote[] = [
+        { furyUserId: 'honest', verdict: 'PASS' },
+      ];
+
+      const noviceStats = { rows: [{ successful_audits: '0', false_accusations: '0', total_audits: '0' }] };
+      mockPool.query.mockResolvedValueOnce(noviceStats);
+
+      // CLEAN honeypot expects PASS — a PASS vote is correct and must NOT be flagged.
+      const result = await engine.evaluate('honeypot-clean', votes, true, 'PASS');
+
+      expect(result.flaggedFuries).not.toContain('honest');
     });
   });
 });

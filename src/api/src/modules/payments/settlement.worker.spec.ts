@@ -10,7 +10,8 @@ jest.mock('bullmq');
 
 describe('SettlementWorker', () => {
   let worker: SettlementWorker;
-  let mockPool: { query: jest.Mock };
+  let mockPool: { query: jest.Mock; connect: jest.Mock };
+  let mockClient: { query: jest.Mock; release: jest.Mock };
   let mockStripeProvider: jest.Mocked<Pick<StripePayoutProvider, 'releaseFunds' | 'captureFunds'>>;
   let mockLedger: jest.Mocked<Pick<LedgerService, 'recordTransaction'>>;
   let mockTruthLog: jest.Mocked<Pick<TruthLogService, 'appendEvent'>>;
@@ -32,8 +33,64 @@ describe('SettlementWorker', () => {
     }],
   });
 
+  // Helper to drive the client.query mock by SQL keyword, since the worker now runs two
+  // separate short transactions (claim + finalize) on a pooled client.
+  //
+  // entryExists() now keys on (contract_id, metadata->>'type', amount): params are
+  // [contractId, type, amountCents]. `existingEntries` lets a test declare which
+  // (type, amount) postings already exist so we can assert amount-aware idempotency.
+  const setupClientQueries = (opts: {
+    existingRun?: { id: string; status: string } | null;
+    existingEntries?: Array<{ type: string; amount: number }>;
+  }) => {
+    const insertedRunId = 'run-claimed';
+    mockClient.query.mockImplementation(async (sql: string, params?: any[]) => {
+      const text = String(sql);
+      if (text.startsWith('BEGIN') || text.startsWith('COMMIT') || text.startsWith('ROLLBACK')) {
+        return { rows: [] };
+      }
+      if (text.includes('FROM contracts WHERE id') && text.includes('FOR UPDATE')) {
+        return { rows: [{ id: 'c-x' }] };
+      }
+      if (text.includes('FROM settlement_runs') && text.includes('ORDER BY started_at DESC')) {
+        return { rows: opts.existingRun ? [opts.existingRun] : [] };
+      }
+      if (text.includes('INSERT INTO settlement_runs')) {
+        return { rows: [{ id: insertedRunId }] };
+      }
+      if (text.includes('UPDATE settlement_runs') && text.includes("'PROCESSING'")) {
+        return { rows: [] };
+      }
+      // finalizeLedger: contract + system accounts lookup
+      if (text.includes('a_escrow') && text.includes('FROM contracts c')) {
+        return makeContractRow();
+      }
+      // entryExists: dedupe ONLY on an exact (type, amount) match so a different amount
+      // for the same type is correctly treated as a new posting.
+      if (text.includes('FROM entries WHERE contract_id') && text.includes("metadata->>'type'")) {
+        const [, type, amount] = params || [];
+        const match = (opts.existingEntries || []).some(
+          (e) => e.type === type && e.amount === amount,
+        );
+        return { rows: match ? [{ id: 'existing-entry' }] : [] };
+      }
+      if (text.includes('UPDATE settlement_runs') && text.includes("'SUCCESS'")) {
+        return { rows: [] };
+      }
+      return { rows: [] };
+    });
+    return insertedRunId;
+  };
+
   beforeEach(() => {
-    mockPool = { query: jest.fn() };
+    mockClient = {
+      query: jest.fn(),
+      release: jest.fn(),
+    };
+    mockPool = {
+      query: jest.fn().mockResolvedValue({ rows: [] }),
+      connect: jest.fn().mockResolvedValue(mockClient),
+    };
     mockStripeProvider = {
       releaseFunds: jest.fn(),
       captureFunds: jest.fn(),
@@ -58,14 +115,7 @@ describe('SettlementWorker', () => {
   const callProcess = (w: SettlementWorker, job: Job) => (w as any).process(job);
 
   it('should calculate deterministic quote and top up bounty pool on capture', async () => {
-    mockPool.query
-      .mockResolvedValueOnce({ rows: [] }) // 1. existing run check
-      .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] }) // 2. insert run
-      .mockResolvedValueOnce(makeContractRow()) // 3. finalizeLedger: contract lookup
-      .mockResolvedValueOnce({ rows: [] }) // 4. finalizeLedger: idempotency check (capture)
-      .mockResolvedValueOnce({ rows: [] }) // 5. finalizeLedger: idempotency check (topup)
-      .mockResolvedValueOnce({ rows: [] }); // 6. update success
-
+    setupClientQueries({ existingRun: null });
     mockStripeProvider.captureFunds.mockResolvedValue(successResult);
 
     const job = makeJob({
@@ -77,39 +127,32 @@ describe('SettlementWorker', () => {
 
     await callProcess(worker, job);
 
-    // ... rest of the test ...
-    const insertCall = mockPool.query.mock.calls[1];
-    const quote = JSON.parse(insertCall[1][4]);
-    expect(quote.platformFeeCents).toBe(8000);
-    expect(quote.bountyPoolCents).toBe(2000);
-    expect(quote.userRefundCents).toBe(0);
+    // captureFunds receives the settlement amount (partial-capture support).
+    expect(mockStripeProvider.captureFunds).toHaveBeenCalledWith('pi_1', 10000, expect.any(Object));
 
-    // Ledger calls
+    // Ledger capture entry to revenue.
     expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
       'acct-escrow',
       'acct-revenue',
       10000,
       'c-1',
-      expect.objectContaining({ type: 'REAL_MONEY_SETTLEMENT_CAPTURE' })
+      expect.objectContaining({ type: 'REAL_MONEY_SETTLEMENT_CAPTURE' }),
+      mockClient,
     );
 
+    // Bounty pool top-up (20% of 10000).
     expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
       'acct-revenue',
       'acct-bounty',
       2000,
       'c-1',
-      expect.objectContaining({ type: 'BOUNTY_POOL_TOPUP' })
+      expect.objectContaining({ type: 'BOUNTY_POOL_TOPUP' }),
+      mockClient,
     );
   });
 
   it('should override actual action to RELEASE if dispositionMode is REFUND', async () => {
-    mockPool.query
-      .mockResolvedValueOnce({ rows: [] }) // 1. existing run check
-      .mockResolvedValueOnce({ rows: [{ id: 'run-2' }] }) // 2. insert run
-      .mockResolvedValueOnce(makeContractRow()) // 3. finalizeLedger: contract lookup
-      .mockResolvedValueOnce({ rows: [] }) // 4. finalizeLedger: idempotency check (release)
-      .mockResolvedValueOnce({ rows: [] }); // 5. update success
-
+    setupClientQueries({ existingRun: null });
     mockStripeProvider.releaseFunds.mockResolvedValue(successResult);
 
     const job = makeJob({
@@ -117,27 +160,124 @@ describe('SettlementWorker', () => {
       outcome: 'FAIL',
       paymentIntentId: 'pi_2',
       amountCents: 5000,
-      dispositionMode: 'REFUND'
+      dispositionMode: 'REFUND',
     });
 
     await callProcess(worker, job);
 
-    // ... rest of the test ...
     expect(mockStripeProvider.releaseFunds).toHaveBeenCalled();
     expect(mockStripeProvider.captureFunds).not.toHaveBeenCalled();
 
-    const insertCall = mockPool.query.mock.calls[1];
-    const quote = JSON.parse(insertCall[1][4]);
-    expect(quote.platformFeeCents).toBe(0);
-    expect(quote.bountyPoolCents).toBe(0);
-    expect(quote.userRefundCents).toBe(5000);
-    
     expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
       'acct-escrow',
       'acct-user-1',
       5000,
       'c-2',
-      expect.objectContaining({ type: 'REAL_MONEY_SETTLEMENT_RELEASE' })
+      expect.objectContaining({ type: 'REAL_MONEY_SETTLEMENT_RELEASE', reason: 'REFUND_ONLY_JURISDICTION' }),
+      mockClient,
     );
+  });
+
+  it('should skip when a SUCCESS run already exists for the (contract, outcome)', async () => {
+    setupClientQueries({ existingRun: { id: 'run-done', status: 'SUCCESS' } });
+
+    const job = makeJob({
+      contractId: 'c-3',
+      outcome: 'FAIL',
+      paymentIntentId: 'pi_3',
+      amountCents: 5000,
+    });
+
+    await callProcess(worker, job);
+
+    expect(mockStripeProvider.captureFunds).not.toHaveBeenCalled();
+    expect(mockStripeProvider.releaseFunds).not.toHaveBeenCalled();
+    expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
+  });
+
+  // FINDING 3: ledger idempotency must key on amount too, not just (contract, type).
+
+  it('should skip re-posting a capture entry that already exists for the SAME amount (true retry dedupe)', async () => {
+    // The capture posting for 10000¢ already exists → must NOT be re-posted, but the
+    // bounty top-up (2000¢, a different type/amount) is still new and must be written.
+    setupClientQueries({
+      existingRun: null,
+      existingEntries: [{ type: 'REAL_MONEY_SETTLEMENT_CAPTURE', amount: 10000 }],
+    });
+    mockStripeProvider.captureFunds.mockResolvedValue(successResult);
+
+    const job = makeJob({
+      contractId: 'c-dup',
+      outcome: 'FAIL',
+      paymentIntentId: 'pi_dup',
+      amountCents: 10000,
+    });
+
+    await callProcess(worker, job);
+
+    expect(mockLedger.recordTransaction).not.toHaveBeenCalledWith(
+      'acct-escrow',
+      'acct-revenue',
+      10000,
+      'c-dup',
+      expect.objectContaining({ type: 'REAL_MONEY_SETTLEMENT_CAPTURE' }),
+      mockClient,
+    );
+    // The bounty top-up is a distinct (type, amount) and must still be posted.
+    expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
+      'acct-revenue',
+      'acct-bounty',
+      2000,
+      'c-dup',
+      expect.objectContaining({ type: 'BOUNTY_POOL_TOPUP' }),
+      mockClient,
+    );
+  });
+
+  it('should NOT skip a capture posting of a DIFFERENT amount for the same (contract, type)', async () => {
+    // A prior posting of 5000¢ exists, but this re-dispatch (e.g. after a double-down)
+    // settles 12000¢. The new amount must be posted, not wrongly deduped.
+    setupClientQueries({
+      existingRun: null,
+      existingEntries: [{ type: 'REAL_MONEY_SETTLEMENT_CAPTURE', amount: 5000 }],
+    });
+    mockStripeProvider.captureFunds.mockResolvedValue(successResult);
+
+    const job = makeJob({
+      contractId: 'c-dd',
+      outcome: 'FAIL',
+      paymentIntentId: 'pi_dd',
+      amountCents: 12000,
+    });
+
+    await callProcess(worker, job);
+
+    expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
+      'acct-escrow',
+      'acct-revenue',
+      12000,
+      'c-dd',
+      expect.objectContaining({ type: 'REAL_MONEY_SETTLEMENT_CAPTURE' }),
+      mockClient,
+    );
+  });
+
+  it('should skip a release posting that already exists for the same amount', async () => {
+    setupClientQueries({
+      existingRun: null,
+      existingEntries: [{ type: 'REAL_MONEY_SETTLEMENT_RELEASE', amount: 5000 }],
+    });
+    mockStripeProvider.releaseFunds.mockResolvedValue(successResult);
+
+    const job = makeJob({
+      contractId: 'c-rel',
+      outcome: 'PASS',
+      paymentIntentId: 'pi_rel',
+      amountCents: 5000,
+    });
+
+    await callProcess(worker, job);
+
+    expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
   });
 });

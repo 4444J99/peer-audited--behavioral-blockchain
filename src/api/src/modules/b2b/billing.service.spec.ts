@@ -36,7 +36,7 @@ describe('BillingService', () => {
       });
       mockCreateUsageRecord.mockResolvedValue({});
 
-      await service.recordConsumptionEvent('ent-001', 'BILLING_QUERY');
+      await service.recordConsumptionEvent('ent-001', 'phash_scan');
       expect(mockCreateUsageRecord).toHaveBeenCalled();
     });
   });

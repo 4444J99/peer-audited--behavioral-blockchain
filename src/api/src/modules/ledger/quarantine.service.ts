@@ -35,9 +35,14 @@ export class QuarantineService {
       severity: 'CRITICAL',
     });
 
-    // 3. Mark the account itself as restricted in metadata
+    // 3. Mark the account itself as restricted using a dedicated status column.
+    //    NOTE: the previous implementation appended ' [QUARANTINED]' to
+    //    accounts.name, but name is the lookup key (e.g. WHERE name =
+    //    'SYSTEM_ESCROW') AND carries a UNIQUE constraint — mutating it would
+    //    break every account lookup and could collide. We flag via
+    //    accounts.status instead. Requires migration 027 (adds accounts.status).
     await this.pool.query(
-      `UPDATE accounts SET name = name || ' [QUARANTINED]' WHERE id = $1 AND name NOT LIKE '%[QUARANTINED]'`,
+      `UPDATE accounts SET status = 'QUARANTINED' WHERE id = $1 AND status IS DISTINCT FROM 'QUARANTINED'`,
       [accountId]
     );
 

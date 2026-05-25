@@ -1,9 +1,8 @@
 import { Controller, Post, Body, Res, Get, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { randomBytes } from 'crypto';
 import type { Request, Response } from 'express';
-import { AuthService } from './auth.service';
+import { AuthService, deriveCsrfToken } from './auth.service';
 import { RegisterDto, LoginDto, EnterpriseTokenDto } from './dto';
 
 const ACCESS_TOKEN_MAX_AGE_MS = 15 * 60 * 1000; // 15 minutes
@@ -15,7 +14,9 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   private async issueBrowserSessionCookies(res: Response, userId: string, accessToken: string) {
-    const csrfToken = randomBytes(24).toString('hex');
+    // CSRF token is bound to (derived from) the access token so the guard can
+    // verify it against the session rather than trusting an arbitrary cookie.
+    const csrfToken = deriveCsrfToken(accessToken);
     const secure = process.env.NODE_ENV === 'production';
     const sameSite = 'lax' as const;
 
@@ -115,6 +116,16 @@ export class AuthController {
       maxAge: REFRESH_TOKEN_MAX_AGE_MS,
     });
 
+    // Re-issue the CSRF cookie bound to the new access token so the double-submit
+    // value stays in sync with the rotated session.
+    res.cookie('styx_csrf_token', deriveCsrfToken(result.token), {
+      httpOnly: false,
+      secure,
+      sameSite,
+      path: '/',
+      maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+    });
+
     return { userId: result.userId, token: result.token };
   }
 
@@ -137,8 +148,14 @@ export class AuthController {
 
   @Get('csrf')
   @ApiOperation({ summary: 'Refresh CSRF cookie for browser session requests' })
-  async csrf(@Res({ passthrough: true }) res: Response) {
-    const csrfToken = randomBytes(24).toString('hex');
+  async csrf(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    // The CSRF token is bound to the active session, so it can only be derived
+    // for a request that already carries a valid access-token cookie.
+    const accessToken = this.getCookieValue(req, 'styx_auth_token'); // allow-secret
+    if (!accessToken) {
+      throw new (await import('@nestjs/common')).UnauthorizedException('No active session');
+    }
+    const csrfToken = deriveCsrfToken(accessToken);
     const secure = process.env.NODE_ENV === 'production';
     res.cookie('styx_csrf_token', csrfToken, {
       httpOnly: false,

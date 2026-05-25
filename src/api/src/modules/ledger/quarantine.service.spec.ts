@@ -47,14 +47,14 @@ describe('QuarantineService', () => {
       );
     });
 
-    it('should mark the account name with [QUARANTINED] using the NOT LIKE guard', async () => {
+    it('should mark the account status as QUARANTINED via the dedicated status column', async () => {
       (mockPool.query as jest.Mock).mockResolvedValue({ rowCount: 1 });
       (mockTruthLog.appendEvent as jest.Mock).mockResolvedValue('log-id-3');
 
       await service.activateQuarantine('acc-003', 'anomaly detected');
 
       expect(mockPool.query).toHaveBeenCalledWith(
-        `UPDATE accounts SET name = name || ' [QUARANTINED]' WHERE id = $1 AND name NOT LIKE '%[QUARANTINED]'`,
+        `UPDATE accounts SET status = 'QUARANTINED' WHERE id = $1 AND status IS DISTINCT FROM 'QUARANTINED'`,
         ['acc-003'],
       );
     });
@@ -170,11 +170,12 @@ describe('QuarantineService', () => {
       ).rejects.toThrow('event_log write failure');
     });
 
-    it('should use NOT LIKE guard to prevent double-tagging on idempotent calls', async () => {
+    it('should use IS DISTINCT FROM guard to prevent redundant re-quarantine on idempotent calls', async () => {
       (mockPool.query as jest.Mock).mockResolvedValue({ rowCount: 0 });
       (mockTruthLog.appendEvent as jest.Mock).mockResolvedValue('log-id-10');
 
-      // Call twice; the SQL WHERE clause prevents double-tagging — verify the guard is present
+      // Call twice; the SQL WHERE clause makes the status update a no-op when
+      // already QUARANTINED — verify the guard is present.
       await service.activateQuarantine('acc-idem', 'idempotency check');
       await service.activateQuarantine('acc-idem', 'idempotency check');
 
@@ -182,9 +183,9 @@ describe('QuarantineService', () => {
         ([sql]: [string]) => sql.includes('UPDATE accounts'),
       );
 
-      // Both calls should include the NOT LIKE guard
+      // Both calls should include the IS DISTINCT FROM guard
       for (const call of accountUpdateCalls) {
-        expect(call[0]).toContain("NOT LIKE '%[QUARANTINED]'");
+        expect(call[0]).toContain("status IS DISTINCT FROM 'QUARANTINED'");
       }
     });
   });

@@ -29,39 +29,40 @@ export class JudgeService {
   async resolveDispute(res: DisputeResolution): Promise<void> {
     this.logger.log(`Judge ${res.judgeId} resolving dispute for contract ${res.contractId} as ${res.verdict}`);
 
-    const client = await this.pool.connect();
-    try {
-      await client.query('BEGIN');
-
-      // 1. Log the judicial decision
-      await this.truthLog.appendEvent('JUDICIAL_OVERRIDE', {
-        ...res,
-        timestamp: new Date().toISOString(),
-      });
-
-      // 2. Resolve the contract via standard service
-      // This will trigger the SettlementService flow (including refund-only checks)
-      await this.contractsService.resolveContract(
-        res.contractId!,
-        res.verdict === 'PASS' ? 'COMPLETED' : 'FAILED'
-      );
-
-      // 3. Mark dispute as resolved if applicable
-      if (res.disputeId) {
+    // The TruthLog append and contract resolution run on their own connections and
+    // CANNOT be rolled back by this method's local transaction. To avoid leaving an
+    // override logged / a contract resolved when the local write fails, commit the
+    // local dispute-status change FIRST, then perform the external side-effects.
+    if (res.disputeId) {
+      const client = await this.pool.connect();
+      try {
+        await client.query('BEGIN');
         await client.query(
           `UPDATE disputes SET status = 'RESOLVED', resolution = $1, resolved_at = NOW(), judge_id = $2 WHERE id = $3`,
           [res.verdict, res.judgeId, res.disputeId]
         );
+        await client.query('COMMIT');
+      } catch (e) {
+        await client.query('ROLLBACK');
+        this.logger.error(`Judicial resolution failed: ${e instanceof Error ? e.message : e}`);
+        throw e;
+      } finally {
+        client.release();
       }
-
-      await client.query('COMMIT');
-    } catch (e) {
-      await client.query('ROLLBACK');
-      this.logger.error(`Judicial resolution failed: ${e instanceof Error ? e.message : e}`);
-      throw e;
-    } finally {
-      client.release();
     }
+
+    // External side-effects — only reached once the local dispute update has committed.
+    // 1. Log the judicial decision.
+    await this.truthLog.appendEvent('JUDICIAL_OVERRIDE', {
+      ...res,
+      timestamp: new Date().toISOString(),
+    });
+
+    // 2. Resolve the contract via the standard service (triggers SettlementService flow).
+    await this.contractsService.resolveContract(
+      res.contractId!,
+      res.verdict === 'PASS' ? 'COMPLETED' : 'FAILED'
+    );
   }
 
   /**
@@ -69,12 +70,18 @@ export class JudgeService {
    */
   async getPendingQueue() {
     const splitProofs = await this.pool.query(
-      `SELECT p.id as proof_id, p.contract_id, p.user_id, c.oath_category, c.stake_amount 
+      `SELECT p.id as proof_id, p.contract_id, p.user_id, c.oath_category, c.stake_amount
        FROM proofs p
        JOIN contracts c ON p.contract_id = c.id
-       WHERE p.status = 'UNDER_REVIEW' 
-       AND (SELECT COUNT(*) FROM fury_assignments WHERE proof_id = p.id AND verdict IS NOT NULL) >= 3
-       -- Logic for "SPLIT" could be more complex in SQL, but this finds potentially stuck items
+       WHERE (
+         -- Proofs the consensus engine explicitly marked as a split decision.
+         p.status = 'SPLIT'
+         -- Or fully-voted proofs still stuck in review (potential split / stranded).
+         OR (
+           p.status IN ('UNDER_REVIEW', 'IN_REVIEW')
+           AND (SELECT COUNT(*) FROM fury_assignments WHERE proof_id = p.id AND verdict IS NOT NULL) >= 3
+         )
+       )
       `
     );
 

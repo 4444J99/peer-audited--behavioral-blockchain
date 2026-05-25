@@ -139,8 +139,13 @@ export class UsersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a public user profile by ID' })
-  @Public()
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a user profile by ID' })
+  // Previously @Public() with no rate limit: this allowed anonymous enumeration of
+  // every user's integrity_score and signup date by walking ids. Require auth and
+  // add a throttle so the endpoint can no longer be scraped anonymously.
+  @UseGuards(AuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 30 } })
   async getPublicProfile(@Param('id') id: string) {
     return this.usersService.getPublicProfile(id);
   }

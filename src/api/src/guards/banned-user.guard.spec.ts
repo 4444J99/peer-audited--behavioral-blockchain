@@ -21,15 +21,13 @@ describe('BannedUserGuard', () => {
     } as any;
   }
 
-  it('should allow request when no authenticated user is present', async () => {
-    const result = await guard.canActivate(createContext(null));
-    expect(result).toBe(true);
+  it('should deny (fail closed) when no authenticated user is present', async () => {
+    await expect(guard.canActivate(createContext(null))).rejects.toThrow(ForbiddenException);
     expect(mockPool.query).not.toHaveBeenCalled();
   });
 
-  it('should allow request when user has no id or sub', async () => {
-    const result = await guard.canActivate(createContext({}));
-    expect(result).toBe(true);
+  it('should deny (fail closed) when user has no id', async () => {
+    await expect(guard.canActivate(createContext({}))).rejects.toThrow(ForbiddenException);
     expect(mockPool.query).not.toHaveBeenCalled();
   });
 
@@ -40,16 +38,6 @@ describe('BannedUserGuard', () => {
     expect(mockPool.query).toHaveBeenCalledWith(
       'SELECT status FROM users WHERE id = $1',
       ['user-1'],
-    );
-  });
-
-  it('should allow active user (using sub fallback)', async () => {
-    mockPool.query.mockResolvedValueOnce({ rows: [{ status: 'ACTIVE' }] });
-    const result = await guard.canActivate(createContext({ sub: 'user-2' }));
-    expect(result).toBe(true);
-    expect(mockPool.query).toHaveBeenCalledWith(
-      'SELECT status FROM users WHERE id = $1',
-      ['user-2'],
     );
   });
 

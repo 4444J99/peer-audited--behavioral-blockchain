@@ -40,21 +40,33 @@ describe('WebhookService', () => {
   });
 
   describe('signature verification', () => {
+    // verify() now rejects deliveries whose signed timestamp is outside the
+    // allowed skew window (replay guard), so use a current timestamp.
+    const currentTimestamp = () => Math.floor(Date.now() / 1000).toString();
+
     it('should verify a valid signature', () => {
-      const timestamp = '1700000000';
+      const timestamp = currentTimestamp();
       const body = '{"event":"test"}';
       const sig = service.sign(timestamp, body);
       expect(service.verify(timestamp, body, sig)).toBe(true);
     });
 
     it('should reject a tampered payload', () => {
-      const timestamp = '1700000000';
+      const timestamp = currentTimestamp();
       const sig = service.sign(timestamp, '{"event":"original"}');
       expect(service.verify(timestamp, '{"event":"tampered"}', sig)).toBe(false);
     });
 
     it('should reject an invalid signature', () => {
-      expect(service.verify('1700000000', '{}', 'invalid-signature')).toBe(false);
+      expect(service.verify(currentTimestamp(), '{}', 'invalid-signature')).toBe(false);
+    });
+
+    it('should reject a stale (replayed) timestamp outside the skew window', () => {
+      // A signature that is otherwise valid but signed long ago must be rejected.
+      const staleTimestamp = (Math.floor(Date.now() / 1000) - 10 * 60).toString();
+      const body = '{"event":"test"}';
+      const sig = service.sign(staleTimestamp, body);
+      expect(service.verify(staleTimestamp, body, sig)).toBe(false);
     });
   });
 

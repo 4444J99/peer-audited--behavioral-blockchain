@@ -2,7 +2,8 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, Forbi
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
-import { getJwtSecret } from '../src/modules/auth/auth.service';
+import { timingSafeEqual } from 'crypto';
+import { getJwtSecret, deriveCsrfToken } from '../src/modules/auth/auth.service';
 import { consumeSseTicket, SseTicketScope } from './sse-ticket.store';
 
 export const IS_PUBLIC_KEY = 'isPublic';
@@ -28,7 +29,7 @@ export class AuthGuard implements CanActivate {
     if (!token) {
       const sseTicketUserId = this.consumeSseTicketForRequest(request);
       if (sseTicketUserId) {
-        (request as any).user = { id: sseTicketUserId, email: '' };
+        (request as any).user = { id: sseTicketUserId, email: '', role: 'USER', sub: sseTicketUserId };
         return true;
       }
     }
@@ -37,22 +38,28 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing Authorization Bearer token');
     }
 
-    if (authSource === 'cookie' && this.requiresCsrfValidation(request) && !this.hasValidCsrfToken(request)) {
-      throw new ForbiddenException('Missing or invalid CSRF token');
-    }
-
     // Resolve secret outside try/catch so production enforcement errors propagate
     const secret = getJwtSecret();
 
     // Decode real JWT — single source of truth for secret via auth.service.ts
+    let payload: { sub: string; email: string; role?: string };
     try {
-      const payload = jwt.verify(token, secret, { algorithms: ['HS256'] }) as { sub: string; email: string };
-      (request as any).user = { id: payload.sub, email: payload.email };
-      (request as any).authSource = authSource;
-      return true;
+      payload = jwt.verify(token, secret, { algorithms: ['HS256'] }) as { sub: string; email: string; role?: string };
     } catch {
       throw new UnauthorizedException('Invalid or expired Authentication Token');
     }
+
+    // CSRF is only relevant for cookie-borne sessions on state-changing methods.
+    // The CSRF token is bound to the session by deriving it (HMAC) from the
+    // access token, so a token set on a sibling cookie cannot satisfy the check
+    // for a different victim session. Compared in constant time.
+    if (authSource === 'cookie' && this.requiresCsrfValidation(request) && !this.hasValidCsrfToken(request, token)) {
+      throw new ForbiddenException('Missing or invalid CSRF token');
+    }
+
+    (request as any).user = { id: payload.sub, email: payload.email, role: payload.role || 'USER', sub: payload.sub };
+    (request as any).authSource = authSource;
+    return true;
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {
@@ -74,14 +81,25 @@ export class AuthGuard implements CanActivate {
     return method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
   }
 
-  private hasValidCsrfToken(request: Request): boolean {
+  private hasValidCsrfToken(request: Request, sessionToken: string): boolean {
     const headerValue = request.headers['x-csrf-token'];
     const csrfHeader = Array.isArray(headerValue) ? headerValue[0] : headerValue;
-    const csrfCookie = this.getCookieValue(request, 'styx_csrf_token');
-    if (!csrfHeader || !csrfCookie) {
+    if (!csrfHeader) {
       return false;
     }
-    return csrfHeader === csrfCookie;
+
+    // The expected value is derived deterministically from the session's access
+    // token, so only a client that legitimately holds this session can produce a
+    // matching CSRF token. This binds the token to the session rather than
+    // relying on an attacker-settable double-submit cookie.
+    const expected = deriveCsrfToken(sessionToken);
+
+    const headerBuf = Buffer.from(csrfHeader);
+    const expectedBuf = Buffer.from(expected);
+    if (headerBuf.length !== expectedBuf.length) {
+      return false;
+    }
+    return timingSafeEqual(headerBuf, expectedBuf);
   }
 
   private consumeSseTicketForRequest(request: Request): string | null {

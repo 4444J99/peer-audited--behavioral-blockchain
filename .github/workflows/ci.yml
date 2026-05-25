@@ -167,22 +167,8 @@ jobs:
         path: playwright-report/
         retention-days: 14
 
-  codeql:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    permissions:
-      security-events: write
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: javascript-typescript
-
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+  # NOTE: CodeQL analysis runs in the dedicated .github/workflows/codeql.yml
+  # workflow. A second copy here produced a duplicate javascript-typescript
+  # configuration (ci.yml:codeql) that conflicted with the dedicated one and
+  # surfaced as a "configuration not found" code-scanning check. Keep a single
+  # CodeQL configuration to avoid that conflict.

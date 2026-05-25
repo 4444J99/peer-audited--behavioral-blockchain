@@ -33,9 +33,21 @@ export interface AnonymizedExport {
 
 const PII_FIELDS = ['email', 'password_hash', 'stripe_customer_id', 'ip_address', 'name', 'first_name', 'last_name', 'phone'] as const;
 
+function requireAnonymizeSalt(): string {
+  const salt = process.env.ANONYMIZE_SALT; // allow-secret
+  if (!salt) {
+    throw new Error('ANONYMIZE_SALT must be set');
+  }
+  return salt;
+}
+
 @Injectable()
 export class AnonymizeService {
-  private salt = process.env.ANONYMIZE_SALT || 'styx-anon-salt-v1'; // allow-secret
+  // Resolved lazily (not in a field initializer) so a missing ANONYMIZE_SALT
+  // fails the anonymization path at use-time rather than crashing DI/app boot.
+  private get salt(): string {
+    return requireAnonymizeSalt(); // allow-secret
+  }
 
   /**
    * One-way hash a user ID into an anonymous identifier.
@@ -44,7 +56,9 @@ export class AnonymizeService {
    */
   hashUserId(userId: string, enterpriseId: string): string {
     const input = `${this.salt}:${enterpriseId}:${userId}`;
-    return createHash('sha256').update(input).digest('hex').slice(0, 16);
+    // Keep 128 bits (32 hex chars) to make collisions/brute-force reversal of the
+    // pseudonym infeasible; the previous 64-bit truncation was too narrow.
+    return createHash('sha256').update(input).digest('hex').slice(0, 32);
   }
 
   /**

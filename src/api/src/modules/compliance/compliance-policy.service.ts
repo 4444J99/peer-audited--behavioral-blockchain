@@ -2,7 +2,7 @@ import { Injectable, Optional } from '@nestjs/common';
 import { Request } from 'express';
 import * as geoip from 'geoip-lite';
 import { Pool } from 'pg';
-import { JurisdictionTier, STATE_TIERS } from '../../../services/geofencing';
+import { JurisdictionTier, STATE_TIERS, normalizeStateCode } from '../../../services/geofencing';
 import { IdentityVerificationService } from './identity-verification.service';
 
 export type ComplianceMode = 'FULL_ACCESS' | 'REFUND_ONLY' | 'BLOCKED';
@@ -18,7 +18,7 @@ export type ComplianceAction =
 
 export interface ComplianceDecision {
   allowed: boolean;
-  code?: 'JURISDICTION_BLOCKED' | 'JURISDICTION_REFUND_ONLY_RESTRICTED' | 'KYC_REQUIRED';
+  code?: 'JURISDICTION_BLOCKED' | 'JURISDICTION_REFUND_ONLY_RESTRICTED' | 'KYC_REQUIRED' | 'AGE_VERIFICATION_REQUIRED';
   message?: string;
   requiredMode: ComplianceMode;
   action: ComplianceAction;
@@ -30,6 +30,8 @@ export interface ComplianceDecision {
 }
 
 type ComplianceActionDecisionCore = Pick<ComplianceDecision, 'allowed' | 'code' | 'message' | 'requiredMode'>;
+
+const MINIMUM_AGE_YEARS = 18;
 
 @Injectable()
 export class CompliancePolicyService {
@@ -71,6 +73,53 @@ export class CompliancePolicyService {
   }
 
   /**
+   * Real age gate (>=18). Reads the user's stored date_of_birth (captured at
+   * registration) and computes whole years. Fails CLOSED: if the DOB is missing or
+   * unparseable we treat the user as not age-verified and block the monetized action.
+   */
+  async evaluateAgeRequirement(userId: string): Promise<{ allowed: boolean; reason?: string }> {
+    const result = await this.pool.query(
+      'SELECT date_of_birth FROM users WHERE id = $1',
+      [userId],
+    );
+
+    const dobRaw = result.rows[0]?.date_of_birth ?? null;
+    const age = this.computeAgeYears(dobRaw);
+
+    if (age == null) {
+      // Missing / unparseable DOB -> fail closed.
+      return {
+        allowed: false,
+        reason: 'Date of birth is required to verify you meet the minimum age requirement.',
+      };
+    }
+
+    if (age < MINIMUM_AGE_YEARS) {
+      return {
+        allowed: false,
+        reason: `You must be at least ${MINIMUM_AGE_YEARS} years old to perform this action.`,
+      };
+    }
+
+    return { allowed: true };
+  }
+
+  private computeAgeYears(dob: unknown): number | null {
+    if (dob == null) return null;
+    const birth = dob instanceof Date ? dob : new Date(String(dob));
+    if (isNaN(birth.getTime())) return null;
+
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    // Subtract a year if this year's birthday has not yet occurred.
+    const beforeBirthday =
+      now.getMonth() < birth.getMonth() ||
+      (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate());
+    if (beforeBirthday) age -= 1;
+    return age;
+  }
+
+  /**
    * Phase Beta P0-003: KYC tier gating.
    * TIER_1 ($20 max) is always allowed without KYC.
    * Above TIER_1, if KYC enforcement is enabled, identity must be verified.
@@ -105,15 +154,12 @@ export class CompliancePolicyService {
   }
 
   shouldFailOpenOnMissingLocation(): boolean {
+    // Fail CLOSED by default everywhere (including production). A missing/unparseable
+    // geo signal must never silently grant FULL_ACCESS — production must not be more
+    // permissive than dev. Opening up requires an explicit, deliberate opt-in.
     const explicitAction = String(process.env.GEO_MISSING_HEADER_ACTION || '').trim().toLowerCase();
     if (explicitAction) {
       return explicitAction === 'allow' || explicitAction === 'open' || explicitAction === 'true';
-    }
-
-    if (process.env.NODE_ENV === 'production') {
-      // Production should remain reachable when upstream geo headers are absent.
-      // Operators can still force fail-closed behavior with GEO_MISSING_HEADER_ACTION=block.
-      return true;
     }
 
     const raw = process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
@@ -185,6 +231,21 @@ export class CompliancePolicyService {
         'UPDATE users SET last_known_state = $1 WHERE id = $2',
         [baseDecision.state, userId]
       );
+    }
+
+    // Age gate applies to every monetized/real-money action and is enforced
+    // unconditionally (it is a hard legal requirement, independent of the KYC
+    // enforcement toggle). Fails closed when DOB is missing/under-age.
+    if (CompliancePolicyService.KYC_GATED_ACTIONS.has(baseDecision.action)) {
+      const age = await this.evaluateAgeRequirement(userId);
+      if (!age.allowed) {
+        return {
+          allowed: false,
+          code: 'AGE_VERIFICATION_REQUIRED',
+          message: age.reason ?? 'Age verification is required before performing this monetized action.',
+          requiredMode: baseDecision.requiredMode,
+        };
+      }
     }
 
     if (
@@ -280,31 +341,49 @@ export class CompliancePolicyService {
     };
   }
 
+  /**
+   * Whether request-borne proxy/CDN headers (cf-ipstate, cf-connecting-ip,
+   * x-forwarded-for, x-real-ip) may be trusted. These are only meaningful when the
+   * API actually sits behind a trusted proxy/CF edge that overwrites client-supplied
+   * values. A raw client can forge any of them, so trust is gated behind an explicit
+   * opt-in (default OFF / fail-closed).
+   */
+  private trustProxyHeaders(): boolean {
+    return String(process.env.TRUST_PROXY_HEADERS || 'false').trim().toLowerCase() === 'true';
+  }
+
   private resolveStateFromRequest(req: Request): {
     state: string | null;
     source: 'cf-ipstate' | 'x-styx-state' | 'ip-lookup' | 'none';
     overrideIgnoredInProduction: boolean;
   } {
-    const cfIpState = this.toSingleHeaderValue(req.headers['cf-ipstate']);
-    if (cfIpState) {
-      return {
-        state: cfIpState.toUpperCase(),
-        source: 'cf-ipstate',
-        overrideIgnoredInProduction: false,
-      };
+    const trustProxy = this.trustProxyHeaders();
+
+    // cf-ipstate is the Cloudflare-injected geo signal. It is only authoritative when
+    // we are actually behind Cloudflare (TRUST_PROXY_HEADERS=true); otherwise a client
+    // could spoof it to bypass a PROHIBITED jurisdiction block.
+    if (trustProxy) {
+      const cfIpState = normalizeStateCode(this.toSingleHeaderValue(req.headers['cf-ipstate']));
+      if (cfIpState) {
+        return {
+          state: cfIpState,
+          source: 'cf-ipstate',
+          overrideIgnoredInProduction: false,
+        };
+      }
     }
 
-    const override = this.toSingleHeaderValue(req.headers['x-styx-state']);
+    const override = normalizeStateCode(this.toSingleHeaderValue(req.headers['x-styx-state']));
     const isProduction = process.env.NODE_ENV === 'production';
     if (override && !isProduction) {
       return {
-        state: override.toUpperCase(),
+        state: override,
         source: 'x-styx-state',
         overrideIgnoredInProduction: false,
       };
     }
 
-    const ipState = this.lookupStateFromRequestIp(req);
+    const ipState = this.lookupStateFromRequestIp(req, trustProxy);
     if (ipState) {
       return {
         state: ipState,
@@ -340,8 +419,8 @@ export class CompliancePolicyService {
     return value;
   }
 
-  private lookupStateFromRequestIp(req: Request): string | null {
-    const ip = this.extractClientIp(req);
+  private lookupStateFromRequestIp(req: Request, trustProxy: boolean): string | null {
+    const ip = this.extractClientIp(req, trustProxy);
     if (!ip) return null;
 
     const geo = geoip.lookup(ip);
@@ -349,19 +428,36 @@ export class CompliancePolicyService {
       return null;
     }
 
-    return String(geo.region).toUpperCase();
+    return normalizeStateCode(geo.region);
   }
 
-  private extractClientIp(req: Request): string | null {
-    const forwardedFor = this.toSingleHeaderValue(req.headers['x-forwarded-for']);
-    const candidate =
-      this.toSingleHeaderValue(req.headers['cf-connecting-ip']) ||
-      forwardedFor?.split(',')[0]?.trim() ||
-      this.toSingleHeaderValue(req.headers['x-real-ip']) ||
-      req.ip ||
+  /**
+   * Resolve the client IP for geo lookup.
+   * Forwarded headers (cf-connecting-ip, x-forwarded-for, x-real-ip) are spoofable by
+   * any client and are only consulted when TRUST_PROXY_HEADERS=true (i.e. we sit behind
+   * a trusted proxy that overwrites them). Otherwise we use the server-observed socket
+   * address, which a client cannot forge.
+   */
+  private extractClientIp(req: Request, trustProxy: boolean): string | null {
+    const socketIp =
       req.socket?.remoteAddress ||
       (req.connection as { remoteAddress?: string } | undefined)?.remoteAddress ||
       null;
+
+    let candidate: string | null = null;
+    if (trustProxy) {
+      const forwardedFor = this.toSingleHeaderValue(req.headers['x-forwarded-for']);
+      candidate =
+        this.toSingleHeaderValue(req.headers['cf-connecting-ip']) ||
+        forwardedFor?.split(',')[0]?.trim() ||
+        this.toSingleHeaderValue(req.headers['x-real-ip']) ||
+        req.ip ||
+        socketIp ||
+        null;
+    } else {
+      // Do not trust client-supplied forwarding headers; rely on the server-observed peer.
+      candidate = socketIp || null;
+    }
 
     if (!candidate) return null;
     return candidate.replace(/^::ffff:/, '').trim() || null;

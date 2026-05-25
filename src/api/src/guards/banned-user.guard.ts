@@ -24,11 +24,13 @@ export class BannedUserGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const userId = request.user?.id || request.user?.sub;
+    const userId = request.user?.id;
 
+    // Fail CLOSED: this guard gates mutation endpoints (e.g. contract creation), so a
+    // request without an authenticated user must be denied rather than allowed.
+    // AuthGuard runs first and always populates request.user.id.
     if (!userId) {
-      // No authenticated user — let AuthGuard handle this
-      return true;
+      throw new ForbiddenException('Authentication required');
     }
 
     const result = await this.pool.query(

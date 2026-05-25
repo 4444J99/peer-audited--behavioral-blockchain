@@ -26,9 +26,19 @@ export class StripePayoutProvider implements PayoutProvider {
     }
   }
 
-  async captureFunds(paymentIntentId: string, _amountCents: number, _metadata?: Record<string, any>): Promise<PayoutResult> {
+  async captureFunds(paymentIntentId: string, amountCents: number, _metadata?: Record<string, any>): Promise<PayoutResult> {
     try {
-      const intent = await this.stripeService.captureStake(paymentIntentId);
+      // Pass the settlement amount so partial captures take only `amountCents`, not the full
+      // authorized hold. (Previously amountCents was ignored, so partial settlement captured
+      // the entire stake.)
+      //
+      // Fury bounties: the `_metadata.furies` array is NOT paid out here. In the canonical
+      // architecture the slashed stake is captured to platform revenue and the bounty share is
+      // moved to the FURY_BOUNTY_POOL *ledger* account by SettlementWorker.finalizeLedger
+      // (BOUNTY_POOL_TOPUP). Individual auditors are then paid from that pool internally by the
+      // fury worker — there is no Stripe transfer to per-fury connected accounts on this path.
+      // The array is therefore intentionally not wired to a Stripe payout here.
+      const intent = await this.stripeService.captureStake(paymentIntentId, amountCents);
       return {
         status: PayoutStatus.SUCCESS,
         providerTransactionId: intent.id,
@@ -48,8 +58,20 @@ export class StripePayoutProvider implements PayoutProvider {
       const intent = await this.stripeService.retrieveIntent(providerTransactionId);
       switch (intent.status) {
         case 'succeeded':
-        case 'canceled': // cancel = successful release
           return PayoutStatus.SUCCESS;
+        case 'canceled': {
+          // In the FBO model a deliberate release cancels the manual hold, so ONLY a
+          // deliberate cancellation counts as a successful release. Use an allowlist
+          // (fail-closed): cancelling an intent via the API with no reason yields a
+          // null cancellation_reason, and an explicit operator/user release uses
+          // 'requested_by_customer'. Every other reason — 'abandoned', 'automatic',
+          // 'failed_invoice', 'fraudulent', 'duplicate', auto-expiry, etc. — is an
+          // involuntary cancellation where no money was actually released and must be
+          // reported as FAILED, not silently treated as a successful settlement.
+          const reason = (intent as any).cancellation_reason as string | null | undefined;
+          const deliberateRelease = reason == null || reason === 'requested_by_customer';
+          return deliberateRelease ? PayoutStatus.SUCCESS : PayoutStatus.FAILED;
+        }
         case 'requires_capture':
         case 'processing':
         case 'requires_payment_method':

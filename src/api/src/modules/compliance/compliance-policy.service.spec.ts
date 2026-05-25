@@ -25,8 +25,10 @@ describe('CompliancePolicyService', () => {
     mockIdentityVerification = {
       getUserComplianceStatus: jest.fn(),
     };
+    // Default pool returns an adult date_of_birth so the unconditional age gate on
+    // monetized actions passes unless a test overrides it.
     service = new CompliancePolicyService(
-      { query: jest.fn().mockResolvedValue({ rows: [] }) } as any,
+      { query: jest.fn().mockResolvedValue({ rows: [{ date_of_birth: '1990-01-01' }] }) } as any,
       mockIdentityVerification as unknown as IdentityVerificationService,
     );
     jest.clearAllMocks();
@@ -35,6 +37,13 @@ describe('CompliancePolicyService', () => {
     delete process.env.KYC_ENFORCEMENT_ENABLED;
     delete process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
     delete process.env.NODE_ENV;
+    // Trust proxy/CDN geo headers in tests that simulate a Cloudflare-fronted request
+    // (cf-ipstate). Hardened default is OFF in production.
+    process.env.TRUST_PROXY_HEADERS = 'true';
+  });
+
+  afterEach(() => {
+    delete process.env.TRUST_PROXY_HEADERS;
   });
 
   // ─── Configuration flags ───
@@ -71,9 +80,9 @@ describe('CompliancePolicyService', () => {
       expect(service.shouldFailOpenOnMissingLocation()).toBe(false);
     });
 
-    it('should default to true in production when no explicit setting is present', () => {
+    it('should fail closed in production when no explicit setting is present', () => {
       process.env.NODE_ENV = 'production';
-      expect(service.shouldFailOpenOnMissingLocation()).toBe(true);
+      expect(service.shouldFailOpenOnMissingLocation()).toBe(false);
     });
 
     it('should return false when env var is "false"', () => {
@@ -217,13 +226,14 @@ describe('CompliancePolicyService', () => {
       expect(result.requiredMode).toBe('BLOCKED');
     });
 
-    it('should ignore x-styx-state in production', () => {
+    it('should ignore x-styx-state in production (and fail closed when no real geo signal)', () => {
       process.env.NODE_ENV = 'production';
       const req = makeRequest({ headers: { 'x-styx-state': 'UT' } });
       const result = service.getEligibility(req);
       expect(result.jurisdiction.state).toBe(null);
       expect(result.jurisdiction.source).toBe('none');
-      expect(result.requiredMode).toBe('FULL_ACCESS');
+      // No trustworthy location -> fail closed (most-restrictive).
+      expect(result.requiredMode).toBe('BLOCKED');
     });
 
     it('should prefer cf-ipstate over x-styx-state', () => {
@@ -242,14 +252,14 @@ describe('CompliancePolicyService', () => {
       expect(result.jurisdiction.source).toBe('none');
     });
 
-    it('should return FULL_ACCESS in production when location is missing and no explicit action is set', () => {
+    it('should fail closed (BLOCKED) in production when location is missing and no explicit action is set', () => {
       process.env.NODE_ENV = 'production';
       const req = makeRequest();
       const result = service.getEligibility(req);
-      expect(result.requiredMode).toBe('FULL_ACCESS');
-      expect(result.actions.canCreateContract).toBe(true);
-      expect(result.actions.canSubmitProof).toBe(true);
-      expect(result.actions.canPurchaseTicket).toBe(true);
+      expect(result.requiredMode).toBe('BLOCKED');
+      expect(result.actions.canCreateContract).toBe(false);
+      expect(result.actions.canSubmitProof).toBe(false);
+      expect(result.actions.canPurchaseTicket).toBe(false);
     });
 
     it('should default unknown states to TIER_3', () => {
@@ -526,6 +536,37 @@ describe('CompliancePolicyService', () => {
       expect(result.code).toBe('JURISDICTION_BLOCKED');
     });
 
+    it('should block a monetized action when DOB is missing (age gate fails closed)', async () => {
+      const serviceNoDob = new CompliancePolicyService(
+        { query: jest.fn().mockResolvedValue({ rows: [] }) } as any,
+        mockIdentityVerification as unknown as IdentityVerificationService,
+      );
+      const req = makeRequest({
+        method: 'POST',
+        originalUrl: '/contracts',
+        headers: { 'cf-ipstate': 'CA' },
+      });
+      const result = await serviceNoDob.evaluateUserComplianceForRequest(req, 'user-1');
+      expect(result.allowed).toBe(false);
+      expect(result.code).toBe('AGE_VERIFICATION_REQUIRED');
+    });
+
+    it('should block a monetized action for an under-18 user', async () => {
+      const thisYear = new Date().getFullYear();
+      const serviceUnderage = new CompliancePolicyService(
+        { query: jest.fn().mockResolvedValue({ rows: [{ date_of_birth: `${thisYear - 16}-01-01` }] }) } as any,
+        mockIdentityVerification as unknown as IdentityVerificationService,
+      );
+      const req = makeRequest({
+        method: 'POST',
+        originalUrl: '/contracts',
+        headers: { 'cf-ipstate': 'CA' },
+      });
+      const result = await serviceUnderage.evaluateUserComplianceForRequest(req, 'user-1');
+      expect(result.allowed).toBe(false);
+      expect(result.code).toBe('AGE_VERIFICATION_REQUIRED');
+    });
+
     it('should allow without KYC check when enforcement is disabled', async () => {
       const req = makeRequest({
         method: 'POST',
@@ -596,7 +637,10 @@ describe('CompliancePolicyService', () => {
 
     it('should handle missing identityVerification service gracefully', async () => {
       process.env.KYC_ENFORCEMENT_ENABLED = 'true';
-      const serviceNoVerification = new CompliancePolicyService({ query: jest.fn().mockResolvedValue({ rows: [] }) } as any);
+      // Adult DOB so the age gate passes and we reach the KYC check.
+      const serviceNoVerification = new CompliancePolicyService(
+        { query: jest.fn().mockResolvedValue({ rows: [{ date_of_birth: '1990-01-01' }] }) } as any,
+      );
       const req = makeRequest({
         method: 'POST',
         originalUrl: '/contracts',

@@ -10,7 +10,9 @@ import { SettlementService } from './settlement.service';
 import { ReconciliationService } from './reconciliation.service';
 import { Public } from '../../common/decorators/current-user.decorator';
 import { AuthGuard } from '../../../guards/auth.guard';
+import { RoleGuard, Roles } from '../../common/guards/role.guard';
 import { JurisdictionDispositionMapper } from '../compliance/jurisdiction-disposition.mapper';
+import { toCents } from '../../../../shared/libs/money';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -101,7 +103,8 @@ export class PaymentsController implements OnModuleInit {
   }
 
   @Post('settlement/:contractId/execute')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Manually trigger settlement dispatch for a resolved contract (Admin/Internal only)' })
   async executeSettlement(
@@ -142,7 +145,7 @@ export class PaymentsController implements OnModuleInit {
       contractId,
       outcome: settlementOutcome,
       paymentIntentId: (contract as any).payment_intent_id,
-      amountCents: Math.round(Number((contract as any).stake_amount) * 100),
+      amountCents: toCents(Number((contract as any).stake_amount)),
       dispositionMode,
     });
 
@@ -195,37 +198,44 @@ export class PaymentsController implements OnModuleInit {
       switch (event.type) {
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
-        const contractId = pi.metadata?.contractId;
-        if (contractId) {
-          this.logger.log(`Payment succeeded for contract ${contractId}`);
+        // Resolve the contract by the SERVER-STORED payment_intent_id linkage, never by the
+        // client-influenceable pi.metadata.contractId alone. Then PERSIST the funded state
+        // (previously this only logged). A contract still awaiting funds is transitioned to
+        // ACTIVE; an already-active contract is a no-op confirmation.
+        const funded = await this.pool.query(
+          `UPDATE contracts
+           SET status = 'ACTIVE', started_at = COALESCE(started_at, NOW())
+           WHERE payment_intent_id = $1 AND status IN ('PENDING_STAKE', 'PENDING', 'PROCESSING')
+           RETURNING id`,
+          [pi.id],
+        );
+        if (funded.rows.length > 0) {
+          this.logger.log(`Payment succeeded; contract ${funded.rows[0].id} marked funded/ACTIVE`);
+        } else {
+          this.logger.log(`Payment succeeded for payment_intent ${pi.id} (no pending contract to fund)`);
         }
         break;
       }
 
       case 'payment_intent.payment_failed': {
         const pi = event.data.object as Stripe.PaymentIntent;
-        const contractId = pi.metadata?.contractId;
-        if (contractId) {
+        // Match on the server-stored payment_intent_id rather than trusting metadata.contractId.
+        const failed = await this.pool.query(
+          `UPDATE contracts SET status = 'PAYMENT_FAILED' WHERE payment_intent_id = $1 RETURNING id, user_id`,
+          [pi.id],
+        );
+        if (failed.rows.length > 0) {
+          const { id: contractId, user_id: userId } = failed.rows[0];
           this.logger.warn(`Payment failed for contract ${contractId}`);
-          await this.pool.query(
-            `UPDATE contracts SET status = 'PAYMENT_FAILED' WHERE id = $1 AND payment_intent_id = $2`,
-            [contractId, pi.id],
-          );
 
           // Notify the user
-          const contract = await this.pool.query(
-            `SELECT user_id FROM contracts WHERE id = $1`,
-            [contractId],
-          );
-          if (contract.rows.length > 0) {
-            await this.notifications.create({
-              userId: contract.rows[0].user_id,
-              type: 'PAYMENT_FAILED',
-              title: 'Payment Failed',
-              body: 'Your payment could not be processed. Please update your payment method.',
-              metadata: { contractId },
-            });
-          }
+          await this.notifications.create({
+            userId,
+            type: 'PAYMENT_FAILED',
+            title: 'Payment Failed',
+            body: 'Your payment could not be processed. Please update your payment method.',
+            metadata: { contractId },
+          });
         }
         break;
       }

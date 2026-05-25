@@ -75,9 +75,13 @@ describe('WalletController', () => {
         rows: [{ account_id: 'acct-1' }],
       });
       const dbRows = [
-        { 
-          id: 'e-1', 
-          amount: '2500', 
+        {
+          id: 'e-1',
+          amount: '2500',
+          // A stake hold debits the user account, so under the canonical sign
+          // convention it must show as a negative amount in history.
+          debit_account_id: 'acct-1',
+          credit_account_id: 'escrow-acct',
           metadata: { type: 'STAKE_HOLD', description: 'Testing' },
           created_at: '2026-01-01T00:00:00Z'
         },
@@ -90,10 +94,56 @@ describe('WalletController', () => {
       expect(result.transactions[0]).toEqual({
         id: 'e-1',
         type: 'STAKE_HOLD',
-        amount: 25,
+        amount: -25, // debit leg → negative under canonical sign convention
         timestamp: '2026-01-01T00:00:00Z',
         description: 'Testing',
       });
+    });
+
+    it('should sign credit entries as positive (e.g. stake refund)', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ account_id: 'acct-1' }],
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'e-2',
+            amount: '2500',
+            debit_account_id: 'escrow-acct',
+            credit_account_id: 'acct-1',
+            metadata: { type: 'STAKE_RETURN', description: 'Refund' },
+            created_at: '2026-01-02T00:00:00Z',
+          },
+        ],
+      });
+
+      const result = await controller.getHistory({ id: 'user-1' });
+
+      expect(result.transactions[0].amount).toBe(25);
+    });
+
+    it('should default limit to 50 when limit is NaN', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ account_id: 'acct-1' }],
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await controller.getHistory({ id: 'user-1' }, 'abc');
+
+      const historyCall = mockPool.query.mock.calls[1];
+      expect(historyCall[1][1]).toBe(50);
+    });
+
+    it('should clamp limit to a minimum of 1', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ account_id: 'acct-1' }],
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await controller.getHistory({ id: 'user-1' }, '0');
+
+      const historyCall = mockPool.query.mock.calls[1];
+      expect(historyCall[1][1]).toBe(1);
     });
 
     it('should respect the limit parameter capped at 100', async () => {

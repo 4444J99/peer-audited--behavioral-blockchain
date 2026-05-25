@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Pool } from 'pg';
 import { LedgerService } from '../../../services/ledger/ledger.service';
+import { toCents } from '../../../../shared/libs/money';
 
 /**
  * ReconciliationService
@@ -41,11 +42,11 @@ export class ReconciliationService {
     if (contract.rows.length === 0) {
       throw new Error(`Contract ${contractId} not found`);
     }
-    const expectedAmountCents = Math.round(Number(contract.rows[0].stake_amount) * 100);
+    const expectedAmountCents = toCents(Number(contract.rows[0].stake_amount));
 
-    // 2. Get the successful settlement run
+    // 2. Get the most recent successful settlement run (deterministic ordering).
     const runs = await this.pool.query(
-      "SELECT * FROM settlement_runs WHERE contract_id = $1 AND status = 'SUCCESS'",
+      "SELECT * FROM settlement_runs WHERE contract_id = $1 AND status = 'SUCCESS' ORDER BY completed_at DESC NULLS LAST, started_at DESC",
       [contractId]
     );
     const run = runs.rows[0];
@@ -55,11 +56,30 @@ export class ReconciliationService {
 
     // 3. Aggregate Ledger Entries
     const ledgerEntries = await this.ledger.getContractLedger(contractId);
-    
-    // Calculate total money moved from Escrow
-    const escrowWithdrawals = ledgerEntries
-      .filter(e => e.metadata?.type?.includes('SETTLEMENT_RELEASE') || e.metadata?.type?.includes('SETTLEMENT_CAPTURE'))
+
+    // Identify the escrow account so we can validate transfer DIRECTION, not just magnitude.
+    // A settlement withdrawal must DEBIT the escrow account. Counting by magnitude alone let a
+    // wrong-direction entry of equal value silently balance the books.
+    const escrowAccount = await this.pool.query(
+      "SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1"
+    );
+    const escrowAccountId = escrowAccount.rows[0]?.id;
+
+    // Calculate total money moved OUT of Escrow (debit side of escrow only).
+    const settlementEntries = ledgerEntries
+      .filter(e => e.metadata?.type?.includes('SETTLEMENT_RELEASE') || e.metadata?.type?.includes('SETTLEMENT_CAPTURE'));
+
+    const escrowWithdrawals = settlementEntries
+      .filter(e => e.debitAccountId === escrowAccountId)
       .reduce((sum, e) => sum + e.amount, 0);
+
+    // Flag any settlement entry that does not debit escrow (wrong direction / wrong account).
+    const wrongDirection = settlementEntries.filter(e => e.debitAccountId !== escrowAccountId);
+    if (wrongDirection.length > 0) {
+      discrepancies.push(
+        `Wrong-direction settlement entries: ${wrongDirection.length} entry(ies) do not debit the escrow account`
+      );
+    }
 
     if (escrowWithdrawals !== expectedAmountCents) {
       discrepancies.push(`Ledger imbalance: Expected ${expectedAmountCents} withdrew ${escrowWithdrawals}`);

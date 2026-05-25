@@ -1,8 +1,16 @@
 /**
  * Stake Tiers and KYC Thresholds
- * 
- * Defines the relationship between financial risk (stake amount) and
- * the required identity verification (KYC).
+ *
+ * Defines the relationship between financial risk (stake amount) and the
+ * required identity verification (KYC). This is the SINGLE source of truth for
+ * "at what amount does a user have to be KYC-verified".
+ *
+ * NOTE: This is a DIFFERENT axis from the integrity-score stake caps in
+ * `../libs/integrity.ts` (`getTierMaxStake` / `getAllowedTiers`), which decide
+ * "how large a stake a user's behavioral integrity score permits". The numbers
+ * here (KYC thresholds) intentionally do not match the integrity caps there.
+ * Do not treat the `maxAmountCents` below as a hard stake limit — it is only the
+ * upper bound of a KYC bracket.
  */
 
 export enum StakeTier {

@@ -17,6 +17,7 @@ describe('GeofenceGuard', () => {
     mockLookup.mockReset();
     delete process.env.GEO_MISSING_HEADER_ACTION;
     delete process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
+    delete process.env.TRUST_PROXY_HEADERS;
     delete process.env.NODE_ENV;
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
@@ -43,6 +44,11 @@ describe('GeofenceGuard', () => {
   }
 
   it('should block TIER_3 jurisdictions with machine-readable code', () => {
+    // cf-ipstate is only trusted when the API sits behind a trusted proxy/CF edge.
+    process.env.TRUST_PROXY_HEADERS = 'true';
+    compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
+    guard = new GeofenceGuard(compliancePolicy);
+
     const context = createContext({
       headers: { 'cf-ipstate': 'WA' },
       originalUrl: '/contracts',
@@ -61,6 +67,10 @@ describe('GeofenceGuard', () => {
   });
 
   it('should block TIER_2 stake-creating actions in refund-only mode', () => {
+    process.env.TRUST_PROXY_HEADERS = 'true';
+    compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
+    guard = new GeofenceGuard(compliancePolicy);
+
     const context = createContext({
       headers: { 'cf-ipstate': 'NY' },
       originalUrl: '/contracts',
@@ -79,6 +89,10 @@ describe('GeofenceGuard', () => {
   });
 
   it('should allow TIER_1 requests with valid state', () => {
+    process.env.TRUST_PROXY_HEADERS = 'true';
+    compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
+    guard = new GeofenceGuard(compliancePolicy);
+
     const context = createContext({
       headers: { 'cf-ipstate': 'CA' },
       originalUrl: '/contracts',
@@ -89,6 +103,10 @@ describe('GeofenceGuard', () => {
   });
 
   it('should allow TIER_2 safe read/proof actions', () => {
+    process.env.TRUST_PROXY_HEADERS = 'true';
+    compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
+    guard = new GeofenceGuard(compliancePolicy);
+
     const context = createContext({
       headers: { 'cf-ipstate': 'NY' },
       originalUrl: '/contracts/abc/proofs',
@@ -159,14 +177,18 @@ describe('GeofenceGuard', () => {
       method: 'GET',
     });
 
-    expect(guard.canActivate(context)).toBe(true);
+    // The x-styx-state override is ignored in production, so no trusted geo signal
+    // remains. With fail-closed the default, the request is now blocked (not allowed),
+    // and the guard still logs the ignored-override + missing-location warnings.
+    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
     expect(warnSpy).toHaveBeenCalled();
   });
 
-  it('should allow in production by default when location is missing', () => {
+  it('should block in production by default when location is missing', () => {
     process.env.NODE_ENV = 'production';
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
+    jest.spyOn((guard as any).logger, 'warn').mockImplementation(() => undefined);
 
     const context = createContext({
       headers: {},
@@ -174,7 +196,8 @@ describe('GeofenceGuard', () => {
       method: 'GET',
     });
 
-    expect(guard.canActivate(context)).toBe(true);
+    // Production must not be more permissive than dev: a missing geo signal fails CLOSED.
+    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
   });
 
   it('should allow in production when missing-location policy is explicitly allow', () => {
@@ -193,6 +216,11 @@ describe('GeofenceGuard', () => {
   });
 
   it('should allow when request IP resolves to a permitted state', () => {
+    // Forwarded IP headers are only consulted when behind a trusted proxy.
+    process.env.TRUST_PROXY_HEADERS = 'true';
+    compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
+    guard = new GeofenceGuard(compliancePolicy);
+
     mockLookup.mockReturnValue({ country: 'US', region: 'CA' });
 
     const context = createContext({

@@ -589,8 +589,8 @@ describe('ContractsService', () => {
     it('should cancel Stripe hold on COMPLETED outcome', async () => {
       // Contract lookup
       mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
-      // UPDATE contracts
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // UPDATE contracts (claim, RETURNING id)
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
       // User lookup
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // UPDATE users
@@ -606,7 +606,7 @@ describe('ContractsService', () => {
 
     it('should capture stake on FAILED outcome', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] }); // claim UPDATE (RETURNING id)
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
@@ -620,7 +620,7 @@ describe('ContractsService', () => {
 
     it('should default failed settlement disposition to REFUND when jurisdiction is unknown', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] }); // claim UPDATE (RETURNING id)
       mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeUser, last_known_state: null }] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
@@ -693,7 +693,7 @@ describe('ContractsService', () => {
 
     it('should update contract status in the database', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] }); // claim UPDATE (RETURNING id) // UPDATE contracts
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE users
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
@@ -708,7 +708,7 @@ describe('ContractsService', () => {
 
     it('should increase integrity score by +5 on COMPLETED (completion bonus)', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] }); // claim UPDATE (RETURNING id)
       mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeUser, integrity_score: 50 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE users
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
@@ -724,7 +724,7 @@ describe('ContractsService', () => {
 
     it('should decrease integrity score by -20 on FAILED (strike penalty)', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] }); // claim UPDATE (RETURNING id)
       mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeUser, integrity_score: 50 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE users
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
@@ -740,7 +740,7 @@ describe('ContractsService', () => {
 
     it('should floor integrity score at 0', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] }); // claim UPDATE (RETURNING id)
       mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeUser, integrity_score: 10 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
@@ -760,7 +760,7 @@ describe('ContractsService', () => {
       (mockAegis.getVolatilityMultiplier as jest.Mock).mockReturnValue(1.5);
 
       mockPool.query.mockResolvedValueOnce({ rows: [contractRow] }); // contract lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [] }); // status update
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] }); // status update (claim, RETURNING id)
       mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeUser, integrity_score: 50 }] }); // user lookup
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // score update
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] }); // escrow lookup
@@ -777,7 +777,7 @@ describe('ContractsService', () => {
     });
     it('should log CONTRACT_RESOLVED to TruthLog', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] }); // claim UPDATE (RETURNING id)
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
@@ -794,7 +794,7 @@ describe('ContractsService', () => {
 
     it('should not directly write ledger entries when settlement processing has been delegated', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [contractRow] });
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] }); // claim UPDATE (RETURNING id)
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
@@ -1407,10 +1407,10 @@ describe('ContractsService', () => {
     });
 
     it('should reject when max grace days exceeded (BadRequestException)', async () => {
-      // Contract lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [activeContract] });
-      // Grace days count: already at max (2)
-      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 2 }] });
+      // Grace days used are now read directly from the contracts.grace_days_used
+      // column on the contract row (no separate truth_log count query). At the
+      // max of 2, the cap check rejects before any UPDATE runs.
+      mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeContract, grace_days_used: 2 }] });
 
       await expect(service.useGraceDay('contract-1', 'user-1')).rejects.toThrow(BadRequestException);
     });
@@ -1431,8 +1431,9 @@ describe('ContractsService', () => {
           contract_status: 'ACTIVE',
         }],
       });
-      // 2. update bounty status
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // 2. atomic claim (UPDATE ... WHERE status='ACTIVE' RETURNING id) — a
+      //    returned row means this claimant won the race.
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'bounty-1' }] });
       // 3. insert proof
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-bounty-1' }] });
 
@@ -1523,7 +1524,10 @@ describe('ContractsService', () => {
         .rejects.toThrow(BadRequestException);
     });
 
-    it('should use contractId as fallback proofId when no proofs exist', async () => {
+    it('should throw BadRequestException when no proof exists to dispute', async () => {
+      // The contractId-as-fallback-proofId behavior has been removed: an appeal
+      // must target a real proof, otherwise the appeal fee would be charged
+      // against a non-existent proof (violating the disputes.proof_id FK).
       mockPool.query.mockResolvedValueOnce({
         rows: [{ id: 'contract-1', user_id: 'user-1' }],
       });
@@ -1532,9 +1536,8 @@ describe('ContractsService', () => {
       });
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // no proofs
 
-      await service.fileDispute('user-1', 'contract-1');
-
-      expect(mockDispute.initiateAppeal).toHaveBeenCalledWith('user-1', 'contract-1', 'cus_1');
+      await expect(service.fileDispute('user-1', 'contract-1')).rejects.toThrow(BadRequestException);
+      expect(mockDispute.initiateAppeal).not.toHaveBeenCalled();
     });
   });
 

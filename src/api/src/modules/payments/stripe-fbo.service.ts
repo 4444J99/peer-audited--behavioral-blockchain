@@ -56,16 +56,20 @@ export class StripeFBOService {
 
     if (outcome === 'PASS') {
       // User succeeded. Refund the stake completely.
-      await this.stripe.refunds.create({
-        payment_intent: paymentIntentId,
-        reason: 'requested_by_customer', // Cleanest refund reason
-      });
+      await this.stripe.refunds.create(
+        {
+          payment_intent: paymentIntentId,
+          reason: 'requested_by_customer', // Cleanest refund reason
+        },
+        // Idempotency: a BullMQ/Stripe retry of the same resolution must not double-refund.
+        { idempotencyKey: `styx_refund_${paymentIntentId}` },
+      );
       this.logger.log(`Stake refunded successfully.`);
       return true;
     } else {
       // User failed. Slashing protocol activated.
       this.logger.warn(`Contract FAILED. Initiating slashing protocol.`);
-      
+
       const intent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
       const totalAmount = intent.amount;
       const quote = buildSettlementQuote(totalAmount, outcome);
@@ -73,20 +77,31 @@ export class StripeFBOService {
       const platformFee = quote.platformFeeCents;
       const furyBountyPool = quote.bountyPoolCents;
 
-      // Transfer bounties to Fury connected accounts
+      // Transfer bounties to Fury connected accounts.
       if (furies.length > 0) {
-        const bountyPerFury = Math.floor(furyBountyPool / furies.length);
-        for (const furyId of furies) {
-          await this.stripe.transfers.create({
-            amount: bountyPerFury,
-            currency: 'usd',
-            destination: furyId,
-            metadata: {
-              paymentIntentId,
-              purpose: 'FURY_BOUNTY',
+        // Distribute the pool deterministically so NO cents are lost to flooring: the base
+        // per-fury share goes to everyone, and the leftover remainder cents are handed, one
+        // each, to the first `remainder` furies (deterministic ordering).
+        const basePerFury = Math.floor(furyBountyPool / furies.length);
+        const remainder = furyBountyPool - basePerFury * furies.length;
+        for (let i = 0; i < furies.length; i++) {
+          const furyId = furies[i];
+          const bountyAmount = basePerFury + (i < remainder ? 1 : 0);
+          if (bountyAmount <= 0) continue;
+          await this.stripe.transfers.create(
+            {
+              amount: bountyAmount,
+              currency: 'usd',
+              destination: furyId,
+              metadata: {
+                paymentIntentId,
+                purpose: 'FURY_BOUNTY',
+              },
             },
-          });
-          this.logger.log(`Transferred $${bountyPerFury / 100} bounty to Fury ${furyId}`);
+            // Idempotency: keyed per (paymentIntent, fury) so a retry cannot double-pay a fury.
+            { idempotencyKey: `styx_bounty_${paymentIntentId}_${furyId}` },
+          );
+          this.logger.log(`Transferred $${bountyAmount / 100} bounty to Fury ${furyId}`);
         }
       }
 

@@ -85,10 +85,8 @@ describe('FuryController', () => {
 
   describe('submitVerdict', () => {
     it('should record the verdict, log to TruthLog, and check consensus', async () => {
-      // UPDATE fury_assignments
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
-      // SELECT proof_id
-      mockPool.query.mockResolvedValueOnce({ rows: [{ proof_id: 'proof-1' }] });
+      // UPDATE fury_assignments ... RETURNING proof_id (one row updated)
+      mockPool.query.mockResolvedValueOnce({ rowCount: 1, rows: [{ proof_id: 'proof-1' }] });
 
       const result = await controller.submitVerdict(
         { id: 'fury-1' },
@@ -97,9 +95,10 @@ describe('FuryController', () => {
 
       expect(result).toEqual({ status: 'verdict_recorded' });
 
-      // Verify UPDATE was called with user ID from @CurrentUser
+      // Verify UPDATE was called with user ID from @CurrentUser and the no-revote guard
       const updateCall = mockPool.query.mock.calls[0];
       expect(updateCall[0]).toMatch(/UPDATE fury_assignments SET verdict/);
+      expect(updateCall[0]).toMatch(/verdict IS NULL/);
       expect(updateCall[1]).toEqual(['PASS', 'assign-1', 'fury-1']);
 
       // Verify TruthLog
@@ -114,8 +113,7 @@ describe('FuryController', () => {
     });
 
     it('should handle FAIL verdict', async () => {
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
-      mockPool.query.mockResolvedValueOnce({ rows: [{ proof_id: 'proof-2' }] });
+      mockPool.query.mockResolvedValueOnce({ rowCount: 1, rows: [{ proof_id: 'proof-2' }] });
 
       await controller.submitVerdict(
         { id: 'fury-2' },
@@ -126,15 +124,17 @@ describe('FuryController', () => {
       expect(updateCall[1]).toEqual(['FAIL', 'assign-2', 'fury-2']);
     });
 
-    it('should not check consensus if assignment is not found', async () => {
-      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE
-      mockPool.query.mockResolvedValueOnce({ rows: [] }); // no assignment found
+    it('should reject and not check consensus when no row is updated (invalid assignment or re-vote)', async () => {
+      mockPool.query.mockResolvedValueOnce({ rowCount: 0, rows: [] }); // UPDATE affected nothing
 
-      await controller.submitVerdict(
-        { id: 'fury-1' },
-        { assignmentId: 'assign-ghost', verdict: 'PASS' },
-      );
+      await expect(
+        controller.submitVerdict(
+          { id: 'fury-1' },
+          { assignmentId: 'assign-ghost', verdict: 'PASS' },
+        ),
+      ).rejects.toThrow();
 
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
       expect(mockFuryWorker.checkConsensus).not.toHaveBeenCalled();
     });
   });

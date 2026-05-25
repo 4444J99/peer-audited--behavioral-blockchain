@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Worker, Job } from 'bullmq';
 import { Pool } from 'pg';
+import { randomUUID } from 'crypto';
 import { FURY_ROUTER_QUEUE_NAME, getDefaultQueueOptions } from '../../config/queue.config';
 
 export interface FuryRouteJobData {
@@ -88,6 +89,7 @@ export class FuryRouterWorker implements OnModuleInit {
       const partners = partnerResult.rows.map(r => r.partner_user_id);
 
       // 3. Find eligible Furies with isolation:
+      // - Must hold the FURY role (only auditors may review)
       // - Not the submitter
       // - Not in the same state (Geographic isolation)
       // - Not in the same social guild (Social isolation)
@@ -98,7 +100,7 @@ export class FuryRouterWorker implements OnModuleInit {
         `SELECT id FROM users
          WHERE id != $1
            AND status = 'ACTIVE'
-           AND role IN ('USER', 'FURY', 'ADMIN')
+           AND role = 'FURY'
            AND integrity_score >= 20
            -- Geographic isolation
            AND (last_known_state IS NULL OR last_known_state != $2)
@@ -121,19 +123,20 @@ export class FuryRouterWorker implements OnModuleInit {
 
       const selectedFuries = eligibleResult.rows;
 
+      // Do not finalize consensus routing with fewer than the required reviewers — a
+      // single reviewer must never constitute "full consensus". Throw so the job is
+      // retried with backoff (held) until enough eligible Furies are available; once
+      // attempts are exhausted the proof stays in its pre-routing state for re-dispatch.
       if (selectedFuries.length < requiredReviewers) {
-        this.logger.warn(
-          `Only ${selectedFuries.length}/${requiredReviewers} eligible Furies found for proof ${proofId}. Proceeding with available reviewers.`,
+        throw new Error(
+          `Only ${selectedFuries.length}/${requiredReviewers} eligible Furies available for proof ${proofId}; holding for retry.`,
         );
       }
 
-      if (selectedFuries.length === 0) {
-        throw new Error(`No eligible Furies available for proof ${proofId}`);
-      }
-
-      // Create fury_assignments for each selected reviewer with an identity mask
+      // Create fury_assignments for each selected reviewer with an identity mask.
+      // Use a crypto-random alias so the mask is unpredictable / non-enumerable.
       for (const fury of selectedFuries) {
-        const alias = `Target_${Math.random().toString(36).substring(2, 6)}`;
+        const alias = `Target_${randomUUID().slice(0, 8)}`;
         await client.query(
           `INSERT INTO fury_assignments (proof_id, fury_user_id, subject_alias)
            VALUES ($1, $2, $3)`,

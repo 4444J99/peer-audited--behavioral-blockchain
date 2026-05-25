@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsEnum, IsOptional, IsBoolean, IsArray, IsEmail, Min, Max, ValidateNested, IsInt, ArrayMaxSize, ArrayMinSize } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsOptional, IsBoolean, IsArray, IsEmail, Min, Max, ValidateNested, IsInt, IsPositive, ArrayMaxSize, ArrayMinSize } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -165,6 +165,19 @@ export class SubmitProofDto {
   @ApiProperty({ description: 'R2 media URI of the proof submission', example: 'r2://styx-proofs/abc123.jpg' })
   @IsString()
   mediaUri!: string;
+}
+
+export class DoubleDownDto {
+  @ApiProperty({
+    description: 'Additional stake amount in USD to add to an active contract (will be converted to cents internally)',
+    example: 20,
+    minimum: 0.01,
+    maximum: 10000,
+  })
+  @IsNumber()
+  @IsPositive()
+  @Max(10000)
+  amount!: number;
 }
 
 export enum WhoopScoredState {

@@ -177,7 +177,9 @@ describe('IdentityProviderService', () => {
       providerName: 'STRIPE_IDENTITY',
       start: jest.fn(),
       parseWebhookEvent: jest.fn(),
+      constructVerifiedEvent: jest.fn(),
     } as any;
+    delete process.env.NODE_ENV;
     service = new IdentityProviderService(mockMockAdapter, mockStripeAdapter);
     jest.clearAllMocks();
   });
@@ -225,8 +227,9 @@ describe('IdentityProviderService', () => {
       expect(mockStripeAdapter.start).toHaveBeenCalled();
     });
 
-    it('should fall back to mock when Stripe adapter throws', async () => {
+    it('should fall back to mock when Stripe adapter throws in non-production', async () => {
       process.env.STYX_IDENTITY_PROVIDER = 'STRIPE_IDENTITY';
+      delete process.env.NODE_ENV;
       service = new IdentityProviderService(mockMockAdapter, mockStripeAdapter);
 
       mockStripeAdapter.start.mockRejectedValue(new Error('Stripe not configured'));
@@ -240,6 +243,38 @@ describe('IdentityProviderService', () => {
 
       const result = await service.startVerification(input);
       expect(result.provider).toBe('MOCK');
+    });
+
+    it('should NOT fall back to mock when Stripe adapter throws in production', async () => {
+      process.env.STYX_IDENTITY_PROVIDER = 'STRIPE_IDENTITY';
+      process.env.NODE_ENV = 'production';
+      service = new IdentityProviderService(mockMockAdapter, mockStripeAdapter);
+
+      mockStripeAdapter.start.mockRejectedValue(new Error('Stripe outage'));
+
+      await expect(service.startVerification(input)).rejects.toThrow('Stripe outage');
+      expect(mockMockAdapter.start).not.toHaveBeenCalled();
+    });
+
+    it('should refuse the mock provider in production when no provider is explicitly configured', async () => {
+      delete process.env.STYX_IDENTITY_PROVIDER;
+      process.env.NODE_ENV = 'production';
+      service = new IdentityProviderService(mockMockAdapter, mockStripeAdapter);
+
+      // Production defaults to the real provider; the stripe adapter (unconfigured) throws.
+      mockStripeAdapter.start.mockRejectedValue(new Error('Stripe Identity provider is not configured'));
+
+      await expect(service.startVerification(input)).rejects.toThrow();
+      expect(mockMockAdapter.start).not.toHaveBeenCalled();
+    });
+
+    it('should refuse mock when STYX_IDENTITY_PROVIDER=MOCK is forced in production', async () => {
+      process.env.STYX_IDENTITY_PROVIDER = 'MOCK';
+      process.env.NODE_ENV = 'production';
+      service = new IdentityProviderService(mockMockAdapter, mockStripeAdapter);
+
+      await expect(service.startVerification(input)).rejects.toThrow(/Mock identity provider is disabled/);
+      expect(mockMockAdapter.start).not.toHaveBeenCalled();
     });
   });
 
@@ -256,6 +291,36 @@ describe('IdentityProviderService', () => {
       const result = service.parseStripeIdentityWebhook({ type: 'identity.verification_session.verified' });
       expect(result).not.toBe(null);
       expect(mockStripeAdapter.parseWebhookEvent).toHaveBeenCalled();
+    });
+  });
+
+  describe('verifyAndParseStripeWebhook', () => {
+    it('should verify the signature then parse the resulting event', () => {
+      const verifiedEvent = { type: 'identity.verification_session.verified', data: { object: { id: 'vs_1' } } };
+      (mockStripeAdapter.constructVerifiedEvent as jest.Mock).mockReturnValue(verifiedEvent);
+      mockStripeAdapter.parseWebhookEvent.mockReturnValue({
+        provider: 'STRIPE_IDENTITY',
+        verificationId: 'vs_1',
+        mode: 'KYC_ONLY',
+        status: 'VERIFIED',
+        userId: 'user-1',
+      });
+
+      const result = service.verifyAndParseStripeWebhook(Buffer.from('{}'), 't=1,v1=abc');
+      expect(mockStripeAdapter.constructVerifiedEvent).toHaveBeenCalledWith(expect.any(Buffer), 't=1,v1=abc');
+      expect(mockStripeAdapter.parseWebhookEvent).toHaveBeenCalledWith(verifiedEvent);
+      expect(result?.userId).toBe('user-1');
+    });
+
+    it('should propagate verification errors (forged / unsigned events rejected)', () => {
+      (mockStripeAdapter.constructVerifiedEvent as jest.Mock).mockImplementation(() => {
+        throw new Error('Missing Stripe-Signature header');
+      });
+
+      expect(() => service.verifyAndParseStripeWebhook(Buffer.from('{}'), undefined)).toThrow(
+        'Missing Stripe-Signature header',
+      );
+      expect(mockStripeAdapter.parseWebhookEvent).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Pool } from 'pg';
 import {
   IdentityProviderService,
@@ -150,6 +150,12 @@ export class IdentityVerificationService {
     mode: IdentityVerificationMode;
     status: Exclude<IdentityProviderStatus, 'PENDING'>;
   }): Promise<UserComplianceStatus> {
+    // Mock completion flips a user to VERIFIED with no provider proof. It must be
+    // unreachable in production (ties to the provider gate in IdentityProviderService).
+    if (process.env.NODE_ENV === 'production') {
+      throw new ForbiddenException('Mock identity verification is disabled in production');
+    }
+
     await this.applyProviderCompletion({
       provider: 'MOCK',
       verificationId: `mock_manual_${input.userId}`,
@@ -162,8 +168,20 @@ export class IdentityVerificationService {
     return this.getUserComplianceStatus(input.userId);
   }
 
-  async completeFromStripeWebhook(body: any): Promise<{ applied: boolean; reason?: string; userId?: string }> {
-    const parsed = this.identityProvider.parseStripeIdentityWebhook(body);
+  async completeFromStripeWebhook(input: {
+    rawBody: Buffer | string | undefined;
+    signature: string | undefined;
+  }): Promise<{ applied: boolean; reason?: string; userId?: string }> {
+    // Verify the Stripe-Signature before trusting any field in the payload. A forged
+    // (unsigned) event must never be able to mark a user KYC/age VERIFIED.
+    let parsed;
+    try {
+      parsed = this.identityProvider.verifyAndParseStripeWebhook(input.rawBody, input.signature);
+    } catch {
+      // Signature verification / secret configuration failure — reject.
+      return { applied: false, reason: 'invalid_signature' };
+    }
+
     if (!parsed) {
       return { applied: false, reason: 'unsupported_or_invalid_event' };
     }

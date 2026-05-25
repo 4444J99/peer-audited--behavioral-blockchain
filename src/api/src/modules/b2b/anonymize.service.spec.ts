@@ -8,9 +8,11 @@ describe('AnonymizeService', () => {
   });
 
   describe('hashUserId', () => {
-    it('should return a 16-char hex string', () => {
+    it('should return a 32-char hex string', () => {
+      // Pseudonym truncation was widened from 64-bit (16 hex) to 128-bit (32 hex)
+      // to make brute-force reversal/collisions infeasible.
       const hash = service.hashUserId('user-123', 'ent-001');
-      expect(hash).toMatch(/^[0-9a-f]{16}$/);
+      expect(hash).toMatch(/^[0-9a-f]{32}$/);
     });
 
     it('should be deterministic for the same input', () => {
@@ -112,7 +114,7 @@ describe('AnonymizeService', () => {
       const result = service.anonymizeEmployeeData('ent-001', employees);
       expect(result.employees).toHaveLength(2);
       result.employees.forEach((emp) => {
-        expect(emp.anonymousId).toMatch(/^[0-9a-f]{16}$/);
+        expect(emp.anonymousId).toMatch(/^[0-9a-f]{32}$/);
       });
     });
 

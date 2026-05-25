@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Pool } from 'pg';
 import { ContractsService } from './contracts.service';
-import { CreateContractDto, SubmitProofDto, SubmitWhoopScoredDto } from './dto';
+import { CreateContractDto, SubmitProofDto, SubmitWhoopScoredDto, DoubleDownDto } from './dto';
 import { DisputeService } from '../../../services/escrow/dispute.service';
 import { StripeFboService } from '../../../services/escrow/stripe.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
@@ -182,9 +182,9 @@ export class ContractsController {
   async doubleDown(
     @Param('id') contractId: string,
     @CurrentUser() user: { id: string },
-    @Body() body: { amount: number },
+    @Body() dto: DoubleDownDto,
   ) {
-    return this.contractsService.doubleDownStake(contractId, user.id, body.amount);
+    return this.contractsService.doubleDownStake(contractId, user.id, dto.amount);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)

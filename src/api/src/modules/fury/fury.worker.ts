@@ -104,141 +104,180 @@ export class FuryWorker implements OnModuleInit {
       [proofId],
     );
 
-    const allVoted = assignments.rows.every((r) => r.verdict !== null);
+    const allVoted = assignments.rows.length > 0 && assignments.rows.every((r) => r.verdict !== null);
     if (!allVoted) return; // not all reviewers have voted yet
 
-    // Check if proof is honeypot
-    const proofResult = await this.pool.query(
-      `SELECT is_honeypot, contract_id FROM proofs WHERE id = $1`,
+    // Atomically "claim" resolution so near-simultaneous final verdicts cannot
+    // double-resolve (paying bounties / resolving the contract twice). Only the
+    // call that flips the proof out of its review state proceeds; others bail.
+    const claim = await this.pool.query(
+      `UPDATE proofs SET status = 'RESOLVING'
+       WHERE id = $1 AND status IN ('UNDER_REVIEW', 'IN_REVIEW')
+       RETURNING id`,
       [proofId],
     );
-    if (proofResult.rows.length === 0) return;
-
-    const { is_honeypot, contract_id } = proofResult.rows[0];
-
-    const votes: FuryVote[] = assignments.rows.map((r) => ({
-      furyUserId: r.fury_user_id,
-      verdict: r.verdict,
-    }));
-
-    const result = await this.consensusEngine.evaluate(proofId, votes, is_honeypot);
-
-    // Update proof status based on consensus
-    const proofStatus =
-      result.outcome === 'VERIFIED'
-        ? 'VERIFIED'
-        : result.outcome === 'REJECTED'
-          ? 'REJECTED'
-          : 'SPLIT';
-
-    await this.pool.query(
-      `UPDATE proofs SET status = $1 WHERE id = $2`,
-      [proofStatus, proofId],
-    );
-
-    // Grade honeypot performance via HoneypotService (nuanced ±5 scoring)
-    if (is_honeypot && this.honeypotService) {
-      try {
-        await this.honeypotService.gradeHoneypotPerformance(proofId, result.flaggedFuries);
-      } catch (err) {
-        this.logger.error(`Honeypot grading failed for proof ${proofId}: ${err instanceof Error ? err.message : err}`);
-      }
+    if (claim.rows.length === 0) {
+      // Another concurrent verdict already claimed this proof for resolution.
+      return;
     }
 
-    // Track Fury accuracy: reward correct votes, penalize incorrect ones
-    if (!is_honeypot && result.outcome !== 'SPLIT') {
-      for (const vote of votes) {
-        const wasCorrect =
-          (result.outcome === 'VERIFIED' && vote.verdict === 'PASS') ||
-          (result.outcome === 'REJECTED' && vote.verdict === 'FAIL');
-
-        if (wasCorrect) {
-          await this.pool.query(
-            `UPDATE users SET integrity_score = integrity_score + 2 WHERE id = $1`,
-            [vote.furyUserId],
-          );
-        } else {
-          await this.pool.query(
-            `UPDATE users SET integrity_score = GREATEST(0, integrity_score - 5) WHERE id = $1`,
-            [vote.furyUserId],
-          );
-        }
-      }
-    }
-
-    // Disburse Fury bounties/penalties via the double-entry ledger
-    if (this.ledger && result.outcome !== 'SPLIT') {
-      await this.disburseFuryBounties(votes, result, is_honeypot, contract_id, proofId);
-    }
-
-    // Check if any Fury should be demoted based on accuracy
-    if (!is_honeypot) {
-      for (const vote of votes) {
-        const furyStats = await this.pool.query(
-          `SELECT
-             COUNT(*) FILTER (WHERE fa.verdict IS NOT NULL) as total_audits,
-             COUNT(*) FILTER (WHERE (fa.verdict = 'PASS' AND p.status = 'VERIFIED') OR (fa.verdict = 'FAIL' AND p.status = 'REJECTED')) as successful_audits,
-             COUNT(*) FILTER (WHERE fa.verdict = 'FAIL' AND p.status = 'VERIFIED') as false_accusations
-           FROM fury_assignments fa
-           JOIN proofs p ON fa.proof_id = p.id
-           WHERE fa.fury_user_id = $1`,
-          [vote.furyUserId],
-        );
-        const stats = furyStats.rows[0];
-        if (shouldDemoteFury({
-          furyId: vote.furyUserId,
-          successfulAudits: Number(stats.successful_audits),
-          falseAccusations: Number(stats.false_accusations),
-          totalAudits: Number(stats.total_audits),
-        })) {
-          await this.pool.query(
-            `UPDATE users SET role = 'USER' WHERE id = $1 AND role = 'FURY'`,
-            [vote.furyUserId],
-          );
-          this.logger.warn(`Fury ${vote.furyUserId} demoted due to low accuracy`);
-        }
-      }
-    }
-
-    // Notify proof submitter of consensus result
-    if (contract_id) {
-      const contractResult = await this.pool.query(
-        `SELECT user_id FROM contracts WHERE id = $1`,
-        [contract_id],
+    // The proof is now claimed in 'RESOLVING'. Any throw past this point would
+    // strand it there forever: the claim guard above (status IN UNDER_REVIEW/IN_REVIEW)
+    // can't re-match it, and JudgeService.getPendingQueue only surfaces SPLIT/
+    // UNDER_REVIEW/IN_REVIEW. So wrap the post-claim work and, on failure, revert the
+    // status to 'UNDER_REVIEW' so a retry can re-claim it, then rethrow.
+    try {
+      // Check if proof is honeypot and recover its expected (known-correct) verdict.
+      const proofResult = await this.pool.query(
+        `SELECT is_honeypot, contract_id, honeypot_expected_verdict FROM proofs WHERE id = $1`,
+        [proofId],
       );
-      if (contractResult.rows.length > 0) {
-        await this.notifications?.create({
-          userId: contractResult.rows[0].user_id,
-          type: 'CONSENSUS_REACHED',
-          title: `Proof ${result.outcome === 'VERIFIED' ? 'Verified' : result.outcome === 'REJECTED' ? 'Rejected' : 'Split'}`,
-          body: result.outcome === 'VERIFIED'
-            ? 'Your proof has been verified by the Fury network.'
-            : result.outcome === 'REJECTED'
-              ? 'Your proof has been rejected by the Fury network.'
-              : 'The Fury network reached a split decision on your proof.',
-          metadata: { proofId, contractId: contract_id, outcome: result.outcome },
-        });
-      }
-    }
+      if (proofResult.rows.length === 0) return;
 
-    // Bridge: resolve the contract based on consensus outcome
-    if (contract_id && result.outcome !== 'SPLIT') {
-      try {
-        const resolution = result.outcome === 'VERIFIED' ? 'COMPLETED' : 'FAILED';
-        await this.contractsService.resolveContract(contract_id, resolution);
-        this.logger.log(
-          `Contract ${contract_id} resolved as ${resolution} via consensus`,
-        );
-      } catch (err) {
-        this.logger.error(
-          `Failed to resolve contract ${contract_id}: ${err instanceof Error ? err.message : err}`,
-        );
-      }
-    }
+      const { is_honeypot, contract_id } = proofResult.rows[0];
+      // Honeypot proofs persist their known-correct verdict. Default to 'FAIL' (the
+      // legacy known-fail assumption) when unset, so a CLEAN honeypot ('PASS') is honored.
+      // For real (non-honeypot) proofs there is no expected verdict, so don't rely on
+      // the column at all — the engine ignores expectedVerdict unless isHoneypot.
+      const expectedVerdict: 'PASS' | 'FAIL' =
+        is_honeypot && proofResult.rows[0].honeypot_expected_verdict === 'PASS' ? 'PASS' : 'FAIL';
 
-    this.logger.log(
-      `Consensus for proof ${proofId}: ${result.outcome} (${result.flaggedFuries.length} flagged)`,
-    );
+      const votes: FuryVote[] = assignments.rows.map((r) => ({
+        furyUserId: r.fury_user_id,
+        verdict: r.verdict,
+      }));
+
+      const result = await this.consensusEngine.evaluate(proofId, votes, is_honeypot, expectedVerdict);
+
+      // Update proof status based on consensus
+      const proofStatus =
+        result.outcome === 'VERIFIED'
+          ? 'VERIFIED'
+          : result.outcome === 'REJECTED'
+            ? 'REJECTED'
+            : 'SPLIT';
+
+      await this.pool.query(
+        `UPDATE proofs SET status = $1 WHERE id = $2`,
+        [proofStatus, proofId],
+      );
+
+      // Grade honeypot performance via HoneypotService (nuanced ±5 scoring)
+      if (is_honeypot && this.honeypotService) {
+        try {
+          await this.honeypotService.gradeHoneypotPerformance(proofId, result.flaggedFuries);
+        } catch (err) {
+          this.logger.error(`Honeypot grading failed for proof ${proofId}: ${err instanceof Error ? err.message : err}`);
+        }
+      }
+
+      // Track Fury accuracy: reward correct votes, penalize incorrect ones
+      if (!is_honeypot && result.outcome !== 'SPLIT') {
+        for (const vote of votes) {
+          const wasCorrect =
+            (result.outcome === 'VERIFIED' && vote.verdict === 'PASS') ||
+            (result.outcome === 'REJECTED' && vote.verdict === 'FAIL');
+
+          if (wasCorrect) {
+            await this.pool.query(
+              `UPDATE users SET integrity_score = integrity_score + 2 WHERE id = $1`,
+              [vote.furyUserId],
+            );
+          } else {
+            await this.pool.query(
+              `UPDATE users SET integrity_score = GREATEST(0, integrity_score - 5) WHERE id = $1`,
+              [vote.furyUserId],
+            );
+          }
+        }
+      }
+
+      // Disburse Fury bounties/penalties via the double-entry ledger
+      if (this.ledger && result.outcome !== 'SPLIT') {
+        await this.disburseFuryBounties(votes, result, is_honeypot, contract_id, proofId);
+      }
+
+      // Check if any Fury should be demoted based on accuracy
+      if (!is_honeypot) {
+        for (const vote of votes) {
+          const furyStats = await this.pool.query(
+            `SELECT
+               COUNT(*) FILTER (WHERE fa.verdict IS NOT NULL AND p.status IN ('VERIFIED', 'REJECTED')) as total_audits,
+               COUNT(*) FILTER (WHERE (fa.verdict = 'PASS' AND p.status = 'VERIFIED') OR (fa.verdict = 'FAIL' AND p.status = 'REJECTED')) as successful_audits,
+               COUNT(*) FILTER (WHERE fa.verdict = 'FAIL' AND p.status = 'VERIFIED') as false_accusations
+             FROM fury_assignments fa
+             JOIN proofs p ON fa.proof_id = p.id
+             WHERE fa.fury_user_id = $1`,
+            [vote.furyUserId],
+          );
+          const stats = furyStats.rows[0];
+          if (shouldDemoteFury({
+            furyId: vote.furyUserId,
+            successfulAudits: Number(stats.successful_audits),
+            falseAccusations: Number(stats.false_accusations),
+            totalAudits: Number(stats.total_audits),
+          })) {
+            await this.pool.query(
+              `UPDATE users SET role = 'USER' WHERE id = $1 AND role = 'FURY'`,
+              [vote.furyUserId],
+            );
+            this.logger.warn(`Fury ${vote.furyUserId} demoted due to low accuracy`);
+          }
+        }
+      }
+
+      // Notify proof submitter of consensus result
+      if (contract_id) {
+        const contractResult = await this.pool.query(
+          `SELECT user_id FROM contracts WHERE id = $1`,
+          [contract_id],
+        );
+        if (contractResult.rows.length > 0) {
+          await this.notifications?.create({
+            userId: contractResult.rows[0].user_id,
+            type: 'CONSENSUS_REACHED',
+            title: `Proof ${result.outcome === 'VERIFIED' ? 'Verified' : result.outcome === 'REJECTED' ? 'Rejected' : 'Split'}`,
+            body: result.outcome === 'VERIFIED'
+              ? 'Your proof has been verified by the Fury network.'
+              : result.outcome === 'REJECTED'
+                ? 'Your proof has been rejected by the Fury network.'
+                : 'The Fury network reached a split decision on your proof.',
+            metadata: { proofId, contractId: contract_id, outcome: result.outcome },
+          });
+        }
+      }
+
+      // Bridge: resolve the contract based on consensus outcome
+      if (contract_id && result.outcome !== 'SPLIT') {
+        try {
+          const resolution = result.outcome === 'VERIFIED' ? 'COMPLETED' : 'FAILED';
+          await this.contractsService.resolveContract(contract_id, resolution);
+          this.logger.log(
+            `Contract ${contract_id} resolved as ${resolution} via consensus`,
+          );
+        } catch (err) {
+          this.logger.error(
+            `Failed to resolve contract ${contract_id}: ${err instanceof Error ? err.message : err}`,
+          );
+        }
+      }
+
+      this.logger.log(
+        `Consensus for proof ${proofId}: ${result.outcome} (${result.flaggedFuries.length} flagged)`,
+      );
+    } catch (err) {
+      // Release the claim so the proof isn't stranded in 'RESOLVING'. Reverting to
+      // 'UNDER_REVIEW' lets a subsequent checkConsensus re-claim it (and keeps it
+      // visible to the judge queue), then rethrow so the caller/queue can retry.
+      await this.pool.query(
+        `UPDATE proofs SET status = 'UNDER_REVIEW' WHERE id = $1 AND status = 'RESOLVING'`,
+        [proofId],
+      );
+      this.logger.error(
+        `Consensus resolution failed for proof ${proofId}; reverted to UNDER_REVIEW: ${err instanceof Error ? err.message : err}`,
+      );
+      throw err;
+    }
   }
 
   /**

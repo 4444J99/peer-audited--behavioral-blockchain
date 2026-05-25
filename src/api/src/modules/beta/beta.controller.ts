@@ -24,7 +24,7 @@ function buildFeatureFlags(): StyxFeatureFlags {
 }
 
 function hashFeatureFlags(featureFlags: StyxFeatureFlags): string {
-  return createHash('sha1')
+  return createHash('sha256')
     .update(JSON.stringify(featureFlags))
     .digest('hex')
     .slice(0, 12);

@@ -22,6 +22,10 @@ import { StripeFboService } from '../../../services/escrow/stripe.service';
   controllers: [PaymentsController],
   providers: [
     PaymentRouterService,
+    // NOTE: StripeFBOService is the @deprecated legacy escrow service. It is retained ONLY
+    // because ContractsService (owned by another team) still injects it. Once that dependency
+    // is migrated to the canonical StripeFboService + SettlementWorker path, remove this
+    // provider/export and delete stripe-fbo.service.ts to eliminate the divergent payout math.
     StripeFBOService,
     StripeFboService,
     StripePayoutProvider,

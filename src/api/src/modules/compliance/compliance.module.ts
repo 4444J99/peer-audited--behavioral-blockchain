@@ -4,6 +4,7 @@ import { ComplianceController } from './compliance.controller';
 import { CompliancePolicyService } from './compliance-policy.service';
 import { GeofenceGuard } from '../../common/guards/geofence.guard';
 import { ComplianceAccessGuard } from '../../common/guards/compliance-access.guard';
+import { RoleGuard } from '../../common/guards/role.guard';
 import { IdentityVerificationService } from './identity-verification.service';
 import {
   IdentityProviderService,
@@ -25,6 +26,7 @@ import { ContractsModule } from '../contracts/contracts.module';
     StripeIdentityProviderAdapter,
     GeofenceGuard,
     ComplianceAccessGuard,
+    RoleGuard,
     MedicalExemptionService,
   ],
   exports: [

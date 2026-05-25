@@ -55,6 +55,22 @@ export class DataLakeService {
   ) {}
 
   /**
+   * Validate the snapshot date range before it is used in queries. The values are
+   * bound as parameters (so this is not an injection guard), but accepting
+   * unparseable or inverted ranges would return misleading data; reject them.
+   */
+  private assertValidDateRange(startDate: string, endDate: string): void {
+    const start = Date.parse(startDate);
+    const end = Date.parse(endDate);
+    if (Number.isNaN(start) || Number.isNaN(end)) {
+      throw new Error('Invalid start/end date');
+    }
+    if (end < start) {
+      throw new Error('end date must not precede start date');
+    }
+  }
+
+  /**
    * Extract a full analytics snapshot for an enterprise.
    * All data is pre-anonymized — no PII leaves this service.
    */
@@ -63,6 +79,8 @@ export class DataLakeService {
     startDate: string,
     endDate: string,
   ): Promise<DataLakeSnapshot> {
+    this.assertValidDateRange(startDate, endDate);
+
     const [contractMetrics, behavioralTrends, cohortAnalysis] = await Promise.all([
       this.extractContractMetrics(enterpriseId, startDate, endDate),
       this.extractBehavioralTrends(enterpriseId, startDate, endDate),
@@ -237,6 +255,13 @@ export class DataLakeService {
    * Only behavioral data tables — no PII-bearing columns are replicated.
    */
   async setupPublication(pubName: string = 'styx_analytics'): Promise<void> {
+    // CREATE PUBLICATION cannot take a bind parameter for the publication name, so
+    // the name is interpolated. Restrict it to a strict SQL identifier allowlist
+    // (lowercase letters/digits/underscore, must start with a letter) so a caller
+    // can never inject DDL even though only the default is used today.
+    if (!/^[a-z][a-z0-9_]{0,62}$/.test(pubName)) {
+      throw new Error('Invalid publication name');
+    }
     await this.pool.query(`
       CREATE PUBLICATION ${pubName} FOR TABLE
         contracts (id, oath_category, verification_method, stake_amount, duration_days, status, strikes, grace_days_used, started_at, ends_at, created_at),

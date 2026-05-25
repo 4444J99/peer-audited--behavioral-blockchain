@@ -52,6 +52,8 @@ describe('FuryWorker', () => {
           { fury_user_id: 'fury-3', verdict: 'FAIL' },
         ],
       });
+      // claim resolution (UPDATE proofs ... RETURNING id)
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-1' }] });
       // proofs query
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: false, contract_id: 'contract-1' }],
@@ -85,6 +87,7 @@ describe('FuryWorker', () => {
           { furyUserId: 'fury-3', verdict: 'FAIL' },
         ],
         false,
+        'FAIL',
       );
     });
 
@@ -95,6 +98,8 @@ describe('FuryWorker', () => {
           { fury_user_id: 'fury-2', verdict: 'PASS' },
         ],
       });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-1' }] });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: false, contract_id: 'c-1' }],
       });
@@ -116,7 +121,8 @@ describe('FuryWorker', () => {
 
       await worker.checkConsensus('proof-1');
 
-      const updateCall = mockPool.query.mock.calls[2];
+      // calls: [0] assignments, [1] claim, [2] proofs SELECT, [3] UPDATE proofs status
+      const updateCall = mockPool.query.mock.calls[3];
       expect(updateCall[0]).toMatch(/UPDATE proofs SET status/);
       expect(updateCall[1]).toEqual(['VERIFIED', 'proof-1']);
     });
@@ -129,6 +135,8 @@ describe('FuryWorker', () => {
           { fury_user_id: 'fury-3', verdict: 'FAIL' },
         ],
       });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-1' }] });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: false, contract_id: 'c-1' }],
       });
@@ -152,7 +160,7 @@ describe('FuryWorker', () => {
 
       await worker.checkConsensus('proof-1');
 
-      const updateCall = mockPool.query.mock.calls[2];
+      const updateCall = mockPool.query.mock.calls[3];
       expect(updateCall[1]).toEqual(['REJECTED', 'proof-1']);
     });
 
@@ -163,6 +171,8 @@ describe('FuryWorker', () => {
           { fury_user_id: 'fury-2', verdict: 'FAIL' },
         ],
       });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-1' }] });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: false, contract_id: 'c-1' }],
       });
@@ -182,7 +192,7 @@ describe('FuryWorker', () => {
 
       await worker.checkConsensus('proof-1');
 
-      const updateCall = mockPool.query.mock.calls[2];
+      const updateCall = mockPool.query.mock.calls[3];
       expect(updateCall[1]).toEqual(['SPLIT', 'proof-1']);
     });
 
@@ -194,6 +204,8 @@ describe('FuryWorker', () => {
           { fury_user_id: 'fury-corrupt-2', verdict: 'PASS' },
         ],
       });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-honeypot' }] });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: true, contract_id: 'c-1' }],
       });
@@ -228,6 +240,8 @@ describe('FuryWorker', () => {
           { fury_user_id: 'fury-2', verdict: 'FAIL' },
         ],
       });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-clean' }] });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: false, contract_id: 'c-1' }],
       });
@@ -260,6 +274,8 @@ describe('FuryWorker', () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{ fury_user_id: 'fury-1', verdict: 'PASS' }],
       });
+      // claim resolution succeeds
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-missing' }] });
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // no proof found
 
       await worker.checkConsensus('proof-missing');
@@ -271,6 +287,8 @@ describe('FuryWorker', () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{ fury_user_id: 'fury-1', verdict: 'FAIL' }],
       });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-hp' }] });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: true, contract_id: 'c-1' }],
       });
@@ -291,7 +309,107 @@ describe('FuryWorker', () => {
         'proof-hp',
         expect.any(Array),
         true, // isHoneypot passed through
+        'FAIL', // expectedVerdict (default)
       );
+    });
+
+    it('should pass the persisted honeypot_expected_verdict (PASS) to ConsensusEngine for a CLEAN honeypot', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ fury_user_id: 'fury-1', verdict: 'PASS' }],
+      });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-hp-clean' }] });
+      // proofs SELECT now returns honeypot_expected_verdict from the new column
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ is_honeypot: true, contract_id: 'c-1', honeypot_expected_verdict: 'PASS' }],
+      });
+      (mockConsensus.evaluate as jest.Mock).mockResolvedValueOnce({
+        outcome: 'VERIFIED',
+        votes: [],
+        flaggedFuries: [],
+      });
+      // UPDATE proofs
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // No accuracy tracking or demotion check (honeypot)
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-hp-clean' }] });
+
+      await worker.checkConsensus('proof-hp-clean');
+
+      expect(mockConsensus.evaluate).toHaveBeenCalledWith(
+        'proof-hp-clean',
+        expect.any(Array),
+        true,
+        'PASS', // recovered from the persisted column
+      );
+    });
+
+    it('should ignore honeypot_expected_verdict for a real (non-honeypot) proof and default to FAIL', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { fury_user_id: 'fury-1', verdict: 'PASS' },
+          { fury_user_id: 'fury-2', verdict: 'PASS' },
+        ],
+      });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-real' }] });
+      // A real proof: column is NULL even though is_honeypot is false.
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ is_honeypot: false, contract_id: 'c-real', honeypot_expected_verdict: null }],
+      });
+      (mockConsensus.evaluate as jest.Mock).mockResolvedValueOnce({
+        outcome: 'VERIFIED',
+        votes: [],
+        flaggedFuries: [],
+      });
+      // UPDATE proofs
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Accuracy tracking (2 furies)
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Demotion check stats (2 furies)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      // Notification: contract user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'u-real' }] });
+
+      await worker.checkConsensus('proof-real');
+
+      expect(mockConsensus.evaluate).toHaveBeenCalledWith(
+        'proof-real',
+        expect.any(Array),
+        false,
+        'FAIL',
+      );
+    });
+
+    // ── Resolution failure recovery (no stranded 'RESOLVING') ──────
+
+    it('should revert proof status to UNDER_REVIEW and rethrow if resolution throws after claim', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { fury_user_id: 'fury-1', verdict: 'PASS' },
+          { fury_user_id: 'fury-2', verdict: 'PASS' },
+        ],
+      });
+      // claim resolution succeeds (proof flipped to RESOLVING)
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-boom' }] });
+      // proofs SELECT
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ is_honeypot: false, contract_id: 'c-boom', honeypot_expected_verdict: null }],
+      });
+      // ConsensusEngine throws mid-resolution
+      (mockConsensus.evaluate as jest.Mock).mockRejectedValueOnce(new Error('engine exploded'));
+      // revert UPDATE
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(worker.checkConsensus('proof-boom')).rejects.toThrow('engine exploded');
+
+      // The last query must revert RESOLVING -> UNDER_REVIEW for this proof.
+      const revertCall = mockPool.query.mock.calls[mockPool.query.mock.calls.length - 1];
+      expect(revertCall[0]).toMatch(/UPDATE proofs SET status = 'UNDER_REVIEW'/);
+      expect(revertCall[0]).toMatch(/status = 'RESOLVING'/);
+      expect(revertCall[1]).toEqual(['proof-boom']);
     });
 
     // ── Contract resolution via consensus ─────────────────────────
@@ -304,6 +422,8 @@ describe('FuryWorker', () => {
           { fury_user_id: 'fury-3', verdict: 'PASS' },
         ],
       });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-resolve-complete' }] });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: false, contract_id: 'contract-99' }],
       });
@@ -342,6 +462,8 @@ describe('FuryWorker', () => {
           { fury_user_id: 'fury-3', verdict: 'FAIL' },
         ],
       });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-resolve-fail' }] });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: false, contract_id: 'contract-100' }],
       });
@@ -379,6 +501,8 @@ describe('FuryWorker', () => {
           { fury_user_id: 'fury-2', verdict: 'FAIL' },
         ],
       });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-split' }] });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: false, contract_id: 'contract-split' }],
       });
@@ -413,6 +537,8 @@ describe('FuryWorker', () => {
           { fury_user_id: 'fury-correct-2', verdict: 'PASS' },
         ],
       });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-reward' }] });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: false, contract_id: 'c-acc' }],
       });
@@ -453,6 +579,8 @@ describe('FuryWorker', () => {
           { fury_user_id: 'fury-right-2', verdict: 'PASS' },
         ],
       });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-penalty' }] });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: false, contract_id: 'c-pen' }],
       });
@@ -494,6 +622,8 @@ describe('FuryWorker', () => {
           { fury_user_id: 'fury-2', verdict: 'FAIL' },
         ],
       });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-hp-skip' }] });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ is_honeypot: true, contract_id: 'c-hp' }],
       });

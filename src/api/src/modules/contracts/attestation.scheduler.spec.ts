@@ -40,8 +40,23 @@ describe('AttestationScheduler', () => {
       await scheduler.processExpiredAttestations();
 
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('strikes = strikes + 1'),
-        ['c-1'],
+        expect.stringContaining('strikes = strikes + $2'),
+        ['c-1', 1],
+      );
+    });
+
+    it('should increment strikes by the number of missed days in one statement', async () => {
+      // A catch-up run surfaces multiple missed days for the same contract;
+      // they collapse into a single strike UPDATE with the aggregated count.
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ contract_id: 'c-1' }, { contract_id: 'c-1' }, { contract_id: 'c-1' }] }) // missed
+        .mockResolvedValueOnce({ rows: [{ user_id: 'u-1', strikes: 3 }] }); // update
+
+      await scheduler.processExpiredAttestations();
+
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('strikes = strikes + $2'),
+        ['c-1', 3],
       );
     });
 

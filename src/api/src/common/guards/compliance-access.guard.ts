@@ -10,8 +10,11 @@ export class ComplianceAccessGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request & { user?: { id?: string } }>();
     const userId = request.user?.id;
 
+    // Fail CLOSED: this guard protects monetized/compliance-gated actions, so a
+    // request without an authenticated user must be denied (AuthGuard is expected to
+    // run first and populate request.user.id).
     if (!userId) {
-      return true;
+      throw new ForbiddenException('Authentication required');
     }
 
     const decision = await this.compliancePolicy.evaluateUserComplianceForRequest(request, userId);

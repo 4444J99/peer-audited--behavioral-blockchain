@@ -24,8 +24,7 @@ export interface FuryHistory {
 
 /**
  * Calculates a user's Integrity Score (IS) based on behavioral physics.
- * Base (50) + (+5 per challenge) - (-15 per fraud) - (-20 per strike)
- * Also applies -1 point decay per inactive month.
+ * Base (50) + (5 per completed challenge) - (15 per fraud) - (20 per strike) - (1 per inactive month).
  */
 export function calculateIntegrity(history: UserHistory): number {
   const base = BASE_INTEGRITY;

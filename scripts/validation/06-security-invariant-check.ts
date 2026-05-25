@@ -30,6 +30,13 @@ const FORBIDDEN_PATTERNS: ForbiddenPattern[] = [
   // Debug backdoors
   { pattern: /NODE_ENV\s*!==\s*['"]production['"]\s*&&\s*token\s*===/, label: 'DEV_TOKEN_BYPASS', severity: 'error' },
 
+  // Hardcoded default secrets — these must never be a runtime fallback.
+  { pattern: /styx-dev-secret-do-not-use-in-production/g, label: 'HARDCODED_JWT_SECRET', severity: 'error' },
+  { pattern: /styx-webhook-dev-secret/g, label: 'HARDCODED_WEBHOOK_SECRET', severity: 'error' },
+  { pattern: /styx-default-secret/g, label: 'HARDCODED_APP_SECRET', severity: 'error' },
+  { pattern: /styx-anon-salt-v1/g, label: 'HARDCODED_ANON_SALT', severity: 'error' },
+  { pattern: /do-not-use-in-production/g, label: 'HARDCODED_DEV_SECRET', severity: 'error' },
+
   // Known test-only secrets — warn but don't fail (env fallbacks are acceptable)
   { pattern: /sk_test_mock_key/g, label: 'STRIPE_TEST_KEY (env fallback)', severity: 'warn' },
 ];
@@ -113,9 +120,15 @@ function runSecurityInvariantCheck() {
     }
   }
 
-  // Also scan source guard files (non-test) for the most critical patterns
-  const sourceGuardsDir = join(REPO_ROOT, 'src/api/guards');
-  const sourceFiles = collectFiles(sourceGuardsDir, SOURCE_SCAN_EXTENSIONS);
+  // Also scan source guard files (non-test) for the most critical patterns.
+  // Guards live in several locations; scan all of them, not just one.
+  const sourceGuardsDirs = [
+    join(REPO_ROOT, 'src/api/guards'),
+    join(REPO_ROOT, 'src/api/src/guards'),
+    join(REPO_ROOT, 'src/api/src/common/guards'),
+  ];
+  const existingGuardsDirs = sourceGuardsDirs.filter((d) => existsSync(d));
+  const sourceFiles = existingGuardsDirs.flatMap((d) => collectFiles(d, SOURCE_SCAN_EXTENSIONS));
   for (const file of sourceFiles) {
     if (isTestFile(file)) continue;
     filesScanned++;
@@ -147,9 +160,9 @@ function runSecurityInvariantCheck() {
     });
   }
 
-  if (sourceFiles.length === 0 && existsSync(sourceGuardsDir)) {
+  if (sourceFiles.length === 0 && existingGuardsDirs.length > 0) {
     errors.push({
-      file: sourceGuardsDir,
+      file: existingGuardsDirs.join(', '),
       label: 'SOURCE_GUARDS_NOT_SCANNED',
       line: 0,
     });

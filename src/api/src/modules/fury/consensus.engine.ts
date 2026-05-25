@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Pool } from 'pg';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
-import { AUDITOR_STAKE_AMOUNT, calculateReviewerWeight, FuryHistory } from '../../../../shared/libs/integrity';
+import { calculateReviewerWeight, FuryHistory } from '../../../../shared/libs/integrity';
+import { FURY_CONSENSUS_SIZE } from '../../../../shared/libs/behavioral-logic';
 
 export type Verdict = 'PASS' | 'FAIL';
 
@@ -21,7 +22,7 @@ export interface ConsensusResult {
     passPower: number;
     failPower: number;
   };
-  flaggedFuries: string[]; // Furies who passed a honeypot (known-fail)
+  flaggedFuries: string[]; // Furies whose verdict disagreed with the honeypot's expected result
   bountyDistributed: boolean;
 }
 
@@ -36,43 +37,51 @@ export class ConsensusEngine {
   ) {}
 
   /**
-   * Aggregates Fury verdicts for a proof using weighted majority (66% power threshold).
+   * Aggregates Fury verdicts for a proof using weighted majority (>66% power threshold).
+   * Mirrors the symmetric band used by the shared ConsensusResolver: a verdict only
+   * reaches VERIFIED/REJECTED when one side exceeds 66% of total power, otherwise SPLIT.
    * F-FURY-08: Reviewer voting power scales with experience and accuracy (1.0 - 2.0x).
+   *
+   * @param expectedVerdict For honeypot proofs, the known-correct verdict ('PASS' for a
+   *   CLEAN honeypot, 'FAIL' for a BREACH/known-fail honeypot). Defaults to 'FAIL'.
    */
   async evaluate(
     proofId: string,
     votes: FuryVote[],
     isHoneypot: boolean,
+    expectedVerdict: Verdict = 'FAIL',
   ): Promise<ConsensusResult> {
     let totalPower = 0;
     let passPower = 0;
     let failPower = 0;
 
     for (const vote of votes) {
-      // Fetch Fury history to calculate weight
+      // Fetch Fury history to calculate weight. fury_assignments has no `status`
+      // column; an audit is "completed" once it has a verdict on a finalized proof,
+      // and "successful" when the verdict matched the proof's final consensus.
       const statsResult = await this.pool.query(
-        `SELECT 
-          COUNT(*) FILTER (WHERE verdict = 'PASS' AND status = 'COMPLETED') as successful_passes,
-          COUNT(*) FILTER (WHERE verdict = 'FAIL' AND status = 'COMPLETED') as successful_fails,
-          COUNT(*) FILTER (WHERE is_false_accusation = true) as false_accusations,
-          COUNT(*) as total_audits
-         FROM fury_assignments
-         JOIN proofs ON fury_assignments.proof_id = proofs.id
-         WHERE fury_user_id = $1`,
+        `SELECT
+          COUNT(*) FILTER (WHERE fa.verdict IS NOT NULL AND p.status IN ('VERIFIED', 'REJECTED')) as total_audits,
+          COUNT(*) FILTER (WHERE (fa.verdict = 'PASS' AND p.status = 'VERIFIED')
+                              OR (fa.verdict = 'FAIL' AND p.status = 'REJECTED')) as successful_audits,
+          COUNT(*) FILTER (WHERE fa.verdict = 'FAIL' AND p.status = 'VERIFIED') as false_accusations
+         FROM fury_assignments fa
+         JOIN proofs p ON fa.proof_id = p.id
+         WHERE fa.fury_user_id = $1`,
         [vote.furyUserId]
       );
 
       const stats = statsResult.rows[0];
       const history: FuryHistory = {
         furyId: vote.furyUserId,
-        successfulAudits: parseInt(stats.successful_passes) + parseInt(stats.successful_fails),
+        successfulAudits: parseInt(stats.successful_audits),
         falseAccusations: parseInt(stats.false_accusations),
         totalAudits: parseInt(stats.total_audits),
       };
 
       const weight = calculateReviewerWeight(history);
       totalPower += weight;
-      
+
       if (vote.verdict === 'PASS') {
         passPower += weight;
       } else {
@@ -80,22 +89,30 @@ export class ConsensusEngine {
       }
     }
 
-    let outcome: ConsensusOutcome;
-    const THRESHOLD = 0.66; // 66% of total power required
+    // Distinct voters present a quorum requirement; without enough voters (or with no
+    // weighted power at all) we cannot make a confident call and must escalate.
+    const distinctVoters = new Set(votes.map((v) => v.furyUserId)).size;
 
-    if (passPower / totalPower >= THRESHOLD) {
+    let outcome: ConsensusOutcome;
+    const THRESHOLD = 0.66; // strictly more than 66% of total power required
+
+    if (totalPower === 0 || distinctVoters < FURY_CONSENSUS_SIZE) {
+      // Empty/zero-weight votes (NaN guard) or sub-quorum → escalate to human judge.
+      outcome = 'SPLIT';
+    } else if (passPower / totalPower > THRESHOLD) {
       outcome = 'VERIFIED';
-    } else if (failPower / totalPower >= THRESHOLD) {
+    } else if (failPower / totalPower > THRESHOLD) {
       outcome = 'REJECTED';
     } else {
       outcome = 'SPLIT'; // escalate to human judge
     }
 
-    // Honeypot detection: flag Furies who incorrectly voted PASS on a known-fail
+    // Honeypot detection: flag Furies whose verdict disagreed with the honeypot's
+    // known-correct (expected) verdict — not merely everyone who voted PASS.
     const flaggedFuries: string[] = [];
     if (isHoneypot) {
       for (const vote of votes) {
-        if (vote.verdict === 'PASS') {
+        if (vote.verdict !== expectedVerdict) {
           flaggedFuries.push(vote.furyUserId);
         }
       }
@@ -118,82 +135,16 @@ export class ConsensusEngine {
       flaggedFuries,
     });
 
-    let bountyDistributed = false;
-    if (outcome !== 'SPLIT') {
-      try {
-        await this.distributeBounties(proofId, votes, outcome, isHoneypot);
-        bountyDistributed = true;
-      } catch (e: any) {
-        this.logger.error(`Failed to distribute bounties for proof ${proofId}: ${e.message}`);
-      }
-
-    }
-
-    return { 
-      outcome, 
-      votes, 
-      weightedStats: { totalPower, passPower, failPower },
-      flaggedFuries, 
-      bountyDistributed 
-    };
-  }
-
-  /**
-   * Distributes bounties to Furies who voted with the consensus.
-   * Correct voters receive AUDITOR_STAKE_AMOUNT from the platform bounty pool.
-   * Incorrect voters (especially on honeypots) receive no payout.
-   */
-  private async distributeBounties(
-    proofId: string,
-    votes: FuryVote[],
-    outcome: ConsensusOutcome,
-    isHoneypot: boolean,
-  ): Promise<void> {
-    // Determine the "correct" vote based on outcome
-    const correctVerdict: Verdict = outcome === 'VERIFIED' ? 'PASS' : 'FAIL';
-
-    // Get the platform bounty pool account
-    const bountyPoolResult = await this.pool.query(
-      `SELECT id FROM accounts WHERE name = 'FURY_BOUNTY_POOL' LIMIT 1`,
-    );
-    if (bountyPoolResult.rows.length === 0) {
-      this.logger.warn('FURY_BOUNTY_POOL account not found — skipping bounty distribution');
-      return;
-    }
-    const bountyPoolAccountId = bountyPoolResult.rows[0].id;
-
-    for (const vote of votes) {
-      if (vote.verdict === correctVerdict) {
-        // Get Fury's account ID
-        const furyResult = await this.pool.query(
-          `SELECT account_id FROM users WHERE id = $1`,
-          [vote.furyUserId],
-        );
-
-        if (furyResult.rows.length > 0 && furyResult.rows[0].account_id) {
-          await this.ledger.recordTransaction(
-            bountyPoolAccountId,
-            furyResult.rows[0].account_id,
-            AUDITOR_STAKE_AMOUNT,
-            undefined,
-            {
-              type: 'FURY_BOUNTY_PAYOUT',
-              proofId,
-              furyUserId: vote.furyUserId,
-              verdict: vote.verdict,
-              isHoneypot,
-            },
-          );
-        }
-      }
-    }
-
-    await this.truthLog.appendEvent('BOUNTY_DISTRIBUTED', {
-      proofId,
+    // NOTE: Bounty/penalty disbursement is owned exclusively by FuryWorker
+    // (disburseFuryBounties). The engine no longer pays bounties here — doing so
+    // alongside the worker caused a double payout. `bountyDistributed` stays false
+    // because this method does not move funds.
+    return {
       outcome,
-      correctVerdict,
-      paidFuries: votes.filter((v) => v.verdict === correctVerdict).map((v) => v.furyUserId),
-      bountyPerFury: AUDITOR_STAKE_AMOUNT,
-    });
+      votes,
+      weightedStats: { totalPower, passPower, failPower },
+      flaggedFuries,
+      bountyDistributed: false,
+    };
   }
 }

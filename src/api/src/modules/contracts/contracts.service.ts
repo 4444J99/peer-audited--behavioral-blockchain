@@ -260,11 +260,12 @@ export class ContractsService {
       disposition,
     );
 
+    // For REFUND disposition on failure, cancel the hold instead of capturing.
+    const stripeEffect = disposition === 'REFUND'
+      ? 'STRIPE_CANCEL_HOLD' as const
+      : 'STRIPE_CAPTURE_STAKE' as const;
+
     if (contractRow.payment_intent_id) {
-      // For REFUND disposition on failure, cancel the hold instead of capturing
-      const stripeEffect = disposition === 'REFUND'
-        ? 'STRIPE_CANCEL_HOLD' as const
-        : 'STRIPE_CAPTURE_STAKE' as const;
       effects.push({
         contractId,
         outcome,
@@ -272,6 +273,32 @@ export class ContractsService {
         dedupeKey: `${baseKey}:stripe`,
         payload: {
           paymentIntentId: contractRow.payment_intent_id,
+        },
+      });
+    }
+
+    // Double-down adds extra Stripe holds recorded in metadata.additional_payouts.
+    // These must be captured/cancelled at settlement alongside the primary intent;
+    // otherwise the additional authorizations are orphaned. We emit one Stripe
+    // effect per additional intent so the outbox dispatcher acts on each.
+    const additionalIntents = Array.isArray(contractRow?.metadata?.additional_payouts)
+      ? contractRow.metadata.additional_payouts
+      : [];
+    const seenIntents = new Set<string>(
+      contractRow.payment_intent_id ? [contractRow.payment_intent_id] : [],
+    );
+    for (const intentId of additionalIntents) {
+      if (typeof intentId !== 'string' || !intentId || seenIntents.has(intentId)) {
+        continue;
+      }
+      seenIntents.add(intentId);
+      effects.push({
+        contractId,
+        outcome,
+        effectType: stripeEffect,
+        dedupeKey: `${baseKey}:stripe:additional:${intentId}`,
+        payload: {
+          paymentIntentId: intentId,
         },
       });
     }
@@ -1466,11 +1493,19 @@ export class ContractsService {
       throw new BadRequestException('This bounty is no longer active or has already been claimed.');
     }
 
-    // 2. Mark bounty as pending review (claimed)
-    await this.pool.query(
-      `UPDATE bounties SET status = 'CLAIMED', claimed_at = NOW(), claimant_ip = $1 WHERE id = $2`,
+    // 2. Atomically claim the bounty. The WHERE status = 'ACTIVE' guard closes
+    //    the TOCTOU window between the read above and this write: only the first
+    //    concurrent claimant wins the conditional UPDATE; a losing racer gets
+    //    zero rows back and is rejected.
+    const claim = await this.pool.query(
+      `UPDATE bounties SET status = 'CLAIMED', claimed_at = NOW(), claimant_ip = $1
+       WHERE id = $2 AND status = 'ACTIVE'
+       RETURNING id`,
       [claimantIp, bounty.id]
     );
+    if (claim.rows.length === 0) {
+      throw new BadRequestException('This bounty is no longer active or has already been claimed.');
+    }
 
     // 3. Create a proof submission on behalf of the Ex (linked to the user's contract)
     const proofResult = await this.pool.query(
@@ -1598,11 +1633,34 @@ export class ContractsService {
         throw new BadRequestException(`Contract ${contractId} already resolved as ${row.status}`);
       }
 
-      // Update contract status while the row lock is held.
-      await db.query(
-        'UPDATE contracts SET status = $1 WHERE id = $2',
+      // Claim the transition atomically. In the transactional path the row is
+      // already pinned by FOR UPDATE; in the non-transactional fallback the
+      // `status NOT IN ('COMPLETED','FAILED')` predicate is the lock+re-check —
+      // the UPDATE takes a row lock for the duration of the statement and the
+      // WHERE clause re-checks the idempotency guard, so if two concurrent crons
+      // both pass the read above only one of them actually transitions the row;
+      // the loser's UPDATE matches zero rows and is a no-op. The downstream
+      // settlement side effects are independently idempotent (settlement dedupe
+      // / ledger sideEffectKey), so a no-op transition cannot double-allocate.
+      const claim = await db.query(
+        `UPDATE contracts SET status = $1
+         WHERE id = $2 AND status NOT IN ('COMPLETED', 'FAILED')
+         RETURNING id`,
         [outcome, contractId],
       );
+
+      // In the non-transactional fallback there is no FOR UPDATE lock held across
+      // the read above and this write, so a concurrent resolver may have already
+      // transitioned the contract to a terminal status. When that happens the
+      // conditional UPDATE matches zero rows; we must NOT proceed to dispatch
+      // settlement or record ledger entries (the winning resolver already owns
+      // those side effects), mirroring the claimBounty / grace-day bail-out. The
+      // transactional path can never see zero rows here (the row is pinned and we
+      // already re-checked its status under the lock), so this guard is a no-op
+      // there.
+      if (!useTransaction && claim.rows.length === 0) {
+        return;
+      }
 
       // Update user integrity score
       const userResult = await db.query('SELECT * FROM users WHERE id = $1', [row.user_id]);
@@ -1718,7 +1776,10 @@ export class ContractsService {
           );
           if (escrowResult.rows.length > 0) {
             if (quote.actualAction === 'RELEASE') {
-              // Return from escrow to user
+              // Return from escrow to user. When an outer transaction is in
+              // flight (the contract row is pinned by FOR UPDATE on `client`),
+              // the posting MUST join that transaction so it rolls back with the
+              // status change if a later step fails — never commit independently.
               await this.ledger.recordTransaction(
                 escrowResult.rows[0].id,
                 userResult.rows[0].account_id,
@@ -1729,38 +1790,86 @@ export class ContractsService {
                   outcome,
                   actualAction: quote.actualAction,
                 },
+                client ?? undefined,
               );
             } else {
-              // Move from escrow to revenue
+              // Move from escrow to revenue, then top up the bounty pool. These
+              // two postings must be atomic with each other AND with the contract
+              // status transition: capturing the stake into revenue while the
+              // contract later reverts (outer ROLLBACK) would strand funds in
+              // SYSTEM_REVENUE for an unresolved contract.
+              //
+              // When an outer transaction client is in use we reuse it so the
+              // capture participates in — and rolls back with — that single
+              // atomic transaction (no nested BEGIN/COMMIT). Only when there is
+              // genuinely no outer transaction do we open a dedicated connection
+              // so the two postings remain atomic relative to each other.
               const revenueResult = await db.query(
                 `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
               );
               if (revenueResult.rows.length > 0) {
-                await this.ledger.recordTransaction(
-                  escrowResult.rows[0].id,
-                  revenueResult.rows[0].id,
-                  stakeAmountCents,
-                  contractId,
-                  {
-                    type: 'STAKE_CAPTURED',
-                    outcome,
-                    platformFeeCents: quote.platformFeeCents,
-                    bountyPoolCents: quote.bountyPoolCents,
-                  },
-                );
+                const bountyResult = quote.bountyPoolCents > 0
+                  ? await db.query(`SELECT id FROM accounts WHERE name = 'FURY_BOUNTY_POOL' LIMIT 1`)
+                  : { rows: [] as any[] };
 
-                if (quote.bountyPoolCents > 0) {
-                  const bountyResult = await db.query(
-                    `SELECT id FROM accounts WHERE name = 'FURY_BOUNTY_POOL' LIMIT 1`,
+                let ledgerClient: PoolClient | null = null;
+                let ownsLedgerTransaction = false;
+                if (client) {
+                  // Reuse the outer transaction; do not open a new BEGIN/COMMIT.
+                  ledgerClient = client;
+                } else {
+                  const captureConnect = (this.pool as unknown as { connect?: () => Promise<PoolClient> }).connect;
+                  ledgerClient = typeof captureConnect === 'function'
+                    ? await captureConnect.call(this.pool)
+                    : null;
+                  ownsLedgerTransaction = !!ledgerClient;
+                }
+                try {
+                  if (ownsLedgerTransaction && ledgerClient) await ledgerClient.query('BEGIN');
+
+                  await this.ledger.recordTransaction(
+                    escrowResult.rows[0].id,
+                    revenueResult.rows[0].id,
+                    stakeAmountCents,
+                    contractId,
+                    {
+                      type: 'STAKE_CAPTURED',
+                      outcome,
+                      platformFeeCents: quote.platformFeeCents,
+                      bountyPoolCents: quote.bountyPoolCents,
+                    },
+                    ledgerClient ?? undefined,
                   );
-                  if (bountyResult.rows.length > 0) {
+
+                  if (quote.bountyPoolCents > 0 && bountyResult.rows.length > 0) {
                     await this.ledger.recordTransaction(
                       revenueResult.rows[0].id,
                       bountyResult.rows[0].id,
                       quote.bountyPoolCents,
                       contractId,
                       { type: 'BOUNTY_POOL_TOPUP', outcome },
+                      ledgerClient ?? undefined,
                     );
+                  }
+
+                  if (ownsLedgerTransaction && ledgerClient) await ledgerClient.query('COMMIT');
+                } catch (captureErr) {
+                  // Only roll back a transaction we own here. When reusing the
+                  // outer transaction, the outer catch block performs the
+                  // ROLLBACK so the capture and status change revert together.
+                  if (ownsLedgerTransaction && ledgerClient) {
+                    try {
+                      await ledgerClient.query('ROLLBACK');
+                    } catch {
+                      // Preserve original failure.
+                    }
+                  }
+                  throw captureErr;
+                } finally {
+                  // Only release a connection we opened; the outer client is
+                  // released by the outer finally block.
+                  if (ownsLedgerTransaction) {
+                    ledgerClient?.release();
                   }
                 }
               }
@@ -1816,6 +1925,11 @@ export class ContractsService {
     }
   }
 
+  /** Calendar-month marker (UTC 'YYYY-MM') used to scope the per-month grace-day cap. */
+  private currentGraceMonth(): string {
+    return new Date().toISOString().slice(0, 7);
+  }
+
   async useGraceDay(contractId: string, userId: string): Promise<{ newDeadline: Date }> {
     const contract = await this.pool.query(
       'SELECT * FROM contracts WHERE id = $1',
@@ -1830,26 +1944,50 @@ export class ContractsService {
       throw new BadRequestException(`Contract is not active (status: ${row.status})`);
     }
 
-    // Count grace days used this month for this user
-    const graceDaysResult = await this.pool.query(
-      `SELECT COUNT(*) as count FROM truth_log
-       WHERE event_type = 'GRACE_DAY_USED'
-       AND payload->>'userId' = $1
-       AND created_at >= date_trunc('month', NOW())`,
-      [userId],
-    );
-    const graceDaysUsed = Number(graceDaysResult.rows[0].count);
+    // MAX_GRACE_DAYS_PER_MONTH is a per-CALENDAR-MONTH cap, not a per-contract
+    // lifetime cap: contracts.grace_days_used counts grace days within the
+    // calendar month recorded in contracts.grace_period_month. When the current
+    // month differs from the stored marker the counter has logically reset to 0,
+    // so a long-running multi-month contract regains its full allowance each
+    // month. The same grace_days_used column is read by getAttestationStatus.
+    const currentMonth = this.currentGraceMonth();
+    const storedMonth: string | null = row.grace_period_month ?? null;
+    const storedCount = Number(row.grace_days_used || 0);
+    // Only count the stored usage toward the cap when it belongs to the current
+    // calendar month; otherwise the month rolled over and this is a fresh quota.
+    const usedThisMonth = storedMonth === currentMonth ? storedCount : 0;
 
-    const result = useGraceDay(graceDaysUsed, new Date(row.ends_at));
+    const result = useGraceDay(usedThisMonth, new Date(row.ends_at));
     if (!result.success) {
       throw new BadRequestException(result.reason);
     }
 
-    // Extend the contract deadline
-    await this.pool.query(
-      'UPDATE contracts SET ends_at = $1 WHERE id = $2',
-      [result.newDeadline!.toISOString(), contractId],
+    // Atomically extend the deadline, stamp the current month, and set the
+    // counter to (usedThisMonth + 1). The CAS guard re-checks BOTH the raw
+    // counter and the month marker we read above (NULL-safe via IS NOT DISTINCT
+    // FROM) so two concurrent grace-day requests — or a request racing a month
+    // rollover — can't both pass; the loser matches zero rows and is rejected.
+    const applied = await this.pool.query(
+      `UPDATE contracts
+       SET ends_at = $1,
+           grace_days_used = $4,
+           grace_period_month = $5
+       WHERE id = $2
+         AND grace_days_used = $3
+         AND grace_period_month IS NOT DISTINCT FROM $6
+       RETURNING grace_days_used`,
+      [
+        result.newDeadline!.toISOString(),
+        contractId,
+        storedCount,
+        usedThisMonth + 1,
+        currentMonth,
+        storedMonth,
+      ],
     );
+    if (applied.rows.length === 0) {
+      throw new BadRequestException('Grace day could not be applied (limit reached or concurrent update)');
+    }
 
     // F-AEGIS-09: Prevent strike by marking today's attestation as ATTESTED via Grace Day
     const today = new Date().toISOString().split('T')[0];
@@ -1889,12 +2027,18 @@ export class ContractsService {
       throw new BadRequestException('User has no payment method for appeal fee');
     }
 
-    // Get the latest proof for this contract to dispute
+    // Get the latest proof for this contract to dispute. An appeal must target a
+    // real proof/verdict — never substitute the contractId as a fake proofId, or
+    // we would charge the appeal fee against a non-existent proof (and violate the
+    // disputes.proof_id FK).
     const proofResult = await this.pool.query(
       `SELECT id FROM proofs WHERE contract_id = $1 ORDER BY submitted_at DESC LIMIT 1`,
       [contractId],
     );
-    const proofId = proofResult.rows.length > 0 ? proofResult.rows[0].id : contractId;
+    if (proofResult.rows.length === 0) {
+      throw new BadRequestException('No proof exists for this contract to dispute');
+    }
+    const proofId = proofResult.rows[0].id;
 
     const result = await this.dispute.initiateAppeal(
       userId,
@@ -2160,11 +2304,15 @@ export class ContractsService {
         [row.id],
       );
     } else {
-      // Create and immediately attest (scheduler hasn't run yet today)
+      // Create and immediately attest (scheduler hasn't run yet today).
+      // Guard the upsert so a racing COSIGNED row is never downgraded back to
+      // ATTESTED: only overwrite when the existing row is not already a more
+      // advanced state (COSIGNED/ATTESTED).
       await this.pool.query(
         `INSERT INTO attestations (contract_id, user_id, attestation_date, status, attested_at)
          VALUES ($1, $2, CURRENT_DATE, 'ATTESTED', NOW())
-         ON CONFLICT (contract_id, attestation_date) DO UPDATE SET status = 'ATTESTED', attested_at = NOW()`,
+         ON CONFLICT (contract_id, attestation_date) DO UPDATE SET status = 'ATTESTED', attested_at = NOW()
+         WHERE attestations.status NOT IN ('ATTESTED', 'COSIGNED')`,
         [contractId, userId],
       );
     }
@@ -2377,6 +2525,16 @@ export class ContractsService {
   }
 
   async doubleDownStake(contractId: string, userId: string, additionalAmount: number) {
+    // Defence-in-depth: the controller DTO already rejects non-positive / NaN /
+    // oversized values, but the service must not trust its caller for money.
+    if (!Number.isFinite(additionalAmount) || additionalAmount <= 0) {
+      throw new BadRequestException('Additional stake amount must be a positive number');
+    }
+    const additionalAmountCents = toCents(additionalAmount);
+    if (!Number.isInteger(additionalAmountCents) || additionalAmountCents <= 0) {
+      throw new BadRequestException('Additional stake amount resolves to an invalid cent value');
+    }
+
     const contract = await this.pool.query('SELECT * FROM contracts WHERE id = $1', [contractId]);
     if (contract.rows.length === 0) throw new NotFoundException('Contract not found');
     const row = contract.rows[0];
@@ -2389,33 +2547,128 @@ export class ContractsService {
 
     if (!user.stripe_customer_id) throw new BadRequestException('No payment method on file');
 
-    // 1. Hold additional funds via Stripe
-    const paymentIntent = await this.stripe.holdStake(user.stripe_customer_id, toCents(additionalAmount), contractId);
+    // 1. Hold additional funds via Stripe BEFORE the DB mutation so a Stripe
+    //    failure can't leave the ledger ahead of the actual hold. The hold is
+    //    the only step that lives outside the DB transaction; if the
+    //    transaction below fails we compensate by cancelling the hold so funds
+    //    are never authorized without a matching ledger record.
+    const paymentIntent = await this.stripe.holdStake(user.stripe_customer_id, additionalAmountCents, contractId);
 
-    // 2. Update contract total stake and record the additional PI in metadata
-    const newTotal = Number(row.stake_amount) + additionalAmount;
-    await this.pool.query(
-      `UPDATE contracts 
-       SET stake_amount = $1, 
-           metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{additional_payouts}', 
-                               COALESCE(metadata->'additional_payouts', '[]'::jsonb) || $3::jsonb)
-       WHERE id = $2`,
-      [newTotal, contractId, JSON.stringify([paymentIntent.id])],
-    );
+    const ledgerSideEffectKey = `double-down:${contractId}:${paymentIntent.id}`;
 
-    // 3. Ledger entry for the increase
-    const escrowResult = await this.pool.query(`SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`);
-    if (user.account_id && escrowResult.rows.length > 0) {
-      await this.ledger.recordTransaction(
-        user.account_id,
-        escrowResult.rows[0].id,
-        toCents(additionalAmount),
-        contractId,
-        { type: 'STAKE_DOUBLE_DOWN', previousTotal: row.stake_amount },
-      );
+    // 2. Apply the DB mutations atomically with a row lock so concurrent
+    //    double-down requests (or retries) can't race on stake_amount.
+    const maybeConnect = (this.pool as unknown as { connect?: () => Promise<PoolClient> }).connect;
+    const client = typeof maybeConnect === 'function' ? await maybeConnect.call(this.pool) : null;
+    const db: { query: PoolClient['query'] } = (client ?? this.pool) as any;
+    const useTransaction = !!client;
+
+    let newTotal: number;
+    try {
+      if (useTransaction) {
+        await db.query('BEGIN');
+
+        // Re-read under FOR UPDATE to obtain the authoritative stake amount and
+        // guard the status while the row is locked.
+        const locked = await db.query(
+          'SELECT id, user_id, status, stake_amount, metadata FROM contracts WHERE id = $1 FOR UPDATE',
+          [contractId],
+        );
+        if (locked.rows.length === 0) throw new NotFoundException('Contract not found');
+        const lockedRow = locked.rows[0];
+        if (lockedRow.user_id !== userId) throw new ForbiddenException('Not your contract');
+        if (lockedRow.status !== 'ACTIVE') throw new BadRequestException('Contract is not active');
+
+        // Idempotency guard: if this payment intent was already recorded for this
+        // contract, the double-down already applied — do not double-count.
+        const alreadyApplied = await db.query(
+          `SELECT id FROM contracts
+           WHERE id = $1
+             AND metadata->'additional_payouts' @> $2::jsonb`,
+          [contractId, JSON.stringify([paymentIntent.id])],
+        );
+        if (alreadyApplied.rows.length > 0) {
+          await db.query('COMMIT');
+          return {
+            contractId,
+            newTotal: Number(lockedRow.stake_amount),
+            paymentIntentId: paymentIntent.id,
+          };
+        }
+
+        newTotal = Number(lockedRow.stake_amount) + additionalAmount;
+        await db.query(
+          `UPDATE contracts
+           SET stake_amount = $1,
+               metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{additional_payouts}',
+                                   COALESCE(metadata->'additional_payouts', '[]'::jsonb) || $3::jsonb)
+           WHERE id = $2`,
+          [newTotal, contractId, JSON.stringify([paymentIntent.id])],
+        );
+
+        // Ledger entry for the increase, inside the same transaction. The
+        // sideEffectKey makes the posting idempotent on retry.
+        const escrowResult = await db.query(`SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`);
+        if (user.account_id && escrowResult.rows.length > 0) {
+          await this.ledger.recordTransaction(
+            user.account_id,
+            escrowResult.rows[0].id,
+            additionalAmountCents,
+            contractId,
+            { type: 'STAKE_DOUBLE_DOWN', previousTotal: lockedRow.stake_amount, sideEffectKey: ledgerSideEffectKey },
+            client as PoolClient,
+          );
+        }
+
+        await db.query('COMMIT');
+      } else {
+        // Non-transactional fallback (e.g. unit tests / pools without connect()).
+        newTotal = Number(row.stake_amount) + additionalAmount;
+        await db.query(
+          `UPDATE contracts
+           SET stake_amount = $1,
+               metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{additional_payouts}',
+                                   COALESCE(metadata->'additional_payouts', '[]'::jsonb) || $3::jsonb)
+           WHERE id = $2`,
+          [newTotal, contractId, JSON.stringify([paymentIntent.id])],
+        );
+
+        const escrowResult = await db.query(`SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`);
+        if (user.account_id && escrowResult.rows.length > 0) {
+          await this.ledger.recordTransaction(
+            user.account_id,
+            escrowResult.rows[0].id,
+            additionalAmountCents,
+            contractId,
+            { type: 'STAKE_DOUBLE_DOWN', previousTotal: row.stake_amount, sideEffectKey: ledgerSideEffectKey },
+          );
+        }
+      }
+    } catch (err) {
+      if (useTransaction) {
+        try {
+          await db.query('ROLLBACK');
+        } catch {
+          // Preserve original failure.
+        }
+      }
+      // Compensation: the Stripe hold succeeded but the ledger/contract mutation
+      // failed, so cancel the hold to avoid funds authorized without a record.
+      try {
+        await this.stripe.cancelHold(paymentIntent.id);
+      } catch (cancelErr) {
+        this.logger.error(
+          `Double-down compensation failed for contract ${contractId}, orphaned hold ${paymentIntent.id}: ${
+            cancelErr instanceof Error ? cancelErr.message : cancelErr
+          }`,
+        );
+      }
+      throw err;
+    } finally {
+      client?.release();
     }
 
-    // 4. Audit Log
+    // 4. Audit Log (non-financial; outside the transaction)
     await this.truthLog.appendEvent('STAKE_DOUBLED_DOWN', {
       contractId,
       userId,
@@ -2507,6 +2760,12 @@ export class ContractsService {
   // --- Phase Delta: Accountability Partners (TKT-P1-017) ---
 
   async invitePartner(contractId: string, userId: string, partnerEmail: string) {
+    // Ownership check: only the contract owner (or an authorized writer) may
+    // invite accountability partners to a contract.
+    const contract = await this.pool.query("SELECT * FROM contracts WHERE id = \$1", [contractId]);
+    if (contract.rows.length === 0) throw new NotFoundException("Contract not found");
+    await this.assertCanWriteContractRow(contract.rows[0], { userId });
+
     const partner = await this.pool.query("SELECT id FROM users WHERE email = \$1", [partnerEmail]);
     if (partner.rows.length === 0) throw new NotFoundException("Partner user not found");
     const partnerId = partner.rows[0].id;

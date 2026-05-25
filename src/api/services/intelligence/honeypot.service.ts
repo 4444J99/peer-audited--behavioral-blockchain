@@ -1,9 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Pool } from 'pg';
+import { randomUUID, randomInt } from 'crypto';
 import { FuryRouterService } from '../fury-router/fury-router.service';
 import { TruthLogService } from '../ledger/truth-log.service';
 import { SHADOW_BAN_THRESHOLD, FURY_CONSENSUS_SIZE } from '../../../shared/libs/behavioral-logic';
+
+/**
+ * Varied, indistinguishable descriptions so injected honeypots cannot be
+ * fingerprinted by a single constant string. One is picked per injection.
+ */
+const HONEYPOT_DESCRIPTIONS = [
+  'Compliance proof — automated verification',
+  'Daily check-in submission',
+  'Routine progress update',
+  'Scheduled accountability evidence',
+  'Standard verification upload',
+  'Periodic compliance attestation',
+];
 
 /**
  * HoneypotService — Cron-based synthetic proof injector for Fury accuracy grading.
@@ -61,11 +75,13 @@ export class HoneypotService {
         return;
       }
 
-      // Check if there are enough active Furies above shadow-ban threshold
+      // Check if there are enough active FURY-role reviewers above the shadow-ban
+      // threshold. This must match the router's eligibility (FURY only), otherwise
+      // we would inject a proof that the router cannot assign enough reviewers to.
       const furyCount = await this.pool.query(
         `SELECT COUNT(*) as count FROM users
          WHERE status = 'ACTIVE'
-           AND role IN ('USER', 'FURY', 'ADMIN')
+           AND role = 'FURY'
            AND integrity_score >= $1`,
         [SHADOW_BAN_THRESHOLD],
       );
@@ -94,19 +110,24 @@ export class HoneypotService {
 
       const hostContract = contractResult.rows[0];
 
-      // Create the synthetic honeypot proof
+      // Create the synthetic honeypot proof. Use a varied description and a
+      // crypto-random, non-enumerable media path so honeypots aren't trivially
+      // identifiable by a constant string or a guessable timestamped filename.
+      const description =
+        HONEYPOT_DESCRIPTIONS[randomInt(HONEYPOT_DESCRIPTIONS.length)];
       const proofResult = await this.pool.query(
         `INSERT INTO proofs (
            contract_id, user_id, status, content_type, description,
            media_uri, is_honeypot, honeypot_expected_verdict, submitted_at, uploaded_at
          )
-         VALUES ($1, $2, 'PENDING_REVIEW', 'video/mp4', 'Compliance proof — automated verification',
+         VALUES ($1, $2, 'PENDING_REVIEW', 'video/mp4', $4,
                  $3, true, 'FAIL', NOW(), NOW())
          RETURNING id`,
         [
           hostContract.id,
           hostContract.user_id,
-          `honeypots/synthetic/${Date.now()}.mp4`,
+          `honeypots/synthetic/${randomUUID()}.mp4`,
+          description,
         ],
       );
 
@@ -141,6 +162,12 @@ export class HoneypotService {
   async gradeHoneypotPerformance(proofId: string, flaggedFuries: string[]): Promise<void> {
     const client = await this.pool.connect();
 
+    // `flaggedFuries` is the authoritative set of incorrect voters computed by the
+    // ConsensusEngine against the honeypot's expected verdict (BREACH or CLEAN).
+    // Grading reuses it instead of re-deriving correctness (which previously assumed
+    // every honeypot was known-fail and wrongly slashed honest voters on CLEAN ones).
+    const flaggedSet = new Set(flaggedFuries);
+
     try {
       await client.query('BEGIN');
 
@@ -152,7 +179,7 @@ export class HoneypotService {
       );
 
       for (const assignment of assignments.rows) {
-        const isCorrect = assignment.verdict === 'FAIL'; // known-fail → FAIL is correct
+        const isCorrect = !flaggedSet.has(assignment.fury_user_id);
         const delta = isCorrect
           ? HoneypotService.HONEYPOT_CORRECT_BONUS
           : -HoneypotService.HONEYPOT_MISS_PENALTY;
@@ -192,7 +219,7 @@ export class HoneypotService {
         proofId,
         totalReviewers: assignments.rows.length,
         flaggedFuries,
-        correctCount: assignments.rows.filter((a: any) => a.verdict === 'FAIL').length,
+        correctCount: assignments.rows.filter((a: any) => !flaggedSet.has(a.fury_user_id)).length,
         incorrectCount: flaggedFuries.length,
       });
     } catch (err) {

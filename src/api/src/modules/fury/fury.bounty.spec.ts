@@ -59,6 +59,9 @@ describe('FuryWorker — Bounty Economy', () => {
       rows: votes.map((v) => ({ fury_user_id: v.id, verdict: v.verdict })),
     });
 
+    // 1b. claim resolution (UPDATE proofs ... RETURNING id)
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: opts.proofId ?? 'proof-1' }] });
+
     // 2. proofs query
     mockPool.query.mockResolvedValueOnce({
       rows: [{ id: opts.proofId ?? 'proof-1', user_id: 'host-user', total_furies: votes.length, is_honeypot: isHoneypot, contract_id: contractId }],
@@ -217,6 +220,8 @@ describe('FuryWorker — Bounty Economy', () => {
         { fury_user_id: 'fury-with-acct', verdict: 'PASS' },
       ],
     });
+    // claim resolution
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-skip' }] });
     // proofs
     mockPool.query.mockResolvedValueOnce({
       rows: [{ is_honeypot: false, contract_id: 'contract-skip' }],
@@ -264,6 +269,8 @@ describe('FuryWorker — Bounty Economy', () => {
         { fury_user_id: 'fury-2', verdict: 'FAIL' },
       ],
     });
+    // claim resolution
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-split-bounty' }] });
     // proofs
     mockPool.query.mockResolvedValueOnce({
       rows: [{ is_honeypot: false, contract_id: 'contract-split' }],

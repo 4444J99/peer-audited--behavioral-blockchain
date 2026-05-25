@@ -56,10 +56,27 @@ export class SalesforceConnector implements CrmConnector {
     if (!res.ok) throw new Error(`Salesforce push failed: ${res.status}`);
   }
 
+  /**
+   * Escape a value before embedding it in a SOQL string literal. SOQL requires
+   * backslashes and single quotes to be backslash-escaped; without this an
+   * enterpriseId such as `x' OR Name != '` would break out of the literal and
+   * alter the query (SOQL injection).
+   */
+  private escapeSoqlLiteral(value: string): string {
+    return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  }
+
   async syncUserList(enterpriseId: string): Promise<CrmUser[]> {
+    // enterpriseId is a UUID-style identifier in our system; reject anything that
+    // is not, then escape defensively before building the SOQL literal.
+    if (typeof enterpriseId !== 'string' || !/^[A-Za-z0-9-]{1,64}$/.test(enterpriseId)) {
+      throw new Error('Invalid enterpriseId');
+    }
+
     const token = await this.authenticate();
+    const safeEnterpriseId = this.escapeSoqlLiteral(enterpriseId);
     const query = encodeURIComponent(
-      `SELECT Id, Email, Name FROM Contact WHERE Account.Styx_Enterprise_Id__c = '${enterpriseId}'`,
+      `SELECT Id, Email, Name FROM Contact WHERE Account.Styx_Enterprise_Id__c = '${safeEnterpriseId}'`,
     );
     const res = await fetch(`${this.baseUrl}/services/data/v59.0/query?q=${query}`, {
       headers: { Authorization: `Bearer ${token}` },

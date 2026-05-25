@@ -1,8 +1,14 @@
 import { GdprService } from './gdpr.service';
 import { Pool } from 'pg';
 
+const mockClient = {
+  query: jest.fn(),
+  release: jest.fn(),
+};
+
 const mockPool = {
   query: jest.fn(),
+  connect: jest.fn(),
 } as unknown as Pool;
 
 describe('GdprService', () => {
@@ -11,6 +17,11 @@ describe('GdprService', () => {
   beforeEach(() => {
     service = new GdprService(mockPool);
     (mockPool.query as jest.Mock).mockReset();
+    (mockPool.connect as jest.Mock).mockReset().mockResolvedValue(mockClient);
+    // appendTruthLogEvent runs on a connected client; default every client query
+    // (BEGIN, advisory lock, SELECT latest, INSERT, COMMIT) to an empty result.
+    mockClient.query.mockReset().mockResolvedValue({ rows: [] });
+    mockClient.release.mockReset();
   });
 
   describe('exportUserData', () => {
@@ -168,10 +179,18 @@ describe('GdprService', () => {
 
       await service.processPendingDeletions();
 
-      const eventCall = (mockPool.query as jest.Mock).mock.calls[4];
-      expect(eventCall[0]).toContain('INSERT INTO event_log');
-      expect(eventCall[0]).toContain('GDPR_ERASURE_COMPLETED');
-      const payload = JSON.parse(eventCall[1][0]);
+      // The anonymizer now issues additional scrub queries (proofs,
+      // health_oracle_samples) before logging, so locate the event_log call
+      // rather than relying on a fixed index.
+      // The erasure event is now a properly-chained append on a connected client
+      // (parameterized INSERT), not a pool.query with an inline 'n/a' hash.
+      const eventCall = mockClient.query.mock.calls.find(
+        (call) => typeof call[0] === 'string' && call[0].includes('INSERT INTO event_log'),
+      );
+      expect(eventCall).toBeDefined();
+      // Params: [sequence_index, event_type, payload, previous_hash, current_hash, created_at]
+      expect(eventCall![1][1]).toBe('GDPR_ERASURE_COMPLETED');
+      const payload = eventCall![1][2] as { userId: string; anonymizedAt: string };
       expect(payload.userId).toBe(userId);
       expect(payload.anonymizedAt).toBeDefined();
     });

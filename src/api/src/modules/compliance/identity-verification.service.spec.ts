@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { IdentityVerificationService, VerificationStatus } from './identity-verification.service';
 import {
@@ -9,19 +9,25 @@ import {
 describe('IdentityVerificationService', () => {
   let service: IdentityVerificationService;
   let mockPool: { query: jest.Mock };
-  let mockProvider: jest.Mocked<Pick<IdentityProviderService, 'startVerification' | 'parseStripeIdentityWebhook'>>;
+  let mockProvider: jest.Mocked<Pick<IdentityProviderService, 'startVerification' | 'parseStripeIdentityWebhook' | 'verifyAndParseStripeWebhook'>>;
 
   beforeEach(() => {
     mockPool = { query: jest.fn() };
     mockProvider = {
       startVerification: jest.fn(),
       parseStripeIdentityWebhook: jest.fn(),
+      verifyAndParseStripeWebhook: jest.fn(),
     };
     service = new IdentityVerificationService(
       mockPool as any,
       mockProvider as unknown as IdentityProviderService,
     );
     jest.clearAllMocks();
+    delete process.env.NODE_ENV;
+  });
+
+  afterEach(() => {
+    delete process.env.NODE_ENV;
   });
 
   // ─── getUserComplianceStatus ───
@@ -301,15 +307,34 @@ describe('IdentityVerificationService', () => {
       expect(result.isKycVerified).toBe(false);
       expect(result.kycStatus).toBe('REJECTED');
     });
+
+    it('should be unreachable in production (throws, no DB write)', async () => {
+      process.env.NODE_ENV = 'production';
+
+      await expect(
+        service.completeMockVerification({ userId: 'user-1', mode: 'KYC_ONLY', status: 'VERIFIED' }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPool.query).not.toHaveBeenCalled();
+    });
   });
 
   // ─── completeFromStripeWebhook ───
 
   describe('completeFromStripeWebhook', () => {
-    it('should return applied=false for unsupported event', async () => {
-      mockProvider.parseStripeIdentityWebhook.mockReturnValue(null);
+    it('should reject when signature verification fails (forged event)', async () => {
+      mockProvider.verifyAndParseStripeWebhook.mockImplementation(() => {
+        throw new Error('Missing Stripe-Signature header');
+      });
 
-      const result = await service.completeFromStripeWebhook({ type: 'unrelated.event' });
+      const result = await service.completeFromStripeWebhook({ rawBody: Buffer.from('{}'), signature: undefined });
+      expect(result.applied).toBe(false);
+      expect(result.reason).toBe('invalid_signature');
+    });
+
+    it('should return applied=false for unsupported event', async () => {
+      mockProvider.verifyAndParseStripeWebhook.mockReturnValue(null);
+
+      const result = await service.completeFromStripeWebhook({ rawBody: Buffer.from('{}'), signature: 't=1,v1=abc' });
       expect(result.applied).toBe(false);
       expect(result.reason).toBe('unsupported_or_invalid_event');
     });
@@ -323,16 +348,17 @@ describe('IdentityVerificationService', () => {
         userId: 'user-1',
         raw: {},
       };
-      mockProvider.parseStripeIdentityWebhook.mockReturnValue(parsed);
+      mockProvider.verifyAndParseStripeWebhook.mockReturnValue(parsed);
       mockPool.query.mockResolvedValue({ rowCount: 1 } as any);
 
       const result = await service.completeFromStripeWebhook({
-        type: 'identity.verification_session.verified',
-        data: { object: { id: 'vs_abc', metadata: { styxUserId: 'user-1' } } },
+        rawBody: Buffer.from('{}'),
+        signature: 't=1,v1=abc',
       });
 
       expect(result.applied).toBe(true);
       expect(result.userId).toBe('user-1');
+      expect(mockProvider.verifyAndParseStripeWebhook).toHaveBeenCalledWith(expect.any(Buffer), 't=1,v1=abc');
     });
   });
 

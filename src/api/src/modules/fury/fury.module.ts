@@ -13,6 +13,7 @@ import { FuryRouterService } from '../../../services/fury-router/fury-router.ser
 import { ContractsModule } from '../contracts/contracts.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { JudgeService } from './judge.service';
+import { RoleGuard } from '../../common/guards/role.guard';
 
 @Module({
   imports: [forwardRef(() => ContractsModule), NotificationsModule],
@@ -28,6 +29,7 @@ import { JudgeService } from './judge.service';
     HoneypotService, 
     FuryRouterService,
     JudgeService,
+    RoleGuard,
   ],
   exports: [
     FuryWorker, 

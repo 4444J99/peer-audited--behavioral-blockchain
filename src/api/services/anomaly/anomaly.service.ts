@@ -48,45 +48,54 @@ export class AnomalyService {
 
       return result as AnomalyResult;
     } catch (err) {
-      this.logger.warn(`Anomaly analysis timed out for ${resolvedMediaUri}, failing open`);
-      return { rejected: false, flags: ['ANALYSIS_TIMEOUT', 'UNVERIFIED'] };
+      // Fail CLOSED: this is a real-money fraud screen. A timeout (or any analysis
+      // failure) must not auto-accept media. Reject and surface for manual review.
+      this.logger.warn(`Anomaly analysis failed for ${resolvedMediaUri}, failing closed for manual review`);
+      return {
+        rejected: true,
+        reason: 'Anomaly analysis could not complete; held for manual review',
+        flags: ['ANALYSIS_TIMEOUT', 'MANUAL_REVIEW_REQUIRED'],
+      };
     } finally {
       clearTimeout(timeoutId!);
     }
   }
 
   /**
-   * Compatibility helper for admin collision scans.
-   * Produces a deterministic hash from a media URI when the original frame bytes are unavailable.
+   * Identity hash for admin collision scans.
+   *
+   * IMPORTANT: this is a CRYPTOGRAPHIC hash of the media URI string, NOT a
+   * perceptual hash. It can only detect the *same stored object* referenced by
+   * two proofs — it can NOT detect re-encoded / visually near-duplicate media (a
+   * one-byte change yields a completely different digest). Authoritative
+   * near-duplicate detection is performed at upload time by PHashService against
+   * the actual frame bytes and stored in `proof_hashes`.
+   *
+   * The previous implementation truncated the digest to 16 chars and the caller
+   * compared it with a Hamming-distance threshold, which is meaningless for crypto
+   * hashes: unrelated digests differ in ~half their bits (so the threshold never
+   * legitimately fired) yet could in principle false-positive. We now return the
+   * full digest and treat comparison as EXACT equality (see hammingDistance).
+   *
+   * (residual) Without the original frame bytes here, this scan cannot find
+   * perceptual duplicates; use proof_hashes for that.
    */
   computePHash(mediaUri: string): string {
-    return createHash('sha256')
-      .update(mediaUri)
-      .digest('hex')
-      .slice(0, 16);
+    return createHash('sha256').update(mediaUri).digest('hex');
   }
 
+  /**
+   * "Distance" between two identity hashes produced by computePHash. These are
+   * crypto digests, so partial similarity is meaningless: either the underlying
+   * media URI is identical (distance 0) or it is different (treated as "not a
+   * duplicate"). This makes the admin scan's `distance < N` check behave as an
+   * exact-match check rather than a spurious near-duplicate heuristic.
+   */
   hammingDistance(hash1: string, hash2: string): number {
-    try {
-      const a = BigInt(`0x${hash1.padStart(16, '0').slice(-16)}`);
-      const b = BigInt(`0x${hash2.padStart(16, '0').slice(-16)}`);
-      let xor = a ^ b;
-      let dist = 0;
-      while (xor > 0n) {
-        dist += Number(xor & 1n);
-        xor >>= 1n;
-      }
-      return dist;
-    } catch {
-      const maxLen = Math.max(hash1.length, hash2.length);
-      const left = hash1.padEnd(maxLen, '0');
-      const right = hash2.padEnd(maxLen, '0');
-      let dist = 0;
-      for (let i = 0; i < maxLen; i++) {
-        if (left[i] !== right[i]) dist += 1;
-      }
-      return dist;
+    if (typeof hash1 !== 'string' || typeof hash2 !== 'string') {
+      return Number.MAX_SAFE_INTEGER;
     }
+    return hash1 === hash2 ? 0 : Number.MAX_SAFE_INTEGER;
   }
 
   private async runAnalysis(mediaInput: Buffer | string, userId: string, mediaUri: string, flags: string[]): Promise<AnomalyResult> {

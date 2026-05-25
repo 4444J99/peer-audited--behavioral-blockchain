@@ -7,6 +7,7 @@ CREATE TABLE accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
     type account_type NOT NULL,
+    status TEXT NOT NULL DEFAULT 'ACTIVE', -- ACTIVE, QUARANTINED
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -73,6 +74,7 @@ CREATE TABLE contracts (
     duration_days INTEGER NOT NULL,
     status TEXT DEFAULT 'PENDING_STAKE',
     grace_days_used INTEGER DEFAULT 0,
+    grace_period_month TEXT,
     strikes INTEGER DEFAULT 0,
     started_at TIMESTAMPTZ,
     ends_at TIMESTAMPTZ,
@@ -137,6 +139,7 @@ CREATE TABLE proofs (
     media_uri TEXT,
     proof_type TEXT DEFAULT 'MEDIA',  -- MEDIA, ATTESTATION
     is_honeypot BOOLEAN DEFAULT FALSE,
+    honeypot_expected_verdict TEXT,  -- known-correct verdict for honeypots ('PASS'/'FAIL'); NULL for real proofs
     status TEXT DEFAULT 'PENDING_REVIEW',
     processing_status TEXT DEFAULT 'NOT_STARTED',
     challenge_token TEXT,

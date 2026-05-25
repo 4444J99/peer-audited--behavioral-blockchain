@@ -30,9 +30,10 @@ describe('ComplianceAccessGuard', () => {
     } as any;
   }
 
-  it('should allow when no authenticated user is attached yet', async () => {
-    const result = await guard.canActivate(createContext({ user: undefined }));
-    expect(result).toBe(true);
+  it('should deny (fail closed) when no authenticated user is attached', async () => {
+    await expect(guard.canActivate(createContext({ user: undefined }))).rejects.toThrow(
+      ForbiddenException,
+    );
     expect(compliancePolicy.evaluateUserComplianceForRequest).not.toHaveBeenCalled();
   });
 

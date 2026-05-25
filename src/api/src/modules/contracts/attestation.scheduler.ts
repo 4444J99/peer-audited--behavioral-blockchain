@@ -60,29 +60,44 @@ export class AttestationScheduler {
 
     this.logger.log(`Marking ${missed.rows.length} attestation(s) as MISSED.`);
 
-    // 2. Apply strikes and check for auto-FAIL
-    const contractIds = [...new Set(missed.rows.map(r => r.contract_id))];
+    // 2. Apply strikes and check for auto-FAIL.
+    //    Each MISSED attestation is a distinct missed obligation, so count how
+    //    many days were missed per contract rather than collapsing them to one
+    //    strike via a Set. (Normally the midnight cron processes a single
+    //    yesterday, but a catch-up run after downtime can surface several days.)
+    const missedCountByContract = new Map<string, number>();
+    for (const r of missed.rows) {
+      missedCountByContract.set(r.contract_id, (missedCountByContract.get(r.contract_id) || 0) + 1);
+    }
 
-    for (const contractId of contractIds) {
+    for (const [contractId, missedCount] of missedCountByContract) {
       try {
-        // Increment strike
+        // Increment strikes by the number of missed obligations, in one atomic
+        // statement. The `status = 'ACTIVE'` guard ensures an already-resolved
+        // contract is never re-struck on a subsequent run.
         const updated = await this.pool.query(
-          `UPDATE contracts SET strikes = strikes + 1 WHERE id = $1 AND status = 'ACTIVE' RETURNING user_id, strikes`,
-          [contractId],
+          `UPDATE contracts SET strikes = strikes + $2 WHERE id = $1 AND status = 'ACTIVE' RETURNING user_id, strikes`,
+          [contractId, missedCount],
         );
 
-        if (updated.rows.length > 0) {
-          const { user_id, strikes } = updated.rows[0];
-          
-          // F-AEGIS-08: Trigger RAIN Mindfulness intercession on first and second miss
-          if (this.notifications && strikes < NOCONTACT_MISS_STRIKE_THRESHOLD) {
-            await this.notifications.createRainNotification(user_id, contractId, 'MISSED_ATTESTATION');
-          }
+        if (updated.rows.length === 0) {
+          // Contract is no longer ACTIVE (already resolved) — nothing to do.
+          continue;
+        }
 
-          if (strikes >= NOCONTACT_MISS_STRIKE_THRESHOLD) {
-            this.logger.log(`Contract ${contractId} hit ${NOCONTACT_MISS_STRIKE_THRESHOLD} missed attestations — auto-FAIL.`);
-            await this.contractsService.resolveContract(contractId, 'FAILED');
-          }
+        const { user_id, strikes } = updated.rows[0];
+
+        // F-AEGIS-08: Trigger RAIN Mindfulness intercession before the threshold.
+        if (this.notifications && strikes < NOCONTACT_MISS_STRIKE_THRESHOLD) {
+          await this.notifications.createRainNotification(user_id, contractId, 'MISSED_ATTESTATION');
+        }
+
+        if (strikes >= NOCONTACT_MISS_STRIKE_THRESHOLD) {
+          this.logger.log(`Contract ${contractId} hit ${NOCONTACT_MISS_STRIKE_THRESHOLD} missed attestations — auto-FAIL.`);
+          // resolveContract is idempotent (it re-checks and locks the status),
+          // so even if this throws transiently and a later run retries, it will
+          // not double-settle: the conditional status claim only succeeds once.
+          await this.contractsService.resolveContract(contractId, 'FAILED');
         }
       } catch (err) {
         this.logger.error(

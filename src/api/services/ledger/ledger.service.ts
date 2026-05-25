@@ -125,49 +125,68 @@ export class LedgerService {
   }
 
   /**
-   * Phantom Money Test: verifies that all debits equal all credits across
-   * the entire ledger. Returns true if balanced, false if phantom money detected.
+   * Phantom Money Test: verifies the structural integrity of the double-entry
+   * ledger. Returns balanced=false when a corrupted or phantom entry is detected.
+   *
+   * In this schema each row in `entries` carries a SINGLE `amount` together with a
+   * `debit_account_id` and a `credit_account_id`, so every row is inherently
+   * balanced (the same amount debits one account and credits another). A naive
+   * "global sum of debits === global sum of credits" check is therefore
+   * tautologically true and detects nothing. Instead we assert the invariants
+   * that CAN actually be violated by corruption, a buggy migration, or a manual
+   * write that bypasses recordTransaction():
+   *
+   *   1. Positive-amount invariant: no entry may have amount <= 0. A zero or
+   *      negative amount means money was minted/destroyed on a posting.
+   *   2. Distinct-leg invariant: no entry may debit and credit the SAME account
+   *      (debit_account_id = credit_account_id) — such a row is a no-op that
+   *      masks a real, lost posting.
+   *   3. Referential invariant: every debit_account_id and credit_account_id must
+   *      reference an existing row in `accounts`. An orphaned reference means an
+   *      entry points at money that lives in no real account (phantom money).
+   *
+   * Any violation flips balanced=false. The returned totalDebits / totalCredits
+   * remain the aggregate SUMs over `entries` (one for the debit side, one for the
+   * credit side) and are kept purely for reporting / audit-trail context.
    */
   async verifyLedgerIntegrity(client?: PoolClient | Pool): Promise<{ balanced: boolean; totalDebits: number; totalCredits: number }> {
     const db = client || this.pool;
-    const result = await db.query(
+
+    // Reporting totals only. By construction these are equal (each row contributes
+    // its amount to both the debit and credit side), so they are NOT used to decide
+    // `balanced`; they exist for the audit trail / error messages.
+    const conservation = await db.query(
       `SELECT
-        COALESCE(SUM(amount), 0) AS total
+        COALESCE(SUM(amount), 0) AS total_debits,
+        COALESCE(SUM(amount), 0) AS total_credits
       FROM entries`,
     );
-    // In a double-entry system, every entry has equal debit and credit,
-    // so the sum of amounts represents money flowing in both directions equally.
-    // True integrity check: sum of debit-side == sum of credit-side.
-    const detailResult = await db.query(
+    const totalDebits = Number.parseInt(String(conservation.rows[0].total_debits), 10);
+    const totalCredits = Number.parseInt(String(conservation.rows[0].total_credits), 10);
+
+    // Real, falsifiable structural invariants. A single query counts every kind of
+    // violation; a healthy ledger returns all zeros.
+    const integrity = await db.query(
       `SELECT
-        debit_account_id,
-        credit_account_id,
-        SUM(amount) as total
-      FROM entries
-      GROUP BY debit_account_id, credit_account_id`,
+        COUNT(*) FILTER (WHERE e.amount <= 0) AS non_positive_count,
+        COUNT(*) FILTER (WHERE e.debit_account_id = e.credit_account_id) AS self_entry_count,
+        COUNT(*) FILTER (WHERE da.id IS NULL OR ca.id IS NULL) AS orphaned_count
+      FROM entries e
+      LEFT JOIN accounts da ON da.id = e.debit_account_id
+      LEFT JOIN accounts ca ON ca.id = e.credit_account_id`,
     );
 
-    // Aggregate debits and credits per account
-    const accountBalances = new Map<string, number>();
-    for (const row of detailResult.rows) {
-      const amount = Number.parseInt(String(row.total), 10);
-      const debitId = row.debit_account_id;
-      const creditId = row.credit_account_id;
-      accountBalances.set(debitId, (accountBalances.get(debitId) || 0) + amount);
-      accountBalances.set(creditId, (accountBalances.get(creditId) || 0) - amount);
-    }
+    const row = integrity.rows[0] || {};
+    const nonPositiveCount = Number.parseInt(String(row.non_positive_count ?? 0), 10);
+    const selfEntryCount = Number.parseInt(String(row.self_entry_count ?? 0), 10);
+    const orphanedCount = Number.parseInt(String(row.orphaned_count ?? 0), 10);
 
-    // Sum of all account balances must be exactly zero
-    let netBalance = 0;
-    for (const balance of accountBalances.values()) {
-      netBalance += balance;
-    }
+    const balanced = nonPositiveCount === 0 && selfEntryCount === 0 && orphanedCount === 0;
 
-    const totalAmount = Number.parseInt(String(result.rows[0].total), 10);
     return {
-      balanced: netBalance === 0,
-      totalDebits: totalAmount,
-      totalCredits: totalAmount,
+      balanced,
+      totalDebits,
+      totalCredits,
     };
   }
 }

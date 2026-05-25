@@ -44,11 +44,14 @@ describe('ContractsService — Behavioral Physics', () => {
     status: 'ACTIVE',
   };
 
+  // stakeAmount is denominated in DOLLARS (the service converts to cents via
+  // toCents()). Score 50 → tiers [TIER_1_MICRO_STAKES, TIER_2_STANDARD] →
+  // tier max is 10000 cents ($100), so valid stakes must stay at/under $100.
   const validDto: CreateContractInput = {
     userId: 'user-1',
     oathCategory: OathCategory.DEEP_WORK_FOCUS,
     verificationMethod: VerificationMethod.API_SCREEN_TIME,
-    stakeAmount: 1500,
+    stakeAmount: 15, // $15 → 1500 cents, within the $100 TIER_2 limit
     durationDays: 30,
   };
 
@@ -114,7 +117,7 @@ describe('ContractsService — Behavioral Physics', () => {
   describe('stake tier limits', () => {
     it('should reject stake exceeding tier max for TIER_2_STANDARD', async () => {
       // Score 50 → tiers = [TIER_1_MICRO_STAKES, TIER_2_STANDARD] → max 10000 cents ($100)
-      const dto = { ...validDto, stakeAmount: 15000 };
+      const dto = { ...validDto, stakeAmount: 150 }; // $150 → 15000 cents, over the $100 limit
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Cool-off: no recent failures
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
@@ -128,7 +131,7 @@ describe('ContractsService — Behavioral Physics', () => {
     });
 
     it('should allow stake within tier limit', async () => {
-      const dto = { ...validDto, stakeAmount: 8000 }; // under 10000 cents ($100) TIER_2 limit
+      const dto = { ...validDto, stakeAmount: 80 }; // $80 → 8000 cents, under the $100 TIER_2 limit
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Cool-off: no failures
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
@@ -152,7 +155,9 @@ describe('ContractsService — Behavioral Physics', () => {
 
   describe('dynamic downscaling', () => {
     it('should reject high stake after 3+ failures', async () => {
-      const dto = { ...validDto, stakeAmount: 8000 }; // Under tier max (10000) but over downscaled max
+      // $80 → 8000 cents: under tier max (10000) but over the downscaled max
+      // (10000 * 0.5 = 5000 cents after 3 failures).
+      const dto = { ...validDto, stakeAmount: 80 };
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Cool-off: no recent failures (failures are older than 7 days)
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
@@ -168,7 +173,7 @@ describe('ContractsService — Behavioral Physics', () => {
     });
 
     it('should allow stake within downscaled limit', async () => {
-      const dto = { ...validDto, stakeAmount: 1000 }; // Well under downscaled max of 5000 cents ($50)
+      const dto = { ...validDto, stakeAmount: 10 }; // $10 → 1000 cents, well under downscaled max of 5000 cents ($50)
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
@@ -188,7 +193,9 @@ describe('ContractsService — Behavioral Physics', () => {
     });
 
     it('should apply exponential downscaling for 6+ failures', async () => {
-      const dto = { ...validDto, stakeAmount: 3000 }; // 6 failures → 0.5^2 = 0.25 → max = 10000 * 0.25 = 2500
+      // $30 → 3000 cents. 6 failures → 0.5^2 = 0.25 → max = 10000 * 0.25 = 2500 cents,
+      // so 3000 cents is rejected while still under the $100 tier ceiling.
+      const dto = { ...validDto, stakeAmount: 30 };
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 6 }] }); // Total failures
@@ -209,7 +216,7 @@ describe('ContractsService — Behavioral Physics', () => {
       userId: 'user-1',
       oathCategory: OathCategory.NO_CONTACT_BOUNDARY,
       verificationMethod: VerificationMethod.DAILY_ATTESTATION,
-      stakeAmount: 1500,
+      stakeAmount: 15, // $15 → 1500 cents, within the $100 TIER_2 limit
       durationDays: 14,
       recoveryMetadata: {
         accountabilityPartnerEmail: 'friend@example.com',

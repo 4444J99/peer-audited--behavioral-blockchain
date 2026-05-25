@@ -25,10 +25,13 @@ describe('TruthLogService', () => {
     const fixedDate = new Date('2026-03-09T00:00:00.000Z');
     jest.useFakeTimers().setSystemTime(fixedDate);
 
-    // Mock the SELECT query to return no rows (empty log)
+    // Mock the query sequence. The append now serializes with a
+    // transaction-scoped advisory lock, so an extra query runs between BEGIN
+    // and the latest-hash SELECT.
     mockClient.query
       .mockResolvedValueOnce({ rows: [] }) // BEGIN
-      .mockResolvedValueOnce({ rows: [] }) // SELECT
+      .mockResolvedValueOnce({ rows: [] }) // SELECT pg_advisory_xact_lock
+      .mockResolvedValueOnce({ rows: [] }) // SELECT latest hash (empty log)
       .mockResolvedValueOnce({ rows: [{ id: 'new-log-1' }] }) // INSERT
       .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
@@ -37,16 +40,22 @@ describe('TruthLogService', () => {
 
     expect(resultId).toBe('new-log-1');
 
-    // Calculate expected hash (Theorem 2 Preimage)
+    // Calculate expected hash (Theorem 2 Preimage):
+    // index | event_type | timestamp | previous_hash | payload
     const expectedHash = createHash('sha256')
-      .update(`1|${fixedDate.toISOString()}|${GENESIS_HASH}|${JSON.stringify(payload)}`)
+      .update(`1|TEST_EVENT|${fixedDate.toISOString()}|${GENESIS_HASH}|${JSON.stringify(payload)}`)
       .digest('hex');
 
-    // Verify INSERT statement arguments
-    const insertCallArgs = (mockClient.query as jest.Mock).mock.calls[2];
+    // Verify INSERT statement arguments. The INSERT is now the 4th query
+    // (BEGIN, advisory lock, SELECT, INSERT) and stores an explicit
+    // sequence_index, so params are
+    // [sequence_index, event_type, payload, previous_hash, current_hash, timestamp].
+    const insertCallArgs = (mockClient.query as jest.Mock).mock.calls[3];
     expect(insertCallArgs[0]).toContain('INSERT INTO event_log');
-    expect(insertCallArgs[1][2]).toBe(GENESIS_HASH); // previous hash
-    expect(insertCallArgs[1][3]).toBe(expectedHash); // current hash
+    expect(insertCallArgs[1][0]).toBe(1); // sequence_index
+    expect(insertCallArgs[1][1]).toBe('TEST_EVENT'); // event_type
+    expect(insertCallArgs[1][3]).toBe(GENESIS_HASH); // previous hash
+    expect(insertCallArgs[1][4]).toBe(expectedHash); // current hash
 
     jest.useRealTimers();
   });
@@ -55,23 +64,27 @@ describe('TruthLogService', () => {
     const fixedDate = new Date('2026-03-09T00:00:00.000Z');
     jest.useFakeTimers().setSystemTime(fixedDate);
 
-    // Mock the SELECT query to return an existing hash
+    // Mock the query sequence with an existing head hash. The advisory lock
+    // query runs between BEGIN and the latest-hash SELECT.
     mockClient.query
       .mockResolvedValueOnce({ rows: [] }) // BEGIN
-      .mockResolvedValueOnce({ rows: [{ sequence_index: '10', current_hash: 'abc123oldhash' }] }) // SELECT
+      .mockResolvedValueOnce({ rows: [] }) // SELECT pg_advisory_xact_lock
+      .mockResolvedValueOnce({ rows: [{ sequence_index: '10', current_hash: 'abc123oldhash' }] }) // SELECT latest
       .mockResolvedValueOnce({ rows: [{ id: 'new-log-2' }] }) // INSERT
       .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
     const payload = { action: 'complete_habit' };
     await service.appendEvent('TEST_EVENT', payload);
 
+    // Preimage: index | event_type | timestamp | previous_hash | payload
     const expectedHash = createHash('sha256')
-      .update(`11|${fixedDate.toISOString()}|abc123oldhash|${JSON.stringify(payload)}`)
+      .update(`11|TEST_EVENT|${fixedDate.toISOString()}|abc123oldhash|${JSON.stringify(payload)}`)
       .digest('hex');
 
-    const insertCallArgs = (mockClient.query as jest.Mock).mock.calls[2];
-    expect(insertCallArgs[1][2]).toBe('abc123oldhash');
-    expect(insertCallArgs[1][3]).toBe(expectedHash);
+    const insertCallArgs = (mockClient.query as jest.Mock).mock.calls[3];
+    expect(insertCallArgs[1][0]).toBe(11); // sequence_index
+    expect(insertCallArgs[1][3]).toBe('abc123oldhash'); // previous hash
+    expect(insertCallArgs[1][4]).toBe(expectedHash); // current hash
 
     jest.useRealTimers();
   });
@@ -79,14 +92,16 @@ describe('TruthLogService', () => {
   describe('verifyChain', () => {
     it('should return valid if chain is consistent', async () => {
       const fixedDate = new Date('2026-03-09T00:00:00.000Z');
+      // Preimage now includes event_type:
+      // index | event_type | timestamp | previous_hash | payload
       const payload1 = { a: 1 };
       const hash1 = createHash('sha256')
-        .update(`1|${fixedDate.toISOString()}|${GENESIS_HASH}|${JSON.stringify(payload1)}`)
+        .update(`1|E1|${fixedDate.toISOString()}|${GENESIS_HASH}|${JSON.stringify(payload1)}`)
         .digest('hex');
 
       const payload2 = { b: 2 };
       const hash2 = createHash('sha256')
-        .update(`2|${fixedDate.toISOString()}|${hash1}|${JSON.stringify(payload2)}`)
+        .update(`2|E2|${fixedDate.toISOString()}|${hash1}|${JSON.stringify(payload2)}`)
         .digest('hex');
 
       (mockPool.query as jest.Mock).mockResolvedValueOnce({

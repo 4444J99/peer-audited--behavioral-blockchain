@@ -2,8 +2,17 @@ import { UsersService } from './users.service';
 import { NotFoundException } from '@nestjs/common';
 import { Pool } from 'pg';
 
+// Audit events are now written via a private appendTruthLogEvent() that
+// acquires a pooled client (pool.connect()) and runs a transaction
+// (BEGIN -> advisory lock -> prev-hash SELECT -> INSERT -> COMMIT) on it.
+const mockClient = {
+  query: jest.fn(),
+  release: jest.fn(),
+};
+
 const mockPool = {
   query: jest.fn(),
+  connect: jest.fn().mockResolvedValue(mockClient),
 } as unknown as Pool;
 
 describe('UsersService', () => {
@@ -12,6 +21,10 @@ describe('UsersService', () => {
   beforeEach(() => {
     service = new UsersService(mockPool);
     jest.clearAllMocks();
+    (mockPool.connect as jest.Mock).mockResolvedValue(mockClient);
+    // Default truth-log transaction: BEGIN, advisory lock, empty head SELECT,
+    // INSERT, COMMIT.
+    (mockClient.query as jest.Mock).mockResolvedValue({ rows: [] });
   });
 
   describe('getProfile', () => {
@@ -171,10 +184,11 @@ describe('UsersService', () => {
 
   describe('requestDeletion', () => {
     it('should mark user as pending deletion and stamp deletion_requested_at', async () => {
+      // SELECT user + UPDATE status go through pool.query; the audit event is
+      // appended via a pooled client transaction (mockClient).
       (mockPool.query as jest.Mock)
         .mockResolvedValueOnce({ rows: [{ id: 'user-1', status: 'ACTIVE' }] }) // SELECT
-        .mockResolvedValueOnce({ rows: [] }) // UPDATE
-        .mockResolvedValueOnce({ rows: [] }); // event log
+        .mockResolvedValueOnce({ rows: [] }); // UPDATE
 
       const result = await service.requestDeletion('user-1');
 
@@ -183,6 +197,15 @@ describe('UsersService', () => {
         "UPDATE users SET status = 'PENDING_DELETION', deletion_requested_at = NOW() WHERE id = $1",
       );
       expect((mockPool.query as jest.Mock).mock.calls[1][1]).toEqual(['user-1']);
+
+      // The deletion request is appended to the tamper-evident chain via a
+      // pooled-client transaction.
+      expect(mockPool.connect).toHaveBeenCalled();
+      const clientSql = (mockClient.query as jest.Mock).mock.calls.map((c) => String(c[0]));
+      expect(clientSql).toContain('BEGIN');
+      expect(clientSql.some((sql) => sql.includes('INSERT INTO event_log'))).toBe(true);
+      expect(clientSql).toContain('COMMIT');
+      expect(mockClient.release).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when requesting deletion for unknown user', async () => {

@@ -41,6 +41,70 @@ describe('StripeFboService (dev mode)', () => {
       expect(result.id).toBe('pi_dev_abc12345');
       expect(result.status).toBe('succeeded');
     });
+
+    // Non-dev (live Stripe) idempotency behaviour. We stub the private stripe client and
+    // force isDevMode=false so the retrieve/capture branch runs.
+    describe('idempotent retry (non-dev mode)', () => {
+      let liveService: StripeFboService;
+      let mockStripe: { paymentIntents: { retrieve: jest.Mock; capture: jest.Mock } };
+
+      beforeEach(() => {
+        liveService = new StripeFboService();
+        mockStripe = {
+          paymentIntents: {
+            retrieve: jest.fn(),
+            capture: jest.fn(),
+          },
+        };
+        // Bypass dev-mode short-circuit and inject the mocked Stripe client.
+        Object.defineProperty(liveService, 'isDevMode', { get: () => false });
+        (liveService as any).stripe = mockStripe;
+      });
+
+      it('should capture when the intent is in requires_capture', async () => {
+        mockStripe.paymentIntents.retrieve.mockResolvedValue({ id: 'pi_live_1', status: 'requires_capture' });
+        mockStripe.paymentIntents.capture.mockResolvedValue({ id: 'pi_live_1', status: 'succeeded' });
+
+        const result = await liveService.captureStake('pi_live_1');
+
+        expect(mockStripe.paymentIntents.capture).toHaveBeenCalledWith('pi_live_1', {}, expect.any(Object));
+        expect(result.status).toBe('succeeded');
+      });
+
+      it('should forward a partial-capture amount', async () => {
+        mockStripe.paymentIntents.retrieve.mockResolvedValue({ id: 'pi_live_2', status: 'requires_capture' });
+        mockStripe.paymentIntents.capture.mockResolvedValue({ id: 'pi_live_2', status: 'succeeded' });
+
+        await liveService.captureStake('pi_live_2', 2500);
+
+        expect(mockStripe.paymentIntents.capture).toHaveBeenCalledWith(
+          'pi_live_2',
+          { amount_to_capture: 2500 },
+          expect.any(Object),
+        );
+      });
+
+      it('should return success WITHOUT re-capturing when the intent already succeeded (idempotent retry)', async () => {
+        // Prior attempt captured but crashed before marking the run SUCCESS; the retry must
+        // not throw, so the ledger entry can be written and the job stops retrying.
+        mockStripe.paymentIntents.retrieve.mockResolvedValue({ id: 'pi_live_3', status: 'succeeded' });
+
+        const result = await liveService.captureStake('pi_live_3');
+
+        expect(result.id).toBe('pi_live_3');
+        expect(result.status).toBe('succeeded');
+        expect(mockStripe.paymentIntents.capture).not.toHaveBeenCalled();
+      });
+
+      it('should throw for a genuinely invalid state (canceled)', async () => {
+        mockStripe.paymentIntents.retrieve.mockResolvedValue({ id: 'pi_live_4', status: 'canceled' });
+
+        await expect(liveService.captureStake('pi_live_4')).rejects.toThrow(
+          /Cannot capture PaymentIntent pi_live_4.*found 'canceled'/,
+        );
+        expect(mockStripe.paymentIntents.capture).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe('cancelHold', () => {

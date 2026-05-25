@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, UseGuards, Sse, MessageEvent, Res, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Sse, MessageEvent, Res, Param, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { Observable, timer } from 'rxjs';
 import { concatMap, map } from 'rxjs/operators';
 import { Pool } from 'pg';
 import { AuthGuard } from '../../../guards/auth.guard';
+import { RoleGuard, Roles } from '../../common/guards/role.guard';
 import { issueSseTicket } from '../../../guards/sse-ticket.store';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { FuryWorker } from './fury.worker';
@@ -16,7 +17,8 @@ import { calculateAccuracy } from '../../../../shared/libs/integrity';
 @ApiTags('Fury')
 @ApiBearerAuth()
 @Controller('fury')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RoleGuard)
+@Roles('FURY')
 export class FuryController {
   constructor(
     private readonly pool: Pool,
@@ -93,7 +95,8 @@ export class FuryController {
       accuracy: Math.round(accuracy * 1000) / 1000,
       totalBountiesEarned,
       totalPenaltiesPaid,
-      netEarnings: (totalBountiesEarned - totalPenaltiesPaid) / 100,
+      // Keep all monetary fields in cents for consistency with totalBountiesEarned/totalPenaltiesPaid.
+      netEarnings: totalBountiesEarned - totalPenaltiesPaid,
       honeypotsCaught,
       honeypotsFailedOn,
     };
@@ -187,12 +190,20 @@ export class FuryController {
   @Post('verdict')
   @ApiOperation({ summary: 'Submit a PASS or FAIL verdict on an assigned proof' })
   async submitVerdict(@CurrentUser() user: { id: string }, @Body() dto: SubmitVerdictDto) {
-    // Record the verdict
-    await this.pool.query(
+    // Record the verdict. Only a first vote is allowed: `verdict IS NULL` prevents a
+    // Fury from re-voting / flipping their verdict and re-triggering consensus.
+    const update = await this.pool.query(
       `UPDATE fury_assignments SET verdict = $1, reviewed_at = NOW()
-       WHERE id = $2 AND fury_user_id = $3`,
+       WHERE id = $2 AND fury_user_id = $3 AND verdict IS NULL
+       RETURNING proof_id`,
       [dto.verdict, dto.assignmentId, user.id],
     );
+
+    // No row updated → assignment doesn't exist, isn't owned by this Fury, or was
+    // already voted on. Don't log a FURY_VERDICT event or re-run consensus.
+    if (update.rowCount === 0) {
+      throw new BadRequestException('Verdict could not be recorded (invalid assignment or already voted)');
+    }
 
     // Log to TruthLog
     await this.truthLog.appendEvent('FURY_VERDICT', {
@@ -201,15 +212,7 @@ export class FuryController {
       verdict: dto.verdict,
     });
 
-    // Get the proof ID to check consensus
-    const assignment = await this.pool.query(
-      `SELECT proof_id FROM fury_assignments WHERE id = $1`,
-      [dto.assignmentId],
-    );
-
-    if (assignment.rows.length > 0) {
-      await this.furyWorker.checkConsensus(assignment.rows[0].proof_id);
-    }
+    await this.furyWorker.checkConsensus(update.rows[0].proof_id);
 
     return { status: 'verdict_recorded' };
   }

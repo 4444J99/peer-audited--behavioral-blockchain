@@ -32,12 +32,17 @@ export class SocialLayerService {
       throw new Error('User not found');
     }
 
+    const appSecret = process.env.APP_SECRET; // allow-secret
+    if (!appSecret) {
+      throw new Error('APP_SECRET must be set');
+    }
+
     const user = userResult.rows[0];
     const monthKey = new Date().toISOString().substring(0, 7); // e.g. "2026-03"
-    
+
     // Deterministic but non-reversible alias for the current month
     const hash = createHash('sha256')
-      .update(`${userId}:${monthKey}:${process.env.APP_SECRET || 'styx-default-secret'}`)
+      .update(`${userId}:${monthKey}:${appSecret}`)
       .digest('hex');
     
     const animalPrefixes = ['Stoic', 'Vigilant', 'Resilient', 'Honorable', 'Ancient', 'Silent'];

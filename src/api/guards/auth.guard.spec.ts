@@ -1,8 +1,12 @@
 import { AuthGuard } from './auth.guard';
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
+import { deriveCsrfToken } from '../src/modules/auth/auth.service';
 
-const DEV_SECRET = 'styx-dev-secret-do-not-use-in-production'; // allow-secret
+// Tokens must be signed with the same secret the guard verifies against. The
+// guard resolves it via getJwtSecret() which reads process.env.JWT_SECRET
+// (set for all tests by jest.setup.cjs), so sign with that value.
+const JWT_SECRET = process.env.JWT_SECRET as string; // allow-secret
 
 function createMockContext(input?: {
   authHeader?: string;
@@ -59,7 +63,7 @@ describe('AuthGuard', () => {
   it('should accept a valid JWT and attach user from payload', () => {
     const token = jwt.sign( // allow-secret
       { sub: 'user-uuid-123', email: 'alice@styx.protocol' },
-      DEV_SECRET,
+      JWT_SECRET,
       { expiresIn: '1h' },
     );
 
@@ -76,7 +80,7 @@ describe('AuthGuard', () => {
   it('should reject an expired JWT', () => {
     const token = jwt.sign( // allow-secret
       { sub: 'user-uuid-123', email: 'alice@styx.protocol' },
-      DEV_SECRET,
+      JWT_SECRET,
       { expiresIn: '-1s' }, // already expired
     );
 
@@ -100,31 +104,33 @@ describe('AuthGuard', () => {
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
-  it('should throw in production if JWT_SECRET is not set', () => {
-    const originalEnv = process.env.NODE_ENV;
+  it('should throw if JWT_SECRET is not set (in any environment)', () => {
     const originalSecret = process.env.JWT_SECRET;
 
-    process.env.NODE_ENV = 'production';
+    // getJwtSecret() now enforces the secret in ALL environments, not just
+    // production, with no insecure hardcoded fallback.
     delete process.env.JWT_SECRET;
 
-    const token = jwt.sign( // allow-secret
-      { sub: 'user-uuid-123', email: 'alice@styx.protocol' },
-      'any-secret',
-      { expiresIn: '1h' },
-    );
-    const context = createMockContext({ authHeader: `Bearer ${token}` });
+    try {
+      const token = jwt.sign( // allow-secret
+        { sub: 'user-uuid-123', email: 'alice@styx.protocol' },
+        'any-secret',
+        { expiresIn: '1h' },
+      );
+      const context = createMockContext({ authHeader: `Bearer ${token}` });
 
-    // getJwtSecret() should throw because JWT_SECRET is missing in production
-    expect(() => guard.canActivate(context)).toThrow('JWT_SECRET must be set in production');
-
-    process.env.NODE_ENV = originalEnv;
-    if (originalSecret) process.env.JWT_SECRET = originalSecret;
+      // getJwtSecret() should throw because JWT_SECRET is missing
+      expect(() => guard.canActivate(context)).toThrow('JWT_SECRET must be set');
+    } finally {
+      // Always restore so subsequent tests in this file keep a valid secret.
+      if (originalSecret !== undefined) process.env.JWT_SECRET = originalSecret;
+    }
   });
 
   it('should accept cookie-based JWT on safe requests', () => {
     const token = jwt.sign(
       { sub: 'cookie-user-1', email: 'cookie@styx.protocol' },
-      DEV_SECRET,
+      JWT_SECRET,
       { expiresIn: '1h' },
     );
 
@@ -142,7 +148,7 @@ describe('AuthGuard', () => {
   it('should reject mutating cookie-authenticated requests without CSRF token', () => {
     const token = jwt.sign(
       { sub: 'cookie-user-2', email: 'cookie2@styx.protocol' },
-      DEV_SECRET,
+      JWT_SECRET,
       { expiresIn: '1h' },
     );
 
@@ -157,14 +163,18 @@ describe('AuthGuard', () => {
   it('should allow mutating cookie-authenticated requests with matching CSRF token', () => {
     const token = jwt.sign(
       { sub: 'cookie-user-3', email: 'cookie3@styx.protocol' },
-      DEV_SECRET,
+      JWT_SECRET,
       { expiresIn: '1h' },
     );
 
+    // The CSRF token is now bound to the session: the x-csrf-token header must
+    // equal deriveCsrfToken(sessionToken) (an HMAC over the access token).
+    const csrf = deriveCsrfToken(token);
+
     const context = createMockContext({
-      cookie: `styx_auth_token=${encodeURIComponent(token)}; styx_csrf_token=csrf-xyz`,
+      cookie: `styx_auth_token=${encodeURIComponent(token)}`,
       method: 'PATCH',
-      extraHeaders: { 'x-csrf-token': 'csrf-xyz' },
+      extraHeaders: { 'x-csrf-token': csrf },
     });
 
     expect(guard.canActivate(context)).toBe(true);

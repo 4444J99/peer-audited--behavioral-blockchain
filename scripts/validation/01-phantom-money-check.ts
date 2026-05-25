@@ -61,22 +61,27 @@ async function runPhantomMoneyCheck() {
     const after = await request<{ ledger_balance: number }>(`/wallet/balance`, auth.token);
     const delta = Math.abs(after.ledger_balance - before.ledger_balance);
 
-    if (delta === 0) {
-      console.log('✅ GATE 01 PASSED: Phantom Money Delta is $0.00. Failed contract did not alter ledger.');
-    } else {
-      console.error(`❌ GATE 01 FAILED: Ledger balance changed by $${delta.toFixed(2)} without valid transaction.`);
+    if (delta > 0.005) {
+      console.error(`❌ GATE 01 FAILED: Ledger balance changed by $${delta.toFixed(2)} without a valid transaction.`);
       process.exit(1);
     }
-    return;
+    // No phantom money was created, but the happy path (an actual stake hold) was never
+    // exercised, so we cannot claim the ledger-balancing invariant was verified.
+    console.warn('⚠️  GATE 01 NOT VERIFIED: contract creation did not complete (e.g. Stripe unavailable);');
+    console.warn('   the stake-hold ledger path was not exercised. No phantom money was detected on failure.');
+    process.exit(2);
   }
 
-  // 3. Verify balance changed by exactly the stake amount
+  // 3. Verify balance changed by (approximately) the stake amount.
+  // NOTE: This checks the user's own ledger balance delta, not the system-wide
+  // double-entry invariant (sum of credits === sum of debits). Use the ledger
+  // integrity check (verifyLedgerIntegrity) for the cross-account invariant.
   const after = await request<{ ledger_balance: number }>(`/wallet/balance`, auth.token);
   const delta = before.ledger_balance - after.ledger_balance;
   console.log(`[STATE] Final ledger balance: $${after.ledger_balance.toFixed(2)} (delta: $${delta.toFixed(2)})`);
 
-  if (delta === 10) {
-    console.log('✅ GATE 01 PASSED: Ledger delta matches stake amount exactly. No phantom money.');
+  if (Math.abs(delta - 10) < 0.005) {
+    console.log('✅ GATE 01 PASSED: Ledger delta matches stake amount. No phantom money.');
   } else {
     console.error(`❌ GATE 01 FAILED: Expected delta of $10.00, got $${delta.toFixed(2)}`);
     process.exit(1);
