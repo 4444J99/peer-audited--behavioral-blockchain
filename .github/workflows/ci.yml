@@ -8,9 +8,14 @@ on:
   merge_group:
 
 jobs:
-  # Required, BLOCKING gate. This job must be able to fail a merge — do not add
-  # `continue-on-error` here. Advisory/infra-dependent jobs below keep it.
-  build_and_test:
+  # Matrix executes the actual build/test work. Renamed from `build_and_test`
+  # so the canonical required-check name (`build_and_test`, the summary job
+  # below) is stable regardless of matrix axis size. Branch protection in
+  # .github/rulesets/main.json targets the summary job by name.
+  #
+  # BLOCKING gate (must be able to fail a merge — do not add `continue-on-error`
+  # here). Advisory/infra-dependent jobs further below keep it.
+  build_and_test_matrix:
     runs-on: ubuntu-latest
 
     strategy:
@@ -70,9 +75,29 @@ jobs:
     - name: Gate 07 — Claim Drift Check
       run: npm run validate:claims
 
+  # Stable required-check name for branch protection. Aggregates the matrix
+  # result so the required context (`build_and_test`) never changes shape
+  # even if the matrix axis grows (e.g. adding Node 22.x for fan-out tests).
+  # `if: always()` is mandatory — without it, a matrix failure produces a
+  # SKIPPED summary, which leaves required-check status pending forever
+  # (silent-deadlock failure mode).
+  build_and_test:
+    runs-on: ubuntu-latest
+    needs: [build_and_test_matrix]
+    if: always()
+    steps:
+    - name: Gate verdict
+      run: |
+        result="${{ needs.build_and_test_matrix.result }}"
+        if [[ "$result" != "success" ]]; then
+          echo "::error::build_and_test_matrix concluded '$result' — gate failed."
+          exit 1
+        fi
+        echo "build_and_test_matrix succeeded — gate passed."
+
   beta_readiness:
     runs-on: ubuntu-latest
-    needs: build_and_test
+    needs: build_and_test_matrix
     continue-on-error: true
     steps:
     - name: Checkout Repository
@@ -131,7 +156,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    needs: [build_and_test, beta_readiness]
+    needs: [build_and_test_matrix, beta_readiness]
     continue-on-error: true
     strategy:
       fail-fast: false
