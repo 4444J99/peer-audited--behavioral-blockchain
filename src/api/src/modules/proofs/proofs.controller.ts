@@ -89,9 +89,49 @@ export class ProofsController {
     const anomalyResult = await this.anomaly.analyze(mediaBuffer, user.id, dto.storageKey);
     const combinedFlags = [...(anomalyResult.flags || [])];
 
+    // 1a. Honor the anomaly screen's verdict. When the sensory-integrity check
+    // rejects the media (e.g. SOFTWARE_MANIPULATION_DETECTED / EXIF_TIMESTAMP_
+    // DISCREPANCY / STRIPPED_METADATA), do NOT route it into the Fury network as a
+    // normal submission — that would let edited/tampered media earn a stake. Park it
+    // in MANUAL_REVIEW (distinguishable from a normally-queued PENDING_REVIEW proof)
+    // for human triage, with an atomic truth-log audit event.
+    if (anomalyResult.rejected) {
+      const client = await this.pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query(
+          "UPDATE proofs SET status = 'MANUAL_REVIEW', media_uri = $1, anomaly_flags = $3 WHERE id = $2",
+          [dto.storageKey, proofId, JSON.stringify(combinedFlags)],
+        );
+        await this.truthLog.appendEvent(
+          'PROOF_ANOMALY_REJECTED',
+          {
+            proofId,
+            contractId: proofAccess.contractId,
+            userId: proofAccess.ownerUserId,
+            flags: combinedFlags,
+            status: 'MANUAL_REVIEW',
+          },
+          client,
+        );
+        await client.query('COMMIT');
+      } catch (txErr) {
+        await client.query('ROLLBACK');
+        throw txErr;
+      } finally {
+        client.release();
+      }
+      throw new BadRequestException(
+        'Proof media failed integrity screening and has been held for manual review.',
+      );
+    }
+
     // 2. pHash Duplicate Detection
-    // Scope dedup to the same contract so one user's proof cannot collide-block
-    // another's, and so cross-contract media reuse is what we actually screen for.
+    // Screen for CROSS-contract media reuse: a user must not be able to re-submit
+    // the same media against a different contract. We compare this proof's media
+    // against all of the SAME user's other proofs (across every contract),
+    // excluding the current proof id. Scoping to the contract only (the prior bug)
+    // would let a user recycle one clip across many contracts undetected.
     let isDuplicate = false;
     let pHashFailed = false;
     try {
@@ -100,8 +140,8 @@ export class ProofsController {
         `SELECT ph.phash
          FROM proof_hashes ph
          JOIN proofs p ON p.id = ph.proof_id
-         WHERE p.contract_id = $1 AND ph.proof_id != $2`,
-        [proofAccess.contractId, proofId],
+         WHERE p.user_id = $1 AND ph.proof_id != $2`,
+        [proofAccess.ownerUserId, proofId],
       );
       const hashStrings = existingHashes.rows.map((r: any) => r.phash);
       const { duplicate } = await this.phash.isDuplicate(mediaBuffer, hashStrings);
@@ -130,16 +170,37 @@ export class ProofsController {
 
     if (pHashFailed) {
       // Quarantine for manual review rather than auto-accepting unhashable media.
-      await this.pool.query(
-        "UPDATE proofs SET status = 'PENDING_REVIEW', media_uri = $1, anomaly_flags = $3 WHERE id = $2",
-        [dto.storageKey, proofId, JSON.stringify(combinedFlags)],
-      );
-      await this.truthLog.appendEvent('PROOF_DEDUP_FAILED', {
-        proofId,
-        contractId: proofAccess.contractId,
-        userId: proofAccess.ownerUserId,
-        flags: combinedFlags,
-      });
+      // Use a DISTINCT status ('MANUAL_REVIEW') so the proof is not indistinguishable
+      // from a normally-queued PENDING_REVIEW proof and is never silently orphaned:
+      // it is explicitly parked for a human to triage (it is intentionally NOT routed
+      // to the Fury network, since we could not run dedup). Wrap the status UPDATE and
+      // the truth-log append in a single transaction so the quarantine and its audit
+      // event commit (or roll back) atomically.
+      const client = await this.pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query(
+          "UPDATE proofs SET status = 'MANUAL_REVIEW', media_uri = $1, anomaly_flags = $3 WHERE id = $2",
+          [dto.storageKey, proofId, JSON.stringify(combinedFlags)],
+        );
+        await this.truthLog.appendEvent(
+          'PROOF_DEDUP_FAILED',
+          {
+            proofId,
+            contractId: proofAccess.contractId,
+            userId: proofAccess.ownerUserId,
+            flags: combinedFlags,
+            status: 'MANUAL_REVIEW',
+          },
+          client,
+        );
+        await client.query('COMMIT');
+      } catch (txErr) {
+        await client.query('ROLLBACK');
+        throw txErr;
+      } finally {
+        client.release();
+      }
       throw new BadRequestException(
         'Proof media could not be processed for duplicate detection. Submission held for manual review.',
       );
@@ -221,6 +282,7 @@ export class ProofsController {
   async processingComplete(
     @Param('id') proofId: string,
     @Headers('x-internal-token') internalToken: string | undefined,
+    @Headers('x-proof-challenge') proofChallenge: string | undefined,
     @Body() dto: { status: 'COMPLETED' | 'FAILED', error?: string, maskedMediaUri?: string },
   ) {
     // Service-to-service only: this callback marks proofs COMPLETED and must NOT be
@@ -229,22 +291,57 @@ export class ProofsController {
     // time. Fail closed if the token is not configured.
     this.assertInternalCaller(internalToken);
 
+    // SH15: the shared internal token alone is not enough. A single leaked token
+    // must NOT let a caller mark ANY proofId COMPLETED/FAILED or plant masked
+    // media. We add per-proof scoping: the caller must also present the proof's
+    // own `challenge_token` (issued when this specific proof was dispatched for
+    // processing), validated in constant time, and the proof must currently be in
+    // an in-flight processing state. This binds the call to one specific proof, so
+    // a leaked global token cannot be replayed against arbitrary proofs.
+    //
+    // NOTE: the dispatch side (the video-processing service that enqueues a proof)
+    // is responsible for issuing the per-proof `challenge_token` and moving
+    // `processing_status` into an in-flight state ('IN_PROGRESS'/'PENDING'/
+    // 'PROCESSING') at dispatch time. This callback fails closed if that has not
+    // happened, so a proof can never be finalized without a matching dispatch.
+    const proofResult = await this.pool.query(
+      'SELECT user_id, challenge_token, processing_status FROM proofs WHERE id = $1',
+      [proofId],
+    );
+    if (proofResult.rows.length === 0) {
+      throw new BadRequestException('Unknown proof for processing callback');
+    }
+    const { challenge_token: expectedChallenge, processing_status: currentProcessingStatus } =
+      proofResult.rows[0];
+
+    // The proof must have an issued challenge token and be in-flight; otherwise this
+    // callback has no business mutating it (prevents re-driving an already-finalized
+    // or never-dispatched proof).
+    if (!expectedChallenge) {
+      throw new ForbiddenException('Proof is not awaiting a processing callback');
+    }
+    if (
+      currentProcessingStatus !== 'IN_PROGRESS' &&
+      currentProcessingStatus !== 'PENDING' &&
+      currentProcessingStatus !== 'PROCESSING'
+    ) {
+      throw new ConflictException(
+        `Proof processing is not in-flight (status '${currentProcessingStatus}')`,
+      );
+    }
+    this.assertProofChallenge(proofChallenge, expectedChallenge);
+
+    // Per-proof scoping passed: clear the challenge token as we finalize so the
+    // callback is single-use and cannot be replayed against this proof.
     await this.pool.query(
-      `UPDATE proofs 
+      `UPDATE proofs
        SET processing_status = $1,
            masked_media_uri = COALESCE($2, masked_media_uri),
-           redaction_status = CASE WHEN $2 IS NOT NULL THEN 'MASKED' ELSE redaction_status END
+           redaction_status = CASE WHEN $2 IS NOT NULL THEN 'MASKED' ELSE redaction_status END,
+           challenge_token = NULL
        WHERE id = $3`,
       [dto.status, dto.maskedMediaUri || null, proofId]
     );
-
-    if (dto.status === 'COMPLETED') {
-      // Check if it's ready for Fury routing (has challenge token etc)
-      const proofResult = await this.pool.query('SELECT user_id, challenge_token FROM proofs WHERE id = $1', [proofId]);
-      if (proofResult.rows.length > 0 && proofResult.rows[0].challenge_token) {
-        // Need to wait until challenge token validation is implemented in the controller
-      }
-    }
 
     return { success: true };
   }
@@ -267,6 +364,23 @@ export class ProofsController {
     const expectedBuf = Buffer.from(expected);
     if (presentedBuf.length !== expectedBuf.length || !timingSafeEqual(presentedBuf, expectedBuf)) {
       throw new ForbiddenException('Invalid internal service token');
+    }
+  }
+
+  /**
+   * SH15: Validate the per-proof challenge token presented by the processing
+   * service against the value stored for THIS proof, in constant time. This binds
+   * an internal callback to a single specific proofId so a leaked global service
+   * token cannot be used to finalize or plant masked media on arbitrary proofs.
+   */
+  private assertProofChallenge(presented: string | undefined, expected: string): void {
+    if (!presented) {
+      throw new ForbiddenException('Missing per-proof challenge token');
+    }
+    const presentedBuf = Buffer.from(presented);
+    const expectedBuf = Buffer.from(expected);
+    if (presentedBuf.length !== expectedBuf.length || !timingSafeEqual(presentedBuf, expectedBuf)) {
+      throw new ForbiddenException('Invalid per-proof challenge token');
     }
   }
 }

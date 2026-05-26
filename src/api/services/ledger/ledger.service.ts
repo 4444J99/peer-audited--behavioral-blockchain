@@ -12,6 +12,13 @@ export class LedgerService {
   /**
    * Records a double-entry transaction linking a debit and credit account.
    * Ensures ACID compliance using PostgreSQL transactions.
+   *
+   * @param idempotencyKey Optional, deterministic single-posting key. When supplied the
+   *   row is inserted with `ON CONFLICT (idempotency_key) DO NOTHING`, so a concurrent
+   *   retry (settlement worker concurrency / stale-PROCESSING reclaim) that races past an
+   *   application-level existence check is still collapsed to ONE posting by the DB unique
+   *   index (PM4). When omitted, behavior is unchanged (a plain INSERT). On a deduped
+   *   conflict the id of the pre-existing entry is returned instead of inserting a new row.
    */
   async recordTransaction(
     debitAccountId: string,
@@ -19,7 +26,8 @@ export class LedgerService {
     amount: number, // integer cents
     contractId?: string,
     metadata?: Record<string, any>,
-    client?: PoolClient
+    client?: PoolClient,
+    idempotencyKey?: string,
   ): Promise<string> {
     if (amount <= 0) {
       throw new Error('Transaction amount must be strictly positive.');
@@ -36,20 +44,56 @@ export class LedgerService {
     try {
       if (!client) await dbClient.query('BEGIN');
 
-      // 1. Insert the entry record
-      const insertEntryQuery = `
-        INSERT INTO entries (debit_account_id, credit_account_id, amount, contract_id, metadata)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id;
-      `;
-      const entryResult = await dbClient.query(insertEntryQuery, [
-        debitAccountId,
-        creditAccountId,
-        amount,
-        contractId || null,
-        metadata || null,
-      ]);
-      const entryId = entryResult.rows[0].id;
+      // 1. Insert the entry record. When an idempotency key is supplied, let the DB enforce
+      //    single-posting via the partial UNIQUE index (migration 030): a duplicate INSERT is
+      //    swallowed by ON CONFLICT DO NOTHING and we resolve the existing entry id below.
+      let entryId: string;
+      if (idempotencyKey) {
+        const insertEntryQuery = `
+          INSERT INTO entries (debit_account_id, credit_account_id, amount, contract_id, metadata, idempotency_key)
+          VALUES ($1, $2, $3, $4, $5, $6)
+          -- The unique index (migration 030) is PARTIAL (WHERE idempotency_key IS NOT NULL),
+          -- so the ON CONFLICT clause must repeat that predicate; otherwise Postgres cannot
+          -- infer it as the arbiter and raises "no unique or exclusion constraint matching".
+          ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
+          RETURNING id;
+        `;
+        const entryResult = await dbClient.query(insertEntryQuery, [
+          debitAccountId,
+          creditAccountId,
+          amount,
+          contractId || null,
+          metadata || null,
+          idempotencyKey,
+        ]);
+        if (entryResult.rows.length > 0) {
+          entryId = entryResult.rows[0].id;
+        } else {
+          // Lost the race / true retry: a row with this key already exists. Return its id so
+          // the caller observes idempotent success rather than a phantom second posting.
+          const existing = await dbClient.query(
+            'SELECT id FROM entries WHERE idempotency_key = $1',
+            [idempotencyKey],
+          );
+          entryId = existing.rows[0].id;
+          if (!client) await dbClient.query('COMMIT');
+          return entryId;
+        }
+      } else {
+        const insertEntryQuery = `
+          INSERT INTO entries (debit_account_id, credit_account_id, amount, contract_id, metadata)
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING id;
+        `;
+        const entryResult = await dbClient.query(insertEntryQuery, [
+          debitAccountId,
+          creditAccountId,
+          amount,
+          contractId || null,
+          metadata || null,
+        ]);
+        entryId = entryResult.rows[0].id;
+      }
 
       // Ensure zero money printing manually at application layer (Phantom Money Test safeguard)
       if (process.env.STYX_ENFORCE_HARD_INTEGRITY === 'true') {
@@ -63,7 +107,16 @@ export class LedgerService {
               integrityResults: integrity,
             });
           }
-          throw new Error(`Phantom money detected! Ledger unbalanced: ${integrity.totalDebits} vs ${integrity.totalCredits}`);
+          // LC8: totalDebits/totalCredits are identical by construction (each row contributes
+          // its amount to both sides), so reporting "X vs Y" was always equal and useless during
+          // incident response. Surface the ACTUAL structural violation counts instead.
+          throw new Error(
+            `Phantom money detected! Ledger integrity violation: ` +
+              `nonPositive=${integrity.nonPositiveCount}, ` +
+              `selfEntry=${integrity.selfEntryCount}, ` +
+              `orphaned=${integrity.orphanedCount} ` +
+              `(totalDebits=${integrity.totalDebits}, totalCredits=${integrity.totalCredits})`,
+          );
         }
       }
 
@@ -149,7 +202,7 @@ export class LedgerService {
    * remain the aggregate SUMs over `entries` (one for the debit side, one for the
    * credit side) and are kept purely for reporting / audit-trail context.
    */
-  async verifyLedgerIntegrity(client?: PoolClient | Pool): Promise<{ balanced: boolean; totalDebits: number; totalCredits: number }> {
+  async verifyLedgerIntegrity(client?: PoolClient | Pool): Promise<{ balanced: boolean; totalDebits: number; totalCredits: number; nonPositiveCount: number; selfEntryCount: number; orphanedCount: number }> {
     const db = client || this.pool;
 
     // Reporting totals only. By construction these are equal (each row contributes
@@ -187,6 +240,9 @@ export class LedgerService {
       balanced,
       totalDebits,
       totalCredits,
+      nonPositiveCount,
+      selfEntryCount,
+      orphanedCount,
     };
   }
 }

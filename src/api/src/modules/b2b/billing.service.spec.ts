@@ -42,7 +42,25 @@ describe('BillingService', () => {
   });
 
   describe('recordUsage', () => {
-    it('should record usage when metered subscription exists', async () => {
+    it('should record usage with an idempotent increment when a stable event id is supplied (PM21)', async () => {
+      mockSearchSubscriptions.mockResolvedValue({
+        data: [{
+          items: {
+            data: [{ id: 'si_abc', price: { recurring: { usage_type: 'metered' } } }],
+          },
+        }],
+      });
+      mockCreateUsageRecord.mockResolvedValue({});
+
+      await service.recordUsage('ent-001', 'phash_scan', 5, 'evt-xyz');
+      expect(mockCreateUsageRecord).toHaveBeenCalledWith(
+        'si_abc',
+        expect.objectContaining({ quantity: 5, action: 'increment' }),
+        { idempotencyKey: 'styx_usage_si_abc_evt-xyz' },
+      );
+    });
+
+    it('should fall back to an idempotent set + keyed idempotency when no event id is supplied (PM21)', async () => {
       mockSearchSubscriptions.mockResolvedValue({
         data: [{
           items: {
@@ -53,10 +71,10 @@ describe('BillingService', () => {
       mockCreateUsageRecord.mockResolvedValue({});
 
       await service.recordUsage('ent-001', 'phash_scan', 5);
-      expect(mockCreateUsageRecord).toHaveBeenCalledWith('si_abc', expect.objectContaining({
-        quantity: 5,
-        action: 'increment',
-      }));
+      const call = mockCreateUsageRecord.mock.calls[0];
+      expect(call[0]).toBe('si_abc');
+      expect(call[1]).toEqual(expect.objectContaining({ quantity: 5, action: 'set' }));
+      expect(call[2].idempotencyKey).toMatch(/^styx_usage_si_abc_phash_scan_\d+$/);
     });
 
     it('should skip recording when no metered subscription found', async () => {
@@ -75,9 +93,11 @@ describe('BillingService', () => {
       mockCreateUsageRecord.mockResolvedValue({});
 
       await service.recordUsage('ent-001', 'anomaly_detection');
-      expect(mockCreateUsageRecord).toHaveBeenCalledWith('si_def', expect.objectContaining({
-        quantity: 1,
-      }));
+      expect(mockCreateUsageRecord).toHaveBeenCalledWith(
+        'si_def',
+        expect.objectContaining({ quantity: 1 }),
+        expect.objectContaining({ idempotencyKey: expect.any(String) }),
+      );
     });
 
     it('should skip non-metered subscription items', async () => {

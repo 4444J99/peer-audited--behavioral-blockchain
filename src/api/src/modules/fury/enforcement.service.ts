@@ -60,10 +60,25 @@ export class EnforcementService {
   }
 
   async applyPenalty(caseId: string, penaltyType: string, amountCents: number = 0) {
-    await this.pool.query(
-      `INSERT INTO fury_penalties (case_id, penalty_type, amount_cents) VALUES ($1, $2, $3)`,
+    // LC9: applyPenalty is public and was previously unconditional, so a direct or
+    // legacy caller invoking it on an already-applied case inserted a DUPLICATE
+    // penalty (and double-logged FURY_PENALTY_APPLIED). There is no UNIQUE
+    // constraint on fury_penalties.case_id, so we guard idempotency in SQL: insert
+    // exactly one penalty per case via INSERT...SELECT...WHERE NOT EXISTS, which is
+    // atomic within the single statement. If a row already exists, RETURNING yields
+    // zero rows and we bail without re-applying status or re-appending to TruthLog.
+    const inserted = await this.pool.query(
+      `INSERT INTO fury_penalties (case_id, penalty_type, amount_cents)
+       SELECT $1, $2, $3
+       WHERE NOT EXISTS (SELECT 1 FROM fury_penalties WHERE case_id = $1)
+       RETURNING id`,
       [caseId, penaltyType, amountCents]
     );
+
+    if (inserted.rows.length === 0) {
+      // A penalty for this case already exists — nothing to do (idempotent no-op).
+      return;
+    }
 
     await this.pool.query(
       `UPDATE fury_enforcement_cases SET status = 'PENALTY_APPLIED' WHERE id = $1`,

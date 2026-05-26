@@ -1,4 +1,4 @@
-import { JurisdictionTier, STATE_TIERS, classifyJurisdiction } from './geofencing';
+import { JurisdictionTier, STATE_TIERS, classifyJurisdiction, normalizeStateCode } from './geofencing';
 
 describe('geofencing', () => {
   describe('JurisdictionTier enum', () => {
@@ -65,6 +65,42 @@ describe('geofencing', () => {
     it('should default to TIER_3 for an unknown US state code', () => {
       const result = classifyJurisdiction({ country: 'US', region: 'ZZ' });
       expect(result).toEqual({ tier: JurisdictionTier.TIER_3, state: 'ZZ' });
+    });
+
+    it('should resolve a full state name to its code and tier (SH8)', () => {
+      expect(classifyJurisdiction({ country: 'US', region: 'California' })).toEqual({
+        tier: JurisdictionTier.TIER_1,
+        state: 'CA',
+      });
+      expect(classifyJurisdiction({ country: 'US', region: 'new york' })).toEqual({
+        tier: JurisdictionTier.TIER_2,
+        state: 'NY',
+      });
+    });
+
+    it('should fail closed (TIER_3, null state) for non-2-letter garbage input (SH8)', () => {
+      const result = classifyJurisdiction({ country: 'US', region: '90210' });
+      expect(result).toEqual({ tier: JurisdictionTier.TIER_3, state: null });
+    });
+  });
+
+  describe('normalizeStateCode (SH8)', () => {
+    it('accepts and uppercases a 2-letter code', () => {
+      expect(normalizeStateCode(' ca ')).toBe('CA');
+    });
+
+    it('maps a full state name to its 2-letter code', () => {
+      expect(normalizeStateCode('District of Columbia')).toBe('DC');
+      expect(normalizeStateCode('TEXAS')).toBe('TX');
+    });
+
+    it('returns null for invalid / unrecognized input', () => {
+      expect(normalizeStateCode('')).toBeNull();
+      expect(normalizeStateCode('   ')).toBeNull();
+      expect(normalizeStateCode('CALI')).toBeNull();
+      expect(normalizeStateCode('12')).toBeNull();
+      expect(normalizeStateCode(null)).toBeNull();
+      expect(normalizeStateCode(undefined)).toBeNull();
     });
   });
 });

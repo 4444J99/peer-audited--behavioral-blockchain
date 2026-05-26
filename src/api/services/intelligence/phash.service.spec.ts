@@ -1,14 +1,25 @@
 import { PHashService } from './phash.service';
 
-// Mock sharp
+// Mock sharp. dHash resizes to (HASH_SIZE+1) x HASH_SIZE = 9 x 8 = 72 grayscale
+// pixels. We build a 9-wide x 8-tall buffer where the left half of every row is
+// bright (200) and the right half dark (50), so the horizontal gradient is stable
+// and the computed dHash is deterministic across the test run.
 jest.mock('sharp', () => {
+  const WIDTH = 9;
+  const HEIGHT = 8;
+  const data = Buffer.from(
+    new Array(WIDTH * HEIGHT).fill(0).map((_, i) => {
+      const col = i % WIDTH;
+      return col < WIDTH / 2 ? 200 : 50;
+    }),
+  );
   return jest.fn().mockImplementation(() => ({
     resize: jest.fn().mockReturnThis(),
     grayscale: jest.fn().mockReturnThis(),
     raw: jest.fn().mockReturnThis(),
     toBuffer: jest.fn().mockResolvedValue({
-      data: Buffer.from(new Array(64).fill(0).map((_, i) => (i < 32 ? 200 : 50))),
-      info: { width: 8, height: 8, channels: 1 },
+      data,
+      info: { width: WIDTH, height: HEIGHT, channels: 1 },
     }),
   }));
 });

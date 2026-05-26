@@ -18,6 +18,11 @@ import { calculateAccuracy } from '../../../../shared/libs/integrity';
 @ApiBearerAuth()
 @Controller('fury')
 @UseGuards(AuthGuard, RoleGuard)
+// Class-level default: Fury-only. Read-only oversight endpoints below override this
+// with @Roles('FURY','ADMIN') so admins/operators retain visibility (LC7) — the
+// previous class-only @Roles('FURY') 403'd ADMIN out of every endpoint, a regression.
+// Verdict casting and personal SSE-subscription endpoints stay FURY-only: an admin is
+// not an assigned auditor and must not vote or hold a fury stream credential.
 @Roles('FURY')
 export class FuryController {
   constructor(
@@ -28,6 +33,7 @@ export class FuryController {
   ) {}
 
   @Get('stats')
+  @Roles('FURY', 'ADMIN') // read-only oversight (LC7)
   @ApiOperation({ summary: 'Get audit statistics for the current Fury reviewer' })
   async getStats(@CurrentUser() user: { id: string }) {
     // Audit statistics
@@ -103,6 +109,7 @@ export class FuryController {
   }
 
   @Get('queue')
+  @Roles('FURY', 'ADMIN') // read-only oversight (LC7)
   @ApiOperation({ summary: 'Get pending audit assignments for the current Fury reviewer' })
   async getAssignments(@CurrentUser() user: { id: string }) {
     const result = await this.pool.query(
@@ -155,6 +162,7 @@ export class FuryController {
   }
 
   @Sse('stream')
+  @Roles('FURY', 'ADMIN') // read-only oversight (LC7)
   @ApiOperation({ summary: 'Stream pending audit assignments to the current Fury via SSE' })
   streamAssignments(@CurrentUser() user: { id: string }): Observable<MessageEvent> {
     // Poll the DB every 5 seconds and push over SSE
@@ -218,6 +226,7 @@ export class FuryController {
   }
 
   @Get('review/:assignmentId/mask-audit')
+  @Roles('FURY', 'ADMIN') // read-only oversight (LC7)
   @ApiOperation({ summary: 'Get identity redaction provenance for a specific assignment' })
   async getMaskAudit(@Param('assignmentId') assignmentId: string, @CurrentUser() user: { id: string }) {
     const assignment = await this.pool.query(

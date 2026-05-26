@@ -1,4 +1,4 @@
-import { AuthService } from './auth.service';
+import { AuthService, DUMMY_BCRYPT_HASH } from './auth.service';
 import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { Pool } from 'pg';
 import * as bcrypt from 'bcryptjs';
@@ -212,6 +212,20 @@ describe('AuthService', () => {
     });
   });
 
+  describe('DUMMY_BCRYPT_HASH (AU6)', () => {
+    it('is a valid bcrypt hash format (starts with $2)', () => {
+      expect(DUMMY_BCRYPT_HASH.startsWith('$2')).toBe(true);
+    });
+
+    it('no password matches it, so the dummy compare always fails (no early-return timing oracle)', () => {
+      // If the hash were malformed, bcrypt.compareSync would return/throw immediately
+      // rather than performing the full hash work, re-introducing the timing oracle the
+      // dummy compare exists to remove.
+      expect(bcrypt.compareSync('anything', DUMMY_BCRYPT_HASH)).toBe(false);
+      expect(bcrypt.compareSync('', DUMMY_BCRYPT_HASH)).toBe(false);
+    });
+  });
+
   describe('JWT signing/verification', () => {
     it('should sign and verify tokens correctly', () => {
       // signToken is private — use cast to access for testing
@@ -242,35 +256,32 @@ describe('AuthService', () => {
       return jwt.sign(claims, secret, { expiresIn: '5m' });
     }
 
-    it('rejects a plain session token replayed as an SSO assertion (no token_type)', async () => {
-      // signToken-style token: { sub, email, role } signed with JWT_SECRET, no token_type.
-      const sessionToken = signAssertion(JWT_SECRET, { sub: 'ent-user', email: 'e@corp.com', role: 'USER' }); // allow-secret
-
-      await expect(service.exchangeEnterpriseToken(sessionToken)).rejects.toThrow('Invalid enterprise token');
-      // Must be rejected before any user lookup happens.
-      expect(mockPool.query).not.toHaveBeenCalled();
-    });
-
-    it('accepts a JWT_SECRET-signed assertion that carries token_type=enterprise_sso (no separate IdP secret)', async () => {
+    it('AU3: rejects enterprise SSO entirely when ENTERPRISE_SSO_SECRET is unset (no JWT_SECRET fallback)', async () => {
+      // Even a JWT_SECRET-signed token carrying token_type=enterprise_sso must be
+      // rejected: there is intentionally NO fallback to the shared session secret.
       const assertion = signAssertion(JWT_SECRET, {
         sub: 'ent-user',
         email: 'e@corp.com',
         token_type: 'enterprise_sso',
       });
 
-      (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ id: 'ent-user', email: 'e@corp.com', enterprise_id: 'corp-1', status: 'ACTIVE', role: 'USER' }],
-      });
-
-      const result = await service.exchangeEnterpriseToken(assertion);
-
-      expect(result.userId).toBe('ent-user');
-      expect(result.token).toBeDefined();
-      const decoded = jwt.decode(result.token) as { sub: string };
-      expect(decoded.sub).toBe('ent-user');
+      await expect(service.exchangeEnterpriseToken(assertion)).rejects.toThrow('Enterprise SSO is not configured');
+      // Must be rejected before any user lookup happens.
+      expect(mockPool.query).not.toHaveBeenCalled();
     });
 
-    it('rejects a token whose signature does not match (tampered/forged)', async () => {
+    it('AU3: rejects a plain session token replayed as an SSO assertion when SSO is configured', async () => {
+      process.env.ENTERPRISE_SSO_SECRET = ENTERPRISE_SECRET;
+      // signToken-style token signed with JWT_SECRET cannot validate against the
+      // dedicated IdP secret.
+      const sessionToken = signAssertion(JWT_SECRET, { sub: 'ent-user', email: 'e@corp.com', role: 'USER' }); // allow-secret
+
+      await expect(service.exchangeEnterpriseToken(sessionToken)).rejects.toThrow('Invalid enterprise token');
+      expect(mockPool.query).not.toHaveBeenCalled();
+    });
+
+    it('rejects a token whose signature does not match the IdP secret (tampered/forged)', async () => {
+      process.env.ENTERPRISE_SSO_SECRET = ENTERPRISE_SECRET;
       const assertion = signAssertion('wrong-secret', { sub: 'ent-user', token_type: 'enterprise_sso' }); // allow-secret
 
       await expect(service.exchangeEnterpriseToken(assertion)).rejects.toThrow('Invalid enterprise token');
@@ -301,14 +312,16 @@ describe('AuthService', () => {
     });
 
     it('rejects when no enterprise-associated user is found', async () => {
-      const assertion = signAssertion(JWT_SECRET, { sub: 'ghost', token_type: 'enterprise_sso' });
+      process.env.ENTERPRISE_SSO_SECRET = ENTERPRISE_SECRET;
+      const assertion = signAssertion(ENTERPRISE_SECRET, { sub: 'ghost' });
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
 
       await expect(service.exchangeEnterpriseToken(assertion)).rejects.toThrow('No enterprise user found for this token');
     });
 
     it('rejects when the enterprise user account is not active', async () => {
-      const assertion = signAssertion(JWT_SECRET, { sub: 'ent-user', token_type: 'enterprise_sso' });
+      process.env.ENTERPRISE_SSO_SECRET = ENTERPRISE_SECRET;
+      const assertion = signAssertion(ENTERPRISE_SECRET, { sub: 'ent-user' });
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
         rows: [{ id: 'ent-user', email: 'e@corp.com', enterprise_id: 'corp-1', status: 'SUSPENDED', role: 'USER' }],
       });

@@ -10,12 +10,16 @@ describe('StripeFBOService', () => {
   let service: StripeFBOService;
   let mockPaymentIntentsCreate: jest.Mock;
   let mockPaymentIntentsRetrieve: jest.Mock;
+  let mockPaymentIntentsCapture: jest.Mock;
+  let mockPaymentIntentsCancel: jest.Mock;
   let mockRefundsCreate: jest.Mock;
   let mockTransfersCreate: jest.Mock;
 
   beforeEach(() => {
     mockPaymentIntentsCreate = jest.fn();
     mockPaymentIntentsRetrieve = jest.fn();
+    mockPaymentIntentsCapture = jest.fn().mockResolvedValue({ id: 'pi_captured', status: 'succeeded' });
+    mockPaymentIntentsCancel = jest.fn().mockResolvedValue({ id: 'pi_cancelled', status: 'canceled' });
     mockRefundsCreate = jest.fn();
     mockTransfersCreate = jest.fn();
 
@@ -23,6 +27,8 @@ describe('StripeFBOService', () => {
       paymentIntents: {
         create: mockPaymentIntentsCreate,
         retrieve: mockPaymentIntentsRetrieve,
+        capture: mockPaymentIntentsCapture,
+        cancel: mockPaymentIntentsCancel,
       },
       refunds: {
         create: mockRefundsCreate,
@@ -42,22 +48,25 @@ describe('StripeFBOService', () => {
   // ─── lockStakeInEscrow ───
 
   describe('lockStakeInEscrow', () => {
-    it('should create a PaymentIntent with correct amount, USD currency, metadata, and automatic capture', async () => {
+    it('should create a PaymentIntent with correct amount, USD currency, metadata, manual capture, and an idempotency key (PM3)', async () => {
       const mockIntentId = 'pi_test_abc123';
       mockPaymentIntentsCreate.mockResolvedValue({ id: mockIntentId });
 
       await service.lockStakeInEscrow('user-1', 5000, 'contract-42');
 
-      expect(mockPaymentIntentsCreate).toHaveBeenCalledWith({
-        amount: 5000,
-        currency: 'usd',
-        metadata: {
-          userId: 'user-1',
-          contractId: 'contract-42',
-          purpose: 'BEHAVIORAL_STAKE_ESCROW',
+      expect(mockPaymentIntentsCreate).toHaveBeenCalledWith(
+        {
+          amount: 5000,
+          currency: 'usd',
+          metadata: {
+            userId: 'user-1',
+            contractId: 'contract-42',
+            purpose: 'BEHAVIORAL_STAKE_ESCROW',
+          },
+          capture_method: 'manual',
         },
-        capture_method: 'automatic',
-      });
+        { idempotencyKey: 'styx_lock_contract-42' },
+      );
     });
 
     it('should return the PaymentIntent ID', async () => {
@@ -73,27 +82,22 @@ describe('StripeFBOService', () => {
   // ─── resolveEscrow — PASS ───
 
   describe('resolveEscrow (PASS)', () => {
-    it('should create a refund with requested_by_customer reason on PASS', async () => {
-      mockRefundsCreate.mockResolvedValue({ id: 're_test_001' });
-
+    it('should release the manual hold (cancel) with an idempotency key on PASS (PM3)', async () => {
       const result = await service.resolveEscrow('pi_test_pass', 'PASS');
 
-      expect(mockRefundsCreate).toHaveBeenCalledWith(
-        {
-          payment_intent: 'pi_test_pass',
-          reason: 'requested_by_customer',
-        },
-        { idempotencyKey: 'styx_refund_pi_test_pass' },
+      expect(mockPaymentIntentsCancel).toHaveBeenCalledWith(
+        'pi_test_pass',
+        { cancellation_reason: 'requested_by_customer' },
+        { idempotencyKey: 'styx_release_pi_test_pass' },
       );
       expect(result).toBe(true);
     });
 
-    it('should not retrieve the intent or create transfers on PASS', async () => {
-      mockRefundsCreate.mockResolvedValue({ id: 're_test_002' });
-
+    it('should not retrieve the intent, capture, or create transfers on PASS', async () => {
       await service.resolveEscrow('pi_test_pass_no_retrieve', 'PASS');
 
       expect(mockPaymentIntentsRetrieve).not.toHaveBeenCalled();
+      expect(mockPaymentIntentsCapture).not.toHaveBeenCalled();
       expect(mockTransfersCreate).not.toHaveBeenCalled();
     });
   });
@@ -109,6 +113,12 @@ describe('StripeFBOService', () => {
       const result = await service.resolveEscrow('pi_test_fail', 'FAIL', ['fury-1']);
 
       expect(mockPaymentIntentsRetrieve).toHaveBeenCalledWith('pi_test_fail');
+      // PM1: the held stake must actually be captured (slashed), not just logged.
+      expect(mockPaymentIntentsCapture).toHaveBeenCalledWith(
+        'pi_test_fail',
+        { amount_to_capture: 10000 },
+        { idempotencyKey: 'styx_capture_pi_test_fail_10000' },
+      );
       // single fury receives the full 2000 pool (no remainder)
       expect(mockTransfersCreate).toHaveBeenCalledWith(
         {
@@ -176,6 +186,33 @@ describe('StripeFBOService', () => {
 
       expect(mockTransfersCreate).not.toHaveBeenCalled();
       expect(result).toBe(true);
+    });
+
+    it('should reject a non-USD PaymentIntent rather than slashing it as USD (PM2)', async () => {
+      mockPaymentIntentsRetrieve.mockResolvedValue({ id: 'pi_eur', amount: 10000, currency: 'eur' });
+
+      await expect(service.resolveEscrow('pi_eur', 'FAIL', ['fury-1'])).rejects.toThrow(/only 'usd' is supported/);
+      expect(mockPaymentIntentsCapture).not.toHaveBeenCalled();
+      expect(mockTransfersCreate).not.toHaveBeenCalled();
+    });
+
+    it('should use the server-authoritative contract stake over the live PI amount when supplied (PM2)', async () => {
+      // Live PI says 99999 but the server-authoritative stake is 10000; the split MUST use 10000.
+      mockPaymentIntentsRetrieve.mockResolvedValue({ id: 'pi_auth', amount: 99999, currency: 'usd' });
+      mockTransfersCreate.mockResolvedValue({ id: 'tr_auth' });
+
+      await service.resolveEscrow('pi_auth', 'FAIL', ['fury-1'], 10000);
+
+      expect(mockPaymentIntentsCapture).toHaveBeenCalledWith(
+        'pi_auth',
+        { amount_to_capture: 10000 },
+        { idempotencyKey: 'styx_capture_pi_auth_10000' },
+      );
+      // furyPool = 20% of 10000 = 2000
+      expect(mockTransfersCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: 2000, destination: 'fury-1' }),
+        { idempotencyKey: 'styx_bounty_pi_auth_fury-1' },
+      );
     });
   });
 

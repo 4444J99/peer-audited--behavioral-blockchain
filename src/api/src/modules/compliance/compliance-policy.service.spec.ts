@@ -67,6 +67,64 @@ describe('CompliancePolicyService', () => {
       process.env.KYC_ENFORCEMENT_ENABLED = 'yes';
       expect(service.isKycEnforcementEnabled()).toBe(false);
     });
+
+    // PRV16: fail closed in production — enforced by default, disabled only explicitly.
+    it('should return true by default in production (fail closed)', () => {
+      process.env.NODE_ENV = 'production';
+      delete process.env.KYC_ENFORCEMENT_ENABLED;
+      expect(service.isKycEnforcementEnabled()).toBe(true);
+    });
+
+    it('should return false in production only when explicitly set to "false"', () => {
+      process.env.NODE_ENV = 'production';
+      process.env.KYC_ENFORCEMENT_ENABLED = 'false';
+      expect(service.isKycEnforcementEnabled()).toBe(false);
+    });
+
+    it('should return true in production when explicitly enabled', () => {
+      process.env.NODE_ENV = 'production';
+      process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+      expect(service.isKycEnforcementEnabled()).toBe(true);
+    });
+  });
+
+  describe('onModuleInit (PRV16 startup warning)', () => {
+    it('should warn loudly on startup when KYC enforcement is disabled', () => {
+      const warnSpy = jest
+        .spyOn((service as any).logger, 'warn')
+        .mockImplementation(() => undefined);
+      service.onModuleInit();
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/KYC enforcement is DISABLED/i));
+    });
+
+    it('should not warn when KYC enforcement is enabled', () => {
+      process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+      const warnSpy = jest
+        .spyOn((service as any).logger, 'warn')
+        .mockImplementation(() => undefined);
+      service.onModuleInit();
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it('should NOT warn in production by default (KYC is enforced there)', () => {
+      process.env.NODE_ENV = 'production';
+      delete process.env.KYC_ENFORCEMENT_ENABLED;
+      const warnSpy = jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
+      const errorSpy = jest.spyOn((service as any).logger, 'error').mockImplementation(() => undefined);
+      service.onModuleInit();
+      expect(warnSpy).not.toHaveBeenCalled();
+      expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+    it('should log an ERROR when KYC is explicitly disabled in production', () => {
+      process.env.NODE_ENV = 'production';
+      process.env.KYC_ENFORCEMENT_ENABLED = 'false';
+      const errorSpy = jest
+        .spyOn((service as any).logger, 'error')
+        .mockImplementation(() => undefined);
+      service.onModuleInit();
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringMatching(/PRODUCTION has KYC_ENFORCEMENT_ENABLED=false/i));
+    });
   });
 
   describe('isAgeEnforcementImplemented', () => {

@@ -1,6 +1,7 @@
 import { UsersService } from './users.service';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Pool } from 'pg';
+import * as bcrypt from 'bcryptjs';
 
 // Audit events are now written via a private appendTruthLogEvent() that
 // acquires a pooled client (pool.connect()) and runs a transaction
@@ -179,6 +180,44 @@ describe('UsersService', () => {
         expect.not.stringContaining('INTERVAL'),
         [10],
       );
+    });
+  });
+
+  describe('changePassword (AU12)', () => {
+    it('updates the hash and revokes existing refresh tokens', async () => {
+      const currentHash = bcrypt.hashSync('old-password', 10); // allow-secret
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ id: 'user-1', password_hash: currentHash }] }) // SELECT
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE password_hash
+        .mockResolvedValueOnce({ rows: [] }); // revoke refresh tokens
+
+      const result = await service.changePassword('user-1', 'old-password', 'new-strong-password'); // allow-secret
+
+      expect(result).toEqual({ status: 'password_updated' });
+
+      const sqls = (mockPool.query as jest.Mock).mock.calls.map((c) => String(c[0]));
+      expect(sqls.some((s) => s.includes('UPDATE users SET password_hash'))).toBe(true);
+      // AU12: refresh tokens must be revoked so old sessions cannot survive the change.
+      const revokeCall = (mockPool.query as jest.Mock).mock.calls.find((c) =>
+        String(c[0]).includes('UPDATE refresh_tokens SET revoked = TRUE'),
+      );
+      expect(revokeCall).toBeDefined();
+      expect(revokeCall![1]).toEqual(['user-1']);
+    });
+
+    it('rejects when the current password is incorrect and does not revoke tokens', async () => {
+      const currentHash = bcrypt.hashSync('old-password', 10); // allow-secret
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ id: 'user-1', password_hash: currentHash }] }); // SELECT
+
+      await expect(
+        service.changePassword('user-1', 'wrong-password', 'new-strong-password'), // allow-secret
+      ).rejects.toThrow(UnauthorizedException);
+
+      const revoked = (mockPool.query as jest.Mock).mock.calls.some((c) =>
+        String(c[0]).includes('UPDATE refresh_tokens SET revoked = TRUE'),
+      );
+      expect(revoked).toBe(false);
     });
   });
 

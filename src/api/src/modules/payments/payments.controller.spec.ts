@@ -149,6 +149,39 @@ describe('PaymentsController', () => {
       }));
     });
 
+    it('should refuse to settle an unfunded contract with no payment intent (PM11)', async () => {
+      mockContractsService.getContract.mockResolvedValue({
+        id: 'c-unfunded',
+        status: 'COMPLETED',
+        user_id: 'user-x',
+        payment_intent_id: null,
+        stake_amount: 50,
+      });
+
+      await expect(controller.executeSettlement('c-unfunded', {})).rejects.toThrow(/unfunded/i);
+      expect(mockSettlement.dispatchSettlement).not.toHaveBeenCalled();
+    });
+
+    it('should fail closed to REFUND for a FAILED contract with no resolvable user_id (PM30)', async () => {
+      mockContractsService.getContract.mockResolvedValue({
+        id: 'c-no-user',
+        status: 'FAILED',
+        // no user_id / userId surfaced
+        payment_intent_id: 'pi_no_user',
+        stake_amount: 25,
+      });
+
+      await controller.executeSettlement('c-no-user', {});
+
+      // No jurisdiction lookup should run with an undefined user id.
+      expect(mockPolicy.getJurisdictionPolicy).not.toHaveBeenCalled();
+      expect(mockSettlement.dispatchSettlement).toHaveBeenCalledWith(expect.objectContaining({
+        contractId: 'c-no-user',
+        outcome: 'FAIL',
+        dispositionMode: 'REFUND',
+      }));
+    });
+
     it('should default failed manual settlements to REFUND when jurisdiction is unknown', async () => {
       mockContractsService.getContract.mockResolvedValue({
         id: 'c-5',

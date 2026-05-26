@@ -1,4 +1,4 @@
-import { ExecutionContext } from '@nestjs/common';
+import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
 import { CurrentUser, Public } from './current-user.decorator';
 import { IS_PUBLIC_KEY } from '../../../guards/auth.guard';
@@ -29,7 +29,9 @@ describe('CurrentUser decorator', () => {
     expect(result).toEqual(mockUser);
   });
 
-  it('should return undefined when no user on request', () => {
+  it('AU14: should throw UnauthorizedException (fail closed) when no user on request', () => {
+    // A handler that forgot @UseGuards(AuthGuard) leaves request.user undefined.
+    // The decorator must fail closed rather than silently passing undefined through.
     class TestController2 {
       testMethod(@CurrentUser() user: any) {
         return user;
@@ -46,8 +48,7 @@ describe('CurrentUser decorator', () => {
       }),
     } as unknown as ExecutionContext;
 
-    const result = factory(undefined, ctx);
-    expect(result).toBeUndefined();
+    expect(() => factory(undefined, ctx)).toThrow(UnauthorizedException);
   });
 });
 

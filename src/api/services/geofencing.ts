@@ -21,7 +21,13 @@ export enum JurisdictionTier {
  * Full 50-state + DC classification.
  * - TIER_3 (HARD_BLOCK): States with strict anti-gambling laws or "any chance" doctrine.
  * - TIER_2 (REFUND_ONLY): States requiring specific licenses or material-element doctrine.
- * - TIER_1 (FULL_ACCESS): Predominance doctrine states (default for unlisted).
+ * - TIER_1 (FULL_ACCESS): Predominance doctrine states (explicitly listed below).
+ *
+ * SH7 — Fail-closed default: an unlisted / unknown US state is NOT granted TIER_1.
+ * `classifyJurisdiction` defaults any state not present in this map to TIER_3
+ * (HARD_BLOCK). Every TIER_1 jurisdiction must be enumerated here explicitly; do
+ * NOT "fix" the default to TIER_1 (that would open unauthorized cross-border /
+ * unclassified-jurisdiction activity).
  */
 export const STATE_TIERS: Record<string, JurisdictionTier> = {
     // TIER_3: Hard-blocked — strict anti-gambling / "any chance" states
@@ -104,12 +110,43 @@ export function classifyJurisdiction(geo: { country: string; region: string } | 
 }
 
 /**
+ * Map of full US state/territory names → canonical 2-letter codes, so a geo
+ * provider that returns names (e.g. "California") still resolves to the correct
+ * tier instead of failing closed and hard-blocking a legitimate TIER_1 user.
+ */
+const STATE_NAME_TO_CODE: Record<string, string> = {
+    ALABAMA: 'AL', ALASKA: 'AK', ARIZONA: 'AZ', ARKANSAS: 'AR', CALIFORNIA: 'CA',
+    COLORADO: 'CO', CONNECTICUT: 'CT', DELAWARE: 'DE', FLORIDA: 'FL', GEORGIA: 'GA',
+    HAWAII: 'HI', IDAHO: 'ID', ILLINOIS: 'IL', INDIANA: 'IN', IOWA: 'IA',
+    KANSAS: 'KS', KENTUCKY: 'KY', LOUISIANA: 'LA', MAINE: 'ME', MARYLAND: 'MD',
+    MASSACHUSETTS: 'MA', MICHIGAN: 'MI', MINNESOTA: 'MN', MISSISSIPPI: 'MS', MISSOURI: 'MO',
+    MONTANA: 'MT', NEBRASKA: 'NE', NEVADA: 'NV', 'NEW HAMPSHIRE': 'NH', 'NEW JERSEY': 'NJ',
+    'NEW MEXICO': 'NM', 'NEW YORK': 'NY', 'NORTH CAROLINA': 'NC', 'NORTH DAKOTA': 'ND', OHIO: 'OH',
+    OKLAHOMA: 'OK', OREGON: 'OR', PENNSYLVANIA: 'PA', 'RHODE ISLAND': 'RI', 'SOUTH CAROLINA': 'SC',
+    'SOUTH DAKOTA': 'SD', TENNESSEE: 'TN', TEXAS: 'TX', UTAH: 'UT', VERMONT: 'VT',
+    VIRGINIA: 'VA', WASHINGTON: 'WA', 'WEST VIRGINIA': 'WV', WISCONSIN: 'WI', WYOMING: 'WY',
+    'DISTRICT OF COLUMBIA': 'DC',
+};
+
+/**
  * Normalize a raw state/region code into a canonical 2-letter key.
- * Trims surrounding whitespace and uppercases. Returns null for empty/invalid input
- * so callers can fail closed (most-restrictive tier) rather than defaulting to TIER_1.
+ *
+ * SH8 — strict validation: only a 2-letter code (after trim/uppercase) or a known
+ * full state name is accepted. Any other input (free text, ZIP, garbage) returns
+ * null so callers fail closed (most-restrictive tier) rather than passing an
+ * unvalidated string through to the tier lookup. We deliberately do NOT pass
+ * arbitrary non-empty strings: a 2-letter check plus the name map keeps honest
+ * TIER_1 users working when a provider returns names, without weakening fail-closed.
  */
 export function normalizeStateCode(code: string | null | undefined): string | null {
     if (code == null) return null;
     const normalized = String(code).trim().toUpperCase();
-    return normalized.length > 0 ? normalized : null;
+    if (normalized.length === 0) return null;
+    // Exact 2-letter code (A–Z only).
+    if (/^[A-Z]{2}$/.test(normalized)) return normalized;
+    // Full state name → code.
+    if (Object.prototype.hasOwnProperty.call(STATE_NAME_TO_CODE, normalized)) {
+        return STATE_NAME_TO_CODE[normalized];
+    }
+    return null;
 }

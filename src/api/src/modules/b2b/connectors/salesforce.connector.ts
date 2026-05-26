@@ -18,7 +18,11 @@ export class SalesforceConnector implements CrmConnector {
     this.clientSecret = process.env.SALESFORCE_CLIENT_SECRET || '';
   }
 
-  private async authenticate(): Promise<string> {
+  private async authenticate(forceRefresh = false): Promise<string> {
+    // PRV17: support forced re-auth. A cached OAuth token has no local expiry, so the
+    // only reliable signal that it has expired is a 401 from Salesforce. forceRefresh
+    // discards the stale token and mints a fresh one.
+    if (forceRefresh) this.accessToken = null;
     if (this.accessToken) return this.accessToken;
     if (!this.baseUrl) throw new Error('Salesforce not configured');
 
@@ -38,21 +42,46 @@ export class SalesforceConnector implements CrmConnector {
     return this.accessToken!;
   }
 
+  /**
+   * PRV17: issue an authenticated request and transparently re-authenticate ONCE on a
+   * 401 (expired/revoked token). Without this, an expired cached token caused every
+   * subsequent PII-export sync to fail silently with no recovery. The caller supplies
+   * a builder that produces the request given the current bearer token.
+   */
+  private async fetchWithReauth(
+    build: (token: string) => { url: string; init: RequestInit },
+  ): Promise<Response> {
+    let token = await this.authenticate();
+    let { url, init } = build(token);
+    let res = await fetch(url, init);
+
+    if (res.status === 401) {
+      // Token likely expired — force a fresh token and retry exactly once.
+      token = await this.authenticate(true);
+      ({ url, init } = build(token));
+      res = await fetch(url, init);
+    }
+
+    return res;
+  }
+
   async pushEmployeeEvent(event: EmployeeEvent): Promise<void> {
-    const token = await this.authenticate();
-    const res = await fetch(`${this.baseUrl}/services/data/v59.0/sobjects/Styx_Event__c`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+    const res = await this.fetchWithReauth((token) => ({
+      url: `${this.baseUrl}/services/data/v59.0/sobjects/Styx_Event__c`,
+      init: {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          Employee_Id__c: event.employeeId,
+          Event_Type__c: event.eventType,
+          Event_Timestamp__c: event.timestamp.toISOString(),
+          Metadata__c: JSON.stringify(event.metadata),
+        }),
       },
-      body: JSON.stringify({
-        Employee_Id__c: event.employeeId,
-        Event_Type__c: event.eventType,
-        Event_Timestamp__c: event.timestamp.toISOString(),
-        Metadata__c: JSON.stringify(event.metadata),
-      }),
-    });
+    }));
     if (!res.ok) throw new Error(`Salesforce push failed: ${res.status}`);
   }
 
@@ -73,14 +102,14 @@ export class SalesforceConnector implements CrmConnector {
       throw new Error('Invalid enterpriseId');
     }
 
-    const token = await this.authenticate();
     const safeEnterpriseId = this.escapeSoqlLiteral(enterpriseId);
     const query = encodeURIComponent(
       `SELECT Id, Email, Name FROM Contact WHERE Account.Styx_Enterprise_Id__c = '${safeEnterpriseId}'`,
     );
-    const res = await fetch(`${this.baseUrl}/services/data/v59.0/query?q=${query}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await this.fetchWithReauth((token) => ({
+      url: `${this.baseUrl}/services/data/v59.0/query?q=${query}`,
+      init: { headers: { Authorization: `Bearer ${token}` } },
+    }));
     if (!res.ok) throw new Error(`Salesforce query failed: ${res.status}`);
     const data = await res.json();
     return data.records.map((r: any) => ({

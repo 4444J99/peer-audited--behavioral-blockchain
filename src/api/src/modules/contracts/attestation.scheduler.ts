@@ -72,32 +72,50 @@ export class AttestationScheduler {
 
     for (const [contractId, missedCount] of missedCountByContract) {
       try {
-        // Increment strikes by the number of missed obligations, in one atomic
-        // statement. The `status = 'ACTIVE'` guard ensures an already-resolved
-        // contract is never re-struck on a subsequent run.
-        const updated = await this.pool.query(
-          `UPDATE contracts SET strikes = strikes + $2 WHERE id = $1 AND status = 'ACTIVE' RETURNING user_id, strikes`,
-          [contractId, missedCount],
-        );
+        // LC11: A multi-day catch-up run (e.g. after downtime) must NOT collapse
+        // several missed days into a single +N strike bump that jumps straight
+        // past the RAIN intervention threshold to auto-FAIL with one notification.
+        // The intended escalation is per-miss: each missed day adds one strike and,
+        // while still BELOW the threshold, fires a RAIN Mindfulness intercession —
+        // the chance for the user to course-correct before the contract fails.
+        // We therefore replay the misses one at a time, applying exactly the
+        // per-day escalation the downtime skipped, and stop as soon as the contract
+        // hits the threshold (auto-FAIL) so we neither over-penalize past the
+        // threshold nor skip the pre-threshold interventions.
+        for (let i = 0; i < missedCount; i++) {
+          // Add a single strike. The `status = 'ACTIVE'` guard ensures an
+          // already-resolved contract is never re-struck on a subsequent run, and
+          // also stops this loop once the auto-FAIL below has resolved the contract.
+          const updated = await this.pool.query(
+            `UPDATE contracts SET strikes = strikes + 1 WHERE id = $1 AND status = 'ACTIVE' RETURNING user_id, strikes`,
+            [contractId],
+          );
 
-        if (updated.rows.length === 0) {
-          // Contract is no longer ACTIVE (already resolved) — nothing to do.
-          continue;
-        }
+          if (updated.rows.length === 0) {
+            // Contract is no longer ACTIVE (already resolved this run, or by another
+            // path) — stop applying further strikes for it.
+            break;
+          }
 
-        const { user_id, strikes } = updated.rows[0];
+          const { user_id, strikes } = updated.rows[0];
 
-        // F-AEGIS-08: Trigger RAIN Mindfulness intercession before the threshold.
-        if (this.notifications && strikes < NOCONTACT_MISS_STRIKE_THRESHOLD) {
-          await this.notifications.createRainNotification(user_id, contractId, 'MISSED_ATTESTATION');
-        }
+          if (strikes >= NOCONTACT_MISS_STRIKE_THRESHOLD) {
+            this.logger.log(`Contract ${contractId} hit ${NOCONTACT_MISS_STRIKE_THRESHOLD} missed attestations — auto-FAIL.`);
+            // resolveContract is idempotent (it re-checks and locks the status),
+            // so even if this throws transiently and a later run retries, it will
+            // not double-settle: the conditional status claim only succeeds once.
+            await this.contractsService.resolveContract(contractId, 'FAILED');
+            // Threshold reached — remaining missed days for this contract are moot
+            // (it is now resolved); stop here rather than over-counting strikes.
+            break;
+          }
 
-        if (strikes >= NOCONTACT_MISS_STRIKE_THRESHOLD) {
-          this.logger.log(`Contract ${contractId} hit ${NOCONTACT_MISS_STRIKE_THRESHOLD} missed attestations — auto-FAIL.`);
-          // resolveContract is idempotent (it re-checks and locks the status),
-          // so even if this throws transiently and a later run retries, it will
-          // not double-settle: the conditional status claim only succeeds once.
-          await this.contractsService.resolveContract(contractId, 'FAILED');
+          // F-AEGIS-08: Below threshold — fire the RAIN Mindfulness intercession for
+          // THIS miss. Doing it per-step means a catch-up still delivers the
+          // pre-threshold interventions instead of a single batched notification.
+          if (this.notifications) {
+            await this.notifications.createRainNotification(user_id, contractId, 'MISSED_ATTESTATION');
+          }
         }
       } catch (err) {
         this.logger.error(

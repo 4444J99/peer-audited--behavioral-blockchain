@@ -97,8 +97,19 @@ export class DisputeService {
   ): Promise<{ appealStatus: string; paymentIntentId: string }> {
     let holdResult: { id: string };
     try {
-      // Hold the $5.00 appeal fee
-      holdResult = await this.stripeService.holdStake(customerId, APPEAL_FEE_AMOUNT, proofId);
+      // Hold the $5.00 appeal fee.
+      // PM24: a proofId is NOT a contractId. Passing the raw proofId here previously stamped it
+      // into the PaymentIntent's `metadata.contractId` and the hold idempotency namespace, which
+      // misleads any webhook/lookup that resolves a contract by `metadata.contractId`. Namespace
+      // the scope so it can never be confused with a real contract id, and use a STABLE per-proof
+      // idempotency key so an appeal retry reuses the same hold rather than authorizing twice.
+      const appealScope = `appeal_${proofId}`;
+      holdResult = await this.stripeService.holdStake(
+        customerId,
+        APPEAL_FEE_AMOUNT,
+        appealScope,
+        `styx_appeal_hold_${proofId}`,
+      );
     } catch (error: any) {
       throw new HttpException(
         `Appeal Rejected: Could not authorize the $${(APPEAL_FEE_AMOUNT / 100).toFixed(2)} appeal fee. Reason: ${error.message}`,
@@ -310,12 +321,14 @@ export class DisputeService {
     try {
       await client.query('BEGIN');
 
-      // Get dispute details
+      // Get dispute details (incl. the appellant's ledger account so an UPHELD fee capture can
+      // be recorded in the double-entry ledger — PM22).
       const dispute = await client.query(
         `SELECT d.id, d.proof_id, d.user_id, d.payment_intent_id,
-                p.contract_id
+                p.contract_id, u.account_id AS user_account_id
          FROM disputes d
          JOIN proofs p ON d.proof_id = p.id
+         JOIN users u ON d.user_id = u.id
          WHERE d.id = $1 AND d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'IN_REVIEW')`,
         [disputeId],
       );
@@ -324,7 +337,7 @@ export class DisputeService {
         throw new NotFoundException('Dispute not found or already resolved');
       }
 
-      const { proof_id, user_id, payment_intent_id, contract_id } = dispute.rows[0];
+      const { proof_id, user_id, payment_intent_id, contract_id, user_account_id } = dispute.rows[0];
       proofIdForEvent = proof_id;
       userIdForEvent = user_id;
       contractIdForEvent = contract_id;
@@ -412,6 +425,38 @@ export class DisputeService {
             }),
           ],
         );
+
+        // PM22: on UPHELD the $5 appeal fee is captured to platform revenue (queued above as a
+        // STRIPE_CAPTURE_APPEAL_FEE side effect). That capture moves REAL money but was never
+        // recorded in the double-entry ledger, so revenue was invisible to reconciliation and the
+        // ledger understated platform balances. Record the fee here, transactionally with the
+        // resolution, with a deterministic idempotency key so a re-resolution cannot double-post.
+        if (queuedStripeSideEffect.outcome === 'UPHELD' && user_account_id) {
+          const revenue = await client.query(
+            `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
+          );
+          if (revenue.rows.length > 0) {
+            await this.ledger.recordTransaction(
+              user_account_id,
+              revenue.rows[0].id,
+              APPEAL_FEE_AMOUNT,
+              contract_id,
+              {
+                type: 'APPEAL_FEE_CAPTURED',
+                disputeId,
+                proofId: proof_id,
+                userId: user_id,
+                sideEffectKey: `dispute-appeal-fee:${disputeId}`,
+              },
+              client as any,
+              `styx_appeal_fee_${disputeId}`,
+            );
+          } else {
+            this.logger.error(
+              `SYSTEM_REVENUE account not found; appeal fee for dispute ${disputeId} not recorded in ledger`,
+            );
+          }
+        }
       }
 
       await client.query('COMMIT');

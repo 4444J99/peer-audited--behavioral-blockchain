@@ -8,9 +8,27 @@ export class StripePayoutProvider implements PayoutProvider {
 
   constructor(private readonly stripeService: StripeFboService) {}
 
-  async releaseFunds(paymentIntentId: string, _amountCents: number, _metadata?: Record<string, any>): Promise<PayoutResult> {
+  async releaseFunds(paymentIntentId: string, amountCents: number, _metadata?: Record<string, any>): Promise<PayoutResult> {
     try {
-      // In our FBO model, releasing funds means canceling the manual hold.
+      // PM27: in our FBO model "releasing" funds means CANCELLING the manual hold, which always
+      // returns the ENTIRE authorization to the customer — there is no partial-cancel primitive.
+      // Previously the amountCents argument was silently ignored, so a request to release only a
+      // PARTIAL amount would release everything while the ledger recorded only amountCents,
+      // diverging real money from the ledger. Since only a FULL release is supported, we assert
+      // the requested amount equals the full authorized hold and fail closed on a mismatch rather
+      // than releasing more than the ledger will record. (A true partial refund must be modeled as
+      // a partial CAPTURE of the kept portion, not a release.)
+      const current = await this.stripeService.retrieveIntent(paymentIntentId);
+      const authorized = typeof current.amount === 'number' ? current.amount : undefined;
+      if (authorized !== undefined && authorized !== amountCents) {
+        const msg =
+          `Refusing partial release of PaymentIntent ${paymentIntentId}: requested ${amountCents}¢ ` +
+          `but the hold authorizes ${authorized}¢. Cancelling a hold releases the full amount; ` +
+          `a partial release is not supported on this path.`;
+        this.logger.error(msg);
+        return { status: PayoutStatus.FAILED, error: msg };
+      }
+
       const intent = await this.stripeService.cancelHold(paymentIntentId);
       return {
         status: PayoutStatus.SUCCESS,
@@ -60,16 +78,16 @@ export class StripePayoutProvider implements PayoutProvider {
         case 'succeeded':
           return PayoutStatus.SUCCESS;
         case 'canceled': {
-          // In the FBO model a deliberate release cancels the manual hold, so ONLY a
-          // deliberate cancellation counts as a successful release. Use an allowlist
-          // (fail-closed): cancelling an intent via the API with no reason yields a
-          // null cancellation_reason, and an explicit operator/user release uses
-          // 'requested_by_customer'. Every other reason — 'abandoned', 'automatic',
-          // 'failed_invoice', 'fraudulent', 'duplicate', auto-expiry, etc. — is an
-          // involuntary cancellation where no money was actually released and must be
-          // reported as FAILED, not silently treated as a successful settlement.
+          // PM25: be CONSERVATIVE about a null cancellation_reason. A deliberate operator/user
+          // release uses 'requested_by_customer', but a null reason is AMBIGUOUS — Stripe also
+          // surfaces null for an auto-expiry of an uncaptured hold (an involuntary cancellation
+          // where no settlement was intended). Mapping null → SUCCESS would mark such an
+          // involuntary cancel as a successful release (the opposite of fail-closed). So treat
+          // ONLY an explicit 'requested_by_customer' as a successful release; every other reason,
+          // including null/undefined, is reported as FAILED so settlement does not silently
+          // finalize on an uncaptured/expired hold.
           const reason = (intent as any).cancellation_reason as string | null | undefined;
-          const deliberateRelease = reason == null || reason === 'requested_by_customer';
+          const deliberateRelease = reason === 'requested_by_customer';
           return deliberateRelease ? PayoutStatus.SUCCESS : PayoutStatus.FAILED;
         }
         case 'requires_capture':

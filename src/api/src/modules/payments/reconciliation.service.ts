@@ -66,8 +66,28 @@ export class ReconciliationService {
     const escrowAccountId = escrowAccount.rows[0]?.id;
 
     // Calculate total money moved OUT of Escrow (debit side of escrow only).
-    const settlementEntries = ledgerEntries
-      .filter(e => e.metadata?.type?.includes('SETTLEMENT_RELEASE') || e.metadata?.type?.includes('SETTLEMENT_CAPTURE'));
+    //
+    // PM8: a contract can be settled by EITHER the SettlementWorker path (entry types
+    // REAL_MONEY_SETTLEMENT_RELEASE / REAL_MONEY_SETTLEMENT_CAPTURE) OR the canonical
+    // ContractsService outbox path (STAKE_RETURN / REFUND_ONLY_DISPOSITION / STAKE_CAPTURED).
+    // Recognizing only the worker types falsely flagged every outbox-settled contract as
+    // "imbalance: expected N withdrew 0," drowning out real signal. All of these types DEBIT
+    // the escrow account, so they are the escrow withdrawals.
+    //
+    // BOUNTY_POOL_TOPUP is intentionally NOT included: it moves funds FROM revenue TO the bounty
+    // pool (debits revenue, not escrow) and is a downstream split of an already-captured stake,
+    // not a withdrawal of escrow.
+    const ESCROW_WITHDRAWAL_TYPES = [
+      'SETTLEMENT_RELEASE',
+      'SETTLEMENT_CAPTURE',
+      'STAKE_RETURN',
+      'REFUND_ONLY_DISPOSITION',
+      'STAKE_CAPTURED',
+    ];
+    const settlementEntries = ledgerEntries.filter((e) => {
+      const t = e.metadata?.type;
+      return typeof t === 'string' && ESCROW_WITHDRAWAL_TYPES.some((known) => t.includes(known));
+    });
 
     const escrowWithdrawals = settlementEntries
       .filter(e => e.debitAccountId === escrowAccountId)
@@ -81,9 +101,19 @@ export class ReconciliationService {
       );
     }
 
-    if (escrowWithdrawals !== expectedAmountCents) {
-      discrepancies.push(`Ledger imbalance: Expected ${expectedAmountCents} withdrew ${escrowWithdrawals}`);
+    // PM9: captureStake supports PARTIAL captures, so a legitimate settlement can withdraw LESS
+    // than the full staked amount. The real invariant is `withdrawn <= staked` — an
+    // over-withdrawal (more left escrow than was ever staked) is a genuine imbalance, but a
+    // partial withdrawal is NOT and must not flag the contract as unbalanced. A contract that
+    // should have settled but withdrew nothing is still a real imbalance.
+    if (escrowWithdrawals > expectedAmountCents) {
+      discrepancies.push(
+        `Ledger over-withdrawal: Expected at most ${expectedAmountCents} withdrew ${escrowWithdrawals}`,
+      );
+    } else if (escrowWithdrawals === 0 && expectedAmountCents > 0) {
+      discrepancies.push(`Ledger imbalance: Expected ${expectedAmountCents} withdrew 0`);
     }
+    // 0 < escrowWithdrawals <= expectedAmountCents is a valid (possibly partial) settlement.
 
     return {
       contractId,

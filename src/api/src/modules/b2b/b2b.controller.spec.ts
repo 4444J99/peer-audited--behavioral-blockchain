@@ -115,7 +115,10 @@ describe('B2BController', () => {
     it('should dispatch a test payload and return sent status', async () => {
       (mockWebhook.dispatchEnterpriseMetricEvent as jest.Mock).mockResolvedValueOnce(true);
 
-      const result = await controller.testWebhook({ url: 'https://example.com/hook' });
+      const result = await controller.testWebhook(adminUser, {
+        enterpriseId: 'ent-001',
+        url: 'https://example.com/hook',
+      });
 
       expect(result).toEqual({ status: 'sent' });
       expect(mockWebhook.dispatchEnterpriseMetricEvent).toHaveBeenCalledWith(
@@ -127,9 +130,28 @@ describe('B2BController', () => {
     it('should return failed status when dispatch fails', async () => {
       (mockWebhook.dispatchEnterpriseMetricEvent as jest.Mock).mockResolvedValueOnce(false);
 
-      const result = await controller.testWebhook({ url: 'https://bad.com/hook' });
+      const result = await controller.testWebhook(adminUser, {
+        enterpriseId: 'ent-001',
+        url: 'https://bad.com/hook',
+      });
 
       expect(result).toEqual({ status: 'failed' });
+    });
+
+    it('should reject when caller is not a member/admin of the enterprise (PRV6)', async () => {
+      // Caller belongs to a different enterprise -> tenant check must block before
+      // any outbound dispatch happens (SSRF probing surface).
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [{ enterprise_id: 'other-ent', role: 'ADMIN' }],
+      });
+
+      await expect(
+        controller.testWebhook(adminUser, {
+          enterpriseId: 'ent-001',
+          url: 'http://169.254.169.254/latest/meta-data',
+        }),
+      ).rejects.toThrow();
+      expect(mockWebhook.dispatchEnterpriseMetricEvent).not.toHaveBeenCalled();
     });
   });
 

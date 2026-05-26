@@ -48,8 +48,13 @@ API docs are available at `http://localhost:3000/api/docs` when the API is runni
 
 ### Branch Strategy
 
+We use **trunk-based development**: short-lived branches off a protected `main`,
+merged via PR. The full model (environments, promotion gates, releases,
+rollback, branch protection) is in
+[`docs/architecture/branching-and-release-strategy.md`](../docs/architecture/branching-and-release-strategy.md).
+
 ```
-main              # Production-ready, protected
+main              # Production-ready, protected trunk — no direct pushes
 feat/<name>       # New features (e.g., feat/fury-bounty-ui)
 fix/<name>        # Bug fixes (e.g., fix/ledger-race)
 docs/<name>       # Documentation changes
@@ -103,12 +108,17 @@ npx tsx scripts/validation/05-behavioral-physics-check.ts  # Algorithm constants
 
 ## Pull Request Process
 
-1. Fork the repository and create a feature branch.
+1. Create a short-lived branch off the latest `main` (see Branch Strategy).
 2. Make your changes with tests.
 3. Run `make test` and `npx turbo run lint` locally.
-4. Open a Pull Request using the PR template.
-5. Address review feedback.
-6. A maintainer will merge once CI passes and review is approved.
+4. Open a Pull Request into `main` using the PR template — start it as a
+   **draft** while iterating, mark **ready for review** when CI is green.
+5. Address review feedback; resolve all conversations.
+6. Merging requires the **`build_and_test`, CodeQL, and Secret Pattern
+   Detection** checks green, **1+ approval incl. CODEOWNERS**, and the branch
+   up to date. Click **Merge when ready** — the **merge queue** revalidates
+   against the post-merge result and **squash-merges** (the only allowed
+   method). Direct pushes to `main` are blocked.
 
 ### PR Checklist
 

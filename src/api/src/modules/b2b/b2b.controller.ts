@@ -102,7 +102,15 @@ export class B2BController {
 
   @Post('webhook/test')
   @ApiOperation({ summary: 'Send a test event to a webhook URL' })
-  async testWebhook(@Body() body: { url: string }) {
+  async testWebhook(
+    @CurrentUser() user: { id: string },
+    @Body() body: { enterpriseId: string; url: string },
+  ) {
+    // PRV6: like every other B2B route, scope this to a verified enterprise admin.
+    // Without it, any platform admin could POST to an arbitrary `url` and (with the
+    // SSRF guard bypasses in PRV7) probe internal hosts. Tenant membership is derived
+    // from the caller's own record, never trusted from the body.
+    await this.assertEnterpriseMembership(user.id, body.enterpriseId);
     const sent = await this.webhook.dispatchEnterpriseMetricEvent(
       body.url,
       { type: 'TEST', timestamp: new Date().toISOString() },

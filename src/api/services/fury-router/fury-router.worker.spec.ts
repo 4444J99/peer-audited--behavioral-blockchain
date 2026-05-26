@@ -38,6 +38,11 @@ describe('FuryRouterWorker', () => {
     return workerInstance.processJob({ data } as any);
   }
 
+  async function processJobWithAttempts(data: any, attemptsMade: number, attempts: number) {
+    const workerInstance = worker as any;
+    return workerInstance.processJob({ data, attemptsMade, opts: { attempts } } as any);
+  }
+
   it('should route with isolation (geographic, social, corporate, partner)', async () => {
     mockClient.query
       .mockResolvedValueOnce(undefined) // BEGIN
@@ -84,5 +89,54 @@ describe('FuryRouterWorker', () => {
       expect.stringContaining('last_known_state != '),
       ['user-2', 'UNKNOWN', '00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000', ['00000000-0000-0000-0000-000000000000'], 1]
     );
+  });
+
+  it('SH14: throws (holds for retry) on Fury shortfall while attempts remain', async () => {
+    mockClient.query
+      .mockResolvedValueOnce(undefined) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ last_known_state: null, social_guild_id: null, enterprise_id: null }] })
+      .mockResolvedValueOnce({ rows: [] }) // No partners
+      .mockResolvedValueOnce({ rows: [{ id: 'fury-1' }] }) // only 1 eligible, need 3
+      .mockResolvedValue(undefined); // ROLLBACK etc.
+
+    await expect(
+      processJobWithAttempts(
+        { proofId: 'proof-short', submitterUserId: 'user-3', requiredReviewers: 3 },
+        0, // attemptsMade
+        3, // max attempts -> not final
+      ),
+    ).rejects.toThrow(/eligible Furies available/);
+
+    expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
+    // Must NOT dead-letter while retries remain.
+    expect(mockClient.query).not.toHaveBeenCalledWith(
+      expect.stringContaining("status = 'MANUAL_REVIEW'"),
+      ['proof-short'],
+    );
+  });
+
+  it('SH14: dead-letters the proof to MANUAL_REVIEW on the final attempt instead of stranding it', async () => {
+    mockClient.query
+      .mockResolvedValueOnce(undefined) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ last_known_state: null, social_guild_id: null, enterprise_id: null }] })
+      .mockResolvedValueOnce({ rows: [] }) // No partners
+      .mockResolvedValueOnce({ rows: [{ id: 'fury-1' }] }) // only 1 eligible, need 3
+      .mockResolvedValueOnce(undefined) // UPDATE -> MANUAL_REVIEW
+      .mockResolvedValueOnce(undefined); // COMMIT
+
+    await expect(
+      processJobWithAttempts(
+        { proofId: 'proof-dead', submitterUserId: 'user-4', requiredReviewers: 3 },
+        2, // attemptsMade -> this is the 3rd (final) attempt
+        3, // max attempts
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(mockClient.query).toHaveBeenCalledWith(
+      expect.stringContaining("status = 'MANUAL_REVIEW'"),
+      ['proof-dead'],
+    );
+    expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
+    expect(mockClient.query).not.toHaveBeenCalledWith('ROLLBACK');
   });
 });

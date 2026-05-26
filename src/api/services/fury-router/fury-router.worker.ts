@@ -124,13 +124,38 @@ export class FuryRouterWorker implements OnModuleInit {
       const selectedFuries = eligibleResult.rows;
 
       // Do not finalize consensus routing with fewer than the required reviewers — a
-      // single reviewer must never constitute "full consensus". Throw so the job is
-      // retried with backoff (held) until enough eligible Furies are available; once
-      // attempts are exhausted the proof stays in its pre-routing state for re-dispatch.
+      // single reviewer must never constitute "full consensus".
+      //
+      // SH14: while retries remain, throw so the job is held with backoff until
+      // enough eligible Furies are available. But once BullMQ retries are EXHAUSTED
+      // we must NOT leave the proof permanently stranded in PENDING_REVIEW with no
+      // assignments and no escalation path. On the final attempt we instead route it
+      // to a dead-letter / manual-review status the system can later pick up, and
+      // return cleanly so the job completes rather than vanishing into BullMQ's
+      // failed set with no DB trace.
       if (selectedFuries.length < requiredReviewers) {
-        throw new Error(
-          `Only ${selectedFuries.length}/${requiredReviewers} eligible Furies available for proof ${proofId}; holding for retry.`,
+        const attemptsMade = job.attemptsMade ?? 0;
+        const maxAttempts = job.opts?.attempts ?? 1;
+        const isFinalAttempt = attemptsMade + 1 >= maxAttempts;
+
+        if (!isFinalAttempt) {
+          throw new Error(
+            `Only ${selectedFuries.length}/${requiredReviewers} eligible Furies available for proof ${proofId}; holding for retry.`,
+          );
+        }
+
+        // Final attempt: dead-letter to manual review (human escalation). Commit the
+        // status transition (and its audit event) in the open transaction.
+        await client.query(
+          `UPDATE proofs SET status = 'MANUAL_REVIEW' WHERE id = $1`,
+          [proofId],
         );
+        await client.query('COMMIT');
+        this.logger.warn(
+          `Proof ${proofId} could not be routed (${selectedFuries.length}/${requiredReviewers} eligible Furies) ` +
+            `after ${attemptsMade + 1} attempts; dead-lettered to MANUAL_REVIEW for human escalation.`,
+        );
+        return;
       }
 
       // Create fury_assignments for each selected reviewer with an identity mask.

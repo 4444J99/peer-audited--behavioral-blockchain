@@ -5,8 +5,17 @@ import { createHash } from 'crypto';
 import { getDisplayTier } from '../../../../shared/libs/integrity';
 
 const BCRYPT_ROUNDS = 10;
-// Matches TruthLogService.GENESIS_HASH / APPEND_LOCK_KEY so audit events written
-// here stay part of the same tamper-evident chain.
+// SH12 — INVARIANT: these MUST stay byte-for-byte identical to
+// TruthLogService.GENESIS_HASH and TruthLogService.APPEND_LOCK_KEY, and the preimage
+// built in appendTruthLogEvent() below MUST stay byte-for-byte identical to
+// TruthLogService.appendEvent()'s preimage
+//   `${sequence_index}|${event_type}|${timestamp}|${previous_hash}|${JSON.stringify(payload)}`.
+// Any drift (a changed delimiter, field order, hash algorithm, lock key, or genesis
+// value) silently FORKS the tamper-evident hash chain: verifyChain() would then flag
+// every event appended by the diverged writer as tampered. This logic is duplicated
+// (not delegated to TruthLogService) only because UsersModule does not provide
+// TruthLogService for injection and wiring it in requires editing users.module.ts
+// (out of scope here). See report note on the SH12 coupling.
 const GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
 const TRUTH_LOG_APPEND_LOCK_KEY = 0x57_54_4c_47; // 'WTLG'
 
@@ -42,6 +51,15 @@ export class UsersService {
         `INSERT INTO event_log (sequence_index, event_type, payload, previous_hash, current_hash, created_at)
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [nextIndex, eventType, payload, previousHash, currentHash, timestamp],
+      );
+
+      // LC4: advance the BIGSERIAL sequence to the explicitly-inserted index, mirroring
+      // TruthLogService.appendEvent. Without this, any DEFAULT-relying writer would
+      // reuse an index and collide with idx_event_log_sequence. (This duplicate writer
+      // MUST stay in lockstep with TruthLogService — see file-top invariant comment.)
+      await client.query(
+        `SELECT setval(pg_get_serial_sequence('event_log', 'sequence_index'), $1::bigint, true)`,
+        [nextIndex],
       );
 
       await client.query('COMMIT');
@@ -146,7 +164,28 @@ export class UsersService {
       [newHash, userId],
     );
 
+    // AU12: revoke all existing refresh tokens on password change. Otherwise the
+    // 7-day refresh tokens issued before the change stay valid and an attacker who
+    // captured the old credentials/session can keep minting access tokens, defeating
+    // the point of changing the password. This mirrors
+    // AuthService.revokeRefreshTokensForUser; it is duplicated here (rather than
+    // imported) because UsersModule does not provide AuthService and wiring it in
+    // would require editing users.module.ts (out of scope). The SQL MUST stay in
+    // sync with AuthService.revokeRefreshTokensForUser.
+    await this.revokeRefreshTokensForUser(userId);
+
     return { status: 'password_updated' };
+  }
+
+  /**
+   * Revoke every outstanding (non-revoked) refresh token for a user. Kept byte-for-byte
+   * consistent with AuthService.revokeRefreshTokensForUser — see AU12 note above.
+   */
+  private async revokeRefreshTokensForUser(userId: string): Promise<void> {
+    await this.pool.query(
+      `UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = $1 AND revoked = FALSE`,
+      [userId],
+    );
   }
 
   async updateSettings(

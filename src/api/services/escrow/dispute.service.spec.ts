@@ -233,27 +233,41 @@ describe('DisputeService', () => {
   });
 
   describe('resolveDispute', () => {
-    it('should queue appeal-fee capture in outbox and avoid Stripe call inside resolution transaction', async () => {
+    it('should queue appeal-fee capture in outbox, record the fee in the ledger (PM22), and avoid Stripe call inside resolution transaction', async () => {
       const client = {
-        query: jest.fn()
-          .mockResolvedValueOnce({ rows: [] }) // BEGIN
-          .mockResolvedValueOnce({
-            rows: [{
-              id: 'dispute-1',
-              proof_id: 'proof-1',
-              user_id: 'user-1',
-              payment_intent_id: 'pi_appeal_1',
-              contract_id: 'contract-1',
-            }],
-          }) // SELECT dispute
-          .mockResolvedValueOnce({ rows: [] }) // UPDATE disputes
-          .mockResolvedValueOnce({ rows: [] }) // UPDATE proofs
-          .mockResolvedValueOnce({ rows: [] }) // INSERT outbox
-          .mockResolvedValueOnce({ rows: [] }), // COMMIT
+        query: jest.fn().mockImplementation(async (sql: string) => {
+          const text = String(sql);
+          if (text.startsWith('BEGIN') || text.startsWith('COMMIT') || text.startsWith('ROLLBACK')) {
+            return { rows: [] };
+          }
+          if (text.includes('FROM disputes d') && text.includes('JOIN users u')) {
+            return {
+              rows: [{
+                id: 'dispute-1',
+                proof_id: 'proof-1',
+                user_id: 'user-1',
+                payment_intent_id: 'pi_appeal_1',
+                contract_id: 'contract-1',
+                user_account_id: 'acct-user-1',
+              }],
+            };
+          }
+          if (text.includes("name = 'SYSTEM_REVENUE'")) {
+            return { rows: [{ id: 'acct-revenue' }] };
+          }
+          // ledger INSERT (recordTransaction with external client + idempotency key)
+          if (text.includes('INSERT INTO entries')) {
+            return { rows: [{ id: 'entry-appeal-fee' }] };
+          }
+          return { rows: [] };
+        }),
         release: jest.fn(),
       };
       mockPool.connect.mockResolvedValueOnce(client);
       mockTruthLog.appendEvent.mockResolvedValueOnce('event-1');
+      // recordTransaction is the real LedgerService here? No — mockLedger is injected, so the
+      // ledger posting goes through the mock. Make it resolve to an entry id.
+      mockLedger.recordTransaction.mockResolvedValueOnce('entry-appeal-fee');
 
       const result = await disputeService.resolveDispute(
         'dispute-1',
@@ -272,6 +286,18 @@ describe('DisputeService', () => {
       expect(outboxInsertCall).toBeDefined();
       expect(outboxInsertCall?.[1][2]).toBe('STRIPE_CAPTURE_APPEAL_FEE');
       expect(outboxInsertCall?.[1][3]).toContain('dispute-resolution:dispute-1:UPHELD:stripe');
+
+      // PM22: the captured $5 appeal fee must be posted to the ledger (user → revenue) with a
+      // deterministic idempotency key so a re-resolution cannot double-post it.
+      expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
+        'acct-user-1',
+        'acct-revenue',
+        500,
+        'contract-1',
+        expect.objectContaining({ type: 'APPEAL_FEE_CAPTURED', disputeId: 'dispute-1' }),
+        client,
+        'styx_appeal_fee_dispute-1',
+      );
     });
   });
 });

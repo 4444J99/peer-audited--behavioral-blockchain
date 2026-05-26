@@ -22,18 +22,17 @@ describe('toCents', () => {
     expect(toCents(-9.99)).toBe(-999);
   });
 
-  it('should handle IEEE 754 rounding for $1.005 (100.4999... in float)', () => {
-    // $1.005 * 100 = 100.49999... in IEEE 754, Math.round → 100
-    expect(toCents(1.005)).toBe(100);
+  it('should reject fractional-cent inputs rather than silently rounding ($1.005)', () => {
+    // $1.005 carries a half-cent; surfacing it beats silently rounding to 100.
+    expect(() => toCents(1.005)).toThrow(/not a whole number of cents/);
   });
 
-  it('should round fractional cents (below half-cent down)', () => {
-    // $1.004 → 100.4 cents → rounds to 100
-    expect(toCents(1.004)).toBe(100);
+  it('should reject a fractional-cent below the half-cent ($1.004)', () => {
+    expect(() => toCents(1.004)).toThrow(/not a whole number of cents/);
   });
 
-  it('should handle IEEE 754 floating-point imprecision via rounding', () => {
-    // 0.1 + 0.2 = 0.30000000000000004 in IEEE 754; should round to 30
+  it('should tolerate IEEE 754 imprecision on whole-cent inputs (0.1 + 0.2)', () => {
+    // 0.1 + 0.2 = 0.30000000000000004 in IEEE 754; epsilon-tolerant rounding → 30.
     expect(toCents(0.1 + 0.2)).toBe(30);
   });
 
@@ -46,11 +45,10 @@ describe('toCents', () => {
     expect(toCents(0.01)).toBe(1);
   });
 
-  it('should handle a sub-cent amount by rounding to nearest cent', () => {
-    // $0.004 → 0.4 cents → rounds to 0
-    expect(toCents(0.004)).toBe(0);
-    // $0.006 → 0.6 cents → rounds to 1
-    expect(toCents(0.006)).toBe(1);
+  it('should reject a sub-cent amount instead of rounding it away', () => {
+    // $0.004 and $0.006 both carry a fractional cent and must be rejected.
+    expect(() => toCents(0.004)).toThrow(/not a whole number of cents/);
+    expect(() => toCents(0.006)).toThrow(/not a whole number of cents/);
   });
 
   it('should handle the TIER_2_STANDARD max stake ($100)', () => {
@@ -75,9 +73,13 @@ describe('toDollars', () => {
     expect(toDollars(0)).toBe(0);
   });
 
-  it('should handle negative cents', () => {
-    expect(toDollars(-100)).toBe(-1);
-    expect(toDollars(-999)).toBe(-9.99);
+  it('should reject negative cents (internal amounts must be non-negative)', () => {
+    expect(() => toDollars(-100)).toThrow(/non-negative/);
+    expect(() => toDollars(-999)).toThrow(/non-negative/);
+  });
+
+  it('should reject non-integer cents', () => {
+    expect(() => toDollars(10.5)).toThrow(/integer/);
   });
 
   it('should handle a single cent', () => {
@@ -116,12 +118,16 @@ describe('formatCents', () => {
     expect(formatCents(1)).toBe('$0.01');
   });
 
-  it('should format a negative amount with a leading minus sign', () => {
-    expect(formatCents(-100)).toBe('$-1.00');
+  it('should reject a negative amount rather than rendering it', () => {
+    expect(() => formatCents(-100)).toThrow(/non-negative/);
   });
 
-  it('should format a negative single cent', () => {
-    expect(formatCents(-1)).toBe('$-0.01');
+  it('should reject a negative single cent', () => {
+    expect(() => formatCents(-1)).toThrow(/non-negative/);
+  });
+
+  it('should reject a non-integer cents amount', () => {
+    expect(() => formatCents(99.9)).toThrow(/integer/);
   });
 
   it('should format a large amount correctly', () => {

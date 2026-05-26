@@ -47,8 +47,10 @@ export function consumeSseTicket(ticket: string, scope: SseTicketScope): string 
     return null;
   }
 
-  tickets.delete(ticket);
-
+  // AU7: validate scope + expiry BEFORE deleting the ticket. The old order deleted
+  // first, so presenting a valid ticket to the wrong-scope (or after-expiry) stream
+  // burned it — a DoS on the victim's own subscription. Only consume (delete) the
+  // ticket once it has actually passed validation and is being honored.
   if (record.scope !== scope) {
     return null;
   }
@@ -56,6 +58,8 @@ export function consumeSseTicket(ticket: string, scope: SseTicketScope): string 
   if (record.expiresAt <= Date.now()) {
     return null;
   }
+
+  tickets.delete(ticket);
 
   return record.userId;
 }

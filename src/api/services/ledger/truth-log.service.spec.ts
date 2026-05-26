@@ -33,6 +33,7 @@ describe('TruthLogService', () => {
       .mockResolvedValueOnce({ rows: [] }) // SELECT pg_advisory_xact_lock
       .mockResolvedValueOnce({ rows: [] }) // SELECT latest hash (empty log)
       .mockResolvedValueOnce({ rows: [{ id: 'new-log-1' }] }) // INSERT
+      .mockResolvedValueOnce({ rows: [{ setval: '1' }] }) // SELECT setval (LC4 sequence advance)
       .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
     const payload = { action: 'start_habit' };
@@ -57,6 +58,12 @@ describe('TruthLogService', () => {
     expect(insertCallArgs[1][3]).toBe(GENESIS_HASH); // previous hash
     expect(insertCallArgs[1][4]).toBe(expectedHash); // current hash
 
+    // LC4: the explicit sequence_index insert must advance the BIGSERIAL sequence
+    // (setval) so any DEFAULT-relying writer can't collide on the unique index.
+    const setvalCallArgs = (mockClient.query as jest.Mock).mock.calls[4];
+    expect(setvalCallArgs[0]).toContain('setval');
+    expect(setvalCallArgs[1]).toEqual([1]);
+
     jest.useRealTimers();
   });
 
@@ -71,6 +78,7 @@ describe('TruthLogService', () => {
       .mockResolvedValueOnce({ rows: [] }) // SELECT pg_advisory_xact_lock
       .mockResolvedValueOnce({ rows: [{ sequence_index: '10', current_hash: 'abc123oldhash' }] }) // SELECT latest
       .mockResolvedValueOnce({ rows: [{ id: 'new-log-2' }] }) // INSERT
+      .mockResolvedValueOnce({ rows: [{ setval: '11' }] }) // SELECT setval (LC4 sequence advance)
       .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
     const payload = { action: 'complete_habit' };
@@ -142,6 +150,38 @@ describe('TruthLogService', () => {
       });
 
       const result = await service.verifyChain();
+      expect(result.valid).toBe(false);
+      expect(result.corrupted).toContain('1');
+    });
+
+    it('LC3: should detect a consistently re-forged chain (links agree internally but diverge from genesis)', async () => {
+      const fixedDate = new Date('2026-03-09T00:00:00.000Z');
+      // An attacker rewrites event #1's payload and recomputes BOTH its current_hash
+      // and the forged previous_hash so the row is internally self-consistent against
+      // the STORED previous_hash. Event #2 is then re-linked to the forged hash. Each
+      // link matches its neighbour, so a check that trusts row.previous_hash would pass.
+      const forgedPayload1 = { a: 'TAMPERED' };
+      // Forged event #1 deliberately uses a fake previous_hash that is NOT genesis but
+      // is consistent with its own current_hash.
+      const forgedPrev1 = 'f0f0f0forgedprevhash';
+      const forgedHash1 = createHash('sha256')
+        .update(`1|E1|${fixedDate.toISOString()}|${forgedPrev1}|${JSON.stringify(forgedPayload1)}`)
+        .digest('hex');
+      const payload2 = { b: 2 };
+      const forgedHash2 = createHash('sha256')
+        .update(`2|E2|${fixedDate.toISOString()}|${forgedHash1}|${JSON.stringify(payload2)}`)
+        .digest('hex');
+
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [
+          { id: '1', sequence_index: 1, event_type: 'E1', payload: forgedPayload1, previous_hash: forgedPrev1, current_hash: forgedHash1, created_at: fixedDate },
+          { id: '2', sequence_index: 2, event_type: 'E2', payload: payload2, previous_hash: forgedHash1, current_hash: forgedHash2, created_at: fixedDate },
+        ]
+      });
+
+      const result = await service.verifyChain();
+      // Recomputing from the running head (genesis) instead of the stored
+      // previous_hash exposes the fork: event #1's previous_hash != genesis.
       expect(result.valid).toBe(false);
       expect(result.corrupted).toContain('1');
     });

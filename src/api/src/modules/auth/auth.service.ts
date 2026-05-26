@@ -21,7 +21,10 @@ export function getJwtSecret(): string {
 
 // Constant-time placeholder hash compared against when no user exists, so that
 // login latency does not reveal whether an email is registered (user enumeration).
-const DUMMY_BCRYPT_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8DvHwz6T2x2vR5y6jHkn3vF3dWk3Iq'; // allow-secret
+// Exported so a unit test can assert it is a valid bcrypt hash that no password
+// matches (AU6): a malformed hash makes bcrypt.compare return/throw immediately,
+// re-introducing the timing oracle this dummy compare exists to remove.
+export const DUMMY_BCRYPT_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8DvHwz6T2x2vR5y6jHkn3vF3dWk3Iq'; // allow-secret
 
 /**
  * Derives a CSRF token bound to a given session access token. Because the token
@@ -156,10 +159,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (String(user.status || '').toUpperCase() !== 'ACTIVE') {
-      throw new UnauthorizedException('Invalid email or password');
-    }
-
+    // AU2: validate the password (and run the failed-attempt UPDATE) BEFORE the
+    // account-status check. Previously a non-ACTIVE account short-circuited here,
+    // before the bcrypt-gated failed-login UPDATE that an ACTIVE+wrong-password
+    // account performs, leaking a timing/enumeration oracle that distinguished
+    // non-ACTIVE accounts. Performing the password branch first makes the work
+    // identical regardless of account status, without weakening the blocked outcome.
     if (!valid) {
       // Atomically increment the failed-login counter and apply lockout in a
       // single UPDATE so concurrent failed attempts cannot lose increments.
@@ -174,6 +179,13 @@ export class AuthService {
          WHERE id = $1`,
         [user.id, MAX_FAILED_LOGIN_ATTEMPTS],
       );
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Password is correct: now enforce the account-status gate. A non-ACTIVE
+    // account is still blocked, but only after the same bcrypt + UPDATE work path
+    // as a wrong-password active account, so the timing does not differ.
+    if (String(user.status || '').toUpperCase() !== 'ACTIVE') {
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -198,32 +210,24 @@ export class AuthService {
     // corporate IdP/portal and delivered to the app via the styx://enterprise/ deep
     // link (see mobile/services/EnterpriseSSO.ts), then POSTed to /auth/enterprise.
     //
-    // SECURITY: the assertion MUST be cryptographically distinguishable from a normal
-    // session token. The original vulnerability was that the assertion was verified
-    // with the SAME JWT_SECRET as our own session tokens, so any session JWT could be
-    // replayed here to impersonate an enterprise user. We close that hole two ways,
-    // preferring the stronger one when it is configured:
+    // SECURITY (AU3): the assertion MUST be cryptographically distinguishable from a
+    // normal session token. The original vulnerability was that the assertion was
+    // verified with the SAME JWT_SECRET as our own session tokens, so any session JWT
+    // could be replayed here to impersonate an enterprise user.
     //
-    //   1. If a dedicated enterprise IdP secret is configured (ENTERPRISE_SSO_SECRET),
-    //      verify the assertion against THAT key. A token signed only with JWT_SECRET
-    //      then cannot validate here at all — a clean cryptographic boundary.
-    //   2. Otherwise (no separate IdP secret provisioned yet), fall back to verifying
-    //      with JWT_SECRET but REQUIRE an explicit token_type='enterprise_sso' claim.
-    //      Our signToken never sets token_type, so a plain session token is rejected.
-    //      This is weaker than (1) because anything able to sign with JWT_SECRET could
-    //      add the claim, so the contract for the external IdP is: set this claim AND,
-    //      once available, sign with a dedicated ENTERPRISE_SSO_SECRET.
+    // We require a DEDICATED enterprise IdP secret (ENTERPRISE_SSO_SECRET) and verify
+    // the assertion against THAT key only. A token signed with JWT_SECRET then cannot
+    // validate here at all — a clean cryptographic boundary. There is intentionally NO
+    // fallback to JWT_SECRET: if the dedicated secret is not provisioned, enterprise
+    // SSO is rejected outright rather than weakening to the shared session secret
+    // (which anyone able to sign a session JWT could exploit to forge assertions).
     const enterpriseSecret = process.env.ENTERPRISE_SSO_SECRET; // allow-secret
+    if (!enterpriseSecret) {
+      throw new UnauthorizedException('Enterprise SSO is not configured');
+    }
     let payload: AuthPayload;
     try {
-      if (enterpriseSecret) {
-        payload = jwt.verify(enterpriseToken, enterpriseSecret, { algorithms: ['HS256'] }) as AuthPayload;
-      } else {
-        payload = jwt.verify(enterpriseToken, getJwtSecret(), { algorithms: ['HS256'] }) as AuthPayload;
-        if (payload.token_type !== 'enterprise_sso') {
-          throw new UnauthorizedException('Invalid enterprise token');
-        }
-      }
+      payload = jwt.verify(enterpriseToken, enterpriseSecret, { algorithms: ['HS256'] }) as AuthPayload;
     } catch (err) {
       if (err instanceof UnauthorizedException) {
         throw err;
@@ -252,6 +256,16 @@ export class AuthService {
 
   verifyToken(token: string): AuthPayload { // allow-secret
     return jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as AuthPayload;
+  }
+
+  /**
+   * Verify a token's signature but ignore its expiry (AU10). Used by logout so an
+   * expired-but-validly-signed access token still lets us identify the user and
+   * revoke their (longer-lived) refresh tokens. The signature is still enforced, so
+   * an attacker cannot pass an arbitrary token to revoke another user's sessions.
+   */
+  verifyTokenIgnoringExpiry(token: string): AuthPayload { // allow-secret
+    return jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'], ignoreExpiration: true }) as AuthPayload;
   }
 
   /** Generate a refresh token, store its hash in DB, return the raw token. */

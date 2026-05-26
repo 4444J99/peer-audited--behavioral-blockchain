@@ -85,6 +85,15 @@ describe('StripeIdentityProviderAdapter', () => {
     expect(fresh.isAvailable).toBe(false);
   });
 
+  it('should hard-fail construction in production with a mock/unset key (PRV13)', () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.STRIPE_SECRET_KEY; // -> defaults to mock key
+    expect(() => new StripeIdentityProviderAdapter()).toThrow(/real key in production/i);
+
+    process.env.STRIPE_SECRET_KEY = 'sk_test_mock_key';
+    expect(() => new StripeIdentityProviderAdapter()).toThrow(/real key in production/i);
+  });
+
   it('should throw when start() called without a real key', async () => {
     await expect(
       adapter.start({ userId: 'u1', mode: 'KYC_ONLY' }),
@@ -278,19 +287,15 @@ describe('IdentityProviderService', () => {
     });
   });
 
-  describe('parseStripeIdentityWebhook', () => {
-    it('should delegate to Stripe adapter', () => {
-      mockStripeAdapter.parseWebhookEvent.mockReturnValue({
-        provider: 'STRIPE_IDENTITY',
-        verificationId: 'vs_123',
-        mode: 'KYC_ONLY',
-        status: 'VERIFIED',
-        userId: 'user-1',
-      });
-
-      const result = service.parseStripeIdentityWebhook({ type: 'identity.verification_session.verified' });
-      expect(result).not.toBe(null);
-      expect(mockStripeAdapter.parseWebhookEvent).toHaveBeenCalled();
+  describe('parseStripeIdentityWebhook (disabled - PRV12)', () => {
+    it('should hard-throw instead of parsing an unverified payload', () => {
+      // The legacy signature-less parser is neutralized; only the signature-verified
+      // path (verifyAndParseStripeWebhook) is reachable.
+      expect(() =>
+        service.parseStripeIdentityWebhook({ type: 'identity.verification_session.verified' }),
+      ).toThrow(/disabled \(PRV12\)/);
+      // It must never delegate to the adapter's unverified parse.
+      expect(mockStripeAdapter.parseWebhookEvent).not.toHaveBeenCalled();
     });
   });
 

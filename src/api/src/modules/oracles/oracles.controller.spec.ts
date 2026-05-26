@@ -23,11 +23,20 @@ describe('OraclesController', () => {
       processHealthKitSample: jest.fn(),
     };
 
+    // AU1: the handler first runs a live-status check (SELECT status ...) and only
+    // proceeds for ACTIVE accounts, then performs the dedup insert (rowCount: 1 so
+    // accepted samples are processed). Route the status query to an ACTIVE row.
+    const mockPoolQuery = jest.fn((sql: string) => {
+      if (typeof sql === 'string' && sql.includes('SELECT status FROM users')) {
+        return Promise.resolve({ rows: [{ status: 'ACTIVE' }], rowCount: 1 });
+      }
+      return Promise.resolve({ rows: [{ id: 'sample-1' }], rowCount: 1 });
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [OraclesController],
       providers: [
-        // Dedup insert returns a new row (rowCount: 1) so accepted samples are processed.
-        { provide: Pool, useValue: { query: jest.fn().mockResolvedValue({ rows: [{ id: 'sample-1' }], rowCount: 1 }) } },
+        { provide: Pool, useValue: { query: mockPoolQuery } },
         { provide: HealthKitGuardService, useValue: mockHealthKitGuard },
         { provide: TruthLogService, useValue: mockTruthLog },
         { provide: ContractsService, useValue: mockContractsService },
@@ -89,6 +98,35 @@ describe('OraclesController', () => {
 
     expect(result.results[0].accepted).toBe(false);
     expect(truthLog.appendEvent).toHaveBeenCalledWith('HEALTHKIT_SAMPLE_REJECTED', expect.any(Object));
+    expect(contractsService.processHealthKitSample).not.toHaveBeenCalled();
+  });
+
+  it('AU1: rejects ingestion for a non-ACTIVE (e.g. quarantined) account before processing', async () => {
+    const { ForbiddenException } = require('@nestjs/common');
+    // Override the pool so the live-status check returns a non-ACTIVE status.
+    (controller as any).pool = {
+      query: jest.fn((sql: string) => {
+        if (typeof sql === 'string' && sql.includes('SELECT status FROM users')) {
+          return Promise.resolve({ rows: [{ status: 'QUARANTINED' }], rowCount: 1 });
+        }
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }),
+    };
+
+    const now = new Date().toISOString();
+    const dto = {
+      samples: [
+        {
+          type: 'HKQuantityTypeIdentifierBodyMass',
+          value: 180,
+          startDate: now,
+          endDate: now,
+          metadata: { sourceBundleId: 'com.apple.health.watchos', sourceName: 'Apple Watch' },
+        },
+      ],
+    };
+
+    await expect(controller.ingestHealthKitSamples({ id: 'banned-user' }, dto)).rejects.toThrow(ForbiddenException);
     expect(contractsService.processHealthKitSample).not.toHaveBeenCalled();
   });
 });

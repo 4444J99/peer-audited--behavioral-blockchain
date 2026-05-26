@@ -174,8 +174,14 @@ export class DoubleDownDto {
     minimum: 0.01,
     maximum: 10000,
   })
-  @IsNumber()
+  // LC10: the docstring/Swagger advertise minimum 0.01, but the previous
+  // IsPositive/Max pair accepted sub-cent values like 0.001 (the service's
+  // toCents() then floored them to 0 and rejected, surfacing a confusing error).
+  // Enforce the documented bounds at the DTO layer: at most 2 decimal places
+  // (cent precision) and a hard 0.01 floor so the contract matches its stated range.
+  @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
+  @Min(0.01)
   @Max(10000)
   amount!: number;
 }

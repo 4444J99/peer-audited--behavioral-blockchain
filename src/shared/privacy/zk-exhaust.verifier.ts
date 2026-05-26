@@ -17,10 +17,19 @@ export interface ZKProof {
   artifactHash: string;
   timestamp: string;
   senderPseudonym: string;
+  // Verifier-supplied nonce/challenge this proof was minted against. Binds the
+  // proof to a single verification session so a captured proof cannot be replayed
+  // against a different challenge.
+  challenge: string;
   signature: string;
 }
 
 const ZK_SECRET_ENV = 'ZK_EXHAUST_SECRET';
+
+// A minted proof is only accepted within this window of its embedded timestamp.
+// Beyond it the proof is considered stale and rejected, so a captured proof cannot
+// be replayed indefinitely.
+export const ZK_PROOF_MAX_AGE_MS = 5 * 60 * 1000; // 5 minutes
 
 // Per-process ephemeral key used only when ZK_EXHAUST_SECRET is not configured.
 // This is generated from a CSPRNG (never a hardcoded value), so proofs minted and
@@ -34,10 +43,23 @@ function resolveZkSecret(): string {
   if (configured) {
     return configured;
   }
+  // Production startup guard: a per-process ephemeral secret silently breaks
+  // verification across instances/restarts. Fail closed rather than mint proofs
+  // that cannot be verified elsewhere.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      `${ZK_SECRET_ENV} must be set in production (refusing to use an ephemeral per-process secret)`,
+    );
+  }
   if (!ephemeralZkSecret) {
     ephemeralZkSecret = randomBytes(32).toString('hex');
   }
   return ephemeralZkSecret;
+}
+
+/** Generates a fresh, high-entropy verifier challenge/nonce. */
+export function generateZkChallenge(): string {
+  return randomBytes(16).toString('hex');
 }
 
 export class ZKExhaustVerifier {
@@ -52,8 +74,17 @@ export class ZKExhaustVerifier {
   /**
    * Generates a verifiable proof of a communication artifact locally.
    * In a production ZKP implementation, this would use SnarkyJS or Circom.
+   *
+   * `challenge` is a verifier-supplied nonce that binds the proof to a single
+   * verification session (defends against replay of a captured proof). Callers
+   * that do not yet supply one get a freshly generated nonce; the resulting proof
+   * is only verifiable against that same challenge.
    */
-  public static generateProof(rawMessage: string, senderPhone: string): ZKProof {
+  public static generateProof(
+    rawMessage: string,
+    senderPhone: string,
+    challenge: string = generateZkChallenge(),
+  ): ZKProof {
     const secret = resolveZkSecret();
     // High-entropy salt from a CSPRNG (never Math.random) so the artifact hash
     // cannot be precomputed/brute-forced against known plaintexts.
@@ -62,34 +93,87 @@ export class ZKExhaustVerifier {
     const senderPseudonym = createHmac('sha256', secret).update(senderPhone).digest('hex');
     const timestamp = new Date().toISOString();
 
-    // Keyed HMAC over the committed fields acts as the unforgeable "signature".
-    const signature = createHmac('sha256', secret)
-      .update(`${artifactHash}|${senderPseudonym}|${timestamp}`)
-      .digest('hex');
+    // Keyed HMAC over the committed fields (incl. the verifier challenge) acts as
+    // the unforgeable "signature".
+    const signature = ZKExhaustVerifier.computeSignature(
+      secret,
+      artifactHash,
+      senderPseudonym,
+      timestamp,
+      challenge,
+    );
 
     return {
       artifactHash,
       senderPseudonym,
       timestamp,
+      challenge,
       signature,
     };
   }
 
   /**
    * Verifies the proof against the system's behavioral graph.
+   *
+   * `knownTargetPseudonym` is the verifier's claim context: the signature is
+   * re-derived against it (not against the value carried in the proof) so a proof
+   * can only prove something about the pseudonym the verifier is actually asking
+   * about. `expectedChallenge`, when supplied, must equal the challenge the proof
+   * was minted against (single-use replay defense). The embedded `timestamp` must
+   * be recent (`maxAgeMs`) so a captured proof cannot be replayed indefinitely.
    */
-  public static verify(proof: ZKProof, knownTargetPseudonym: string): boolean {
-    // Check 1: Does the pseudonym match the target? (constant-time)
+  public static verify(
+    proof: ZKProof,
+    knownTargetPseudonym: string,
+    expectedChallenge?: string,
+    maxAgeMs: number = ZK_PROOF_MAX_AGE_MS,
+  ): boolean {
+    // Check 1: Does the pseudonym match the target the verifier is asking about?
     if (!ZKExhaustVerifier.constantTimeEquals(proof.senderPseudonym, knownTargetPseudonym)) {
       return false;
     }
 
-    // Check 2: Recompute and verify the HMAC signature over the committed fields.
-    const expectedSignature = createHmac('sha256', resolveZkSecret())
-      .update(`${proof.artifactHash}|${proof.senderPseudonym}|${proof.timestamp}`)
-      .digest('hex');
+    // Check 2: Reject stale proofs (timestamp expiry → no indefinite replay).
+    const minted = Date.parse(proof.timestamp);
+    if (!Number.isFinite(minted)) {
+      return false;
+    }
+    const age = Date.now() - minted;
+    if (age < -maxAgeMs || age > maxAgeMs) {
+      return false;
+    }
+
+    // Check 3: Enforce the verifier's challenge/nonce if one was issued, so a
+    // captured proof cannot be replayed against a different challenge.
+    if (expectedChallenge !== undefined &&
+        !ZKExhaustVerifier.constantTimeEquals(proof.challenge, expectedChallenge)) {
+      return false;
+    }
+
+    // Check 4: Recompute the HMAC over the committed fields. The signature is bound
+    // to the verifier's claimed target pseudonym AND the challenge carried by the
+    // proof, so it cannot be lifted onto a different claim/session.
+    const expectedSignature = ZKExhaustVerifier.computeSignature(
+      resolveZkSecret(),
+      proof.artifactHash,
+      knownTargetPseudonym,
+      proof.timestamp,
+      proof.challenge,
+    );
 
     return ZKExhaustVerifier.constantTimeEquals(proof.signature, expectedSignature);
+  }
+
+  private static computeSignature(
+    secret: string,
+    artifactHash: string,
+    pseudonym: string,
+    timestamp: string,
+    challenge: string,
+  ): string {
+    return createHmac('sha256', secret)
+      .update(`${artifactHash}|${pseudonym}|${timestamp}|${challenge}`)
+      .digest('hex');
   }
 
   private static constantTimeEquals(a: string, b: string): boolean {

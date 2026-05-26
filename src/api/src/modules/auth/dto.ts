@@ -33,9 +33,13 @@ export class LoginDto {
   @IsEmail()
   email!: string;
 
-  @ApiProperty({ description: 'User password', minLength: 12 }) // allow-secret
+  // AU13: login validates credentials, it does not (re-)impose registration policy.
+  // The old @MinLength(12) here locked out any account whose stored password is
+  // shorter than the current policy and gave a minor enumeration aid. Require only a
+  // non-empty string; complexity is enforced at registration (RegisterDto), not login.
+  @ApiProperty({ description: 'User password' }) // allow-secret
   @IsString()
-  @MinLength(12)
+  @MinLength(1)
   password!: string; // allow-secret
 }
 

@@ -45,7 +45,21 @@ export class StripeFboService {
     return customer.id;
   }
 
-  async holdStake(customerId: string, amountCents: number, contractId: string): Promise<Stripe.PaymentIntent> {
+  /**
+   * Authorizes a manual-capture hold.
+   *
+   * @param idempotencyKeyOverride When provided, this STABLE key is used so a function-level
+   *   retry (e.g. processIAP re-invoked for the same purchase) reuses the same PaymentIntent
+   *   instead of creating — and capturing — a second one (PM19). When omitted, a per-attempt
+   *   nonce key is used (the correct default for re-holdable stakes: a contract-scoped key would,
+   *   after a cancellation, replay the ORIGINAL cancelled intent instead of creating a fresh hold).
+   */
+  async holdStake(
+    customerId: string,
+    amountCents: number,
+    contractId: string,
+    idempotencyKeyOverride?: string,
+  ): Promise<Stripe.PaymentIntent> {
     if (this.isDevMode) {
       this.logger.debug(`[DEV] Mock hold ${amountCents}¢ for contract ${contractId}`);
       return {
@@ -55,12 +69,7 @@ export class StripeFboService {
         currency: 'usd',
       } as any;
     }
-    // Idempotency key must be unique PER ATTEMPT. A contract-scoped key
-    // (e.g. styx_hold_${contractId}) would, after a hold is cancelled, replay the
-    // ORIGINAL cancelled PaymentIntent instead of creating a fresh hold. The nonce
-    // ensures a re-hold after cancellation creates a new intent while still
-    // deduplicating accidental double-submits of the same attempt.
-    const idempotencyKey = `styx_hold_${contractId}_${randomUUID()}`;
+    const idempotencyKey = idempotencyKeyOverride ?? `styx_hold_${contractId}_${randomUUID()}`;
     const intent = await this.stripe.paymentIntents.create(
       {
         amount: amountCents,
@@ -89,8 +98,17 @@ export class StripeFboService {
    */
   async captureStake(paymentIntentId: string, captureAmountCents?: number): Promise<Stripe.PaymentIntent> {
     if (this.isDevMode) {
-      this.logger.debug(`[DEV] Mock capture ${paymentIntentId}`);
-      return { id: paymentIntentId, status: 'succeeded' } as any;
+      // PM18: surface the partial-capture amount in dev so units/partial-capture bugs are not
+      // hidden by an amount-agnostic mock. amount_received reflects what would actually be taken.
+      this.logger.debug(
+        `[DEV] Mock capture ${paymentIntentId}` +
+          (captureAmountCents !== undefined ? ` for ${captureAmountCents}¢` : ' (full hold)'),
+      );
+      return {
+        id: paymentIntentId,
+        status: 'succeeded',
+        ...(captureAmountCents !== undefined ? { amount_received: captureAmountCents } : {}),
+      } as any;
     }
 
     const current = await this.stripe.paymentIntents.retrieve(paymentIntentId);
@@ -111,8 +129,14 @@ export class StripeFboService {
     const params: Stripe.PaymentIntentCaptureParams =
       captureAmountCents !== undefined ? { amount_to_capture: captureAmountCents } : {};
 
+    // PM17: the idempotency key must incorporate the capture amount. A fixed
+    // `styx_capture_${paymentIntentId}` key reused with a DIFFERENT amount_to_capture (a
+    // legitimate re-capture at a partial amount) makes Stripe replay the FIRST request's
+    // result and silently ignore the new amount. Including the amount makes each distinct
+    // capture amount its own idempotent operation while still deduping true retries.
+    const amountKeyPart = captureAmountCents !== undefined ? String(captureAmountCents) : 'full';
     return this.stripe.paymentIntents.capture(paymentIntentId, params, {
-      idempotencyKey: `styx_capture_${paymentIntentId}`,
+      idempotencyKey: `styx_capture_${paymentIntentId}_${amountKeyPart}`,
     });
   }
 
@@ -134,17 +158,46 @@ export class StripeFboService {
     });
   }
 
-  async transferFunds(amountCents: number, destinationAccountId: string, metadata?: Record<string, any>): Promise<Stripe.Transfer> {
+  /**
+   * Moves funds to a connected account.
+   *
+   * PM7: `transfers.create` MUST carry an idempotency key. Without one, any retry (BullMQ,
+   * crash-resume, outbox replay, or the stale-PROCESSING reclaim in SettlementWorker) double-pays
+   * the destination connected account. The key is derived deterministically from a stable id in
+   * `metadata` (sideEffectKey / runId / paymentIntentId / contractId / transferId) plus the
+   * destination and amount, so true retries dedupe while genuinely distinct transfers do not
+   * collide. Callers SHOULD supply a stable id in metadata; if none is available we fall back to
+   * an explicit `idempotencyKey` argument.
+   */
+  async transferFunds(
+    amountCents: number,
+    destinationAccountId: string,
+    metadata?: Record<string, any>,
+    idempotencyKey?: string,
+  ): Promise<Stripe.Transfer> {
     if (this.isDevMode) {
       this.logger.debug(`[DEV] Mock transfer ${amountCents}¢ to ${destinationAccountId}`);
       return { id: `tr_dev_${randomUUID().slice(0, 8)}`, amount: amountCents } as any;
     }
-    return this.stripe.transfers.create({
-      amount: amountCents,
-      currency: 'usd',
-      destination: destinationAccountId,
-      metadata,
-    });
+    const stableId =
+      idempotencyKey ||
+      metadata?.sideEffectKey ||
+      metadata?.runId ||
+      metadata?.transferId ||
+      metadata?.paymentIntentId ||
+      metadata?.contractId;
+    const key = stableId
+      ? `styx_transfer_${destinationAccountId}_${stableId}`
+      : `styx_transfer_${destinationAccountId}_${amountCents}`;
+    return this.stripe.transfers.create(
+      {
+        amount: amountCents,
+        currency: 'usd',
+        destination: destinationAccountId,
+        metadata,
+      },
+      { idempotencyKey: key },
+    );
   }
 
   /**

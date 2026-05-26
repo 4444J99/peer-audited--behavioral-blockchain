@@ -21,19 +21,31 @@ export class BillingService {
    * eventType is constrained to the known metered metrics rather than an arbitrary
    * string cast through `as any`, so callers cannot record bogus/free-text events.
    */
-  async recordConsumptionEvent(enterpriseId: string, eventType: MeteredEventType): Promise<void> {
+  async recordConsumptionEvent(
+    enterpriseId: string,
+    eventType: MeteredEventType,
+    eventId?: string,
+  ): Promise<void> {
     this.logger.log(`Recorded consumption event [${eventType}] for Enterprise: ${enterpriseId}`);
-    await this.recordUsage(enterpriseId, eventType);
+    await this.recordUsage(enterpriseId, eventType, 1, eventId);
   }
 
   /**
    * Record a metered usage event for an enterprise's Stripe subscription.
    * Increments the usage count on the metered subscription item.
+   *
+   * PM21: an `action:'increment'` usage record with a `Date.now()` timestamp and at-least-once
+   * callers double-bills the enterprise on any retry. When a STABLE `eventId` is supplied we pass
+   * it as the Stripe `idempotencyKey` so a retried call collapses to a single increment. When no
+   * stable id is available we fall back to `action:'set'` with an idempotency key derived from
+   * the (subscriptionItem, metric, day-bucket): 'set' is naturally idempotent for re-delivery of
+   * the same value, avoiding the runaway over-count that 'increment' suffers under retries.
    */
   async recordUsage(
     enterpriseId: string,
     metric: 'phash_scan' | 'gemini_call' | 'anomaly_detection',
     quantity: number = 1,
+    eventId?: string,
   ): Promise<void> {
     const subscriptionItemId = await this.getMeteredSubscriptionItem(enterpriseId);
     if (!subscriptionItemId) {
@@ -41,11 +53,25 @@ export class BillingService {
       return;
     }
 
-    await this.stripe.subscriptionItems.createUsageRecord(subscriptionItemId, {
-      quantity,
-      timestamp: Math.floor(Date.now() / 1000),
-      action: 'increment',
-    });
+    const timestamp = Math.floor(Date.now() / 1000);
+
+    if (eventId) {
+      // Stable event id → idempotent increment.
+      await this.stripe.subscriptionItems.createUsageRecord(
+        subscriptionItemId,
+        { quantity, timestamp, action: 'increment' },
+        { idempotencyKey: `styx_usage_${subscriptionItemId}_${eventId}` },
+      );
+    } else {
+      // No stable id: use action 'set', which is idempotent under re-delivery of the same value
+      // (re-applying the same total does not over-count), keyed per (item, metric, day-bucket).
+      const dayBucket = Math.floor(timestamp / 86400);
+      await this.stripe.subscriptionItems.createUsageRecord(
+        subscriptionItemId,
+        { quantity, timestamp, action: 'set' },
+        { idempotencyKey: `styx_usage_${subscriptionItemId}_${metric}_${dayBucket}` },
+      );
+    }
 
     this.logger.log(`Recorded ${quantity}x ${metric} usage for enterprise ${enterpriseId}`);
   }

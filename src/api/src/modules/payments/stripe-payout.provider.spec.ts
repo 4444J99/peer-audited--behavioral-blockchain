@@ -27,8 +27,9 @@ describe('StripePayoutProvider', () => {
   // ─── releaseFunds ───
 
   describe('releaseFunds', () => {
-    it('should call cancelHold and return SUCCESS with the intent ID on success', async () => {
+    it('should call cancelHold and return SUCCESS when the requested amount matches the full hold', async () => {
       const mockIntent = { id: 'pi_release_001', status: 'canceled' };
+      mockStripeService.retrieveIntent.mockResolvedValue({ id: 'pi_release_001', amount: 5000 });
       mockStripeService.cancelHold.mockResolvedValue(mockIntent);
 
       const result = await provider.releaseFunds('pi_release_001', 5000);
@@ -39,7 +40,18 @@ describe('StripePayoutProvider', () => {
       expect(result.rawResponse).toEqual(mockIntent);
     });
 
+    it('should refuse a PARTIAL release (amount < full hold) rather than releasing everything (PM27)', async () => {
+      mockStripeService.retrieveIntent.mockResolvedValue({ id: 'pi_partial', amount: 5000 });
+
+      const result = await provider.releaseFunds('pi_partial', 2500);
+
+      expect(result.status).toBe(PayoutStatus.FAILED);
+      expect(result.error).toMatch(/partial release/i);
+      expect(mockStripeService.cancelHold).not.toHaveBeenCalled();
+    });
+
     it('should return FAILED with error message when cancelHold throws', async () => {
+      mockStripeService.retrieveIntent.mockResolvedValue({ id: 'pi_release_fail', amount: 5000 });
       mockStripeService.cancelHold.mockRejectedValue(new Error('Stripe network error'));
 
       const result = await provider.releaseFunds('pi_release_fail', 5000);
@@ -88,12 +100,26 @@ describe('StripePayoutProvider', () => {
       expect(status).toBe(PayoutStatus.SUCCESS);
     });
 
-    it('should map a deliberately "canceled" intent (no abandonment reason) to PayoutStatus.SUCCESS', async () => {
-      mockStripeService.retrieveIntent.mockResolvedValue({ id: 'pi_status_002', status: 'canceled' });
+    it('should map an explicit requested_by_customer cancellation to PayoutStatus.SUCCESS', async () => {
+      mockStripeService.retrieveIntent.mockResolvedValue({
+        id: 'pi_status_002',
+        status: 'canceled',
+        cancellation_reason: 'requested_by_customer',
+      });
 
       const status = await provider.getTransactionStatus('pi_status_002');
 
       expect(status).toBe(PayoutStatus.SUCCESS);
+    });
+
+    it('should conservatively map a null-reason cancellation to PayoutStatus.FAILED (PM25)', async () => {
+      // A null cancellation_reason is ambiguous (could be auto-expiry of an uncaptured hold), so
+      // it must NOT be auto-classified as a successful release.
+      mockStripeService.retrieveIntent.mockResolvedValue({ id: 'pi_status_002n', status: 'canceled' });
+
+      const status = await provider.getTransactionStatus('pi_status_002n');
+
+      expect(status).toBe(PayoutStatus.FAILED);
     });
 
     it('should map an "abandoned" cancellation to PayoutStatus.FAILED', async () => {

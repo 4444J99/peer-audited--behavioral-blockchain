@@ -3,28 +3,55 @@ import sharp from 'sharp';
 
 /**
  * Perceptual hash (pHash) service for video frame deduplication.
- * Uses average-hash algorithm on 8x8 grayscale thumbnails.
- * Detects near-duplicate proof submissions to prevent fraud.
+ *
+ * SH13: upgraded from average-hash to a DIFFERENCE HASH (dHash). dHash encodes the
+ * gradient (brightness difference between horizontally-adjacent pixels) rather than
+ * each pixel's relation to a single global average. This is materially more robust
+ * to global brightness/contrast shifts and re-encoding (common fraud-evasion
+ * tactics) while staying dependency-free (sharp only) and the same 64-bit width.
+ *
+ * LIMITATIONS (documented, by design): a 64-bit dHash is still defeatable by large
+ * geometric transforms (heavy crops, rotations, mirroring) — it is a near-duplicate
+ * detector, not a content-identity oracle. The Hamming match threshold is
+ * configurable via PHASH_HAMMING_THRESHOLD so it can be tuned per environment
+ * without a code change; a true rotation/crop-invariant upgrade (e.g. DCT pHash or
+ * feature descriptors) is tracked as future work.
  */
 @Injectable()
 export class PHashService {
   private readonly HASH_SIZE = 8;
-  private readonly HAMMING_THRESHOLD = 10;
+  // dHash compares each pixel with its right neighbour, so the source thumbnail is
+  // (HASH_SIZE + 1) wide × HASH_SIZE tall, yielding HASH_SIZE*HASH_SIZE = 64 bits.
+  private readonly HASH_WIDTH = this.HASH_SIZE + 1;
+  // Configurable Hamming match threshold (default tightened from 10 to 8: ~12.5% of
+  // 64 bits). Lower = stricter (fewer false-positive duplicate flags); raise via env
+  // if legitimate re-encodes are being flagged.
+  private readonly HAMMING_THRESHOLD = (() => {
+    const raw = Number(process.env.PHASH_HAMMING_THRESHOLD);
+    return Number.isInteger(raw) && raw >= 0 && raw <= 64 ? raw : 8;
+  })();
 
   /**
-   * Compute a perceptual hash for a single video frame.
-   * Resizes to 8x8 grayscale, computes average hash, returns 16-char hex string.
+   * Compute a perceptual hash (dHash) for a single video frame.
+   * Resizes to (HASH_SIZE+1)xHASH_SIZE grayscale, encodes the horizontal gradient
+   * (1 bit per adjacent-pixel comparison), returns a 16-char hex string (64 bits).
    */
   async computeFrameHash(frameBuffer: Buffer): Promise<string> {
     const { data } = await sharp(frameBuffer)
-      .resize(this.HASH_SIZE, this.HASH_SIZE, { fit: 'fill' })
+      .resize(this.HASH_WIDTH, this.HASH_SIZE, { fit: 'fill' })
       .grayscale()
       .raw()
       .toBuffer({ resolveWithObject: true });
 
-    const pixels = Array.from(data);
-    const avg = pixels.reduce((sum, p) => sum + p, 0) / pixels.length;
-    const bits = pixels.map((p) => (p >= avg ? '1' : '0')).join('');
+    let bits = '';
+    for (let row = 0; row < this.HASH_SIZE; row++) {
+      const rowStart = row * this.HASH_WIDTH;
+      for (let col = 0; col < this.HASH_SIZE; col++) {
+        const left = data[rowStart + col];
+        const right = data[rowStart + col + 1];
+        bits += left > right ? '1' : '0';
+      }
+    }
     return BigInt('0b' + bits).toString(16).padStart(16, '0');
   }
 

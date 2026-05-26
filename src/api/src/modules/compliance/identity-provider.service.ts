@@ -58,6 +58,12 @@ export class StripeIdentityProviderAdapter implements IdentityProviderAdapter {
 
   constructor() {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
+    // PRV13: in production a mock/placeholder API key must hard-fail. A config where
+    // the webhook secret is real but the API key is the mock default yields
+    // inconsistent verification and silent KYC failure. Fail closed at construction.
+    if (process.env.NODE_ENV === 'production' && apiKey === 'sk_test_mock_key') {
+      throw new Error('STRIPE_SECRET_KEY must be a real key in production (mock key is not allowed)');
+    }
     this.stripe = new Stripe(apiKey, { apiVersion: '2023-10-16' });
   }
 
@@ -214,7 +220,16 @@ export class IdentityProviderService {
     return this.stripeAdapter.parseWebhookEvent(event);
   }
 
-  parseStripeIdentityWebhook(body: any): IdentityProviderCompletionResult | null {
-    return this.stripeAdapter.parseWebhookEvent(body);
+  /**
+   * PRV12: the legacy signature-less webhook parser is DISABLED. It previously
+   * parsed an UNVERIFIED payload and could flip a user to VERIFIED from a forged
+   * event (a KYC-bypass footgun). It now hard-throws so the only reachable path is
+   * verifyAndParseStripeWebhook, which validates the Stripe-Signature first.
+   * @deprecated Use verifyAndParseStripeWebhook. Retained only as a tripwire.
+   */
+  parseStripeIdentityWebhook(_body: any): IdentityProviderCompletionResult | null {
+    throw new Error(
+      'parseStripeIdentityWebhook is disabled (PRV12): unverified Stripe Identity payloads must not be parsed. Use verifyAndParseStripeWebhook.',
+    );
   }
 }

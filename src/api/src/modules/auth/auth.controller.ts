@@ -89,6 +89,8 @@ export class AuthController {
 
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token using refresh token cookie' })
+  // AU5: rate-limit token rotation to curb refresh-token abuse / rotation amplification.
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const refreshToken = this.getCookieValue(req, 'styx_refresh_token'); // allow-secret
     if (!refreshToken) {
@@ -131,16 +133,23 @@ export class AuthController {
 
   @Post('logout')
   @ApiOperation({ summary: 'Clear browser session cookies and revoke refresh tokens' })
+  // AU5: rate-limit logout to match the other auth endpoints.
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    // Try to extract user ID from access token to revoke refresh tokens
+    // AU10: revoke refresh tokens even when the access token has expired. The old
+    // code used verifyToken (which enforces expiry), so an expired access token threw
+    // and the catch swallowed it — leaving 7-day refresh tokens valid after "logout".
+    // We now verify the signature while IGNORING expiry, so an expired-but-genuine
+    // token still identifies the user and triggers revocation. The signature check
+    // prevents an attacker from forging a token to revoke someone else's sessions.
     try {
       const token = this.getCookieValue(req, 'styx_auth_token'); // allow-secret
       if (token) {
-        const payload = this.authService.verifyToken(token);
+        const payload = this.authService.verifyTokenIgnoringExpiry(token);
         await this.authService.revokeRefreshTokensForUser(payload.sub);
       }
     } catch {
-      // Token may be expired; still clear cookies
+      // Token missing or signature invalid; still clear cookies.
     }
     this.clearBrowserSessionCookies(res);
     return { status: 'logged_out' };
@@ -148,6 +157,8 @@ export class AuthController {
 
   @Get('csrf')
   @ApiOperation({ summary: 'Refresh CSRF cookie for browser session requests' })
+  // AU5: rate-limit CSRF cookie issuance like the other auth endpoints.
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async csrf(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     // The CSRF token is bound to the active session, so it can only be derived
     // for a request that already carries a valid access-token cookie.

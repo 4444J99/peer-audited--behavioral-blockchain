@@ -45,9 +45,20 @@ export const STAKE_TIERS: TierConfig[] = [
 
 /**
  * Returns the minimum tier required for a given amount in cents.
+ *
+ * SH6 — Boundary semantics (chosen; confirm if business intent differs):
+ * The `maxAmountCents` of a tier is treated as the EXCLUSIVE upper bound, so an
+ * amount exactly AT a threshold escalates to the next (stricter) tier. Concretely:
+ *   - exactly $20.00 (2000c)  -> TIER_2 (KYC required), NOT TIER_1
+ *   - exactly $500.00 (50000c) -> TIER_3 (KYC required)
+ * Rationale: for a real-money compliance gate it is safer to require KYC AT the
+ * threshold than to let a stake sitting exactly on the line slip into the lower,
+ * no-KYC bracket. (Previously `<=` placed at-threshold stakes in the lower tier.)
+ * The final TIER_3 has `maxAmountCents: Infinity`, which `<` still matches for any
+ * finite amount, so the function always resolves a tier.
  */
 export function getRequiredTier(amountCents: number): TierConfig {
-  const tier = STAKE_TIERS.find(t => amountCents <= t.maxAmountCents);
+  const tier = STAKE_TIERS.find(t => amountCents < t.maxAmountCents);
   return tier || STAKE_TIERS[STAKE_TIERS.length - 1];
 }
 

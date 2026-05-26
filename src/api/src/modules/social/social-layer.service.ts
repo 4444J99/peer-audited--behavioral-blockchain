@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Pool } from 'pg';
 import { createHash } from 'crypto';
 
@@ -10,10 +10,30 @@ export interface PublicProfile {
 }
 
 @Injectable()
-export class SocialLayerService {
+export class SocialLayerService implements OnModuleInit {
   private readonly logger = new Logger(SocialLayerService.name);
 
   constructor(private readonly pool: Pool) {}
+
+  /**
+   * SH11: APP_SECRET is MANDATORY (no insecure predictable fallback). Rather than
+   * only surfacing the missing-secret as a per-request 500 deep inside
+   * getPublicProfile/getLeaderboard, fail fast at startup in production with an
+   * actionable message so a misconfigured deploy is an EXPLICIT config failure at
+   * boot. In non-production we warn (so local/dev/test without the secret still
+   * boots) but the per-request guard below still hard-throws if the secret is used.
+   */
+  onModuleInit(): void {
+    if (!process.env.APP_SECRET) {
+      const message =
+        'APP_SECRET is not set. It is required to derive pseudonymous social aliases. ' +
+        'Set APP_SECRET (a long random value) in the environment.';
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(message);
+      }
+      this.logger.warn(message);
+    }
+  }
 
   /**
    * F-SOCIAL-02: Anonymized Social Layer
@@ -34,7 +54,10 @@ export class SocialLayerService {
 
     const appSecret = process.env.APP_SECRET; // allow-secret
     if (!appSecret) {
-      throw new Error('APP_SECRET must be set');
+      // No insecure fallback (a predictable default would make aliases reversible).
+      throw new Error(
+        'APP_SECRET must be set to generate pseudonymous social aliases (see startup config).',
+      );
     }
 
     const user = userResult.rows[0];

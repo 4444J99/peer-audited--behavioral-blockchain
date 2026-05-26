@@ -10,6 +10,8 @@ const mockAuthService = {
   exchangeEnterpriseToken: jest.fn(),
   generateRefreshToken: jest.fn().mockResolvedValue('mock-refresh-token'), // allow-secret
   revokeRefreshTokensForUser: jest.fn().mockResolvedValue(undefined),
+  verifyToken: jest.fn(),
+  verifyTokenIgnoringExpiry: jest.fn(),
 } as unknown as AuthService;
 
 describe('AuthController', () => {
@@ -104,6 +106,47 @@ describe('AuthController', () => {
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.some((e) => e.property === 'password')).toBe(true);
+    });
+
+    it('AU13: should accept a short (legacy) password at login without re-imposing register policy', async () => {
+      // A pre-existing account may have a stored password shorter than the current
+      // registration complexity policy; login must not lock it out at the DTO layer.
+      const dto = plainToInstance(LoginDto, { email: 'test@styx.protocol', password: 'short' }); // allow-secret
+      const errors = await validate(dto);
+      expect(errors.some((e) => e.property === 'password')).toBe(false);
+    });
+  });
+
+  describe('POST /auth/logout (AU10)', () => {
+    const makeReq = (cookie?: string) => ({ headers: cookie ? { cookie } : {} }) as any;
+
+    it('revokes refresh tokens even when the access token is expired (verified ignoring expiry)', async () => {
+      (mockAuthService.verifyTokenIgnoringExpiry as jest.Mock).mockReturnValue({ sub: 'user-9' });
+
+      const result = await controller.logout(
+        makeReq('styx_auth_token=expired.jwt.token'),
+        mockResponse,
+      );
+
+      expect(mockAuthService.verifyTokenIgnoringExpiry).toHaveBeenCalledWith('expired.jwt.token');
+      expect(mockAuthService.revokeRefreshTokensForUser).toHaveBeenCalledWith('user-9');
+      expect(mockResponse.clearCookie).toHaveBeenCalled();
+      expect(result).toEqual({ status: 'logged_out' });
+    });
+
+    it('still clears cookies when the token signature is invalid', async () => {
+      (mockAuthService.verifyTokenIgnoringExpiry as jest.Mock).mockImplementation(() => {
+        throw new Error('invalid signature');
+      });
+
+      const result = await controller.logout(
+        makeReq('styx_auth_token=tampered'),
+        mockResponse,
+      );
+
+      expect(mockAuthService.revokeRefreshTokensForUser).not.toHaveBeenCalled();
+      expect(mockResponse.clearCookie).toHaveBeenCalled();
+      expect(result).toEqual({ status: 'logged_out' });
     });
   });
 });

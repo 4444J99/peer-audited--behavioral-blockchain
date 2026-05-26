@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, BadRequestException, Logger } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -12,6 +12,7 @@ import {
 import { Pool } from 'pg';
 import * as crypto from 'crypto';
 import { AuthGuard } from '../../../guards/auth.guard';
+import { BannedUserGuard } from '../../guards/banned-user.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { HealthKitGuardService, HealthKitSampleMetadata } from '../compliance/healthkit-guard.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
@@ -56,15 +57,44 @@ const TRUSTED_SOURCE_BUNDLES = new Set<string>([
   'com.google.android.apps.healthdata',
 ]);
 
+// SH5: legitimate hardware samples are frequently attributed to device-/version-
+// specific child bundles (e.g. per-paired-device `com.apple.health.<UUID>`, or
+// vendor Health Connect aggregator packages). Exact-match alone over-rejects honest
+// users — and a failed biological oath liquidates real stake. Prefix-match the known
+// first-party HealthKit / Health Connect / Google Fit families (NOT third-party
+// roots, which would re-open the spoofing surface). Mirrors src/shared/native/
+// health-bridge.ts `isTrustedBundle`; the two should eventually be consolidated.
+const TRUSTED_SOURCE_BUNDLE_PREFIXES: readonly string[] = [
+  'com.apple.health',
+  'com.google.android.apps.healthdata',
+  'com.google.android.apps.fitness',
+];
+
+function isTrustedSourceBundle(sourceBundleId: string): boolean {
+  if (TRUSTED_SOURCE_BUNDLES.has(sourceBundleId)) {
+    return true;
+  }
+  return TRUSTED_SOURCE_BUNDLE_PREFIXES.some(
+    (prefix) => sourceBundleId === prefix || sourceBundleId.startsWith(prefix + '.'),
+  );
+}
+
 // Reject readings whose start is more than this far in the past, or any reading
 // dated in the future (clock-skew tolerance applied to the future bound).
 const MAX_SAMPLE_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const FUTURE_SKEW_TOLERANCE_MS = 5 * 60 * 1000; // 5 minutes
 
+// AU1: this controller feeds contract-advancing (money-bearing) health samples.
+// AuthGuard alone trusted a live 15-min JWT, so a user banned/quarantined
+// mid-session could still POST samples that fulfil/advance staked contracts.
+// BannedUserGuard re-checks the live DB status and denies BANNED accounts; the
+// in-handler live-status check below additionally denies QUARANTINED/SUSPENDED/
+// PENDING_DELETION (which BannedUserGuard does not cover). BannedUserGuard only
+// needs the global Pool, so no module provider change is required.
 @ApiTags('Oracles')
 @ApiBearerAuth()
 @Controller('oracles')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, BannedUserGuard)
 export class OraclesController {
   private readonly logger = new Logger(OraclesController.name);
 
@@ -83,6 +113,21 @@ export class OraclesController {
   ) {
     if (!dto || !Array.isArray(dto.samples)) {
       throw new BadRequestException('Request body must include a samples array');
+    }
+
+    // AU1: live-status re-check. The 15-min access token outlives a mid-session
+    // ban/quarantine, and BannedUserGuard only blocks BANNED. Since this endpoint
+    // advances money-bearing contracts, require the account to be ACTIVE before
+    // processing any sample (denies QUARANTINED/SUSPENDED/PENDING_DELETION too).
+    const statusResult = await this.pool.query(
+      'SELECT status FROM users WHERE id = $1',
+      [user.id],
+    );
+    if (statusResult.rows.length === 0) {
+      throw new ForbiddenException('User account not found');
+    }
+    if (String(statusResult.rows[0].status || '').toUpperCase() !== 'ACTIVE') {
+      throw new ForbiddenException('Account is not active and cannot submit health samples');
     }
 
     const results = [];
@@ -180,8 +225,9 @@ export class OraclesController {
       return { accepted: false, reason: 'Missing required metadata field: sourceName' };
     }
 
-    // 3. Allowlist of trusted hardware source bundles (fail closed for unknown sources).
-    if (!TRUSTED_SOURCE_BUNDLES.has(sourceBundleId)) {
+    // 3. Allowlist of trusted hardware source bundle families (fail closed for
+    // unknown sources; SH5 — accepts legitimate first-party child bundles).
+    if (!isTrustedSourceBundle(sourceBundleId)) {
       return { accepted: false, reason: 'Sample must originate from a verified hardware device/app' };
     }
 

@@ -23,6 +23,7 @@ import {
   validateOathMapping,
   grantOnboardingBonus,
   useGraceDay,
+  MAX_GRACE_DAYS_PER_MONTH,
   ONBOARDING_BONUS_AMOUNT,
   FAILURE_COOL_OFF_DAYS,
   DOWNSCALE_STRIKE_THRESHOLD,
@@ -1740,6 +1741,20 @@ export class ContractsService {
         });
         await this.enqueueContractResolutionSideEffects(db, effects);
       } else {
+        // LC6: In the non-transactional fallback the status claim above
+        // auto-commits (there is no enclosing transaction to roll back), so the
+        // contract is ALREADY terminal (COMPLETED/FAILED) before any money moves.
+        // The outer catch only rolls back when useTransaction is true, so a
+        // settlement failure here would otherwise strand a terminally-resolved
+        // contract with the stake un-moved and no retry path. We therefore wrap
+        // the settlement work and, on failure, revert the status back to its
+        // pre-resolution value (`previousStatus`) so a subsequent resolveContract
+        // can re-claim and re-settle — mirroring the proof RESOLVING→UNDER_REVIEW
+        // revert in fury.worker. The downstream settlement side effects are
+        // independently idempotent (settlement dedupe / ledger sideEffectKey), so
+        // a re-resolution cannot double-allocate.
+        const previousStatus = row.status;
+        try {
         const stakeAmountCents = this.stakeAmountToCents(row.stake_amount);
         let dispositionMode: 'CAPTURE' | 'REFUND' =
           outcome === 'COMPLETED' ? 'REFUND' : 'CAPTURE';
@@ -1884,6 +1899,21 @@ export class ContractsService {
           userId: row.user_id,
           stakeAmount: Number(row.stake_amount),
         });
+        } catch (settlementErr) {
+          // Settlement failed AFTER the status was committed terminal. Revert the
+          // status to its pre-resolution value so the contract is no longer stuck
+          // resolved-with-money-unmoved; a retry can then re-claim and re-settle.
+          // Guarded so we only revert OUR terminal write (status still === outcome).
+          try {
+            await db.query(
+              `UPDATE contracts SET status = $1 WHERE id = $2 AND status = $3`,
+              [previousStatus, contractId, outcome],
+            );
+          } catch {
+            // If the compensating revert itself fails, preserve the original error.
+          }
+          throw settlementErr;
+        }
       }
 
       if (useTransaction) {
@@ -1944,29 +1974,43 @@ export class ContractsService {
       throw new BadRequestException(`Contract is not active (status: ${row.status})`);
     }
 
-    // MAX_GRACE_DAYS_PER_MONTH is a per-CALENDAR-MONTH cap, not a per-contract
-    // lifetime cap: contracts.grace_days_used counts grace days within the
-    // calendar month recorded in contracts.grace_period_month. When the current
-    // month differs from the stored marker the counter has logically reset to 0,
-    // so a long-running multi-month contract regains its full allowance each
-    // month. The same grace_days_used column is read by getAttestationStatus.
+    // MAX_GRACE_DAYS_PER_MONTH is a per-USER, per-CALENDAR-MONTH cap (LC2) — NOT
+    // a per-contract cap. Counting only this contract's grace_days_used would let
+    // a user with N active contracts burn 2*N grace days a month. We therefore sum
+    // grace_days_used across ALL of the user's contracts whose grace_period_month
+    // is the current calendar month. contracts.grace_days_used counts grace days
+    // within the month recorded in contracts.grace_period_month; when the current
+    // month differs from a row's stored marker that row's usage has logically
+    // reset to 0, so a long-running contract regains allowance each month. The
+    // same per-contract grace_days_used column is read by getAttestationStatus.
     const currentMonth = this.currentGraceMonth();
     const storedMonth: string | null = row.grace_period_month ?? null;
     const storedCount = Number(row.grace_days_used || 0);
-    // Only count the stored usage toward the cap when it belongs to the current
-    // calendar month; otherwise the month rolled over and this is a fresh quota.
-    const usedThisMonth = storedMonth === currentMonth ? storedCount : 0;
+
+    // Per-user usage this calendar month, summed across the user's contracts.
+    const userUsageRes = await this.pool.query(
+      `SELECT COALESCE(SUM(grace_days_used), 0) AS used
+       FROM contracts
+       WHERE user_id = $1 AND grace_period_month = $2`,
+      [row.user_id, currentMonth],
+    );
+    const usedThisMonth = Number(userUsageRes.rows[0]?.used || 0);
 
     const result = useGraceDay(usedThisMonth, new Date(row.ends_at));
     if (!result.success) {
       throw new BadRequestException(result.reason);
     }
 
-    // Atomically extend the deadline, stamp the current month, and set the
-    // counter to (usedThisMonth + 1). The CAS guard re-checks BOTH the raw
-    // counter and the month marker we read above (NULL-safe via IS NOT DISTINCT
-    // FROM) so two concurrent grace-day requests — or a request racing a month
-    // rollover — can't both pass; the loser matches zero rows and is rejected.
+    // This contract's own usage this calendar month (reset to 0 on month rollover).
+    const contractUsedThisMonth = storedMonth === currentMonth ? storedCount : 0;
+
+    // Atomically extend the deadline, stamp the current month, and set this
+    // contract's counter to (contractUsedThisMonth + 1). The CAS guard re-checks
+    // BOTH the raw counter and the month marker we read above (NULL-safe via IS
+    // NOT DISTINCT FROM) so two concurrent grace-day requests against this
+    // contract — or a request racing a month rollover — can't both pass; the
+    // loser matches zero rows and is rejected. The per-USER monthly cap is
+    // enforced above via useGraceDay(usedThisMonth, ...).
     const applied = await this.pool.query(
       `UPDATE contracts
        SET ends_at = $1,
@@ -1980,7 +2024,7 @@ export class ContractsService {
         result.newDeadline!.toISOString(),
         contractId,
         storedCount,
-        usedThisMonth + 1,
+        contractUsedThisMonth + 1,
         currentMonth,
         storedMonth,
       ],
@@ -2201,7 +2245,7 @@ export class ContractsService {
 
   async getAttestationStatus(contractId: string, userId: string) {
     const contract = await this.pool.query(
-      `SELECT id, user_id, oath_category, status, duration_days, started_at, ends_at, strikes, grace_days_used
+      `SELECT id, user_id, oath_category, status, duration_days, started_at, ends_at, strikes, grace_days_used, grace_period_month
        FROM contracts WHERE id = $1`,
       [contractId],
     );
@@ -2247,8 +2291,17 @@ export class ContractsService {
     const now = new Date();
     const daysRemaining = endsAt ? Math.max(0, Math.ceil((endsAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))) : 0;
 
-    // Grace days available this month
-    const graceDaysAvailable = Math.max(0, 2 - (c.grace_days_used || 0));
+    // Grace days available this month. Mirror useGraceDay's month-rollover logic:
+    // grace_days_used only counts toward the cap when it belongs to the calendar
+    // month recorded in grace_period_month. After a month rollover the stored
+    // marker no longer matches, so the quota has logically reset to full — report
+    // it that way so status and enforcement agree (LC1). The cap itself is now
+    // enforced per-user-per-month (see useGraceDay/LC2); this per-contract view is
+    // an upper bound on what this contract has consumed this month.
+    const currentMonth = this.currentGraceMonth();
+    const usedThisMonth =
+      (c.grace_period_month ?? null) === currentMonth ? Number(c.grace_days_used || 0) : 0;
+    const graceDaysAvailable = Math.max(0, MAX_GRACE_DAYS_PER_MONTH - usedThisMonth);
 
     return {
       contractId: c.id,

@@ -25,7 +25,7 @@ describe('processIAP', () => {
 
     // Stripe hold
     mockStripe.holdStake.mockResolvedValueOnce({ id: 'pi_test_123' });
-    mockStripe.captureStake.mockResolvedValueOnce(undefined);
+    mockStripe.captureStake.mockResolvedValueOnce({ id: 'pi_test_123', status: 'succeeded' });
 
     // Revenue account lookup
     mockPool.query.mockResolvedValueOnce({
@@ -52,7 +52,8 @@ describe('processIAP', () => {
       amount: TICKET_PRICE_BASE,
     });
 
-    expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test', TICKET_PRICE_BASE, 'contract-1');
+    // PM19: a stable per-(user, contract) idempotency key threads through hold + ledger.
+    expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test', TICKET_PRICE_BASE, 'contract-1', 'styx_iap_user-1_contract-1');
     expect(mockStripe.captureStake).toHaveBeenCalledWith('pi_test_123');
     expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
       'acc-1',
@@ -60,6 +61,8 @@ describe('processIAP', () => {
       TICKET_PRICE_BASE,
       'contract-1',
       { type: 'TICKET_PURCHASE', userId: 'user-1' },
+      undefined,
+      'styx_iap_user-1_contract-1',
     );
     expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('TICKET_PURCHASED', {
       userId: 'user-1',
@@ -93,7 +96,7 @@ describe('processIAP', () => {
     });
 
     mockStripe.holdStake.mockResolvedValueOnce({ id: 'pi_no_acc' });
-    mockStripe.captureStake.mockResolvedValueOnce(undefined);
+    mockStripe.captureStake.mockResolvedValueOnce({ id: 'pi_no_acc', status: 'succeeded' });
     mockTruthLog.appendEvent.mockResolvedValueOnce(undefined);
 
     const result = await processIAP(
@@ -108,5 +111,21 @@ describe('processIAP', () => {
     expect(result.paymentIntentId).toBe('pi_no_acc');
     // Ledger should NOT have been called since account_id is null
     expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
+  });
+
+  it('should NOT record revenue when the capture does not succeed (PM20)', async () => {
+    mockPool.query.mockResolvedValueOnce({
+      rows: [{ stripe_customer_id: 'cus_test', account_id: 'acc-1' }],
+    });
+    mockStripe.holdStake.mockResolvedValueOnce({ id: 'pi_uncaptured' });
+    // Capture returns a non-succeeded status WITHOUT throwing.
+    mockStripe.captureStake.mockResolvedValueOnce({ id: 'pi_uncaptured', status: 'requires_capture' });
+
+    await expect(
+      processIAP(mockPool as any, mockStripe as any, mockLedger as any, mockTruthLog as any, 'user-1', 'c-3'),
+    ).rejects.toThrow('did not succeed');
+
+    expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
+    expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
   });
 });

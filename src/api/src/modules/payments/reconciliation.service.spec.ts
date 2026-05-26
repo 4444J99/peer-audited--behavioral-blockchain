@@ -50,19 +50,65 @@ describe('ReconciliationService', () => {
       expect(result.ledgerTotalCents).toBe(1000);
     });
 
-    it('should detect discrepancies when ledger is unbalanced', async () => {
+    it('should allow a partial settlement (withdrew < staked) without flagging imbalance (PM9)', async () => {
       const contractId = 'c2';
       mockPool.query.mockResolvedValueOnce({ rows: [{ stake_amount: '50.00', status: 'FAILED' }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ status: 'SUCCESS' }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'acct-escrow' }] }); // SYSTEM_ESCROW account
 
       mockLedger.getContractLedger.mockResolvedValue([
-        { amount: 2500, debitAccountId: 'acct-escrow', creditAccountId: 'acct-revenue', metadata: { type: 'REAL_MONEY_SETTLEMENT_CAPTURE' } } // Only captured half!
+        { amount: 2500, debitAccountId: 'acct-escrow', creditAccountId: 'acct-revenue', metadata: { type: 'REAL_MONEY_SETTLEMENT_CAPTURE' } } // Intentional partial capture
+      ]);
+
+      const result = await service.reconcileContract(contractId);
+      expect(result.isBalanced).toBe(true);
+      expect(result.ledgerTotalCents).toBe(2500);
+    });
+
+    it('should flag a zero-withdrawal contract that should have settled', async () => {
+      const contractId = 'c2b';
+      mockPool.query.mockResolvedValueOnce({ rows: [{ stake_amount: '50.00', status: 'FAILED' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ status: 'SUCCESS' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'acct-escrow' }] });
+
+      mockLedger.getContractLedger.mockResolvedValue([]); // nothing left escrow
+
+      const result = await service.reconcileContract(contractId);
+      expect(result.isBalanced).toBe(false);
+      expect(result.discrepancies).toContain('Ledger imbalance: Expected 5000 withdrew 0');
+    });
+
+    it('should flag an over-withdrawal (withdrew more than staked)', async () => {
+      const contractId = 'c2c';
+      mockPool.query.mockResolvedValueOnce({ rows: [{ stake_amount: '50.00', status: 'FAILED' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ status: 'SUCCESS' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'acct-escrow' }] });
+
+      mockLedger.getContractLedger.mockResolvedValue([
+        { amount: 6000, debitAccountId: 'acct-escrow', creditAccountId: 'acct-revenue', metadata: { type: 'REAL_MONEY_SETTLEMENT_CAPTURE' } }
       ]);
 
       const result = await service.reconcileContract(contractId);
       expect(result.isBalanced).toBe(false);
-      expect(result.discrepancies).toContain('Ledger imbalance: Expected 5000 withdrew 2500');
+      expect(result.discrepancies.some(d => d.includes('over-withdrawal'))).toBe(true);
+    });
+
+    it('should recognize the canonical outbox settlement types as escrow withdrawals (PM8)', async () => {
+      const contractId = 'c2d';
+      mockPool.query.mockResolvedValueOnce({ rows: [{ stake_amount: '10.00', status: 'COMPLETED' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ status: 'SUCCESS' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'acct-escrow' }] });
+
+      // ContractsService outbox posts STAKE_RETURN (debit escrow → credit user) — must count.
+      mockLedger.getContractLedger.mockResolvedValue([
+        { amount: 1000, debitAccountId: 'acct-escrow', creditAccountId: 'acct-user', metadata: { type: 'STAKE_RETURN' } },
+        // BOUNTY_POOL_TOPUP must NOT count (debits revenue, not escrow).
+        { amount: 200, debitAccountId: 'acct-revenue', creditAccountId: 'acct-bounty', metadata: { type: 'BOUNTY_POOL_TOPUP' } },
+      ]);
+
+      const result = await service.reconcileContract(contractId);
+      expect(result.isBalanced).toBe(true);
+      expect(result.ledgerTotalCents).toBe(1000);
     });
 
     it('should detect a wrong-direction settlement entry of equal magnitude', async () => {

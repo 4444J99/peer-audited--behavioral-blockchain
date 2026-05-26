@@ -81,6 +81,8 @@ describe('AnonymizeService', () => {
   });
 
   describe('anonymizeEmployeeData', () => {
+    // Use a cohort of >= K_ANONYMITY (5) so per-employee rows are released (not
+    // suppressed). The first two carry the values the aggregate assertions check.
     const employees = [
       {
         id: 'user-1',
@@ -98,6 +100,30 @@ describe('AnonymizeService', () => {
         created_at: '2026-02-10T00:00:00Z',
         contracts: { completed: 3, failed: 2, active: 0 },
       },
+      {
+        id: 'user-3',
+        email: 'carol@corp.io',
+        integrity_score: 70,
+        tier: 'STANDARD',
+        created_at: '2026-03-01T00:00:00Z',
+        contracts: { completed: 5, failed: 0, active: 0 },
+      },
+      {
+        id: 'user-4',
+        email: 'dave@corp.io',
+        integrity_score: 70,
+        tier: 'STANDARD',
+        created_at: '2026-03-05T00:00:00Z',
+        contracts: { completed: 5, failed: 0, active: 0 },
+      },
+      {
+        id: 'user-5',
+        email: 'erin@corp.io',
+        integrity_score: 70,
+        tier: 'STANDARD',
+        created_at: '2026-03-08T00:00:00Z',
+        contracts: { completed: 5, failed: 0, active: 0 },
+      },
     ];
 
     it('should strip all PII from output', () => {
@@ -112,7 +138,7 @@ describe('AnonymizeService', () => {
 
     it('should include anonymous IDs instead of real IDs', () => {
       const result = service.anonymizeEmployeeData('ent-001', employees);
-      expect(result.employees).toHaveLength(2);
+      expect(result.employees).toHaveLength(5);
       result.employees.forEach((emp) => {
         expect(emp.anonymousId).toMatch(/^[0-9a-f]{32}$/);
       });
@@ -126,15 +152,15 @@ describe('AnonymizeService', () => {
 
     it('should compute correct aggregate stats', () => {
       const result = service.anonymizeEmployeeData('ent-001', employees);
-      expect(result.aggregate.avgIntegrityScore).toBe(70);
-      expect(result.aggregate.totalContracts).toBe(15);
-      expect(result.aggregate.completedContracts).toBe(11);
+      expect(result.aggregate.totalContracts).toBe(30);
+      expect(result.aggregate.completedContracts).toBe(26);
     });
 
     it('should handle empty employee list', () => {
       const result = service.anonymizeEmployeeData('ent-empty', []);
       expect(result.employeeCount).toBe(0);
       expect(result.employees).toEqual([]);
+      expect(result.suppressed).toBe(false);
       expect(result.aggregate.avgIntegrityScore).toBe(0);
     });
 
@@ -142,6 +168,22 @@ describe('AnonymizeService', () => {
       const result = service.anonymizeEmployeeData('ent-001', employees);
       expect(result.employees[0].completionRate).toBe(80); // 8/10
       expect(result.employees[1].completionRate).toBe(60); // 3/5
+    });
+
+    it('should suppress per-employee rows for cohorts below K (PRV10)', () => {
+      const smallCohort = employees.slice(0, 2); // 2 < 5
+      const result = service.anonymizeEmployeeData('ent-small', smallCohort);
+      expect(result.suppressed).toBe(true);
+      expect(result.employees).toEqual([]);
+      // employeeCount and aggregates remain available.
+      expect(result.employeeCount).toBe(2);
+      expect(result.aggregate.avgIntegrityScore).toBe(70);
+    });
+
+    it('should NOT suppress rows for cohorts at or above K (PRV10)', () => {
+      const result = service.anonymizeEmployeeData('ent-001', employees); // 5
+      expect(result.suppressed).toBe(false);
+      expect(result.employees).toHaveLength(5);
     });
   });
 });

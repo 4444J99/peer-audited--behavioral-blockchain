@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { lookup } from 'dns/promises';
+import { isIP } from 'net';
+import * as https from 'node:https';
+import * as http from 'node:http';
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
@@ -52,7 +56,11 @@ export class WebhookService {
     url: string,
     payload: Record<string, unknown>,
   ): Promise<WebhookDeliveryResult> {
-    this.assertSafeWebhookUrl(url);
+    // The guard validates the URL and returns the exact IP it resolved+approved.
+    // We pin the actual connection to that IP (sendWebhook) so a DNS-rebinding
+    // attacker cannot repoint the hostname to an internal address between this
+    // check and the request.
+    const { parsed, pinnedAddress } = await this.assertSafeWebhookUrl(url);
 
     const body = JSON.stringify(payload);
     const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -60,15 +68,14 @@ export class WebhookService {
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const response = await fetch(url, {
-          method: 'POST',
+        const response = await this.sendWebhook(parsed, {
           headers: {
             'Content-Type': 'application/json',
             'X-Styx-Signature': signature,
             'X-Styx-Timestamp': timestamp,
           },
           body,
-          signal: AbortSignal.timeout(10_000),
+          pinnedAddress,
         });
 
         if (response.ok) {
@@ -147,7 +154,9 @@ export class WebhookService {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  private assertSafeWebhookUrl(rawUrl: string): void {
+  private async assertSafeWebhookUrl(
+    rawUrl: string,
+  ): Promise<{ parsed: URL; pinnedAddress: string }> {
     let parsed: URL;
     try {
       parsed = new URL(rawUrl);
@@ -163,33 +172,190 @@ export class WebhookService {
       throw new Error('Webhook URL must not include credentials');
     }
 
-    const host = parsed.hostname.toLowerCase();
-    if (this.isLocalOrPrivateHost(host)) {
+    // URL.hostname strips brackets from IPv6 literals; lowercase for matching.
+    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+
+    // PRV7: reject hostnames that are non-dotted / obfuscated IPv4 literals
+    // (decimal e.g. 2130706433, octal e.g. 0177.0.0.1, hex e.g. 0x7f000001) and
+    // IPv4-mapped IPv6 (::ffff:127.0.0.1). isIP only recognises canonical forms,
+    // so anything that "looks numeric" but is not a canonical IP is suspicious.
+    if (this.looksLikeObfuscatedIp(host)) {
+      throw new Error('Webhook URL host is an unsupported numeric/obfuscated address');
+    }
+
+    // If the host is already a literal IP, validate it directly.
+    const literalKind = isIP(host);
+    if (literalKind !== 0) {
+      if (this.isBlockedIp(host)) {
+        throw new Error('Webhook URL must not target loopback, private, or link-local addresses');
+      }
+      // Already a literal IP — pin to it directly.
+      return { parsed, pinnedAddress: host };
+    }
+
+    // Obvious local names short-circuit before DNS.
+    if (host === 'localhost' || host.endsWith('.local') || host.endsWith('.localhost')) {
       throw new Error('Webhook URL must not target localhost or private network addresses');
     }
+
+    // PRV7: resolve the hostname and block if ANY resolved address is private /
+    // loopback / link-local. Inspecting only the literal hostname allowed DNS
+    // rebinding (a public name pointing at an internal IP). Fail closed if DNS
+    // resolution fails (we cannot prove the target is safe).
+    let resolved: { address: string }[];
+    try {
+      resolved = await this.resolveHost(host);
+    } catch {
+      throw new Error('Webhook URL host could not be resolved');
+    }
+
+    if (resolved.length === 0) {
+      throw new Error('Webhook URL host did not resolve to any address');
+    }
+
+    for (const { address } of resolved) {
+      if (this.isBlockedIp(address)) {
+        throw new Error('Webhook URL resolves to a loopback, private, or link-local address');
+      }
+    }
+
+    // Pin to the first validated address so the request connects to an IP we
+    // actually checked, not whatever a later DNS lookup might return.
+    return { parsed, pinnedAddress: resolved[0].address };
   }
 
-  private isLocalOrPrivateHost(hostname: string): boolean {
-    if (
-      hostname === 'localhost' ||
-      hostname === '0.0.0.0' ||
-      hostname === '::1' ||
-      hostname.endsWith('.local')
-    ) {
-      return true;
+  /**
+   * Sends a single signed POST, connecting to a pre-validated IP.
+   *
+   * Why not `fetch`: Node's global fetch re-resolves the hostname at connect
+   * time, so the IP the SSRF guard validated and the IP actually dialed can
+   * differ (DNS-rebinding TOCTOU). Here we force the socket to the validated
+   * `pinnedAddress` via a custom `lookup`, while the URL's hostname still drives
+   * the Host header and TLS SNI/certificate validation. Redirects are never
+   * followed (a 3xx is surfaced as a non-2xx response), closing the redirect
+   * SSRF vector as well.
+   *
+   * `protected` so unit tests can stub the actual network call.
+   */
+  protected sendWebhook(
+    parsed: URL,
+    opts: { headers: Record<string, string>; body: string; pinnedAddress: string },
+  ): Promise<{ ok: boolean; status: number }> {
+    const transport = parsed.protocol === 'https:' ? https : http;
+    const family = isIP(opts.pinnedAddress) || 4;
+
+    const pinnedLookup = (
+      _hostname: string,
+      options: any,
+      callback: (err: NodeJS.ErrnoException | null, address: any, family?: number) => void,
+    ): void => {
+      if (options && options.all) {
+        callback(null, [{ address: opts.pinnedAddress, family }]);
+      } else {
+        callback(null, opts.pinnedAddress, family);
+      }
+    };
+
+    return new Promise((resolve, reject) => {
+      const req = transport.request(
+        parsed,
+        {
+          method: 'POST',
+          headers: {
+            ...opts.headers,
+            'Content-Length': Buffer.byteLength(opts.body).toString(),
+          },
+          lookup: pinnedLookup as any,
+          timeout: 10_000,
+        },
+        (res) => {
+          const status = res.statusCode ?? 0;
+          res.resume(); // drain & discard the response body
+          resolve({ ok: status >= 200 && status < 300, status });
+        },
+      );
+      req.on('timeout', () => req.destroy(new Error('Webhook request timed out')));
+      req.on('error', (err) => reject(err));
+      req.write(opts.body);
+      req.end();
+    });
+  }
+
+  /**
+   * DNS resolution seam. Overridable in tests so unit tests need no real network.
+   * Returns all A/AAAA records for the host.
+   */
+  protected async resolveHost(host: string): Promise<{ address: string }[]> {
+    return lookup(host, { all: true });
+  }
+
+  /**
+   * Detect numeric hosts that are not canonical dotted-quad IPv4 / standard IPv6.
+   * Browsers/Node's fetch will happily parse 0x7f000001, 2130706433, 0177.1, etc.
+   * as 127.0.0.1, bypassing a naive `^127\.` check.
+   */
+  private looksLikeObfuscatedIp(host: string): boolean {
+    if (isIP(host) !== 0) return false; // canonical IP, handled elsewhere
+    // Pure decimal integer (e.g. 2130706433) — not a valid hostname label.
+    if (/^\d+$/.test(host)) return true;
+    // Hex (0x...) or octal (leading 0) numeric segments anywhere, or any segment
+    // that is a bare hex literal. A legitimate DNS label never starts with 0x.
+    if (/(^|\.)0x[0-9a-f]+/.test(host)) return true;
+    // Dotted form where every part is numeric but contains an octal-style leading
+    // zero (0177.0.0.1) or has fewer/odd parts that are all-numeric and not a
+    // canonical IPv4 (isIP already returned 0 above).
+    const parts = host.split('.');
+    if (parts.length > 0 && parts.every((p) => /^\d+$/.test(p) && p.length > 0)) {
+      return true; // all-numeric dotted but not a canonical IPv4 => obfuscated
     }
+    return false;
+  }
 
-    if (/^127\./.test(hostname)) return true;
-    if (/^10\./.test(hostname)) return true;
-    if (/^192\.168\./.test(hostname)) return true;
-    if (/^169\.254\./.test(hostname)) return true;
-    if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)) return true;
-
-    // Common IPv6 local ranges
-    if (hostname.startsWith('fc') || hostname.startsWith('fd') || hostname.startsWith('fe80:')) {
-      return true;
+  private isBlockedIp(ip: string): boolean {
+    const kind = isIP(ip);
+    if (kind === 4) {
+      return this.isBlockedIpv4(ip);
     }
+    if (kind === 6) {
+      const lower = ip.toLowerCase();
+      // Unspecified / loopback.
+      if (lower === '::' || lower === '::1') return true;
+      // Unique-local (fc00::/7) and link-local (fe80::/10).
+      if (/^f[cd][0-9a-f]*:/.test(lower) || lower.startsWith('fe8') || lower.startsWith('fe9') ||
+          lower.startsWith('fea') || lower.startsWith('feb')) {
+        return true;
+      }
+      // IPv4-mapped (::ffff:a.b.c.d) — validate the embedded IPv4. Anchored at the
+      // start so a legitimate public address that merely ENDS in ":ffff:x:y" is not
+      // misclassified as mapped.
+      const mappedDotted = lower.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
+      if (mappedDotted) {
+        return this.isBlockedIpv4(mappedDotted[1]);
+      }
+      // URL/Node normalizes ::ffff:127.0.0.1 to the hex form ::ffff:7f00:1, which the
+      // dotted check above misses — decode the trailing 32 bits back to dotted-quad
+      // and re-check. (This was the IPv4-mapped-loopback SSRF bypass.)
+      const mappedHex = lower.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+      if (mappedHex) {
+        const hi = parseInt(mappedHex[1], 16);
+        const lo = parseInt(mappedHex[2], 16);
+        const dotted = `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
+        return this.isBlockedIpv4(dotted);
+      }
+      return false;
+    }
+    // Unknown/non-IP — block defensively.
+    return true;
+  }
 
+  private isBlockedIpv4(ip: string): boolean {
+    if (/^0\./.test(ip)) return true; // "this network" 0.0.0.0/8
+    if (/^127\./.test(ip)) return true; // loopback
+    if (/^10\./.test(ip)) return true; // private
+    if (/^192\.168\./.test(ip)) return true; // private
+    if (/^169\.254\./.test(ip)) return true; // link-local
+    if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(ip)) return true; // private
+    if (/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(ip)) return true; // CGNAT 100.64/10
     return false;
   }
 }

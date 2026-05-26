@@ -22,6 +22,10 @@ export interface AnonymizedExport {
   enterpriseId: string;
   generatedAt: string;
   employeeCount: number;
+  // PRV10: per-employee rows are suppressed when the cohort is below K_ANONYMITY so
+  // a small/solo roster cannot be re-identified by an HR consumer who knows it. When
+  // suppressed, `employees` is empty and `suppressed` is true (aggregates remain).
+  suppressed: boolean;
   employees: AnonymizedEmployee[];
   aggregate: {
     avgIntegrityScore: number;
@@ -30,6 +34,20 @@ export interface AnonymizedExport {
     completedContracts: number;
   };
 }
+
+/**
+ * Minimum cohort size for releasing per-individual rows (k-anonymity). Below this,
+ * a row is re-identifiable by a consumer who knows their own small roster, so we
+ * suppress the per-employee detail and release only aggregate statistics.
+ *
+ * Tradeoff (documented per PRV10): even with row suppression, the per-user
+ * pseudonym (hashUserId) is DETERMINISTIC across exports, which permits longitudinal
+ * linkage of the same anon id over time. That is intentional (HR needs trend
+ * continuity) but means these exports are pseudonymous, not anonymous — combining
+ * many small-cohort exports could still narrow identity. Larger K or rotating salts
+ * would reduce that further at the cost of cross-export comparability.
+ */
+const K_ANONYMITY = 5;
 
 const PII_FIELDS = ['email', 'password_hash', 'stripe_customer_id', 'ip_address', 'name', 'first_name', 'last_name', 'phone'] as const;
 
@@ -121,11 +139,16 @@ export class AnonymizeService {
     );
     const totalCompleted = anonymized.reduce((sum, e) => sum + e.completedContracts, 0);
 
+    // PRV10: k-anonymity suppression. A cohort smaller than K is re-identifiable, so
+    // release only aggregate statistics for it (no per-employee rows).
+    const suppressed = anonymized.length > 0 && anonymized.length < K_ANONYMITY;
+
     return {
       enterpriseId,
       generatedAt: new Date().toISOString(),
       employeeCount: anonymized.length,
-      employees: anonymized,
+      suppressed,
+      employees: suppressed ? [] : anonymized,
       aggregate: {
         avgIntegrityScore: anonymized.length > 0
           ? Math.round(anonymized.reduce((s, e) => s + e.integrityScore, 0) / anonymized.length)

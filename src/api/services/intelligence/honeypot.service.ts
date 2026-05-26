@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Pool } from 'pg';
-import { randomUUID, randomInt } from 'crypto';
+import { randomInt } from 'crypto';
 import { FuryRouterService } from '../fury-router/fury-router.service';
 import { TruthLogService } from '../ledger/truth-log.service';
 import { SHADOW_BAN_THRESHOLD, FURY_CONSENSUS_SIZE } from '../../../shared/libs/behavioral-logic';
+import { HoneypotEngine } from '../../../shared/fury-logic/honeypot.engine';
 
 /**
  * Varied, indistinguishable descriptions so injected honeypots cannot be
@@ -41,6 +42,12 @@ export class HoneypotService {
 
   /** Minimum number of active Furies required before injecting */
   private static readonly MIN_FURIES_FOR_INJECTION = 3;
+
+  /**
+   * Engine providing the BREACH / CLEAN honeypot pools. Used so injected honeypots
+   * are drawn from BOTH expected-verdict classes (SH9), not just known-fail ones.
+   */
+  private readonly honeypotEngine = new HoneypotEngine();
 
   constructor(
     private readonly pool: Pool,
@@ -110,8 +117,20 @@ export class HoneypotService {
 
       const hostContract = contractResult.rows[0];
 
-      // Create the synthetic honeypot proof. Use a varied description and a
-      // crypto-random, non-enumerable media path so honeypots aren't trivially
+      // SH9: Inject BOTH expected-PASS (CLEAN) and expected-FAIL (BREACH) honeypots,
+      // drawn from the HoneypotEngine pools, rather than only known-fail ones. If
+      // every honeypot were FAIL, a dishonest auditor could game detection by simply
+      // voting FAIL on anything that "looks like" a honeypot. The engine picks the
+      // expected class via CSPRNG so a cheater cannot guess the correct vote, which
+      // preserves the adversarial-equilibrium guarantee. The DB column maps
+      // PASS<->CLEAN and FAIL<->BREACH (fury.worker keys grading off
+      // honeypot_expected_verdict).
+      const expectedResult: 'BREACH' | 'CLEAN' = randomInt(2) === 0 ? 'BREACH' : 'CLEAN';
+      const artifact = this.honeypotEngine.generateHoneypot(expectedResult);
+      const expectedVerdict: 'PASS' | 'FAIL' = artifact.expectedResult === 'CLEAN' ? 'PASS' : 'FAIL';
+
+      // Use a varied description and a crypto-random, non-enumerable media path
+      // (seeded by the engine artifact id) so honeypots aren't trivially
       // identifiable by a constant string or a guessable timestamped filename.
       const description =
         HONEYPOT_DESCRIPTIONS[randomInt(HONEYPOT_DESCRIPTIONS.length)];
@@ -121,13 +140,14 @@ export class HoneypotService {
            media_uri, is_honeypot, honeypot_expected_verdict, submitted_at, uploaded_at
          )
          VALUES ($1, $2, 'PENDING_REVIEW', 'video/mp4', $4,
-                 $3, true, 'FAIL', NOW(), NOW())
+                 $3, true, $5, NOW(), NOW())
          RETURNING id`,
         [
           hostContract.id,
           hostContract.user_id,
-          `honeypots/synthetic/${randomUUID()}.mp4`,
+          `honeypots/synthetic/${artifact.id}.mp4`,
           description,
+          expectedVerdict,
         ],
       );
 
@@ -144,7 +164,7 @@ export class HoneypotService {
         proofId: honeypotProofId,
         hostContractId: hostContract.id,
         furyRouteJobId: jobId,
-        expectedVerdict: 'FAIL',
+        expectedVerdict,
       });
 
       this.logger.log(
@@ -215,12 +235,18 @@ export class HoneypotService {
 
       await client.query('COMMIT');
 
+      // SH10: derive BOTH counts from the SAME reviewer set (the graded
+      // assignments) so correctCount + incorrectCount === totalReviewers. Using
+      // `flaggedFuries.length` for the incorrect count could disagree with
+      // totalReviewers if a flagged fury had no verdict row in this set.
+      const incorrectCount = assignments.rows.filter((a: any) => flaggedSet.has(a.fury_user_id)).length;
+      const correctCount = assignments.rows.length - incorrectCount;
       await this.truthLog.appendEvent('HONEYPOT_GRADED', {
         proofId,
         totalReviewers: assignments.rows.length,
         flaggedFuries,
-        correctCount: assignments.rows.filter((a: any) => !flaggedSet.has(a.fury_user_id)).length,
-        incorrectCount: flaggedFuries.length,
+        correctCount,
+        incorrectCount,
       });
     } catch (err) {
       await client.query('ROLLBACK');

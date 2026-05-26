@@ -45,6 +45,14 @@ export interface CohortBucket {
   retentionRate: number;
 }
 
+/**
+ * PRV11: minimum group size for releasing an aggregated row. A category / month /
+ * cohort whose underlying population is below this is re-identifiable (a single- or
+ * few-employee bucket exposes that individual's behavior), so it is suppressed
+ * entirely rather than published. Matches the K used for HR-export row suppression.
+ */
+const MIN_GROUP_SIZE = 5;
+
 @Injectable()
 export class DataLakeService {
   private readonly logger = new Logger(DataLakeService.name);
@@ -108,6 +116,7 @@ export class DataLakeService {
     const result = await this.pool.query(
       `SELECT
          c.oath_category,
+         COUNT(DISTINCT c.user_id) as distinct_employees,
          COUNT(*) as total_created,
          COUNT(*) FILTER (WHERE c.status = 'COMPLETED') as total_completed,
          COUNT(*) FILTER (WHERE c.status = 'FAILED') as total_failed,
@@ -123,19 +132,36 @@ export class DataLakeService {
       [enterpriseId, startDate, endDate],
     );
 
-    return result.rows.map((row) => {
-      const total = Number(row.total_created);
-      const completed = Number(row.total_completed);
-      return {
-        oathCategory: row.oath_category,
-        totalCreated: total,
-        totalCompleted: completed,
-        totalFailed: Number(row.total_failed),
-        avgStakeAmount: Math.round(Number(row.avg_stake) * 100) / 100,
-        avgDurationDays: Math.round(Number(row.avg_duration)),
-        completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
-      };
-    });
+    return result.rows
+      // PRV11: suppress any category backed by fewer than MIN_GROUP_SIZE distinct
+      // employees (single-/few-person buckets re-identify the individual).
+      .filter((row) => this.meetsMinGroupSize(row.distinct_employees))
+      .map((row) => {
+        const total = Number(row.total_created);
+        const completed = Number(row.total_completed);
+        return {
+          oathCategory: row.oath_category,
+          totalCreated: total,
+          totalCompleted: completed,
+          totalFailed: Number(row.total_failed),
+          avgStakeAmount: Math.round(Number(row.avg_stake) * 100) / 100,
+          avgDurationDays: Math.round(Number(row.avg_duration)),
+          completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+        };
+      });
+  }
+
+  /**
+   * True when a group's underlying distinct-employee population is large enough to
+   * publish without re-identifying an individual. When the count column is absent
+   * (older callers / partial mocks) we conservatively allow the row, since the
+   * primary protection is added at query time.
+   */
+  private meetsMinGroupSize(distinctEmployees: unknown): boolean {
+    if (distinctEmployees == null) return true;
+    const n = Number(distinctEmployees);
+    if (!Number.isFinite(n)) return true;
+    return n >= MIN_GROUP_SIZE;
   }
 
   /**
@@ -149,6 +175,7 @@ export class DataLakeService {
     const result = await this.pool.query(
       `SELECT
          TO_CHAR(c.created_at, 'YYYY-MM') as month,
+         COUNT(DISTINCT c.user_id) as distinct_employees,
          COUNT(*) as new_contracts,
          COUNT(*) FILTER (WHERE c.status = 'COMPLETED') as completions,
          COUNT(*) FILTER (WHERE c.status = 'FAILED') as failures,
@@ -167,13 +194,16 @@ export class DataLakeService {
       [enterpriseId, startDate, endDate],
     );
 
-    return result.rows.map((row) => ({
-      month: row.month,
-      newContracts: Number(row.new_contracts),
-      completions: Number(row.completions),
-      failures: Number(row.failures),
-      avgIntegrityDelta: Math.round(Number(row.avg_integrity_delta) * 10) / 10,
-    }));
+    return result.rows
+      // PRV11: suppress months backed by fewer than MIN_GROUP_SIZE distinct employees.
+      .filter((row) => this.meetsMinGroupSize(row.distinct_employees))
+      .map((row) => ({
+        month: row.month,
+        newContracts: Number(row.new_contracts),
+        completions: Number(row.completions),
+        failures: Number(row.failures),
+        avgIntegrityDelta: Math.round(Number(row.avg_integrity_delta) * 10) / 10,
+      }));
   }
 
   /**
@@ -219,13 +249,17 @@ export class DataLakeService {
       [enterpriseId],
     );
 
-    return result.rows.map((row) => ({
-      cohortMonth: row.cohort_month,
-      employeeCount: Number(row.employee_count),
-      avgIntegrityScore: Number(row.avg_integrity_score),
-      avgCompletionRate: Number(row.avg_completion_rate),
-      retentionRate: Number(row.retention_rate),
-    }));
+    return result.rows
+      // PRV11: suppress join-month cohorts smaller than MIN_GROUP_SIZE (a solo/few
+      // person cohort discloses that individual's integrity/retention).
+      .filter((row) => this.meetsMinGroupSize(row.employee_count))
+      .map((row) => ({
+        cohortMonth: row.cohort_month,
+        employeeCount: Number(row.employee_count),
+        avgIntegrityScore: Number(row.avg_integrity_score),
+        avgCompletionRate: Number(row.avg_completion_rate),
+        retentionRate: Number(row.retention_rate),
+      }));
   }
 
   /**

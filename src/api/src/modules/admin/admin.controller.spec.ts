@@ -10,6 +10,7 @@ describe('AdminController', () => {
   let controller: AdminController;
   let mockPool: { query: jest.Mock };
   let mockAnomaly: { computePHash: jest.Mock; hammingDistance: jest.Mock };
+  let mockTruthLog: { verifyChain: jest.Mock; appendEvent: jest.Mock };
 
   const mockModeration = {
     banUser: jest.fn(),
@@ -33,6 +34,10 @@ describe('AdminController', () => {
       computePHash: jest.fn().mockReturnValue('0000000000000000'),
       hammingDistance: jest.fn().mockReturnValue(10),
     };
+    mockTruthLog = {
+      verifyChain: jest.fn(),
+      appendEvent: jest.fn().mockResolvedValue('evt-hash'),
+    };
     controller = new AdminController(
       mockModeration,
       mockHoneypot as any,
@@ -40,7 +45,7 @@ describe('AdminController', () => {
       {} as any,
       {} as any,
       mockAnomaly as unknown as AnomalyService,
-      { verifyChain: jest.fn() } as any,
+      mockTruthLog as any,
       mockIdentityVerification,
       mockPool as unknown as Pool,
     );
@@ -80,6 +85,19 @@ describe('AdminController', () => {
         'target-user-1',
         'Repeated fraud violations',
       );
+      // AU11: privileged action is recorded in the tamper-evident audit log.
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        'ADMIN_USER_BANNED',
+        expect.objectContaining({ adminId: 'ADMIN_root', targetUserId: 'target-user-1' }),
+      );
+    });
+
+    it('AU11: should reject an admin banning their own account (self-target guard)', async () => {
+      await expect(
+        controller.banUser('ADMIN_root', { id: 'ADMIN_root' }, { reason: 'oops' }),
+      ).rejects.toThrow(/own account/);
+      expect(mockModeration.banUser).not.toHaveBeenCalled();
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
     });
 
     it('should propagate ForbiddenException from ModerationService for non-admin', async () => {
@@ -101,10 +119,56 @@ describe('AdminController', () => {
     it('should delegate to ContractsService and return result', async () => {
       (mockContracts.resolveContract as jest.Mock).mockResolvedValueOnce(undefined);
 
-      const result = await controller.resolveContract('contract-1', { outcome: 'COMPLETED' });
+      const result = await controller.resolveContract(
+        'contract-1',
+        { id: 'ADMIN_root' },
+        { outcome: 'COMPLETED' },
+      );
 
       expect(result).toEqual({ status: 'resolved', contractId: 'contract-1', outcome: 'COMPLETED' });
       expect(mockContracts.resolveContract).toHaveBeenCalledWith('contract-1', 'COMPLETED');
+      // AU11: admin override of a money-bearing resolution is audited.
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        'ADMIN_CONTRACT_RESOLVED',
+        expect.objectContaining({ adminId: 'ADMIN_root', contractId: 'contract-1', outcome: 'COMPLETED' }),
+      );
+    });
+  });
+
+  describe('adjustIntegrity', () => {
+    it('AU11: should adjust score and write an audit entry', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [{ integrity_score: 55 }] });
+
+      const result = await controller.adjustIntegrity(
+        'target-user-1',
+        { id: 'ADMIN_root' },
+        { delta: 5, reason: 'manual correction' },
+      );
+
+      expect(result).toEqual({
+        status: 'integrity_adjusted',
+        userId: 'target-user-1',
+        delta: 5,
+        reason: 'manual correction',
+      });
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        'ADMIN_INTEGRITY_ADJUSTED',
+        expect.objectContaining({
+          adminId: 'ADMIN_root',
+          targetUserId: 'target-user-1',
+          delta: 5,
+          reason: 'manual correction',
+          newScore: 55,
+        }),
+      );
+    });
+
+    it('AU11: should reject an admin adjusting their own integrity score', async () => {
+      await expect(
+        controller.adjustIntegrity('ADMIN_root', { id: 'ADMIN_root' }, { delta: 50, reason: 'self' }),
+      ).rejects.toThrow(/own integrity score/);
+      expect(mockPool.query).not.toHaveBeenCalled();
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
     });
   });
 
@@ -182,6 +246,10 @@ describe('AdminController', () => {
       expect(result.collisions).toHaveLength(1);
       expect(result.collisions[0].origin.id).toBe('p1');
       expect(result.collisions[0].duplicate.id).toBe('p2');
+      // PRV15: distance 0 == identical URI → reported as an exact-match collision,
+      // not a fabricated similarity percentage.
+      expect(result.collisions[0].matchType).toBe('EXACT_URI');
+      expect((result.collisions[0].origin as any).similarity).toBeUndefined();
     });
   });
 

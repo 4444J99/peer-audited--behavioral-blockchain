@@ -109,6 +109,38 @@ describe('LedgerService', () => {
       expect(mockPool.connect).not.toHaveBeenCalled();
       expect(externalClient.release).not.toHaveBeenCalled(); // caller manages external client
     });
+
+    it('should insert with ON CONFLICT DO NOTHING when an idempotency key is supplied', async () => {
+      const externalClient = { query: jest.fn(), release: jest.fn() };
+      externalClient.query.mockResolvedValueOnce({ rows: [{ id: 'idem-entry' }] }); // INSERT wins
+
+      const resultId = await service.recordTransaction(
+        'acct-A', 'acct-B', 500, 'contract-1', { type: 'X' }, externalClient as any, 'styx_key_1',
+      );
+
+      expect(resultId).toBe('idem-entry');
+      const insertCall = externalClient.query.mock.calls[0];
+      // Must repeat the partial-index predicate so Postgres infers the partial
+      // UNIQUE index (migration 030) as the conflict arbiter.
+      expect(insertCall[0]).toContain(
+        'ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING',
+      );
+      expect(insertCall[1]).toEqual(['acct-A', 'acct-B', 500, 'contract-1', { type: 'X' }, 'styx_key_1']);
+    });
+
+    it('should return the pre-existing entry id when the idempotency key collides (no double-post)', async () => {
+      const externalClient = { query: jest.fn(), release: jest.fn() };
+      externalClient.query
+        .mockResolvedValueOnce({ rows: [] }) // INSERT swallowed by ON CONFLICT DO NOTHING
+        .mockResolvedValueOnce({ rows: [{ id: 'existing-entry' }] }); // SELECT existing
+
+      const resultId = await service.recordTransaction(
+        'acct-A', 'acct-B', 500, 'contract-1', { type: 'X' }, externalClient as any, 'styx_key_dup',
+      );
+
+      expect(resultId).toBe('existing-entry');
+      expect(externalClient.query).toHaveBeenCalledTimes(2); // INSERT + SELECT, no extra posting
+    });
   });
 
   // ── getAccountBalance ──────────────────────────────────────────
@@ -270,6 +302,18 @@ describe('LedgerService', () => {
 
       const result = await service.verifyLedgerIntegrity();
       expect(result.balanced).toBe(false);
+    });
+
+    it('should surface the actual violation counts (LC8) so incident response is not misled by equal totals', async () => {
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ total_debits: '5000', total_credits: '5000' }] })
+        .mockResolvedValueOnce({ rows: [{ non_positive_count: '1', self_entry_count: '2', orphaned_count: '3' }] });
+
+      const result = await service.verifyLedgerIntegrity();
+      expect(result.balanced).toBe(false);
+      expect(result.nonPositiveCount).toBe(1);
+      expect(result.selfEntryCount).toBe(2);
+      expect(result.orphanedCount).toBe(3);
     });
 
     it('should return balanced=false when an entry references a non-existent account (orphaned)', async () => {

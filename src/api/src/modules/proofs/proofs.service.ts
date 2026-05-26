@@ -205,7 +205,11 @@ export class ProofsService {
       description: row.description,
       submittedAt: row.submitted_at,
       uploadedAt: row.uploaded_at,
-      isHoneypot: row.is_honeypot,
+      // SH2: `is_honeypot` is intentionally NOT returned. Exposing it to any reader
+      // — especially an assigned Fury auditor — defeats honeypot-based dishonest
+      // auditor detection: a cheater could simply read the flag and always vote
+      // correctly on honeypots. The honeypot status is internal-only; auditors must
+      // be unable to distinguish a honeypot from a real proof.
       biometricVerified: row.biometric_verified,
       biometricType: row.biometric_type,
       anomalyFlags: row.anomaly_flags,

@@ -40,6 +40,38 @@ describe('HoneypotInjectorService', () => {
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('HONEYPOT_INJECTED', expect.any(Object));
     });
 
+    it('should inject honeypots with a PASS or FAIL expected verdict (SH9: not always FAIL)', async () => {
+      // Run several injections and collect the inserted honeypot_expected_verdict.
+      const verdicts = new Set<string>();
+      for (let i = 0; i < 40; i++) {
+        (mockPool.query as jest.Mock)
+          .mockResolvedValueOnce({ rows: [{ count: '0' }] }) // shouldInject volume
+          .mockResolvedValueOnce({ rows: [{ count: '10' }] }) // active furies
+          .mockResolvedValueOnce({ rows: [{ id: 'c', user_id: 'u' }] }) // host contract
+          .mockResolvedValueOnce({ rows: [{ id: 'p' }] }); // proof insert
+        (mockRouter.routeProof as jest.Mock).mockResolvedValueOnce('job');
+
+        await honeypotService.injectHoneypot();
+
+        const insertCall = (mockPool.query as jest.Mock).mock.calls.find(
+          ([sql]: [string]) => typeof sql === 'string' && sql.includes('INSERT INTO proofs'),
+        );
+        // The honeypot_expected_verdict is the last bound parameter.
+        const params = insertCall[1];
+        verdicts.add(params[params.length - 1]);
+        jest.clearAllMocks();
+        jest.spyOn(Math, 'random').mockReturnValue(0);
+      }
+
+      // Every emitted verdict must be a valid PASS/FAIL and, over many runs, both
+      // classes should appear (CSPRNG-driven; flaky probability ~ 2 * 0.5^40).
+      for (const v of verdicts) {
+        expect(['PASS', 'FAIL']).toContain(v);
+      }
+      expect(verdicts.has('PASS')).toBe(true);
+      expect(verdicts.has('FAIL')).toBe(true);
+    });
+
     it('should scale injection probability with volume (Theorem 7)', async () => {
       // With 50 recent audits, probability should be 0.1 + (50/100) = 0.6, capped at 0.5
       // With 5 recent audits, probability should be 0.1 + 0.05 = 0.15

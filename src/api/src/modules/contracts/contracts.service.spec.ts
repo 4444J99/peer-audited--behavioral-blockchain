@@ -808,6 +808,33 @@ describe('ContractsService', () => {
       }));
       expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
     });
+
+    it('LC6: should revert the terminal status and rethrow when settlement fails in the non-transactional fallback', async () => {
+      // Non-transactional fallback (mockPool has no connect). The status claim
+      // auto-commits BEFORE settlement; if settlement throws, the contract must NOT
+      // be left terminally resolved with money unmoved — it is reverted to its
+      // pre-resolution status so a retry can re-settle. (FAILED avoids the COMPLETED
+      // Phoenix-badge path; jurisdiction lookup + the revert fall through to the base
+      // mock implementation.)
+      mockPool.query.mockResolvedValueOnce({ rows: [{ ...contractRow, status: 'ACTIVE' }] }); // contract lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] }); // claim UPDATE (RETURNING id)
+      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE users integrity_score
+
+      (mockSettlement.dispatchSettlement as jest.Mock).mockRejectedValueOnce(new Error('settlement boom'));
+
+      await expect(service.resolveContract('contract-1', 'FAILED')).rejects.toThrow('settlement boom');
+
+      // The compensating revert must set the contract status from the terminal
+      // outcome back to its pre-resolution value, guarded by the terminal outcome.
+      const revertCall = mockPool.query.mock.calls.find(
+        (c) => typeof c[0] === 'string' &&
+          /UPDATE contracts SET status/.test(c[0]) &&
+          Array.isArray(c[1]) && c[1][0] === 'ACTIVE',
+      );
+      expect(revertCall).toBeDefined();
+      expect(revertCall![1]).toEqual(['ACTIVE', 'contract-1', 'FAILED']);
+    });
   });
 
   // ── contract resolution outbox retries ─────────────────────────
@@ -1100,6 +1127,9 @@ describe('ContractsService', () => {
         ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         strikes: 0,
         grace_days_used: 1,
+        // LC1: usage only counts toward the cap when it belongs to the CURRENT
+        // calendar month; stamp the current month so the 1 used day is reported.
+        grace_period_month: new Date().toISOString().slice(0, 7),
       };
 
       mockPool.query.mockResolvedValueOnce({ rows: [recoveryContract] });
@@ -1111,6 +1141,31 @@ describe('ContractsService', () => {
       expect(result.todayAttested).toBe(false);
       expect(result.streakDays).toBe(0);
       expect(result.graceDaysAvailable).toBe(1);
+    });
+
+    it('LC1: should report the FULL quota after a month rollover (stale grace_period_month)', async () => {
+      const recoveryContract = {
+        id: 'contract-rollover',
+        user_id: 'user-1',
+        oath_category: 'RECOVERY_NO_CONTACT_TEXT',
+        status: 'ACTIVE',
+        duration_days: 30,
+        started_at: new Date().toISOString(),
+        ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        strikes: 0,
+        grace_days_used: 2,
+        // A stale month marker: the cap has logically reset, so status must report
+        // the full quota (matching useGraceDay enforcement) rather than 0.
+        grace_period_month: '2000-01',
+      };
+
+      mockPool.query.mockResolvedValueOnce({ rows: [recoveryContract] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ streak: '0' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.getAttestationStatus('contract-rollover', 'user-1');
+
+      expect(result.graceDaysAvailable).toBe(2);
     });
 
     it('should throw NotFoundException for missing contract', async () => {
@@ -1362,10 +1417,10 @@ describe('ContractsService', () => {
     it('should extend deadline by 24h and log GRACE_DAY_USED to TruthLog', async () => {
       // Contract lookup
       mockPool.query.mockResolvedValueOnce({ rows: [activeContract] });
-      // Grace days count query
-      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
-      // UPDATE contracts
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // LC2: per-user monthly grace usage (summed across the user's contracts)
+      mockPool.query.mockResolvedValueOnce({ rows: [{ used: 0 }] });
+      // UPDATE contracts CAS — must RETURN a row for the grace day to be applied
+      mockPool.query.mockResolvedValueOnce({ rows: [{ grace_days_used: 1 }] });
       // UPDATE attestations
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
@@ -1407,12 +1462,24 @@ describe('ContractsService', () => {
     });
 
     it('should reject when max grace days exceeded (BadRequestException)', async () => {
-      // Grace days used are now read directly from the contracts.grace_days_used
-      // column on the contract row (no separate truth_log count query). At the
-      // max of 2, the cap check rejects before any UPDATE runs.
-      mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeContract, grace_days_used: 2 }] });
+      // LC2: the cap is per-USER per-CALENDAR-MONTH, summed across the user's
+      // contracts. When the user has already consumed the monthly maximum (2),
+      // the cap check rejects before any UPDATE runs.
+      mockPool.query.mockResolvedValueOnce({ rows: [{ ...activeContract, grace_days_used: 0 }] }); // contract lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ used: 2 }] }); // per-user monthly sum at cap
 
       await expect(service.useGraceDay('contract-1', 'user-1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('LC2: should reject a second contract once the per-user monthly cap is reached', async () => {
+      // This contract itself has used 0 grace days, but the user has already used 2
+      // across OTHER contracts this month — the per-user cap must still reject.
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'contract-2', user_id: 'user-1', status: 'ACTIVE', ends_at: '2026-03-15T12:00:00Z', grace_days_used: 0 }],
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ used: 2 }] }); // per-user monthly sum
+
+      await expect(service.useGraceDay('contract-2', 'user-1')).rejects.toThrow(BadRequestException);
     });
   });
 

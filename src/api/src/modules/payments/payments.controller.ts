@@ -126,25 +126,49 @@ export class PaymentsController implements OnModuleInit {
           ? 'FAIL'
           : body.outcome!;
 
+    // PM11: fundability check. A settlement moves money against an escrow hold; if the contract
+    // was never funded (no payment_intent_id) — e.g. a cancelled/unfunded contract — a forced
+    // PASS/FAIL would attempt to release/capture non-existent escrow. Refuse rather than dispatch
+    // a job that can only fail (or, worse, mis-post the ledger) downstream.
+    const paymentIntentId = (contract as any).payment_intent_id;
+    if (!paymentIntentId) {
+      throw new BadRequestException(
+        'Contract has no payment intent on file (unfunded); cannot settle non-existent escrow',
+      );
+    }
+
+    // PM30: read user_id defensively. If getContract did not surface a snake_case user_id we must
+    // NOT run the jurisdiction lookup with `undefined` (which previously defaulted the disposition
+    // and could CAPTURE a stake where the user's jurisdiction requires REFUND_ONLY). Fall back to a
+    // camelCase alias, and fail CLOSED to REFUND when the user cannot be resolved.
+    const userId = (contract as any).user_id ?? (contract as any).userId;
+
     let dispositionMode: 'CAPTURE' | 'REFUND' | undefined;
     if (settlementOutcome === 'FAIL') {
-      const userResult = await this.pool.query(
-        'SELECT last_known_state FROM users WHERE id = $1',
-        [(contract as any).user_id],
-      );
-      const lastKnownState = userResult.rows[0]?.last_known_state ?? null;
-      const jurisdictionPolicy = lastKnownState
-        ? await this.compliancePolicy.getJurisdictionPolicy(lastKnownState)
-        : null;
-      
-      dispositionMode = JurisdictionDispositionMapper.getDispositionMode(jurisdictionPolicy?.tier);
+      if (!userId) {
+        this.logger.warn(
+          `executeSettlement: contract ${contractId} has no resolvable user_id; defaulting FAIL disposition to REFUND (fail-closed).`,
+        );
+        dispositionMode = 'REFUND';
+      } else {
+        const userResult = await this.pool.query(
+          'SELECT last_known_state FROM users WHERE id = $1',
+          [userId],
+        );
+        const lastKnownState = userResult.rows[0]?.last_known_state ?? null;
+        const jurisdictionPolicy = lastKnownState
+          ? await this.compliancePolicy.getJurisdictionPolicy(lastKnownState)
+          : null;
+
+        dispositionMode = JurisdictionDispositionMapper.getDispositionMode(jurisdictionPolicy?.tier);
+      }
     }
 
     // This manually enqueues the job that is normally enqueued by ContractsService.resolveContract
     await this.settlementService.dispatchSettlement({
       contractId,
       outcome: settlementOutcome,
-      paymentIntentId: (contract as any).payment_intent_id,
+      paymentIntentId,
       amountCents: toCents(Number((contract as any).stake_amount)),
       dispositionMode,
     });
@@ -199,20 +223,45 @@ export class PaymentsController implements OnModuleInit {
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
         // Resolve the contract by the SERVER-STORED payment_intent_id linkage, never by the
-        // client-influenceable pi.metadata.contractId alone. Then PERSIST the funded state
-        // (previously this only logged). A contract still awaiting funds is transitioned to
-        // ACTIVE; an already-active contract is a no-op confirmation.
+        // client-influenceable pi.metadata.contractId alone.
+        //
+        // PM10: BEFORE activating, verify the PaymentIntent actually paid the staked amount in
+        // the expected currency. Previously the handler flipped the contract to ACTIVE on a
+        // payment_intent_id match ALONE, so a PI for a smaller amount (or a different currency)
+        // would activate the contract as fully funded. We compare amount_received/amount (cents)
+        // and currency against the contract's stake. On mismatch we do NOT activate — we leave
+        // the contract for reconciliation and log loudly.
+        const pending = await this.pool.query(
+          `SELECT id, stake_amount FROM contracts
+           WHERE payment_intent_id = $1 AND status IN ('PENDING_STAKE', 'PENDING', 'PROCESSING')`,
+          [pi.id],
+        );
+        if (pending.rows.length === 0) {
+          this.logger.log(`Payment succeeded for payment_intent ${pi.id} (no pending contract to fund)`);
+          break;
+        }
+        const contractRow = pending.rows[0];
+        const expectedCents = toCents(Number(contractRow.stake_amount));
+        const paidCents = typeof pi.amount_received === 'number' ? pi.amount_received : pi.amount;
+        const currency = (pi.currency || '').toLowerCase();
+
+        if (currency !== 'usd' || paidCents !== expectedCents) {
+          this.logger.error(
+            `Payment amount/currency mismatch for contract ${contractRow.id} ` +
+              `(expected ${expectedCents}¢ usd, got ${paidCents}¢ ${currency}); NOT activating — left for reconciliation.`,
+          );
+          break;
+        }
+
         const funded = await this.pool.query(
           `UPDATE contracts
            SET status = 'ACTIVE', started_at = COALESCE(started_at, NOW())
-           WHERE payment_intent_id = $1 AND status IN ('PENDING_STAKE', 'PENDING', 'PROCESSING')
+           WHERE id = $1 AND status IN ('PENDING_STAKE', 'PENDING', 'PROCESSING')
            RETURNING id`,
-          [pi.id],
+          [contractRow.id],
         );
         if (funded.rows.length > 0) {
           this.logger.log(`Payment succeeded; contract ${funded.rows[0].id} marked funded/ACTIVE`);
-        } else {
-          this.logger.log(`Payment succeeded for payment_intent ${pi.id} (no pending contract to fund)`);
         }
         break;
       }
@@ -253,17 +302,30 @@ export class PaymentsController implements OnModuleInit {
           );
           if (contract.rows.length > 0) {
             this.logger.warn(`Dispute created for contract ${contract.rows[0].id}`);
-            await this.pool.query(
-              `UPDATE contracts SET status = 'DISPUTED' WHERE id = $1`,
+            // PM12: guard against reverting a TERMINAL (already-settled) contract back to
+            // DISPUTED. The succeeded/failed handlers are status-scoped; this one was not, so a
+            // late dispute could re-open a closed financial state. Only move a contract that is
+            // still in a live/non-terminal state into DISPUTED.
+            const updated = await this.pool.query(
+              `UPDATE contracts SET status = 'DISPUTED'
+               WHERE id = $1
+                 AND status NOT IN ('COMPLETED', 'FAILED', 'SETTLED', 'CANCELLED', 'DISPUTED')
+               RETURNING id`,
               [contract.rows[0].id],
             );
-            await this.notifications.create({
-              userId: contract.rows[0].user_id,
-              type: 'CHARGE_DISPUTED',
-              title: 'Payment Disputed',
-              body: 'A dispute has been filed on your contract. An admin will review.',
-              metadata: { contractId: contract.rows[0].id },
-            });
+            if (updated.rows.length > 0) {
+              await this.notifications.create({
+                userId: contract.rows[0].user_id,
+                type: 'CHARGE_DISPUTED',
+                title: 'Payment Disputed',
+                body: 'A dispute has been filed on your contract. An admin will review.',
+                metadata: { contractId: contract.rows[0].id },
+              });
+            } else {
+              this.logger.warn(
+                `Dispute on contract ${contract.rows[0].id} ignored: contract is in a terminal/disputed state.`,
+              );
+            }
           }
         }
         break;
@@ -273,9 +335,17 @@ export class PaymentsController implements OnModuleInit {
           this.logger.debug(`Unhandled Stripe event: ${event.type}`);
       }
     } catch (err: any) {
-      // Allow Stripe to retry if processing failed after we inserted the dedup row.
-      await this.pool.query('DELETE FROM stripe_events WHERE event_id = $1', [event.id]);
-      this.logger.error(`Stripe webhook processing failed for ${event.id}: ${err.message}`);
+      // PM13: do NOT delete the dedup row on a processing error. Previously the catch DELETEd the
+      // stripe_events row and returned 500, so Stripe's retry re-ran the handlers and re-applied
+      // any side effects that had already committed before the throw. Instead we KEEP the row and
+      // rely on the handlers being idempotent: every contract mutation above is a status-scoped
+      // UPDATE (succeeded activates only PENDING contracts; failed/dispute are state-guarded), so a
+      // retry that finds the dedup row will be short-circuited rather than re-committing effects.
+      // We still return 500 so Stripe retries — the retry is safely deduped and re-acked.
+      this.logger.error(
+        `Stripe webhook processing failed for ${event.id}: ${err.message}. ` +
+          `Dedup row retained (idempotent handlers); retry will be deduped.`,
+      );
       return res.status(500).json({ error: 'Webhook processing failed' });
     }
 

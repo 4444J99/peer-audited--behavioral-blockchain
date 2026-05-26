@@ -42,6 +42,13 @@ describe('StripeFboService (dev mode)', () => {
       expect(result.status).toBe('succeeded');
     });
 
+    it('should surface the partial-capture amount in dev mode (PM18)', async () => {
+      const result: any = await service.captureStake('pi_dev_partial', 2500);
+
+      expect(result.status).toBe('succeeded');
+      expect(result.amount_received).toBe(2500);
+    });
+
     // Non-dev (live Stripe) idempotency behaviour. We stub the private stripe client and
     // force isDevMode=false so the retrieve/capture branch runs.
     describe('idempotent retry (non-dev mode)', () => {
@@ -67,11 +74,16 @@ describe('StripeFboService (dev mode)', () => {
 
         const result = await liveService.captureStake('pi_live_1');
 
-        expect(mockStripe.paymentIntents.capture).toHaveBeenCalledWith('pi_live_1', {}, expect.any(Object));
+        // PM17: full-capture key carries the `_full` suffix.
+        expect(mockStripe.paymentIntents.capture).toHaveBeenCalledWith(
+          'pi_live_1',
+          {},
+          { idempotencyKey: 'styx_capture_pi_live_1_full' },
+        );
         expect(result.status).toBe('succeeded');
       });
 
-      it('should forward a partial-capture amount', async () => {
+      it('should forward a partial-capture amount and key the idempotency on the amount (PM17)', async () => {
         mockStripe.paymentIntents.retrieve.mockResolvedValue({ id: 'pi_live_2', status: 'requires_capture' });
         mockStripe.paymentIntents.capture.mockResolvedValue({ id: 'pi_live_2', status: 'succeeded' });
 
@@ -80,7 +92,7 @@ describe('StripeFboService (dev mode)', () => {
         expect(mockStripe.paymentIntents.capture).toHaveBeenCalledWith(
           'pi_live_2',
           { amount_to_capture: 2500 },
-          expect.any(Object),
+          { idempotencyKey: 'styx_capture_pi_live_2_2500' },
         );
       });
 
@@ -113,6 +125,45 @@ describe('StripeFboService (dev mode)', () => {
 
       expect(result.id).toBe('pi_dev_abc12345');
       expect(result.status).toBe('canceled');
+    });
+  });
+
+  describe('transferFunds (PM7 idempotency)', () => {
+    let liveService: StripeFboService;
+    let mockStripe: { transfers: { create: jest.Mock } };
+
+    beforeEach(() => {
+      liveService = new StripeFboService();
+      mockStripe = { transfers: { create: jest.fn().mockResolvedValue({ id: 'tr_live_1', amount: 1000 }) } };
+      Object.defineProperty(liveService, 'isDevMode', { get: () => false });
+      (liveService as any).stripe = mockStripe;
+    });
+
+    it('should attach a deterministic idempotency key derived from a stable metadata id', async () => {
+      await liveService.transferFunds(1000, 'acct_dest_1', { sideEffectKey: 'evt-123' });
+
+      expect(mockStripe.transfers.create).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: 1000, destination: 'acct_dest_1', currency: 'usd' }),
+        { idempotencyKey: 'styx_transfer_acct_dest_1_evt-123' },
+      );
+    });
+
+    it('should honor an explicit idempotency key argument', async () => {
+      await liveService.transferFunds(500, 'acct_dest_2', undefined, 'explicit-key');
+
+      expect(mockStripe.transfers.create).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: 500, destination: 'acct_dest_2' }),
+        { idempotencyKey: 'styx_transfer_acct_dest_2_explicit-key' },
+      );
+    });
+
+    it('should fall back to destination+amount when no stable id is available', async () => {
+      await liveService.transferFunds(750, 'acct_dest_3');
+
+      expect(mockStripe.transfers.create).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: 750, destination: 'acct_dest_3' }),
+        { idempotencyKey: 'styx_transfer_acct_dest_3_750' },
+      );
     });
   });
 

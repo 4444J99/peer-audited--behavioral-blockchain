@@ -43,15 +43,31 @@ export async function processIAP(
     throw new Error('User has no payment method on file');
   }
 
+  // PM19: a STABLE per-(user, contract) idempotency key so a retry of this purchase reuses the
+  // same PaymentIntent rather than minting a fresh nonce key — which would create a second intent,
+  // re-charge TICKET_PRICE_BASE, and post a duplicate ledger entry. The same stable key threads
+  // through capture and the ledger posting so the entire purchase is idempotent end-to-end.
+  const iapKey = `styx_iap_${userId}_${contractId}`;
+
   // Create Stripe payment intent for the ticket price
   const paymentIntent = await stripe.holdStake(
     stripe_customer_id,
     TICKET_PRICE_BASE,
     contractId,
+    iapKey,
   );
 
-  // Capture immediately — tickets are non-refundable
-  await stripe.captureStake(paymentIntent.id);
+  // Capture immediately — tickets are non-refundable.
+  // PM20: verify the capture actually succeeded before recording revenue. If Stripe returns a
+  // non-succeeded status WITHOUT throwing, we must NOT write a TICKET_PURCHASE ledger entry /
+  // TruthLog event for money that was never collected.
+  const captured = await stripe.captureStake(paymentIntent.id);
+  if (captured.status !== 'succeeded') {
+    throw new Error(
+      `IAP capture for contract ${contractId} did not succeed (status: ${captured.status}); ` +
+        `revenue not recorded.`,
+    );
+  }
 
   // Record in ledger: user → revenue
   if (account_id) {
@@ -65,6 +81,10 @@ export async function processIAP(
         TICKET_PRICE_BASE,
         contractId,
         { type: 'TICKET_PURCHASE', userId },
+        undefined,
+        // PM19: DB-enforced single-posting for the ticket revenue entry, so even a retry that
+        // reaches the ledger (e.g. after the Stripe call was already idempotent) cannot double-post.
+        iapKey,
       );
     }
   }

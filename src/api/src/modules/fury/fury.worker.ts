@@ -171,8 +171,25 @@ export class FuryWorker implements OnModuleInit {
         }
       }
 
+      // LC5: post-claim side effects (integrity scoring + bounty/penalty ledger
+      // postings) are NOT individually transactional, and the catch below reverts
+      // the proof to UNDER_REVIEW so a retry re-runs this whole block. Without a
+      // guard, a re-claim would re-apply integrity-score deltas and re-post
+      // bounties/penalties. We therefore (a) tag every consensus ledger posting
+      // with a deterministic idempotencyKey so the DB collapses re-posts to a
+      // single entry (see disburseFuryBounties), and (b) gate the score-mutating
+      // block on whether consensus money side effects already exist for this proof.
+      // The guard relies on the ledger; when no ledger is configured (legacy/degraded
+      // path) there are no money side effects to double-apply and the marker check
+      // is skipped. SPLIT outcomes apply neither scoring nor bounties, so they need
+      // no guard; demotion (FURY->USER) is naturally idempotent (AND role = 'FURY').
+      const consensusAlreadyApplied =
+        !!this.ledger && result.outcome !== 'SPLIT'
+          ? await this.consensusSideEffectsAlreadyApplied(proofId)
+          : false;
+
       // Track Fury accuracy: reward correct votes, penalize incorrect ones
-      if (!is_honeypot && result.outcome !== 'SPLIT') {
+      if (!is_honeypot && result.outcome !== 'SPLIT' && !consensusAlreadyApplied) {
         for (const vote of votes) {
           const wasCorrect =
             (result.outcome === 'VERIFIED' && vote.verdict === 'PASS') ||
@@ -192,8 +209,10 @@ export class FuryWorker implements OnModuleInit {
         }
       }
 
-      // Disburse Fury bounties/penalties via the double-entry ledger
-      if (this.ledger && result.outcome !== 'SPLIT') {
+      // Disburse Fury bounties/penalties via the double-entry ledger. Idempotent at
+      // the DB level via per-(proof,fury) idempotencyKey, so re-running on a retry
+      // cannot double-pay even if the marker check above raced.
+      if (this.ledger && result.outcome !== 'SPLIT' && !consensusAlreadyApplied) {
         await this.disburseFuryBounties(votes, result, is_honeypot, contract_id, proofId);
       }
 
@@ -281,6 +300,21 @@ export class FuryWorker implements OnModuleInit {
   }
 
   /**
+   * LC5 idempotency marker: returns true when consensus money side effects have
+   * already been posted for this proof. Every consensus ledger posting carries
+   * metadata.consensusProofId = proofId (see disburseFuryBounties), so a single
+   * existing entry means a prior (now-reverted or partially-completed) run already
+   * disbursed/penalized for this proof and the score+bounty block must NOT re-run.
+   */
+  private async consensusSideEffectsAlreadyApplied(proofId: string): Promise<boolean> {
+    const existing = await this.pool.query(
+      `SELECT 1 FROM entries WHERE metadata->>'consensusProofId' = $1 LIMIT 1`,
+      [proofId],
+    );
+    return existing.rows.length > 0;
+  }
+
+  /**
    * Disburses AUDITOR_STAKE_AMOUNT bounties to correct Furies and charges penalties to incorrect ones.
    * Honeypot failures also receive a financial penalty via the ledger.
    */
@@ -318,7 +352,9 @@ export class FuryWorker implements OnModuleInit {
             revenueAccountId,
             AUDITOR_STAKE_AMOUNT,
             contractId ?? undefined,
-            { type: 'FURY_PENALTY' },
+            { type: 'FURY_PENALTY', consensusProofId: proofId },
+            undefined,
+            `consensus:${proofId}:${furyId}:honeypot-penalty`,
           );
           await this.truthLog?.appendEvent('FURY_PENALTY_CHARGED', {
             furyUserId: furyId,
@@ -354,7 +390,9 @@ export class FuryWorker implements OnModuleInit {
             furyAccountId,
             AUDITOR_STAKE_AMOUNT,
             contractId ?? undefined,
-            { type: 'FURY_BOUNTY' },
+            { type: 'FURY_BOUNTY', consensusProofId: proofId },
+            undefined,
+            `consensus:${proofId}:${vote.furyUserId}:bounty`,
           );
           await this.truthLog?.appendEvent('FURY_BOUNTY_PAID', {
             furyUserId: vote.furyUserId,
@@ -367,7 +405,9 @@ export class FuryWorker implements OnModuleInit {
             revenueAccountId,
             AUDITOR_STAKE_AMOUNT,
             contractId ?? undefined,
-            { type: 'FURY_PENALTY' },
+            { type: 'FURY_PENALTY', consensusProofId: proofId },
+            undefined,
+            `consensus:${proofId}:${vote.furyUserId}:penalty`,
           );
           await this.truthLog?.appendEvent('FURY_PENALTY_CHARGED', {
             furyUserId: vote.furyUserId,

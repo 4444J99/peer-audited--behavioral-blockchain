@@ -2,6 +2,7 @@ import { Controller, Get, Query, UseGuards, NotFoundException } from '@nestjs/co
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Pool } from 'pg';
 import { AuthGuard } from '../../../guards/auth.guard';
+import { BannedUserGuard } from '../../guards/banned-user.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { getAllowedTiers } from '../../../../shared/libs/integrity';
 import { LedgerService } from '../../../services/ledger/ledger.service';
@@ -9,7 +10,11 @@ import { LedgerService } from '../../../services/ledger/ledger.service';
 @ApiTags('Wallet')
 @ApiBearerAuth()
 @Controller('wallet')
-@UseGuards(AuthGuard)
+// AU1: AuthGuard alone trusted a live 15-min JWT, so a user banned mid-session
+// could still read wallet/balance. BannedUserGuard re-checks the live DB status
+// and denies BANNED accounts. (BannedUserGuard only needs the global Pool, so no
+// module provider change is required.)
+@UseGuards(AuthGuard, BannedUserGuard)
 export class WalletController {
   constructor(
     private readonly pool: Pool,

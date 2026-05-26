@@ -99,27 +99,45 @@ export class AnomalyService {
   }
 
   private async runAnalysis(mediaInput: Buffer | string, userId: string, mediaUri: string, flags: string[]): Promise<AnomalyResult> {
-    // 1. Perceptual Hash (pHash) Duplicate Detection
-    // In MVP, we use URI-based pHash if buffer analysis fails or for simplicity.
-    // For TKT-P0-002, we rely on ProofsController passing the frameHash.
-    // Here we focus on EXIF and metadata integrity.
+    // Perceptual-duplicate detection is performed authoritatively at upload time by
+    // PHashService against the actual frame bytes (see computePHash docstring); this
+    // screen focuses on EXIF / metadata integrity. The dead URI-pHash machinery was
+    // removed in favour of that single source of truth.
 
-    // 2. EXIF Software Check (Edit Detection)
+    // 1. EXIF Software Check (Edit Detection)
     const softwareFlag = await this.checkExifSoftware(mediaInput);
     if (softwareFlag) {
       flags.push('SOFTWARE_MANIPULATION_DETECTED');
     }
 
-    // 3. EXIF Timestamp Discrepancy
+    // 2. EXIF Timestamp Discrepancy
     const timestampFlag = await this.checkExifTimestamp(mediaInput);
     if (timestampFlag) {
       flags.push('EXIF_TIMESTAMP_DISCREPANCY');
     }
 
-    // 4. Missing Native Metadata
+    // 3. Missing Native Metadata
     const metadata = await sharp(mediaInput).metadata();
     if (!metadata.exif && !metadata.iptc && !metadata.xmp) {
       flags.push('STRIPPED_METADATA');
+    }
+
+    // PRV14: this is a real-money fraud screen. Previously these flags were appended
+    // but the result was ALWAYS rejected:false, so edited/manipulated media was
+    // auto-accepted. Any integrity flag must now REJECT the media (held for manual
+    // review / resubmission) rather than silently pass.
+    const REJECTING_FLAGS = [
+      'SOFTWARE_MANIPULATION_DETECTED',
+      'EXIF_TIMESTAMP_DISCREPANCY',
+      'STRIPPED_METADATA',
+    ];
+    const triggered = flags.filter((f) => REJECTING_FLAGS.includes(f));
+    if (triggered.length > 0) {
+      return {
+        rejected: true,
+        reason: `Media failed integrity screening: ${triggered.join(', ')}`,
+        flags,
+      };
     }
 
     return { rejected: false, flags };

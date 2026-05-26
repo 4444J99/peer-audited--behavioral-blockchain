@@ -77,6 +77,12 @@ describe('FuryWorker — Bounty Economy', () => {
     // 4. UPDATE proofs
     mockPool.query.mockResolvedValueOnce({ rows: [] });
 
+    // 4b. LC5 idempotency guard: consensusSideEffectsAlreadyApplied (ledger present,
+    //     non-SPLIT). Returns empty → not yet applied → side effects proceed.
+    if (outcome !== 'SPLIT') {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+    }
+
     // 5. Removed: Fraud penalty logic moved to HoneypotService
 
     // 6. Accuracy tracking (non-honeypot, non-SPLIT only)
@@ -137,13 +143,18 @@ describe('FuryWorker — Bounty Economy', () => {
 
     await worker.checkConsensus('proof-bounty');
 
-    // Both correct → both get bounties from escrow
+    // Both correct → both get bounties from escrow. Each posting now carries the
+    // LC5 idempotency key (consensus:<proof>:<fury>:bounty) and consensusProofId.
     expect(mockLedger.recordTransaction).toHaveBeenCalledTimes(2);
     expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
-      'escrow-account', 'acct-f1', AUDITOR_STAKE_AMOUNT, 'contract-bounty', { type: 'FURY_BOUNTY' },
+      'escrow-account', 'acct-f1', AUDITOR_STAKE_AMOUNT, 'contract-bounty',
+      { type: 'FURY_BOUNTY', consensusProofId: 'proof-bounty' },
+      undefined, 'consensus:proof-bounty:fury-1:bounty',
     );
     expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
-      'escrow-account', 'acct-f2', AUDITOR_STAKE_AMOUNT, 'contract-bounty', { type: 'FURY_BOUNTY' },
+      'escrow-account', 'acct-f2', AUDITOR_STAKE_AMOUNT, 'contract-bounty',
+      { type: 'FURY_BOUNTY', consensusProofId: 'proof-bounty' },
+      undefined, 'consensus:proof-bounty:fury-2:bounty',
     );
 
     // TruthLog events
@@ -175,12 +186,16 @@ describe('FuryWorker — Bounty Economy', () => {
 
     // Correct vote → bounty
     expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
-      'escrow-account', 'acct-right', AUDITOR_STAKE_AMOUNT, 'contract-pen', { type: 'FURY_BOUNTY' },
+      'escrow-account', 'acct-right', AUDITOR_STAKE_AMOUNT, 'contract-pen',
+      { type: 'FURY_BOUNTY', consensusProofId: 'proof-pen' },
+      undefined, 'consensus:proof-pen:fury-right:bounty',
     );
 
     // Incorrect vote → penalty
     expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
-      'acct-wrong', 'revenue-account', AUDITOR_STAKE_AMOUNT, 'contract-pen', { type: 'FURY_PENALTY' },
+      'acct-wrong', 'revenue-account', AUDITOR_STAKE_AMOUNT, 'contract-pen',
+      { type: 'FURY_PENALTY', consensusProofId: 'proof-pen' },
+      undefined, 'consensus:proof-pen:fury-wrong:penalty',
     );
 
     expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('FURY_PENALTY_CHARGED', expect.objectContaining({
@@ -237,6 +252,8 @@ describe('FuryWorker — Bounty Economy', () => {
     });
     // UPDATE proofs
     mockPool.query.mockResolvedValueOnce({ rows: [] });
+    // LC5 idempotency guard: not yet applied
+    mockPool.query.mockResolvedValueOnce({ rows: [] });
     // Accuracy tracking: 2 correct votes
     mockPool.query.mockResolvedValueOnce({ rows: [] });
     mockPool.query.mockResolvedValueOnce({ rows: [] });
@@ -257,7 +274,9 @@ describe('FuryWorker — Bounty Economy', () => {
     // Only 1 ledger transaction (for the Fury with account_id)
     expect(mockLedger.recordTransaction).toHaveBeenCalledTimes(1);
     expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
-      'escrow-account', 'acct-yes', AUDITOR_STAKE_AMOUNT, 'contract-skip', { type: 'FURY_BOUNTY' },
+      'escrow-account', 'acct-yes', AUDITOR_STAKE_AMOUNT, 'contract-skip',
+      { type: 'FURY_BOUNTY', consensusProofId: 'proof-skip' },
+      undefined, 'consensus:proof-skip:fury-with-acct:bounty',
     );
   });
 
@@ -297,5 +316,50 @@ describe('FuryWorker — Bounty Economy', () => {
     await worker.checkConsensus('proof-split-bounty');
 
     expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
+  });
+
+  it('LC5: should NOT re-apply scoring or re-disburse bounties when consensus side effects already exist (re-claim)', async () => {
+    // fury_assignments
+    mockPool.query.mockResolvedValueOnce({
+      rows: [
+        { fury_user_id: 'fury-1', verdict: 'PASS' },
+        { fury_user_id: 'fury-2', verdict: 'PASS' },
+      ],
+    });
+    // claim resolution
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-reclaim' }] });
+    // proofs
+    mockPool.query.mockResolvedValueOnce({
+      rows: [{ is_honeypot: false, contract_id: 'contract-reclaim' }],
+    });
+    // ConsensusEngine
+    (mockConsensus.evaluate as jest.Mock).mockResolvedValueOnce({
+      outcome: 'VERIFIED',
+      votes: [
+        { furyUserId: 'fury-1', verdict: 'PASS' },
+        { furyUserId: 'fury-2', verdict: 'PASS' },
+      ],
+      flaggedFuries: [],
+    });
+    // UPDATE proofs
+    mockPool.query.mockResolvedValueOnce({ rows: [] });
+    // LC5 idempotency guard returns a row → already applied
+    mockPool.query.mockResolvedValueOnce({ rows: [{ '?column?': 1 }] });
+    // Demotion check stats still run (idempotent) for both furies
+    mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+    mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+    // Notification
+    mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-reclaim' }] });
+
+    await worker.checkConsensus('proof-reclaim');
+
+    // No bounty/penalty postings on a re-claim.
+    expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
+    // No integrity-score deltas re-applied.
+    const scoreCalls = mockPool.query.mock.calls.filter(
+      (c) => typeof c[0] === 'string' &&
+        (c[0].includes('integrity_score + 2') || c[0].includes('integrity_score - 5')),
+    );
+    expect(scoreCalls).toHaveLength(0);
   });
 });

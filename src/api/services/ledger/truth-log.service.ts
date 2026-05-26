@@ -34,8 +34,12 @@ export class TruthLogService {
 
       // Recompute the hash (Theorem 2 logic) — event_type is part of the preimage
       // so a tampered event_type with an unchanged payload is still detected.
+      // Use the running recomputed head (expectedPreviousHash), NOT the stored
+      // row.previous_hash, so a chain that was consistently re-forged (every
+      // previous_hash/current_hash rewritten to agree internally) still fails:
+      // the recomputed head will diverge from the forged links.
       const timestamp = new Date(row.created_at).toISOString();
-      const hashInput = `${row.sequence_index}|${row.event_type}|${timestamp}|${row.previous_hash}|${JSON.stringify(row.payload)}`;
+      const hashInput = `${row.sequence_index}|${row.event_type}|${timestamp}|${expectedPreviousHash}|${JSON.stringify(row.payload)}`;
       const recomputedHash = createHash('sha256').update(hashInput).digest('hex');
 
       if (recomputedHash !== row.current_hash) {
@@ -63,11 +67,21 @@ export class TruthLogService {
    * Theorem 2: Sequential Integrity using
    * SHA256(index | event_type | timestamp | previous_hash | payload)
    */
-  async appendEvent(eventType: string, payload: Record<string, any>): Promise<string> {
-    const client: PoolClient = await this.pool.connect();
+  async appendEvent(
+    eventType: string,
+    payload: Record<string, any>,
+    externalClient?: PoolClient,
+  ): Promise<string> {
+    // When a caller passes its own client, we enlist in THAT transaction so the
+    // append commits (or rolls back) atomically with the caller's other writes
+    // (e.g. a proof status change). In that mode we must NOT open/commit our own
+    // transaction or release the caller's client. The transaction-scoped advisory
+    // lock is held for the duration of the caller's transaction, which is fine.
+    const ownTransaction = !externalClient;
+    const client: PoolClient = externalClient ?? (await this.pool.connect());
 
     try {
-      await client.query('BEGIN');
+      if (ownTransaction) await client.query('BEGIN');
 
       // 0. Serialize all appends with a transaction-scoped advisory lock so only
       //    one append computes the head/index at a time. This closes the
@@ -112,13 +126,30 @@ export class TruthLogService {
         timestamp
       ]);
 
-      await client.query('COMMIT');
+      // 4. Advance the underlying BIGSERIAL sequence to the index we just inserted
+      //    explicitly. Without this, the sequence's nextval still lags behind the
+      //    app-computed indices, so any path that relies on the column DEFAULT
+      //    (seed.sql, a future writer) would hand out an already-used index and
+      //    collide with idx_event_log_sequence. setval(..., nextIndex, true) marks
+      //    "last value used = nextIndex", so the next DEFAULT yields nextIndex + 1.
+      //    We hold the advisory lock for the whole transaction and indices are
+      //    monotonically increasing, so this never regresses the sequence.
+      //    NOTE: the cleaner fix is a migration dropping the column DEFAULT entirely;
+      //    that is out of scope here (no migrations created).
+      await client.query(
+        `SELECT setval(pg_get_serial_sequence('event_log', 'sequence_index'), $1::bigint, true)`,
+        [nextIndex],
+      );
+
+      if (ownTransaction) await client.query('COMMIT');
       return insertRes.rows[0].id;
     } catch (e) {
-      await client.query('ROLLBACK');
+      // Only unwind our own transaction; if the caller owns it, let the error
+      // propagate so the caller's catch can ROLLBACK the whole unit of work.
+      if (ownTransaction) await client.query('ROLLBACK');
       throw e;
     } finally {
-      client.release();
+      if (ownTransaction) client.release();
     }
   }
 

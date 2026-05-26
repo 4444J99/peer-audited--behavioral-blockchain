@@ -73,31 +73,36 @@ describe('GdprService', () => {
 
   describe('processPendingDeletions', () => {
     it('should process users pending deletion after 30-day cooling period', async () => {
-      // Find pending users
+      // Find pending users (pool.query). The erasure itself now runs entirely on a
+      // connected client inside a single transaction (PRV4).
       (mockPool.query as jest.Mock)
-        .mockResolvedValueOnce({ rows: [{ id: 'user-to-delete' }] }) // pending users
-        // anonymizeUser calls:
-        .mockResolvedValueOnce(undefined) // UPDATE users
-        .mockResolvedValueOnce(undefined) // DELETE notifications
-        .mockResolvedValueOnce(undefined) // UPDATE contracts
-        .mockResolvedValueOnce(undefined); // INSERT event_log
+        .mockResolvedValueOnce({ rows: [{ id: 'user-to-delete' }] }); // pending users
 
       const result = await service.processPendingDeletions();
 
       expect(result.processed).toBe(1);
       expect(result.skipped).toBe(0);
       expect((mockPool.query as jest.Mock).mock.calls[0][0]).toContain('deletion_requested_at');
+      // The transaction was opened and committed on a single client.
+      expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
+      expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
     });
 
-    it('should report skipped users on anonymization failure', async () => {
+    it('should report skipped users on anonymization failure and roll back', async () => {
       (mockPool.query as jest.Mock)
-        .mockResolvedValueOnce({ rows: [{ id: 'user-fail' }] }) // pending users
-        .mockRejectedValueOnce(new Error('DB error')); // anonymize fails
+        .mockResolvedValueOnce({ rows: [{ id: 'user-fail' }] }); // pending users
+      // Fail the first erasure statement (after BEGIN) so the transaction aborts.
+      mockClient.query.mockReset();
+      mockClient.query
+        .mockResolvedValueOnce({ rows: [] }) // BEGIN
+        .mockRejectedValueOnce(new Error('DB error')) // UPDATE users fails
+        .mockResolvedValue({ rows: [] }); // ROLLBACK
 
       const result = await service.processPendingDeletions();
 
       expect(result.processed).toBe(0);
       expect(result.skipped).toBe(1);
+      expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
     });
 
     it('should return zero counts when no users are pending', async () => {
@@ -111,82 +116,101 @@ describe('GdprService', () => {
   });
 
   describe('anonymization (via processPendingDeletions)', () => {
+    // PRV4: the whole erasure now runs on a connected client inside one transaction,
+    // so the scrub statements appear on mockClient.query (not mockPool.query). Find
+    // statements by content rather than fixed index since order may evolve.
+    const findClientCall = (needle: string) =>
+      mockClient.query.mock.calls.find(
+        (call) => typeof call[0] === 'string' && call[0].includes(needle),
+      );
+
     it('should anonymize email, null password_hash, and set status to DELETED', async () => {
       const userId = 'anon-user';
 
       (mockPool.query as jest.Mock)
-        .mockResolvedValueOnce({ rows: [{ id: userId }] }) // pending users
-        .mockResolvedValueOnce(undefined) // UPDATE users
-        .mockResolvedValueOnce(undefined) // DELETE notifications
-        .mockResolvedValueOnce(undefined) // UPDATE contracts
-        .mockResolvedValueOnce(undefined); // INSERT event_log
+        .mockResolvedValueOnce({ rows: [{ id: userId }] }); // pending users
 
       await service.processPendingDeletions();
 
-      // Verify the UPDATE users query
-      const updateCall = (mockPool.query as jest.Mock).mock.calls[1];
-      expect(updateCall[0]).toContain('UPDATE users SET');
-      expect(updateCall[0]).toContain('password_hash = NULL');
-      expect(updateCall[0]).toContain("status = 'DELETED'");
-      expect(updateCall[1][0]).toBe(userId);
-      expect(updateCall[1][1]).toBe(`deleted-${userId}@anonymized.styx`);
+      const updateCall = findClientCall('UPDATE users SET');
+      expect(updateCall).toBeDefined();
+      expect(updateCall![0]).toContain('password_hash = NULL');
+      expect(updateCall![0]).toContain("status = 'DELETED'");
+      expect(updateCall![1][0]).toBe(userId);
+      expect(updateCall![1][1]).toBe(`deleted-${userId}@anonymized.styx`);
+    });
+
+    it('should scrub remaining identity/compliance PII columns on the user (PRV3)', async () => {
+      const userId = 'pii-user';
+
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ id: userId }] });
+
+      await service.processPendingDeletions();
+
+      const updateCall = findClientCall('UPDATE users SET');
+      expect(updateCall).toBeDefined();
+      expect(updateCall![0]).toContain('date_of_birth = NULL');
+      expect(updateCall![0]).toContain('stripe_customer_id = NULL');
+      expect(updateCall![0]).toContain("compliance_metadata = '{}'::jsonb");
+      expect(updateCall![0]).toContain('identity_verification_id = NULL');
+      expect(updateCall![0]).toContain('identity_provider = NULL');
+      expect(updateCall![0]).toContain('terms_accepted_at = NULL');
+      expect(updateCall![0]).toContain('terms_version = NULL');
+    });
+
+    it('should scrub partner email, fury subject alias, and dashboard snapshots (PRV3)', async () => {
+      const userId = 'rel-user';
+
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ id: userId }] });
+
+      await service.processPendingDeletions();
+
+      expect(findClientCall('accountability_partners')).toBeDefined();
+      expect(findClientCall('partner_email = NULL')).toBeDefined();
+      expect(findClientCall('subject_alias = NULL')).toBeDefined();
+      expect(findClientCall('DELETE FROM dashboard_progress_snapshots')).toBeDefined();
     });
 
     it('should delete notifications for the user', async () => {
       const userId = 'notif-user';
 
       (mockPool.query as jest.Mock)
-        .mockResolvedValueOnce({ rows: [{ id: userId }] })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(undefined);
+        .mockResolvedValueOnce({ rows: [{ id: userId }] });
 
       await service.processPendingDeletions();
 
-      const deleteCall = (mockPool.query as jest.Mock).mock.calls[2];
-      expect(deleteCall[0]).toContain('DELETE FROM notifications');
-      expect(deleteCall[1]).toEqual([userId]);
+      const deleteCall = findClientCall('DELETE FROM notifications');
+      expect(deleteCall).toBeDefined();
+      expect(deleteCall![1]).toEqual([userId]);
     });
 
     it('should scrub contract metadata but preserve contract records', async () => {
       const userId = 'contract-user';
 
       (mockPool.query as jest.Mock)
-        .mockResolvedValueOnce({ rows: [{ id: userId }] })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(undefined);
+        .mockResolvedValueOnce({ rows: [{ id: userId }] });
 
       await service.processPendingDeletions();
 
-      const contractCall = (mockPool.query as jest.Mock).mock.calls[3];
-      expect(contractCall[0]).toContain('UPDATE contracts');
-      expect(contractCall[0]).toContain("metadata = '{}'::jsonb");
-      expect(contractCall[1]).toEqual([userId]);
+      const contractCall = findClientCall('UPDATE contracts');
+      expect(contractCall).toBeDefined();
+      expect(contractCall![0]).toContain("metadata = '{}'::jsonb");
+      expect(contractCall![1]).toEqual([userId]);
     });
 
-    it('should log GDPR_ERASURE_COMPLETED event', async () => {
+    it('should log GDPR_ERASURE_COMPLETED event in the same transaction', async () => {
       const userId = 'event-user';
 
       (mockPool.query as jest.Mock)
-        .mockResolvedValueOnce({ rows: [{ id: userId }] })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(undefined);
+        .mockResolvedValueOnce({ rows: [{ id: userId }] });
 
       await service.processPendingDeletions();
 
-      // The anonymizer now issues additional scrub queries (proofs,
-      // health_oracle_samples) before logging, so locate the event_log call
-      // rather than relying on a fixed index.
-      // The erasure event is now a properly-chained append on a connected client
-      // (parameterized INSERT), not a pool.query with an inline 'n/a' hash.
-      const eventCall = mockClient.query.mock.calls.find(
-        (call) => typeof call[0] === 'string' && call[0].includes('INSERT INTO event_log'),
-      );
+      // The erasure event is a properly-chained append on the SAME connected client
+      // (parameterized INSERT), committed atomically with the scrub statements.
+      const eventCall = findClientCall('INSERT INTO event_log');
       expect(eventCall).toBeDefined();
       // Params: [sequence_index, event_type, payload, previous_hash, current_hash, created_at]
       expect(eventCall![1][1]).toBe('GDPR_ERASURE_COMPLETED');

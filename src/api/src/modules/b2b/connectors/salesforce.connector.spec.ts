@@ -78,6 +78,38 @@ describe('SalesforceConnector', () => {
       await expect(connector.pushEmployeeEvent(testEvent)).rejects.toThrow('Salesforce push failed: 500');
     });
 
+    it('should re-authenticate once and retry on a 401 (expired token) (PRV17)', async () => {
+      mockFetch
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ access_token: 'stale_tok' }) }) // initial auth
+        .mockResolvedValueOnce({ ok: false, status: 401 }) // push -> token expired
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ access_token: 'fresh_tok' }) }) // re-auth
+        .mockResolvedValueOnce({ ok: true }); // retried push succeeds
+
+      await expect(connector.pushEmployeeEvent(testEvent)).resolves.toBeUndefined();
+
+      // Two auth calls (initial + forced refresh) and two pushes.
+      const authCalls = mockFetch.mock.calls.filter(
+        (c: any) => typeof c[0] === 'string' && c[0].includes('oauth2/token'),
+      );
+      expect(authCalls).toHaveLength(2);
+      // The retried push used the fresh token.
+      const pushCalls = mockFetch.mock.calls.filter(
+        (c: any) => typeof c[0] === 'string' && c[0].includes('Styx_Event__c'),
+      );
+      expect(pushCalls).toHaveLength(2);
+      expect(pushCalls[1][1].headers.Authorization).toBe('Bearer fresh_tok');
+    });
+
+    it('should propagate a 401 that persists after re-authentication (PRV17)', async () => {
+      mockFetch
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ access_token: 'tok1' }) }) // auth
+        .mockResolvedValueOnce({ ok: false, status: 401 }) // push 401
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ access_token: 'tok2' }) }) // re-auth
+        .mockResolvedValueOnce({ ok: false, status: 401 }); // still 401
+
+      await expect(connector.pushEmployeeEvent(testEvent)).rejects.toThrow('Salesforce push failed: 401');
+    });
+
     it('should cache access token across calls', async () => {
       mockFetch
         .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ access_token: 'cached_tok' }) })

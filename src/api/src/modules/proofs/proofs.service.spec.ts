@@ -88,6 +88,36 @@ describe('ProofsService', () => {
     expect(mockR2.generateViewUrl).toHaveBeenCalledWith('proofs/1-masked.mp4');
     // Critical: the raw media_uri must never be signed for a non-owner reader.
     expect(mockR2.generateViewUrl).not.toHaveBeenCalledWith('proofs/1.mp4');
+    // SH2: an assigned Fury auditor must NOT be able to tell a honeypot from a real
+    // proof — the is_honeypot flag must never be exposed in the returned detail.
+    expect(result).not.toHaveProperty('isHoneypot');
+  });
+
+  it('never exposes the is_honeypot flag to any reader, including the owner (SH2)', async () => {
+    mockPool.query.mockResolvedValueOnce({
+      rows: [{
+        id: 'proof-1',
+        contract_id: 'contract-1',
+        user_id: 'owner-1',
+        contract_owner_id: 'owner-1',
+        status: 'PENDING_REVIEW',
+        content_type: 'video/mp4',
+        description: 'demo',
+        media_uri: 'proofs/1.mp4',
+        masked_media_uri: null,
+        redaction_status: 'NOT_APPLICABLE',
+        submitted_at: '2026-01-01T00:00:00Z',
+        uploaded_at: '2026-01-01T00:01:00Z',
+        is_honeypot: true,
+        requester_role: 'USER',
+        requester_enterprise_id: 'ent-1',
+        contract_owner_enterprise_id: 'ent-1',
+        requester_is_assigned_fury: false,
+      }],
+    });
+
+    const result = await service.getProofDetail('proof-1', { userId: 'owner-1' });
+    expect(result).not.toHaveProperty('isHoneypot');
   });
 
   it('serves no URL (never the raw media_uri) to a tenant admin when no masked asset exists, regardless of redaction_status', async () => {

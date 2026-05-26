@@ -29,6 +29,10 @@ export class AuthGuard implements CanActivate {
     if (!token) {
       const sseTicketUserId = this.consumeSseTicketForRequest(request);
       if (sseTicketUserId) {
+        // AU9 (residual): SSE tickets carry no role, so we pin role:'USER' here and
+        // intentionally do NOT grant privileges from a ticket. Any handler that needs
+        // role/email MUST re-check them against the DB (the fury stream already does)
+        // — never trust this synthetic principal for authorization decisions.
         (request as any).user = { id: sseTicketUserId, email: '', role: 'USER', sub: sseTicketUserId };
         return true;
       }
@@ -108,19 +112,25 @@ export class AuthGuard implements CanActivate {
       return null;
     }
 
+    // AU8 (residual): the HttpOnly cookie path (issued by /…/stream-cookie) is the
+    // PREFERRED credential channel — a query-string ticket can leak into proxy logs,
+    // browser history and Referer headers. We try the cookie first and fall back to
+    // the query param, which is retained because the EventSource clients that cannot
+    // attach an Authorization header still rely on /…/stream-ticket. Single-use +
+    // 60s TTL bounds the exposure of any leaked query-param ticket.
+    const cookieName = scope === 'notifications'
+      ? 'styx_notifications_sse_ticket'
+      : 'styx_fury_sse_ticket';
+    const cookieTicketPreferred = this.getCookieValue(request, cookieName);
+    if (cookieTicketPreferred) {
+      return consumeSseTicket(cookieTicketPreferred, scope);
+    }
+
     if (request.query && typeof request.query.ticket === 'string') {
       return consumeSseTicket(request.query.ticket, scope);
     }
 
-    const cookieName = scope === 'notifications'
-      ? 'styx_notifications_sse_ticket'
-      : 'styx_fury_sse_ticket';
-    const cookieTicket = this.getCookieValue(request, cookieName);
-    if (!cookieTicket) {
-      return null;
-    }
-
-    return consumeSseTicket(cookieTicket, scope);
+    return null;
   }
 
   private getSseStreamScope(request: Request): SseTicketScope | null {

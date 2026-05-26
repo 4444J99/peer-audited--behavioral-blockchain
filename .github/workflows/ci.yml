@@ -5,11 +5,13 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  merge_group:
 
 jobs:
+  # Required, BLOCKING gate. This job must be able to fail a merge — do not add
+  # `continue-on-error` here. Advisory/infra-dependent jobs below keep it.
   build_and_test:
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     strategy:
       matrix:
@@ -26,10 +28,10 @@ jobs:
         cache: 'npm'
 
     - name: Install Dependencies
-      run: npm install
+      run: npm ci
 
-    - name: Security Audit
-      run: npm audit --audit-level=high
+    - name: Security Audit (advisory, non-blocking)
+      run: npm audit --audit-level=high || echo "::warning::npm audit reported high-severity advisories; review but not blocking the merge."
 
     - name: Execute Tests with Coverage (Turborepo)
       run: npx turbo run test -- --coverage --ci

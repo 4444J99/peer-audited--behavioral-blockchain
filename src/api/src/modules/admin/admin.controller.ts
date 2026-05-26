@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, UseGuards, Patch, Query } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, UseGuards, Patch, Query, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Pool } from 'pg';
@@ -61,7 +61,19 @@ export class AdminController {
     @CurrentUser() user: { id: string },
     @Body() body: BanUserDto,
   ) {
-    return this.moderation.banUser(user.id, targetUserId, body.reason);
+    // AU11: an admin cannot ban (and thereby lock out) themselves — a guard against
+    // accidental or coerced self-targeting of privileged moderation actions.
+    if (targetUserId === user.id) {
+      throw new ForbiddenException('Admins cannot perform this moderation action on their own account');
+    }
+    const result = await this.moderation.banUser(user.id, targetUserId, body.reason);
+    // AU11: persist a tamper-evident audit entry so the privileged action is traceable.
+    await this.truthLog.appendEvent('ADMIN_USER_BANNED', {
+      adminId: user.id,
+      targetUserId,
+      reason: body.reason,
+    });
+    return result;
   }
 
   // --- Contracts ---
@@ -70,9 +82,16 @@ export class AdminController {
   @ApiOperation({ summary: 'Manually resolve a contract as completed or failed' })
   async resolveContract(
     @Param('contractId') contractId: string,
+    @CurrentUser() admin: { id: string },
     @Body() body: ResolveContractDto,
   ) {
     await this.contractsService.resolveContract(contractId, body.outcome);
+    // AU11: record the admin override of a money-bearing contract resolution.
+    await this.truthLog.appendEvent('ADMIN_CONTRACT_RESOLVED', {
+      adminId: admin.id,
+      contractId,
+      outcome: body.outcome,
+    });
     return { status: 'resolved', contractId, outcome: body.outcome };
   }
 
@@ -165,12 +184,28 @@ export class AdminController {
     @CurrentUser() admin: { id: string },
     @Body() body: { delta: number; reason: string },
   ) {
-    await this.pool.query(
+    // AU11: an admin cannot adjust their own integrity score (self-dealing guard).
+    if (userId === admin.id) {
+      throw new ForbiddenException('Admins cannot adjust their own integrity score');
+    }
+
+    const updateResult = await this.pool.query(
       `UPDATE users
        SET integrity_score = GREATEST(0, LEAST(100, integrity_score + $1))
-       WHERE id = $2`,
+       WHERE id = $2
+       RETURNING integrity_score`,
       [body.delta, userId],
     );
+
+    // AU11: persist the privileged adjustment (attacker-controllable delta + reason)
+    // to the tamper-evident TruthLog so manual score overrides are auditable.
+    await this.truthLog.appendEvent('ADMIN_INTEGRITY_ADJUSTED', {
+      adminId: admin.id,
+      targetUserId: userId,
+      delta: body.delta,
+      reason: body.reason,
+      newScore: updateResult.rows[0]?.integrity_score ?? null,
+    });
 
     return { status: 'integrity_adjusted', userId, delta: body.delta, reason: body.reason };
   }
@@ -245,9 +280,18 @@ export class AdminController {
        LIMIT 1000`,
     );
 
+    // PRV15: computePHash is a SHA-256 of the media URI and hammingDistance now
+    // returns only 0 (identical URI) or MAX_SAFE_INTEGER (anything else) — there is
+    // no meaningful "near" distance to scale. So this scan detects EXACT URI reuse
+    // only. The previous `distance < 5` + `(1 - distance/64)*100` similarity was dead
+    // arithmetic (it could only ever yield 100). We report it honestly as an
+    // exact-match collision rather than implying a perceptual-similarity percentage.
+    // (residual) True near-duplicate detection happens at upload time in PHashService
+    // against the actual frame bytes; this URI-level scan cannot reproduce it.
     const collisions: Array<{
-      origin: { id: string; pHash: string; user: string; contractId: string; timestamp: string; similarity: number };
-      duplicate: { id: string; pHash: string; user: string; contractId: string; timestamp: string; similarity: number };
+      matchType: 'EXACT_URI';
+      origin: { id: string; pHash: string; user: string; contractId: string; timestamp: string };
+      duplicate: { id: string; pHash: string; user: string; contractId: string; timestamp: string };
     }> = [];
 
     const hashed = proofs.rows.map((row: any) => ({
@@ -258,16 +302,16 @@ export class AdminController {
     for (let i = 0; i < hashed.length; i++) {
       for (let j = i + 1; j < hashed.length; j++) {
         const distance = this.anomaly.hammingDistance(hashed[i].pHash, hashed[j].pHash);
-        if (distance < 5) {
-          const similarity = Math.round((1 - distance / 64) * 1000) / 10;
+        // distance === 0 means the media URIs are byte-for-byte identical.
+        if (distance === 0) {
           collisions.push({
+            matchType: 'EXACT_URI',
             origin: {
               id: hashed[i].id,
               pHash: hashed[i].pHash,
               user: hashed[i].user_id,
               contractId: hashed[i].contract_id,
               timestamp: hashed[i].submitted_at,
-              similarity: 100,
             },
             duplicate: {
               id: hashed[j].id,
@@ -275,7 +319,6 @@ export class AdminController {
               user: hashed[j].user_id,
               contractId: hashed[j].contract_id,
               timestamp: hashed[j].submitted_at,
-              similarity,
             },
           });
         }
