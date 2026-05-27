@@ -6,15 +6,23 @@
 
 ## State of the world
 
-`main` @ `f45c80c` = PR #607 (squash): **89 audit findings remediated** + release-engineering
-system + KYC default-ON in prod (PRV16) + SSRF IP-pinning + ledger idempotency (migration 030).
-Branch protection is **LIVE** on `main` (1 CODEOWNERS approving review + merge queue).
+`main` @ `8566d32`: PR #607 (89 audit findings remediated + release-engineering + KYC
+default-ON + SSRF IP-pinning + ledger idempotency 030), then PR #608 (renamed the matrix
+job to `build_and_test_matrix` and added a stable `build_and_test` **summary** job so the
+required-check name never changes shape — but #608 left the broken `--coverage --ci` test
+step, so main's `build_and_test` is currently RED). Branch protection is **LIVE** (1
+CODEOWNERS approving review + merge queue).
 
-### Open PRs (auto-merge armed; both need a human CODEOWNERS approval — a bot cannot self-approve or drive the merge queue)
-| PR | Branch | Contents | Checks | Auto-merge |
-|----|--------|----------|--------|-----------|
-| **#611** | `claude/ci-health-green-PWWb9` | shared ts-jest config (119 tests now run), test-harness lint → `tsc --noEmit`, CI stops forwarding jest-only `--coverage --ci` | **build_and_test GREEN**; CodeQL neutral; advisory jobs red (see below) | SQUASH enabled |
-| **#609** | `claude/index-sync-vacuum-log-PWWb9` | `.claude/MEMORY.md` record, `docs/CLAUDE.md` required-secrets, `docs/audit/2026-05-26-index-propagation-and-vacuum-log.md`, this handoff | docs-only | (enable on close) |
+**MERGE ORDER (strict): #611 FIRST, then #609.** #611 carries the test-step fix that turns
+`build_and_test` green; #609 only goes green after #611 is on main and #609's branch is
+updated (the strict merge queue should auto-update it on approval). Both branches are
+already merged up-to-date with `main @ 8566d32`.
+
+### Open PRs (auto-merge armed SQUASH; both need a human CODEOWNERS approval — a bot cannot self-approve or drive the merge queue)
+| PR | Branch | Contents | Checks |
+|----|--------|----------|--------|
+| **#611** (merge 1st) | `claude/ci-health-green-PWWb9` | shared ts-jest config (119 tests now run), test-harness lint → `tsc --noEmit`, CI stops forwarding jest-only `--coverage --ci`; merged with #608's summary-job structure | **build_and_test GREEN**; advisory jobs red (below) |
+| **#609** (merge 2nd) | `claude/index-sync-vacuum-log-PWWb9` | `.claude/MEMORY.md`, `docs/CLAUDE.md` required-secrets, index/vacuum log, this handoff | docs-only; `build_and_test` RED until #611 lands (lacks the fix) |
 
 ## Verification facts (local; Node v22 — CI pins Node 20)
 - API: `tsc --noEmit` clean; **994 tests / 95 suites** pass (`cd src/api && npx jest`).
