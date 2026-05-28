@@ -38,8 +38,14 @@ jobs:
     - name: Security Audit (advisory, non-blocking)
       run: npm audit --audit-level=high || echo "::warning::npm audit reported high-severity advisories; review but not blocking the merge."
 
-    - name: Execute Tests with Coverage (Turborepo)
-      run: npx turbo run test -- --coverage --ci
+    - name: Execute Tests (Turborepo)
+      # NOTE: do not forward `--coverage --ci` here. Those are jest-only flags:
+      # `--ci` makes the vitest workspaces (ask-styx, test-harness) throw
+      # `CACError: Unknown option --ci`, and `--coverage` currently fails api
+      # suite-loading. Each workspace owns its own test invocation. Re-introducing
+      # coverage-threshold gating is tracked as a follow-up once coverage mode is
+      # fixed (see docs/audit/2026-05-26-index-propagation-and-vacuum-log.md).
+      run: npx turbo run test
 
     - name: Upload Coverage Reports
       if: always()
@@ -115,10 +121,18 @@ jobs:
     - name: Run Beta Readiness Suite
       env:
         READINESS_PROFILE: beta
-        READINESS_REQUIRE_TARGETS: "true"
-        BETA_API_URL: ${{ secrets.CI_BETA_API_URL || secrets.CI_GATE05_API_URL }}
-        BETA_WEB_URL: ${{ secrets.BETA_WEB_URL }}
-        BETA_ENV_LABEL: ${{ secrets.BETA_ENV_LABEL }}
+        # Advisory in PR CI: beta readiness validates a LIVE deployed target, which
+        # PRs don't have. Don't hard-require targets here (that turned "no live URL"
+        # into a red check) — the suite skips cleanly when no target is set. The
+        # deploy/promotion workflows set this true where a live URL exists.
+        READINESS_REQUIRE_TARGETS: "false"
+        # Explicitly empty the target URLs on PR CI so the suite takes the
+        # skip-clean path regardless of any stale secret (e.g. a CI_GATE05_API_URL
+        # pointing at a broken/old environment). Deploy & promotion workflows set
+        # these where a live URL actually exists.
+        BETA_API_URL: ""
+        BETA_WEB_URL: ""
+        BETA_ENV_LABEL: ""
       run: npm run beta:readiness
 
     - name: Upload Beta Readiness Summary

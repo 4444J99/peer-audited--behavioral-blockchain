@@ -95,23 +95,23 @@ provider "cloudflare" {
 # --- Render: API Service ---
 
 resource "render_web_service" "styx_api" {
-  name            = "styx-api"
-  region          = "oregon"
-  plan            = "starter"
-  runtime         = "docker"
-  docker_path     = "./src/api/Dockerfile"
-  docker_context  = "."
-  branch          = "main"
+  name           = "styx-api"
+  region         = "oregon"
+  plan           = "starter"
+  runtime        = "docker"
+  docker_path    = "./src/api/Dockerfile"
+  docker_context = "."
+  branch         = "main"
 
   env_vars = {
-    NODE_ENV           = var.environment
-    DATABASE_URL       = var.database_url
-    REDIS_URL          = var.redis_url
-    STRIPE_SECRET_KEY  = var.stripe_secret_key
-    JWT_SECRET         = var.jwt_secret
-    ANONYMIZE_SALT     = var.anonymize_salt
-    R2_ENDPOINT        = "https://${var.cloudflare_account_id}.r2.cloudflarestorage.com"
-    R2_BUCKET          = cloudflare_r2_bucket.styx_proofs.name
+    NODE_ENV          = var.environment
+    DATABASE_URL      = var.database_url
+    REDIS_URL         = var.redis_url
+    STRIPE_SECRET_KEY = var.stripe_secret_key
+    JWT_SECRET        = var.jwt_secret
+    ANONYMIZE_SALT    = var.anonymize_salt
+    R2_ENDPOINT       = "https://${var.cloudflare_account_id}.r2.cloudflarestorage.com"
+    R2_BUCKET         = cloudflare_r2_bucket.styx_proofs.name
   }
 
   health_check_path = "/health"
@@ -120,17 +120,17 @@ resource "render_web_service" "styx_api" {
 # --- Render: Web Dashboard ---
 
 resource "render_web_service" "styx_web" {
-  name            = "styx-web"
-  region          = "oregon"
-  plan            = "starter"
-  runtime         = "docker"
-  docker_path     = "./src/web/Dockerfile"
-  docker_context  = "."
-  branch          = "main"
+  name           = "styx-web"
+  region         = "oregon"
+  plan           = "starter"
+  runtime        = "docker"
+  docker_path    = "./src/web/Dockerfile"
+  docker_context = "."
+  branch         = "main"
 
   env_vars = {
-    NODE_ENV             = var.environment
-    NEXT_PUBLIC_API_URL  = "https://${render_web_service.styx_api.name}.onrender.com"
+    NODE_ENV            = var.environment
+    NEXT_PUBLIC_API_URL = "https://${render_web_service.styx_api.name}.onrender.com"
   }
 }
 
