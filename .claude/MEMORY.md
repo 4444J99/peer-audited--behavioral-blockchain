@@ -79,3 +79,60 @@ enterprise, finance, growth, support, ops, product, legal
 - `ask-styx-static-chat` — standalone chat SPA for GH Pages
 - `architecture-completeness-matrix` — 8-phase deep dive, 19 feature areas
 - `stub-placeholder-inventory` — grep-based stub/TODO search (subordinate to above)
+
+## Security Remediation & Release Engineering (2026-05-26)
+Merged to `main` as squash **f45c80c** (PR #607, squashed 6 commits). Audited the
+#605 "security & correctness hardening" commit, found **89 issues**, fixed all of
+them. Verified locally: `tsc --noEmit` clean + **994 tests / 95 suites green**.
+Co-located specs updated for every behavior change. (CI `build_and_test` did NOT
+run — see Known Gaps.)
+
+- **Money/idempotency:** Stripe idempotency keys on `transferFunds`/`processIAP`/
+  `recordUsage`/capture/lock; DB-enforced ledger `idempotency_key` (migration
+  **030**) with a PARTIAL unique index → `ON CONFLICT (idempotency_key) WHERE
+  idempotency_key IS NOT NULL DO NOTHING`; per-(run,type) settlement dedupe;
+  concurrent-reclaim status guards; `payment_intent.succeeded` verifies amount +
+  currency before activating a contract.
+- **Auth:** banned-user guard on wallet/oracles; **`ENTERPRISE_SSO_SECRET` is now
+  REQUIRED** (no `JWT_SECRET` fallback) — `/auth/enterprise` rejects until it is
+  set; logout revokes refresh tokens even on an expired access token; `CurrentUser`
+  fails closed; throttle on refresh/logout/csrf.
+- **Anti-fraud:** cross-contract pHash dedup restored; `isHoneypot` no longer
+  returned to auditors; PASS+FAIL honeypots; dHash; manipulated media → MANUAL_REVIEW.
+- **Privacy/GDPR/SSRF:** transactional + complete erasure; keyed-HMAC email
+  pseudonymization; k-anonymity suppression; webhook delivery rewritten to
+  `node:https`/`http` and **pinned to the validated IP** (custom `lookup`) to close
+  the DNS-rebinding SSRF; redirects no longer followed.
+- **Ledger/consensus:** per-user (not per-contract) grace-day cap; `verifyChain`
+  recomputes from the running head; BIGSERIAL `sequence_index` advanced via `setval`;
+  idempotent consensus side effects; non-transactional `resolveContract` fallback no
+  longer strands a terminally-resolved contract.
+- **KYC (PRV16 decision):** enforcement is now **default-ON in production**
+  (fail-closed; disabled only by explicit `KYC_ENFORCEMENT_ENABLED=false`, logged at
+  error level). Opt-in outside production. NOTE: this changes the enforcement
+  DEFAULT only — the actual KYC **provider integration (#132) is still pending/mock**.
+- **Tier boundary (SH6 decision):** confirmed exclusive (`<`) — a stake exactly at a
+  threshold escalates to the stricter tier. No code change.
+- **Release engineering:** `ci.yml` `build_and_test` is now a **blocking** gate
+  (removed the repo-wide `continue-on-error` that made red builds report green);
+  `npm ci`; `merge_group` trigger; `.github/rulesets/main.json` (branch protection as
+  code) + README; `docs/architecture/branching-and-release-strategy.md` (canonical
+  trunk-based model).
+- **New required env var:** `ENTERPRISE_SSO_SECRET`.
+
+### Known Gaps / Operator TODO (do not lose)
+- **`build_and_test` is NOT running on PRs** (repo Actions gating, not a YAML bug).
+  FIX THIS before applying `main.json` — a required check that never reports would
+  deadlock every merge.
+- **CodeQL SSRF alert** persists as a static false-positive (real rebinding vuln is
+  fixed via IP-pinning); needs a one-click maintainer **dismissal** in Security →
+  Code scanning. The CodeQL `ci.yml:codeql configuration not found` artifact resolves
+  on its own now that `main` no longer defines that duplicate config.
+- **Apply `.github/rulesets/main.json`**, set `ENTERPRISE_SSO_SECRET` per env. Migration
+  030 runs via the deploy pipeline.
+- **IRF master registry** (`meta-organvm/organvm-corpvs-testamentvm/INST-INDEX-RERUM-FACIENDARUM.md`)
+  was NOT updated — it lives outside this repo and this session's GitHub access is
+  restricted to `a-organvm/peer-audited--behavioral-blockchain`. Operator must run
+  `organvm irf` to propagate. See `docs/audit/2026-05-26-index-propagation-and-vacuum-log.md`.
+- **VACUUM: Logos Documentation Layer is MISSING** (`docs/logos/` — Symmetry 0.0 per
+  docs/CLAUDE.md). Logged with a plan in the propagation log; not yet built.
