@@ -15,7 +15,9 @@ test.describe('Authentication', () => {
   test('should display register form', async ({ page }) => {
     await page.goto('/register');
     await expect(page.locator('input[type="email"], input[name="email"]')).toBeVisible();
-    await expect(page.locator('input[type="password"]')).toBeVisible();
+    // The register form has two password inputs (password + confirm); scope to
+    // the first so `toBeVisible` doesn't trip Playwright strict mode.
+    await expect(page.locator('input[type="password"]').first()).toBeVisible();
   });
 
   test('should show validation error for empty login', async ({ page }) => {
@@ -111,17 +113,33 @@ test.describe('Authentication', () => {
       route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
     );
 
+    // Pre-seed the auth cookie so the post-register redirect lands on /dashboard
+    // (proxy.ts gates protected routes on the styx_auth_token cookie) instead of
+    // bouncing back to /login — this asserts the true register-success path.
+    await page.context().addCookies([
+      { name: 'styx_auth_token', value: 'jwt-e2e-token', domain: 'localhost', path: '/' },
+    ]);
+
     await page.goto('/register');
     await page.fill('input[type="email"], input[name="email"]', 'new@styx.test');
 
-    // Fill password fields
+    // Fill password + confirm-password (policy: 12+ chars, upper, digit, symbol)
     const passwordInputs = page.locator('input[type="password"]');
     const count = await passwordInputs.count();
     if (count >= 2) {
-      await passwordInputs.nth(0).fill('strongpassword123');
-      await passwordInputs.nth(1).fill('strongpassword123');
+      await passwordInputs.nth(0).fill('StrongPassw0rd!');
+      await passwordInputs.nth(1).fill('StrongPassw0rd!');
     } else if (count === 1) {
-      await passwordInputs.nth(0).fill('strongpassword123');
+      await passwordInputs.nth(0).fill('StrongPassw0rd!');
+    }
+
+    // The form also requires date-of-birth and the age + terms gates; without
+    // them the (HTML5 `required`) submit is blocked and no navigation occurs.
+    await page.fill('input[type="date"]', '1990-01-01');
+    const gates = page.locator('input[type="checkbox"]');
+    const gateCount = await gates.count();
+    for (let i = 0; i < gateCount; i++) {
+      await gates.nth(i).check();
     }
 
     await page.click('button[type="submit"]');

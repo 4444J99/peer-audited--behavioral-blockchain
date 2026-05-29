@@ -34,10 +34,19 @@ export const test = base.extend<{ authenticatedPage: Page }>({
     // Set up all authenticated endpoint mocks
     await setupAuthenticatedMocks(page);
 
-    // Inject auth token into localStorage before navigation
-    await page.addInitScript(() => {
-      localStorage.setItem('styx_token', 'jwt-e2e-test-token');
-    });
+    // Authenticate the way the app actually gates: src/web/proxy.ts guards
+    // protected routes on the presence of the `styx_auth_token` cookie
+    // (server-side, so it cannot see localStorage or client-side route mocks).
+    // The previous `localStorage.styx_token` injection was inert — the app
+    // reads no such key — which is why authenticated specs landed on /login.
+    await page.context().addCookies([
+      {
+        name: 'styx_auth_token',
+        value: 'jwt-e2e-test-token',
+        domain: 'localhost',
+        path: '/',
+      },
+    ]);
 
     await use(page);
   },
