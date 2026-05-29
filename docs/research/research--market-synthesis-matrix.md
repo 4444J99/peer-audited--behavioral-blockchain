@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # Research: Market Synthesis Matrix
 
 **Status:** Completed | **Version:** 2.0.0 | **Date:** March 6, 2026

@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # Pillar 1: User Psychology & Behavior
 
 **Loss aversion:**  Prospect theory shows people dread losses about twice as much as they enjoy gains. For example, Kahneman & Tversky note that “the pain from losing $1,000 could only be compensated by the pleasure of earning $2,000”【9†L161-L168】.  In habit-building apps this means users will work hard to avoid losing a deposited stake.  In practice, trials confirm this: one pedometer-based gamified study found that participants who risked their own money on step goals met their targets significantly more often【2†L332-L336】.  Crucially, loss-aversion only kicks in if the stakes are perceived as *earned* rather than arbitrarily given.  As one study notes, users only showed strong motivation “so long as the loss relates to something that was earned rather than endowed”【2†L332-L336】.  In other words, framing the money as *the user’s own* deposit (a personal endowment) is key to triggering loss aversion.  

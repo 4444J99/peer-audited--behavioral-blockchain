@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # Styx: Evaluation to Growth Strategic Review
 
 ## Evaluation Phase

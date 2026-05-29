@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # SOP: Deep-Dive Product & Competitor Analysis
 
 > **Note:** This is a project-specific instance of the system-wide SOP at `meta-organvm/SOP--market-gap-analysis.md`. Customize the Reporting Template columns for your product.

@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # SOP: Styx Gold Path (Research to Implementation)
 
 > **Note:** This is a project-specific instance of the universal SOP at `meta-organvm/SOP--research-to-implementation-pipeline.md`. It is governed by the structural and philosophical standards in `meta-organvm/METADOC--research-standards.md`.

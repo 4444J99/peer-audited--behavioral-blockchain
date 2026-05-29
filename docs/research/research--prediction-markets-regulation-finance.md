@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # **Spectator Prediction Markets in 2026: The Convergence of Federal Derivatives Regulation, State Gaming Law, and Decentralized Tokenomics**
 
 ## **Introduction to the Information Finance Paradigm**

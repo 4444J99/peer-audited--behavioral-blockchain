@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # **The Architecture of Behavioral Change: Integrating Psychological Efficacy and Relational Database Schema in Digital Therapeutics**
 
 ## **Introduction to Digital Therapeutics and Behavioral Architecture**

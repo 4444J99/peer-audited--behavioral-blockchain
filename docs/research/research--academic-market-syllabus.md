@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # Styx Academic & Market Research Syllabus
 
 > **Project:** Styx -- Peer-Audited Behavioral Market

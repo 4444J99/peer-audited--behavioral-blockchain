@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # Styx: Behavioral Engineering - The Master Synthesis
 
 ## Overview

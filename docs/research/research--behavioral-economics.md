@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # **The Behavioral Economics of Habit Formation: Synthesizing Loss Aversion, Endowed Progress, and Motivational Dynamics in Financial Commitment Applications**
 
 ## **Introduction to Behavioral Design in Digital Habit Formation**

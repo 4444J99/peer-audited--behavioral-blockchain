@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # Styx: Behavioral Physics Manifesto - Evaluation to Growth Review
 
 ## Overview

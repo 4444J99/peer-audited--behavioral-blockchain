@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # **Quantifying "No Contact": Leveraging Digital Exhaust for Behavioral Commitment Contracts**
 
 ## **Introduction to Telemetry-Driven Behavioral Enforcement and Digital Exhaust**

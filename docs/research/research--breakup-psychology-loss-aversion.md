@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # **Psychological Pain-Point Mapping: The 90-Day Breakup Recovery Timeline and Loss Aversion Interventions**
 
 ## **Introduction to Attachment-Driven Relapse and Behavioral Economics**

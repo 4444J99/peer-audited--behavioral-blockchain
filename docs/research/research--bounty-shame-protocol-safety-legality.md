@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # **Accountability and The "Bounty/Shame" Protocol: A Multidisciplinary Analysis of User Safety, Psychological Efficacy, and Decentralized Legal Frameworks**
 
 ## **1\. App Store Safety Guidelines and the Viability of Punitive User-Generated Content Mechanics**

@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # Market-Gap Analysis: Relationship Recovery & No Contact Niche
 
 **Status:** Completed | **Version:** 1.0.0 | **Date:** March 6, 2026

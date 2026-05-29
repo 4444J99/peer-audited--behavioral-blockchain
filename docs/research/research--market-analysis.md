@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # **The Gamification and Habit Tracking App Market: 2025–2035 Strategic Outlook**
 
 ## **Executive Overview**

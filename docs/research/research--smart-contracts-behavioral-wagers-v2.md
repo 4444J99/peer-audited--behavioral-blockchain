@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # Architecture and Legal Classification of Milestone-Based Commitment Contracts
 
 ## Introduction

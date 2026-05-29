@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 ## Q: 
 satanism argues the inherent balance of humanity through the self-governance of the seven deadly sins
 

@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # **Strategic Go-To-Market Plan: Transitioning Behavioral Recovery Applications to Enterprise B2B2C Models**
 
 The digital therapeutics and behavioral health market is undergoing a structural evolution, shifting from fragmented direct-to-consumer (B2C) applications toward integrated business-to-business-to-consumer (B2B2C) ecosystems. The current operational baseline involves a Phase 1 minimum viable product (MVP) serving an initial beta audience of 18,000 highly engaged users within the relationship recovery and heartbreak niche. These users currently leverage the platform to stake financial resources on their own "No Contact" behavioral goals. This mechanism relies on the principles of gamification, behavioral economics, and positive reinforcement to drive psychological recovery, utilizing financial loss aversion as the primary catalyst for adherence.1

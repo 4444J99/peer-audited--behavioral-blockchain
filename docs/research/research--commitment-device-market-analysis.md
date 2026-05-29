@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # **Market Gap Analysis: The Digital Detox Angle and the Blockchain of Truth Architecture**
 
 ## **1\. Executive Summary: The Structural Failure of the Behavioral Health Ecosystem**

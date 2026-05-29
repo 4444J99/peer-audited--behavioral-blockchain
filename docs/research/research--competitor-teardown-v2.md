@@ -1,3 +1,10 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+---
+
 # Market Differentiation & Competitor Analysis: A Strategic Teardown of the Gamified Habit-Tracking and Financial-Stakes Ecosystem
 
 The intersection of behavioral economics, digital gamification, and
