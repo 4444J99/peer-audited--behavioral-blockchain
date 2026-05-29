@@ -223,6 +223,7 @@ Expo-managed React Native app. `src/mobile/screens/`: Dashboard, Login, Register
 - **Files**: kebab-case; double-hyphen separates function from descriptor (`research--behavioral-economics.md`)
 - **TypeScript**: strict mode, named exports, async/await
 - **NestJS testing pattern**: `@Injectable()` classes with constructor DI; mock `Pool` or service via `as any` cast in tests (see any `*.spec.ts` in `src/api/src/modules/`)
+- **Plan files** (`docs/planning/`): use descriptive branch/sequence names (e.g. `market-activation`, `irf-propagation`), **not** generic letters (`A`/`B`/`C`) — letter labels force the reader to look up the mapping every time and don't survive context loss. Existing letter-labeled plans are grandfathered, each letter mapped to its phase name in the plan body. (See [#601](https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/601).)
 
 ## Companion Governance Files (root)
 

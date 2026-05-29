@@ -2,6 +2,8 @@
 
 **Date:** 2026-05-17 | **Version:** 4 | **Predecessor:** v3 archived at `~/.claude/plans/archive/2026-05/` (slug `spicy-bubbling-treehouse.md`). v4 is the authoritative plan and supersedes v3 in response to the user's audit challenge ("eat off the floor — no bandaids, fundamental fixes").
 
+> **Naming note ([#601](https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/601)):** The `B / A / C` sequence labels here are **grandfathered**. Each maps to a descriptive phase, spelled out in the Phase sections below — **B** = market activation + URL standup · **A** = IRF propagation (validated) · **C** = audit-engine / technical extraction (demand-driven). Per the plan-file naming convention in [`docs/CLAUDE.md`](../CLAUDE.md#conventions), **new** plans use descriptive branch names, not generic letters.
+
 ## Context
 
 This plan resolves the standing A/B/C decision carried forward from `.conductor/active-handoff.md`. The underlying decision (sequence is B first, then A, then C; register `${CANONICAL_DOMAIN}` in Phase 1) was reached in v2/v3 and is preserved. v4 rebuilds the encoding at the value layer — references to dynamic values go through `.env.example` and other canonical authorities, not through inline hard-coded strings.
