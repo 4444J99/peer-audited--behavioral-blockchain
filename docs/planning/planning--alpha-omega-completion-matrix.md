@@ -57,7 +57,7 @@ For the Phase 1 Beta (Test-Money Pilot, iOS, No-Contact Recovery, US-only), the 
 | :--- | :--- | :--- | :--- | :--- |
 | `F-FURY-01` | Fury Router (BullMQ) | `IMPLEMENTED` | **[BETA-BLOCKER]** | Anonymized distribution to 3 reviewers. |
 | `F-FURY-02` | Fury Accuracy & Demotion | `IMPLEMENTED` | **[BETA-BLOCKER]** | Burn-in logic (10 audits) and 80% threshold verified. |
-| `F-FURY-06` | Consensus Engine | `IMPLEMENTED` | **[BETA-BLOCKER]** | 3/3 pass/fail logic + Judge escalation. |
+| `F-FURY-06` | Consensus Engine | `IMPLEMENTED` | **[BETA-BLOCKER]** | 2-of-3-or-3/3 pass/fail logic (per ADR-004) + Judge escalation. |
 | `F-FURY-05` | Honeypot Injection | `IMPLEMENTED` | **[BETA-BLOCKER]** | Anti-cheat for reviewers. Tests Fury vigilance. |
 | `F-SOCIAL-02`| Whistleblower Bounty Links | `IMPLEMENTED` | **[BETA-BLOCKER]** | The Ex-Bounty. Asymmetric information gathering. |
 | `F-VERIFY-01`| pHash Duplicate Detection | `IMPLEMENTED` | `[BETA-ENHANCER]` | Blocks re-upload of identical proof media. |

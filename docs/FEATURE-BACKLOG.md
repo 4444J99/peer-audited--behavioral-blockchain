@@ -383,7 +383,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Priority**: P0
 - **Source**: `architecture--feasibility-stack.md` §S4.3, `planning--roadmap.md` §Gamma (checked)
 - **Existing Code**: `src/api/services/fury-router/fury-router.service.ts`, `src/api/services/fury-router/fury-router.worker.ts`, `src/api/src/modules/fury/`
-- **Spec**: Anonymized BullMQ distribution to 3 random Furies. Double-anonymized: author hidden from reviewers, reviewers hidden from each other. Consensus: 3/3 pass → user passes; 3/3 fail → stake liquidated; split → Judge escalation. All identifying metadata stripped via FFmpeg.
+- **Spec**: Anonymized BullMQ distribution to 3 random Furies. Double-anonymized: author hidden from reviewers, reviewers hidden from each other. Consensus (per ADR-004): 2-of-3 or 3-of-3 pass → user passes; 2-of-3 or 3-of-3 fail → stake liquidated; 3-way split → Judge escalation. All identifying metadata stripped via FFmpeg.
 - **Dependencies**: Redis, BullMQ, F-INFRA-03
 
 #### F-FURY-02: Fury Accuracy Score & Demotion
@@ -433,7 +433,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Priority**: P0
 - **Source**: `architecture--feasibility-stack.md` §S4.3
 - **Existing Code**: `src/api/src/modules/fury/consensus.engine.ts`, `src/api/src/modules/fury/consensus.engine.spec.ts`
-- **Spec**: Aggregates verdicts from 3 Furies. 3/3 pass → user passes. 3/3 fail → liquidation (house 15%, Furies 85%). Split → Judge escalation.
+- **Spec**: Aggregates verdicts from 3 Furies (per ADR-004). 2-of-3 or 3-of-3 pass → user passes. 2-of-3 or 3-of-3 fail → liquidation (house 15%, Furies 85%). 3-way split → Judge escalation.
 - **Dependencies**: F-FURY-01
 
 #### F-FURY-07: Master Fury Career Path / Economy

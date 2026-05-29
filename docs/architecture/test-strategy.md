@@ -196,7 +196,7 @@ Additional CI workflows:
 ## 7. Testing Principles
 
 1. **Financial correctness over speed.** Every test involving money must assert ledger balance invariants. A fast test that misses a penny is worse than a slow test that catches it.
-2. **Fury consensus is non-negotiable.** No test may bypass the 3-of-5 quorum requirement. If a test needs a quick pass, it must simulate 3 agreeing auditors.
+2. **Fury consensus is non-negotiable.** No test may bypass the consensus rule: **3 assigned auditors, 2-of-3 or 3-of-3 agreement** (per [ADR-004](../adr/adr--004-fury-consensus-engine.md) — a 3-way split escalates to the senior pool; there is no $1000 threshold). If a test needs a quick pass, it must simulate 2 of 3 agreeing auditors.
 3. **Aegis is a safety system.** Tests for biological oaths must always verify BMI floor and velocity cap enforcement. Skipping Aegis checks in tests is a blocking code review finding.
 4. **Recovery contracts are sensitive.** Tests involving no-contact targets must verify guardrails (max 30 days, max 3 targets, cooldown enforcement).
 5. **The linguistic cloaker is testable.** Verify that user-facing strings use the approved vocabulary (vault, not bet; oath, not wager) in all test assertions.
