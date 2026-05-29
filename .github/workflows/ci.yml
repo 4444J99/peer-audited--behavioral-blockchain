@@ -196,7 +196,7 @@ jobs:
       run: cd src/web && npm run build
 
     - name: Run E2E Tests (${{ matrix.browser }})
-      run: npx playwright test --project=${{ matrix.browser }}
+      run: npx playwright test --config=.config/playwright/playwright.config.ts --project=${{ matrix.browser }}
       env:
         CI: true
 

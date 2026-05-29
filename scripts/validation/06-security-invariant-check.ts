@@ -144,7 +144,12 @@ function runSecurityInvariantCheck() {
 
   console.log(`Scanned ${filesScanned} files across ${SCAN_DIRS.length} build directories + source guards.`);
 
-  if (missingScanDirs.length > 0) {
+  // All build dirs missing = "not built in this context" (e.g. PR-stage beta
+  // readiness, which never builds) — that is not-applicable, not a violation,
+  // and is handled as a clean skip (exit 2) below. Only a PARTIAL build (some
+  // output present, some missing) is a real anomaly worth failing on here.
+  const allBuildDirsMissing = missingScanDirs.length === SCAN_DIRS.length;
+  if (missingScanDirs.length > 0 && !allBuildDirsMissing) {
     errors.push({
       file: 'validation',
       label: `MISSING_SCAN_DIRS (${missingScanDirs.join(', ')})`,
@@ -189,6 +194,18 @@ function runSecurityInvariantCheck() {
       console.error(`  🚨 ${v.label} in ${v.file}:${v.line}`);
     }
     process.exit(1);
+  }
+
+  // No violations. If there was simply no build output to scan (no build in
+  // this context), exit 2 = "skipped / not verified" so suite wrappers like
+  // scripts/smoke/beta-readiness.sh treat it as a clean skip rather than a red.
+  // A post-build invocation (the blocking build_and_test_matrix gate) always
+  // has the dirs present, so it still exits 0 and enforces the scan on shipped
+  // output — security coverage there is unchanged.
+  if (allBuildDirsMissing) {
+    const rel = SCAN_DIRS.map((d) => d.replace(`${REPO_ROOT}/`, '')).join(', ');
+    console.log(`\n⏭️  GATE 06 SKIPPED: no build output present to scan (${rel}). Run after a build to enforce.`);
+    process.exit(2);
   }
 
   console.log('\n✅ GATE 06 PASSED: No dev tokens or debug backdoors found in production output.');
