@@ -1,3 +1,14 @@
+---
+superseded_by: ../planning/planning--roadmap--alpha-to-omega--definitive--2026-03-04.md
+current_role: superseded draft — not the canonical roadmap
+---
+
+> **⚠️ Superseded draft.** This is the **v3.0 draft** roadmap (added 2026-02-27),
+> historically misfiled under `architecture/`. The canonical roadmap is the
+> [Definitive Alpha→Omega Roadmap](../planning/planning--roadmap--alpha-to-omega--definitive--2026-03-04.md)
+> (2026-03-04 baseline) in `docs/planning/`. Retained for reference; dedup tracked in
+> [#594](https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/594).
+
 # Styx: There and Back Again - The Alpha-to-Omega Plan (v3.0)
 
 ## 0. Phase Zero: The Manifesto (The Foundation)
