@@ -93,7 +93,7 @@ npm run format                          # Prettier: **/*.{ts,tsx,md}
 ### CI Pipeline Order (`.github/workflows/ci.yml`)
 
 1. `npm ci` + `npm audit --audit-level=high`
-2. `turbo run test -- --coverage --ci`
+2. `turbo run test` — **no** `--coverage --ci`: those are jest-only flags that make the Vitest workspaces (`ask-styx`, `test-harness`) throw `CACError: Unknown option --ci` and break API suite-loading (ci.yml carries an explicit NOTE; coverage gating is a tracked follow-up)
 3. `turbo run build`
 4. `turbo run lint`
 5. Gate 04: redacted build check (no gambling vocabulary in production build)
