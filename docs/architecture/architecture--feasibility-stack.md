@@ -1,3 +1,18 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+generated_by: Perplexity Pro
+generated_on: "2026-02-22"
+current_role: archived research input — not as-built architecture
+---
+
+> **⚠️ Archived AI research input.** This is Perplexity Pro output exploring the
+> same feasibility question as the truth-blockchain reports, **not the as-built
+> design**. For the as-built architecture see the [ADRs](../adr/) and
+> [`architecture--technical-feasibility.md`](architecture--technical-feasibility.md).
+
 <img src="https://r2cdn.perplexity.ai/pplx-full-logo-primary-dark%402x.png" style="height:64px;margin-right:32px"/>
 
 # Pillar 5: Technical Feasibility \& Architecture

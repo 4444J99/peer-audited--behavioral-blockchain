@@ -1,3 +1,21 @@
+---
+generated: true
+type: research
+provenance: ai-synthesis
+authoritative: false
+generated_by: Gemini (inferred)
+generated_on: "2026-02-22"
+current_role: archived research input — not as-built architecture
+superseded_by: architecture--truth-blockchain-v2.md
+---
+
+> **⚠️ Archived AI research input — superseded.** This is an AI-generated
+> feasibility study, **not the as-built design**. Its content is near-identical
+> to [`architecture--truth-blockchain-v2.md`](architecture--truth-blockchain-v2.md)
+> (zero vocabulary-diff; v2 is the fuller rendering). For the as-built
+> architecture see the [ADRs](../adr/) and
+> [`architecture--technical-feasibility.md`](architecture--technical-feasibility.md).
+
 # **Technical Feasibility and Architecture Report: Building a Cryptographically Secure, Financially Staked Habit Validation Platform**
 
 ## **Executive Summary**
