@@ -16,21 +16,26 @@ Styx employs a four-tier testing strategy designed to catch regressions across f
 
 ### 1.1 Unit Tests (Jest + ts-jest)
 
-Unit tests run in every workspace of the Turborepo monorepo. Each package maintains its own Jest configuration inheriting from a root `jest.config.base.ts`.
+Unit tests run in the workspaces of the Turborepo monorepo. Most use Jest + ts-jest; `ask-styx` and `test-harness` use **Vitest**. Each workspace owns its test config.
 
-| Workspace | Config | Naming Convention | Current Count |
-|-----------|--------|-------------------|---------------|
-| `apps/api` | `jest.config.ts` | `*.spec.ts` | ~280 |
-| `apps/web` | `jest.config.ts` | `*.test.ts` | ~90 |
-| `apps/mobile` | `jest.config.ts` | `*.test.ts` | ~40 |
-| `packages/shared` | `jest.config.ts` | `*.spec.ts` | ~89 |
+| Workspace | Runner | Naming Convention |
+|-----------|--------|-------------------|
+| `src/api` | Jest (`src/api/jest.config.cjs`) | `*.spec.ts` |
+| `src/web` | Jest | `*.test.ts` / `*.test.tsx` |
+| `src/mobile` | Jest | `*.spec.ts` |
+| `src/shared` | Jest | `*.spec.ts` |
+| `src/desktop` | Jest | `*.spec.ts` |
+| `src/ask-styx` | **Vitest** (`vitest run`) | `*.test.ts` |
+| `src/test-harness` | **Vitest** | `*.test.ts` |
+
+(`src/pitch` has no tests. Workspace globs: `src/*` and `packages/*`; `packages/` is currently empty.)
 
 **Naming conventions:**
 - `*.spec.ts` for API service/module tests and shared library tests (NestJS convention)
 - `*.test.ts` for web and mobile component/hook tests (React convention)
 - Test files co-locate next to source: `contracts.service.ts` pairs with `contracts.service.spec.ts`
 
-**Coverage thresholds** (enforced in CI):
+**API coverage thresholds** (configured in `src/api/jest.config.cjs`):
 
 ```
 lines: 70%
@@ -39,7 +44,7 @@ functions: 60%
 statements: 70%
 ```
 
-These thresholds are configured per-workspace in each `jest.config.ts` and enforced by the `ci.yml` GitHub Actions workflow. A single workspace dropping below threshold fails the entire pipeline.
+**Coverage-threshold gating is not currently enforced in CI.** `ci.yml` runs `turbo run test` without `--coverage --ci` (those flags break the Vitest workspaces and the API suite-loading — see `docs/audit/2026-05-26-index-propagation-and-vacuum-log.md`), so the numbers above are targets, not a hard gate. Re-introducing coverage gating is a tracked follow-up.
 
 ### 1.2 Integration Tests
 
@@ -58,7 +63,7 @@ Key integration test suites:
 
 ### 1.3 End-to-End Tests (Playwright)
 
-Playwright tests cover critical user journeys across four browser targets:
+Playwright defines four browser projects in `.config/playwright/playwright.config.ts`; the CI `e2e` matrix runs **chromium** and **firefox** (webkit and mobile-chrome are available for local runs):
 
 | Target | Config Key | Viewport |
 |--------|-----------|----------|
@@ -77,24 +82,25 @@ Playwright tests cover critical user journeys across four browser targets:
 7. Fury auditor workbench -- accept assignment, review proof, cast verdict
 8. Integrity score changes after contract completion/failure
 
-E2E tests run in CI on the `deploy.yml` workflow against the staging environment. Local runs use `npx playwright test` with `--project=chromium` for speed.
+E2E runs in CI via the `e2e` job in `ci.yml` (chromium + firefox) — it builds `src/web` and serves it on `:3001` before running the suite. Local runs use `npm run test:e2e` (which passes `--config=.config/playwright/playwright.config.ts`); add `--project=chromium` to limit to one browser.
 
 ### 1.4 Validation Gates
 
-Eight custom validation gates run as part of CI. Each gate is a standalone script in `scripts/gates/` that returns exit code 0 (pass) or 1 (fail).
+Nine validation scripts live in `scripts/validation/`, each returning exit code 0 (pass), 1 (fail), or 2 (skip / not-applicable in this context). Gates **04–07** run in the main CI job (`build_and_test_matrix`). The beta-readiness suite (`scripts/smoke/beta-readiness.sh`) additionally runs **01** and **05** (and re-runs 04/06/07); gates **02, 03, 08, and 09** are standalone checks not currently wired into CI.
 
-| Gate | ID | Purpose |
-|------|----|---------|
-| Phantom Money | `01-phantom-money` | Verifies double-entry ledger balance invariant: sum of all debits equals sum of all credits. Catches off-by-one errors in escrow settlement. |
-| Orphan Contracts | `02-orphan-contracts` | Ensures every contract has a valid user, a funded vault entry, and at least one scheduled verification window. |
-| Fury Quorum | `03-fury-quorum` | Validates that audit consensus requires 3-of-5 agreement and that no single auditor can unilaterally pass/fail a contract. |
-| Aegis Floor | `04-aegis-floor` | Confirms BMI floor (18.5) enforcement in biological oath creation. Rejects contracts that could incentivize dangerous weight loss. |
-| Velocity Cap | `05-velocity-cap` | Validates the 2% weekly loss velocity cap is enforced on all biological oaths. |
-| Escrow Integrity | `06-escrow-integrity` | Cross-references Stripe FBO balance against internal ledger totals. Flags any discrepancy > $0.01. |
-| Recovery Guardrails | `07-recovery-guardrails` | Verifies recovery contracts enforce max 30-day duration, max 3 no-contact targets, and mandatory cooldown periods. |
-| Fury Crucible | `08-fury-crucible` | Stress test for the auditor matching algorithm: ensures no auditor is assigned to audit their own contract, no geographic/social-graph conflicts, and round-robin fairness within 10% deviation. |
+| Gate | Script | Purpose |
+|------|--------|---------|
+| Phantom Money | `01-phantom-money-check.ts` | Verifies the double-entry ledger prevents unbalanced entries (debits = credits). |
+| Simulator Spoof | `02-simulator-spoof-check.ts` | Ensures hardware oracles reject manually-injected / simulated sensor data. |
+| Full Loop | `03-the-full-loop.ts` | End-to-end contract-lifecycle integration check. |
+| Redacted Build | `04-redacted-build-check.sh` | No gambling/Stygian terminology in the production build (paired with `scripts/gatekeeper-scan.sh`). |
+| Behavioral Physics | `05-behavioral-physics-check.ts` | Core behavioral constants match spec (needs `CI_GATE05_API_URL` for the live check; skips cleanly otherwise). |
+| Security Invariant | `06-security-invariant-check.ts` | No hardcoded secrets or debug backdoors in compiled output (skips when no build output is present). |
+| Claim Drift | `07-claim-drift-check.js` | File paths referenced in `docs/planning/implementation-status.md` still exist (`npm run validate:claims`). |
+| Fury Crucible | `08-fury-crucible-simulation.ts` | Fury auditor-matching simulation: no self-audit, conflict avoidance, round-robin fairness. |
+| Realm Sync | `09-realm-sync-check.ts` | Dual-source-of-truth: the `REALM_REGISTRY` TS constant and the `realms` DB table agree on IDs and stream-prefix mappings. |
 
-Gates run sequentially after unit and integration tests pass. A gate failure blocks deployment.
+Gates 04–07 run after unit/integration tests in CI; a required-gate failure fails the `build_and_test` check.
 
 ## 2. Turbo Pipeline Dependencies
 
@@ -129,31 +135,30 @@ The `turbo.json` pipeline configuration:
 
 ## 3. Smoke and Readiness Scripts
 
-Located in `scripts/`:
+Located in `scripts/smoke/`:
 
 | Script | Purpose | When Used |
 |--------|---------|-----------|
-| `beta-readiness.sh` | Runs all 8 gates + coverage check + Playwright smoke suite. Outputs a pass/fail report with gate-by-gate status. | Before any beta promotion. |
-| `check-endpoints.sh` | Hits all public API endpoints with health/readiness probes. Verifies 200 responses, correct content-types, and CORS headers. | Post-deploy verification. |
-| `smoke-stripe.sh` | Creates a test customer, initiates a $1 charge, verifies webhook receipt, refunds. End-to-end Stripe FBO smoke test. | After Stripe config changes. |
-| `smoke-fury.sh` | Creates a contract, submits mock proof, triggers Fury assignment, verifies audit flow completes. | After Fury algorithm changes. |
-| `seed-test-db.sh` | Populates test database with fixture data: 10 users, 5 active contracts, 3 Fury auditors, sample ledger entries. | Local development setup. |
+| `beta-readiness.sh` | Comprehensive beta-readiness suite (`npm run beta:readiness`): runs the local validation gates + remote-target probes, emits `artifacts/beta-readiness-summary.json`. | Before any beta promotion. |
+| `beta-deploy-preflight.sh` | Pre-deploy gate (`npm run beta:deploy-preflight`). | Immediately before a beta deploy. |
+| `beta-smoke.sh` / `staging-smoke.sh` | Environment-specific post-deploy smoke runs. | After a beta / staging deploy. |
+| `check-endpoints.sh` | Hits public API endpoints with health/readiness probes (status, content-type, CORS). | Post-deploy verification. |
+| `check-api-ready.sh` / `check-api-release.sh` / `check-web.sh` | Individual API-readiness, release-metadata, and web-availability checks. | Targeted post-deploy checks. |
+| `vanguard-ignition.sh` | Vanguard deployment ignition. | Vanguard rollout. |
 
 ## 4. CI Integration
 
 The `ci.yml` GitHub Actions workflow orchestrates the full test pipeline:
 
 ```
-1. Checkout + install (pnpm)
-2. Typecheck (tsc --noEmit across all workspaces)
-3. Lint (ESLint across all workspaces)
-4. Build @styx/shared
-5. Unit tests (all workspaces, --coverage)
-6. Coverage threshold check
-7. Integration tests (docker-compose.test.yml up)
-8. Validation gates (01 through 08, sequential)
-9. Playwright E2E (4 browsers)
-10. Gate summary artifact upload
+1. Checkout + install (npm ci, Node 20)
+2. Security audit (advisory, --audit-level=high)
+3. Test (turbo run test, all workspaces)
+4. Build (turbo run build)
+5. Lint (turbo run lint)
+6. Validation Gates 04–07 (redacted-build, behavioral-physics, security-invariant, claim-drift)
+7. beta_readiness suite (advisory) + terraform_validate (advisory)
+8. Playwright E2E — chromium + firefox (matrix)
 ```
 
 Additional CI workflows:
@@ -163,18 +168,20 @@ Additional CI workflows:
 
 ## 5. Test Data Management
 
-**Fixtures** live in `packages/shared/test/fixtures/`:
+> **Note:** this section describes the *intended* shared test-data layer under `src/shared/`. The `src/shared/test/` directory is not yet present in the tree — treat the files below as target design, not current state.
+
+**Fixtures** (target: `src/shared/test/fixtures/`):
 - `contracts.fixture.ts` -- sample contracts across all 7 oath categories
 - `users.fixture.ts` -- users at different integrity score tiers
 - `ledger.fixture.ts` -- balanced double-entry transaction sets
 - `fury.fixture.ts` -- auditor profiles with varying reputation scores
 
-**Factory functions** in `packages/shared/test/factories/`:
+**Factory functions** (target: `src/shared/test/factories/`):
 - `createContract()` -- generates a valid contract with randomized but legal parameters
 - `createUser()` -- generates a user with configurable integrity score
 - `createAudit()` -- generates a Fury audit with configurable verdict distribution
 
-**Database seeding** for integration tests uses Prisma's `$transaction` API to ensure atomic setup/teardown.
+**Database seeding** for integration tests uses raw SQL transactions against the `pg` pool (the project uses node-postgres + `src/api/database/schema.sql`, not an ORM) for atomic setup/teardown.
 
 ## 6. Known Test Gaps
 
