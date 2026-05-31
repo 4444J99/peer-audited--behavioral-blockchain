@@ -1,29 +1,43 @@
-import { Controller, Post, Get, Param, Body, UseGuards, Patch, Query, ForbiddenException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
-import { Pool } from 'pg';
-import { AuthGuard } from '../../../guards/auth.guard';
-import { RoleGuard, Roles } from '../../common/guards/role.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { ModerationService } from '../../../services/security/moderation.service';
-import { HoneypotService } from '../../../services/intelligence/honeypot.service';
-import { ContractsService } from '../contracts/contracts.service';
-import { DisputeService } from '../../../services/escrow/dispute.service';
-import { R2StorageService } from '../../../services/storage/r2.service';
-import { AnomalyService } from '../../../services/anomaly/anomaly.service';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { IdentityVerificationService } from '../compliance/identity-verification.service';
-import { IdentityVerificationMode } from '../compliance/identity-provider.service';
-import { BanUserDto, ResolveContractDto } from './dto';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  UseGuards,
+  Patch,
+  Query,
+  ForbiddenException,
+} from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { Throttle } from "@nestjs/throttler";
+import { Pool } from "pg";
+import { AuthGuard } from "../../../guards/auth.guard";
+import { RoleGuard, Roles } from "../../common/guards/role.guard";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { ModerationService } from "../../../services/security/moderation.service";
+import { CrisisDetectionService } from "../../../services/security/crisis-detection.service";
+import { CrisisInterventionService } from "../../../services/security/crisis-intervention.service";
+import { HoneypotService } from "../../../services/intelligence/honeypot.service";
+import { ContractsService } from "../contracts/contracts.service";
+import { DisputeService } from "../../../services/escrow/dispute.service";
+import { R2StorageService } from "../../../services/storage/r2.service";
+import { AnomalyService } from "../../../services/anomaly/anomaly.service";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { IdentityVerificationService } from "../compliance/identity-verification.service";
+import { IdentityVerificationMode } from "../compliance/identity-provider.service";
+import { BanUserDto, CrisisEscalateDto, ResolveContractDto } from "./dto";
 
-@ApiTags('Admin')
+@ApiTags("Admin")
 @ApiBearerAuth()
-@Controller('admin')
+@Controller("admin")
 @UseGuards(AuthGuard, RoleGuard)
-@Roles('ADMIN')
+@Roles("ADMIN")
 export class AdminController {
   constructor(
     private readonly moderation: ModerationService,
+    private readonly crisisDetection: CrisisDetectionService,
+    private readonly crisisIntervention: CrisisInterventionService,
     private readonly honeypot: HoneypotService,
     private readonly contractsService: ContractsService,
     private readonly disputeService: DisputeService,
@@ -34,41 +48,89 @@ export class AdminController {
     private readonly pool: Pool,
   ) {}
 
+  // --- Crisis Intervention ---
+
+  @Post("crisis/escalate")
+  @ApiOperation({ summary: "Manually trigger crisis intervention for a user" })
+  async escalateCrisis(
+    @Body() body: CrisisEscalateDto,
+    @CurrentUser() admin: { id: string },
+  ) {
+    const detection = this.crisisDetection.analyzeContent(body.trigger);
+    const storedSeverity =
+      detection.severity !== "NONE" ? detection.severity : "HIGH";
+    const detectionOnly = detection.severity !== "NONE" ? detection : undefined;
+    await this.truthLog.appendEvent("ADMIN_CRISIS_ESCALATED", {
+      adminId: admin.id,
+      targetUserId: body.userId,
+      severity: storedSeverity,
+      trigger: body.trigger,
+    });
+    return this.crisisIntervention.reportCrisis(
+      body.userId,
+      body.trigger,
+      detectionOnly,
+    );
+  }
+
+  @Get("crisis/events")
+  @ApiOperation({ summary: "List recent crisis intervention events" })
+  async getCrisisEvents(@Query("limit") limit?: string) {
+    const parsedLimit = Number(limit || 25);
+    const safeLimit = Number.isFinite(parsedLimit)
+      ? Math.max(1, Math.min(100, parsedLimit))
+      : 25;
+    const result = await this.pool.query(
+      `SELECT id, user_id, severity, trigger, matched_keywords, escalated, created_at
+       FROM crisis_events
+       ORDER BY created_at DESC
+       LIMIT $1`,
+      [safeLimit],
+    );
+    return { events: result.rows };
+  }
+
   // --- Integrity ---
 
-  @Get('integrity/chain')
-  @ApiOperation({ summary: 'Verify event_log hash chain integrity' })
+  @Get("integrity/chain")
+  @ApiOperation({ summary: "Verify event_log hash chain integrity" })
   async verifyChain() {
     return this.truthLog.verifyChain();
   }
 
   // --- Honeypot ---
 
-  @Post('honeypot')
-  @ApiOperation({ summary: 'Inject a honeypot proof to QA reviewer accuracy' })
+  @Post("honeypot")
+  @ApiOperation({ summary: "Inject a honeypot proof to QA reviewer accuracy" })
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   async injectHoneypot() {
     await this.honeypot.injectHoneypot();
-    return { status: 'honeypot_injected' };
+    return { status: "honeypot_injected" };
   }
 
   // --- Moderation ---
 
-  @Post('ban/:userId')
-  @ApiOperation({ summary: 'Ban a user for policy violations' })
+  @Post("ban/:userId")
+  @ApiOperation({ summary: "Ban a user for policy violations" })
   async banUser(
-    @Param('userId') targetUserId: string,
+    @Param("userId") targetUserId: string,
     @CurrentUser() user: { id: string },
     @Body() body: BanUserDto,
   ) {
     // AU11: an admin cannot ban (and thereby lock out) themselves — a guard against
     // accidental or coerced self-targeting of privileged moderation actions.
     if (targetUserId === user.id) {
-      throw new ForbiddenException('Admins cannot perform this moderation action on their own account');
+      throw new ForbiddenException(
+        "Admins cannot perform this moderation action on their own account",
+      );
     }
-    const result = await this.moderation.banUser(user.id, targetUserId, body.reason);
+    const result = await this.moderation.banUser(
+      user.id,
+      targetUserId,
+      body.reason,
+    );
     // AU11: persist a tamper-evident audit entry so the privileged action is traceable.
-    await this.truthLog.appendEvent('ADMIN_USER_BANNED', {
+    await this.truthLog.appendEvent("ADMIN_USER_BANNED", {
       adminId: user.id,
       targetUserId,
       reason: body.reason,
@@ -78,34 +140,39 @@ export class AdminController {
 
   // --- Contracts ---
 
-  @Post('resolve/:contractId')
-  @ApiOperation({ summary: 'Manually resolve a contract as completed or failed' })
+  @Post("resolve/:contractId")
+  @ApiOperation({
+    summary: "Manually resolve a contract as completed or failed",
+  })
   async resolveContract(
-    @Param('contractId') contractId: string,
+    @Param("contractId") contractId: string,
     @CurrentUser() admin: { id: string },
     @Body() body: ResolveContractDto,
   ) {
     await this.contractsService.resolveContract(contractId, body.outcome);
     // AU11: record the admin override of a money-bearing contract resolution.
-    await this.truthLog.appendEvent('ADMIN_CONTRACT_RESOLVED', {
+    await this.truthLog.appendEvent("ADMIN_CONTRACT_RESOLVED", {
       adminId: admin.id,
       contractId,
       outcome: body.outcome,
     });
-    return { status: 'resolved', contractId, outcome: body.outcome };
+    return { status: "resolved", contractId, outcome: body.outcome };
   }
 
   // --- Disputes (The Judge's Gavel) ---
 
-  @Get('disputes')
-  @ApiOperation({ summary: 'Get queue of disputes pending judge review' })
+  @Get("disputes")
+  @ApiOperation({ summary: "Get queue of disputes pending judge review" })
   async getDisputes() {
     return this.disputeService.getDisputeQueue();
   }
 
-  @Get('disputes/:id')
-  @ApiOperation({ summary: 'Get full dispute detail with Fury vote history and signed media URL' })
-  async getDisputeDetail(@Param('id') disputeId: string) {
+  @Get("disputes/:id")
+  @ApiOperation({
+    summary:
+      "Get full dispute detail with Fury vote history and signed media URL",
+  })
+  async getDisputeDetail(@Param("id") disputeId: string) {
     const detail = await this.disputeService.getDisputeDetail(disputeId);
 
     // Generate signed view URL for the judge
@@ -121,27 +188,44 @@ export class AdminController {
     return { ...detail, viewUrl };
   }
 
-  @Post('disputes/:id/resolve')
-  @ApiOperation({ summary: 'Resolve a dispute with a judge verdict (UPHELD, OVERTURNED, ESCALATED)' })
+  @Post("disputes/:id/resolve")
+  @ApiOperation({
+    summary:
+      "Resolve a dispute with a judge verdict (UPHELD, OVERTURNED, ESCALATED)",
+  })
   async resolveDispute(
-    @Param('id') disputeId: string,
+    @Param("id") disputeId: string,
     @CurrentUser() user: { id: string },
-    @Body() body: { outcome: 'UPHELD' | 'OVERTURNED' | 'ESCALATED'; judgeNotes: string },
+    @Body()
+    body: {
+      outcome: "UPHELD" | "OVERTURNED" | "ESCALATED";
+      judgeNotes: string;
+    },
   ) {
-    return this.disputeService.resolveDispute(disputeId, user.id, body.outcome, body.judgeNotes);
+    return this.disputeService.resolveDispute(
+      disputeId,
+      user.id,
+      body.outcome,
+      body.judgeNotes,
+    );
   }
 
-  @Get('disputes/:id/audit-trail')
-  @ApiOperation({ summary: 'Get the full audit trail (timeline + ledger) for a dispute' })
-  async getAuditTrail(@Param('id') disputeId: string) {
+  @Get("disputes/:id/audit-trail")
+  @ApiOperation({
+    summary: "Get the full audit trail (timeline + ledger) for a dispute",
+  })
+  async getAuditTrail(@Param("id") disputeId: string) {
     return this.disputeService.getAuditTrail(disputeId);
   }
 
   // --- User Inspection ---
 
-  @Get('users/:id')
-  @ApiOperation({ summary: 'Get full user profile with contract, proof, and assignment history' })
-  async getUserProfile(@Param('id') userId: string) {
+  @Get("users/:id")
+  @ApiOperation({
+    summary:
+      "Get full user profile with contract, proof, and assignment history",
+  })
+  async getUserProfile(@Param("id") userId: string) {
     const [user, contracts, proofs, assignments] = await Promise.all([
       this.pool.query(
         `SELECT id, email, role, status, integrity_score, created_at FROM users WHERE id = $1`,
@@ -167,7 +251,7 @@ export class AdminController {
       ),
     ]);
 
-    if (user.rows.length === 0) return { error: 'User not found' };
+    if (user.rows.length === 0) return { error: "User not found" };
 
     return {
       user: user.rows[0],
@@ -177,16 +261,20 @@ export class AdminController {
     };
   }
 
-  @Patch('users/:id/integrity')
-  @ApiOperation({ summary: 'Manually adjust a user integrity score (admin override)' })
+  @Patch("users/:id/integrity")
+  @ApiOperation({
+    summary: "Manually adjust a user integrity score (admin override)",
+  })
   async adjustIntegrity(
-    @Param('id') userId: string,
+    @Param("id") userId: string,
     @CurrentUser() admin: { id: string },
     @Body() body: { delta: number; reason: string },
   ) {
     // AU11: an admin cannot adjust their own integrity score (self-dealing guard).
     if (userId === admin.id) {
-      throw new ForbiddenException('Admins cannot adjust their own integrity score');
+      throw new ForbiddenException(
+        "Admins cannot adjust their own integrity score",
+      );
     }
 
     const updateResult = await this.pool.query(
@@ -199,7 +287,7 @@ export class AdminController {
 
     // AU11: persist the privileged adjustment (attacker-controllable delta + reason)
     // to the tamper-evident TruthLog so manual score overrides are auditable.
-    await this.truthLog.appendEvent('ADMIN_INTEGRITY_ADJUSTED', {
+    await this.truthLog.appendEvent("ADMIN_INTEGRITY_ADJUSTED", {
       adminId: admin.id,
       targetUserId: userId,
       delta: body.delta,
@@ -207,27 +295,44 @@ export class AdminController {
       newScore: updateResult.rows[0]?.integrity_score ?? null,
     });
 
-    return { status: 'integrity_adjusted', userId, delta: body.delta, reason: body.reason };
+    return {
+      status: "integrity_adjusted",
+      userId,
+      delta: body.delta,
+      reason: body.reason,
+    };
   }
 
-  @Post('users/:id/compliance/identity/mock-complete')
-  @ApiOperation({ summary: 'Admin override: complete identity verification in mock/provider-test mode' })
+  @Post("users/:id/compliance/identity/mock-complete")
+  @ApiOperation({
+    summary:
+      "Admin override: complete identity verification in mock/provider-test mode",
+  })
   async completeIdentityVerificationForUser(
-    @Param('id') userId: string,
-    @Body() body: { mode?: IdentityVerificationMode; status?: 'VERIFIED' | 'FAILED' | 'REJECTED' },
+    @Param("id") userId: string,
+    @Body()
+    body: {
+      mode?: IdentityVerificationMode;
+      status?: "VERIFIED" | "FAILED" | "REJECTED";
+    },
   ) {
     return this.identityVerification.completeMockVerification({
       userId,
-      mode: body.mode || 'KYC_AND_AGE',
-      status: body.status || 'VERIFIED',
+      mode: body.mode || "KYC_AND_AGE",
+      status: body.status || "VERIFIED",
     });
   }
 
-  @Get('reconciliation')
-  @ApiOperation({ summary: 'Get reconciliation visibility for contract/payment inconsistencies and dispute fee side effects' })
-  async getReconciliationVisibility(@Query('limit') limit?: string) {
+  @Get("reconciliation")
+  @ApiOperation({
+    summary:
+      "Get reconciliation visibility for contract/payment inconsistencies and dispute fee side effects",
+  })
+  async getReconciliationVisibility(@Query("limit") limit?: string) {
     const parsedLimit = Number(limit || 25);
-    const safeLimit = Number.isFinite(parsedLimit) ? Math.max(1, Math.min(100, parsedLimit)) : 25;
+    const safeLimit = Number.isFinite(parsedLimit)
+      ? Math.max(1, Math.min(100, parsedLimit))
+      : 25;
 
     const [contracts, disputeFeeSideEffects, summary] = await Promise.all([
       this.pool.query(
@@ -269,8 +374,10 @@ export class AdminController {
 
   // --- Anomaly Detection ---
 
-  @Post('anomaly/scan')
-  @ApiOperation({ summary: 'Scan all stored proof hashes for pHash collisions' })
+  @Post("anomaly/scan")
+  @ApiOperation({
+    summary: "Scan all stored proof hashes for pHash collisions",
+  })
   async scanHashCollisions() {
     const proofs = await this.pool.query(
       `SELECT p.id, p.user_id, p.contract_id, p.media_uri, p.submitted_at
@@ -289,9 +396,21 @@ export class AdminController {
     // (residual) True near-duplicate detection happens at upload time in PHashService
     // against the actual frame bytes; this URI-level scan cannot reproduce it.
     const collisions: Array<{
-      matchType: 'EXACT_URI';
-      origin: { id: string; pHash: string; user: string; contractId: string; timestamp: string };
-      duplicate: { id: string; pHash: string; user: string; contractId: string; timestamp: string };
+      matchType: "EXACT_URI";
+      origin: {
+        id: string;
+        pHash: string;
+        user: string;
+        contractId: string;
+        timestamp: string;
+      };
+      duplicate: {
+        id: string;
+        pHash: string;
+        user: string;
+        contractId: string;
+        timestamp: string;
+      };
     }> = [];
 
     const hashed = proofs.rows.map((row: any) => ({
@@ -301,11 +420,14 @@ export class AdminController {
 
     for (let i = 0; i < hashed.length; i++) {
       for (let j = i + 1; j < hashed.length; j++) {
-        const distance = this.anomaly.hammingDistance(hashed[i].pHash, hashed[j].pHash);
+        const distance = this.anomaly.hammingDistance(
+          hashed[i].pHash,
+          hashed[j].pHash,
+        );
         // distance === 0 means the media URIs are byte-for-byte identical.
         if (distance === 0) {
           collisions.push({
-            matchType: 'EXACT_URI',
+            matchType: "EXACT_URI",
             origin: {
               id: hashed[i].id,
               pHash: hashed[i].pHash,
@@ -330,15 +452,25 @@ export class AdminController {
 
   // --- Platform Stats ---
 
-  @Get('stats')
-  @ApiOperation({ summary: 'Get platform-wide statistics' })
+  @Get("stats")
+  @ApiOperation({ summary: "Get platform-wide statistics" })
   async getStats() {
     const [users, contracts, proofs, integrity, disputes] = await Promise.all([
-      this.pool.query(`SELECT COUNT(*) as count FROM users WHERE status = 'ACTIVE'`),
-      this.pool.query(`SELECT COUNT(*) as count FROM contracts WHERE status = 'ACTIVE'`),
-      this.pool.query(`SELECT COUNT(*) as count FROM proofs WHERE status IN ('PENDING_REVIEW', 'IN_REVIEW', 'DISPUTED')`),
-      this.pool.query(`SELECT COALESCE(AVG(integrity_score), 0) as avg FROM users WHERE status = 'ACTIVE'`),
-      this.pool.query(`SELECT COUNT(*) as count FROM disputes WHERE appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'IN_REVIEW')`),
+      this.pool.query(
+        `SELECT COUNT(*) as count FROM users WHERE status = 'ACTIVE'`,
+      ),
+      this.pool.query(
+        `SELECT COUNT(*) as count FROM contracts WHERE status = 'ACTIVE'`,
+      ),
+      this.pool.query(
+        `SELECT COUNT(*) as count FROM proofs WHERE status IN ('PENDING_REVIEW', 'IN_REVIEW', 'DISPUTED')`,
+      ),
+      this.pool.query(
+        `SELECT COALESCE(AVG(integrity_score), 0) as avg FROM users WHERE status = 'ACTIVE'`,
+      ),
+      this.pool.query(
+        `SELECT COUNT(*) as count FROM disputes WHERE appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'IN_REVIEW')`,
+      ),
     ]);
     return {
       totalUsers: Number(users.rows[0].count),

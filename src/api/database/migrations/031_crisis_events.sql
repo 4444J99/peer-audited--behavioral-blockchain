@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS crisis_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES accounts(id),
+    user_id UUID NOT NULL REFERENCES users(id),
     trigger TEXT NOT NULL,
     severity VARCHAR(50) NOT NULL DEFAULT 'HIGH',
     matched_keywords JSONB,
