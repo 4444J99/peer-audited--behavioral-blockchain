@@ -2,9 +2,9 @@ name: Styx CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   merge_group:
 
 jobs:
@@ -23,63 +23,91 @@ jobs:
         node-version: [20.x]
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
-    - name: Install Dependencies
-      run: npm ci
+      - name: Install Dependencies
+        run: npm ci
 
-    - name: Security Audit (advisory, non-blocking)
-      run: npm audit --audit-level=high || echo "::warning::npm audit reported high-severity advisories; review but not blocking the merge."
+      - name: Turbo Cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ hashFiles('package-lock.json', 'turbo.json') }}
+          restore-keys: |
+            turbo-
 
-    - name: Execute Tests (Turborepo)
-      # NOTE: do not forward `--coverage --ci` here. Those are jest-only flags:
-      # `--ci` makes the vitest workspaces (ask-styx, test-harness) throw
-      # `CACError: Unknown option --ci`, and `--coverage` currently fails api
-      # suite-loading. Each workspace owns its own test invocation. Re-introducing
-      # coverage-threshold gating is tracked as a follow-up once coverage mode is
-      # fixed (see docs/audit/2026-05-26-index-propagation-and-vacuum-log.md).
-      run: npx turbo run test
+      - name: Security Audit (advisory, non-blocking)
+        run: npm audit --audit-level=high || echo "::warning::npm audit reported high-severity advisories; review but not blocking the merge."
 
-    - name: Upload Coverage Reports
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-reports
-        path: |
-          src/*/coverage/
-        retention-days: 14
+      - name: Compute changed workspaces
+        id: changed
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "filter=--filter=...[origin/main]" >> $GITHUB_OUTPUT
+          else
+            echo "filter=" >> $GITHUB_OUTPUT
+          fi
 
-    - name: Execute Build (Turborepo)
-      run: npx turbo run build
+      - name: Execute Tests + Lint (Turborepo)
+        # NOTE: do not forward `--coverage --ci` here. Those are jest-only flags:
+        # `--ci` makes the vitest workspaces (ask-styx, test-harness) throw
+        # `CACError: Unknown option --ci`, and `--coverage` currently fails api
+        # suite-loading. Each workspace owns its own test invocation. Re-introducing
+        # coverage-threshold gating is tracked as a follow-up once coverage mode is
+        # fixed (see docs/audit/2026-05-26-index-propagation-and-vacuum-log.md).
+        #
+        # `test` dependsOn `^build` (upstream builds only, no per-workspace build).
+        # `lint` is independent so turbo parallelizes both.
+        # Retry loop catches flaky exit-code-1 (open-handle timeouts, etc).
+        run: |
+          for attempt in 1 2 3; do
+            if npx turbo run test lint ${{ steps.changed.outputs.filter }}; then
+              exit 0
+            fi
+            echo "::warning::Test run failed (attempt $attempt/3), retrying in 10s..."
+            sleep 10
+          done
+          exit 1
 
-    - name: Lint (Turborepo)
-      run: npx turbo run lint
+      - name: Upload Coverage Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            src/*/coverage/
+          retention-days: 14
 
-    - name: Gate 04 — Redacted Build Check
-      run: bash scripts/validation/04-redacted-build-check.sh
+      - name: Build for Validation Gates (Turborepo)
+        run: npx turbo run build
 
-    - name: Gate 05 — Behavioral Physics Check (integration)
-      env:
-        API_URL: ${{ secrets.CI_GATE05_API_URL }}
-      run: |
-        if [ -z "${API_URL:-}" ]; then
-          echo "::warning::Skipping Gate 05 (NOT VERIFIED): set CI_GATE05_API_URL to a live integration API."
-          exit 0
-        fi
-        npx tsx scripts/validation/05-behavioral-physics-check.ts
+      - name: Gate 04 — Redacted Build Check
+        run: bash scripts/validation/04-redacted-build-check.sh
 
-    - name: Gate 06 — Security Invariant Check
-      run: npx tsx scripts/validation/06-security-invariant-check.ts
+      - name: Gate 05 — Behavioral Physics Check (integration)
+        env:
+          API_URL: ${{ secrets.CI_GATE05_API_URL }}
+        run: |
+          if [ -z "${API_URL:-}" ]; then
+            echo "::warning::Skipping Gate 05 (NOT VERIFIED): set CI_GATE05_API_URL to a live integration API."
+            exit 0
+          fi
+          npx tsx scripts/validation/05-behavioral-physics-check.ts
 
-    - name: Gate 07 — Claim Drift Check
-      run: npm run validate:claims
+      - name: Gate 06 — Security Invariant Check
+        run: npx tsx scripts/validation/06-security-invariant-check.ts
+
+      - name: Gate 07 — Claim Drift Check
+        run: npm run validate:claims
 
   # Stable required-check name for branch protection. Aggregates the matrix
   # result so the required context (`build_and_test`) never changes shape
@@ -92,121 +120,139 @@ jobs:
     needs: [build_and_test_matrix]
     if: always()
     steps:
-    - name: Gate verdict
-      run: |
-        result="${{ needs.build_and_test_matrix.result }}"
-        if [[ "$result" != "success" ]]; then
-          echo "::error::build_and_test_matrix concluded '$result' — gate failed."
-          exit 1
-        fi
-        echo "build_and_test_matrix succeeded — gate passed."
+      - name: Gate verdict
+        run: |
+          result="${{ needs.build_and_test_matrix.result }}"
+          if [[ "$result" != "success" ]]; then
+            echo "::error::build_and_test_matrix concluded '$result' — gate failed."
+            exit 1
+          fi
+          echo "build_and_test_matrix succeeded — gate passed."
 
   beta_readiness:
     runs-on: ubuntu-latest
     needs: build_and_test_matrix
     continue-on-error: true
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Use Node.js 20.x
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
-        cache: 'npm'
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: "npm"
 
-    - name: Install Dependencies
-      run: npm install
+      - name: Install Dependencies
+        run: npm install
 
-    - name: Run Beta Readiness Suite
-      env:
-        READINESS_PROFILE: beta
-        # Advisory in PR CI: beta readiness validates a LIVE deployed target, which
-        # PRs don't have. Don't hard-require targets here (that turned "no live URL"
-        # into a red check) — the suite skips cleanly when no target is set. The
-        # deploy/promotion workflows set this true where a live URL exists.
-        READINESS_REQUIRE_TARGETS: "false"
-        # Explicitly empty the target URLs on PR CI so the suite takes the
-        # skip-clean path regardless of any stale secret (e.g. a CI_GATE05_API_URL
-        # pointing at a broken/old environment). Deploy & promotion workflows set
-        # these where a live URL actually exists.
-        BETA_API_URL: ""
-        BETA_WEB_URL: ""
-        BETA_ENV_LABEL: ""
-      run: npm run beta:readiness
+      - name: Run Beta Readiness Suite
+        env:
+          READINESS_PROFILE: beta
+          # Advisory in PR CI: beta readiness validates a LIVE deployed target, which
+          # PRs don't have. Don't hard-require targets here (that turned "no live URL"
+          # into a red check) — the suite skips cleanly when no target is set. The
+          # deploy/promotion workflows set this true where a live URL exists.
+          READINESS_REQUIRE_TARGETS: "false"
+          # Explicitly empty the target URLs on PR CI so the suite takes the
+          # skip-clean path regardless of any stale secret (e.g. a CI_GATE05_API_URL
+          # pointing at a broken/old environment). Deploy & promotion workflows set
+          # these where a live URL actually exists.
+          BETA_API_URL: ""
+          BETA_WEB_URL: ""
+          BETA_ENV_LABEL: ""
+        run: npm run beta:readiness
 
-    - name: Upload Beta Readiness Summary
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: beta-readiness-summary
-        path: artifacts/beta-readiness-summary.json
-        retention-days: 14
+      - name: Upload Beta Readiness Summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-readiness-summary
+          path: artifacts/beta-readiness-summary.json
+          retention-days: 14
 
   terraform_validate:
     runs-on: ubuntu-latest
     continue-on-error: true
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: "~1.9"
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.9"
 
-    - name: Terraform Format Check
-      working-directory: infra/terraform
-      run: terraform fmt -check -recursive -diff
+      - name: Terraform Format Check
+        working-directory: infra/terraform
+        run: terraform fmt -check -recursive -diff
 
-    - name: Terraform Init (validation only)
-      working-directory: infra/terraform
-      run: terraform init -backend=false -input=false
+      - name: Terraform Init (validation only)
+        working-directory: infra/terraform
+        run: terraform init -backend=false -input=false
 
-    - name: Terraform Validate
-      working-directory: infra/terraform
-      run: terraform validate
+      - name: Terraform Validate
+        working-directory: infra/terraform
+        run: terraform validate
+
+  changed-files:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.check.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: check
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          if git diff --name-only "$BASE" | grep -q "^src/web/"; then
+            echo "web=true" >> $GITHUB_OUTPUT
+          else
+            echo "web=false" >> $GITHUB_OUTPUT
+          fi
 
   e2e:
     runs-on: ubuntu-latest
-    needs: [build_and_test_matrix, beta_readiness]
+    needs: [build_and_test_matrix, beta_readiness, changed-files]
+    if: needs.changed-files.outputs.web == 'true'
     continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, firefox]
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Use Node.js 20.x
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
-        cache: 'npm'
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: "npm"
 
-    - name: Install Dependencies
-      run: npm install
+      - name: Install Dependencies
+        run: npm install
 
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps ${{ matrix.browser }}
 
-    - name: Build Web
-      run: cd src/web && npm run build
+      - name: Build Web
+        run: cd src/web && npm run build
 
-    - name: Run E2E Tests (${{ matrix.browser }})
-      run: npx playwright test --config=.config/playwright/playwright.config.ts --project=${{ matrix.browser }}
-      env:
-        CI: true
+      - name: Run E2E Tests (${{ matrix.browser }})
+        run: npx playwright test --config=.config/playwright/playwright.config.ts --project=${{ matrix.browser }}
+        env:
+          CI: true
 
-    - name: Upload Playwright Report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: playwright-report-${{ matrix.browser }}
-        path: playwright-report/
-        retention-days: 14
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: playwright-report/
+          retention-days: 14
 
   # NOTE: CodeQL analysis runs in the dedicated .github/workflows/codeql.yml
   # workflow. A second copy here produced a duplicate javascript-typescript

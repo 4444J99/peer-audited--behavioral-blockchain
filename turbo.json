@@ -12,12 +12,15 @@
       "outputs": ["../../docs/**"]
     },
     "lint": {},
+    "@styx/web#lint": {
+      "dependsOn": ["build"]
+    },
     "dev": {
       "cache": false,
       "persistent": true
     },
     "test": {
-      "dependsOn": ["build"]
+      "dependsOn": ["^build"]
     },
     "build:pitch": {
       "dependsOn": []
