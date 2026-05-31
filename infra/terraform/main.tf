@@ -31,7 +31,7 @@ terraform {
     }
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 4.0"
+      version = "~> 5.0"
     }
   }
 }
@@ -155,17 +155,65 @@ resource "render_web_service" "styx_web" {
 resource "cloudflare_r2_bucket" "styx_proofs" {
   account_id = var.cloudflare_account_id
   name       = "styx-proofs"
-  location   = "WNAM"
+  # v5 location codes are lowercase ("wnam" = Western North America); v4 used "WNAM".
+  location = "wnam"
 }
 
 # R2 object-lifecycle policies — auto-expire proof media 30 days after final
-# review, honeypots after 7 (storage hygiene + GDPR data-minimization) — are NOT
-# managed here: the pinned Cloudflare provider (~> 4.0) has no
-# `cloudflare_r2_bucket_lifecycle` resource (it landed in provider v5). Until the
-# provider is upgraded, apply these rules out-of-band via the Cloudflare dashboard,
-# API, or `wrangler r2 bucket lifecycle`. Restoring Terraform management requires a
-# deliberate v4 -> v5 provider migration (also rewrites the cloudflare_ruleset WAF
-# resources) and is tracked as a separate change.
+# review, honeypots after 7 (storage hygiene + GDPR data-minimization).
+#
+# Provider v5 (regenerated from Cloudflare's OpenAPI schema) replaces v4's
+# day-based blocks (delete_objects_after { days = N }) with age *transitions*
+# whose conditions are expressed in SECONDS — the schema states "after an object
+# reaches an age in seconds." Day intent is therefore encoded as days * 86400:
+#   30d = 2592000s · 7d = 604800s · 1d = 86400s
+resource "cloudflare_r2_bucket_lifecycle" "proofs_cleanup" {
+  account_id  = var.cloudflare_account_id
+  bucket_name = cloudflare_r2_bucket.styx_proofs.name
+
+  rules = [
+    {
+      id      = "auto-expire-proofs"
+      enabled = true
+
+      conditions = {
+        prefix = "proofs/"
+      }
+
+      # Abort incomplete multipart uploads after 1 day (86400s).
+      abort_multipart_uploads_transition = {
+        condition = {
+          type    = "Age"
+          max_age = 86400
+        }
+      }
+
+      # Delete proof objects 30 days (2592000s) after upload.
+      delete_objects_transition = {
+        condition = {
+          type    = "Age"
+          max_age = 2592000
+        }
+      }
+    },
+    {
+      id      = "auto-expire-honeypots"
+      enabled = true
+
+      conditions = {
+        prefix = "honeypots/"
+      }
+
+      # Delete honeypot objects 7 days (604800s) after upload.
+      delete_objects_transition = {
+        condition = {
+          type    = "Age"
+          max_age = 604800
+        }
+      }
+    },
+  ]
+}
 
 # --- Outputs ---
 
