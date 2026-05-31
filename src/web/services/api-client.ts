@@ -1,19 +1,29 @@
-import type { MobileBootstrapResponse, ReleaseInfoResponse } from '@styx/shared/index';
+import type {
+  MobileBootstrapResponse,
+  ReleaseInfoResponse,
+} from "@styx/shared/index";
 
 // In the browser, route through the Next.js /api rewrite proxy (same-origin)
 // to avoid cross-origin cookie/CORS issues.  On the server (SSR), call the
 // API directly since there's no browser cookie sandbox to worry about.
 const API_BASE =
-  typeof window !== 'undefined'
-    ? '/api'
-    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000');
-const WEB_APP_VERSION = process.env.NEXT_PUBLIC_STYX_WEB_VERSION || process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0-dev';
-const WEB_APP_BUILD = process.env.NEXT_PUBLIC_STYX_WEB_BUILD || process.env.NEXT_PUBLIC_BUILD_SHA || 'dev';
+  typeof window !== "undefined"
+    ? "/api"
+    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const WEB_APP_VERSION =
+  process.env.NEXT_PUBLIC_STYX_WEB_VERSION ||
+  process.env.NEXT_PUBLIC_APP_VERSION ||
+  "0.0.0-dev";
+const WEB_APP_BUILD =
+  process.env.NEXT_PUBLIC_STYX_WEB_BUILD ||
+  process.env.NEXT_PUBLIC_BUILD_SHA ||
+  "dev";
 
-let currentToken = '';
-let currentCsrfToken = '';
+let currentToken = "";
+let currentCsrfToken = "";
 
-export function setAuthToken(token: string) { // allow-secret
+export function setAuthToken(token: string) {
+  // allow-secret
   currentToken = token;
 }
 
@@ -30,26 +40,30 @@ export function getCsrfToken(): string {
 }
 
 function readCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  const cookies = document.cookie.split(';');
+  if (typeof document === "undefined") return null;
+  const cookies = document.cookie.split(";");
   for (const cookie of cookies) {
-    const [rawKey, ...rawValue] = cookie.trim().split('=');
+    const [rawKey, ...rawValue] = cookie.trim().split("=");
     if (rawKey === name) {
-      return decodeURIComponent(rawValue.join('='));
+      return decodeURIComponent(rawValue.join("="));
     }
   }
   return null;
 }
 
 function getRequestId(res: Response): string | null {
-  return res.headers?.get?.('x-styx-request-id') || res.headers?.get?.('x-request-id') || null;
+  return (
+    res.headers?.get?.("x-styx-request-id") ||
+    res.headers?.get?.("x-request-id") ||
+    null
+  );
 }
 
 async function parseErrorMessage(res: Response): Promise<string> {
   let message = `API ${res.status}`;
   try {
-    const contentType = res.headers?.get?.('content-type') || '';
-    if (contentType.includes('application/json')) {
+    const contentType = res.headers?.get?.("content-type") || "";
+    if (contentType.includes("application/json")) {
       const payload = await res.json();
       const envelopeMessage =
         payload?.message ||
@@ -57,9 +71,7 @@ async function parseErrorMessage(res: Response): Promise<string> {
         payload?.error_description ||
         payload?.error;
       const errorCode =
-        payload?.error_code ||
-        payload?.code ||
-        payload?.error?.code;
+        payload?.error_code || payload?.code || payload?.error?.code;
       if (envelopeMessage) {
         message = `API ${res.status}: ${String(envelopeMessage)}`;
       }
@@ -73,7 +85,7 @@ async function parseErrorMessage(res: Response): Promise<string> {
       }
     }
   } catch {
-    const text = await res.text().catch(() => '');
+    const text = await res.text().catch(() => "");
     if (text) {
       message = `API ${res.status}: ${text}`;
     }
@@ -89,31 +101,37 @@ async function parseErrorMessage(res: Response): Promise<string> {
 let isRefreshing = false;
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const method = String(options?.method || 'GET').toUpperCase();
-  const needsCsrf = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
-  const csrfToken = currentCsrfToken || readCookie('styx_csrf_token') || '';
+  const method = String(options?.method || "GET").toUpperCase();
+  const needsCsrf =
+    method === "POST" ||
+    method === "PUT" ||
+    method === "PATCH" ||
+    method === "DELETE";
+  const csrfToken = currentCsrfToken || readCookie("styx_csrf_token") || "";
   const mergedHeaders = {
-    'Content-Type': 'application/json',
-    'x-styx-platform': 'web',
-    'x-styx-app-version': WEB_APP_VERSION,
-    'x-styx-build': WEB_APP_BUILD,
+    "Content-Type": "application/json",
+    "x-styx-platform": "web",
+    "x-styx-app-version": WEB_APP_VERSION,
+    "x-styx-build": WEB_APP_BUILD,
     ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
-    ...(needsCsrf && csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+    ...(needsCsrf && csrfToken ? { "x-csrf-token": csrfToken } : {}),
     ...options?.headers,
   };
   let res: Response;
   try {
     res = await fetch(`${API_BASE}${path}`, {
       ...options,
-      credentials: options?.credentials ?? 'include',
+      credentials: options?.credentials ?? "include",
       headers: mergedHeaders,
     });
   } catch {
-    throw new Error('Styx service is temporarily unavailable. Please try again shortly.');
+    throw new Error(
+      "Styx service is temporarily unavailable. Please try again shortly.",
+    );
   }
 
   // Auto-refresh on 401 (except for the refresh endpoint itself)
-  if (res.status === 401 && path !== '/auth/refresh' && !isRefreshing) {
+  if (res.status === 401 && path !== "/auth/refresh" && !isRefreshing) {
     isRefreshing = true;
     try {
       await refreshToken();
@@ -128,8 +146,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!res.ok) throw new Error(await parseErrorMessage(res));
   if (res.status === 204) return undefined as T;
-  const contentType = res.headers?.get?.('content-type') || '';
-  if (contentType.includes('application/json') || contentType === '') {
+  const contentType = res.headers?.get?.("content-type") || "";
+  if (contentType.includes("application/json") || contentType === "") {
     return res.json();
   }
   return (await res.text()) as T;
@@ -137,11 +155,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 async function refreshToken(): Promise<void> {
   const res = await fetch(`${API_BASE}/auth/refresh`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
   });
-  if (!res.ok) throw new Error('Refresh failed');
+  if (!res.ok) throw new Error("Refresh failed");
 }
 
 export interface CreateContractDto {
@@ -162,7 +180,7 @@ export interface SubmitProofDto {
 
 export interface VerdictDto {
   assignmentId: string;
-  verdict: 'PASS' | 'FAIL';
+  verdict: "PASS" | "FAIL";
   confidence?: number;
   flagged?: boolean;
 }
@@ -175,30 +193,43 @@ export interface LeaderboardEntry {
 }
 
 export const api = {
-  health: () => request<{ status: string }>('/health'),
-  getMobileBootstrap: () => request<MobileBootstrapResponse>('/mobile/bootstrap'),
-  getReleaseInfo: () => request<ReleaseInfoResponse>('/meta/release'),
+  health: () => request<{ status: string }>("/health"),
+  getMobileBootstrap: () =>
+    request<MobileBootstrapResponse>("/mobile/bootstrap"),
+  getReleaseInfo: () => request<ReleaseInfoResponse>("/meta/release"),
 
   // Auth
-  register: (email: string, password: string, opts?: { ageConfirmation?: boolean; termsAccepted?: boolean; dateOfBirth?: string }) => // allow-secret
-    request<{ userId: string; token: string }>('/auth/register', { // allow-secret
-      method: 'POST',
+  register: (
+    email: string,
+    password: string,
+    opts?: {
+      ageConfirmation?: boolean;
+      termsAccepted?: boolean;
+      dateOfBirth?: string;
+    }, // allow-secret
+  ) =>
+    request<{ userId: string; token: string }>("/auth/register", {
+      // allow-secret
+      method: "POST",
       body: JSON.stringify({ email, password, ...opts }),
     }),
 
-  login: (email: string, password: string) => // allow-secret
-    request<{ userId: string; token: string }>('/auth/login', { // allow-secret
-      method: 'POST',
+  login: (
+    email: string,
+    password: string, // allow-secret
+  ) =>
+    request<{ userId: string; token: string }>("/auth/login", {
+      // allow-secret
+      method: "POST",
       body: JSON.stringify({ email, password }),
     }),
 
   logout: () =>
-    request<{ status: string }>('/auth/logout', {
-      method: 'POST',
+    request<{ status: string }>("/auth/logout", {
+      method: "POST",
     }),
 
-  getCsrf: () =>
-    request<{ csrfToken: string }>('/auth/csrf'),
+  getCsrf: () => request<{ csrfToken: string }>("/auth/csrf"),
 
   // Wallet — no more userId query params
   getBalance: () =>
@@ -209,20 +240,39 @@ export const api = {
       allowed_tiers: string[];
       ledger_balance: number;
       status: string;
-    }>('/wallet/balance'),
+    }>("/wallet/balance"),
 
   getHistory: (limit?: number) =>
-    request<{ transactions: Array<{
-      id: string;
-      type: string;
-      amount: number;
-      timestamp: string;
-      description: string;
-    }> }>(`/wallet/history${limit ? `?limit=${limit}` : ''}`),
+    request<{
+      transactions: Array<{
+        id: string;
+        type: string;
+        amount: number;
+        timestamp: string;
+        description: string;
+      }>;
+    }>(`/wallet/history${limit ? `?limit=${limit}` : ""}`),
 
   // Contracts — userId comes from JWT
   getUserContracts: () =>
-    request<Array<{
+    request<
+      Array<{
+        id: string;
+        user_id: string;
+        oath_category: string;
+        verification_method: string;
+        stake_amount: string;
+        status: string;
+        duration_days: number;
+        started_at: string;
+        ends_at: string;
+        created_at: string;
+        proof_count: number;
+      }>
+    >("/contracts"),
+
+  getContract: (id: string) =>
+    request<{
       id: string;
       user_id: string;
       oath_category: string;
@@ -233,123 +283,132 @@ export const api = {
       started_at: string;
       ends_at: string;
       created_at: string;
+      email: string;
+      integrity_score: number;
+      grace_days_used?: number;
       proof_count: number;
-    }>>('/contracts'),
-
-  getContract: (id: string) => request<{
-    id: string;
-    user_id: string;
-    oath_category: string;
-    verification_method: string;
-    stake_amount: string;
-    status: string;
-    duration_days: number;
-    started_at: string;
-    ends_at: string;
-    created_at: string;
-    email: string;
-    integrity_score: number;
-    grace_days_used?: number;
-    proof_count: number;
-    proofs: Array<{
-      id: string;
-      timestamp: string;
-      status: string;
-      media_url: string | null;
-    }>;
-    grace_days_max: number;
-  }>(`/contracts/${id}`),
+      proofs: Array<{
+        id: string;
+        timestamp: string;
+        status: string;
+        media_url: string | null;
+      }>;
+      grace_days_max: number;
+    }>(`/contracts/${id}`),
 
   createContract: (dto: CreateContractDto | Record<string, unknown>) =>
-    request<{ contractId: string; paymentIntentId: string }>('/contracts', {
-      method: 'POST',
+    request<{ contractId: string; paymentIntentId: string }>("/contracts", {
+      method: "POST",
       body: JSON.stringify(dto),
     }),
 
   submitProof: (contractId: string, dto: SubmitProofDto) =>
-    request<{ proofId: string; jobId: string; rejected?: boolean; reason?: string }>(`/contracts/${contractId}/proof`, {
-      method: 'POST',
+    request<{
+      proofId: string;
+      jobId: string;
+      rejected?: boolean;
+      reason?: string;
+    }>(`/contracts/${contractId}/proof`, {
+      method: "POST",
       body: JSON.stringify(dto),
     }),
 
   disputeContract: (contractId: string) =>
-    request<{ appealStatus: string; paymentIntentId: string }>(`/contracts/${contractId}/dispute`, {
-      method: 'POST',
-    }),
+    request<{ appealStatus: string; paymentIntentId: string }>(
+      `/contracts/${contractId}/dispute`,
+      {
+        method: "POST",
+      },
+    ),
 
   // Fury — userId comes from JWT
   getFuryAssignments: () =>
-    request<{ assignments: Array<{
-      assignmentId: string;
-      proofId: string;
-      assignedAt: string;
-      contractId: string;
-      submittedAt: string;
-      contentType: string | null;
-      description: string | null;
-      viewUrl: string | null;
-    }> }>('/fury/queue'),
+    request<{
+      assignments: Array<{
+        assignmentId: string;
+        proofId: string;
+        assignedAt: string;
+        contractId: string;
+        submittedAt: string;
+        contentType: string | null;
+        description: string | null;
+        viewUrl: string | null;
+      }>;
+    }>("/fury/queue"),
 
   submitVerdict: (dto: VerdictDto) =>
-    request<{ status: string; honeypotReveal?: { wasHoneypot: boolean; wasCorrect: boolean } }>('/fury/verdict', {
-      method: 'POST',
+    request<{
+      status: string;
+      honeypotReveal?: { wasHoneypot: boolean; wasCorrect: boolean };
+    }>("/fury/verdict", {
+      method: "POST",
       body: JSON.stringify(dto),
     }),
 
   // Users
-  getMe: () => request<{
-    id: string;
-    email: string;
-    integrity_score: number;
-    role: string;
-    status: string;
-    created_at: string;
-    compliance?: {
-      kyc_status: string;
-      age_verification_status: string;
-      identity_provider: string | null;
-      identity_verification_id: string | null;
-      identity_verified_at: string | null;
-      is_kyc_verified: boolean;
-      is_age_verified: boolean;
-    };
-  }>('/users/me'),
+  getMe: () =>
+    request<{
+      id: string;
+      email: string;
+      integrity_score: number;
+      role: string;
+      status: string;
+      created_at: string;
+      compliance?: {
+        kyc_status: string;
+        age_verification_status: string;
+        identity_provider: string | null;
+        identity_verification_id: string | null;
+        identity_verified_at: string | null;
+        is_kyc_verified: boolean;
+        is_age_verified: boolean;
+      };
+    }>("/users/me"),
 
   getLeaderboard: (limit?: number, period?: string) => {
     const params = new URLSearchParams();
-    if (limit) params.set('limit', String(limit));
-    if (period) params.set('period', period);
+    if (limit) params.set("limit", String(limit));
+    if (period) params.set("period", period);
     const qs = params.toString();
-    return request<LeaderboardEntry[]>(`/users/leaderboard${qs ? `?${qs}` : ''}`);
+    return request<LeaderboardEntry[]>(
+      `/users/leaderboard${qs ? `?${qs}` : ""}`,
+    );
   },
 
   // Notifications
   getNotifications: () =>
-    request<Array<{
-      id: string;
-      type: string;
-      title: string;
-      body: string | null;
-      read: boolean;
-      created_at: string;
-    }>>('/notifications'),
+    request<
+      Array<{
+        id: string;
+        type: string;
+        title: string;
+        body: string | null;
+        read: boolean;
+        created_at: string;
+      }>
+    >("/notifications"),
 
   getUnreadCount: () =>
-    request<{ count: number }>('/notifications/unread-count'),
+    request<{ count: number }>("/notifications/unread-count"),
 
   requestNotificationStreamTicket: () =>
-    request<{ ticket: string; expiresInSeconds: number }>('/notifications/stream-ticket', {
-      method: 'POST',
-    }),
+    request<{ ticket: string; expiresInSeconds: number }>(
+      "/notifications/stream-ticket",
+      {
+        method: "POST",
+      },
+    ),
 
   issueNotificationStreamCookie: () =>
-    request<{ expiresInSeconds: number }>('/notifications/stream-cookie', {
-      method: 'POST',
-      credentials: 'include',
+    request<{ expiresInSeconds: number }>("/notifications/stream-cookie", {
+      method: "POST",
+      credentials: "include",
     }),
 
   markNotificationRead: (id: string) =>
-    request<{ status: string }>(`/notifications/${id}/read`, { method: 'POST' }),
+    request<{ status: string }>(`/notifications/${id}/read`, {
+      method: "POST",
+    }),
 
   // B2B Enterprise
   getEnterpriseMetrics: (enterpriseId: string) =>
@@ -375,38 +434,45 @@ export const api = {
 
   // Billing — ticket purchase
   purchaseTicket: (contractId: string) =>
-    request<{ paymentIntentId: string; amount: number }>(`/contracts/${contractId}/ticket`, {
-      method: 'POST',
-    }),
+    request<{ paymentIntentId: string; amount: number }>(
+      `/contracts/${contractId}/ticket`,
+      {
+        method: "POST",
+      },
+    ),
 
   // Grace day
   useGraceDay: (contractId: string) =>
     request<{ newDeadline: string }>(`/contracts/${contractId}/grace-day`, {
-      method: 'POST',
+      method: "POST",
     }),
 
   // Proofs for a contract
   getContractProofs: (contractId: string) =>
-    request<Array<{
-      id: string;
-      status: string;
-      media_uri: string;
-      submitted_at: string;
-    }>>(`/contracts/${contractId}/proofs`),
+    request<
+      Array<{
+        id: string;
+        status: string;
+        media_uri: string;
+        submitted_at: string;
+      }>
+    >(`/contracts/${contractId}/proofs`),
 
   // Admin
   injectHoneypot: () =>
-    request<{ status: string; jobId: string }>('/admin/honeypot', { method: 'POST' }),
+    request<{ status: string; jobId: string }>("/admin/honeypot", {
+      method: "POST",
+    }),
 
   banUser: (userId: string, reason: string) =>
-    request('/admin/ban/' + userId, {
-      method: 'POST',
+    request("/admin/ban/" + userId, {
+      method: "POST",
       body: JSON.stringify({ reason }),
     }),
 
-  adminResolve: (contractId: string, outcome: 'COMPLETED' | 'FAILED') =>
-    request('/admin/resolve/' + contractId, {
-      method: 'POST',
+  adminResolve: (contractId: string, outcome: "COMPLETED" | "FAILED") =>
+    request("/admin/resolve/" + contractId, {
+      method: "POST",
       body: JSON.stringify({ outcome }),
     }),
 
@@ -416,56 +482,90 @@ export const api = {
       activeContracts: number;
       pendingProofs: number;
       avgIntegrity: number;
-    }>('/admin/stats'),
+    }>("/admin/stats"),
+
+  escalateCrisis: (userId: string, trigger: string) =>
+    request<{
+      message: string;
+      resources: Array<{ name: string; contact: string; instructions: string }>;
+      actionTaken: string;
+      escalated: boolean;
+    }>("/crisis/escalate", {
+      method: "POST",
+      body: JSON.stringify({ userId, trigger }),
+    }),
+
+  getCrisisEvents: (limit?: number) =>
+    request<{
+      events: Array<{
+        id: string;
+        user_id: string;
+        severity: string;
+        trigger: string;
+        matched_keywords: string;
+        escalated: boolean;
+        created_at: string;
+      }>;
+    }>(`/admin/crisis/events${limit ? `?limit=${limit}` : ""}`),
 
   getDisputes: () =>
-    request<Array<{
-      id: string;
-      contract_id: string;
-      user_id: string;
-      media_uri: string;
-      status: string;
-      submitted_at: string;
-      email: string;
-      oath_category: string;
-    }>>('/admin/disputes'),
+    request<
+      Array<{
+        id: string;
+        contract_id: string;
+        user_id: string;
+        media_uri: string;
+        status: string;
+        submitted_at: string;
+        email: string;
+        oath_category: string;
+      }>
+    >("/admin/disputes"),
 
   // User profile / history
   getIntegrityHistory: () =>
-    request<Array<{
-      event_type: string;
-      payload: Record<string, unknown>;
-      created_at: string;
-    }>>('/users/me/history'),
+    request<
+      Array<{
+        event_type: string;
+        payload: Record<string, unknown>;
+        created_at: string;
+      }>
+    >("/users/me/history"),
 
   // Settings
-  changePassword: (currentPassword: string, newPassword: string) => // allow-secret
-    request<{ status: string }>('/users/me/password', {
-      method: 'PATCH',
+  changePassword: (
+    currentPassword: string,
+    newPassword: string, // allow-secret
+  ) =>
+    request<{ status: string }>("/users/me/password", {
+      method: "PATCH",
       body: JSON.stringify({ currentPassword, newPassword }),
     }),
 
-  updateSettings: (settings: { emailNotifications?: boolean; pushNotifications?: boolean }) =>
-    request<{ status: string }>('/users/me/settings', {
-      method: 'PATCH',
+  updateSettings: (settings: {
+    emailNotifications?: boolean;
+    pushNotifications?: boolean;
+  }) =>
+    request<{ status: string }>("/users/me/settings", {
+      method: "PATCH",
       body: JSON.stringify(settings),
     }),
 
   deleteAccount: () =>
-    request<{ status: string }>('/users/me', {
-      method: 'DELETE',
+    request<{ status: string }>("/users/me", {
+      method: "DELETE",
     }),
 
   // AI
   grillMe: (slideContent: string) =>
-    request<{ questions: string[] }>('/ai/grill-me', {
-      method: 'POST',
+    request<{ questions: string[] }>("/ai/grill-me", {
+      method: "POST",
       body: JSON.stringify({ slideContent }),
     }),
 
   eli5: (text: string) =>
-    request<{ explanation: string }>('/ai/eli5', {
-      method: 'POST',
+    request<{ explanation: string }>("/ai/eli5", {
+      method: "POST",
       body: JSON.stringify({ text }),
     }),
 
@@ -481,17 +581,20 @@ export const api = {
       netEarnings: number;
       honeypotsCaught: number;
       honeypotsFailedOn: number;
-    }>('/fury/stats'),
+    }>("/fury/stats"),
 
   requestFuryStreamTicket: () =>
-    request<{ ticket: string; expiresInSeconds: number }>('/fury/stream-ticket', {
-      method: 'POST',
-    }),
+    request<{ ticket: string; expiresInSeconds: number }>(
+      "/fury/stream-ticket",
+      {
+        method: "POST",
+      },
+    ),
 
   issueFuryStreamCookie: () =>
-    request<{ expiresInSeconds: number }>('/fury/stream-cookie', {
-      method: 'POST',
-      credentials: 'include',
+    request<{ expiresInSeconds: number }>("/fury/stream-cookie", {
+      method: "POST",
+      credentials: "include",
     }),
 
   // Attestations (Recovery stream)
@@ -508,15 +611,17 @@ export const api = {
 
   submitAttestation: (contractId: string) =>
     request<{ status: string }>(`/contracts/${contractId}/attestation`, {
-      method: 'POST',
+      method: "POST",
     }),
 
   // Public feed (no auth)
   getPublicFeed: (limit?: number) =>
-    request<{ events: Array<{
-      id: string;
-      type: string;
-      message: string;
-      timestamp: string;
-    }> }>(`/feed${limit ? `?limit=${limit}` : ''}`),
+    request<{
+      events: Array<{
+        id: string;
+        type: string;
+        message: string;
+        timestamp: string;
+      }>;
+    }>(`/feed${limit ? `?limit=${limit}` : ""}`),
 };

@@ -20,6 +20,7 @@ import { ComplianceModule } from './modules/compliance/compliance.module';
 import { BetaModule } from './modules/beta/beta.module';
 import { OraclesModule } from './modules/oracles/oracles.module';
 import { SocialModule } from './modules/social/social.module';
+import { CrisisModule } from './modules/crisis/crisis.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { RealmsModule } from './modules/realms/realms.module';
 
@@ -54,6 +55,7 @@ import { RealmsModule } from './modules/realms/realms.module';
     FeedModule,
     DashboardModule,
     SocialModule,
+    CrisisModule,
     RealmsModule,
   ],
   providers: [
