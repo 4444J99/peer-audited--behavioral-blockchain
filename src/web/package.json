@@ -9,7 +9,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "lucide-react": "^0.284.0",
+    "lucide-react": "^0.468.0",
     "next": "16.2.6",
     "omggif": "^1.0.10",
     "p5": "2.2.1",

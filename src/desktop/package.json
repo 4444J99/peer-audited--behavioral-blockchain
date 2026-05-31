@@ -13,7 +13,7 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "lucide-react": "^0.284.0"
+    "lucide-react": "^0.468.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0-beta",
