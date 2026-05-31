@@ -82,6 +82,12 @@ variable "environment" {
   default = "production"
 }
 
+variable "repo_url" {
+  type        = string
+  description = "Git repository URL Render builds the Docker services from."
+  default     = "https://github.com/a-organvm/peer-audited--behavioral-blockchain"
+}
+
 # --- Providers ---
 
 provider "render" {
@@ -95,23 +101,28 @@ provider "cloudflare" {
 # --- Render: API Service ---
 
 resource "render_web_service" "styx_api" {
-  name           = "styx-api"
-  region         = "oregon"
-  plan           = "starter"
-  runtime        = "docker"
-  docker_path    = "./src/api/Dockerfile"
-  docker_context = "."
-  branch         = "main"
+  name   = "styx-api"
+  region = "oregon"
+  plan   = "starter"
+
+  runtime_source = {
+    docker = {
+      repo_url        = var.repo_url
+      branch          = "main"
+      dockerfile_path = "./src/api/Dockerfile"
+      context         = "."
+    }
+  }
 
   env_vars = {
-    NODE_ENV          = var.environment
-    DATABASE_URL      = var.database_url
-    REDIS_URL         = var.redis_url
-    STRIPE_SECRET_KEY = var.stripe_secret_key
-    JWT_SECRET        = var.jwt_secret
-    ANONYMIZE_SALT    = var.anonymize_salt
-    R2_ENDPOINT       = "https://${var.cloudflare_account_id}.r2.cloudflarestorage.com"
-    R2_BUCKET         = cloudflare_r2_bucket.styx_proofs.name
+    NODE_ENV          = { value = var.environment }
+    DATABASE_URL      = { value = var.database_url }
+    REDIS_URL         = { value = var.redis_url }
+    STRIPE_SECRET_KEY = { value = var.stripe_secret_key }
+    JWT_SECRET        = { value = var.jwt_secret }
+    ANONYMIZE_SALT    = { value = var.anonymize_salt }
+    R2_ENDPOINT       = { value = "https://${var.cloudflare_account_id}.r2.cloudflarestorage.com" }
+    R2_BUCKET         = { value = cloudflare_r2_bucket.styx_proofs.name }
   }
 
   health_check_path = "/health"
@@ -120,17 +131,22 @@ resource "render_web_service" "styx_api" {
 # --- Render: Web Dashboard ---
 
 resource "render_web_service" "styx_web" {
-  name           = "styx-web"
-  region         = "oregon"
-  plan           = "starter"
-  runtime        = "docker"
-  docker_path    = "./src/web/Dockerfile"
-  docker_context = "."
-  branch         = "main"
+  name   = "styx-web"
+  region = "oregon"
+  plan   = "starter"
+
+  runtime_source = {
+    docker = {
+      repo_url        = var.repo_url
+      branch          = "main"
+      dockerfile_path = "./src/web/Dockerfile"
+      context         = "."
+    }
+  }
 
   env_vars = {
-    NODE_ENV            = var.environment
-    NEXT_PUBLIC_API_URL = "https://${render_web_service.styx_api.name}.onrender.com"
+    NODE_ENV            = { value = var.environment }
+    NEXT_PUBLIC_API_URL = { value = "https://${render_web_service.styx_api.name}.onrender.com" }
   }
 }
 
@@ -142,42 +158,14 @@ resource "cloudflare_r2_bucket" "styx_proofs" {
   location   = "WNAM"
 }
 
-# R2 Lifecycle: auto-delete proof media 30 days after final review
-# Prevents unbounded storage growth and maintains GDPR compliance.
-resource "cloudflare_r2_bucket_lifecycle" "proofs_cleanup" {
-  account_id = var.cloudflare_account_id
-  bucket     = cloudflare_r2_bucket.styx_proofs.name
-
-  rules {
-    id      = "auto-expire-proofs"
-    enabled = true
-
-    conditions {
-      prefix = "proofs/"
-    }
-
-    abort_multipart_uploads_after {
-      days = 1
-    }
-
-    delete_objects_after {
-      days = 30
-    }
-  }
-
-  rules {
-    id      = "auto-expire-honeypots"
-    enabled = true
-
-    conditions {
-      prefix = "honeypots/"
-    }
-
-    delete_objects_after {
-      days = 7
-    }
-  }
-}
+# R2 object-lifecycle policies — auto-expire proof media 30 days after final
+# review, honeypots after 7 (storage hygiene + GDPR data-minimization) — are NOT
+# managed here: the pinned Cloudflare provider (~> 4.0) has no
+# `cloudflare_r2_bucket_lifecycle` resource (it landed in provider v5). Until the
+# provider is upgraded, apply these rules out-of-band via the Cloudflare dashboard,
+# API, or `wrangler r2 bucket lifecycle`. Restoring Terraform management requires a
+# deliberate v4 -> v5 provider migration (also rewrites the cloudflare_ruleset WAF
+# resources) and is tracked as a separate change.
 
 # --- Outputs ---
 
