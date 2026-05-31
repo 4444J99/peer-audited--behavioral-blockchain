@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 
 export interface CrisisDetectionResult {
   isCrisis: boolean;
-  severity: 'NONE' | 'HIGH' | 'CRITICAL';
+  severity: "NONE" | "HIGH" | "CRITICAL";
   matchedKeywords: string[];
 }
 
@@ -10,14 +10,24 @@ export interface CrisisDetectionResult {
 export class CrisisDetectionService {
   private readonly logger = new Logger(CrisisDetectionService.name);
 
-  // Hardcoded behavioral physics / crisis patterns
+  private readonly SEP = /[\s.,!?;:\-'"…]+/;
+
   private readonly CRITICAL_PATTERNS = [
-    /\b(kill\s+myself|suicide|end\s+it\s+all|want\s+to\s+die|take\s+my\s+own\s+life)\b/i,
+    new RegExp(
+      `\\b(kill${this.SEP.source}myself|suicide|end${this.SEP.source}it${this.SEP.source}all|want${this.SEP.source}to${this.SEP.source}die|(?:take|taking|took)${this.SEP.source}my${this.SEP.source}own${this.SEP.source}life)\\b`,
+      "i",
+    ),
   ];
 
   private readonly HIGH_PATTERNS = [
-    /\b(starve|purge|anorexia|bulimia|cutting\s+myself|self\s*harm)\b/i,
-    /\b(relapse|using\s+again|drunk|high\s+right\s+now|drinking\s+again)\b/i,
+    new RegExp(
+      `\\b(starve|purge|anorexia|bulimia|cutting${this.SEP.source}myself|self${this.SEP.source}harm)\\b`,
+      "i",
+    ),
+    new RegExp(
+      `\\b(relapse|using${this.SEP.source}again|drunk|high${this.SEP.source}right${this.SEP.source}now|drinking${this.SEP.source}again)\\b`,
+      "i",
+    ),
   ];
 
   /**
@@ -26,34 +36,36 @@ export class CrisisDetectionService {
    */
   public analyzeContent(content: string): CrisisDetectionResult {
     if (!content) {
-      return { isCrisis: false, severity: 'NONE', matchedKeywords: [] };
+      return { isCrisis: false, severity: "NONE", matchedKeywords: [] };
     }
 
     const matchedKeywords: string[] = [];
-    let severity: 'NONE' | 'HIGH' | 'CRITICAL' = 'NONE';
+    let severity: "NONE" | "HIGH" | "CRITICAL" = "NONE";
 
     for (const pattern of this.CRITICAL_PATTERNS) {
       const match = content.match(pattern);
       if (match) {
-        severity = 'CRITICAL';
+        severity = "CRITICAL";
         matchedKeywords.push(match[0].toLowerCase());
       }
     }
 
-    if (severity === 'NONE') {
+    if (severity === "NONE") {
       for (const pattern of this.HIGH_PATTERNS) {
         const match = content.match(pattern);
         if (match) {
-          severity = 'HIGH';
+          severity = "HIGH";
           matchedKeywords.push(match[0].toLowerCase());
         }
       }
     }
 
-    const isCrisis = severity !== 'NONE';
+    const isCrisis = severity !== "NONE";
 
     if (isCrisis) {
-      this.logger.warn(`Crisis detected in content analysis: Severity ${severity}`);
+      this.logger.warn(
+        `Crisis detected in content analysis: Severity ${severity}`,
+      );
     }
 
     return {
