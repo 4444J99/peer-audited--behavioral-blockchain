@@ -1,6 +1,11 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from "@nestjs/common";
+import { randomBytes } from "crypto";
 
-export type PaymentProcessor = 'STRIPE' | 'HIGH_RISK_COREPAY';
+export type PaymentProcessor = "STRIPE" | "HIGH_RISK_COREPAY";
 
 export interface PaymentIntentOptions {
   amount: number;
@@ -21,14 +26,24 @@ export class PaymentRouterService {
    * Determines the safest payment processor for a given transaction.
    * Prevents Stripe shadow-bans by routing high-contention volume to Corepay/Allied Wallet.
    */
-  determineProcessor(options: PaymentIntentOptions, userTotalDisputes: number): PaymentProcessor {
-    if (options.isHighRisk || userTotalDisputes >= this.DISPUTE_RISK_THRESHOLD) {
-      this.logger.warn(`Routing transaction for user ${options.userId} to HIGH-RISK processor (Disputes: ${userTotalDisputes})`);
-      return 'HIGH_RISK_COREPAY';
+  determineProcessor(
+    options: PaymentIntentOptions,
+    userTotalDisputes: number,
+  ): PaymentProcessor {
+    if (
+      options.isHighRisk ||
+      userTotalDisputes >= this.DISPUTE_RISK_THRESHOLD
+    ) {
+      this.logger.warn(
+        `Routing transaction for user ${options.userId} to HIGH-RISK processor (Disputes: ${userTotalDisputes})`,
+      );
+      return "HIGH_RISK_COREPAY";
     }
 
-    this.logger.log(`Routing transaction for user ${options.userId} to primary processor (STRIPE)`);
-    return 'STRIPE';
+    this.logger.log(
+      `Routing transaction for user ${options.userId} to primary processor (STRIPE)`,
+    );
+    return "STRIPE";
   }
 
   /**
@@ -36,15 +51,21 @@ export class PaymentRouterService {
    * In dev/test, returns mock client secrets. In production, throws until
    * a real processor integration is configured.
    */
-  async createPaymentIntent(options: PaymentIntentOptions, processor: PaymentProcessor): Promise<{ clientSecret: string, processor: PaymentProcessor }> {
-    const isProduction = process.env.NODE_ENV === 'production';
+  async createPaymentIntent(
+    options: PaymentIntentOptions,
+    processor: PaymentProcessor,
+  ): Promise<{ clientSecret: string; processor: PaymentProcessor }> {
+    const isProduction = process.env.NODE_ENV === "production";
     if (isProduction) {
-      throw new ServiceUnavailableException('Payment processor not configured');
+      throw new ServiceUnavailableException("Payment processor not configured");
     }
 
-    if (processor === 'STRIPE') {
+    if (processor === "STRIPE") {
       // Defer to existing StripeFboService in a real implementation
-      return { clientSecret: `pi_stripe_mock_${Date.now()}_secret_${Math.random().toString(36).substring(7)}`, processor };
+      return {
+        clientSecret: `pi_stripe_mock_${Date.now()}_secret_${randomBytes(12).toString("hex")}`,
+        processor,
+      };
     } else {
       // Defer to Corepay SDK in a real implementation
       return { clientSecret: `tok_corepay_mock_${Date.now()}`, processor };

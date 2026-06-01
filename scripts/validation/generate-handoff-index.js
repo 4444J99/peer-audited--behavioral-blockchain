@@ -11,7 +11,9 @@ function parseRepositoryFromPackageJson() {
 
   if (!packageJson.repository) return fallback;
   if (typeof packageJson.repository === "string") {
-    const match = packageJson.repository.match(/github\.com[:/](.+?)(?:\.git)?$/);
+    const match = packageJson.repository.match(
+      /github\.com[:/](.+?)(?:\.git)?$/,
+    );
     return match?.[1] ?? fallback;
   }
 
@@ -28,7 +30,11 @@ function labelName(label) {
 
 function sanitizeTableCell(value) {
   return String(value ?? "")
-    .replace(/\|/g, "\\|")
+    .replace(/\\/g, "\\\\") // Escape backslashes first
+    .replace(/\|/g, "\\|") // Escape pipe to prevent cell injection
+    .replace(/[\[\]()]/g, "\\$&") // Escape markdown link/paren chars
+    .replace(/[<>]/g, "") // Remove angle brackets to prevent HTML injection
+    .replace(/[`~]/g, "") // Remove backticks to prevent code injection
     .replace(/\r?\n+/g, " ")
     .trim();
 }
@@ -73,7 +79,9 @@ async function ghRequest(token, pathname, query = {}) {
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`GitHub API ${response.status} ${response.statusText}: ${text}`);
+    throw new Error(
+      `GitHub API ${response.status} ${response.statusText}: ${text}`,
+    );
   }
 
   return response.json();
@@ -83,7 +91,11 @@ async function paginate(token, pathname, query = {}) {
   const all = [];
   let page = 1;
   while (true) {
-    const rows = await ghRequest(token, pathname, { ...query, page, per_page: 100 });
+    const rows = await ghRequest(token, pathname, {
+      ...query,
+      page,
+      per_page: 100,
+    });
     all.push(...rows);
     if (rows.length < 100) break;
     page += 1;
@@ -97,7 +109,8 @@ async function run() {
     throw new Error("GITHUB_TOKEN is required to generate the handoff index.");
   }
 
-  const ownerRepo = process.env.GITHUB_REPOSITORY || parseRepositoryFromPackageJson();
+  const ownerRepo =
+    process.env.GITHUB_REPOSITORY || parseRepositoryFromPackageJson();
   const [owner, repo] = ownerRepo.split("/");
   if (!owner || !repo) {
     throw new Error(`Unable to resolve owner/repo from "${ownerRepo}".`);
@@ -156,7 +169,9 @@ async function run() {
       .map(labelName)
       .filter((name) => name.startsWith("owner:"))
       .join(", ");
-    const milestone = issue.milestone ? issue.milestone.title.split(" (")[0] : "-";
+    const milestone = issue.milestone
+      ? issue.milestone.title.split(" (")[0]
+      : "-";
     const dueDate = inferDueDate(issue);
     const interferenceType = extractInterferenceType(issue.body, issue.title);
 
