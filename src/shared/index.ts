@@ -6,7 +6,12 @@ export interface BaseStyxResponse {
   message?: string;
 }
 
-export type StyxClientPlatform = 'ios' | 'android' | 'web' | 'desktop' | 'unknown';
+export type StyxClientPlatform =
+  | "ios"
+  | "android"
+  | "web"
+  | "desktop"
+  | "unknown";
 
 // Realm types
 export {
@@ -23,7 +28,7 @@ export {
   getOathCategoriesForRealm,
   getAllRealmIds,
   getAllRealmSlugs,
-} from './libs/realm-registry';
+} from "./libs/realm-registry";
 
 export interface StyxClientBuildMetadata {
   platform: StyxClientPlatform;
@@ -53,7 +58,7 @@ export interface MobileBootstrapResponse {
   mobile: {
     minSupportedVersion: string;
     minSupportedBuild: string;
-    platformPrimary: 'ios' | 'android' | 'web';
+    platformPrimary: "ios" | "android" | "web";
   };
   featureFlags: StyxFeatureFlags;
   labels: {
@@ -68,7 +73,7 @@ export interface MobileBootstrapResponse {
 }
 
 export interface ReleaseInfoResponse {
-  service: 'styx-api';
+  service: "styx-api";
   apiVersion: string;
   environment: {
     label: string;
@@ -79,10 +84,12 @@ export interface ReleaseInfoResponse {
   };
   build: {
     sha: string | null;
-    source: 'env' | 'unknown';
+    source: "env" | "unknown";
     deployedAt: string | null;
   };
   featureFlags: StyxFeatureFlags;
   featureFlagSnapshotHash: string;
   timestamp: string;
 }
+
+export * from "./libs/behavioral-enhancements";

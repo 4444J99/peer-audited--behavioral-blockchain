@@ -1332,9 +1332,7 @@ export class ContractsService {
     );
   }
 
-  async createContract(
-    dto: CreateContractInput,
-  ): Promise<{
+  async createContract(dto: CreateContractInput): Promise<{
     contractId: string;
     paymentIntentId: string;
     bountyLink?: string;
@@ -2644,7 +2642,15 @@ export class ContractsService {
     };
   }
 
-  async submitAttestation(contractId: string, userId: string) {
+  async submitAttestation(
+    contractId: string,
+    userId: string,
+    emotionalTracking?: {
+      urgeLevel?: number;
+      triggers?: string[];
+      copingMechanisms?: string[];
+    },
+  ) {
     const contract = await this.pool.query(
       `SELECT id, user_id, oath_category, status
        FROM contracts WHERE id = $1`,
@@ -2684,9 +2690,15 @@ export class ContractsService {
       }
       // Update the PENDING row to ATTESTED
       await this.pool.query(
-        `UPDATE attestations SET status = 'ATTESTED', attested_at = NOW()
+        `UPDATE attestations SET status = 'ATTESTED', attested_at = NOW(),
+         urge_level = $2, triggers = $3::jsonb, coping_mechanisms = $4::jsonb
          WHERE id = $1`,
-        [row.id],
+        [
+          row.id,
+          emotionalTracking?.urgeLevel ?? null,
+          JSON.stringify(emotionalTracking?.triggers ?? []),
+          JSON.stringify(emotionalTracking?.copingMechanisms ?? []),
+        ],
       );
     } else {
       // Create and immediately attest (scheduler hasn't run yet today).
@@ -2694,11 +2706,17 @@ export class ContractsService {
       // ATTESTED: only overwrite when the existing row is not already a more
       // advanced state (COSIGNED/ATTESTED).
       await this.pool.query(
-        `INSERT INTO attestations (contract_id, user_id, attestation_date, status, attested_at)
-         VALUES ($1, $2, CURRENT_DATE, 'ATTESTED', NOW())
+        `INSERT INTO attestations (contract_id, user_id, attestation_date, status, attested_at, urge_level, triggers, coping_mechanisms)
+         VALUES ($1, $2, CURRENT_DATE, 'ATTESTED', NOW(), $3, $4::jsonb, $5::jsonb)
          ON CONFLICT (contract_id, attestation_date) DO UPDATE SET status = 'ATTESTED', attested_at = NOW()
          WHERE attestations.status NOT IN ('ATTESTED', 'COSIGNED')`,
-        [contractId, userId],
+        [
+          contractId,
+          userId,
+          emotionalTracking?.urgeLevel ?? null,
+          JSON.stringify(emotionalTracking?.triggers ?? []),
+          JSON.stringify(emotionalTracking?.copingMechanisms ?? []),
+        ],
       );
     }
 

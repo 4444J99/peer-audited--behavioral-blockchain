@@ -1,37 +1,43 @@
-import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { LoggerModule } from 'nestjs-pino';
-import { DatabaseModule } from './database/database.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { ContractsModule } from './modules/contracts/contracts.module';
-import { FuryModule } from './modules/fury/fury.module';
-import { WalletModule } from './modules/wallet/wallet.module';
-import { UsersModule } from './modules/users/users.module';
-import { AdminModule } from './modules/admin/admin.module';
-import { HealthModule } from './modules/health/health.module';
-import { B2BModule } from './modules/b2b/b2b.module';
-import { NotificationsModule } from './modules/notifications/notifications.module';
-import { PaymentsModule } from './modules/payments/payments.module';
-import { AiModule } from './modules/ai/ai.module';
-import { ProofsModule } from './modules/proofs/proofs.module';
-import { FeedModule } from './modules/feed/feed.module';
-import { ComplianceModule } from './modules/compliance/compliance.module';
-import { BetaModule } from './modules/beta/beta.module';
-import { OraclesModule } from './modules/oracles/oracles.module';
-import { SocialModule } from './modules/social/social.module';
-import { CrisisModule } from './modules/crisis/crisis.module';
-import { DashboardModule } from './modules/dashboard/dashboard.module';
-import { RealmsModule } from './modules/realms/realms.module';
+import { Module } from "@nestjs/common";
+import { APP_GUARD } from "@nestjs/core";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { LoggerModule } from "nestjs-pino";
+import { DatabaseModule } from "./database/database.module";
+import { AuthModule } from "./modules/auth/auth.module";
+import { ContractsModule } from "./modules/contracts/contracts.module";
+import { FuryModule } from "./modules/fury/fury.module";
+import { WalletModule } from "./modules/wallet/wallet.module";
+import { UsersModule } from "./modules/users/users.module";
+import { AdminModule } from "./modules/admin/admin.module";
+import { HealthModule } from "./modules/health/health.module";
+import { B2BModule } from "./modules/b2b/b2b.module";
+import { NotificationsModule } from "./modules/notifications/notifications.module";
+import { PaymentsModule } from "./modules/payments/payments.module";
+import { AiModule } from "./modules/ai/ai.module";
+import { ProofsModule } from "./modules/proofs/proofs.module";
+import { FeedModule } from "./modules/feed/feed.module";
+import { ComplianceModule } from "./modules/compliance/compliance.module";
+import { BetaModule } from "./modules/beta/beta.module";
+import { OraclesModule } from "./modules/oracles/oracles.module";
+import { SocialModule } from "./modules/social/social.module";
+import { CrisisModule } from "./modules/crisis/crisis.module";
+import { DashboardModule } from "./modules/dashboard/dashboard.module";
+import { RealmsModule } from "./modules/realms/realms.module";
+import { BehavioralModule } from "./modules/behavioral/behavioral.module";
 
 @Module({
   imports: [
     LoggerModule.forRoot({
       pinoHttp: {
         autoLogging: true,
-        level: process.env.LOG_LEVEL || 'info',
+        level: process.env.LOG_LEVEL || "info",
         ...(process.env.PINO_TRANSPORT
-          ? { transport: { target: process.env.PINO_TRANSPORT, options: { colorize: true } } }
+          ? {
+              transport: {
+                target: process.env.PINO_TRANSPORT,
+                options: { colorize: true },
+              },
+            }
           : {}),
       },
     }),
@@ -57,9 +63,8 @@ import { RealmsModule } from './modules/realms/realms.module';
     SocialModule,
     CrisisModule,
     RealmsModule,
+    BehavioralModule,
   ],
-  providers: [
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
-  ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

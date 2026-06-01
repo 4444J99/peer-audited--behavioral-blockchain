@@ -1,42 +1,49 @@
 <!-- ORGANVM:AUTO:START -->
+
 ## Agent Context (auto-generated — do not edit)
 
 This repo participates in the **ORGAN-III (Commerce)** swarm.
 
 ### Active Subscriptions
+
 - Event: `theory.updated` → Action: Review theory changes for product implications
 - Event: `governance.updated` → Action: Check compliance with updated governance rules
 - Event: `community.event_created` → Action: Community event registered for this product
 - Event: `distribution.dispatched` → Action: Announcement distributed via POSSE pipeline
 
 ### Production Responsibilities
+
 - **Produce** `product` for unspecified
 - **Produce** `community_signal` for organvm-vi-koinonia/community-hub
 - **Produce** `distribution_signal` for organvm-vii-kerygma/kerygma-pipeline
 - **Produce** `essay_material` for organvm-v-logos/essay-pipeline
 
 ### External Dependencies
+
 - **Consume** `theory` from [`organvm-i-theoria/styx-behavioral-economics-theory`](../../organvm-i-theoria/styx-behavioral-economics-theory/CLAUDE.md)
 - **Consume** `creative-artifact` from [`organvm-ii-poiesis/styx-behavioral-art`](../../organvm-ii-poiesis/styx-behavioral-art/CLAUDE.md)
 - **Consume** `governance-rules` from [`organvm-iv-taxis/orchestration-start-here`](../../organvm-iv-taxis/orchestration-start-here/CLAUDE.md)
 
 ### Governance Constraints
+
 - Adhere to unidirectional flow: I→II→III
 - Never commit secrets or credentials
 
-*Last synced: 2026-06-01T13:17:56Z*
-<!-- ORGANVM:AUTO:END -->
+_Last synced: 2026-06-01T13:17:56Z_
 
+<!-- ORGANVM:AUTO:END -->
 
 ## Session Review Protocol
 
 At the end of each session that produces or modifies files:
+
 1. Run `organvm session review --latest` to get a session summary
 2. Check for unimplemented plans: `organvm session plans --project .`
 3. Export significant sessions: `organvm session export <id> --slug <slug>`
 4. Run `organvm prompts distill --dry-run` to detect uncovered operational patterns
 
 Transcripts are on-demand (never committed):
+
 - `organvm session transcript <id>` — conversation summary
 - `organvm session transcript <id> --unabridged` — full audit trail
 - `organvm session prompts <id>` — human prompts only
@@ -47,16 +54,16 @@ Transcripts are on-demand (never committed):
 
 Turborepo + npm workspaces. Package scope: `@styx/*`. Root `tsconfig.json` maps `@styx/shared/*` → `src/shared/*`.
 
-| Workspace | Stack | Entry | Notes |
-|-----------|-------|-------|-------|
-| `src/api` | NestJS 11, BullMQ, Stripe, pg | `nest-cli.json` entryFile: `api/src/main` | Double-entry ledger, Fury router, escrow |
-| `src/web` | Next.js 16, React 18, Tailwind | dev on port **3001** | Dashboard, Fury workbench |
-| `src/mobile` | React Native 0.81, Expo 54 | `expo run:ios` / `expo run:android` | Sensor bridge, camera, biometrics |
-| `src/desktop` | Tauri 2, Vite, React | `src-tauri/tauri.conf.json` | "The Judge" admin dashboard |
-| `src/shared` | TypeScript | `dist/index.js` | Constants, types, algorithms — **must build before others** |
-| `src/pitch` | Vite, React, p5.js | interactive pitch deck | build outputs to `docs/` |
-| `src/ask-styx` | Cloudflare Worker (wrangler) | `worker/index.ts` | LLM proxy for Ask Styx UI |
-| `src/test-harness` | Vitest, Commander CLI | `bin/ergon-test` | Validation & simulation suite |
+| Workspace          | Stack                          | Entry                                     | Notes                                                       |
+| ------------------ | ------------------------------ | ----------------------------------------- | ----------------------------------------------------------- |
+| `src/api`          | NestJS 11, BullMQ, Stripe, pg  | `nest-cli.json` entryFile: `api/src/main` | Double-entry ledger, Fury router, escrow                    |
+| `src/web`          | Next.js 16, React 18, Tailwind | dev on port **3001**                      | Dashboard, Fury workbench                                   |
+| `src/mobile`       | React Native 0.81, Expo 54     | `expo run:ios` / `expo run:android`       | Sensor bridge, camera, biometrics                           |
+| `src/desktop`      | Tauri 2, Vite, React           | `src-tauri/tauri.conf.json`               | "The Judge" admin dashboard                                 |
+| `src/shared`       | TypeScript                     | `dist/index.js`                           | Constants, types, algorithms — **must build before others** |
+| `src/pitch`        | Vite, React, p5.js             | interactive pitch deck                    | build outputs to `docs/`                                    |
+| `src/ask-styx`     | Cloudflare Worker (wrangler)   | `worker/index.ts`                         | LLM proxy for Ask Styx UI                                   |
+| `src/test-harness` | Vitest, Commander CLI          | `bin/ergon-test`                          | Validation & simulation suite                               |
 
 ### Setup & Dev Commands
 
@@ -138,4 +145,40 @@ node scripts/validation/07-claim-drift-check.js            # Claim drift
 ```bash
 BETA_API_URL=https://api-beta.example.com npm run beta:readiness
 ```
+
 Writes `artifacts/beta-readiness-summary.json`. Full policy: `docs/planning/beta-readiness-contract.md`.
+
+---
+
+## Issue Processing Protocol (MANDATORY)
+
+Every issue in this repo is tracked in `docs/triage.json`. Before closing ANY issue:
+
+1. **Declare batch:** `scripts/triage/batch-init.sh <batch-id> <phase> <issues...>`
+2. **For each issue:** verify code exists on disk OR build it. Record state via `scripts/triage/state-transition.sh <num> <to-state> [--evidence <file:line>] [--pr <url>]`
+3. **Reconcile:** `scripts/triage/reconcile.sh <batch-id>` — DO NOT PROCEED IF IT FAILS
+4. **Test:** `make test` (or workspace-specific test) — DO NOT PROCEED IF IT FAILS
+5. **Complete batch:** mark `test_passed: true` in triage.json, append to `docs/triage/pattern-log.md`
+6. **Commit:** triage.json + code changes together in one atomic commit
+7. **Report:** `scripts/triage/report.sh` — verify dashboard is clean, 0 orphans
+
+**NEVER:**
+
+- Close an issue without recording evidence in triage.json
+- Batch-close >20 issues without reconciliation
+- Skip `reconcile.sh` — it is the mechanical gate that rejects CLOSED without evidence
+- Leave an issue in UNREAD state after its batch is marked complete
+- Close non-code issues (TRACKING/WAITING/FUTURE) — they represent real work, not dead backlog
+
+**State machine:**
+
+```
+UNREAD → INSPECTED → CLOSED (evidence required)
+                   → BUILD_STARTED → BUILD_DONE → TESTED → PR_CREATED → PR_MERGED → CLOSED
+                   → TRACKING (non-code, stays open)
+                   → WAITING (blocked, stays open)
+                   → FUTURE (post-beta, stays open)
+                   → BUG (defect, stays open until fixed)
+```
+
+See `docs/triage/pattern-log.md` for per-batch learnings. See `scripts/triage/` for tooling.

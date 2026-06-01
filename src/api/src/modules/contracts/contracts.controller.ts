@@ -1,24 +1,42 @@
-import { Controller, Post, Get, Param, Body, UseGuards, Res, Req } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
-import { Pool } from 'pg';
-import { ContractsService } from './contracts.service';
-import { CreateContractDto, SubmitProofDto, SubmitWhoopScoredDto, DoubleDownDto } from './dto';
-import { DisputeService } from '../../../services/escrow/dispute.service';
-import { StripeFboService } from '../../../services/escrow/stripe.service';
-import { LedgerService } from '../../../services/ledger/ledger.service';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { AuthGuard } from '../../../guards/auth.guard';
-import { BannedUserGuard } from '../../guards/banned-user.guard';
-import { GeofenceGuard } from '../../common/guards/geofence.guard';
-import { ComplianceAccessGuard } from '../../common/guards/compliance-access.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { processIAP } from '../../../services/billing';
-import { MedicalExemptionService } from '../compliance/medical-exemption.service';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  UseGuards,
+  Res,
+  Req,
+} from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { Throttle } from "@nestjs/throttler";
+import { Pool } from "pg";
+import { ContractsService } from "./contracts.service";
+import {
+  CreateContractDto,
+  SubmitProofDto,
+  SubmitWhoopScoredDto,
+  DoubleDownDto,
+  SubmitSurveyDto,
+  EmotionalTrackingDto,
+} from "./dto";
+import { DisputeService } from "../../../services/escrow/dispute.service";
+import { StripeFboService } from "../../../services/escrow/stripe.service";
+import { LedgerService } from "../../../services/ledger/ledger.service";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { AuthGuard } from "../../../guards/auth.guard";
+import { BannedUserGuard } from "../../guards/banned-user.guard";
+import { GeofenceGuard } from "../../common/guards/geofence.guard";
+import { ComplianceAccessGuard } from "../../common/guards/compliance-access.guard";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { processIAP } from "../../../services/billing";
+import { MedicalExemptionService } from "../compliance/medical-exemption.service";
+import { SurveyService } from "./survey.service";
+import { WaitlistService } from "./waitlist.service";
 
-@ApiTags('Contracts')
+@ApiTags("Contracts")
 @ApiBearerAuth()
-@Controller('contracts')
+@Controller("contracts")
 export class ContractsController {
   constructor(
     private readonly contractsService: ContractsService,
@@ -28,170 +46,214 @@ export class ContractsController {
     private readonly stripe: StripeFboService,
     private readonly ledger: LedgerService,
     private readonly truthLog: TruthLogService,
+    private readonly surveyService: SurveyService,
+    private readonly waitlistService: WaitlistService,
   ) {}
 
   @UseGuards(AuthGuard, GeofenceGuard)
   @Get()
-  @ApiOperation({ summary: 'List contracts for the authenticated user' })
+  @ApiOperation({ summary: "List contracts for the authenticated user" })
   async findByUser(@CurrentUser() user: { id: string }) {
     return this.contractsService.getUserContracts(user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
   @Post()
-  @ApiOperation({ summary: 'Create a new behavioral contract with a financial stake' })
-  async create(@CurrentUser() user: { id: string }, @Body() dto: CreateContractDto) {
+  @ApiOperation({
+    summary: "Create a new behavioral contract with a financial stake",
+  })
+  async create(
+    @CurrentUser() user: { id: string },
+    @Body() dto: CreateContractDto,
+  ) {
     return this.contractsService.createContract({ ...dto, userId: user.id });
   }
 
   @UseGuards(AuthGuard, GeofenceGuard)
-  @Get('cohorts/:cohortId/snapshot')
-  @ApiOperation({ summary: 'Get cohort snapshot (roster, Active/Out visibility, pod breakdown)' })
+  @Get("cohorts/:cohortId/snapshot")
+  @ApiOperation({
+    summary:
+      "Get cohort snapshot (roster, Active/Out visibility, pod breakdown)",
+  })
   async getCohortSnapshot(
-    @Param('cohortId') cohortId: string,
+    @Param("cohortId") cohortId: string,
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.getCohortSnapshot(cohortId, user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard)
-  @Get(':id')
-  @ApiOperation({ summary: 'Get a single contract by ID' })
-  async findOne(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-  ) {
+  @Get(":id")
+  @ApiOperation({ summary: "Get a single contract by ID" })
+  async findOne(@Param("id") id: string, @CurrentUser() user: { id: string }) {
     return this.contractsService.getContract(id, { userId: user.id });
   }
 
   @UseGuards(AuthGuard, GeofenceGuard)
-  @Get(':id/proofs')
-  @ApiOperation({ summary: 'List proof submissions for a contract' })
+  @Get(":id/proofs")
+  @ApiOperation({ summary: "List proof submissions for a contract" })
   async getProofs(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
-    return this.contractsService.getContractProofs(contractId, { userId: user.id });
+    return this.contractsService.getContractProofs(contractId, {
+      userId: user.id,
+    });
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
-  @Post(':id/proof')
-  @ApiOperation({ summary: 'Submit a proof of compliance for peer review' })
+  @Post(":id/proof")
+  @ApiOperation({ summary: "Submit a proof of compliance for peer review" })
   @Throttle({ default: { ttl: 60000, limit: 10 } })
   async submitProof(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
     @Body() dto: SubmitProofDto,
   ) {
-    return this.contractsService.submitProof(contractId, { ...dto, userId: user.id });
+    return this.contractsService.submitProof(contractId, {
+      ...dto,
+      userId: user.id,
+    });
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
-  @Post(':id/grace-day')
-  @ApiOperation({ summary: 'Use a grace day on a contract' })
+  @Post(":id/grace-day")
+  @ApiOperation({ summary: "Use a grace day on a contract" })
   async useGraceDay(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.useGraceDay(contractId, user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
-  @Post(':id/dispute')
-  @ApiOperation({ summary: 'File a dispute against a verdict' })
+  @Post(":id/dispute")
+  @ApiOperation({ summary: "File a dispute against a verdict" })
   async disputeVerdict(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.fileDispute(user.id, contractId);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
-  @Post(':id/ticket')
-  @ApiOperation({ summary: 'Purchase an in-app ticket for a contract' })
+  @Post(":id/ticket")
+  @ApiOperation({ summary: "Purchase an in-app ticket for a contract" })
   async purchaseTicket(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
-    return processIAP(this.pool, this.stripe, this.ledger, this.truthLog, user.id, contractId);
+    return processIAP(
+      this.pool,
+      this.stripe,
+      this.ledger,
+      this.truthLog,
+      user.id,
+      contractId,
+    );
   }
 
   @UseGuards(AuthGuard, GeofenceGuard)
-  @Get(':id/attestation')
-  @ApiOperation({ summary: 'Get attestation status for a recovery contract' })
+  @Get(":id/attestation")
+  @ApiOperation({ summary: "Get attestation status for a recovery contract" })
   async getAttestationStatus(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.getAttestationStatus(contractId, user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
-  @Post(':id/attestation')
-  @ApiOperation({ summary: 'Submit daily attestation for a recovery contract' })
+  @Post(":id/attestation")
+  @ApiOperation({
+    summary:
+      "Submit daily attestation for a recovery contract with optional emotional tracking",
+  })
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   async submitAttestation(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
+    @Body() emotionalTracking?: EmotionalTrackingDto,
   ) {
-    return this.contractsService.submitAttestation(contractId, user.id);
+    return this.contractsService.submitAttestation(
+      contractId,
+      user.id,
+      emotionalTracking,
+    );
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
-  @Post(':id/whoop/scored')
-  @ApiOperation({ summary: 'Ingest Whoop SCORED state and optionally credit daily attestation' })
+  @Post(":id/whoop/scored")
+  @ApiOperation({
+    summary:
+      "Ingest Whoop SCORED state and optionally credit daily attestation",
+  })
   @Throttle({ default: { ttl: 60000, limit: 20 } })
   async submitWhoopScored(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
     @Body() dto: SubmitWhoopScoredDto,
   ) {
-    return this.contractsService.submitWhoopScoredState(contractId, { ...dto, userId: user.id });
+    return this.contractsService.submitWhoopScoredState(contractId, {
+      ...dto,
+      userId: user.id,
+    });
   }
 
   @UseGuards(AuthGuard, GeofenceGuard)
-  @Get('invitations')
-  @ApiOperation({ summary: 'List pending accountability partner invitations' })
+  @Get("invitations")
+  @ApiOperation({ summary: "List pending accountability partner invitations" })
   async getInvitations(@CurrentUser() user: { id: string }) {
     return this.contractsService.getPendingInvitations(user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
-  @Post(':id/partner/accept')
-  @ApiOperation({ summary: 'Accept an accountability partner invitation' })
+  @Post(":id/partner/accept")
+  @ApiOperation({ summary: "Accept an accountability partner invitation" })
   async acceptInvitation(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.acceptPartnerInvitation(contractId, user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
-  @Post(':id/attestation/cosign')
-  @ApiOperation({ summary: 'Co-sign a daily attestation as an accountability partner' })
+  @Post(":id/attestation/cosign")
+  @ApiOperation({
+    summary: "Co-sign a daily attestation as an accountability partner",
+  })
   async cosignAttestation(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.cosignAttestation(contractId, user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
-  @Post(':id/double-down')
-  @ApiOperation({ summary: 'Increase the financial stake for an active contract (Double Down)' })
+  @Post(":id/double-down")
+  @ApiOperation({
+    summary:
+      "Increase the financial stake for an active contract (Double Down)",
+  })
   async doubleDown(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
     @Body() dto: DoubleDownDto,
   ) {
-    return this.contractsService.doubleDownStake(contractId, user.id, dto.amount);
+    return this.contractsService.doubleDownStake(
+      contractId,
+      user.id,
+      dto.amount,
+    );
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
-  @Post(':id/medical-exemption')
-  @ApiOperation({ summary: 'Request a compassionate medical exemption for a contract' })
+  @Post(":id/medical-exemption")
+  @ApiOperation({
+    summary: "Request a compassionate medical exemption for a contract",
+  })
   async requestMedicalExemption(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
     @Body() dto: { reason: string; documentationUri?: string },
   ) {
@@ -204,66 +266,86 @@ export class ContractsController {
   }
 
   // --- No Auth Guard for Bounty Claims (Ex-partner access) ---
-  @Post('bounty/:linkId')
-  @ApiOperation({ summary: 'Submit evidence against a user via their unique whistleblower bounty link' })
+  @Post("bounty/:linkId")
+  @ApiOperation({
+    summary:
+      "Submit evidence against a user via their unique whistleblower bounty link",
+  })
   @Throttle({ default: { ttl: 60000, limit: 5 } }) // Stricter throttling for public endpoint
   async claimBounty(
-    @Param('linkId') linkId: string,
+    @Param("linkId") linkId: string,
     @Body() dto: { mediaUri: string },
     @Res() res: any, // Extract Request to get IP if possible, NestJS often uses @Req
-    @Req() req: any
+    @Req() req: any,
   ) {
     const claimantIp = req.ip || req.connection.remoteAddress;
-    const result = await this.contractsService.claimBounty(linkId, dto.mediaUri, claimantIp);
+    const result = await this.contractsService.claimBounty(
+      linkId,
+      dto.mediaUri,
+      claimantIp,
+    );
     return res.json(result);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard)
-  @Get(':id/recovery/lock-status')
-  @ApiOperation({ summary: 'Get the 24h timelock status for an intentional recovery break' })
+  @Get(":id/recovery/lock-status")
+  @ApiOperation({
+    summary: "Get the 24h timelock status for an intentional recovery break",
+  })
   async getRecoveryLockStatus(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.getRecoveryLockStatus(contractId, user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
-  @Post(':id/recovery/break-request')
-  @ApiOperation({ summary: 'Queue a 24h timelocked intentional break for a recovery contract' })
+  @Post(":id/recovery/break-request")
+  @ApiOperation({
+    summary: "Queue a 24h timelocked intentional break for a recovery contract",
+  })
   async requestRecoveryBreak(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
     @Body() dto: { reason: string },
   ) {
-    return this.contractsService.requestRecoveryBreak(contractId, user.id, dto.reason);
+    return this.contractsService.requestRecoveryBreak(
+      contractId,
+      user.id,
+      dto.reason,
+    );
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
-  @Post(':id/recovery/break-cancel')
-  @ApiOperation({ summary: 'Cancel a pending intentional break during the cooldown period' })
+  @Post(":id/recovery/break-cancel")
+  @ApiOperation({
+    summary: "Cancel a pending intentional break during the cooldown period",
+  })
   async cancelRecoveryBreak(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.cancelRecoveryBreak(contractId, user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard)
-  @Get(':id/recovery/penalty-preview')
-  @ApiOperation({ summary: 'Preview the potential penalty amount including weekend multipliers' })
+  @Get(":id/recovery/penalty-preview")
+  @ApiOperation({
+    summary:
+      "Preview the potential penalty amount including weekend multipliers",
+  })
   async getPenaltyPreview(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.getRecoveryPenaltyPreview(contractId, user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
-  @Post(':id/accountability/invite')
-  @ApiOperation({ summary: 'Invite an accountability partner to a contract' })
+  @Post(":id/accountability/invite")
+  @ApiOperation({ summary: "Invite an accountability partner to a contract" })
   async inviteAccountabilityPartner(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
     @Body() body: { email: string },
   ) {
@@ -271,33 +353,100 @@ export class ContractsController {
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
-  @Post(':id/accountability/respond')
-  @ApiOperation({ summary: 'Respond to an accountability partner invitation' })
+  @Post(":id/accountability/respond")
+  @ApiOperation({ summary: "Respond to an accountability partner invitation" })
   async respondToAccountabilityInvite(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
     @Body() body: { accept: boolean },
   ) {
-    return this.contractsService.respondToInvite(contractId, user.id, body.accept);
+    return this.contractsService.respondToInvite(
+      contractId,
+      user.id,
+      body.accept,
+    );
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
-  @Post(':id/recovery/veto-break')
-  @ApiOperation({ summary: 'Veto a pending recovery break as an accountability partner' })
+  @Post(":id/recovery/veto-break")
+  @ApiOperation({
+    summary: "Veto a pending recovery break as an accountability partner",
+  })
   async vetoRecoveryBreak(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.vetoRecoveryBreak(contractId, user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard)
-  @Get(':id/accountability/status')
-  @ApiOperation({ summary: 'Get accountability partner status and history for a contract' })
+  @Get(":id/accountability/status")
+  @ApiOperation({
+    summary: "Get accountability partner status and history for a contract",
+  })
   async getAccountabilityStatus(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.getAccountabilityStatus(contractId, user.id);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
+  @Post(":id/survey")
+  @ApiOperation({ summary: "Submit a baseline or final survey for a contract" })
+  async submitSurvey(
+    @Param("id") contractId: string,
+    @CurrentUser() user: { id: string },
+    @Body() dto: SubmitSurveyDto,
+  ) {
+    return this.surveyService.submitSurvey(
+      user.id,
+      contractId,
+      dto.surveyType,
+      dto.responses,
+    );
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get(":id/survey")
+  @ApiOperation({ summary: "Get survey responses for a contract" })
+  async getSurvey(
+    @Param("id") contractId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.surveyService.getSurvey(contractId, user.id);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
+  @Post("cohorts/:cohortId/waitlist")
+  @ApiOperation({ summary: "Join the waitlist for a cohort" })
+  async joinWaitlist(
+    @Param("cohortId") cohortId: string,
+    @CurrentUser() user: { id: string },
+    @Body() body: { podId?: string; displayAlias?: string },
+  ) {
+    return this.waitlistService.joinWaitlist(
+      user.id,
+      cohortId,
+      body.podId,
+      body.displayAlias,
+    );
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get("cohorts/:cohortId/waitlist/position")
+  @ApiOperation({ summary: "Get your waitlist position for a cohort" })
+  async getWaitlistPosition(
+    @Param("cohortId") cohortId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.waitlistService.getWaitlistPosition(user.id, cohortId);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get("cohorts/:cohortId/waitlist")
+  @ApiOperation({ summary: "Get the waitlist for a cohort" })
+  async getCohortWaitlist(@Param("cohortId") cohortId: string) {
+    return this.waitlistService.getCohortWaitlist(cohortId);
   }
 }
