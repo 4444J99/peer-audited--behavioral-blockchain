@@ -2,6 +2,8 @@ export const BASE_INTEGRITY = 50;
 export const FRAUD_PENALTY = 15;
 export const STRIKE_PENALTY = 20;
 export const COMPLETION_BONUS = 5;
+export const INTEGRITY_CEILING_HIGH = 500;
+export const CEILING_PENALTY_RATE = 0.5;
 
 export const AUDITOR_STAKE_AMOUNT = 200; // cents ($2.00)
 export const AUDITOR_HARASSMENT_THRESHOLD = 3;
@@ -33,10 +35,19 @@ export function calculateIntegrity(history: UserHistory): number {
   const strikeCost = history.failedOaths * STRIKE_PENALTY;
   const decay = history.monthsInactive * 1; // 1 point decay per month
 
-  const score = base + bonus - fraudCost - strikeCost - decay;
-  
-  // Floor at 0, ceiling is theoretically infinite but realistically ~10k+
-  return Math.max(0, score);
+  let score = base + bonus - fraudCost - strikeCost - decay;
+
+  score = Math.max(0, score);
+
+  // Percentage-based compression above the high ceiling — fraud/strike
+  // penalties remain meaningful even for top-tier users because the
+  // compressed score keeps them within a range where fixed-point
+  // deductions still move the needle.
+  if (score > INTEGRITY_CEILING_HIGH) {
+    score = INTEGRITY_CEILING_HIGH + (score - INTEGRITY_CEILING_HIGH) * CEILING_PENALTY_RATE;
+  }
+
+  return Math.round(score);
 }
 
 /**

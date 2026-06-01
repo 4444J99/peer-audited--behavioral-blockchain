@@ -74,6 +74,37 @@ describe('calculateIntegrity', () => {
     // 50 + 25 - 15 - 20 - 3 = 37
     expect(score).toBe(37);
   });
+
+  it('should apply percentage-based compression above ceiling (500)', () => {
+    // 500 completions + no penalties = 50 + 2500 = 2550 raw
+    // compressed: 500 + (2550 - 500) * 0.5 = 500 + 1025 = 1525
+    const score = calculateIntegrity(makeUser({ completedOaths: 500 }));
+    expect(score).toBe(1525);
+  });
+
+  it('should not compress scores at or below ceiling', () => {
+    // 90 completions = 50 + 450 = 500 → exactly at ceiling, no compression
+    const atCeiling = calculateIntegrity(makeUser({ completedOaths: 90 }));
+    // 90 * 5 = 450, 50 + 450 = 500
+    expect(atCeiling).toBe(500);
+
+    // 80 completions = 50 + 400 = 450 → below ceiling
+    const below = calculateIntegrity(makeUser({ completedOaths: 80 }));
+    expect(below).toBe(450);
+  });
+
+  it('should keep fraud penalties meaningful at high scores', () => {
+    // User with 200 completions (score = 50 + 1000 = 1050 → compressed: 500 + 550*0.5 = 775)
+    const clean = calculateIntegrity(makeUser({ completedOaths: 200 }));
+    expect(clean).toBe(775);
+
+    // Same user with 1 fraud strike (score = 50 + 1000 - 15 = 1035 → compressed: 500 + 535*0.5 = 767.5 → 768)
+    const withFraud = calculateIntegrity(makeUser({ completedOaths: 200, fraudStrikes: 1 }));
+    expect(withFraud).toBe(768);
+
+    // Fraud penalty still registers as a visible delta (775 → 768 = 7 points, ~half of 15 due to compression)
+    expect(clean - withFraud).toBe(7);
+  });
 });
 
 describe('getAllowedTiers', () => {

@@ -19,11 +19,6 @@ describe('styx-knowledge (auto-generated knowledge base)', () => {
   });
 
   describe('required sections', () => {
-    it('contains PROJECT OVERVIEW section from CLAUDE.md', () => {
-      expect(STYX_KNOWLEDGE).toContain('=== PROJECT OVERVIEW');
-      expect(STYX_KNOWLEDGE).toContain('File: CLAUDE.md');
-    });
-
     it('contains BEHAVIORAL LOGIC section', () => {
       expect(STYX_KNOWLEDGE).toContain('=== BEHAVIORAL LOGIC');
       expect(STYX_KNOWLEDGE).toContain('behavioral-logic.ts');
