@@ -6,6 +6,7 @@ interface Env {
   ALLOWED_ORIGIN: string;
   LLM_MODEL: string;
   LLM_BASE_URL: string;
+  RATE_LIMIT_KV: KVNamespace;
 }
 
 const SYSTEM_PROMPT = `You are the Styx AI assistant — an expert on the Styx peer-audited behavioral market platform. You help stakeholders (investors, partners, developers) understand how Styx works.
@@ -23,18 +24,23 @@ ${STYX_KNOWLEDGE}`;
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 30;
-const rateLimitMap = new Map<string, number[]>();
 
-function isRateLimited(ip: string): boolean {
+function kvKey(ip: string): string {
+  return `ratelimit:${ip}`;
+}
+
+async function isRateLimited(ip: string, kv: KVNamespace): Promise<boolean> {
   const now = Date.now();
-  const timestamps = rateLimitMap.get(ip) ?? [];
+  const key = kvKey(ip);
+  const raw = await kv.get(key);
+  const timestamps: number[] = raw ? JSON.parse(raw) : [];
   const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
   if (recent.length >= RATE_LIMIT_MAX) {
-    rateLimitMap.set(ip, recent);
+    await kv.put(key, JSON.stringify(recent), { expirationTtl: Math.ceil(RATE_LIMIT_WINDOW_MS / 1000) });
     return true;
   }
   recent.push(now);
-  rateLimitMap.set(ip, recent);
+  await kv.put(key, JSON.stringify(recent), { expirationTtl: Math.ceil(RATE_LIMIT_WINDOW_MS / 1000) });
   return false;
 }
 
@@ -60,7 +66,7 @@ export default {
     }
 
     const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
-    if (isRateLimited(ip)) {
+    if (await isRateLimited(ip, env.RATE_LIMIT_KV)) {
       return Response.json(
         { error: 'Rate limit exceeded. Try again in a minute.' },
         { status: 429, headers },

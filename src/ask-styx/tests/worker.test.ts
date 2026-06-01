@@ -7,12 +7,24 @@ vi.mock('../../web/lib/styx-knowledge', () => ({
 
 import worker from '../worker/index';
 
-function makeEnv(overrides: Partial<Record<string, string>> = {}) {
+function makeKV(): KVNamespace {
+  const store = new Map<string, string>();
+  return {
+    get: vi.fn(async (key: string) => store.get(key) ?? null),
+    put: vi.fn(async (key: string, value: string) => { store.set(key, value); }),
+    delete: vi.fn(async (key: string) => { store.delete(key); }),
+    list: vi.fn(),
+    getWithMetadata: vi.fn(),
+  } as unknown as KVNamespace;
+}
+
+function makeEnv(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     GROQ_API_KEY: 'test-key',
     ALLOWED_ORIGIN: 'https://styx.io',
     LLM_MODEL: 'llama-3.3-70b-versatile',
     LLM_BASE_URL: 'https://api.groq.com/openai/v1',
+    RATE_LIMIT_KV: makeKV(),
     ...overrides,
   };
 }
