@@ -26,7 +26,13 @@ import { AnomalyService } from "../../../services/anomaly/anomaly.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
 import { IdentityVerificationService } from "../compliance/identity-verification.service";
 import { IdentityVerificationMode } from "../compliance/identity-provider.service";
-import { BanUserDto, CrisisEscalateDto, ResolveContractDto } from "./dto";
+import {
+  BanUserDto,
+  CrisisEscalateDto,
+  ResolveContractDto,
+  UpdateJurisdictionDto,
+} from "./dto";
+import { JurisdictionDispositionMapper } from "../compliance/jurisdiction-disposition.mapper";
 
 @ApiTags("Admin")
 @ApiBearerAuth()
@@ -88,6 +94,123 @@ export class AdminController {
       [safeLimit],
     );
     return { events: result.rows };
+  }
+
+  // --- Jurisdictions (Policy Registry) ---
+
+  @Get("jurisdictions")
+  @ApiOperation({
+    summary: "List all jurisdictions with their current policy tier",
+  })
+  async getJurisdictions() {
+    const result = await this.pool.query(
+      `SELECT code, name, tier, disposition_mode, updated_at
+       FROM jurisdictions
+       ORDER BY code`,
+    );
+    return { jurisdictions: result.rows };
+  }
+
+  @Get("jurisdictions/:code")
+  @ApiOperation({ summary: "Get a single jurisdiction by state code" })
+  async getJurisdiction(@Param("code") code: string) {
+    const result = await this.pool.query(
+      `SELECT code, name, tier, disposition_mode, updated_at
+       FROM jurisdictions
+       WHERE code = $1`,
+      [code.toUpperCase()],
+    );
+    if (result.rows.length === 0) {
+      return { error: "Jurisdiction not found", code: code.toUpperCase() };
+    }
+    return { jurisdiction: result.rows[0] };
+  }
+
+  @Patch("jurisdictions/:code")
+  @ApiOperation({ summary: "Update a jurisdiction's tier or disposition mode" })
+  async updateJurisdiction(
+    @Param("code") code: string,
+    @Body() body: UpdateJurisdictionDto,
+    @CurrentUser() admin: { id: string },
+  ) {
+    const normalizedCode = code.toUpperCase();
+    const existing = await this.pool.query(
+      "SELECT code, tier, disposition_mode FROM jurisdictions WHERE code = $1",
+      [normalizedCode],
+    );
+    if (existing.rows.length === 0) {
+      return { error: "Jurisdiction not found", code: normalizedCode };
+    }
+
+    const updates: string[] = [];
+    const values: unknown[] = [];
+    let paramIndex = 1;
+
+    if (body.tier) {
+      updates.push(`tier = $${paramIndex++}`);
+      values.push(body.tier);
+    }
+    if (body.dispositionMode) {
+      updates.push(`disposition_mode = $${paramIndex++}`);
+      values.push(body.dispositionMode);
+    }
+    if (updates.length === 0) {
+      return { error: "No fields to update" };
+    }
+
+    updates.push(`updated_at = NOW()`);
+    values.push(normalizedCode);
+
+    const result = await this.pool.query(
+      `UPDATE jurisdictions SET ${updates.join(", ")} WHERE code = $${paramIndex} RETURNING *`,
+      values,
+    );
+
+    await this.truthLog.appendEvent("JURISDICTION_POLICY_CHANGED", {
+      adminId: admin.id,
+      code: normalizedCode,
+      previousTier: existing.rows[0].tier,
+      newTier: body.tier ?? existing.rows[0].tier,
+      previousDisposition: existing.rows[0].disposition_mode,
+      newDisposition: body.dispositionMode ?? existing.rows[0].disposition_mode,
+    });
+
+    return { jurisdiction: result.rows[0] };
+  }
+
+  // --- Kill Switch (Refund-Only Override) ---
+
+  @Get("kill-switch")
+  @ApiOperation({
+    summary: "Get current kill switch status (refund-only mode)",
+  })
+  getKillSwitch() {
+    return {
+      refundOnlyMode: JurisdictionDispositionMapper.isRefundOnlyMode(),
+    };
+  }
+
+  @Post("kill-switch")
+  @ApiOperation({
+    summary: "Toggle kill switch — force all settlements to REFUND mode",
+  })
+  async setKillSwitch(
+    @Body() body: { enabled: boolean },
+    @CurrentUser() admin: { id: string },
+  ) {
+    JurisdictionDispositionMapper.setRefundOnlyMode(body.enabled);
+
+    await this.truthLog.appendEvent("KILL_SWITCH_TOGGLED", {
+      adminId: admin.id,
+      enabled: body.enabled,
+    });
+
+    return {
+      refundOnlyMode: body.enabled,
+      message: body.enabled
+        ? "Kill switch ACTIVE — all settlements forced to REFUND mode"
+        : "Kill switch INACTIVE — settlements follow jurisdiction policy",
+    };
   }
 
   // --- Integrity ---

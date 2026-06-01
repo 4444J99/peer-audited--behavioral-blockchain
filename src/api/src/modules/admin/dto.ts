@@ -28,3 +28,21 @@ export class CrisisEscalateDto {
   @IsString()
   trigger!: string;
 }
+
+export class UpdateJurisdictionDto {
+  @ApiProperty({
+    description: "Jurisdiction tier",
+    enum: ["FULL_ACCESS", "REFUND_ONLY", "HARD_BLOCK"],
+    required: false,
+  })
+  @IsEnum(["FULL_ACCESS", "REFUND_ONLY", "HARD_BLOCK"])
+  tier?: "FULL_ACCESS" | "REFUND_ONLY" | "HARD_BLOCK";
+
+  @ApiProperty({
+    description: "Disposition mode for settlements",
+    enum: ["HOUSE_RETAINED", "REFUND_ONLY"],
+    required: false,
+  })
+  @IsEnum(["HOUSE_RETAINED", "REFUND_ONLY"])
+  dispositionMode?: "HOUSE_RETAINED" | "REFUND_ONLY";
+}

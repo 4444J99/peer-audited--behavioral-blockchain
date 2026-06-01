@@ -508,6 +508,46 @@ export const api = {
       }>;
     }>(`/admin/crisis/events${limit ? `?limit=${limit}` : ""}`),
 
+  getJurisdictions: () =>
+    request<{
+      jurisdictions: Array<{
+        code: string;
+        name: string;
+        tier: string;
+        disposition_mode: string;
+        updated_at: string;
+      }>;
+    }>("/admin/jurisdictions"),
+
+  updateJurisdiction: (
+    code: string,
+    data: { tier?: string; dispositionMode?: string },
+  ) =>
+    request<{
+      jurisdiction: {
+        code: string;
+        name: string;
+        tier: string;
+        disposition_mode: string;
+        updated_at: string;
+      };
+    }>(`/admin/jurisdictions/${code}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  getKillSwitch: () =>
+    request<{ refundOnlyMode: boolean }>("/admin/kill-switch"),
+
+  setKillSwitch: (enabled: boolean) =>
+    request<{ refundOnlyMode: boolean; message: string }>(
+      "/admin/kill-switch",
+      {
+        method: "POST",
+        body: JSON.stringify({ enabled }),
+      },
+    ),
+
   getDisputes: () =>
     request<
       Array<{
