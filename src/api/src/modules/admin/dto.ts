@@ -19,7 +19,7 @@ export class ResolveContractDto {
   outcome!: "COMPLETED" | "FAILED";
 }
 
-export class CrisisEscalateDto {
+export class AdminCrisisEscalateDto {
   @ApiProperty({ description: "Target user ID" })
   @IsString()
   userId!: string;

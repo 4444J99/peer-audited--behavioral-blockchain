@@ -9,7 +9,7 @@
       "outputs": []
     },
     "@styx/pitch#build": {
-      "outputs": ["../../docs/**"]
+      "outputs": ["../../docs/index.html", "../../docs/assets/**"]
     },
     "lint": {},
     "@styx/web#lint": {

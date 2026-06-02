@@ -28,7 +28,7 @@ import { IdentityVerificationService } from "../compliance/identity-verification
 import { IdentityVerificationMode } from "../compliance/identity-provider.service";
 import {
   BanUserDto,
-  CrisisEscalateDto,
+  AdminCrisisEscalateDto,
   ResolveContractDto,
   UpdateJurisdictionDto,
 } from "./dto";
@@ -59,7 +59,7 @@ export class AdminController {
   @Post("crisis/escalate")
   @ApiOperation({ summary: "Manually trigger crisis intervention for a user" })
   async escalateCrisis(
-    @Body() body: CrisisEscalateDto,
+    @Body() body: AdminCrisisEscalateDto,
     @CurrentUser() admin: { id: string },
   ) {
     const detection = this.crisisDetection.analyzeContent(body.trigger);

@@ -2,11 +2,13 @@ import { CrmService } from './crm.service';
 import { SalesforceConnector } from './connectors/salesforce.connector';
 import { HubSpotConnector } from './connectors/hubspot.connector';
 import { EmployeeEvent } from './connectors/crm-connector.interface';
+import { Pool } from 'pg';
 
 describe('CrmService', () => {
   let service: CrmService;
-  let mockSalesforce: jest.Mocked<Pick<SalesforceConnector, 'pushEmployeeEvent'>>;
-  let mockHubspot: jest.Mocked<Pick<HubSpotConnector, 'pushEmployeeEvent'>>;
+  let mockSalesforce: jest.Mocked<Pick<SalesforceConnector, 'pushEmployeeEvent' | 'syncUserList'>>;
+  let mockHubspot: jest.Mocked<Pick<HubSpotConnector, 'pushEmployeeEvent' | 'syncUserList'>>;
+  let mockPool: jest.Mocked<Pick<Pool, 'query'>>;
 
   const testEvent: EmployeeEvent = {
     employeeId: 'emp-001',
@@ -16,9 +18,11 @@ describe('CrmService', () => {
   };
 
   beforeEach(() => {
-    mockSalesforce = { pushEmployeeEvent: jest.fn() };
-    mockHubspot = { pushEmployeeEvent: jest.fn() };
+    mockSalesforce = { pushEmployeeEvent: jest.fn(), syncUserList: jest.fn() };
+    mockHubspot = { pushEmployeeEvent: jest.fn(), syncUserList: jest.fn() };
+    mockPool = { query: jest.fn() };
     service = new CrmService(
+      mockPool as unknown as Pool,
       mockSalesforce as unknown as SalesforceConnector,
       mockHubspot as unknown as HubSpotConnector,
     );
