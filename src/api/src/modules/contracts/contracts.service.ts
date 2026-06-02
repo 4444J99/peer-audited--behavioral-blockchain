@@ -44,6 +44,8 @@ import {
   FAILURE_COOL_OFF_DAYS,
   DOWNSCALE_STRIKE_THRESHOLD,
   MAX_NOCONTACT_DURATION_DAYS,
+  checkPregnancyExclusion,
+  validateRecoveryGuardrails,
 } from "../../../../shared/libs/behavioral-logic";
 import {
   getRealmForCategory,
@@ -1454,6 +1456,18 @@ export class ContractsService {
       this.aegis.validateHealthMetrics(dto.healthMetrics, dto.durationDays);
     }
 
+    // 3f. Pregnancy Exclusion Gate (AEGIS-05)
+    if (user.pregnancy_exclusion) {
+      const oathCategory = dto.oathCategory as OathCategory;
+      const pregnancyCheck = checkPregnancyExclusion(true, oathCategory);
+      if (pregnancyCheck.blocked) {
+        throw new ForbiddenException(
+          pregnancyCheck.reason ||
+            "Contract creation blocked due to pregnancy exclusion",
+        );
+      }
+    }
+
     // 3d. KYC tier gating (Phase Beta P0-003)
     if (this.compliancePolicy) {
       const kycResult = await this.compliancePolicy.evaluateKycRequirement(
@@ -1478,6 +1492,48 @@ export class ContractsService {
       // Enforce duration cap for RECOVERY_NOCONTACT
       if (dto.durationDays > MAX_NOCONTACT_DURATION_DAYS) {
         dto = { ...dto, durationDays: MAX_NOCONTACT_DURATION_DAYS };
+      }
+
+      // 4c. Recovery impulse guardrails (AEGIS-06)
+      const activeRecoveryContracts = await this.pool.query(
+        `SELECT COUNT(*) as count FROM contracts
+         WHERE user_id = $1 AND oath_category LIKE 'RECOVERY\\_%' ESCAPE '\\'
+         AND status NOT IN ('COMPLETED', 'FAILED', 'CANCELLED')`,
+        [dto.userId],
+      );
+      const lastRecoveryContract = await this.pool.query(
+        `SELECT created_at FROM contracts
+         WHERE user_id = $1 AND oath_category LIKE 'RECOVERY\\_%' ESCAPE '\\'
+         ORDER BY created_at DESC LIMIT 1`,
+        [dto.userId],
+      );
+      const lastRecoveryFailure = await this.pool.query(
+        `SELECT updated_at FROM contracts
+         WHERE user_id = $1 AND oath_category LIKE 'RECOVERY\\_%' ESCAPE '\\'
+         AND status = 'FAILED'
+         ORDER BY updated_at DESC LIMIT 1`,
+        [dto.userId],
+      );
+      const guardrailResult = validateRecoveryGuardrails({
+        activeRecoveryContractCount: Number(
+          activeRecoveryContracts.rows[0].count,
+        ),
+        hoursSinceLastRecoveryContract:
+          lastRecoveryContract.rows.length > 0
+            ? (Date.now() -
+                new Date(lastRecoveryContract.rows[0].created_at).getTime()) /
+              (1000 * 60 * 60)
+            : undefined,
+        hoursSinceLastFailure:
+          lastRecoveryFailure.rows.length > 0
+            ? (Date.now() -
+                new Date(lastRecoveryFailure.rows[0].updated_at).getTime()) /
+              (1000 * 60 * 60)
+            : undefined,
+        isRecoveryOath: true,
+      });
+      if (!guardrailResult.allowed) {
+        throw new ForbiddenException(guardrailResult.reason);
       }
     }
 

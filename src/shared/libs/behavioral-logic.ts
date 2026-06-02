@@ -1,6 +1,6 @@
 /**
  * Behavioral Logic: The Kernel of Oaths & Physics
- * 
+ *
  * This file defines the exhaustive taxonomy of behaviors tracked by Styx.
  */
 
@@ -66,7 +66,8 @@ export const ONBOARDING_BONUS_AMOUNT = 500; // cents ($5.00)
  * Theorem 2: Genesis Hash
  * Fixed 64-char hex value for the start of the tamper-evident log.
  */
-export const GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+export const GENESIS_HASH =
+  "0000000000000000000000000000000000000000000000000000000000000000";
 
 /**
  * Theorem 8: Isolation Guardrails
@@ -129,10 +130,10 @@ export const NOCONTACT_MISS_STRIKE_THRESHOLD = 3;
  * Psychological reframing of failure as a pivot point.
  */
 export enum BadgeType {
-  PHOENIX_RECOVERY = 'PHOENIX_RECOVERY', // Completed contract after a failure
-  CONSISTENCY_KING = 'CONSISTENCY_KING', // 30-day streak
-  FURY_MASTER = 'FURY_MASTER', // >200 audits with high accuracy
-  EARLY_ADOPTER = 'EARLY_ADOPTER', // Beta participant
+  PHOENIX_RECOVERY = "PHOENIX_RECOVERY", // Completed contract after a failure
+  CONSISTENCY_KING = "CONSISTENCY_KING", // 30-day streak
+  FURY_MASTER = "FURY_MASTER", // >200 audits with high accuracy
+  EARLY_ADOPTER = "EARLY_ADOPTER", // Beta participant
 }
 
 export interface Badge {
@@ -146,23 +147,39 @@ export interface Badge {
  * BIOLOGICAL requires hardware oracles; COGNITIVE uses device APIs; etc.
  */
 const OATH_METHOD_MAP: Record<string, VerificationMethod[]> = {
-  BIOLOGICAL: [VerificationMethod.HARDWARE_HEALTHKIT, VerificationMethod.HARDWARE_HEALTHCONNECT],
-  COGNITIVE: [VerificationMethod.API_SCREEN_TIME, VerificationMethod.API_THIRD_PARTY],
-  PROFESSIONAL: [VerificationMethod.API_THIRD_PARTY, VerificationMethod.FINANCIAL_LEDGER],
+  BIOLOGICAL: [
+    VerificationMethod.HARDWARE_HEALTHKIT,
+    VerificationMethod.HARDWARE_HEALTHCONNECT,
+  ],
+  COGNITIVE: [
+    VerificationMethod.API_SCREEN_TIME,
+    VerificationMethod.API_THIRD_PARTY,
+  ],
+  PROFESSIONAL: [
+    VerificationMethod.API_THIRD_PARTY,
+    VerificationMethod.FINANCIAL_LEDGER,
+  ],
   CREATIVE: [VerificationMethod.TIME_LAPSE, VerificationMethod.FURY_CONSENSUS],
   VISUAL: [VerificationMethod.FURY_CONSENSUS, VerificationMethod.GPS_GEOFENCE],
   SOCIAL: [VerificationMethod.FURY_CONSENSUS, VerificationMethod.GPS_GEOFENCE],
-  RECOVERY: [VerificationMethod.DAILY_ATTESTATION, VerificationMethod.API_SCREEN_TIME, VerificationMethod.FURY_CONSENSUS],
+  RECOVERY: [
+    VerificationMethod.DAILY_ATTESTATION,
+    VerificationMethod.API_SCREEN_TIME,
+    VerificationMethod.FURY_CONSENSUS,
+  ],
 };
 
 /**
  * Validates that an oath category uses a correct oracle/verification method.
  * Returns true if the mapping is valid, false if the method is not allowed for the stream.
  */
-export function validateOathMapping(category: OathCategory, method: VerificationMethod): boolean {
+export function validateOathMapping(
+  category: OathCategory,
+  method: VerificationMethod,
+): boolean {
   const categoryValue = category as string;
   // Extract the stream prefix (e.g., "BIOLOGICAL" from "BIOLOGICAL_WEIGHT")
-  const stream = categoryValue.split('_')[0];
+  const stream = categoryValue.split("_")[0];
   const allowedMethods = OATH_METHOD_MAP[stream];
 
   if (!allowedMethods) return false;
@@ -185,7 +202,10 @@ export function useGraceDay(
   currentEndsAt: Date,
 ): GraceDayResult {
   if (graceDaysUsedThisMonth >= MAX_GRACE_DAYS_PER_MONTH) {
-    return { success: false, reason: `Maximum ${MAX_GRACE_DAYS_PER_MONTH} grace days per month exceeded` };
+    return {
+      success: false,
+      reason: `Maximum ${MAX_GRACE_DAYS_PER_MONTH} grace days per month exceeded`,
+    };
   }
   const newDeadline = new Date(currentEndsAt.getTime() + 24 * 60 * 60 * 1000);
   return { success: true, newDeadline };
@@ -201,9 +221,15 @@ export interface OnboardingBonusResult {
  * Determines if a user qualifies for the onboarding bonus ($5 credit on first contract).
  * Caller must pass the user's total contract count.
  */
-export function grantOnboardingBonus(totalContracts: number): OnboardingBonusResult {
+export function grantOnboardingBonus(
+  totalContracts: number,
+): OnboardingBonusResult {
   if (totalContracts > 0) {
-    return { granted: false, amount: 0, reason: 'User already has prior contracts' };
+    return {
+      granted: false,
+      amount: 0,
+      reason: "User already has prior contracts",
+    };
   }
   return { granted: true, amount: ONBOARDING_BONUS_AMOUNT };
 }
@@ -217,19 +243,107 @@ export function grantOnboardingBonus(totalContracts: number): OnboardingBonusRes
 
 /** Active oath streams supported in MVP */
 export const ACTIVE_OATH_STREAMS = [
-  'BIOLOGICAL',
-  'COGNITIVE',
-  'PROFESSIONAL',
-  'CREATIVE',
-  'VISUAL',
-  'SOCIAL',
-  'RECOVERY',
+  "BIOLOGICAL",
+  "COGNITIVE",
+  "PROFESSIONAL",
+  "CREATIVE",
+  "VISUAL",
+  "SOCIAL",
+  "RECOVERY",
 ] as const;
 
 /** Check if an oath category is supported in the current MVP */
 export function isOathStreamActive(category: OathCategory): boolean {
-  const stream = (category as string).split('_')[0];
+  const stream = (category as string).split("_")[0];
   return (ACTIVE_OATH_STREAMS as readonly string[]).includes(stream);
+}
+
+/**
+ * AEGIS-05: Pregnancy Exclusion Gate
+ * Legal mandate: users who self-report pregnancy are excluded from penalty-bearing
+ * contracts to comply with health-protection regulations. Penalty-free suspension
+ * is available mid-contract. Attempted enrollment during pregnancy is blocked.
+ */
+export const PREGNANCY_EXCLUSION_ENABLED = true;
+
+export const PREGNANCY_EXCLUDED_OATH_CATEGORIES = [
+  OathCategory.WEIGHT_MANAGEMENT,
+  OathCategory.CARDIOVASCULAR_STAMINA,
+  OathCategory.NUTRITIONAL_TRANSPARENCY,
+  OathCategory.SUBSTANCE_ABSTINENCE,
+  OathCategory.BEHAVIORAL_DETOX,
+];
+
+export interface PregnancyExclusionResult {
+  blocked: boolean;
+  reason?: string;
+}
+
+export function checkPregnancyExclusion(
+  isPregnant: boolean,
+  oathCategory: OathCategory,
+): PregnancyExclusionResult {
+  if (!isPregnant) return { blocked: false };
+  if (PREGNANCY_EXCLUDED_OATH_CATEGORIES.includes(oathCategory)) {
+    return {
+      blocked: true,
+      reason: `Oath category ${oathCategory} is excluded during pregnancy for health safety`,
+    };
+  }
+  return { blocked: false };
+}
+
+/**
+ * AEGIS-06: Recovery Impulse Guardrails
+ * Prevents users in active recovery from making impulsive decisions.
+ */
+export const RECOVERY_NEW_CONTRACT_COOLDOWN_HOURS = 72;
+export const RECOVERY_FAILURE_LOCKOUT_HOURS = 24;
+export const RECOVERY_MAX_ACTIVE_CONTRACTS = 2;
+export const RECOVERY_MIN_INTERVAL_BETWEEN_CONTRACTS_HOURS = 168;
+
+export interface RecoveryGuardrailResult {
+  allowed: boolean;
+  reason?: string;
+}
+
+export function validateRecoveryGuardrails(params: {
+  activeRecoveryContractCount: number;
+  hoursSinceLastRecoveryContract?: number;
+  hoursSinceLastFailure?: number;
+  isRecoveryOath: boolean;
+}): RecoveryGuardrailResult {
+  if (!params.isRecoveryOath) return { allowed: true };
+
+  if (params.activeRecoveryContractCount >= RECOVERY_MAX_ACTIVE_CONTRACTS) {
+    return {
+      allowed: false,
+      reason: `Maximum ${RECOVERY_MAX_ACTIVE_CONTRACTS} active recovery contracts allowed`,
+    };
+  }
+
+  if (
+    params.hoursSinceLastRecoveryContract !== undefined &&
+    params.hoursSinceLastRecoveryContract <
+      RECOVERY_MIN_INTERVAL_BETWEEN_CONTRACTS_HOURS
+  ) {
+    return {
+      allowed: false,
+      reason: `Must wait ${RECOVERY_MIN_INTERVAL_BETWEEN_CONTRACTS_HOURS}h between recovery contracts (${Math.round(params.hoursSinceLastRecoveryContract)}h elapsed)`,
+    };
+  }
+
+  if (
+    params.hoursSinceLastFailure !== undefined &&
+    params.hoursSinceLastFailure < RECOVERY_FAILURE_LOCKOUT_HOURS
+  ) {
+    return {
+      allowed: false,
+      reason: `Recovery failure lockout: ${RECOVERY_FAILURE_LOCKOUT_HOURS}h cooldown required after failure`,
+    };
+  }
+
+  return { allowed: true };
 }
 
 /**
@@ -237,12 +351,12 @@ export function isOathStreamActive(category: OathCategory): boolean {
  * Maps psychological vulnerability peaks to system state triggers.
  */
 export enum RecoveryState {
-  LOCKDOWN = 'STATE_LOCKDOWN',
-  WEEKEND_SHIELD = 'STATE_WEEKEND_SHIELD',
-  REWARD_INJECTION = 'STATE_REWARD_INJECTION',
-  FRICTION_DELAY = 'STATE_FRICTION_DELAY',
-  ALPHA_COMPLETE = 'STATE_ALPHA_COMPLETE',
-  NORMAL = 'STATE_NORMAL',
+  LOCKDOWN = "STATE_LOCKDOWN",
+  WEEKEND_SHIELD = "STATE_WEEKEND_SHIELD",
+  REWARD_INJECTION = "STATE_REWARD_INJECTION",
+  FRICTION_DELAY = "STATE_FRICTION_DELAY",
+  ALPHA_COMPLETE = "STATE_ALPHA_COMPLETE",
+  NORMAL = "STATE_NORMAL",
 }
 
 export const RECOVERY_MATRIX = {
@@ -250,28 +364,27 @@ export const RECOVERY_MATRIX = {
     startDay: 0,
     endDay: 14,
     multiplier: 2.5,
-    description: 'Acute Withdrawal (Panic Phase)',
+    description: "Acute Withdrawal (Panic Phase)",
   },
   [RecoveryState.WEEKEND_SHIELD]: {
     multiplier: 2.0,
-    description: 'Structural Isolation (Weekend Void)',
+    description: "Structural Isolation (Weekend Void)",
   },
   [RecoveryState.REWARD_INJECTION]: {
     triggerDay: 21,
     refundPct: 0.05,
-    description: 'Dopamine Trough (Anhedonia Pivot)',
+    description: "Dopamine Trough (Anhedonia Pivot)",
   },
   [RecoveryState.FRICTION_DELAY]: {
     startDay: 45,
     endDay: 60,
     multiplier: 1.5,
     delayHrs: 48,
-    description: 'Bargaining Stage',
+    description: "Bargaining Stage",
   },
   [RecoveryState.ALPHA_COMPLETE]: {
     triggerDay: 90,
     feePct: 0,
-    description: 'Identity Reconstruction (Omega Milestone)',
+    description: "Identity Reconstruction (Omega Milestone)",
   },
 };
-
