@@ -2764,7 +2764,8 @@ export class ContractsService {
       await this.pool.query(
         `INSERT INTO attestations (contract_id, user_id, attestation_date, status, attested_at, urge_level, triggers, coping_mechanisms)
          VALUES ($1, $2, CURRENT_DATE, 'ATTESTED', NOW(), $3, $4::jsonb, $5::jsonb)
-         ON CONFLICT (contract_id, attestation_date) DO UPDATE SET status = 'ATTESTED', attested_at = NOW()
+         ON CONFLICT (contract_id, attestation_date) DO UPDATE SET status = 'ATTESTED', attested_at = NOW(),
+         urge_level = EXCLUDED.urge_level, triggers = EXCLUDED.triggers, coping_mechanisms = EXCLUDED.coping_mechanisms
          WHERE attestations.status NOT IN ('ATTESTED', 'COSIGNED')`,
         [
           contractId,
