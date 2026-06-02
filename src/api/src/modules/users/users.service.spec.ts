@@ -1,7 +1,7 @@
-import { UsersService } from './users.service';
-import { NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { Pool } from 'pg';
-import * as bcrypt from 'bcryptjs';
+import { UsersService } from "./users.service";
+import { NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { Pool } from "pg";
+import * as bcrypt from "bcryptjs";
 
 // Audit events are now written via a private appendTruthLogEvent() that
 // acquires a pooled client (pool.connect()) and runs a transaction
@@ -16,7 +16,7 @@ const mockPool = {
   connect: jest.fn().mockResolvedValue(mockClient),
 } as unknown as Pool;
 
-describe('UsersService', () => {
+describe("UsersService", () => {
   let service: UsersService;
 
   beforeEach(() => {
@@ -28,81 +28,106 @@ describe('UsersService', () => {
     (mockClient.query as jest.Mock).mockResolvedValue({ rows: [] });
   });
 
-  describe('getProfile', () => {
-    it('should return user profile for valid userId', async () => {
+  describe("getProfile", () => {
+    it("should return user profile for valid userId", async () => {
       const user = {
-        id: 'user-1',
-        email: 'demo@styx.protocol',
+        id: "user-1",
+        email: "demo@styx.protocol",
         integrity_score: 75,
-        role: 'USER',
-        status: 'ACTIVE',
-        created_at: '2025-01-01',
-        kyc_status: 'NOT_STARTED',
-        age_verification_status: 'NOT_STARTED',
+        role: "USER",
+        status: "ACTIVE",
+        created_at: "2025-01-01",
+        kyc_status: "NOT_STARTED",
+        age_verification_status: "NOT_STARTED",
         identity_provider: null,
         identity_verification_id: null,
         identity_verified_at: null,
       };
       (mockPool.query as jest.Mock)
         .mockResolvedValueOnce({ rows: [user] })
-        .mockResolvedValueOnce({ rows: [{ count: '2', total: '150.00' }] });
+        .mockResolvedValueOnce({ rows: [{ count: "2", total: "150.00" }] });
 
-      const result = await service.getProfile('user-1');
+      const result = await service.getProfile("user-1");
 
-      expect(result).toEqual(expect.objectContaining({
-        id: 'user-1',
-        email: 'demo@styx.protocol',
-        integrity_score: 75,
-        tier: 'STANDARD',
-        contract_count: 2,
-        total_staked: 150.00,
-        role: 'USER',
-        status: 'ACTIVE',
-        compliance: expect.objectContaining({
-          kyc_status: 'NOT_STARTED',
-          age_verification_status: 'NOT_STARTED',
-          is_kyc_verified: false,
-          is_age_verified: false,
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: "user-1",
+          email: "demo@styx.protocol",
+          integrity_score: 75,
+          tier: "STANDARD",
+          contract_count: 2,
+          total_staked: 150.0,
+          role: "USER",
+          status: "ACTIVE",
+          compliance: expect.objectContaining({
+            kyc_status: "NOT_STARTED",
+            age_verification_status: "NOT_STARTED",
+            is_kyc_verified: false,
+            is_age_verified: false,
+          }),
         }),
-      }));
+      );
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT id, email'),
-        ['user-1'],
+        expect.stringContaining("SELECT id, email"),
+        ["user-1"],
       );
     });
 
-    it('should throw NotFoundException for unknown userId', async () => {
+    it("should throw NotFoundException for unknown userId", async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
 
-      await expect(service.getProfile('unknown-id'))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.getProfile("unknown-id")).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
-  describe('getPublicProfile', () => {
-    it('should return limited public profile fields', async () => {
-      const publicData = { id: 'user-1', integrity_score: 75, created_at: '2025-01-01' };
-      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [publicData] });
+  describe("getPublicProfile", () => {
+    it("should return limited public profile fields", async () => {
+      const publicData = {
+        id: "user-1",
+        integrity_score: 75,
+        created_at: "2025-01-01",
+      };
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [publicData],
+      });
 
-      const result = await service.getPublicProfile('user-1');
+      const result = await service.getPublicProfile("user-1");
 
       expect(result).toEqual(publicData);
     });
 
-    it('should throw NotFoundException for unknown userId', async () => {
+    it("should throw NotFoundException for unknown userId", async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
 
-      await expect(service.getPublicProfile('unknown'))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.getPublicProfile("unknown")).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
-  describe('getLeaderboard', () => {
-    it('should return users sorted by integrity_score descending', async () => {
+  describe("getLeaderboard", () => {
+    it("should return users sorted by integrity_score descending", async () => {
       const leaders = [
-        { id: 'u3', email: 'admin@styx.protocol', integrity_score: 200, created_at: '2025-01-01' },
-        { id: 'u2', email: 'fury@styx.protocol', integrity_score: 90, created_at: '2025-01-01' },
-        { id: 'u1', email: 'demo@styx.protocol', integrity_score: 75, created_at: '2025-01-01' },
+        {
+          id: "u3",
+          email: "admin@styx.protocol",
+          integrity_score: 200,
+          created_at: "2025-01-01",
+        },
+        {
+          id: "u2",
+          email: "fury@styx.protocol",
+          integrity_score: 90,
+          created_at: "2025-01-01",
+        },
+        {
+          id: "u1",
+          email: "demo@styx.protocol",
+          integrity_score: 75,
+          created_at: "2025-01-01",
+        },
       ];
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: leaders });
 
@@ -111,37 +136,31 @@ describe('UsersService', () => {
       expect(result).toHaveLength(3);
       expect(result[0].integrity_score).toBe(200);
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('ORDER BY integrity_score DESC'),
+        expect.stringContaining("ORDER BY integrity_score DESC"),
         [10],
       );
     });
 
-    it('should default to 10 results', async () => {
+    it("should default to 10 results", async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
 
       await service.getLeaderboard();
 
-      expect(mockPool.query).toHaveBeenCalledWith(
-        expect.any(String),
-        [10],
-      );
+      expect(mockPool.query).toHaveBeenCalledWith(expect.any(String), [10]);
     });
 
-    it('should cap limit at 100', async () => {
+    it("should cap limit at 100", async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
 
       await service.getLeaderboard(500);
 
-      expect(mockPool.query).toHaveBeenCalledWith(
-        expect.any(String),
-        [100],
-      );
+      expect(mockPool.query).toHaveBeenCalledWith(expect.any(String), [100]);
     });
 
     it('should filter by weekly activity when period is "weekly"', async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
 
-      await service.getLeaderboard(10, 'weekly');
+      await service.getLeaderboard(10, "weekly");
 
       expect(mockPool.query).toHaveBeenCalledWith(
         expect.stringContaining("INTERVAL '7 days'"),
@@ -152,7 +171,7 @@ describe('UsersService', () => {
     it('should filter by monthly activity when period is "monthly"', async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
 
-      await service.getLeaderboard(10, 'monthly');
+      await service.getLeaderboard(10, "monthly");
 
       expect(mockPool.query).toHaveBeenCalledWith(
         expect.stringContaining("INTERVAL '30 days'"),
@@ -160,97 +179,179 @@ describe('UsersService', () => {
       );
     });
 
-    it('should not add interval filter for alltime period', async () => {
+    it("should not add interval filter for alltime period", async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
 
-      await service.getLeaderboard(10, 'alltime');
+      await service.getLeaderboard(10, "alltime");
 
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.not.stringContaining('INTERVAL'),
+        expect.not.stringContaining("INTERVAL"),
         [10],
       );
     });
 
-    it('should not add interval filter when period is undefined', async () => {
+    it("should not add interval filter when period is undefined", async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
 
       await service.getLeaderboard(10);
 
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.not.stringContaining('INTERVAL'),
+        expect.not.stringContaining("INTERVAL"),
         [10],
       );
     });
   });
 
-  describe('changePassword (AU12)', () => {
-    it('updates the hash and revokes existing refresh tokens', async () => {
-      const currentHash = bcrypt.hashSync('old-password', 10); // allow-secret
+  describe("changePassword (AU12)", () => {
+    it("updates the hash and revokes existing refresh tokens", async () => {
+      const currentHash = bcrypt.hashSync("old-password", 10); // allow-secret
       (mockPool.query as jest.Mock)
-        .mockResolvedValueOnce({ rows: [{ id: 'user-1', password_hash: currentHash }] }) // SELECT
+        .mockResolvedValueOnce({
+          rows: [{ id: "user-1", password_hash: currentHash }],
+        }) // SELECT
         .mockResolvedValueOnce({ rows: [] }) // UPDATE password_hash
         .mockResolvedValueOnce({ rows: [] }); // revoke refresh tokens
 
-      const result = await service.changePassword('user-1', 'old-password', 'new-strong-password'); // allow-secret
+      const result = await service.changePassword(
+        "user-1",
+        "old-password",
+        "new-strong-password",
+      ); // allow-secret
 
-      expect(result).toEqual({ status: 'password_updated' });
+      expect(result).toEqual({ status: "password_updated" });
 
-      const sqls = (mockPool.query as jest.Mock).mock.calls.map((c) => String(c[0]));
-      expect(sqls.some((s) => s.includes('UPDATE users SET password_hash'))).toBe(true);
+      const sqls = (mockPool.query as jest.Mock).mock.calls.map((c) =>
+        String(c[0]),
+      );
+      expect(
+        sqls.some((s) => s.includes("UPDATE users SET password_hash")),
+      ).toBe(true);
       // AU12: refresh tokens must be revoked so old sessions cannot survive the change.
       const revokeCall = (mockPool.query as jest.Mock).mock.calls.find((c) =>
-        String(c[0]).includes('UPDATE refresh_tokens SET revoked = TRUE'),
+        String(c[0]).includes("UPDATE refresh_tokens SET revoked = TRUE"),
       );
       expect(revokeCall).toBeDefined();
-      expect(revokeCall![1]).toEqual(['user-1']);
+      expect(revokeCall![1]).toEqual(["user-1"]);
     });
 
-    it('rejects when the current password is incorrect and does not revoke tokens', async () => {
-      const currentHash = bcrypt.hashSync('old-password', 10); // allow-secret
-      (mockPool.query as jest.Mock)
-        .mockResolvedValueOnce({ rows: [{ id: 'user-1', password_hash: currentHash }] }); // SELECT
+    it("rejects when the current password is incorrect and does not revoke tokens", async () => {
+      const currentHash = bcrypt.hashSync("old-password", 10); // allow-secret
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [{ id: "user-1", password_hash: currentHash }],
+      }); // SELECT
 
       await expect(
-        service.changePassword('user-1', 'wrong-password', 'new-strong-password'), // allow-secret
+        service.changePassword(
+          "user-1",
+          "wrong-password",
+          "new-strong-password",
+        ), // allow-secret
       ).rejects.toThrow(UnauthorizedException);
 
       const revoked = (mockPool.query as jest.Mock).mock.calls.some((c) =>
-        String(c[0]).includes('UPDATE refresh_tokens SET revoked = TRUE'),
+        String(c[0]).includes("UPDATE refresh_tokens SET revoked = TRUE"),
       );
       expect(revoked).toBe(false);
     });
   });
 
-  describe('requestDeletion', () => {
-    it('should mark user as pending deletion and stamp deletion_requested_at', async () => {
+  describe("requestDeletion", () => {
+    it("should mark user as pending deletion and stamp deletion_requested_at", async () => {
       // SELECT user + UPDATE status go through pool.query; the audit event is
       // appended via a pooled client transaction (mockClient).
       (mockPool.query as jest.Mock)
-        .mockResolvedValueOnce({ rows: [{ id: 'user-1', status: 'ACTIVE' }] }) // SELECT
+        .mockResolvedValueOnce({ rows: [{ id: "user-1", status: "ACTIVE" }] }) // SELECT
         .mockResolvedValueOnce({ rows: [] }); // UPDATE
 
-      const result = await service.requestDeletion('user-1');
+      const result = await service.requestDeletion("user-1");
 
-      expect(result).toEqual({ status: 'deletion_requested' });
+      expect(result).toEqual({ status: "deletion_requested" });
       expect((mockPool.query as jest.Mock).mock.calls[1][0]).toContain(
         "UPDATE users SET status = 'PENDING_DELETION', deletion_requested_at = NOW() WHERE id = $1",
       );
-      expect((mockPool.query as jest.Mock).mock.calls[1][1]).toEqual(['user-1']);
+      expect((mockPool.query as jest.Mock).mock.calls[1][1]).toEqual([
+        "user-1",
+      ]);
 
       // The deletion request is appended to the tamper-evident chain via a
       // pooled-client transaction.
       expect(mockPool.connect).toHaveBeenCalled();
-      const clientSql = (mockClient.query as jest.Mock).mock.calls.map((c) => String(c[0]));
-      expect(clientSql).toContain('BEGIN');
-      expect(clientSql.some((sql) => sql.includes('INSERT INTO event_log'))).toBe(true);
-      expect(clientSql).toContain('COMMIT');
+      const clientSql = (mockClient.query as jest.Mock).mock.calls.map((c) =>
+        String(c[0]),
+      );
+      expect(clientSql).toContain("BEGIN");
+      expect(
+        clientSql.some((sql) => sql.includes("INSERT INTO event_log")),
+      ).toBe(true);
+      expect(clientSql).toContain("COMMIT");
       expect(mockClient.release).toHaveBeenCalled();
     });
 
-    it('should throw NotFoundException when requesting deletion for unknown user', async () => {
+    it("should throw NotFoundException when requesting deletion for unknown user", async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
 
-      await expect(service.requestDeletion('missing-user')).rejects.toThrow(NotFoundException);
+      await expect(service.requestDeletion("missing-user")).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe("setPregnancyExclusion (H3 Triadic Review fix)", () => {
+    it("activates pregnancy_exclusion, stamps the column, writes audit row + truth-log event", async () => {
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({
+          rows: [
+            { pregnancy_exclusion: true, pregnancy_exclusion_at: new Date() },
+          ],
+        })
+        .mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.setPregnancyExclusion("user-1", true);
+
+      expect(result.pregnancy_exclusion).toBe(true);
+
+      const sqls = (mockPool.query as jest.Mock).mock.calls.map((c) =>
+        String(c[0]),
+      );
+      expect(
+        sqls.some(
+          (s) =>
+            s.includes("UPDATE users") &&
+            s.includes("pregnancy_exclusion = $2"),
+        ),
+      ).toBe(true);
+      expect(
+        sqls.some((s) => s.includes("INSERT INTO pregnancy_exclusion_events")),
+      ).toBe(true);
+      expect(mockPool.connect).toHaveBeenCalled();
+
+      // The truth-log event_type is bound as a parameter ($2), not inlined,
+      // so check the bound argument list on the event_log INSERT.
+      const eventLogInsert = (mockClient.query as jest.Mock).mock.calls.find(
+        (c) => String(c[0]).includes("INSERT INTO event_log"),
+      );
+      expect(eventLogInsert).toBeDefined();
+      expect(eventLogInsert![1][1]).toBe("PREGNANCY_EXCLUSION_ACTIVATED");
+    });
+
+    it("deactivates and clears pregnancy_exclusion_at", async () => {
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({
+          rows: [{ pregnancy_exclusion: false, pregnancy_exclusion_at: null }],
+        })
+        .mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.setPregnancyExclusion("user-1", false);
+
+      expect(result.pregnancy_exclusion).toBe(false);
+      expect(result.pregnancy_exclusion_at).toBeNull();
+    });
+
+    it("throws NotFoundException for an unknown user", async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
+      await expect(
+        service.setPregnancyExclusion("missing", true),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

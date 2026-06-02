@@ -76,10 +76,37 @@ export class BehavioralEnhancementsService {
     userId: string,
     deviceId: string,
   ): Promise<{ subscribed: boolean }> {
-    this.logger.log(
-      `User ${userId} subscribed to commitment device ${deviceId}`,
+    const catalog = this.getCommitmentDeviceCatalog();
+    if (!catalog.some((d) => d.id === deviceId)) {
+      throw new BadRequestException(`Unknown commitment device: ${deviceId}`);
+    }
+
+    const { rows } = await this.pool.query(
+      `INSERT INTO commitment_device_subscriptions (user_id, device_id, status)
+       VALUES ($1, $2, 'ACTIVE')
+       ON CONFLICT (user_id, device_id) DO UPDATE
+         SET status = 'ACTIVE', cancelled_at = NULL
+       RETURNING id, status`,
+      [userId, deviceId],
     );
-    return { subscribed: true };
+
+    this.logger.log(
+      `User ${userId} subscribed to commitment device ${deviceId} (id=${rows[0].id})`,
+    );
+    return { subscribed: rows[0].status === "ACTIVE" };
+  }
+
+  async unsubscribeFromDevice(
+    userId: string,
+    deviceId: string,
+  ): Promise<{ subscribed: boolean }> {
+    const { rowCount } = await this.pool.query(
+      `UPDATE commitment_device_subscriptions
+       SET status = 'CANCELLED', cancelled_at = NOW()
+       WHERE user_id = $1 AND device_id = $2 AND status = 'ACTIVE'`,
+      [userId, deviceId],
+    );
+    return { subscribed: rowCount === 0 };
   }
 
   async calculateAmplifiedStake(
