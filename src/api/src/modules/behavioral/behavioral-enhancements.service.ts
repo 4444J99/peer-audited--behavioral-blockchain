@@ -1,4 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
 import { Pool } from "pg";
 import {
   CrabBucketSignal,
@@ -206,9 +211,20 @@ export class BehavioralEnhancementsService {
       [sourceContractId, userId],
     );
 
+    if (!contract) {
+      throw new NotFoundException(
+        `Source contract ${sourceContractId} not found for user ${userId}`,
+      );
+    }
+    if (contract.stake_amount == null) {
+      throw new BadRequestException(
+        `Source contract ${sourceContractId} has no stake_amount recorded`,
+      );
+    }
+
     const eligibility = validateSwapEligibility(
-      contract?.age_days ?? 0,
-      contract?.status ?? "UNKNOWN",
+      contract.age_days ?? 0,
+      contract.status ?? "UNKNOWN",
       0,
     );
     if (!eligibility.eligible) throw new Error(eligibility.reason);

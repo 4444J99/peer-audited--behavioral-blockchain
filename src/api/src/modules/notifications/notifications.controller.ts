@@ -1,86 +1,104 @@
-import { Controller, Get, Post, Param, Query, Res, Sse, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import type { Response } from 'express';
-import { Observable } from 'rxjs';
-import { AuthGuard } from '../../../guards/auth.guard';
-import { issueSseTicket } from '../../../guards/sse-ticket.store';
-import { CurrentUser, Public } from '../../common/decorators/current-user.decorator';
-import { NotificationsService } from './notifications.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Res,
+  Sse,
+  UseGuards,
+} from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import type { Response } from "express";
+import { Observable } from "rxjs";
+import { AuthGuard } from "../../../guards/auth.guard";
+import { issueSseTicket } from "../../../guards/sse-ticket.store";
+import {
+  CurrentUser,
+  Public,
+} from "../../common/decorators/current-user.decorator";
+import { NotificationsService } from "./notifications.service";
 
-@ApiTags('Notifications')
+@ApiTags("Notifications")
 @ApiBearerAuth()
-@Controller('notifications')
+@Controller("notifications")
 @UseGuards(AuthGuard)
 export class NotificationsController {
   constructor(private readonly notifications: NotificationsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all notifications for the current user' })
+  @ApiOperation({ summary: "Get all notifications for the current user" })
   async getNotifications(@CurrentUser() user: { id: string }) {
     return this.notifications.getUserNotifications(user.id);
   }
 
-  @Get('unread-count')
-  @ApiOperation({ summary: 'Get count of unread notifications' })
+  @Get("unread-count")
+  @ApiOperation({ summary: "Get count of unread notifications" })
   async getUnreadCount(@CurrentUser() user: { id: string }) {
     const count = await this.notifications.getUnreadCount(user.id);
     return { count };
   }
 
-  @Post('stream-ticket')
-  @ApiOperation({ summary: 'Issue a short-lived ticket for notification SSE subscription' })
+  @Post("stream-ticket")
+  @ApiOperation({
+    summary: "Issue a short-lived ticket for notification SSE subscription",
+  })
   issueStreamTicket(@CurrentUser() user: { id: string }) {
-    return issueSseTicket(user.id, 'notifications');
+    return issueSseTicket(user.id, "notifications");
   }
 
-  @Post('stream-cookie')
-  @ApiOperation({ summary: 'Issue a short-lived HttpOnly cookie for notification SSE subscription' })
+  @Post("stream-cookie")
+  @ApiOperation({
+    summary:
+      "Issue a short-lived HttpOnly cookie for notification SSE subscription",
+  })
   issueStreamCookie(
     @CurrentUser() user: { id: string },
     @Res({ passthrough: true }) res: Response,
   ) {
-    const issued = issueSseTicket(user.id, 'notifications');
-    res.cookie('styx_notifications_sse_ticket', issued.ticket, {
+    const issued = issueSseTicket(user.id, "notifications");
+    res.cookie("styx_notifications_sse_ticket", issued.ticket, {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/notifications/stream',
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/notifications/stream",
       maxAge: issued.expiresInSeconds * 1000,
     });
     return { expiresInSeconds: issued.expiresInSeconds };
   }
 
-  @Sse('stream')
-  @ApiOperation({ summary: 'Subscribe to real-time notification stream via SSE' })
+  @Sse("stream")
+  @ApiOperation({
+    summary: "Subscribe to real-time notification stream via SSE",
+  })
   stream(@CurrentUser() user: { id: string }): Observable<MessageEvent> {
     return this.notifications.getStreamForUser(user.id);
   }
 
-  @Post(':id/read')
-  @ApiOperation({ summary: 'Mark a notification as read' })
-  async markRead(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-  ) {
+  @Post(":id/read")
+  @ApiOperation({ summary: "Mark a notification as read" })
+  async markRead(@Param("id") id: string, @CurrentUser() user: { id: string }) {
     await this.notifications.markRead(id, user.id);
-    return { status: 'read' };
+    return { status: "read" };
   }
 }
 
 /**
  * Public feed controller — serves anonymized system events.
  * Mounted at /feed (separate from /notifications which requires auth).
+ * Renamed from FeedController to PublicFeedController to avoid a class
+ * name collision with the SSE-stream FeedController in modules/feed.
  */
-@ApiTags('Feed')
-@Controller('feed')
-export class FeedController {
+@ApiTags("Feed")
+@Controller("feed")
+export class PublicFeedController {
   constructor(private readonly notifications: NotificationsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get the public anonymized event feed' })
+  @ApiOperation({ summary: "Get the public anonymized event feed" })
   @Public()
-  async getPublicFeed(@Query('limit') limit?: string) {
-    const maxLimit = Math.min(parseInt(limit || '50', 10) || 50, 100);
+  async getPublicFeed(@Query("limit") limit?: string) {
+    const maxLimit = Math.min(parseInt(limit || "50", 10) || 50, 100);
     return this.notifications.getPublicFeed(maxLimit);
   }
 }
