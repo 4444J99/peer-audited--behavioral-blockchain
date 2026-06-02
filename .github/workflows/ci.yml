@@ -207,7 +207,7 @@ jobs:
       - id: check
         run: |
           BASE="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
-          if git diff --name-only "$BASE" | grep -q "^src/web/"; then
+          if git diff --name-only "$BASE" | grep -qE "^(src/web/|e2e/|src/shared/|\.config/playwright/)"; then
             echo "web=true" >> $GITHUB_OUTPUT
           else
             echo "web=false" >> $GITHUB_OUTPUT
@@ -215,6 +215,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [build_and_test_matrix, beta_readiness, changed-files]
     if: needs.changed-files.outputs.web == 'true'
     continue-on-error: true
