@@ -1,5 +1,15 @@
-const path = require('path');
-const repoRoot = path.join(__dirname, '../../');
+const path = require("path");
+const repoRoot = path.resolve(__dirname, "../..");
+
+function normalizeBaseUrl(value) {
+  return value.replace(/\/+$/, "");
+}
+
+function getApiUrl() {
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL || process.env.STYX_API_PUBLIC_URL;
+  return apiUrl ? normalizeBaseUrl(apiUrl) : null;
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -8,10 +18,13 @@ const nextConfig = {
     root: repoRoot,
   },
   async rewrites() {
+    const apiUrl = getApiUrl();
+    if (!apiUrl) return [];
+
     return [
       {
-        source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/:path*`,
+        source: "/api/:path*",
+        destination: `${apiUrl}/:path*`,
       },
     ];
   },

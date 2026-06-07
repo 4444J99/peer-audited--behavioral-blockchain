@@ -4,11 +4,11 @@
   "main": "dist/api/src/main.js",
   "scripts": {
     "start": "node dist/api/src/main.js",
-    "dev": "nest start --watch",
+    "dev": "node ../../scripts/dev/run-api.mjs",
     "build": "nest build",
     "lint": "tsc --noEmit",
     "test": "jest --forceExit",
-    "migrate": "tsx database/migrations/migrate.ts"
+    "migrate": "node ../../scripts/dev/run-migrate.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.500.0",

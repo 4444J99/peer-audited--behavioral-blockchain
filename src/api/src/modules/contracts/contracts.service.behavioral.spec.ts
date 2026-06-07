@@ -1,54 +1,74 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { ContractsService, CreateContractInput } from './contracts.service';
-import { LedgerService } from '../../../services/ledger/ledger.service';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { StripeFboService } from '../../../services/escrow/stripe.service';
-import { DisputeService } from '../../../services/escrow/dispute.service';
-import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
-import { AegisProtocolService } from '../../../services/health/aegis.service';
-import { RecoveryProtocolService } from '../../../services/health/recovery-protocol.service';
-import { AnomalyService } from '../../../services/anomaly/anomaly.service';
-import { OathCategory, VerificationMethod, FAILURE_COOL_OFF_DAYS, DOWNSCALE_STRIKE_THRESHOLD } from '../../../../shared/libs/behavioral-logic';
-import { Pool } from 'pg';
+import { BadRequestException, ForbiddenException } from "@nestjs/common";
+import { ContractsService, CreateContractInput } from "./contracts.service";
+import { LedgerService } from "../../../services/ledger/ledger.service";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { StripeFboService } from "../../../services/escrow/stripe.service";
+import { DisputeService } from "../../../services/escrow/dispute.service";
+import { FuryRouterService } from "../../../services/fury-router/fury-router.service";
+import { AegisProtocolService } from "../../../services/health/aegis.service";
+import { RecoveryProtocolService } from "../../../services/health/recovery-protocol.service";
+import { AnomalyService } from "../../../services/anomaly/anomaly.service";
+import {
+  OathCategory,
+  VerificationMethod,
+  FAILURE_COOL_OFF_DAYS,
+  DOWNSCALE_STRIKE_THRESHOLD,
+} from "../../../../shared/libs/behavioral-logic";
+import { Pool } from "pg";
 
-describe('ContractsService — Behavioral Physics', () => {
+describe("ContractsService — Behavioral Physics", () => {
   let service: ContractsService;
   let mockPool: { query: jest.Mock };
+  const originalEnv = process.env;
 
-  const mockLedger = { recordTransaction: jest.fn().mockResolvedValue('entry-id') } as unknown as LedgerService;
-  const mockTruthLog = { appendEvent: jest.fn().mockResolvedValue('log-id') } as unknown as TruthLogService;
+  const mockLedger = {
+    recordTransaction: jest.fn().mockResolvedValue("entry-id"),
+  } as unknown as LedgerService;
+  const mockTruthLog = {
+    appendEvent: jest.fn().mockResolvedValue("log-id"),
+  } as unknown as TruthLogService;
   const mockStripe = {
-    holdStake: jest.fn().mockResolvedValue({ id: 'pi_test_123' }),
-    captureStake: jest.fn().mockResolvedValue({ id: 'pi_test_123' }),
-    cancelHold: jest.fn().mockResolvedValue({ id: 'pi_test_123' }),
+    holdStake: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
+    captureStake: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
+    cancelHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
   } as unknown as StripeFboService;
   const mockRealStripe = { resolveEscrow: jest.fn().mockResolvedValue(true) };
-  const mockFuryRouter = { routeProof: jest.fn().mockResolvedValue('job-id-1') } as unknown as FuryRouterService;
-  const mockDispute = { initiateAppeal: jest.fn() } as unknown as DisputeService;
+  const mockFuryRouter = {
+    routeProof: jest.fn().mockResolvedValue("job-id-1"),
+  } as unknown as FuryRouterService;
+  const mockDispute = {
+    initiateAppeal: jest.fn(),
+  } as unknown as DisputeService;
   const mockAegis = {
     validatePsychologicalGuardrails: jest.fn(),
     getVolatilityMultiplier: jest.fn().mockReturnValue(1.0),
   } as unknown as AegisProtocolService;
-  const mockRecovery = { validateRecoveryContract: jest.fn().mockResolvedValue(true) } as unknown as RecoveryProtocolService;
-  const mockDynamicPenalty = { calculateState: jest.fn().mockReturnValue({ state: 'STATE_NORMAL', multiplier: 1.0 }) };
-  const mockAnomaly = { analyze: jest.fn().mockResolvedValue({ rejected: false, flags: [] }) } as unknown as AnomalyService;
-
-
+  const mockRecovery = {
+    validateRecoveryContract: jest.fn().mockResolvedValue(true),
+  } as unknown as RecoveryProtocolService;
+  const mockDynamicPenalty = {
+    calculateState: jest
+      .fn()
+      .mockReturnValue({ state: "STATE_NORMAL", multiplier: 1.0 }),
+  };
+  const mockAnomaly = {
+    analyze: jest.fn().mockResolvedValue({ rejected: false, flags: [] }),
+  } as unknown as AnomalyService;
 
   const activeUser = {
-    id: 'user-1',
-    email: 'user@styx.app',
-    stripe_customer_id: 'cus_test_1',
+    id: "user-1",
+    email: "user@styx.app",
+    stripe_customer_id: "cus_test_1",
     integrity_score: 50,
-    account_id: 'acct-1',
-    status: 'ACTIVE',
+    account_id: "acct-1",
+    status: "ACTIVE",
   };
 
   // stakeAmount is denominated in DOLLARS (the service converts to cents via
   // toCents()). Score 50 → tiers [TIER_1_MICRO_STAKES, TIER_2_STANDARD] →
   // tier max is 10000 cents ($100), so valid stakes must stay at/under $100.
   const validDto: CreateContractInput = {
-    userId: 'user-1',
+    userId: "user-1",
     oathCategory: OathCategory.DEEP_WORK_FOCUS,
     verificationMethod: VerificationMethod.API_SCREEN_TIME,
     stakeAmount: 15, // $15 → 1500 cents, within the $100 TIER_2 limit
@@ -56,6 +76,10 @@ describe('ContractsService — Behavioral Physics', () => {
   };
 
   beforeEach(() => {
+    process.env = {
+      ...originalEnv,
+      STYX_WEB_PUBLIC_URL: "http://localhost:3001",
+    };
     mockPool = { query: jest.fn() };
     service = new ContractsService(
       mockPool as unknown as Pool,
@@ -74,10 +98,14 @@ describe('ContractsService — Behavioral Physics', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
   // ── Cool-off period ──────────────────────────────────────────
 
-  describe('cool-off period', () => {
-    it('should reject contract creation when user has a recent failure', async () => {
+  describe("cool-off period", () => {
+    it("should reject contract creation when user has a recent failure", async () => {
       // User lookup
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Cool-off query: 1 recent failure
@@ -91,7 +119,7 @@ describe('ContractsService — Behavioral Physics', () => {
       );
     });
 
-    it('should allow contract creation when no recent failures', async () => {
+    it("should allow contract creation when no recent failures", async () => {
       // User lookup
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Cool-off query: no recent failures
@@ -99,23 +127,23 @@ describe('ContractsService — Behavioral Physics', () => {
       // Total failures (downscaling check)
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       // Contract insert
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "contract-1" }] });
       // UPDATE contracts SET status = 'ACTIVE'
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       // Prior contracts (onboarding)
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       // Escrow lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "escrow-acct" }] });
 
       const result = await service.createContract(validDto);
-      expect(result.contractId).toBe('contract-1');
+      expect(result.contractId).toBe("contract-1");
     });
   });
 
   // ── Stake tier limits ────────────────────────────────────────
 
-  describe('stake tier limits', () => {
-    it('should reject stake exceeding tier max for TIER_2_STANDARD', async () => {
+  describe("stake tier limits", () => {
+    it("should reject stake exceeding tier max for TIER_2_STANDARD", async () => {
       // Score 50 → tiers = [TIER_1_MICRO_STAKES, TIER_2_STANDARD] → max 10000 cents ($100)
       const dto = { ...validDto, stakeAmount: 150 }; // $150 → 15000 cents, over the $100 limit
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
@@ -130,7 +158,7 @@ describe('ContractsService — Behavioral Physics', () => {
       );
     });
 
-    it('should allow stake within tier limit', async () => {
+    it("should allow stake within tier limit", async () => {
       const dto = { ...validDto, stakeAmount: 80 }; // $80 → 8000 cents, under the $100 TIER_2 limit
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Cool-off: no failures
@@ -138,23 +166,23 @@ describe('ContractsService — Behavioral Physics', () => {
       // Total failures (downscaling)
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       // Contract insert
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-2' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "contract-2" }] });
       // UPDATE contracts SET status = 'ACTIVE'
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       // Prior contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       // Escrow lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "escrow-acct" }] });
 
       const result = await service.createContract(dto);
-      expect(result.contractId).toBe('contract-2');
+      expect(result.contractId).toBe("contract-2");
     });
   });
 
   // ── Dynamic downscaling ──────────────────────────────────────
 
-  describe('dynamic downscaling', () => {
-    it('should reject high stake after 3+ failures', async () => {
+  describe("dynamic downscaling", () => {
+    it("should reject high stake after 3+ failures", async () => {
       // $80 → 8000 cents: under tier max (10000) but over the downscaled max
       // (10000 * 0.5 = 5000 cents after 3 failures).
       const dto = { ...validDto, stakeAmount: 80 };
@@ -172,7 +200,7 @@ describe('ContractsService — Behavioral Physics', () => {
       );
     });
 
-    it('should allow stake within downscaled limit', async () => {
+    it("should allow stake within downscaled limit", async () => {
       const dto = { ...validDto, stakeAmount: 10 }; // $10 → 1000 cents, well under downscaled max of 5000 cents ($50)
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       // Cool-off
@@ -180,19 +208,19 @@ describe('ContractsService — Behavioral Physics', () => {
       // Total failures: 3 → max = 50
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 3 }] });
       // Contract insert
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-3' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "contract-3" }] });
       // UPDATE contracts SET status = 'ACTIVE'
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       // Prior contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
       // Escrow lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "escrow-acct" }] });
 
       const result = await service.createContract(dto);
-      expect(result.contractId).toBe('contract-3');
+      expect(result.contractId).toBe("contract-3");
     });
 
-    it('should apply exponential downscaling for 6+ failures', async () => {
+    it("should apply exponential downscaling for 6+ failures", async () => {
       // $30 → 3000 cents. 6 failures → 0.5^2 = 0.25 → max = 10000 * 0.25 = 2500 cents,
       // so 3000 cents is rejected while still under the $100 tier ceiling.
       const dto = { ...validDto, stakeAmount: 30 };
@@ -211,16 +239,16 @@ describe('ContractsService — Behavioral Physics', () => {
 
   // ── Recovery contracts ─────────────────────────────────────
 
-  describe('recovery contracts', () => {
+  describe("recovery contracts", () => {
     const recoveryDto: CreateContractInput = {
-      userId: 'user-1',
+      userId: "user-1",
       oathCategory: OathCategory.NO_CONTACT_BOUNDARY,
       verificationMethod: VerificationMethod.DAILY_ATTESTATION,
       stakeAmount: 15, // $15 → 1500 cents, within the $100 TIER_2 limit
       durationDays: 14,
       recoveryMetadata: {
-        accountabilityPartnerEmail: 'friend@example.com',
-        noContactIdentifiers: ['hash_abc'],
+        accountabilityPartnerEmail: "friend@example.com",
+        noContactIdentifiers: ["hash_abc"],
         acknowledgments: {
           voluntary: true,
           noMinors: true,
@@ -237,91 +265,101 @@ describe('ContractsService — Behavioral Physics', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // activeRecoveryContracts count
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // lastRecoveryContract (no prior)
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // lastRecoveryFailure (no prior)
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-r1' }] }); // Contract insert
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "contract-r1" }] }); // Contract insert
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts SET status = 'ACTIVE'
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // Bounty insert (for NOCONTACT)
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // AP insert
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] }); // Prior contracts
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] }); // Escrow lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "escrow-acct" }] }); // Escrow lookup
     }
 
-    it('should call RecoveryProtocolService.validateRecoveryContract for RECOVERY_ oaths', async () => {
+    it("should call RecoveryProtocolService.validateRecoveryContract for RECOVERY_ oaths", async () => {
       mockSuccessfulRecoveryFlow();
 
       await service.createContract(recoveryDto);
 
       expect(mockRecovery.validateRecoveryContract).toHaveBeenCalledWith(
-        'user-1',
-        'RECOVERY_NOCONTACT',
+        "user-1",
+        "RECOVERY_NOCONTACT",
         14,
         recoveryDto.recoveryMetadata,
       );
     });
 
-
-    it('should create accountability partner row for RECOVERY contracts', async () => {
+    it("should create accountability partner row for RECOVERY contracts", async () => {
       mockSuccessfulRecoveryFlow();
 
       await service.createContract(recoveryDto);
 
       // The AP insert is the 6th query call (index 5)
       const apInsertCall = mockPool.query.mock.calls.find(
-        ([sql]: [string]) => typeof sql === 'string' && sql.includes('accountability_partners'),
+        ([sql]: [string]) =>
+          typeof sql === "string" && sql.includes("accountability_partners"),
       );
       expect(apInsertCall).toBeDefined();
-      expect(apInsertCall![1]).toContain('friend@example.com');
+      expect(apInsertCall![1]).toContain("friend@example.com");
     });
 
-    it('should store recovery metadata in contract JSONB column', async () => {
+    it("should store recovery metadata in contract JSONB column", async () => {
       mockSuccessfulRecoveryFlow();
 
       await service.createContract(recoveryDto);
 
       // The contract insert is the 4th query call (index 3)
       const insertCall = mockPool.query.mock.calls.find(
-        ([sql]: [string]) => typeof sql === 'string' && sql.includes('INSERT INTO contracts'),
+        ([sql]: [string]) =>
+          typeof sql === "string" && sql.includes("INSERT INTO contracts"),
       );
       expect(insertCall).toBeDefined();
       const metadataParam = insertCall![1][7]; // 8th parameter ($8) — metadata
       const parsed = JSON.parse(metadataParam);
-      expect(parsed.recovery.noContactIdentifiers).toEqual(['hash_abc']);
+      expect(parsed.recovery.noContactIdentifiers).toEqual(["hash_abc"]);
       expect(parsed.recovery.acknowledgments.voluntary).toBe(true);
     });
 
-    it('should not call RecoveryProtocolService for non-RECOVERY oaths', async () => {
+    it("should not call RecoveryProtocolService for non-RECOVERY oaths", async () => {
       // Standard flow for COGNITIVE oath
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-c1' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "contract-c1" }] });
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "escrow-acct" }] });
 
       await service.createContract(validDto);
 
       expect(mockRecovery.validateRecoveryContract).not.toHaveBeenCalled();
     });
 
-    it('should reject RECOVERY oath with invalid category', async () => {
-      const dto = { ...recoveryDto, oathCategory: 'RECOVERY_INVALID' };
+    it("should reject RECOVERY oath with invalid category", async () => {
+      const dto = { ...recoveryDto, oathCategory: "RECOVERY_INVALID" };
 
-      await expect(service.createContract(dto)).rejects.toThrow(BadRequestException);
+      await expect(service.createContract(dto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
-    it('should reject RECOVERY oath with wrong verification method', async () => {
+    it("should reject RECOVERY oath with wrong verification method", async () => {
       const dto = {
         ...recoveryDto,
         verificationMethod: VerificationMethod.HARDWARE_HEALTHKIT,
       };
 
-      await expect(service.createContract(dto)).rejects.toThrow(BadRequestException);
+      await expect(service.createContract(dto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
-    it('should propagate RecoveryProtocol 406 errors', async () => {
-      const { HttpException, HttpStatus } = require('@nestjs/common');
-      (mockRecovery.validateRecoveryContract as jest.Mock).mockRejectedValueOnce(
-        new HttpException('Recovery Protocol: Duration exceeded', HttpStatus.NOT_ACCEPTABLE)
+    it("should propagate RecoveryProtocol 406 errors", async () => {
+      const { HttpException, HttpStatus } = require("@nestjs/common");
+      (
+        mockRecovery.validateRecoveryContract as jest.Mock
+      ).mockRejectedValueOnce(
+        new HttpException(
+          "Recovery Protocol: Duration exceeded",
+          HttpStatus.NOT_ACCEPTABLE,
+        ),
       );
 
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] });
@@ -329,10 +367,12 @@ describe('ContractsService — Behavioral Physics', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] });
 
-      await expect(service.createContract(recoveryDto)).rejects.toThrow(HttpException);
+      await expect(service.createContract(recoveryDto)).rejects.toThrow(
+        HttpException,
+      );
     });
 
-    it('should create contract with 30-day cap for RECOVERY_SUBSTANCE', async () => {
+    it("should create contract with 30-day cap for RECOVERY_SUBSTANCE", async () => {
       const dto: CreateContractInput = {
         ...recoveryDto,
         oathCategory: OathCategory.SUBSTANCE_ABSTINENCE,
@@ -345,14 +385,14 @@ describe('ContractsService — Behavioral Physics', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // activeRecoveryContracts
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // lastRecoveryContract
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // lastRecoveryFailure
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'contract-r2' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "contract-r2" }] });
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts
       mockPool.query.mockResolvedValueOnce({ rows: [] }); // AP insert (no bounty for SUBSTANCE)
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-acct' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "escrow-acct" }] });
 
       const result = await service.createContract(dto);
-      expect(result.contractId).toBe('contract-r2');
+      expect(result.contractId).toBe("contract-r2");
     });
   });
 });

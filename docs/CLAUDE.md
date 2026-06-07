@@ -18,28 +18,30 @@ bash scripts/setup.sh
 
 # Day-to-day:
 make install          # npm install across all workspaces
-make dev              # turbo run dev (API + Web + Mobile)
+make dev              # env-backed API + Web app stack
+make dev-turbo        # turbo run dev for the full workspace fan-out
 make build            # turbo run build
 make test             # turbo run test
-make docker-up        # docker-compose up -d (PostgreSQL + Redis)
+make docker-up        # docker compose using .env / STYX_DOCKER_* values
 npx turbo run lint    # strict TypeScript lint (tsc --noEmit per workspace)
 npm run format        # prettier across all workspaces
 npm run clean         # turbo clean + rm node_modules
 ```
 
 Individual workspace dev:
+
 ```bash
-cd src/api && npm run dev          # nest start --watch
-cd src/web && npm run dev          # next dev -p 3001
+cd src/api && npm run dev          # repo-root env-backed API runner
+cd src/web && npm run dev          # repo-root env-backed Next runner
 cd src/mobile && npm start         # metro bundler (Expo)
 cd src/mobile && npx expo run:ios  # iOS simulator
 cd src/desktop && npm run dev      # vite dev
 cd src/pitch && npm run dev        # vite dev (interactive pitch deck)
 cd src/shared && npm run build     # tsc
-cd src/api && npm run migrate      # run database migrations
+cd src/api && npm run migrate      # repo-root env-backed database migrations
 ```
 
-API docs (Swagger/OpenAPI): `http://localhost:3000/api/docs` when API is running.
+API docs (Swagger/OpenAPI): `$STYX_API_PUBLIC_URL/api/docs` when API is running.
 
 ### Testing
 
@@ -65,11 +67,12 @@ make test-e2e-ui                  # Playwright UI mode
 npm run test:e2e:headed           # headed mode
 ```
 
-Config: `.config/playwright/playwright.config.ts`. Tests in `e2e/`. Base URL defaults to `http://localhost:3001`. Web server auto-starts via `webServer` config. E2E suites: auth, auth-guards, contract-lifecycle, dashboard, fury-workbench, recovery-contracts, wallet.
+Config: `.config/playwright/playwright.config.ts`. Tests in `e2e/`. Base URL is resolved from Playwright config/env. Web server auto-starts via `webServer` config. E2E suites: auth, auth-guards, contract-lifecycle, dashboard, fury-workbench, recovery-contracts, wallet.
 
 ### Validation Gates
 
 `scripts/validation/` — integration-level checks (Gates 04–07 run in CI):
+
 1. `01-phantom-money-check.ts` — ledger prevents unbalanced entries
 2. `02-simulator-spoof-check.ts` — hardware oracles reject manual data
 3. `03-the-full-loop.ts` — end-to-end contract lifecycle
@@ -84,6 +87,7 @@ Config: `.config/playwright/playwright.config.ts`. Tests in `e2e/`. Base URL def
 ### Smoke / Readiness Scripts
 
 `scripts/smoke/` — deployment verification:
+
 - `beta-readiness.sh` — comprehensive beta readiness suite (`npm run beta:readiness`); outputs `artifacts/beta-readiness-summary.json`
 - `beta-smoke.sh`, `staging-smoke.sh` — environment-specific smoke runs
 - `beta-deploy-preflight.sh` — pre-deploy gate (`npm run beta:deploy-preflight`)
@@ -93,6 +97,7 @@ Config: `.config/playwright/playwright.config.ts`. Tests in `e2e/`. Base URL def
 ### Project-Board & Audit Scripts (top-level `scripts/`)
 
 Automation around the GitHub Projects board (config at `board.config.json` — project ID, field IDs, status/category option IDs):
+
 - `audit-board.sh`, `setup-board.sh`, `sync-tracking-table.sh`, `transition-issue.sh` — board state transitions; audit trail at `docs/audit/transitions.log`
 - `gatekeeper-scan.sh` — Stygian-terminology scan (paired with Gate 04)
 - `detect-redundancy.{sh,py}` — duplicate-content scanner across docs/plans
@@ -102,16 +107,16 @@ Automation around the GitHub Projects board (config at `board.config.json` — p
 
 ### Workspaces
 
-| Workspace | Package | Stack | Role |
-|-----------|---------|-------|------|
-| `src/api` | `@styx/api` | NestJS 11, BullMQ, Stripe, pg, pino | Backend — ledger, escrow, Fury Router, oracles |
-| `src/web` | `@styx/web` | Next.js 16, React 18, Tailwind, Zustand | Dashboard, Fury workbench |
-| `src/mobile` | `@styx/mobile` | Expo 54, React Native 0.81, React Navigation 7 | Sensor bridge, camera, biometrics |
-| `src/shared` | `@styx/shared` | TypeScript (pure) | Constants, types, algorithms |
-| `src/desktop` | `@styx/desktop` | Tauri 2.0 beta, Vite, React | "The Judge" admin dashboard |
-| `src/pitch` | `@styx/pitch` | Vite, React 18, p5.js, Tailwind | Interactive pitch deck (builds to `docs/` for GitHub Pages). No test/lint scripts. |
-| `src/ask-styx` | `@styx/ask-styx` | Vite 6, React 18, Tailwind, Cloudflare Workers, Vitest | "Ask Styx" conversational front-end deployed as a Worker; tests via `vitest run` (not Jest) |
-| `src/test-harness` | `@styx/test-harness` | TypeScript, Vitest, Playwright, zod, commander | ORGAN-III quality gate. Exposes the `ergon-test` CLI (`bin/ergon-test`). Audit suites: contract validator, aesthetic auditor (headless Playwright), seed.yaml/edge contracts |
+| Workspace          | Package              | Stack                                                  | Role                                                                                                                                                                         |
+| ------------------ | -------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/api`          | `@styx/api`          | NestJS 11, BullMQ, Stripe, pg, pino                    | Backend — ledger, escrow, Fury Router, oracles                                                                                                                               |
+| `src/web`          | `@styx/web`          | Next.js 16, React 18, Tailwind, Zustand                | Dashboard, Fury workbench                                                                                                                                                    |
+| `src/mobile`       | `@styx/mobile`       | Expo 54, React Native 0.81, React Navigation 7         | Sensor bridge, camera, biometrics                                                                                                                                            |
+| `src/shared`       | `@styx/shared`       | TypeScript (pure)                                      | Constants, types, algorithms                                                                                                                                                 |
+| `src/desktop`      | `@styx/desktop`      | Tauri 2.0 beta, Vite, React                            | "The Judge" admin dashboard                                                                                                                                                  |
+| `src/pitch`        | `@styx/pitch`        | Vite, React 18, p5.js, Tailwind                        | Interactive pitch deck (builds to `docs/` for GitHub Pages). No test/lint scripts.                                                                                           |
+| `src/ask-styx`     | `@styx/ask-styx`     | Vite 6, React 18, Tailwind, Cloudflare Workers, Vitest | "Ask Styx" conversational front-end deployed as a Worker; tests via `vitest run` (not Jest)                                                                                  |
+| `src/test-harness` | `@styx/test-harness` | TypeScript, Vitest, Playwright, zod, commander         | ORGAN-III quality gate. Exposes the `ergon-test` CLI (`bin/ergon-test`). Audit suites: contract validator, aesthetic auditor (headless Playwright), seed.yaml/edge contracts |
 
 Workspace globs (root `package.json`): `src/*` and `packages/*` (the `packages/` directory is currently empty but reserved).
 
@@ -167,6 +172,7 @@ src/api/
 ### Core Algorithms (`src/shared/libs/`)
 
 **Integrity Score** (`integrity.ts`): `Base(50) + 5*completions - 15*frauds - 20*strikes - 1*inactive_months`. Floor at 0. Tier thresholds:
+
 - `RESTRICTED_MODE` (score < 20): max stake $0
 - `TIER_1_MICRO_STAKES` (< 50): max $20
 - `TIER_2_STANDARD` (< 100): max $100
@@ -239,11 +245,12 @@ These files at the repo root carry constraints that tooling reads but are easy t
 
 Copy `.env.example` → `.env`. Required vars: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `DATABASE_URL`, `REDIS_URL`, `CLOUDFLARE_R2_ACCESS_KEY`, `CLOUDFLARE_R2_SECRET_KEY`, `JWT_SECRET`. The 2026-05-26 hardening removed insecure fallbacks, so these are now also required at use-time (services throw if unset): `APP_SECRET`, `ANONYMIZE_SALT`, `ZK_EXHAUST_SECRET`, `STYX_WEBHOOK_SECRET`, `INTERNAL_SERVICE_TOKEN`, and `ENTERPRISE_SSO_SECRET` (enterprise SSO is rejected until it is set — no `JWT_SECRET` fallback). Optional: `GEMINI_API_KEY`, `SENTRY_DSN`, Salesforce/HubSpot keys.
 
-Docker services: PostgreSQL `5432`, Redis `6379`, API `3000`, Web `3001`.
+Docker services are wired by `.config/docker/docker-compose.yml` using `.env` / `STYX_DOCKER_*` values.
 
 ### Beta / Feature Flags
 
 The `.env` includes a beta configuration system (all `STYX_*` and `NEXT_PUBLIC_STYX_*` prefixed):
+
 - `STYX_PRIVATE_BETA` / `STYX_TEST_MONEY_MODE` — private beta mode with test money
 - `STYX_ALLOWLIST_US_ONLY` — geofence to US only
 - `STYX_PHASE1_MOBILE_PRIMARY` / `STYX_PHASE1_NO_CONTACT_ONLY` — Phase 1 scope limits
@@ -257,12 +264,14 @@ The `.env` includes a beta configuration system (all `STYX_*` and `NEXT_PUBLIC_S
 - **High-risk merchant underwriting**: Business/legal process (Corepay/Allied Wallet application), not code.
 
 <!-- ORGANVM:AUTO:START -->
+
 ## System Context (auto-generated — do not edit)
 
 **Organ:** ORGAN-III (Commerce) | **Tier:** flagship | **Status:** GRADUATED
 **Org:** `organvm-iii-ergon` | **Repo:** `peer-audited--behavioral-blockchain`
 
 ### Edges
+
 - **Produces** → `unspecified`: product
 - **Produces** → `organvm-vi-koinonia/community-hub`: community_signal
 - **Produces** → `organvm-vii-kerygma/kerygma-pipeline`: distribution_signal
@@ -272,12 +281,14 @@ The `.env` includes a beta configuration system (all `STYX_*` and `NEXT_PUBLIC_S
 - **Consumes** ← `organvm-iv-taxis/orchestration-start-here`: governance-rules
 
 ### Siblings in Commerce
+
 `classroom-rpg-aetheria`, `gamified-coach-interface`, `trade-perpetual-future`, `fetch-familiar-friends`, `sovereign-ecosystem--real-estate-luxury`, `public-record-data-scrapper`, `search-local--happy-hour`, `multi-camera--livestream--framework`, `universal-mail--automation`, `mirror-mirror`, `the-invisible-ledger`, `enterprise-plugin`, `virgil-training-overlay`, `tab-bookmark-manager`, `a-i-chat--exporter` ... and 16 more
 
 ### Governance
+
 - Strictly unidirectional flow: I→II→III. No dependencies on Theory (I).
 
-*Last synced: 2026-05-17T20:53:33Z*
+_Last synced: 2026-05-17T20:53:33Z_
 
 ## Active Handoff Protocol
 
@@ -291,16 +302,17 @@ NOT be trusted. A different agent will verify your output against these constrai
 ## Session Review Protocol
 
 At the end of each session that produces or modifies files:
+
 1. Run `organvm session review --latest` to get a session summary
 2. Check for unimplemented plans: `organvm session plans --project .`
 3. Export significant sessions: `organvm session export <id> --slug <slug>`
 4. Run `organvm prompts distill --dry-run` to detect uncovered operational patterns
 
 Transcripts are on-demand (never committed):
+
 - `organvm session transcript <id>` — conversation summary
 - `organvm session transcript <id> --unabridged` — full audit trail
 - `organvm session prompts <id>` — human prompts only
-
 
 ## System Library
 
@@ -308,42 +320,37 @@ Plans: 269 indexed | Chains: 5 available | SOPs: 8 active
 Discover: `organvm plans search <query>` | `organvm chains list` | `organvm sop lifecycle`
 Library: `/Users/4jp/Code/organvm/praxis-perpetua/library`
 
-
 ## Active Directives
 
-| Scope | Phase | Name | Description |
-|-------|-------|------|-------------|
-| system | any | atomic-clock | The Atomic Clock |
-| system | any | execution-sequence | Execution Sequence |
-| system | any | multi-agent-dispatch | Multi-Agent Dispatch |
-| system | any | session-handoff-avalanche | Session Handoff Avalanche |
-| system | any | system-loops | System Loops |
-| system | any | prompting-standards | Prompting Standards |
-| system | any | background-task-resilience | background-task-resilience |
-| system | any | context-window-conservation | context-window-conservation |
-| system | any | session-self-critique | session-self-critique |
-| system | any | the-descent-protocol | the-descent-protocol |
-| system | any | the-membrane-protocol | the-membrane-protocol |
-| system | any | theory-to-concrete-gate | theory-to-concrete-gate |
-| system | any | triangulation-protocol | triangulation-protocol |
+| Scope  | Phase | Name                        | Description                 |
+| ------ | ----- | --------------------------- | --------------------------- |
+| system | any   | atomic-clock                | The Atomic Clock            |
+| system | any   | execution-sequence          | Execution Sequence          |
+| system | any   | multi-agent-dispatch        | Multi-Agent Dispatch        |
+| system | any   | session-handoff-avalanche   | Session Handoff Avalanche   |
+| system | any   | system-loops                | System Loops                |
+| system | any   | prompting-standards         | Prompting Standards         |
+| system | any   | background-task-resilience  | background-task-resilience  |
+| system | any   | context-window-conservation | context-window-conservation |
+| system | any   | session-self-critique       | session-self-critique       |
+| system | any   | the-descent-protocol        | the-descent-protocol        |
+| system | any   | the-membrane-protocol       | the-membrane-protocol       |
+| system | any   | theory-to-concrete-gate     | theory-to-concrete-gate     |
+| system | any   | triangulation-protocol      | triangulation-protocol      |
 
 Linked skills: SOP-TRIADIC-REVIEW-PROTOCOL, cicd-resilience-and-recovery, continuous-learning-agent, evaluation-to-growth, genesis-dna, multi-agent-workforce-planner, promotion-and-state-transitions, quality-gate-baseline-calibration, repo-onboarding-and-habitat-creation, session-self-critique, structural-integrity-audit, the-membrane-protocol, triple-reference
 
-
 **Prompting (Anthropic)**: context 200K tokens, format: XML tags, thinking: extended thinking (budget_tokens)
-
 
 ## Atomization Pipeline
 
 Run `organvm atoms pipeline --write && organvm atoms fanout --write` to generate task queue.
-
 
 ## System Density (auto-generated)
 
 AMMOI: 25% | Edges: 0 | Tensions: 0 | Clusters: 0 | Adv: 27 | Events(24h): 37445
 Structure: 8 organs / 148 repos / 1654 components (depth 17) | Inference: 0% | Organs: META-ORGANVM:63%, ORGAN-I:53%, ORGAN-II:48%, ORGAN-III:54% +5 more
 Last pulse: 2026-05-17T20:53:14 | Δ24h: n/a | Δ7d: n/a
-
 
 ## Dialect Identity (Trivium)
 
@@ -353,7 +360,6 @@ Strongest translations: I (formal), II (structural), VII (structural)
 
 Scan: `organvm trivium scan III <OTHER>` | Matrix: `organvm trivium matrix` | Synthesize: `organvm trivium synthesize`
 
-
 ## Logos Documentation Layer
 
 **Status:** MISSING | **Symmetry:** 0.0 (VACUUM)
@@ -361,16 +367,18 @@ Scan: `organvm trivium scan III <OTHER>` | Matrix: `organvm trivium matrix` | Sy
 Nature demands a documentation counterpart. This formation maintains its narrative record in `docs/logos/`.
 
 ### The Tetradic Counterpart
+
 - **[Telos (Idealized Form)](../docs/logos/telos.md)** — The dream and theoretical grounding.
 - **[Pragma (Concrete State)](../docs/logos/pragma.md)** — The honest account of what exists.
 - **[Praxis (Remediation Plan)](../docs/logos/praxis.md)** — The attack vectors for evolution.
 - **[Receptio (Reception)](../docs/logos/receptio.md)** — The account of the constructed polis.
 
 ### Alchemical I/O
+
 - **[Source & Transmutation](../docs/logos/alchemical-io.md)** — Narrative of inputs, process, and returns.
 
 - **[Public Essay](https://organvm-v-logos.github.io/public-process/)** — System-wide narrative entry.
 
-*Compliance: Formation is currently void.*
+_Compliance: Formation is currently void._
 
 <!-- ORGANVM:AUTO:END -->

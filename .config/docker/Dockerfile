@@ -15,8 +15,8 @@ COPY . .
 # Build shared + API
 RUN npx turbo run build --filter=@styx/api
 
-# Expose API port
-EXPOSE 3000
+ARG API_CONTAINER_PORT
+EXPOSE ${API_CONTAINER_PORT}
 
 # Start command (override in docker-compose)
 CMD ["node", "src/api/dist/main.js"]

@@ -2,7 +2,7 @@ import { Controller, Get, Res } from '@nestjs/common';
 import { Pool } from 'pg';
 import Redis from 'ioredis';
 import type { Response } from 'express';
-import { REDIS_CONNECTION_CONFIG } from '../../../config/queue.config';
+import { getRedisConnectionConfig } from '../../../config/queue.config';
 import { Public } from '../../common/decorators/current-user.decorator';
 
 @Controller('health')
@@ -11,7 +11,7 @@ export class HealthController {
 
   constructor(private readonly pool: Pool) {
     try {
-      this.redis = new Redis({ ...REDIS_CONNECTION_CONFIG, lazyConnect: true });
+      this.redis = new Redis({ ...getRedisConnectionConfig(), lazyConnect: true });
     } catch {
       // Redis not available — health check will report it
     }

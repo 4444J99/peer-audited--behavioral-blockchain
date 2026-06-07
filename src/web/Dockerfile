@@ -37,6 +37,7 @@ COPY --from=builder /app/src/web/.next/standalone ./
 COPY --from=builder /app/src/web/.next/static ./src/web/.next/static
 COPY --from=builder /app/src/web/public ./src/web/public
 
-EXPOSE 3000
+ARG WEB_CONTAINER_PORT
+EXPOSE ${WEB_CONTAINER_PORT}
 
 CMD ["node", "src/web/server.js"]

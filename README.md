@@ -3,7 +3,6 @@
 A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes.
 
 ![CI](https://github.com/a-organvm/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
-![Tests](https://img.shields.io/badge/tests-1%2C107-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-339933)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -25,35 +24,35 @@ A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to 
 ## Quick Start
 
 ```bash
-# Prerequisites: Node.js >= 20, Docker, npm 10+
+# Prerequisites: Node.js >= 20, npm 10+, PostgreSQL, Redis
 
-# Start infrastructure (PostgreSQL + Redis)
-docker compose -f .config/docker/docker-compose.yml up -d
+# Configure runtime values for this environment
+cp .env.example .env
 
 # Install dependencies across all workspaces
-make install
+npm install
 
 # Run database migrations
-cd src/api && npm run migrate && cd ../..
+npm run dev:migrate
 
-# Run all services (API + Web + Mobile)
-make dev
+# Run the local application stack (API + Web)
+npm run dev
 ```
 
-Docker services: PostgreSQL on `5432`, Redis on `6379`, API on `3000`, Web on `3001`.
+`DATABASE_URL`, `REDIS_URL`, `STYX_API_PUBLIC_URL`, `STYX_WEB_PUBLIC_URL`, and `NEXT_PUBLIC_API_URL` define the runtime endpoints. Docker Compose uses the `STYX_DOCKER_*` variables from the same environment contract.
 
 ## Architecture
 
 Turborepo monorepo with **npm** workspaces. Package scope: `@styx/*`.
 
-| Workspace | Package | Stack | Role |
-|-----------|---------|-------|------|
-| `src/api` | `@styx/api` | NestJS 11, BullMQ, Stripe, PostgreSQL | Backend — ledger, escrow, Fury Router, oracles |
-| `src/web` | `@styx/web` | Next.js 16, React 18, Tailwind | Dashboard, Fury workbench |
-| `src/mobile` | `@styx/mobile` | React Native 0.81 | Sensor bridge, camera, biometrics |
-| `src/desktop` | `@styx/desktop` | Tauri 2.0, Vite, React | "The Judge" admin dashboard |
-| `src/shared` | `@styx/shared` | TypeScript | Constants, types, algorithms |
-| `src/pitch` | `@styx/pitch` | Vite, React 18, p5.js | Interactive pitch deck |
+| Workspace     | Package         | Stack                                 | Role                                           |
+| ------------- | --------------- | ------------------------------------- | ---------------------------------------------- |
+| `src/api`     | `@styx/api`     | NestJS 11, BullMQ, Stripe, PostgreSQL | Backend — ledger, escrow, Fury Router, oracles |
+| `src/web`     | `@styx/web`     | Next.js 16, React 18, Tailwind        | Dashboard, Fury workbench                      |
+| `src/mobile`  | `@styx/mobile`  | React Native 0.81                     | Sensor bridge, camera, biometrics              |
+| `src/desktop` | `@styx/desktop` | Tauri 2.0, Vite, React                | "The Judge" admin dashboard                    |
+| `src/shared`  | `@styx/shared`  | TypeScript                            | Constants, types, algorithms                   |
+| `src/pitch`   | `@styx/pitch`   | Vite, React 18, p5.js                 | Interactive pitch deck                         |
 
 ```mermaid
 flowchart TB
@@ -173,56 +172,65 @@ Full policy and gate ownership live in `docs/planning/beta-readiness-contract.md
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `make install` | Install all workspace dependencies |
-| `make dev` | Start API + Web + Mobile dev servers |
-| `make build` | Build all workspaces |
-| `make test` | Run all unit/integration tests |
-| `make test-e2e` | Run Playwright E2E tests |
-| `make docker-up` | Start PostgreSQL + Redis |
-| `npx turbo run lint` | TypeScript strict lint |
-| `npm run format` | Prettier across all workspaces |
-| `npm run clean` | Clean build artifacts + node_modules |
-| `npm run beta:readiness` | Run Phase 1 beta readiness contract + emit JSON artifact |
-| `cd src/api && npm run migrate` | Run database migrations |
-| `bash scripts/setup.sh` | Full bootstrap (docker + install + build + test) |
+| Command                         | Description                                              |
+| ------------------------------- | -------------------------------------------------------- |
+| `make install`                  | Install all workspace dependencies                       |
+| `make dev`                      | Run API + Web with repo-root env resolution              |
+| `make dev-turbo`                | Run the full Turbo dev pipeline                          |
+| `make build`                    | Build all workspaces                                     |
+| `make test`                     | Run all unit/integration tests                           |
+| `make test-e2e`                 | Run Playwright E2E tests                                 |
+| `npm run dev`                   | Run API + Web with repo-root env resolution              |
+| `npm run dev:api`               | Run API with repo-root env resolution                    |
+| `npm run dev:web`               | Run Web with repo-root env resolution                    |
+| `npm run dev:migrate`           | Run database migrations with repo-root env resolution    |
+| `make docker-up`                | Start services through Docker Compose                    |
+| `npx turbo run lint`            | TypeScript strict lint                                   |
+| `npm run format`                | Prettier across all workspaces                           |
+| `npm run clean`                 | Clean build artifacts + node_modules                     |
+| `npm run beta:readiness`        | Run Phase 1 beta readiness contract + emit JSON artifact |
+| `cd src/api && npm run migrate` | Run database migrations via the repo-root env resolver   |
+| `bash scripts/setup.sh`         | Full bootstrap (docker + install + build + test)         |
 
 ## API Documentation
 
 Interactive Swagger/OpenAPI docs are available at `/api/docs` when the API is running:
 
 ```bash
-cd src/api && npm run dev
-# Open http://localhost:3000/api/docs
+npm run dev:api
+# Open $STYX_API_PUBLIC_URL/api/docs
 ```
 
 ## Environment
 
 Copy `.env.example` to `.env` and set:
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `STRIPE_SECRET_KEY` | Yes | Stripe API secret key |
-| `STRIPE_PUBLISHABLE_KEY` | Yes | Stripe publishable key |
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `REDIS_URL` | Yes | Redis connection string |
-| `CLOUDFLARE_R2_ACCESS_KEY` | Yes | R2 storage access key |
-| `CLOUDFLARE_R2_SECRET_KEY` | Yes | R2 storage secret key |
-| `JWT_SECRET` | Yes (prod) | JWT signing secret (enforced in production) |
-| `GEMINI_API_KEY` | No | Gemini AI for goal ethics screening |
-| `KYC_ENFORCEMENT_ENABLED` | No | Enable KYC gating (default: `false`) |
-| `GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS` | No | Fail-open when geo headers missing (default: `true`) |
-| `BETA_API_URL` | No (required for full beta readiness verification) | Target API URL for `npm run beta:readiness` |
-| `BETA_WEB_URL` | No | Optional target web URL for beta readiness |
-| `BETA_ENV_LABEL` | No | Expected environment label for `/meta/release` (default: `beta`) |
+| Variable                                | Required                                           | Description                                                             |
+| --------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------- |
+| `STRIPE_SECRET_KEY`                     | Yes                                                | Stripe API secret key                                                   |
+| `STRIPE_PUBLISHABLE_KEY`                | Yes                                                | Stripe publishable key                                                  |
+| `DATABASE_URL`                          | Yes                                                | PostgreSQL connection string                                            |
+| `REDIS_URL`                             | Yes                                                | Redis connection string                                                 |
+| `STYX_API_PUBLIC_URL`                   | Yes                                                | Public API base URL for this environment                                |
+| `STYX_WEB_PUBLIC_URL`                   | Yes                                                | Public web base URL for this environment                                |
+| `NEXT_PUBLIC_API_URL`                   | Yes                                                | Web-visible API base URL                                                |
+| `NEXT_PUBLIC_WEB_URL`                   | No                                                 | Web-visible canonical web URL when different from `STYX_WEB_PUBLIC_URL` |
+| `CLOUDFLARE_R2_ACCESS_KEY`              | Yes                                                | R2 storage access key                                                   |
+| `CLOUDFLARE_R2_SECRET_KEY`              | Yes                                                | R2 storage secret key                                                   |
+| `JWT_SECRET`                            | Yes (prod)                                         | JWT signing secret (enforced in production)                             |
+| `GEMINI_API_KEY`                        | No                                                 | Gemini AI for goal ethics screening                                     |
+| `KYC_ENFORCEMENT_ENABLED`               | No                                                 | Enable KYC gating (default: `false`)                                    |
+| `GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS` | No                                                 | Fail-open when geo headers missing (default: `true`)                    |
+| `BETA_API_URL`                          | No (required for full beta readiness verification) | Target API URL for `npm run beta:readiness`                             |
+| `BETA_WEB_URL`                          | No                                                 | Optional target web URL for beta readiness                              |
+| `BETA_ENV_LABEL`                        | No                                                 | Expected environment label for `/meta/release` (default: `beta`)        |
 
 ## CI Pipeline
 
 `.github/workflows/ci.yml` runs on every push and PR:
 
 1. **Install + Security Audit** — `npm ci`, `npm audit --audit-level=high`
-2. **Tests + Coverage** — `turbo run test --coverage --ci` (1,107 tests, per-workspace thresholds)
+2. **Tests** — `turbo run test`
 3. **Build** — `turbo run build` (all workspaces)
 4. **Lint** — `turbo run lint` (strict TypeScript)
 5. **Gate 04** — Redacted build check (no gambling terminology in production)

@@ -19,7 +19,7 @@
 ### Governance
 - Strictly unidirectional flow: I→II→III. No dependencies on Theory (I).
 
-*Last synced: 2026-06-01T13:17:56Z*
+*Last synced: 2026-06-07T14:00:33Z*
 
 ## Active Handoff Protocol
 
@@ -46,7 +46,7 @@ Transcripts are on-demand (never committed):
 
 ## System Library
 
-Plans: 269 indexed | Chains: 5 available | SOPs: 8 active
+Plans: 269 indexed | Chains: 5 available | SOPs: 18 active
 Discover: `organvm plans search <query>` | `organvm chains list` | `organvm sop lifecycle`
 Library: `/Users/4jp/Code/organvm/praxis-perpetua/library`
 
@@ -60,6 +60,8 @@ Library: `/Users/4jp/Code/organvm/praxis-perpetua/library`
 | system | any | multi-agent-dispatch | Multi-Agent Dispatch |
 | system | any | session-handoff-avalanche | Session Handoff Avalanche |
 | system | any | system-loops | System Loops |
+| system | any | prompting-standards | Prompting Standards |
+| system | any | prompting-standards | Prompting Standards |
 | system | any | prompting-standards | Prompting Standards |
 | system | any | background-task-resilience | background-task-resilience |
 | system | any | context-window-conservation | context-window-conservation |
@@ -82,9 +84,9 @@ Run `organvm atoms pipeline --write && organvm atoms fanout --write` to generate
 
 ## System Density (auto-generated)
 
-AMMOI: 25% | Edges: 0 | Tensions: 0 | Clusters: 0 | Adv: 27 | Events(24h): 38766
-Structure: 8 organs / 148 repos / 1654 components (depth 17) | Inference: 0% | Organs: META-ORGANVM:63%, ORGAN-I:53%, ORGAN-II:48%, ORGAN-III:55% +5 more
-Last pulse: 2026-06-01T13:17:51 | Δ24h: n/a | Δ7d: n/a
+AMMOI: 25% | Edges: 0 | Tensions: 0 | Clusters: 0 | Adv: 27 | Events(24h): 38806
+Structure: 8 organs / 149 repos / 1654 components (depth 17) | Inference: 0% | Organs: META-ORGANVM:63%, ORGAN-I:53%, ORGAN-II:48%, ORGAN-III:55% +5 more
+Last pulse: 2026-06-07T14:00:21 | Δ24h: n/a | Δ7d: n/a
 
 
 ## Dialect Identity (Trivium)
@@ -98,7 +100,7 @@ Scan: `organvm trivium scan III <OTHER>` | Matrix: `organvm trivium matrix` | Sy
 
 ## Logos Documentation Layer
 
-**Status:** MISSING | **Symmetry:** 0.0 (VACUUM)
+**Status:** ACTIVE | **Symmetry:** 1.0 (SYMMETRIC)
 
 Nature demands a documentation counterpart. This formation maintains its narrative record in `docs/logos/`.
 
@@ -113,7 +115,6 @@ Nature demands a documentation counterpart. This formation maintains its narrati
 
 - **[Public Essay](https://organvm-v-logos.github.io/public-process/)** — System-wide narrative entry.
 
-*Compliance: Formation is currently void.*
+*Compliance: Nature and Counterpart are in balance.*
 
 <!-- ORGANVM:AUTO:END -->
-

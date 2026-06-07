@@ -1,6 +1,8 @@
 node_modules/
 **/node_modules/
 .env
+.env.local
+.env.*.local
 .DS_Store
 dist/
 .next/
@@ -64,6 +66,7 @@ infra/terraform/.terraform.lock.hcl
 # Session exports and transient output (organvm CLI generates these)
 exports/
 output/
+.claude/sessions/
 
 # E2E test results
 playwright-report/

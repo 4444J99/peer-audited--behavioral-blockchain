@@ -164,18 +164,18 @@ Scan: `organvm trivium scan III <OTHER>` | Matrix: `organvm trivium matrix` | Sy
 
 ## Logos Documentation Layer
 
-**Status:** MISSING | **Symmetry:** 0.0 (VACUUM)
+**Status:** ACTIVE | **Symmetry:** 1.0 (ALIGNED)
 
 Nature demands a documentation counterpart. This formation maintains its narrative record in `docs/logos/`.
 
 ### The Tetradic Counterpart
-- **[Telos (Idealized Form)](../docs/logos/telos.md)** — The dream and theoretical grounding.
-- **[Pragma (Concrete State)](../docs/logos/pragma.md)** — The honest account of what exists.
-- **[Praxis (Remediation Plan)](../docs/logos/praxis.md)** — The attack vectors for evolution.
-- **[Receptio (Reception)](../docs/logos/receptio.md)** — The account of the constructed polis.
+- **[Telos (Idealized Form)](docs/logos/telos.md)** — The dream and theoretical grounding.
+- **[Pragma (Concrete State)](docs/logos/pragma.md)** — The honest account of what exists.
+- **[Praxis (Remediation Plan)](docs/logos/praxis.md)** — The attack vectors for evolution.
+- **[Receptio (Reception)](docs/logos/receptio.md)** — The account of the constructed polis.
 
 ### Alchemical I/O
-- **[Source & Transmutation](../docs/logos/alchemical-io.md)** — Narrative of inputs, process, and returns.
+- **[Source & Transmutation](docs/logos/alchemical-io.md)** — Narrative of inputs, process, and returns.
 
 - **[Public Essay](https://organvm-v-logos.github.io/public-process/)** — System-wide narrative entry.
 

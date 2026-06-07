@@ -41,8 +41,8 @@ RUN npm install --omit=dev
 # Run as non-root for security
 USER node
 
-# Expose standard NestJS port
-EXPOSE 3000
+ARG API_CONTAINER_PORT
+EXPOSE ${API_CONTAINER_PORT}
 
 # Ensure graceful shutdown
 STOPSIGNAL SIGTERM

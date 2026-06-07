@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { Worker, Job } from 'bullmq';
 import { Pool, PoolClient } from 'pg';
-import { SETTLEMENT_QUEUE_NAME, REDIS_CONNECTION_CONFIG } from '../../../config/queue.config';
+import { SETTLEMENT_QUEUE_NAME, getRedisConnectionConfig } from '../../../config/queue.config';
 import { StripePayoutProvider } from './stripe-payout.provider';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
@@ -25,7 +25,7 @@ export class SettlementWorker implements OnModuleInit {
     this.worker = new Worker(
       SETTLEMENT_QUEUE_NAME,
       async (job: Job) => this.process(job),
-      { connection: REDIS_CONNECTION_CONFIG, concurrency: 2 },
+      { connection: getRedisConnectionConfig(), concurrency: 2 },
     );
     this.logger.log('Settlement worker initialized and listening on SETTLEMENT_QUEUE');
   }

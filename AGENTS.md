@@ -1,37 +1,32 @@
 <!-- ORGANVM:AUTO:START -->
-
 ## Agent Context (auto-generated — do not edit)
 
 This repo participates in the **ORGAN-III (Commerce)** swarm.
 
 ### Active Subscriptions
-
 - Event: `theory.updated` → Action: Review theory changes for product implications
 - Event: `governance.updated` → Action: Check compliance with updated governance rules
 - Event: `community.event_created` → Action: Community event registered for this product
 - Event: `distribution.dispatched` → Action: Announcement distributed via POSSE pipeline
 
 ### Production Responsibilities
-
 - **Produce** `product` for unspecified
 - **Produce** `community_signal` for organvm-vi-koinonia/community-hub
 - **Produce** `distribution_signal` for organvm-vii-kerygma/kerygma-pipeline
 - **Produce** `essay_material` for organvm-v-logos/essay-pipeline
 
 ### External Dependencies
-
 - **Consume** `theory` from [`organvm-i-theoria/styx-behavioral-economics-theory`](../../organvm-i-theoria/styx-behavioral-economics-theory/CLAUDE.md)
 - **Consume** `creative-artifact` from [`organvm-ii-poiesis/styx-behavioral-art`](../../organvm-ii-poiesis/styx-behavioral-art/CLAUDE.md)
 - **Consume** `governance-rules` from [`organvm-iv-taxis/orchestration-start-here`](../../organvm-iv-taxis/orchestration-start-here/CLAUDE.md)
 
 ### Governance Constraints
-
 - Adhere to unidirectional flow: I→II→III
 - Never commit secrets or credentials
 
-_Last synced: 2026-06-01T13:17:56Z_
-
+*Last synced: 2026-06-07T14:00:33Z*
 <!-- ORGANVM:AUTO:END -->
+
 
 ## Session Review Protocol
 
@@ -57,7 +52,7 @@ Turborepo + npm workspaces. Package scope: `@styx/*`. Root `tsconfig.json` maps 
 | Workspace          | Stack                          | Entry                                     | Notes                                                       |
 | ------------------ | ------------------------------ | ----------------------------------------- | ----------------------------------------------------------- |
 | `src/api`          | NestJS 11, BullMQ, Stripe, pg  | `nest-cli.json` entryFile: `api/src/main` | Double-entry ledger, Fury router, escrow                    |
-| `src/web`          | Next.js 16, React 18, Tailwind | dev on port **3001**                      | Dashboard, Fury workbench                                   |
+| `src/web`          | Next.js 16, React 18, Tailwind | `STYX_WEB_PUBLIC_URL` / `STYX_WEB_PORT`   | Dashboard, Fury workbench                                   |
 | `src/mobile`       | React Native 0.81, Expo 54     | `expo run:ios` / `expo run:android`       | Sensor bridge, camera, biometrics                           |
 | `src/desktop`      | Tauri 2, Vite, React           | `src-tauri/tauri.conf.json`               | "The Judge" admin dashboard                                 |
 | `src/shared`       | TypeScript                     | `dist/index.js`                           | Constants, types, algorithms — **must build before others** |
@@ -69,20 +64,21 @@ Turborepo + npm workspaces. Package scope: `@styx/*`. Root `tsconfig.json` maps 
 
 ```bash
 # Prerequisites: Node.js >= 20, Docker, npm 10+
-docker-compose up -d                    # PostgreSQL (5432) + Redis (6379)
+cp .env.example .env                    # fill runtime URLs, ports, DB, Redis, secrets
+make docker-up                          # Docker Compose uses .env / STYX_DOCKER_* values
 make install                            # npm install (all workspaces)
-cd src/api && npm run migrate && cd ../..  # DB migrations (required before API works)
-make dev                                # npx turbo run dev (API + Web + Mobile)
+npm run dev:migrate                     # DB migrations (required before API works)
+make dev                                # env-backed API + Web app stack
 ```
 
 ### Verification Commands
 
 ```bash
 make test                               # All unit/integration tests via turbo
-cd src/api && npx jest                  # API tests only (640)
-cd src/web && npx jest                  # Web tests only (166)
-cd src/mobile && npx jest               # Mobile tests only (273)
-cd src/desktop && npx jest              # Desktop tests only (128)
+cd src/api && npx jest                  # API tests only
+cd src/web && npx jest                  # Web tests only
+cd src/mobile && npx jest               # Mobile tests only
+cd src/desktop && npx jest              # Desktop tests only
 cd src/test-harness && npx vitest       # Test-harness uses Vitest, not Jest
 npx jest --testNamePattern="pattern"    # Single test by name pattern
 
@@ -123,7 +119,7 @@ npm run format                          # Prettier: **/*.{ts,tsx,md}
 - **`turbo.json`**: `test` dependsOn `build` — you cannot run tests without building first via turbo.
 - **Linguistic Cloaker**: production builds swap gambling terms (stake→commitment, bet→vault). Gate 04 validates this. Run `bash scripts/validation/04-redacted-build-check.sh` locally to check.
 - **`@styx/shared`** must be built before any workspace that imports from it can build or test.
-- **Playwright** auto-starts the web server (`cd src/web && npm run dev`) unless `CI=true`, then uses `npm run start`. Base URL: `http://localhost:3001`.
+- **Playwright** auto-starts the web server unless `CI=true`, then uses `npm run start`. Base URL comes from the Playwright config/env.
 - **EditorConfig**: 2-space indent for TS/TSX, LF line endings, final newline required.
 - **Mobile `build` and `lint` are both `tsc --noEmit`** — no actual bundle build. Native builds use `expo run:*`.
 - **Pitch build outputs to `docs/`** (see `turbo.json` `@styx/pitch#build` outputs) — not `dist/`.

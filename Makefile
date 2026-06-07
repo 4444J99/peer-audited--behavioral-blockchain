@@ -1,10 +1,13 @@
-.PHONY: install dev build test clean docker-up pitch test-e2e test-e2e-ui
+.PHONY: install dev dev-turbo build test clean docker-up pitch test-e2e test-e2e-ui
 
 install:
 	npm install
 
 dev:
-	npx turbo run dev
+	npm run dev
+
+dev-turbo:
+	npm run dev:turbo
 
 build:
 	npx turbo run build
@@ -16,7 +19,7 @@ clean:
 	npx turbo run clean
 
 docker-up:
-	docker compose -f .config/docker/docker-compose.yml up -d
+	docker compose --env-file .env -f .config/docker/docker-compose.yml up -d
 
 pitch:
 	cd src/pitch && npm run build

@@ -24,6 +24,7 @@ import { AegisProtocolService } from "../../../services/health/aegis.service";
 import { RecoveryProtocolService } from "../../../services/health/recovery-protocol.service";
 import { DynamicPenaltyService } from "../../../services/health/dynamic-penalty.service";
 import { AnomalyService } from "../../../services/anomaly/anomaly.service";
+import { resolveWebPublicUrl } from "../../config/runtime";
 
 import { NotificationsService } from "../notifications/notifications.service";
 import { CompliancePolicyService } from "../compliance/compliance-policy.service";
@@ -797,9 +798,7 @@ export class ContractsService {
     };
 
     if (bountyLinkId) {
-      const publicWebUrl =
-        process.env.STYX_WEB_PUBLIC_URL || "http://localhost:3001";
-      response.bountyLink = `${publicWebUrl}/whistleblower/${bountyLinkId}`;
+      response.bountyLink = `${resolveWebPublicUrl()}/whistleblower/${bountyLinkId}`;
     }
 
     if (pricing) {

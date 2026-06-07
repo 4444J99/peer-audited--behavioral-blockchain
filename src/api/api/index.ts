@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto';
 import { AppModule } from '../src/app.module';
 import { GlobalHttpExceptionFilter } from '../src/common/filters/global-http-exception.filter';
 import { initSentry } from '../src/common/monitoring/sentry';
+import { resolveCorsOrigins } from '../src/config/runtime';
 
 const server = express();
 let cachedApp: Awaited<ReturnType<typeof NestFactory.create>> | null = null;
@@ -44,10 +45,10 @@ async function bootstrap() {
   nestApp.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   nestApp.useGlobalFilters(new GlobalHttpExceptionFilter());
 
-  const allowedOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',')
-    : ['http://localhost:3001'];
-  nestApp.enableCors({ origin: allowedOrigins, credentials: true });
+  const allowedOrigins = resolveCorsOrigins();
+  if (allowedOrigins.length > 0) {
+    nestApp.enableCors({ origin: allowedOrigins, credentials: true });
+  }
 
   await nestApp.init();
   cachedApp = nestApp;

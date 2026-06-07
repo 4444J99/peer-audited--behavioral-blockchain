@@ -4,10 +4,10 @@ set -euo pipefail
 # Styx Phase Omega: Data Lake Extraction
 # Orchestrates a nightly, sanitized dump of the PostgreSQL Truth Log for Enterprise B2B analytics.
 
-DB_HOST=${POSTGRES_HOST:-styx-postgres}
-DB_USER=${POSTGRES_USER:-styx_admin}
-DB_NAME=${POSTGRES_DB:-styx_ledger}
-EXPORT_DIR="/tmp/styx_data_lake"
+DB_HOST=${POSTGRES_HOST:?POSTGRES_HOST is required}
+DB_USER=${POSTGRES_USER:?POSTGRES_USER is required}
+DB_NAME=${POSTGRES_DB:?POSTGRES_DB is required}
+EXPORT_DIR=${STYX_DATA_LAKE_EXPORT_DIR:?STYX_DATA_LAKE_EXPORT_DIR is required}
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 echo "Initiating Data Lake Extraction (Phase Omega) at ${TIMESTAMP}..."

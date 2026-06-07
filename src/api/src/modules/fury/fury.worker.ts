@@ -1,7 +1,7 @@
 import { Injectable, Inject, OnModuleInit, Logger, forwardRef, Optional } from '@nestjs/common';
 import { Worker, Job } from 'bullmq';
 import { Pool } from 'pg';
-import { FURY_ROUTER_QUEUE_NAME, REDIS_CONNECTION_CONFIG } from '../../../config/queue.config';
+import { FURY_ROUTER_QUEUE_NAME, getRedisConnectionConfig } from '../../../config/queue.config';
 import { ConsensusEngine, FuryVote } from './consensus.engine';
 import { ContractsService } from '../contracts/contracts.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -45,7 +45,7 @@ export class FuryWorker implements OnModuleInit {
       FURY_ROUTER_QUEUE_NAME,
       async (job: Job<FuryRouteJob>) => this.process(job),
       {
-        connection: REDIS_CONNECTION_CONFIG,
+        connection: getRedisConnectionConfig(),
         concurrency: 5,
       },
     );

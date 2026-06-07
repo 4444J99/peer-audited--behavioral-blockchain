@@ -3,9 +3,9 @@ version: "2"
 tunnels:
   styx-api-tunnel:
     proto: http
-    addr: 3000
-    host_header: localhost:3000
+    addr: ${STYX_NGROK_API_ADDR}
+    host_header: ${STYX_NGROK_API_HOST_HEADER}
   styx-web-tunnel:
     proto: http
-    addr: 3001
-    host_header: localhost:3001
+    addr: ${STYX_NGROK_WEB_ADDR}
+    host_header: ${STYX_NGROK_WEB_HOST_HEADER}

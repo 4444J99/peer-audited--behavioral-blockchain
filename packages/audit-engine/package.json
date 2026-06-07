@@ -1,0 +1,35 @@
+{
+  "name": "@styx/audit-engine",
+  "version": "0.1.0",
+  "description": "Peer-audited behavioral verification engine with consensus voting, honeypot detection, and privacy-preserving proof verification",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "peer-audit",
+    "behavioral-verification",
+    "consensus",
+    "honeypot",
+    "integrity-scoring",
+    "loss-aversion",
+    "zero-knowledge"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}

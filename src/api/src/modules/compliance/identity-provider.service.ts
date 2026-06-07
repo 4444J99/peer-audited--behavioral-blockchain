@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { randomUUID } from 'crypto';
+import { resolveWebPublicUrl } from '../../config/runtime';
 
 export type IdentityVerificationMode = 'KYC_ONLY' | 'AGE_ONLY' | 'KYC_AND_AGE';
 export type IdentityProviderStatus = 'PENDING' | 'VERIFIED' | 'FAILED' | 'REJECTED';
@@ -44,7 +45,7 @@ export class MockIdentityProviderAdapter implements IdentityProviderAdapter {
       provider: 'MOCK',
       verificationId: `ivs_mock_${randomUUID().replace(/-/g, '').slice(0, 16)}`,
       status: 'PENDING',
-      hostedUrl: `${input.returnUrl || 'http://localhost:3001'}/settings?mockIdentity=1`,
+      hostedUrl: `${resolveWebPublicUrl(input.returnUrl)}/settings?mockIdentity=1`,
       clientSecret: null,
     };
   }

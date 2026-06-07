@@ -16,12 +16,16 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { CompliancePolicyService } from "../compliance/compliance-policy.service";
 import { WaitlistService } from "./waitlist.service";
 import { SurveyService } from "./survey.service";
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import {
+  PostgreSqlContainer,
+  StartedPostgreSqlContainer,
+} from "@testcontainers/postgresql";
 import { Pool } from "pg";
 import { execSync } from "child_process";
 import path from "path";
+import { describeWithContainerRuntime } from "../../../test/container-runtime";
 
-describe("ContractsService (Integration)", () => {
+describeWithContainerRuntime("ContractsService (Integration)", () => {
   let container: StartedPostgreSqlContainer;
   let pool: Pool;
   let service: ContractsService;
@@ -29,7 +33,7 @@ describe("ContractsService (Integration)", () => {
   beforeAll(async () => {
     // Start Postgres container
     container = await new PostgreSqlContainer("postgres:15-alpine").start();
-    
+
     const dbUri = container.getConnectionUri();
 
     // Initialize pool
@@ -41,7 +45,7 @@ describe("ContractsService (Integration)", () => {
     execSync("npm run migrate", {
       env: { ...process.env, DATABASE_URL: dbUri },
       stdio: "inherit",
-      cwd: process.cwd() // Jest runs from src/api
+      cwd: process.cwd(), // Jest runs from src/api
     });
 
     // Provide mocked dependencies
@@ -51,19 +55,36 @@ describe("ContractsService (Integration)", () => {
         { provide: Pool, useValue: pool },
         { provide: LedgerService, useValue: { recordTransaction: jest.fn() } },
         { provide: TruthLogService, useValue: { appendEvent: jest.fn() } },
-        { provide: StripeFboService, useValue: { holdStake: jest.fn(), captureStake: jest.fn(), cancelHold: jest.fn(), resolveDisposition: jest.fn() } },
-        { provide: RealStripeFBOService, useValue: { captureFunds: jest.fn() } },
+        {
+          provide: StripeFboService,
+          useValue: {
+            holdStake: jest.fn(),
+            captureStake: jest.fn(),
+            cancelHold: jest.fn(),
+            resolveDisposition: jest.fn(),
+          },
+        },
+        {
+          provide: RealStripeFBOService,
+          useValue: { captureFunds: jest.fn() },
+        },
         { provide: DisputeService, useValue: {} },
         { provide: FuryRouterService, useValue: {} },
-        { provide: AegisProtocolService, useValue: { validateCreation: jest.fn() } },
-        { provide: RecoveryProtocolService, useValue: { validateCreation: jest.fn() } },
+        {
+          provide: AegisProtocolService,
+          useValue: { validateCreation: jest.fn() },
+        },
+        {
+          provide: RecoveryProtocolService,
+          useValue: { validateCreation: jest.fn() },
+        },
         { provide: DynamicPenaltyService, useValue: {} },
         { provide: AnomalyService, useValue: {} },
         { provide: SettlementService, useValue: {} },
         { provide: NotificationsService, useValue: { create: jest.fn() } },
         { provide: CompliancePolicyService, useValue: {} },
         { provide: WaitlistService, useValue: {} },
-        { provide: SurveyService, useValue: {} }
+        { provide: SurveyService, useValue: {} },
       ],
     }).compile();
 
@@ -88,14 +109,23 @@ describe("ContractsService (Integration)", () => {
       // Insert dummy user
       await pool.query(
         `INSERT INTO users (id, email, password_hash, status) VALUES ($1, $2, $3, $4)`,
-        [userId, "test@example.com", "hash", "ACTIVE"]
+        [userId, "test@example.com", "hash", "ACTIVE"],
       );
 
       // Insert active contract
       await pool.query(
         `INSERT INTO contracts (id, user_id, status, oath_category, verification_method, stake_amount, duration_days, realm_id) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [contractId, userId, "ACTIVE", "RECOVERY_SUBSTANCE", "CAMERA", 100, 30, "RECOVERY_ABSTINENCE"]
+        [
+          contractId,
+          userId,
+          "ACTIVE",
+          "RECOVERY_SUBSTANCE",
+          "CAMERA",
+          100,
+          30,
+          "RECOVERY_ABSTINENCE",
+        ],
       );
 
       // Submit first attestation
@@ -106,7 +136,10 @@ describe("ContractsService (Integration)", () => {
       });
 
       // Verify in DB
-      let result = await pool.query(`SELECT * FROM attestations WHERE contract_id = $1`, [contractId]);
+      let result = await pool.query(
+        `SELECT * FROM attestations WHERE contract_id = $1`,
+        [contractId],
+      );
       expect(result.rows).toHaveLength(1);
       expect(result.rows[0].status).toBe("ATTESTED");
       expect(result.rows[0].urge_level).toBe(5);
@@ -115,7 +148,7 @@ describe("ContractsService (Integration)", () => {
 
       // If we submit again, it should throw because existing status is ATTESTED
       await expect(
-        service.submitAttestation(contractId, userId, { urgeLevel: 2 })
+        service.submitAttestation(contractId, userId, { urgeLevel: 2 }),
       ).rejects.toThrow("Already attested today");
     });
   });

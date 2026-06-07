@@ -1,23 +1,21 @@
-version: '3.8'
-
 services:
   # The Styx API (Workstream 1)
   styx-api:
     build:
-      context: .
-      dockerfile: ./src/api/Dockerfile
+      context: ../..
+      dockerfile: src/api/Dockerfile
+      args:
+        API_CONTAINER_PORT: ${STYX_DOCKER_API_CONTAINER_PORT:?STYX_DOCKER_API_CONTAINER_PORT is required}
     ports:
-      - '3000:3000'
+      - "${STYX_DOCKER_API_PORT:?STYX_DOCKER_API_PORT is required}:${STYX_DOCKER_API_CONTAINER_PORT:?STYX_DOCKER_API_CONTAINER_PORT is required}"
     environment:
-      - NODE_ENV=development
-      - POSTGRES_HOST=styx-postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=styx_admin
-      - POSTGRES_PASSWORD=styx_local_secret
-      - POSTGRES_DB=styx_ledger
-      - DATABASE_URL=postgresql://styx_admin:styx_local_secret@styx-postgres:5432/styx_ledger
-      - REDIS_HOST=styx-redis
-      - REDIS_PORT=6379
+      NODE_ENV: ${STYX_DOCKER_API_NODE_ENV:?STYX_DOCKER_API_NODE_ENV is required}
+      PORT: ${STYX_DOCKER_API_CONTAINER_PORT:?STYX_DOCKER_API_CONTAINER_PORT is required}
+      DATABASE_URL: ${STYX_DOCKER_DATABASE_URL:?STYX_DOCKER_DATABASE_URL is required}
+      REDIS_URL: ${STYX_DOCKER_REDIS_URL:?STYX_DOCKER_REDIS_URL is required}
+      STYX_API_PUBLIC_URL: ${STYX_API_PUBLIC_URL:?STYX_API_PUBLIC_URL is required}
+      STYX_WEB_PUBLIC_URL: ${STYX_WEB_PUBLIC_URL:?STYX_WEB_PUBLIC_URL is required}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
     depends_on:
       - styx-postgres
       - styx-redis
@@ -26,27 +24,27 @@ services:
 
   # Core Ledger Database (PostgreSQL)
   styx-postgres:
-    image: postgres:15-alpine
+    image: ${STYX_DOCKER_POSTGRES_IMAGE:?STYX_DOCKER_POSTGRES_IMAGE is required}
     restart: always
     environment:
-      POSTGRES_USER: styx_admin
-      POSTGRES_PASSWORD: styx_local_secret
-      POSTGRES_DB: styx_ledger
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
     ports:
-      - '5432:5432'
+      - "${STYX_DOCKER_POSTGRES_PORT:?STYX_DOCKER_POSTGRES_PORT is required}:${POSTGRES_PORT:?POSTGRES_PORT is required}"
     volumes:
       - styx-pg-data:/var/lib/postgresql/data
-      - ./src/api/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./src/api/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+      - ../../src/api/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../../src/api/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     networks:
       - styx-network
 
   # Core Router Queue (Redis)
   styx-redis:
-    image: redis:7-alpine
+    image: ${STYX_DOCKER_REDIS_IMAGE:?STYX_DOCKER_REDIS_IMAGE is required}
     restart: always
     ports:
-      - '6379:6379'
+      - "${STYX_DOCKER_REDIS_PORT:?STYX_DOCKER_REDIS_PORT is required}:${REDIS_PORT:?REDIS_PORT is required}"
     networks:
       - styx-network
     command: redis-server --appendonly yes
@@ -56,13 +54,18 @@ services:
   # Web Dashboard (Next.js)
   styx-web:
     build:
-      context: .
-      dockerfile: ./src/web/Dockerfile
+      context: ../..
+      dockerfile: src/web/Dockerfile
+      args:
+        WEB_CONTAINER_PORT: ${STYX_DOCKER_WEB_CONTAINER_PORT:?STYX_DOCKER_WEB_CONTAINER_PORT is required}
     ports:
-      - '3001:3000'
+      - "${STYX_DOCKER_WEB_PORT:?STYX_DOCKER_WEB_PORT is required}:${STYX_DOCKER_WEB_CONTAINER_PORT:?STYX_DOCKER_WEB_CONTAINER_PORT is required}"
     environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://styx-api:3000
+      NODE_ENV: ${STYX_DOCKER_WEB_NODE_ENV:?STYX_DOCKER_WEB_NODE_ENV is required}
+      PORT: ${STYX_DOCKER_WEB_CONTAINER_PORT:?STYX_DOCKER_WEB_CONTAINER_PORT is required}
+      NEXT_PUBLIC_API_URL: ${STYX_DOCKER_API_INTERNAL_URL:?STYX_DOCKER_API_INTERNAL_URL is required}
+      STYX_WEB_PUBLIC_URL: ${STYX_WEB_PUBLIC_URL:?STYX_WEB_PUBLIC_URL is required}
+      NEXT_PUBLIC_WEB_URL: ${NEXT_PUBLIC_WEB_URL:-}
     depends_on:
       - styx-api
     networks:

@@ -1,5 +1,6 @@
-import { create } from 'zustand';
-import { api } from '../services/api-client';
+import { create } from "zustand";
+import { api } from "../services/api-client";
+import { getApiBase } from "../services/runtime-config";
 
 export interface Assignment {
   assignmentId: string;
@@ -23,9 +24,6 @@ interface FuryState {
 
 const POLL_INTERVAL_MS = 5_000;
 const SSE_RECONNECT_MS = 5_000;
-const API_BASE = typeof window !== 'undefined'
-  ? '/api'
-  : 'http://localhost:3000';
 
 // Closure refs — kept outside Zustand state to avoid unnecessary re-renders
 let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -35,7 +33,9 @@ let stopped = false;
 
 function startPolling(poll: () => Promise<void>) {
   if (pollTimer) return;
-  pollTimer = setInterval(() => { void poll(); }, POLL_INTERVAL_MS);
+  pollTimer = setInterval(() => {
+    void poll();
+  }, POLL_INTERVAL_MS);
 }
 
 function stopPolling() {
@@ -68,10 +68,17 @@ export const useFuryStore = create<FuryState>((set, get) => ({
       try {
         const data = await api.getFuryAssignments();
         if (data && Array.isArray(data.assignments)) {
-          set({ assignments: data.assignments, isConnected: true, error: null });
+          set({
+            assignments: data.assignments,
+            isConnected: true,
+            error: null,
+          });
         }
       } catch {
-        set({ isConnected: false, error: 'Connection to Panopticon stream lost.' });
+        set({
+          isConnected: false,
+          error: "Connection to Panopticon stream lost.",
+        });
       }
     };
 
@@ -90,7 +97,9 @@ export const useFuryStore = create<FuryState>((set, get) => ({
         await api.issueFuryStreamCookie();
         if (stopped) return;
 
-        const source = new EventSource(`${API_BASE}/fury/stream`, { withCredentials: true });
+        const source = new EventSource(`${getApiBase()}/fury/stream`, {
+          withCredentials: true,
+        });
         eventSource = source;
 
         source.onopen = () => {
@@ -105,7 +114,9 @@ export const useFuryStore = create<FuryState>((set, get) => ({
               set({ assignments: data.assignments });
             } else if (data.assignmentId) {
               set((state) => {
-                const exists = state.assignments.some((a) => a.assignmentId === data.assignmentId);
+                const exists = state.assignments.some(
+                  (a) => a.assignmentId === data.assignmentId,
+                );
                 if (exists) return state;
                 return { assignments: [...state.assignments, data] };
               });
@@ -139,7 +150,9 @@ export const useFuryStore = create<FuryState>((set, get) => ({
 
   removeAssignment: (assignmentId: string) => {
     set((state) => ({
-      assignments: state.assignments.filter((a) => a.assignmentId !== assignmentId),
+      assignments: state.assignments.filter(
+        (a) => a.assignmentId !== assignmentId,
+      ),
     }));
   },
 }));

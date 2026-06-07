@@ -12,7 +12,7 @@ metadata:
   implementation_status: ACTIVE
   tier: flagship
   promotion_status: PUBLIC_PROCESS
-  last_validated: "2026-03-11"
+  last_validated: "2026-06-07"
   generated: "2026-02-22"
   language: typescript
   tags: [nestjs, nextjs, react-native, tauri, stripe, groq, llama, postgresql, redis]

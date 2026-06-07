@@ -14,6 +14,11 @@ import { Logger } from 'nestjs-pino';
 import * as express from 'express';
 import { GlobalHttpExceptionFilter } from './common/filters/global-http-exception.filter';
 import { initSentry } from './common/monitoring/sentry';
+import {
+  resolveApiListenPort,
+  resolveApiPublicUrl,
+  resolveCorsOrigins,
+} from './config/runtime';
 
 async function bootstrap() {
   // Initialize Sentry before NestFactory (requires SENTRY_DSN in .env)
@@ -53,13 +58,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new GlobalHttpExceptionFilter());
 
-  const allowedOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',')
-        .map((origin) => origin.trim())
-        .filter(Boolean)
-    : isProduction
-      ? []
-      : ['http://localhost:3001', 'http://localhost:5173'];
+  const allowedOrigins = resolveCorsOrigins();
 
   if (allowedOrigins.length > 0) {
     app.enableCors({
@@ -88,11 +87,13 @@ async function bootstrap() {
   // Graceful shutdown — drain in-flight requests before exit
   app.enableShutdownHooks();
 
-  const port = Number(process.env.PORT || process.env.API_PORT || 3000);
+  const port = resolveApiListenPort();
   await app.listen(port);
-  logger.log(`Styx API running on http://localhost:${port}`, 'Bootstrap');
+  const boundUrl = await app.getUrl();
+  const publicApiUrl = resolveApiPublicUrl(boundUrl) || boundUrl;
+  logger.log(`Styx API running on ${publicApiUrl}`, 'Bootstrap');
   if (!isProduction) {
-    logger.log(`Swagger docs at http://localhost:${port}/api/docs`, 'Bootstrap');
+    logger.log(`Swagger docs at ${publicApiUrl}/api/docs`, 'Bootstrap');
   }
 }
 

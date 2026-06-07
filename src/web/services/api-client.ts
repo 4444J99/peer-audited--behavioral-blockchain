@@ -2,14 +2,11 @@ import type {
   MobileBootstrapResponse,
   ReleaseInfoResponse,
 } from "@styx/shared/index";
+import { getApiBase } from "./runtime-config";
 
 // In the browser, route through the Next.js /api rewrite proxy (same-origin)
 // to avoid cross-origin cookie/CORS issues.  On the server (SSR), call the
 // API directly since there's no browser cookie sandbox to worry about.
-const API_BASE =
-  typeof window !== "undefined"
-    ? "/api"
-    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 const WEB_APP_VERSION =
   process.env.NEXT_PUBLIC_STYX_WEB_VERSION ||
   process.env.NEXT_PUBLIC_APP_VERSION ||
@@ -119,7 +116,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   };
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, {
+    res = await fetch(`${getApiBase()}${path}`, {
       ...options,
       credentials: options?.credentials ?? "include",
       headers: mergedHeaders,
@@ -154,7 +151,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 async function refreshToken(): Promise<void> {
-  const res = await fetch(`${API_BASE}/auth/refresh`, {
+  const res = await fetch(`${getApiBase()}/auth/refresh`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

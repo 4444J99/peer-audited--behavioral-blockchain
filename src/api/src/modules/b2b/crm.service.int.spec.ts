@@ -3,11 +3,15 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { CrmService } from "./crm.service";
 import { SalesforceConnector } from "./connectors/salesforce.connector";
 import { HubSpotConnector } from "./connectors/hubspot.connector";
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import {
+  PostgreSqlContainer,
+  StartedPostgreSqlContainer,
+} from "@testcontainers/postgresql";
 import { Pool } from "pg";
 import { execSync } from "child_process";
+import { describeWithContainerRuntime } from "../../../test/container-runtime";
 
-describe("CrmService (Integration)", () => {
+describeWithContainerRuntime("CrmService (Integration)", () => {
   let container: StartedPostgreSqlContainer;
   let pool: Pool;
   let service: CrmService;
@@ -24,15 +28,21 @@ describe("CrmService (Integration)", () => {
     execSync("npm run migrate", {
       env: { ...process.env, DATABASE_URL: dbUri },
       stdio: "inherit",
-      cwd: process.cwd() // Jest runs from src/api
+      cwd: process.cwd(), // Jest runs from src/api
     });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CrmService,
         { provide: Pool, useValue: pool },
-        { provide: SalesforceConnector, useValue: { pushEmployeeEvent: jest.fn() } },
-        { provide: HubSpotConnector, useValue: { pushEmployeeEvent: jest.fn() } }
+        {
+          provide: SalesforceConnector,
+          useValue: { pushEmployeeEvent: jest.fn() },
+        },
+        {
+          provide: HubSpotConnector,
+          useValue: { pushEmployeeEvent: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -60,7 +70,7 @@ describe("CrmService (Integration)", () => {
       // Note: enterprises table was added in previous session's migration 037b
       await pool.query(
         `INSERT INTO enterprises (id, name) VALUES ($1, $2), ($3, $4)`,
-        [enterpriseId, "Test Corp", otherEnterpriseId, "Other Corp"]
+        [enterpriseId, "Test Corp", otherEnterpriseId, "Other Corp"],
       );
 
       // Add users
@@ -87,7 +97,7 @@ describe("CrmService (Integration)", () => {
           "other@test.com",
           10,
           otherEnterpriseId,
-        ]
+        ],
       );
 
       // Add active contracts for one active user and one inactive user. The duplicate
@@ -99,7 +109,14 @@ describe("CrmService (Integration)", () => {
           ($1, $2, 'ACTIVE', 'BIOLOGICAL_WEIGHT', 'WEIGHT', 100, 30, 'BIOLOGICAL_HARDWARE'),
           ($3, $4, 'ACTIVE', 'BIOLOGICAL_WEIGHT', 'WEIGHT', 100, 30, 'BIOLOGICAL_HARDWARE'),
           ($5, $6, 'ACTIVE', 'BIOLOGICAL_WEIGHT', 'WEIGHT', 100, 30, 'BIOLOGICAL_HARDWARE')`,
-        [contractId1, userId1, contractId2, userId1, inactiveContractId, inactiveUserId]
+        [
+          contractId1,
+          userId1,
+          contractId2,
+          userId1,
+          inactiveContractId,
+          inactiveUserId,
+        ],
       );
 
       // Add velocity events. Only the first two belong to active users in this enterprise.
@@ -115,11 +132,12 @@ describe("CrmService (Integration)", () => {
           JSON.stringify({ contractId: contractId2 }),
           JSON.stringify({ userId: inactiveUserId }),
           JSON.stringify({ userId: otherEnterpriseUserId }),
-        ]
+        ],
       );
 
-      const score = await service.calculateCorporateIntegrityScore(enterpriseId);
-      
+      const score =
+        await service.calculateCorporateIntegrityScore(enterpriseId);
+
       expect(score.averageIntegrity).toBe(70); // (80 + 60) / 2
       expect(score.activeContracts).toBe(2);
       expect(score.behavioralVelocity).toBe(2);

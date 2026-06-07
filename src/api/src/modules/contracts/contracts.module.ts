@@ -23,13 +23,13 @@ import {
 import { NotificationsModule } from "../notifications/notifications.module";
 import { PaymentsModule } from "../payments/payments.module";
 import Redis from "ioredis";
-import { REDIS_CONNECTION_CONFIG } from "../../../config/queue.config";
+import { getRedisConnectionConfig } from "../../../config/queue.config";
 
 const redisProvider = {
   provide: ANOMALY_REDIS_CLIENT,
   useFactory: () => {
     try {
-      return new Redis({ ...REDIS_CONNECTION_CONFIG, lazyConnect: true });
+      return new Redis({ ...getRedisConnectionConfig(), lazyConnect: true });
     } catch {
       return undefined;
     }

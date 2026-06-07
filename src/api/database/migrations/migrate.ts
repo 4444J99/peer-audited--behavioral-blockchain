@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
+import { resolveDatabaseUrl } from '../../src/config/runtime';
 
 const MIGRATIONS_TABLE = 'schema_migrations';
 const MIGRATIONS_DIR = path.join(__dirname);
@@ -67,8 +68,7 @@ export async function runMigrations(pool: Pool): Promise<string[]> {
 
 // CLI entry point — run directly with `tsx database/migrations/migrate.ts`
 if (require.main === module) {
-  const databaseUrl = process.env.DATABASE_URL || 'postgresql://styx_admin:styx_local_secret@localhost:5432/styx_ledger';
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = new Pool({ connectionString: resolveDatabaseUrl() });
 
   runMigrations(pool)
     .then((applied) => {

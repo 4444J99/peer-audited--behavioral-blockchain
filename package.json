@@ -9,7 +9,11 @@
   ],
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "node scripts/dev/app-stack.mjs",
+    "dev:api": "node scripts/dev/run-api.mjs",
+    "dev:web": "node scripts/dev/run-web.mjs",
+    "dev:migrate": "node scripts/dev/run-migrate.mjs",
+    "dev:turbo": "turbo run dev",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "validate:claims": "node scripts/validation/07-claim-drift-check.js",

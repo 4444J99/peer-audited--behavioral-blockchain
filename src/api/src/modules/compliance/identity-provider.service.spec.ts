@@ -7,9 +7,17 @@ import {
 
 describe('MockIdentityProviderAdapter', () => {
   let adapter: MockIdentityProviderAdapter;
+  const originalEnv = process.env;
 
   beforeEach(() => {
+    process.env = { ...originalEnv };
+    delete process.env.STYX_WEB_PUBLIC_URL;
+    delete process.env.NEXT_PUBLIC_WEB_URL;
     adapter = new MockIdentityProviderAdapter();
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
   });
 
   it('should have providerName MOCK', () => {
@@ -41,18 +49,30 @@ describe('MockIdentityProviderAdapter', () => {
     expect(result.hostedUrl).toContain('https://app.styx.io');
   });
 
-  it('should fall back to localhost when no returnUrl provided', async () => {
+  it('should use configured web URL when no returnUrl provided', async () => {
+    process.env.STYX_WEB_PUBLIC_URL = 'https://configured.styx.test';
+
     const result = await adapter.start({
       userId: 'user-1',
       mode: 'KYC_ONLY',
     });
 
-    expect(result.hostedUrl).toContain('localhost:3001');
+    expect(result.hostedUrl).toContain('https://configured.styx.test');
+  });
+
+  it('should reject missing web URL when no returnUrl provided', async () => {
+    await expect(
+      adapter.start({
+        userId: 'user-1',
+        mode: 'KYC_ONLY',
+      }),
+    ).rejects.toThrow(/Web public URL is required/);
   });
 
   it('should generate unique verification IDs', async () => {
-    const result1 = await adapter.start({ userId: 'u1', mode: 'KYC_ONLY' });
-    const result2 = await adapter.start({ userId: 'u2', mode: 'KYC_ONLY' });
+    const input = { mode: 'KYC_ONLY' as const, returnUrl: 'https://app.styx.test' };
+    const result1 = await adapter.start({ ...input, userId: 'u1' });
+    const result2 = await adapter.start({ ...input, userId: 'u2' });
     expect(result1.verificationId).not.toBe(result2.verificationId);
   });
 });
