@@ -1,5 +1,6 @@
 import { test as base, Page } from '@playwright/test';
-import { setupAuthenticatedMocks, MOCK_USER, MOCK_CSRF_TOKEN } from './api-mocks';
+import { setupAuthenticatedMocks, MOCK_USER } from './api-mocks';
+import { seedAuthCookie } from './auth-cookie';
 
 /**
  * Extended test fixture providing an authenticated page.
@@ -39,14 +40,7 @@ export const test = base.extend<{ authenticatedPage: Page }>({
     // (server-side, so it cannot see localStorage or client-side route mocks).
     // The previous `localStorage.styx_token` injection was inert — the app
     // reads no such key — which is why authenticated specs landed on /login.
-    await page.context().addCookies([
-      {
-        name: 'styx_auth_token',
-        value: 'jwt-e2e-test-token',
-        domain: 'localhost',
-        path: '/',
-      },
-    ]);
+    await seedAuthCookie(page);
 
     await use(page);
   },

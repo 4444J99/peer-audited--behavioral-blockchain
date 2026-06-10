@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { setupUnauthenticatedMocks, MOCK_USER, MOCK_CSRF_TOKEN } from './fixtures/api-mocks';
+import { seedAuthCookie } from './fixtures/auth-cookie';
 
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {
@@ -116,9 +117,7 @@ test.describe('Authentication', () => {
     // Pre-seed the auth cookie so the post-register redirect lands on /dashboard
     // (proxy.ts gates protected routes on the styx_auth_token cookie) instead of
     // bouncing back to /login — this asserts the true register-success path.
-    await page.context().addCookies([
-      { name: 'styx_auth_token', value: 'jwt-e2e-token', domain: 'localhost', path: '/' },
-    ]);
+    await seedAuthCookie(page, 'jwt-e2e-token');
 
     await page.goto('/register');
     await page.fill('input[type="email"], input[name="email"]', 'new@styx.test');
