@@ -1,0 +1,52 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build All Workspaces
+        run: npx turbo run build
+
+      - name: Generate Release Notes
+        id: notes
+        run: |
+          PREV_TAG=$(git tag --sort=-creatordate | head -n 2 | tail -n 1 || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            NOTES=$(git log "$PREV_TAG..HEAD" --oneline --no-decorate 2>/dev/null || git log --oneline -20 --no-decorate)
+          else
+            NOTES=$(git log --oneline -30 --no-decorate)
+          fi
+          {
+            echo 'NOTES<<EOF'
+            echo "$NOTES"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.notes.outputs.NOTES }}
+          generate_release_notes: true
+          make_latest: true

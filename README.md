@@ -120,18 +120,36 @@ flowchart TB
 | Pitch deck (canonical Pages artifact, `@styx/pitch` → `docs/`) | https://a-organvm.github.io/peer-audited--behavioral-blockchain/ | `ship-now` (200 OK) |
 | Interactive launch surface (waitlist / sign-up) | `/launch` | `ship-soon` (404 — tracked in Phase Gamma) |
 | Ask Styx LLM Q&A app | `/ask-styx` (deploy-ask-styx workflow) | separate sub-path, not on canonical URL |
-| API health check | `<api-host>/health` (per `render.yaml` and `@styx/api` `HealthController`) | `ship-soon` (deploy tracked in Issue #675) |
+| API (NestJS, Render) | `$API_URL` per Render blueprint (`render.yaml`, `@styx/api`) | `ship-soon` (cut `v*` tag to trigger [`deploy.yml`](.github/workflows/deploy.yml); set Render secrets `RENDER_API_SERVICE_ID`, `RENDER_API_KEY`, `RENDER_WEB_SERVICE_ID`, `API_URL`, `WEB_URL`, `DATABASE_URL`) |
+| Web (Next.js, Render) | `$WEB_URL` per Render blueprint (`render.yaml`, `@styx/web`) | `ship-soon` (same tag-triggered deploy as API) |
 
 Full activation ledger (evidence, blockers, reconciliation with the cross-system `activation-ledger-2026-06-10.csv`): [`docs/activation/activation-ledger--peer-audited--2026-06-11.md`](docs/activation/activation-ledger--peer-audited--2026-06-11.md).
 
 Verify the live surface (re-runnable by any user):
 
 ```bash
+# Pitch deck
 curl -sS -o /dev/null -w "%{http_code} %{url_effective}\n" \
   -L https://a-organvm.github.io/peer-audited--behavioral-blockchain/
+
+# API health (after deploy)
+# curl -sS $API_URL/health
+
+# Web (after deploy)
+# curl -sS -o /dev/null -w "%{http_code}\n" $WEB_URL
 ```
 
 **Expected output:** `200 https://a-organvm.github.io/peer-audited--behavioral-blockchain/`
+
+### Deploying
+
+A production deploy requires:
+
+1. **Render secrets** set in GitHub Actions: `RENDER_API_SERVICE_ID`, `RENDER_API_KEY`, `RENDER_WEB_SERVICE_ID`, `API_URL`, `WEB_URL`, `DATABASE_URL`
+2. **A `v*` tag** pushed to `main` — triggers [`deploy.yml`](.github/workflows/deploy.yml) which deploys API + Web to Render, runs migrations, and smoke-tests both services.
+3. **Render dashboard** manual secrets for `sync: false` vars in `render.yaml` (`STRIPE_SECRET_KEY`, `JWT_SECRET`, `CLOUDFLARE_R2_*`, etc.)
+
+See [`docs/activation/activation-ledger--peer-audited--2026-06-11.md`](docs/activation/activation-ledger--peer-audited--2026-06-11.md) for the full activation checklist.
 
 ## Key Features
 
