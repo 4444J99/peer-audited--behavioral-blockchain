@@ -1,0 +1,157 @@
+# Styx / Jessica — InstanceConfig
+#
+# This is the machine-readable form of
+# docs/planning/planning--audience-growth-engine--styx-instance--2026-06-01.md.
+# Edit this YAML to regenerate the 30-day calendar.
+#
+# To generate:
+#   audience-engine plan --config templates/styx-instance.yaml --output /tmp/styx-calendar.md
+
+systemName: styx
+
+parameters:
+  p1Host:
+    archetype: personal_creator
+    statement: "Jessica — personal creator, no-contact recovery niche"
+  p2Wedge:
+    statement: "No-contact breakup recovery (the live urge moment)"
+    highIntentPhrases:
+      - "how to survive 30 days of no contact"
+      - "why willpower fails after a breakup"
+      - "stop texting my ex"
+  p3Product:
+    statement: "Styx iOS private beta (test-money, US allowlist)"
+    kind: app
+    conversionCta: "Join the Private Beta"
+  p4OwnedAsset:
+    statement: "Waitlist + email list + qualified beta roster"
+    kind: email_list
+  p5ProofLoop:
+    statement: "No-contact milestone cards (7 / 14 / 30 days)"
+    cadence: weekly
+    format: card
+
+channels:
+  host:
+    role: host
+    name: "Jessica (Instagram)"
+    voice: "Names the pain, captures the urge moment, human voice"
+    does:
+      - "Names the live decision moment"
+      - "Speaks human, not clinical"
+    doesNot:
+      - "Become a product brochure"
+      - "Lead with 'behavioral blockchain' or financial framing"
+    ratio:
+      value: 60
+      trust: 25
+      proof: 0
+      conversion: 15
+    cadence:
+      shortForm: 3
+      longForm: 1
+      story: 1
+      conversion: 1
+      conversationPrompts: 1
+
+  product:
+    role: product
+    name: "Styx (Instagram)"
+    voice: "Product receipts, beta scope, trust/safety, early-user proof"
+    does:
+      - "Explains what the product is and is not"
+      - "Shows receipts (screens, milestones, reactions)"
+    doesNot:
+      - "Try to be the intimate primary voice"
+      - "Compete with the Host for personality"
+    ratio:
+      value: 40
+      trust: 25
+      proof: 20
+      conversion: 15
+    cadence:
+      shortForm: 1
+      longForm: 0
+      story: 0
+      conversion: 1
+      proofPosts: 1
+      scopeExplainers: 1
+
+ladder:
+  admissionRule: "Fit with no-contact wedge · likelihood of actual use · willingness to give feedback"
+  cohortSize: 20
+  weeklyRitual: "Founder check-in + weekly prompt + one milestone highlight + selective referral invite"
+  sourceMix:
+    own: 50
+    partner: 30
+    intermediary: 20
+
+attack:
+  l1DemandCapture:
+    phrases:
+      - "no contact rule"
+      - "how to stop texting your ex"
+      - "30 days no contact"
+    capturePageRoute: "/do-not-text-tonight"
+  l2BorrowedAudience:
+    targets:
+      - "Breakup-recovery creators on TikTok"
+      - "Attachment-style creators on Instagram"
+      - "Sober-curious creators on Substack"
+    voice: consumer_creator
+  l3Intermediaries:
+    hook: "Therapists + breakup coaches as accountability infrastructure"
+    referralAsset: "B2B ICP at docs/departments/b2b/artifacts/icp.md"
+  l4CommunityLoop:
+    shareCardMoment: "Milestone share cards (P5)"
+    referralMechanic: "Controlled referral invite in weekly ritual"
+  l5Authority:
+    cornerstoneEssays:
+      - "Why willpower fails after a breakup"
+      - "The accountability gap"
+      - "Consequence-backed recovery"
+  doNotSayYet:
+    - "real-money winnings"
+    - "Fury/blockchain lead"
+    - "paid acquisition before organic baseline"
+    - "broad community before cohort motion"
+    - "guarantees about relationship or emotional outcome"
+
+audienceAsProduct:
+  rungs:
+    - { name: "free follow" }
+    - { name: "email subscriber (no-contact guide)" }
+    - { name: "low-ticket recovery resource" }
+    - { name: "cohort/community", isProduct: false }
+    - { name: "selective sponsorship" }
+  coexistenceRule: "Styx beta sits beside the low-ticket rung; never replaces free value"
+
+engagementEconomics:
+  weeklyHours: 6
+  inScope:
+    - "Jessica week-1 content batch"
+    - "L2 creator outreach (5/week)"
+    - "Milestone share cards (P5)"
+  outOfScope:
+    - "Paid acquisition"
+    - "Conference booths"
+    - "Broad-community management"
+  roiStatement: "Asset growth (followers + email) + Product pipeline (waitlist → cohort) + reusable system (the L1-L5 attack and the 3 cornerstone essays are reusable for the next venture)"
+
+kpis:
+  - { name: "Followers (net)", weeklyTarget: 250, unit: "followers" }
+  - { name: "Email subscribers (net)", weeklyTarget: 75, unit: "subscribers" }
+  - { name: "Lead-magnet conversion", weeklyTarget: 25, unit: "%" }
+  - { name: "Qualified waitlist", weeklyTarget: 12, unit: "people" }
+  - { name: "Cohort activation", weeklyTarget: 80, unit: "%" }
+  - { name: "Day-7 retention", weeklyTarget: 70, unit: "%" }
+  - { name: "Intermediary partners", weeklyTarget: 1, unit: "partners" }
+
+healthBands:
+  green: "Weekly content shipped on schedule · follower + email growth on target · waitlist filling"
+  yellow: "1 missed content week · growth flat/below target · waitlist stalling"
+  red: "2+ missed content weeks · net follower/email decline · zero qualified waitlist for 2+ weeks"
+
+guardrails:
+  inheritedFrom: "docs/departments/gro/REGE.md (CRIT:content-quality, human checkpoints)"
+  nicheRule: "No-contact audience is emotionally vulnerable — lead with empathy, never exploit relapse for engagement-bait, never promise relationship or emotional outcomes"

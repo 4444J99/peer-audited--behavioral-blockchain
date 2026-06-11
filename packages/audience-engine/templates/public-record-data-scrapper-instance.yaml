@@ -1,0 +1,172 @@
+# Public Record Data Scrapper — InstanceConfig
+#
+# Machine-readable form of
+# docs/planning/planning--audience-growth-engine--public-record-data-scrapper-instance--2026-06-11.md.
+#
+# To generate:
+#   audience-engine plan --config templates/public-record-data-scrapper-instance.yaml \
+#     --output /tmp/pds-calendar.md
+
+systemName: public-record-data-scrapper
+
+parameters:
+  p1Host:
+    archetype: branded_expert
+    statement: "Filings Wire — public records research desk (anonymous, authoritative)"
+  p2Wedge:
+    statement: "UCC-1 filing monitoring for active financing signals (the 14-day window)"
+    highIntentPhrases:
+      - "new ucc filing in [state]"
+      - "ucc search by debtor name"
+      - "is this company actively financing"
+      - "ucc priority rules"
+  p3Product:
+    statement: "Public-record-data-scrapper dashboard + CLI + REST API"
+    kind: dashboard
+    conversionCta: "Try the CLI"
+  p4OwnedAsset:
+    statement: "GitHub star list + email list of broker trial users + npm install telemetry"
+    kind: github_stars
+  p5ProofLoop:
+    statement: "Friday Filings of the Week digest (5-10 high-priority UCC-1s, scored, cited)"
+    cadence: weekly
+    format: digest
+
+channels:
+  host:
+    role: host
+    name: "Filings Wire"
+    voice: "Wire service — speaks in filings, grades, jurisdictions, signal patterns"
+    does:
+      - "Names the filing, the debtor, the priority, the source portal"
+      - "Cites every state portal URL"
+    doesNot:
+      - "Sell"
+      - "Use emoji or first-person"
+      - "Read like marketing copy"
+    ratio:
+      value: 70
+      trust: 20
+      proof: 0
+      conversion: 10
+    cadence:
+      shortForm: 4
+      longForm: 0
+      story: 0
+      conversion: 1
+      conversationPrompts: 0
+
+  product:
+    role: product
+    name: "Public Record Data Scrapper (dashboard / API)"
+    voice: "Receipts, scope, trust, provenance"
+    does:
+      - "Explains what the tool is and is not"
+      - "Shows scored output examples"
+      - "Cites every state portal"
+    doesNot:
+      - "Try to be the wire voice"
+      - "Make scraping claims that overpromise"
+    ratio:
+      value: 40
+      trust: 30
+      proof: 20
+      conversion: 10
+    cadence:
+      shortForm: 0
+      longForm: 0
+      story: 0
+      conversion: 1
+      proofPosts: 1
+      scopeExplainers: 1
+
+ladder:
+  admissionRule: "GitHub star · email opt-in via the digest · first successful CLI/dashboard run"
+  cohortSize: 30
+  weeklyRitual: "Friday Filings of the Week digest (RSS + Substack + GitHub releases)"
+  sourceMix:
+    own: 40
+    partner: 35
+    intermediary: 25
+
+attack:
+  l1DemandCapture:
+    phrases:
+      - "new ucc filing in [state]"
+      - "ucc-3 termination meaning"
+      - "how to read a ucc-1"
+      - "ucc search by debtor name"
+      - "is this company actively financing"
+      - "ucc priority rules"
+      - "what is a blanket lien"
+      - "ucc lapse date"
+      - "ucc collateral description"
+      - "ucc search api"
+    capturePageRoute: "/try-the-cli"
+  l2BorrowedAudience:
+    targets:
+      - "deBanked"
+      - "Merchant Cash and Capital"
+      - "The Broker Bulletin podcast"
+      - "MCA-vertical Substack creators (3)"
+    voice: trade_press
+  l3Intermediaries:
+    hook: "MCA brokers with 100+ active deals as accountability infrastructure for analyst teams"
+    referralAsset: "B2B ICP at docs/departments/b2b/artifacts/icp.md"
+  l4CommunityLoop:
+    shareCardMoment: "Friday Filings of the Week digest"
+    referralMechanic: "3 referrals = permanent Wire Contributor credit on future digests"
+  l5Authority:
+    cornerstoneEssays:
+      - "What a UCC-1 Actually Means (5000 words, worked examples)"
+      - "The 14-Day Window: Why UCC Filing Date Matters"
+      - "How 50 State Portals Differ — and Why That Matters for Your Funnel"
+  doNotSayYet:
+    - "AI-powered hype"
+    - "'all 50 states' without a failure-mode caveat"
+    - "scraping claims that overpromise (some states rate-limit)"
+    - "guarantees about whether a deal will close"
+    - "shaming of brokers for not being technical"
+
+audienceAsProduct:
+  rungs:
+    - { name: "GitHub star (free)" }
+    - { name: "email subscriber (Friday digest)" }
+    - { name: "CLI/dashboard trial (self-serve)", isProduct: true }
+    - { name: "paid API tier" }
+    - { name: "co-marketing partnership" }
+  coexistenceRule: "Friday digest does not pitch the paid API. Paid API does not pitch the digest. Each rung is honest about its own value."
+
+engagementEconomics:
+  weeklyHours: 6
+  inScope:
+    - "Friday digest"
+    - "2 cornerstone essays per quarter"
+    - "weekly L2 outreach (5 targets)"
+    - "GitHub release notes per shipped feature"
+  outOfScope:
+    - "Paid acquisition"
+    - "Conference booths"
+    - "broker relationship management beyond referrals"
+  roiStatement: "Asset growth (stars + subscribers + CLI installs) + Product pipeline (CLI installs → dashboard trials → paid tier) + reusable system (L1-L5 attack and 3 cornerstone essays are reusable for any ORGAN-III B2B data venture)"
+
+kpis:
+  - { name: "GitHub stars (net)", weeklyTarget: 12, unit: "stars" }
+  - { name: "Friday digest subscribers (net)", weeklyTarget: 5, unit: "subscribers" }
+  - { name: "Digest open rate", weeklyTarget: 40, unit: "%" }
+  - { name: "CLI installs/week", weeklyTarget: 30, unit: "installs" }
+  - { name: "Dashboard trial signups", weeklyTarget: 5, unit: "signups" }
+  - { name: "Paid tier conversions", weeklyTarget: 1, unit: "conversions" }
+  - { name: "L1 capture-page → email conversion", weeklyTarget: 8, unit: "%" }
+  - { name: "L2 outreach → reply rate", weeklyTarget: 15, unit: "%" }
+  - { name: "Cornerstone essay 30-day reads", weeklyTarget: 2000, unit: "reads" }
+  - { name: "External citations/month", weeklyTarget: 3, unit: "citations" }
+
+healthBands:
+  green: "Friday digest shipped on schedule · star/subscriber growth on target · CLI install velocity ≥ 30/week · ≥ 1 paid tier conversion/month"
+  yellow: "1 missed digest in trailing 4 · star/subscriber growth below target · CLI install velocity 15-30/week · zero paid tier conversions in 4 weeks"
+  red: "2+ missed digests · net star/subscriber decline · CLI install velocity < 15/week · zero paid tier conversions in 8 weeks"
+
+guardrails:
+  inheritedFrom: "ORGAN-III Commerce REGE (when it exists) or cross-organ GRO REGE"
+  nicheRule: "MCA industry is regulator-scrutinized. No scraping claims that overreach what public portals allow. No 'flood broker inboxes' growth tactics. No undisclosed paid promotion. Cite the originating state portal in every filing-cited artifact."

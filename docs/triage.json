@@ -10614,7 +10614,7 @@
       "title": "docs(playbooks): instantiate Audience Growth Engine for public-record-data-scrapper",
       "labels": [],
       "action": "UNCLASSIFIED",
-      "state": "TESTED",
+      "state": "CLOSED",
       "batch": "instantiate-engine-679-680",
       "history": [
         {
@@ -10636,18 +10636,23 @@
           "from": "BUILD_DONE",
           "to": "TESTED",
           "at": "2026-06-11T18:46:02Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-06-11T18:52:49Z"
         }
       ],
       "evidence": "docs/planning/planning--audience-growth-engine--public-record-data-scrapper-instance--2026-06-11.md:1",
       "pr": null,
-      "state_updated": "2026-06-11T18:46:02Z",
+      "state_updated": "2026-06-11T18:52:49Z",
       "closed_at": null
     },
     "680": {
       "title": "docs(playbooks): instantiate Audience Growth Engine for sovereign-ecosystem--real-estate-luxury",
       "labels": [],
       "action": "UNCLASSIFIED",
-      "state": "TESTED",
+      "state": "CLOSED",
       "batch": "instantiate-engine-679-680",
       "history": [
         {
@@ -10669,11 +10674,16 @@
           "from": "BUILD_DONE",
           "to": "TESTED",
           "at": "2026-06-11T18:46:02Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-06-11T18:52:49Z"
         }
       ],
       "evidence": "docs/planning/planning--audience-growth-engine--sovereign-ecosystem-instance--2026-06-11.md:1",
       "pr": null,
-      "state_updated": "2026-06-11T18:46:02Z",
+      "state_updated": "2026-06-11T18:52:49Z",
       "closed_at": null
     }
   }
