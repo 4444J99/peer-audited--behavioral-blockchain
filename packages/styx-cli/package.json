@@ -1,0 +1,42 @@
+{
+  "name": "@styx/styx-cli",
+  "version": "0.1.0",
+  "description": "Operational wrapper for the Audience Growth Engine, tuned for Styx/Jessica. Runs the engine with Styx defaults and logs weekly metrics.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "styx": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@styx/audience-engine": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^4.1.0"
+  },
+  "keywords": [
+    "styx",
+    "audience-engine",
+    "cli",
+    "no-contact",
+    "jessica"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

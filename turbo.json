@@ -15,6 +15,15 @@
     "@styx/web#lint": {
       "dependsOn": ["build"]
     },
+    "@styx/styx-cli#lint": {
+      "dependsOn": ["^build"]
+    },
+    "@styx/audience-engine#test": {
+      "dependsOn": ["^build"]
+    },
+    "@styx/styx-cli#test": {
+      "dependsOn": ["^build"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

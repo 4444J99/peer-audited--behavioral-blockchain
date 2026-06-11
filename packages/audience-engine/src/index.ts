@@ -7,7 +7,7 @@
  */
 
 export { loadConfig } from "./loaders/config.js";
-export { generatePlan } from "./generators/plan.js";
+export { generatePlan, parseDateNoTimezoneDrift } from "./generators/plan.js";
 export { renderMarkdown } from "./generators/markdown.js";
 export type {
   InstanceConfig,
