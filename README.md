@@ -13,6 +13,7 @@ A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to 
 
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
+- [Live Status](#live-status)
 - [Key Features](#key-features)
 - [Testing](#testing)
 - [Commands](#commands)
@@ -111,6 +112,26 @@ flowchart TB
 - **CI/CD**: GitHub Actions (test + build + lint + gates + CodeQL + E2E)
 - **IaC**: Terraform (Render services, Cloudflare R2, WAF rules)
 - **API Docs**: OpenAPI/Swagger at `/api/docs`
+
+## Live Status
+
+| Surface | URL | Status |
+|---|---|---|
+| Pitch deck (canonical Pages artifact, `@styx/pitch` → `docs/`) | https://a-organvm.github.io/peer-audited--behavioral-blockchain/ | `ship-now` (200 OK) |
+| Interactive launch surface (waitlist / sign-up) | `/launch` | `ship-soon` (404 — tracked in Phase Gamma) |
+| Ask Styx LLM Q&A app | `/ask-styx` (deploy-ask-styx workflow) | separate sub-path, not on canonical URL |
+| API health check | `<api-host>/health` (per `render.yaml` and `@styx/api` `HealthController`) | `ship-soon` (deploy tracked in Issue #675) |
+
+Full activation ledger (evidence, blockers, reconciliation with the cross-system `activation-ledger-2026-06-10.csv`): [`docs/activation/activation-ledger--peer-audited--2026-06-11.md`](docs/activation/activation-ledger--peer-audited--2026-06-11.md).
+
+Verify the live surface (re-runnable by any user):
+
+```bash
+curl -sS -o /dev/null -w "%{http_code} %{url_effective}\n" \
+  -L https://a-organvm.github.io/peer-audited--behavioral-blockchain/
+```
+
+**Expected output:** `200 https://a-organvm.github.io/peer-audited--behavioral-blockchain/`
 
 ## Key Features
 

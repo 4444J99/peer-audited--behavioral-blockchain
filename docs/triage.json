@@ -143,6 +143,52 @@
       "completed": "2026-06-01T19:56:44Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "triage-codereview-p2",
+      "phase": "Phase 4 — Triage Codex P2 review threads",
+      "issues": [
+        670
+      ],
+      "started": "2026-06-11T15:55:11Z",
+      "completed": null,
+      "reconciled": false,
+      "test_passed": false
+    },
+    {
+      "id": "close-superseded-burndowns",
+      "phase": "Phase 4 — Close superseded weekly Blocked Handoff Burn-downs (keep #673)",
+      "issues": [
+        145,
+        559,
+        572,
+        578,
+        581,
+        582,
+        584,
+        585,
+        587,
+        588,
+        589,
+        602,
+        606,
+        651
+      ],
+      "started": "2026-06-11T16:04:08Z",
+      "completed": null,
+      "reconciled": false,
+      "test_passed": false
+    },
+    {
+      "id": "triage-activation-676",
+      "phase": "Phase 4 — Activation audit (Issue #676)",
+      "issues": [
+        676
+      ],
+      "started": "2026-06-11T16:22:22Z",
+      "completed": null,
+      "reconciled": false,
+      "test_passed": false
     }
   ],
   "issues": {
@@ -1303,7 +1349,7 @@
     },
     "145": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -9101,7 +9147,7 @@
     },
     "559": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -9194,7 +9240,7 @@
     },
     "572": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -9216,7 +9262,7 @@
     },
     "578": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -9238,7 +9284,7 @@
     },
     "581": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -9260,7 +9306,7 @@
     },
     "582": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -9282,7 +9328,7 @@
     },
     "584": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -9304,7 +9350,7 @@
     },
     "585": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -9326,7 +9372,7 @@
     },
     "587": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -9348,7 +9394,7 @@
     },
     "588": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -9370,7 +9416,7 @@
     },
     "589": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -9508,7 +9554,7 @@
     },
     "602": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -9557,7 +9603,7 @@
     },
     "606": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "close-superseded-burndowns",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -10442,6 +10488,104 @@
       "evidence": null,
       "pr": null,
       "state_updated": "2026-06-01T15:50:50Z",
+      "closed_at": null
+    },
+    "670": {
+      "title": "Triage Codex P2 review suggestions from PR #669 (13 threads)",
+      "labels": [],
+      "action": "UNCLASSIFIED",
+      "state": "PR_CREATED",
+      "batch": "triage-codereview-p2",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-11T15:55:18Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-11T15:57:01Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-06-11T16:01:46Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-06-11T16:01:46Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-06-11T16:02:30Z"
+        }
+      ],
+      "evidence": "docs/triage/triage-codereview-p2--2026-06-11.md",
+      "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/678",
+      "state_updated": "2026-06-11T16:02:30Z",
+      "closed_at": null
+    },
+    "651": {
+      "title": "Blocked Handoff Burn-down - 2026-06-01",
+      "labels": [
+        "documentation",
+        "devops",
+        "blocked"
+      ],
+      "action": "UNCLASSIFIED",
+      "state": "INSPECTED",
+      "batch": "close-superseded-burndowns",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-11T16:04:23Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-11T16:04:23Z",
+      "closed_at": null
+    },
+    "676": {
+      "title": "Activation audit: production route and service health",
+      "labels": [],
+      "action": "UNCLASSIFIED",
+      "state": "PR_CREATED",
+      "batch": "triage-activation-676",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-11T16:22:23Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-11T16:22:23Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-06-11T16:22:23Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-06-11T16:22:23Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-06-11T16:22:23Z"
+        }
+      ],
+      "evidence": "docs/activation/activation-ledger--peer-audited--2026-06-11.md",
+      "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/677",
+      "state_updated": "2026-06-11T16:22:23Z",
       "closed_at": null
     }
   }
