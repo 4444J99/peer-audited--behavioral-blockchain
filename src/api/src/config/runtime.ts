@@ -113,8 +113,12 @@ export function resolveRedisConnectionConfig() {
   const redisUrl = process.env.REDIS_URL;
   if (redisUrl) {
     const parsed = new URL(redisUrl);
+    // Default Redis port is 6379 (Redis standard) when the URL has no
+    // explicit port and REDIS_PORT env is unset. Previously this
+    // required REDIS_PORT to be set, which broke the common case of
+    // REDIS_URL=redis://localhost with no port.
     const port = parsePort(
-      parsed.port || requireOneEnv(["REDIS_PORT"], "REDIS_URL port"),
+      parsed.port || process.env.REDIS_PORT || "6379",
       "REDIS_URL port",
     );
     return {

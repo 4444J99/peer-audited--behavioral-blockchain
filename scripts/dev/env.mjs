@@ -86,7 +86,13 @@ export function buildApiEnv() {
 
   env.STYX_API_PUBLIC_URL ||= apiUrl;
   env.NEXT_PUBLIC_API_URL ||= apiUrl;
-  env.API_PORT ||= env.PORT || portFromUrl(apiUrl, "API public URL");
+  // Default API to a dedicated dev port (3000) so it does not collide
+  // with the Web process (default 3001) or the public-URL's port.
+  // Override order: STYX_API_PORT > PORT > 3000.
+  env.API_PORT ||=
+    env.STYX_API_PORT ||
+    env.PORT ||
+    "3000";
   env.PORT = env.API_PORT;
   env.NODE_ENV ||= "development";
   if (!env.CORS_ORIGINS && webUrl) env.CORS_ORIGINS = webUrl;
@@ -130,8 +136,39 @@ export function buildWebEnv() {
 
   env.NEXT_PUBLIC_API_URL = apiUrl;
   env.STYX_WEB_PUBLIC_URL ||= webUrl;
-  env.PORT ||= env.STYX_WEB_PORT || portFromUrl(webUrl, "Web public URL");
+  // STYX_WEB_PORT should win over the shared PORT (which is often
+  // set by toolchains like Render/Heroku/Docker) so the Web process
+  // binds to its dedicated dev port.
+  // Override order: STYX_WEB_PORT > PORT > portFromUrl(webUrl).
+  // STYX_WEB_PORT explicitly OVERRIDES PORT (not just fallback) so
+  // run-web.mjs (next dev -p $PORT) uses the dev port.
+  if (env.STYX_WEB_PORT) {
+    env.PORT = env.STYX_WEB_PORT;
+  } else if (!env.PORT) {
+    env.PORT = portFromUrl(webUrl, "Web public URL");
+  }
+  if (!env.STYX_WEB_PORT) {
+    env.STYX_WEB_PORT = env.PORT;
+  }
   env.NODE_ENV ||= "development";
 
+  return env;
+}
+
+/**
+ * Minimal env for DB migrations. Migrations only need DATABASE_URL
+ * (or PG* vars); they do NOT need API/Redis/Stripe/etc. Use this
+ * from scripts/dev/run-migrate.mjs to avoid confusing "REDIS_URL
+ * required" errors when running `npm run dev:migrate`.
+ */
+export function buildMigrateEnv() {
+  const env = loadRepoEnv();
+  const isTest = env.NODE_ENV === "test" || process.env.NODE_ENV === "test";
+
+  if (!isTest) {
+    requireOne(env, ["DATABASE_URL"], "DATABASE_URL");
+  }
+
+  env.NODE_ENV ||= "development";
   return env;
 }

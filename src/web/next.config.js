@@ -19,7 +19,21 @@ const nextConfig = {
   },
   async rewrites() {
     const apiUrl = getApiUrl();
-    if (!apiUrl) return [];
+    if (!apiUrl) {
+      // Fallback rewrite so the image always contains the API
+      // route rule. Runtime env (when set) will replace it via
+      // the deployment platform's runtime config. This keeps the
+      // Docker image functional when built without a public URL.
+      // The destination service name matches the docker-compose
+      // service in .config/docker/docker-compose.yml ("styx-api");
+      // the container port is the canonical API port (3000).
+      return [
+        {
+          source: "/api/:path*",
+          destination: `http://styx-api:3000/:path*`,
+        },
+      ];
+    }
 
     return [
       {

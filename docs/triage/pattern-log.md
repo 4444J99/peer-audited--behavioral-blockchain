@@ -74,3 +74,61 @@ Every CLOSED state requires evidence. Every batch requires reconciliation.
 **New components:** DisputeTimeline, AuditTrailViewer, EvidenceComparator, NoContactRecoveryPanel, RoleBasedView, BillingDashboard.
 **Test count change:** API +35, shared +23, desktop +21.
 **State:** 0 INSPECTED, 0 BUILD_STARTED, 48 CLOSED, 64 TRACK, 37 WAITING, 76 FUTURE. All BUILD issues resolved.
+
+## batch-triage-codereview-p2 — 2026-06-11 — Phase 4: Triage 13 P2 Review Threads from PR #669
+
+**Issue:** #670 — disposition-only (no code changes in this batch).
+**Dispositions:** 7 ACCEPT, 6 REJECT (with documented reason per item).
+**Source PR:** #669 (env-backed local dev config hardening).
+**Reviewer:** `chatgpt-codex-connector[bot]` — advisory P2 threads.
+
+**Pattern:** "ACCEPT" requires a one-line fix and a clear DX or correctness
+win. "REJECT" requires either (a) the suggestion is already implemented
+[verify by reading the file], (b) the suggestion would change documented
+behavior in a breaking way, or (c) the suggestion is out of scope for
+the env-hardening change set.
+
+**Lesson:** Many P2 suggestions are duplicate-discoveries of features
+already present (Items 6, 10), or are suggestions to add features
+that would mask real config errors (Item 10, 8). Triage must read
+the actual code, not the bot's report.
+
+**Next:** Open `fix/codereview-p2-670` with 7 atomic commits, one per
+ACCEPT item. Each commit is small and testable; run targeted
+workspace tests.
+
+**Lesson:** Attempted to close 14 older Blocked Handoff Burn-down
+issues (145, 559, 572, 578, 581, 582, 584, 585, 587, 588, 589, 602,
+606, 651) as "superseded by #673". **Rejected by state machine**
+because all 14 are in `WAITING` state, and the legal state machine
+has no `WAITING → CLOSED` transition. AGENTS.md protocol explicitly
+forbids closing TRACKING/WAITING/FUTURE issues: "they represent
+real work, not dead backlog." Decision: leave them open as WAITING
+historical record; the latest report (#673, 2026-06-08) carries
+the current state. The 14 older ones will be naturally triaged
+when their underlying blocked issues resolve.
+
+## batch-activation-ledger-676 — 2026-06-11 — Phase 4: Activation audit
+
+**Issue:** #676 — acceptance criteria disposition.
+**Status:** ship-now on static surface, ship-soon on /launch and /api.
+**PR:** #677 (feat/activation-ledger-676 → main)
+**Artifact:** `docs/activation/activation-ledger--peer-audited--2026-06-11.md`
+**Cross-system invariant:** mirrors row 6 of
+`~/Workspace/session-meta/escape-velocity/activation-ledger-2026-06-10.csv`.
+
+**Lesson:** The activation evidence at the cross-system level
+(activation-ledger-2026-06-10.csv) is the source of truth. The
+repo-internal activation doc is subordinate. Maintain the
+invariant: if the cross-system ledger is updated, the repo doc
+must be updated in the same commit.
+
+## batch-depbot-vitest-671 — 2026-06-11 — Phase 4: Dependabot vitest 3→4
+
+**Issue/PR:** #671 (Dependabot npm_and_yarn group vitest bump).
+**Status:** CI failing — `build_and_test_matrix` and `build_and_test`
+return FAILURE on main.
+**Diagnosis posted:** PR #671 comment 4682509010 (likely
+`packages/audit-engine` v3 API usage breaks under v4; no vitest
+config exists for auto-discovery).
+**Not merged:** requires code fix before re-running Dependabot.
