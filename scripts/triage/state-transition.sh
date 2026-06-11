@@ -41,11 +41,15 @@ valid_transition() {
   case "$1→$2" in
   "UNREAD→INSPECTED") return 0 ;;
   "INSPECTED→CLOSED") return 0 ;;
+  "INSPECTED→SUPERSEDED") return 0 ;;
   "INSPECTED→BUILD_STARTED") return 0 ;;
   "INSPECTED→TRACKING") return 0 ;;
   "INSPECTED→WAITING") return 0 ;;
   "INSPECTED→FUTURE") return 0 ;;
   "INSPECTED→BUG") return 0 ;;
+  "WAITING→SUPERSEDED") return 0 ;;
+  "FUTURE→SUPERSEDED") return 0 ;;
+  "TRACKING→SUPERSEDED") return 0 ;;
   "BUILD_STARTED→BUILD_DONE") return 0 ;;
   "BUILD_DONE→TESTED") return 0 ;;
   "TESTED→PR_CREATED") return 0 ;;

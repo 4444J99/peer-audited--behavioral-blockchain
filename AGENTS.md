@@ -175,6 +175,10 @@ UNREAD → INSPECTED → CLOSED (evidence required)
                    → WAITING (blocked, stays open)
                    → FUTURE (post-beta, stays open)
                    → BUG (defect, stays open until fixed)
+                   → SUPERSEDED (overtaken by newer tracking issue)
+WAITING → SUPERSEDED
+FUTURE → SUPERSEDED
+TRACKING → SUPERSEDED
 ```
 
 See `docs/triage/pattern-log.md` for per-batch learnings. See `scripts/triage/` for tooling.

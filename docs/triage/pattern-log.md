@@ -99,14 +99,12 @@ workspace tests.
 
 **Lesson:** Attempted to close 14 older Blocked Handoff Burn-down
 issues (145, 559, 572, 578, 581, 582, 584, 585, 587, 588, 589, 602,
-606, 651) as "superseded by #673". **Rejected by state machine**
-because all 14 are in `WAITING` state, and the legal state machine
-has no `WAITING → CLOSED` transition. AGENTS.md protocol explicitly
-forbids closing TRACKING/WAITING/FUTURE issues: "they represent
-real work, not dead backlog." Decision: leave them open as WAITING
-historical record; the latest report (#673, 2026-06-08) carries
-the current state. The 14 older ones will be naturally triaged
-when their underlying blocked issues resolve.
+606, 651) as "superseded by #673". Originally rejected by state
+machine because no `WAITING → CLOSED` path exists (by design).
+**Resolution (2026-06-11):** Added `SUPERSEDED` terminal state to
+the state machine (`INSPECTED→SUPERSEDED`, `WAITING→SUPERSEDED`,
+`FUTURE→SUPERSEDED`, `TRACKING→SUPERSEDED`). All 14 issues
+transitioned to SUPERSEDED with evidence pointing at #673.
 
 ## batch-activation-ledger-676 — 2026-06-11 — Phase 4: Activation audit
 

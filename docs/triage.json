@@ -175,9 +175,9 @@
         651
       ],
       "started": "2026-06-11T16:04:08Z",
-      "completed": null,
-      "reconciled": false,
-      "test_passed": false
+      "completed": "2026-06-11T22:25:15.368584+00:00",
+      "reconciled": true,
+      "test_passed": true
     },
     {
       "id": "triage-activation-676",
@@ -1374,12 +1374,17 @@
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:41Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -1388,8 +1393,8 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:41Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-03-05"
     },
     "146": {
@@ -9172,12 +9177,17 @@
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -9186,8 +9196,8 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-03-09"
     },
     "56": {
@@ -9265,12 +9275,17 @@
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -9279,20 +9294,25 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-03-16"
     },
     "578": {
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -9301,20 +9321,25 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-03-23"
     },
     "581": {
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -9323,20 +9348,25 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-03-30"
     },
     "582": {
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -9345,20 +9375,25 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-04-06"
     },
     "584": {
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -9367,20 +9402,25 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-04-13"
     },
     "585": {
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -9389,20 +9429,25 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-04-20"
     },
     "587": {
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -9411,20 +9456,25 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-04-27"
     },
     "588": {
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -9433,20 +9483,25 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-05-04"
     },
     "589": {
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -9455,8 +9510,8 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-05-11"
     },
     "591": {
@@ -9579,12 +9634,17 @@
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -9593,8 +9653,8 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-05-18"
     },
     "603": {
@@ -9628,12 +9688,17 @@
       "action": "WAITING",
       "batch": "close-superseded-burndowns",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
       "labels": [
@@ -9642,8 +9707,8 @@
         "blocked"
       ],
       "pr": null,
-      "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-06-11T22:25:10Z",
       "title": "Blocked Handoff Burn-down - 2026-05-25"
     },
     "64": {
@@ -10559,18 +10624,23 @@
         "blocked"
       ],
       "action": "UNCLASSIFIED",
-      "state": "INSPECTED",
+      "state": "SUPERSEDED",
       "batch": "close-superseded-burndowns",
       "history": [
         {
           "from": "UNREAD",
           "to": "INSPECTED",
           "at": "2026-06-11T16:04:23Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "SUPERSEDED",
+          "at": "2026-06-11T22:25:10Z"
         }
       ],
-      "evidence": null,
+      "evidence": "superseded by #673 (2026-06-08 Blocked Handoff Burn-down)",
       "pr": null,
-      "state_updated": "2026-06-11T16:04:23Z",
+      "state_updated": "2026-06-11T22:25:10Z",
       "closed_at": null
     },
     "676": {
