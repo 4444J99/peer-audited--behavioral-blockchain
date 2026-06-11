@@ -132,3 +132,50 @@ return FAILURE on main.
 `packages/audit-engine` v3 API usage breaks under v4; no vitest
 config exists for auto-discovery).
 **Not merged:** requires code fix before re-running Dependabot.
+
+## batch-instantiate-engine-679-680 — 2026-06-11 — Engine portability proofs
+
+**Started:** 2 issues (#679 public-record-data-scrapper, #680 sovereign-ecosystem).
+**Built:** 10 markdown files, 1,623 lines added. Plus 1 playbook §10 cross-instance
+verdict table (10 lines).
+
+**Files (with file:line evidence for closure):**
+
+#679 (public-record-data-scrapper):
+
+- `docs/planning/planning--audience-growth-engine--public-record-data-scrapper-instance--2026-06-11.md:1` — the instance doc
+- `docs/planning/planning--public-record-data-scrapper-30-day-content-calendar--2026-06-11.md:1`
+- `docs/planning/planning--public-record-data-scrapper-content-asset-pack--2026-06-11.md:1`
+- `docs/planning/planning--public-record-data-scrapper-creator-outreach--2026-06-11.md:1`
+- `docs/planning/planning--public-record-data-scrapper-metrics-tracker--2026-06-11.md:1`
+
+#680 (sovereign-ecosystem):
+
+- `docs/planning/planning--audience-growth-engine--sovereign-ecosystem-instance--2026-06-11.md:1`
+- `docs/planning/planning--sovereign-ecosystem-30-day-content-calendar--2026-06-11.md:1`
+- `docs/planning/planning--sovereign-ecosystem-content-asset-pack--2026-06-11.md:1`
+- `docs/planning/planning--sovereign-ecosystem-creator-outreach--2026-06-11.md:1`
+- `docs/planning/planning--sovereign-ecosystem-metrics-tracker--2026-06-11.md:1`
+
+**Playbook update:**
+
+- `docs/playbooks/playbook--audience-growth-engine.md:8` — added §10 cross-instance
+  portability verdict (10-row table); §8 updated to point at the three worked
+  instantiations (was sketches only).
+
+**Engine-portability verdict (from the two new instances):**
+The engine is **type-covering**, not just shape-covering. All three Host archetypes
+from §1 (personal creator, branded expert account, founder-operator) have been
+exercised in real instantiations. Five dimensions (Five Levels, Dual Channel,
+Ladder, guardrails, content-mix ratios) are mechanically identical. The other six
+change _type_ with every instantiation but preserve _function_. The two
+Audience-as-Product inversions (public-record-data-scrapper, sovereign-ecosystem)
+confirm the audience-as-product model is a _rung-order_ parameter, not a fixed
+pattern. **Zero required changes** to the playbook — every section ran as-is with
+different parameters.
+
+**Lesson:** A parameterized engine is provably portable when three worked
+instantiations cover the named type-space. The third (Styx) was the proof-of-run;
+the fourth and fifth (public-record-data-scrapper, sovereign-ecosystem) are the
+proof-of-type-coverage. The cross-instance verdict table is the smallest
+artifact that exposes the parameter shape to future readers.

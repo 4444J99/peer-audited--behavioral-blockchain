@@ -189,6 +189,18 @@
       "completed": "2026-06-11T16:52:20Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "instantiate-engine-679-680",
+      "phase": "phase",
+      "issues": [
+        679,
+        680
+      ],
+      "started": "2026-06-11T18:45:09Z",
+      "completed": "2026-06-11T18:47:40Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -10596,6 +10608,72 @@
       "evidence": "docs/activation/activation-ledger--peer-audited--2026-06-11.md:50",
       "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/677",
       "state_updated": "2026-06-11T16:43:35Z",
+      "closed_at": null
+    },
+    "679": {
+      "title": "docs(playbooks): instantiate Audience Growth Engine for public-record-data-scrapper",
+      "labels": [],
+      "action": "UNCLASSIFIED",
+      "state": "TESTED",
+      "batch": "instantiate-engine-679-680",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-11T18:45:17Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-11T18:45:24Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-06-11T18:45:53Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-06-11T18:46:02Z"
+        }
+      ],
+      "evidence": "docs/planning/planning--audience-growth-engine--public-record-data-scrapper-instance--2026-06-11.md:1",
+      "pr": null,
+      "state_updated": "2026-06-11T18:46:02Z",
+      "closed_at": null
+    },
+    "680": {
+      "title": "docs(playbooks): instantiate Audience Growth Engine for sovereign-ecosystem--real-estate-luxury",
+      "labels": [],
+      "action": "UNCLASSIFIED",
+      "state": "TESTED",
+      "batch": "instantiate-engine-679-680",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-11T18:45:17Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-11T18:45:24Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-06-11T18:45:53Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-06-11T18:46:02Z"
+        }
+      ],
+      "evidence": "docs/planning/planning--audience-growth-engine--sovereign-ecosystem-instance--2026-06-11.md:1",
+      "pr": null,
+      "state_updated": "2026-06-11T18:46:02Z",
       "closed_at": null
     }
   }
