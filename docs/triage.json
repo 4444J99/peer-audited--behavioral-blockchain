@@ -178,6 +178,17 @@
       "completed": null,
       "reconciled": false,
       "test_passed": false
+    },
+    {
+      "id": "triage-activation-676",
+      "phase": "Phase 4 — Activation audit (Issue #676)",
+      "issues": [
+        676
+      ],
+      "started": "2026-06-11T16:43:33Z",
+      "completed": "2026-06-11T16:52:20Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -10537,6 +10548,54 @@
       "evidence": null,
       "pr": null,
       "state_updated": "2026-06-11T16:04:23Z",
+      "closed_at": null
+    },
+    "676": {
+      "title": "Activation audit: production route and service health",
+      "labels": [],
+      "action": "UNCLASSIFIED",
+      "state": "CLOSED",
+      "batch": "triage-activation-676",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-11T16:43:34Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-11T16:43:34Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-06-11T16:43:34Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-06-11T16:43:34Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-06-11T16:43:35Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-06-11T16:43:35Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-06-11T16:43:35Z"
+        }
+      ],
+      "evidence": "docs/activation/activation-ledger--peer-audited--2026-06-11.md:50",
+      "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/677",
+      "state_updated": "2026-06-11T16:43:35Z",
       "closed_at": null
     }
   }
