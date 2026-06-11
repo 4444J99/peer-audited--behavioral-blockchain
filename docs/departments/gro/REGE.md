@@ -61,8 +61,12 @@ The department serves two distinct funnels: **B2C direct** (consumers searching 
 | G4 | Paid Acquisition Playbook | `artifacts/paid-acquisition.md` | — | — | — | dormant |
 | G5 | Referral Program Design | `artifacts/referral-program.md` | — | — | — | dormant |
 | G6 | Practitioner Co-Marketing Kit | `artifacts/co-marketing-kit.md` | — | — | — | dormant |
+| G10 | Audience Growth Engine (portable playbook) | `../../playbooks/playbook--audience-growth-engine.md` | hardening | 90d | 2026-06-01 | active |
+| G11 | Audience Growth — Styx/Jessica Instance | `../../planning/planning--audience-growth-engine--styx-instance--2026-06-01.md` | hardening | 30d | 2026-06-01 | active |
 
-**Staleness rules:** G1 stale after 90 days without review. G2 stale after 14 days. G3 stale after 30 days.
+**Staleness rules:** G1 stale after 90 days without review. G2 stale after 14 days. G3 stale after 30 days. G10 (portable engine) stale after 90 days. G11 (Styx instance) stale after 30 days — it drives the live Jessica content engine. G11's derived assets (30-day calendar, content asset pack, audience-as-product model, engagement economics, metrics tracker) live alongside it in `docs/planning/planning--*--2026-06-01.md` and are governed by the same content-quality and human-checkpoint rules below.
+
+**Canonical channel-split source:** the Host/Product dual-channel pattern used by G10/G11 is the generalization of `../../planning/planning--dual-channel-audience-architecture--2026-03-10.md` and `../../planning/planning--market-attack-plan--2026-03-10.md`. Treat those two as canonical Styx detail; G10 is the portable abstraction re-runnable for sibling ventures.
 
 ## 4. Generative Prompts (GEN:)
 
@@ -222,3 +226,5 @@ The department serves two distinct funnels: **B2C direct** (consumers searching 
 | G7 | Podcast/Media Outreach Strategy | Target behavioral economics podcasts (Choiceology, Hidden Brain adjacent), breakup recovery influencers, therapy industry publications. | low | G1 phase 2 completion |
 | G8 | Community-Led Growth Playbook | Discord/community strategy for organic word-of-mouth among completed-contract users sharing success stories. | low | Active user base >200 |
 | G9 | Breakup Seasonality Calendar | Map marketing intensity to known breakup peaks (post-Valentine's, post-holidays, back-to-school) for campaign timing. | medium | 12 months of user data |
+| G12 | Creator-Owned Audience Monetization | Stand up the audience-as-product ladder (lead magnet → low-ticket → community → sponsorship) for the Jessica Host channel as a standalone media asset alongside the Styx funnel. Detailed in `../../planning/planning--audience-as-product-model--2026-06-01.md`. | high | Email list baseline + free-value engine live |
+| G13 | Sibling-Venture Instantiations | Re-run the G10 engine for other ORGAN-III ventures (`public-record-data-scrapper`, `sovereign-ecosystem--real-estate-luxury`, etc.) via the instantiation worksheet. Proves portability. | low | G11 validated through one full 90-day cycle |
