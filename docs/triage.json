@@ -242,7 +242,7 @@
         282
       ],
       "started": "2026-06-12T11:46:15Z",
-      "completed": "2026-06-12T12:15:10Z",
+      "completed": "2026-06-12T12:21:13Z",
       "reconciled": true,
       "test_passed": true
     }
@@ -11048,7 +11048,7 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "PR_CREATED",
+      "state": "CLOSED",
       "batch": "audit-not-planned-closures",
       "history": [
         {
@@ -11080,11 +11080,21 @@
           "from": "TESTED",
           "to": "PR_CREATED",
           "at": "2026-06-12T12:06:29Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-06-12T12:20:57Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-06-12T12:20:57Z"
         }
       ],
       "evidence": "src/web/app/contracts/new/page.test.tsx:84",
       "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/692",
-      "state_updated": "2026-06-12T12:06:29Z",
+      "state_updated": "2026-06-12T12:20:57Z",
       "closed_at": null
     },
     "309": {

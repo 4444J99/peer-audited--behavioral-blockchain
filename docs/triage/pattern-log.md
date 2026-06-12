@@ -211,13 +211,17 @@ implemented work with evidence.
 
 **Issue:** #311 — bounded stake selection UI.
 
-**Status:** implemented and tested locally. The contract creation page now
+**Status:** implemented, reviewed, merged in PR #692, and closed as completed.
+The contract creation page now
 derives stake bounds from the user's integrity tier, applies the Aegis safety
 ceiling, renders a bounded slider plus numeric amount control, shows loss-framed
-copy, and displays the live `$30 + $9 = $39` fee breakdown.
+copy, displays the live `$30 + $9 = $39` MVP fee breakdown, keeps exact `$20`
+micro-stakes outside KYC, and reflects failure-history downscaling when the
+browser can load prior contract status.
 
 **Evidence:** `src/web/app/contracts/new/page.tsx`, plus static render coverage
-in `src/web/app/contracts/new/page.test.tsx`.
+in `src/web/app/contracts/new/page.test.tsx`, merged via
+`https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/692`.
 
 **Lesson:** Tracked live work must be able to move into implementation. The
 triage transition script now permits `TRACKING`, `FUTURE`, and `WAITING` issues
