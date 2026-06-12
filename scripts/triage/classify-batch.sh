@@ -28,8 +28,8 @@ classify() {
     ;;
   esac
 
-  # Blocked explicitly in title
-  if [[ "$title" == *"[Blocked]"* ]] || [[ "$title" == *"Blocked"* ]]; then
+  # Blocked explicitly in title or label
+  if [[ "$title" == *"[Blocked]"* ]] || [[ "$title" == *"Blocked"* ]] || echo "$labels" | jq -e 'index("blocked")' >/dev/null 2>&1; then
     echo "WAITING"
     return
   fi

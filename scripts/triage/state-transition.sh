@@ -48,6 +48,7 @@ valid_transition() {
   "INSPECTED→FUTURE") return 0 ;;
   "INSPECTED→BUG") return 0 ;;
   "TRACKING→BUILD_STARTED") return 0 ;;
+  "TRACKING→WAITING") return 0 ;;
   "FUTURE→BUILD_STARTED") return 0 ;;
   "WAITING→BUILD_STARTED") return 0 ;;
   "WAITING→SUPERSEDED") return 0 ;;
@@ -85,6 +86,7 @@ jq --arg i "$ISSUE" --arg to "$TO_STATE" --arg from "$FROM_STATE" --arg ts "$TIM
   '.issues[$i].state = $to |
     .issues[$i].state_updated = $ts |
     .issues[$i].history += [{"from": $from, "to": $to, "at": $ts}] |
+    (if $to == "WAITING" then .issues[$i].action = "WAITING" else . end) |
     (if $ev != "" then .issues[$i].evidence = $ev else . end) |
     (if $pr != "" then .issues[$i].pr = $pr else . end)' \
   "$TRIAGE_FILE" >"${TRIAGE_FILE}.tmp" && mv "${TRIAGE_FILE}.tmp" "$TRIAGE_FILE"

@@ -28,8 +28,8 @@ jq -r '.issues | to_entries[] | select(.value.state == "UNREAD") | "\(.key)|||\(
       ;;
     esac
 
-    # Blocked in title (regex avoids glob character-class clash with [])
-    if [[ "$title" =~ Blocked ]]; then
+    # Blocked in title or label (regex avoids glob character-class clash with [])
+    if [[ "$title" =~ Blocked || "$labels" == *"blocked"* ]]; then
       echo "WAITING"
       return
     fi

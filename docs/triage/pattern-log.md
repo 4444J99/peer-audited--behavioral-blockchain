@@ -226,3 +226,51 @@ in `src/web/app/contracts/new/page.test.tsx`, merged via
 **Lesson:** Tracked live work must be able to move into implementation. The
 triage transition script now permits `TRACKING`, `FUTURE`, and `WAITING` issues
 to enter `BUILD_STARTED` when a deferred obligation is actually picked up.
+
+## batch-audit-closed-without-ledger — 2026-06-12 — Reopen GitHub closures without triage proof
+
+**Issues:** 100 GitHub-closed issues missing from `docs/triage.json`, recorded
+in batch `audit-closed-without-ledger`.
+
+**Status:** all 100 were reopened on GitHub with a closure-governance comment
+and added back to the triage ledger as live work. They are not treated as
+complete merely because GitHub previously showed `COMPLETED`; each must now be
+implemented, planned, or validly superseded with durable proof before closure.
+Recovered states: 95 live tracking items (`BUILD` or `TRACK` action), 4 bugs,
+and 1 future item.
+
+**Verified counts after reopen:** GitHub open issues increased from 404 to 504;
+closed issues dropped from 168 to 68; closed issues with non-`COMPLETED` state
+reason remained 0.
+
+**Observed bad closure patterns:** missing triage record entirely, closure with
+no evidence comment, closure as "business ops" despite scoped API/funnel work,
+and closure of legal/counsel sign-off issues while external sign-off was still
+pending.
+
+**Lesson:** `COMPLETED` is only a GitHub state label until it is backed by local
+triage evidence, merged implementation, a durable plan, or a valid supersession
+artifact. Missing evidence means recovery work, not quiet closure.
+
+## batch-audit-closed-without-ledger-review-fixes -- 2026-06-12 -- Resolve recovery PR review findings
+
+**Issues:** #161, #281, #617.
+
+**Status:** review findings on PR #696 were accepted and resolved in the ledger.
+#161 now closes with CSRF guard, web-client CSRF header, and focused Jest
+coverage evidence. #617 now closes against merged PR #618, including the
+auth-cookie fixture, register-spec drift fixes, and PR #618's green e2e
+chromium/firefox CI. #281 moved from TRACKING to WAITING because it carries the
+blocked label and the issue body says native health bridge UI is blocked on a
+mobile native engineer.
+
+**Local verification:** `cd src/api && npx jest guards/auth.guard.spec.ts
+--runInBand` passed; `cd src/web && npx jest services/api-client.test.ts
+--runInBand` passed. A local targeted Playwright run for #617 did not execute
+specs because the bundled Chromium binary is absent locally, so the closure
+evidence relies on merged PR #618 and its historical green e2e CI rather than
+the blocked local browser environment.
+
+**Tooling fix:** the classifier now treats the `blocked` label as WAITING, and
+`state-transition.sh` permits correcting a misclassified `TRACKING` item to
+`WAITING` while keeping the action aligned.

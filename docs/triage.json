@@ -245,6 +245,116 @@
       "completed": "2026-06-12T12:21:13Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "audit-closed-without-ledger",
+      "phase": "Phase 4 — Reopen/audit GitHub-closed issues without triage proof",
+      "issues": [
+        28,
+        32,
+        34,
+        35,
+        42,
+        43,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161,
+        163,
+        166,
+        167,
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        178,
+        181,
+        278,
+        279,
+        280,
+        281,
+        284,
+        306,
+        310,
+        315,
+        316,
+        317,
+        341,
+        342,
+        343,
+        344,
+        347,
+        373,
+        386,
+        387,
+        388,
+        389,
+        390,
+        391,
+        392,
+        393,
+        394,
+        395,
+        396,
+        397,
+        398,
+        399,
+        400,
+        401,
+        402,
+        403,
+        404,
+        405,
+        406,
+        407,
+        408,
+        409,
+        410,
+        411,
+        412,
+        413,
+        414,
+        505,
+        506,
+        562,
+        563,
+        564,
+        565,
+        566,
+        567,
+        590,
+        593,
+        594,
+        595,
+        600,
+        601,
+        617,
+        663
+      ],
+      "started": "2026-06-12T12:35:18Z",
+      "completed": "2026-06-12T14:03:10Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -11221,6 +11331,2640 @@
       "evidence": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/282",
       "pr": null,
       "state_updated": "2026-06-12T11:47:18Z",
+      "closed_at": null
+    },
+    "28": {
+      "title": "Fix DB migration runner credentials and schema drift",
+      "labels": [
+        "bug",
+        "database"
+      ],
+      "action": "BUG",
+      "state": "BUG",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUG",
+          "at": "2026-06-12T12:36:44Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:44Z",
+      "closed_at": null
+    },
+    "32": {
+      "title": "Payment router returns fake client secrets in non-dev environments",
+      "labels": [
+        "bug",
+        "security"
+      ],
+      "action": "BUG",
+      "state": "BUG",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUG",
+          "at": "2026-06-12T12:36:44Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:44Z",
+      "closed_at": null
+    },
+    "34": {
+      "title": "Fix temporary bounty link status in contracts.service",
+      "labels": [
+        "bug",
+        "api"
+      ],
+      "action": "BUG",
+      "state": "BUG",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUG",
+          "at": "2026-06-12T12:36:44Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:44Z",
+      "closed_at": null
+    },
+    "35": {
+      "title": "Migrate mobile tests from deprecated react-test-renderer",
+      "labels": [
+        "tech-debt",
+        "mobile",
+        "testing"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "42": {
+      "title": "Mobile tests: remove async act(...) warnings in screen specs",
+      "labels": [
+        "testing"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "43": {
+      "title": "Test infra: fix React Native input prop mapping warnings in mobile mock",
+      "labels": [
+        "testing"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "58": {
+      "title": "feat: Two-way referral program — $5 referrer + $5 referred viral loop",
+      "labels": [
+        "enhancement",
+        "brainstorm-audit",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "59": {
+      "title": "feat: Closed beta waitlist landing page — pre-launch acquisition funnel",
+      "labels": [
+        "enhancement",
+        "brainstorm-audit",
+        "P1-beta-enhancer",
+        "marketing",
+        "follow-up"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:45Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "60": {
+      "title": "feat: Fury violation code taxonomy — structured rejection reasons for auditors",
+      "labels": [
+        "enhancement",
+        "api",
+        "brainstorm-audit",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:45Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "61": {
+      "title": "feat: Pregnancy exclusion gate & mid-challenge penalty-free suspension",
+      "labels": [
+        "enhancement",
+        "api",
+        "brainstorm-audit",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:45Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "62": {
+      "title": "feat: Stake-tiered verification escalation — progressive proof requirements by risk",
+      "labels": [
+        "enhancement",
+        "api",
+        "brainstorm-audit",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:45Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "63": {
+      "title": "feat: UGC moderation pipeline — App Store approval requirement for user-generated proof content",
+      "labels": [
+        "mobile",
+        "brainstorm-audit",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:45Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "149": {
+      "title": "Market-Gap Analysis: stickK.com Deep Dive",
+      "labels": [
+        "research"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:45Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:45Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:45Z",
+      "closed_at": null
+    },
+    "150": {
+      "title": "Market-Gap Analysis: Beeminder Deep Dive",
+      "labels": [
+        "research"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:45Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:45Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:45Z",
+      "closed_at": null
+    },
+    "151": {
+      "title": "Market-Gap Analysis: Forfeit Deep Dive",
+      "labels": [
+        "research"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:45Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:45Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:45Z",
+      "closed_at": null
+    },
+    "152": {
+      "title": "Market-Gap Analysis: HealthyWage/DietBet/StepBet Deep Dive",
+      "labels": [
+        "research"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:45Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:45Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:45Z",
+      "closed_at": null
+    },
+    "153": {
+      "title": "Market-Gap Analysis: Habitica Deep Dive",
+      "labels": [
+        "research"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:45Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:45Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:45Z",
+      "closed_at": null
+    },
+    "154": {
+      "title": "Market-Gap Analysis: Accountable AI Deep Dive",
+      "labels": [
+        "research"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:45Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:46Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:46Z",
+      "closed_at": null
+    },
+    "155": {
+      "title": "Market-Gap Analysis: Relationship Recovery Niche Deep Dive",
+      "labels": [
+        "research"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:46Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:46Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:46Z",
+      "closed_at": null
+    },
+    "156": {
+      "title": "Market-Gap Analysis: Pavlok Deep Dive",
+      "labels": [
+        "research"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:46Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:46Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:46Z",
+      "closed_at": null
+    },
+    "157": {
+      "title": "Market-Gap Analysis: TaskRatchet Deep Dive",
+      "labels": [
+        "research"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:46Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:46Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:46Z",
+      "closed_at": null
+    },
+    "158": {
+      "title": "Market-Gap Analysis: Focusmate Deep Dive",
+      "labels": [
+        "research"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:46Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:46Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:46Z",
+      "closed_at": null
+    },
+    "159": {
+      "title": "fix: ask-styx rate limiter is per-isolate — ineffective at edge scale",
+      "labels": [
+        "bug",
+        "security",
+        "P1-beta-enhancer",
+        "full-breath-audit"
+      ],
+      "action": "BUG",
+      "state": "BUG",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:46Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUG",
+          "at": "2026-06-12T12:36:46Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:46Z",
+      "closed_at": null
+    },
+    "160": {
+      "title": "feat: add load testing infrastructure (k6/artillery) for Fury Router queue",
+      "labels": [
+        "devops",
+        "testing",
+        "P1-beta-enhancer",
+        "full-breath-audit"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:46Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "161": {
+      "title": "fix: add CSRF protection to API mutation endpoints",
+      "labels": [
+        "security",
+        "api",
+        "P1-beta-enhancer",
+        "full-breath-audit"
+      ],
+      "action": "BUILD",
+      "state": "CLOSED",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:46Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-12T14:02:53Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-06-12T14:02:53Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-06-12T14:02:53Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-06-12T14:02:54Z"
+        }
+      ],
+      "evidence": "src/api/guards/auth.guard.ts:56-61 CSRF guard; src/api/guards/auth.guard.spec.ts:148-180 reject/allow coverage; src/web/services/api-client.ts:100-115 x-csrf-token header",
+      "pr": null,
+      "state_updated": "2026-06-12T14:02:54Z",
+      "closed_at": null
+    },
+    "163": {
+      "title": "feat: failure notification UX copy — emotional safety for stake liquidation",
+      "labels": [
+        "enhancement",
+        "P1-beta-enhancer",
+        "full-breath-audit"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:46Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "166": {
+      "title": "process: establish code review protocol — single-developer bus factor mitigation",
+      "labels": [
+        "documentation",
+        "P1-beta-enhancer",
+        "full-breath-audit"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:46Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:46Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:46Z",
+      "closed_at": null
+    },
+    "167": {
+      "title": "feat: KYC runtime enforcement & progressive stake tiers (TKT-P0-003)",
+      "labels": [
+        "api",
+        "P0-beta-blocker",
+        "owner:legal-compliance"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:46Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "168": {
+      "title": "feat: Native iOS camera proof capture with nonce challenge (TKT-P0-002)",
+      "labels": [
+        "mobile",
+        "P0-beta-blocker",
+        "owner:mobile-native"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:47Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:47Z",
+      "closed_at": null
+    },
+    "169": {
+      "title": "feat: Real-money FBO settlement activation (TKT-P0-001)",
+      "labels": [
+        "api",
+        "P0-beta-blocker",
+        "owner:backend-platform"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "170": {
+      "title": "feat: Recovery danger-zone lockdowns & 24h timelock (TKT-P1-005)",
+      "labels": [
+        "api",
+        "P1-beta-enhancer",
+        "recovery"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "171": {
+      "title": "feat: Weekend risk multiplier policy engine (TKT-P1-012)",
+      "labels": [
+        "api",
+        "P1-beta-enhancer",
+        "recovery"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "172": {
+      "title": "feat: Accountability partner protocol completion (TKT-P1-017)",
+      "labels": [
+        "api",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "173": {
+      "title": "feat: Endowed progress & downscale UX completion (TKT-P1-010)",
+      "labels": [
+        "mobile",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "174": {
+      "title": "feat: Identity-based oath onboarding flow (TKT-P1-016)",
+      "labels": [
+        "mobile",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:16Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:16Z",
+      "closed_at": null
+    },
+    "175": {
+      "title": "feat: Goal-gradient dashboard & live leaderboard (TKT-P1-018)",
+      "labels": [
+        "api",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "176": {
+      "title": "feat: Remote push pipeline (APNs/FCM) completion (TKT-P1-006)",
+      "labels": [
+        "mobile",
+        "P1-beta-enhancer",
+        "owner:release-ops"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:47Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:47Z",
+      "closed_at": null
+    },
+    "178": {
+      "title": "feat: implement BetaReadinessContract as executable NestJS service",
+      "labels": [
+        "api",
+        "P1-beta-enhancer",
+        "unimplemented-plan"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "181": {
+      "title": "docs: investor-facing state-of-union deck and exec summary",
+      "labels": [
+        "documentation",
+        "P1-beta-enhancer",
+        "unimplemented-plan"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:47Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:47Z",
+      "closed_at": null
+    },
+    "278": {
+      "title": "feat: Geofence fail-closed hardening & policy registry (TKT-P0-004)",
+      "labels": [
+        "api",
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "279": {
+      "title": "feat: Forfeit disposition policy engine & refund-only kill switch (TKT-P0-011)",
+      "labels": [
+        "api",
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "280": {
+      "title": "feat: Self-exclusion & responsible-use runtime controls (TKT-P1-009)",
+      "labels": [
+        "api",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "281": {
+      "title": "feat: Health data bridge — native UI completion (TKT-P1-007)",
+      "labels": [
+        "P1-beta-enhancer",
+        "blocked"
+      ],
+      "action": "WAITING",
+      "state": "WAITING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "WAITING",
+          "at": "2026-06-12T14:02:53Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T14:02:53Z",
+      "closed_at": null
+    },
+    "284": {
+      "title": "feat: Fury audit masks — workbench masked display (TKT-P1-014)",
+      "labels": [
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "306": {
+      "title": "feat: Recovery protocol guardrails (F-AEGIS-04)",
+      "labels": [
+        "api",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "310": {
+      "title": "feat: State-by-state compliance toggle UI (F-LEGAL-03)",
+      "labels": [
+        "api",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "315": {
+      "title": "Retain outside legal counsel — find and sign retainer",
+      "labels": [
+        "P0-beta-blocker",
+        "owner:legal-compliance",
+        "legal"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:48Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:48Z",
+      "closed_at": null
+    },
+    "316": {
+      "title": "Custody model sign-off — lawyer reviews FBO escrow structure",
+      "labels": [
+        "P0-beta-blocker",
+        "owner:legal-compliance",
+        "legal"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:48Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:48Z",
+      "closed_at": null
+    },
+    "317": {
+      "title": "State jurisdiction matrix sign-off — confirm legal US states",
+      "labels": [
+        "P0-beta-blocker",
+        "owner:legal-compliance",
+        "legal"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:48Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:48Z",
+      "closed_at": null
+    },
+    "341": {
+      "title": "Audience map — early-user channels + first target lists",
+      "labels": [
+        "P1-beta-enhancer",
+        "marketing",
+        "follow-up"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:48Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:48Z",
+      "closed_at": null
+    },
+    "342": {
+      "title": "Landing page + beta explainer funnel — no-contact conversion flow",
+      "labels": [
+        "P1-beta-enhancer",
+        "marketing",
+        "follow-up"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:49Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:49Z",
+      "closed_at": null
+    },
+    "343": {
+      "title": "Social operating system — Jessica/Styx channel architecture + 30-day cadence",
+      "labels": [
+        "P1-beta-enhancer",
+        "marketing",
+        "follow-up"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:49Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:49Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:49Z",
+      "closed_at": null
+    },
+    "344": {
+      "title": "SEO demand capture — no-contact keywords + first 4 intent articles",
+      "labels": [
+        "P1-beta-enhancer",
+        "marketing",
+        "follow-up"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:49Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:49Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:49Z",
+      "closed_at": null
+    },
+    "347": {
+      "title": "Practitioner outreach — one-pager + first 15 outreach + demo loop",
+      "labels": [
+        "P1-beta-enhancer",
+        "owner:business-development",
+        "marketing",
+        "follow-up"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:49Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:49Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:49Z",
+      "closed_at": null
+    },
+    "373": {
+      "title": "Seed user recruitment — creator outreach + first cohort admissions",
+      "labels": [
+        "P1-beta-enhancer",
+        "owner:business-development",
+        "marketing",
+        "follow-up"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:49Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:49Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:49Z",
+      "closed_at": null
+    },
+    "386": {
+      "title": "KYC: Schema — identity_verifications table + API types",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:49Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "387": {
+      "title": "KYC: API — verification endpoint + progressive tier logic",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:49Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "388": {
+      "title": "KYC: UI — identity upload flow + stake tier display",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:49Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "389": {
+      "title": "KYC: Tests — unit + integration for tier transitions",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:49Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "390": {
+      "title": "KYC: Legal — counsel sign-off on verification requirements",
+      "labels": [
+        "P0-beta-blocker",
+        "owner:legal-compliance"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:49Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:49Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:49Z",
+      "closed_at": null
+    },
+    "391": {
+      "title": "Camera: Native Swift module — photo/video capture with nonce",
+      "labels": [
+        "P0-beta-blocker",
+        "owner:mobile-native"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:49Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:49Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:49Z",
+      "closed_at": null
+    },
+    "392": {
+      "title": "Camera: API — proof submission endpoint + nonce validation",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:50Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "393": {
+      "title": "Camera: Schema — proof_submissions table + metadata",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:50Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "394": {
+      "title": "Camera: Tests — capture flow + nonce challenge verification",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:50Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "395": {
+      "title": "Settlement: Stripe Connect FBO account configuration",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:50Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:50Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:50Z",
+      "closed_at": null
+    },
+    "396": {
+      "title": "Settlement: API — deposit/withdrawal/settlement endpoints",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:50Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "397": {
+      "title": "Settlement: Schema — transactions + ledger tables",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:50Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "398": {
+      "title": "Settlement: Reconciliation — automated Stripe vs internal check",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:50Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:50Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:50Z",
+      "closed_at": null
+    },
+    "399": {
+      "title": "Settlement: Tests — full deposit→stake→settle→withdraw flow",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:50Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "400": {
+      "title": "Settlement: Legal — FBO custody model counsel review",
+      "labels": [
+        "P0-beta-blocker",
+        "owner:legal-compliance"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:50Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:50Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:50Z",
+      "closed_at": null
+    },
+    "401": {
+      "title": "Geofence: Policy registry — state availability matrix CRUD",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:50Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:50Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:50Z",
+      "closed_at": null
+    },
+    "402": {
+      "title": "Geofence: Middleware — fail-closed location enforcement",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:51Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:51Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:51Z",
+      "closed_at": null
+    },
+    "403": {
+      "title": "Geofence: Admin UI — state matrix management screen",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:51Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "404": {
+      "title": "Geofence: Compliance logging — decision audit trail",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:51Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:51Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:51Z",
+      "closed_at": null
+    },
+    "405": {
+      "title": "Geofence: Tests — all protected routes + regression suite",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:51Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "406": {
+      "title": "Forfeit: Policy engine — jurisdiction-aware disposition rules",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:51Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:51Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:51Z",
+      "closed_at": null
+    },
+    "407": {
+      "title": "Forfeit: Kill switch — refund-only emergency override",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:51Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:51Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:51Z",
+      "closed_at": null
+    },
+    "408": {
+      "title": "Forfeit: Admin UI — kill switch toggle + state mode display",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:51Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "409": {
+      "title": "Forfeit: Tests — payout matrix all configured states",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:51Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "410": {
+      "title": "Forfeit: Legal — counsel sign-off on jurisdiction mode mapping",
+      "labels": [
+        "P0-beta-blocker",
+        "owner:legal-compliance"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:51Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:51Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:51Z",
+      "closed_at": null
+    },
+    "411": {
+      "title": "Guardrails: Crisis detection — keyword + pattern matching engine",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:51Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:51Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:51Z",
+      "closed_at": null
+    },
+    "412": {
+      "title": "Guardrails: Intervention flow — pause + resource display UI",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:52Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "413": {
+      "title": "Guardrails: API — crisis event logging + escalation trigger",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:52Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "414": {
+      "title": "Guardrails: Tests — detection accuracy + false positive rate",
+      "labels": [
+        "P0-beta-blocker"
+      ],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:52Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "505": {
+      "title": "Landing page — no-contact hero copy + waitlist CTA",
+      "labels": [
+        "P1-beta-enhancer",
+        "marketing",
+        "follow-up"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:52Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:52Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:52Z",
+      "closed_at": null
+    },
+    "506": {
+      "title": "API — waitlist signup + confirmation email + source tagging",
+      "labels": [
+        "api",
+        "P1-beta-enhancer",
+        "marketing",
+        "follow-up"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:52Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:52Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:52Z",
+      "closed_at": null
+    },
+    "562": {
+      "title": "Expand case law coverage to 15-25 cases in whitepaper and supporting docs",
+      "labels": [
+        "P1-beta-enhancer",
+        "owner:legal-compliance",
+        "research",
+        "legal",
+        "follow-up"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:52Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:52Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:52Z",
+      "closed_at": null
+    },
+    "563": {
+      "title": "Add adverse authority analysis section to whitepaper",
+      "labels": [
+        "P0-beta-blocker",
+        "owner:legal-compliance",
+        "legal",
+        "follow-up"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:52Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:52Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:52Z",
+      "closed_at": null
+    },
+    "564": {
+      "title": "Produce 50-state skill-contest statutory survey",
+      "labels": [
+        "P1-beta-enhancer",
+        "research",
+        "legal"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:52Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:52Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:52Z",
+      "closed_at": null
+    },
+    "565": {
+      "title": "Deepen FinCEN / money transmitter analysis for FBO structure",
+      "labels": [
+        "P1-beta-enhancer",
+        "legal",
+        "finance"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:52Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:52Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:52Z",
+      "closed_at": null
+    },
+    "566": {
+      "title": "Resolve BIPA biometric data classification for wearable data",
+      "labels": [
+        "P1-beta-enhancer",
+        "research",
+        "legal"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:52Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:36:52Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:52Z",
+      "closed_at": null
+    },
+    "567": {
+      "title": "Map Styx mechanics against DFS regulatory frameworks by state",
+      "labels": [
+        "P2-post-beta",
+        "research",
+        "legal"
+      ],
+      "action": "FUTURE",
+      "state": "FUTURE",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:53Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "FUTURE",
+          "at": "2026-06-12T12:36:53Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:36:53Z",
+      "closed_at": null
+    },
+    "590": {
+      "title": "docs/architecture: test-strategy.md has filesystem drift (workspace paths, gate names, smoke scripts)",
+      "labels": [],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:53Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "593": {
+      "title": "docs/architecture: LLM-generated research docs lack authorship/provenance frontmatter",
+      "labels": [],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:53Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "594": {
+      "title": "docs/architecture: misclassified files (1 roadmap, 2 forward-specs) belong in planning/ and specs/",
+      "labels": [],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:53Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "595": {
+      "title": "docs/architecture and docs/adr are orphaned from each other (no cross-references)",
+      "labels": [],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:53Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "600": {
+      "title": "README badge URL doesn't match git remote namespace",
+      "labels": [],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:53Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "601": {
+      "title": "Replace A/B/C plan branch labels with descriptive names",
+      "labels": [],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:53Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
+      "closed_at": null
+    },
+    "617": {
+      "title": "e2e: 7 specs fail under `next start` — auth fixture sets localStorage, app gates on styx_auth_token cookie",
+      "labels": [],
+      "action": "BUILD",
+      "state": "CLOSED",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:53Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-12T14:02:54Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-06-12T14:02:54Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-06-12T14:02:54Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-06-12T14:02:54Z"
+        }
+      ],
+      "evidence": "e2e/fixtures/auth.ts:38-43 cookie auth fixture; e2e/auth.spec.ts:16-21,117-144 register drift fixes; PR #618 CI e2e chromium/firefox green",
+      "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/618",
+      "state_updated": "2026-06-12T14:02:54Z",
+      "closed_at": null
+    },
+    "663": {
+      "title": "Implement integration test suite for real database interactions",
+      "labels": [],
+      "action": "BUILD",
+      "state": "TRACKING",
+      "batch": "audit-closed-without-ledger",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T12:36:53Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T12:43:17Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-06-12T12:43:17Z",
       "closed_at": null
     }
   }
