@@ -187,3 +187,22 @@ instantiations cover the named type-space. The third (Styx) was the proof-of-run
 the fourth and fifth (public-record-data-scrapper, sovereign-ecosystem) are the
 proof-of-type-coverage. The cross-instance verdict table is the smallest
 artifact that exposes the parameter shape to future readers.
+
+## batch-audit-not-planned-closures — 2026-06-12 — Repair NOT_PLANNED closure drift
+
+**Issues:** #569, #561, #560, #314, #313, #312, #311, #309, #292, #289, #287,
+#282.
+
+**Status:** all 12 were reopened on GitHub and added to `docs/triage.json` as
+live work. They are not complete, not canceled, and not eligible for closure
+until implemented or explicitly represented by a durable plan that keeps the
+work visible.
+
+**Build obligations:** #560, #314, #313, #312, #311, #309, #289, #287, #282.
+
+**Tracking/planning obligations:** #569, #561, #292.
+
+**Lesson:** `NOT_PLANNED` is not a valid queue-cleanup state for this repo. If
+work is post-beta, blocked, duplicate, stale, or too large for the current
+session, keep it open and record the live obligation. Closing is reserved for
+implemented work with evidence.
