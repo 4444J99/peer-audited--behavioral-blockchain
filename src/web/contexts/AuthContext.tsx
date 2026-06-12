@@ -11,6 +11,8 @@ interface User {
   role: string;
   status?: string;
   created_at?: string;
+  failed_contracts?: number;
+  failedContracts?: number;
   compliance?: {
     kyc_status: string;
     age_verification_status: string;

@@ -206,3 +206,19 @@ work visible.
 work is post-beta, blocked, duplicate, stale, or too large for the current
 session, keep it open and record the live obligation. Closing is reserved for
 implemented work with evidence.
+
+## batch-build-bounded-stake-311 — 2026-06-12 — Build bounded stake selector
+
+**Issue:** #311 — bounded stake selection UI.
+
+**Status:** implemented and tested locally. The contract creation page now
+derives stake bounds from the user's integrity tier, applies the Aegis safety
+ceiling, renders a bounded slider plus numeric amount control, shows loss-framed
+copy, and displays the live `$30 + $9 = $39` fee breakdown.
+
+**Evidence:** `src/web/app/contracts/new/page.tsx`, plus static render coverage
+in `src/web/app/contracts/new/page.test.tsx`.
+
+**Lesson:** Tracked live work must be able to move into implementation. The
+triage transition script now permits `TRACKING`, `FUTURE`, and `WAITING` issues
+to enter `BUILD_STARTED` when a deferred obligation is actually picked up.

@@ -1,10 +1,12 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Flame, ArrowLeft, Loader2 } from 'lucide-react';
+import { Flame, ArrowLeft, Loader2, ShieldCheck, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '../../../services/api-client';
+import { useAuth } from '../../../contexts/AuthContext';
+import { getAllowedTiers, getDisplayTier, getTierMaxStake } from '../../../../shared/libs/integrity';
 import { getRealmBySlug } from '../../../../shared/libs/realm-registry';
 
 const OATH_CATEGORIES = [
@@ -57,17 +59,63 @@ const DURATION_OPTIONS = [
   { value: 90, label: '90 days' },
 ];
 
+const DEFAULT_STAKE_USD = 30;
+const PLATFORM_FEE_USD = 9;
+const AEGIS_MAX_STAKE_USD = 500;
+const LOW_INTEGRITY_AEGIS_MAX_USD = 100;
+const FAILURE_AEGIS_MAX_USD = 50;
+const FAILURE_DOWNSCALE_STRIKE_THRESHOLD = 3;
+const KYC_EXEMPT_MAX_USD = 20;
+const MIN_STAKE_USD = 1;
+
+function clampStakeAmount(value: number, maxStakeUsd: number): number {
+  if (maxStakeUsd < MIN_STAKE_USD) return 0;
+  return Math.min(Math.max(value, MIN_STAKE_USD), maxStakeUsd);
+}
+
+function formatMoney(value: number): string {
+  return `$${value.toFixed(2)}`;
+}
+
+function getProfileFailureCount(
+  user: { failed_contracts?: number; failedContracts?: number } | null | undefined,
+): number | null {
+  const rawCount = user?.failed_contracts ?? user?.failedContracts;
+  return typeof rawCount === 'number' && Number.isFinite(rawCount)
+    ? Math.max(0, rawCount)
+    : null;
+}
+
+function getFailureAdjustedTierMaxStakeUsd(tierMaxStakeUsd: number, failureCount: number | null): number {
+  if (failureCount == null || failureCount < FAILURE_DOWNSCALE_STRIKE_THRESHOLD) {
+    return tierMaxStakeUsd;
+  }
+
+  const downscaleFactor = Math.pow(
+    0.5,
+    Math.floor(failureCount / FAILURE_DOWNSCALE_STRIKE_THRESHOLD),
+  );
+
+  return Math.min(tierMaxStakeUsd * downscaleFactor, FAILURE_AEGIS_MAX_USD);
+}
+
+function requiresCreateContractKyc(stakeUsd: number): boolean {
+  return stakeUsd > KYC_EXEMPT_MAX_USD;
+}
+
 function NewContractPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const realmSlug = searchParams.get('realm');
   const realmFilter = realmSlug ? getRealmBySlug(realmSlug) : null;
   const [oathCategory, setOathCategory] = useState('');
   const [verificationMethod, setVerificationMethod] = useState('');
-  const [stakeAmount, setStakeAmount] = useState('');
+  const [stakeAmount, setStakeAmount] = useState(String(DEFAULT_STAKE_USD));
   const [durationDays, setDurationDays] = useState(30);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failureCount, setFailureCount] = useState<number | null>(null);
 
   // Recovery stream fields
   const [apEmail, setApEmail] = useState('');
@@ -79,6 +127,63 @@ function NewContractPageContent() {
 
   const isRecovery = oathCategory.startsWith('RECOVERY_');
   const isNoContact = oathCategory === 'RECOVERY_NOCONTACT';
+  const integrityScore = user?.integrity_score ?? 50;
+  const profileFailureCount = getProfileFailureCount(user);
+  const effectiveFailureCount = failureCount ?? profileFailureCount;
+  const allowedTiers = useMemo(() => getAllowedTiers(integrityScore), [integrityScore]);
+  const tierMaxStakeCents = useMemo(() => getTierMaxStake(allowedTiers), [allowedTiers]);
+  const tierMaxStakeUsd = Number.isFinite(tierMaxStakeCents)
+    ? tierMaxStakeCents / 100
+    : AEGIS_MAX_STAKE_USD;
+  const aegisMaxStakeUsd = integrityScore < 40
+    ? Math.min(AEGIS_MAX_STAKE_USD, LOW_INTEGRITY_AEGIS_MAX_USD)
+    : AEGIS_MAX_STAKE_USD;
+  const failureAdjustedTierMaxStakeUsd = getFailureAdjustedTierMaxStakeUsd(tierMaxStakeUsd, effectiveFailureCount);
+  const maxStakeUsd = Math.floor(Math.max(0, Math.min(failureAdjustedTierMaxStakeUsd, aegisMaxStakeUsd)));
+  const selectedStakeUsd = clampStakeAmount(Number.parseFloat(stakeAmount) || 0, maxStakeUsd);
+  const usesMvpPlan = selectedStakeUsd === DEFAULT_STAKE_USD;
+  const platformFeeUsd = usesMvpPlan ? PLATFORM_FEE_USD : 0;
+  const totalEntryUsd = selectedStakeUsd + platformFeeUsd;
+  const requiresKyc = selectedStakeUsd > 0 && requiresCreateContractKyc(selectedStakeUsd);
+  const canStake = maxStakeUsd >= MIN_STAKE_USD;
+  const displayTier = getDisplayTier(integrityScore).replace(/_/g, ' ');
+  const failureLimitCopy = effectiveFailureCount == null
+    ? 'Server checks failure history again at submit.'
+    : effectiveFailureCount >= FAILURE_DOWNSCALE_STRIKE_THRESHOLD
+      ? `Failure-history cap: ${formatMoney(maxStakeUsd)} after ${effectiveFailureCount} failed contracts.`
+      : 'No failure-history cap applied.';
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const profileFailureCount = getProfileFailureCount(user);
+    setFailureCount(profileFailureCount);
+
+    if (!user) return undefined;
+
+    api.getUserContracts()
+      .then((contracts) => {
+        if (cancelled) return;
+        const failedContracts = contracts.filter((contract) => contract.status === 'FAILED').length;
+        setFailureCount(failedContracts);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFailureCount(profileFailureCount);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    const nextStake = clampStakeAmount(Number.parseFloat(stakeAmount) || DEFAULT_STAKE_USD, maxStakeUsd);
+    if (String(nextStake) !== stakeAmount) {
+      setStakeAmount(String(nextStake));
+    }
+  }, [maxStakeUsd, stakeAmount]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,8 +195,12 @@ function NewContractPageContent() {
     }
 
     const amount = parseFloat(stakeAmount);
-    if (isNaN(amount) || amount <= 0 || amount > 20) {
-      setError('Stake amount must be between $1 and $20 for the current beta phase.');
+    if (!canStake) {
+      setError('Integrity score is too low to open a financial commitment right now.');
+      return;
+    }
+    if (isNaN(amount) || amount < MIN_STAKE_USD || amount > maxStakeUsd) {
+      setError(`Stake amount must be between ${formatMoney(MIN_STAKE_USD)} and ${formatMoney(maxStakeUsd)} for your current tier.`);
       return;
     }
 
@@ -113,6 +222,7 @@ function NewContractPageContent() {
         verificationMethod,
         stakeAmount: amount,
         durationDays: effectiveDuration,
+        ...(amount === DEFAULT_STAKE_USD ? { pricing: { plan: 'MVP_39' } } : {}),
         ...(realmFilter ? { realmId: realmFilter.id } : {}),
       };
 
@@ -216,20 +326,76 @@ function NewContractPageContent() {
           <label className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-3">
             Stake Amount (USD)
           </label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-red-500 font-black text-xl">$</span>
+          <div className="space-y-5 rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">You could lose</p>
+                <p className="mt-1 text-4xl font-black text-red-500">{formatMoney(selectedStakeUsd)}</p>
+                <p className="mt-2 text-sm text-neutral-500">
+                  {displayTier} tier cap: {formatMoney(maxStakeUsd)}. Aegis safety ceiling: {formatMoney(aegisMaxStakeUsd)}.
+                  {' '}
+                  {failureLimitCopy}
+                </p>
+              </div>
+              <div className="rounded-lg border border-neutral-800 bg-black px-4 py-3 text-right">
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Entry total</p>
+                <p className="text-2xl font-black text-white">{formatMoney(totalEntryUsd)}</p>
+              </div>
+            </div>
+
             <input
-              type="number"
-              min="1"
-              max="20"
-              step="0.01"
-              value={stakeAmount}
+              aria-label="Bounded stake amount"
+              type="range"
+              min={canStake ? MIN_STAKE_USD : 0}
+              max={Math.max(maxStakeUsd, MIN_STAKE_USD)}
+              step="1"
+              value={selectedStakeUsd}
+              disabled={!canStake}
               onChange={(e) => setStakeAmount(e.target.value)}
-              placeholder="0.00"
-              className="w-full p-4 pl-10 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-black text-2xl placeholder:text-neutral-700 focus:border-red-600 focus:outline-none"
+              className="w-full accent-red-600 disabled:opacity-40"
             />
+
+            <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr]">
+              <div className="rounded-lg border border-neutral-800 bg-black p-3">
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Refundable stake</p>
+                <p className="mt-1 text-lg font-black text-white">{formatMoney(selectedStakeUsd)}</p>
+              </div>
+              <div className="rounded-lg border border-neutral-800 bg-black p-3">
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Platform fee</p>
+                <p className="mt-1 text-lg font-black text-white">{formatMoney(platformFeeUsd)}</p>
+                <p className="mt-1 text-xs text-neutral-600">
+                  {usesMvpPlan ? 'MVP plan fee' : 'Only applies to the $30 MVP plan'}
+                </p>
+              </div>
+              <label className="rounded-lg border border-neutral-800 bg-black p-3">
+                <span className="text-xs font-bold uppercase tracking-widest text-neutral-500">Amount</span>
+                <span className="mt-1 flex items-center gap-2">
+                  <span className="text-red-500 font-black">$</span>
+                  <input
+                    type="number"
+                    min={canStake ? MIN_STAKE_USD : 0}
+                    max={maxStakeUsd}
+                    step="1"
+                    value={selectedStakeUsd}
+                    disabled={!canStake}
+                    onChange={(e) => setStakeAmount(e.target.value)}
+                    className="w-full bg-transparent text-lg font-black text-white focus:outline-none disabled:opacity-40"
+                  />
+                </span>
+              </label>
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-neutral-800 pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-neutral-500">
+                Loss framing is intentional: choose only an amount you can afford to lose.
+              </p>
+              <p className={`inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${requiresKyc ? 'text-amber-400' : 'text-emerald-400'}`}>
+                {requiresKyc ? <TriangleAlert size={14} /> : <ShieldCheck size={14} />}
+                {requiresKyc ? 'KYC required at this amount' : 'No KYC required'}
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-neutral-600 mt-2">Test-money only ($20 cap). Failure means simulated forfeiture.</p>
+          <p className="text-xs text-neutral-600 mt-2">Test-money only. Backend Aegis checks still enforce final safety limits.</p>
         </div>
 
         {/* Duration */}

@@ -47,6 +47,9 @@ valid_transition() {
   "INSPECTED→WAITING") return 0 ;;
   "INSPECTED→FUTURE") return 0 ;;
   "INSPECTED→BUG") return 0 ;;
+  "TRACKING→BUILD_STARTED") return 0 ;;
+  "FUTURE→BUILD_STARTED") return 0 ;;
+  "WAITING→BUILD_STARTED") return 0 ;;
   "WAITING→SUPERSEDED") return 0 ;;
   "FUTURE→SUPERSEDED") return 0 ;;
   "TRACKING→SUPERSEDED") return 0 ;;
