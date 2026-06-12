@@ -94,10 +94,10 @@ jobs:
     environment: beta
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Deploy API to Render (beta)
-        uses: johnbeynon/render-deploy-action@v0.0.8
+        uses: johnbeynon/render-deploy-action@v0.0.9
         with:
           service-id: ${{ secrets.RENDER_BETA_API_SERVICE_ID }}
           api-key: ${{ secrets.RENDER_API_KEY }}
@@ -109,10 +109,10 @@ jobs:
     environment: beta
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Deploy Web to Render (beta)
-        uses: johnbeynon/render-deploy-action@v0.0.8
+        uses: johnbeynon/render-deploy-action@v0.0.9
         with:
           service-id: ${{ secrets.RENDER_BETA_WEB_SERVICE_ID }}
           api-key: ${{ secrets.RENDER_API_KEY }}
@@ -125,10 +125,10 @@ jobs:
     if: ${{ always() && needs.deploy_beta_api.result == 'success' && inputs.run_migrations }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Use Node.js 20.x
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20.x
           cache: 'npm'
@@ -148,7 +148,7 @@ jobs:
     if: ${{ always() && needs.deploy_beta_api.result == 'success' && needs.deploy_beta_web.result == 'success' && (needs.migrate_beta.result == 'success' || needs.migrate_beta.result == 'skipped') }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Wait for beta services
         run: sleep 30
