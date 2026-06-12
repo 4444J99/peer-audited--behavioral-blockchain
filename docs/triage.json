@@ -151,9 +151,9 @@
         670
       ],
       "started": "2026-06-11T15:55:11Z",
-      "completed": null,
-      "reconciled": false,
-      "test_passed": false
+      "completed": "2026-06-12T09:38:18Z",
+      "reconciled": true,
+      "test_passed": true
     },
     {
       "id": "close-superseded-burndowns",
@@ -210,6 +210,17 @@
       ],
       "started": "2026-06-11T22:20:39.088979+00:00",
       "completed": "2026-06-11T22:20:39.088979+00:00",
+      "reconciled": true,
+      "test_passed": true
+    },
+    {
+      "id": "track-burndown-673",
+      "phase": "Phase 4 \u2014 Track current Blocked Handoff Burn-down report",
+      "issues": [
+        673
+      ],
+      "started": "2026-06-12T09:37:48Z",
+      "completed": "2026-06-12T09:38:18Z",
       "reconciled": true,
       "test_passed": true
     }
@@ -10581,8 +10592,8 @@
     "670": {
       "title": "Triage Codex P2 review suggestions from PR #669 (13 threads)",
       "labels": [],
-      "action": "UNCLASSIFIED",
-      "state": "PR_CREATED",
+      "action": "CLOSE",
+      "state": "CLOSED",
       "batch": "triage-codereview-p2",
       "history": [
         {
@@ -10609,11 +10620,21 @@
           "from": "TESTED",
           "to": "PR_CREATED",
           "at": "2026-06-11T16:02:30Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-06-12T09:37:48Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-06-12T09:37:48Z"
         }
       ],
-      "evidence": "docs/triage/triage-codereview-p2--2026-06-11.md",
+      "evidence": "docs/triage/pattern-log.md:96",
       "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/678",
-      "state_updated": "2026-06-11T16:02:30Z",
+      "state_updated": "2026-06-12T09:37:48Z",
       "closed_at": null
     },
     "651": {
@@ -10807,6 +10828,33 @@
       "state": "CLOSED",
       "state_updated": "2026-06-11T22:20:39.088979+00:00",
       "title": "ACTIVATION AUDIT: ship-soon"
+    },
+    "673": {
+      "title": "Blocked Handoff Burn-down - 2026-06-08",
+      "labels": [
+        "documentation",
+        "devops",
+        "blocked"
+      ],
+      "action": "TRACK",
+      "state": "TRACKING",
+      "batch": "track-burndown-673",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-06-12T09:37:49Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "TRACKING",
+          "at": "2026-06-12T09:37:49Z"
+        }
+      ],
+      "evidence": "docs/triage/pattern-log.md:109",
+      "pr": null,
+      "state_updated": "2026-06-12T09:37:49Z",
+      "closed_at": null
     }
   }
 }

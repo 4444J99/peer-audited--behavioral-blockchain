@@ -93,9 +93,9 @@ already present (Items 6, 10), or are suggestions to add features
 that would mask real config errors (Item 10, 8). Triage must read
 the actual code, not the bot's report.
 
-**Next:** Open `fix/codereview-p2-670` with 7 atomic commits, one per
-ACCEPT item. Each commit is small and testable; run targeted
-workspace tests.
+**Outcome (2026-06-12):** PR #678 merged the accepted fixes and closed
+#670. The repo-local state machine was advanced from `PR_CREATED` to
+`PR_MERGED` to `CLOSED` so the batch no longer lags GitHub truth.
 
 **Lesson:** Attempted to close 14 older Blocked Handoff Burn-down
 issues (145, 559, 572, 578, 581, 582, 584, 585, 587, 588, 589, 602,
@@ -105,6 +105,16 @@ machine because no `WAITING → CLOSED` path exists (by design).
 the state machine (`INSPECTED→SUPERSEDED`, `WAITING→SUPERSEDED`,
 `FUTURE→SUPERSEDED`, `TRACKING→SUPERSEDED`). All 14 issues
 transitioned to SUPERSEDED with evidence pointing at #673.
+
+## batch-track-burndown-673 — 2026-06-12 — Track current Blocked Handoff Burn-down
+
+**Issue:** #673 — canonical current weekly Blocked Handoff Burn-down.
+**Status:** kept open and tracked as `TRACKING`; it supersedes older weekly
+burn-down report issues but is not itself complete work.
+
+**Lesson:** Generated weekly report issues still need a triage row even when
+they are intentionally kept open. Otherwise supersession evidence can point at
+a GitHub issue that is outside the repo-local state machine.
 
 ## batch-activation-ledger-676 — 2026-06-11 — Phase 4: Activation audit
 
