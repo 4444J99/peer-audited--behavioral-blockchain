@@ -54,6 +54,7 @@ Any user proof needs consent (checkpoint #3).
 ### Lead magnet B — "Do Not Text Your Ex Tonight" (emergency tool)
 - **Promise:** an in-the-moment page for the 2 a.m. urge.
 - **Format:** lightweight web tool / page (ties to market-attack-plan Level 1 capture).
+- **Route:** `/do-not-text-your-ex-tonight?source=jessica-asset-pack&intent=no-contact-urge`.
 - **Flow:** land → "what are you feeling right now?" → urge-wave timer + grounding prompt →
   "still here in 10 minutes?" → optional email capture + beta invite.
 - **Tone:** calm, non-judgmental, never shaming a relapse.

@@ -60,12 +60,15 @@ asset pack, outreach, metrics, engagement log).
 - **Fixed CTA set:**
   - Jessica: `Join the Private Beta` · `Get the no-contact guide` · `Try the Do Not Text Your Ex Tonight tool`
   - Styx: `Apply for Beta` · `See how it works` · `Read the beta scope`
+- **Emergency tool route:** `/do-not-text-your-ex-tonight?source=styx-channel&intent=no-contact-urge`
 
 ## D. Five-Level Attack (Playbook §4 → market-attack-plan)
 
 - **L1 Demand Capture:** high-intent breakup/no-contact search ("how to survive 30 days of no
   contact", "why willpower fails after a breakup", "stop texting my ex"). Capture page + the
-  "Do Not Text Your Ex Tonight" emergency tool. *(See market-attack-plan Level 1.)*
+  "Do Not Text Your Ex Tonight" emergency tool at
+  `/do-not-text-your-ex-tonight?source=styx-demand-capture&intent=no-contact-urge`.
+  *(See market-attack-plan Level 1.)*
 - **L2 Borrowed Audience:** breakup-recovery / attachment-style / sober-curious / therapy
   creators on TikTok, IG, YouTube, Substack, podcasts. Outreach via
   `planning--jessica-content-asset-pack--2026-06-01.md` §4. *(market-attack-plan Level 2.)*

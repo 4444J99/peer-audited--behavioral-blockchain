@@ -8,6 +8,9 @@ channel + Styx Product channel. Honors the ratios and cadence from
 `docs/departments/gro/REGE.md` CRIT:content-quality and is empathy-first. Week-1 full drafts
 live in `planning--jessica-content-asset-pack--2026-06-01.md`.
 
+Emergency tool route for Jessica CTAs:
+`/do-not-text-your-ex-tonight?source=jessica-channel&intent=no-contact-urge`
+
 ## Pillars
 
 | # | Pillar | Channel | Ratio | Goal |
@@ -33,7 +36,7 @@ live in `planning--jessica-content-asset-pack--2026-06-01.md`.
 |-----|----|--------|----------------|--------|-----|
 | Mon | H | short-form | "The text you write at 2am and delete at 2:01 — let's talk about it." | 1 | — |
 | Mon | O | email | Welcome + the no-contact guide (lead magnet) | — | Get the guide |
-| Tue | H | story (5) | The urge-wave: why it peaks and passes | 2 | Try the Do Not Text Your Ex Tonight tool |
+| Tue | H | story (5) | The urge-wave: why it peaks and passes | 2 | Try the Do Not Text Your Ex Tonight tool (`/do-not-text-your-ex-tonight?source=jessica-story&intent=no-contact-urge`) |
 | Tue | P | proof | What Styx actually is (60-sec plain explainer) | 4 | See how it works |
 | Wed | H | short-form | "You're not weak for wanting to text them. You're human. Here's the science." | 1 | — |
 | Thu | H | conversation prompt | "What hour is hardest for you in no-contact?" | 1 | — |
@@ -75,7 +78,7 @@ live in `planning--jessica-content-asset-pack--2026-06-01.md`.
 |-----|----|--------|----------------|--------|-----|
 | Mon | H | short-form (essay teaser) | "Why willpower fails after a breakup" (L5 cornerstone) | 2 | — |
 | Tue | P | proof | 14-day milestone card (consented) | 6 | Apply for Beta |
-| Wed | H | short-form | Pattern interrupt: replace the checking ritual | 1 | Try the Do Not Text Your Ex Tonight tool |
+| Wed | H | short-form | Pattern interrupt: replace the checking ritual | 1 | Try the Do Not Text Your Ex Tonight tool (`/do-not-text-your-ex-tonight?source=jessica-short-form&intent=no-contact-urge`) |
 | Thu | H | conversation prompt | "What helped you most this month?" | 1 | — |
 | Thu | P | scope/trust | Safety + how we protect vulnerable users | 5 | Read the beta scope |
 | Fri | O | email | Month recap + what's next + low-ticket resource teaser | — | Get the no-contact guide |

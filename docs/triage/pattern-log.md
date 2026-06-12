@@ -274,3 +274,24 @@ the blocked local browser environment.
 **Tooling fix:** the classifier now treats the `blocked` label as WAITING, and
 `state-transition.sh` permits correcting a misclassified `TRACKING` item to
 `WAITING` while keeping the action aligned.
+
+## batch-build-emergency-asset-560 — 2026-06-12 — Build no-contact urge tool
+
+**Issue:** #560 — `Do Not Text Your Ex Tonight` emergency acquisition asset.
+
+**Status:** implemented and tested. The new public route
+`/do-not-text-your-ex-tonight` provides a focused ten-minute no-contact reset
+tool with feeling selection, urge-level input, step progression, replacement
+message copy, and one attributed CTA into the private beta registration path.
+
+**Evidence:** `src/web/app/do-not-text-your-ex-tonight/page.tsx`,
+`src/web/app/do-not-text-your-ex-tonight/page.test.tsx`, and
+`src/web/proxy.ts`.
+
+**Channel linkage:** Jessica and Styx planning docs now point to the route with
+source/intent query params so channel traffic can preserve the emergency-asset
+source.
+
+**Lesson:** Emergency acquisition assets should be usable before they sell. The
+first viewport must own the live urge moment, while the CTA remains singular and
+source-tagged.

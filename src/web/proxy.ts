@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/', '/login', '/register', '/pitch', '/users/leaderboard'];
+const PUBLIC_PATHS = [
+  '/',
+  '/login',
+  '/register',
+  '/pitch',
+  '/users/leaderboard',
+  '/do-not-text-your-ex-tonight',
+];
 
 const PROTECTED_PATHS = [
   '/dashboard',
