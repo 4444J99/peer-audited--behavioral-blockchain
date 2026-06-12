@@ -188,10 +188,8 @@ Development threads trace the intellectual and engineering arc of the project fr
 |----|------|------|------------|
 | `DOC-PIT-01` | `docs/pitch/pitch--styx-deck.pptx` | #pitch #branding #asset | PowerPoint pitch deck for investor presentation. Binary file (PPTX). Companion to the interactive `src/pitch` web application. |
 | `DOC-PIT-02` | `docs/index.html` | #pitch #web #asset | GitHub Pages entry point. Serves the built pitch deck (`src/pitch` Vite build output) as a static site from the `docs/` directory. |
-| `DOC-PIT-03` | `docs/assets/index-BKNXWelK.js` | #pitch #asset #binary | Vite-built JavaScript bundle for the pitch deck static site. Generated output — do not edit. |
-| `DOC-PIT-04` | `docs/assets/index-C1O4pFhU.js` | #pitch #asset #binary | Vite-built JavaScript bundle (secondary chunk) for the pitch deck static site. Generated output. |
-| `DOC-PIT-05` | `docs/assets/index-DJFROXte.css` | #pitch #asset #style | Vite-built CSS bundle for the pitch deck static site. Generated output. |
-| `DOC-PIT-06` | `docs/assets/index-DmHllcqr.js` | #pitch #asset #binary | Vite-built JavaScript bundle (tertiary chunk) for the pitch deck static site. Generated output. |
+| `DOC-PIT-03` | `docs/assets/index-DD4Gqadl.js` | #pitch #asset #binary | Vite-built JavaScript bundle for the pitch deck static site. Generated output — do not edit. |
+| `DOC-PIT-04` | `docs/assets/index-BuXVxqIz.css` | #pitch #asset #style | Vite-built CSS bundle for the pitch deck static site. Generated output. |
 
 ### 9. Root Governance Documents
 

@@ -182,7 +182,9 @@ export const sketchSlide4 = (p: p5) => {
   let isFraud = false;
   let textAlpha = 0;
   
-  p.setup = () => p.createCanvas(p.windowWidth > 800 ? 800 : p.windowWidth, p.windowHeight > 600 ? 600 : p.windowHeight);
+  p.setup = () => {
+    p.createCanvas(p.windowWidth > 800 ? 800 : p.windowWidth, p.windowHeight > 600 ? 600 : p.windowHeight);
+  };
 
   p.draw = () => {
     p.clear();
@@ -248,7 +250,9 @@ export const sketchSlide4 = (p: p5) => {
 
 export const sketchSlide5 = (p: p5) => {
    // Minimalist geometric shield building itself
-   p.setup = () => p.createCanvas(p.windowWidth > 800 ? 800 : p.windowWidth, p.windowHeight > 600 ? 600 : p.windowHeight);
+   p.setup = () => {
+     p.createCanvas(p.windowWidth > 800 ? 800 : p.windowWidth, p.windowHeight > 600 ? 600 : p.windowHeight);
+   };
    
    p.draw = () => {
      p.clear();
@@ -386,7 +390,9 @@ export const sketchSlide8 = (p: p5) => {
      {x: 400, y: 500, n: "Open APIs"}
    ];
    
-   p.setup = () => p.createCanvas(p.windowWidth > 800 ? 800 : p.windowWidth, p.windowHeight > 600 ? 600 : p.windowHeight);
+   p.setup = () => {
+     p.createCanvas(p.windowWidth > 800 ? 800 : p.windowWidth, p.windowHeight > 600 ? 600 : p.windowHeight);
+   };
    
    p.draw = () => {
       p.clear();
@@ -421,7 +427,9 @@ export const sketchSlide8 = (p: p5) => {
 
 export const sketchSlide9 = (p: p5) => {
    // Interlocking Gears (Team)
-   p.setup = () => p.createCanvas(p.windowWidth > 800 ? 800 : p.windowWidth, p.windowHeight > 600 ? 600 : p.windowHeight);
+   p.setup = () => {
+     p.createCanvas(p.windowWidth > 800 ? 800 : p.windowWidth, p.windowHeight > 600 ? 600 : p.windowHeight);
+   };
    
    let drawGear = (cx:number, cy:number, r:number, teeth:number, speed:number, color: number[]) => {
       p.push();
@@ -463,7 +471,9 @@ export const sketchSlide9 = (p: p5) => {
 export const sketchSlide10 = (p: p5) => {
    // Milestones rocketing up
    let m = [5, 4, 3, 2, 1]; // Months
-   p.setup = () => p.createCanvas(p.windowWidth > 800 ? 800 : p.windowWidth, p.windowHeight > 600 ? 600 : p.windowHeight);
+   p.setup = () => {
+     p.createCanvas(p.windowWidth > 800 ? 800 : p.windowWidth, p.windowHeight > 600 ? 600 : p.windowHeight);
+   };
    
    p.draw = () => {
       p.clear();

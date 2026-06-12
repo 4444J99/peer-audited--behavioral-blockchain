@@ -3,6 +3,9 @@ import Stripe from 'stripe';
 import { randomUUID } from 'crypto';
 import { resolveWebPublicUrl } from '../../config/runtime';
 
+type StripeClient = InstanceType<typeof Stripe>;
+type StripeEvent = ReturnType<StripeClient['webhooks']['constructEvent']>;
+
 export type IdentityVerificationMode = 'KYC_ONLY' | 'AGE_ONLY' | 'KYC_AND_AGE';
 export type IdentityProviderStatus = 'PENDING' | 'VERIFIED' | 'FAILED' | 'REJECTED';
 
@@ -55,7 +58,7 @@ export class MockIdentityProviderAdapter implements IdentityProviderAdapter {
 export class StripeIdentityProviderAdapter implements IdentityProviderAdapter {
   providerName: 'STRIPE_IDENTITY' = 'STRIPE_IDENTITY';
   private readonly logger = new Logger(StripeIdentityProviderAdapter.name);
-  private readonly stripe: Stripe;
+  private readonly stripe: StripeClient;
 
   constructor() {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
@@ -65,7 +68,7 @@ export class StripeIdentityProviderAdapter implements IdentityProviderAdapter {
     if (process.env.NODE_ENV === 'production' && apiKey === 'sk_test_mock_key') {
       throw new Error('STRIPE_SECRET_KEY must be a real key in production (mock key is not allowed)');
     }
-    this.stripe = new Stripe(apiKey, { apiVersion: '2023-10-16' });
+    this.stripe = new Stripe(apiKey, { apiVersion: '2026-05-27.dahlia' });
   }
 
   get isAvailable(): boolean {
@@ -83,7 +86,7 @@ export class StripeIdentityProviderAdapter implements IdentityProviderAdapter {
    * webhook secret is unconfigured, the signature header is missing, or verification
    * fails — callers must NOT process unverified payloads.
    */
-  constructVerifiedEvent(rawBody: Buffer | string | undefined, signature: string | undefined): Stripe.Event {
+  constructVerifiedEvent(rawBody: Buffer | string | undefined, signature: string | undefined): StripeEvent {
     if (!this.webhookSecret) {
       throw new Error('Stripe Identity webhook secret is not configured');
     }

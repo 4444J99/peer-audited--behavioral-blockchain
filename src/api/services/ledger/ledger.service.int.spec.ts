@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "crypto";
 import { Test, TestingModule } from "@nestjs/testing";
 import { LedgerService } from "./ledger.service";
 import { QuarantineService } from "../../src/modules/ledger/quarantine.service";

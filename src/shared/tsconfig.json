@@ -9,9 +9,9 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
     "strict": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node", "jest"]
   },
   "include": [
     "src/**/*",

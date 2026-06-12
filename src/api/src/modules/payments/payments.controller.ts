@@ -14,11 +14,16 @@ import { RoleGuard, Roles } from '../../common/guards/role.guard';
 import { JurisdictionDispositionMapper } from '../compliance/jurisdiction-disposition.mapper';
 import { toCents } from '../../../../shared/libs/money';
 
+type StripeClient = InstanceType<typeof Stripe>;
+type StripeEvent = ReturnType<StripeClient['webhooks']['constructEvent']>;
+type StripePaymentIntent = Awaited<ReturnType<StripeClient['paymentIntents']['retrieve']>>;
+type StripeDispute = Awaited<ReturnType<StripeClient['disputes']['retrieve']>>;
+
 @ApiTags('Payments')
 @Controller('payments')
 export class PaymentsController implements OnModuleInit {
   private readonly logger = new Logger(PaymentsController.name);
-  private readonly stripe: Stripe;
+  private readonly stripe: StripeClient;
   private readonly webhookSecret: string;
 
   constructor(
@@ -30,7 +35,7 @@ export class PaymentsController implements OnModuleInit {
     private readonly reconciliationService: ReconciliationService,
   ) {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
-    this.stripe = new Stripe(apiKey, { apiVersion: '2023-10-16' });
+    this.stripe = new Stripe(apiKey, { apiVersion: '2026-05-27.dahlia' });
     this.webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''; // allow-secret
   }
 
@@ -196,7 +201,7 @@ export class PaymentsController implements OnModuleInit {
       return res.status(400).json({ error: 'Missing signature' });
     }
 
-    let event: Stripe.Event;
+    let event: StripeEvent;
     try {
       event = this.stripe.webhooks.constructEvent(
         req.rawBody!,
@@ -221,7 +226,7 @@ export class PaymentsController implements OnModuleInit {
     try {
       switch (event.type) {
       case 'payment_intent.succeeded': {
-        const pi = event.data.object as Stripe.PaymentIntent;
+        const pi = event.data.object as StripePaymentIntent;
         // Resolve the contract by the SERVER-STORED payment_intent_id linkage, never by the
         // client-influenceable pi.metadata.contractId alone.
         //
@@ -267,7 +272,7 @@ export class PaymentsController implements OnModuleInit {
       }
 
       case 'payment_intent.payment_failed': {
-        const pi = event.data.object as Stripe.PaymentIntent;
+        const pi = event.data.object as StripePaymentIntent;
         // Match on the server-stored payment_intent_id rather than trusting metadata.contractId.
         const failed = await this.pool.query(
           `UPDATE contracts SET status = 'PAYMENT_FAILED' WHERE payment_intent_id = $1 RETURNING id, user_id`,
@@ -290,7 +295,7 @@ export class PaymentsController implements OnModuleInit {
       }
 
       case 'charge.dispute.created': {
-        const dispute = event.data.object as Stripe.Dispute;
+        const dispute = event.data.object as StripeDispute;
         const piId = typeof dispute.payment_intent === 'string'
           ? dispute.payment_intent
           : (dispute.payment_intent as any)?.id;

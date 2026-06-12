@@ -51,10 +51,9 @@ function resolveZkSecret(): string {
       `${ZK_SECRET_ENV} must be set in production (refusing to use an ephemeral per-process secret)`,
     );
   }
-  if (!ephemeralZkSecret) {
-    ephemeralZkSecret = randomBytes(32).toString('hex');
-  }
-  return ephemeralZkSecret;
+  const secret = ephemeralZkSecret ?? randomBytes(32).toString('hex');
+  ephemeralZkSecret = secret;
+  return secret;
 }
 
 /** Generates a fresh, high-entropy verifier challenge/nonce. */

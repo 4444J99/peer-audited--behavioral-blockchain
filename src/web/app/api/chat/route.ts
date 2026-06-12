@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { STYX_KNOWLEDGE } from "../../../lib/styx-knowledge";
 
-const client = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY || "",
-  baseURL: process.env.LLM_BASE_URL || "https://api.groq.com/openai/v1",
-});
-
 const MODEL = process.env.LLM_MODEL || "llama-3.3-70b-versatile";
 
 const SYSTEM_PROMPT = `You are the Styx AI assistant — an expert on the Styx peer-audited behavioral market platform. You help stakeholders (investors, partners, developers) understand how Styx works.
@@ -70,7 +65,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!process.env.GROQ_API_KEY) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
     return NextResponse.json(
       { error: "LLM not configured (missing GROQ_API_KEY)" },
       { status: 503 }
@@ -78,6 +74,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const client = new OpenAI({
+      apiKey,
+      baseURL: process.env.LLM_BASE_URL || "https://api.groq.com/openai/v1",
+    });
+
     const stream = await client.chat.completions.create({
       model: MODEL,
       messages: [

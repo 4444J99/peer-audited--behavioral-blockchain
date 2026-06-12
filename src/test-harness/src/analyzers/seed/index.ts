@@ -36,7 +36,7 @@ export class SeedAnalyzer {
         results.push({
           check: 'seed-schema',
           status: 'FAIL',
-          message: parseResult.error.errors.map(e => `${e.path}: ${e.message}`).join(', '),
+          message: parseResult.error.issues.map((e) => `${e.path}: ${e.message}`).join(', '),
         });
       } else {
         results.push({ check: 'seed-schema', status: 'PASS' });

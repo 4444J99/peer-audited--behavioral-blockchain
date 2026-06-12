@@ -5,11 +5,15 @@ import { JurisdictionTier } from '../geofencing';
 
 export type StakeDisposition = 'CAPTURE' | 'REFUND';
 
+type StripeClient = InstanceType<typeof Stripe>;
+type StripePaymentIntent = Awaited<ReturnType<StripeClient['paymentIntents']['retrieve']>>;
+type StripePaymentIntentCaptureParams = NonNullable<Parameters<StripeClient['paymentIntents']['capture']>[1]>;
+type StripeTransfer = Awaited<ReturnType<StripeClient['transfers']['create']>>;
 
 @Injectable()
 export class StripeFboService {
   private readonly logger = new Logger(StripeFboService.name);
-  private stripe: Stripe;
+  private stripe: StripeClient;
 
   constructor() {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
@@ -23,7 +27,7 @@ export class StripeFboService {
     }
 
     this.stripe = new Stripe(apiKey, {
-      apiVersion: '2023-10-16',
+      apiVersion: '2026-05-27.dahlia',
     });
   }
 
@@ -59,7 +63,7 @@ export class StripeFboService {
     amountCents: number,
     contractId: string,
     idempotencyKeyOverride?: string,
-  ): Promise<Stripe.PaymentIntent> {
+  ): Promise<StripePaymentIntent> {
     if (this.isDevMode) {
       this.logger.debug(`[DEV] Mock hold ${amountCents}¢ for contract ${contractId}`);
       return {
@@ -96,7 +100,7 @@ export class StripeFboService {
    * job would retry forever. We only throw for genuinely invalid states (e.g. `canceled`), where
    * capture can never succeed and a fast, clear error beats an opaque Stripe failure.
    */
-  async captureStake(paymentIntentId: string, captureAmountCents?: number): Promise<Stripe.PaymentIntent> {
+  async captureStake(paymentIntentId: string, captureAmountCents?: number): Promise<StripePaymentIntent> {
     if (this.isDevMode) {
       // PM18: surface the partial-capture amount in dev so units/partial-capture bugs are not
       // hidden by an amount-agnostic mock. amount_received reflects what would actually be taken.
@@ -126,7 +130,7 @@ export class StripeFboService {
       );
     }
 
-    const params: Stripe.PaymentIntentCaptureParams =
+    const params: StripePaymentIntentCaptureParams =
       captureAmountCents !== undefined ? { amount_to_capture: captureAmountCents } : {};
 
     // PM17: the idempotency key must incorporate the capture amount. A fixed
@@ -140,7 +144,7 @@ export class StripeFboService {
     });
   }
 
-  async retrieveIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
+  async retrieveIntent(paymentIntentId: string): Promise<StripePaymentIntent> {
     if (this.isDevMode) {
       this.logger.debug(`[DEV] Mock retrieve ${paymentIntentId}`);
       return { id: paymentIntentId, status: 'succeeded' } as any;
@@ -148,7 +152,7 @@ export class StripeFboService {
     return this.stripe.paymentIntents.retrieve(paymentIntentId);
   }
 
-  async cancelHold(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
+  async cancelHold(paymentIntentId: string): Promise<StripePaymentIntent> {
     if (this.isDevMode) {
       this.logger.debug(`[DEV] Mock cancel ${paymentIntentId}`);
       return { id: paymentIntentId, status: 'canceled' } as any;
@@ -174,7 +178,7 @@ export class StripeFboService {
     destinationAccountId: string,
     metadata?: Record<string, any>,
     idempotencyKey?: string,
-  ): Promise<Stripe.Transfer> {
+  ): Promise<StripeTransfer> {
     if (this.isDevMode) {
       this.logger.debug(`[DEV] Mock transfer ${amountCents}¢ to ${destinationAccountId}`);
       return { id: `tr_dev_${randomUUID().slice(0, 8)}`, amount: amountCents } as any;

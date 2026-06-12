@@ -53,7 +53,7 @@ describe('HR dashboard page', () => {
       expect(mockGetEnterpriseMetrics).toHaveBeenCalledWith('e0000000-0000-0000-0000-000000000001');
     });
 
-    expect(screen.getByText('Total Contracts')).toBeTruthy();
+    expect(await screen.findByText('Total Contracts')).toBeTruthy();
     expect(screen.getByText('25')).toBeTruthy();
     expect(screen.getByText('Open Risk Exposure')).toBeTruthy();
     expect(screen.getByText('7')).toBeTruthy();
@@ -89,7 +89,7 @@ describe('HR dashboard page', () => {
       expect(mockGetEnterpriseMetrics).toHaveBeenCalledWith('e0000000-0000-0000-0000-000000000001');
     });
 
-    const input = screen.getByLabelText('Enterprise ID') as HTMLInputElement;
+    const input = await screen.findByLabelText('Enterprise ID') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'ent-alpha-01' } });
     fireEvent.click(screen.getByText('Load Enterprise'));
 

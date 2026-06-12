@@ -66,7 +66,7 @@ export class OfflineCache {
     const keys = await AsyncStorage.getAllKeys();
     const cacheKeys = keys.filter((k) => k.startsWith(CACHE_PREFIX));
     if (cacheKeys.length > 0) {
-      await AsyncStorage.multiRemove(cacheKeys);
+      await Promise.all(cacheKeys.map((key) => AsyncStorage.removeItem(key)));
     }
     await AsyncStorage.removeItem(QUEUE_KEY);
   }

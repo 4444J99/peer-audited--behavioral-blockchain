@@ -15,16 +15,16 @@
     "audit": "tsx src/index.ts"
   },
   "dependencies": {
-    "commander": "^12.0.0",
-    "js-yaml": "^4.1.0",
+    "commander": "^15.0.0",
+    "js-yaml": "^4.2.0",
     "playwright": "^1.40.0",
-    "zod": "^3.23.0"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^20.0.0",
+    "@types/node": "^25.9.3",
     "ts-node": "^10.9.0",
-    "typescript": "^5.0.0",
-    "vitest": "4.1.0"
+    "typescript": "^6.0.3",
+    "vitest": "4.1.8"
   }
 }

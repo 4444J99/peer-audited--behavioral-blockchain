@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { buildSettlementQuote } from './settlement-quote';
 
+type StripeClient = InstanceType<typeof Stripe>;
+
 /**
  * @deprecated Use SettlementModule and SettlementWorker for contract resolution.
  * The canonical truth for payout math is now in settlement-quote.ts, and this
@@ -12,12 +14,12 @@ import { buildSettlementQuote } from './settlement-quote';
 @Injectable()
 export class StripeFBOService {
   private readonly logger = new Logger(StripeFBOService.name);
-  private stripe: Stripe;
+  private stripe: StripeClient;
 
   constructor() {
     // In production, this uses a high-risk merchant account API key
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
-      apiVersion: '2023-10-16', // Matched to project stripe dependency
+      apiVersion: '2026-05-27.dahlia', // Matched to project stripe dependency
     });
   }
 

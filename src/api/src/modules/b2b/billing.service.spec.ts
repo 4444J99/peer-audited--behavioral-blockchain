@@ -1,18 +1,24 @@
 import { BillingService } from './billing.service';
 
 // Mock Stripe at module level
-const mockCreateUsageRecord = jest.fn();
+const mockCreateMeterEvent = jest.fn();
 const mockSearchSubscriptions = jest.fn();
-const mockListUsageRecordSummaries = jest.fn();
+const mockListMeters = jest.fn();
+const mockListEventSummaries = jest.fn();
 
 jest.mock('stripe', () => {
   return jest.fn().mockImplementation(() => ({
     subscriptions: {
       search: mockSearchSubscriptions,
     },
-    subscriptionItems: {
-      createUsageRecord: mockCreateUsageRecord,
-      listUsageRecordSummaries: mockListUsageRecordSummaries,
+    billing: {
+      meterEvents: {
+        create: mockCreateMeterEvent,
+      },
+      meters: {
+        list: mockListMeters,
+        listEventSummaries: mockListEventSummaries,
+      },
     },
   }));
 });
@@ -29,15 +35,21 @@ describe('BillingService', () => {
     it('should log and record a consumption event', async () => {
       mockSearchSubscriptions.mockResolvedValue({
         data: [{
+          customer: 'cus_ent_001',
           items: {
-            data: [{ id: 'si_metered', price: { recurring: { usage_type: 'metered' } } }],
+            data: [{
+              id: 'si_metered',
+              current_period_start: 1706745600,
+              current_period_end: 1709424000,
+              price: { recurring: { usage_type: 'metered' } },
+            }],
           },
         }],
       });
-      mockCreateUsageRecord.mockResolvedValue({});
+      mockCreateMeterEvent.mockResolvedValue({});
 
       await service.recordConsumptionEvent('ent-001', 'phash_scan');
-      expect(mockCreateUsageRecord).toHaveBeenCalled();
+      expect(mockCreateMeterEvent).toHaveBeenCalled();
     });
   });
 
@@ -45,57 +57,88 @@ describe('BillingService', () => {
     it('should record usage with an idempotent increment when a stable event id is supplied (PM21)', async () => {
       mockSearchSubscriptions.mockResolvedValue({
         data: [{
+          customer: 'cus_ent_001',
           items: {
-            data: [{ id: 'si_abc', price: { recurring: { usage_type: 'metered' } } }],
+            data: [{
+              id: 'si_abc',
+              current_period_start: 1706745600,
+              current_period_end: 1709424000,
+              price: { recurring: { usage_type: 'metered' } },
+            }],
           },
         }],
       });
-      mockCreateUsageRecord.mockResolvedValue({});
+      mockCreateMeterEvent.mockResolvedValue({});
 
       await service.recordUsage('ent-001', 'phash_scan', 5, 'evt-xyz');
-      expect(mockCreateUsageRecord).toHaveBeenCalledWith(
-        'si_abc',
-        expect.objectContaining({ quantity: 5, action: 'increment' }),
+      expect(mockCreateMeterEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event_name: 'phash_scan',
+          identifier: 'styx_usage_si_abc_evt-xyz',
+          payload: expect.objectContaining({
+            stripe_customer_id: 'cus_ent_001',
+            value: '5',
+          }),
+        }),
         { idempotencyKey: 'styx_usage_si_abc_evt-xyz' },
       );
     });
 
-    it('should fall back to an idempotent set + keyed idempotency when no event id is supplied (PM21)', async () => {
+    it('should fall back to a deterministic daily event identifier when no event id is supplied (PM21)', async () => {
       mockSearchSubscriptions.mockResolvedValue({
         data: [{
+          customer: 'cus_ent_001',
           items: {
-            data: [{ id: 'si_abc', price: { recurring: { usage_type: 'metered' } } }],
+            data: [{
+              id: 'si_abc',
+              current_period_start: 1706745600,
+              current_period_end: 1709424000,
+              price: { recurring: { usage_type: 'metered' } },
+            }],
           },
         }],
       });
-      mockCreateUsageRecord.mockResolvedValue({});
+      mockCreateMeterEvent.mockResolvedValue({});
 
       await service.recordUsage('ent-001', 'phash_scan', 5);
-      const call = mockCreateUsageRecord.mock.calls[0];
-      expect(call[0]).toBe('si_abc');
-      expect(call[1]).toEqual(expect.objectContaining({ quantity: 5, action: 'set' }));
-      expect(call[2].idempotencyKey).toMatch(/^styx_usage_si_abc_phash_scan_\d+$/);
+      const call = mockCreateMeterEvent.mock.calls[0];
+      expect(call[0]).toEqual(expect.objectContaining({
+        event_name: 'phash_scan',
+        payload: expect.objectContaining({ value: '5' }),
+      }));
+      expect(call[0].identifier).toMatch(/^styx_usage_si_abc_phash_scan_\d+$/);
+      expect(call[1].idempotencyKey).toBe(call[0].identifier);
     });
 
     it('should skip recording when no metered subscription found', async () => {
       mockSearchSubscriptions.mockResolvedValue({ data: [] });
 
       await service.recordUsage('ent-missing', 'gemini_call');
-      expect(mockCreateUsageRecord).not.toHaveBeenCalled();
+      expect(mockCreateMeterEvent).not.toHaveBeenCalled();
     });
 
     it('should default quantity to 1', async () => {
       mockSearchSubscriptions.mockResolvedValue({
         data: [{
-          items: { data: [{ id: 'si_def', price: { recurring: { usage_type: 'metered' } } }] },
+          customer: 'cus_ent_001',
+          items: {
+            data: [{
+              id: 'si_def',
+              current_period_start: 1706745600,
+              current_period_end: 1709424000,
+              price: { recurring: { usage_type: 'metered' } },
+            }],
+          },
         }],
       });
-      mockCreateUsageRecord.mockResolvedValue({});
+      mockCreateMeterEvent.mockResolvedValue({});
 
       await service.recordUsage('ent-001', 'anomaly_detection');
-      expect(mockCreateUsageRecord).toHaveBeenCalledWith(
-        'si_def',
-        expect.objectContaining({ quantity: 1 }),
+      expect(mockCreateMeterEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event_name: 'anomaly_detection',
+          payload: expect.objectContaining({ value: '1' }),
+        }),
         expect.objectContaining({ idempotencyKey: expect.any(String) }),
       );
     });
@@ -103,12 +146,13 @@ describe('BillingService', () => {
     it('should skip non-metered subscription items', async () => {
       mockSearchSubscriptions.mockResolvedValue({
         data: [{
+          customer: 'cus_ent_001',
           items: { data: [{ id: 'si_flat', price: { recurring: { usage_type: 'licensed' } } }] },
         }],
       });
 
       await service.recordUsage('ent-001', 'phash_scan');
-      expect(mockCreateUsageRecord).not.toHaveBeenCalled();
+      expect(mockCreateMeterEvent).not.toHaveBeenCalled();
     });
   });
 
@@ -116,18 +160,35 @@ describe('BillingService', () => {
     it('should return usage summary from Stripe', async () => {
       mockSearchSubscriptions.mockResolvedValue({
         data: [{
-          items: { data: [{ id: 'si_sum', price: { recurring: { usage_type: 'metered' } } }] },
+          customer: 'cus_ent_001',
+          items: {
+            data: [{
+              id: 'si_sum',
+              current_period_start: 1706745600,
+              current_period_end: 1709424000,
+              price: { recurring: { usage_type: 'metered' } },
+            }],
+          },
         }],
       });
-      mockListUsageRecordSummaries.mockResolvedValue({
-        data: [{
-          total_usage: 42,
-          period: { start: 1706745600, end: 1709424000 },
-        }],
+      mockListMeters.mockResolvedValue({
+        data: [
+          { id: 'meter_phash', event_name: 'phash_scan' },
+          { id: 'meter_other', event_name: 'other_metric' },
+        ],
       });
+      mockListEventSummaries.mockResolvedValue({ data: [{ aggregated_value: 42 }] });
 
       const result = await service.getUsageSummary('ent-001');
       expect(result.totalUsage).toBe(42);
+      expect(mockListEventSummaries).toHaveBeenCalledWith(
+        'meter_phash',
+        expect.objectContaining({
+          customer: 'cus_ent_001',
+          start_time: 1706745600,
+          end_time: 1709424000,
+        }),
+      );
       expect(result.currentPeriodStart).toBeInstanceOf(Date);
       expect(result.currentPeriodEnd).toBeInstanceOf(Date);
     });

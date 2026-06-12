@@ -34,10 +34,9 @@ function resolveZkSecret(): string {
     );
   }
 
-  if (!ephemeralZkSecret) {
-    ephemeralZkSecret = randomBytes(32).toString("hex");
-  }
-  return ephemeralZkSecret;
+  const secret = ephemeralZkSecret ?? randomBytes(32).toString("hex");
+  ephemeralZkSecret = secret;
+  return secret;
 }
 
 export function generateZkChallenge(): string {
