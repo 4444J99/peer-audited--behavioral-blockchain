@@ -1,0 +1,58 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directories:
+      - "/"
+      - "/packages/audience-engine"
+      - "/packages/audit-engine"
+      - "/packages/styx-cli"
+      - "/src/api"
+      - "/src/ask-styx"
+      - "/src/desktop"
+      - "/src/mobile"
+      - "/src/pitch"
+      - "/src/shared"
+      - "/src/web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      npm-deps:
+        patterns: ["*"]
+  - package-ecosystem: "github-actions"
+    directories:
+      - "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      github-actions-deps:
+        patterns: ["*"]
+  - package-ecosystem: "docker"
+    directories:
+      - "/.config/docker"
+      - "/src/api"
+      - "/src/web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      docker-deps:
+        patterns: ["*"]
+  - package-ecosystem: "cargo"
+    directories:
+      - "/src/desktop/src-tauri"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      cargo-deps:
+        patterns: ["*"]
+  - package-ecosystem: "terraform"
+    directory: "/infra/terraform"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      terraform-providers:
+        patterns: ["*"]
