@@ -2,7 +2,7 @@
 artifact_id: L-WP-01
 title: "Skill-Based Contest Whitepaper — Legal Classification of Behavioral Commitment Systems"
 date: "2026-03-09"
-version: "0.4.0-draft"
+version: "0.5.0-draft"
 owner: "agent/research-support"
 approval_status: "draft"
 citation_format: "bluebook"
@@ -13,8 +13,8 @@ source_documents:
   - "docs/legal/legal--gatekeeper-compliance.md"
   - "docs/research/research--prediction-markets-regulation-finance.md"
   - "docs/legal/legal--compliance-guardrails.md"
-  - "docs/legal/legal--50-state-skill-contest-survey.md"
-linked_issues: [564, 567]
+  - "docs/legal/50_state_skill_contest_survey.md"
+linked_issues: [563, 564, 567]
 ---
 
 # Skill-Based Contest Whitepaper — Legal Classification of Behavioral Commitment Systems
@@ -243,7 +243,7 @@ States applying the material element test require heightened attention to the ch
 
 ### 9.3 High-Risk States (Any Chance Test / Strict Construction)
 
-States that historically apply the any-chance test, require licensing for all wagering, or interpret gambling statutes with strict constructionism pose the highest risk. These states are excluded from Styx's operational territory via hard API-layer geo-blocking. *See* `docs/legal/legal--50-state-skill-contest-survey.md` for individual state analysis.
+States that historically apply the any-chance test, require licensing for all wagering, or interpret gambling statutes with strict constructionism pose the highest risk. These states are excluded from Styx's operational territory via hard API-layer geo-blocking. *See* `docs/legal/50_state_skill_contest_survey.md` for individual state analysis.
 
 **Blocked jurisdictions:** Arizona, Arkansas, Hawaii, Idaho, Montana, Nevada, Utah. *See In re Masterlobos, Inc.*, No. GCB-14-0015 (Ariz. Dep't of Gaming 2014) (Arizona administrative ruling classifying a skill-based contest as subject to the state gaming regulatory framework, illustrating the enforcement risk in any-chance jurisdictions that require licensing for all contest categories involving consideration).
 
@@ -335,7 +335,7 @@ Several states have codified safe harbors for "skill-based contests" through Dai
 
 ---
 
-## 10. Adverse Authority and Counterarguments
+## 10. Adverse Authority Analysis
 
 Comprehensive legal analysis requires an examination of the strongest potential challenges to Styx's classification. Regulators or litigants may raise the following arguments to characterize the platform as an illegal gambling operation.
 
@@ -409,15 +409,18 @@ The following areas require formal legal opinion from outside counsel before Sty
 | Version | Date | Author | Changes |
 |---|---|---|---|
 | 0.1.0-draft | 2026-03-09 | agent/research-support | Initial draft — 11 sections with Bluebook citations, jurisdiction taxonomy, commitment device doctrine, product design analysis |
-| 0.2.0-draft | 2026-03-10 | agent/research-support | Added Section 10 (Adverse Authority and Counterarguments) with detailed analysis of 5 core challenges |
+| 0.2.0-draft | 2026-03-10 | agent/research-support | Added Section 10 (Adverse Authority Analysis) with detailed analysis of 5 core challenges |
 | 0.3.0-draft | 2026-03-10 | agent/research-support | Expanded Table of Authorities to 18 cases/authorities; added HHS-OIG and SAMHSA clinical precedent |
 | 0.4.0-draft | 2026-03-09 | agent/research-support | Expanded case law to 18 cases (#562); split §10.4 into AG enforcement + house-wins optics (#563); expanded DFS mapping to 11 states (#567); cited 7 previously uncited cases in body text |
+| 0.5.0-draft | 2026-06-16 | agent/legal-compliance | Renamed Section 10 to Adverse Authority Analysis and linked issue (#563) |
 
 ---
 
 ## Table of Authorities
 
 ### Cases
+
+*For detailed analysis of these and other relevant cases, see [Case Law Coverage](case_law_coverage.md).*
 
 - *Commonwealth v. Dent*, 2014 PA Super 218 (Pa. Super. Ct. 2014)
 - *Dew-Becker v. Wu*, 2020 IL 124472 (Ill. 2020)

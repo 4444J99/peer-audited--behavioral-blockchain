@@ -1,12 +1,12 @@
-# Sequence B → A → C, register `${CANONICAL_DOMAIN}`, close revenue gap
+# Sequence market activation → IRF propagation → audit-engine extraction, register `${CANONICAL_DOMAIN}`, close revenue gap
 
 **Date:** 2026-05-17 | **Version:** 4 | **Predecessor:** v3 archived at `~/.claude/plans/archive/2026-05/` (slug `spicy-bubbling-treehouse.md`). v4 is the authoritative plan and supersedes v3 in response to the user's audit challenge ("eat off the floor — no bandaids, fundamental fixes").
 
-> **Naming note ([#601](https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/601)):** The `B / A / C` sequence labels here are **grandfathered**. Each maps to a descriptive phase, spelled out in the Phase sections below — **B** = market activation + URL standup · **A** = IRF propagation (validated) · **C** = audit-engine / technical extraction (demand-driven). Per the plan-file naming convention in [`docs/CLAUDE.md`](../CLAUDE.md#conventions), **new** plans use descriptive branch names, not generic letters.
+> **Naming note ([#601](https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/601)):** The `market activation / IRF propagation / audit-engine extraction` sequence labels here replaced the grandfathered A/B/C labels. Per the plan-file naming convention in [`docs/CLAUDE.md`](../CLAUDE.md#conventions), **new** plans use descriptive branch names, not generic letters.
 
 ## Context
 
-This plan resolves the standing A/B/C decision carried forward from `.conductor/active-handoff.md`. The underlying decision (sequence is B first, then A, then C; register `${CANONICAL_DOMAIN}` in Phase 1) was reached in v2/v3 and is preserved. v4 rebuilds the encoding at the value layer — references to dynamic values go through `.env.example` and other canonical authorities, not through inline hard-coded strings.
+This plan resolves the standing decision (sequence is market activation first, then IRF propagation, then audit-engine extraction; register `${CANONICAL_DOMAIN}` in Phase 1) was reached in v2/v3 and is preserved. v4 rebuilds the encoding at the value layer — references to dynamic values go through `.env.example` and other canonical authorities, not through inline hard-coded strings.
 
 ## Authority pointers (this plan does not duplicate values)
 
@@ -43,31 +43,31 @@ Convergent evidence:
 | `${CANONICAL_REPO_URL}` | Live [24] | OSS canonical repo — for developers, not buyers |
 | `https://${CANONICAL_DOMAIN}` | **Not registered** | What the repo writes toward [2][16] |
 
-## Ideal logical order: B → A → C
+## Ideal logical order: market activation → IRF propagation → audit-engine extraction
 
 Alphabetical labels inherited from prior handoffs are NOT priority-ordered. Logic dictates:
 
-**B first.** The prior handoff's hardest constraint — *"If plan-to-action ratio exceeds 3:1, send an email instead of writing another plan"* [20][21][22] — is a logic gate, not a preference. B is the only path that starts external. A and C both add internal artifact before external contact, re-entering the diagnosed Möbius [17][20].
+**Market activation first.** The prior handoff's hardest constraint — *"If plan-to-action ratio exceeds 3:1, send an email instead of writing another plan"* [20][21][22] — is a logic gate, not a preference. Market activation is the only path that starts external. IRF propagation and audit-engine extraction both add internal artifact before external contact, re-entering the diagnosed Möbius [17][20].
 
-**A second.** IRF propagation is bookkeeping. Done before B → codifies pre-validation assumptions. Done after B → records validated demand. Same activity at different positions has opposite information value.
+**IRF propagation second.** IRF propagation is bookkeeping. Done before market activation → codifies pre-validation assumptions. Done after market activation → records validated demand. Same activity at different positions has opposite information value.
 
-**C third.** Technical extraction of `${CANONICAL_REPO_PATH}/packages/audit-engine/` is build-ahead-of-demand [20][21]. C resolves only after B reveals a buyer who needs the package.
+**Audit-engine extraction third.** Technical extraction of `${CANONICAL_REPO_PATH}/packages/audit-engine/` is build-ahead-of-demand [20][21]. Audit-engine extraction resolves only after market activation reveals a buyer who needs the package.
 
 ## Phase-by-phase
 
-### Phase 1 — B (market activation + URL standup)
+### Phase 1 — Market activation (+ URL standup)
 - **Trigger:** User acts (not "approves in text"). The two-track action below IS the approval.
 - **First action (two-track, both required):**
   1. User names ≥1 real person/company who needs peer-audited verification.
   2. User authorizes registering `${CANONICAL_DOMAIN}` (~`$36/year` per [23]) and shipping a one-page minimal landing (links to `${CANONICAL_REPO_URL}` + `${DISSERTATION_URL}`; nothing else).
 - **Gate to advance:** 5 cold messages sent + ≥1 substantive reply [20][21]. Names + responses logged to `${CANONICAL_REPO_PATH}/.outreach-log` (flat append-only; no schema until format is genuinely needed).
 
-### Phase 2 — A (IRF propagation, validated)
+### Phase 2 — IRF propagation (validated)
 - **Trigger:** Phase 1 gate met.
 - **First action:** Append entries to `~/Code/organvm/organvm-corpvs-testamentvm/INST-INDEX-RERUM-FACIENDARUM.md` reflecting Phase 1 ground truth — named buyers, stated needs, `${CANONICAL_DOMAIN}` registration, validated demand evidence. Also append the three IRF candidates surfaced by v4 itself (see Propagation gap section).
-- **Gate to advance:** IRF reflects B's results.
+- **Gate to advance:** IRF reflects market activation's results.
 
-### Phase 3 — C (technical extraction, demand-driven)
+### Phase 3 — Audit-engine extraction (demand-driven)
 - **Trigger:** Phase 2 gate met **AND** ≥1 named buyer has explicitly asked for the extracted package.
 - **First action:** Create `${CANONICAL_REPO_PATH}/packages/audit-engine/` skeleton.
 - **Gate:** Buyer reviews and approves the package contract before any npm publish.
@@ -78,7 +78,7 @@ Alphabetical labels inherited from prior handoffs are NOT priority-ordered. Logi
 
 1. **Build-time brand propagation.** Templating from `.env` → mobile (`Info.plist`, `build.gradle`, `AndroidManifest.xml`, `project.pbxproj`), deploy (`render.yaml`, `docker-compose.yml`, `ngrok_app.yml`, `vercel/project.json`), identity (`package.json`, `README.md`), legal docs, outreach copy. Implementation candidates: pre-commit hook diffing `.env.example` against propagation targets (warning), or a generator script that materializes platform-specific files from `.env`.
 2. **README badge / git remote drift.** `README.md:5` cites `organvm-iii-ergon/` namespace; git remote is `a-organvm/` [24][25]. Surfaced 2026-05-17 by the multi-citation requirement itself — the very act of looking for a second source revealed the divergence. The git remote is authoritative.
-3. **AB/C label deprecation.** "A/B/C" propagates through `.conductor/active-handoff.md`, prior session memories, this plan, future handoffs. Replace with descriptive names ("market activation", "IRF propagation", "audit-engine extraction") in the next IRF revision.
+3. **A/B/C label deprecation.** "A/B/C" propagates through `.conductor/active-handoff.md`, prior session memories, this plan, future handoffs. Replaced with descriptive names ("market activation", "IRF propagation", "audit-engine extraction") in the next IRF revision.
 
 **Until these land, this plan's authority declaration is documentation, not enforcement.** Naming the gaps explicitly IS the strict-branding compliance — claiming `.env.example` is the source of truth without acknowledging the propagation gap would be bandaid territory.
 
@@ -86,7 +86,7 @@ Alphabetical labels inherited from prior handoffs are NOT priority-ordered. Logi
 
 - Cold message templates (no template until ≥1 real name)
 - Response tracking schema (no schema until ≥1 real response)
-- IRF row drafts (no draft until B reveals what)
+- IRF row drafts (no draft until market activation reveals what)
 - `package.json` / `tsconfig.json` scaffolds for `audit-engine/`
 - Codex/Gemini dispatch envelopes, voice-scorer pipelines, file-location decisions for outreach scaffolding
 - Build-time templating implementation (forward-declared as IRF candidate #1)

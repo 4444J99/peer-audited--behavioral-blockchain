@@ -80,7 +80,7 @@ Styx uses multiple verification methods to confirm user commitment completion: p
 | **New York** | Allowed | Allowed | Allowed | Allowed | Notice + opt-in | Reasonable | N.Y. Gen. Bus. Law § 899-aa (data breach notification). No comprehensive privacy law yet. SHIELD Act imposes security requirements. |
 | **Texas** | Allowed | Allowed (Non-CUBI) | Allowed | Allowed | Informed consent (TDPSA) | Purpose-limited | CUBI: biometric data requires informed consent. Tex. Bus. & Com. Code § 503.001. Heart rate excluded from narrow statutory list. TDPSA covers heart rate as sensitive data. |
 | **Washington** | Allowed | Restricted (MHMDA) | Allowed | Allowed | Explicit Opt-in (MHMDA) | Consumer-controlled | My Health My Data Act: heart rate = "consumer health data" + "biometric data" (Section 3). Requires separate consent and absolute deletion right. Wash. Rev. Code § 19.373.005 et seq. |
-| **AZ, AR, HI, ID, MT, NV, UT** | **Blocked** | **Blocked** | **Blocked** | **Blocked** | N/A | N/A | High-risk jurisdictions blocked via `STYX_STATE_BLOCKLIST`. *See* `docs/legal/legal--50-state-skill-contest-survey.md` for individual state analysis. |
+| **AZ, AR, HI, ID, MT, NV, UT** | **Blocked** | **Blocked** | **Blocked** | **Blocked** | N/A | N/A | High-risk jurisdictions blocked via `STYX_STATE_BLOCKLIST`. *See* `docs/legal/50_state_skill_contest_survey.md` for individual state analysis. |
 
 ### 3.2 International Jurisdictions (Expansion Planning)
 
@@ -396,7 +396,7 @@ The `STYX_STATE_BLOCKLIST` environment variable defines states where the platfor
 
 **Current blocklist:** `STYX_STATE_BLOCKLIST=AZ,AR,HI,ID,MT,NV,UT`
 
-This list must remain consistent with Section 3.1. *See* `docs/legal/legal--50-state-skill-contest-survey.md` for individual state analysis.
+This list must remain consistent with Section 3.1. *See* `docs/legal/50_state_skill_contest_survey.md` for individual state analysis.
 
 [COUNSEL: REVIEW whether additional states should be added based on current case law.]
 

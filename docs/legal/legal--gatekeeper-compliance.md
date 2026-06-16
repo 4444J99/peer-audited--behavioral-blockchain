@@ -138,7 +138,7 @@ If Styx ever implements screen-recording-based verification (currently: Research
 
 ### 4.1 State Blocklist
 
-States where Styx's skill-based contest model faces elevated legal risk must be hard-blocked at the API layer. *See* `docs/legal/legal--50-state-skill-contest-survey.md` for full statutory analysis.
+States where Styx's skill-based contest model faces elevated legal risk must be hard-blocked at the API layer. *See* `docs/legal/50_state_skill_contest_survey.md` for full statutory analysis.
 
 | State | Risk Basis | Block Level |
 |---|---|---|
