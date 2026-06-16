@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import { CameraScreen } from './CameraScreen';
 
 const mockCameraModule = jest.fn(({ contractId }: { contractId?: string }) => (
@@ -28,7 +28,9 @@ describe('CameraScreen', () => {
     const { getByPlaceholderText, getByText } = render(<CameraScreen />);
 
     const contractInput = getByPlaceholderText('Contract ID');
-    fireEvent.change(contractInput, { target: { value: '   contract-99   ' } });
+    act(() => {
+      fireEvent.change(contractInput, { target: { value: '   contract-99   ' } });
+    });
 
     expect(getByText('camera-module:contract-99')).toBeTruthy();
   });

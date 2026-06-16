@@ -154,6 +154,7 @@ fi
 run_gate "build_check" "true" bash scripts/validation/04-redacted-build-check.sh
 run_gate "security_invariants" "true" npx tsx scripts/validation/06-security-invariant-check.ts
 run_gate "claim_drift" "true" node scripts/validation/07-claim-drift-check.js
+run_gate "brand_propagation" "true" node scripts/validation/08-brand-propagation-check.js
 
 FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 

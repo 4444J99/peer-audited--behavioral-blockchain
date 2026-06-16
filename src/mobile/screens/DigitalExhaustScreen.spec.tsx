@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { Alert } from 'react-native';
 import DigitalExhaustScreen from './DigitalExhaustScreen';
 import { ZKPrivacyEngine } from '../services/ZKPrivacyEngine';
@@ -61,7 +61,9 @@ describe('DigitalExhaustScreen', () => {
       React.createElement(DigitalExhaustScreen, { route: mockRoute, navigation: mockNavigation }),
     );
 
-    fireEvent.click(getByText('START SECURE SCAN').closest('button') as HTMLElement);
+    await act(async () => {
+      fireEvent.click(getByText('START SECURE SCAN').closest('button') as HTMLElement);
+    });
 
     await waitFor(() => {
       expect(ZKPrivacyEngine.generateLocalProof).toHaveBeenCalledWith(
@@ -73,7 +75,9 @@ describe('DigitalExhaustScreen', () => {
       expect(container.textContent).toContain('No Contact Maintained');
     });
 
-    fireEvent.click(getByText('TRANSMIT PROOF').closest('button') as HTMLElement);
+    await act(async () => {
+      fireEvent.click(getByText('TRANSMIT PROOF').closest('button') as HTMLElement);
+    });
 
     await waitFor(() => {
       expect(ApiClient.submitProof).toHaveBeenCalledWith(

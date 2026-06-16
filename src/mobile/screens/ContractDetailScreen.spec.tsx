@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { Alert } from 'react-native';
 import { ContractDetailScreen } from './ContractDetailScreen';
 import { ApiClient } from '../services/ApiClient';
@@ -81,7 +81,9 @@ describe('ContractDetailScreen', () => {
     );
 
     await waitFor(() => expect(getByText('Daily Check-In')).toBeTruthy());
-    fireEvent.click(getByText('Daily Check-In').closest('button') as HTMLElement);
+    await act(async () => {
+      fireEvent.click(getByText('Daily Check-In').closest('button') as HTMLElement);
+    });
 
     expect(mockNavigation.navigate).toHaveBeenCalledWith('Attestation', { contractId: 'contract-123' });
   });
@@ -92,7 +94,9 @@ describe('ContractDetailScreen', () => {
     );
 
     await waitFor(() => expect(getByText('Automatic Scan')).toBeTruthy());
-    fireEvent.click(getByText('Automatic Scan').closest('button') as HTMLElement);
+    await act(async () => {
+      fireEvent.click(getByText('Automatic Scan').closest('button') as HTMLElement);
+    });
 
     expect(mockNavigation.navigate).toHaveBeenCalledWith('DigitalExhaust', {
       contractId: 'contract-123',
@@ -107,7 +111,9 @@ describe('ContractDetailScreen', () => {
     );
 
     await waitFor(() => expect(getByText('Use Grace Day')).toBeTruthy());
-    fireEvent.click(getByText('Use Grace Day').closest('button') as HTMLElement);
+    await act(async () => {
+      fireEvent.click(getByText('Use Grace Day').closest('button') as HTMLElement);
+    });
 
     await waitFor(() => {
       expect(ApiClient.useGraceDay).toHaveBeenCalledWith('contract-123');

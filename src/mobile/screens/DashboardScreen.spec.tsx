@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
@@ -176,7 +176,9 @@ describe('DashboardScreen – render tests', () => {
     );
 
     await waitFor(() => expect(getByText('Profile')).toBeTruthy());
-    fireEvent.click(getByText('Profile').closest('button') as HTMLElement);
+    await act(async () => {
+      fireEvent.click(getByText('Profile').closest('button') as HTMLElement);
+    });
 
     expect(navigation.navigate).toHaveBeenCalledWith('Profile');
   });

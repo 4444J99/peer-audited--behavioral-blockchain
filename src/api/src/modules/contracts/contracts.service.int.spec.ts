@@ -31,10 +31,18 @@ describeWithContainerRuntime("ContractsService (Integration)", () => {
   let service: ContractsService;
 
   beforeAll(async () => {
-    // Start Postgres container
-    container = await new PostgreSqlContainer("postgres:15-alpine").start();
-
-    const dbUri = container.getConnectionUri();
+    let dbUri = process.env.TEST_DATABASE_URL;
+    if (!dbUri) {
+      try {
+        container = await new PostgreSqlContainer("postgres:15-alpine").start();
+        dbUri = container.getConnectionUri();
+      } catch (e) {
+        console.warn("Could not start testcontainers, falling back to local postgres instance");
+        execSync(`psql -U postgres -c "DROP DATABASE IF EXISTS styx_test;"`);
+        execSync(`psql -U postgres -c "CREATE DATABASE styx_test;"`);
+        dbUri = "postgres://postgres@localhost:5432/styx_test";
+      }
+    }
 
     // Initialize pool
     pool = new Pool({

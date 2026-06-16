@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 
 function collectText(node: any): string {
@@ -199,7 +199,9 @@ describe('CreateContractScreen – render', () => {
   it('applies preset stake selection to the amount input', () => {
     const { getByText, getByPlaceholderText } = renderScreen();
 
-    fireEvent.click(getByText('$50 Default').closest('button') as HTMLElement);
+    act(() => {
+      fireEvent.click(getByText('$50 Default').closest('button') as HTMLElement);
+    });
 
     const amountInput = getByPlaceholderText('0.00') as HTMLInputElement;
     expect(amountInput.value).toBe('50.00');
@@ -208,32 +210,34 @@ describe('CreateContractScreen – render', () => {
   it('blocks submit when stake is below minimum bound', async () => {
     const { getByText, getByPlaceholderText, container } = renderScreen();
 
-    fireEvent.click(getByText('Recovery').closest('button') as HTMLElement);
-    fireEvent.click(getByText('No Contact Boundary').closest('button') as HTMLElement);
-    fireEvent.click(getByText('Screen Time API').closest('button') as HTMLElement);
-    fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
-      target: { value: 'No contact for 30 days.' },
+    await act(async () => {
+      fireEvent.click(getByText('Recovery').closest('button') as HTMLElement);
+      fireEvent.click(getByText('No Contact Boundary').closest('button') as HTMLElement);
+      fireEvent.click(getByText('Screen Time API').closest('button') as HTMLElement);
+      fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
+        target: { value: 'No contact for 30 days.' },
+      });
+      fireEvent.change(getByPlaceholderText('partner@example.com'), {
+        target: { value: 'ally@styx.io' },
+      });
+      fireEvent.change(getByPlaceholderText('Target #1'), {
+        target: { value: 'Former Partner' },
+      });
+      fireEvent.click(
+        getByText('I am entering this contract voluntarily.').closest('button') as HTMLElement,
+      );
+      fireEvent.click(
+        getByText('No minors are involved in this contract.').closest('button') as HTMLElement,
+      );
+      fireEvent.click(
+        getByText('No dependents are affected by this commitment.').closest('button') as HTMLElement,
+      );
+      fireEvent.click(
+        getByText('This does not violate any legal obligations.').closest('button') as HTMLElement,
+      );
+      fireEvent.change(getByPlaceholderText('0.00'), { target: { value: '5' } });
+      fireEvent.click(getByText('STAKE AND COMMIT').closest('button') as HTMLElement);
     });
-    fireEvent.change(getByPlaceholderText('partner@example.com'), {
-      target: { value: 'ally@styx.io' },
-    });
-    fireEvent.change(getByPlaceholderText('Target #1'), {
-      target: { value: 'Former Partner' },
-    });
-    fireEvent.click(
-      getByText('I am entering this contract voluntarily.').closest('button') as HTMLElement,
-    );
-    fireEvent.click(
-      getByText('No minors are involved in this contract.').closest('button') as HTMLElement,
-    );
-    fireEvent.click(
-      getByText('No dependents are affected by this commitment.').closest('button') as HTMLElement,
-    );
-    fireEvent.click(
-      getByText('This does not violate any legal obligations.').closest('button') as HTMLElement,
-    );
-    fireEvent.change(getByPlaceholderText('0.00'), { target: { value: '5' } });
-    fireEvent.click(getByText('STAKE AND COMMIT').closest('button') as HTMLElement);
 
     await waitFor(() => {
       expect(container.textContent).toContain('Stake amount must be between $10 and $200.');
@@ -244,32 +248,34 @@ describe('CreateContractScreen – render', () => {
   it('submits valid bounded stake and navigates to contract detail', async () => {
     const { getByText, getByPlaceholderText, container } = renderScreen();
 
-    fireEvent.click(getByText('Recovery').closest('button') as HTMLElement);
-    fireEvent.click(getByText('No Contact Boundary').closest('button') as HTMLElement);
-    fireEvent.click(getByText('Fury Peer Review').closest('button') as HTMLElement);
-    fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
-      target: { value: 'No social stalking for 30 days.' },
+    await act(async () => {
+      fireEvent.click(getByText('Recovery').closest('button') as HTMLElement);
+      fireEvent.click(getByText('No Contact Boundary').closest('button') as HTMLElement);
+      fireEvent.click(getByText('Fury Peer Review').closest('button') as HTMLElement);
+      fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
+        target: { value: 'No social stalking for 30 days.' },
+      });
+      fireEvent.change(getByPlaceholderText('partner@example.com'), {
+        target: { value: 'ally@styx.io' },
+      });
+      fireEvent.change(getByPlaceholderText('Target #1'), {
+        target: { value: 'Former Partner' },
+      });
+      fireEvent.click(
+        getByText('I am entering this contract voluntarily.').closest('button') as HTMLElement,
+      );
+      fireEvent.click(
+        getByText('No minors are involved in this contract.').closest('button') as HTMLElement,
+      );
+      fireEvent.click(
+        getByText('No dependents are affected by this commitment.').closest('button') as HTMLElement,
+      );
+      fireEvent.click(
+        getByText('This does not violate any legal obligations.').closest('button') as HTMLElement,
+      );
+      fireEvent.click(getByText('$50 Default').closest('button') as HTMLElement);
+      fireEvent.click(getByText('STAKE AND COMMIT').closest('button') as HTMLElement);
     });
-    fireEvent.change(getByPlaceholderText('partner@example.com'), {
-      target: { value: 'ally@styx.io' },
-    });
-    fireEvent.change(getByPlaceholderText('Target #1'), {
-      target: { value: 'Former Partner' },
-    });
-    fireEvent.click(
-      getByText('I am entering this contract voluntarily.').closest('button') as HTMLElement,
-    );
-    fireEvent.click(
-      getByText('No minors are involved in this contract.').closest('button') as HTMLElement,
-    );
-    fireEvent.click(
-      getByText('No dependents are affected by this commitment.').closest('button') as HTMLElement,
-    );
-    fireEvent.click(
-      getByText('This does not violate any legal obligations.').closest('button') as HTMLElement,
-    );
-    fireEvent.click(getByText('$50 Default').closest('button') as HTMLElement);
-    fireEvent.click(getByText('STAKE AND COMMIT').closest('button') as HTMLElement);
 
     await waitFor(() => {
       expect(ApiClient.createContract).toHaveBeenCalledWith({

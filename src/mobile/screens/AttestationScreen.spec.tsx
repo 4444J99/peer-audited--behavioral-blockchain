@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import { parseSupportTraceMessage } from '../utils/support-trace';
 
@@ -198,7 +198,9 @@ describe('AttestationScreen – render', () => {
     const { getByText } = renderScreen();
 
     await waitFor(() => expect(getByText('I HELD THE LINE')).toBeTruthy());
-    fireEvent.click(getByText('I HELD THE LINE').closest('button') as HTMLElement);
+    await act(async () => {
+      fireEvent.click(getByText('I HELD THE LINE').closest('button') as HTMLElement);
+    });
 
     await waitFor(() => {
       expect(ApiClient.submitAttestation).toHaveBeenCalledWith('test-contract-123');

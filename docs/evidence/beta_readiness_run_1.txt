@@ -1,0 +1,82 @@
+
+-------------------------------------------
+  Styx Beta Readiness
+  Profile: beta
+  Require targets: false
+-------------------------------------------
+
+
+--- STARTING VALIDATION GATE 04: REDACTED BUILD CHECK ---
+[ANALYSIS] Scanning /Users/4jp/styx/src/web/app for restricted terms...
+  - Checking for 'bet'... Clean.
+  - Checking for 'gamble'... Clean.
+  - Checking for 'wager'... Clean.
+[ANALYSIS] Scanning /Users/4jp/styx/src/web/components for restricted terms...
+  - Checking for 'bet'... Clean.
+  - Checking for 'gamble'... Clean.
+  - Checking for 'wager'... Clean.
+[ANALYSIS] Scanning /Users/4jp/styx/src/web/store for restricted terms...
+  - Checking for 'bet'... Clean.
+  - Checking for 'gamble'... Clean.
+  - Checking for 'wager'... Clean.
+[ANALYSIS] Scanning /Users/4jp/styx/src/web/services for restricted terms...
+  - Checking for 'bet'... Clean.
+  - Checking for 'gamble'... Clean.
+  - Checking for 'wager'... Clean.
+[ANALYSIS] Scanning /Users/4jp/styx/src/desktop/src for restricted terms...
+  - Checking for 'bet'... Clean.
+  - Checking for 'gamble'... Clean.
+  - Checking for 'wager'... Clean.
+[ANALYSIS] Scanning /Users/4jp/styx/src/mobile/screens for restricted terms...
+  - Checking for 'bet'... Clean.
+  - Checking for 'gamble'... Clean.
+  - Checking for 'wager'... Clean.
+[ANALYSIS] Scanning /Users/4jp/styx/src/mobile/components for restricted terms...
+  - Checking for 'bet'... Clean.
+  - Checking for 'gamble'... Clean.
+  - Checking for 'wager'... Clean.
+[ANALYSIS] Scanning /Users/4jp/styx/src/mobile/services for restricted terms...
+  - Checking for 'bet'... Clean.
+  - Checking for 'gamble'... Clean.
+  - Checking for 'wager'... Clean.
+[ANALYSIS] Scanning /Users/4jp/styx/src/pitch/src for restricted terms...
+  - Checking for 'bet'... Clean.
+  - Checking for 'gamble'... Clean.
+  - Checking for 'wager'... Clean.
+✅ GATE 04 PASSED: No banned lexicon found. The build is safe for App Store / Payment Processor heuristic review.
+
+--- STARTING VALIDATION GATE 06: SECURITY INVARIANT CHECK ---
+
+Scanned 6 files across 2 build directories + source guards.
+
+⏭️  GATE 06 SKIPPED: no build output present to scan (src/api/dist, src/web/.next). Run after a build to enforce.
+Claim drift check passed (59 inline code references scanned).
+[OK] File docs/legal/privacy-policy.md contains CONTACT_EMAIL_DOMAIN ('privacy@styx.app')
+[OK] File docs/departments/b2b/artifacts/outreach-sequences.md contains CONTACT_EMAIL_DOMAIN ('partners@styx.app')
+[OK] File src/mobile/ios/Styx/Info.plist contains MOBILE_BUNDLE_ID ('<string>com.styxprotocol.app</string>')
+[OK] File src/mobile/ios/Styx/Info.plist contains DEEP_LINK_SCHEME ('<string>styx</string>')
+[OK] File src/mobile/ios/Styx.xcodeproj/project.pbxproj contains MOBILE_BUNDLE_ID ('PRODUCT_BUNDLE_IDENTIFIER = "com.styxprotocol.app";')
+[OK] File src/mobile/android/app/build.gradle contains MOBILE_BUNDLE_ID ('applicationId 'com.styxprotocol.app'')
+[OK] File src/mobile/android/app/build.gradle contains MOBILE_BUNDLE_ID (namespace) ('namespace 'com.styxprotocol.app'')
+[OK] File src/mobile/android/app/src/main/AndroidManifest.xml contains DEEP_LINK_SCHEME ('android:scheme="styx"')
+[OK] File docs/legal/terms-of-service.md contains CONTACT_EMAIL_DOMAIN ('legal@styx.app')
+[OK] File render.yaml contains RENDER_API_SERVICE_NAME ('name: styx-api')
+[OK] File render.yaml contains RENDER_WEB_SERVICE_NAME ('name: styx-web')
+[OK] File .config/docker/docker-compose.yml contains RENDER_API_SERVICE_NAME ('styx-api:')
+[OK] File .config/docker/docker-compose.yml contains RENDER_WEB_SERVICE_NAME ('styx-web:')
+[OK] File .config/ngrok/ngrok_app.yml contains RENDER_API_SERVICE_NAME ('styx-api-tunnel:')
+[OK] File .config/ngrok/ngrok_app.yml contains RENDER_WEB_SERVICE_NAME ('styx-web-tunnel:')
+[OK] File .claude/agents/ops/CONTEXT.md contains RENDER_API_SERVICE_NAME ('styx-api')
+[OK] File .claude/agents/ops/CONTEXT.md contains RENDER_WEB_SERVICE_NAME ('styx-web')
+[OK] File README.md contains CANONICAL_REPO_URL ('https://github.com/a-organvm/peer-audited--behavioral-blockchain')
+[SUCCESS] All brand propagation checks passed.
+
+-------------------------------------------
+  Beta Readiness Summary
+  Passed:  3
+  Failed:  0
+  Skipped: 2
+  Overall: incomplete
+  Artifact: /Users/4jp/styx/artifacts/beta-readiness-summary.json
+-------------------------------------------
+

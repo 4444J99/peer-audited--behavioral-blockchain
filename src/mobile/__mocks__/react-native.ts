@@ -26,14 +26,26 @@ function createPrimitive(tag: string) {
         safeProps.onChange = (event: any) => val(event?.target?.value ?? '');
         continue;
       }
+      if (key === 'onValueChange' && typeof val === 'function') {
+        hasOnChange = true;
+        safeProps.onChange = (event: any) => val(event?.target?.checked ?? event?.target?.value);
+        continue;
+      }
       if (key === 'onChange' && typeof val === 'function') {
         hasOnChange = true;
+        safeProps.onChange = val;
+        continue;
+      }
+      if (key === 'value' && typeof val === 'boolean') {
+        safeProps.checked = val;
+        safeProps.type = 'checkbox';
+        continue;
       }
       if (SAFE_HTML_PROPS.has(key) && (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean')) {
         safeProps[key] = val;
       }
     }
-    if (tag === 'input' && 'value' in safeProps && !hasOnChange) {
+    if (tag === 'input' && ('value' in safeProps || 'checked' in safeProps) && !hasOnChange) {
       safeProps.readOnly = true;
     }
     return React.createElement(tag, safeProps, children);
