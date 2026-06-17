@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // ts-jest only type-checks/transpiles per-file; emitting declarations is
+    // unnecessary and triggers a rootDir-inference error (TS5011) for specs
+    // that live OUTSIDE the app `include` roots — notably the migration runner
+    // under database/migrations/. Disabling declaration emit and widening the
+    // include lets those specs compile and actually run under jest.
+    "declaration": false,
+    "noEmit": true,
+    "incremental": false,
+    "rootDir": ".",
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["src/**/*.ts", "api/**/*.ts", "database/**/*.ts", "test/**/*.ts"]
+}
