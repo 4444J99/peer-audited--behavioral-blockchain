@@ -11533,7 +11533,7 @@
         "follow-up"
       ],
       "action": "TRACK",
-      "state": "TESTED",
+      "state": "PR_CREATED",
       "batch": "build-beta-waitlist-funnel-505-506-507",
       "history": [
         {
@@ -11560,11 +11560,16 @@
           "from": "BUILD_DONE",
           "to": "TESTED",
           "at": "2026-06-17T13:30:43Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-06-17T13:33:15Z"
         }
       ],
       "evidence": null,
-      "pr": null,
-      "state_updated": "2026-06-17T13:30:43Z",
+      "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/703",
+      "state_updated": "2026-06-17T13:33:15Z",
       "closed_at": null
     },
     "506": {
@@ -11576,7 +11581,7 @@
         "follow-up"
       ],
       "action": "TRACK",
-      "state": "TESTED",
+      "state": "PR_CREATED",
       "batch": "build-beta-waitlist-funnel-505-506-507",
       "history": [
         {
@@ -11603,11 +11608,16 @@
           "from": "BUILD_DONE",
           "to": "TESTED",
           "at": "2026-06-17T13:30:43Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-06-17T13:33:15Z"
         }
       ],
       "evidence": null,
-      "pr": null,
-      "state_updated": "2026-06-17T13:30:43Z",
+      "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/703",
+      "state_updated": "2026-06-17T13:33:15Z",
       "closed_at": null
     },
     "507": {
@@ -11641,12 +11651,17 @@
           "from": "BUILD_DONE",
           "to": "TESTED",
           "at": "2026-06-17T13:30:43Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-06-17T13:33:15Z"
         }
       ],
       "labels": [],
-      "pr": null,
-      "state": "TESTED",
-      "state_updated": "2026-06-17T13:30:43Z",
+      "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/703",
+      "state": "PR_CREATED",
+      "state_updated": "2026-06-17T13:33:15Z",
       "title": "Tests — conversion tracking + email delivery"
     },
     "508": {
