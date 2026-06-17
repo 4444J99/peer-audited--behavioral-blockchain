@@ -61,27 +61,49 @@ describe('PaymentRouterService', () => {
       userId: 'user-2',
     };
 
-    it('should create a Stripe payment intent with mock client secret in dev', async () => {
+    const originalEnv = process.env.NODE_ENV;
+    afterEach(() => {
+      process.env.NODE_ENV = originalEnv;
+    });
+
+    it('should create a Stripe payment intent with mock client secret in development', async () => {
+      process.env.NODE_ENV = 'development';
       const result = await service.createPaymentIntent(baseOptions, 'STRIPE');
       expect(result.processor).toBe('STRIPE');
       expect(result.clientSecret).toMatch(/^pi_stripe_mock_/);
     });
 
-    it('should create a Corepay payment intent with mock token in dev', async () => {
+    it('should create a Corepay payment intent with mock token in development', async () => {
+      process.env.NODE_ENV = 'development';
       const result = await service.createPaymentIntent(baseOptions, 'HIGH_RISK_COREPAY');
       expect(result.processor).toBe('HIGH_RISK_COREPAY');
       expect(result.clientSecret).toMatch(/^tok_corepay_mock_/);
     });
 
+    it('should create a mock client secret in the test environment', async () => {
+      process.env.NODE_ENV = 'test';
+      const result = await service.createPaymentIntent(baseOptions, 'STRIPE');
+      expect(result.clientSecret).toMatch(/^pi_stripe_mock_/);
+    });
+
     it('should throw ServiceUnavailableException in production', async () => {
-      const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production';
-      try {
-        await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
-          .rejects.toThrow('Payment processor not configured');
-      } finally {
-        process.env.NODE_ENV = originalEnv;
-      }
+      await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
+        .rejects.toThrow('Payment processor not configured');
+    });
+
+    it('should throw ServiceUnavailableException in staging (never return a fabricated secret)', async () => {
+      process.env.NODE_ENV = 'staging';
+      const promise = service.createPaymentIntent(baseOptions, 'STRIPE');
+      await expect(promise).rejects.toThrow('Payment processor not configured');
+      // Defensive: the fabricated `pi_stripe_mock_*` secret must never reach a caller.
+      await expect(promise).rejects.not.toMatchObject({ clientSecret: expect.anything() });
+    });
+
+    it('should fail closed when NODE_ENV is unset/misconfigured', async () => {
+      delete process.env.NODE_ENV;
+      await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
+        .rejects.toThrow('Payment processor not configured');
     });
   });
 });
