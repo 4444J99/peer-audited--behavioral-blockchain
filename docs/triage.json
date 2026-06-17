@@ -355,6 +355,19 @@
       "completed": "2026-06-12T14:03:10Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "build-beta-waitlist-funnel-505-506-507",
+      "phase": "Build — public beta-waitlist funnel (landing CTA + signup API + tests)",
+      "issues": [
+        505,
+        506,
+        507
+      ],
+      "started": "2026-06-17T13:30:59Z",
+      "completed": "2026-06-17T13:30:59Z",
+      "reconciled": false,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -11520,8 +11533,8 @@
         "follow-up"
       ],
       "action": "TRACK",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "TESTED",
+      "batch": "build-beta-waitlist-funnel-505-506-507",
       "history": [
         {
           "from": "UNREAD",
@@ -11532,11 +11545,26 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:36:52Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-17T13:30:43Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-06-17T13:30:43Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-06-17T13:30:43Z"
         }
       ],
       "evidence": null,
       "pr": null,
-      "state_updated": "2026-06-12T12:36:52Z",
+      "state_updated": "2026-06-17T13:30:43Z",
       "closed_at": null
     },
     "506": {
@@ -11548,8 +11576,8 @@
         "follow-up"
       ],
       "action": "TRACK",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "TESTED",
+      "batch": "build-beta-waitlist-funnel-505-506-507",
       "history": [
         {
           "from": "UNREAD",
@@ -11560,16 +11588,31 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:36:52Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-17T13:30:43Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-06-17T13:30:43Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-06-17T13:30:43Z"
         }
       ],
       "evidence": null,
       "pr": null,
-      "state_updated": "2026-06-12T12:36:52Z",
+      "state_updated": "2026-06-17T13:30:43Z",
       "closed_at": null
     },
     "507": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "build-beta-waitlist-funnel-505-506-507",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -11577,12 +11620,33 @@
           "from": "UNREAD",
           "to": "TRACK",
           "at": "2026-06-01T15:50:47Z"
+        },
+        {
+          "from": "TRACK",
+          "to": "TRACKING",
+          "at": "2026-06-17T13:30:34Z",
+          "note": "normalize legacy TRACK state to canonical TRACKING"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-17T13:30:43Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-06-17T13:30:43Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-06-17T13:30:43Z"
         }
       ],
       "labels": [],
       "pr": null,
-      "state": "TRACK",
-      "state_updated": "2026-06-01T15:50:47Z",
+      "state": "TESTED",
+      "state_updated": "2026-06-17T13:30:43Z",
       "title": "Tests — conversion tracking + email delivery"
     },
     "508": {

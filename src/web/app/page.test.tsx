@@ -43,16 +43,16 @@ describe('Landing Page', () => {
     expect(html).toContain('small US allowlist');
   });
 
-  it('renders the START RECOVERY button', () => {
+  it('renders the JOIN THE PRIVATE BETA button', () => {
     const html = renderToStaticMarkup(<Home />);
 
-    expect(html).toContain('START RECOVERY');
+    expect(html).toContain('JOIN THE PRIVATE BETA');
   });
 
-  it('links to login when user is not authenticated', () => {
+  it('routes the public CTA to the beta waitlist when not authenticated', () => {
     const html = renderToStaticMarkup(<Home />);
 
-    expect(html).toContain('href="/login"');
+    expect(html).toContain('href="/beta"');
   });
 
   it('does not render the removed manifesto or ask CTAs', () => {
@@ -86,10 +86,10 @@ describe('Landing Page', () => {
     expect(html).toContain('>S</span>');
   });
 
-  it('links only to login when the user is unauthenticated', () => {
+  it('routes a single public link to the beta waitlist when unauthenticated', () => {
     const html = renderToStaticMarkup(<Home />);
 
-    expect(html).toContain('href="/login"');
+    expect(html).toContain('href="/beta"');
     expect(html.match(/href=\"\//g)?.length).toBe(1);
   });
 
@@ -102,7 +102,7 @@ describe('Landing Page', () => {
   it('renders a single recovery CTA', () => {
     const html = renderToStaticMarkup(<Home />);
 
-    expect(html).toContain('START RECOVERY');
+    expect(html).toContain('JOIN THE PRIVATE BETA');
     expect(html.match(/<a /g)?.length).toBe(1);
   });
 
