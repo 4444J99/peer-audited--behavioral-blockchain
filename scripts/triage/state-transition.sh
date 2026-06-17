@@ -49,6 +49,11 @@ valid_transition() {
   "INSPECTED→BUG") return 0 ;;
   "TRACKING→BUILD_STARTED") return 0 ;;
   "TRACKING→WAITING") return 0 ;;
+  # Legacy "TRACK" state (pre-dates the current state machine; mirrors TRACKING)
+  "TRACK→BUILD_STARTED") return 0 ;;
+  "TRACK→WAITING") return 0 ;;
+  "TRACK→SUPERSEDED") return 0 ;;
+  "TRACK→TRACKING") return 0 ;;
   "FUTURE→BUILD_STARTED") return 0 ;;
   "WAITING→BUILD_STARTED") return 0 ;;
   "WAITING→SUPERSEDED") return 0 ;;

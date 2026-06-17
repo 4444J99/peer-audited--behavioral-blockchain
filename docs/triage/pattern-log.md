@@ -348,3 +348,56 @@ and different trust boundaries (public vs authenticated).
 machine. Normalized it to canonical `TRACKING` (with a history note) before
 entering the build chain, matching the precedent for correcting misclassified
 states rather than inventing a new transition.
+
+## batch-docs-architecture-integrity-verify — 2026-06-15 — Close resolved docs-integrity cluster + fix dangling v1 links
+
+**Issues:** #590, #591, #592, #593, #594, #595, #600.
+
+**Status:** all seven resolved and closed with on-disk evidence. Six were already
+fixed on `main` by prior architecture-corpus work but had never been closed with
+a ledger record — the exact "resolved but unproven-closed" gap the audit batch
+warned about. One (#591) carried residual drift that this batch fixed.
+
+**Verification (evidence on `main` unless noted):**
+- #590 (test-strategy path/gate drift, HIGH): `docs/architecture/test-strategy.md`
+  already uses `src/api`/`scripts/validation/`/`scripts/smoke/` and lists the 9
+  real gate files — the `apps/api` / `scripts/gates/` drift is gone.
+- #592 (Fury consensus contradicted three ways, P1): reconciled to ADR-004 across
+  the corpus. `test-strategy.md:199` states "3 auditors, 2-of-3 or 3-of-3 … no
+  $1000 threshold"; `docs/specs/spec--fury-router.md:10` carries an as-built
+  banner and FR-5 (`:73`) is corrected. No "3-of-5" or "$1000 threshold" remains.
+- #593 (provenance frontmatter, P2): both surviving research docs
+  (`feasibility-stack.md`, `truth-blockchain-v2.md`) carry
+  `provenance/authoritative/generated_by/generated_on` frontmatter + in-file banner.
+- #594 (misclassified files, P2): module specs relocated to `docs/specs/`; the
+  alpha-to-omega plan is documented as superseded by the canonical roadmap in
+  `docs/architecture/README.md:23` (kept in place, marked superseded — not moved,
+  to avoid duplicating the canonical planning copy).
+- #595 (architecture↔adr orphaned, P1): `docs/architecture/README.md` and
+  `docs/adr/README.md` now cross-reference each other and `docs/specs/`.
+- #600 (README badge namespace): `README.md:5` uses the `a-organvm/...` namespace,
+  matching the git remote.
+- #591 (triplicate dedup + provenance, fixed this batch): v1
+  `architecture--truth-blockchain.md` was correctly deduped away earlier, but two
+  **live hyperlinks** to it remained — in the architecture README table and the v2
+  in-file banner. Both updated to explanatory prose; the README table dropped the
+  dead v1 row. Snapshot bibliographies (`docs/MANIFEST.md`, `docs/FEATURE-BACKLOG.md`)
+  and archived plans were intentionally left untouched: they are dated point-in-time
+  records, not live navigation.
+
+**Local verification:** `bash -n scripts/triage/state-transition.sh` (syntax OK);
+no live markdown hyperlinks to the deleted v1 file remain in `docs/architecture`,
+`docs/specs`, `docs/adr`; every local link in `docs/architecture/README.md`
+resolves to an existing file; `node scripts/validation/07-claim-drift-check.js`
+passed (59 inline code references scanned).
+
+**Tooling fix:** `state-transition.sh` now recognizes the legacy `TRACK` state
+(pre-dates the current state machine) as a valid FROM state mirroring `TRACKING`
+(`TRACK→BUILD_STARTED|WAITING|SUPERSEDED|TRACKING`). This unblocks the ~69 issues
+still parked in the legacy `TRACK` state so future batches can transition them
+without hand-editing `triage.json`.
+
+**Lesson:** "Already fixed on disk" is not "closed." Resolved work left open is
+indistinguishable from unproven work until a ledger entry with file:line evidence
+records the verification. Verify-and-close is real triage, not a no-op — and when
+a dedup deletes a file, every live link to it is residual drift that must be swept.

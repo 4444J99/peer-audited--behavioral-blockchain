@@ -368,6 +368,23 @@
       "completed": "2026-06-17T13:30:59Z",
       "reconciled": false,
       "test_passed": true
+    },
+    {
+      "id": "docs-architecture-integrity-verify",
+      "phase": "documentation-integrity",
+      "issues": [
+        590,
+        591,
+        592,
+        593,
+        594,
+        595,
+        600
+      ],
+      "started": "2026-06-15T10:02:54Z",
+      "completed": "2026-06-15T10:03:41Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -13322,8 +13339,8 @@
       "title": "docs/architecture: test-strategy.md has filesystem drift (workspace paths, gate names, smoke scripts)",
       "labels": [],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "docs-architecture-integrity-verify",
       "history": [
         {
           "from": "UNREAD",
@@ -13334,55 +13351,90 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-15T10:03:11Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-06-15T10:03:11Z"
         }
       ],
-      "evidence": null,
+      "evidence": "docs/architecture/test-strategy.md:89",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-06-15T10:03:11Z",
       "closed_at": null
     },
     "591": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "docs-architecture-integrity-verify",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "docs/architecture/README.md:19",
       "history": [
         {
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-15T10:03:12Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-06-15T10:03:12Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "CLOSED",
+          "at": "2026-06-15T10:03:12Z"
         }
       ],
       "labels": [],
       "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "CLOSED",
+      "state_updated": "2026-06-15T10:03:12Z",
       "title": "docs/architecture: triplicate research docs (truth-blockchain v1/v2 + feasibility-stack) need dedup + provenance frontmatter"
     },
     "592": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "docs-architecture-integrity-verify",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "docs/specs/spec--fury-router.md:10",
       "history": [
         {
           "from": "UNREAD",
           "to": "TRACK",
           "at": "2026-06-01T15:50:49Z"
+        },
+        {
+          "from": "TRACK",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-15T10:03:12Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-06-15T10:03:12Z"
         }
       ],
       "labels": [],
       "pr": null,
-      "state": "TRACK",
-      "state_updated": "2026-06-01T15:50:49Z",
+      "state": "CLOSED",
+      "state_updated": "2026-06-15T10:03:12Z",
       "title": "docs/architecture: Fury consensus parameter contradicted three ways across corpus"
     },
     "593": {
       "title": "docs/architecture: LLM-generated research docs lack authorship/provenance frontmatter",
       "labels": [],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "docs-architecture-integrity-verify",
       "history": [
         {
           "from": "UNREAD",
@@ -13393,19 +13445,29 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-15T10:03:12Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-06-15T10:03:12Z"
         }
       ],
-      "evidence": null,
+      "evidence": "docs/architecture/architecture--feasibility-stack.md:2",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-06-15T10:03:12Z",
       "closed_at": null
     },
     "594": {
       "title": "docs/architecture: misclassified files (1 roadmap, 2 forward-specs) belong in planning/ and specs/",
       "labels": [],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "docs-architecture-integrity-verify",
       "history": [
         {
           "from": "UNREAD",
@@ -13416,19 +13478,29 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-15T10:03:12Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-06-15T10:03:12Z"
         }
       ],
-      "evidence": null,
+      "evidence": "docs/architecture/README.md:23",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-06-15T10:03:12Z",
       "closed_at": null
     },
     "595": {
       "title": "docs/architecture and docs/adr are orphaned from each other (no cross-references)",
       "labels": [],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "docs-architecture-integrity-verify",
       "history": [
         {
           "from": "UNREAD",
@@ -13439,11 +13511,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-15T10:03:12Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-06-15T10:03:12Z"
         }
       ],
-      "evidence": null,
+      "evidence": "docs/adr/README.md:3",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-06-15T10:03:12Z",
       "closed_at": null
     },
     "596": {
@@ -13530,8 +13612,8 @@
       "title": "README badge URL doesn't match git remote namespace",
       "labels": [],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "docs-architecture-integrity-verify",
       "history": [
         {
           "from": "UNREAD",
@@ -13542,11 +13624,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-06-15T10:03:12Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-06-15T10:03:12Z"
         }
       ],
-      "evidence": null,
+      "evidence": "README.md:5",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-06-15T10:03:12Z",
       "closed_at": null
     },
     "601": {
