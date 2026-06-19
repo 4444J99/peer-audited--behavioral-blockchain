@@ -121,5 +121,6 @@ export function getTierMaxStake(tiers: string[]): number {
   return 0;
 }
 
+// Fury Consensus Constants
 export const FURY_CONSENSUS_AUDITORS = 3;
 export const FURY_CONSENSUS_AGREEMENT_REQUIRED = 2;

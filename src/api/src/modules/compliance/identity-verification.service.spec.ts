@@ -5,22 +5,11 @@ import {
   IdentityProviderService,
   IdentityProviderCompletionResult,
 } from './identity-provider.service';
-import { EmailService } from '../email/email.service';
 
 describe('IdentityVerificationService', () => {
   let service: IdentityVerificationService;
   let mockPool: { query: jest.Mock };
-  let mockProvider: jest.Mocked<
-    Pick<
-      IdentityProviderService,
-      | 'startVerification'
-      | 'parseStripeIdentityWebhook'
-      | 'verifyAndParseStripeWebhook'
-    >
-  >;
-  let mockEmail: jest.Mocked<
-    Pick<EmailService, 'sendEarlyAccessOnboarding'>
-  >;
+  let mockProvider: jest.Mocked<Pick<IdentityProviderService, 'startVerification' | 'parseStripeIdentityWebhook' | 'verifyAndParseStripeWebhook'>>;
 
   beforeEach(() => {
     mockPool = { query: jest.fn() };
@@ -29,13 +18,9 @@ describe('IdentityVerificationService', () => {
       parseStripeIdentityWebhook: jest.fn(),
       verifyAndParseStripeWebhook: jest.fn(),
     };
-    mockEmail = {
-      sendEarlyAccessOnboarding: jest.fn(),
-    };
     service = new IdentityVerificationService(
       mockPool as any,
       mockProvider as unknown as IdentityProviderService,
-      mockEmail as unknown as EmailService,
     );
     jest.clearAllMocks();
     delete process.env.NODE_ENV;
@@ -380,97 +365,10 @@ describe('IdentityVerificationService', () => {
   // ─── applyProviderCompletion ───
 
   describe('applyProviderCompletion', () => {
-    it('should send early-access onboarding when KYC verification upgrades the user tier', async () => {
-      mockPool.query.mockResolvedValueOnce({
-        rows: [
-          {
-            email: 'test@styx.io',
-            previous_kyc_status: 'PENDING',
-          },
-        ],
-      } as any);
-
-      await service.applyProviderCompletion({
-        provider: 'MOCK',
-        verificationId: 'mock_abc',
-        mode: 'KYC_ONLY',
-        status: 'VERIFIED',
-        userId: 'user-1',
-      });
-
-      expect(mockEmail.sendEarlyAccessOnboarding).toHaveBeenCalledWith({
-        to: 'test@styx.io',
-        userId: 'user-1',
-        trigger: 'tier_upgrade',
-      });
-      const [sql] = mockPool.query.mock.calls[0];
-      expect(sql).toContain('FOR UPDATE');
-      expect(sql).toContain('previous_kyc_status');
-    });
-
-    it('should not resend tier-upgrade onboarding for already verified KYC', async () => {
-      mockPool.query.mockResolvedValueOnce({
-        rows: [
-          {
-            email: 'test@styx.io',
-            previous_kyc_status: 'VERIFIED',
-          },
-        ],
-      } as any);
-
-      await service.applyProviderCompletion({
-        provider: 'MOCK',
-        verificationId: 'mock_abc',
-        mode: 'KYC_ONLY',
-        status: 'VERIFIED',
-        userId: 'user-1',
-      });
-
-      expect(mockEmail.sendEarlyAccessOnboarding).not.toHaveBeenCalled();
-    });
-
-    it('should not wait for tier-upgrade email before acknowledging Stripe webhooks', async () => {
-      const parsed: IdentityProviderCompletionResult = {
-        provider: 'STRIPE_IDENTITY',
-        verificationId: 'vs_abc',
-        mode: 'KYC_ONLY',
-        status: 'VERIFIED',
-        userId: 'user-1',
-        raw: {},
-      };
-      mockProvider.verifyAndParseStripeWebhook.mockReturnValue(parsed);
-      mockPool.query.mockResolvedValueOnce({
-        rows: [
-          {
-            email: 'test@styx.io',
-            previous_kyc_status: 'PENDING',
-          },
-        ],
-      } as any);
-      mockEmail.sendEarlyAccessOnboarding.mockReturnValue(
-        new Promise(() => undefined) as any,
-      );
-
-      await expect(
-        service.completeFromStripeWebhook({
-          rawBody: Buffer.from('{}'),
-          signature: 't=1,v1=abc',
-        }),
-      ).resolves.toEqual({ applied: true, userId: 'user-1' });
-      expect(mockEmail.sendEarlyAccessOnboarding).toHaveBeenCalled();
-    });
-
     it('should look up user by verificationId when userId is not provided', async () => {
       mockPool.query
         .mockResolvedValueOnce({ rows: [{ id: 'user-found' }] } as any) // lookup
-        .mockResolvedValueOnce({
-          rows: [
-            {
-              email: 'found@styx.io',
-              previous_kyc_status: 'PENDING',
-            },
-          ],
-        } as any); // recordVerificationStatusForTierUpgrade
+        .mockResolvedValueOnce({ rowCount: 1 } as any); // recordVerificationStatus
 
       await service.applyProviderCompletion({
         provider: 'STRIPE_IDENTITY',

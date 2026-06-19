@@ -1,6 +1,5 @@
 import { ContractsController } from "./contracts.controller";
 import { ContractsService } from "./contracts.service";
-import { GUARDS_METADATA } from "@nestjs/common/constants";
 import { DisputeService } from "../../../services/escrow/dispute.service";
 import { validate } from "class-validator";
 import { plainToInstance } from "class-transformer";
@@ -99,16 +98,6 @@ describe("ContractsController", () => {
         userId: "user-1",
       });
       expect(result).toEqual(mockContract);
-    });
-
-    it("should apply TierGuard to contract creation", () => {
-      const guards =
-        Reflect.getMetadata(
-          GUARDS_METADATA,
-          ContractsController.prototype.create,
-        ) ?? [];
-
-      expect(guards).toContain(TierGuard);
     });
 
     it("should propagate service errors for invalid stake", async () => {

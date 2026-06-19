@@ -16,8 +16,6 @@ import { HoneypotService } from "../../../services/intelligence/honeypot.service
 
 import { SurveyService } from "./survey.service";
 import { WaitlistService } from "./waitlist.service";
-import { BannedUserGuard } from "../../guards/banned-user.guard";
-import { TierGuard } from "../../guards/tier.guard";
 import {
   AnomalyService,
   ANOMALY_REDIS_CLIENT,
@@ -64,8 +62,6 @@ const redisProvider = {
     HoneypotService,
     SurveyService,
     WaitlistService,
-    BannedUserGuard,
-    TierGuard,
 
     AnomalyService,
     redisProvider,

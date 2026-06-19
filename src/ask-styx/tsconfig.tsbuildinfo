@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/chatinterface.tsx","./src/components/chatmessage.tsx","./tests/app.test.tsx","./tests/chatinterface.test.tsx","./tests/chatmessage.test.tsx","./tests/jest-dom.d.ts","./tests/setup.ts","./tests/worker.test.ts"],"version":"6.0.3"}

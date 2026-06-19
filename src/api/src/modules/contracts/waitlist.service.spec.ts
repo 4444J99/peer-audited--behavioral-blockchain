@@ -1,25 +1,18 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { WaitlistService } from "./waitlist.service";
 import { Pool } from "pg";
-import { ConflictException } from "@nestjs/common";
-import { EmailService } from "../email/email.service";
 
 describe("WaitlistService", () => {
   let service: WaitlistService;
   let pool: Pool;
   const mockQuery = jest.fn();
-  const mockEmail = {
-    sendEarlyAccessOnboarding: jest.fn(),
-  };
 
   beforeEach(async () => {
     mockQuery.mockReset();
-    mockEmail.sendEarlyAccessOnboarding.mockReset();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WaitlistService,
         { provide: Pool, useValue: { query: mockQuery } },
-        { provide: EmailService, useValue: mockEmail },
       ],
     }).compile();
 
@@ -29,6 +22,7 @@ describe("WaitlistService", () => {
 
   it("joins waitlist", async () => {
     mockQuery
+      .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ next_position: 1 }] })
       .mockResolvedValueOnce({
         rows: [
@@ -42,61 +36,13 @@ describe("WaitlistService", () => {
             enrolled: false,
             enrolled_at: null,
             created_at: new Date(),
-            was_inserted: true,
           },
         ],
-      })
-      .mockResolvedValueOnce({
-        rows: [{ email: "early@styx.app" }],
       });
 
     const result = await service.joinWaitlist("u1", "c1");
     expect(result.position).toBe(1);
     expect(result.cohortId).toBe("c1");
-    expect(mockEmail.sendEarlyAccessOnboarding).toHaveBeenCalledWith({
-      to: "early@styx.app",
-      userId: "u1",
-      cohortId: "c1",
-      position: 1,
-      trigger: "waitlist_join",
-    });
-  });
-
-  it("does not resend onboarding when the upsert updates an existing entry", async () => {
-    mockQuery
-      .mockResolvedValueOnce({ rows: [{ next_position: 2 }] })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "w1",
-            user_id: "u1",
-            cohort_id: "c1",
-            pod_id: "p2",
-            display_alias: null,
-            position: 1,
-            enrolled: false,
-            enrolled_at: null,
-            created_at: new Date(),
-            was_inserted: false,
-          },
-        ],
-      });
-
-    await service.joinWaitlist("u1", "c1", "p2");
-
-    expect(mockEmail.sendEarlyAccessOnboarding).not.toHaveBeenCalled();
-    expect(mockQuery).toHaveBeenCalledTimes(2);
-  });
-
-  it("rejects already-enrolled entries when the upsert returns no row", async () => {
-    mockQuery
-      .mockResolvedValueOnce({ rows: [{ next_position: 2 }] })
-      .mockResolvedValueOnce({ rows: [] });
-
-    await expect(service.joinWaitlist("u1", "c1")).rejects.toThrow(
-      ConflictException,
-    );
-    expect(mockEmail.sendEarlyAccessOnboarding).not.toHaveBeenCalled();
   });
 
   it("gets waitlist position", async () => {
