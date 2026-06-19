@@ -1,10 +1,6 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  ConflictException,
-} from "@nestjs/common";
+import { Injectable, Logger, ConflictException } from "@nestjs/common";
 import { Pool } from "pg";
+import { EmailService } from "../email/email.service";
 
 export interface WaitlistEntry {
   id: string;
@@ -22,7 +18,10 @@ export interface WaitlistEntry {
 export class WaitlistService {
   private readonly logger = new Logger(WaitlistService.name);
 
-  constructor(private readonly pool: Pool) {}
+  constructor(
+    private readonly pool: Pool,
+    private readonly emailService: EmailService,
+  ) {}
 
   async joinWaitlist(
     userId: string,
@@ -30,16 +29,6 @@ export class WaitlistService {
     podId?: string,
     displayAlias?: string,
   ): Promise<WaitlistEntry> {
-    const {
-      rows: [existing],
-    } = await this.pool.query(
-      "SELECT id, enrolled FROM waitlist_entries WHERE user_id = $1 AND cohort_id = $2",
-      [userId, cohortId],
-    );
-    if (existing?.enrolled) {
-      throw new ConflictException("Already enrolled in this cohort");
-    }
-
     const {
       rows: [next],
     } = await this.pool.query(
@@ -53,15 +42,28 @@ export class WaitlistService {
     } = await this.pool.query(
       `INSERT INTO waitlist_entries (user_id, cohort_id, pod_id, display_alias, position)
        VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (user_id, cohort_id) DO UPDATE SET pod_id = $3, display_alias = $4
-       RETURNING *`,
+       ON CONFLICT (user_id, cohort_id) DO UPDATE
+       SET pod_id = EXCLUDED.pod_id, display_alias = EXCLUDED.display_alias
+       WHERE waitlist_entries.enrolled = false
+       RETURNING *, (xmax = 0) AS was_inserted`,
       [userId, cohortId, podId || null, displayAlias || null, position],
     );
+    if (!entry) {
+      throw new ConflictException("Already enrolled in this cohort");
+    }
 
+    const mappedEntry = this.mapEntry(entry);
     this.logger.log(
-      `User ${userId} joined waitlist for cohort ${cohortId} at position ${position}`,
+      `User ${userId} joined waitlist for cohort ${cohortId} at position ${mappedEntry.position}`,
     );
-    return this.mapEntry(entry);
+    if (entry.was_inserted) {
+      await this.sendEarlyAccessOnboarding(
+        userId,
+        cohortId,
+        mappedEntry.position,
+      );
+    }
+    return mappedEntry;
   }
 
   async getWaitlistPosition(
@@ -131,5 +133,37 @@ export class WaitlistService {
       enrolledAt: r.enrolled_at ?? null,
       createdAt: r.created_at,
     };
+  }
+
+  private async sendEarlyAccessOnboarding(
+    userId: string,
+    cohortId: string,
+    position: number,
+  ): Promise<void> {
+    try {
+      const {
+        rows: [user],
+      } = await this.pool.query("SELECT email FROM users WHERE id = $1", [
+        userId,
+      ]);
+      if (!user?.email) {
+        this.logger.warn(
+          `Skipping waitlist onboarding email for ${userId}: missing email`,
+        );
+        return;
+      }
+
+      await this.emailService.sendEarlyAccessOnboarding({
+        to: user.email,
+        userId,
+        cohortId,
+        position,
+        trigger: "waitlist_join",
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Waitlist onboarding email failed for user ${userId}: ${(error as Error).message}`,
+      );
+    }
   }
 }
