@@ -2,16 +2,13 @@ import { ContractsController } from "./contracts.controller";
 import { ContractsService } from "./contracts.service";
 import { GUARDS_METADATA } from "@nestjs/common/constants";
 import { DisputeService } from "../../../services/escrow/dispute.service";
-import { StripeFboService } from "../../../services/escrow/stripe.service";
-import { LedgerService } from "../../../services/ledger/ledger.service";
-import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import { Pool } from "pg";
 import { validate } from "class-validator";
 import { plainToInstance } from "class-transformer";
 import { CreateContractDto, SubmitProofDto } from "./dto";
 import { SurveyService } from "./survey.service";
 import { WaitlistService } from "./waitlist.service";
 import { TierGuard } from "../../guards/tier.guard";
+import { PayService } from "../pay/pay.service";
 
 const mockSurveyService = {} as unknown as SurveyService;
 const mockWaitlistService = {} as unknown as WaitlistService;
@@ -32,10 +29,9 @@ const mockContractsService = {
 } as unknown as ContractsService;
 
 const mockDisputeService = {} as unknown as DisputeService;
-const mockPool = {} as unknown as Pool;
-const mockStripe = {} as unknown as StripeFboService;
-const mockLedger = {} as unknown as LedgerService;
-const mockTruthLog = {} as unknown as TruthLogService;
+const mockPayService = {
+  purchaseTicket: jest.fn(),
+} as unknown as jest.Mocked<PayService>;
 
 describe("ContractsController", () => {
   let controller: ContractsController;
@@ -46,10 +42,7 @@ describe("ContractsController", () => {
       mockContractsService,
       {} as any, // mockMedicalExemption
       mockDisputeService,
-      mockPool,
-      mockStripe,
-      mockLedger,
-      mockTruthLog,
+      mockPayService,
       mockSurveyService,
       mockWaitlistService,
     );
@@ -261,6 +254,21 @@ describe("ContractsController", () => {
       const result = await controller.disputeVerdict("c1", testUser);
 
       expect(mockContractsService.fileDispute).toHaveBeenCalledWith(
+        "user-1",
+        "c1",
+      );
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe("POST /contracts/:id/ticket", () => {
+    it("should purchase a ticket through PayService for backwards-compatible routing", async () => {
+      const mockResult = { paymentIntentId: "pi_ticket", amount: 499 };
+      mockPayService.purchaseTicket.mockResolvedValue(mockResult);
+
+      const result = await controller.purchaseTicket("c1", testUser);
+
+      expect(mockPayService.purchaseTicket).toHaveBeenCalledWith(
         "user-1",
         "c1",
       );
