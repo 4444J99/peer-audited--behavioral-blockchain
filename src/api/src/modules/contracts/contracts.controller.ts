@@ -26,6 +26,7 @@ import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
 import { AuthGuard } from "../../../guards/auth.guard";
 import { BannedUserGuard } from "../../guards/banned-user.guard";
+import { TierGuard } from "../../guards/tier.guard";
 import { GeofenceGuard } from "../../common/guards/geofence.guard";
 import { ComplianceAccessGuard } from "../../common/guards/compliance-access.guard";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
@@ -57,7 +58,13 @@ export class ContractsController {
     return this.contractsService.getUserContracts(user.id);
   }
 
-  @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
+  @UseGuards(
+    AuthGuard,
+    GeofenceGuard,
+    ComplianceAccessGuard,
+    BannedUserGuard,
+    TierGuard,
+  )
   @Post()
   @ApiOperation({
     summary: "Create a new behavioral contract with a financial stake",

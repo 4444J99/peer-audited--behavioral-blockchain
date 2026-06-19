@@ -1,5 +1,6 @@
 import { ContractsController } from "./contracts.controller";
 import { ContractsService } from "./contracts.service";
+import { GUARDS_METADATA } from "@nestjs/common/constants";
 import { DisputeService } from "../../../services/escrow/dispute.service";
 import { StripeFboService } from "../../../services/escrow/stripe.service";
 import { LedgerService } from "../../../services/ledger/ledger.service";
@@ -10,6 +11,7 @@ import { plainToInstance } from "class-transformer";
 import { CreateContractDto, SubmitProofDto } from "./dto";
 import { SurveyService } from "./survey.service";
 import { WaitlistService } from "./waitlist.service";
+import { TierGuard } from "../../guards/tier.guard";
 
 const mockSurveyService = {} as unknown as SurveyService;
 const mockWaitlistService = {} as unknown as WaitlistService;
@@ -99,6 +101,16 @@ describe("ContractsController", () => {
         userId: "user-1",
       });
       expect(result).toEqual(mockContract);
+    });
+
+    it("should apply TierGuard to contract creation", () => {
+      const guards =
+        Reflect.getMetadata(
+          GUARDS_METADATA,
+          ContractsController.prototype.create,
+        ) ?? [];
+
+      expect(guards).toContain(TierGuard);
     });
 
     it("should propagate service errors for invalid stake", async () => {
