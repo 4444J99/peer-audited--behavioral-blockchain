@@ -233,7 +233,9 @@ Full policy and gate ownership live in `docs/planning/beta-readiness-contract.md
 
 ## API Documentation
 
-Interactive Swagger/OpenAPI docs are available at `/api/docs` when the API is running:
+Customer-facing API and usage docs live at [`docs/api/api--spec.md`](docs/api/api--spec.md).
+Interactive Swagger/OpenAPI docs are also available at `/api/docs` in
+non-production environments when the API is running:
 
 ```bash
 npm run dev:api
