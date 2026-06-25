@@ -2,6 +2,11 @@
 
 A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes.
 
+> **The expensive problem:** Accountability and corporate-wellness programs leak money because the stakes aren't real, the proof isn't audited, and holding employees' health data is a liability nobody wants to own. Budgets buy good intentions and get no follow-through. Styx is the production-grade enforcement layer that closes the gap: real Stripe FBO escrow (hold / capture / cancel), a double-entry ledger with no phantom money, peer-audited proof-of-completion via the Fury Router (honeypot injection + consensus + bounty economy), loss-aversion physics (λ = 1.955), and a privacy-firewalled B2B tier where the employer funds the pot but never sees an individual's health data — only k-anonymized aggregate engagement.
+>
+> [**Deploy this for your shop →**](mailto:padavano.anthony@gmail.com)  
+> *(If you are a technical recruiter or engineering leader, this repository is the proof-of-work for my architectural weight — a NestJS + Next.js + React Native + Tauri monorepo moving regulated money through a double-entry ledger and Stripe escrow, with 1,107 tests, KYC, geofencing, and CodeQL gates. [Work with the team that built this →](mailto:padavano.anthony@gmail.com))*
+
 ![CI](https://github.com/a-organvm/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-339933)
