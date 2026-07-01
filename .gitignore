@@ -89,3 +89,14 @@ docs/evaluation/
 docs/EXPORT-*.md
 docs/audit/document-audit-*.md
 data/
+
+# Removed orphan AI session/prompt scaffolding (zero inbound references, not catalogued
+# in docs/MANIFEST.md). These globs match ONLY the removed process-scaffolding classes —
+# deliberately NOT the MANIFEST-catalogued product provenance kept in this repo: the
+# brainstorm transcripts (DOC-BRN-*), the ai-session-audit doc, the gtm-role-prompts pack,
+# and docs/planning/session-exports/ (which the GEMINI.md Session Review Protocol requires
+# to stay tracked as audit exports). Raw session transcripts are on-demand, never committed.
+docs/planning/premortem-transcript-*.md
+docs/planning/planning--parallel-*-prompts--*.md
+.codex/plans/**/*-prompts.md
+.claude/plans/**/*ai-session-audit*.md

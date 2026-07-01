@@ -213,7 +213,10 @@ jobs:
             echo "web=false" >> $GITHUB_OUTPUT
           fi
 
-  e2e:
+  # Browser E2E work. Renamed from `e2e` → `e2e_browsers` so the stable required-check
+  # name (`e2e`, the summary gate below) never changes shape and always posts a result.
+  # Web-gated and advisory (continue-on-error), exactly as before — only the job id moved.
+  e2e_browsers:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [build_and_test_matrix, beta_readiness, changed-files]
@@ -258,6 +261,40 @@ jobs:
           name: playwright-report-${{ matrix.browser }}
           path: playwright-report/
           retention-days: 14
+
+  # Stable required-check name for branch protection. The classic branch-protection
+  # rule on `main` requires the `e2e` context. The browser job above is web-gated and
+  # SKIPS on config/docs-only PRs — and GitHub treats a *skipped* required context as
+  # unsatisfied, so those PRs wedge forever (the identical silent-deadlock failure mode
+  # already documented on `build_and_test`). This summary job ALWAYS runs (`if: always()`
+  # is mandatory) so the required `e2e` context always reports a real conclusion:
+  #   - no web-affecting changes  -> pass (the browser suite is not applicable)
+  #   - web changed               -> reflect the browser result (advisory: a browser
+  #                                   failure warns but does not block, matching the
+  #                                   `continue-on-error` design; `build_and_test` in
+  #                                   .github/rulesets/main.json is the enforcing gate).
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [changed-files, e2e_browsers]
+    if: always()
+    steps:
+      - name: E2E gate verdict
+        run: |
+          web="${{ needs.changed-files.outputs.web }}"
+          res="${{ needs.e2e_browsers.result }}"
+          if [[ "$web" != "true" ]]; then
+            echo "No web-affecting changes — browser E2E suite not applicable; gate passes."
+            exit 0
+          fi
+          if [[ "$res" == "cancelled" ]]; then
+            echo "::error::e2e_browsers was cancelled — gate fails."
+            exit 1
+          fi
+          if [[ "$res" != "success" ]]; then
+            echo "::warning::e2e_browsers concluded '$res' (advisory; see e2e_browsers checks). build_and_test is the enforcing gate."
+          fi
+          echo "e2e gate passes (e2e_browsers result: $res)."
+          exit 0
 
   # NOTE: CodeQL analysis runs in the dedicated .github/workflows/codeql.yml
   # workflow. A second copy here produced a duplicate javascript-typescript
