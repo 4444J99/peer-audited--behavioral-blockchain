@@ -8,7 +8,7 @@ describe('RecoveryProtocolService', () => {
   let mockPool: jest.Mocked<Pool>;
 
   const validMetadata: RecoveryMetadata = {
-    accountabilityPartnerEmail: '[email redacted]',
+    accountabilityPartnerEmail: 'friend@example.com',
     noContactIdentifiers: ['hash_abc123'],
     acknowledgments: {
       voluntary: true,

@@ -27,7 +27,7 @@ jest.mock('../../../services/api-client', () => ({
 
 let mockAuthUser = {
   id: '1',
-  email: '[email redacted]',
+  email: 'test@styx.io',
   integrity_score: 125,
   role: 'USER',
   failed_contracts: 0,
@@ -50,7 +50,7 @@ describe('New Contract Page', () => {
   beforeEach(() => {
     mockAuthUser = {
       id: '1',
-      email: '[email redacted]',
+      email: 'test@styx.io',
       integrity_score: 125,
       role: 'USER',
       failed_contracts: 0,
@@ -122,7 +122,7 @@ describe('New Contract Page', () => {
   it('keeps exact $20 micro stakes outside KYC and MVP fees', () => {
     mockAuthUser = {
       id: '1',
-      email: '[email redacted]',
+      email: 'micro@styx.io',
       integrity_score: 35,
       role: 'USER',
       failed_contracts: 0,
@@ -138,7 +138,7 @@ describe('New Contract Page', () => {
   it('renders failure-history cap copy when failed contracts are known', () => {
     mockAuthUser = {
       id: '1',
-      email: '[email redacted]',
+      email: 'risk@styx.io',
       integrity_score: 125,
       role: 'USER',
       failed_contracts: 3,

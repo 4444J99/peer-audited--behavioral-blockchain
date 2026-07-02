@@ -16,7 +16,7 @@ describe('ZKPrivacyEngine', () => {
 
     const result = await ZKPrivacyEngine.generateLocalProof(
       'contract-1',
-      '[phone redacted]',
+      '+1 (555) 111-2222',
       new Date('2026-03-03T00:00:00.000Z'),
       new Date('2026-03-04T00:00:00.000Z'),
     );
@@ -35,7 +35,7 @@ describe('ZKPrivacyEngine', () => {
 
     const result = await ZKPrivacyEngine.generateLocalProof(
       'contract-2',
-      '[phone redacted]',
+      '555-111-2222',
       new Date('2026-03-03T00:00:00.000Z'),
       new Date('2026-03-04T00:00:00.000Z'),
     );
@@ -50,7 +50,7 @@ describe('ZKPrivacyEngine', () => {
 
     const result = await ZKPrivacyEngine.generateLocalProof(
       'contract-2',
-      '[phone redacted]',
+      '555-111-2222',
       new Date('2026-03-03T00:00:00.000Z'),
       new Date('2026-03-04T00:00:00.000Z'),
     );
@@ -63,7 +63,7 @@ describe('ZKPrivacyEngine', () => {
       { counterparty: '+15550001111', timestamp: '2026-03-03T12:00:00.000Z', channel: 'SMS' },
     ]);
 
-    const proof = await ZKPrivacyEngine.generateBreachProof('[phone redacted]', {
+    const proof = await ZKPrivacyEngine.generateBreachProof('+1 (555) 111-2222', {
       start: new Date('2026-03-03T00:00:00.000Z'),
       end: new Date('2026-03-04T00:00:00.000Z'),
     });
@@ -73,11 +73,11 @@ describe('ZKPrivacyEngine', () => {
 
   it('generates breach proof from normalized identifier using latest event', async () => {
     ZKPrivacyEngine.setLogProvider(async () => [
-      { counterparty: '[phone redacted]', timestamp: '2026-03-03T01:00:00.000Z', channel: 'SMS' },
+      { counterparty: '+1 (555) 111-2222', timestamp: '2026-03-03T01:00:00.000Z', channel: 'SMS' },
       { identifier: '15551112222', timestamp: new Date('2026-03-03T22:00:00.000Z'), method: 'CALL' },
     ]);
 
-    const proof = await ZKPrivacyEngine.generateBreachProof('[phone redacted]', {
+    const proof = await ZKPrivacyEngine.generateBreachProof('555-111-2222', {
       start: new Date('2026-03-03T00:00:00.000Z'),
       end: new Date('2026-03-04T00:00:00.000Z'),
     });

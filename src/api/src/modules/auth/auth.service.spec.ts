@@ -30,7 +30,7 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('should register a new user and return userId + token', async () => {
-      const email = '[email redacted]';
+      const email = 'test@styx.protocol';
       const password = 'secure123'; // allow-secret
 
       // No existing user
@@ -59,7 +59,7 @@ describe('AuthService', () => {
         .mockResolvedValueOnce({ rows: [{ id: 'existing-id' }] }) // check existing
         .mockResolvedValueOnce(undefined); // ROLLBACK
 
-      await expect(service.register('[email redacted]', 'pass123', validRegisterOpts))
+      await expect(service.register('taken@styx.protocol', 'pass123', validRegisterOpts))
         .rejects
         .toThrow(ConflictException);
     });
@@ -72,7 +72,7 @@ describe('AuthService', () => {
         .mockResolvedValueOnce({ rows: [{ id: 'user-uuid' }] })
         .mockResolvedValueOnce(undefined); // COMMIT
 
-      await service.register('[email redacted]', 'plaintext-pass', validRegisterOpts);
+      await service.register('hash-test@styx.protocol', 'plaintext-pass', validRegisterOpts);
 
       // The third query (insert user) should have a bcrypt hash, not plaintext
       const insertCall = (mockClient.query as jest.Mock).mock.calls[3];
@@ -83,7 +83,7 @@ describe('AuthService', () => {
 
     it('should reject registration with invalid dateOfBirth format', async () => {
       await expect(
-        service.register('[email redacted]', 'pass123', {
+        service.register('dob-test@styx.protocol', 'pass123', {
           ...validRegisterOpts,
           dateOfBirth: '2020-99-99',
         }),
@@ -98,7 +98,7 @@ describe('AuthService', () => {
         .mockRejectedValueOnce(new Error('duplicate key value violates unique constraint users_email_key')) // user insert
         .mockResolvedValueOnce(undefined); // ROLLBACK
 
-      await expect(service.register('[email redacted]', 'pass123', validRegisterOpts)).rejects.toThrow(
+      await expect(service.register('race@styx.protocol', 'pass123', validRegisterOpts)).rejects.toThrow(
         'duplicate key value violates unique constraint users_email_key',
       );
 
@@ -113,10 +113,10 @@ describe('AuthService', () => {
 
     it('should return userId + token for valid credentials', async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ id: 'user-uuid', email: '[email redacted]', password_hash: hashedPassword, status: 'ACTIVE', integrity_score: 50, failed_login_attempts: 0, locked_until: null }],
+        rows: [{ id: 'user-uuid', email: 'test@styx.protocol', password_hash: hashedPassword, status: 'ACTIVE', integrity_score: 50, failed_login_attempts: 0, locked_until: null }],
       });
 
-      const result = await service.login('[email redacted]', 'correct-password');
+      const result = await service.login('test@styx.protocol', 'correct-password');
 
       expect(result.userId).toBe('user-uuid');
       expect(result.token).toBeDefined();
@@ -126,11 +126,11 @@ describe('AuthService', () => {
     it('should reject login with wrong password', async () => {
       (mockPool.query as jest.Mock)
         .mockResolvedValueOnce({
-          rows: [{ id: 'user-uuid', email: '[email redacted]', password_hash: hashedPassword, status: 'ACTIVE', failed_login_attempts: 0, locked_until: null }],
+          rows: [{ id: 'user-uuid', email: 'test@styx.protocol', password_hash: hashedPassword, status: 'ACTIVE', failed_login_attempts: 0, locked_until: null }],
         })
         .mockResolvedValueOnce(undefined); // UPDATE failed_login_attempts
 
-      await expect(service.login('[email redacted]', 'wrong-password'))
+      await expect(service.login('test@styx.protocol', 'wrong-password'))
         .rejects
         .toThrow(UnauthorizedException);
     });
@@ -138,17 +138,17 @@ describe('AuthService', () => {
     it('should reject login with unknown email', async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
 
-      await expect(service.login('[email redacted]', 'any-password'))
+      await expect(service.login('unknown@styx.protocol', 'any-password'))
         .rejects
         .toThrow(UnauthorizedException);
     });
 
     it('should reject login when user has no password hash', async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ id: 'user-uuid', email: '[email redacted]', password_hash: null, status: 'ACTIVE', failed_login_attempts: 0, locked_until: null }],
+        rows: [{ id: 'user-uuid', email: 'test@styx.protocol', password_hash: null, status: 'ACTIVE', failed_login_attempts: 0, locked_until: null }],
       });
 
-      await expect(service.login('[email redacted]', 'any-password'))
+      await expect(service.login('test@styx.protocol', 'any-password'))
         .rejects
         .toThrow(UnauthorizedException);
     });
@@ -156,10 +156,10 @@ describe('AuthService', () => {
     it('should reject login when user account is inactive', async () => {
       (mockPool.query as jest.Mock)
         .mockResolvedValueOnce({
-          rows: [{ id: 'user-uuid', email: '[email redacted]', password_hash: hashedPassword, status: 'SUSPENDED', failed_login_attempts: 0, locked_until: null }],
+          rows: [{ id: 'user-uuid', email: 'test@styx.protocol', password_hash: hashedPassword, status: 'SUSPENDED', failed_login_attempts: 0, locked_until: null }],
         });
 
-      await expect(service.login('[email redacted]', 'correct-password'))
+      await expect(service.login('test@styx.protocol', 'correct-password'))
         .rejects
         .toThrow(UnauthorizedException);
     });
@@ -171,11 +171,11 @@ describe('AuthService', () => {
     it('should lock account after 5 failed login attempts', async () => {
       (mockPool.query as jest.Mock)
         .mockResolvedValueOnce({
-          rows: [{ id: 'lock-user', email: '[email redacted]', password_hash: hashedPw, status: 'ACTIVE', failed_login_attempts: 4, locked_until: null }],
+          rows: [{ id: 'lock-user', email: 'lock@styx.protocol', password_hash: hashedPw, status: 'ACTIVE', failed_login_attempts: 4, locked_until: null }],
         })
         .mockResolvedValueOnce(undefined); // UPDATE failed_login_attempts + locked_until
 
-      await expect(service.login('[email redacted]', 'wrong-password'))
+      await expect(service.login('lock@styx.protocol', 'wrong-password'))
         .rejects.toThrow(UnauthorizedException);
 
       // Verify the UPDATE query atomically increments and sets locked_until.
@@ -190,21 +190,21 @@ describe('AuthService', () => {
     it('should reject login when account is locked', async () => {
       const futureDate = new Date(Date.now() + 15 * 60 * 1000).toISOString();
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ id: 'lock-user', email: '[email redacted]', password_hash: hashedPw, status: 'ACTIVE', failed_login_attempts: 5, locked_until: futureDate }],
+        rows: [{ id: 'lock-user', email: 'lock@styx.protocol', password_hash: hashedPw, status: 'ACTIVE', failed_login_attempts: 5, locked_until: futureDate }],
       });
 
-      await expect(service.login('[email redacted]', 'correct-password'))
+      await expect(service.login('lock@styx.protocol', 'correct-password'))
         .rejects.toThrow('Account temporarily locked. Try again later.');
     });
 
     it('should reset failed attempts on successful login', async () => {
       (mockPool.query as jest.Mock)
         .mockResolvedValueOnce({
-          rows: [{ id: 'lock-user', email: '[email redacted]', password_hash: hashedPw, status: 'ACTIVE', failed_login_attempts: 3, locked_until: null }],
+          rows: [{ id: 'lock-user', email: 'lock@styx.protocol', password_hash: hashedPw, status: 'ACTIVE', failed_login_attempts: 3, locked_until: null }],
         })
         .mockResolvedValueOnce(undefined); // UPDATE reset
 
-      const result = await service.login('[email redacted]', 'correct-password');
+      const result = await service.login('lock@styx.protocol', 'correct-password');
       expect(result.userId).toBe('lock-user');
 
       const resetCall = (mockPool.query as jest.Mock).mock.calls[1];
@@ -229,15 +229,15 @@ describe('AuthService', () => {
   describe('JWT signing/verification', () => {
     it('should sign and verify tokens correctly', () => {
       // signToken is private — use cast to access for testing
-      const token = (service as any).signToken('user-123', '[email redacted]'); // allow-secret
+      const token = (service as any).signToken('user-123', 'test@styx.protocol'); // allow-secret
       const payload = service.verifyToken(token);
 
       expect(payload.sub).toBe('user-123');
-      expect(payload.email).toBe('[email redacted]');
+      expect(payload.email).toBe('test@styx.protocol');
     });
 
     it('should reject tampered tokens', () => {
-      const token = (service as any).signToken('user-123', '[email redacted]'); // allow-secret
+      const token = (service as any).signToken('user-123', 'test@styx.protocol'); // allow-secret
       const tampered = token + 'x'; // allow-secret
 
       expect(() => service.verifyToken(tampered)).toThrow();
@@ -261,7 +261,7 @@ describe('AuthService', () => {
       // rejected: there is intentionally NO fallback to the shared session secret.
       const assertion = signAssertion(JWT_SECRET, {
         sub: 'ent-user',
-        email: '[email redacted]',
+        email: 'e@corp.com',
         token_type: 'enterprise_sso',
       });
 
@@ -274,7 +274,7 @@ describe('AuthService', () => {
       process.env.ENTERPRISE_SSO_SECRET = ENTERPRISE_SECRET;
       // signToken-style token signed with JWT_SECRET cannot validate against the
       // dedicated IdP secret.
-      const sessionToken = signAssertion(JWT_SECRET, { sub: 'ent-user', email: '[email redacted]', role: 'USER' }); // allow-secret
+      const sessionToken = signAssertion(JWT_SECRET, { sub: 'ent-user', email: 'e@corp.com', role: 'USER' }); // allow-secret
 
       await expect(service.exchangeEnterpriseToken(sessionToken)).rejects.toThrow('Invalid enterprise token');
       expect(mockPool.query).not.toHaveBeenCalled();
@@ -300,10 +300,10 @@ describe('AuthService', () => {
 
     it('accepts a token signed with ENTERPRISE_SSO_SECRET when configured', async () => {
       process.env.ENTERPRISE_SSO_SECRET = ENTERPRISE_SECRET;
-      const assertion = signAssertion(ENTERPRISE_SECRET, { sub: 'ent-user', email: '[email redacted]' });
+      const assertion = signAssertion(ENTERPRISE_SECRET, { sub: 'ent-user', email: 'e@corp.com' });
 
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ id: 'ent-user', email: '[email redacted]', enterprise_id: 'corp-1', status: 'ACTIVE', role: 'USER' }],
+        rows: [{ id: 'ent-user', email: 'e@corp.com', enterprise_id: 'corp-1', status: 'ACTIVE', role: 'USER' }],
       });
 
       const result = await service.exchangeEnterpriseToken(assertion);
@@ -323,7 +323,7 @@ describe('AuthService', () => {
       process.env.ENTERPRISE_SSO_SECRET = ENTERPRISE_SECRET;
       const assertion = signAssertion(ENTERPRISE_SECRET, { sub: 'ent-user' });
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ id: 'ent-user', email: '[email redacted]', enterprise_id: 'corp-1', status: 'SUSPENDED', role: 'USER' }],
+        rows: [{ id: 'ent-user', email: 'e@corp.com', enterprise_id: 'corp-1', status: 'SUSPENDED', role: 'USER' }],
       });
 
       await expect(service.exchangeEnterpriseToken(assertion)).rejects.toThrow('Enterprise user account is not active');
@@ -356,7 +356,7 @@ describe('AuthService', () => {
           user_id: 'user-123',
           expires_at: new Date(Date.now() + 86400000).toISOString(),
           revoked: false,
-          email: '[email redacted]',
+          email: 'test@styx.protocol',
           status: 'ACTIVE',
         }],
       });
@@ -382,7 +382,7 @@ describe('AuthService', () => {
           user_id: 'user-123',
           expires_at: new Date(Date.now() + 86400000).toISOString(),
           revoked: true,
-          email: '[email redacted]',
+          email: 'test@styx.protocol',
           status: 'ACTIVE',
         }],
       });

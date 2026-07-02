@@ -19,7 +19,7 @@ jest.mock('../../services/api-client', () => ({
   api: {
     getBalance: jest.fn().mockResolvedValue({
       userId: '1',
-      email: '[email redacted]',
+      email: 'test@styx.io',
       integrityScore: 75,
       allowedTiers: ['TIER_2_STANDARD'],
       ledgerBalance: 100,
@@ -37,7 +37,7 @@ jest.mock('../../services/api-client', () => ({
 
 jest.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: '1', email: '[email redacted]', integrity_score: 75, role: 'USER' },
+    user: { id: '1', email: 'test@styx.io', integrity_score: 75, role: 'USER' },
     token: 'mock-token',
     login: jest.fn(),
     register: jest.fn(),

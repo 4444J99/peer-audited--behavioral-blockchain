@@ -43,7 +43,7 @@ describe('AuthContext', () => {
   it('provides auth state via AuthProvider', () => {
     // During SSR (renderToStaticMarkup), useEffect does not run,
     // so isLoading remains true (the initial state).
-    (api.getMe as jest.Mock).mockResolvedValue({ id: '1', email: '[email redacted]', integrity_score: 50, role: 'USER' });
+    (api.getMe as jest.Mock).mockResolvedValue({ id: '1', email: 'test@styx.io', integrity_score: 50, role: 'USER' });
 
     const html = renderToStaticMarkup(
       <AuthProvider>
@@ -79,15 +79,15 @@ describe('AuthContext', () => {
   });
 
   it('login calls api.login and api.getMe', async () => {
-    const mockUser = { id: '1', email: '[email redacted]', integrity_score: 75, role: 'USER' };
+    const mockUser = { id: '1', email: 'user@test.com', integrity_score: 75, role: 'USER' };
     (api.login as jest.Mock).mockResolvedValue({ token: 'jwt-token-123' });
     (api.getCsrf as jest.Mock).mockResolvedValue({ csrfToken: 'csrf-abc' });
     (api.getMe as jest.Mock).mockResolvedValue(mockUser);
 
     // Verify the API functions are callable and chainable
-    const loginResult = await api.login('[email redacted]', 'password123!');
+    const loginResult = await api.login('user@test.com', 'password123!');
     expect(loginResult.token).toBe('jwt-token-123');
-    expect(api.login).toHaveBeenCalledWith('[email redacted]', 'password123!');
+    expect(api.login).toHaveBeenCalledWith('user@test.com', 'password123!');
   });
 
   it('logout calls api.logout and clears tokens', async () => {

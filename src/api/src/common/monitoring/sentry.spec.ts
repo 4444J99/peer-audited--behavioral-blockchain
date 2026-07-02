@@ -27,7 +27,7 @@ describe('Sentry monitoring', () => {
   });
 
   it('should gracefully handle missing @sentry/nestjs package', () => {
-    process.env.SENTRY_DSN = 'https://[email redacted]/0';
+    process.env.SENTRY_DSN = 'https://examplePublicKey@o0.ingest.sentry.io/0';
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     sentryModule = require('./sentry');
     sentryModule.initSentry();

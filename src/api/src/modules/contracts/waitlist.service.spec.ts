@@ -47,14 +47,14 @@ describe("WaitlistService", () => {
         ],
       })
       .mockResolvedValueOnce({
-        rows: [{ email: "[email redacted]" }],
+        rows: [{ email: "early@styx.app" }],
       });
 
     const result = await service.joinWaitlist("u1", "c1");
     expect(result.position).toBe(1);
     expect(result.cohortId).toBe("c1");
     expect(mockEmail.sendEarlyAccessOnboarding).toHaveBeenCalledWith({
-      to: "[email redacted]",
+      to: "early@styx.app",
       userId: "u1",
       cohortId: "c1",
       position: 1,

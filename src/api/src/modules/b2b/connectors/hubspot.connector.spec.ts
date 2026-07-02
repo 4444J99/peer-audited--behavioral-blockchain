@@ -116,7 +116,7 @@ describe('HubSpotConnector', () => {
               id: 'hs-1',
               properties: {
                 styx_employee_id: 'emp-001',
-                email: '[email redacted]',
+                email: 'alice@acme.com',
                 firstname: 'Alice',
                 lastname: 'Smith',
               },
@@ -125,7 +125,7 @@ describe('HubSpotConnector', () => {
               id: 'hs-2',
               properties: {
                 styx_employee_id: null,
-                email: '[email redacted]',
+                email: 'bob@acme.com',
                 firstname: 'Bob',
                 lastname: '',
               },
@@ -136,7 +136,7 @@ describe('HubSpotConnector', () => {
 
       const users = await connector.syncUserList('ent-001');
       expect(users).toHaveLength(2);
-      expect(users[0]).toEqual({ externalId: 'emp-001', email: '[email redacted]', name: 'Alice Smith' });
+      expect(users[0]).toEqual({ externalId: 'emp-001', email: 'alice@acme.com', name: 'Alice Smith' });
       // Falls back to HubSpot ID when styx_employee_id is null
       expect(users[1].externalId).toBe('hs-2');
       expect(users[1].name).toBe('Bob');
