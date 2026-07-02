@@ -32,9 +32,9 @@ describe('LoginScreen', () => {
     it('calls api.login with email and password', async () => {
       mockLogin.mockResolvedValue({ userId: 'user-1', token: 'jwt-abc' });
 
-      const result = await api.login('[email redacted]', 'secret');
+      const result = await api.login('admin@styx.io', 'secret');
 
-      expect(mockLogin).toHaveBeenCalledWith('[email redacted]', 'secret');
+      expect(mockLogin).toHaveBeenCalledWith('admin@styx.io', 'secret');
       expect(result.userId).toBe('user-1');
       expect(result.token).toBe('jwt-abc');
     });
@@ -42,7 +42,7 @@ describe('LoginScreen', () => {
     it('calls setToken with returned token on success', async () => {
       mockLogin.mockResolvedValue({ userId: 'user-1', token: 'jwt-xyz' });
 
-      const { token } = await api.login('[email redacted]', 'pass');
+      const { token } = await api.login('admin@styx.io', 'pass');
       setToken(token);
 
       expect(mockSetToken).toHaveBeenCalledWith('jwt-xyz');
@@ -52,7 +52,7 @@ describe('LoginScreen', () => {
       mockLogin.mockResolvedValue({ userId: 'user-42', token: 'jwt-token' });
       const onLogin = jest.fn();
 
-      const { userId, token } = await api.login('[email redacted]', 'pw');
+      const { userId, token } = await api.login('user@styx.io', 'pw');
       setToken(token);
       onLogin(userId);
 
@@ -66,7 +66,7 @@ describe('LoginScreen', () => {
 
       let error = '';
       try {
-        await api.login('[email redacted]', 'badpass');
+        await api.login('wrong@styx.io', 'badpass');
       } catch (err: any) {
         error = err.message || 'Login failed';
       }
@@ -79,7 +79,7 @@ describe('LoginScreen', () => {
 
       let error = '';
       try {
-        await api.login('[email redacted]', 'nopass');
+        await api.login('test@styx.io', 'nopass');
       } catch (err: any) {
         error = err.message || 'Login failed';
       }
@@ -91,7 +91,7 @@ describe('LoginScreen', () => {
       mockLogin.mockRejectedValue(new Error('Network error'));
 
       try {
-        await api.login('[email redacted]', 'pw');
+        await api.login('fail@styx.io', 'pw');
       } catch {
         // expected
       }
@@ -107,7 +107,7 @@ describe('LoginScreen', () => {
       const onLogin = jest.fn();
 
       try {
-        await api.login('[email redacted]', 'pw');
+        await api.login('blocked@styx.io', 'pw');
         // Only call onLogin on success — this line should not execute
         onLogin('should-not-happen');
       } catch {
@@ -150,7 +150,7 @@ describe('LoginScreen', () => {
       error = '';
 
       try {
-        const { userId, token } = await api.login('[email redacted]', 'supersecret');
+        const { userId, token } = await api.login('judge@styx.io', 'supersecret');
         setToken(token);
         onLogin(userId);
       } catch (err: any) {
@@ -176,7 +176,7 @@ describe('LoginScreen', () => {
       error = '';
 
       try {
-        const { userId, token } = await api.login('[email redacted]', 'pw');
+        const { userId, token } = await api.login('judge@styx.io', 'pw');
         setToken(token);
         onLogin(userId);
       } catch (err: any) {

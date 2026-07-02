@@ -18,7 +18,7 @@ describe('CurrentUser decorator', () => {
     const key = Object.keys(metadata)[0];
     const factory = metadata[key].factory;
 
-    const mockUser = { id: 'user-1', email: '[email redacted]' };
+    const mockUser = { id: 'user-1', email: 'test@styx.protocol' };
     const ctx = {
       switchToHttp: () => ({
         getRequest: () => ({ user: mockUser }),

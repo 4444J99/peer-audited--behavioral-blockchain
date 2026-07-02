@@ -38,7 +38,7 @@ describe('AnonymizeService', () => {
     it('should remove known PII fields', () => {
       const row = {
         id: 'abc',
-        email: '[email redacted]',
+        email: 'alice@example.com',
         password_hash: '$2b$10$...',
         stripe_customer_id: 'cus_abc',
         integrity_score: 75,
@@ -52,7 +52,7 @@ describe('AnonymizeService', () => {
     it('should remove values that look like emails even if key is not in PII list', () => {
       const row = {
         id: 'abc',
-        contact: '[email redacted]',
+        contact: 'bob@test.io',
         score: 50,
       };
       const cleaned = service.stripPii(row);
@@ -86,7 +86,7 @@ describe('AnonymizeService', () => {
     const employees = [
       {
         id: 'user-1',
-        email: '[email redacted]',
+        email: 'alice@corp.io',
         integrity_score: 80,
         tier: 'STANDARD',
         created_at: '2026-01-15T00:00:00Z',
@@ -94,7 +94,7 @@ describe('AnonymizeService', () => {
       },
       {
         id: 'user-2',
-        email: '[email redacted]',
+        email: 'bob@corp.io',
         integrity_score: 60,
         tier: 'MICRO',
         created_at: '2026-02-10T00:00:00Z',
@@ -102,7 +102,7 @@ describe('AnonymizeService', () => {
       },
       {
         id: 'user-3',
-        email: '[email redacted]',
+        email: 'carol@corp.io',
         integrity_score: 70,
         tier: 'STANDARD',
         created_at: '2026-03-01T00:00:00Z',
@@ -110,7 +110,7 @@ describe('AnonymizeService', () => {
       },
       {
         id: 'user-4',
-        email: '[email redacted]',
+        email: 'dave@corp.io',
         integrity_score: 70,
         tier: 'STANDARD',
         created_at: '2026-03-05T00:00:00Z',
@@ -118,7 +118,7 @@ describe('AnonymizeService', () => {
       },
       {
         id: 'user-5',
-        email: '[email redacted]',
+        email: 'erin@corp.io',
         integrity_score: 70,
         tier: 'STANDARD',
         created_at: '2026-03-08T00:00:00Z',

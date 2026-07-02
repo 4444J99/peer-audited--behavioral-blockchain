@@ -47,6 +47,6 @@ describe('TermsPage', () => {
 
   it('renders the contact email', () => {
     const html = renderToStaticMarkup(<TermsPage />);
-    expect(html).toContain('[email redacted]');
+    expect(html).toContain('legal@styx.protocol');
   });
 });

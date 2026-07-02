@@ -92,7 +92,7 @@ describe('ContractsService (Full Breath Features)', () => {
 
   describe('getPendingInvitations', () => {
     it('should return pending invitations for a user', async () => {
-      const rows = [{ id: 'ap-1', owner_email: '[email redacted]' }];
+      const rows = [{ id: 'ap-1', owner_email: 'owner@styx.app' }];
       mockPool.query.mockResolvedValueOnce({ rows });
 
       const result = await service.getPendingInvitations('user-1');

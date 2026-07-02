@@ -73,12 +73,12 @@ describe('Desktop API service', () => {
     it('sends POST to /auth/login with email and password', async () => {
       mockFetch.mockResolvedValueOnce(jsonOk({ userId: 'a1', token: 'jwt' }));
 
-      await api.login('[email redacted]', 'pass');
+      await api.login('admin@styx.io', 'pass');
 
       const [url, opts] = mockFetch.mock.calls[0];
       expect(url).toContain('/auth/login');
       expect(opts.method).toBe('POST');
-      expect(JSON.parse(opts.body)).toEqual({ email: '[email redacted]', password: 'pass' });
+      expect(JSON.parse(opts.body)).toEqual({ email: 'admin@styx.io', password: 'pass' });
     });
   });
 

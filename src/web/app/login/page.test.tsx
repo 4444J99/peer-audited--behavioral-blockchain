@@ -67,7 +67,7 @@ describe('LoginPage', () => {
   it('renders email placeholder', () => {
     const html = renderToStaticMarkup(<LoginPage />);
 
-    expect(html).toContain('[email redacted]');
+    expect(html).toContain('you@styx.protocol');
   });
 
   it('renders the form element', () => {

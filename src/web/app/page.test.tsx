@@ -111,7 +111,7 @@ describe('Landing Page', () => {
     jest.resetModules();
     jest.doMock('../contexts/AuthContext', () => ({
       useAuth: () => ({
-        user: { id: '1', email: '[email redacted]', integrity_score: 50, role: 'USER' },
+        user: { id: '1', email: 'test@styx.io', integrity_score: 50, role: 'USER' },
         token: 'token',
         isLoading: false,
       }),
