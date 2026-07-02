@@ -101,12 +101,12 @@ describe('Web API client', () => {
     it('sends POST with email and password', async () => {
       mockFetch.mockResolvedValueOnce(jsonOk({ userId: 'u1', token: 'jwt' }));
 
-      await api.login('user@styx.io', 'secret');
+      await api.login('[email redacted]', 'secret');
 
       const [url, opts] = mockFetch.mock.calls[0];
       expect(url).toContain('/auth/login');
       expect(opts.method).toBe('POST');
-      expect(JSON.parse(opts.body)).toEqual({ email: 'user@styx.io', password: 'secret' });
+      expect(JSON.parse(opts.body)).toEqual({ email: '[email redacted]', password: 'secret' });
     });
   });
 
@@ -132,12 +132,12 @@ describe('Web API client', () => {
     it('sends POST with email and password', async () => {
       mockFetch.mockResolvedValueOnce(jsonOk({ userId: 'u2', token: 'jwt2' }));
 
-      await api.register('new@styx.io', 'pw123');
+      await api.register('[email redacted]', 'pw123');
 
       const [url, opts] = mockFetch.mock.calls[0];
       expect(url).toContain('/auth/register');
       expect(opts.method).toBe('POST');
-      expect(JSON.parse(opts.body)).toEqual({ email: 'new@styx.io', password: 'pw123' });
+      expect(JSON.parse(opts.body)).toEqual({ email: '[email redacted]', password: 'pw123' });
     });
   });
 
@@ -202,7 +202,7 @@ describe('Web API client', () => {
 
   describe('getMe()', () => {
     it('hits /users/me', async () => {
-      mockFetch.mockResolvedValueOnce(jsonOk({ id: 'u1', email: 'x@y.com' }));
+      mockFetch.mockResolvedValueOnce(jsonOk({ id: 'u1', email: '[email redacted]' }));
 
       await api.getMe();
 

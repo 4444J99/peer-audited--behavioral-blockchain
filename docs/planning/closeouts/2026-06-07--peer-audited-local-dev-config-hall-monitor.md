@@ -1,7 +1,7 @@
 # Session Close-Out: Peer-Audited Local Dev Config Hall-Monitor
 
 Date: 2026-06-07
-Repo: `/Users/4jp/Code/organvm/peer-audited--behavioral-blockchain`
+Repo: `~/Code/organvm/peer-audited--behavioral-blockchain`
 Branch: `codex/heal-local-dev-config`
 PR: `#669` - <https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/669>
 
@@ -33,7 +33,7 @@ PR: `#669` - <https://github.com/a-organvm/peer-audited--behavioral-blockchain/p
 - Product `git status --short --branch`: clean at start of closeout, then changed only by this handoff/closeout writing.
 - Branch tracks `origin/codex/heal-local-dev-config`.
 - `git log @{u}..` had no unpushed commits before writing this closeout pair.
-- `/Users/4jp/Workspace/*.txt`: no stray root text exports were found.
+- `~/Workspace/*.txt`: no stray root text exports were found.
 - Local gates passed before closeout: `make test`, `npm run lint`, Gate 04, diff-check, Prettier checks.
 - PR checks at last poll:
   - Passed: `Secret Pattern Detection`, `changed-files`, `terraform_validate`, `update_release_draft`

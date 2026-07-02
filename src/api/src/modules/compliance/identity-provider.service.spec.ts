@@ -27,7 +27,7 @@ describe('MockIdentityProviderAdapter', () => {
   it('should return a pending verification with a mock ID', async () => {
     const result = await adapter.start({
       userId: 'user-1',
-      email: 'test@styx.io',
+      email: '[email redacted]',
       mode: 'KYC_ONLY',
       returnUrl: 'http://localhost:3001',
     });
@@ -220,7 +220,7 @@ describe('IdentityProviderService', () => {
   describe('startVerification', () => {
     const input: StartIdentityVerificationInput = {
       userId: 'user-1',
-      email: 'test@styx.io',
+      email: '[email redacted]',
       mode: 'KYC_ONLY',
     };
 

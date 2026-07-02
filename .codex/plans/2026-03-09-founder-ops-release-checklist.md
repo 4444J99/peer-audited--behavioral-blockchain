@@ -9,7 +9,7 @@ Objective:
 
 Outputs:
 
-- [planning--founder-ops-release-checklist--2026-03-09.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--founder-ops-release-checklist--2026-03-09.md)
+- [planning--founder-ops-release-checklist--2026-03-09.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--founder-ops-release-checklist--2026-03-09.md)
 
 Included workstreams:
 

@@ -202,4 +202,4 @@ For each of the six categories, compile:
 - Plan assumes default Styx directory structure from CLAUDE.md
 - Any missing files/directories will be noted and skipped gracefully
 - Analysis will focus on **content gaps** not presentation quality
-- Final report will be written to `/Users/4jp/.claude/plans/` with dated filename
+- Final report will be written to `~/.claude/plans/` with dated filename

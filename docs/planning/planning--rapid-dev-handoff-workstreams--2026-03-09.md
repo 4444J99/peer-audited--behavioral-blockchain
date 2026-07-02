@@ -142,7 +142,7 @@ Do now:
 
 Dependency:
 
-- Jessica must complete [planning--payout-math-worksheet--2026-03-09.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--payout-math-worksheet--2026-03-09.md) before the final payout formula is locked
+- Jessica must complete [planning--payout-math-worksheet--2026-03-09.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--payout-math-worksheet--2026-03-09.md) before the final payout formula is locked
 
 Exit condition:
 

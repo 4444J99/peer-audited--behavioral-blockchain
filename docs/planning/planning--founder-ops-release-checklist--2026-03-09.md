@@ -9,7 +9,7 @@ Use it to answer four questions only:
 3. What artifact files prove it is done?
 4. Who has to hand it over for review?
 
-Current Phase 1 scope remains the one defined in [planning--phase1-private-beta-scope.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--phase1-private-beta-scope.md): `iOS`, `TestFlight`, `Test-Money Pilot`, `US allowlist`, `no real-money settlement`.
+Current Phase 1 scope remains the one defined in [planning--phase1-private-beta-scope.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--phase1-private-beta-scope.md): `iOS`, `TestFlight`, `Test-Money Pilot`, `US allowlist`, `no real-money settlement`.
 
 ## Release Gate Table
 

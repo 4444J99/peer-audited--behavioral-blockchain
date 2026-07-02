@@ -241,7 +241,7 @@ test.describe('Attestation Flow', () => {
           started_at: new Date(Date.now() - 10 * 86400000).toISOString(),
           ends_at: new Date(Date.now() + 20 * 86400000).toISOString(),
           created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
-          email: 'e2e@styx.test',
+          email: '[email redacted]',
           integrity_score: 72,
           proofs: [],
         }),

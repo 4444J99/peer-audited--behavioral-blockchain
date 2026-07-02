@@ -201,7 +201,7 @@ describe('IdentityVerificationService', () => {
 
     it('should initiate verification and record PENDING status (KYC_ONLY)', async () => {
       mockPool.query
-        .mockResolvedValueOnce({ rows: [{ id: 'user-1', email: 'test@styx.io' }] } as any)
+        .mockResolvedValueOnce({ rows: [{ id: 'user-1', email: '[email redacted]' }] } as any)
         .mockResolvedValueOnce({ rowCount: 1 } as any);
 
       mockProvider.startVerification.mockResolvedValue({
@@ -221,7 +221,7 @@ describe('IdentityVerificationService', () => {
       expect(result.provider).toBe('MOCK');
       expect(result.userId).toBe('user-1');
       expect(mockProvider.startVerification).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: 'user-1', email: 'test@styx.io', mode: 'KYC_ONLY' }),
+        expect.objectContaining({ userId: 'user-1', email: '[email redacted]', mode: 'KYC_ONLY' }),
       );
       // Should record PENDING kyc_status
       const recordCall = mockPool.query.mock.calls[1];
@@ -251,7 +251,7 @@ describe('IdentityVerificationService', () => {
 
     it('should set only age status for AGE_ONLY mode', async () => {
       mockPool.query
-        .mockResolvedValueOnce({ rows: [{ id: 'user-1', email: 'a@b.com' }] } as any)
+        .mockResolvedValueOnce({ rows: [{ id: 'user-1', email: '[email redacted]' }] } as any)
         .mockResolvedValueOnce({ rowCount: 1 } as any);
 
       mockProvider.startVerification.mockResolvedValue({
@@ -384,7 +384,7 @@ describe('IdentityVerificationService', () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [
           {
-            email: 'test@styx.io',
+            email: '[email redacted]',
             previous_kyc_status: 'PENDING',
           },
         ],
@@ -399,7 +399,7 @@ describe('IdentityVerificationService', () => {
       });
 
       expect(mockEmail.sendEarlyAccessOnboarding).toHaveBeenCalledWith({
-        to: 'test@styx.io',
+        to: '[email redacted]',
         userId: 'user-1',
         trigger: 'tier_upgrade',
       });
@@ -412,7 +412,7 @@ describe('IdentityVerificationService', () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [
           {
-            email: 'test@styx.io',
+            email: '[email redacted]',
             previous_kyc_status: 'VERIFIED',
           },
         ],
@@ -442,7 +442,7 @@ describe('IdentityVerificationService', () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [
           {
-            email: 'test@styx.io',
+            email: '[email redacted]',
             previous_kyc_status: 'PENDING',
           },
         ],
@@ -466,7 +466,7 @@ describe('IdentityVerificationService', () => {
         .mockResolvedValueOnce({
           rows: [
             {
-              email: 'found@styx.io',
+              email: '[email redacted]',
               previous_kyc_status: 'PENDING',
             },
           ],

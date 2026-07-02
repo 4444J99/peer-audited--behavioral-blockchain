@@ -23,7 +23,7 @@ describe('WalletController', () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{
           id: 'user-1',
-          email: 'user@styx.app',
+          email: '[email redacted]',
           integrity_score: 75,
           account_id: 'acct-1',
           status: 'ACTIVE',
@@ -35,7 +35,7 @@ describe('WalletController', () => {
 
       expect(result).toEqual({
         id: 'user-1',
-        email: 'user@styx.app',
+        email: '[email redacted]',
         integrity_score: 75,
         ledger_balance: 50, // 5000 cents / 100
         allowed_tiers: ['TIER_1_MICRO_STAKES', 'TIER_2_STANDARD'],
@@ -54,7 +54,7 @@ describe('WalletController', () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{
           id: 'user-2',
-          email: 'new@styx.app',
+          email: '[email redacted]',
           integrity_score: 50,
           account_id: null,
           status: 'ACTIVE',

@@ -116,19 +116,19 @@ export default function ResponsibleUsePage() {
               </li>
               <li>
                 <strong className="text-neutral-300">SAMHSA National Helpline:</strong>{' '}
-                <a href="tel:1-800-662-4357" className="text-red-500 hover:text-red-400">1-800-662-4357</a> (free, 24/7)
+                <a href="tel:[phone redacted]" className="text-red-500 hover:text-red-400">[phone redacted]</a> (free, 24/7)
               </li>
               <li>
                 <strong className="text-neutral-300">National Domestic Violence Hotline:</strong>{' '}
-                <a href="tel:1-800-799-7233" className="text-red-500 hover:text-red-400">1-800-799-7233</a>
+                <a href="tel:[phone redacted]" className="text-red-500 hover:text-red-400">[phone redacted]</a>
               </li>
               <li>
                 <strong className="text-neutral-300">National Eating Disorders Association:</strong>{' '}
-                <a href="tel:1-800-931-2237" className="text-red-500 hover:text-red-400">1-800-931-2237</a>
+                <a href="tel:[phone redacted]" className="text-red-500 hover:text-red-400">[phone redacted]</a>
               </li>
               <li>
                 <strong className="text-neutral-300">National Problem Gambling Helpline:</strong>{' '}
-                <a href="tel:1-800-522-4700" className="text-red-500 hover:text-red-400">1-800-522-4700</a>
+                <a href="tel:[phone redacted]" className="text-red-500 hover:text-red-400">[phone redacted]</a>
               </li>
             </ul>
           </section>
@@ -137,7 +137,7 @@ export default function ResponsibleUsePage() {
             <h2 className="text-lg font-bold text-white mb-3">Contact Us</h2>
             <p>
               If you have concerns about your use of Styx or believe the platform is causing harm, contact us at{' '}
-              <a href="mailto:safety@styx.protocol" className="text-red-500 hover:text-red-400">safety@styx.protocol</a>.
+              <a href="mailto:[email redacted]" className="text-red-500 hover:text-red-400">[email redacted]</a>.
               We will work with you to pause, modify, or cancel active contracts if your well-being is at risk.
             </p>
           </section>

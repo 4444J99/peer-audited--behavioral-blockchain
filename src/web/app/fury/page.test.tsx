@@ -36,7 +36,7 @@ jest.mock('../../services/api-client', () => ({
 
 jest.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: '1', email: 'fury@styx.io', integrity_score: 90, role: 'USER' },
+    user: { id: '1', email: '[email redacted]', integrity_score: 90, role: 'USER' },
     token: 'mock-token',
     login: jest.fn(),
     register: jest.fn(),

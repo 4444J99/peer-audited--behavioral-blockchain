@@ -17,7 +17,7 @@ Target: Tier 1 and Tier 2 ICP practitioners who have not previously interacted w
 ### Touch 1 — Intro Email (Day 1)
 
 **Subject:** Your clients' follow-through problem has a solution
-**From:** {sender_name} <partners@styx.app>
+**From:** {sender_name} <[email redacted]>
 
 Hi {first_name},
 
@@ -44,7 +44,7 @@ P.S. — No strings attached. The Solo plan is $49/mo for up to 10 clients, and 
 ### Touch 2 — Follow-Up with Data (Day 4)
 
 **Subject:** Re: Your clients' follow-through problem has a solution
-**From:** {sender_name} <partners@styx.app>
+**From:** {sender_name} <[email redacted]>
 
 Hi {first_name},
 
@@ -89,7 +89,7 @@ No agenda — just thought you'd find it useful. Happy to chat if you ever want 
 ### Touch 4 — Quick Question Email (Day 14)
 
 **Subject:** Quick question about your practice
-**From:** {sender_name} <partners@styx.app>
+**From:** {sender_name} <[email redacted]>
 
 Hi {first_name},
 
@@ -111,7 +111,7 @@ Best,
 ### Touch 5 — Breakup Email (Day 21)
 
 **Subject:** Not the right time? Here's a resource anyway.
-**From:** {sender_name} <partners@styx.app>
+**From:** {sender_name} <[email redacted]>
 
 Hi {first_name},
 
@@ -142,7 +142,7 @@ Target: Practitioners who signed up on the Styx website, requested a demo, or do
 ### Email 1 — Thanks + Schedule Demo (Day 0)
 
 **Subject:** Thanks for your interest in Styx — let's get you set up
-**From:** {sender_name} <partners@styx.app>
+**From:** {sender_name} <[email redacted]>
 **Trigger:** Demo request form submission or practitioner waitlist signup
 
 Hi {first_name},
@@ -169,7 +169,7 @@ Looking forward to it,
 ### Email 2 — Demo Reminder + Prep (Day 1)
 
 **Subject:** Your Styx demo is {tomorrow / in 2 days} — here's how to prepare
-**From:** {sender_name} <partners@styx.app>
+**From:** {sender_name} <[email redacted]>
 **Trigger:** 24 hours before scheduled demo (or 24 hours after Email 1 if no demo booked)
 
 Hi {first_name},
@@ -199,7 +199,7 @@ Best,
 ### Email 3 — Post-Demo Follow-Up + Trial Activation (Day 2)
 
 **Subject:** Your Styx trial is ready — here's how to start
-**From:** {sender_name} <partners@styx.app>
+**From:** {sender_name} <[email redacted]>
 **Trigger:** Within 2 hours after demo completion (or Day 2 if no demo occurred)
 
 Hi {first_name},
@@ -239,7 +239,7 @@ Target: Practitioners referred by an existing Styx partner.
 ### Email 1 — Warm Introduction (Day 0)
 
 **Subject:** {referrer_name} thought Styx might help your practice
-**From:** {sender_name} <partners@styx.app>
+**From:** {sender_name} <[email redacted]>
 **Trigger:** Referral submitted by existing partner
 
 Hi {first_name},
@@ -264,7 +264,7 @@ P.S. — If you sign up, {referrer_name} gets a month free as a thank-you. Win-w
 ### Email 2 — Social Proof + Demo Nudge (Day 3)
 
 **Subject:** What {referrer_name} said about Styx
-**From:** {sender_name} <partners@styx.app>
+**From:** {sender_name} <[email redacted]>
 **Trigger:** 3 days after referral email, no demo booked
 
 Hi {first_name},
@@ -292,7 +292,7 @@ Best,
 ### Email 3 — Last Touch + Resource (Day 7)
 
 **Subject:** A resource from {referrer_name}'s recommendation
-**From:** {sender_name} <partners@styx.app>
+**From:** {sender_name} <[email redacted]>
 **Trigger:** 7 days after referral, no demo or trial activated
 
 Hi {first_name},
@@ -330,10 +330,10 @@ All the best,
 ## Sending Guidelines
 
 - **Sending hours:** Tuesday-Thursday, 9am-11am in recipient's local timezone
-- **From address:** Always a named person (partners@styx.app), never no-reply
+- **From address:** Always a named person ([email redacted]), never no-reply
 - **Reply handling:** All replies go to the sender's inbox (real human reads them within 4 hours)
 - **Opt-out:** One-click unsubscribe in every email footer; honor immediately
 - **CAN-SPAM compliance:** Physical address in footer, clear sender identification, honest subject lines
 - **Personalization:** Minimum: first name, specialization, source. Ideal: reference specific content they've published or a mutual connection
 - **Volume limits:** Max 50 cold emails/day to maintain deliverability
-- **Domain warm-up:** partners@styx.app domain warmed over 4 weeks before cold outreach begins
+- **Domain warm-up:** [email redacted] domain warmed over 4 weeks before cold outreach begins

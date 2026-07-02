@@ -17,9 +17,9 @@ ON CONFLICT (name) DO NOTHING;
 
 -- Demo users (password: demo-password-123, bcrypt cost 10) -- allow-secret
 INSERT INTO users (id, email, password_hash, stripe_customer_id, integrity_score, account_id, role, enterprise_id, status) VALUES
-  ('d0000000-0000-0000-0000-000000000001', 'demo@styx.protocol', '$2b$10$Qvqvkece7/TpoSbDjHr75eHpT7blt9.4dwoub11ClSk2/PCk4tehe', 'cus_demo_001', 75, 'a0000000-0000-0000-0000-000000000010', 'USER', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE'),
-  ('d0000000-0000-0000-0000-000000000002', 'fury@styx.protocol', '$2b$10$Qvqvkece7/TpoSbDjHr75eHpT7blt9.4dwoub11ClSk2/PCk4tehe', 'cus_fury_001', 90, 'a0000000-0000-0000-0000-000000000011', 'FURY', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE'),
-  ('d0000000-0000-0000-0000-000000000003', 'admin@styx.protocol', '$2b$10$Qvqvkece7/TpoSbDjHr75eHpT7blt9.4dwoub11ClSk2/PCk4tehe', 'cus_admin_001', 200, 'a0000000-0000-0000-0000-000000000012', 'ADMIN', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE')
+  ('d0000000-0000-0000-0000-000000000001', '[email redacted]', '$2b$10$Qvqvkece7/TpoSbDjHr75eHpT7blt9.4dwoub11ClSk2/PCk4tehe', 'cus_demo_001', 75, 'a0000000-0000-0000-0000-000000000010', 'USER', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE'),
+  ('d0000000-0000-0000-0000-000000000002', '[email redacted]', '$2b$10$Qvqvkece7/TpoSbDjHr75eHpT7blt9.4dwoub11ClSk2/PCk4tehe', 'cus_fury_001', 90, 'a0000000-0000-0000-0000-000000000011', 'FURY', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE'),
+  ('d0000000-0000-0000-0000-000000000003', '[email redacted]', '$2b$10$Qvqvkece7/TpoSbDjHr75eHpT7blt9.4dwoub11ClSk2/PCk4tehe', 'cus_admin_001', 200, 'a0000000-0000-0000-0000-000000000012', 'ADMIN', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE')
 ON CONFLICT (id) DO NOTHING;
 
 -- Contracts in different states
@@ -130,7 +130,7 @@ INSERT INTO accountability_partners (id, contract_id, partner_user_id, partner_e
     'ab000000-0000-0000-0000-000000000001',
     'c0000000-0000-0000-0000-000000000003',
     'd0000000-0000-0000-0000-000000000002',
-    'fury@styx.protocol',
+    '[email redacted]',
     'ACTIVE',
     NOW() - INTERVAL '10 days',
     NOW() - INTERVAL '9 days'

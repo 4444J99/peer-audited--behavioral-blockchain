@@ -29,7 +29,7 @@ describe('GdprService', () => {
       const userId = 'user-123';
 
       (mockPool.query as jest.Mock)
-        .mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@styx.protocol', integrity_score: 50, role: 'USER', status: 'ACTIVE', created_at: '2025-01-01' }] }) // users
+        .mockResolvedValueOnce({ rows: [{ id: userId, email: '[email redacted]', integrity_score: 50, role: 'USER', status: 'ACTIVE', created_at: '2025-01-01' }] }) // users
         .mockResolvedValueOnce({ rows: [{ id: 'c1', oath_category: 'BIOLOGICAL_WEIGHT', status: 'ACTIVE' }] }) // contracts
         .mockResolvedValueOnce({ rows: [{ id: 'p1', contract_id: 'c1', status: 'PENDING' }] }) // proofs
         .mockResolvedValueOnce({ rows: [{ id: 'e1', amount: '5000' }] }) // entries
@@ -39,7 +39,7 @@ describe('GdprService', () => {
       const result = await service.exportUserData(userId);
 
       expect(result.exportedAt).toBeDefined();
-      expect(result.user).toEqual(expect.objectContaining({ id: userId, email: 'test@styx.protocol' }));
+      expect(result.user).toEqual(expect.objectContaining({ id: userId, email: '[email redacted]' }));
       expect(result.contracts).toHaveLength(1);
       expect(result.proofs).toHaveLength(1);
       expect(result.ledgerEntries).toHaveLength(1);

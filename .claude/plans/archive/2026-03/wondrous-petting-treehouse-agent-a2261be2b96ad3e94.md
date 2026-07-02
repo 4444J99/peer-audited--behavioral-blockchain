@@ -1,7 +1,7 @@
 # Styx Monorepo: Comprehensive Stub & Placeholder Search Plan
 
 **Date Created**: 2026-03-06  
-**Repository**: `/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain`  
+**Repository**: `~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain`  
 **Objective**: Find ALL stubs, skeletons, incomplete implementations, placeholders, and TODO/FIXME markers across all six workspaces (api, web, mobile, shared, desktop, pitch)
 
 ## Search Strategy

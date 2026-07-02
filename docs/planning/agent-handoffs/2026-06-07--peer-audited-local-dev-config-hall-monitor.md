@@ -6,7 +6,7 @@
 
 ## Current State
 
-- Repo: `/Users/4jp/Code/organvm/peer-audited--behavioral-blockchain`
+- Repo: `~/Code/organvm/peer-audited--behavioral-blockchain`
 - Branch: `codex/heal-local-dev-config`
 - Remote: `origin/codex/heal-local-dev-config`
 - Live branch head: verify from PR `#669` or `origin/codex/heal-local-dev-config`
@@ -65,7 +65,7 @@
 - The systemic session-export persistence vacuum is open as `IRF-OPS-093` and `a-organvm/organvm-corpvs-testamentvm#429`.
 - `organvm prompts distill --dry-run` still fails until `organvm prompts clipboard` creates `data/atoms/clipboard-prompts.json`; this is already tracked as `IRF-DST-004`.
 - `organvm session export` emitted a zero-byte prompts artifact despite 3 human messages in the review; the tracked prompts note points to `IRF-SYS-056` and `IRF-DST-004`.
-- The corpvs checkout at `/Users/4jp/Code/organvm/organvm-corpvs-testamentvm` remains dirty with unrelated generated prompt/corpus files. Do not batch-add them from this lane.
+- The corpvs checkout at `~/Code/organvm/organvm-corpvs-testamentvm` remains dirty with unrelated generated prompt/corpus files. Do not batch-add them from this lane.
 
 ## Next Actions
 
@@ -78,7 +78,7 @@
 ## Resume Prompt
 
 ```bash
-cd /Users/4jp/Code/organvm/peer-audited--behavioral-blockchain
+cd ~/Code/organvm/peer-audited--behavioral-blockchain
 git status --short --branch
 gh pr view 669 --repo a-organvm/peer-audited--behavioral-blockchain --json number,state,title,url,headRefName,baseRefName,commits
 gh pr checks 669 --repo a-organvm/peer-audited--behavioral-blockchain

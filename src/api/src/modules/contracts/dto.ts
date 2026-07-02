@@ -57,7 +57,7 @@ export class RecoveryAcknowledgmentsDto {
 export class RecoveryMetadataDto {
   @ApiProperty({
     description: "Email of the accountability partner",
-    example: "friend@example.com",
+    example: "[email redacted]",
   })
   @IsEmail()
   accountabilityPartnerEmail!: string;

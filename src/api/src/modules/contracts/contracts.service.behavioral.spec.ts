@@ -57,7 +57,7 @@ describe("ContractsService — Behavioral Physics", () => {
 
   const activeUser = {
     id: "user-1",
-    email: "user@styx.app",
+    email: "[email redacted]",
     stripe_customer_id: "cus_test_1",
     integrity_score: 50,
     account_id: "acct-1",
@@ -247,7 +247,7 @@ describe("ContractsService — Behavioral Physics", () => {
       stakeAmount: 15, // $15 → 1500 cents, within the $100 TIER_2 limit
       durationDays: 14,
       recoveryMetadata: {
-        accountabilityPartnerEmail: "friend@example.com",
+        accountabilityPartnerEmail: "[email redacted]",
         noContactIdentifiers: ["hash_abc"],
         acknowledgments: {
           voluntary: true,
@@ -297,7 +297,7 @@ describe("ContractsService — Behavioral Physics", () => {
           typeof sql === "string" && sql.includes("accountability_partners"),
       );
       expect(apInsertCall).toBeDefined();
-      expect(apInsertCall![1]).toContain("friend@example.com");
+      expect(apInsertCall![1]).toContain("[email redacted]");
     });
 
     it("should store recovery metadata in contract JSONB column", async () => {

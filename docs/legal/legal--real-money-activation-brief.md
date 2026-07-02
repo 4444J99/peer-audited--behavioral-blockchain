@@ -234,10 +234,10 @@ The Styx website, app, and all marketing materials must include a clear disclaim
 Despite Styx's legal classification as a skill-based system (not gambling), responsible practice requires providing users with resources for problem gambling and mental health support:
 
 > **Need Help?**
-> - National Problem Gambling Helpline: 1-800-522-4700
+> - National Problem Gambling Helpline: [phone redacted]
 > - Crisis Text Line: Text HOME to 741741
-> - National Eating Disorders Association: 1-800-931-2237
-> - SAMHSA Helpline: 1-800-662-4357
+> - National Eating Disorders Association: [phone redacted]
+> - SAMHSA Helpline: [phone redacted]
 
 This disclosure should be accessible from the app's Settings screen and from the web dashboard's footer.
 

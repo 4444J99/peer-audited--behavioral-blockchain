@@ -15,7 +15,7 @@ date: "2026-03-08"
 ### Email 1 — Welcome + First Contract Guide (Day 0)
 
 **Subject:** Welcome to Styx — Let's make your first Oath
-**From:** Styx <welcome@styx.app>
+**From:** Styx <[email redacted]>
 **Trigger:** Account creation
 
 **Body:**
@@ -196,7 +196,7 @@ You've been on Styx for two weeks. Whether you've completed a contract, are mid-
 ### Email 1 — Welcome + Dashboard Setup (Day 0)
 
 **Subject:** Welcome to Styx for Practitioners — your dashboard is ready
-**From:** Styx B2B <partners@styx.app>
+**From:** Styx B2B <[email redacted]>
 **Trigger:** Practitioner account creation
 
 **Body:**

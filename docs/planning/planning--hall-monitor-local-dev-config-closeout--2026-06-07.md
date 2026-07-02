@@ -38,7 +38,7 @@ Work commit: `66e557fd`
 
 ## Local-Only Vacuum Found
 
-The closeout export created `/Users/4jp/Workspace/meta-organvm/praxis-perpetua/sessions/2026-06-07--peer-audited-local-dev-config-commit.md`, but `/Users/4jp/Workspace/meta-organvm/praxis-perpetua` is not a git repo. That makes the export durable-looking but local-only unless mirrored elsewhere.
+The closeout export created `~/Workspace/meta-organvm/praxis-perpetua/sessions/2026-06-07--peer-audited-local-dev-config-commit.md`, but `~/Workspace/meta-organvm/praxis-perpetua` is not a git repo. That makes the export durable-looking but local-only unless mirrored elsewhere.
 
 Remediation for this lane: this tracked receipt captures the audit, validation, and persistence facts in the product repo before the branch is pushed.
 

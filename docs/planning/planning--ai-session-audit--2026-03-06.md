@@ -7,7 +7,7 @@ Comprehensive audit of all AI-generated artifacts across Claude, Gemini, and Cod
 ## Section 1: Complete Session Inventory
 
 ### Claude Code Sessions
-- **Location:** `~/.claude/projects/-Users-4jp-Workspace-organvm-iii-ergon-peer-audited--behavioral-blockchain/`
+- **Location:** `~/.claude/projects/-Users-[user]-Workspace-organvm-iii-ergon-peer-audited--behavioral-blockchain/`
 - **Main sessions:** 76 JSONL files (each = one conversation)
 - **Subagent sessions:** 696 JSONL files (spawned by main sessions)
 - **Date range:** 2026-02-22 through 2026-03-06 (13 days)

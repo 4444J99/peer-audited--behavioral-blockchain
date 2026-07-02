@@ -66,7 +66,7 @@ test.describe('Authentication', () => {
     );
 
     await page.goto('/login');
-    await page.fill('input[type="email"], input[name="email"]', 'e2e@styx.test');
+    await page.fill('input[type="email"], input[name="email"]', '[email redacted]');
     await page.fill('input[type="password"]', 'testpassword123');
     await page.click('button[type="submit"]');
 
@@ -84,7 +84,7 @@ test.describe('Authentication', () => {
     );
 
     await page.goto('/login');
-    await page.fill('input[type="email"], input[name="email"]', 'wrong@styx.test');
+    await page.fill('input[type="email"], input[name="email"]', '[email redacted]');
     await page.fill('input[type="password"]', 'badpassword');
     await page.click('button[type="submit"]');
 
@@ -120,7 +120,7 @@ test.describe('Authentication', () => {
     await seedAuthCookie(page, 'jwt-e2e-token');
 
     await page.goto('/register');
-    await page.fill('input[type="email"], input[name="email"]', 'new@styx.test');
+    await page.fill('input[type="email"], input[name="email"]', '[email redacted]');
 
     // Fill password + confirm-password (policy: 12+ chars, upper, digit, symbol)
     const passwordInputs = page.locator('input[type="password"]');

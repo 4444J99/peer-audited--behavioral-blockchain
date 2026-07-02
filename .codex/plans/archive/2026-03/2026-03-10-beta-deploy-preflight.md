@@ -37,4 +37,4 @@ Current blocker state:
 
 Primary artifact:
 
-- [evidence--beta-deploy-preflight.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/artifacts/release/evidence--beta-deploy-preflight.md)
+- [evidence--beta-deploy-preflight.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/artifacts/release/evidence--beta-deploy-preflight.md)

@@ -135,15 +135,15 @@ describe('SalesforceConnector', () => {
           ok: true,
           json: () => Promise.resolve({
             records: [
-              { Id: 'sf-001', Email: 'alice@acme.com', Name: 'Alice Smith' },
-              { Id: 'sf-002', Email: 'bob@acme.com', Name: 'Bob Jones' },
+              { Id: 'sf-001', Email: '[email redacted]', Name: 'Alice Smith' },
+              { Id: 'sf-002', Email: '[email redacted]', Name: 'Bob Jones' },
             ],
           }),
         });
 
       const users = await connector.syncUserList('ent-001');
       expect(users).toHaveLength(2);
-      expect(users[0]).toEqual({ externalId: 'sf-001', email: 'alice@acme.com', name: 'Alice Smith' });
+      expect(users[0]).toEqual({ externalId: 'sf-001', email: '[email redacted]', name: 'Alice Smith' });
     });
 
     it('should throw on query failure', async () => {

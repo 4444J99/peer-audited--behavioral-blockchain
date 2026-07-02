@@ -14572,7 +14572,7 @@ somewhere in this book---either in attributing an idea to the wrong
 
 person or not giving credit to someone where it is due. (If you believe
 
-this to be the case, please email me at james@jamesclear.com so I can
+this to be the case, please email me at [email redacted] so I can
 
 fix the issue as soon as possible.)
 

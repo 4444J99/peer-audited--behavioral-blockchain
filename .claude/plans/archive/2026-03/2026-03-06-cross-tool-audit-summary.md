@@ -11,7 +11,7 @@
 ## Completed Work
 
 ### 1. seed.yaml (100% ✓)
-- **Location:** `/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/seed.yaml`
+- **Location:** `~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/seed.yaml`
 - **Status:** Successfully retrieved via bash cat
 - **Key Metadata:**
   - Schema version: 1.0
@@ -46,7 +46,7 @@
 - **Location:** `docs/architecture/`
 - **Count:** 8 files expected
 - **Status:** Successfully retrieved to tool results file (156,366 characters)
-- **Tool results file:** `/Users/4jp/.claude/projects/-Users-4jp-Workspace-meta-organvm/2029e569-810d-484e-be7f-b8bb08bf818f/tool-results/mcp-MCP_DOCKER-start_process-1772821489600.txt`
+- **Tool results file:** `~/.claude/projects/-Users-[user]-Workspace-meta-organvm/2029e569-810d-484e-be7f-b8bb08bf818f/tool-results/mcp-MCP_DOCKER-start_process-1772821489600.txt`
 - **Next step:** Extract content using bash cat alternative method
 - **Expected files:**
   - spec--fury-router.md

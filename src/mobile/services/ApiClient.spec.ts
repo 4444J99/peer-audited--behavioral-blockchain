@@ -53,7 +53,7 @@ describe('ApiClient', () => {
       setAuthToken('tok-123');
       mockFetch.mockResolvedValueOnce(jsonOk({ userId: '1', token: 'x', integrity: 50 }));
 
-      await ApiClient.login('a@b.com', 'pw');
+      await ApiClient.login('[email redacted]', 'pw');
 
       const [url, opts] = mockFetch.mock.calls[0];
       expect(opts.headers['Content-Type']).toBe('application/json');
@@ -66,7 +66,7 @@ describe('ApiClient', () => {
     it('omits Authorization when no token is set', async () => {
       mockFetch.mockResolvedValueOnce(jsonOk({ userId: '1', token: 'x', integrity: 50 }));
 
-      await ApiClient.login('a@b.com', 'pw');
+      await ApiClient.login('[email redacted]', 'pw');
 
       const [, opts] = mockFetch.mock.calls[0];
       expect(opts.headers['Authorization']).toBeUndefined();
@@ -75,7 +75,7 @@ describe('ApiClient', () => {
     it('throws on non-ok response with status and body', async () => {
       mockFetch.mockResolvedValueOnce(jsonFail(403, 'Forbidden'));
 
-      await expect(ApiClient.login('a@b.com', 'pw')).rejects.toThrow('API 403: Forbidden');
+      await expect(ApiClient.login('[email redacted]', 'pw')).rejects.toThrow('API 403: Forbidden');
     });
   });
 
@@ -93,12 +93,12 @@ describe('ApiClient', () => {
     it('sends POST to /auth/login with email and password', async () => {
       mockFetch.mockResolvedValueOnce(jsonOk({ userId: 'u1', token: 't1', integrity: 50 }));
 
-      const res = await ApiClient.login('user@styx.io', 'secret');
+      const res = await ApiClient.login('[email redacted]', 'secret');
 
       const [url, opts] = mockFetch.mock.calls[0];
       expect(url).toContain('/auth/login');
       expect(opts.method).toBe('POST');
-      expect(JSON.parse(opts.body)).toEqual({ email: 'user@styx.io', password: 'secret' });
+      expect(JSON.parse(opts.body)).toEqual({ email: '[email redacted]', password: 'secret' });
       expect(res.userId).toBe('u1');
     });
   });
@@ -134,7 +134,7 @@ describe('ApiClient', () => {
         stakeAmount: 50,
         durationDays: 30,
         recoveryMetadata: {
-          accountabilityPartnerEmail: 'ally@styx.io',
+          accountabilityPartnerEmail: '[email redacted]',
           noContactIdentifiers: ['Former Partner'],
           acknowledgments: {
             voluntary: true,

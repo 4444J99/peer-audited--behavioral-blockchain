@@ -240,7 +240,7 @@ export function CreateContractScreen({ navigation }: Props) {
             style={styles.textInput}
             value={partnerEmail}
             onChangeText={setPartnerEmail}
-            placeholder="partner@example.com"
+            placeholder="[email redacted]"
             placeholderTextColor="#555"
             keyboardType="email-address"
             autoCapitalize="none"
