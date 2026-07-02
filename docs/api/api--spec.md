@@ -65,7 +65,7 @@ refresh tokens for the session user.
 curl -sS -X POST "$STYX_API_URL/auth/register" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "customer.user@example.com",
+    "email": "[email redacted]",
     "password": "Use-a-real-password-123!",
     "ageConfirmation": true,
     "termsAccepted": true,
@@ -88,7 +88,7 @@ Example response:
 TOKEN=$(
   curl -sS -X POST "$STYX_API_URL/auth/login" \
     -H "Content-Type: application/json" \
-    -d '{"email":"customer.user@example.com","password":"Use-a-real-password-123!"}' \
+    -d '{"email":"[email redacted]","password":"Use-a-real-password-123!"}' \
     | jq -r .token
 )
 

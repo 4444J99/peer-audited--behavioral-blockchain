@@ -21,7 +21,7 @@ describe("EmailService", () => {
 
   it("uses the mock sender when SendGrid is not configured", async () => {
     const result = await service.sendEarlyAccessOnboarding({
-      to: "early@styx.app",
+      to: "[email redacted]",
       userId: "user-1",
       cohortId: "cohort-1",
       position: 7,
@@ -37,7 +37,7 @@ describe("EmailService", () => {
 
   it("sends the early-access template through SendGrid when configured", async () => {
     process.env.SENDGRID_API_KEY = "SG.test";
-    process.env.SENDGRID_FROM_EMAIL = "hello@styx.app";
+    process.env.SENDGRID_FROM_EMAIL = "[email redacted]";
     process.env.SENDGRID_EARLY_ACCESS_ONBOARDING_TEMPLATE_ID = "d-template";
     process.env.STYX_WEB_PUBLIC_URL = "https://app.styx.test";
     const fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue({
@@ -48,7 +48,7 @@ describe("EmailService", () => {
     } as any);
 
     const result = await service.sendEarlyAccessOnboarding({
-      to: "early@styx.app",
+      to: "[email redacted]",
       userId: "user-1",
       trigger: "tier_upgrade",
     });
@@ -69,7 +69,7 @@ describe("EmailService", () => {
     );
     const body = JSON.parse(String((fetchSpy.mock.calls[0][1] as any).body));
     expect(body).toMatchObject({
-      from: { email: "hello@styx.app" },
+      from: { email: "[email redacted]" },
       template_id: "d-template",
       categories: ["early-access-onboarding"],
     });

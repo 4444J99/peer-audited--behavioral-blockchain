@@ -10,7 +10,7 @@ Objective:
 
 Outputs:
 
-- [planning--bug-sweep-workstreams--2026-03-09.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--bug-sweep-workstreams--2026-03-09.md)
+- [planning--bug-sweep-workstreams--2026-03-09.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--bug-sweep-workstreams--2026-03-09.md)
 
 Key conclusion:
 

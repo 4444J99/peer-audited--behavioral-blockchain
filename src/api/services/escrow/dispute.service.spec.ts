@@ -143,7 +143,7 @@ describe('DisputeService', () => {
             proof_id: 'proof-1',
             contract_id: 'contract-1',
             user_id: 'user-1',
-            user_email: 'user@styx.app',
+            user_email: '[email redacted]',
             oath_category: 'DEEP_WORK_FOCUS',
             proof_status: 'DISPUTED',
             media_uri: 'proofs/123.mp4',
@@ -166,7 +166,7 @@ describe('DisputeService', () => {
       expect(result.id).toBe('dispute-1');
       expect(result.proofId).toBe('proof-1');
       expect(result.contractId).toBe('contract-1');
-      expect(result.userEmail).toBe('user@styx.app');
+      expect(result.userEmail).toBe('[email redacted]');
       expect(result.furyVotes).toHaveLength(2);
     });
 
@@ -189,7 +189,7 @@ describe('DisputeService', () => {
             proof_id: 'proof-1',
             contract_id: 'contract-1',
             user_id: 'user-1',
-            user_email: 'user@styx.app',
+            user_email: '[email redacted]',
             oath_category: 'DEEP_WORK_FOCUS',
             proof_status: 'DISPUTED',
             media_uri: null,

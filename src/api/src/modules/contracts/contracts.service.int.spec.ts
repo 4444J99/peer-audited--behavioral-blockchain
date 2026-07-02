@@ -109,7 +109,7 @@ describeWithContainerRuntime("ContractsService (Integration)", () => {
       // Insert dummy user
       await pool.query(
         `INSERT INTO users (id, email, password_hash, status) VALUES ($1, $2, $3, $4)`,
-        [userId, "test@example.com", "hash", "ACTIVE"],
+        [userId, "[email redacted]", "hash", "ACTIVE"],
       );
 
       // Insert active contract

@@ -31,7 +31,7 @@ jest.mock('../../../services/api-client', () => ({
       started_at: '2026-02-01T00:00:00Z',
       ends_at: '2026-03-03T00:00:00Z',
       created_at: '2026-02-01T00:00:00Z',
-      email: 'user@test.com',
+      email: '[email redacted]',
       integrity_score: 75,
     }),
     getContractProofs: jest.fn().mockResolvedValue([]),
@@ -43,7 +43,7 @@ jest.mock('../../../services/api-client', () => ({
 
 jest.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: 'user-1', email: 'user@test.com', integrity_score: 75, role: 'USER' },
+    user: { id: 'user-1', email: '[email redacted]', integrity_score: 75, role: 'USER' },
     token: 'mock-token',
     login: jest.fn(),
     register: jest.fn(),

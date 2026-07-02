@@ -21,7 +21,7 @@
 
     <rect x="110" y="650" width="500" height="110" rx="24" fill="#172033" stroke="#34d399"/>
     <text x="145" y="695" fill="#e5e7eb" font-size="26" font-weight="700">Developer Contact</text>
-    <text x="145" y="730" fill="#cbd5e1" font-size="18">legal@styx.app • safety@styx.app • support trace flow.</text>
+    <text x="145" y="730" fill="#cbd5e1" font-size="18">[email redacted] • [email redacted] • support trace flow.</text>
 
     <rect x="110" y="810" width="500" height="220" rx="28" fill="#1f2937" stroke="#f59e0b"/>
     <text x="145" y="860" fill="#f8fafc" font-size="26" font-weight="700">Moderation Promise</text>

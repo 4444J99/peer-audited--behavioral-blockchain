@@ -130,7 +130,7 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-bold text-white mb-3">12. Contact</h2>
             <p>
               For privacy inquiries, contact{' '}
-              <a href="mailto:privacy@styx.protocol" className="text-red-500 hover:text-red-400">privacy@styx.protocol</a>.
+              <a href="mailto:[email redacted]" className="text-red-500 hover:text-red-400">[email redacted]</a>.
             </p>
           </section>
 

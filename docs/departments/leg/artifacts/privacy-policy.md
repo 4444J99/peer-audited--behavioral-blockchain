@@ -283,7 +283,7 @@ You may designate an authorized agent to submit CCPA requests on your behalf. Th
 
 ### 8.6 Contact for CCPA Requests
 
-CCPA requests may be submitted to: [privacy@styx.app -- TBD]
+CCPA requests may be submitted to: [[email redacted] -- TBD]
 
 We will verify your identity before processing any request. Response time: within 45 days, extendable to 90 days with notice.
 
@@ -301,9 +301,9 @@ We will notify you of material changes to this Privacy Policy via email and in-a
 
 ## 12. Contact
 
-For privacy-related questions or requests: [privacy@styx.app -- TBD]
+For privacy-related questions or requests: [[email redacted] -- TBD]
 
-For data deletion requests: [privacy@styx.app -- TBD] with subject line "Data Deletion Request"
+For data deletion requests: [[email redacted] -- TBD] with subject line "Data Deletion Request"
 
 ---
 

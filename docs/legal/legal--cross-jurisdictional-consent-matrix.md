@@ -75,7 +75,7 @@ Styx uses multiple verification methods to confirm user commitment completion: p
 | Jurisdiction | Photo Proof | Wearable Sync | Location Check-In | Peer Attestation | Consent Type | Data Retention Limit | Notes |
 |---|---|---|---|---|---|---|---|
 | **US Federal** | Allowed | Allowed | Allowed | Allowed | Notice + opt-in | No federal limit (sector-specific) | FTC Act § 5 unfairness/deception standard; COPPA for <13 (N/A — Styx is 18+) |
-| **California** | Allowed | Allowed (sensitive PI) | Allowed (sensitive PI) | Allowed | Explicit opt-in for sensitive PI; right to limit | Purpose-limited | CCPA/CPRA: health data + precise geolocation = sensitive PI. Right to limit use/disclosure. Cal. Civ. Code §§ 1798.100-1798.199.100. |
+| **California** | Allowed | Allowed (sensitive PI) | Allowed (sensitive PI) | Allowed | Explicit opt-in for sensitive PI; right to limit | Purpose-limited | CCPA/CPRA: health data + precise geolocation = sensitive PI. Right to limit use/disclosure. Cal. Civ. Code §§ [phone redacted].199.100. |
 | **Illinois** | Restricted (BIPA) | Allowed (Non-BIPA) | Allowed | Allowed | Written informed consent (BIPA) | 3 years or purpose completion | BIPA: biometric identifiers require written consent. 740 Ill. Comp. Stat. 14/10. Heart rate data is NOT a biometric identifier. *See Rivera v. Google LLC*, 238 F. Supp. 3d 1088 (N.D. Ill. 2017). |
 | **New York** | Allowed | Allowed | Allowed | Allowed | Notice + opt-in | Reasonable | N.Y. Gen. Bus. Law § 899-aa (data breach notification). No comprehensive privacy law yet. SHIELD Act imposes security requirements. |
 | **Texas** | Allowed | Allowed (Non-CUBI) | Allowed | Allowed | Informed consent (TDPSA) | Purpose-limited | CUBI: biometric data requires informed consent. Tex. Bus. & Com. Code § 503.001. Heart rate excluded from narrow statutory list. TDPSA covers heart rate as sensitive data. |
@@ -425,7 +425,7 @@ This list must remain consistent with Section 3.1. *See* `docs/legal/legal--50-s
 - 18 U.S.C. §§ 2510-2522 (Federal Wiretap Act).
 - 26 C.F.R. § 1.6001-1 (IRS record-keeping requirements).
 - 740 Ill. Comp. Stat. 14/1 et seq. (Illinois Biometric Information Privacy Act).
-- Cal. Civ. Code §§ 1798.100-1798.199.100 (CCPA/CPRA).
+- Cal. Civ. Code §§ [phone redacted].199.100 (CCPA/CPRA).
 - Cal. Civ. Code § 1798.121 (right to limit use of sensitive personal information).
 - Cal. Civ. Code § 1798.140(ae) (definition of sensitive personal information).
 - Cal. Code Regs. tit. 11, § 7150 et seq. (proposed ADMT regulations).

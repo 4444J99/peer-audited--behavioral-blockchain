@@ -7,7 +7,7 @@ Conduct comprehensive exploration of Styx codebase to identify:
 - Unimplemented services, modules, and middleware
 - API endpoints vs actual implementation discrepancies
 
-Location: `/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/`
+Location: `~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/`
 
 ## Exploration Strategy
 

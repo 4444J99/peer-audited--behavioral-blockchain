@@ -90,7 +90,7 @@ check "POST /auth/login empty body" \
 check "POST /auth/login bad creds" \
   POST "${API_URL}/auth/login" 401 \
   -H "Content-Type: application/json" \
-  -d '{"email":"smoke-test-nonexistent@styx.test","password":"wrongPassword1!"}'
+  -d '{"email":"[email redacted]","password":"wrongPassword1!"}'
 
 check "POST /auth/register missing fields" \
   POST "${API_URL}/auth/register" 400 \

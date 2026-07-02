@@ -18,11 +18,11 @@ Primary output:
 
 Primary sources:
 
-- [legal--performance-wagering.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/legal/legal--performance-wagering.md)
-- [legal--aegis-protocol.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/legal/legal--aegis-protocol.md)
-- [legal--gatekeeper-compliance.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/legal/legal--gatekeeper-compliance.md)
-- [research--prediction-markets-regulation-finance.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/research/research--prediction-markets-regulation-finance.md)
-- [planning--phase1-private-beta-scope.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--phase1-private-beta-scope.md)
+- [legal--performance-wagering.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/legal/legal--performance-wagering.md)
+- [legal--aegis-protocol.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/legal/legal--aegis-protocol.md)
+- [legal--gatekeeper-compliance.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/legal/legal--gatekeeper-compliance.md)
+- [research--prediction-markets-regulation-finance.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/research/research--prediction-markets-regulation-finance.md)
+- [planning--phase1-private-beta-scope.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--phase1-private-beta-scope.md)
 
 Main questions:
 
@@ -46,8 +46,8 @@ Primary output:
 
 Primary sources:
 
-- [research--bounty-shame-protocol-safety-legality.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/research/research--bounty-shame-protocol-safety-legality.md)
-- [research--app-verification-tech-privacy-law.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/research/research--app-verification-tech-privacy-law.md)
+- [research--bounty-shame-protocol-safety-legality.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/research/research--bounty-shame-protocol-safety-legality.md)
+- [research--app-verification-tech-privacy-law.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/research/research--app-verification-tech-privacy-law.md)
 - GitHub [#63](https://github.com/organvm-iii-ergon/peer-audited--behavioral-blockchain/issues/63)
 - GitHub [#146](https://github.com/organvm-iii-ergon/peer-audited--behavioral-blockchain/issues/146)
 
@@ -70,8 +70,8 @@ Primary output:
 
 Primary sources:
 
-- [research--app-verification-tech-privacy-law.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/research/research--app-verification-tech-privacy-law.md)
-- [research--bounty-shame-protocol-safety-legality.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/research/research--bounty-shame-protocol-safety-legality.md)
+- [research--app-verification-tech-privacy-law.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/research/research--app-verification-tech-privacy-law.md)
+- [research--bounty-shame-protocol-safety-legality.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/research/research--bounty-shame-protocol-safety-legality.md)
 - GitHub [#67](https://github.com/organvm-iii-ergon/peer-audited--behavioral-blockchain/issues/67)
 - GitHub [#148](https://github.com/organvm-iii-ergon/peer-audited--behavioral-blockchain/issues/148)
 
@@ -96,9 +96,9 @@ Primary output:
 
 Primary sources:
 
-- [legal--gatekeeper-compliance.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/legal/legal--gatekeeper-compliance.md)
-- [legal--performance-wagering.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/legal/legal--performance-wagering.md)
-- [legal--aegis-protocol.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/legal/legal--aegis-protocol.md)
+- [legal--gatekeeper-compliance.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/legal/legal--gatekeeper-compliance.md)
+- [legal--performance-wagering.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/legal/legal--performance-wagering.md)
+- [legal--aegis-protocol.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/legal/legal--aegis-protocol.md)
 - GitHub [#132](https://github.com/organvm-iii-ergon/peer-audited--behavioral-blockchain/issues/132)
 - GitHub [#133](https://github.com/organvm-iii-ergon/peer-audited--behavioral-blockchain/issues/133)
 

@@ -39,7 +39,7 @@ describe('AuthController', () => {
 
       const result = await controller.register(
         plainToInstance(RegisterDto, {
-          email: 'test@styx.protocol',
+          email: '[email redacted]',
           password: 'secure123', // allow-secret
           ageConfirmation: true,
           termsAccepted: true,
@@ -49,7 +49,7 @@ describe('AuthController', () => {
 
       expect(result.userId).toBe('new-user-id');
       expect(result.token).toBe('jwt-token');
-      expect(mockAuthService.register).toHaveBeenCalledWith('test@styx.protocol', 'secure123', { // allow-secret
+      expect(mockAuthService.register).toHaveBeenCalledWith('[email redacted]', 'secure123', { // allow-secret
         ageConfirmation: true,
         termsAccepted: true,
         dateOfBirth: '',
@@ -64,14 +64,14 @@ describe('AuthController', () => {
     });
 
     it('should reject missing password via DTO validation', async () => {
-      const dto = plainToInstance(RegisterDto, { email: 'test@styx.protocol', password: '' });
+      const dto = plainToInstance(RegisterDto, { email: '[email redacted]', password: '' });
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.some((e) => e.property === 'password')).toBe(true);
     });
 
     it('should reject short password via DTO validation', async () => {
-      const dto = plainToInstance(RegisterDto, { email: 'test@styx.protocol', password: '12345' }); // allow-secret
+      const dto = plainToInstance(RegisterDto, { email: '[email redacted]', password: '12345' }); // allow-secret
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.some((e) => e.property === 'password')).toBe(true);
@@ -87,7 +87,7 @@ describe('AuthController', () => {
 
       const result = await controller.login(
         plainToInstance(LoginDto, {
-          email: 'test@styx.protocol',
+          email: '[email redacted]',
           password: 'secure123', // allow-secret
         }),
         mockResponse,
@@ -105,7 +105,7 @@ describe('AuthController', () => {
     });
 
     it('should reject missing password via DTO validation', async () => {
-      const dto = plainToInstance(LoginDto, { email: 'test@styx.protocol', password: '' });
+      const dto = plainToInstance(LoginDto, { email: '[email redacted]', password: '' });
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.some((e) => e.property === 'password')).toBe(true);
@@ -114,7 +114,7 @@ describe('AuthController', () => {
     it('AU13: should accept a short (legacy) password at login without re-imposing register policy', async () => {
       // A pre-existing account may have a stored password shorter than the current
       // registration complexity policy; login must not lock it out at the DTO layer.
-      const dto = plainToInstance(LoginDto, { email: 'test@styx.protocol', password: 'short' }); // allow-secret
+      const dto = plainToInstance(LoginDto, { email: '[email redacted]', password: 'short' }); // allow-secret
       const errors = await validate(dto);
       expect(errors.some((e) => e.property === 'password')).toBe(false);
     });

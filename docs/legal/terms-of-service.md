@@ -246,7 +246,7 @@ The Company may suspend or terminate your account for violation of these Terms. 
 
 ## 13. Contact
 
-For questions about these Terms, contact: [legal@styx.app -- TBD]
+For questions about these Terms, contact: [[email redacted] -- TBD]
 
 ---
 

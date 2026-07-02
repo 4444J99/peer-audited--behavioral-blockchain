@@ -80,7 +80,7 @@ describe("ContractsService", () => {
 
   const activeUser = {
     id: "user-1",
-    email: "user@styx.app",
+    email: "[email redacted]",
     stripe_customer_id: "cus_test_1",
     integrity_score: 50,
     account_id: "acct-1",
@@ -568,7 +568,7 @@ describe("ContractsService", () => {
       const row = {
         id: "contract-1",
         user_id: "user-1",
-        email: "user@styx.app",
+        email: "[email redacted]",
         integrity_score: 55,
         proof_count: "0",
       };
@@ -580,7 +580,7 @@ describe("ContractsService", () => {
       expect(result).toEqual({
         id: "contract-1",
         user_id: "user-1",
-        email: "user@styx.app",
+        email: "[email redacted]",
         integrity_score: 55,
         proof_count: 0,
         proofs: [],
@@ -602,7 +602,7 @@ describe("ContractsService", () => {
           {
             id: "contract-1",
             user_id: "owner-1",
-            email: "owner@styx.app",
+            email: "[email redacted]",
             integrity_score: 60,
           },
         ],
@@ -628,7 +628,7 @@ describe("ContractsService", () => {
           {
             id: "contract-1",
             user_id: "owner-1",
-            email: "owner@styx.app",
+            email: "[email redacted]",
             integrity_score: 60,
           },
         ],
@@ -1223,7 +1223,7 @@ describe("ContractsService", () => {
           {
             id: "contract-1",
             user_id: "owner-1",
-            email: "owner@styx.app",
+            email: "[email redacted]",
             integrity_score: 50,
           },
         ],
@@ -1294,7 +1294,7 @@ describe("ContractsService", () => {
             pod_id: "pod-1",
             display_alias: "Jess",
             cohort_id: "launch-2026-03-a",
-            email: "jess@example.com",
+            email: "[email redacted]",
             streak_days: 5,
           },
           {
@@ -1306,7 +1306,7 @@ describe("ContractsService", () => {
             pod_id: "pod-1",
             display_alias: "Alex",
             cohort_id: "launch-2026-03-a",
-            email: "alex@example.com",
+            email: "[email redacted]",
             streak_days: 1,
           },
         ],
@@ -2004,7 +2004,7 @@ describe("ContractsService", () => {
           contract_id: "c-1",
           oath_category: "DEEP_WORK_FOCUS",
           stake_amount: 25,
-          owner_email: "owner@styx.app",
+          owner_email: "[email redacted]",
         },
       ];
       mockPool.query.mockResolvedValueOnce({ rows: invitations });

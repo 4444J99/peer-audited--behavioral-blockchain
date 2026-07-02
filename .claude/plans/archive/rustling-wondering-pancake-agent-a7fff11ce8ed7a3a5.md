@@ -4,7 +4,7 @@
 Conduct a thorough audit of the Styx peer-audited behavioral market codebase to identify implementation gaps and categorize completeness (COMPLETE, PARTIAL, STUB, MISSING).
 
 ## Scope
-Repository: `/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain`
+Repository: `~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain`
 
 ## Task Breakdown (9 Steps)
 

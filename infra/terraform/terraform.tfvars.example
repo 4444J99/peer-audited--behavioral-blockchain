@@ -4,7 +4,7 @@
 render_api_key        = "rnd_..."
 cloudflare_api_token  = "..."
 cloudflare_account_id = "..."
-database_url          = "postgresql://user:pass@db.supabase.co:5432/postgres"
+database_url          = "postgresql://user:[email redacted]:5432/postgres"
 redis_url             = "redis://default:pass@redis-host:6379"
 stripe_secret_key     = "sk_live_..."
 jwt_secret            = "..."

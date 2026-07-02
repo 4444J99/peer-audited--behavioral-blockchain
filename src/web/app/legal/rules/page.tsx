@@ -171,7 +171,7 @@ export default function ContestRulesPage() {
             <h2 className="text-lg font-bold text-white mb-3">14. Contact</h2>
             <p>
               Questions about these Official Rules should be directed to{' '}
-              <a href="mailto:legal@styx.protocol" className="text-red-500 hover:text-red-400">legal@styx.protocol</a>.
+              <a href="mailto:[email redacted]" className="text-red-500 hover:text-red-400">[email redacted]</a>.
             </p>
           </section>
 

@@ -141,6 +141,6 @@ Every artifact-producing agent including Claude is a smoothing agent. This plan 
 [21] `docs/planning/premortem-report-20260517-144746.md:31` — "If ratio exceeds 3:1, do not start a new plan. Send an email instead."
 [22] `docs/planning/premortem-report-20260517-144746.md:64` — "Plan-to-action ratio exceeds 3:1 in any 7-day window."
 [23] `docs/departments/fin/artifacts/runway-tracker.md:29` — `| | Domain (styx.app or similar) | $3.00 | $36.00 | Estimated, varies by registrar |`
-[24] `git remote -v` (executed 2026-05-17 in working tree of `${CANONICAL_REPO_PATH}`) — `origin git@github.com:a-organvm/peer-audited--behavioral-blockchain.git`
+[24] `git remote -v` (executed 2026-05-17 in working tree of `${CANONICAL_REPO_PATH}`) — `origin [email redacted]:a-organvm/peer-audited--behavioral-blockchain.git`
 [25] `README.md:5` — CI badge URL (cites `organvm-iii-ergon/` namespace; stale relative to [24] — divergence flagged as IRF candidate #2)
 [26] `${CANONICAL_REPO_PATH}/.env.example` Project Identity section (committed by this change) — declares the authority for all runtime-identity vars listed in the Authority pointers table

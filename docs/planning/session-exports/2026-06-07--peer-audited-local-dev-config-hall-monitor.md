@@ -5,7 +5,7 @@
 **Session ID:** `019ea20f-2591-7230-8a9b-a67d8205d798`
 **Slug:** `peer-audited-local-dev-config-hall-monitor`
 **Duration:** ~27 min
-**Working directory:** `/Users/4jp/Code/organvm/peer-audited--behavioral-blockchain`
+**Working directory:** `~/Code/organvm/peer-audited--behavioral-blockchain`
 **Branch:** `codex/heal-local-dev-config`
 **Messages:** 73 (3 human, 70 assistant)
 
@@ -22,13 +22,13 @@ organvm session transcript 019ea20f --unabridged
 organvm session prompts 019ea20f
 ```
 
-**Source JSONL:** `/Users/4jp/.codex/sessions/2026/06/07/rollout-2026-06-07T08-29-22-019ea20f-2591-7230-8a9b-a67d8205d798.jsonl`
+**Source JSONL:** `~/.codex/sessions/2026/06/07/rollout-2026-06-07T08-29-22-019ea20f-2591-7230-8a9b-a67d8205d798.jsonl`
 
 ---
 
 ## Opening Prompt
 
-> # AGENTS.md instructions for /Users/4jp/Code/organvm/peer-audited--behavioral-blockchain
+> # AGENTS.md instructions for ~/Code/organvm/peer-audited--behavioral-blockchain
 
 <INSTRUCTIONS>
 <!-- Role: shim | Owner: domus-genoma | Source: dot_local/share/codex/AGENTS.md.tmpl | Redirect...

@@ -169,7 +169,7 @@ describe('StripeFboService (dev mode)', () => {
 
   describe('createCustomer', () => {
     it('should return mock customer ID in dev mode', async () => {
-      const customerId = await service.createCustomer('user-1', 'user@styx.app');
+      const customerId = await service.createCustomer('user-1', '[email redacted]');
 
       expect(customerId).toMatch(/^cus_dev_/);
       expect(typeof customerId).toBe('string');

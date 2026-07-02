@@ -32,7 +32,7 @@ describe("UsersService", () => {
     it("should return user profile for valid userId", async () => {
       const user = {
         id: "user-1",
-        email: "demo@styx.protocol",
+        email: "[email redacted]",
         integrity_score: 75,
         role: "USER",
         status: "ACTIVE",
@@ -52,7 +52,7 @@ describe("UsersService", () => {
       expect(result).toEqual(
         expect.objectContaining({
           id: "user-1",
-          email: "demo@styx.protocol",
+          email: "[email redacted]",
           integrity_score: 75,
           tier: "STANDARD",
           contract_count: 2,
@@ -112,19 +112,19 @@ describe("UsersService", () => {
       const leaders = [
         {
           id: "u3",
-          email: "admin@styx.protocol",
+          email: "[email redacted]",
           integrity_score: 200,
           created_at: "2025-01-01",
         },
         {
           id: "u2",
-          email: "fury@styx.protocol",
+          email: "[email redacted]",
           integrity_score: 90,
           created_at: "2025-01-01",
         },
         {
           id: "u1",
-          email: "demo@styx.protocol",
+          email: "[email redacted]",
           integrity_score: 75,
           created_at: "2025-01-01",
         },

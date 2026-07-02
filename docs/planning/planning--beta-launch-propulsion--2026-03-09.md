@@ -193,7 +193,7 @@ Done evidence:
 
 Primary source:
 
-- [planning--beta-readiness-contract.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--beta-readiness-contract.md)
+- [planning--beta-readiness-contract.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--beta-readiness-contract.md)
 
 ## Parallel But Not On The Hard Path
 
@@ -209,7 +209,7 @@ What must happen now:
 
 - keep `test-money` mode active
 - do not expose future real-money percentages in the beta UI
-- use [planning--jessica-briefing-payout-decisions--2026-03-09.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--jessica-briefing-payout-decisions--2026-03-09.md) to lock the business policy before code normalization
+- use [planning--jessica-briefing-payout-decisions--2026-03-09.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--jessica-briefing-payout-decisions--2026-03-09.md) to lock the business policy before code normalization
 
 What can wait until after beta launch pressure:
 
@@ -236,7 +236,7 @@ What does not block the immediate TestFlight launch:
 
 Primary source:
 
-- [planning--legal-artifact-production-plan--2026-03-09.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--legal-artifact-production-plan--2026-03-09.md)
+- [planning--legal-artifact-production-plan--2026-03-09.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--legal-artifact-production-plan--2026-03-09.md)
 
 ## Explicit Deferrals
 

@@ -19,9 +19,9 @@ What was exercised:
 
 Artifacts:
 
-- [planning--b7-manual-defect-log--2026-03-09.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--b7-manual-defect-log--2026-03-09.md)
-- [b7-console.log](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/output/playwright/b7-console.log)
-- [b7-register-network-error.png](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/output/playwright/b7-register-network-error.png)
+- [planning--b7-manual-defect-log--2026-03-09.md](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--b7-manual-defect-log--2026-03-09.md)
+- [b7-console.log](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/output/playwright/b7-console.log)
+- [b7-register-network-error.png](~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/output/playwright/b7-register-network-error.png)
 
 Key outcome:
 

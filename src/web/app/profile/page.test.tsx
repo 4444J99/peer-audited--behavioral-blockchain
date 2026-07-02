@@ -26,7 +26,7 @@ jest.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: {
       id: '1',
-      email: 'warrior@styx.io',
+      email: '[email redacted]',
       integrity_score: 125,
       role: 'USER',
       created_at: '2025-06-15T00:00:00Z',

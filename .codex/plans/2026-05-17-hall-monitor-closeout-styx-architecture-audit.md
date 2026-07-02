@@ -13,7 +13,7 @@ Scope: closeout verification for the 2026-05-16 evaluation-to-growth pass over `
 ## What Is
 
 - Local Styx git state at closeout: `main == origin/main` before this closeout note.
-- Current remote: `git@github.com:a-organvm/peer-audited--behavioral-blockchain.git`.
+- Current remote: `[email redacted]:a-organvm/peer-audited--behavioral-blockchain.git`.
 - Six GitHub issues exist for the architecture-corpus findings:
   - `#590` test strategy filesystem drift.
   - `#591` triplicate research docs / dedup + provenance.

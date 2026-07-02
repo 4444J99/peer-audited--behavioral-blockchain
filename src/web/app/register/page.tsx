@@ -97,7 +97,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 bg-black border border-neutral-800 rounded-xl text-white placeholder-neutral-600 focus:outline-none focus:border-red-600 transition-colors"
-              placeholder="you@styx.protocol"
+              placeholder="[email redacted]"
             />
           </div>
 

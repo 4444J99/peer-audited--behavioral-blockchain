@@ -214,8 +214,8 @@ describe('CreateContractScreen – render', () => {
     fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
       target: { value: 'No contact for 30 days.' },
     });
-    fireEvent.change(getByPlaceholderText('partner@example.com'), {
-      target: { value: 'ally@styx.io' },
+    fireEvent.change(getByPlaceholderText('[email redacted]'), {
+      target: { value: '[email redacted]' },
     });
     fireEvent.change(getByPlaceholderText('Target #1'), {
       target: { value: 'Former Partner' },
@@ -250,8 +250,8 @@ describe('CreateContractScreen – render', () => {
     fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
       target: { value: 'No social stalking for 30 days.' },
     });
-    fireEvent.change(getByPlaceholderText('partner@example.com'), {
-      target: { value: 'ally@styx.io' },
+    fireEvent.change(getByPlaceholderText('[email redacted]'), {
+      target: { value: '[email redacted]' },
     });
     fireEvent.change(getByPlaceholderText('Target #1'), {
       target: { value: 'Former Partner' },
@@ -279,7 +279,7 @@ describe('CreateContractScreen – render', () => {
         stakeAmount: 50,
         durationDays: 30,
         recoveryMetadata: {
-          accountabilityPartnerEmail: 'ally@styx.io',
+          accountabilityPartnerEmail: '[email redacted]',
           noContactIdentifiers: ['Former Partner'],
           acknowledgments: {
             voluntary: true,

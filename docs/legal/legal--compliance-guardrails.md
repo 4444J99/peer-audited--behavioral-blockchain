@@ -719,6 +719,6 @@ If you want to go one level deeper, the next step is to pick **one concrete user
 
 - 31 U.S.C. §§ 5361-5367 (Unlawful Internet Gambling Enforcement Act of 2006)
 - 31 U.S.C. § 5362(1)(E)(ix) (UIGEA — skill-based contest exclusion)
-- Cal. Civ. Code §§ 1798.100-1798.199.100 (CCPA/CPRA)
+- Cal. Civ. Code §§ [phone redacted].199.100 (CCPA/CPRA)
 - 740 Ill. Comp. Stat. 14/15 (Illinois Biometric Information Privacy Act)
 - N.Y. Gen. Bus. Law § 391-oo (weight-loss supplement restrictions for minors)

@@ -28,7 +28,7 @@ describe('UsersController', () => {
     it('should return profile including compliance fields from UsersService', async () => {
       usersService.getProfile.mockResolvedValueOnce({
         id: 'user-1',
-        email: 'demo@styx.protocol',
+        email: '[email redacted]',
         integrity_score: 75,
         role: 'USER',
         status: 'ACTIVE',
