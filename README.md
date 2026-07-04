@@ -264,12 +264,34 @@ Copy `.env.example` to `.env` and set:
 | `CLOUDFLARE_R2_ACCESS_KEY`              | Yes                                                | R2 storage access key                                                   |
 | `CLOUDFLARE_R2_SECRET_KEY`              | Yes                                                | R2 storage secret key                                                   |
 | `JWT_SECRET`                            | Yes (prod)                                         | JWT signing secret (enforced in production)                             |
+| `STYX_API_KEY_PEPPER`                   | Yes                                                | Scrypt pepper for stored user API-key verifiers                         |
 | `GEMINI_API_KEY`                        | No                                                 | Gemini AI for goal ethics screening                                     |
 | `KYC_ENFORCEMENT_ENABLED`               | No                                                 | Enable KYC gating (default: `false`)                                    |
 | `GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS` | No                                                 | Fail-open when geo headers missing (default: `true`)                    |
 | `BETA_API_URL`                          | No (required for full beta readiness verification) | Target API URL for `npm run beta:readiness`                             |
 | `BETA_WEB_URL`                          | No                                                 | Optional target web URL for beta readiness                              |
 | `BETA_ENV_LABEL`                        | No                                                 | Expected environment label for `/meta/release` (default: `beta`)        |
+
+The API loads env files through `src/api/src/config/env-path.ts` in this order:
+repo `.env.local`, repo `.env`, `src/api/.env.local`, then `src/api/.env`.
+Set `STYX_API_KEY_PEPPER` in the selected file or deployment secret store before
+issuing or verifying API keys. Generate it with `openssl rand -base64 48`; do not
+reuse `JWT_SECRET`.
+
+User API keys are issued from an authenticated session:
+
+```bash
+curl -X POST "$STYX_API_PUBLIC_URL/auth/api-keys" \
+  -H "Authorization: Bearer $JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"automation","expiresInDays":90}'
+```
+
+The `apiKey` field is returned once. Use it on protected API endpoints with:
+
+```bash
+curl "$STYX_API_PUBLIC_URL/users/me" -H "x-api-key: $STYX_API_KEY"
+```
 
 ## CI Pipeline
 
