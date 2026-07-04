@@ -8,16 +8,25 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { CompliancePolicyService } from '../compliance/compliance-policy.service';
 import { SettlementService } from './settlement.service';
 import { ReconciliationService } from './reconciliation.service';
-import { Public } from '../../common/decorators/current-user.decorator';
+import { CurrentUser, Public } from '../../common/decorators/current-user.decorator';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { RoleGuard, Roles } from '../../common/guards/role.guard';
 import { JurisdictionDispositionMapper } from '../compliance/jurisdiction-disposition.mapper';
 import { toCents } from '../../../../shared/libs/money';
+import { MONTHLY_SUBSCRIPTION_PRICE } from '../../../services/billing';
 
 type StripeClient = InstanceType<typeof Stripe>;
 type StripeEvent = ReturnType<StripeClient['webhooks']['constructEvent']>;
 type StripePaymentIntent = Awaited<ReturnType<StripeClient['paymentIntents']['retrieve']>>;
 type StripeDispute = Awaited<ReturnType<StripeClient['disputes']['retrieve']>>;
+
+type SubscribeBody = {
+  paymentMethodId?: string;
+};
+
+const EARLY_ACCESS_SUBSCRIPTION_TRIAL_DAYS = 30;
+const EARLY_ACCESS_SUBSCRIPTION_CURRENCY = 'usd';
+const EARLY_ACCESS_SUBSCRIPTION_PRODUCT_NAME = 'Styx Early Access';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -45,6 +54,96 @@ export class PaymentsController implements OnModuleInit {
     if (process.env.NODE_ENV === 'production' && !this.webhookSecret) {
       this.logger.warn('STRIPE_WEBHOOK_SECRET is unset; Stripe webhook handling is disabled.');
     }
+  }
+
+  @Post('subscribe')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Start early-access subscription billing' })
+  async subscribe(
+    @CurrentUser() user: { id: string; email?: string },
+    @Body() body: SubscribeBody = {},
+  ) {
+    const paymentMethodId = this.resolvePaymentMethodId(body);
+    const userResult = await this.pool.query(
+      `SELECT id, email, stripe_customer_id, subscription_id
+       FROM users
+       WHERE id = $1`,
+      [user.id],
+    );
+
+    if (userResult.rows.length === 0) {
+      throw new BadRequestException('User account not found.');
+    }
+
+    const userRow = userResult.rows[0];
+    const customerId = await this.ensureStripeCustomer(
+      user.id,
+      userRow.email ?? user.email,
+      userRow.stripe_customer_id,
+    );
+
+    if (paymentMethodId) {
+      await this.attachDefaultPaymentMethod(customerId, paymentMethodId);
+    }
+
+    if (userRow.subscription_id) {
+      return this.formatSubscribeResponse({
+        subscriptionId: userRow.subscription_id,
+        customerId,
+        status: 'stored',
+        trialEndsAt: null,
+        reused: true,
+      });
+    }
+
+    const subscriptionParams: Stripe.SubscriptionCreateParams = {
+      customer: customerId,
+      items: [
+        {
+          price_data: {
+            currency: EARLY_ACCESS_SUBSCRIPTION_CURRENCY,
+            product_data: {
+              name: EARLY_ACCESS_SUBSCRIPTION_PRODUCT_NAME,
+            },
+            recurring: {
+              interval: 'month',
+            },
+            unit_amount: MONTHLY_SUBSCRIPTION_PRICE,
+          },
+        },
+      ],
+      metadata: {
+        product: 'early_access',
+        userId: user.id,
+      },
+      trial_period_days: EARLY_ACCESS_SUBSCRIPTION_TRIAL_DAYS,
+    };
+
+    if (paymentMethodId) {
+      subscriptionParams.default_payment_method = paymentMethodId;
+    }
+
+    const subscription = await this.stripe.subscriptions.create(
+      subscriptionParams,
+      { idempotencyKey: `styx-subscribe-${user.id}` },
+    );
+
+    await this.pool.query(
+      `UPDATE users
+       SET stripe_customer_id = $1,
+           subscription_id = $2
+       WHERE id = $3`,
+      [customerId, subscription.id, user.id],
+    );
+
+    return this.formatSubscribeResponse({
+      subscriptionId: subscription.id,
+      customerId,
+      status: subscription.status,
+      trialEndsAt: this.toStripeTimestampIso(subscription.trial_end),
+      reused: false,
+    });
   }
 
   @Get('disposition-policy/effective')
@@ -179,6 +278,81 @@ export class PaymentsController implements OnModuleInit {
     });
 
     return { message: 'Settlement job dispatched' };
+  }
+
+  private resolvePaymentMethodId(body: SubscribeBody | null | undefined): string | undefined {
+    const paymentMethodId = body?.paymentMethodId;
+    if (paymentMethodId === undefined) {
+      return undefined;
+    }
+
+    if (typeof paymentMethodId !== 'string' || paymentMethodId.trim().length === 0) {
+      throw new BadRequestException('paymentMethodId must be a non-empty string when provided.');
+    }
+
+    return paymentMethodId.trim();
+  }
+
+  private async ensureStripeCustomer(
+    userId: string,
+    email: string | undefined,
+    existingCustomerId: string | null,
+  ): Promise<string> {
+    if (existingCustomerId) {
+      return existingCustomerId;
+    }
+
+    const customer = await this.stripe.customers.create(
+      {
+        email,
+        metadata: { userId },
+      },
+      { idempotencyKey: `styx-customer-${userId}` },
+    );
+
+    await this.pool.query(
+      `UPDATE users
+       SET stripe_customer_id = $1
+       WHERE id = $2`,
+      [customer.id, userId],
+    );
+
+    return customer.id;
+  }
+
+  private async attachDefaultPaymentMethod(customerId: string, paymentMethodId: string): Promise<void> {
+    await this.stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
+    await this.stripe.customers.update(customerId, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId,
+      },
+    });
+  }
+
+  private toStripeTimestampIso(timestamp: number | null | undefined): string | null {
+    return typeof timestamp === 'number'
+      ? new Date(timestamp * 1000).toISOString()
+      : null;
+  }
+
+  private formatSubscribeResponse(params: {
+    subscriptionId: string;
+    customerId: string | null;
+    status: string;
+    trialEndsAt: string | null;
+    reused: boolean;
+  }) {
+    return {
+      subscriptionId: params.subscriptionId,
+      customerId: params.customerId,
+      status: params.status,
+      trialDays: EARLY_ACCESS_SUBSCRIPTION_TRIAL_DAYS,
+      trialEndsAt: params.trialEndsAt,
+      amountCents: MONTHLY_SUBSCRIPTION_PRICE,
+      currency: EARLY_ACCESS_SUBSCRIPTION_CURRENCY,
+      interval: 'month',
+      reused: params.reused,
+    };
   }
 
   @Post('webhook')

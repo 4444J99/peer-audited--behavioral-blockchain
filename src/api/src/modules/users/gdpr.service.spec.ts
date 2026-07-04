@@ -152,6 +152,7 @@ describe('GdprService', () => {
       expect(updateCall).toBeDefined();
       expect(updateCall![0]).toContain('date_of_birth = NULL');
       expect(updateCall![0]).toContain('stripe_customer_id = NULL');
+      expect(updateCall![0]).toContain('subscription_id = NULL');
       expect(updateCall![0]).toContain("compliance_metadata = '{}'::jsonb");
       expect(updateCall![0]).toContain('identity_verification_id = NULL');
       expect(updateCall![0]).toContain('identity_provider = NULL');

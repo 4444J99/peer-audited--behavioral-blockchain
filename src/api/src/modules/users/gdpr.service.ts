@@ -192,7 +192,7 @@ export class GdprService {
   ): Promise<void> {
     // 1. Anonymize the user record. Scrub every direct-PII / identity / compliance
     //    column, not just email/password (PRV3): geolocation, date_of_birth, the
-    //    Stripe customer linkage, KYC compliance_metadata, identity-provider refs
+    //    Stripe customer/subscription linkage, KYC compliance_metadata, identity-provider refs
     //    and Terms-of-Service acceptance metadata.
     await db.query(
       `UPDATE users SET
@@ -201,6 +201,7 @@ export class GdprService {
         last_known_state = NULL,
         date_of_birth = NULL,
         stripe_customer_id = NULL,
+        subscription_id = NULL,
         compliance_metadata = '{}'::jsonb,
         identity_verification_id = NULL,
         identity_provider = NULL,
