@@ -2,10 +2,10 @@
   "agent": "opencode",
   "status": "idle",
   "accepting_tasks": true,
-  "available_tokens": 43739085,
-  "available_pct": 87.5,
-  "current_task_id": "HEAL-cifix-organvm-peer-audited--behavioral-blockchain-719",
-  "heartbeat": "2026-07-04T05:02:36.303086+00:00",
-  "token_usage_pct": 12.52,
+  "available_tokens": 42990680,
+  "available_pct": 86.0,
+  "current_task_id": "HEAL-cifix-organvm-peer-audited--behavioral-blockchain-744",
+  "heartbeat": "2026-07-04T05:13:40.844003+00:00",
+  "token_usage_pct": 14.02,
   "clock_health": "ok"
 }
