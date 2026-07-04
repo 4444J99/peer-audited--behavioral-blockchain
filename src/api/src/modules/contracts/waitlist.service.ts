@@ -57,7 +57,7 @@ export class WaitlistService {
       `User ${userId} joined waitlist for cohort ${cohortId} at position ${mappedEntry.position}`,
     );
     if (entry.was_inserted) {
-      await this.sendEarlyAccessOnboarding(
+      void this.sendEarlyAccessOnboarding(
         userId,
         cohortId,
         mappedEntry.position,
