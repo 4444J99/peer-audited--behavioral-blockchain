@@ -12,9 +12,13 @@ import { CreateContractDto, SubmitProofDto } from "./dto";
 import { SurveyService } from "./survey.service";
 import { WaitlistService } from "./waitlist.service";
 import { TierGuard } from "../../guards/tier.guard";
+import { MeteredUsageService } from "../payments/metered-usage.service";
 
 const mockSurveyService = {} as unknown as SurveyService;
 const mockWaitlistService = {} as unknown as WaitlistService;
+const mockMeteredUsage = {
+  recordMeteredUsage: jest.fn(),
+} as unknown as MeteredUsageService;
 
 const mockContractsService = {
   getUserContracts: jest.fn(),
@@ -52,6 +56,7 @@ describe("ContractsController", () => {
       mockTruthLog,
       mockSurveyService,
       mockWaitlistService,
+      mockMeteredUsage,
     );
     jest.clearAllMocks();
   });
@@ -221,6 +226,45 @@ describe("ContractsController", () => {
       await expect(
         controller.submitProof("c1", testUser, proofDto),
       ).rejects.toThrow("Contract is not active");
+    });
+  });
+
+  describe("POST /contracts/:id/complete", () => {
+    it("should verify contract ownership and record metered usage once", async () => {
+      (mockContractsService.getContract as jest.Mock).mockResolvedValue({
+        id: "c1",
+        userId: "user-1",
+      });
+      (mockMeteredUsage.recordMeteredUsage as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await controller.complete("c1", testUser);
+
+      expect(mockContractsService.getContract).toHaveBeenCalledWith("c1", {
+        userId: "user-1",
+      });
+      expect(mockMeteredUsage.recordMeteredUsage).toHaveBeenCalledWith(
+        "user-1",
+        "proof_accepted",
+        "c1",
+      );
+      expect(result).toEqual({
+        contractId: "c1",
+        status: "COMPLETED",
+        usageRecorded: true,
+      });
+    });
+
+    it("should not record metered usage when ownership verification fails", async () => {
+      (mockContractsService.getContract as jest.Mock).mockRejectedValue(
+        new Error("Contract not found"),
+      );
+
+      await expect(controller.complete("missing", testUser)).rejects.toThrow(
+        "Contract not found",
+      );
+      expect(mockMeteredUsage.recordMeteredUsage).not.toHaveBeenCalled();
     });
   });
 
