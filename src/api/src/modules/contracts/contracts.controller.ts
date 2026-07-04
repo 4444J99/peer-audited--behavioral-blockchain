@@ -10,6 +10,7 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
+import { Pool } from "pg";
 import { ContractsService } from "./contracts.service";
 import {
   CreateContractDto,
@@ -20,17 +21,20 @@ import {
   EmotionalTrackingDto,
 } from "./dto";
 import { DisputeService } from "../../../services/escrow/dispute.service";
+import { StripeFboService } from "../../../services/escrow/stripe.service";
+import { LedgerService } from "../../../services/ledger/ledger.service";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
 import { AuthGuard } from "../../../guards/auth.guard";
 import { BannedUserGuard } from "../../guards/banned-user.guard";
 import { TierGuard } from "../../guards/tier.guard";
 import { GeofenceGuard } from "../../common/guards/geofence.guard";
 import { ComplianceAccessGuard } from "../../common/guards/compliance-access.guard";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { processIAP } from "../../../services/billing";
 import { MedicalExemptionService } from "../compliance/medical-exemption.service";
 import { SurveyService } from "./survey.service";
 import { WaitlistService } from "./waitlist.service";
 import { MeteredUsageService } from "../payments/metered-usage.service";
-import { PayService } from "../pay/pay.service";
 
 @ApiTags("Contracts")
 @ApiBearerAuth()
@@ -40,7 +44,10 @@ export class ContractsController {
     private readonly contractsService: ContractsService,
     private readonly medicalExemption: MedicalExemptionService,
     private readonly disputeService: DisputeService,
-    private readonly payService: PayService,
+    private readonly pool: Pool,
+    private readonly stripe: StripeFboService,
+    private readonly ledger: LedgerService,
+    private readonly truthLog: TruthLogService,
     private readonly surveyService: SurveyService,
     private readonly waitlistService: WaitlistService,
     private readonly meteredUsage: MeteredUsageService,
@@ -165,7 +172,14 @@ export class ContractsController {
     @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
-    return this.payService.purchaseTicket(user.id, contractId);
+    return processIAP(
+      this.pool,
+      this.stripe,
+      this.ledger,
+      this.truthLog,
+      user.id,
+      contractId,
+    );
   }
 
   @UseGuards(AuthGuard, GeofenceGuard)

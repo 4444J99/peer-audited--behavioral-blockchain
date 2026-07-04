@@ -1,19 +1,19 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { PaymentsController } from './payments.controller';
-import { ContractsModule } from '../contracts/contracts.module';
-import { NotificationsModule } from '../notifications/notifications.module';
-import { ComplianceModule } from '../compliance/compliance.module';
-import { B2BModule } from '../b2b/b2b.module';
-import { MeteredUsageService } from './metered-usage.service';
-import { PaymentRouterService } from './payment-router.service';
-import { StripeFBOService } from './stripe-fbo.service';
-import { StripePayoutProvider } from './stripe-payout.provider';
-import { SettlementService } from './settlement.service';
-import { SettlementWorker } from './settlement.worker';
-import { ReconciliationService } from './reconciliation.service';
-import { LedgerService } from '../../../services/ledger/ledger.service';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { StripeFboService } from '../../../services/escrow/stripe.service';
+import { Module, forwardRef } from "@nestjs/common";
+import { PaymentsController } from "./payments.controller";
+import { ContractsModule } from "../contracts/contracts.module";
+import { NotificationsModule } from "../notifications/notifications.module";
+import { ComplianceModule } from "../compliance/compliance.module";
+import { B2BModule } from "../b2b/b2b.module";
+import { MeteredUsageService } from "./metered-usage.service";
+import { PaymentRouterService } from "./payment-router.service";
+import { StripeFBOService } from "./stripe-fbo.service";
+import { StripePayoutProvider } from "./stripe-payout.provider";
+import { SettlementService } from "./settlement.service";
+import { SettlementWorker } from "./settlement.worker";
+import { ReconciliationService } from "./reconciliation.service";
+import { LedgerService } from "../../../services/ledger/ledger.service";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { StripeFboService } from "../../../services/escrow/stripe.service";
 
 @Module({
   imports: [
