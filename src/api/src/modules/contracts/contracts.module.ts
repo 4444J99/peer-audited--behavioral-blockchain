@@ -24,6 +24,7 @@ import {
 } from "../../../services/anomaly/anomaly.service";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { PaymentsModule } from "../payments/payments.module";
+import { PayModule } from "../pay/pay.module";
 import { EmailModule } from "../email/email.module";
 import Redis from "ioredis";
 import { getRedisConnectionConfig } from "../../../config/queue.config";
@@ -44,6 +45,7 @@ const redisProvider = {
     ScheduleModule.forRoot(),
     NotificationsModule,
     EmailModule,
+    PayModule,
     forwardRef(() => PaymentsModule),
   ],
   controllers: [ContractsController],
