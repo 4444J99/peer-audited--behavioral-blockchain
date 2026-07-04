@@ -4,7 +4,7 @@ Session: `019ea20f-2591-7230-8a9b-a67d8205d798`
 
 `organvm session export` reported 3 human messages in the review but extracted 0 prompt characters into this prompts artifact. The raw Codex session JSONL is still present at:
 
-`/Users/4jp/.codex/sessions/2026/06/07/rollout-2026-06-07T08-29-22-019ea20f-2591-7230-8a9b-a67d8205d798.jsonl`
+`~/.codex/sessions/2026/06/07/rollout-2026-06-07T08-29-22-019ea20f-2591-7230-8a9b-a67d8205d798.jsonl`
 
 Use these commands for the on-demand prompt/transcript surfaces:
 

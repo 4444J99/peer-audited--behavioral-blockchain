@@ -8,7 +8,7 @@
 - **Head SHA**: `4043c1422db3f6448e83f1c71b3b698b45a2c5f9`
 - **PR**: #669 (<https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/669>)
 - **CI Status**: `build_and_test` PASSED. `Analyze (javascript-typescript)` PASSED. PR is set to **auto-merge (squash)**.
-- **IRF**: Completion logged as `DONE-588` in `/Users/4jp/Code/organvm/organvm-corpvs-testamentvm/INST-INDEX-RERUM-FACIENDARUM.md`.
+- **IRF**: Completion logged as `DONE-588` in `~/Code/organvm/organvm-corpvs-testamentvm/INST-INDEX-RERUM-FACIENDARUM.md`.
 
 ## Completed Work
 

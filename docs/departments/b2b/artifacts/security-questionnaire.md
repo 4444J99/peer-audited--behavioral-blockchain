@@ -108,7 +108,7 @@ This document provides pre-filled answers to standard enterprise security questi
 | How are vulnerabilities managed? | GitHub Dependabot monitors all dependencies for known vulnerabilities. Alerts are triaged within 48 hours. Critical/high vulnerabilities are patched within 7 days. |
 | Is static analysis performed? | Yes. GitHub CodeQL runs on every pull request. Ruff linter enforces Python code quality. ESLint + TypeScript strict mode enforce frontend code quality. |
 | Is there a security audit in CI? | Yes. The CI pipeline includes: dependency vulnerability scanning (Dependabot), static analysis (CodeQL), linting (ruff, ESLint), type checking (TypeScript strict, Pyright). Security audit is one of 7 CI workflows. |
-| Is there a responsible disclosure policy? | Planned. Will be published at styx.app/.well-known/security.txt with a security@styx.app contact. |
+| Is there a responsible disclosure policy? | Planned. Will be published at styx.app/.well-known/security.txt with a [email redacted] contact. |
 
 ## 9. Subprocessors
 

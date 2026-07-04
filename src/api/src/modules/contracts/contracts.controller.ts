@@ -34,7 +34,6 @@ import { processIAP } from "../../../services/billing";
 import { MedicalExemptionService } from "../compliance/medical-exemption.service";
 import { SurveyService } from "./survey.service";
 import { WaitlistService } from "./waitlist.service";
-import { MeteredUsageService } from "../payments/metered-usage.service";
 
 @ApiTags("Contracts")
 @ApiBearerAuth()
@@ -50,7 +49,6 @@ export class ContractsController {
     private readonly truthLog: TruthLogService,
     private readonly surveyService: SurveyService,
     private readonly waitlistService: WaitlistService,
-    private readonly meteredUsage: MeteredUsageService,
   ) {}
 
   @UseGuards(AuthGuard, GeofenceGuard)
@@ -123,26 +121,6 @@ export class ContractsController {
       ...dto,
       userId: user.id,
     });
-  }
-
-  @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
-  @Post(":id/complete")
-  @ApiOperation({
-    summary:
-      "Mark a contract complete and record a billable proof_accepted usage event",
-  })
-  async complete(
-    @Param("id") contractId: string,
-    @CurrentUser() user: { id: string },
-  ) {
-    await this.contractsService.getContract(contractId, { userId: user.id });
-    await this.meteredUsage.recordMeteredUsage(
-      user.id,
-      "proof_accepted",
-      contractId,
-    );
-
-    return { contractId, status: "COMPLETED", usageRecorded: true };
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)

@@ -23,7 +23,7 @@ function requireApiBase(): string {
 
 const API_BASE = requireApiBase();
 const DEMO_USER = {
-  email: "demo@styx.protocol",
+  email: "[email redacted]",
   password: "demo-password-123",
 }; // allow-secret
 

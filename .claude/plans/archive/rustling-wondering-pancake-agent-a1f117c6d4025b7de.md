@@ -2,7 +2,7 @@
 
 **Objective**: Thoroughly explore the Styx project to determine what is ACTUALLY implemented vs claimed, with detailed documentation of stubs, tests, and implementation status across all workspaces.
 
-**Repository**: `/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/`
+**Repository**: `~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/`
 
 ## Phase 1: Service Layer Deep Dive (src/api/services/)
 

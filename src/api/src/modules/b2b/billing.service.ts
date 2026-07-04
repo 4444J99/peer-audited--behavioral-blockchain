@@ -1,14 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 
-export const METERED_EVENT_TYPES = [
-  'phash_scan',
-  'gemini_call',
-  'anomaly_detection',
-  'proof_accepted',
-] as const;
-
-export type MeteredEventType = (typeof METERED_EVENT_TYPES)[number];
+export type MeteredEventType = 'phash_scan' | 'gemini_call' | 'anomaly_detection';
 
 type StripeClient = InstanceType<typeof Stripe>;
 
@@ -59,7 +52,7 @@ export class BillingService {
    */
   async recordUsage(
     enterpriseId: string,
-    metric: MeteredEventType,
+    metric: 'phash_scan' | 'gemini_call' | 'anomaly_detection',
     quantity: number = 1,
     eventId?: string,
   ): Promise<void> {
@@ -165,7 +158,7 @@ export class BillingService {
 
     const meters = await this.stripe.billing.meters.list({ status: 'active', limit: 100 });
     const relevantMeters = meters.data.filter((meter) =>
-      (METERED_EVENT_TYPES as readonly string[]).includes(meter.event_name),
+      ['phash_scan', 'gemini_call', 'anomaly_detection'].includes(meter.event_name),
     );
 
     const summaries = await Promise.all(

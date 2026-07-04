@@ -93,4 +93,3 @@ export interface ReleaseInfoResponse {
 }
 
 export * from "./libs/behavioral-enhancements";
-export * from "./libs/integrity";

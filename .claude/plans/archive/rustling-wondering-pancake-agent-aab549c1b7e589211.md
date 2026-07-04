@@ -1,7 +1,7 @@
 # Styx Frontend Completeness & Cross-Cutting Concerns Investigation
 
 **Project**: peer-audited--behavioral-blockchain (Styx)  
-**Location**: /Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain  
+**Location**: ~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain  
 **Status**: CANDIDATE promotion  
 **Created**: 2026-02-23
 

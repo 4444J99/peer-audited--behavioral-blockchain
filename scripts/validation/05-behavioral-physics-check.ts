@@ -6,7 +6,7 @@
  * 2. Dynamic downscaling (max stake reduced after 3+ failures)
  * 3. Stake tier limits (can't exceed tier max)
  *
- * Uses a deterministic seeded test user (gate05-physics@styx.protocol)
+ * Uses a deterministic seeded test user ([email redacted])
  * to avoid probabilistic "at least 1/3" assertions.
  */
 
@@ -27,7 +27,7 @@ function requireApiBase(): string {
 
 const API_BASE = requireApiBase();
 const SEEDED_USER = {
-  email: "gate05-physics@styx.protocol",
+  email: "[email redacted]",
   password: "G@te05-Phys1cs!Test",
 }; // allow-secret
 

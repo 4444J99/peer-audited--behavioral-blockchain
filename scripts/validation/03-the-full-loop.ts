@@ -24,12 +24,12 @@ const API_BASE = requireApiBase();
 
 // Demo credentials — must match seed.sql (password: demo-password-123, bcrypt cost 10)
 const DEMO_USER = {
-  email: "demo@styx.protocol",
+  email: "[email redacted]",
   password: "demo-password-123",
 }; // allow-secret
 const FURY_USERS = [
-  { email: "fury@styx.protocol", password: "demo-password-123" }, // allow-secret
-  { email: "admin@styx.protocol", password: "demo-password-123" }, // allow-secret
+  { email: "[email redacted]", password: "demo-password-123" }, // allow-secret
+  { email: "[email redacted]", password: "demo-password-123" }, // allow-secret
 ];
 
 async function request<T>(

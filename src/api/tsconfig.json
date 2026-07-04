@@ -11,7 +11,6 @@
     "sourceMap": true,
     "noEmit": false,
     "outDir": "./dist",
-    "rootDir": "../",
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
@@ -20,6 +19,6 @@
     "resolveJsonModule": true,
     "types": ["jest", "node"]
   },
-  "include": ["src/**/*.ts", "api/**/*.ts", "../shared/**/*.ts"],
+  "include": ["src/**/*.ts", "api/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

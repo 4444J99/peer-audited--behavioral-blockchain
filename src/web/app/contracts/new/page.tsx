@@ -434,7 +434,7 @@ function NewContractPageContent() {
                 type="email"
                 value={apEmail}
                 onChange={(e) => setApEmail(e.target.value)}
-                placeholder="friend@example.com"
+                placeholder="[email redacted]"
                 className="w-full p-3 bg-neutral-900 border border-neutral-800 rounded-xl text-white focus:border-amber-600 focus:outline-none"
               />
               <p className="text-xs text-neutral-600 mt-1">Your AP will co-sign daily attestations and can cancel the contract if needed.</p>

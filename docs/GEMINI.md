@@ -114,7 +114,7 @@ Transcripts are on-demand (never committed):
 
 Plans: 269 indexed | Chains: 5 available | SOPs: 8 active
 Discover: `organvm plans search <query>` | `organvm chains list` | `organvm sop lifecycle`
-Library: `/Users/4jp/Code/organvm/praxis-perpetua/library`
+Library: `~/Code/organvm/praxis-perpetua/library`
 
 
 ## Active Directives
