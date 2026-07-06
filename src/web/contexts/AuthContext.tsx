@@ -11,6 +11,7 @@ interface User {
   role: string;
   status?: string;
   created_at?: string;
+  is_premium?: boolean;
   failed_contracts?: number;
   failedContracts?: number;
   compliance?: {

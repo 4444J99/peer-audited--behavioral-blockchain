@@ -6,10 +6,7 @@ import { RoleGuard } from '../../common/guards/role.guard';
 
 describe('EnforcementController', () => {
   let controller: EnforcementController;
-  let enforcementService: {
-    evaluateCollusion: jest.Mock;
-    appealCase: jest.Mock;
-  };
+  let enforcementService: any;
 
   beforeEach(async () => {
     enforcementService = {
@@ -19,7 +16,9 @@ describe('EnforcementController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [EnforcementController],
-      providers: [{ provide: EnforcementService, useValue: enforcementService }],
+      providers: [
+        { provide: EnforcementService, useValue: enforcementService },
+      ],
     })
       .overrideGuard(AuthGuard)
       .useValue({ canActivate: () => true })
@@ -35,35 +34,29 @@ describe('EnforcementController', () => {
   });
 
   describe('evaluate', () => {
-    it('calls enforcementService.evaluateCollusion and returns success', async () => {
+    it('should call enforcementService.evaluateCollusion and return success', async () => {
       enforcementService.evaluateCollusion.mockResolvedValue(undefined);
 
       const dto = { proofId: 'proof-123', flaggedFuries: ['fury-1', 'fury-2'] };
       const result = await controller.evaluate(dto);
 
-      expect(enforcementService.evaluateCollusion).toHaveBeenCalledWith(
-        'proof-123',
-        ['fury-1', 'fury-2'],
-      );
+      expect(enforcementService.evaluateCollusion).toHaveBeenCalledWith('proof-123', ['fury-1', 'fury-2']);
       expect(result).toEqual({ success: true });
     });
   });
 
   describe('appeal', () => {
-    it('calls enforcementService.appealCase and returns the result', async () => {
+    it('should call enforcementService.appealCase and return the result', async () => {
       const appealResult = { caseId: 'case-456', status: 'PENDING' };
       enforcementService.appealCase.mockResolvedValue(appealResult);
 
       const user = { id: 'user-789' };
       const dto = { reason: 'I was unfairly flagged' };
+      const caseId = 'case-456';
 
-      const result = await controller.appeal('case-456', user, dto);
+      const result = await controller.appeal(caseId, user, dto);
 
-      expect(enforcementService.appealCase).toHaveBeenCalledWith(
-        'case-456',
-        'user-789',
-        'I was unfairly flagged',
-      );
+      expect(enforcementService.appealCase).toHaveBeenCalledWith('case-456', 'user-789', 'I was unfairly flagged');
       expect(result).toEqual(appealResult);
     });
   });

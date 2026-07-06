@@ -93,7 +93,7 @@ export class UsersService {
       `SELECT id, email, integrity_score, role, status, created_at,
               kyc_status, age_verification_status, identity_provider,
               identity_verification_id, identity_verified_at,
-              terms_accepted_at, terms_version
+              terms_accepted_at, terms_version, is_premium
        FROM users WHERE id = $1`,
       [userId],
     );
@@ -137,6 +137,7 @@ export class UsersService {
         terms_accepted_at: row.terms_accepted_at ?? null,
         terms_version: row.terms_version ?? null,
       },
+      is_premium: row.is_premium || false,
     };
   }
 
