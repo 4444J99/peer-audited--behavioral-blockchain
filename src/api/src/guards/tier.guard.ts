@@ -16,6 +16,7 @@ export enum AccessTier {
 const EARLY_ACCESS_MAX_ACTIVE_CONTRACTS = 3;
 const EARLY_ACCESS_MAX_ESCROW_USD = 0;
 const MVP_39_REFUNDABLE_STAKE_USD = 30;
+const EARLY_ACCESS_199_REFUNDABLE_STAKE_USD = 199;
 
 @Injectable()
 export class TierGuard implements CanActivate {
@@ -38,9 +39,7 @@ export class TierGuard implements CanActivate {
       throw new ForbiddenException("User account not found.");
     }
 
-    const accessTier = this.normalizeAccessTier(
-      userResult.rows[0].access_tier,
-    );
+    const accessTier = this.normalizeAccessTier(userResult.rows[0].access_tier);
 
     if (accessTier === AccessTier.PRO) {
       return true;
@@ -53,9 +52,12 @@ export class TierGuard implements CanActivate {
     }
 
     const requestedEscrowUsd = this.resolveRequestedEscrowUsd(request.body);
-    if (requestedEscrowUsd > EARLY_ACCESS_MAX_ESCROW_USD) {
+    if (
+      requestedEscrowUsd > EARLY_ACCESS_MAX_ESCROW_USD &&
+      !this.isEarlyAccessPaidPlan(request.body)
+    ) {
       throw new ForbiddenException(
-        "Early-access users are limited to $0 escrow contracts.",
+        "Early-access users are limited to $0 escrow contracts unless using an early-access pricing plan.",
       );
     }
 
@@ -93,6 +95,9 @@ export class TierGuard implements CanActivate {
     if (body?.pricing?.plan === "MVP_39") {
       return MVP_39_REFUNDABLE_STAKE_USD;
     }
+    if (this.isEarlyAccessPaidPlan(body)) {
+      return EARLY_ACCESS_199_REFUNDABLE_STAKE_USD;
+    }
 
     const amount = Number(body?.stakeAmount ?? 0);
     if (!Number.isFinite(amount)) {
@@ -100,5 +105,9 @@ export class TierGuard implements CanActivate {
     }
 
     return amount;
+  }
+
+  private isEarlyAccessPaidPlan(body: any): boolean {
+    return body?.pricing?.plan === "EARLY_ACCESS_199";
   }
 }

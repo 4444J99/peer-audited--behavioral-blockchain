@@ -47,12 +47,10 @@ describe("ContractsService", () => {
   } as unknown as FuryRouterService;
 
   const mockDispute = {
-    initiateAppeal: jest
-      .fn()
-      .mockResolvedValue({
-        appealStatus: "FEE_AUTHORIZED_PENDING_REVIEW",
-        paymentIntentId: "pi_appeal_1",
-      }),
+    initiateAppeal: jest.fn().mockResolvedValue({
+      appealStatus: "FEE_AUTHORIZED_PENDING_REVIEW",
+      paymentIntentId: "pi_appeal_1",
+    }),
   } as unknown as DisputeService;
 
   const mockAegis = {
@@ -311,6 +309,38 @@ describe("ContractsService", () => {
         totalEntryUsd: 39,
         platformFeeUsd: 9,
         refundableStakeUsd: 30,
+      });
+    });
+
+    it("should enforce EARLY_ACCESS_199 pricing as a $199 refundable stake with no uncollected fee", async () => {
+      const earlyAccessDto: CreateContractInput = {
+        ...validDto,
+        stakeAmount: 10,
+        pricing: { plan: "EARLY_ACCESS_199" as any },
+      };
+
+      const highScoreUser = { ...activeUser, integrity_score: 150 };
+
+      mockPool.query.mockResolvedValueOnce({ rows: [highScoreUser] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "contract-1" }] }); // Insert
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // Update active
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] }); // Prior contracts
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "escrow-acct" }] }); // Escrow
+
+      const result = await service.createContract(earlyAccessDto);
+
+      expect(mockStripe.holdStake).toHaveBeenCalledWith(
+        "cus_test_1",
+        19900,
+        "contract-1",
+      );
+      expect(result.pricing).toEqual({
+        plan: "EARLY_ACCESS_199",
+        totalEntryUsd: 199,
+        platformFeeUsd: 0,
+        refundableStakeUsd: 199,
       });
     });
 
