@@ -225,7 +225,7 @@ export class CreateContractDto {
 
   @ApiPropertyOptional({
     description:
-      "Optional pricing plan metadata (MVP_39 enforces $30 stake with $9 platform fee metadata; EARLY_ACCESS_199 enforces a $150 refundable stake)",
+      "Optional pricing plan metadata (MVP_39 enforces $30 stake with $9 platform fee metadata; EARLY_ACCESS_199 enforces a $199 refundable stake)",
     type: PricingPlanDto,
   })
   @IsOptional()

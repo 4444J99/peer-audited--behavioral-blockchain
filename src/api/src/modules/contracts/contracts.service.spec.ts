@@ -47,12 +47,10 @@ describe("ContractsService", () => {
   } as unknown as FuryRouterService;
 
   const mockDispute = {
-    initiateAppeal: jest
-      .fn()
-      .mockResolvedValue({
-        appealStatus: "FEE_AUTHORIZED_PENDING_REVIEW",
-        paymentIntentId: "pi_appeal_1",
-      }),
+    initiateAppeal: jest.fn().mockResolvedValue({
+      appealStatus: "FEE_AUTHORIZED_PENDING_REVIEW",
+      paymentIntentId: "pi_appeal_1",
+    }),
   } as unknown as DisputeService;
 
   const mockAegis = {
@@ -314,7 +312,7 @@ describe("ContractsService", () => {
       });
     });
 
-    it("should enforce EARLY_ACCESS_199 pricing as a $150 refundable stake with no uncollected fee", async () => {
+    it("should enforce EARLY_ACCESS_199 pricing as a $199 refundable stake with no uncollected fee", async () => {
       const earlyAccessDto: CreateContractInput = {
         ...validDto,
         stakeAmount: 10,
@@ -335,14 +333,14 @@ describe("ContractsService", () => {
 
       expect(mockStripe.holdStake).toHaveBeenCalledWith(
         "cus_test_1",
-        15000,
+        19900,
         "contract-1",
       );
       expect(result.pricing).toEqual({
         plan: "EARLY_ACCESS_199",
-        totalEntryUsd: 150,
+        totalEntryUsd: 199,
         platformFeeUsd: 0,
-        refundableStakeUsd: 150,
+        refundableStakeUsd: 199,
       });
     });
 

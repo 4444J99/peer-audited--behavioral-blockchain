@@ -99,6 +99,23 @@ describe("TierGuard", () => {
     ).rejects.toThrow(/limited to \$0 escrow/);
   });
 
+  it("allows early-access users to use the explicit EARLY_ACCESS_199 plan below the active-contract cap", async () => {
+    mockPool.query
+      .mockResolvedValueOnce({
+        rows: [{ access_tier: AccessTier.EARLY_ACCESS }],
+      })
+      .mockResolvedValueOnce({ rows: [{ count: 2 }] });
+
+    await expect(
+      guard.canActivate(
+        createContext(
+          { id: "user-1" },
+          { stakeAmount: 1, pricing: { plan: "EARLY_ACCESS_199" } },
+        ),
+      ),
+    ).resolves.toBe(true);
+  });
+
   it("denies early-access users at the active-contract cap", async () => {
     mockPool.query
       .mockResolvedValueOnce({
