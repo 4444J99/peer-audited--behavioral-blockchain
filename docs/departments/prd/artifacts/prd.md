@@ -34,7 +34,7 @@ Styx is a peer-audited behavioral market that uses loss aversion to enforce habi
 1. **Oath creation.** A user creates a behavioral contract (an "Oath") specifying the habit, verification criteria, duration, and financial stake ($39 standard contract).
 2. **Vault funding.** The stake is deposited into an FBO (For Benefit Of) escrow account via Stripe. The money is real and at risk.
 3. **Proof submission.** At each verification window, the user submits proof of compliance (photo, check-in, or sensor data).
-4. **Fury audit.** A decentralized network of peer auditors ("Furies") reviews the proof. A quorum of 3-of-5 must agree on pass/fail. Auditors stake $2 of their own money to participate, aligning incentives.
+4. **Fury audit.** A decentralized network of peer auditors ("Furies") reviews the proof. A quorum of 2-of-3 must agree on pass/fail. Auditors stake $2 of their own money to participate, aligning incentives.
 5. **Settlement.** On contract completion, the user's stake is returned. On failure, the stake is forfeited (distributed to Furies and the platform).
 6. **Integrity scoring.** A persistent reputation score (base 50 + completions - penalties) determines stake limits, Fury eligibility, and platform trust tier.
 
@@ -78,7 +78,7 @@ See `docs/planning/user-personas.md` for detailed persona profiles.
 
 - Auditors apply and are vetted (minimum integrity score, identity verification)
 - $2 auditor stake per assignment (skin in the game)
-- 3-of-5 quorum for pass/fail decisions
+- 2-of-3 quorum for pass/fail decisions
 - Round-robin assignment with conflict-of-interest detection
 - Auditor reputation tracking and ejection for bad-faith audits
 
