@@ -2,6 +2,11 @@
 
 A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes.
 
+> **The expensive problem:** Accountability and corporate-wellness programs leak money because the stakes aren't real, the proof isn't audited, and holding employees' health data is a liability nobody wants to own. Budgets buy good intentions and get no follow-through. Styx is the production-grade enforcement layer that closes the gap: real Stripe FBO escrow (hold / capture / cancel), a double-entry ledger with no phantom money, peer-audited proof-of-completion via the Fury Router (honeypot injection + consensus + bounty economy), loss-aversion physics (λ = 1.955), and a privacy-firewalled B2B tier where the employer funds the pot but never sees an individual's health data — only k-anonymized aggregate engagement.
+>
+> [**Deploy this for your shop →**](mailto:padavano.anthony@gmail.com)<br>
+> *(If you are a technical recruiter or engineering leader, this repository is the proof-of-work for my architectural weight — a NestJS + Next.js + React Native + Tauri monorepo moving regulated money through a double-entry ledger and Stripe escrow, with 1,107 tests, KYC, geofencing, and CodeQL gates. [Work with the team that built this →](mailto:padavano.anthony@gmail.com))*
+
 ![CI](https://github.com/a-organvm/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-339933)
@@ -233,7 +238,9 @@ Full policy and gate ownership live in `docs/planning/beta-readiness-contract.md
 
 ## API Documentation
 
-Interactive Swagger/OpenAPI docs are available at `/api/docs` when the API is running:
+Customer-facing API and usage docs live at [`docs/api/api--spec.md`](docs/api/api--spec.md).
+Interactive Swagger/OpenAPI docs are also available at `/api/docs` in
+non-production environments when the API is running:
 
 ```bash
 npm run dev:api
@@ -257,12 +264,34 @@ Copy `.env.example` to `.env` and set:
 | `CLOUDFLARE_R2_ACCESS_KEY`              | Yes                                                | R2 storage access key                                                   |
 | `CLOUDFLARE_R2_SECRET_KEY`              | Yes                                                | R2 storage secret key                                                   |
 | `JWT_SECRET`                            | Yes (prod)                                         | JWT signing secret (enforced in production)                             |
+| `STYX_API_KEY_PEPPER`                   | Yes                                                | Scrypt pepper for stored user API-key verifiers                         |
 | `GEMINI_API_KEY`                        | No                                                 | Gemini AI for goal ethics screening                                     |
 | `KYC_ENFORCEMENT_ENABLED`               | No                                                 | Enable KYC gating (default: `false`)                                    |
 | `GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS` | No                                                 | Fail-open when geo headers missing (default: `true`)                    |
 | `BETA_API_URL`                          | No (required for full beta readiness verification) | Target API URL for `npm run beta:readiness`                             |
 | `BETA_WEB_URL`                          | No                                                 | Optional target web URL for beta readiness                              |
 | `BETA_ENV_LABEL`                        | No                                                 | Expected environment label for `/meta/release` (default: `beta`)        |
+
+The API loads env files through `src/api/src/config/env-path.ts` in this order:
+repo `.env.local`, repo `.env`, `src/api/.env.local`, then `src/api/.env`.
+Set `STYX_API_KEY_PEPPER` in the selected file or deployment secret store before
+issuing or verifying API keys. Generate it with `openssl rand -base64 48`; do not
+reuse `JWT_SECRET`.
+
+User API keys are issued from an authenticated session:
+
+```bash
+curl -X POST "$STYX_API_PUBLIC_URL/auth/api-keys" \
+  -H "Authorization: Bearer $JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"automation","expiresInDays":90}'
+```
+
+The `apiKey` field is returned once. Use it on protected API endpoints with:
+
+```bash
+curl "$STYX_API_PUBLIC_URL/users/me" -H "x-api-key: $STYX_API_KEY"
+```
 
 ## CI Pipeline
 
