@@ -36,7 +36,8 @@ src/mobile/ios_simulator*.png
 src/desktop/dist/
 src/desktop/src-tauri/target/
 src/web/.next/
-src/web/tsconfig.tsbuildinfo
+*.tsbuildinfo
+traceDir/
 src/desktop/.turbo/
 src/mobile/.turbo/
 src/web/.turbo/
