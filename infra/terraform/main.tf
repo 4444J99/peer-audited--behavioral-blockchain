@@ -120,15 +120,15 @@ resource "render_web_service" "styx_api" {
   }
 
   env_vars = {
-    NODE_ENV             = { value = var.environment }
-    DATABASE_URL         = { value = var.database_url }
-    REDIS_URL            = { value = var.redis_url }
-    STRIPE_SECRET_KEY    = { value = var.stripe_secret_key }
-    JWT_SECRET           = { value = var.jwt_secret }
-    STYX_API_KEY_PEPPER  = { value = var.api_key_pepper }
-    ANONYMIZE_SALT       = { value = var.anonymize_salt }
-    R2_ENDPOINT          = { value = "https://${var.cloudflare_account_id}.r2.cloudflarestorage.com" }
-    R2_BUCKET            = { value = cloudflare_r2_bucket.styx_proofs.name }
+    NODE_ENV            = { value = var.environment }
+    DATABASE_URL        = { value = var.database_url }
+    REDIS_URL           = { value = var.redis_url }
+    STRIPE_SECRET_KEY   = { value = var.stripe_secret_key }
+    JWT_SECRET          = { value = var.jwt_secret }
+    STYX_API_KEY_PEPPER = { value = var.api_key_pepper }
+    ANONYMIZE_SALT      = { value = var.anonymize_salt }
+    R2_ENDPOINT         = { value = "https://${var.cloudflare_account_id}.r2.cloudflarestorage.com" }
+    R2_BUCKET           = { value = cloudflare_r2_bucket.styx_proofs.name }
   }
 
   health_check_path = "/health"
