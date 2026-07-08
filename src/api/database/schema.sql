@@ -2,6 +2,7 @@
 -- Enforce absolute financial integrity for user stakes and bounties.
 
 CREATE TYPE account_type AS ENUM ('ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE');
+CREATE TYPE access_tier AS ENUM ('free', 'early_access', 'pro');
 
 CREATE TABLE accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -59,10 +60,11 @@ CREATE TABLE users (
     integrity_score INTEGER DEFAULT 50,
     account_id UUID REFERENCES accounts(id),
     role TEXT DEFAULT 'USER',
+    access_tier access_tier NOT NULL DEFAULT 'early_access',
     enterprise_id UUID,
     status TEXT DEFAULT 'ACTIVE', last_known_state TEXT, social_guild_id UUID,
     deletion_requested_at TIMESTAMPTZ,
-    is_premium BOOLEAN DEFAULT FALSE,
+    is_premium BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -252,6 +254,26 @@ CREATE TABLE refresh_tokens (
 CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
 
+-- User API keys for authenticated API clients.
+CREATE TABLE api_keys (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    key_id TEXT NOT NULL UNIQUE,
+    key_hash TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    prefix TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked_at TIMESTAMPTZ,
+    last_used_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_api_keys_user_id ON api_keys(user_id);
+CREATE INDEX idx_api_keys_key_id ON api_keys(key_id);
+CREATE INDEX idx_api_keys_active_lookup
+  ON api_keys(key_id)
+  WHERE revoked_at IS NULL;
+
 -- Account lockout columns
 ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;
@@ -438,3 +460,8 @@ CREATE INDEX IF NOT EXISTS idx_fury_assignments_realm_id ON fury_assignments(rea
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS realm_preferences JSONB DEFAULT '{}';
 
+COMMENT ON COLUMN users.access_tier IS
+  'Product access tier: free cannot create contracts, early_access is capped, pro has full contract creation access.';
+
+COMMENT ON COLUMN users.is_premium IS
+  'Consumer premium membership flag exposed on the authenticated user profile.';

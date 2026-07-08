@@ -20,7 +20,8 @@ artifacts/
 .vscode/
 
 # TypeScript artifacts in source directories
-**/tsconfig.tsbuildinfo
+**/*.tsbuildinfo
+traceDir/
 src/api/**/*.js
 src/api/**/*.js.map
 src/api/**/*.d.ts
