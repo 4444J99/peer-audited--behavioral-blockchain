@@ -34,6 +34,7 @@ describe('Swagger Documentation', () => {
       .setDescription('Peer-audited behavioral market — the Blockchain of Truth')
       .setVersion('0.1.0')
       .addBearerAuth()
+      .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'apiKey')
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api/docs', app, document);
@@ -59,5 +60,6 @@ describe('Swagger Documentation', () => {
     expect(response.body.info.title).toBe('Styx API');
     expect(response.body.info.version).toBe('0.1.0');
     expect(response.body.components.securitySchemes).toHaveProperty('bearer');
+    expect(response.body.components.securitySchemes).toHaveProperty('apiKey');
   });
 });
