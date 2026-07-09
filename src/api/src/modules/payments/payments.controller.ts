@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Req, Res, Logger, RawBodyRequest, OnModuleInit, UseGuards, Param, Body, BadRequestException, Query } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, Logger, RawBodyRequest, OnModuleInit, UseGuards, Param, Body, BadRequestException, Query, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint, ApiBearerAuth } from '@nestjs/swagger';
 import { Pool } from 'pg';
 import { Request, Response } from 'express';
@@ -19,6 +19,7 @@ type StripeClient = InstanceType<typeof Stripe>;
 type StripeEvent = ReturnType<StripeClient['webhooks']['constructEvent']>;
 type StripePaymentIntent = Awaited<ReturnType<StripeClient['paymentIntents']['retrieve']>>;
 type StripeDispute = Awaited<ReturnType<StripeClient['disputes']['retrieve']>>;
+type StripeSubscription = Awaited<ReturnType<StripeClient['subscriptions']['retrieve']>>;
 
 type SubscribeBody = {
   paymentMethodId?: string;
@@ -27,6 +28,7 @@ type SubscribeBody = {
 const EARLY_ACCESS_SUBSCRIPTION_TRIAL_DAYS = 30;
 const EARLY_ACCESS_SUBSCRIPTION_CURRENCY = 'usd';
 const EARLY_ACCESS_SUBSCRIPTION_PRODUCT_NAME = 'Styx Early Access';
+const REUSABLE_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing', 'past_due']);
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -66,7 +68,7 @@ export class PaymentsController implements OnModuleInit {
   ) {
     const paymentMethodId = this.resolvePaymentMethodId(body);
     const userResult = await this.pool.query(
-      `SELECT id, email, stripe_customer_id, subscription_id
+      `SELECT id, email, stripe_customer_id, subscription_id, status, access_tier
        FROM users
        WHERE id = $1`,
       [user.id],
@@ -77,6 +79,8 @@ export class PaymentsController implements OnModuleInit {
     }
 
     const userRow = userResult.rows[0];
+    this.assertActiveBillingUser(userRow);
+
     const customerId = await this.ensureStripeCustomer(
       user.id,
       userRow.email ?? user.email,
@@ -88,15 +92,91 @@ export class PaymentsController implements OnModuleInit {
     }
 
     if (userRow.subscription_id) {
-      return this.formatSubscribeResponse({
-        subscriptionId: userRow.subscription_id,
-        customerId,
-        status: 'stored',
-        trialEndsAt: null,
-        reused: true,
+      const storedSubscription = await this.refreshStoredSubscription(
+        user.id,
+        userRow.subscription_id,
+        paymentMethodId,
+      );
+      if (!storedSubscription) {
+        await this.clearStoredSubscription(user.id);
+      } else {
+        return this.formatSubscribeResponse({
+          subscriptionId: storedSubscription.id,
+          customerId,
+          status: storedSubscription.status,
+          trialEndsAt: this.toStripeTimestampIso(storedSubscription.trial_end),
+          reused: true,
+        });
+      }
+    }
+
+    const subscription = await this.createEarlyAccessSubscription(user.id, customerId, paymentMethodId);
+
+    try {
+      await this.persistSubscription(user.id, customerId, subscription.id);
+    } catch (error) {
+      await this.cancelSubscriptionQuietly(
+        subscription.id,
+        `local subscription persistence failed for user ${user.id}`,
+      );
+      throw error;
+    }
+
+    return this.formatSubscribeResponse({
+      subscriptionId: subscription.id,
+      customerId,
+      status: subscription.status,
+      trialEndsAt: this.toStripeTimestampIso(subscription.trial_end),
+      reused: false,
+    });
+  }
+
+  private assertActiveBillingUser(userRow: { status?: unknown }): void {
+    if (String(userRow.status || '').toUpperCase() !== 'ACTIVE') {
+      throw new ForbiddenException('An active account is required to start subscription billing.');
+    }
+  }
+
+  private async refreshStoredSubscription(
+    userId: string,
+    subscriptionId: string,
+    paymentMethodId: string | undefined,
+  ): Promise<StripeSubscription | null> {
+    const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+    if (!this.isReusableSubscription(subscription)) {
+      this.logger.warn(
+        `Stored subscription ${subscriptionId} for user ${userId} is ${subscription.status}; clearing before replacement.`,
+      );
+      return null;
+    }
+
+    if (paymentMethodId) {
+      return this.stripe.subscriptions.update(subscriptionId, {
+        default_payment_method: paymentMethodId,
       });
     }
 
+    return subscription;
+  }
+
+  private isReusableSubscription(subscription: StripeSubscription): boolean {
+    return REUSABLE_SUBSCRIPTION_STATUSES.has(String(subscription.status || ''));
+  }
+
+  private async clearStoredSubscription(userId: string): Promise<void> {
+    await this.pool.query(
+      `UPDATE users
+       SET subscription_id = NULL
+       WHERE id = $1`,
+      [userId],
+    );
+  }
+
+  private async createEarlyAccessSubscription(
+    userId: string,
+    customerId: string,
+    paymentMethodId: string | undefined,
+  ): Promise<StripeSubscription> {
     const subscriptionParams: Stripe.SubscriptionCreateParams = {
       customer: customerId,
       items: [
@@ -115,7 +195,10 @@ export class PaymentsController implements OnModuleInit {
       ],
       metadata: {
         product: 'early_access',
-        userId: user.id,
+        userId,
+      },
+      payment_settings: {
+        save_default_payment_method: 'on_subscription',
       },
       trial_period_days: EARLY_ACCESS_SUBSCRIPTION_TRIAL_DAYS,
     };
@@ -124,26 +207,42 @@ export class PaymentsController implements OnModuleInit {
       subscriptionParams.default_payment_method = paymentMethodId;
     }
 
-    const subscription = await this.stripe.subscriptions.create(
+    return this.stripe.subscriptions.create(
       subscriptionParams,
-      { idempotencyKey: `styx-subscribe-${user.id}` },
+      { idempotencyKey: `styx-subscribe-${userId}` },
     );
+  }
 
+  private async persistSubscription(
+    userId: string,
+    customerId: string,
+    subscriptionId: string,
+  ): Promise<void> {
     await this.pool.query(
       `UPDATE users
        SET stripe_customer_id = $1,
-           subscription_id = $2
+           subscription_id = $2,
+           access_tier = CASE
+             WHEN access_tier = 'free' THEN 'early_access'::access_tier
+             ELSE access_tier
+           END
        WHERE id = $3`,
-      [customerId, subscription.id, user.id],
+      [customerId, subscriptionId, userId],
     );
+  }
 
-    return this.formatSubscribeResponse({
-      subscriptionId: subscription.id,
-      customerId,
-      status: subscription.status,
-      trialEndsAt: this.toStripeTimestampIso(subscription.trial_end),
-      reused: false,
-    });
+  private async cancelSubscriptionQuietly(subscriptionId: string, reason: string): Promise<void> {
+    try {
+      await this.stripe.subscriptions.cancel(
+        subscriptionId,
+        { prorate: true },
+        { idempotencyKey: `styx-subscribe-rollback-${subscriptionId}` },
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to roll back Stripe subscription ${subscriptionId} after ${reason}: ${error instanceof Error ? error.message : 'unknown error'}`,
+      );
+    }
   }
 
   @Get('disposition-policy/effective')

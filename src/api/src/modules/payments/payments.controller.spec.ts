@@ -15,7 +15,7 @@ describe('PaymentsController', () => {
   let mockPolicy: { evaluateRequestPolicy: jest.Mock; getJurisdictionPolicy: jest.Mock };
   let mockSettlement: { getSettlementPreview: jest.Mock; getSettlementStatus: jest.Mock; dispatchSettlement: jest.Mock };
   let mockStripe: {
-    subscriptions: { create: jest.Mock };
+    subscriptions: { create: jest.Mock; retrieve: jest.Mock; update: jest.Mock; cancel: jest.Mock };
     customers: { create: jest.Mock; update: jest.Mock };
     paymentMethods: { attach: jest.Mock };
   };
@@ -37,7 +37,12 @@ describe('PaymentsController', () => {
       dispatchSettlement: jest.fn(),
     };
     mockStripe = {
-      subscriptions: { create: jest.fn() },
+      subscriptions: {
+        create: jest.fn(),
+        retrieve: jest.fn(),
+        update: jest.fn(),
+        cancel: jest.fn().mockResolvedValue({ id: 'sub_cancelled' }),
+      },
       customers: { create: jest.fn(), update: jest.fn() },
       paymentMethods: { attach: jest.fn() },
     };
@@ -59,16 +64,21 @@ describe('PaymentsController', () => {
   });
 
   describe('subscribe', () => {
+    const activeUserRow = (overrides: Record<string, unknown> = {}) => ({
+      id: 'user-1',
+      email: 'user@example.com',
+      stripe_customer_id: 'cus_1',
+      subscription_id: null,
+      status: 'ACTIVE',
+      access_tier: 'free',
+      ...overrides,
+    });
+
     it('creates a 30-day $14.99/month Stripe subscription and stores subscription_id', async () => {
       const trialEnd = 1780000000;
       mockPool.query
         .mockResolvedValueOnce({
-          rows: [{
-            id: 'user-1',
-            email: 'user@example.com',
-            stripe_customer_id: 'cus_1',
-            subscription_id: null,
-          }],
+          rows: [activeUserRow()],
         })
         .mockResolvedValueOnce({ rows: [] });
       mockStripe.subscriptions.create.mockResolvedValue({
@@ -103,6 +113,7 @@ describe('PaymentsController', () => {
         expect.stringContaining('subscription_id = $2'),
         ['cus_1', 'sub_1', 'user-1'],
       );
+      expect(mockPool.query.mock.calls[1][0]).toContain("WHEN access_tier = 'free'");
       expect(result).toEqual({
         subscriptionId: 'sub_1',
         customerId: 'cus_1',
@@ -119,12 +130,11 @@ describe('PaymentsController', () => {
     it('creates and stores a Stripe customer before subscribing when the user has none', async () => {
       mockPool.query
         .mockResolvedValueOnce({
-          rows: [{
+          rows: [activeUserRow({
             id: 'user-2',
             email: 'new@example.com',
             stripe_customer_id: null,
-            subscription_id: null,
-          }],
+          })],
         })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] });
@@ -155,12 +165,11 @@ describe('PaymentsController', () => {
     it('attaches an optional payment method as the customer and subscription default', async () => {
       mockPool.query
         .mockResolvedValueOnce({
-          rows: [{
+          rows: [activeUserRow({
             id: 'user-3',
             email: 'paid@example.com',
             stripe_customer_id: 'cus_paid',
-            subscription_id: null,
-          }],
+          })],
         })
         .mockResolvedValueOnce({ rows: [] });
       mockStripe.subscriptions.create.mockResolvedValue({
@@ -180,19 +189,34 @@ describe('PaymentsController', () => {
         },
       });
       expect(mockStripe.subscriptions.create).toHaveBeenCalledWith(
-        expect.objectContaining({ default_payment_method: 'pm_123' }),
+        expect.objectContaining({
+          default_payment_method: 'pm_123',
+          payment_settings: {
+            save_default_payment_method: 'on_subscription',
+          },
+        }),
         { idempotencyKey: 'styx-subscribe-user-3' },
       );
     });
 
-    it('can attach a payment method to a stored subscription without creating a duplicate subscription', async () => {
+    it('refreshes a stored subscription and updates its default payment method without duplicating it', async () => {
       mockPool.query.mockResolvedValueOnce({
-        rows: [{
+        rows: [activeUserRow({
           id: 'user-4',
           email: 'stored@example.com',
           stripe_customer_id: 'cus_stored',
           subscription_id: 'sub_stored',
-        }],
+        })],
+      });
+      mockStripe.subscriptions.retrieve.mockResolvedValue({
+        id: 'sub_stored',
+        status: 'active',
+        trial_end: null,
+      });
+      mockStripe.subscriptions.update.mockResolvedValue({
+        id: 'sub_stored',
+        status: 'active',
+        trial_end: null,
       });
 
       const result = await controller.subscribe({ id: 'user-4' }, { paymentMethodId: 'pm_later' });
@@ -205,11 +229,15 @@ describe('PaymentsController', () => {
           default_payment_method: 'pm_later',
         },
       });
+      expect(mockStripe.subscriptions.retrieve).toHaveBeenCalledWith('sub_stored');
+      expect(mockStripe.subscriptions.update).toHaveBeenCalledWith('sub_stored', {
+        default_payment_method: 'pm_later',
+      });
       expect(mockStripe.subscriptions.create).not.toHaveBeenCalled();
       expect(result).toEqual({
         subscriptionId: 'sub_stored',
         customerId: 'cus_stored',
-        status: 'stored',
+        status: 'active',
         trialDays: 30,
         trialEndsAt: null,
         amountCents: 1499,
@@ -226,6 +254,78 @@ describe('PaymentsController', () => {
 
       expect(mockPool.query).not.toHaveBeenCalled();
       expect(mockStripe.subscriptions.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects inactive users before creating Stripe resources', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [activeUserRow({ status: 'PENDING_DELETION' })],
+      });
+
+      await expect(
+        controller.subscribe({ id: 'user-6' }, {}),
+      ).rejects.toThrow(/active account/i);
+
+      expect(mockStripe.customers.create).not.toHaveBeenCalled();
+      expect(mockStripe.subscriptions.create).not.toHaveBeenCalled();
+    });
+
+    it('clears canceled stored subscriptions and creates a replacement', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [activeUserRow({
+            id: 'user-7',
+            stripe_customer_id: 'cus_7',
+            subscription_id: 'sub_old',
+          })],
+        })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] });
+      mockStripe.subscriptions.retrieve.mockResolvedValue({
+        id: 'sub_old',
+        status: 'canceled',
+        trial_end: null,
+      });
+      mockStripe.subscriptions.create.mockResolvedValue({
+        id: 'sub_new',
+        status: 'trialing',
+        trial_end: null,
+      });
+
+      const result = await controller.subscribe({ id: 'user-7' }, {});
+
+      expect(mockPool.query.mock.calls[1][0]).toContain('SET subscription_id = NULL');
+      expect(mockStripe.subscriptions.create).toHaveBeenCalledWith(
+        expect.objectContaining({ customer: 'cus_7' }),
+        { idempotencyKey: 'styx-subscribe-user-7' },
+      );
+      expect(result.subscriptionId).toBe('sub_new');
+      expect(result.reused).toBe(false);
+    });
+
+    it('cancels a newly created subscription if local persistence fails', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [activeUserRow({
+            id: 'user-8',
+            stripe_customer_id: 'cus_8',
+          })],
+        })
+        .mockRejectedValueOnce(new Error('db down'));
+      mockStripe.subscriptions.create.mockResolvedValue({
+        id: 'sub_orphan',
+        status: 'trialing',
+        trial_end: null,
+      });
+
+      await expect(
+        controller.subscribe({ id: 'user-8' }, {}),
+      ).rejects.toThrow('db down');
+
+      expect(mockStripe.subscriptions.cancel).toHaveBeenCalledWith(
+        'sub_orphan',
+        { prorate: true },
+        { idempotencyKey: 'styx-subscribe-rollback-sub_orphan' },
+      );
     });
 
     it('uses AuthGuard without the contract-creation tier guard', () => {
