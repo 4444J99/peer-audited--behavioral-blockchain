@@ -4,7 +4,7 @@ import { Page } from '@playwright/test';
 
 export const MOCK_USER = {
   id: 'user-e2e-test-001',
-  email: '[email redacted]',
+  email: 'e2e@styx.test',
   username: 'e2e-tester',
   integrityScore: 72,
   createdAt: '2026-01-15T00:00:00Z',

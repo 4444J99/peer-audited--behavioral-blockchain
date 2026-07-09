@@ -17,7 +17,7 @@ covers MCA deal flow.
 ### 1. deBanked
 
 - **URL:** https://debanked.com
-- **Contact:** [email redacted]
+- **Contact:** newsroom@debanked.com
 - **Hook:** "We have a 50-state UCC-1 dataset and a Friday Filings of the Week digest. Could a monthly guest post be of interest? No promotion in copy — just filings + analysis."
 - **CTA:** Reply-only. No "subscribe" CTA in the message.
 
@@ -31,7 +31,7 @@ covers MCA deal flow.
 ### 3. The ISO and Agent
 
 - **URL:** https://theisoandagent.com (placeholder — verify)
-- **Contact:** [email redacted]
+- **Contact:** editor@theisoandagent.com
 - **Hook:** "Filings of the Week is a Friday digest that surfaces high-priority UCC-1s. Would a syndication arrangement work?"
 - **CTA:** Reply-only.
 

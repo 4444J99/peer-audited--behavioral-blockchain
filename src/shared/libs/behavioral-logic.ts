@@ -101,6 +101,11 @@ export const SHADOW_BAN_THRESHOLD = 20;
 export const FURY_CONSENSUS_SIZE = 3;
 
 /**
+ * ADR-004: Minimum agreeing votes required for a 3-Fury consensus verdict.
+ */
+export const FURY_CONSENSUS_AGREEMENT_REQUIRED = 2;
+
+/**
  * BE-05: Dynamic Downscaling Threshold
  */
 export const DOWNSCALE_STRIKE_THRESHOLD = 3;

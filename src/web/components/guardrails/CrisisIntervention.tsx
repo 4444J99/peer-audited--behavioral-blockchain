@@ -68,7 +68,7 @@ const DEFAULT_RESOURCES: SupportResource[] = [
   },
   {
     name: "SAMHSA Helpline",
-    contact: "[phone redacted]",
+    contact: "1-800-662-4357",
     instructions:
       "Confidential referral for mental health and substance use treatment.",
   },

@@ -159,7 +159,7 @@ Furies must:
 
 ### 5.4 Quorum
 
-A minimum of 3-of-5 assigned Furies must agree for a verdict to stand. If quorum cannot be reached within 48 hours, the audit is escalated to an elevated panel.
+A minimum of 2-of-3 assigned Furies must agree for a verdict to stand. If quorum cannot be reached within 48 hours, the audit is escalated to an elevated panel.
 
 ## 6. FBO Escrow and Financial Terms
 
@@ -246,7 +246,7 @@ The Company may suspend or terminate your account for violation of these Terms. 
 
 ## 13. Contact
 
-For questions about these Terms, contact: [[email redacted] -- TBD]
+For questions about these Terms, contact: [legal@styx.app -- TBD]
 
 ---
 

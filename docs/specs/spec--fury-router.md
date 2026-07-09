@@ -7,7 +7,7 @@
 
 ---
 
-> **As-built note ([ADR-004](../adr/adr--004-fury-consensus-engine.md)):** This is a **Draft** forward-spec. The **accepted, as-built** consensus rule is ADR-004's: **3 auditors assigned to every proof, with 2-of-3 or 3-of-3 agreement** (a 3-way split escalates to the senior pool; there is **no** $1000 threshold). The "1 primary auditor" (§4.3) and "2-of-3 only for $1000+ contracts" (§4.5, FR-5) described below are an earlier draft design that ADR-004 superseded.
+> **As-built note ([ADR-004](../adr/adr--004-fury-consensus-engine.md)):** This is a **Draft** forward-spec. The **accepted, as-built** consensus rule is ADR-004's: **3 auditors assigned to every proof, with 2-of-3 or 3-of-3 agreement** (a 3-way split escalates to the senior pool; there is **no** $1000 threshold).
 
 ## 1. Objective
 

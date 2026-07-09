@@ -57,7 +57,7 @@ export class RecoveryAcknowledgmentsDto {
 export class RecoveryMetadataDto {
   @ApiProperty({
     description: "Email of the accountability partner",
-    example: "[email redacted]",
+    example: "friend@example.com",
   })
   @IsEmail()
   accountabilityPartnerEmail!: string;
@@ -145,6 +145,7 @@ export class CohortEnrollmentDto {
 export enum PricingPlan {
   CUSTOM = "CUSTOM",
   MVP_39 = "MVP_39",
+  EARLY_ACCESS_199 = "EARLY_ACCESS_199",
 }
 
 export class PricingPlanDto {
@@ -224,7 +225,7 @@ export class CreateContractDto {
 
   @ApiPropertyOptional({
     description:
-      "Optional pricing plan metadata (MVP_39 enforces $30 stake with $9 platform fee metadata)",
+      "Optional pricing plan metadata (MVP_39 enforces $30 stake with $9 platform fee metadata; EARLY_ACCESS_199 enforces a $199 refundable stake)",
     type: PricingPlanDto,
   })
   @IsOptional()
