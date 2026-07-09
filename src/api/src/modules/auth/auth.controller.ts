@@ -1,9 +1,22 @@
-import { Controller, Post, Body, Res, Get, Req } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  Get,
+  Req,
+  UseGuards,
+  Delete,
+  Param,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService, deriveCsrfToken } from './auth.service';
-import { RegisterDto, LoginDto, EnterpriseTokenDto } from './dto';
+import { RegisterDto, LoginDto, EnterpriseTokenDto, CreateApiKeyDto } from './dto';
+import { AuthGuard } from '../../../guards/auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 const ACCESS_TOKEN_MAX_AGE_MS = 15 * 60 * 1000; // 15 minutes
 const REFRESH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -176,6 +189,47 @@ export class AuthController {
       maxAge: ACCESS_TOKEN_MAX_AGE_MS,
     });
     return { csrfToken };
+  }
+
+  @Post('api-keys')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Issue a user API key for protected API endpoints' })
+  @UseGuards(AuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  async createApiKey(
+    @CurrentUser() user: { id: string },
+    @Body() dto: CreateApiKeyDto,
+    @Req() req: Request,
+  ) {
+    if ((req as any).authSource === 'api_key') {
+      throw new UnauthorizedException('API key issuance requires session authentication');
+    }
+
+    return this.authService.issueApiKey(user.id, {
+      name: dto.name,
+      expiresInDays: dto.expiresInDays,
+    });
+  }
+
+  @Get('api-keys')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List API key metadata for the authenticated user' })
+  @UseGuards(AuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 30 } })
+  async listApiKeys(@CurrentUser() user: { id: string }) {
+    return this.authService.listApiKeys(user.id);
+  }
+
+  @Delete('api-keys/:keyId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Revoke an API key for the authenticated user' })
+  @UseGuards(AuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  async revokeApiKey(
+    @CurrentUser() user: { id: string },
+    @Param('keyId') keyId: string,
+  ) {
+    return this.authService.revokeApiKey(user.id, keyId);
   }
 
   private getCookieValue(req: Request, name: string): string | null {

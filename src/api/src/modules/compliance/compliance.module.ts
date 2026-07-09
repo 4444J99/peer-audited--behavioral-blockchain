@@ -13,10 +13,11 @@ import {
 } from './identity-provider.service';
 import { MedicalExemptionService } from './medical-exemption.service';
 import { ContractsModule } from '../contracts/contracts.module';
+import { EmailModule } from '../email/email.module';
 
 @Global()
 @Module({
-  imports: [DatabaseModule, forwardRef(() => ContractsModule)],
+  imports: [DatabaseModule, EmailModule, forwardRef(() => ContractsModule)],
   controllers: [ComplianceController],
   providers: [
     CompliancePolicyService,
