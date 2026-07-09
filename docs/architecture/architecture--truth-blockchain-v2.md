@@ -9,8 +9,10 @@ current_role: archived research input — not as-built architecture
 ---
 
 > **⚠️ Archived AI research input.** This is an AI-generated feasibility study,
-> **not the as-built design**. It is the fuller of two near-identical renderings
-> (see [`architecture--truth-blockchain.md`](architecture--truth-blockchain.md)).
+> **not the as-built design**. It is the surviving, fuller rendering of two
+> near-identical drafts; the v1 draft (`architecture--truth-blockchain.md`) was
+> deduped away as content-equivalent — see
+> [#591](https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/591).
 > For the as-built architecture see the [ADRs](../adr/) and
 > [`architecture--technical-feasibility.md`](architecture--technical-feasibility.md).
 
