@@ -7,6 +7,7 @@
 const TEST_ENV_DEFAULTS = {
   NODE_ENV: 'test',
   JWT_SECRET: 'test-jwt-secret-not-for-production',
+  STYX_API_KEY_PEPPER: 'test-api-key-pepper-not-for-production',
   APP_SECRET: 'test-app-secret-not-for-production',
   ANONYMIZE_SALT: 'test-anonymize-salt-not-for-production',
   ZK_EXHAUST_SECRET: 'test-zk-exhaust-secret-not-for-production',
