@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "commander": "^15.0.0",
-    "js-yaml": "^4.2.0",
+    "js-yaml": "^4.3.0",
     "playwright": "^1.40.0",
     "zod": "^4.4.3"
   },
