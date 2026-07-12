@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -38,7 +38,7 @@ jobs:
         run: npm ci
 
       - name: Turbo Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .turbo/cache
           key: turbo-${{ hashFiles('package-lock.json', 'turbo.json') }}
@@ -135,7 +135,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Use Node.js 20.x
         uses: actions/setup-node@v6
@@ -177,7 +177,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
@@ -201,7 +201,7 @@ jobs:
     outputs:
       web: ${{ steps.check.outputs.web }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - id: check
@@ -228,7 +228,7 @@ jobs:
         browser: [chromium, firefox]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Use Node.js 20.x
         uses: actions/setup-node@v6

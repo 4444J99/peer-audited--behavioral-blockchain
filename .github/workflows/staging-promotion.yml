@@ -59,7 +59,7 @@ jobs:
     environment: staging
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Deploy API to Render (staging)
         uses: johnbeynon/render-deploy-action@v0.0.9
@@ -73,7 +73,7 @@ jobs:
     environment: staging
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Deploy Web to Render (staging)
         uses: johnbeynon/render-deploy-action@v0.0.9
@@ -88,7 +88,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Use Node.js 20.x
         uses: actions/setup-node@v6
@@ -110,7 +110,7 @@ jobs:
     environment: staging
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Wait for staging services
         run: sleep 30
