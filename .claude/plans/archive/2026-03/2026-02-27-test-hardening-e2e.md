@@ -45,7 +45,7 @@ run: npx turbo run test -- --coverage --ci
 - `terraform init -backend=false -input=false` (skip R2 credentials)
 - `terraform validate`
 
-Working directory: `infra/terraform`
+Working directory: `infrastructure/terraform`
 
 ---
 
@@ -210,7 +210,7 @@ Steps 1-3 are independent quick wins. Steps 4-5 are independent of 6-8. Step 9 i
 ```bash
 # Phase 1: CI changes
 npx turbo run test -- --coverage --ci    # all workspaces pass with adjusted thresholds
-cd infra/terraform && terraform fmt -check && terraform validate
+cd infrastructure/terraform && terraform fmt -check && terraform validate
 
 # Phase 2: New unit tests
 cd src/api && npx jest --testPathPattern="compliance|goal-ethics|beta|feed|payment-router|proofs.controller|billing.service|crm|salesforce|hubspot"

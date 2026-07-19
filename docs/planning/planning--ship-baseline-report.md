@@ -20,7 +20,7 @@ Generated: 2026-02-26 (local execution)
 
 - Status: `PASS` (serial run)
 - Notes:
-  - Initial parallel run failed due a Next.js build lock at `src/web/.next/lock` while `build` was running concurrently.
+  - Initial parallel run failed due a Next.js build lock at `apps/web/.next/lock` while `build` was running concurrently.
   - Serial rerun passed across all workspace tests.
   - API tests emitted an open-handle warning:
     - `A worker process has failed to exit gracefully...`
@@ -41,11 +41,11 @@ Generated: 2026-02-26 (local execution)
 
 ### Severity 2 (Release / CI Risk)
 
-- Concurrent `test` + `build` can collide on `src/web/.next/lock`.
+- Concurrent `test` + `build` can collide on `apps/web/.next/lock`.
   - Impact: false negatives when multiple Next.js builds run simultaneously.
   - Action: avoid parallel `next build` executions against same workspace; clean `.next` tracking/ignore hygiene.
 
-- Tracked generated artifacts still exist in repo (notably `src/desktop/src-tauri/target`).
+- Tracked generated artifacts still exist in repo (notably `apps/desktop/src-tauri/target`).
   - Impact: noisy diffs, slower CI, accidental merge churn.
   - Action: update `.gitignore` and untrack generated directories.
 
@@ -63,6 +63,6 @@ Generated: 2026-02-26 (local execution)
 npm run lint
 npm test
 npm run build
-cd src/api && npx jest --detectOpenHandles
+cd apps/api && npx jest --detectOpenHandles
 ```
 

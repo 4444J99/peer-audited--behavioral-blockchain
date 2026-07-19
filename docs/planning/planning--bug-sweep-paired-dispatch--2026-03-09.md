@@ -29,11 +29,11 @@ Mission:
 
 Primary boundaries:
 
-- `src/mobile/screens/**`
-- `src/mobile/services/ApiClient.ts`
-- `src/api/src/modules/beta/**`
-- `src/api/src/modules/contracts/**`
-- `src/api/src/modules/auth/**`
+- `apps/mobile/screens/**`
+- `apps/mobile/services/ApiClient.ts`
+- `apps/api/src/modules/beta/**`
+- `apps/api/src/modules/contracts/**`
+- `apps/api/src/modules/auth/**`
 
 Done when:
 
@@ -59,7 +59,7 @@ Mission:
 
 Primary boundaries:
 
-- `src/web/app/**`
+- `apps/web/app/**`
 - legal/support route entry points
 - `scripts/validation/07-claim-drift-check.js`
 - beta-facing labels and public copy

@@ -42,10 +42,10 @@ Verdicts collected → consensus algorithm
 ```
 
 **Implementation**:
-- Routing: `src/api/services/fury-router/fury-router.service.ts`
-- Queue config: `src/api/config/queue.config.ts` (queue name: `FURY_ROUTER_QUEUE`)
-- Module wiring: `src/api/src/modules/fury/`
-- Accuracy tracking: `src/shared/libs/integrity.ts` (`calculateFuryAccuracy`)
+- Routing: `apps/api/services/fury-router/fury-router.service.ts`
+- Queue config: `apps/api/config/queue.config.ts` (queue name: `FURY_ROUTER_QUEUE`)
+- Module wiring: `apps/api/src/modules/fury/`
+- Accuracy tracking: `apps/shared/libs/integrity.ts` (`calculateFuryAccuracy`)
 
 ### Accuracy & Incentives
 
@@ -81,7 +81,7 @@ Verdicts collected → consensus algorithm
 
 2. **5-auditor panel** — considered for high-stakes contracts. Deferred to post-beta. 3 is sufficient for micro-stakes ($5-$100) and reduces auditor pool requirements.
 
-3. **Automated AI review** — rejected as primary mechanism. AI can assist (flag obvious fakes via pHash duplicate detection in `src/api/services/anomaly/`), but human judgment is essential for subjective behavioral proofs. May be added as a pre-filter.
+3. **Automated AI review** — rejected as primary mechanism. AI can assist (flag obvious fakes via pHash duplicate detection in `apps/api/services/anomaly/`), but human judgment is essential for subjective behavioral proofs. May be added as a pre-filter.
 
 4. **On-chain consensus** — rejected for beta. Gas costs and latency are prohibitive for the target volume. The BullMQ approach gives equivalent guarantees for a centralized platform.
 
@@ -90,4 +90,4 @@ Verdicts collected → consensus algorithm
 - ADR-001: Domain services (`services/fury-router/`) separated from NestJS modules (`src/modules/fury/`)
 - ADR-002: FBO escrow funds the auditor bounty payouts
 - Validation gate 08: `scripts/validation/08-fury-crucible-simulation.ts`
-- Integrity score algorithm: `src/shared/libs/integrity.ts`
+- Integrity score algorithm: `apps/shared/libs/integrity.ts`

@@ -1,0 +1,30 @@
+{
+  "name": "@styx/test-harness",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "description": "Validation & Simulation Suite for ORGAN-III",
+  "main": "src/index.ts",
+  "bin": {
+    "ergon-test": "bin/ergon-test"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "lint": "tsc --noEmit",
+    "audit": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "js-yaml": "^4.3.0",
+    "playwright": "^1.40.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^25.9.3",
+    "ts-node": "^10.9.0",
+    "typescript": "^6.0.3",
+    "vitest": "4.1.8"
+  }
+}

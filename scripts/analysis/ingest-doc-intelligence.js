@@ -607,7 +607,7 @@ function main() {
       claim: "Pod/cohort structures with participant visibility (Active/Out)",
       search: codeSearch(
         "cohorts/:cohortId/snapshot|getCohortSnapshot|POD_BASED|maxPodSize|cohortId",
-        ["src/api/src", "src/web", "src/mobile"],
+        ["apps/api/src", "apps/web", "apps/mobile"],
       ),
       expected: "Runtime API or UI support for cohorts/pods.",
     },
@@ -617,11 +617,11 @@ function main() {
       search: codeSearch(
         "MVP_39|totalEntryUsd|platformFeeUsd|refundableStakeUsd",
         [
-          "src/api/src",
-          "src/api/services",
-          "src/shared",
-          "src/web",
-          "src/mobile",
+          "apps/api/src",
+          "apps/api/services",
+          "apps/shared",
+          "apps/web",
+          "apps/mobile",
         ],
       ),
       expected: "Explicit pricing constants and plan-level handling.",
@@ -629,7 +629,7 @@ function main() {
     {
       id: "DRIFT-ORACLE-01",
       claim: "Whoop SCORED state integration",
-      search: codeSearch("whoop|SCORED", ["src/api", "src/mobile", "src/web"]),
+      search: codeSearch("whoop|SCORED", ["apps/api", "apps/mobile", "apps/web"]),
       expected: "Webhook or ingestion logic for SCORED state.",
     },
     {
@@ -637,7 +637,7 @@ function main() {
       claim: "HealthKit manual-entry rejection (WasUserEntered)",
       search: codeSearch(
         "HKMetadataKeyWasUserEntered|wasuserentered|healthkit",
-        ["src/api", "src/mobile"],
+        ["apps/api", "apps/mobile"],
       ),
       expected: "Native bridge checks for manual-entry exclusion.",
     },

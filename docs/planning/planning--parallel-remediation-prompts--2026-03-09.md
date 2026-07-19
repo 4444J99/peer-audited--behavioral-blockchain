@@ -25,12 +25,12 @@ Scope lock:
 - test-money only
 
 Primary files you may edit:
-- src/mobile/screens/DashboardScreen.tsx
-- src/mobile/screens/CreateContractScreen.tsx
-- src/mobile/screens/ContractListScreen.tsx
-- src/mobile/screens/ContractDetailScreen.tsx
-- src/mobile/screens/AttestationScreen.tsx
-- src/mobile/services/ApiClient.ts
+- apps/mobile/screens/DashboardScreen.tsx
+- apps/mobile/screens/CreateContractScreen.tsx
+- apps/mobile/screens/ContractListScreen.tsx
+- apps/mobile/screens/ContractDetailScreen.tsx
+- apps/mobile/screens/AttestationScreen.tsx
+- apps/mobile/services/ApiClient.ts
 - directly related mobile tests only when necessary
 
 Known defects to resolve:
@@ -40,8 +40,8 @@ Known defects to resolve:
 4. Contract detail expects fields the backend does not actually guarantee.
 
 Do not touch:
-- src/web/**
-- src/desktop/**
+- apps/web/**
+- apps/desktop/**
 - release/legal docs
 - payment/settlement policy
 
@@ -68,10 +68,10 @@ Scope lock:
 - do not refactor backend logic
 
 Primary files you may edit:
-- src/web/app/page.tsx
-- src/web/app/dashboard/page.tsx
-- src/web/app/layout.tsx
-- src/desktop/src/App.tsx
+- apps/web/app/page.tsx
+- apps/web/app/dashboard/page.tsx
+- apps/web/app/layout.tsx
+- apps/desktop/src/App.tsx
 - directly related UI tests only
 
 Known defects to resolve:
@@ -104,9 +104,9 @@ Mission:
 Finish the proof-capture boundary decision. The current synthetic flow cannot remain a half-open tester-visible path.
 
 Primary files you may edit:
-- src/mobile/components/CameraModule.tsx
-- src/mobile/screens/ContractDetailScreen.tsx
-- src/mobile/App.tsx
+- apps/mobile/components/CameraModule.tsx
+- apps/mobile/screens/ContractDetailScreen.tsx
+- apps/mobile/App.tsx
 - directly related proof/navigation tests only
 
 Known defects to resolve:
@@ -185,12 +185,12 @@ Starts after:
 - Lane 3 has finalized the proof boundary decision
 
 Primary files you may edit:
-- src/mobile/screens/CreateContractScreen.spec.tsx
-- src/mobile/screens/ContractDetailScreen.spec.tsx
-- src/mobile/screens/AttestationScreen.spec.tsx
-- src/mobile/components/CameraModule.spec.tsx
-- src/mobile/services/ApiClient.spec.ts
-- src/web/app/page.test.tsx
+- apps/mobile/screens/CreateContractScreen.spec.tsx
+- apps/mobile/screens/ContractDetailScreen.spec.tsx
+- apps/mobile/screens/AttestationScreen.spec.tsx
+- apps/mobile/components/CameraModule.spec.tsx
+- apps/mobile/services/ApiClient.spec.ts
+- apps/web/app/page.test.tsx
 - other directly affected tests only
 
 Known defects to resolve:
@@ -227,13 +227,13 @@ Start rule:
 - technical audit can start earlier, but policy changes must be clearly marked provisional
 
 Primary files you may edit:
-- src/api/src/modules/contracts/dto.ts
-- src/api/src/modules/contracts/contracts.service.ts
-- src/api/src/modules/payments/settlement-quote.ts
-- src/api/src/modules/payments/settlement.service.ts
-- src/api/src/modules/payments/settlement.worker.ts
-- src/api/src/modules/payments/stripe-fbo.service.ts
-- src/api/src/modules/wallet/wallet.controller.ts
+- apps/api/src/modules/contracts/dto.ts
+- apps/api/src/modules/contracts/contracts.service.ts
+- apps/api/src/modules/payments/settlement-quote.ts
+- apps/api/src/modules/payments/settlement.service.ts
+- apps/api/src/modules/payments/settlement.worker.ts
+- apps/api/src/modules/payments/stripe-fbo.service.ts
+- apps/api/src/modules/wallet/wallet.controller.ts
 - directly related tests only
 
 Primary planning docs:

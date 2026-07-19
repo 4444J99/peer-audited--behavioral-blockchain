@@ -1,0 +1,21 @@
+/* Leaderboard / Tavern Board — tier-specific styles */
+
+/* ── DIAMOND ── */
+.tier-diamond-text { color: #b9f2ff; }
+.tier-diamond-row  { border-color: #b9f2ff22; background-color: rgba(185, 242, 255, 0.1); }
+.tier-diamond-badge { color: #b9f2ff; border-color: #b9f2ff44; background-color: #b9f2ff11; }
+
+/* ── GOLD ── */
+.tier-gold-text { color: #ffd700; }
+.tier-gold-row  { border-color: #ffd70022; background-color: rgba(255, 215, 0, 0.1); }
+.tier-gold-badge { color: #ffd700; border-color: #ffd70044; background-color: #ffd70011; }
+
+/* ── SILVER ── */
+.tier-silver-text { color: #c0c0c0; }
+.tier-silver-row  { border-color: #c0c0c022; background-color: rgba(192, 192, 192, 0.1); }
+.tier-silver-badge { color: #c0c0c0; border-color: #c0c0c044; background-color: #c0c0c011; }
+
+/* ── BRONZE ── */
+.tier-bronze-text { color: #cd7f32; }
+.tier-bronze-row  { border-color: #cd7f3222; background-color: rgba(205, 127, 50, 0.1); }
+.tier-bronze-badge { color: #cd7f32; border-color: #cd7f3244; background-color: #cd7f3211; }

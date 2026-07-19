@@ -32,7 +32,7 @@ Implement a **runtime vocabulary transformation layer** that swaps regulated ter
 | no-contact | personal boundary | APP_STORE, STRIPE |
 | relapse | setback | APP_STORE, STRIPE |
 
-**Implementation**: `src/web/utils/linguistic-cloak.ts`
+**Implementation**: `apps/web/utils/linguistic-cloak.ts`
 
 The cloaker uses character-code construction (`String.fromCharCode`) to build regex patterns, so the banned terms never appear as string literals in the source code itself. This prevents static analysis tools from flagging the source.
 

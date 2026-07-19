@@ -28,41 +28,41 @@ Includes:
 
 ### Mobile core (`94`)
 
-- [DashboardScreen.spec.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/mobile/screens/DashboardScreen.spec.tsx) — `13`
-- [CreateContractScreen.spec.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/mobile/screens/CreateContractScreen.spec.tsx) — `18`
-- [ContractDetailScreen.spec.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/mobile/screens/ContractDetailScreen.spec.tsx) — `6`
-- [AttestationScreen.spec.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/mobile/screens/AttestationScreen.spec.tsx) — `17`
-- [ApiClient.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/mobile/services/ApiClient.spec.ts) — `21`
-- [App.navigation.spec.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/mobile/App.navigation.spec.tsx) — `1`
-- [linking.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/mobile/config/linking.spec.ts) — `18`
+- [DashboardScreen.spec.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/mobile/screens/DashboardScreen.spec.tsx) — `13`
+- [CreateContractScreen.spec.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/mobile/screens/CreateContractScreen.spec.tsx) — `18`
+- [ContractDetailScreen.spec.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/mobile/screens/ContractDetailScreen.spec.tsx) — `6`
+- [AttestationScreen.spec.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/mobile/screens/AttestationScreen.spec.tsx) — `17`
+- [ApiClient.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/mobile/services/ApiClient.spec.ts) — `21`
+- [App.navigation.spec.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/mobile/App.navigation.spec.tsx) — `1`
+- [linking.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/mobile/config/linking.spec.ts) — `18`
 
 ### API runtime and contract truth (`226`)
 
-- [auth.service.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/api/src/modules/auth/auth.service.spec.ts) — `19`
-- [beta.controller.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/api/src/modules/beta/beta.controller.spec.ts) — `23`
-- [geofence.guard.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/api/src/common/guards/geofence.guard.spec.ts) — `9`
-- [compliance-policy.service.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/api/src/modules/compliance/compliance-policy.service.spec.ts) — `54`
-- [contracts.controller.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/api/src/modules/contracts/contracts.controller.spec.ts) — `30`
-- [contracts.service.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/api/src/modules/contracts/contracts.service.spec.ts) — `91`
+- [auth.service.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/api/src/modules/auth/auth.service.spec.ts) — `19`
+- [beta.controller.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/api/src/modules/beta/beta.controller.spec.ts) — `23`
+- [geofence.guard.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/api/src/common/guards/geofence.guard.spec.ts) — `9`
+- [compliance-policy.service.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/api/src/modules/compliance/compliance-policy.service.spec.ts) — `54`
+- [contracts.controller.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/api/src/modules/contracts/contracts.controller.spec.ts) — `30`
+- [contracts.service.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/api/src/modules/contracts/contracts.service.spec.ts) — `91`
 
 Bundle total: `320`
 
 Run:
 
 ```bash
-cd src/mobile
+cd apps/mobile
 npm test -- --runInBand \
-  src/mobile/screens/DashboardScreen.spec.tsx \
-  src/mobile/screens/CreateContractScreen.spec.tsx \
-  src/mobile/screens/ContractDetailScreen.spec.tsx \
-  src/mobile/screens/AttestationScreen.spec.tsx \
-  src/mobile/services/ApiClient.spec.ts \
-  src/mobile/App.navigation.spec.tsx \
-  src/mobile/config/linking.spec.ts
+  apps/mobile/screens/DashboardScreen.spec.tsx \
+  apps/mobile/screens/CreateContractScreen.spec.tsx \
+  apps/mobile/screens/ContractDetailScreen.spec.tsx \
+  apps/mobile/screens/AttestationScreen.spec.tsx \
+  apps/mobile/services/ApiClient.spec.ts \
+  apps/mobile/App.navigation.spec.tsx \
+  apps/mobile/config/linking.spec.ts
 ```
 
 ```bash
-cd src/api
+cd apps/api
 npm test -- --runInBand \
   src/modules/auth/auth.service.spec.ts \
   src/modules/beta/beta.controller.spec.ts \
@@ -90,21 +90,21 @@ Mission:
 
 Includes web beta-surface tests (`45`):
 
-- [page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/web/app/page.test.tsx) — `12`
-- [dashboard/page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/web/app/dashboard/page.test.tsx) — `3`
-- [contracts/new/page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/web/app/contracts/new/page.test.tsx) — `8`
-- [legal/terms/page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/web/app/legal/terms/page.test.tsx) — `5`
-- [legal/privacy/page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/web/app/legal/privacy/page.test.tsx) — `4`
-- [legal/rules/page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/web/app/legal/rules/page.test.tsx) — `4`
-- [legal/responsible-use/page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/web/app/legal/responsible-use/page.test.tsx) — `2`
-- [SiteFooter.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/web/components/SiteFooter.test.tsx) — `7`
+- [page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/web/app/page.test.tsx) — `12`
+- [dashboard/page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/web/app/dashboard/page.test.tsx) — `3`
+- [contracts/new/page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/web/app/contracts/new/page.test.tsx) — `8`
+- [legal/terms/page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/web/app/legal/terms/page.test.tsx) — `5`
+- [legal/privacy/page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/web/app/legal/privacy/page.test.tsx) — `4`
+- [legal/rules/page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/web/app/legal/rules/page.test.tsx) — `4`
+- [legal/responsible-use/page.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/web/app/legal/responsible-use/page.test.tsx) — `2`
+- [SiteFooter.test.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/web/components/SiteFooter.test.tsx) — `7`
 
 Bundle total: `45`
 
 Run:
 
 ```bash
-cd src/web
+cd apps/web
 npm test -- --runInBand \
   app/page.test.tsx \
   app/dashboard/page.test.tsx \
@@ -135,11 +135,11 @@ Mission:
 
 Includes financial / settlement / ledger tests (`49`):
 
-- [payments.controller.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/api/src/modules/payments/payments.controller.spec.ts) — `7`
-- [settlement.service.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/api/src/modules/payments/settlement.service.spec.ts) — `11`
-- [settlement.worker.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/api/src/modules/payments/settlement.worker.spec.ts) — `2`
-- [stripe-fbo.service.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/api/src/modules/payments/stripe-fbo.service.spec.ts) — `10`
-- [ledger.service.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/api/services/ledger/ledger.service.spec.ts) — `19`
+- [payments.controller.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/api/src/modules/payments/payments.controller.spec.ts) — `7`
+- [settlement.service.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/api/src/modules/payments/settlement.service.spec.ts) — `11`
+- [settlement.worker.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/api/src/modules/payments/settlement.worker.spec.ts) — `2`
+- [stripe-fbo.service.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/api/src/modules/payments/stripe-fbo.service.spec.ts) — `10`
+- [ledger.service.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/api/services/ledger/ledger.service.spec.ts) — `19`
 
 Includes release readiness:
 
@@ -150,9 +150,9 @@ Includes release readiness:
 
 Preferred adjacent mobile boundary tests (`15`) if those files changed:
 
-- [CameraModule.spec.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/mobile/components/CameraModule.spec.tsx) — `3`
-- [HealthKitMetadataGuard.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/mobile/services/HealthKitMetadataGuard.spec.ts) — `4`
-- [NotificationService.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/src/mobile/services/NotificationService.spec.ts) — `8`
+- [CameraModule.spec.tsx](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/mobile/components/CameraModule.spec.tsx) — `3`
+- [HealthKitMetadataGuard.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/mobile/services/HealthKitMetadataGuard.spec.ts) — `4`
+- [NotificationService.spec.ts](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/apps/mobile/services/NotificationService.spec.ts) — `8`
 
 Bundle total:
 
@@ -162,7 +162,7 @@ Bundle total:
 Run:
 
 ```bash
-cd src/api
+cd apps/api
 npm test -- --runInBand \
   src/modules/payments/payments.controller.spec.ts \
   src/modules/payments/settlement.service.spec.ts \

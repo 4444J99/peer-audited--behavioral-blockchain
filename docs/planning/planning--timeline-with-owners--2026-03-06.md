@@ -530,7 +530,7 @@ Each department has two tracks: **(A)** the human work, and **(B)** a deep agent
 
 ### 5.4 Operations & Infrastructure (OPS) — Activates Beta
 
-**Agent seed corpus**: `render.yaml`, `docker-compose.yml`, `scripts/smoke/*`, `.github/workflows/*`, `infra/terraform/*`
+**Agent seed corpus**: `render.yaml`, `docker-compose.yml`, `scripts/smoke/*`, `.github/workflows/*`, `infrastructure/terraform/*`
 
 **Agent role**: Monitor deployment health, draft runbooks, flag cost anomalies, automate scaling decisions
 
@@ -591,7 +591,7 @@ Each department has two tracks: **(A)** the human work, and **(B)** a deep agent
 
 ### 5.7 Customer Success (CXS) — Activates Delta
 
-**Agent seed corpus**: Beta tester feedback, support tickets, NPS data, `src/shared/libs/behavioral-logic.ts` constants, FAQ patterns
+**Agent seed corpus**: Beta tester feedback, support tickets, NPS data, `apps/shared/libs/behavioral-logic.ts` constants, FAQ patterns
 
 **Agent role**: Draft help docs, triage support requests, detect churn signals, generate onboarding sequences
 
@@ -778,10 +778,10 @@ Per `research--b2b-expansion-heartbreak-niche.md`:
 | ENG | `styx-eng` | CLAUDE.md, seed.yaml, all `src/`, all tests | (existing project context) | Already active |
 | LEG | `styx-legal` | `docs/legal/*` (6 docs), blocked handoff index, `services/geofencing.ts` | `.claude/agents/legal/` | Draft App Store UGC policy checklist |
 | PRD | `styx-product` | `docs/research/*behavioral*`, `docs/research/*psychology*`, competitor teardowns, `FEATURE-BACKLOG.md` | `.claude/agents/product/` | Audit 5 critical UX flows for No-Contact recovery |
-| OPS | `styx-ops` | `render.yaml`, `docker-compose.yml`, `scripts/smoke/*`, `.github/workflows/*`, `infra/terraform/*` | `.claude/agents/ops/` | Draft incident response runbook v1 |
+| OPS | `styx-ops` | `render.yaml`, `docker-compose.yml`, `scripts/smoke/*`, `.github/workflows/*`, `infrastructure/terraform/*` | `.claude/agents/ops/` | Draft incident response runbook v1 |
 | GRO | `styx-growth` | `research--market-analysis*.md`, competitor teardowns, demographic data | `.claude/agents/growth/` | SEO keyword research (10 targets for No-Contact recovery niche) |
 | FIN | `styx-finance` | `services/billing.ts`, Stripe docs, `research--b2b-expansion-heartbreak-niche.md` pricing tiers | `.claude/agents/finance/` | Build unit economics model for $39 contract |
-| CXS | `styx-support` | `src/shared/libs/behavioral-logic.ts`, `FEATURE-BACKLOG.md`, beta-readiness contract | `.claude/agents/support/` | Draft FAQ v1 (10 articles) |
+| CXS | `styx-support` | `apps/shared/libs/behavioral-logic.ts`, `FEATURE-BACKLOG.md`, beta-readiness contract | `.claude/agents/support/` | Draft FAQ v1 (10 articles) |
 | B2B | `styx-enterprise` | `research--b2b-expansion-heartbreak-niche.md`, competitor coaching software pricing | `.claude/agents/enterprise/` | Define ICP for therapist/coach market |
 
 ### 10.2 Seeding Process (Repeatable Per Department)

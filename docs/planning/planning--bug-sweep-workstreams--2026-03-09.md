@@ -68,19 +68,19 @@ Check:
 
 Start with:
 
-- `src/mobile/screens/`
-- `src/mobile/services/ApiClient.ts`
+- `apps/mobile/screens/`
+- `apps/mobile/services/ApiClient.ts`
 
 Verify with:
 
 ```bash
-cd src/mobile
+cd apps/mobile
 npm test -- --runInBand \
-  src/mobile/screens/DashboardScreen.spec.tsx \
-  src/mobile/screens/CreateContractScreen.spec.tsx \
-  src/mobile/screens/ContractDetailScreen.spec.tsx \
-  src/mobile/screens/AttestationScreen.spec.tsx \
-  src/mobile/services/ApiClient.spec.ts
+  apps/mobile/screens/DashboardScreen.spec.tsx \
+  apps/mobile/screens/CreateContractScreen.spec.tsx \
+  apps/mobile/screens/ContractDetailScreen.spec.tsx \
+  apps/mobile/screens/AttestationScreen.spec.tsx \
+  apps/mobile/services/ApiClient.spec.ts
 ```
 
 ### `B2` API Contract Sweep
@@ -100,9 +100,9 @@ Check:
 
 Start with:
 
-- `src/api/src/modules/beta/`
-- `src/api/src/modules/contracts/`
-- `src/api/src/modules/auth/`
+- `apps/api/src/modules/beta/`
+- `apps/api/src/modules/contracts/`
+- `apps/api/src/modules/auth/`
 - `scripts/smoke/check-*.sh`
 
 ### `B3` Web Surface Sweep
@@ -122,7 +122,7 @@ Check:
 Verify with:
 
 ```bash
-cd src/web
+cd apps/web
 npm test -- --runInBand app/page.test.tsx app/dashboard/page.test.tsx
 npm run build
 ```
@@ -144,7 +144,7 @@ Check:
 Verify with:
 
 ```bash
-cd src/api
+cd apps/api
 npm test -- --runInBand \
   contracts.service.spec.ts \
   settlement.service.spec.ts \

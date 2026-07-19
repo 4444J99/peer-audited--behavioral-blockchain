@@ -8,12 +8,12 @@ This report closes the stub/placeholder audit sequence by separating real incomp
 
 Scanned source-bearing TypeScript/JavaScript surfaces under:
 
-- `src/api`
-- `src/web`
-- `src/mobile`
-- `src/desktop`
-- `src/shared`
-- `src/pitch`
+- `apps/api`
+- `apps/web`
+- `apps/mobile`
+- `apps/desktop`
+- `apps/shared`
+- `apps/pitch`
 - `src/ask-styx`
 - `src/test-harness`
 - `scripts`
@@ -41,9 +41,9 @@ Priority: P2 documentation cleanup only.
 
 Signals:
 
-- `src/api/database/migrations/016_biometric_verification_stub.sql` is the only filename-based stub hit. The migration is real and adds `proofs.biometric_verified` plus `proofs.biometric_type`; the word `stub` is historical naming, not a placeholder implementation.
-- `src/api/src/modules/b2b/webhook.service.ts` contains "unit tests can stub the actual network call" in a comment. This is an intentional test seam, not production mock behavior.
-- `src/api/src/modules/auth/auth.service.ts` uses a dummy bcrypt compare path to avoid timing leaks when a user is missing. This is a security control, not fake auth.
+- `apps/api/database/migrations/016_biometric_verification_stub.sql` is the only filename-based stub hit. The migration is real and adds `proofs.biometric_verified` plus `proofs.biometric_type`; the word `stub` is historical naming, not a placeholder implementation.
+- `apps/api/src/modules/b2b/webhook.service.ts` contains "unit tests can stub the actual network call" in a comment. This is an intentional test seam, not production mock behavior.
+- `apps/api/src/modules/auth/auth.service.ts` uses a dummy bcrypt compare path to avoid timing leaks when a user is missing. This is a security control, not fake auth.
 
 Action:
 
@@ -56,9 +56,9 @@ Priority: P1 tracked implementation gap, not hidden technical debt.
 
 Signals:
 
-- `src/mobile/components/CameraModule.tsx` is explicit about the beta preview path: it creates a synthetic capture session and warns that the path is non-production.
-- `src/mobile/services/UploadService.ts` uses real API calls for presigned upload URL request, R2 upload, and upload confirmation.
-- `src/web/lib/styx-knowledge.ts` still describes `F-MOBILE-01` as `STUB`. That snapshot is stale relative to the current code shape: the mobile surface is no longer a hidden stub, but native camera capture remains a tracked production gap.
+- `apps/mobile/components/CameraModule.tsx` is explicit about the beta preview path: it creates a synthetic capture session and warns that the path is non-production.
+- `apps/mobile/services/UploadService.ts` uses real API calls for presigned upload URL request, R2 upload, and upload confirmation.
+- `apps/web/lib/styx-knowledge.ts` still describes `F-MOBILE-01` as `STUB`. That snapshot is stale relative to the current code shape: the mobile surface is no longer a hidden stub, but native camera capture remains a tracked production gap.
 
 Action:
 
@@ -71,7 +71,7 @@ Priority: P2 stale generated knowledge cleanup.
 
 Signals:
 
-- `src/web/lib/styx-knowledge.ts` is the only executable-source file with `STUB` table entries.
+- `apps/web/lib/styx-knowledge.ts` is the only executable-source file with `STUB` table entries.
 - UI text scan found no `Coming soon`, `under construction`, `placeholder text`, or `lorem ipsum` production copy.
 - Form `placeholder=` attributes exist, but those are normal input hints and were excluded from the blocker count.
 

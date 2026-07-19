@@ -6,11 +6,11 @@ This chapter collects the supplementary reference materials that support the for
 
 ## Appendix A: Core Algorithm Listings
 
-This appendix presents the four algorithms most directly referenced by the formal proofs in Chapter 4. Each listing reproduces the production TypeScript source with inline annotations mapping code constructs to the corresponding formal definitions from Chapter 3 (Section 3.3). All algorithms reside in the `src/shared/libs/` or `src/api/services/` directories and are exercised by automated tests.
+This appendix presents the four algorithms most directly referenced by the formal proofs in Chapter 4. Each listing reproduces the production TypeScript source with inline annotations mapping code constructs to the corresponding formal definitions from Chapter 3 (Section 3.3). All algorithms reside in the `apps/shared/libs/` or `apps/api/services/` directories and are exercised by automated tests.
 
 ### A.1 Integrity Score Calculation
 
-The following function computes the Integrity Score *IS*(*u*) as specified in Definition D3. The function resides in `src/shared/libs/integrity.ts` and is the single authoritative implementation of the scoring algorithm across all workspaces.
+The following function computes the Integrity Score *IS*(*u*) as specified in Definition D3. The function resides in `apps/shared/libs/integrity.ts` and is the single authoritative implementation of the scoring algorithm across all workspaces.
 
 ```typescript
 export const BASE_INTEGRITY = 50;       // IS_0: base score
@@ -51,7 +51,7 @@ The tier function *T*(*IS*) that maps scores to access levels is implemented by 
 
 ### A.2 Fury Accuracy Calculation
 
-The following function computes the Fury Accuracy metric *FA*(*v*) as specified in Definition D4. It resides in the same file (`src/shared/libs/integrity.ts`) and is the sole implementation used by the Fury worker, consensus engine, and demotion scheduler.
+The following function computes the Fury Accuracy metric *FA*(*v*) as specified in Definition D4. It resides in the same file (`apps/shared/libs/integrity.ts`) and is the sole implementation used by the Fury worker, consensus engine, and demotion scheduler.
 
 ```typescript
 export const FALSE_ACCUSATION_WEIGHT = 3;  // omega: penalty multiplier
@@ -90,7 +90,7 @@ export function shouldDemoteFury(history: FuryHistory): boolean {
 
 ### A.3 Hamming Distance
 
-The Hamming distance function computes *d*_H(*x*, *y*) for two 64-bit perceptual hashes, as referenced in Definition D9 and Theorem T9. It resides in `src/api/services/anomaly/anomaly.service.ts`.
+The Hamming distance function computes *d*_H(*x*, *y*) for two 64-bit perceptual hashes, as referenced in Definition D9 and Theorem T9. It resides in `apps/api/services/anomaly/anomaly.service.ts`.
 
 ```typescript
 /**
@@ -115,7 +115,7 @@ hammingDistance(a: string, b: string): number {
 
 ### A.4 Hash Chain Append
 
-The `appendEvent()` method constructs the cryptographic hash chain specified in Definition D2. It resides in `src/api/services/ledger/truth-log.service.ts` and is the sole write path to the `event_log` table.
+The `appendEvent()` method constructs the cryptographic hash chain specified in Definition D2. It resides in `apps/api/services/ledger/truth-log.service.ts` and is the sole write path to the `event_log` table.
 
 ```typescript
 /**
@@ -181,7 +181,7 @@ async appendEvent(
 
 ## Appendix B: Database Schema
 
-This appendix presents the principal tables from the PostgreSQL schema (`src/api/database/schema.sql`) with annotations identifying which formal properties each constraint enforces. The schema implements a defense-in-depth strategy: even if application-layer validation fails, database-level constraints prevent invariant violations.
+This appendix presents the principal tables from the PostgreSQL schema (`apps/api/database/schema.sql`) with annotations identifying which formal properties each constraint enforces. The schema implements a defense-in-depth strategy: even if application-layer validation fails, database-level constraints prevent invariant violations.
 
 ### B.1 Ledger Tables
 
@@ -324,7 +324,7 @@ Additional tables enforce operational constraints: `stripe_events` provides webh
 
 ## Appendix C: API Endpoint Specification
 
-This appendix documents the HTTP API surface exposed by the NestJS backend (`src/api`). All endpoints are prefixed with the application root (`/`). Unless otherwise noted, endpoints require JWT bearer authentication via the `Authorization` header. The API specification is also available interactively at `/api/docs` (Swagger/OpenAPI) when the development server is running.
+This appendix documents the HTTP API surface exposed by the NestJS backend (`apps/api`). All endpoints are prefixed with the application root (`/`). Unless otherwise noted, endpoints require JWT bearer authentication via the `Authorization` header. The API specification is also available interactively at `/api/docs` (Swagger/OpenAPI) when the development server is running.
 
 ### C.1 Authentication Module
 
@@ -463,7 +463,7 @@ The Styx platform employs eight validation gates --- automated scripts that veri
 | 04 | Redacted Build Check | `04-redacted-build-check.sh` | Linguistic Cloaker has successfully removed legally banned terminology from user-facing client code. Greps source bundles for terms that trigger Apple/Stripe bot rejections. | Regulatory compliance | Zero matches for banned terms ("bet", "gamble", "wager") in web, desktop, and mobile source directories. |
 | 05 | Behavioral Physics Check | `05-behavioral-physics-check.ts` | Core behavioral physics rules are enforced by the API: 7-day cool-off period after failure, dynamic downscaling after 3+ failures, stake tier limits respected. | T3 (Integrity Score), T5 (Aegis) | Deterministic test user experiences correct cool-off lockout, downscaled stake ceiling, and tier-appropriate rejection. |
 | 06 | Security Invariant Check | `06-security-invariant-check.ts` | No development tokens, hardcoded secrets, or debug backdoors exist in compiled production output. Scans source files (excluding test files) for forbidden patterns. | Security invariant | Zero matches for forbidden patterns: dev mock tokens, mock user IDs, debug backdoors, unprotected admin endpoints. |
-| 07 | Claim Drift Check | `07-claim-drift-check.js` | File paths referenced in the Claim-to-Control Matrix (`docs/planning/implementation-status.md`) still exist on disk. Prevents documentation from drifting out of sync with the codebase. | Documentation integrity | All inline code paths starting with `/src/` or `/docs/` resolve to existing files. |
+| 07 | Claim Drift Check | `07-claim-drift-check.js` | File paths referenced in the Claim-to-Control Matrix (`docs/planning/implementation-status.md`) still exist on disk. Prevents documentation from drifting out of sync with the codebase. | Documentation integrity | All inline code paths starting with `/apps/` or `/docs/` resolve to existing files. |
 | 08 | Fury Crucible | `08-fury-crucible-simulation.ts` | Adversarial agent simulation of the Fury network. Spawns 100 simulated reviewers (70 honest at 95% accuracy, 20 random guessers at 50%, 10 colluding at 100% internal alignment but incorrect). | T4 (Fury Accuracy), T7 (Honeypot Detection) | Honest Furies maintain positive stake; random guessers are demoted; colluding Furies are bankrupted. Network consensus accuracy exceeds 95%. |
 
 **Gate execution.** Gates 01--03 and 08 are integration-level checks that require the API server, PostgreSQL, and Redis to be running with seeded test data. They are executed locally during development and in staging environments. Gates 04--07 are pure static analysis scripts that operate on source files and build artifacts; they run in every CI pipeline execution and block merges on failure. The separation ensures that the most critical invariant checks (no banned terms, no leaked secrets, no documentation drift) are enforced on every commit, while the integration-level checks are reserved for environments with full infrastructure availability.
@@ -488,7 +488,7 @@ The Styx platform maintains a comprehensive test suite spanning five workspaces,
 
 ### E.2 Coverage Thresholds
 
-The API workspace enforces minimum coverage thresholds in `src/api/jest.config.cjs`:
+The API workspace enforces minimum coverage thresholds in `apps/api/jest.config.cjs`:
 
 | Metric | Threshold |
 |--------|-----------|
@@ -501,7 +501,7 @@ These thresholds are enforced in CI: any test run that produces coverage below t
 
 ### E.3 Test Categories
 
-**Unit tests** form the majority of the suite. In the API workspace, each domain service (`src/api/services/`) and NestJS module (`src/api/src/modules/`) has a corresponding `*.spec.ts` file that tests business logic in isolation using mocked dependencies. The standard NestJS testing pattern constructs injectable classes with constructor-injected `Pool` or service instances, using `as any` casts for mock injection. Examples include `ledger.service.spec.ts` (balance computation, phantom money prevention), `integrity.spec.ts` (score calculation, tier assignment), `anomaly.service.spec.ts` (pHash duplicate detection, EXIF validation), and `dispute.service.spec.ts` (dispute filing, resolution, fee handling).
+**Unit tests** form the majority of the suite. In the API workspace, each domain service (`apps/api/services/`) and NestJS module (`apps/api/src/modules/`) has a corresponding `*.spec.ts` file that tests business logic in isolation using mocked dependencies. The standard NestJS testing pattern constructs injectable classes with constructor-injected `Pool` or service instances, using `as any` casts for mock injection. Examples include `ledger.service.spec.ts` (balance computation, phantom money prevention), `integrity.spec.ts` (score calculation, tier assignment), `anomaly.service.spec.ts` (pHash duplicate detection, EXIF validation), and `dispute.service.spec.ts` (dispute filing, resolution, fee handling).
 
 **Integration tests** verify cross-module interactions. The `contracts.full-breath.spec.ts` and `users.full-breath.spec.ts` files exercise complete user journeys spanning authentication, contract creation, proof submission, Fury assignment, verdict processing, and settlement. The `global-http-exception.e2e.spec.ts` file tests the exception filter pipeline end-to-end.
 
@@ -521,7 +521,7 @@ Test execution is orchestrated by Turborepo with a pipeline dependency: `"test":
 
 ## Appendix F: Oath Category Taxonomy
 
-The Styx platform supports seven behavioral streams comprising 27 oath categories. This appendix presents the complete taxonomy as defined in the `OathCategory` enum (`src/shared/libs/behavioral-logic.ts`), with verification methods, oracle types, and example contracts for each category.
+The Styx platform supports seven behavioral streams comprising 27 oath categories. This appendix presents the complete taxonomy as defined in the `OathCategory` enum (`apps/shared/libs/behavioral-logic.ts`), with verification methods, oracle types, and example contracts for each category.
 
 ### F.1 Biological Stream (5 categories)
 

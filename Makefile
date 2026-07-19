@@ -22,7 +22,7 @@ docker-up:
 	docker compose --env-file .env -f .config/docker/docker-compose.yml up -d
 
 pitch:
-	cd src/pitch && npm run build
+	cd apps/pitch && npm run build
 
 test-e2e:
 	npx playwright test

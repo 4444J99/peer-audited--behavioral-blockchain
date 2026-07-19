@@ -146,7 +146,7 @@ async function runBehavioralPhysicsCheck() {
   total++;
   try {
     const { LOSS_AVERSION_COEFFICIENT, DISPUTE_GRACE_PERIOD_HOURS } =
-      await import("../../src/shared/libs/behavioral-logic");
+      await import("../../apps/shared/libs/behavioral-logic");
     if (
       LOSS_AVERSION_COEFFICIENT === 1.955 &&
       DISPUTE_GRACE_PERIOD_HOURS === 24

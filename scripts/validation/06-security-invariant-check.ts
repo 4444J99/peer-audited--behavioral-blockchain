@@ -42,8 +42,8 @@ const FORBIDDEN_PATTERNS: ForbiddenPattern[] = [
 ];
 
 const SCAN_DIRS = [
-  join(REPO_ROOT, 'src/api/dist'),
-  join(REPO_ROOT, 'src/web/.next'),
+  join(REPO_ROOT, 'apps/api/dist'),
+  join(REPO_ROOT, 'apps/web/.next'),
 ];
 
 const BUILD_SCAN_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.jsx', '.json']);
@@ -123,9 +123,9 @@ function runSecurityInvariantCheck() {
   // Also scan source guard files (non-test) for the most critical patterns.
   // Guards live in several locations; scan all of them, not just one.
   const sourceGuardsDirs = [
-    join(REPO_ROOT, 'src/api/guards'),
-    join(REPO_ROOT, 'src/api/src/guards'),
-    join(REPO_ROOT, 'src/api/src/common/guards'),
+    join(REPO_ROOT, 'apps/api/guards'),
+    join(REPO_ROOT, 'apps/api/src/guards'),
+    join(REPO_ROOT, 'apps/api/src/common/guards'),
   ];
   const existingGuardsDirs = sourceGuardsDirs.filter((d) => existsSync(d));
   const sourceFiles = existingGuardsDirs.flatMap((d) => collectFiles(d, SOURCE_SCAN_EXTENSIONS));

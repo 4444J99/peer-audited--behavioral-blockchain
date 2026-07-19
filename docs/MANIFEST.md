@@ -186,8 +186,8 @@ Development threads trace the intellectual and engineering arc of the project fr
 
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
-| `DOC-PIT-01` | `docs/pitch/pitch--styx-deck.pptx` | #pitch #branding #asset | PowerPoint pitch deck for investor presentation. Binary file (PPTX). Companion to the interactive `src/pitch` web application. |
-| `DOC-PIT-02` | `docs/index.html` | #pitch #web #asset | GitHub Pages entry point. Serves the built pitch deck (`src/pitch` Vite build output) as a static site from the `docs/` directory. |
+| `DOC-PIT-01` | `docs/pitch/pitch--styx-deck.pptx` | #pitch #branding #asset | PowerPoint pitch deck for investor presentation. Binary file (PPTX). Companion to the interactive `apps/pitch` web application. |
+| `DOC-PIT-02` | `docs/index.html` | #pitch #web #asset | GitHub Pages entry point. Serves the built pitch deck (`apps/pitch` Vite build output) as a static site from the `docs/` directory. |
 | `DOC-PIT-03` | `docs/assets/index-DD4Gqadl.js` | #pitch #asset #binary | Vite-built JavaScript bundle for the pitch deck static site. Generated output — do not edit. |
 | `DOC-PIT-04` | `docs/assets/index-BuXVxqIz.css` | #pitch #asset #style | Vite-built CSS bundle for the pitch deck static site. Generated output. |
 
@@ -215,13 +215,13 @@ Development threads trace the intellectual and engineering arc of the project fr
 | ID | File | Tags | Annotation |
 |----|------|------|------------|
 | `DOC-WS-01` | `scripts/README.md` | #readme #scripts #governance | "Styx Automation Scripts (Ironclad)" — module definition and usage guide for the `scripts/` directory covering validation gates, smoke tests, and infrastructure automation. |
-| `DOC-WS-02` | `src/api/README.md` | #readme #api #governance | "Styx API Core (The Brain)" — Ironclad Directive for the API workspace. Module definition, architecture overview, and development conventions for the NestJS backend. |
-| `DOC-WS-03` | `src/api/services/anomaly/README.md` | #readme #api #anomaly | "Styx Anomaly Service (The Watcher)" — Ironclad Directive for the anomaly detection domain service (pHash deduplication, EXIF validation). |
-| `DOC-WS-04` | `src/api/services/b2b/README.md` | #readme #api #b2b | "Styx B2B Service (The Empire)" — Ironclad Directive for enterprise B2B domain services (billing, CRM connectors). |
-| `DOC-WS-05` | `src/desktop/README.md` | #readme #desktop #governance | "Styx Desktop Admin (The Judge)" — Ironclad Directive for the Tauri desktop app workspace. Admin console panels: LedgerInspector, MacroReview, ExilePanel, B2BOrchestration, HashCollider. |
-| `DOC-WS-06` | `src/mobile/README.md` | #readme #mobile #governance | "Styx Mobile Client (The Oracle)" — Ironclad Directive for the React Native mobile workspace. Covers screen navigation, native bridge stubs, sensor integration, and offline caching. |
-| `DOC-WS-07` | `src/shared/README.md` | #readme #shared #governance | "Styx Shared Logic (The Kernel)" — Ironclad Directive for the shared TypeScript library. Core algorithms: integrity scoring, behavioral logic, oath taxonomy, and type definitions. |
-| `DOC-WS-08` | `src/web/README.md` | #readme #web #governance | "Styx Web Client (The Portal)" — Ironclad Directive for the Next.js web workspace. App Router pages, component architecture, linguistic cloaker, and auth context. |
+| `DOC-WS-02` | `apps/api/README.md` | #readme #api #governance | "Styx API Core (The Brain)" — Ironclad Directive for the API workspace. Module definition, architecture overview, and development conventions for the NestJS backend. |
+| `DOC-WS-03` | `apps/api/services/anomaly/README.md` | #readme #api #anomaly | "Styx Anomaly Service (The Watcher)" — Ironclad Directive for the anomaly detection domain service (pHash deduplication, EXIF validation). |
+| `DOC-WS-04` | `apps/api/services/b2b/README.md` | #readme #api #b2b | "Styx B2B Service (The Empire)" — Ironclad Directive for enterprise B2B domain services (billing, CRM connectors). |
+| `DOC-WS-05` | `apps/desktop/README.md` | #readme #desktop #governance | "Styx Desktop Admin (The Judge)" — Ironclad Directive for the Tauri desktop app workspace. Admin console panels: LedgerInspector, MacroReview, ExilePanel, B2BOrchestration, HashCollider. |
+| `DOC-WS-06` | `apps/mobile/README.md` | #readme #mobile #governance | "Styx Mobile Client (The Oracle)" — Ironclad Directive for the React Native mobile workspace. Covers screen navigation, native bridge stubs, sensor integration, and offline caching. |
+| `DOC-WS-07` | `apps/shared/README.md` | #readme #shared #governance | "Styx Shared Logic (The Kernel)" — Ironclad Directive for the shared TypeScript library. Core algorithms: integrity scoring, behavioral logic, oath taxonomy, and type definitions. |
+| `DOC-WS-08` | `apps/web/README.md` | #readme #web #governance | "Styx Web Client (The Portal)" — Ironclad Directive for the Next.js web workspace. App Router pages, component architecture, linguistic cloaker, and auth context. |
 
 ---
 

@@ -72,22 +72,22 @@ The monorepo comprises six workspaces, each published under the `@styx` npm scop
 
 | Workspace | Package Name | Stack | Responsibility |
 |-----------|-------------|-------|---------------|
-| `src/api` | `@styx/api` | NestJS 11, BullMQ, Stripe, pg, pino | Backend: ledger, escrow, Fury routing, oracles, health guards |
-| `src/web` | `@styx/web` | Next.js 16, React 18, Tailwind CSS, Zustand | Dashboard, Fury workbench, contract management |
-| `src/mobile` | `@styx/mobile` | Expo 54, React Native 0.81, React Navigation 7 | Sensor bridge, camera proof capture, biometrics |
-| `src/shared` | `@styx/shared` | TypeScript (pure library) | Constants, types, core algorithms |
-| `src/desktop` | `@styx/desktop` | Tauri 2.0 beta, Vite, React | "The Judge" administrative dashboard |
-| `src/pitch` | `@styx/pitch` | Vite, React 18, p5.js, Tailwind CSS | Interactive pitch deck (GitHub Pages) |
+| `apps/api` | `@styx/api` | NestJS 11, BullMQ, Stripe, pg, pino | Backend: ledger, escrow, Fury routing, oracles, health guards |
+| `apps/web` | `@styx/web` | Next.js 16, React 18, Tailwind CSS, Zustand | Dashboard, Fury workbench, contract management |
+| `apps/mobile` | `@styx/mobile` | Expo 54, React Native 0.81, React Navigation 7 | Sensor bridge, camera proof capture, biometrics |
+| `apps/shared` | `@styx/shared` | TypeScript (pure library) | Constants, types, core algorithms |
+| `apps/desktop` | `@styx/desktop` | Tauri 2.0 beta, Vite, React | "The Judge" administrative dashboard |
+| `apps/pitch` | `@styx/pitch` | Vite, React 18, p5.js, Tailwind CSS | Interactive pitch deck (GitHub Pages) |
 
 The Turborepo pipeline enforces build ordering: `@styx/shared` must build before any workspace that imports it (`@styx/api`, `@styx/web`, `@styx/mobile`, `@styx/desktop`). The test pipeline inherits this dependency: `"test": { "dependsOn": ["build"] }`, ensuring that all workspaces test against freshly compiled shared types.
 
-The shared library (`src/shared/libs/`) contains the pure-function implementations of the core algorithms formalized in Section 3.3: the integrity score calculation (`integrity.ts`), the Fury accuracy calculation (`integrity.ts`), the behavioral logic constants and oath taxonomy (`behavioral-logic.ts`), and the currency utilities (`money.ts`). By isolating these algorithms in a dependency-free TypeScript library, the system ensures that the same code that is formally verified in Chapter 4 is the code that executes in production across all workspaces (see Figure 11 for a visual representation of the workspace topology).
+The shared library (`apps/shared/libs/`) contains the pure-function implementations of the core algorithms formalized in Section 3.3: the integrity score calculation (`integrity.ts`), the Fury accuracy calculation (`integrity.ts`), the behavioral logic constants and oath taxonomy (`behavioral-logic.ts`), and the currency utilities (`money.ts`). By isolating these algorithms in a dependency-free TypeScript library, the system ensures that the same code that is formally verified in Chapter 4 is the code that executes in production across all workspaces (see Figure 11 for a visual representation of the workspace topology).
 
 ### 3.2.2 API: The Dual-Layer Architecture
 
-The API workspace (`src/api`) exhibits a dual-layer architecture that separates domain logic from HTTP transport. This separation is the most important structural decision in the backend design, because it enables formal verification of business logic independently of NestJS framework concerns.
+The API workspace (`apps/api`) exhibits a dual-layer architecture that separates domain logic from HTTP transport. This separation is the most important structural decision in the backend design, because it enables formal verification of business logic independently of NestJS framework concerns.
 
-**Domain Services Layer** (`src/api/services/`). Each service is an `@Injectable()` class with constructor-injected dependencies (typically a PostgreSQL `Pool` or a BullMQ `Queue`). Services contain pure business logic with no HTTP awareness --- no request objects, no response objects, no status codes. They throw domain exceptions that the HTTP layer translates into appropriate responses. The domain services include:
+**Domain Services Layer** (`apps/api/services/`). Each service is an `@Injectable()` class with constructor-injected dependencies (typically a PostgreSQL `Pool` or a BullMQ `Queue`). Services contain pure business logic with no HTTP awareness --- no request objects, no response objects, no status codes. They throw domain exceptions that the HTTP layer translates into appropriate responses. The domain services include:
 
 - `LedgerService` (`services/ledger/ledger.service.ts`): Double-entry transaction recording, account balance computation, and ledger integrity verification. Implements Definitions D1 and the balance invariant proven in Theorem T1.
 - `TruthLogService` (`services/ledger/truth-log.service.ts`): SHA-256 hash-chained append-only event log with chain verification. Implements Definition D2 and the tamper evidence property proven in Theorem T2.
@@ -99,13 +99,13 @@ The API workspace (`src/api`) exhibits a dual-layer architecture that separates 
 - `DisputeService` (`services/escrow/dispute.service.ts`): Dispute initiation, resolution, and audit trail generation. Implements Definition D6 and the FSM termination property proven in Theorem T6.
 - `StripeFboService` (`services/escrow/stripe.service.ts`): Stripe For Benefit Of escrow operations --- hold, capture, and cancel.
 
-**NestJS Application Layer** (`src/api/src/modules/`). Each module wires domain services into NestJS controllers, guards, and dependency injection containers. Modules handle HTTP request parsing, JWT authentication, response serialization, and error translation. They import domain services and expose HTTP endpoints. The module structure mirrors the domain service structure: `modules/contracts/`, `modules/fury/`, `modules/wallet/`, `modules/auth/`, `modules/admin/`, `modules/payments/`, `modules/notifications/`, and so on.
+**NestJS Application Layer** (`apps/api/src/modules/`). Each module wires domain services into NestJS controllers, guards, and dependency injection containers. Modules handle HTTP request parsing, JWT authentication, response serialization, and error translation. They import domain services and expose HTTP endpoints. The module structure mirrors the domain service structure: `modules/contracts/`, `modules/fury/`, `modules/wallet/`, `modules/auth/`, `modules/admin/`, `modules/payments/`, `modules/notifications/`, and so on.
 
 This dual-layer separation yields a critical methodological benefit: the formal definitions and theorems in this dissertation reference domain service methods directly, without needing to reason about HTTP transport, authentication middleware, or serialization. When Theorem T1 proves that the ledger balance invariant holds, it references `LedgerService.recordTransaction()` and `LedgerService.verifyLedgerIntegrity()` --- pure methods whose behavior can be analyzed independently of the web framework that hosts them.
 
 ### 3.2.3 Database Architecture
 
-The PostgreSQL 15 schema (`src/api/database/schema.sql`) implements three structural patterns that support the formal properties proven in Chapter 4.
+The PostgreSQL 15 schema (`apps/api/database/schema.sql`) implements three structural patterns that support the formal properties proven in Chapter 4.
 
 **Double-Entry Ledger.** The financial data model comprises two core tables: `accounts` (typed by `account_type` enum: ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE) and `entries` (with `debit_account_id`, `credit_account_id`, `amount`, `contract_id`, and `metadata`). The `amount` column carries a `CHECK (amount > 0)` constraint, enforcing the strict positivity required by Definition D1. Foreign keys use `ON DELETE RESTRICT` to prevent deletion of accounts with outstanding ledger entries, preserving the integrity of the historical record. Every financial movement --- stake deposit, escrow capture, Fury bounty distribution, refund, fee deduction --- is recorded as a double-entry transaction, maintaining the system-wide balance invariant $\Sigma B(a) = 0$ for all accounts $a \in A$ (see Figure 12 for a visual representation of double-entry transaction flow).
 
@@ -121,7 +121,7 @@ The PostgreSQL 15 schema (`src/api/database/schema.sql`) implements three struct
 
 **Payments: Stripe FBO Escrow.** User stakes are held in Stripe For Benefit Of (FBO) escrow accounts via `StripeFboService` (`services/escrow/stripe.service.ts`). The escrow lifecycle comprises three operations: `holdStake()` creates a PaymentIntent with `capture_method: 'manual'`, authorizing the charge without capturing funds; `captureStake()` captures the held amount upon verified contract failure (stake forfeiture); and `cancelHold()` releases the authorization upon verified contract success (stake return). This FBO structure ensures that Styx never holds user funds in corporate accounts --- a critical regulatory distinction that positions the platform as a payment facilitator rather than a money transmitter (see Figure 13 for a visual representation of the escrow lifecycle).
 
-**AI Services.** The API integrates two AI services. The Gemini 2.5 Flash model (`services/intelligence/GeminiClient.ts`) powers the "Grill Me" pre-commitment interrogation and the "ELI5" plain-language contract explanation. The Groq free tier with Llama 3.3 70B (`src/web/app/api/chat/route.ts`) powers a stakeholder chat interface with codebase knowledge retrieval. These AI integrations are supplementary: no formal theorem depends on AI service behavior.
+**AI Services.** The API integrates two AI services. The Gemini 2.5 Flash model (`services/intelligence/GeminiClient.ts`) powers the "Grill Me" pre-commitment interrogation and the "ELI5" plain-language contract explanation. The Groq free tier with Llama 3.3 70B (`apps/web/app/api/chat/route.ts`) powers a stakeholder chat interface with codebase knowledge retrieval. These AI integrations are supplementary: no formal theorem depends on AI service behavior.
 
 ---
 
@@ -137,7 +137,7 @@ $$B(a) = \sum_{\{i : e_i.d = a\}} m_i - \sum_{\{i : e_i.c = a\}} m_i$$
 
 This definition formalizes the double-entry bookkeeping principle: each entry simultaneously debits one account and credits another by the same amount. The balance function $B(a)$ computes the net position of any account by aggregating all entries in which that account appears as a debit party (increasing the balance) or a credit party (decreasing the balance).
 
-The definition is implemented in `LedgerService.getAccountBalance()` (`src/api/services/ledger/ledger.service.ts`), which executes a SQL aggregation over the `entries` table:
+The definition is implemented in `LedgerService.getAccountBalance()` (`apps/api/services/ledger/ledger.service.ts`), which executes a SQL aggregation over the `entries` table:
 
 ```sql
 SELECT COALESCE(SUM(CASE WHEN debit_account_id = $1 THEN amount ELSE 0 END), 0)
@@ -161,7 +161,7 @@ where $\|$ denotes string concatenation and $\text{serialize}(\cdot)$ is the det
 
 This definition formalizes the tamper-evident audit trail. Each event's hash incorporates the previous event's hash and the current event's payload, producing a chain in which modifying any historical event invalidates all subsequent hashes. The construction is analogous to the block header chaining in blockchain systems, but operates within a centralized PostgreSQL database rather than a distributed peer-to-peer network.
 
-The definition is implemented in `TruthLogService.appendEvent()` (`src/api/services/ledger/truth-log.service.ts`). The implementation retrieves the latest `current_hash` from the `event_log` table using `SELECT ... FOR UPDATE` (to prevent race conditions during concurrent insertions), computes the new hash via Node.js `createHash('sha256')`, and inserts the new event with both `previous_hash` and `current_hash` fields. Chain verification is implemented in `TruthLogService.verifyChain()`, which walks the log from oldest to newest, recomputing each hash and comparing it against the stored value.
+The definition is implemented in `TruthLogService.appendEvent()` (`apps/api/services/ledger/truth-log.service.ts`). The implementation retrieves the latest `current_hash` from the `event_log` table using `SELECT ... FOR UPDATE` (to prevent race conditions during concurrent insertions), computes the new hash via Node.js `createHash('sha256')`, and inserts the new event with both `previous_hash` and `current_hash` fields. Chain verification is implemented in `TruthLogService.verifyChain()`, which walks the log from oldest to newest, recomputing each hash and comparing it against the stored value.
 
 **Why this formalization matters.** Definition D2 enables Theorem T2 (Truth Log Tamper Evidence), which proves that modifying any historical event $\ell_k$ produces a detectable hash discrepancy at position $k$ and all subsequent positions. This provides audit integrity independent of the double-entry ledger's accounting integrity: even if the ledger's balance invariant is satisfied, a tampered truth log reveals that the sequence of events leading to that state has been altered.
 
@@ -191,7 +191,7 @@ The Integrity Score maps to a tier function $T: \mathbb{Z}_{\geq 0} \to \text{Ti
 | `TIER_3_HIGH_ROLLER` | $100 \leq IS < 500$ | $1,000 |
 | `TIER_4_WHALE_VAULTS` | $IS \geq 500$ | Unlimited |
 
-The definition is implemented in `calculateIntegrity()` and `getAllowedTiers()` in `src/shared/libs/integrity.ts`. The `max(0, ...)` floor ensures that the Integrity Score is always non-negative, regardless of the magnitude of penalties accumulated. The tier thresholds are implemented as conditional branches in `getAllowedTiers()`, with `getTierMaxStake()` returning the corresponding maximum stake amount in cents.
+The definition is implemented in `calculateIntegrity()` and `getAllowedTiers()` in `apps/shared/libs/integrity.ts`. The `max(0, ...)` floor ensures that the Integrity Score is always non-negative, regardless of the magnitude of penalties accumulated. The tier thresholds are implemented as conditional branches in `getAllowedTiers()`, with `getTierMaxStake()` returning the corresponding maximum stake amount in cents.
 
 **Why this formalization matters.** Definition D3 enables Theorem T3 (Integrity Score Boundedness and Tier Monotonicity), which proves two properties: (1) $IS(u) \geq 0$ for all users $u$ (non-negativity), and (2) the tier function $T$ is monotonically non-decreasing with respect to $IS$ (a user who improves their integrity score never loses access to previously available tiers). The Integrity Score also appears in Definition D5 (Aegis Safety Predicate P4), where it gates access to higher stake amounts.
 
@@ -207,7 +207,7 @@ The function assigns new auditors (with no audit history) a perfect accuracy sco
 
 A Fury is demoted from the audit network when two conditions are jointly satisfied: $n_v \geq \underline{n}$ (the auditor has completed at least $\underline{n} = 10$ audits, the burn-in period) and $FA(v) < \underline{FA}$ (accuracy has fallen below $\underline{FA} = 0.8$). The burn-in period prevents premature demotion of new auditors whose accuracy statistics are unstable due to small sample sizes.
 
-The definition is implemented in `calculateAccuracy()` and `shouldDemoteFury()` in `src/shared/libs/integrity.ts`. The `FALSE_ACCUSATION_WEIGHT` constant is exported as 3. The auditor stake amount (`AUDITOR_STAKE_AMOUNT = 200` cents, i.e., $2.00) is also defined in this module.
+The definition is implemented in `calculateAccuracy()` and `shouldDemoteFury()` in `apps/shared/libs/integrity.ts`. The `FALSE_ACCUSATION_WEIGHT` constant is exported as 3. The auditor stake amount (`AUDITOR_STAKE_AMOUNT = 200` cents, i.e., $2.00) is also defined in this module.
 
 **Why this formalization matters.** Definition D4 enables Theorem T4 (Honest Auditor Dominance), which proves that truthful auditing is a weakly dominant strategy: an auditor who reports honestly achieves a (weakly) higher accuracy score than one who reports dishonestly, regardless of the behavior of other auditors. The $3\times$ false-accusation penalty creates an asymmetric payoff structure in which the expected cost of a false accusation exceeds the expected benefit of any strategic deviation from truthful reporting.
 
@@ -226,7 +226,7 @@ where:
 - $P_5$: $BMI(u) \geq \underline{BMI}$ where $\underline{BMI} = 18.5$. For biological-stream oaths involving weight management, the system enforces the WHO underweight threshold to prevent acceleration of eating disorders.
 - $P_6$: $v_w \leq \bar{v}_w$ where $\bar{v}_w = 0.02$ (2% per week). Maximum weekly weight-loss velocity prevents dangerously rapid weight reduction.
 
-The predicate set is partitioned into two implementation units. Predicates $P_1$ through $P_4$ (financial and behavioral guards) are implemented in `AegisProtocolService.validatePsychologicalGuardrails()` (`src/api/services/health/aegis.service.ts`). Predicates $P_5$ and $P_6$ (medical guards) are implemented in `AegisProtocolService.validateHealthMetrics()`. Both methods throw HTTP 406 (Not Acceptable) when any predicate is violated, preventing contract creation.
+The predicate set is partitioned into two implementation units. Predicates $P_1$ through $P_4$ (financial and behavioral guards) are implemented in `AegisProtocolService.validatePsychologicalGuardrails()` (`apps/api/services/health/aegis.service.ts`). Predicates $P_5$ and $P_6$ (medical guards) are implemented in `AegisProtocolService.validateHealthMetrics()`. Both methods throw HTTP 406 (Not Acceptable) when any predicate is violated, preventing contract creation.
 
 Additionally, the Aegis Protocol includes a volatility multiplier $\mu(t)$ implemented in `AegisProtocolService.getVolatilityMultiplier()`. This multiplier returns 1.5 during high-risk temporal windows (Friday and Saturday nights between 9 PM and 4 AM) and 1.0 otherwise, reflecting the behavioral observation that impulsive financial decisions are disproportionately concentrated during weekend evening hours.
 
@@ -260,7 +260,7 @@ The transition function is defined by the following table:
 | $q_3$ (`ESCALATED`) | UPHELD | $q_4$ |
 | $q_3$ | OVERTURNED | $q_5$ |
 
-The FSM is implemented in `DisputeService.resolveDispute()` (`src/api/services/escrow/dispute.service.ts`). The method accepts a dispute ID, judge user ID, outcome (from $\Sigma$), and judge notes. It queries disputes in states $q_1$ or $q_2$, applies the transition function via a `switch` statement, updates the dispute and proof records within a PostgreSQL transaction, and appends a `DISPUTE_RESOLVED` event to the truth log.
+The FSM is implemented in `DisputeService.resolveDispute()` (`apps/api/services/escrow/dispute.service.ts`). The method accepts a dispute ID, judge user ID, outcome (from $\Sigma$), and judge notes. It queries disputes in states $q_1$ or $q_2$, applies the transition function via a `switch` statement, updates the dispute and proof records within a PostgreSQL transaction, and appends a `DISPUTE_RESOLVED` event to the truth log.
 
 **Why this formalization matters.** Definition D6 enables Theorem T6 (Dispute Resolution FSM Termination and Determinism), which proves two properties: (1) from any non-terminal state, there exists a finite sequence of inputs that reaches a terminal state (termination guarantee), and (2) the transition function is deterministic --- for any state-input pair, there is exactly one next state. These properties ensure that no dispute can become permanently stuck in a non-terminal state, and that the resolution outcome is unambiguously determined by the judge's decision.
 
@@ -270,7 +270,7 @@ The FSM is implemented in `DisputeService.resolveDispute()` (`src/api/services/e
 
 The honeypot system operates as follows: every $T_{\text{inj}}$ hours, if $|F_{\text{active}}| \geq N_F$, a synthetic proof with a known correct verdict (currently: known-fail) is injected into the Fury routing queue and dispatched to auditors as a normal proof. When consensus is reached on the honeypot, each Fury's verdict is compared against the known ground truth, and the appropriate integrity adjustment ($\Delta^+$ or $\Delta^-$) is applied.
 
-The injection mechanism is implemented in `HoneypotService.injectHoneypot()` (`src/api/services/intelligence/honeypot.service.ts`), which is annotated with `@Cron(CronExpression.EVERY_6_HOURS)` for automatic scheduling. The grading mechanism is implemented in `HoneypotService.gradeHoneypotPerformance()`, which iterates over Fury assignments for the honeypot proof and adjusts integrity scores within a database transaction.
+The injection mechanism is implemented in `HoneypotService.injectHoneypot()` (`apps/api/services/intelligence/honeypot.service.ts`), which is annotated with `@Cron(CronExpression.EVERY_6_HOURS)` for automatic scheduling. The grading mechanism is implemented in `HoneypotService.gradeHoneypotPerformance()`, which iterates over Fury assignments for the honeypot proof and adjusts integrity scores within a database transaction.
 
 **Why this formalization matters.** Definition D7 enables Theorem T7 (Honeypot Detection Rate Lower Bound), which proves that a dishonest Fury (one whose true detection probability $\rho$ is below a critical threshold) will, with probability approaching 1 as the number of honeypot exposures increases, accumulate sufficient integrity penalties to trigger demotion from the Fury network. This provides a convergence guarantee: the system will eventually detect and remove unreliable auditors.
 
@@ -291,7 +291,7 @@ where:
 
 The safety acknowledgment tuple $Ack(c) = (\text{voluntary}, \text{noMinors}, \text{noDependents}, \text{noLegalObligations})$ requires the user to affirm four conditions: (1) participation is voluntary and not coerced, (2) the no-contact targets do not include minors, (3) the targets are not dependents of the user, and (4) no legal obligations (e.g., custody arrangements, court orders) prohibit the no-contact commitment.
 
-The predicate is implemented in `RecoveryProtocolService.validateRecoveryContract()` (`src/api/services/health/recovery-protocol.service.ts`). The method validates each conjunct sequentially and throws HTTP 406 on violation, preventing the creation of recovery contracts that could serve as instruments of social isolation or coercive control.
+The predicate is implemented in `RecoveryProtocolService.validateRecoveryContract()` (`apps/api/services/health/recovery-protocol.service.ts`). The method validates each conjunct sequentially and throws HTTP 406 on violation, preventing the creation of recovery contracts that could serve as instruments of social isolation or coercive control.
 
 **Why this formalization matters.** Definition D8 enables Theorem T8 (Anti-Isolation Guarantee), which proves that no recovery contract can be created that would isolate a user from more than 3 contacts, persist for more than 30 days without renewal, or lack an external accountability witness. This is a unique ethical constraint that has no analogue in existing commitment device platforms: Styx is, to the author's knowledge, the first platform to formally specify and enforce anti-isolation invariants for behavioral contracts.
 
@@ -305,7 +305,7 @@ The perceptual hash function evaluates the spatial distribution of luminance in 
 
 The Hamming distance function counts the number of bit positions at which two hash values differ. A distance of 0 indicates identical perceptual content; a distance below $\theta_H = 5$ indicates content that is perceptually indistinguishable; a distance above $\theta_H$ indicates distinct content.
 
-The definition is implemented across two service files. The primary implementation resides in `AnomalyService` (`src/api/services/anomaly/anomaly.service.ts`), which exports `computePHash()` and `hammingDistance()` methods. The `computePHash()` method produces a deterministic 64-bit hash from the media URI. The `hammingDistance()` method uses BigInt XOR and bit-counting to compute the Hamming distance between two hex-encoded hashes. The `checkDuplicate()` method iterates over stored hashes (in Redis or in-memory fallback) and returns a match if any stored hash has a Hamming distance below `PHASH_HAMMING_THRESHOLD = 5`.
+The definition is implemented across two service files. The primary implementation resides in `AnomalyService` (`apps/api/services/anomaly/anomaly.service.ts`), which exports `computePHash()` and `hammingDistance()` methods. The `computePHash()` method produces a deterministic 64-bit hash from the media URI. The `hammingDistance()` method uses BigInt XOR and bit-counting to compute the Hamming distance between two hex-encoded hashes. The `checkDuplicate()` method iterates over stored hashes (in Redis or in-memory fallback) and returns a match if any stored hash has a Hamming distance below `PHASH_HAMMING_THRESHOLD = 5`.
 
 **Why this formalization matters.** Definition D9 enables Theorem T9 (pHash Duplicate Detection Soundness), which establishes upper bounds on the false positive rate (genuine proofs incorrectly classified as duplicates) and provides a lower bound on the true positive rate (recycled proofs correctly detected). The theorem demonstrates that the chosen threshold $\theta_H = 5$ achieves a favorable trade-off between sensitivity and specificity under the combinatorial properties of 64-bit Hamming space.
 
@@ -399,7 +399,7 @@ The CI/CD pipeline is implemented in GitHub Actions. The primary CI workflow (`c
 
 The deployment workflow (`deploy.yml`) triggers on semantic version tags, deploying the API and web application to Render with post-deployment smoke tests. Additional workflows handle beta promotion (`beta-promotion.yml`) and staging promotion (`staging-promotion.yml`).
 
-Infrastructure-as-code is managed via Terraform (`infra/terraform/`), defining Render services, Cloudflare R2 buckets, and WAF rules. The Render Blueprint (`render.yaml`) specifies four services: API (NestJS), Web (Next.js), PostgreSQL, and Redis, all deployed in the Oregon region on the starter plan. A root `Dockerfile` provides an API-only container image for alternative deployment targets.
+Infrastructure-as-code is managed via Terraform (`infrastructure/terraform/`), defining Render services, Cloudflare R2 buckets, and WAF rules. The Render Blueprint (`render.yaml`) specifies four services: API (NestJS), Web (Next.js), PostgreSQL, and Redis, all deployed in the Oregon region on the starter plan. A root `Dockerfile` provides an API-only container image for alternative deployment targets.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > **Chapter:** 4 (Results)
 > **Mathematical tool:** Information theory; Hamming space analysis; binomial probability
-> **Code mapping:** `src/api/services/anomaly/anomaly.service.ts`
+> **Code mapping:** `apps/api/services/anomaly/anomaly.service.ts`
 > **References:** Zauner (2010), C2PA (2024)
 
 ---

@@ -2,7 +2,7 @@
 
 > **Chapter:** 4 (Results)
 > **Mathematical tool:** Game theory; mechanism design; dominant strategy analysis
-> **Code mapping:** `src/shared/libs/integrity.ts` (calculateAccuracy, shouldDemoteFury)
+> **Code mapping:** `apps/shared/libs/integrity.ts` (calculateAccuracy, shouldDemoteFury)
 > **References:** Myerson (2007), Prelec (2004), Witkowski & Parkes (2012)
 
 ---

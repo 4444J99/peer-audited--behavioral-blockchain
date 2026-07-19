@@ -15,9 +15,9 @@
 
 1. **Comprehensive test coverage (~95%+ file coverage)**. 499+ tests across 7 workspaces. API services at 100% coverage. E2E suites cover 7 user journeys. Validation gates (8+1) enforce behavioral physics, build redaction, security invariants, and claim drift.
 
-2. **Clean dual-layer API architecture**. Domain services (`src/api/services/`) contain pure business logic; NestJS modules (`src/api/src/modules/`) handle HTTP/DI. This separation enables testing business logic without HTTP coupling.
+2. **Clean dual-layer API architecture**. Domain services (`apps/api/services/`) contain pure business logic; NestJS modules (`apps/api/src/modules/`) handle HTTP/DI. This separation enables testing business logic without HTTP coupling.
 
-3. **Behavioral constants are centralized and tested**. `src/shared/libs/behavioral-logic.ts` and `integrity.ts` define all game-theoretic constants in one place. Gate 05 (`behavioral-physics-check.ts`) verifies these match the spec at build time.
+3. **Behavioral constants are centralized and tested**. `apps/shared/libs/behavioral-logic.ts` and `integrity.ts` define all game-theoretic constants in one place. Gate 05 (`behavioral-physics-check.ts`) verifies these match the spec at build time.
 
 4. **Linguistic Cloaker + Gatekeeper Scan**. Runtime vocabulary swap (`linguistic-cloak.ts`) and build-time Gate 04 (`redacted-build-check.sh`) prevent gambling terminology from reaching app store reviewers. Dual enforcement.
 
@@ -122,7 +122,7 @@ The CLAUDE.md accurately describes the dual-layer API, workspace structure, and 
 
 ### 3.1 Blind Spots
 
-1. **No load testing**: Unknown behavior under concurrent load. BullMQ Fury Router queue is single-consumer — if the worker falls behind, proof routing latency could spike. The queue config exists (`src/api/config/queue.config.ts`) but no load profiles are defined.
+1. **No load testing**: Unknown behavior under concurrent load. BullMQ Fury Router queue is single-consumer — if the worker falls behind, proof routing latency could spike. The queue config exists (`apps/api/config/queue.config.ts`) but no load profiles are defined.
 
 2. **Stripe FBO custody model untested in production**: The escrow hold/capture/cancel flow is unit-tested, but real Stripe FBO accounts require a high-risk merchant underwriting process (Corepay/Allied Wallet). This is a business blocker, not a code blocker.
 
@@ -175,12 +175,12 @@ The CLAUDE.md accurately describes the dual-layer API, workspace structure, and 
 
 | # | File Created | Tests | Status |
 |---|-------------|-------|--------|
-| 1 | `src/api/src/modules/users/gdpr.scheduler.spec.ts` | 3 | PASS |
-| 2 | `src/mobile/components/TavernFeed.spec.tsx` | 7 | PASS |
-| 3 | `src/web/app/hr/page.test.tsx` | (already existed — 5 tests) | PASS |
-| 4 | `src/web/app/pitch/page.test.tsx` | 1 | PASS |
-| 5 | `src/web/app/ask/page.test.tsx` | 2 | PASS |
-| 6 | `src/web/components/PitchDeck/PitchDeck.test.tsx` | 4 | PASS |
+| 1 | `apps/api/src/modules/users/gdpr.scheduler.spec.ts` | 3 | PASS |
+| 2 | `apps/mobile/components/TavernFeed.spec.tsx` | 7 | PASS |
+| 3 | `apps/web/app/hr/page.test.tsx` | (already existed — 5 tests) | PASS |
+| 4 | `apps/web/app/pitch/page.test.tsx` | 1 | PASS |
+| 5 | `apps/web/app/ask/page.test.tsx` | 2 | PASS |
+| 6 | `apps/web/components/PitchDeck/PitchDeck.test.tsx` | 4 | PASS |
 | 7 | `src/ask-styx/tests/App.test.tsx` | 3 | PASS |
 | 8 | `src/ask-styx/tests/worker.test.ts` | 9 | PASS |
 

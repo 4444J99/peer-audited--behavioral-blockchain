@@ -45,7 +45,7 @@ The previous session created artifacts at **all four levels from within a single
 - `docs/thesis/` (33 files with formal proofs) — correct, unique to this repo
 - `docs/legal/` (6 files) — correct for a financial product
 - `scripts/validation/` (8 gates) — correct and excellent
-- `infra/terraform/` — correct
+- `infrastructure/terraform/` — correct
 
 #### Correctly Placed (at organ level, in commerce--meta)
 - `governance/policies/code-review-policy.md` — correct (organ-wide policy)
@@ -135,7 +135,7 @@ REPO LAYER (peer-audited--behavioral-blockchain/)
 ├── docs/architecture/        # System specs, feasibility studies
 ├── scripts/validation/       # Quality gates (run in CI)
 ├── scripts/smoke/            # Deployment verification
-├── infra/terraform/          # Infrastructure as Code
+├── infrastructure/terraform/          # Infrastructure as Code
 ├── .github/workflows/        # CI/CD pipelines
 ├── .claude/agents/           # Department-specific agent contexts
 ├── CONTRIBUTING.md           # Contribution guidelines

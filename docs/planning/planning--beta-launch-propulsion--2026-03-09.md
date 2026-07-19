@@ -59,10 +59,10 @@ Done evidence:
 
 Primary code boundary:
 
-- `src/mobile/services/ApiClient.ts`
-- `src/mobile/screens/CreateContractScreen.tsx`
-- `src/mobile/screens/ContractDetailScreen.tsx`
-- `src/mobile/screens/AttestationScreen.tsx`
+- `apps/mobile/services/ApiClient.ts`
+- `apps/mobile/screens/CreateContractScreen.tsx`
+- `apps/mobile/screens/ContractDetailScreen.tsx`
+- `apps/mobile/screens/AttestationScreen.tsx`
 
 ### 2. Surface Lockdown
 
@@ -87,11 +87,11 @@ Done evidence:
 
 Primary code boundary:
 
-- `src/mobile/App.tsx`
-- `src/web/app/page.tsx`
-- `src/web/app/dashboard/page.tsx`
-- `src/web/app/layout.tsx`
-- `src/desktop/src/App.tsx`
+- `apps/mobile/App.tsx`
+- `apps/web/app/page.tsx`
+- `apps/web/app/dashboard/page.tsx`
+- `apps/web/app/layout.tsx`
+- `apps/desktop/src/App.tsx`
 
 ### 3. Proof Capture Policy Decision
 
@@ -116,8 +116,8 @@ Done evidence:
 
 Primary code boundary:
 
-- `src/mobile/components/CameraModule.tsx`
-- `src/mobile/screens/ContractDetailScreen.tsx`
+- `apps/mobile/components/CameraModule.tsx`
+- `apps/mobile/screens/ContractDetailScreen.tsx`
 
 ### 4. Apple/TestFlight Control
 

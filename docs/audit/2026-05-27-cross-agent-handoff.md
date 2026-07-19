@@ -25,8 +25,8 @@ already merged up-to-date with `main @ 8566d32`.
 | **#609** (merge 2nd) | `claude/index-sync-vacuum-log-PWWb9` | `.claude/MEMORY.md`, `docs/CLAUDE.md` required-secrets, index/vacuum log, this handoff | docs-only; `build_and_test` RED until #611 lands (lacks the fix) |
 
 ## Verification facts (local; Node v22 — CI pins Node 20)
-- API: `tsc --noEmit` clean; **994 tests / 95 suites** pass (`cd src/api && npx jest`).
-- Shared: **119 tests** pass once the new ts-jest config is present (`cd src/shared && npx jest`).
+- API: `tsc --noEmit` clean; **994 tests / 95 suites** pass (`cd apps/api && npx jest`).
+- Shared: **119 tests** pass once the new ts-jest config is present (`cd apps/shared && npx jest`).
 - `turbo run build` 8/8; `turbo run lint` 7/7 (after test-harness fix); Gates 04/06/07 pass.
 
 ## Human / operator TODO (I cannot do these — no access/authority here)
@@ -43,7 +43,7 @@ already merged up-to-date with `main @ 8566d32`.
 - **GitHub here is MCP-only** (no `gh` CLI, not shell-accessible) — you cannot build a `Monitor` to watch PRs; use the PR-activity subscription for events.
 - **No `ScheduleWakeup`/`CronCreate`** in this environment — `/loop` dynamic mode can't set a timer; rely on PR/CI events.
 - **No `organvm` CLI** — `organvm irf|session|...` commands are unavailable here.
-- **Advisory CI jobs** (`terraform_validate`, `beta_readiness`, `e2e`) are `continue-on-error: true` and pre-existing-red; they need real infra/terraform/browser envs and do NOT block `build_and_test`.
+- **Advisory CI jobs** (`terraform_validate`, `beta_readiness`, `e2e`) are `continue-on-error: true` and pre-existing-red; they need real infrastructure/terraform/browser envs and do NOT block `build_and_test`.
 - **Coverage-threshold gating is deferred** — `--coverage` mode currently fails api suite-loading; re-enable in api jest only (not globally) once fixed.
 - **Editing `.github/workflows/*` in a PR can trigger GitHub's workflow-run approval gate** (it did on #607; build_and_test then didn't run).
 - A linter/process in this repo periodically restores working-tree files on branch switch — stage files explicitly (`git add <path>`), never `git add -A`.

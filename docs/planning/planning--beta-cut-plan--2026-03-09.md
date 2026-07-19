@@ -39,8 +39,8 @@ That means:
 
 ### Already aligned with the scope
 
-- mobile bootstrap flags exist in `src/api/src/modules/beta/beta.controller.ts`
-- mobile local defaults mirror those flags in `src/mobile/config/beta.ts`
+- mobile bootstrap flags exist in `apps/api/src/modules/beta/beta.controller.ts`
+- mobile local defaults mirror those flags in `apps/mobile/config/beta.ts`
 - mobile already shows a phase notice via `showNoContactScopeNotice`
 - mobile create-contract screen already filters categories when `phase1NoContactOnly` is `true`
 - web `/hr` already hides itself unless `NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI=true`
@@ -49,11 +49,11 @@ That means:
 
 ### Misaligned with the scope
 
-- mobile still exposes the `Fury` tab in `src/mobile/App.tsx`
+- mobile still exposes the `Fury` tab in `apps/mobile/App.tsx`
 - web dashboard still links to `/fury` and `/tavern`
 - web landing page still drives users toward `/pitch` and `/ask`
-- mobile proof capture is a synthetic camera flow in `src/mobile/components/CameraModule.tsx`, not native capture
-- mobile contract creation uses a legacy payload shape in `src/mobile/services/ApiClient.ts` and does not match the current API DTO shape cleanly
+- mobile proof capture is a synthetic camera flow in `apps/mobile/components/CameraModule.tsx`, not native capture
+- mobile contract creation uses a legacy payload shape in `apps/mobile/services/ApiClient.ts` and does not match the current API DTO shape cleanly
 
 ## Surface Matrix
 
@@ -82,25 +82,25 @@ That means:
 
 ### Mobile
 
-- `src/mobile/App.tsx`
+- `apps/mobile/App.tsx`
   remove the `Fury` tab from the tester-facing navigator
-- `src/mobile/screens/ContractDetailScreen.tsx`
+- `apps/mobile/screens/ContractDetailScreen.tsx`
   hide `Capture Proof` while the camera path is synthetic
-- `src/mobile/components/CameraModule.tsx`
+- `apps/mobile/components/CameraModule.tsx`
   do not present this as production proof capture in the external beta
 
 ### Web
 
-- `src/web/app/page.tsx`
+- `apps/web/app/page.tsx`
   remove direct CTA links to `/pitch` and `/ask` from the beta home surface
-- `src/web/app/dashboard/page.tsx`
+- `apps/web/app/dashboard/page.tsx`
   remove or role-gate links to `/fury`, `/tavern`, and any non-core consumer detours
-- `src/web` route exposure
+- `apps/web` route exposure
   treat `/admin`, `/hr`, `/fury`, `/tavern`, `/ask`, `/pitch`, `/realms` as non-tester routes for Phase 1
 
 ### Desktop
 
-- `src/desktop/src/App.tsx`
+- `apps/desktop/src/App.tsx`
   keep desktop in the internal-operator lane only; no tester distribution
 
 ## What To Close Off Functionally
@@ -147,7 +147,7 @@ Implication:
 
 Evidence:
 
-- `src/mobile/components/CameraModule.tsx` uses generated synthetic capture session helpers
+- `apps/mobile/components/CameraModule.tsx` uses generated synthetic capture session helpers
 - repo backlog explicitly says native camera is still a blocker, while also noting text-only / attestation-based Phase 1 can still be acceptable
 
 Implication:

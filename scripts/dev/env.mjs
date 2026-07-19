@@ -24,8 +24,8 @@ export function loadRepoEnv() {
   const envFiles = [
     path.join(repoRoot, ".env.local"),
     path.join(repoRoot, ".env"),
-    path.join(repoRoot, "src/api/.env.local"),
-    path.join(repoRoot, "src/api/.env"),
+    path.join(repoRoot, "apps/api/.env.local"),
+    path.join(repoRoot, "apps/api/.env"),
   ];
 
   for (const filePath of envFiles) {

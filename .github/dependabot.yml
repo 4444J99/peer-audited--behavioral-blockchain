@@ -6,13 +6,13 @@ updates:
       - "/packages/audience-engine"
       - "/packages/audit-engine"
       - "/packages/styx-cli"
-      - "/src/api"
-      - "/src/ask-styx"
-      - "/src/desktop"
-      - "/src/mobile"
-      - "/src/pitch"
-      - "/src/shared"
-      - "/src/web"
+      - "/apps/api"
+      - "/apps/ask-styx"
+      - "/apps/desktop"
+      - "/apps/mobile"
+      - "/apps/pitch"
+      - "/apps/shared"
+      - "/apps/web"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
@@ -31,8 +31,8 @@ updates:
   - package-ecosystem: "docker"
     directories:
       - "/.config/docker"
-      - "/src/api"
-      - "/src/web"
+      - "/apps/api"
+      - "/apps/web"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
@@ -41,7 +41,7 @@ updates:
         patterns: ["*"]
   - package-ecosystem: "cargo"
     directories:
-      - "/src/desktop/src-tauri"
+      - "/apps/desktop/src-tauri"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
@@ -49,7 +49,7 @@ updates:
       cargo-deps:
         patterns: ["*"]
   - package-ecosystem: "terraform"
-    directory: "/infra/terraform"
+    directory: "/infrastructure/terraform"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3

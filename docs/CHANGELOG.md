@@ -44,7 +44,7 @@
 
 ### Changed
 
-- **GEMINI.md overhaul**: Fixed package manager (yarn→npm), desktop stack (Electron→Tauri 2.0), added `src/pitch` workspace, added Recovery Protocol, added AI tooling reference.
+- **GEMINI.md overhaul**: Fixed package manager (yarn→npm), desktop stack (Electron→Tauri 2.0), added `apps/pitch` workspace, added Recovery Protocol, added AI tooling reference.
 - **Node.js engine**: Standardized minimum to `>=20.0.0` across `package.json`, `README.md`, and CI matrix.
 - **Deprecated BIOLOGICAL oath stream**: Marked `WEIGHT_MANAGEMENT`, `CARDIOVASCULAR_STAMINA`, `GLUCOSE_STABILITY`, `SLEEP_INTEGRITY`, `SOBRIETY_HRV` and `HEALTHKIT`/`HEALTHCONNECT` native bridge verification methods as `@deprecated` in `behavioral-logic.ts`.
 - **Stripe production guard**: `StripeFboService` now throws on startup if `NODE_ENV=production` and `STRIPE_SECRET_KEY` is missing or mock.
@@ -53,9 +53,9 @@
 
 ### Added
 
-- **`GoalEthicsService`** (`src/api/services/intelligence/goal-ethics.service.ts`): Moved goal ethics screening from `shared/` to `api/` to fix `shared→api` dependency inversion.
-- **`FuryRouterWorker`** (`src/api/services/fury-router/fury-router.worker.ts`): BullMQ worker that processes Fury review routing jobs — selects eligible auditors, creates `fury_assignments`, and updates proof status.
-- **`BannedUserGuard`** (`src/api/src/guards/banned-user.guard.ts`): NestJS guard that prevents banned users from accessing mutation endpoints.
+- **`GoalEthicsService`** (`apps/api/services/intelligence/goal-ethics.service.ts`): Moved goal ethics screening from `shared/` to `api/` to fix `shared→api` dependency inversion.
+- **`FuryRouterWorker`** (`apps/api/services/fury-router/fury-router.worker.ts`): BullMQ worker that processes Fury review routing jobs — selects eligible auditors, creates `fury_assignments`, and updates proof status.
+- **`BannedUserGuard`** (`apps/api/src/guards/banned-user.guard.ts`): NestJS guard that prevents banned users from accessing mutation endpoints.
 - **`LedgerService` read-path**: `getAccountBalance()`, `getContractLedger()`, `verifyLedgerIntegrity()` methods for balance queries and Phantom Money Test.
 - **`isOathStreamActive()`**: Runtime check for whether an oath category is supported in the current MVP.
 - **`ACTIVE_OATH_STREAMS`**: Constant array of active oath streams (`COGNITIVE`, `PROFESSIONAL`, `CREATIVE`, `RECOVERY`).

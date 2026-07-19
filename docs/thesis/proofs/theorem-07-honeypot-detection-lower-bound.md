@@ -2,7 +2,7 @@
 
 > **Chapter:** 4 (Results)
 > **Mathematical tool:** Random walk; Markov chain analysis; expected hitting time
-> **Code mapping:** `src/api/services/intelligence/honeypot.service.ts`
+> **Code mapping:** `apps/api/services/intelligence/honeypot.service.ts`
 > **References:** Schelling (1960), Buterin (2021)
 
 ---

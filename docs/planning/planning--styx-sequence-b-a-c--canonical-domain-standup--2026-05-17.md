@@ -121,12 +121,12 @@ Every artifact-producing agent including Claude is a smoothing agent. This plan 
 [1] `docs/legal/privacy-policy.md` — `privacy@${CONTACT_EMAIL_DOMAIN}`
 [2] `docs/EXPORT-ALL-REPORTS-AND-TRANSCRIPTS-2026-05-17.md:5` — "Acquire `${CANONICAL_DOMAIN}` domain | P1 | Operations | Pre-beta"
 [3] `docs/departments/b2b/artifacts/outreach-sequences.md` — `partners@${CONTACT_EMAIL_DOMAIN}`
-[4] `src/mobile/ios/Styx/Info.plist:31` — `<string>${MOBILE_BUNDLE_ID}</string>`
-[5] `src/mobile/ios/Styx.xcodeproj/project.pbxproj` — `PRODUCT_BUNDLE_IDENTIFIER = "${MOBILE_BUNDLE_ID}";`
-[6] `src/mobile/android/app/build.gradle:92` — `applicationId '${MOBILE_BUNDLE_ID}'`
-[7] `src/mobile/android/app/build.gradle:90` — `namespace '${MOBILE_BUNDLE_ID}'`
-[8] `src/mobile/android/app/src/main/AndroidManifest.xml:27` — `<data android:scheme="${DEEP_LINK_SCHEME}"/>`
-[9] `src/mobile/ios/Styx/Info.plist:30` — `<string>${DEEP_LINK_SCHEME}</string>` in CFBundleURLSchemes
+[4] `apps/mobile/ios/Styx/Info.plist:31` — `<string>${MOBILE_BUNDLE_ID}</string>`
+[5] `apps/mobile/ios/Styx.xcodeproj/project.pbxproj` — `PRODUCT_BUNDLE_IDENTIFIER = "${MOBILE_BUNDLE_ID}";`
+[6] `apps/mobile/android/app/build.gradle:92` — `applicationId '${MOBILE_BUNDLE_ID}'`
+[7] `apps/mobile/android/app/build.gradle:90` — `namespace '${MOBILE_BUNDLE_ID}'`
+[8] `apps/mobile/android/app/apps/main/AndroidManifest.xml:27` — `<data android:scheme="${DEEP_LINK_SCHEME}"/>`
+[9] `apps/mobile/ios/Styx/Info.plist:30` — `<string>${DEEP_LINK_SCHEME}</string>` in CFBundleURLSchemes
 [10] `docs/legal/terms-of-service.md` — `legal@${CONTACT_EMAIL_DOMAIN}`
 [11] `render.yaml:{7,30,58,69}` — `name: ${RENDER_API_SERVICE_NAME}` / `name: ${RENDER_WEB_SERVICE_NAME}`
 [12] `.config/docker/docker-compose.yml:{5,57}` — service names

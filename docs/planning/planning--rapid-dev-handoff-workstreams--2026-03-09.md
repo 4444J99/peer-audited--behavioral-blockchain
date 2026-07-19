@@ -40,10 +40,10 @@ Scope:
 
 Files:
 
-- `src/mobile/services/ApiClient.ts`
-- `src/mobile/screens/CreateContractScreen.tsx`
-- `src/mobile/screens/ContractDetailScreen.tsx`
-- `src/mobile/screens/AttestationScreen.tsx`
+- `apps/mobile/services/ApiClient.ts`
+- `apps/mobile/screens/CreateContractScreen.tsx`
+- `apps/mobile/screens/ContractDetailScreen.tsx`
+- `apps/mobile/screens/AttestationScreen.tsx`
 - related mobile tests
 
 Do now:
@@ -68,10 +68,10 @@ Scope:
 
 Files:
 
-- `src/mobile/App.tsx`
-- `src/web/app/page.tsx`
-- `src/web/app/dashboard/page.tsx`
-- `src/web/app/layout.tsx`
+- `apps/mobile/App.tsx`
+- `apps/web/app/page.tsx`
+- `apps/web/app/dashboard/page.tsx`
+- `apps/web/app/layout.tsx`
 
 Do now:
 
@@ -96,8 +96,8 @@ Scope:
 
 Files:
 
-- `src/mobile/components/CameraModule.tsx`
-- `src/mobile/screens/ContractDetailScreen.tsx`
+- `apps/mobile/components/CameraModule.tsx`
+- `apps/mobile/screens/ContractDetailScreen.tsx`
 - any related proof-submit navigation
 
 Do now:
@@ -125,13 +125,13 @@ Scope:
 
 Files:
 
-- `src/api/src/modules/contracts/dto.ts`
-- `src/api/src/modules/contracts/contracts.service.ts`
-- `src/api/src/modules/payments/settlement-quote.ts`
-- `src/api/src/modules/payments/stripe-fbo.service.ts`
-- `src/api/src/modules/payments/settlement.service.ts`
-- `src/api/src/modules/payments/settlement.worker.ts`
-- `src/api/src/modules/wallet/wallet.controller.ts`
+- `apps/api/src/modules/contracts/dto.ts`
+- `apps/api/src/modules/contracts/contracts.service.ts`
+- `apps/api/src/modules/payments/settlement-quote.ts`
+- `apps/api/src/modules/payments/stripe-fbo.service.ts`
+- `apps/api/src/modules/payments/settlement.service.ts`
+- `apps/api/src/modules/payments/settlement.worker.ts`
+- `apps/api/src/modules/wallet/wallet.controller.ts`
 
 Do now:
 

@@ -8,7 +8,7 @@ Accepted
 
 Styx exposes two distinct attack surfaces that require rate limiting:
 
-1. **NestJS API** (`src/api/`) — authenticated endpoints for contracts, wallet, fury, escrow operations
+1. **NestJS API** (`apps/api/`) — authenticated endpoints for contracts, wallet, fury, escrow operations
 2. **Ask-Styx Cloudflare Worker** (`src/ask-styx/`) — public-facing AI chat endpoint (unauthenticated)
 
 A single rate-limiting strategy cannot cover both: the API needs per-user throttling tied to JWT identity, while the edge worker needs IP-based limiting without access to the user database.
@@ -74,6 +74,6 @@ const RATE_LIMIT_MAX = 30;
 ## Related
 
 - Ask-Styx worker: `src/ask-styx/worker/index.ts`
-- API auth guard: `src/api/guards/auth.guard.ts`
-- Queue config (Redis connection): `src/api/config/queue.config.ts`
+- API auth guard: `apps/api/guards/auth.guard.ts`
+- Queue config (Redis connection): `apps/api/config/queue.config.ts`
 - Deploy workflow: `.github/workflows/deploy-ask-styx.yml`

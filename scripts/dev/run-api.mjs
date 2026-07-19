@@ -6,7 +6,7 @@ const child = spawn(
   process.execPath,
   ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "src/main.ts"],
   {
-    cwd: path.join(repoRoot, "src/api"),
+    cwd: path.join(repoRoot, "apps/api"),
     env: buildApiEnv(),
     stdio: "inherit",
   },

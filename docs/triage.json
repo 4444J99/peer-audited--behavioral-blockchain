@@ -405,7 +405,7 @@
       "action": "CLOSE",
       "batch": "close-already-impl",
       "closed_at": null,
-      "evidence": "src/mobile/services/UploadService.ts:1",
+      "evidence": "apps/mobile/services/UploadService.ts:1",
       "history": [
         {
           "from": "UNREAD",
@@ -431,7 +431,7 @@
       "action": "CLOSE",
       "batch": "close-already-impl",
       "closed_at": null,
-      "evidence": "src/api/services/security/geofence.service.ts:1",
+      "evidence": "apps/api/services/security/geofence.service.ts:1",
       "history": [
         {
           "from": "UNREAD",
@@ -509,7 +509,7 @@
       "action": "CLOSE",
       "batch": "close-already-impl",
       "closed_at": null,
-      "evidence": "src/desktop/src/components/HashCollider.tsx:1",
+      "evidence": "apps/desktop/src/components/HashCollider.tsx:1",
       "history": [
         {
           "from": "UNREAD",
@@ -741,7 +741,7 @@
       "action": "BUILD",
       "batch": "build-tier2-services",
       "closed_at": null,
-      "evidence": "src/mobile/App.navigation.spec.tsx:1",
+      "evidence": "apps/mobile/App.navigation.spec.tsx:1",
       "history": [
         {
           "from": "UNREAD",
@@ -766,7 +766,7 @@
       "action": "BUILD",
       "batch": "build-survey-attest-waitlist",
       "closed_at": null,
-      "evidence": "src/api/database/migrations/034_survey_system.sql:1-11 survey_responses table; src/api/src/modules/contracts/survey.service.ts:1-85 SurveyService; src/api/src/modules/contracts/contracts.controller.ts:397-409 survey endpoints",
+      "evidence": "apps/api/database/migrations/034_survey_system.sql:1-11 survey_responses table; apps/api/src/modules/contracts/survey.service.ts:1-85 SurveyService; apps/api/src/modules/contracts/contracts.controller.ts:397-409 survey endpoints",
       "history": [
         {
           "from": "UNREAD",
@@ -810,7 +810,7 @@
       "action": "BUILD",
       "batch": "build-survey-attest-waitlist",
       "closed_at": null,
-      "evidence": "src/api/database/migrations/035_attestation_emotional_tracking.sql:1-6 emotional columns; src/api/src/modules/contracts/dto.ts:33-58 EmotionalTrackingDto; src/api/src/modules/contracts/contracts.service.ts:2647-2703 submitAttestation with emotional tracking",
+      "evidence": "apps/api/database/migrations/035_attestation_emotional_tracking.sql:1-6 emotional columns; apps/api/src/modules/contracts/dto.ts:33-58 EmotionalTrackingDto; apps/api/src/modules/contracts/contracts.service.ts:2647-2703 submitAttestation with emotional tracking",
       "history": [
         {
           "from": "UNREAD",
@@ -951,7 +951,7 @@
       "action": "BUILD",
       "batch": "build-survey-attest-waitlist",
       "closed_at": null,
-      "evidence": "src/api/database/migrations/036_cohort_waitlist.sql:1-15 waitlist_entries table; src/api/src/modules/contracts/waitlist.service.ts:1-104 WaitlistService; src/api/src/modules/contracts/contracts.controller.ts:411-444 waitlist endpoints",
+      "evidence": "apps/api/database/migrations/036_cohort_waitlist.sql:1-15 waitlist_entries table; apps/api/src/modules/contracts/waitlist.service.ts:1-104 WaitlistService; apps/api/src/modules/contracts/contracts.controller.ts:411-444 waitlist endpoints",
       "history": [
         {
           "from": "UNREAD",
@@ -1322,7 +1322,7 @@
       "action": "BUILD",
       "batch": "build-tier2-services",
       "closed_at": null,
-      "evidence": "src/api/services/health/circuit-breaker.service.ts:1",
+      "evidence": "apps/api/services/health/circuit-breaker.service.ts:1",
       "history": [
         {
           "from": "UNREAD",
@@ -2344,7 +2344,7 @@
       "action": "BUILD",
       "batch": "build-behavioral-enhancements",
       "closed_at": null,
-      "evidence": "src/shared/libs/behavioral-enhancements.ts:1-46 CrabBucketSignal/CrabBucketSeverity/classifyCrabBucketRisk; src/api/database/migrations/037_behavioral_enhancements_tables.sql:1-12 crab_bucket_signals table; src/api/src/modules/behavioral/behavioral-enhancements.service.ts:29-48 analyzeCrabBucketRisk",
+      "evidence": "apps/shared/libs/behavioral-enhancements.ts:1-46 CrabBucketSignal/CrabBucketSeverity/classifyCrabBucketRisk; apps/api/database/migrations/037_behavioral_enhancements_tables.sql:1-12 crab_bucket_signals table; apps/api/src/modules/behavioral/behavioral-enhancements.service.ts:29-48 analyzeCrabBucketRisk",
       "history": [
         {
           "from": "UNREAD",
@@ -2384,7 +2384,7 @@
       "action": "BUILD",
       "batch": "build-behavioral-enhancements",
       "closed_at": null,
-      "evidence": "src/shared/libs/behavioral-enhancements.ts:60-88 CommitmentDevice/DEFAULT_COMMITMENT_DEVICE_CATALOG/calculateStakeWithDevice; src/api/src/modules/behavioral/behavioral-enhancements.service.ts:50-68 catalog/stake calc",
+      "evidence": "apps/shared/libs/behavioral-enhancements.ts:60-88 CommitmentDevice/DEFAULT_COMMITMENT_DEVICE_CATALOG/calculateStakeWithDevice; apps/api/src/modules/behavioral/behavioral-enhancements.service.ts:50-68 catalog/stake calc",
       "history": [
         {
           "from": "UNREAD",
@@ -2424,7 +2424,7 @@
       "action": "BUILD",
       "batch": "build-behavioral-enhancements",
       "closed_at": null,
-      "evidence": "src/shared/libs/behavioral-enhancements.ts:90-163 IdentityDomain/IDENTITY_REFRAMING_TABLE/reframeMessage; src/api/src/modules/behavioral/behavioral-enhancements.service.ts:70-78 getReframingForContract",
+      "evidence": "apps/shared/libs/behavioral-enhancements.ts:90-163 IdentityDomain/IDENTITY_REFRAMING_TABLE/reframeMessage; apps/api/src/modules/behavioral/behavioral-enhancements.service.ts:70-78 getReframingForContract",
       "history": [
         {
           "from": "UNREAD",
@@ -2464,7 +2464,7 @@
       "action": "BUILD",
       "batch": "build-behavioral-enhancements",
       "closed_at": null,
-      "evidence": "src/shared/libs/behavioral-enhancements.ts:165-197 EscalationSchedule/createDefaultEscalationSchedule/calculateNextStake; src/api/src/modules/behavioral/behavioral-enhancements.service.ts:80-95 enableSaveMoreTomorrow",
+      "evidence": "apps/shared/libs/behavioral-enhancements.ts:165-197 EscalationSchedule/createDefaultEscalationSchedule/calculateNextStake; apps/api/src/modules/behavioral/behavioral-enhancements.service.ts:80-95 enableSaveMoreTomorrow",
       "history": [
         {
           "from": "UNREAD",
@@ -2504,7 +2504,7 @@
       "action": "BUILD",
       "batch": "build-behavioral-enhancements",
       "closed_at": null,
-      "evidence": "src/shared/libs/behavioral-enhancements.ts:199-235 ProfessionalModeConfig/PROFESSIONAL_MODE_DEFAULTS/applyProfessionalModeCopy; src/api/src/modules/behavioral/behavioral-enhancements.service.ts:97-103",
+      "evidence": "apps/shared/libs/behavioral-enhancements.ts:199-235 ProfessionalModeConfig/PROFESSIONAL_MODE_DEFAULTS/applyProfessionalModeCopy; apps/api/src/modules/behavioral/behavioral-enhancements.service.ts:97-103",
       "history": [
         {
           "from": "UNREAD",
@@ -2544,7 +2544,7 @@
       "action": "BUILD",
       "batch": "build-behavioral-enhancements",
       "closed_at": null,
-      "evidence": "src/shared/libs/behavioral-enhancements.ts:237-273 HabituationMetrics/detectHabituation; src/api/src/modules/behavioral/behavioral-enhancements.service.ts:105-140 detectContractHabituation",
+      "evidence": "apps/shared/libs/behavioral-enhancements.ts:237-273 HabituationMetrics/detectHabituation; apps/api/src/modules/behavioral/behavioral-enhancements.service.ts:105-140 detectContractHabituation",
       "history": [
         {
           "from": "UNREAD",
@@ -2584,7 +2584,7 @@
       "action": "BUILD",
       "batch": "build-behavioral-enhancements",
       "closed_at": null,
-      "evidence": "src/shared/libs/behavioral-enhancements.ts:275-310 BehaviorSwapContract/validateSwapEligibility/calculateSwapStake; src/api/database/migrations/037_behavioral_enhancements_tables.sql:14-25 behavior_swaps table; src/api/src/modules/behavioral/behavioral-enhancements.service.ts:142-170 proposeBehaviorSwap",
+      "evidence": "apps/shared/libs/behavioral-enhancements.ts:275-310 BehaviorSwapContract/validateSwapEligibility/calculateSwapStake; apps/api/database/migrations/037_behavioral_enhancements_tables.sql:14-25 behavior_swaps table; apps/api/src/modules/behavioral/behavioral-enhancements.service.ts:142-170 proposeBehaviorSwap",
       "history": [
         {
           "from": "UNREAD",
@@ -3662,7 +3662,7 @@
           "at": "2026-06-12T14:02:54Z"
         }
       ],
-      "evidence": "src/api/guards/auth.guard.ts:56-61 CSRF guard; src/api/guards/auth.guard.spec.ts:148-180 reject/allow coverage; src/web/services/api-client.ts:100-115 x-csrf-token header",
+      "evidence": "apps/api/guards/auth.guard.ts:56-61 CSRF guard; apps/api/guards/auth.guard.spec.ts:148-180 reject/allow coverage; apps/web/services/api-client.ts:100-115 x-csrf-token header",
       "pr": null,
       "state_updated": "2026-06-12T14:02:54Z",
       "closed_at": null
@@ -3671,7 +3671,7 @@
       "action": "CLOSE",
       "batch": "close-already-impl",
       "closed_at": null,
-      "evidence": "src/shared/libs/integrity.ts:42",
+      "evidence": "apps/shared/libs/integrity.ts:42",
       "history": [
         {
           "from": "UNREAD",
@@ -4203,7 +4203,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:41Z",
-      "title": "feat: The Judge frontend forensic panels in src/desktop"
+      "title": "feat: The Judge frontend forensic panels in apps/desktop"
     },
     "183": {
       "action": "FUTURE",
@@ -4581,7 +4581,7 @@
       "action": "CLOSE",
       "batch": "close-already-impl",
       "closed_at": null,
-      "evidence": "src/ask-styx/src/App.tsx:1",
+      "evidence": "src/ask-styx/apps/App.tsx:1",
       "history": [
         {
           "from": "UNREAD",
@@ -4607,7 +4607,7 @@
       "action": "CLOSE",
       "batch": "close-already-impl",
       "closed_at": null,
-      "evidence": "src/ask-styx/src/App.tsx:1",
+      "evidence": "src/ask-styx/apps/App.tsx:1",
       "history": [
         {
           "from": "UNREAD",
@@ -4633,7 +4633,7 @@
       "action": "CLOSE",
       "batch": "close-already-impl",
       "closed_at": null,
-      "evidence": "src/ask-styx/src/App.tsx:1",
+      "evidence": "src/ask-styx/apps/App.tsx:1",
       "history": [
         {
           "from": "UNREAD",
@@ -5189,7 +5189,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:27Z",
-      "title": "audit: Phase 1 — service layer deep dive (40+ files in src/api/services/)"
+      "title": "audit: Phase 1 — service layer deep dive (40+ files in apps/api/services/)"
     },
     "226": {
       "action": "TRACK",
@@ -5216,7 +5216,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:27Z",
-      "title": "audit: Phase 2 — NestJS module layer deep dive (100+ files in src/api/src/modules/)"
+      "title": "audit: Phase 2 — NestJS module layer deep dive (100+ files in apps/api/src/modules/)"
     },
     "227": {
       "action": "TRACK",
@@ -5237,7 +5237,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 3 — shared libraries inventory (src/shared/libs/)"
+      "title": "audit: Phase 3 — shared libraries inventory (apps/shared/libs/)"
     },
     "228": {
       "action": "TRACK",
@@ -5258,7 +5258,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 4 — frontend inventory (src/web/app/, utils/, stores/, components/)"
+      "title": "audit: Phase 4 — frontend inventory (apps/web/app/, utils/, stores/, components/)"
     },
     "229": {
       "action": "TRACK",
@@ -5285,7 +5285,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:27Z",
-      "title": "audit: Phase 5 — mobile inventory (src/mobile/screens/, services/)"
+      "title": "audit: Phase 5 — mobile inventory (apps/mobile/screens/, services/)"
     },
     "230": {
       "action": "TRACK",
@@ -5312,7 +5312,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:27Z",
-      "title": "audit: Phase 6 — desktop inventory (src/desktop/src/panels/)"
+      "title": "audit: Phase 6 — desktop inventory (apps/desktop/src/panels/)"
     },
     "231": {
       "action": "TRACK",
@@ -5558,7 +5558,7 @@
       "action": "CLOSE",
       "batch": "close-already-impl",
       "closed_at": null,
-      "evidence": "src/api/src/modules/ops/beta-readiness.service.ts:1",
+      "evidence": "apps/api/src/modules/ops/beta-readiness.service.ts:1",
       "history": [
         {
           "from": "UNREAD",
@@ -5584,7 +5584,7 @@
       "action": "CLOSE",
       "batch": "close-already-impl",
       "closed_at": null,
-      "evidence": "src/api/src/modules/ops/beta-readiness.service.ts:1",
+      "evidence": "apps/api/src/modules/ops/beta-readiness.service.ts:1",
       "history": [
         {
           "from": "UNREAD",
@@ -5611,7 +5611,7 @@
       "action": "CLOSE",
       "batch": "close-already-impl",
       "closed_at": null,
-      "evidence": "src/api/src/modules/ops/beta-readiness.service.ts:1",
+      "evidence": "apps/api/src/modules/ops/beta-readiness.service.ts:1",
       "history": [
         {
           "from": "UNREAD",
@@ -5907,7 +5907,7 @@
       "action": "BUILD",
       "batch": "build-desktop-dispute",
       "closed_at": null,
-      "evidence": "src/desktop/src/components/DisputeTimeline.tsx:1-105 DisputeTimeline component",
+      "evidence": "apps/desktop/src/components/DisputeTimeline.tsx:1-105 DisputeTimeline component",
       "history": [
         {
           "from": "UNREAD",
@@ -5943,13 +5943,13 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:54:34Z",
-      "title": "feat: DisputeTimeline component in src/desktop/src/panels/"
+      "title": "feat: DisputeTimeline component in apps/desktop/src/panels/"
     },
     "257": {
       "action": "BUILD",
       "batch": "build-desktop-dispute",
       "closed_at": null,
-      "evidence": "src/desktop/src/components/AuditTrailViewer.tsx:1-147 AuditTrailViewer component",
+      "evidence": "apps/desktop/src/components/AuditTrailViewer.tsx:1-147 AuditTrailViewer component",
       "history": [
         {
           "from": "UNREAD",
@@ -5991,7 +5991,7 @@
       "action": "BUILD",
       "batch": "build-desktop-dispute",
       "closed_at": null,
-      "evidence": "src/desktop/src/components/EvidenceComparator.tsx:1-117 EvidenceComparator component",
+      "evidence": "apps/desktop/src/components/EvidenceComparator.tsx:1-117 EvidenceComparator component",
       "history": [
         {
           "from": "UNREAD",
@@ -7263,7 +7263,7 @@
           "at": "2026-06-12T12:20:57Z"
         }
       ],
-      "evidence": "src/web/app/contracts/new/page.test.tsx:84",
+      "evidence": "apps/web/app/contracts/new/page.test.tsx:84",
       "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/692",
       "state_updated": "2026-06-12T12:20:57Z",
       "closed_at": null
@@ -7621,7 +7621,7 @@
       "action": "BUILD",
       "batch": "build-desktop-dispute",
       "closed_at": null,
-      "evidence": "src/desktop/src/components/NoContactRecoveryPanel.tsx:1-140 NoContactRecoveryPanel with 5-flow audit",
+      "evidence": "apps/desktop/src/components/NoContactRecoveryPanel.tsx:1-140 NoContactRecoveryPanel with 5-flow audit",
       "history": [
         {
           "from": "UNREAD",
@@ -9766,7 +9766,7 @@
       "action": "CLOSE",
       "batch": "close-already-impl",
       "closed_at": null,
-      "evidence": "src/ask-styx/src/App.tsx:1",
+      "evidence": "src/ask-styx/apps/App.tsx:1",
       "history": [
         {
           "from": "UNREAD",
@@ -9948,7 +9948,7 @@
       "action": "BUILD",
       "batch": "build-desktop-dispute",
       "closed_at": null,
-      "evidence": "src/desktop/src/components/DisputeTimeline.tsx:30-38 scaffolding+state management",
+      "evidence": "apps/desktop/src/components/DisputeTimeline.tsx:30-38 scaffolding+state management",
       "history": [
         {
           "from": "UNREAD",
@@ -9989,7 +9989,7 @@
       "action": "BUILD",
       "batch": "build-desktop-dispute",
       "closed_at": null,
-      "evidence": "src/desktop/src/components/DisputeTimeline.tsx:55-101 evidence node rendering+timeline layout",
+      "evidence": "apps/desktop/src/components/DisputeTimeline.tsx:55-101 evidence node rendering+timeline layout",
       "history": [
         {
           "from": "UNREAD",
@@ -10030,7 +10030,7 @@
       "action": "BUILD",
       "batch": "build-desktop-dispute",
       "closed_at": null,
-      "evidence": "src/desktop/src/components/DisputeTimeline.tsx:39-52 zoom/filter/detail interaction",
+      "evidence": "apps/desktop/src/components/DisputeTimeline.tsx:39-52 zoom/filter/detail interaction",
       "history": [
         {
           "from": "UNREAD",
@@ -10071,7 +10071,7 @@
       "action": "BUILD",
       "batch": "build-desktop-dispute",
       "closed_at": null,
-      "evidence": "src/desktop/src/components/DisputeTimeline.spec.tsx:1-80 6 tests",
+      "evidence": "apps/desktop/src/components/DisputeTimeline.spec.tsx:1-80 6 tests",
       "history": [
         {
           "from": "UNREAD",
@@ -12330,7 +12330,7 @@
       "action": "BUILD",
       "batch": "exists-desktop-enterprise",
       "closed_at": null,
-      "evidence": "src/api/src/common/guards/role.guard.ts:1-62 RoleGuard with @Roles() decorator; src/api/src/modules/b2b/b2b.controller.ts:35-59 assertEnterpriseMembership with tenant scoping",
+      "evidence": "apps/api/src/common/guards/role.guard.ts:1-62 RoleGuard with @Roles() decorator; apps/api/src/modules/b2b/b2b.controller.ts:35-59 assertEnterpriseMembership with tenant scoping",
       "history": [
         {
           "from": "UNREAD",
@@ -12355,7 +12355,7 @@
       "action": "BUILD",
       "batch": "build-enterprise-rbac-billing",
       "closed_at": null,
-      "evidence": "src/web/app/admin/role-based-view.tsx:1-65 RoleBasedView component with ADMIN/FURY/USER role sections",
+      "evidence": "apps/web/app/admin/role-based-view.tsx:1-65 RoleBasedView component with ADMIN/FURY/USER role sections",
       "history": [
         {
           "from": "UNREAD",
@@ -12395,7 +12395,7 @@
       "action": "BUILD",
       "batch": "exists-desktop-enterprise",
       "closed_at": null,
-      "evidence": "src/api/src/common/guards/role.guard.spec.ts:1-122 12 tests covering role/access/org isolation; src/api/src/modules/b2b/b2b.controller.spec.ts:84 enterprise-scoped billing access test",
+      "evidence": "apps/api/src/common/guards/role.guard.spec.ts:1-122 12 tests covering role/access/org isolation; apps/api/src/modules/b2b/b2b.controller.spec.ts:84 enterprise-scoped billing access test",
       "history": [
         {
           "from": "UNREAD",
@@ -12420,7 +12420,7 @@
       "action": "BUILD",
       "batch": "exists-desktop-enterprise",
       "closed_at": null,
-      "evidence": "src/desktop/src/components/hash-collider.utils.ts:1-71 HashProof/HashCollision interfaces, similarity, severity classification, ticket draft",
+      "evidence": "apps/desktop/src/components/hash-collider.utils.ts:1-71 HashProof/HashCollision interfaces, similarity, severity classification, ticket draft",
       "history": [
         {
           "from": "UNREAD",
@@ -12445,7 +12445,7 @@
       "action": "BUILD",
       "batch": "exists-desktop-enterprise",
       "closed_at": null,
-      "evidence": "src/desktop/src/components/HashCollider.tsx:1-166 full React component with scan/severity grid/controls; src/desktop/src/components/HashCollider.css styles",
+      "evidence": "apps/desktop/src/components/HashCollider.tsx:1-166 full React component with scan/severity grid/controls; apps/desktop/src/components/HashCollider.css styles",
       "history": [
         {
           "from": "UNREAD",
@@ -12470,7 +12470,7 @@
       "action": "BUILD",
       "batch": "exists-desktop-enterprise",
       "closed_at": null,
-      "evidence": "src/desktop/src/components/HashCollider.spec.tsx:1-172 17 tests: utils + component rendering + severity + ticket draft",
+      "evidence": "apps/desktop/src/components/HashCollider.spec.tsx:1-172 17 tests: utils + component rendering + severity + ticket draft",
       "history": [
         {
           "from": "UNREAD",
@@ -12495,7 +12495,7 @@
       "action": "BUILD",
       "batch": "build-enterprise-rbac-billing",
       "closed_at": null,
-      "evidence": "src/api/database/migrations/038_enterprise_billing_scope.sql:1-24; src/api/src/modules/b2b/enterprise-scope.service.ts:1-100 EnterpriseScopeService with scope/seats",
+      "evidence": "apps/api/database/migrations/038_enterprise_billing_scope.sql:1-24; apps/api/src/modules/b2b/enterprise-scope.service.ts:1-100 EnterpriseScopeService with scope/seats",
       "history": [
         {
           "from": "UNREAD",
@@ -12536,7 +12536,7 @@
       "action": "BUILD",
       "batch": "build-enterprise-rbac-billing",
       "closed_at": null,
-      "evidence": "src/web/app/admin/billing-dashboard.tsx:1-97 BillingDashboard with metrics + scope controls",
+      "evidence": "apps/web/app/admin/billing-dashboard.tsx:1-97 BillingDashboard with metrics + scope controls",
       "history": [
         {
           "from": "UNREAD",
@@ -12577,7 +12577,7 @@
       "action": "BUILD",
       "batch": "build-enterprise-rbac-billing",
       "closed_at": null,
-      "evidence": "src/api/src/modules/b2b/enterprise-scope.service.spec.ts:1-70 6 tests: scope limits, seat management, usage recording",
+      "evidence": "apps/api/src/modules/b2b/enterprise-scope.service.spec.ts:1-70 6 tests: scope limits, seat management, usage recording",
       "history": [
         {
           "from": "UNREAD",
@@ -12764,7 +12764,7 @@
           "at": "2026-06-12T12:53:05Z"
         }
       ],
-      "evidence": "src/web/app/do-not-text-your-ex-tonight/page.test.tsx:1",
+      "evidence": "apps/web/app/do-not-text-your-ex-tonight/page.test.tsx:1",
       "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/697",
       "state_updated": "2026-06-12T12:53:05Z",
       "closed_at": null
@@ -13713,7 +13713,7 @@
       "action": "CLOSE",
       "batch": "close-already-impl",
       "closed_at": null,
-      "evidence": "src/api/src/modules/contracts/contracts.service.ts:1938",
+      "evidence": "apps/api/src/modules/contracts/contracts.service.ts:1938",
       "history": [
         {
           "from": "UNREAD",

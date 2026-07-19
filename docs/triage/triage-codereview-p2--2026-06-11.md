@@ -29,7 +29,7 @@ only gap. Fix: fall back to `http://localhost:${STYX_WEB_PORT||3000}`.
 
 ---
 
-## Item 2 — `src/api/src/config/runtime.ts:118` — Redis port 6379 default
+## Item 2 — `apps/api/src/config/runtime.ts:118` — Redis port 6379 default
 
 **Status: ACCEPT**
 
@@ -37,7 +37,7 @@ only gap. Fix: fall back to `http://localhost:${STYX_WEB_PORT||3000}`.
 If a user supplies `REDIS_URL=redis://localhost` (no port) and no `REDIS_PORT`,
 this throws. The right default is 6379 (Redis standard). One-line change.
 
-**File scope:** `src/api/src/config/runtime.ts:112-126`
+**File scope:** `apps/api/src/config/runtime.ts:112-126`
 
 ---
 
@@ -55,7 +55,7 @@ helper in `scripts/dev/env.mjs`)
 
 ---
 
-## Item 4 — `src/web/next.config.js:22` — preserve API rewrite in Docker
+## Item 4 — `apps/web/next.config.js:22` — preserve API rewrite in Docker
 
 **Status: ACCEPT**
 
@@ -65,7 +65,7 @@ when the build arg is not propagated. The rewrite should fall back to
 a build-time default (e.g., `http://api:3000`) so the image still
 contains the rewrite rule and runtime config can override.
 
-**File scope:** `src/web/next.config.js:20-30`
+**File scope:** `apps/web/next.config.js:20-30`
 
 ---
 
@@ -85,7 +85,7 @@ behavior, not a bug.
 
 ---
 
-## Item 6 — `src/api/src/config/env-path.ts:40` — load `.env` in addition to `.env.local`
+## Item 6 — `apps/api/src/config/env-path.ts:40` — load `.env` in addition to `.env.local`
 
 **Status: REJECT (already done)**
 
@@ -93,7 +93,7 @@ behavior, not a bug.
 both `.env.local` AND `.env` (in that order). The current implementation
 matches the suggestion exactly. No change needed.
 
-**File scope:** `src/api/src/config/env-path.ts:34-44`
+**File scope:** `apps/api/src/config/env-path.ts:34-44`
 
 ---
 
@@ -154,7 +154,7 @@ The current throw is correct.
 
 ---
 
-## Item 11 — `src/api/src/modules/contracts/contracts.service.ts:801` — resolve bounty URL before activation
+## Item 11 — `apps/api/src/modules/contracts/contracts.service.ts:801` — resolve bounty URL before activation
 
 **Status: DEFERRED**
 
@@ -171,7 +171,7 @@ PR with test coverage for the rollback path.
 branch chain — see commit `docs: defer bounty-URL-before-activation
 fix (Issue #670 item 11)`.
 
-**File scope:** `src/api/src/modules/contracts/contracts.service.ts:1145-1334` (caller) — not `780-810` (the suggested line).
+**File scope:** `apps/api/src/modules/contracts/contracts.service.ts:1145-1334` (caller) — not `780-810` (the suggested line).
 
 ---
 

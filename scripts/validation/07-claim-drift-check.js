@@ -28,7 +28,7 @@ const candidatePaths = [...new Set(
 const missing = [];
 for (const token of candidatePaths) {
   // Only validate repo file references, not API routes like /compliance/eligibility.
-  if (!token.startsWith('/src/') && !token.startsWith('/docs/') && token !== '/.env.example') {
+  if (!token.startsWith('/apps/') && !token.startsWith('/docs/') && token !== '/.env.example') {
     continue;
   }
   const fsPath = path.join(repoRoot, token.slice(1));

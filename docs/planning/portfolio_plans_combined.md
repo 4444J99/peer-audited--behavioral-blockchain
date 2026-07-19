@@ -744,7 +744,7 @@ Implement the recommendations from the recent Evaluation-to-Growth assessment (`
 ### 1. Abstract Quality Scripts into `@4444j99/quality-ratchet-kit`
 Many of the standalone Node scripts in the `scripts/` directory should be migrated into the local package `packages/quality-ratchet-kit`.
 - **Identify mature scripts:** Audit files such as `scripts/check-quality-deltas.mjs`, `scripts/verify-quality-contracts.mjs`, and `scripts/check-bundle-budgets.mjs`.
-- **Relocate logic:** Move the core logic of these scripts to `packages/quality-ratchet-kit/src/`.
+- **Relocate logic:** Move the core logic of these scripts to `packages/quality-ratchet-kit/apps/`.
 - **Update package.json:** Update the portfolio's `package.json` to call the CLI binary provided by the `quality-ratchet-kit` package instead of raw Node scripts.
 
 ### 2. Safeguard External API Dependencies (Offline Mode)

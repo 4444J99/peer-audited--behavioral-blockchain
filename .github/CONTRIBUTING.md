@@ -27,7 +27,7 @@ docker-compose up -d
 make install
 
 # Run database migrations
-cd src/api && npm run migrate && cd ../..
+cd apps/api && npm run migrate && cd ../..
 
 # Start all dev servers (API + Web + Mobile)
 make dev
@@ -37,10 +37,10 @@ make dev
 
 | Workspace | Port | Command |
 |-----------|------|---------|
-| `src/api` | 3000 | `cd src/api && npm run dev` |
-| `src/web` | 3001 | `cd src/web && npm run dev` |
-| `src/mobile` | Metro | `cd src/mobile && npm start` |
-| `src/desktop` | Vite | `cd src/desktop && npm run dev` |
+| `apps/api` | 3000 | `cd apps/api && npm run dev` |
+| `apps/web` | 3001 | `cd apps/web && npm run dev` |
+| `apps/mobile` | Metro | `cd apps/mobile && npm start` |
+| `apps/desktop` | Vite | `cd apps/desktop && npm run dev` |
 
 API docs are available at `http://localhost:3000/api/docs` when the API is running.
 
@@ -90,7 +90,7 @@ Every PR must include tests for changed behavior.
 
 ```bash
 make test                                          # All workspaces
-cd src/api && npx jest path/to/file.spec.ts        # Single file
+cd apps/api && npx jest path/to/file.spec.ts        # Single file
 npx jest --testNamePattern="should reject"         # Single test by name
 ```
 
@@ -133,8 +133,8 @@ npx tsx scripts/validation/05-behavioral-physics-check.ts  # Algorithm constants
 
 The API has **two parallel directory trees** — understand this before contributing:
 
-- **`src/api/services/`** — Domain services (pure business logic, no HTTP)
-- **`src/api/src/modules/`** — NestJS modules (controllers, route handlers, DI wiring)
+- **`apps/api/services/`** — Domain services (pure business logic, no HTTP)
+- **`apps/api/src/modules/`** — NestJS modules (controllers, route handlers, DI wiring)
 
 Domain services are imported by modules. Controllers call services. Tests mock services to test controllers in isolation.
 

@@ -22,15 +22,15 @@ banned_terms=("bet" "gamble" "wager")
 # create persistent false positives (e.g., library identifiers containing banned substrings).
 # If we need deploy-artifact scanning, it should be a separate allowlisted artifact gate.
 search_dirs=(
-  "$REPO_ROOT/src/web/app"
-  "$REPO_ROOT/src/web/components"
-  "$REPO_ROOT/src/web/store"
-  "$REPO_ROOT/src/web/services"
-  "$REPO_ROOT/src/desktop/src"
-  "$REPO_ROOT/src/mobile/screens"
-  "$REPO_ROOT/src/mobile/components"
-  "$REPO_ROOT/src/mobile/services"
-  "$REPO_ROOT/src/pitch/src"
+  "$REPO_ROOT/apps/web/app"
+  "$REPO_ROOT/apps/web/components"
+  "$REPO_ROOT/apps/web/store"
+  "$REPO_ROOT/apps/web/services"
+  "$REPO_ROOT/apps/desktop/src"
+  "$REPO_ROOT/apps/mobile/screens"
+  "$REPO_ROOT/apps/mobile/components"
+  "$REPO_ROOT/apps/mobile/services"
+  "$REPO_ROOT/apps/pitch/src"
 )
 
 found_violations=false

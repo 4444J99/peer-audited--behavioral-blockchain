@@ -15,7 +15,7 @@
 - `src/mobile/` — React Native (Expo)
 - `src/desktop/` — Tauri wrapper
 - `src/pitch/` — pitch deck build
-- `infra/terraform/` — Render + Cloudflare R2 + WAF
+- `infrastructure/terraform/` — Render + Cloudflare R2 + WAF
 - `docs/` — research, legal, planning, architecture docs
 
 ## Key Constants

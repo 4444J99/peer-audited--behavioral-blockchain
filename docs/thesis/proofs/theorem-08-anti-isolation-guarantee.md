@@ -2,7 +2,7 @@
 
 > **Chapter:** 4 (Results)
 > **Mathematical tool:** Predicate logic; universal quantification
-> **Code mapping:** `src/api/services/health/recovery-protocol.service.ts`
+> **Code mapping:** `apps/api/services/health/recovery-protocol.service.ts`
 > **References:** Marlatt (2005), Cordier et al. (2021), Holt et al. (2003)
 
 ---

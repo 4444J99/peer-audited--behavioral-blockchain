@@ -21,7 +21,7 @@ echo "3. Building Web Companion..."
 echo "✅ Web Build Simulated"
 
 echo "4. Triggering Expo EAS Build for iOS TestFlight..."
-# cd src/mobile && eas build --platform ios --profile preview --non-interactive
+# cd apps/mobile && eas build --platform ios --profile preview --non-interactive
 echo "✅ EAS Build Submitted to Queue"
 
 echo "5. Verifying Legal & Security Compliance..."

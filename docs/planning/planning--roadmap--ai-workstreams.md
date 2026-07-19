@@ -10,7 +10,7 @@ The goal is to move from **Phase Alpha (The Iron Core)** to **Phase Omega (The E
 
 **Primary Focus**: Financial truth, ACID compliance, rule logic, queue routing.
 **Dependencies**: Postgres, Redis, BullMQ, Stripe.
-**Target Directory**: `src/api`, `src/shared`
+**Target Directory**: `apps/api`, `apps/shared`
 
 * **Phase Alpha (The Iron Core)**
   * **Double-Entry Ledger Engine**: Implement `LedgerService` with transactional PostgreSQL locking to ensure zero money-printing (the "Phantom Money Test").
@@ -35,7 +35,7 @@ The goal is to move from **Phase Alpha (The Iron Core)** to **Phase Omega (The E
 
 **Primary Focus**: Tamper-proof sensor bridges, biometric constraints, on-the-go video ingestion.
 **Dependencies**: Native iOS/Android modules, HealthKit, Google Fit.
-**Target Directory**: `src/mobile`
+**Target Directory**: `apps/mobile`
 
 * **Phase Alpha (The Iron Core)**
   * **Mobile Scaffolding**: React Native setup with bare workflow for native module access.
@@ -59,7 +59,7 @@ The goal is to move from **Phase Alpha (The Iron Core)** to **Phase Omega (The E
 
 **Primary Focus**: Peer review dashboards, Plaid financial proofs, B2C funnel.
 **Dependencies**: Next.js, React, Tailwind, Plaid Link, Cloudflare Stream Player.
-**Target Directory**: `src/web`
+**Target Directory**: `apps/web`
 
 * **Phase Alpha (The Iron Core)**
   * **Vercel / Next.js Setup**: Monorepo routing and public landing/marketing pages for Phase Zero (Manifesto) communication.
@@ -81,7 +81,7 @@ The goal is to move from **Phase Alpha (The Iron Core)** to **Phase Omega (The E
 
 **Primary Focus**: Moderation, dispute resolution, macro platform control.
 **Dependencies**: Tauri/Electron, React, heavy data-tables.
-**Target Directory**: `src/desktop`
+**Target Directory**: `apps/desktop`
 
 * **Phase Alpha (The Iron Core)**
   * **Tauri Scaffolding**: Setup minimal Rust/WebView wrapper inside Monorepo.

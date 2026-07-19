@@ -108,7 +108,7 @@ Continues from `2026-05-27-cross-agent-handoff.md`. All PRs (#605–#611) are no
 
 ### Phase 6 — CI health restoration (PRs #608 `8566d32`, #611 `b1dd946`)
 - Stable `build_and_test` summary job — required-check name never changes with matrix shape.
-- `src/shared` ts-jest config: 119 previously-skipped shared tests now run.
+- `apps/shared` ts-jest config: 119 previously-skipped shared tests now run.
 - `test-harness` lint fixed (`tsc --noEmit`).
 - `--coverage --ci` flags no longer forwarded globally (was blocking suite loading).
 

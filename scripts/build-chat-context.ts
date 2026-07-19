@@ -3,7 +3,7 @@
  * build-chat-context.ts
  *
  * Reads key source files and assembles them into a static knowledge base
- * exported from src/web/lib/styx-knowledge.ts. No vector DB needed —
+ * exported from apps/web/lib/styx-knowledge.ts. No vector DB needed —
  * the assembled content fits within Llama 3.3 70B's 128K context window.
  *
  * Usage: npx tsx scripts/build-chat-context.ts
@@ -25,14 +25,14 @@ const SOURCES: SourceFile[] = [
   { label: "PROJECT OVERVIEW (CLAUDE.md)", path: "CLAUDE.md" },
   {
     label: "BEHAVIORAL LOGIC (oath categories, constants, streams)",
-    path: "src/shared/libs/behavioral-logic.ts",
+    path: "apps/shared/libs/behavioral-logic.ts",
   },
   {
     label: "INTEGRITY SCORE (algorithm, tiers, Fury accuracy)",
-    path: "src/shared/libs/integrity.ts",
+    path: "apps/shared/libs/integrity.ts",
   },
-  { label: "MONEY UTILITIES", path: "src/shared/libs/money.ts" },
-  { label: "DATABASE SCHEMA", path: "src/api/database/schema.sql" },
+  { label: "MONEY UTILITIES", path: "apps/shared/libs/money.ts" },
+  { label: "DATABASE SCHEMA", path: "apps/api/database/schema.sql" },
   {
     label: "FEATURE BACKLOG (executive summary + P0/P1)",
     path: "docs/FEATURE-BACKLOG.md",
@@ -80,7 +80,7 @@ function main() {
   console.log("Building Styx chat knowledge base...");
 
   const knowledge = buildKnowledge();
-  const outPath = resolve(ROOT, "src/web/lib/styx-knowledge.ts");
+  const outPath = resolve(ROOT, "apps/web/lib/styx-knowledge.ts");
 
   // Ensure directory exists
   mkdirSync(dirname(outPath), { recursive: true });

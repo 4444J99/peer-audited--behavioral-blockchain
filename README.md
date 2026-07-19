@@ -53,12 +53,12 @@ Turborepo monorepo with **npm** workspaces. Package scope: `@styx/*`.
 
 | Workspace     | Package         | Stack                                 | Role                                           |
 | ------------- | --------------- | ------------------------------------- | ---------------------------------------------- |
-| `src/api`     | `@styx/api`     | NestJS 11, BullMQ, Stripe, PostgreSQL | Backend — ledger, escrow, Fury Router, oracles |
-| `src/web`     | `@styx/web`     | Next.js 16, React 18, Tailwind        | Dashboard, Fury workbench                      |
-| `src/mobile`  | `@styx/mobile`  | React Native 0.81                     | Sensor bridge, camera, biometrics              |
-| `src/desktop` | `@styx/desktop` | Tauri 2.0, Vite, React                | "The Judge" admin dashboard                    |
-| `src/shared`  | `@styx/shared`  | TypeScript                            | Constants, types, algorithms                   |
-| `src/pitch`   | `@styx/pitch`   | Vite, React 18, p5.js                 | Interactive pitch deck                         |
+| `apps/api`     | `@styx/api`     | NestJS 11, BullMQ, Stripe, PostgreSQL | Backend — ledger, escrow, Fury Router, oracles |
+| `apps/web`     | `@styx/web`     | Next.js 16, React 18, Tailwind        | Dashboard, Fury workbench                      |
+| `apps/mobile`  | `@styx/mobile`  | React Native 0.81                     | Sensor bridge, camera, biometrics              |
+| `apps/desktop` | `@styx/desktop` | Tauri 2.0, Vite, React                | "The Judge" admin dashboard                    |
+| `apps/shared`  | `@styx/shared`  | TypeScript                            | Constants, types, algorithms                   |
+| `apps/pitch`   | `@styx/pitch`   | Vite, React 18, p5.js                 | Interactive pitch deck                         |
 
 ```mermaid
 flowchart TB
@@ -176,10 +176,10 @@ See [`docs/activation/activation-ledger--peer-audited--2026-06-11.md`](docs/acti
 
 ```bash
 make test                                        # All unit/integration tests via Turborepo
-cd src/api && npx jest                           # API tests only (640)
-cd src/mobile && npx jest                        # Mobile tests only (273)
-cd src/web && npx jest                           # Web tests only (166)
-cd src/desktop && npx jest                       # Desktop tests only (128)
+cd apps/api && npx jest                           # API tests only (640)
+cd apps/mobile && npx jest                        # Mobile tests only (273)
+cd apps/web && npx jest                           # Web tests only (166)
+cd apps/desktop && npx jest                       # Desktop tests only (128)
 npx jest --testNamePattern="should reject"       # Single test by name
 
 # E2E (Playwright)
@@ -233,7 +233,7 @@ Full policy and gate ownership live in `docs/planning/beta-readiness-contract.md
 | `npm run format`                | Prettier across all workspaces                           |
 | `npm run clean`                 | Clean build artifacts + node_modules                     |
 | `npm run beta:readiness`        | Run Phase 1 beta readiness contract + emit JSON artifact |
-| `cd src/api && npm run migrate` | Run database migrations via the repo-root env resolver   |
+| `cd apps/api && npm run migrate` | Run database migrations via the repo-root env resolver   |
 | `bash scripts/setup.sh`         | Full bootstrap (docker + install + build + test)         |
 
 ## API Documentation
@@ -272,8 +272,8 @@ Copy `.env.example` to `.env` and set:
 | `BETA_WEB_URL`                          | No                                                 | Optional target web URL for beta readiness                              |
 | `BETA_ENV_LABEL`                        | No                                                 | Expected environment label for `/meta/release` (default: `beta`)        |
 
-The API loads env files through `src/api/src/config/env-path.ts` in this order:
-repo `.env.local`, repo `.env`, `src/api/.env.local`, then `src/api/.env`.
+The API loads env files through `apps/api/apps/config/env-path.ts` in this order:
+repo `.env.local`, repo `.env`, `apps/api/.env.local`, then `apps/api/.env`.
 Set `STYX_API_KEY_PEPPER` in the selected file or deployment secret store before
 issuing or verifying API keys. Generate it with `openssl rand -base64 48`; do not
 reuse `JWT_SECRET`.

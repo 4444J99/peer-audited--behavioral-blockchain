@@ -11,7 +11,7 @@ Owner: `Founder + Engineering`
 - App Store Connect `Styx` app record exists
 - distribution certificate and provisioning profile confirmed
 - release branch / tag selected
-- `src/mobile/eas.json` submit credentials filled outside source control
+- `apps/mobile/eas.json` submit credentials filled outside source control
 
 Repo-derived current state:
 
@@ -37,7 +37,7 @@ Record here:
 Suggested current mobile build path:
 
 ```bash
-cd src/mobile
+cd apps/mobile
 npx eas build --platform ios --profile beta
 ```
 
@@ -55,7 +55,7 @@ Record here:
 Current gap to resolve:
 
 - The repo does not contain a proven TestFlight upload lane.
-- `src/mobile/eas.json` still has blank `appleId`, `ascAppId`, and `appleTeamId` under `submit.production`.
+- `apps/mobile/eas.json` still has blank `appleId`, `ascAppId`, and `appleTeamId` under `submit.production`.
 - Until those are configured and a real upload occurs, this runbook remains draft-only.
 
 ## 4. Post-Upload Checks

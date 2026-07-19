@@ -24,15 +24,15 @@ Because of that, the most important finance question is not "what are the fees?"
 - Scope lock: `docs/planning/planning--phase1-private-beta-scope.md`
 - Beta readiness: `docs/planning/planning--beta-readiness-contract.md`
 - Feature intent: `docs/FEATURE-BACKLOG.md`
-- Shared money helper: `src/shared/libs/money.ts`
-- Ledger truth: `src/api/services/ledger/ledger.service.ts`
-- Schema: `src/api/database/schema.sql`
-- Contract creation / resolution: `src/api/src/modules/contracts/contracts.service.ts`
-- Escrow rail: `src/api/services/escrow/stripe.service.ts`
-- Settlement quote / worker: `src/api/src/modules/payments/settlement-quote.ts`, `src/api/src/modules/payments/settlement.worker.ts`
-- Dispute / appeal fee: `src/api/services/escrow/dispute.service.ts`
-- Ticket purchases: `src/api/services/billing.ts`
-- Wallet reads: `src/api/src/modules/wallet/wallet.controller.ts`
+- Shared money helper: `apps/shared/libs/money.ts`
+- Ledger truth: `apps/api/services/ledger/ledger.service.ts`
+- Schema: `apps/api/database/schema.sql`
+- Contract creation / resolution: `apps/api/src/modules/contracts/contracts.service.ts`
+- Escrow rail: `apps/api/services/escrow/stripe.service.ts`
+- Settlement quote / worker: `apps/api/src/modules/payments/settlement-quote.ts`, `apps/api/src/modules/payments/settlement.worker.ts`
+- Dispute / appeal fee: `apps/api/services/escrow/dispute.service.ts`
+- Ticket purchases: `apps/api/services/billing.ts`
+- Wallet reads: `apps/api/src/modules/wallet/wallet.controller.ts`
 
 ## Financial Surface Inventory
 
@@ -56,10 +56,10 @@ Because of that, the most important finance question is not "what are the fees?"
 
 Code path:
 
-- `src/api/src/modules/contracts/dto.ts`
-- `src/api/src/modules/contracts/contracts.service.ts`
-- `src/api/services/escrow/stripe.service.ts`
-- `src/api/database/schema.sql`
+- `apps/api/src/modules/contracts/dto.ts`
+- `apps/api/src/modules/contracts/contracts.service.ts`
+- `apps/api/services/escrow/stripe.service.ts`
+- `apps/api/database/schema.sql`
 
 Current chain:
 
@@ -81,8 +81,8 @@ That means the create-time rail and the settlement-time rail can disagree by `10
 
 Code path:
 
-- `src/shared/libs/behavioral-logic.ts`
-- `src/api/src/modules/contracts/contracts.service.ts`
+- `apps/shared/libs/behavioral-logic.ts`
+- `apps/api/src/modules/contracts/contracts.service.ts`
 
 Constants:
 
@@ -103,8 +103,8 @@ Logic note:
 
 Code path:
 
-- `src/api/services/billing.ts`
-- `src/api/services/escrow/dispute.service.ts`
+- `apps/api/services/billing.ts`
+- `apps/api/services/escrow/dispute.service.ts`
 
 Constants:
 
@@ -129,7 +129,7 @@ Critical gap:
 
 Code path:
 
-- `src/api/services/billing.ts`
+- `apps/api/services/billing.ts`
 
 Constants:
 
@@ -151,10 +151,10 @@ Assessment:
 
 Code path:
 
-- `src/api/src/modules/payments/settlement.service.ts`
-- `src/api/src/modules/payments/settlement-quote.ts`
-- `src/api/src/modules/payments/settlement.worker.ts`
-- `src/api/src/modules/compliance/jurisdiction-disposition.mapper.ts`
+- `apps/api/src/modules/payments/settlement.service.ts`
+- `apps/api/src/modules/payments/settlement-quote.ts`
+- `apps/api/src/modules/payments/settlement.worker.ts`
+- `apps/api/src/modules/compliance/jurisdiction-disposition.mapper.ts`
 
 Current quote rules in `settlement-quote.ts`:
 
@@ -182,7 +182,7 @@ Assessment:
 
 Code path:
 
-- `src/api/src/modules/payments/stripe-fbo.service.ts`
+- `apps/api/src/modules/payments/stripe-fbo.service.ts`
 
 Current math there:
 
@@ -200,7 +200,7 @@ This means the repo currently contains **two incompatible failed-settlement payo
 
 Code path:
 
-- `src/api/src/modules/contracts/contracts.service.ts`
+- `apps/api/src/modules/contracts/contracts.service.ts`
 
 Current chain:
 
@@ -217,8 +217,8 @@ Assessment:
 
 Code path:
 
-- `src/api/src/modules/wallet/wallet.controller.ts`
-- `src/api/services/ledger/ledger.service.ts`
+- `apps/api/src/modules/wallet/wallet.controller.ts`
+- `apps/api/services/ledger/ledger.service.ts`
 
 Current behavior:
 

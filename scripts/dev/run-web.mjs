@@ -4,7 +4,7 @@ import { buildWebEnv, repoRoot } from "./env.mjs";
 
 const env = buildWebEnv();
 const child = spawn("npm", ["exec", "--", "next", "dev", "-p", env.PORT], {
-  cwd: path.join(repoRoot, "src/web"),
+  cwd: path.join(repoRoot, "apps/web"),
   env,
   stdio: "inherit",
 });

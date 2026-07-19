@@ -2,7 +2,7 @@
 
 > **Chapter:** 4 (Results)
 > **Mathematical tool:** Cryptographic hash chain properties; collision resistance of SHA-256
-> **Code mapping:** `src/api/services/ledger/truth-log.service.ts`
+> **Code mapping:** `apps/api/services/ledger/truth-log.service.ts`
 > **References:** Menezes et al. (1996), Caldarelli & Ellul (2021)
 
 ---

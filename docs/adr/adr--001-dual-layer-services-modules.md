@@ -10,10 +10,10 @@ The Styx API needs to separate pure business logic from HTTP transport and NestJ
 
 ## Decision
 
-We use two parallel directory trees inside `src/api/`:
+We use two parallel directory trees inside `apps/api/`:
 
 ```
-src/api/
+apps/api/
 ├── services/       ← Domain layer (pure business logic)
 │   ├── ledger/
 │   ├── fury-router/

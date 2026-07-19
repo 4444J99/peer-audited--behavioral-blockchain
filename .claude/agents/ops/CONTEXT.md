@@ -13,7 +13,7 @@ Deployment, monitoring, incident response, and infrastructure reliability for th
 - `.github/workflows/ci.yml` — Node 20, security audit, turbo test + build + lint, Gates 04-07, beta readiness, Terraform validate, Playwright E2E, CodeQL
 - `.github/workflows/deploy.yml` — tag-triggered deploy to Render with smoke test
 - `.github/workflows/beta-promotion.yml`, `staging-promotion.yml` — promotion workflows
-- `infra/terraform/` — Render services, Cloudflare R2, WAF rules
+- `infrastructure/terraform/` — Render services, Cloudflare R2, WAF rules
 - `scripts/infra/` — R2 lifecycle, WAF rules, pg data lake extract
 
 ## Infrastructure Map

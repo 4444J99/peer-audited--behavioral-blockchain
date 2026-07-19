@@ -139,7 +139,7 @@ jobs:
       - name: Run Database Migrations (beta)
         env:
           DATABASE_URL: ${{ secrets.BETA_DATABASE_URL }}
-        run: cd src/api && npm run migrate
+        run: cd apps/api && npm run migrate
 
   smoke_beta:
     runs-on: ubuntu-latest

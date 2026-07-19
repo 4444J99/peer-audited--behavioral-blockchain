@@ -6,7 +6,7 @@ const child = spawn(
   "npm",
   ["exec", "--", "tsx", "database/migrations/migrate.ts"],
   {
-    cwd: path.join(repoRoot, "src/api"),
+    cwd: path.join(repoRoot, "apps/api"),
     env: buildMigrateEnv(),
     stdio: "inherit",
   },

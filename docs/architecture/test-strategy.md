@@ -20,22 +20,22 @@ Unit tests run in the workspaces of the Turborepo monorepo. Most use Jest + ts-j
 
 | Workspace | Runner | Naming Convention |
 |-----------|--------|-------------------|
-| `src/api` | Jest (`src/api/jest.config.cjs`) | `*.spec.ts` |
-| `src/web` | Jest | `*.test.ts` / `*.test.tsx` |
-| `src/mobile` | Jest | `*.spec.ts` |
-| `src/shared` | Jest | `*.spec.ts` |
-| `src/desktop` | Jest | `*.spec.ts` |
+| `apps/api` | Jest (`apps/api/jest.config.cjs`) | `*.spec.ts` |
+| `apps/web` | Jest | `*.test.ts` / `*.test.tsx` |
+| `apps/mobile` | Jest | `*.spec.ts` |
+| `apps/shared` | Jest | `*.spec.ts` |
+| `apps/desktop` | Jest | `*.spec.ts` |
 | `src/ask-styx` | **Vitest** (`vitest run`) | `*.test.ts` |
 | `src/test-harness` | **Vitest** | `*.test.ts` |
 
-(`src/pitch` has no tests. Workspace globs: `src/*` and `packages/*`; `packages/` is currently empty.)
+(`apps/pitch` has no tests. Workspace globs: `src/*` and `packages/*`; `packages/` is currently empty.)
 
 **Naming conventions:**
 - `*.spec.ts` for API service/module tests and shared library tests (NestJS convention)
 - `*.test.ts` for web and mobile component/hook tests (React convention)
 - Test files co-locate next to source: `contracts.service.ts` pairs with `contracts.service.spec.ts`
 
-**API coverage thresholds** (configured in `src/api/jest.config.cjs`):
+**API coverage thresholds** (configured in `apps/api/jest.config.cjs`):
 
 ```
 lines: 70%
@@ -82,7 +82,7 @@ Playwright defines four browser projects in `.config/playwright/playwright.confi
 7. Fury auditor workbench -- accept assignment, review proof, cast verdict
 8. Integrity score changes after contract completion/failure
 
-E2E runs in CI via the `e2e` job in `ci.yml` (chromium + firefox) — it builds `src/web` and serves it on `:3001` before running the suite. Local runs use `npm run test:e2e` (which passes `--config=.config/playwright/playwright.config.ts`); add `--project=chromium` to limit to one browser.
+E2E runs in CI via the `e2e` job in `ci.yml` (chromium + firefox) — it builds `apps/web` and serves it on `:3001` before running the suite. Local runs use `npm run test:e2e` (which passes `--config=.config/playwright/playwright.config.ts`); add `--project=chromium` to limit to one browser.
 
 ### 1.4 Validation Gates
 
@@ -168,20 +168,20 @@ Additional CI workflows:
 
 ## 5. Test Data Management
 
-> **Note:** this section describes the *intended* shared test-data layer under `src/shared/`. The `src/shared/test/` directory is not yet present in the tree — treat the files below as target design, not current state.
+> **Note:** this section describes the *intended* shared test-data layer under `apps/shared/`. The `apps/shared/test/` directory is not yet present in the tree — treat the files below as target design, not current state.
 
-**Fixtures** (target: `src/shared/test/fixtures/`):
+**Fixtures** (target: `apps/shared/test/fixtures/`):
 - `contracts.fixture.ts` -- sample contracts across all 7 oath categories
 - `users.fixture.ts` -- users at different integrity score tiers
 - `ledger.fixture.ts` -- balanced double-entry transaction sets
 - `fury.fixture.ts` -- auditor profiles with varying reputation scores
 
-**Factory functions** (target: `src/shared/test/factories/`):
+**Factory functions** (target: `apps/shared/test/factories/`):
 - `createContract()` -- generates a valid contract with randomized but legal parameters
 - `createUser()` -- generates a user with configurable integrity score
 - `createAudit()` -- generates a Fury audit with configurable verdict distribution
 
-**Database seeding** for integration tests uses raw SQL transactions against the `pg` pool (the project uses node-postgres + `src/api/database/schema.sql`, not an ORM) for atomic setup/teardown.
+**Database seeding** for integration tests uses raw SQL transactions against the `pg` pool (the project uses node-postgres + `apps/api/database/schema.sql`, not an ORM) for atomic setup/teardown.
 
 ## 6. Known Test Gaps
 

@@ -219,8 +219,8 @@ copy, displays the live `$30 + $9 = $39` MVP fee breakdown, keeps exact `$20`
 micro-stakes outside KYC, and reflects failure-history downscaling when the
 browser can load prior contract status.
 
-**Evidence:** `src/web/app/contracts/new/page.tsx`, plus static render coverage
-in `src/web/app/contracts/new/page.test.tsx`, merged via
+**Evidence:** `apps/web/app/contracts/new/page.tsx`, plus static render coverage
+in `apps/web/app/contracts/new/page.test.tsx`, merged via
 `https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/692`.
 
 **Lesson:** Tracked live work must be able to move into implementation. The
@@ -264,8 +264,8 @@ chromium/firefox CI. #281 moved from TRACKING to WAITING because it carries the
 blocked label and the issue body says native health bridge UI is blocked on a
 mobile native engineer.
 
-**Local verification:** `cd src/api && npx jest guards/auth.guard.spec.ts
---runInBand` passed; `cd src/web && npx jest services/api-client.test.ts
+**Local verification:** `cd apps/api && npx jest guards/auth.guard.spec.ts
+--runInBand` passed; `cd apps/web && npx jest services/api-client.test.ts
 --runInBand` passed. A local targeted Playwright run for #617 did not execute
 specs because the bundled Chromium binary is absent locally, so the closure
 evidence relies on merged PR #618 and its historical green e2e CI rather than
@@ -284,9 +284,9 @@ the blocked local browser environment.
 tool with feeling selection, urge-level input, step progression, replacement
 message copy, and one attributed CTA into the private beta registration path.
 
-**Evidence:** `src/web/app/do-not-text-your-ex-tonight/page.tsx`,
-`src/web/app/do-not-text-your-ex-tonight/page.test.tsx`, and
-`src/web/proxy.ts`.
+**Evidence:** `apps/web/app/do-not-text-your-ex-tonight/page.tsx`,
+`apps/web/app/do-not-text-your-ex-tonight/page.test.tsx`, and
+`apps/web/proxy.ts`.
 
 **Channel linkage:** Jessica and Styx planning docs now point to the route with
 source/intent query params so channel traffic can preserve the emergency-asset
@@ -307,7 +307,7 @@ warned about. One (#591) carried residual drift that this batch fixed.
 
 **Verification (evidence on `main` unless noted):**
 - #590 (test-strategy path/gate drift, HIGH): `docs/architecture/test-strategy.md`
-  already uses `src/api`/`scripts/validation/`/`scripts/smoke/` and lists the 9
+  already uses `apps/api`/`scripts/validation/`/`scripts/smoke/` and lists the 9
   real gate files — the `apps/api` / `scripts/gates/` drift is gone.
 - #592 (Fury consensus contradicted three ways, P1): reconciled to ADR-004 across
   the corpus. `test-strategy.md:199` states "3 auditors, 2-of-3 or 3-of-3 … no

@@ -79,7 +79,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Alpha
 - **Priority**: P0 (foundation)
 - **Source**: `architecture--feasibility-stack.md` §S5, `architecture--truth-blockchain.md` §Financial Database, `planning--roadmap.md` §Alpha
-- **Existing Code**: `src/api/services/ledger/ledger.service.ts`, `src/api/database/schema.sql` (accounts, entries tables)
+- **Existing Code**: `apps/api/services/ledger/ledger.service.ts`, `apps/api/database/schema.sql` (accounts, entries tables)
 - **Spec**: PostgreSQL double-entry accounting. Every financial transaction requires equal debit + credit entries. Money is never created or deleted. Core tables: `accounts` (ASSET/LIABILITY/EQUITY/REVENUE/EXPENSE), `entries` (debit/credit FKs, `CHECK(amount > 0)`), `event_log`. Zero-balance invariant enforced at SQL level, not application. `ON DELETE RESTRICT` prevents deletion of historical data.
 - **Dependencies**: PostgreSQL
 - **Legal/Compliance**: Required for financial audit trail and regulator defensibility.
@@ -90,7 +90,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Alpha
 - **Priority**: P0 (foundation)
 - **Source**: `architecture--feasibility-stack.md` §S2.4, `architecture--truth-blockchain.md`, `planning--roadmap.md` §Alpha (checked)
-- **Existing Code**: `src/api/services/ledger/truth-log.service.ts`, `src/api/database/schema.sql` (event_log table)
+- **Existing Code**: `apps/api/services/ledger/truth-log.service.ts`, `apps/api/database/schema.sql` (event_log table)
 - **Spec**: Append-only `event_log` table. Each row's `current_hash` = hash(previous_hash || payload || timestamp). SHA-256 chain creates tamper-evident log. Optional future: anchor head hash to public blockchain.
 - **Dependencies**: F-CORE-01
 
@@ -100,7 +100,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Alpha
 - **Priority**: P0 (foundation)
 - **Source**: `research--differentiation-competitor.md` §Gap 3, `research--evaluation-to-growth--strategic-review.md` §1.1
-- **Existing Code**: `src/shared/libs/integrity.ts`, `src/shared/libs/integrity.spec.ts`
+- **Existing Code**: `apps/shared/libs/integrity.ts`, `apps/shared/libs/integrity.spec.ts`
 - **Spec**: `Base(50) + 5*completions - 15*frauds - 20*strikes - 1*inactive_months`. Floor 0. Tiers: RESTRICTED_MODE (<20, $0 max), TIER_1 (<50, $20), TIER_2 (<100, $100), TIER_3 (<500, $1K), TIER_4 (>=500, unlimited).
 - **Dependencies**: None (pure algorithm)
 
@@ -110,7 +110,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Alpha
 - **Priority**: P0 (beta-blocker)
 - **Source**: `legal--aegis-protocol.md` §3, `legal--gatekeeper-compliance.md` §1, `legal--performance-wagering.md` §Variant 1, `planning--roadmap.md` §Alpha
-- **Existing Code**: `src/api/services/escrow/stripe.service.ts`, `src/api/services/escrow/dispute.service.ts`, `src/api/src/modules/payments/`
+- **Existing Code**: `apps/api/services/escrow/stripe.service.ts`, `apps/api/services/escrow/dispute.service.ts`, `apps/api/src/modules/payments/`
 - **Spec**: Stripe Connect FBO routing. User stakes $X → Stripe holds in FBO. On resolution: refund to user, platform fee to house, bounty to Furies. Currently test-money only; real-money settlement path needs activation.
 - **Dependencies**: High-risk merchant account (F-INFRA-01)
 - **Legal/Compliance**: Mandatory to avoid Money Transmitter classification. Zero custody model.
@@ -121,7 +121,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Alpha
 - **Priority**: P0 (foundation)
 - **Source**: `research--behavioral-engineering-masters.md` §Synthesis, `research--behavioral-economics.md` §Introduction
-- **Existing Code**: `src/shared/libs/behavioral-logic.ts`, `src/shared/libs/behavioral-logic.spec.ts`
+- **Existing Code**: `apps/shared/libs/behavioral-logic.ts`, `apps/shared/libs/behavioral-logic.spec.ts`
 - **Spec**: 7 categories: Biological, Cognitive, Professional, Creative, Environmental, Character, Recovery. Constants: grace days 2/month, onboarding bonus $5, λ=1.955, downscale after 3 strikes, 7-day cool-off, BMI floor 18.5, 2% weekly velocity cap, recovery max 30 days, max 3 no-contact targets, 3 missed attestations = auto-fail.
 - **Dependencies**: None (pure algorithm)
 
@@ -131,7 +131,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Alpha
 - **Priority**: P1
 - **Source**: `research--market-analysis.md` §Revenue Structuring
-- **Existing Code**: `src/api/services/billing.ts`, `src/api/services/billing.spec.ts`
+- **Existing Code**: `apps/api/services/billing.ts`, `apps/api/services/billing.spec.ts`
 - **Spec**: Centralized pricing constants. IAP single-contract ticket at $4.99.
 - **Dependencies**: F-CORE-04
 
@@ -141,7 +141,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Alpha
 - **Priority**: P0
 - **Source**: `research--smart-contracts-behavioral-wagers.md` §State Machine, `api/spec.md`
-- **Existing Code**: `src/api/src/modules/contracts/contracts.service.ts`, `src/api/src/modules/contracts/contracts.scheduler.ts`, `src/api/database/schema.sql` (contracts table: PENDING_STAKE → ACTIVE → COMPLETED/FAILED)
+- **Existing Code**: `apps/api/src/modules/contracts/contracts.service.ts`, `apps/api/src/modules/contracts/contracts.scheduler.ts`, `apps/api/database/schema.sql` (contracts table: PENDING_STAKE → ACTIVE → COMPLETED/FAILED)
 - **Spec**: Full CRUD: create contract, submit proof, use grace day, scheduler for deadline enforcement. Attestation scheduler for daily check-ins.
 - **Dependencies**: F-CORE-01, F-CORE-04
 
@@ -237,7 +237,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Gamma
 - **Priority**: P0
 - **Source**: `architecture--truth-blockchain.md` §Anti-Fraud, `planning--roadmap.md` §Gamma (checked)
-- **Existing Code**: `src/api/services/intelligence/phash.service.ts`, `src/api/services/anomaly/anomaly.service.ts`
+- **Existing Code**: `apps/api/services/intelligence/phash.service.ts`, `apps/api/services/anomaly/anomaly.service.ts`
 - **Spec**: 64-bit perceptual hash via spatial + temporal hashing. Before proof enters review queue, Hamming distance compared against all previous uploads. Below threshold = auto-reject as duplicate.
 - **Dependencies**: FFmpeg, R2 storage
 
@@ -288,7 +288,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P0 (beta-blocker — primary Phase 1 journey)
 - **Source**: `planning--phase1-private-beta-scope.md`, `planning--roadmap.md` §Beta
-- **Existing Code**: `src/api/src/modules/contracts/contracts.service.ts` (getAttestationStatus, submitAttestation), `src/api/src/modules/contracts/contracts.controller.ts`, `src/web/app/contracts/[id]/attest/page.tsx`, `src/mobile/screens/AttestationScreen.tsx`, `src/api/database/schema.sql` (attestations table)
+- **Existing Code**: `apps/api/src/modules/contracts/contracts.service.ts` (getAttestationStatus, submitAttestation), `apps/api/src/modules/contracts/contracts.controller.ts`, `apps/web/app/contracts/[id]/attest/page.tsx`, `apps/mobile/screens/AttestationScreen.tsx`, `apps/api/database/schema.sql` (attestations table)
 - **Spec**: Daily attestation check-in for No-Contact recovery contracts. User attests compliance; accountability partner can cosign. 3 missed attestations = auto-fail. Attestation scheduler generates daily pending rows.
 - **Dependencies**: F-CORE-07, F-SOCIAL-01
 
@@ -298,7 +298,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Gamma
 - **Priority**: P1
 - **Source**: `architecture--feasibility-stack.md` §S4.2, `research--habit-application.md` §Pillar 5
-- **Existing Code**: `src/api/services/storage/r2.service.ts` (upload/download), `src/api/src/modules/proofs/` (submission endpoints)
+- **Existing Code**: `apps/api/services/storage/r2.service.ts` (upload/download), `apps/api/src/modules/proofs/` (submission endpoints)
 - **Spec**: Client requests signed upload URL → uploads to R2 → backend receives webhook → extracts metadata → ties to contract + time window → FFmpeg compress/transcode/strip metadata → serve via signed URL. "Weigh-in word" (random, time-sensitive) must appear in frame to prevent old photo reuse.
 - **Dependencies**: F-INFRA-03 (R2), FFmpeg
 
@@ -382,7 +382,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Gamma
 - **Priority**: P0
 - **Source**: `architecture--feasibility-stack.md` §S4.3, `planning--roadmap.md` §Gamma (checked)
-- **Existing Code**: `src/api/services/fury-router/fury-router.service.ts`, `src/api/services/fury-router/fury-router.worker.ts`, `src/api/src/modules/fury/`
+- **Existing Code**: `apps/api/services/fury-router/fury-router.service.ts`, `apps/api/services/fury-router/fury-router.worker.ts`, `apps/api/src/modules/fury/`
 - **Spec**: Anonymized BullMQ distribution to 3 random Furies. Double-anonymized: author hidden from reviewers, reviewers hidden from each other. Consensus (per ADR-004): 2-of-3 or 3-of-3 pass → user passes; 2-of-3 or 3-of-3 fail → stake liquidated; 3-way split → Judge escalation. All identifying metadata stripped via FFmpeg.
 - **Dependencies**: Redis, BullMQ, F-INFRA-03
 
@@ -392,7 +392,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Gamma
 - **Priority**: P0
 - **Source**: `research--evaluation-to-growth--strategic-review.md` §1.1
-- **Existing Code**: `src/shared/libs/integrity.ts`, `src/api/src/modules/fury/fury.worker.demotion.spec.ts`, `src/api/src/modules/fury/fury.stats.spec.ts`
+- **Existing Code**: `apps/shared/libs/integrity.ts`, `apps/api/src/modules/fury/fury.worker.demotion.spec.ts`, `apps/api/src/modules/fury/fury.stats.spec.ts`
 - **Spec**: Accuracy = (successful - false_accusations*3) / total. Demotion below 0.8 after 10-audit burn-in. Auditor stake: $2.00 per audit. False accusation: stake forfeited, integrity score drops.
 - **Dependencies**: F-CORE-03
 
@@ -422,7 +422,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Gamma
 - **Priority**: P0
 - **Source**: `planning--roadmap.md` §Gamma (checked), `research--evaluation-to-growth--strategic-review.md` §Sprint 3
-- **Existing Code**: `src/api/services/intelligence/honeypot.service.ts`, admin endpoint `POST /admin/honeypot`
+- **Existing Code**: `apps/api/services/intelligence/honeypot.service.ts`, admin endpoint `POST /admin/honeypot`
 - **Spec**: Cron-injected "known-fail" and "known-pass" proofs into Fury queue. Furies who consistently misjudge honeypots get Trust Score reduction, voting weight zeroed, potential ban.
 - **Dependencies**: F-FURY-01
 
@@ -432,7 +432,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Gamma
 - **Priority**: P0
 - **Source**: `architecture--feasibility-stack.md` §S4.3
-- **Existing Code**: `src/api/src/modules/fury/consensus.engine.ts`, `src/api/src/modules/fury/consensus.engine.spec.ts`
+- **Existing Code**: `apps/api/src/modules/fury/consensus.engine.ts`, `apps/api/src/modules/fury/consensus.engine.spec.ts`
 - **Spec**: Aggregates verdicts from 3 Furies (per ADR-004). 2-of-3 or 3-of-3 pass → user passes. 2-of-3 or 3-of-3 fail → liquidation (house 15%, Furies 85%). 3-way split → Judge escalation.
 - **Dependencies**: F-FURY-01
 
@@ -475,7 +475,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P0
 - **Source**: `legal--aegis-protocol.md` §2, `legal--compliance-guardrails.md`, `planning--roadmap.md` §Beta (checked)
-- **Existing Code**: `src/api/services/health/aegis.service.ts`, `src/api/services/health/aegis.service.spec.ts`
+- **Existing Code**: `apps/api/services/health/aegis.service.ts`, `apps/api/services/health/aegis.service.spec.ts`
 - **Spec**: BMI floor 18.5 (prevents underweight goals). Weight loss velocity cap 2%/week (prevents starvation). Prevents incentivizing eating disorders.
 - **Dependencies**: None
 
@@ -485,7 +485,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P0
 - **Source**: `legal--compliance-guardrails.md` §50-State, `legal--gatekeeper-compliance.md` §2, `planning--roadmap.md` §Beta (checked)
-- **Existing Code**: `src/api/services/geofencing.ts`, `src/api/src/common/guards/geofence.guard.ts`, `src/api/src/modules/compliance/compliance-policy.service.ts`
+- **Existing Code**: `apps/api/services/geofencing.ts`, `apps/api/src/common/guards/geofence.guard.ts`, `apps/api/src/modules/compliance/compliance-policy.service.ts`
 - **Spec**: Three tiers: TIER_1 (full access, predominance-test states), TIER_2 (refund-only, material-element states), TIER_3 (hard-blocked, any-chance states: AZ, AR, DE, etc.). IP-based + address verification. TIER_2 refund-only restrictions implemented. Missing geolocation defaults fail-open (configurable).
 - **Dependencies**: IP geolocation service
 - **Legal/Compliance**: Mandatory for multi-state operation.
@@ -496,7 +496,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P0 (beta-blocker)
 - **Source**: `legal--aegis-protocol.md`, `legal--compliance-guardrails.md` §4.D, `planning--implementation-status.md`
-- **Existing Code**: `src/api/src/modules/auth/auth.service.ts` (register validation requires `ageConfirmation: true`), `src/api/database/migrations/008_age_gate_terms_acceptance.sql`, `src/web/app/register/page.tsx`, `src/mobile/screens/RegisterScreen.tsx`
+- **Existing Code**: `apps/api/src/modules/auth/auth.service.ts` (register validation requires `ageConfirmation: true`), `apps/api/database/migrations/008_age_gate_terms_acceptance.sql`, `apps/web/app/register/page.tsx`, `apps/mobile/screens/RegisterScreen.tsx`
 - **Spec**: Enforce 18+ age verification at registration. Collect date of birth, validate against threshold. Phase 1 scope explicitly defers but this is a legal requirement before any real-money operation.
 - **Dependencies**: None
 - **Legal/Compliance**: Legal requirement for financial stakes in all jurisdictions.
@@ -507,7 +507,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P1
 - **Source**: `research--breakup-psychology-loss-aversion.md`, `planning--phase1-private-beta-scope.md`
-- **Existing Code**: `src/api/services/health/recovery-protocol.service.ts`, behavioral-logic constants (max 30 days, max 3 targets)
+- **Existing Code**: `apps/api/services/health/recovery-protocol.service.ts`, behavioral-logic constants (max 30 days, max 3 targets)
 - **Spec**: No-contact specific guardrails: max 30 days duration, max 3 no-contact targets, 3 missed attestations = auto-fail. Day 3 & Day 21 lockdown (prevent modification during danger zones). Five rationalization countermeasures (closure trap, apology guise, logistical loophole, special occasions, "I'm healed" illusion).
 - **Dependencies**: F-CORE-07, F-CORE-05
 
@@ -517,7 +517,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Phase2+
 - **Priority**: P2
 - **Source**: `legal--aegis-protocol.md`, `legal--compliance-guardrails.md` §4.D, `planning--implementation-status.md` (Planned)
-- **Existing Code**: `src/api/src/modules/compliance/identity-verification.service.ts`, `src/api/src/modules/compliance/identity-provider.service.ts` (spec files exist, implementation status unclear)
+- **Existing Code**: `apps/api/src/modules/compliance/identity-verification.service.ts`, `apps/api/src/modules/compliance/identity-provider.service.ts` (spec files exist, implementation status unclear)
 - **Spec**: Collect legal name, DOB, address. Full ID verification for higher stakes. Enforces age limits. Reduces fraud/money-laundering risk.
 - **Dependencies**: Third-party KYC provider (Stripe Identity, Jumio, etc.)
 - **Legal/Compliance**: Required for AML compliance. Even without MSB status, reduces regulatory risk.
@@ -633,7 +633,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Delta
 - **Priority**: P1
 - **Source**: `research--psychology-behavior.md` §Flow 2
-- **Existing Code**: `src/web/app/dashboard/page.tsx`, `src/web/app/dashboard/page.test.tsx`, `src/mobile/screens/DashboardScreen.tsx`, `src/mobile/screens/DashboardScreen.spec.tsx`
+- **Existing Code**: `apps/web/app/dashboard/page.tsx`, `apps/web/app/dashboard/page.test.tsx`, `apps/mobile/screens/DashboardScreen.tsx`, `apps/mobile/screens/DashboardScreen.spec.tsx`
 - **Spec**: Large progress circle (weekly completion). Vault status (protected vs active split). One-tap logging. Multiple nested progress bars: daily, weekly streak, seasonal. Effort increases as users approach goal (goal-gradient effect).
 - **Dependencies**: F-CORE-07
 - **Gap Remaining**: Progress-circle visualization and nested streak layers are still simplified; goal-gradient nudges need dedicated UX treatment.
@@ -644,7 +644,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P1
 - **Source**: `research--psychology-behavior.md` §Flow 1
-- **Existing Code**: `src/web/app/contracts/new/`, `src/mobile/screens/CreateContractScreen.tsx`, `src/mobile/screens/CreateContractScreen.spec.tsx`
+- **Existing Code**: `apps/web/app/contracts/new/`, `apps/mobile/screens/CreateContractScreen.tsx`, `apps/mobile/screens/CreateContractScreen.spec.tsx`
 - **Spec**: Slider with three suggested amounts: $20 (Light nudge), $50 (Meaningful — default), $100 (Serious). Custom allowed. Cap $200 max, $10 min. Transparent loss math shown upfront: vault amount, cost per missed day, weekly loss cap, grace days.
 - **Dependencies**: F-CORE-04
 - **What's Done**: Mobile now enforces min/max stake validation ($10-$200), includes quick-select presets ($20/$50/$100), and renders explicit loss-math preview (vault hold, per-day exposure, weekly cap).
@@ -686,7 +686,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Alpha
 - **Priority**: P0
 - **Source**: `legal--gatekeeper-compliance.md` §2, `planning--roadmap.md` §Alpha (checked)
-- **Existing Code**: `src/web/utils/linguistic-cloak.ts`, `src/web/utils/linguistic-cloak.test.ts`, `src/mobile/services/LinguisticMiddleware.ts`
+- **Existing Code**: `apps/web/utils/linguistic-cloak.ts`, `apps/web/utils/linguistic-cloak.test.ts`, `apps/mobile/services/LinguisticMiddleware.ts`
 - **Spec**: Runtime vocabulary swap: stake→vault, bet→commitment, fury→peer review, wager→pledge, pot→pool, odds→likelihood, casino→platform. Validation Gate 04 scans production build for forbidden strings.
 - **Dependencies**: None
 - **Legal/Compliance**: Required for Apple App Store "Health & Fitness" and Stripe compliance.
@@ -720,7 +720,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P1
 - **Source**: `research--breakup-psychology-loss-aversion.md` §3, `research--psychology-behavior.md` §Flow 5
-- **Existing Code**: `src/api/database/schema.sql` (accountability_partners table), attestation cosigning logic
+- **Existing Code**: `apps/api/database/schema.sql` (accountability_partners table), attestation cosigning logic
 - **Spec**: After Week 1, offer opt-in partner who sees progress (not vault amount). Partners can cosign attestations, veto No-Contact breaks, and receive weekly updates. 30% higher completion with accountability partner (stickK data). For high-stakes contracts ($500+), partners become financially incentivized adversaries (30% bounty).
 - **Dependencies**: F-CORE-07, F-VERIFY-06
 
@@ -730,7 +730,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Alpha
 - **Priority**: P0
 - **Source**: `planning--roadmap.md` §Alpha (checked)
-- **Existing Code**: `src/web/app/whistleblower/` route exists
+- **Existing Code**: `apps/web/app/whistleblower/` route exists
 - **Spec**: Anonymous bounty link generation for No-Contact contracts. Third parties can submit evidence of violations via anonymous link. Validated evidence earns bounty from violator's forfeited stake.
 - **Dependencies**: F-CORE-04, F-CORE-07
 
@@ -740,7 +740,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Delta
 - **Priority**: P1
 - **Source**: `planning--roadmap.md` §Delta (checked)
-- **Existing Code**: `src/web/app/tavern/`, API endpoint `GET /users/leaderboard`, `src/web/store/useFuryStore.ts`
+- **Existing Code**: `apps/web/app/tavern/`, API endpoint `GET /users/leaderboard`, `apps/web/store/useFuryStore.ts`
 - **Spec**: Gamified leaderboard with tier badges. Redis Sorted Sets for O(log N) insertions. Anonymized integrity leaderboard. Real-time via SSE.
 - **Dependencies**: Redis
 
@@ -750,7 +750,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Delta
 - **Priority**: P1
 - **Source**: `planning--roadmap.md` §Delta (checked)
-- **Existing Code**: `src/api/src/modules/feed/feed.controller.ts`, API endpoint `GET /feed`
+- **Existing Code**: `apps/api/src/modules/feed/feed.controller.ts`, API endpoint `GET /feed`
 - **Spec**: Anonymized real-time event stream (REST + SSE). Shows platform activity without exposing user identities. `?limit=50` (max 100).
 - **Dependencies**: F-CORE-07
 
@@ -785,7 +785,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Gamma
 - **Priority**: P0 (beta-blocker)
 - **Source**: `architecture--feasibility-stack.md` §S4.2, CLAUDE.md §Remaining Limitations
-- **Existing Code**: `src/mobile/screens/CameraScreen.tsx` (placeholder), `src/mobile/screens/ProofCaptureScreen.tsx`
+- **Existing Code**: `apps/mobile/screens/CameraScreen.tsx` (placeholder), `apps/mobile/screens/ProofCaptureScreen.tsx`
 - **Spec**: Native Swift (iOS) / Kotlin (Android) camera that disables gallery uploads. Forces real-time proof capture. In-app camera with "weigh-in word" overlay. Upload buffer directly to pre-signed R2 links. Current placeholder allows text proof submission as fallback.
 - **Dependencies**: Xcode (iOS), Android Studio (Android)
 
@@ -805,7 +805,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P1
 - **Source**: `research--behavioral-engineering-masters.md` §RAIN, general UX
-- **Existing Code**: `src/mobile/services/NotificationService.ts` (expo-notifications wiring: local scheduling, permission request, Android channel, graceful degradation), `src/mobile/services/ApiClient.ts` (registerPushToken)
+- **Existing Code**: `apps/mobile/services/NotificationService.ts` (expo-notifications wiring: local scheduling, permission request, Android channel, graceful degradation), `apps/mobile/services/ApiClient.ts` (registerPushToken)
 - **Spec**: Push notifications for: grace day reminders, Fury review assignments, verdict reports, endowed progress alerts, RAIN intercessions, attestation reminders.
 - **Dependencies**: APNs (iOS), FCM (Android)
 - **What's done**: Local notifications (grace day, attestation, deadline), permission flow, Expo push token retrieval, device token registration API. **What remains**: Remote push via APNs/FCM (requires Apple/Google credentials), server-side push dispatch.
@@ -826,7 +826,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Omega
 - **Priority**: P2
 - **Source**: `planning--roadmap--ai-workstreams.md` §WS2 Omega
-- **Existing Code**: `src/mobile/services/OfflineCache.ts`, `src/mobile/services/OfflineCache.spec.ts`
+- **Existing Code**: `apps/mobile/services/OfflineCache.ts`, `apps/mobile/services/OfflineCache.spec.ts`
 - **Spec**: TTL-based response caching. Mutation queue replays when connectivity returns. "Dark Device Default": if offline >24 hours, defaults to failure state.
 - **Dependencies**: None
 
@@ -836,7 +836,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Omega
 - **Priority**: P2
 - **Source**: `api/spec.md`, `planning--roadmap--ai-workstreams.md`
-- **Existing Code**: `src/mobile/services/EnterpriseSSO.ts`, `src/mobile/services/EnterpriseSSO.spec.ts`
+- **Existing Code**: `apps/mobile/services/EnterpriseSSO.ts`, `apps/mobile/services/EnterpriseSSO.spec.ts`
 - **Spec**: Enterprise SSO token exchange via deep links. Corporate employees transition seamlessly from internal portals.
 - **Dependencies**: F-B2B-01
 
@@ -850,7 +850,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P0 (beta-blocker — security requirement)
 - **Source**: `planning--implementation-status.md`
-- **Existing Code**: `src/web/contexts/AuthContext.tsx`, `src/web/services/api-client.ts`, `src/api/src/modules/auth/auth.service.ts`
+- **Existing Code**: `apps/web/contexts/AuthContext.tsx`, `apps/web/services/api-client.ts`, `apps/api/src/modules/auth/auth.service.ts`
 - **Spec**: Migrate from client-side JWT storage to HttpOnly cookie-based authentication. Current implementation exposes JWT to XSS. Server must set/clear cookies; client reads auth state from API response.
 - **Dependencies**: API auth module changes
 
@@ -860,7 +860,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Gamma
 - **Priority**: P0
 - **Source**: `planning--roadmap--ai-workstreams.md` §WS3 Gamma
-- **Existing Code**: `src/web/app/fury/`, `src/web/store/useFuryStore.ts`
+- **Existing Code**: `apps/web/app/fury/`, `apps/web/store/useFuryStore.ts`
 - **Spec**: Anonymous peer-review workbench. HLS video playback. Pass/Fail/Flag with confidence scores. Side-by-side: baseline (Day 1) vs final proof (Day 30). Tools: zoom, contrast filter, clothing comparison.
 - **Dependencies**: F-FURY-01, F-INFRA-03
 
@@ -870,7 +870,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Omega
 - **Priority**: P2
 - **Source**: `planning--roadmap--ai-workstreams.md` §WS3 Omega, `research--b2b-expansion-heartbreak-niche.md`
-- **Existing Code**: `src/web/app/hr/page.tsx` (feature-flag gate, enterprise-scoped metrics loader, support-trace error rendering)
+- **Existing Code**: `apps/web/app/hr/page.tsx` (feature-flag gate, enterprise-scoped metrics loader, support-trace error rendering)
 - **Spec**: Read-only UI for corporate managers showing aggregated, anonymized group habit metrics. No individual identification. ERISA compliance.
 - **Gap Remaining**: Role-based access + org-scoped authz enforcement still required before external rollout.
 - **Dependencies**: F-B2B-01, F-B2B-03
@@ -881,7 +881,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Delta
 - **Priority**: P1
 - **Source**: `planning--roadmap--ai-workstreams.md` §WS3 Delta
-- **Existing Code**: `src/api/services/realtime/`, SSE-based notification stream exists
+- **Existing Code**: `apps/api/services/realtime/`, SSE-based notification stream exists
 - **Spec**: Real-time updates via SSE/WebSocket. Redis Sorted Sets power the leaderboard. Sub-millisecond latency for rank queries.
 - **Dependencies**: Redis, F-SOCIAL-03
 
@@ -906,7 +906,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Delta
 - **Priority**: P0
 - **Source**: `planning--roadmap.md` §Delta (checked), `planning--roadmap--ai-workstreams.md` §WS4 Delta
-- **Existing Code**: `src/desktop/src/components/MacroReview.tsx`, admin endpoints (`POST /admin/resolve/:contractId`)
+- **Existing Code**: `apps/desktop/src/components/MacroReview.tsx`, admin endpoints (`POST /admin/resolve/:contractId`)
 - **Spec**: Secure Tauri 2.0 desktop app for dispute resolution. $5 appeal fee. Judge sees baseline photo, final proof, violation code, user plea text. Override Fury verdicts. Handle refunds.
 - **Dependencies**: F-FURY-01
 
@@ -916,7 +916,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P1 (internal tool)
 - **Source**: `planning--roadmap--ai-workstreams.md` §WS4 Beta
-- **Existing Code**: `src/desktop/src/components/LedgerInspector.tsx`
+- **Existing Code**: `apps/desktop/src/components/LedgerInspector.tsx`
 - **Spec**: Raw read-only view into PostgreSQL Truth Log. Instantly identify balance mismatches or transaction failures.
 - **Dependencies**: F-CORE-01, F-CORE-02
 
@@ -926,7 +926,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Delta
 - **Priority**: P1
 - **Source**: `planning--roadmap--ai-workstreams.md` §WS4 Delta
-- **Existing Code**: `src/desktop/src/components/ExilePanel.tsx`, `src/api/services/security/moderation.service.ts`
+- **Existing Code**: `apps/desktop/src/components/ExilePanel.tsx`, `apps/api/services/security/moderation.service.ts`
 - **Spec**: Permanent system exile management. Admin can ban users with reason. Links to moderation service.
 - **Dependencies**: F-CORE-03
 
@@ -936,7 +936,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Delta
 - **Priority**: P2
 - **Source**: `planning--roadmap--ai-workstreams.md` §WS4
-- **Existing Code**: `src/desktop/src/components/HashCollider.tsx`, `src/desktop/src/components/hash-collider.utils.ts`
+- **Existing Code**: `apps/desktop/src/components/HashCollider.tsx`, `apps/desktop/src/components/hash-collider.utils.ts`
 - **Spec**: Tool for comparing pHash values and investigating suspected duplicate proofs.
 - **Gap Remaining**: Backend-side automated ticket creation/escalation path not yet wired.
 - **Dependencies**: F-VERIFY-01
@@ -947,7 +947,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Omega
 - **Priority**: P2
 - **Source**: `planning--roadmap--ai-workstreams.md` §WS4 Omega
-- **Existing Code**: `src/desktop/src/components/B2BOrchestration.tsx` (list/generate/revoke API keys, clipboard-safe key reveal, operator feedback states)
+- **Existing Code**: `apps/desktop/src/components/B2BOrchestration.tsx` (list/generate/revoke API keys, clipboard-safe key reveal, operator feedback states)
 - **Spec**: Controls for generating Enterprise API keys and managing billing parameters.
 - **Gap Remaining**: Billing plan controls and per-key scope restrictions still pending.
 - **Dependencies**: F-B2B-01
@@ -972,7 +972,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Omega
 - **Priority**: P1
 - **Source**: `planning--roadmap.md` §Omega (checked), `planning--roadmap--ai-workstreams.md` §WS1 Omega
-- **Existing Code**: `src/api/src/modules/b2b/connectors/salesforce.connector.ts`, `src/api/src/modules/b2b/connectors/hubspot.connector.ts`, `src/api/src/modules/b2b/crm.service.ts`
+- **Existing Code**: `apps/api/src/modules/b2b/connectors/salesforce.connector.ts`, `apps/api/src/modules/b2b/connectors/hubspot.connector.ts`, `apps/api/src/modules/b2b/crm.service.ts`
 - **Spec**: Enterprise webhook endpoints returning anonymized behavioral velocity stats. Webhook registration, testing, and delivery. CRM interface pattern for swappable connectors.
 - **Dependencies**: F-B2B-03
 
@@ -982,7 +982,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Omega
 - **Priority**: P1
 - **Source**: `planning--roadmap.md` §Omega (checked)
-- **Existing Code**: `src/api/src/modules/b2b/billing.service.ts`
+- **Existing Code**: `apps/api/src/modules/b2b/billing.service.ts`
 - **Spec**: Revenue based on "AI Insights generated." Consumption-based billing for enterprise customers.
 - **Dependencies**: F-B2B-01
 
@@ -992,7 +992,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Omega
 - **Priority**: P0 (B2B requirement)
 - **Source**: `planning--roadmap.md` §Omega (checked)
-- **Existing Code**: `src/api/src/modules/b2b/anonymize.service.ts`, `src/api/services/security/anonymization.service.ts`
+- **Existing Code**: `apps/api/src/modules/b2b/anonymize.service.ts`, `apps/api/services/security/anonymization.service.ts`
 - **Spec**: One-way hashing of identifiers, date coarsening, anonymized HR exports. Employers see aggregated metrics without individual identification.
 - **Dependencies**: None
 - **Legal/Compliance**: Required for CCPA/CPRA, HIPAA, ERISA compliance.
@@ -1023,7 +1023,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Omega
 - **Priority**: P2
 - **Source**: `architecture--alpha-to-omega-plan.md` §Infrastructure
-- **Existing Code**: `src/api/src/modules/b2b/datalake.service.ts`
+- **Existing Code**: `apps/api/src/modules/b2b/datalake.service.ts`
 - **Spec**: Batch analytics snapshots: contract metrics, behavioral trends, cohort analysis. PostgreSQL logical replication for external analytics.
 - **Dependencies**: PostgreSQL
 
@@ -1155,7 +1155,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Gamma
 - **Priority**: P0
 - **Source**: `architecture--feasibility-stack.md` §S4.1, `planning--roadmap.md` §Gamma (checked)
-- **Existing Code**: `src/api/services/storage/r2.service.ts`
+- **Existing Code**: `apps/api/services/storage/r2.service.ts`
 - **Spec**: S3-compatible, zero egress fees. At 100TB: AWS ~$10K/mo vs R2 ~$150/mo. Signed URLs only. Pre-signed upload links. 30-day auto-delete lifecycle after review.
 - **Dependencies**: Cloudflare account
 
@@ -1165,7 +1165,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Added Feb 2026
 - **Priority**: P1
 - **Source**: `architecture--alpha-to-omega-plan.md` §Infrastructure
-- **Existing Code**: `infra/terraform/`
+- **Existing Code**: `infrastructure/terraform/`
 - **Spec**: Terraform configs for Render services + Cloudflare R2. Reproducible infrastructure deployments.
 - **Dependencies**: Terraform
 
@@ -1240,7 +1240,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P0 (beta-blocker)
 - **Source**: `legal--compliance-guardrails.md` §4.C
-- **Existing Code**: `src/web/app/legal/rules/page.tsx`
+- **Existing Code**: `apps/web/app/legal/rules/page.tsx`
 - **Spec**: Every contest must have official rules stating: eligibility (age, geography, health), start/end dates with timezone, exact performance criteria, verification methods, winner determination, maximum prizes, dispute procedure. Rules must be consistent with product behavior.
 - **Dependencies**: F-CORE-07
 - **Legal/Compliance**: Required for promotions/contest law compliance across all states.
@@ -1251,7 +1251,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P1
 - **Source**: `legal--compliance-guardrails.md` §4.E
-- **Existing Code**: `src/web/app/legal/responsible-use/page.tsx`
+- **Existing Code**: `apps/web/app/legal/responsible-use/page.tsx`
 - **Spec**: "You can lose money; not an investment product." "Not medical advice; talk to your doctor." Links to NCPG, eating-disorder, mental-health resources. FTC 16 CFR Part 255 compliance for marketing.
 - **Dependencies**: None
 - **Legal/Compliance**: FTC, state consumer protection laws.
@@ -1262,7 +1262,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 - **Phase**: Beta
 - **Priority**: P0
 - **Source**: `legal--compliance-guardrails.md` §50-State, `legal--performance-wagering.md`
-- **Existing Code**: `src/api/services/geofencing.ts` (tier mapping), `src/api/src/modules/compliance/compliance-policy.service.ts`
+- **Existing Code**: `apps/api/services/geofencing.ts` (tier mapping), `apps/api/src/modules/compliance/compliance-policy.service.ts`
 - **Spec**: Canonical policy service handles per-state rules. TIER_2 refund-only mode for "material element" states. TIER_3 hard-block for "any chance" states. Must be dynamically configurable as legal landscape changes.
 - **Dependencies**: F-AEGIS-02
 - **Legal/Compliance**: "The application cannot operate uniformly nationwide."

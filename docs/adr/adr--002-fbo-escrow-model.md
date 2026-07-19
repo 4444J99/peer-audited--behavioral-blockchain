@@ -33,7 +33,7 @@ User stakes $100 → Stripe creates PaymentIntent (hold)
      expires without proof submission       before final settlement
 ```
 
-**Implementation**: `src/api/services/escrow/stripe.service.ts` handles hold/capture/cancel. `src/api/src/modules/payments/stripe-fbo.service.ts` manages the FBO-specific lifecycle. `src/api/src/modules/payments/settlement.service.ts` orchestrates the final distribution.
+**Implementation**: `apps/api/services/escrow/stripe.service.ts` handles hold/capture/cancel. `apps/api/src/modules/payments/stripe-fbo.service.ts` manages the FBO-specific lifecycle. `apps/api/src/modules/payments/settlement.service.ts` orchestrates the final distribution.
 
 ## Consequences
 
@@ -61,6 +61,6 @@ User stakes $100 → Stripe creates PaymentIntent (hold)
 ## Related
 
 - ADR-001: Dual-layer architecture separates escrow domain logic from HTTP/payment webhooks
-- `src/api/services/escrow/dispute.service.ts`: Dispute handling
-- `src/api/src/modules/payments/settlement.worker.ts`: Background settlement processing
+- `apps/api/services/escrow/dispute.service.ts`: Dispute handling
+- `apps/api/src/modules/payments/settlement.worker.ts`: Background settlement processing
 - Validation gate 01 (`scripts/validation/01-phantom-money-check.ts`): Ensures no unbalanced ledger entries from escrow operations

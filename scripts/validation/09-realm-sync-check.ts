@@ -9,7 +9,7 @@
  */
 
 import { Pool } from "pg";
-import { REALM_REGISTRY, RealmId } from "../../src/shared/libs/realm-registry";
+import { REALM_REGISTRY, RealmId } from "../../apps/shared/libs/realm-registry";
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {

@@ -2,7 +2,7 @@
 
 > **Chapter:** 4 (Results)
 > **Mathematical tool:** Finite automaton theory; exhaustive case analysis
-> **Code mapping:** `src/api/services/escrow/dispute.service.ts`
+> **Code mapping:** `apps/api/services/escrow/dispute.service.ts`
 > **References:** Sipser (2012)
 
 ---

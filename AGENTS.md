@@ -100,7 +100,7 @@ npm run format                          # Prettier: **/*.{ts,tsx,md}
 7. Gate 06: security invariant check
 8. Gate 07: claim drift check (`npm run validate:claims`)
 9. Beta readiness (uploads `artifacts/beta-readiness-summary.json`)
-10. Terraform validate (`infra/terraform/`)
+10. Terraform validate (`infrastructure/terraform/`)
 11. E2E Playwright (chromium + firefox matrix)
 12. CodeQL
 

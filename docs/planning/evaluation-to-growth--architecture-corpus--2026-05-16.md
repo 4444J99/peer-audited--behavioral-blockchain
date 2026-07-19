@@ -16,7 +16,7 @@ The `docs/architecture/` corpus has **strong substance and weak curation**. The 
 Six concrete issues, ranked:
 
 1. **Triplicate content on the core architectural question.** `feasibility-stack.md` (525 lines), `truth-blockchain.md` (290 lines), `truth-blockchain-v2.md` (1,002 lines) cover the same scope: wearable APIs, Plaid, video pipeline, leaderboard stack. Word-vocabulary diff between v1 and v2 is zero (verified this session via `grep -oE '[A-Za-z]{4,}' | sort -u`) — same source content, different rendering (LaTeX-style footnotes in v1 vs Markdown links in v2). Maintenance cost on a triplicated source is N×; drift cost is also N×.
-2. **Filesystem drift in `test-strategy.md`.** Doc lists `apps/api`/`packages/shared` workspaces (`src/api`/`src/shared` exist), `scripts/gates/` (doesn't exist; actual is `scripts/validation/`), and 8 gate names where only 2 ("Phantom Money", "Fury Crucible") match real files. The `07-claim-drift-check.js` gate would fail on this file if scanned.
+2. **Filesystem drift in `test-strategy.md`.** Doc lists `apps/api`/`packages/shared` workspaces (`apps/api`/`apps/shared` exist), `scripts/gates/` (doesn't exist; actual is `scripts/validation/`), and 8 gate names where only 2 ("Phantom Money", "Fury Crucible") match real files. The `07-claim-drift-check.js` gate would fail on this file if scanned.
 3. **No README/index in the directory.** A reader landing in `docs/architecture/` cannot tell which file is canonical, which is research, which is forward-looking spec, or which is generated artifact.
 4. **Author/source provenance missing on the LLM-generated docs.** `feasibility-stack.md` opens with a Perplexity logo; `truth-blockchain.md` and `-v2.md` appear to be Gemini/other-LLM output. Neither states authorship, model, prompt, or date-of-generation. The corpus reads as "the team's architecture" but is partly third-party AI research artifacts.
 5. **Misclassified files.** `architecture--alpha-to-omega-plan.md` is a 5-phase product roadmap (planning artifact), not architecture. `spec--digital-exhaust-intake.md` and `spec--fury-router.md` are forward-looking module specs (Stage IV Backcasting) — they belong in `docs/specs/` or as `prd/` adjuncts, not under "architecture" alongside as-built docs.
@@ -44,7 +44,7 @@ The good news: every issue is reversible without losing content. Most are curati
 - **Triplicate coverage of one question** (issue #1 above). `truth-blockchain.md` v1 and v2 are content-equivalent (same source material rendered with different footnote styles — LaTeX-ish numerical refs vs Markdown links). `feasibility-stack.md` covers the same topic from a different LLM. Reader cannot tell which is current or canonical.
 - **Generated artifacts treated as authored documents.** No frontmatter on the long research files indicating generator, prompt, date, intended use, or replacement plan. By contrast, `load-test-report.md` and `test-strategy.md` *do* have `generated: true` frontmatter — a partial convention that hasn't been applied to the research docs.
 - **Filesystem drift in two engineering docs** (issue #2 above). Specifically:
-  - `test-strategy.md:24-28` (workspaces table): `apps/api`, `apps/web`, `apps/mobile`, `packages/shared` — none exist. Actual: `src/api`, `src/web`, `src/mobile`, `src/shared`.
+  - `test-strategy.md:24-28` (workspaces table): `apps/api`, `apps/web`, `apps/mobile`, `packages/shared` — none exist. Actual: `apps/api`, `apps/web`, `apps/mobile`, `apps/shared`.
   - `test-strategy.md:86-95` (validation gates table): 8 gates with mismatched names. Actual `scripts/validation/` holds 9 files (01-phantom-money, 02-simulator-spoof, 03-the-full-loop, 04-redacted-build, 05-behavioral-physics, 06-security-invariant, 07-claim-drift, 08-fury-crucible, 09-realm-sync).
   - `test-strategy.md:99-106` Turbo pipeline JSON references `@styx/*` correctly but the dependency layout assumes a `packages/` workspace that doesn't exist (root `package.json` globs are `src/*` and `packages/*`, with `packages/` currently empty).
   - `test-strategy.md:136-140` references `scripts/` smoke scripts that don't all exist in the documented form (the actual repo uses `scripts/smoke/beta-readiness.sh`, etc., per root `CLAUDE.md`).
@@ -157,7 +157,7 @@ Consolidating Phase 1 findings into resolvable actions.
 **Fill reasoning gaps**
 
 - Write a 1-page ADR for each: choice of Render, choice of R2, choice of Stripe FBO, choice of BullMQ over RabbitMQ, choice of pg+native over Supabase.
-- Add a sub-section to `aegis-tier-reconciliation.md` (or a new doc) mapping each gate to its code location (e.g., "BMI floor enforced at `src/api/services/health/aegis.service.ts:<line>`").
+- Add a sub-section to `aegis-tier-reconciliation.md` (or a new doc) mapping each gate to its code location (e.g., "BMI floor enforced at `apps/api/services/health/aegis.service.ts:<line>`").
 - Write an explicit Stripe FBO design doc — escrow hold/capture/cancel flow, dispute handling, webhook idempotency strategy. This is currently missing and is the highest-risk financial component.
 
 **Support unsupported claims**
@@ -211,8 +211,8 @@ Consolidating Phase 1 findings into resolvable actions.
 - *Preventive measure*: cross-reference ADR-002 from the new `architecture/README.md` and `architecture--core.md`. Extend ADR-002 (or write ADR-006) covering the idempotency strategy specifically. Do not duplicate ADR-002's content in `docs/architecture/`.
 
 **4. Fury consensus parameter contradicted three ways** (Severity: MEDIUM-HIGH)
-- `test-strategy.md` says 3-of-5; `spec--fury-router.md` says 2-of-3-conditional-on-$1000; `adr--004-fury-consensus-engine.md` (canonical) says 3-auditor with 2/3 or 3/3 agreement and 3-way-split escalation, no $1000 threshold. The ADR points at `src/api/services/fury-router/fury-router.service.ts` as the implementation; that file is the codebase truth. The architecture corpus is internally inconsistent and additionally inconsistent with the ADR.
-- *Preventive measure*: pull the consensus parameter into `src/shared/libs/integrity.ts` (or behavioral-logic.ts) as an exported constant referenced by both the code and the doc. Update `test-strategy.md` and `spec--fury-router.md` to match ADR-004 verbatim, or supersede them.
+- `test-strategy.md` says 3-of-5; `spec--fury-router.md` says 2-of-3-conditional-on-$1000; `adr--004-fury-consensus-engine.md` (canonical) says 3-auditor with 2/3 or 3/3 agreement and 3-way-split escalation, no $1000 threshold. The ADR points at `apps/api/services/fury-router/fury-router.service.ts` as the implementation; that file is the codebase truth. The architecture corpus is internally inconsistent and additionally inconsistent with the ADR.
+- *Preventive measure*: pull the consensus parameter into `apps/shared/libs/integrity.ts` (or behavioral-logic.ts) as an exported constant referenced by both the code and the doc. Update `test-strategy.md` and `spec--fury-router.md` to match ADR-004 verbatim, or supersede them.
 
 **5. Dual-layer API pattern documented in ADR-001 but invisible from `docs/architecture/`** (Severity: LOW)
 - `adr--001-dual-layer-services-modules.md` describes the pattern (directory tree, rules, positive/negative consequences, alternatives rejected). The architecture corpus does not link to it. A contributor reading `docs/architecture/` first would miss the canonical record.
@@ -272,7 +272,7 @@ A two-tier action queue. Tier 1 is a half-day of work and closes the credibility
 **Tier 1 — Drift Fixes & Labels (close shatter points #1, #2, #4 within a half-day)**
 
 1. Edit `test-strategy.md`:
-   - Workspaces table: `apps/api` → `src/api`, `apps/web` → `src/web`, `apps/mobile` → `src/mobile`, `packages/shared` → `src/shared`.
+   - Workspaces table: `apps/api` → `apps/api`, `apps/web` → `apps/web`, `apps/mobile` → `apps/mobile`, `packages/shared` → `apps/shared`.
    - Validation gates table: rewrite to match `scripts/validation/*` (9 gates including realm-sync; drop the fictional gates Orphan Contracts, Aegis Floor, Velocity Cap, Escrow Integrity, Recovery Guardrails, OR if those gates are intended-but-not-yet-built, mark them `STATUS: planned`).
    - Smoke scripts table: align with `scripts/smoke/` actual contents.
    - Resolve Fury consensus number (`§7.2` 3-of-5 vs `spec--fury-router.md §5` 2-of-3) — pick the codebase-truth one and update the other.

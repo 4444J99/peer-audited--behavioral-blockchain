@@ -1,6 +1,6 @@
 import { Page } from '@playwright/test';
 
-// Canonical mock data matching src/web/services/api-client.ts types
+// Canonical mock data matching apps/web/services/api-client.ts types
 
 export const MOCK_USER = {
   id: 'user-e2e-test-001',

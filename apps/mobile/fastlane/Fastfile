@@ -1,0 +1,38 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build iOS debug scheme"
+  lane :build_debug do
+    sh("cd ../.. && npx expo prebuild --platform ios --clean")
+    build_app(
+      workspace: "../ios/Styx.xcworkspace",
+      scheme: "Styx",
+      configuration: "Debug",
+      export_method: "development",
+      skip_codesigning: true,
+      skip_archive: true,
+      derived_data_path: "../ios/build"
+    )
+  end
+
+  desc "Run iOS tests"
+  lane :test do
+    sh("cd ../.. && npm test")
+  end
+end
+
+platform :android do
+  desc "Build Android debug APK"
+  lane :build_debug do
+    sh("cd ../.. && npx expo prebuild --platform android --clean")
+    gradle(
+      project_dir: "../android",
+      task: "assembleDebug"
+    )
+  end
+
+  desc "Run Android tests"
+  lane :test do
+    sh("cd ../.. && npm test")
+  end
+end

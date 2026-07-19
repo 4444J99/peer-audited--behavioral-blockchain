@@ -26,15 +26,15 @@ Scope lock:
 - US allowlist only
 
 Primary files you may edit:
-- src/mobile/services/ApiClient.ts
-- src/mobile/screens/CreateContractScreen.tsx
-- src/mobile/screens/ContractDetailScreen.tsx
-- src/mobile/screens/AttestationScreen.tsx
+- apps/mobile/services/ApiClient.ts
+- apps/mobile/screens/CreateContractScreen.tsx
+- apps/mobile/screens/ContractDetailScreen.tsx
+- apps/mobile/screens/AttestationScreen.tsx
 - directly related mobile tests only
 
 Do not touch unless absolutely required and justified:
-- src/web/**
-- src/desktop/**
+- apps/web/**
+- apps/desktop/**
 - legal/planning docs
 - payment policy / settlement math
 
@@ -67,11 +67,11 @@ Scope lock:
 - hide, gate, or remove non-beta surfaces from tester navigation
 
 Primary files you may edit:
-- src/mobile/App.tsx
-- src/web/app/page.tsx
-- src/web/app/dashboard/page.tsx
-- src/web/app/layout.tsx
-- src/desktop/src/App.tsx
+- apps/mobile/App.tsx
+- apps/web/app/page.tsx
+- apps/web/app/dashboard/page.tsx
+- apps/web/app/layout.tsx
+- apps/desktop/src/App.tsx
 - directly related UI tests only
 
 Do not touch:
@@ -106,8 +106,8 @@ Mission:
 Prevent synthetic proof capture from shipping as if it were a production verification path.
 
 Primary files you may edit:
-- src/mobile/components/CameraModule.tsx
-- src/mobile/screens/ContractDetailScreen.tsx
+- apps/mobile/components/CameraModule.tsx
+- apps/mobile/screens/ContractDetailScreen.tsx
 - directly related proof/navigation tests only
 
 Do not touch:
@@ -186,13 +186,13 @@ Do not finalize payout formula changes until Jessica’s decisions are explicit 
 - docs/planning/planning--jessica-briefing-payout-decisions--2026-03-09.md
 
 Primary files you may edit:
-- src/api/src/modules/contracts/dto.ts
-- src/api/src/modules/contracts/contracts.service.ts
-- src/api/src/modules/payments/settlement-quote.ts
-- src/api/src/modules/payments/stripe-fbo.service.ts
-- src/api/src/modules/payments/settlement.service.ts
-- src/api/src/modules/payments/settlement.worker.ts
-- src/api/src/modules/wallet/wallet.controller.ts
+- apps/api/src/modules/contracts/dto.ts
+- apps/api/src/modules/contracts/contracts.service.ts
+- apps/api/src/modules/payments/settlement-quote.ts
+- apps/api/src/modules/payments/stripe-fbo.service.ts
+- apps/api/src/modules/payments/settlement.service.ts
+- apps/api/src/modules/payments/settlement.worker.ts
+- apps/api/src/modules/wallet/wallet.controller.ts
 - directly related tests only
 
 What to do:

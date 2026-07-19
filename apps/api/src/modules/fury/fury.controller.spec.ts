@@ -1,0 +1,141 @@
+import { FuryController } from './fury.controller';
+import { FuryWorker } from './fury.worker';
+import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { Pool } from 'pg';
+
+describe('FuryController', () => {
+  let controller: FuryController;
+  let mockPool: { query: jest.Mock };
+
+  const mockFuryWorker = {
+    checkConsensus: jest.fn().mockResolvedValue(undefined),
+  } as unknown as FuryWorker;
+
+  const mockTruthLog = {
+    appendEvent: jest.fn().mockResolvedValue('log-id'),
+  } as unknown as TruthLogService;
+
+  beforeEach(() => {
+    mockPool = { query: jest.fn() };
+    controller = new FuryController(
+      mockPool as unknown as Pool,
+      mockFuryWorker,
+      mockTruthLog,
+      {} as any
+    );
+    jest.clearAllMocks();
+  });
+
+  describe('getAssignments', () => {
+    it('should return pending assignments for a Fury user', async () => {
+      const assignments = [
+        { assignment_id: 'a-1', proof_id: 'p-1', media_uri: 'https://r2.styx.app/video.mp4', oath_category: 'RECOVERY_NOCONTACT' },
+        { assignment_id: 'a-2', proof_id: 'p-2', media_uri: 'https://r2.styx.app/video2.mp4', oath_category: 'BIOLOGICAL_WEIGHT' },
+      ];
+      mockPool.query.mockResolvedValueOnce({ rows: assignments });
+
+      const result = await controller.getAssignments({ id: 'fury-user-1' });
+
+      expect(result).toEqual({
+        assignments: [
+          {
+            id: 'a-1',
+            assignmentId: 'a-1',
+            proofId: 'p-1',
+            assignedAt: undefined,
+            contractId: undefined,
+            submittedAt: undefined,
+            category: 'RECOVERY_NOCONTACT',
+            contentType: undefined,
+            description: undefined,
+            redactionStatus: undefined,
+            viewUrl: null,
+            subjectAlias: undefined,
+          },
+          {
+            id: 'a-2',
+            assignmentId: 'a-2',
+            proofId: 'p-2',
+            assignedAt: undefined,
+            contractId: undefined,
+            submittedAt: undefined,
+            category: 'BIOLOGICAL_WEIGHT',
+            contentType: undefined,
+            description: undefined,
+            redactionStatus: undefined,
+            viewUrl: null,
+            subjectAlias: undefined,
+          },
+        ],
+      });
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('fury_user_id = $1'),
+        ['fury-user-1'],
+      );
+    });
+
+    it('should return empty assignments when Fury has no pending reviews', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      const result = await controller.getAssignments({ id: 'fury-idle' });
+
+      expect(result).toEqual({ assignments: [] });
+    });
+  });
+
+  describe('submitVerdict', () => {
+    it('should record the verdict, log to TruthLog, and check consensus', async () => {
+      // UPDATE fury_assignments ... RETURNING proof_id (one row updated)
+      mockPool.query.mockResolvedValueOnce({ rowCount: 1, rows: [{ proof_id: 'proof-1' }] });
+
+      const result = await controller.submitVerdict(
+        { id: 'fury-1' },
+        { assignmentId: 'assign-1', verdict: 'PASS' },
+      );
+
+      expect(result).toEqual({ status: 'verdict_recorded' });
+
+      // Verify UPDATE was called with user ID from @CurrentUser and the no-revote guard
+      const updateCall = mockPool.query.mock.calls[0];
+      expect(updateCall[0]).toMatch(/UPDATE fury_assignments SET verdict/);
+      expect(updateCall[0]).toMatch(/verdict IS NULL/);
+      expect(updateCall[1]).toEqual(['PASS', 'assign-1', 'fury-1']);
+
+      // Verify TruthLog
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('FURY_VERDICT', {
+        assignmentId: 'assign-1',
+        furyUserId: 'fury-1',
+        verdict: 'PASS',
+      });
+
+      // Verify consensus check
+      expect(mockFuryWorker.checkConsensus).toHaveBeenCalledWith('proof-1');
+    });
+
+    it('should handle FAIL verdict', async () => {
+      mockPool.query.mockResolvedValueOnce({ rowCount: 1, rows: [{ proof_id: 'proof-2' }] });
+
+      await controller.submitVerdict(
+        { id: 'fury-2' },
+        { assignmentId: 'assign-2', verdict: 'FAIL' },
+      );
+
+      const updateCall = mockPool.query.mock.calls[0];
+      expect(updateCall[1]).toEqual(['FAIL', 'assign-2', 'fury-2']);
+    });
+
+    it('should reject and not check consensus when no row is updated (invalid assignment or re-vote)', async () => {
+      mockPool.query.mockResolvedValueOnce({ rowCount: 0, rows: [] }); // UPDATE affected nothing
+
+      await expect(
+        controller.submitVerdict(
+          { id: 'fury-1' },
+          { assignmentId: 'assign-ghost', verdict: 'PASS' },
+        ),
+      ).rejects.toThrow();
+
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
+      expect(mockFuryWorker.checkConsensus).not.toHaveBeenCalled();
+    });
+  });
+});

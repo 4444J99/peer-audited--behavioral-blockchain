@@ -35,7 +35,7 @@ export const test = base.extend<{ authenticatedPage: Page }>({
     // Set up all authenticated endpoint mocks
     await setupAuthenticatedMocks(page);
 
-    // Authenticate the way the app actually gates: src/web/proxy.ts guards
+    // Authenticate the way the app actually gates: apps/web/proxy.ts guards
     // protected routes on the presence of the `styx_auth_token` cookie
     // (server-side, so it cannot see localStorage or client-side route mocks).
     // The previous `localStorage.styx_token` injection was inert — the app

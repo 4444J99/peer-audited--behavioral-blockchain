@@ -59,8 +59,8 @@ authoritative: false
 ## Reinforcement
 
 ### 2.1 Synthesis
-- **Resolved Contradiction**: The "Avatar" system in `src/web/social` will now use "Audit Masks"—when a Fury reviews a video, the user's avatar and name are replaced with a generic "Target_UUID."
-- **Filled Gap**: Added `MedicalExemptionService` to `src/shared/libs/behavioral-logic.ts` to handle verified emergencies via the "Judge" panel, preventing "Ostrich" abandonment.
+- **Resolved Contradiction**: The "Avatar" system in `apps/web/social` will now use "Audit Masks"—when a Fury reviews a video, the user's avatar and name are replaced with a generic "Target_UUID."
+- **Filled Gap**: Added `MedicalExemptionService` to `apps/shared/libs/behavioral-logic.ts` to handle verified emergencies via the "Judge" panel, preventing "Ostrich" abandonment.
 - **Strengthened Logic**: Updated the `IntegrityScore` formula to include a **"Reviewer Quality"** weight, making Master Furies' votes count for more than Novices in split decisions.
 
 ---

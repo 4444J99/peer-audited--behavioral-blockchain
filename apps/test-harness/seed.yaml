@@ -1,0 +1,30 @@
+# seed.yaml — Automation Contract for organvm-iii-ergon/ergon-test-harness
+schema_version: "1.0"
+organ: III
+repo: ergon-test-harness
+org: organvm-iii-ergon
+
+metadata:
+  implementation_status: PROPOSED
+  tier: infrastructure
+  language: typescript
+  tags: [validation, testing, playwright, simulation, commerce]
+
+agents:
+  - name: ecosystem-auditor
+    trigger: on_push
+    workflow: .github/workflows/audit-organ.yml
+    description: "Runs cross-repo validation for all Organ III siblings"
+
+produces:
+  - type: validation_report
+    description: "Compliance and aesthetic audit results for Organ III products"
+  - type: community_signal
+    description: "Audit failures/successes broadcast to Koinonia"
+    consumers: [organvm-vi-koinonia/community-hub]
+
+consumes:
+  - type: governance-rules
+    source: ORGAN-IV
+  - type: seed-contracts
+    source: ORGAN-III-ALL

@@ -2,7 +2,7 @@
 
 > **Chapter:** 4 (Results)
 > **Mathematical tool:** Induction over transaction sequence; group theory over (ℤ, +)
-> **Code mapping:** `src/api/services/ledger/ledger.service.ts`
+> **Code mapping:** `apps/api/services/ledger/ledger.service.ts`
 > **Validation gate:** `scripts/validation/01-phantom-money-check.ts`
 
 ---

@@ -8,8 +8,8 @@ The 18 remediation tasks identified in the Evaluation-to-Growth review have been
 | # | Task | Status | Implementation Details |
 |---|------|--------|------------------------|
 | 1 | Fix Gate 06 recursion parameter | **Implemented** | Added missing `extensions` param in `scripts/validation/06-security-invariant-check.ts`. |
-| 2 | Stripe idempotency keys | **Implemented** | Added `idempotencyKey` to hold/capture/cancel in `src/api/services/escrow/stripe.service.ts`. |
-| 3 | Linguistic cloaker word boundaries | **Implemented** | Added `\b` anchors to patterns in `src/web/utils/linguistic-cloak.ts`. |
+| 2 | Stripe idempotency keys | **Implemented** | Added `idempotencyKey` to hold/capture/cancel in `apps/api/services/escrow/stripe.service.ts`. |
+| 3 | Linguistic cloaker word boundaries | **Implemented** | Added `\b` anchors to patterns in `apps/web/utils/linguistic-cloak.ts`. |
 | 4 | DOB validation hardening | **Implemented** | Added format validation and age check in `AuthService.register`. |
 | 5 | `signToken` private | **Implemented** | Changed access modifier to `private` in `AuthService`. |
 | 6 | Ledger indexes | **Implemented** | Added performance indexes in migration `014` and `schema.sql`. |
@@ -24,7 +24,7 @@ The 18 remediation tasks identified in the Evaluation-to-Growth review have been
 | 15 | Ledger integer-cent migration | **Implemented** | Migrated `amount` to `BIGINT` in DB; updated `LedgerService` logic. |
 | 16 | Explicit JWT algorithms in verify | **Implemented** | Pinned to `HS256` in all `jwt.verify` calls. |
 | 17 | GDPR export/erasure | **Implemented** | Added `deletion_requested_at` lifecycle; updated `GdprService` timing logic. |
-| 18 | Next.js middleware auth guard | **Implemented** | Implemented cookie-gated route protection in `src/web/proxy.ts`. |
+| 18 | Next.js middleware auth guard | **Implemented** | Implemented cookie-gated route protection in `apps/web/proxy.ts`. |
 
 ## Additional Hardening
 - **Jurisdiction Geofencing**: Hardened `GeofenceService` and `CompliancePolicyService` to fail-closed (TIER_3) for unknown or non-US locations.

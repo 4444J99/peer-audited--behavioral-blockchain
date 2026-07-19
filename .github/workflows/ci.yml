@@ -185,15 +185,15 @@ jobs:
           terraform_version: "~1.9"
 
       - name: Terraform Format Check
-        working-directory: infra/terraform
+        working-directory: infrastructure/terraform
         run: terraform fmt -check -recursive -diff
 
       - name: Terraform Init (validation only)
-        working-directory: infra/terraform
+        working-directory: infrastructure/terraform
         run: terraform init -backend=false -input=false
 
       - name: Terraform Validate
-        working-directory: infra/terraform
+        working-directory: infrastructure/terraform
         run: terraform validate
 
   changed-files:
@@ -207,7 +207,7 @@ jobs:
       - id: check
         run: |
           BASE="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
-          if git diff --name-only "$BASE" | grep -qE "^(src/web/|e2e/|src/shared/|\.config/playwright/)"; then
+          if git diff --name-only "$BASE" | grep -qE "^(apps/web/|e2e/|apps/shared/|\.config/playwright/)"; then
             echo "web=true" >> $GITHUB_OUTPUT
           else
             echo "web=false" >> $GITHUB_OUTPUT
@@ -243,7 +243,7 @@ jobs:
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Build Web
-        run: cd src/web && npm run build
+        run: cd apps/web && npm run build
 
       - name: Run E2E Tests (${{ matrix.browser }})
         run: npx playwright test --config=.config/playwright/playwright.config.ts --project=${{ matrix.browser }}

@@ -2,7 +2,7 @@
 
 > **Chapter:** 4 (Results)
 > **Mathematical tool:** Real analysis; direct proof from definition
-> **Code mapping:** `src/shared/libs/integrity.ts`
+> **Code mapping:** `apps/shared/libs/integrity.ts`
 > **References:** Resnick et al. (2000), Ostrom (1990)
 
 ---

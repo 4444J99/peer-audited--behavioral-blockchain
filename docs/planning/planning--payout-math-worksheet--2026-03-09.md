@@ -129,6 +129,6 @@ Without this worksheet, engineering is forced to choose between conflicting payo
 Derived from:
 
 - `docs/planning/planning--financial-logic-map--2026-03-09.md`
-- `src/api/src/modules/payments/settlement-quote.ts`
-- `src/api/src/modules/payments/stripe-fbo.service.ts`
-- `src/api/services/billing.ts`
+- `apps/api/src/modules/payments/settlement-quote.ts`
+- `apps/api/src/modules/payments/stripe-fbo.service.ts`
+- `apps/api/services/billing.ts`

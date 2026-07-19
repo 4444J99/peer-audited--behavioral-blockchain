@@ -1,0 +1,254 @@
+import { Controller, Get, Post, Body, UseGuards, Sse, MessageEvent, Res, Param, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import type { Response } from 'express';
+import { Observable, timer } from 'rxjs';
+import { concatMap, map } from 'rxjs/operators';
+import { Pool } from 'pg';
+import { AuthGuard } from '../../../guards/auth.guard';
+import { RoleGuard, Roles } from '../../common/guards/role.guard';
+import { issueSseTicket } from '../../../guards/sse-ticket.store';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { FuryWorker } from './fury.worker';
+import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { R2StorageService } from '../../../services/storage/r2.service';
+import { SubmitVerdictDto } from './dto';
+import { calculateAccuracy } from '../../../../shared/libs/integrity';
+
+@ApiTags('Fury')
+@ApiBearerAuth()
+@Controller('fury')
+@UseGuards(AuthGuard, RoleGuard)
+// Class-level default: Fury-only. Read-only oversight endpoints below override this
+// with @Roles('FURY','ADMIN') so admins/operators retain visibility (LC7) — the
+// previous class-only @Roles('FURY') 403'd ADMIN out of every endpoint, a regression.
+// Verdict casting and personal SSE-subscription endpoints stay FURY-only: an admin is
+// not an assigned auditor and must not vote or hold a fury stream credential.
+@Roles('FURY')
+export class FuryController {
+  constructor(
+    private readonly pool: Pool,
+    private readonly furyWorker: FuryWorker,
+    private readonly truthLog: TruthLogService,
+    private readonly r2: R2StorageService,
+  ) {}
+
+  @Get('stats')
+  @Roles('FURY', 'ADMIN') // read-only oversight (LC7)
+  @ApiOperation({ summary: 'Get audit statistics for the current Fury reviewer' })
+  async getStats(@CurrentUser() user: { id: string }) {
+    // Audit statistics
+    const auditStats = await this.pool.query(
+      `SELECT
+         COUNT(*) FILTER (WHERE fa.verdict IS NOT NULL) as total_audits,
+         COUNT(*) FILTER (WHERE (fa.verdict = 'PASS' AND p.status = 'VERIFIED')
+                             OR (fa.verdict = 'FAIL' AND p.status = 'REJECTED')) as successful_audits,
+         COUNT(*) FILTER (WHERE fa.verdict = 'FAIL' AND p.status = 'VERIFIED') as false_accusations,
+         COUNT(*) FILTER (WHERE p.is_honeypot = true AND fa.verdict = 'FAIL') as honeypots_caught,
+         COUNT(*) FILTER (WHERE p.is_honeypot = true AND fa.verdict = 'PASS') as honeypots_failed
+       FROM fury_assignments fa
+       JOIN proofs p ON fa.proof_id = p.id
+       WHERE fa.fury_user_id = $1`,
+      [user.id],
+    );
+
+    const stats = auditStats.rows[0];
+    const totalAudits = Number(stats.total_audits);
+    const successfulAudits = Number(stats.successful_audits);
+    const falseAccusations = Number(stats.false_accusations);
+    const honeypotsCaught = Number(stats.honeypots_caught);
+    const honeypotsFailedOn = Number(stats.honeypots_failed);
+
+    const accuracy = calculateAccuracy({
+      furyId: user.id,
+      successfulAudits,
+      falseAccusations,
+      totalAudits,
+    });
+
+    // Earnings from ledger
+    const userResult = await this.pool.query(
+      `SELECT account_id FROM users WHERE id = $1`,
+      [user.id],
+    );
+
+    let totalBountiesEarned = 0;
+    let totalPenaltiesPaid = 0;
+
+    if (userResult.rows.length > 0 && userResult.rows[0].account_id) {
+      const accountId = userResult.rows[0].account_id;
+
+      const bountyResult = await this.pool.query(
+        `SELECT COALESCE(SUM(amount), 0) as total
+         FROM entries
+         WHERE credit_account_id = $1 AND metadata->>'type' = 'FURY_BOUNTY'`,
+        [accountId],
+      );
+      totalBountiesEarned = Number(bountyResult.rows[0].total);
+
+      const penaltyResult = await this.pool.query(
+        `SELECT COALESCE(SUM(amount), 0) as total
+         FROM entries
+         WHERE debit_account_id = $1 AND metadata->>'type' = 'FURY_PENALTY'`,
+        [accountId],
+      );
+      totalPenaltiesPaid = Number(penaltyResult.rows[0].total);
+    }
+
+    return {
+      totalAudits,
+      successfulAudits,
+      falseAccusations,
+      accuracy: Math.round(accuracy * 1000) / 1000,
+      totalBountiesEarned,
+      totalPenaltiesPaid,
+      // Keep all monetary fields in cents for consistency with totalBountiesEarned/totalPenaltiesPaid.
+      netEarnings: totalBountiesEarned - totalPenaltiesPaid,
+      honeypotsCaught,
+      honeypotsFailedOn,
+    };
+  }
+
+  @Get('queue')
+  @Roles('FURY', 'ADMIN') // read-only oversight (LC7)
+  @ApiOperation({ summary: 'Get pending audit assignments for the current Fury reviewer' })
+  async getAssignments(@CurrentUser() user: { id: string }) {
+    const result = await this.pool.query(
+      `SELECT fa.id AS assignment_id, fa.proof_id, fa.assigned_at, fa.subject_alias,
+              p.media_uri, p.masked_media_uri, p.redaction_status, p.content_type, p.contract_id, p.submitted_at, p.description,
+              c.oath_category
+       FROM fury_assignments fa
+       JOIN proofs p ON fa.proof_id = p.id
+       JOIN contracts c ON p.contract_id = c.id
+       WHERE fa.fury_user_id = $1 AND fa.verdict IS NULL
+       ORDER BY fa.assigned_at ASC`,
+      [user.id],
+    );
+
+    // Generate signed R2 view URLs for each assignment's proof media
+    const assignments = await Promise.all(
+      result.rows.map(async (row: any) => {
+        let viewUrl: string | null = null;
+
+        // Prefer masked media if redaction is completed
+        const mediaToView = (row.redaction_status === 'COMPLETED' && row.masked_media_uri)
+          ? row.masked_media_uri
+          : row.media_uri;
+
+        if (mediaToView) {
+          try {
+            viewUrl = await this.r2.generateViewUrl(mediaToView);
+          } catch {
+            // R2 may be unavailable in dev — degrade gracefully
+          }
+        }
+        return {
+          id: row.assignment_id, // Map to 'id' for mobile
+          assignmentId: row.assignment_id,
+          proofId: row.proof_id,
+          assignedAt: row.assigned_at,
+          subjectAlias: row.subject_alias,
+          contractId: row.contract_id,
+          submittedAt: row.submitted_at,
+          category: row.oath_category, // Map to 'category' for mobile
+          contentType: row.content_type,
+          description: row.description,
+          redactionStatus: row.redaction_status,
+          viewUrl,
+        };
+      }),
+    );
+
+    return { assignments };
+  }
+
+  @Sse('stream')
+  @Roles('FURY', 'ADMIN') // read-only oversight (LC7)
+  @ApiOperation({ summary: 'Stream pending audit assignments to the current Fury via SSE' })
+  streamAssignments(@CurrentUser() user: { id: string }): Observable<MessageEvent> {
+    // Poll the DB every 5 seconds and push over SSE
+    return timer(0, 5000).pipe(
+      concatMap(() => this.getAssignments(user)),
+      map((data) => ({ data } as MessageEvent)),
+    );
+  }
+
+  @Post('stream-ticket')
+  @ApiOperation({ summary: 'Issue a short-lived ticket for Fury SSE subscription' })
+  issueStreamTicket(@CurrentUser() user: { id: string }) {
+    return issueSseTicket(user.id, 'fury');
+  }
+
+  @Post('stream-cookie')
+  @ApiOperation({ summary: 'Issue a short-lived HttpOnly cookie for Fury SSE subscription' })
+  issueStreamCookie(
+    @CurrentUser() user: { id: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const issued = issueSseTicket(user.id, 'fury');
+    res.cookie('styx_fury_sse_ticket', issued.ticket, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/fury/stream',
+      maxAge: issued.expiresInSeconds * 1000,
+    });
+    return { expiresInSeconds: issued.expiresInSeconds };
+  }
+
+  @Post('verdict')
+  @ApiOperation({ summary: 'Submit a PASS or FAIL verdict on an assigned proof' })
+  async submitVerdict(@CurrentUser() user: { id: string }, @Body() dto: SubmitVerdictDto) {
+    // Record the verdict. Only a first vote is allowed: `verdict IS NULL` prevents a
+    // Fury from re-voting / flipping their verdict and re-triggering consensus.
+    const update = await this.pool.query(
+      `UPDATE fury_assignments SET verdict = $1, reviewed_at = NOW()
+       WHERE id = $2 AND fury_user_id = $3 AND verdict IS NULL
+       RETURNING proof_id`,
+      [dto.verdict, dto.assignmentId, user.id],
+    );
+
+    // No row updated → assignment doesn't exist, isn't owned by this Fury, or was
+    // already voted on. Don't log a FURY_VERDICT event or re-run consensus.
+    if (update.rowCount === 0) {
+      throw new BadRequestException('Verdict could not be recorded (invalid assignment or already voted)');
+    }
+
+    // Log to TruthLog
+    await this.truthLog.appendEvent('FURY_VERDICT', {
+      assignmentId: dto.assignmentId,
+      furyUserId: user.id,
+      verdict: dto.verdict,
+    });
+
+    await this.furyWorker.checkConsensus(update.rows[0].proof_id);
+
+    return { status: 'verdict_recorded' };
+  }
+
+  @Get('review/:assignmentId/mask-audit')
+  @Roles('FURY', 'ADMIN') // read-only oversight (LC7)
+  @ApiOperation({ summary: 'Get identity redaction provenance for a specific assignment' })
+  async getMaskAudit(@Param('assignmentId') assignmentId: string, @CurrentUser() user: { id: string }) {
+    const assignment = await this.pool.query(
+      `SELECT p.redaction_status, p.redaction_profile, p.media_uri, p.masked_media_uri, fa.subject_alias
+       FROM fury_assignments fa
+       JOIN proofs p ON fa.proof_id = p.id
+       WHERE fa.id = \$1 AND fa.fury_user_id = \$2`,
+      [assignmentId, user.id]
+    );
+    
+    if (assignment.rows.length === 0) {
+      throw new Error('Assignment not found');
+    }
+
+    const row = assignment.rows[0];
+    return {
+      assignmentId,
+      subjectAlias: row.subject_alias,
+      redactionStatus: row.redaction_status,
+      redactionProfile: row.redaction_profile,
+      originalMediaHash: row.media_uri ? 'redacted-for-fury-privacy' : null,
+      maskedMediaHash: row.masked_media_uri ? 'available-for-fury-review' : null,
+    };
+  }
+}

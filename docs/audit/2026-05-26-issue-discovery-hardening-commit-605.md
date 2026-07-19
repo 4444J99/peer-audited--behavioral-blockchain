@@ -8,8 +8,8 @@
 ## Remediation status (2026-05-26)
 
 **All 89 findings have been remediated in code** on this branch (commit following
-this report). Verification: `tsc --noEmit` clean across `src/api` and the changed
-`src/shared` files, and the full API test suite green (**989 tests / 95 suites passing**),
+this report). Verification: `tsc --noEmit` clean across `apps/api` and the changed
+`apps/shared` files, and the full API test suite green (**989 tests / 95 suites passing**),
 with co-located specs updated for every behavior change.
 
 Highlights of the fixes:
@@ -387,7 +387,7 @@ Strikes incremented by missed-day count in one statement; a catch-up run after d
 
 ## Cross-cutting / Config (2 findings)
 
-**CC1 — `jest.setup.cjs` omits `INTERNAL_SERVICE_TOKEN` default** · `src/api/jest.setup.cjs` · Conf Med · Sev Low
+**CC1 — `jest.setup.cjs` omits `INTERNAL_SERVICE_TOKEN` default** · `apps/api/jest.setup.cjs` · Conf Med · Sev Low
 Provides test defaults for 5 of the 6 newly-required secrets but not `INTERNAL_SERVICE_TOKEN`. Runtime auth (`proofs.controller.ts:257`) is correctly fail-closed + constant-time, so this is only a test-infra gap for any spec exercising that endpoint.
 
 **CC2 — `01-phantom-money-check.ts` ambiguous pass/fail on the NOT-VERIFIED path** · `scripts/validation/01-phantom-money-check.ts` · Conf Low · Sev Low

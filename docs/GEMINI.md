@@ -18,12 +18,12 @@ This document provides instructional context for AI agents working on the **Styx
 
 Styx is implemented as a **Monorepo** managed by Turborepo.
 
-* **`src/api`**: NestJS backend. Responsible for the ledger, escrow (Stripe FBO), and the Fury Router (BullMQ/Redis).
-* **`src/web`**: Next.js web application for consumer dashboards and the "Fury Audit" workbench.
-* **`src/mobile`**: React Native mobile application for iOS and Android. Contains deep linking for Whistleblower intake loops, camera module for digital exhaust capture.
-* **`src/desktop`**: Tauri 2.0 admin dashboard for "The Judge" (dispute resolution).
-* **`src/pitch`**: Vite + React interactive pitch deck (builds to `docs/` for GitHub Pages).
-* **`src/shared`**: Shared TypeScript types, utility libraries (Integrity Score algorithm, behavioral logic constants), and shared UI components.
+* **`apps/api`**: NestJS backend. Responsible for the ledger, escrow (Stripe FBO), and the Fury Router (BullMQ/Redis).
+* **`apps/web`**: Next.js web application for consumer dashboards and the "Fury Audit" workbench.
+* **`apps/mobile`**: React Native mobile application for iOS and Android. Contains deep linking for Whistleblower intake loops, camera module for digital exhaust capture.
+* **`apps/desktop`**: Tauri 2.0 admin dashboard for "The Judge" (dispute resolution).
+* **`apps/pitch`**: Vite + React interactive pitch deck (builds to `docs/` for GitHub Pages).
+* **`apps/shared`**: Shared TypeScript types, utility libraries (Integrity Score algorithm, behavioral logic constants), and shared UI components.
 
 ## Building and Running
 

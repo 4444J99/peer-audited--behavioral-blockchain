@@ -21,29 +21,29 @@ artifacts/
 
 # TypeScript artifacts in source directories
 **/tsconfig.tsbuildinfo
-src/api/**/*.js
-src/api/**/*.js.map
-src/api/**/*.d.ts
-src/shared/**/*.js
-src/shared/**/*.js.map
-src/shared/**/*.d.ts
+apps/api/**/*.js
+apps/api/**/*.js.map
+apps/api/**/*.d.ts
+apps/shared/**/*.js
+apps/shared/**/*.js.map
+apps/shared/**/*.d.ts
 
 # Mobile / desktop local build outputs (keep source, ignore generated state)
-src/mobile/.expo/
-src/mobile/android/.gradle/
-src/mobile/android/build_output*.txt
-src/mobile/ios/Pods/
-src/mobile/ios_simulator*.png
-src/desktop/dist/
-src/desktop/src-tauri/target/
-src/web/.next/
-src/web/tsconfig.tsbuildinfo
-src/desktop/.turbo/
-src/mobile/.turbo/
-src/web/.turbo/
-src/shared/.turbo/
-src/api/.turbo/
-src/pitch/.turbo/
+apps/mobile/.expo/
+apps/mobile/android/.gradle/
+apps/mobile/android/build_output*.txt
+apps/mobile/ios/Pods/
+apps/mobile/ios_simulator*.png
+apps/desktop/dist/
+apps/desktop/src-tauri/target/
+apps/web/.next/
+apps/web/tsconfig.tsbuildinfo
+apps/desktop/.turbo/
+apps/mobile/.turbo/
+apps/web/.turbo/
+apps/shared/.turbo/
+apps/api/.turbo/
+apps/pitch/.turbo/
 
 # Test coverage reports
 **/coverage/
@@ -55,11 +55,11 @@ src/pitch/.turbo/
 docs/**/.DS_Store
 
 # Terraform
-infra/terraform/.terraform/
-infra/terraform/*.tfstate
-infra/terraform/*.tfstate.backup
-infra/terraform/terraform.tfvars
-infra/terraform/.terraform.lock.hcl
+infrastructure/terraform/.terraform/
+infrastructure/terraform/*.tfstate
+infrastructure/terraform/*.tfstate.backup
+infrastructure/terraform/terraform.tfvars
+infrastructure/terraform/.terraform.lock.hcl
 
 # .config/ local state
 .config/vercel/.vercel/
@@ -102,3 +102,7 @@ docs/planning/premortem-transcript-*.md
 docs/planning/planning--parallel-*-prompts--*.md
 .codex/plans/**/*-prompts.md
 .claude/plans/**/*ai-session-audit*.md
+
+# Large binaries
+/terraform
+*.zip

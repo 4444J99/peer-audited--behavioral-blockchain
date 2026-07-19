@@ -2,7 +2,7 @@
 
 > **Chapter:** 4 (Results)
 > **Mathematical tool:** CSP formalization; predicate logic; constraint satisfaction
-> **Code mapping:** `src/api/services/health/aegis.service.ts`
+> **Code mapping:** `apps/api/services/health/aegis.service.ts`
 > **References:** Hoare (1985), Marlatt (2005), Baumeister et al. (2007)
 
 ---

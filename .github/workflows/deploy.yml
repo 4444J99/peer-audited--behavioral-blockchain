@@ -100,7 +100,7 @@ jobs:
       - name: Run Database Migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: cd src/api && npm run migrate
+        run: cd apps/api && npm run migrate
 
   smoke_test:
     runs-on: ubuntu-latest

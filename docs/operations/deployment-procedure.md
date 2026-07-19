@@ -101,7 +101,7 @@ Individual gates:
 
 ### Infrastructure
 
-- [ ] Database migrations tested locally: `cd src/api && npm run migrate`
+- [ ] Database migrations tested locally: `cd apps/api && npm run migrate`
 - [ ] No breaking schema changes without migration
 - [ ] Environment variables verified (see Environment Variables section)
 - [ ] Render health check endpoint responds (`/health`)
@@ -165,7 +165,7 @@ After Render reports the deploy is live:
 
 ```bash
 # Local development
-cd src/api
+cd apps/api
 npm run migrate
 
 # Production (via Render shell or pre-deploy command)
@@ -183,7 +183,7 @@ npm run migrate
 
 ```bash
 # Revert the last migration
-cd src/api
+cd apps/api
 npm run migrate:revert
 
 # Revert to a specific migration

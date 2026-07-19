@@ -31,14 +31,14 @@ npm run clean         # turbo clean + rm node_modules
 Individual workspace dev:
 
 ```bash
-cd src/api && npm run dev          # repo-root env-backed API runner
-cd src/web && npm run dev          # repo-root env-backed Next runner
-cd src/mobile && npm start         # metro bundler (Expo)
-cd src/mobile && npx expo run:ios  # iOS simulator
-cd src/desktop && npm run dev      # vite dev
-cd src/pitch && npm run dev        # vite dev (interactive pitch deck)
-cd src/shared && npm run build     # tsc
-cd src/api && npm run migrate      # repo-root env-backed database migrations
+cd apps/api && npm run dev          # repo-root env-backed API runner
+cd apps/web && npm run dev          # repo-root env-backed Next runner
+cd apps/mobile && npm start         # metro bundler (Expo)
+cd apps/mobile && npx expo run:ios  # iOS simulator
+cd apps/desktop && npm run dev      # vite dev
+cd apps/pitch && npm run dev        # vite dev (interactive pitch deck)
+cd apps/shared && npm run build     # tsc
+cd apps/api && npm run migrate      # repo-root env-backed database migrations
 ```
 
 API docs (Swagger/OpenAPI): `$STYX_API_PUBLIC_URL/api/docs` when API is running.
@@ -49,15 +49,15 @@ Jest + ts-jest in all workspaces (except pitch, which has no tests). Test files 
 
 ```bash
 make test                                                    # all workspaces via turbo
-cd src/api && npx jest                                       # single workspace
-cd src/api && npx jest services/ledger/ledger.service.spec.ts  # single file
-cd src/api && npx jest --testNamePattern="should reject"      # single test by name
-cd src/api && npx jest --coverage                             # with coverage report
+cd apps/api && npx jest                                       # single workspace
+cd apps/api && npx jest services/ledger/ledger.service.spec.ts  # single file
+cd apps/api && npx jest --testNamePattern="should reject"      # single test by name
+cd apps/api && npx jest --coverage                             # with coverage report
 ```
 
 **Turbo pipeline**: `"test": { "dependsOn": ["build"] }` — `@styx/shared` must build before other workspaces can test against it.
 
-**API coverage thresholds** (enforced in `src/api/jest.config.cjs`): lines 70%, branches 60%, functions 60%, statements 70%.
+**API coverage thresholds** (enforced in `apps/api/jest.config.cjs`): lines 70%, branches 60%, functions 60%, statements 70%.
 
 ### E2E Tests (Playwright)
 
@@ -109,18 +109,18 @@ Automation around the GitHub Projects board (config at `board.config.json` — p
 
 | Workspace          | Package              | Stack                                                  | Role                                                                                                                                                                         |
 | ------------------ | -------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/api`          | `@styx/api`          | NestJS 11, BullMQ, Stripe, pg, pino                    | Backend — ledger, escrow, Fury Router, oracles                                                                                                                               |
-| `src/web`          | `@styx/web`          | Next.js 16, React 18, Tailwind, Zustand                | Dashboard, Fury workbench                                                                                                                                                    |
-| `src/mobile`       | `@styx/mobile`       | Expo 54, React Native 0.81, React Navigation 7         | Sensor bridge, camera, biometrics                                                                                                                                            |
-| `src/shared`       | `@styx/shared`       | TypeScript (pure)                                      | Constants, types, algorithms                                                                                                                                                 |
-| `src/desktop`      | `@styx/desktop`      | Tauri 2.0 beta, Vite, React                            | "The Judge" admin dashboard                                                                                                                                                  |
-| `src/pitch`        | `@styx/pitch`        | Vite, React 18, p5.js, Tailwind                        | Interactive pitch deck (builds to `docs/` for GitHub Pages). No test/lint scripts.                                                                                           |
+| `apps/api`          | `@styx/api`          | NestJS 11, BullMQ, Stripe, pg, pino                    | Backend — ledger, escrow, Fury Router, oracles                                                                                                                               |
+| `apps/web`          | `@styx/web`          | Next.js 16, React 18, Tailwind, Zustand                | Dashboard, Fury workbench                                                                                                                                                    |
+| `apps/mobile`       | `@styx/mobile`       | Expo 54, React Native 0.81, React Navigation 7         | Sensor bridge, camera, biometrics                                                                                                                                            |
+| `apps/shared`       | `@styx/shared`       | TypeScript (pure)                                      | Constants, types, algorithms                                                                                                                                                 |
+| `apps/desktop`      | `@styx/desktop`      | Tauri 2.0 beta, Vite, React                            | "The Judge" admin dashboard                                                                                                                                                  |
+| `apps/pitch`        | `@styx/pitch`        | Vite, React 18, p5.js, Tailwind                        | Interactive pitch deck (builds to `docs/` for GitHub Pages). No test/lint scripts.                                                                                           |
 | `src/ask-styx`     | `@styx/ask-styx`     | Vite 6, React 18, Tailwind, Cloudflare Workers, Vitest | "Ask Styx" conversational front-end deployed as a Worker; tests via `vitest run` (not Jest)                                                                                  |
 | `src/test-harness` | `@styx/test-harness` | TypeScript, Vitest, Playwright, zod, commander         | ORGAN-III quality gate. Exposes the `ergon-test` CLI (`bin/ergon-test`). Audit suites: contract validator, aesthetic auditor (headless Playwright), seed.yaml/edge contracts |
 
 Workspace globs (root `package.json`): `src/*` and `packages/*` (the `packages/` directory is currently empty but reserved).
 
-Path alias: `@styx/shared/*` → `./src/shared/*` (root `tsconfig.json`).
+Path alias: `@styx/shared/*` → `./apps/shared/*` (root `tsconfig.json`).
 
 **Test-runner heterogeneity**: most workspaces use Jest, but `ask-styx` and `test-harness` use **Vitest**. When invoking a single workspace's tests directly, use that workspace's `npm test` rather than assuming `npx jest`.
 
@@ -128,11 +128,11 @@ Path alias: `@styx/shared/*` → `./src/shared/*` (root `tsconfig.json`).
 
 The API has **two parallel directory trees** — this is the most important structural detail:
 
-- **`src/api/services/`** — Domain services (pure business logic, no HTTP). Each is an `@Injectable()` class with constructor-injected `Pool` or queue. These are the core building blocks.
-- **`src/api/src/modules/`** — NestJS modules (controllers, route handlers, DI wiring). Each module imports domain services and exposes HTTP endpoints.
+- **`apps/api/services/`** — Domain services (pure business logic, no HTTP). Each is an `@Injectable()` class with constructor-injected `Pool` or queue. These are the core building blocks.
+- **`apps/api/src/modules/`** — NestJS modules (controllers, route handlers, DI wiring). Each module imports domain services and exposes HTTP endpoints.
 
 ```
-src/api/
+apps/api/
 ├── services/                    # Domain layer (business logic)
 │   ├── ledger/                  #   Double-entry transactions, hash-chained audit log
 │   ├── fury-router/             #   BullMQ proof routing, consensus engine
@@ -169,7 +169,7 @@ src/api/
 └── database/schema.sql          # PostgreSQL schema (init script for docker)
 ```
 
-### Core Algorithms (`src/shared/libs/`)
+### Core Algorithms (`apps/shared/libs/`)
 
 **Integrity Score** (`integrity.ts`): `Base(50) + 5*completions - 15*frauds - 20*strikes - 1*inactive_months`. Floor at 0. Tier thresholds:
 
@@ -189,29 +189,29 @@ src/api/
 
 Next.js App Router: `/`, `/dashboard`, `/fury`, `/wallet`, `/pitch`, `/hr`, `/tavern`, `/admin`, `/settings`, `/profile`, `/login`, `/register`, `/contracts/new`, `/contracts/[id]`, `/legal`, `/whistleblower`.
 
-**Linguistic Cloaker** (`src/web/utils/linguistic-cloak.ts`): Runtime vocabulary swap (stake→vault, bet→commitment, fury→peer review) for App Store/Stripe compliance.
+**Linguistic Cloaker** (`apps/web/utils/linguistic-cloak.ts`): Runtime vocabulary swap (stake→vault, bet→commitment, fury→peer review) for App Store/Stripe compliance.
 
 ### Mobile
 
-Expo-managed React Native app. `src/mobile/screens/`: Dashboard, Login, Register, CreateContract, ContractList, ContractDetail, Fury, Wallet, Settings, Profile, Camera (placeholder — native Swift/Kotlin required).
+Expo-managed React Native app. `apps/mobile/screens/`: Dashboard, Login, Register, CreateContract, ContractList, ContractDetail, Fury, Wallet, Settings, Profile, Camera (placeholder — native Swift/Kotlin required).
 
-`src/mobile/services/`: ApiClient (all endpoints), SessionService (AsyncStorage JWT), OfflineCache (TTL caching + mutation queue), UploadService (R2), NotificationService, EnterpriseSSO (deep links).
+`apps/mobile/services/`: ApiClient (all endpoints), SessionService (AsyncStorage JWT), OfflineCache (TTL caching + mutation queue), UploadService (R2), NotificationService, EnterpriseSSO (deep links).
 
 ### Desktop Panels
 
-`src/desktop/src/panels/`: LedgerInspector, MacroReview, ExilePanel, B2BOrchestration, LoginScreen.
+`apps/desktop/src/panels/`: LedgerInspector, MacroReview, ExilePanel, B2BOrchestration, LoginScreen.
 
 ### Infrastructure
 
-- **Database**: PostgreSQL 15-alpine, double-entry ledger schema (`src/api/database/schema.sql`, seed: `src/api/database/seed.sql`)
+- **Database**: PostgreSQL 15-alpine, double-entry ledger schema (`apps/api/database/schema.sql`, seed: `apps/api/database/seed.sql`)
 - **Queue**: Redis 7-alpine + BullMQ (`FURY_ROUTER_QUEUE`)
 - **Storage**: Cloudflare R2 (zero-egress, signed URLs only)
 - **Payments**: Stripe FBO escrow (hold/capture/cancel)
 - **AI (API services)**: Gemini 2.5 Flash (`gemini-2.5-flash-preview-09-2025`) for grill-me/ELI5
-- **AI (Chat)**: Groq free tier + Llama 3.3 70B via OpenAI-compatible SDK (`src/web/app/api/chat/route.ts`). Configurable via `GROQ_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` env vars — works with any OpenAI-compatible endpoint (Groq, Together, Ollama, etc.)
+- **AI (Chat)**: Groq free tier + Llama 3.3 70B via OpenAI-compatible SDK (`apps/web/app/api/chat/route.ts`). Configurable via `GROQ_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` env vars — works with any OpenAI-compatible endpoint (Groq, Together, Ollama, etc.)
 - **CI**: GitHub Actions (`ci.yml`) — Node 20, security audit, turbo test + build + lint, Gates 04–07, beta readiness, Terraform validate, Playwright E2E (chromium + firefox), CodeQL
 - **CD**: GitHub Actions (`deploy.yml`) — tag-triggered deploy to Render with smoke test. Also: `beta-promotion.yml`, `staging-promotion.yml`
-- **IaC**: Terraform (`infra/terraform/`) — Render services, Cloudflare R2, WAF rules. Also `scripts/infra/` for R2 lifecycle, WAF rules, pg data lake extract
+- **IaC**: Terraform (`infrastructure/terraform/`) — Render services, Cloudflare R2, WAF rules. Also `scripts/infra/` for R2 lifecycle, WAF rules, pg data lake extract
 - **Render Blueprint**: `render.yaml` — API + Web + PostgreSQL + Redis (Oregon region, starter plan)
 - **Docker**: `.config/docker/docker-compose.yml` (4 services: styx-api, styx-postgres, styx-redis, styx-web) and `.config/docker/Dockerfile` (API-only image)
 
@@ -228,7 +228,7 @@ Expo-managed React Native app. `src/mobile/screens/`: Dashboard, Login, Register
 - **Branching**: `feat/fury-bounty-ui`, `fix/ledger-race`
 - **Files**: kebab-case; double-hyphen separates function from descriptor (`research--behavioral-economics.md`)
 - **TypeScript**: strict mode, named exports, async/await
-- **NestJS testing pattern**: `@Injectable()` classes with constructor DI; mock `Pool` or service via `as any` cast in tests (see any `*.spec.ts` in `src/api/src/modules/`)
+- **NestJS testing pattern**: `@Injectable()` classes with constructor DI; mock `Pool` or service via `as any` cast in tests (see any `*.spec.ts` in `apps/api/src/modules/`)
 - **Plan files** (`docs/planning/`): use descriptive branch/sequence names (e.g. `market-activation`, `irf-propagation`), **not** generic letters (`A`/`B`/`C`) — letter labels force the reader to look up the mapping every time and don't survive context loss. Existing letter-labeled plans are grandfathered, each letter mapped to its phase name in the plan body. (See [#601](https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/601).)
 
 ## Companion Governance Files (root)
@@ -260,7 +260,7 @@ The `.env` includes a beta configuration system (all `STYX_*` and `NEXT_PUBLIC_S
 ## Remaining Limitations
 
 - **CameraModule**: Mobile camera requires native Swift/Kotlin — placeholder UI with text proof submission.
-- **HealthKit/Google Fit**: Architectural stubs in `src/mobile/services/` but actual native bridges not implemented (requires Xcode/Android Studio).
+- **HealthKit/Google Fit**: Architectural stubs in `apps/mobile/services/` but actual native bridges not implemented (requires Xcode/Android Studio).
 - **High-risk merchant underwriting**: Business/legal process (Corepay/Allied Wallet application), not code.
 
 <!-- ORGANVM:AUTO:START -->

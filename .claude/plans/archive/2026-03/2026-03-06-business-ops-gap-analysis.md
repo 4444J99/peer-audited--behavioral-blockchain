@@ -76,7 +76,7 @@ Additionally analyze `render.yaml`, `.env.example`, and deployment-related docum
    - Extract: local dev environment, service dependencies, data persistence
    - Map to: category 3
 
-10. **Read**: `/infra/terraform/` (if exists - check structure)
+10. **Read**: `/infrastructure/terraform/` (if exists - check structure)
     - Extract: infrastructure as code, scaling configuration, monitoring hooks
     - Map to: category 3
 
