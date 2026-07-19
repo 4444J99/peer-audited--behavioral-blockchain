@@ -212,6 +212,9 @@ describe('CreateContractScreen – render', () => {
 
     await act(async () => {
       fireEvent.click(getByText('Recovery').closest('button') as HTMLElement);
+    });
+
+    await act(async () => {
       fireEvent.click(getByText('No Contact Boundary').closest('button') as HTMLElement);
       fireEvent.click(getByText('Screen Time API').closest('button') as HTMLElement);
       fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
@@ -236,6 +239,9 @@ describe('CreateContractScreen – render', () => {
         getByText('This does not violate any legal obligations.').closest('button') as HTMLElement,
       );
       fireEvent.change(getByPlaceholderText('0.00'), { target: { value: '5' } });
+    });
+
+    await act(async () => {
       fireEvent.click(getByText('STAKE AND COMMIT').closest('button') as HTMLElement);
     });
 
@@ -250,6 +256,9 @@ describe('CreateContractScreen – render', () => {
 
     await act(async () => {
       fireEvent.click(getByText('Recovery').closest('button') as HTMLElement);
+    });
+
+    await act(async () => {
       fireEvent.click(getByText('No Contact Boundary').closest('button') as HTMLElement);
       fireEvent.click(getByText('Fury Peer Review').closest('button') as HTMLElement);
       fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
@@ -274,6 +283,9 @@ describe('CreateContractScreen – render', () => {
         getByText('This does not violate any legal obligations.').closest('button') as HTMLElement,
       );
       fireEvent.click(getByText('$50 Default').closest('button') as HTMLElement);
+    });
+
+    await act(async () => {
       fireEvent.click(getByText('STAKE AND COMMIT').closest('button') as HTMLElement);
     });
 

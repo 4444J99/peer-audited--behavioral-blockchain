@@ -256,9 +256,11 @@ export function CreateContractScreen({ navigation }: Props) {
                     style={[styles.textInput, { flex: 1 }]}
                     value={val}
                     onChangeText={(text) => {
-                      const newIds = [...targetIdentifiers];
-                      newIds[idx] = text;
-                      setTargetIdentifiers(newIds);
+                      setTargetIdentifiers(prev => {
+                        const newIds = [...prev];
+                        newIds[idx] = text;
+                        return newIds;
+                      });
                     }}
                     placeholder={`Target #${idx + 1}`}
                     placeholderTextColor="#555"
@@ -266,7 +268,7 @@ export function CreateContractScreen({ navigation }: Props) {
                   {targetIdentifiers.length > 1 && (
                     <TouchableOpacity
                       style={styles.removeButton}
-                      onPress={() => setTargetIdentifiers(targetIdentifiers.filter((_, i) => i !== idx))}
+                      onPress={() => setTargetIdentifiers(prev => prev.filter((_, i) => i !== idx))}
                     >
                       <Text style={styles.removeButtonText}>✕</Text>
                     </TouchableOpacity>
@@ -276,7 +278,7 @@ export function CreateContractScreen({ navigation }: Props) {
               {targetIdentifiers.length < 3 && (
                 <TouchableOpacity
                   style={styles.addButton}
-                  onPress={() => setTargetIdentifiers([...targetIdentifiers, ''])}
+                  onPress={() => setTargetIdentifiers(prev => [...prev, ''])}
                 >
                   <Text style={styles.addButtonText}>+ ADD TARGET</Text>
                 </TouchableOpacity>
@@ -294,7 +296,7 @@ export function CreateContractScreen({ navigation }: Props) {
             <TouchableOpacity
               key={ack.key}
               style={styles.ackRow}
-              onPress={() => setAcks({ ...acks, [ack.key]: !acks[ack.key as keyof typeof acks] })}
+              onPress={() => setAcks(prev => ({ ...prev, [ack.key]: !prev[ack.key as keyof typeof prev] }))}
             >
               <View style={[styles.checkbox, acks[ack.key as keyof typeof acks] && styles.checkboxSelected]}>
                 {acks[ack.key as keyof typeof acks] && <Text style={styles.checkMark}>✓</Text>}
