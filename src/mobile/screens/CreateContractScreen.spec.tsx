@@ -214,7 +214,7 @@ describe('CreateContractScreen – render', () => {
     fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
       target: { value: 'No contact for 30 days.' },
     });
-    fireEvent.change(getByPlaceholderText('partner@example.com'), {
+    fireEvent.change(getByPlaceholderText('[email redacted]'), {
       target: { value: 'ally@styx.io' },
     });
     fireEvent.change(getByPlaceholderText('Target #1'), {
@@ -250,7 +250,7 @@ describe('CreateContractScreen – render', () => {
     fireEvent.change(getByPlaceholderText('Describe your behavioral commitment...'), {
       target: { value: 'No social stalking for 30 days.' },
     });
-    fireEvent.change(getByPlaceholderText('partner@example.com'), {
+    fireEvent.change(getByPlaceholderText('[email redacted]'), {
       target: { value: 'ally@styx.io' },
     });
     fireEvent.change(getByPlaceholderText('Target #1'), {
