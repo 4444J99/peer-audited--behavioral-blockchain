@@ -130,19 +130,19 @@ describe('DashboardScreen – render tests', () => {
   });
 
   it('renders the locked beta quick actions without a Fury route', async () => {
-    ApiClient.getMe.mockResolvedValueOnce({
+    ApiClient.getMe.mockResolvedValue({
       integrity_score: 77,
       tier: 'STANDARD',
       contract_count: 1,
       total_staked: 50,
     });
-    ApiClient.getBalance.mockResolvedValueOnce({
+    ApiClient.getBalance.mockResolvedValue({
       ledger_balance: 12.34,
     });
-    ApiClient.getNotifications.mockResolvedValueOnce({
+    ApiClient.getNotifications.mockResolvedValue({
       notifications: [],
     });
-    ApiClient.getContracts.mockResolvedValueOnce([]);
+    ApiClient.getContracts.mockResolvedValue([]);
 
     const { getByText, queryByText } = render(
       React.createElement(DashboardScreen, { navigation }),
@@ -157,19 +157,19 @@ describe('DashboardScreen – render tests', () => {
   });
 
   it('navigates the profile quick action to the profile tab', async () => {
-    ApiClient.getMe.mockResolvedValueOnce({
+    ApiClient.getMe.mockResolvedValue({
       integrity_score: 77,
       tier: 'STANDARD',
       contract_count: 1,
       total_staked: 50,
     });
-    ApiClient.getBalance.mockResolvedValueOnce({
+    ApiClient.getBalance.mockResolvedValue({
       ledger_balance: 12.34,
     });
-    ApiClient.getNotifications.mockResolvedValueOnce({
+    ApiClient.getNotifications.mockResolvedValue({
       notifications: [],
     });
-    ApiClient.getContracts.mockResolvedValueOnce([]);
+    ApiClient.getContracts.mockResolvedValue([]);
 
     const { getByText } = render(
       React.createElement(DashboardScreen, { navigation }),
