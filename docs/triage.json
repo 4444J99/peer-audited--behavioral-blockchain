@@ -1908,6 +1908,11 @@
           "from": "BUILD_DONE",
           "to": "TESTED",
           "at": "2026-07-19T10:04:34Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-07-19T10:06:22Z"
         }
       ],
       "labels": [
@@ -1915,9 +1920,9 @@
         "brainstorm-audit",
         "P2-post-beta"
       ],
-      "pr": null,
-      "state": "TESTED",
-      "state_updated": "2026-07-19T10:04:34Z",
+      "pr": "https://github.com/organvm/peer-audited--behavioral-blockchain/pull/792",
+      "state": "PR_CREATED",
+      "state_updated": "2026-07-19T10:06:22Z",
       "title": "feat: Oracle failure fallback — staked arbiter network for verification system outages"
     },
     "92": {
