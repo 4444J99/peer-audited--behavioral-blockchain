@@ -177,7 +177,7 @@ export class PaymentsController implements OnModuleInit {
     customerId: string,
     paymentMethodId: string | undefined,
   ): Promise<StripeSubscription> {
-    const subscriptionParams: Stripe.SubscriptionCreateParams = {
+    const subscriptionParams: any = {
       customer: customerId,
       items: [
         {
