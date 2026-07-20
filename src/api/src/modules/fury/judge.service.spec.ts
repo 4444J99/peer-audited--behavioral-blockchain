@@ -87,7 +87,7 @@ describe('JudgeService', () => {
       };
 
       const error = new Error('DB Error');
-      clientMock.query.mockImplementation((q) => {
+      clientMock.query.mockImplementation((q: string) => {
         if (q.startsWith('UPDATE disputes')) throw error;
         return Promise.resolve();
       });
@@ -125,7 +125,7 @@ describe('JudgeService', () => {
 
   describe('getPendingQueue', () => {
     it('should retrieve both split proofs and active disputes', async () => {
-      pool.query.mockImplementation((q) => {
+      pool.query.mockImplementation((q: string) => {
         if (q.includes('FROM proofs')) return Promise.resolve({ rows: [{ proof_id: 'p-1' }] });
         if (q.includes('FROM disputes')) return Promise.resolve({ rows: [{ id: 'd-1' }] });
         return Promise.resolve({ rows: [] });
