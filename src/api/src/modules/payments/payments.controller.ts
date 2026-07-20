@@ -20,6 +20,7 @@ type StripeEvent = ReturnType<StripeClient['webhooks']['constructEvent']>;
 type StripePaymentIntent = Awaited<ReturnType<StripeClient['paymentIntents']['retrieve']>>;
 type StripeDispute = Awaited<ReturnType<StripeClient['disputes']['retrieve']>>;
 type StripeSubscription = Awaited<ReturnType<StripeClient['subscriptions']['retrieve']>>;
+type StripeSubscriptionCreateParams = NonNullable<Parameters<StripeClient['subscriptions']['create']>[0]>;
 
 type SubscribeBody = {
   paymentMethodId?: string;
@@ -27,7 +28,7 @@ type SubscribeBody = {
 
 const EARLY_ACCESS_SUBSCRIPTION_TRIAL_DAYS = 30;
 const EARLY_ACCESS_SUBSCRIPTION_CURRENCY = 'usd';
-const EARLY_ACCESS_SUBSCRIPTION_PRODUCT_NAME = 'Styx Early Access';
+const EARLY_ACCESS_SUBSCRIPTION_PRODUCT_ID = process.env.STRIPE_EARLY_ACCESS_PRODUCT_ID || 'prod_early_access';
 const REUSABLE_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing', 'past_due']);
 
 @ApiTags('Payments')
@@ -177,15 +178,13 @@ export class PaymentsController implements OnModuleInit {
     customerId: string,
     paymentMethodId: string | undefined,
   ): Promise<StripeSubscription> {
-    const subscriptionParams: Stripe.SubscriptionCreateParams = {
+    const subscriptionParams: StripeSubscriptionCreateParams = {
       customer: customerId,
       items: [
         {
           price_data: {
             currency: EARLY_ACCESS_SUBSCRIPTION_CURRENCY,
-            product_data: {
-              name: EARLY_ACCESS_SUBSCRIPTION_PRODUCT_NAME,
-            },
+            product: EARLY_ACCESS_SUBSCRIPTION_PRODUCT_ID,
             recurring: {
               interval: 'month',
             },
