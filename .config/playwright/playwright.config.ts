@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 import { join } from "path";
 
 // This config lives in .config/playwright/ (Minimal-Root convention) but the
-// specs it runs (e2e/) and the web server it boots (src/web/) live at the repo
+// specs it runs (e2e/) and the web server it boots (apps/web/) live at the repo
 // root. Playwright resolves a relative testDir/webServer.cwd against the config
 // file's own directory (.config/playwright/), which would point at the wrong
 // place. The CLI is always invoked from the repo root — the --config path is
@@ -77,7 +77,7 @@ export default defineConfig({
   ],
   webServer: {
     command: process.env.CI ? `npm run start -- -p ${webPort}` : "npm run dev",
-    cwd: join(repoRoot, "src/web"),
+    cwd: join(repoRoot, "apps/web"),
     url: webUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
