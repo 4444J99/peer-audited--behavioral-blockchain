@@ -56,6 +56,7 @@ CREATE TABLE users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT,
     stripe_customer_id TEXT,
+    subscription_id TEXT,
     integrity_score INTEGER DEFAULT 50,
     account_id UUID REFERENCES accounts(id),
     role TEXT DEFAULT 'USER',
@@ -280,6 +281,7 @@ CREATE INDEX idx_entries_debit_account_id ON entries(debit_account_id);
 CREATE INDEX idx_entries_credit_account_id ON entries(credit_account_id);
 CREATE INDEX idx_entries_contract_id ON entries(contract_id);
 CREATE INDEX idx_users_access_tier ON users(access_tier);
+CREATE UNIQUE INDEX idx_users_subscription_id ON users(subscription_id) WHERE subscription_id IS NOT NULL;
 CREATE INDEX idx_users_enterprise_id ON users(enterprise_id);
 CREATE INDEX idx_users_deletion_requested_at ON users(deletion_requested_at);
 
