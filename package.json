@@ -15,6 +15,7 @@
     "dev:migrate": "node scripts/dev/run-migrate.mjs",
     "dev:turbo": "turbo run dev",
     "test": "turbo run test",
+    "load-test": "node scripts/load-test/run-load-tests.mjs",
     "lint": "turbo run lint",
     "validate:claims": "node scripts/validation/07-claim-drift-check.js",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
