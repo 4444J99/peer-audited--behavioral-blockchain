@@ -41,6 +41,7 @@ describe('AnonymizeService', () => {
         email: 'alice@example.com',
         password_hash: '$2b$10$...',
         stripe_customer_id: 'cus_abc',
+        subscription_id: 'sub_abc',
         integrity_score: 75,
         ip_address: '192.168.1.1',
         name: 'Alice Smith',
