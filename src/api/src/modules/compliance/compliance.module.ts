@@ -1,5 +1,6 @@
 import { Global, Module, forwardRef } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
+import { ComplianceArtifactService } from './compliance-artifact.service';
 import { ComplianceController } from './compliance.controller';
 import { CompliancePolicyService } from './compliance-policy.service';
 import { GeofenceGuard } from '../../common/guards/geofence.guard';
@@ -20,6 +21,7 @@ import { EmailModule } from '../email/email.module';
   imports: [DatabaseModule, EmailModule, forwardRef(() => ContractsModule)],
   controllers: [ComplianceController],
   providers: [
+    ComplianceArtifactService,
     CompliancePolicyService,
     IdentityVerificationService,
     IdentityProviderService,

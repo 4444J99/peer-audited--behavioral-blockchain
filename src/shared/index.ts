@@ -72,6 +72,17 @@ export interface MobileBootstrapResponse {
   };
 }
 
+export interface ComplianceArtifactStatus {
+  artifactType: string;
+  version: string | null;
+  contentHash: string | null;
+  signedBy: string | null;
+  signedAt: string | null;
+  expiresAt: string | null;
+  isActive: boolean;
+  jurisdictions: string[];
+}
+
 export interface ReleaseInfoResponse {
   service: "styx-api";
   apiVersion: string;
