@@ -18,9 +18,14 @@ services:
         fromDatabase:
           name: styx-db
           property: connectionString
-      - key: REDIS_URL
+      - key: REDIS_BULLMQ_URL
         fromService:
-          name: styx-redis
+          name: styx-redis-bullmq
+          type: redis
+          property: connectionString
+      - key: REDIS_CACHE_URL
+        fromService:
+          name: styx-redis-cache
           type: redis
           property: connectionString
       - key: JWT_SECRET
@@ -76,9 +81,17 @@ services:
       - key: SENTRY_DSN
         sync: false
 
-  # --- Key-Value (Redis) ---
+  # --- Key-Value: BullMQ Queues ---
   - type: redis
-    name: styx-redis
+    name: styx-redis-bullmq
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+  # --- Key-Value: Cache / SSE / Anomaly Detection ---
+  - type: redis
+    name: styx-redis-cache
     plan: starter
     region: oregon
     maxmemoryPolicy: allkeys-lru

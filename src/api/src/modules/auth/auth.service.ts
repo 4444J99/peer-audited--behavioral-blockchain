@@ -114,12 +114,15 @@ function compareHashes(left: string, right: string): boolean {
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly pool: Pool) {}
+  constructor(
+    private readonly pool: Pool,
+    private readonly referralService?: any,
+  ) {}
 
   async register(
     email: string,
     password: string, // allow-secret
-    opts: { ageConfirmation: boolean; termsAccepted: boolean; dateOfBirth: string },
+    opts: { ageConfirmation: boolean; termsAccepted: boolean; dateOfBirth: string; referralCode?: string },
   ): Promise<{ userId: string; token: string }> { // allow-secret
     const maybeConnect = (this.pool as unknown as { connect?: () => Promise<PoolClient> }).connect;
     const client = typeof maybeConnect === 'function' ? await maybeConnect.call(this.pool) : null;
@@ -183,6 +186,13 @@ export class AuthService {
       }
 
       const token = this.signToken(userId, email); // allow-secret
+
+      if (opts.referralCode && this.referralService) {
+        this.referralService.attributeReferral(opts.referralCode, userId).catch((err: Error) => {
+          console.error(`Failed to attribute referral: ${err.message}`);
+        });
+      }
+
       return { userId, token };
     } catch (err) {
       if (useTransaction) {
@@ -256,13 +266,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Successful login — reset lockout counters
-    if (user.failed_login_attempts > 0 || user.locked_until) {
-      await this.pool.query(
-        'UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1',
-        [user.id],
-      );
-    }
+    // Successful login — reset lockout counters and track activity
+    await this.pool.query(
+      `UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_active_at = NOW() WHERE id = $1`,
+      [user.id],
+    );
 
     const token = this.signToken(user.id, user.email, user.role); // allow-secret
     return { userId: user.id, token, integrity: user.integrity_score };

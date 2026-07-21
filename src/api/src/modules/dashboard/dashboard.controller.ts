@@ -23,6 +23,12 @@ export class DashboardController {
     return this.dashboardService.getProgress(user.id);
   }
 
+  @Get('streak')
+  @ApiOperation({ summary: 'Get 30-day streak chain with Never Miss Twice status' })
+  async getStreak(@CurrentUser() user: { id: string }) {
+    return this.dashboardService.getStreakChain(user.id);
+  }
+
   @Sse('leaderboard/stream')
   @ApiOperation({ summary: 'Stream live leaderboard rank updates via SSE' })
   streamLeaderboard(@CurrentUser() user: { id: string }): Observable<MessageEvent> {

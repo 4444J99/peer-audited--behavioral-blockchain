@@ -153,6 +153,8 @@ export class ContractsService {
     @Optional()
     @Inject(forwardRef(() => SettlementService))
     private readonly settlementService?: SettlementService,
+    @Optional()
+    private readonly referralService?: any,
   ) {}
 
   private stakeAmountToCents(stakeAmount: number | string): number {
@@ -1069,6 +1071,13 @@ export class ContractsService {
           sideEffectKey: bonusTruthKey,
         });
       }
+    }
+
+    // Referral reward: credit the referrer when the referred user creates their first contract
+    if (this.referralService) {
+      this.referralService.rewardOnFirstContract(dto.userId, contractId).catch((err: Error) => {
+        console.error(`Failed to process referral reward: ${err.message}`);
+      });
     }
 
     if (user.account_id && escrowAccountId) {

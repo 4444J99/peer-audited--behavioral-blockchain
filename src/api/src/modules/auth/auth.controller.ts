@@ -77,6 +77,7 @@ export class AuthController {
       ageConfirmation: dto.ageConfirmation,
       termsAccepted: dto.termsAccepted,
       dateOfBirth: dto.dateOfBirth ?? '',
+      referralCode: dto.referralCode,
     });
     await this.issueBrowserSessionCookies(res, result.userId, result.token);
     return result;

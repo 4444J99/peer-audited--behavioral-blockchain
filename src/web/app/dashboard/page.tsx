@@ -8,6 +8,7 @@ import { api } from '../../services/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import Leaderboard from '../../components/Leaderboard';
 import NotificationPanel from '../../components/NotificationPanel';
+import StreakChain from '../../components/StreakChain';
 import { OnboardingWizard } from '../../components/OnboardingWizard';
 
 interface BalanceData {
@@ -41,6 +42,8 @@ export default function IdentityDashboard() {
   const [balance, setBalance] = useState<BalanceData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [streakData, setStreakData] = useState<any>(null);
+  const [streakLoading, setStreakLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -49,19 +52,22 @@ export default function IdentityDashboard() {
     if (authLoading || !authUser) return;
     async function load() {
       try {
-        const [balanceData, historyData, contractData] = await Promise.all([
+        const [balanceData, historyData, contractData, streakChain] = await Promise.all([
           api.getBalance() as any,
           api.getHistory(10) as any,
           api.getUserContracts() as any,
+          api.getStreakChain().catch(() => null),
         ]);
         setBalance(balanceData);
         setTransactions(historyData.transactions);
         setContracts(contractData);
+        if (streakChain) setStreakData(streakChain);
         if (contractData.length === 0) setShowOnboarding(true);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load dashboard');
       } finally {
         setLoading(false);
+        setStreakLoading(false);
       }
     }
     load();
@@ -177,6 +183,16 @@ export default function IdentityDashboard() {
               CREATE NEW CONTRACT
             </Link>
           </div>
+
+          {/* Streak Chain */}
+          <StreakChain
+            days={streakData?.days ?? []}
+            currentStreak={streakData?.currentStreak ?? 0}
+            longestStreak={streakData?.longestStreak ?? 0}
+            neverMissTwiceActive={streakData?.neverMissTwiceActive ?? false}
+            penaltyMultiplier={streakData?.penaltyMultiplier ?? 1}
+            loading={streakLoading}
+          />
 
           {/* Leaderboard hidden in Phase 1 Beta */}
           {/* <Leaderboard /> */}
