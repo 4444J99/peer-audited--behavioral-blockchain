@@ -1,10 +1,19 @@
 import { PaymentRouterService, PaymentProcessor } from './payment-router.service';
+import { StripePayoutProvider } from './stripe-payout.provider';
+import { CorepayPayoutProvider } from './corepay-payout.provider';
 
 describe('PaymentRouterService', () => {
   let service: PaymentRouterService;
+  let mockStripe: Partial<StripePayoutProvider>;
+  let mockCorepay: Partial<CorepayPayoutProvider>;
 
   beforeEach(() => {
-    service = new PaymentRouterService();
+    mockStripe = { payout: jest.fn().mockResolvedValue({ id: 'pi_stripe_mock_1' }) };
+    mockCorepay = { payout: jest.fn().mockResolvedValue({ id: 'tok_corepay_mock_1' }) };
+    service = new PaymentRouterService(
+      mockStripe as StripePayoutProvider,
+      mockCorepay as CorepayPayoutProvider,
+    );
   });
 
   // ─── determineProcessor ───
