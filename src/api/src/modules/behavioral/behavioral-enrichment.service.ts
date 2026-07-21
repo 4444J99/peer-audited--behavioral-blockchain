@@ -22,6 +22,18 @@ import {
   getTemptationBundles,
   getRecoveryState,
   RecoveryState,
+  DisenchantmentEntry,
+  DisenchantmentResult,
+  calculateDisenchantment,
+  LifeTransitionType,
+  DiscontinuityWindow,
+  detectDiscontinuityWindow,
+  ImplementationIntention,
+  ImplementationIntentionValidation,
+  parseImplementationIntention,
+  validateImplementationIntention,
+  generateImplementationIntentionTemplate,
+  OathCategory,
 } from "../../../../shared/libs/behavioral-logic";
 
 @Injectable()
@@ -161,6 +173,42 @@ export class BehavioralEnrichmentService {
     const now = new Date();
     const isWeekend = now.getDay() === 0 || now.getDay() === 6;
     return { state: getRecoveryState(rows[0].age_days, isWeekend), ageDays: rows[0].age_days };
+  }
+
+  async recordDisenchantmentRating(userId: string, contractId: string, rating: number) {
+    const { rows } = await this.pool.query(
+      `INSERT INTO disenchantment_ratings (user_id, contract_id, rating)
+       VALUES ($1, $2, $3) RETURNING id, created_at`,
+      [userId, contractId, rating],
+    );
+    this.logger.log(`Disenchantment rating ${rating} recorded for contract ${contractId}`);
+    return rows[0];
+  }
+
+  async getDisenchantmentTrend(contractId: string): Promise<DisenchantmentResult> {
+    const { rows } = await this.pool.query(
+      `SELECT rating, created_at::date::text AS date
+       FROM disenchantment_ratings WHERE contract_id = $1
+       ORDER BY created_at ASC`,
+      [contractId],
+    );
+    return calculateDisenchantment(rows as DisenchantmentEntry[]);
+  }
+
+  getDiscontinuityWindow(transitionType: LifeTransitionType, daysSinceTransition: number): DiscontinuityWindow {
+    return detectDiscontinuityWindow({ transitionType, daysSinceTransition });
+  }
+
+  parseImplIntention(raw: string): ImplementationIntention | null {
+    return parseImplementationIntention(raw);
+  }
+
+  validateImplIntention(intention: ImplementationIntention): ImplementationIntentionValidation {
+    return validateImplementationIntention(intention);
+  }
+
+  getImplementationIntentionTemplate(category: OathCategory): string {
+    return generateImplementationIntentionTemplate(category);
   }
 
   async checkDay21Milestone(contractId: string) {
