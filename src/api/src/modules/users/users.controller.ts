@@ -10,11 +10,13 @@ import {
   ForbiddenException,
   BadRequestException,
   Post,
+  Put,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 import { UsersService } from "./users.service";
 import { GdprService } from "./gdpr.service";
+import { PushTokensService } from "../notifications/push-tokens.service";
 import { AuthGuard } from "../../../guards/auth.guard";
 import {
   CurrentUser,
@@ -30,6 +32,7 @@ export class UsersController {
     private readonly usersService: UsersService,
     private readonly gdprService: GdprService,
     private readonly identityVerification: IdentityVerificationService,
+    private readonly pushTokens: PushTokensService,
   ) {}
 
   @Get("me")
@@ -135,6 +138,26 @@ export class UsersController {
     @Body() body: { emailNotifications?: boolean; pushNotifications?: boolean },
   ) {
     return this.usersService.updateSettings(user.id, body);
+  }
+
+  @Put("me/push-token")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Register or update a push notification device token" })
+  @UseGuards(AuthGuard)
+  async registerPushToken(
+    @CurrentUser() user: { id: string },
+    @Body() body: { token: string; platform?: string; deviceIdentifier?: string },
+  ) {
+    if (!body.token) {
+      throw new BadRequestException('token is required');
+    }
+    await this.pushTokens.registerToken(
+      user.id,
+      body.token,
+      body.platform || 'unknown',
+      body.deviceIdentifier,
+    );
+    return { success: true };
   }
 
   @Get("me/data-export")

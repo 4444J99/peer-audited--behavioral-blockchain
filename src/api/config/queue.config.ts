@@ -1,10 +1,12 @@
 import { QueueOptions } from 'bullmq';
-import { resolveRedisConnectionConfig } from '../src/config/runtime';
+import { resolveBullmqRedisConfig } from '../src/config/runtime';
 
-export const getRedisConnectionConfig = () => resolveRedisConnectionConfig();
+export const getRedisConnectionConfig = () => resolveBullmqRedisConfig();
 
 export const FURY_ROUTER_QUEUE_NAME = 'FURY_ROUTER_QUEUE';
 export const SETTLEMENT_QUEUE_NAME = 'SETTLEMENT_QUEUE';
+export const VIDEO_PROCESSING_QUEUE_NAME = 'VIDEO_PROCESSING_QUEUE';
+export const PUSH_DISPATCH_QUEUE_NAME = 'PUSH_DISPATCH_QUEUE';
 
 export const getDefaultQueueOptions = (): QueueOptions => ({
   connection: getRedisConnectionConfig(),

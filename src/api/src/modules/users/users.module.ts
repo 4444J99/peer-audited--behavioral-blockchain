@@ -5,9 +5,10 @@ import { UsersService } from './users.service';
 import { GdprService } from './gdpr.service';
 import { UsersScheduler } from './users.scheduler';
 import { GdprScheduler } from './gdpr.scheduler';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot()],
+  imports: [ScheduleModule.forRoot(), NotificationsModule],
   controllers: [UsersController],
   providers: [UsersService, GdprService, UsersScheduler, GdprScheduler],
   exports: [UsersService, GdprService],

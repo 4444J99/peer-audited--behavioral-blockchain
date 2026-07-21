@@ -25,6 +25,7 @@ import { CrisisModule } from "./modules/crisis/crisis.module";
 import { DashboardModule } from "./modules/dashboard/dashboard.module";
 import { RealmsModule } from "./modules/realms/realms.module";
 import { BehavioralModule } from "./modules/behavioral/behavioral.module";
+import { ReferralModule } from "./modules/referrals/referral.module";
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { BehavioralModule } from "./modules/behavioral/behavioral.module";
     CrisisModule,
     RealmsModule,
     BehavioralModule,
+    ReferralModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

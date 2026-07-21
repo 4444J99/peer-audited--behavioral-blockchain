@@ -4,6 +4,9 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { randomBytes } from "crypto";
+import { PayoutProvider } from "../../common/interfaces/payout-provider.interface";
+import { StripePayoutProvider } from "./stripe-payout.provider";
+import { CorepayPayoutProvider } from "./corepay-payout.provider";
 
 export type PaymentProcessor = "STRIPE" | "HIGH_RISK_COREPAY";
 
@@ -12,20 +15,20 @@ export interface PaymentIntentOptions {
   currency: string;
   userId: string;
   metadata?: Record<string, string>;
-  isHighRisk?: boolean; // Flag to force high-risk routing
+  isHighRisk?: boolean;
 }
 
 @Injectable()
 export class PaymentRouterService {
   private readonly logger = new Logger(PaymentRouterService.name);
 
-  // Fallback threshold: if a user has &gt; X disputes, automatically route to high-risk processor
   private readonly DISPUTE_RISK_THRESHOLD = 3;
 
-  /**
-   * Determines the safest payment processor for a given transaction.
-   * Prevents Stripe shadow-bans by routing high-contention volume to Corepay/Allied Wallet.
-   */
+  constructor(
+    private readonly stripeProvider: StripePayoutProvider,
+    private readonly corepayProvider: CorepayPayoutProvider,
+  ) {}
+
   determineProcessor(
     options: PaymentIntentOptions,
     userTotalDisputes: number,
@@ -40,17 +43,13 @@ export class PaymentRouterService {
       return "HIGH_RISK_COREPAY";
     }
 
-    this.logger.log(
-      `Routing transaction for user ${options.userId} to primary processor (STRIPE)`,
-    );
     return "STRIPE";
   }
 
-  /**
-   * Creates a payment intent via the selected processor.
-   * In dev/test, returns mock client secrets. In production, throws until
-   * a real processor integration is configured.
-   */
+  getProvider(processor: PaymentProcessor): PayoutProvider {
+    return processor === "STRIPE" ? this.stripeProvider : this.corepayProvider;
+  }
+
   async createPaymentIntent(
     options: PaymentIntentOptions,
     processor: PaymentProcessor,
@@ -61,14 +60,12 @@ export class PaymentRouterService {
     }
 
     if (processor === "STRIPE") {
-      // Defer to existing StripeFboService in a real implementation
       return {
         clientSecret: `pi_stripe_mock_${Date.now()}_secret_${randomBytes(12).toString("hex")}`,
         processor,
       };
-    } else {
-      // Defer to Corepay SDK in a real implementation
-      return { clientSecret: `tok_corepay_mock_${Date.now()}`, processor };
     }
+
+    return { clientSecret: `tok_corepay_mock_${Date.now()}`, processor };
   }
 }
