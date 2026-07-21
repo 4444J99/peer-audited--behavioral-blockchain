@@ -1,91 +1,99 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Param,
-  Body,
-  UseGuards,
-} from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { Controller, Get, Post, Body, Param, UseGuards, Req } from "@nestjs/common";
 import { AuthGuard } from "../../../guards/auth.guard";
-import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { BehavioralEnhancementsService } from "./behavioral-enhancements.service";
+import { BehavioralEnrichmentService } from "./behavioral-enrichment.service";
 
-@ApiTags("Behavioral")
+function resolveUserId(req: any): string {
+  return req?.id ?? req?.user?.id ?? req?.userId;
+}
+
 @Controller("behavioral")
+@UseGuards(AuthGuard)
 export class BehavioralController {
-  constructor(private readonly enhancements: BehavioralEnhancementsService) {}
+  constructor(
+    private readonly enhancements: BehavioralEnhancementsService,
+    private readonly enrichment: BehavioralEnrichmentService,
+  ) {}
 
-  @Get("commitment-devices/catalog")
-  @ApiOperation({ summary: "List the catalog of available commitment devices" })
-  getCatalog() {
-    return this.enhancements.getCommitmentDeviceCatalog();
+  @Post("device/subscribe")
+  async subscribe(@Req() req: any, @Body("deviceId") deviceId: string) {
+    return this.enhancements.subscribeToDevice(resolveUserId(req), deviceId);
   }
 
-  @Post("commitment-devices/:deviceId/subscribe")
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: "Subscribe to a commitment device (persisted to DB; H1 fix)",
-  })
-  @UseGuards(AuthGuard)
-  async subscribe(
-    @CurrentUser() user: { id: string },
-    @Param("deviceId") deviceId: string,
-  ) {
-    return this.enhancements.subscribeToDevice(user.id, deviceId);
+  @Post("device/unsubscribe")
+  async unsubscribe(@Req() req: any, @Body("deviceId") deviceId: string) {
+    return this.enhancements.unsubscribeFromDevice(resolveUserId(req), deviceId);
   }
 
-  @Delete("commitment-devices/:deviceId/subscribe")
-  @ApiBearerAuth()
-  @ApiOperation({ summary: "Cancel a commitment device subscription" })
-  @UseGuards(AuthGuard)
-  async unsubscribe(
-    @CurrentUser() user: { id: string },
-    @Param("deviceId") deviceId: string,
-  ) {
-    return this.enhancements.unsubscribeFromDevice(user.id, deviceId);
-  }
-
-  @Get("crab-bucket/risk")
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: "Classify crab-bucket (self-sabotage) risk for the current user",
-  })
-  @UseGuards(AuthGuard)
-  async risk(@CurrentUser() user: { id: string }) {
-    return this.enhancements.analyzeCrabBucketRisk(user.id);
-  }
-
-  @Get("habituation/:contractId")
-  @ApiBearerAuth()
-  @ApiOperation({ summary: "Detect habituation signals on a contract" })
-  @UseGuards(AuthGuard)
-  async habituation(@Param("contractId") contractId: string) {
-    return this.enhancements.detectContractHabituation(contractId);
-  }
-
-  @Post("swaps")
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary:
-      "Propose a behavior swap from one contract to a different oath category",
-  })
-  @UseGuards(AuthGuard)
+  @Post("propose-swap")
   async proposeSwap(
-    @CurrentUser() user: { id: string },
-    @Body()
-    body: {
-      sourceContractId: string;
-      targetOathCategory: string;
-      carryOverPct: number;
-    },
+    @Req() req: any,
+    @Body() body: { sourceContractId: string; targetOathCategory: string; carryOverPct: number },
   ) {
     return this.enhancements.proposeBehaviorSwap(
-      user.id,
+      resolveUserId(req),
       body.sourceContractId,
       body.targetOathCategory,
       body.carryOverPct,
     );
+  }
+
+  @Get("bbo/:category")
+  getBbo(@Param("category") category: string) {
+    return this.enrichment.getBboRecommendations(category);
+  }
+
+  @Get("micro-reward")
+  getMicroReward() {
+    return this.enrichment.getMicroReward();
+  }
+
+  @Post("friction-audit")
+  async frictionAudit(@Body() body: { answers: Record<string, number> }, @Req() req: any) {
+    return this.enrichment.frictionAudit(resolveUserId(req), body.answers);
+  }
+
+  @Get("habit-strength")
+  async habitStrength(@Req() req: any) {
+    return this.enrichment.getHabitStrength(resolveUserId(req));
+  }
+
+  @Get("gateway-oath/eligibility")
+  async gatewayEligibility(@Req() req: any) {
+    return this.enrichment.checkGatewayOathEligibility(resolveUserId(req), 100, 7);
+  }
+
+  @Get("reentry/eligibility")
+  async reentryEligibility(@Req() req: any) {
+    return this.enrichment.checkReentryEligibility(resolveUserId(req));
+  }
+
+  @Get("cm-reward/:day")
+  getCmReward(@Param("day") day: string) {
+    return { rewardCents: this.enrichment.getCmReward(parseInt(day, 10)) };
+  }
+
+  @Post("exit-interview/:contractId")
+  async submitExitInterview(
+    @Param("contractId") contractId: string,
+    @Body() body: { answers: Record<string, any> },
+    @Req() req: any,
+  ) {
+    return this.enrichment.submitExitInterview(contractId, resolveUserId(req), body.answers);
+  }
+
+  @Get("exit-interview/questions/:outcome")
+  getExitQuestions(@Param("outcome") outcome: string) {
+    return this.enrichment.getExitInterviewQuestions(outcome as "COMPLETED" | "FAILED");
+  }
+
+  @Get("day21/:contractId")
+  async checkDay21(@Param("contractId") contractId: string) {
+    return this.enrichment.checkDay21Milestone(contractId);
+  }
+
+  @Get("abandonment-classification")
+  async classifyAbandonment(@Req() req: any) {
+    return this.enrichment.classifyAbandonment(resolveUserId(req));
   }
 }

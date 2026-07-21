@@ -1,5 +1,6 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { BehavioralEnhancementsService } from "./behavioral-enhancements.service";
+import { BehavioralEnrichmentService } from "./behavioral-enrichment.service";
 import { BehavioralController } from "./behavioral.controller";
 import { RecoveryStatusCalculator } from "./recovery-status.calculator";
 import { OstrichDetectionService } from "./ostrich-detection.service";
@@ -14,6 +15,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
   controllers: [BehavioralController],
   providers: [
     BehavioralEnhancementsService,
+    BehavioralEnrichmentService,
     RecoveryStatusCalculator,
     OstrichDetectionService,
     OstrichScheduler,
@@ -22,6 +24,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
   ],
   exports: [
     BehavioralEnhancementsService,
+    BehavioralEnrichmentService,
     RecoveryStatusCalculator,
     OstrichDetectionService,
     DifficultyCalibrationService,

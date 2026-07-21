@@ -354,6 +354,360 @@ export function validateRecoveryGuardrails(params: {
 }
 
 /**
+ * GATEWAY-01: Gateway Oath Tier (Two-Minute Rule)
+ * Zero/micro-stake tier for first-time users, re-entry, and overcommitters.
+ * Progressive 5-phase Habit Shaping Ladder per category.
+ */
+export const GATEWAY_OATH_ENABLED = true;
+export const GATEWAY_OATH_MIN_STAKE_CENTS = 100; // $1.00
+export const GATEWAY_OATH_MAX_STAKE_CENTS = 200; // $2.00
+export const GATEWAY_OATH_MIN_DURATION_DAYS = 3;
+export const GATEWAY_OATH_MAX_DURATION_DAYS = 14;
+export const GATEWAY_OATH_MAX_PER_USER = 3; // max gateway oaths per user lifetime
+export const GATEWAY_OATH_PHASE_COUNT = 5;
+
+export interface GatewayOathResult {
+  allowed: boolean;
+  reason?: string;
+}
+
+export function validateGatewayOath(params: {
+  totalContracts: number;
+  requestedStakeCents: number;
+  requestedDurationDays: number;
+}): GatewayOathResult {
+  if (params.totalContracts > 0) {
+    return { allowed: false, reason: "Gateway Oath available for first contract only" };
+  }
+  if (params.requestedStakeCents < GATEWAY_OATH_MIN_STAKE_CENTS) {
+    return { allowed: false, reason: `Minimum gateway stake is $${(GATEWAY_OATH_MIN_STAKE_CENTS / 100).toFixed(2)}` };
+  }
+  if (params.requestedStakeCents > GATEWAY_OATH_MAX_STAKE_CENTS) {
+    return { allowed: false, reason: `Maximum gateway stake is $${(GATEWAY_OATH_MAX_STAKE_CENTS / 100).toFixed(2)}` };
+  }
+  if (params.requestedDurationDays < GATEWAY_OATH_MIN_DURATION_DAYS) {
+    return { allowed: false, reason: `Minimum gateway duration is ${GATEWAY_OATH_MIN_DURATION_DAYS} days` };
+  }
+  if (params.requestedDurationDays > GATEWAY_OATH_MAX_DURATION_DAYS) {
+    return { allowed: false, reason: `Maximum gateway duration is ${GATEWAY_OATH_MAX_DURATION_DAYS} days` };
+  }
+  return { allowed: true };
+}
+
+/**
+ * STAKE-01: Stake Tapering & Incentive Fading
+ * Auto-reduces stakes as habits solidify to prevent overjustification effect.
+ */
+export const STAKE_TAPER_ENABLED = true;
+export const STAKE_TAPER_PCT_PER_WEEK = 0.15; // 15% reduction per successful week
+export const STAKE_TAPER_MIN_FLOOR_CENTS = 500; // $5.00 minimum floor
+export const STAKE_TAPER_GRADUATION_THRESHOLD = 0.9; // P(H) > 0.9 for 2+ weeks
+
+export interface StakeTaperResult {
+  currentStakeCents: number;
+  weekNumber: number;
+  reductionCents: number;
+  isAtFloor: boolean;
+  isEligibleForGraduation: boolean;
+}
+
+export function calculateStakeTaper(
+  initialStakeCents: number,
+  completedWeeks: number,
+): StakeTaperResult {
+  let currentStake = initialStakeCents;
+  let weekNum = 0;
+  for (let w = 0; w < completedWeeks; w++) {
+    const reduction = Math.round(currentStake * STAKE_TAPER_PCT_PER_WEEK);
+    currentStake = Math.max(currentStake - reduction, STAKE_TAPER_MIN_FLOOR_CENTS);
+    weekNum++;
+  }
+  return {
+    currentStakeCents: currentStake,
+    weekNumber: weekNum,
+    reductionCents: initialStakeCents - currentStake,
+    isAtFloor: currentStake <= STAKE_TAPER_MIN_FLOOR_CENTS,
+    isEligibleForGraduation: completedWeeks >= 2 && false, // requires P(H) check by caller
+  };
+}
+
+/**
+ * CM-01: Contingency Management — Escalating Reward Schedule
+ * Evidence-based positive reinforcement (NNT 3 for substance use disorders).
+ */
+export const CM_ENABLED = true;
+export const CM_REWARD_TIERS: Array<{ startDay: number; endDay: number; rewardCents: number }> = [
+  { startDay: 1, endDay: 7, rewardCents: 25 },    // $0.25/day
+  { startDay: 8, endDay: 14, rewardCents: 50 },    // $0.50/day
+  { startDay: 15, endDay: 21, rewardCents: 100 },   // $1.00/day
+  { startDay: 22, endDay: 30, rewardCents: 150 },   // $1.50/day
+];
+export const CM_RESET_ON_MISSED_DAY_REWARD_CENTS = 25; // reset to $0.25/day
+
+export function getCmRewardForDay(day: number): number {
+  for (const tier of CM_REWARD_TIERS) {
+    if (day >= tier.startDay && day <= tier.endDay) {
+      return tier.rewardCents;
+    }
+  }
+  return CM_REWARD_TIERS[CM_REWARD_TIERS.length - 1].rewardCents;
+}
+
+/**
+ * MICRO-01: Per-Proof Micro-Reward System
+ * Instant small rewards per verified proof, with variable-ratio bonuses.
+ */
+export const MICRO_REWARD_ENABLED = true;
+export const MICRO_REWARD_BASE_CENTS = 25; // $0.25 per proof
+export const MICRO_REWARD_RANGE_CENTS: [number, number] = [25, 100]; // $0.25–$1.00
+export const MICRO_REWARD_BONUS_PROBABILITY = 0.2; // 20% chance of surprise bonus
+export const MICRO_REWARD_BONUS_MULTIPLIER = 3; // 3x bonus on hit
+
+export function calculateMicroReward(): { base: number; bonus: number; total: number } {
+  const base = MICRO_REWARD_RANGE_CENTS[0] +
+    Math.floor(Math.random() * (MICRO_REWARD_RANGE_CENTS[1] - MICRO_REWARD_RANGE_CENTS[0] + 1));
+  const bonusHit = Math.random() < MICRO_REWARD_BONUS_PROBABILITY;
+  const bonus = bonusHit ? base * MICRO_REWARD_BONUS_MULTIPLIER : 0;
+  return { base, bonus, total: base + bonus };
+}
+
+/**
+ * HABIT-01: Habit Strength Calculation
+ * Based on repetition count (Lally et al. 2010), not elapsed time.
+ * Follows asymptotic automaticity curve.
+ */
+export const HABIT_STRENGTH_AUTOMATICITY_THRESHOLD = 0.95;
+export const HABIT_STRENGTH_AUTOMATICITY_MIDPOINT = 66; // repetitions to reach 0.5
+export const HABIT_STRENGTH_CURVE_STEEPNESS = 0.07;
+
+export function calculateHabitStrength(completedProofs: number, totalRequired: number): number {
+  const ratio = totalRequired > 0 ? completedProofs / totalRequired : 0;
+  // Logistic curve: 1 / (1 + e^(-k * (x - x0)))
+  return 1 / (1 + Math.exp(-HABIT_STRENGTH_CURVE_STEEPNESS * (completedProofs - HABIT_STRENGTH_AUTOMATICITY_MIDPOINT)));
+}
+
+export function getHabitStrengthLabel(strength: number): string {
+  if (strength >= 0.95) return 'Automatic';
+  if (strength >= 0.8) return 'Strong';
+  if (strength >= 0.5) return 'Developing';
+  if (strength >= 0.2) return 'Early';
+  return 'Fragile';
+}
+
+/**
+ * BBO-01: Bigger Better Offer Substitution Engine
+ * Active craving replacement with curated flow-producing activities.
+ */
+export interface BboEntry {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  durationMinutes: number;
+  tags: string[];
+}
+
+export const BBO_LIBRARY: BboEntry[] = [
+  { id: 'bbo-call-friend', category: 'social', title: 'Call a Friend', description: 'Phone a trusted friend for a 10-minute catch-up', durationMinutes: 10, tags: ['social', 'distraction'] },
+  { id: 'bbo-walk', category: 'physical', title: 'Go for a Walk', description: 'Step outside for a 15-minute walk without your phone', durationMinutes: 15, tags: ['physical', 'nature'] },
+  { id: 'bbo-meditate', category: 'mindfulness', title: '3-Minute Breath', description: 'Box breathing: 4-4-4-4 pattern for 3 minutes', durationMinutes: 3, tags: ['mindfulness', 'quick'] },
+  { id: 'bbo-journal', category: 'reflection', title: 'Brain Dump', description: 'Write whatever comes to mind for 5 minutes', durationMinutes: 5, tags: ['reflection', 'writing'] },
+  { id: 'bbo-exercise', category: 'physical', title: 'Quick Workout', description: '20 pushups, 20 squats, 30-second plank', durationMinutes: 5, tags: ['physical', 'endorphins'] },
+  { id: 'bbo-music', category: 'creative', title: 'Play Music', description: 'Play one song you love on an instrument or speaker', durationMinutes: 4, tags: ['creative', 'mood'] },
+  { id: 'bbo-read', category: 'focus', title: 'Read 5 Pages', description: 'Read 5 pages of any book you are currently reading', durationMinutes: 10, tags: ['focus', 'learning'] },
+  { id: 'bbo-cold', category: 'physical', title: 'Cold Splash', description: 'Splash cold water on your face or take a cold shower', durationMinutes: 2, tags: ['physical', 'reset'] },
+  { id: 'bbo-podcast', category: 'focus', title: 'Listen to a Podcast', description: 'Put on a 10-minute episode of a favorite podcast', durationMinutes: 10, tags: ['focus', 'distraction'] },
+  { id: 'bbo-stretch', category: 'physical', title: 'Full Body Stretch', description: '5-minute full-body stretching routine', durationMinutes: 5, tags: ['physical', 'mindfulness'] },
+];
+
+export function getBboRecommendations(category: string, count = 3): BboEntry[] {
+  const byCategory = BBO_LIBRARY.filter(b => b.category === category);
+  const shuffled = [...(byCategory.length > 0 ? byCategory : BBO_LIBRARY)].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+/**
+ * FRICTION-01: Friction Audit Scoring
+ * Measures environmental friction for habit success prediction.
+ */
+export const FRICTION_AUDIT_QUESTIONS = [
+  { id: 'good_habit_steps', question: 'How many steps between you and your desired habit? (1 = immediate, 5 = many steps)', weight: 3 },
+  { id: 'bad_habit_access', question: 'How easy is it to access the behavior you want to avoid? (1 = very hard, 5 = very easy)', weight: 3 },
+  { id: 'environment_triggers', question: 'How many environmental triggers remind you of the old behavior? (1 = none, 5 = many)', weight: 2 },
+  { id: 'social_support', question: 'Do people around you support this change? (1 = strongly, 5 = actively oppose)', weight: 2 },
+  { id: 'time_availability', question: 'Do you have dedicated time for this habit? (1 = always, 5 = never)', weight: 1 },
+];
+
+export interface FrictionAuditResult {
+  totalScore: number;
+  maxScore: number;
+  riskLevel: 'low' | 'medium' | 'high';
+  recommendations: string[];
+}
+
+export function calculateFrictionScore(answers: Record<string, number>): FrictionAuditResult {
+  let totalScore = 0;
+  let maxScore = 0;
+  for (const q of FRICTION_AUDIT_QUESTIONS) {
+    const answer = answers[q.id] ?? 3;
+    totalScore += answer * q.weight;
+    maxScore += 5 * q.weight;
+  }
+  const pct = totalScore / maxScore;
+  const riskLevel = pct < 0.33 ? 'low' : pct < 0.66 ? 'medium' : 'high';
+  const recommendations: string[] = [];
+  if (answers.good_habit_steps && answers.good_habit_steps >= 3) {
+    recommendations.push('Reduce steps to your habit: prepare equipment/tools the night before.');
+  }
+  if (answers.bad_habit_access && answers.bad_habit_access >= 3) {
+    recommendations.push('Increase friction for the behavior you want to avoid: block apps, remove triggers.');
+  }
+  if (answers.environment_triggers && answers.environment_triggers >= 3) {
+    recommendations.push('Remove environmental triggers: rearrange your space, change your route.');
+  }
+  if (answers.social_support && answers.social_support >= 3) {
+    recommendations.push('Find social support: tell a friend about your commitment, join a pod.');
+  }
+  return { totalScore, maxScore, riskLevel, recommendations };
+}
+
+/**
+ * TEMPTATION-01: Temptation Bundling (Premack's Principle)
+ * Pairs need-behaviors with want-behaviors.
+ */
+export interface TemptationBundle {
+  id: string;
+  needBehavior: string;
+  wantBehavior: string;
+  category: string;
+}
+
+export const TEMPTATION_BUNDLE_TEMPLATES: TemptationBundle[] = [
+  { id: 'tb-exercise-netflix', needBehavior: 'exercise', wantBehavior: 'watch Netflix', category: 'BIOLOGICAL' },
+  { id: 'tb-study-coffee', needBehavior: 'study', wantBehavior: 'drink specialty coffee', category: 'COGNITIVE' },
+  { id: 'tb-work-music', needBehavior: 'deep work', wantBehavior: 'listen to music', category: 'PROFESSIONAL' },
+  { id: 'tb-write-treat', needBehavior: 'write', wantBehavior: 'eat a treat', category: 'CREATIVE' },
+  { id: 'tb-clean-podcast', needBehavior: 'clean', wantBehavior: 'listen to podcast', category: 'ENVIRONMENTAL' },
+  { id: 'tb-meditate-walk', needBehavior: 'meditate', wantBehavior: 'go for a walk after', category: 'RECOVERY' },
+];
+
+/**
+ * ABANDONMENT-01: Abandonment Typology Detection
+ * Classifies user churn into 4 archetypes for targeted re-engagement.
+ */
+export enum AbandonmentType {
+  FRUSTRATED = 'FRUSTRATED',
+  BORED = 'BORED',
+  HAPPY_GRADUATE = 'HAPPY_GRADUATE',
+  LIFE_EVENT = 'LIFE_EVENT',
+}
+
+export interface AbandonmentClassification {
+  type: AbandonmentType;
+  confidence: number;
+  signal: string;
+}
+
+export function classifyAbandonment(params: {
+  completedContracts: number;
+  failedContracts: number;
+  averageCompletionRate: number;
+  daysSinceLastActive: number;
+  streakAtExit: number;
+  integrityScore: number;
+  supportTicketsOpened: number;
+}): AbandonmentClassification {
+  const { completedContracts, failedContracts, averageCompletionRate, daysSinceLastActive, streakAtExit, integrityScore, supportTicketsOpened } = params;
+  const totalContracts = completedContracts + failedContracts;
+
+  if (totalContracts > 0 && averageCompletionRate >= 0.9 && integrityScore >= 80 && daysSinceLastActive > 14) {
+    return { type: AbandonmentType.HAPPY_GRADUATE, confidence: 0.8, signal: 'high completion rate + high integrity + inactive' };
+  }
+  if (failedContracts >= 2 && supportTicketsOpened >= 1 && daysSinceLastActive < 14) {
+    return { type: AbandonmentType.FRUSTRATED, confidence: 0.75, signal: 'multiple failures + support tickets' };
+  }
+  if (completedContracts >= 3 && averageCompletionRate >= 0.8 && streakAtExit <= 3) {
+    return { type: AbandonmentType.BORED, confidence: 0.7, signal: 'multiple completions + low exit streak' };
+  }
+  if (daysSinceLastActive > 30 && integrityScore > 50) {
+    return { type: AbandonmentType.LIFE_EVENT, confidence: 0.6, signal: 'long absence + moderate integrity' };
+  }
+  return { type: AbandonmentType.FRUSTRATED, confidence: 0.5, signal: 'default classification' };
+}
+
+/**
+ * REDEMPTION-01: Re-entry Path After Contract Failure
+ */
+export const REENTRY_COOLDOWN_DAYS = 7;
+export const REENTRY_MAX_ATTEMPTS = 5;
+export const REENTRY_STAKE_DISCOUNT_PCT = 0.5; // 50% of original stake
+export const REENTRY_PHOENIX_BONUS_CENTS = 200; // $2.00 phoenix badge bonus
+
+export interface ReentryEligibilityResult {
+  eligible: boolean;
+  attemptNumber: number;
+  reducedStakeCents: number;
+  reason?: string;
+}
+
+export function checkReentryEligibility(params: {
+  daysSinceLastFailure: number;
+  previousFailureCount: number;
+  previousStakeCents: number;
+}): ReentryEligibilityResult {
+  if (params.daysSinceLastFailure < REENTRY_COOLDOWN_DAYS) {
+    return {
+      eligible: false,
+      attemptNumber: params.previousFailureCount,
+      reducedStakeCents: 0,
+      reason: `Re-entry cooldown: ${REENTRY_COOLDOWN_DAYS - params.daysSinceLastFailure} days remaining`,
+    };
+  }
+  if (params.previousFailureCount >= REENTRY_MAX_ATTEMPTS) {
+    return {
+      eligible: false,
+      attemptNumber: params.previousFailureCount,
+      reducedStakeCents: 0,
+      reason: `Maximum re-entry attempts (${REENTRY_MAX_ATTEMPTS}) exceeded`,
+    };
+  }
+  const reducedStake = Math.round(params.previousStakeCents * REENTRY_STAKE_DISCOUNT_PCT);
+  return {
+    eligible: true,
+    attemptNumber: params.previousFailureCount + 1,
+    reducedStakeCents: reducedStake,
+  };
+}
+
+/**
+ * DAY21-01: Day 21 Micro-Reward (Dopamine Danger Zone Intervention)
+ */
+export const DAY21_TRIGGER_DURATION_DAYS = 30; // Default contract duration that triggers day 21
+export const DAY21_TARGET_DAY = 21;
+export const DAY21_BONUS_INTEGRITY_POINTS = 5;
+export const DAY21_VAULT_BONUS_CENTS = 150; // $1.50
+export const DAY21_BADGE_NAME = 'DOPAMINE_DANGER_ZONE_SURVIVOR';
+
+/**
+ * EXIT-01: Post-Contract Exit Interview Questions
+ */
+export const EXIT_INTERVIEW_QUESTIONS_SUCCESS = [
+  { id: 'satisfaction', question: 'How satisfied are you with your experience?', type: 'rating_1_5' },
+  { id: 'difficulty', question: 'How difficult was this contract for you?', type: 'rating_1_5' },
+  { id: 'what_helped', question: 'What helped you succeed?', type: 'text' },
+  { id: 'improvement', question: 'What could we improve?', type: 'text' },
+  { id: 'nps', question: 'How likely are you to recommend Styx to a friend?', type: 'rating_0_10' },
+];
+
+export const EXIT_INTERVIEW_QUESTIONS_FAILURE = [
+  { id: 'satisfaction', question: 'How satisfied are you with how this was handled?', type: 'rating_1_5' },
+  { id: 'why_failed', question: 'What caused the failure?', type: 'text' },
+  { id: 'what_would_help', question: 'What would have helped you succeed?', type: 'text' },
+  { id: 'return_intention', question: 'Would you try again?', type: 'rating_1_5' },
+  { id: 'nps', question: 'How likely are you to recommend Styx to a friend?', type: 'rating_0_10' },
+];
+
+/**
  * RECOVERY-02: 90-Day Execution Matrix (Theorem 9)
  * Maps psychological vulnerability peaks to system state triggers.
  */
