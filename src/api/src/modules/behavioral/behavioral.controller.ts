@@ -96,4 +96,19 @@ export class BehavioralController {
   async classifyAbandonment(@Req() req: any) {
     return this.enrichment.classifyAbandonment(resolveUserId(req));
   }
+
+  @Get("temptation-bundles/:category?")
+  getTemptationBundles(@Param("category") category?: string) {
+    return this.enrichment.getTemptationBundles(category);
+  }
+
+  @Get("recovery-state/:contractId")
+  async recoveryState(@Param("contractId") contractId: string) {
+    return this.enrichment.getRecoveryState(contractId);
+  }
+
+  @Get("stake-taper/:contractId")
+  async stakeTaper(@Param("contractId") contractId: string) {
+    return this.enrichment.getStakeTaper(contractId);
+  }
 }

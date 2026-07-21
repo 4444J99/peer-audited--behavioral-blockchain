@@ -582,6 +582,11 @@ export interface TemptationBundle {
   category: string;
 }
 
+export function getTemptationBundles(category?: string): TemptationBundle[] {
+  if (!category) return TEMPTATION_BUNDLE_TEMPLATES;
+  return TEMPTATION_BUNDLE_TEMPLATES.filter(b => b.category === category);
+}
+
 export const TEMPTATION_BUNDLE_TEMPLATES: TemptationBundle[] = [
   { id: 'tb-exercise-netflix', needBehavior: 'exercise', wantBehavior: 'watch Netflix', category: 'BIOLOGICAL' },
   { id: 'tb-study-coffee', needBehavior: 'study', wantBehavior: 'drink specialty coffee', category: 'COGNITIVE' },
@@ -749,3 +754,12 @@ export const RECOVERY_MATRIX = {
     description: "Identity Reconstruction (Omega Milestone)",
   },
 };
+
+export function getRecoveryState(daysSinceContractStart: number, isWeekend: boolean): RecoveryState {
+  if (daysSinceContractStart <= 14) return RecoveryState.LOCKDOWN;
+  if (daysSinceContractStart <= 30 && isWeekend) return RecoveryState.WEEKEND_SHIELD;
+  if (daysSinceContractStart === 21) return RecoveryState.REWARD_INJECTION;
+  if (daysSinceContractStart >= 45 && daysSinceContractStart <= 60) return RecoveryState.FRICTION_DELAY;
+  if (daysSinceContractStart >= 90) return RecoveryState.ALPHA_COMPLETE;
+  return RecoveryState.NORMAL;
+}

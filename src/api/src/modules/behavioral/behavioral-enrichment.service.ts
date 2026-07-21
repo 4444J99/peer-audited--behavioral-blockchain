@@ -18,6 +18,10 @@ import {
   DAY21_VAULT_BONUS_CENTS,
   DAY21_BADGE_NAME,
   BboEntry,
+  TemptationBundle,
+  getTemptationBundles,
+  getRecoveryState,
+  RecoveryState,
 } from "../../../../shared/libs/behavioral-logic";
 
 @Injectable()
@@ -142,6 +146,21 @@ export class BehavioralEnrichmentService {
     );
     this.logger.log(`Exit interview submitted for contract ${contractId} (id=${row.id})`);
     return { id: row.id };
+  }
+
+  getTemptationBundles(category?: string): TemptationBundle[] {
+    return getTemptationBundles(category);
+  }
+
+  async getRecoveryState(contractId: string) {
+    const { rows } = await this.pool.query(
+      `SELECT EXTRACT(DAY FROM NOW() - started_at)::int AS age_days FROM contracts WHERE id = $1`,
+      [contractId],
+    );
+    if (!rows[0]) return null;
+    const now = new Date();
+    const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+    return { state: getRecoveryState(rows[0].age_days, isWeekend), ageDays: rows[0].age_days };
   }
 
   async checkDay21Milestone(contractId: string) {
