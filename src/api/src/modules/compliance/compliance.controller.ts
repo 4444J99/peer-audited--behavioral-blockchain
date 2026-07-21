@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Post, RawBodyRequest, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, RawBodyRequest, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { CurrentUser, Public } from '../../common/decorators/current-user.decorator';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { RoleGuard, Roles } from '../../common/guards/role.guard';
+import { ComplianceArtifactService } from './compliance-artifact.service';
 import { CompliancePolicyService } from './compliance-policy.service';
 import { IdentityVerificationService } from './identity-verification.service';
 import { MedicalExemptionService } from './medical-exemption.service';
@@ -15,6 +16,7 @@ export class ComplianceController {
     private readonly compliancePolicy: CompliancePolicyService,
     private readonly identityVerification: IdentityVerificationService,
     private readonly medicalExemption: MedicalExemptionService,
+    private readonly complianceArtifact: ComplianceArtifactService,
   ) {}
 
   @Get('eligibility')
@@ -71,5 +73,25 @@ export class ComplianceController {
     @Body() body: { contractId: string }
   ) {
     return this.medicalExemption.approveExemption(body.contractId, user.id);
+  }
+
+  @Get('artifacts')
+  @Public()
+  @ApiOperation({ summary: 'List all active compliance artifacts with status' })
+  async listActiveArtifacts() {
+    return this.complianceArtifact.getAllActiveArtifacts();
+  }
+
+  @Get('artifacts/:type')
+  @Public()
+  @ApiOperation({ summary: 'Get the currently active compliance artifact for a given type' })
+  async getActiveArtifact(
+    @Param('type') type: string,
+  ) {
+    const artifact = await this.complianceArtifact.getActiveArtifact(type);
+    if (!artifact) {
+      return { artifactType: type, version: null, isActive: false, jurisdictions: [] };
+    }
+    return artifact;
   }
 }
