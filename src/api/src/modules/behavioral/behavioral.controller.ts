@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, UseGuards, Req } from "@nestjs/comm
 import { AuthGuard } from "../../../guards/auth.guard";
 import { BehavioralEnhancementsService } from "./behavioral-enhancements.service";
 import { BehavioralEnrichmentService } from "./behavioral-enrichment.service";
+import { LifeTransitionType, ImplementationIntention, OathCategory } from "../../../../shared/libs/behavioral-logic";
 
 function resolveUserId(req: any): string {
   return req?.id ?? req?.user?.id ?? req?.userId;
@@ -110,5 +111,42 @@ export class BehavioralController {
   @Get("stake-taper/:contractId")
   async stakeTaper(@Param("contractId") contractId: string) {
     return this.enrichment.getStakeTaper(contractId);
+  }
+
+  @Post("disenchantment/:contractId")
+  async recordDisenchantment(
+    @Param("contractId") contractId: string,
+    @Body() body: { rating: number },
+    @Req() req: any,
+  ) {
+    return this.enrichment.recordDisenchantmentRating(resolveUserId(req), contractId, body.rating);
+  }
+
+  @Get("disenchantment/:contractId")
+  async disenchantmentTrend(@Param("contractId") contractId: string) {
+    return this.enrichment.getDisenchantmentTrend(contractId);
+  }
+
+  @Get("discontinuity-window/:type/:days")
+  async discontinuityWindow(
+    @Param("type") type: string,
+    @Param("days") days: string,
+  ) {
+    return this.enrichment.getDiscontinuityWindow(type as LifeTransitionType, parseInt(days, 10));
+  }
+
+  @Post("implementation-intention/parse")
+  async parseIntention(@Body() body: { raw: string }) {
+    return this.enrichment.parseImplIntention(body.raw);
+  }
+
+  @Post("implementation-intention/validate")
+  async validateIntention(@Body() body: { intention: ImplementationIntention }) {
+    return this.enrichment.validateImplIntention(body.intention);
+  }
+
+  @Get("implementation-intention/template/:category")
+  async intentionTemplate(@Param("category") category: string) {
+    return { template: this.enrichment.getImplementationIntentionTemplate(category as OathCategory) };
   }
 }

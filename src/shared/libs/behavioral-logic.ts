@@ -763,3 +763,132 @@ export function getRecoveryState(daysSinceContractStart: number, isWeekend: bool
   if (daysSinceContractStart >= 90) return RecoveryState.ALPHA_COMPLETE;
   return RecoveryState.NORMAL;
 }
+
+/**
+ * #109: Disenchantment Score — Reward Devaluation Tracking
+ * Measures how rewarding the old behavior feels over time (Brewer mechanism).
+ */
+export interface DisenchantmentEntry {
+  date: string;
+  rating: number;
+}
+
+export interface DisenchantmentResult {
+  currentScore: number;
+  startScore: number;
+  trend: number;
+  dropPct: number;
+  milestone: 'NONE' | 'NOTICING' | 'REALIZATION' | 'TRANSFORMATION';
+}
+
+export function calculateDisenchantment(ratings: DisenchantmentEntry[]): DisenchantmentResult {
+  if (ratings.length === 0) return { currentScore: 5, startScore: 5, trend: 0, dropPct: 0, milestone: 'NONE' };
+  const sorted = [...ratings].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const startScore = sorted[0].rating;
+  const currentScore = sorted[sorted.length - 1].rating;
+  const dropPct = startScore > 0 ? Math.round(((startScore - currentScore) / startScore) * 100) : 0;
+  const firstHalf = sorted.slice(0, Math.floor(sorted.length / 2));
+  const secondHalf = sorted.slice(Math.floor(sorted.length / 2));
+  const firstAvg = firstHalf.reduce((s, e) => s + e.rating, 0) / firstHalf.length;
+  const secondAvg = secondHalf.reduce((s, e) => s + e.rating, 0) / secondHalf.length;
+  const trend = Math.round((secondAvg - firstAvg) * 10) / 10;
+  let milestone: DisenchantmentResult['milestone'] = 'NONE';
+  if (dropPct >= 50) milestone = 'TRANSFORMATION';
+  else if (dropPct >= 30) milestone = 'REALIZATION';
+  else if (dropPct >= 15) milestone = 'NOTICING';
+  return { currentScore, startScore, trend, dropPct, milestone };
+}
+
+/**
+ * #110: Habit Discontinuity Window Detector
+ * Life transitions create receptivity windows for new habit formation (Wood).
+ */
+export const DISCONTINUITY_WINDOW_DAYS = 30;
+
+export enum LifeTransitionType {
+  MOVE = 'MOVE',
+  NEW_JOB = 'NEW_JOB',
+  BREAKUP = 'BREAKUP',
+  GRADUATION = 'GRADUATION',
+  NEW_PARENT = 'NEW_PARENT',
+  RETIREMENT = 'RETIREMENT',
+  OTHER = 'OTHER',
+}
+
+export interface DiscontinuityWindow {
+  active: boolean;
+  transitionType: LifeTransitionType;
+  daysRemaining: number;
+  stakeDiscountPct: number;
+  suggestedOaths: string[];
+}
+
+const DISCONTINUITY_OATH_MAP: Record<LifeTransitionType, string[]> = {
+  [LifeTransitionType.MOVE]: ['BIOLOGICAL_CARDIO', 'ENVIRONMENTAL_TIDINESS', 'COGNITIVE_DIGITAL'],
+  [LifeTransitionType.NEW_JOB]: ['PROFESSIONAL_TIME', 'COGNITIVE_FOCUS', 'BIOLOGICAL_SLEEP'],
+  [LifeTransitionType.BREAKUP]: ['RECOVERY_NOCONTACT', 'BIOLOGICAL_SOBRIETY', 'CREATIVE_WRITING'],
+  [LifeTransitionType.GRADUATION]: ['COGNITIVE_LEARNING', 'PROFESSIONAL_CODE', 'BIOLOGICAL_WEIGHT'],
+  [LifeTransitionType.NEW_PARENT]: ['BIOLOGICAL_SLEEP', 'RECOVERY_NOCONTACT', 'ENVIRONMENTAL_TIDINESS'],
+  [LifeTransitionType.RETIREMENT]: ['CREATIVE_WRITING', 'BIOLOGICAL_CARDIO', 'COGNITIVE_LEARNING'],
+  [LifeTransitionType.OTHER]: ['BIOLOGICAL_WEIGHT', 'COGNITIVE_FOCUS', 'RECOVERY_NOCONTACT'],
+};
+
+export function detectDiscontinuityWindow(params: {
+  transitionType: LifeTransitionType;
+  daysSinceTransition: number;
+}): DiscontinuityWindow {
+  const active = params.daysSinceTransition <= DISCONTINUITY_WINDOW_DAYS;
+  const remaining = Math.max(0, DISCONTINUITY_WINDOW_DAYS - params.daysSinceTransition);
+  const discountPct = active ? Math.max(10, 50 - Math.floor(remaining / DISCONTINUITY_WINDOW_DAYS * 40)) : 0;
+  return {
+    active,
+    transitionType: params.transitionType,
+    daysRemaining: remaining,
+    stakeDiscountPct: discountPct,
+    suggestedOaths: DISCONTINUITY_OATH_MAP[params.transitionType] || DISCONTINUITY_OATH_MAP[LifeTransitionType.OTHER],
+  };
+}
+
+/**
+ * #111: Implementation Intention Contract Syntax
+ * "I will [BEHAVIOR] at [TIME] in [LOCATION]" — Clear Ch.5.
+ */
+export const IMPLEMENTATION_INTENTION_TIME_FORMAT = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const IMPLEMENTATION_INTENTION_GRACE_MINUTES = 30;
+
+export interface ImplementationIntention {
+  behavior: string;
+  time: string;
+  location: string;
+}
+
+export interface ImplementationIntentionValidation {
+  valid: boolean;
+  errors: string[];
+}
+
+export function parseImplementationIntention(raw: string): ImplementationIntention | null {
+  const match = raw.match(/^I will (.+) at (\d{2}:\d{2}) in (.+)$/i);
+  if (!match) return null;
+  return { behavior: match[1].trim(), time: match[2], location: match[3].trim() };
+}
+
+export function validateImplementationIntention(intention: ImplementationIntention): ImplementationIntentionValidation {
+  const errors: string[] = [];
+  if (!intention.behavior || intention.behavior.length < 2) errors.push('Behavior must be at least 2 characters');
+  if (!IMPLEMENTATION_INTENTION_TIME_FORMAT.test(intention.time)) errors.push('Time must be in HH:MM 24-hour format');
+  if (!intention.location || intention.location.length < 2) errors.push('Location must be at least 2 characters');
+  return { valid: errors.length === 0, errors };
+}
+
+export function generateImplementationIntentionTemplate(category: OathCategory): string {
+  const templates: Record<string, string> = {
+    [OathCategory.CARDIOVASCULAR_STAMINA]: 'I will exercise at 07:00 in the living room',
+    [OathCategory.DEEP_WORK_FOCUS]: 'I will do deep work at 09:00 in my home office',
+    [OathCategory.SLEEP_INTEGRITY]: 'I will start my bedtime routine at 22:00 in my bedroom',
+    [OathCategory.DIGITAL_FASTING]: 'I will put my phone away at 20:00 in the kitchen drawer',
+    [OathCategory.SOBRIETY_HRV]: 'I will attend my meeting at 19:00 at the community center',
+    [OathCategory.DEEP_WRITING]: 'I will write at 06:00 at my desk',
+  };
+  return templates[category] || 'I will [behavior] at [HH:MM] in [location]';
+}
