@@ -1,6 +1,9 @@
 /**
  * Minimal stubs for react-native APIs used by mobile services.
  * Only stubs what the service layer actually imports.
+ *
+ * NOTE: Maps RN prop semantics to DOM-safe equivalents to avoid
+ * React controlled-input warnings in test environments.
  */
 import React from 'react';
 
@@ -8,34 +11,72 @@ import React from 'react';
 const SAFE_HTML_PROPS = new Set([
   'id', 'className', 'style', 'placeholder', 'value', 'type',
   'disabled', 'checked', 'readOnly', 'autoComplete',
+  'defaultValue',
 ]);
 
+/**
+ * RN-to-DOM prop mappings.
+ *
+ * `onValueChange` → `onChange` (Switch sends checked state)
+ * `onChangeText`  → `onChange` (TextInput sends string value)
+ * `onPress`       → `onClick` (TouchableOpacity)
+ * `editable`      → `!readOnly` (inverted)
+ * `enabled`       → `!disabled` (inverted)
+ */
 function createPrimitive(tag: string) {
   return ({ children, ...props }: any) => {
-    // Filter out non-DOM-safe props to avoid React DOM warnings/errors
     const safeProps: Record<string, any> = {};
     let hasOnChange = false;
+
     for (const key of Object.keys(props)) {
       const val = props[key];
+
       if (key === 'onPress' && typeof val === 'function') {
         safeProps.onClick = val;
         continue;
       }
+
       if (key === 'onChangeText' && typeof val === 'function') {
         hasOnChange = true;
         safeProps.onChange = (event: any) => val(event?.target?.value ?? '');
         continue;
       }
-      if (key === 'onChange' && typeof val === 'function') {
+
+      if (key === 'onValueChange' && typeof val === 'function') {
         hasOnChange = true;
+        safeProps.onChange = (event: any) => val(event?.target?.checked ?? false);
+        continue;
       }
-      if (SAFE_HTML_PROPS.has(key) && (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean')) {
+
+      if (key === 'onChange' && typeof val === 'function') {
+        safeProps.onChange = val;
+        continue;
+      }
+
+      if (key === 'editable') {
+        safeProps.readOnly = !val;
+        continue;
+      }
+
+      if (key === 'enabled') {
+        safeProps.disabled = !val;
+        continue;
+      }
+
+      if (
+        SAFE_HTML_PROPS.has(key) &&
+        (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean')
+      ) {
         safeProps[key] = val;
+        continue;
       }
     }
-    if (tag === 'input' && 'value' in safeProps && !hasOnChange) {
+
+    // Suppress controlled-input warning for value/checked without onChange
+    if (tag === 'input' && !hasOnChange && ('value' in safeProps || 'checked' in safeProps)) {
       safeProps.readOnly = true;
     }
+
     return React.createElement(tag, safeProps, children);
   };
 }
@@ -48,7 +89,16 @@ export const TouchableOpacity = createPrimitive('button');
 export const TextInput = createPrimitive('input');
 export const ActivityIndicator = createPrimitive('span');
 export const RefreshControl = createPrimitive('div');
-export const Switch = createPrimitive('input');
+
+/** Switch renders as type=checkbox with value→checked mapping */
+export const Switch = ({ children, value, ...props }: any) => {
+  return createPrimitive('input')({
+    children,
+    type: 'checkbox',
+    checked: value,
+    ...props,
+  });
+};
 
 /** FlatList renders data items using renderItem, plus header/empty components */
 export const FlatList = ({ data, renderItem, ListHeaderComponent, ListEmptyComponent, keyExtractor, ...rest }: any) => {
