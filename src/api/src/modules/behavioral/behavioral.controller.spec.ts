@@ -91,7 +91,7 @@ describe("BehavioralController", () => {
   describe("bbo recommendations", () => {
     it("returns bbo entries for a category", () => {
       mockQuery.mockResolvedValue({ rows: [] });
-      const result = controller.getBbo("physical", user);
+      const result = controller.getBbo("physical");
       expect(Array.isArray(result)).toBe(true);
     });
   });
