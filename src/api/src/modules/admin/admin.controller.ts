@@ -603,4 +603,30 @@ export class AdminController {
       pendingDisputes: Number(disputes.rows[0].count),
     };
   }
+
+  @Get("financial-metrics")
+  @Roles("admin")
+  async financialMetrics() {
+    const result = await this.pool.query(`
+      SELECT
+        COALESCE(COUNT(*) FILTER (WHERE created_at >= date_trunc('month', NOW())), 0) AS new_users_this_month,
+        COALESCE(COUNT(*), 0) AS total_users
+      FROM users
+    `);
+    const paying = await this.pool.query(`
+      SELECT COALESCE(COUNT(DISTINCT user_id), 0) AS paying_users,
+             COALESCE(SUM(stake_amount), 0) AS total_staked
+      FROM contracts WHERE status IN ('ACTIVE', 'COMPLETED')
+    `);
+    return {
+      cac: { current: 0, previous: 0, trend: 0 },
+      ltv: { current: 0, previous: 0, trend: 0 },
+      ltvCacRatio: { current: 0, trend: 0 },
+      paybackDays: { current: 0, trend: 0 },
+      monthlyBurn: { current: 0, previous: 0 },
+      totalUsers: { current: Number(result.rows[0].total_users), newThisMonth: Number(result.rows[0].new_users_this_month) },
+      payingUsers: { current: Number(paying.rows[0].paying_users), pct: 0 },
+      monthlyRevenue: { current: Number(paying.rows[0].total_staked), recurringPct: 0 },
+    };
+  }
 }
