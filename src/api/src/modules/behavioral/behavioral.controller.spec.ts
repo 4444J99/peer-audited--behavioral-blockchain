@@ -3,10 +3,10 @@ import { Pool } from "pg";
 import { BadRequestException } from "@nestjs/common";
 import { BehavioralController } from "./behavioral.controller";
 import { BehavioralEnhancementsService } from "./behavioral-enhancements.service";
+import { BehavioralEnrichmentService } from "./behavioral-enrichment.service";
 
 describe("BehavioralController", () => {
   let controller: BehavioralController;
-  let service: BehavioralEnhancementsService;
   let pool: { query: jest.Mock };
 
   const mockQuery = jest.fn();
@@ -19,14 +19,12 @@ describe("BehavioralController", () => {
       controllers: [BehavioralController],
       providers: [
         BehavioralEnhancementsService,
+        BehavioralEnrichmentService,
         { provide: Pool, useValue: pool },
       ],
     }).compile();
 
     controller = module.get<BehavioralController>(BehavioralController);
-    service = module.get<BehavioralEnhancementsService>(
-      BehavioralEnhancementsService,
-    );
   });
 
   describe("subscribe", () => {
@@ -87,6 +85,14 @@ describe("BehavioralController", () => {
           carryOverPct: 50,
         }),
       ).rejects.toThrow(/stake_amount/);
+    });
+  });
+
+  describe("bbo recommendations", () => {
+    it("returns bbo entries for a category", () => {
+      mockQuery.mockResolvedValue({ rows: [] });
+      const result = controller.getBbo("physical", user);
+      expect(Array.isArray(result)).toBe(true);
     });
   });
 });
