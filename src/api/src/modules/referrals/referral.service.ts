@@ -14,7 +14,7 @@ export class ReferralService {
   ) {}
 
   private generateCode(): string {
-    return randomBytes(6).toString('base64url').slice(0, 8).toUpperCase();
+    return randomBytes(4).toString('hex').toUpperCase();
   }
 
   async getOrCreateCode(userId: string): Promise<string> {

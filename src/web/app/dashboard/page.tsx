@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Activity, ShieldCheck, Flame, History, User, Loader2, AlertTriangle, LogOut, Bell, Settings, ScrollText } from 'lucide-react';
+import { Activity, ShieldCheck, Flame, History, User, Loader2, AlertTriangle, LogOut, Bell, Settings, ScrollText, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '../../services/api-client';
@@ -126,6 +126,9 @@ export default function IdentityDashboard() {
           </Link>
           <Link href="/settings" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors flex items-center gap-1">
             <Settings size={14} />
+          </Link>
+          <Link href="/help" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors flex items-center gap-1">
+            <HelpCircle size={14} />
           </Link>
           {authUser?.role === 'ADMIN' && (
             <Link href="/admin" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-red-900/50 text-xs md:text-sm font-bold text-red-400 hover:text-red-300 transition-colors">
