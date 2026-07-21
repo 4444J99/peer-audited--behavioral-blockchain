@@ -8,6 +8,12 @@ services:
     runtime: node
     region: oregon
     plan: starter
+    # Uncomment for auto-scaling after upgrading from Starter:
+    # scaling:
+    #   minInstances: 1
+    #   maxInstances: 3
+    #   targetMemoryPercent: 75
+    #   targetCPUCent: 75
     buildCommand: npm install --include=dev && npx turbo run build --filter=@styx/api
     startCommand: cd src/api && node dist/api/src/main.js
     healthCheckPath: /health
@@ -66,6 +72,12 @@ services:
     runtime: node
     region: oregon
     plan: starter
+    # Uncomment for auto-scaling after upgrading from Starter:
+    # scaling:
+    #   minInstances: 1
+    #   maxInstances: 3
+    #   targetMemoryPercent: 75
+    #   targetCPUCent: 75
     buildCommand: npm install --include=dev && npx turbo run build --filter=@styx/web
     startCommand: cd src/web && npm start -- --port $PORT
     envVars:
