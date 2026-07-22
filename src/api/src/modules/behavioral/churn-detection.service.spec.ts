@@ -5,7 +5,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 
 describe('ChurnDetectionService', () => {
   let service: ChurnDetectionService;
-  let pool: jest.Mocked<Pool>;
+  let pool: { query: jest.Mock };
   let notifications: jest.Mocked<NotificationsService>;
 
   beforeEach(async () => {

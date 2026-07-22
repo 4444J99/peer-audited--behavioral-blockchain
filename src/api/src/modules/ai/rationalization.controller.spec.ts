@@ -26,7 +26,8 @@ describe('RationalizationController', () => {
         { text: 'I am too busy', contextType: 'GRACE_DAY' },
       );
 
-      expect(result.category).toBe('PURE_RATIONALIZATION');
+      expect(result).not.toHaveProperty('error');
+      if ('category' in result) expect(result.category).toBe('PURE_RATIONALIZATION');
       expect(mockService.classify).toHaveBeenCalledWith('user-1', 'I am too busy', 'GRACE_DAY', undefined);
     });
 

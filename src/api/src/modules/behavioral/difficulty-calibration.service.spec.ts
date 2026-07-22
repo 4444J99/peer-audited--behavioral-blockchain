@@ -4,7 +4,7 @@ import { DifficultyCalibrationService } from './difficulty-calibration.service';
 
 describe('DifficultyCalibrationService', () => {
   let service: DifficultyCalibrationService;
-  let pool: jest.Mocked<Pool>;
+  let pool: { query: jest.Mock };
 
   beforeEach(async () => {
     const query = jest.fn();
