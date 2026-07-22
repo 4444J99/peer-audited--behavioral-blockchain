@@ -1,39 +1,23 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Pool } from "pg";
 import {
-  validateGatewayOath,
-  calculateStakeTaper,
-  getCmRewardForDay,
-  calculateMicroReward,
-  calculateHabitStrength,
-  getHabitStrengthLabel,
-  getBboRecommendations,
-  calculateFrictionScore,
-  classifyAbandonment,
-  checkReentryEligibility,
-  EXIT_INTERVIEW_QUESTIONS_SUCCESS,
-  EXIT_INTERVIEW_QUESTIONS_FAILURE,
-  DAY21_TARGET_DAY,
-  DAY21_BONUS_INTEGRITY_POINTS,
-  DAY21_VAULT_BONUS_CENTS,
-  DAY21_BADGE_NAME,
-  BboEntry,
-  TemptationBundle,
-  getTemptationBundles,
-  getRecoveryState,
-  RecoveryState,
-  DisenchantmentEntry,
-  DisenchantmentResult,
-  calculateDisenchantment,
-  LifeTransitionType,
-  DiscontinuityWindow,
-  detectDiscontinuityWindow,
-  ImplementationIntention,
-  ImplementationIntentionValidation,
-  parseImplementationIntention,
-  validateImplementationIntention,
-  generateImplementationIntentionTemplate,
+  validateGatewayOath, calculateStakeTaper, getCmRewardForDay, calculateMicroReward,
+  calculateHabitStrength, getHabitStrengthLabel, getBboRecommendations, calculateFrictionScore,
+  classifyAbandonment, checkReentryEligibility,
+  EXIT_INTERVIEW_QUESTIONS_SUCCESS, EXIT_INTERVIEW_QUESTIONS_FAILURE,
+  DAY21_TARGET_DAY, DAY21_BONUS_INTEGRITY_POINTS, DAY21_VAULT_BONUS_CENTS, DAY21_BADGE_NAME,
+  BboEntry, TemptationBundle, getTemptationBundles, getRecoveryState, RecoveryState,
+  DisenchantmentEntry, DisenchantmentResult, calculateDisenchantment,
+  LifeTransitionType, DiscontinuityWindow, detectDiscontinuityWindow,
+  ImplementationIntention, ImplementationIntentionValidation,
+  parseImplementationIntention, validateImplementationIntention, generateImplementationIntentionTemplate,
   OathCategory,
+  PassiveProvider, getPassiveProviders, getPassiveProviderConfig,
+  evaluatePodBroadcast, assessAuditorWellness, calculateGenerosityGrant,
+  generateRolloverOffer, getAcademyProgress, detectResistancePatterns,
+  INTAKE_ASSESSMENT, calculateAssessmentProfile, createDecoProof,
+  resolveOracleFailure, quoteStablecoinStake, calculateRevenueShare,
+  createWhistleblowerReport,
 } from "../../../../shared/libs/behavioral-logic";
 
 @Injectable()
@@ -232,5 +216,62 @@ export class BehavioralEnrichmentService {
       vaultBonusCents: DAY21_VAULT_BONUS_CENTS,
       badge: DAY21_BADGE_NAME,
     };
+  }
+
+  // #108: Passive proof API integrations
+  getPassiveProviders() { return getPassiveProviders(); }
+  getPassiveProviderConfig(provider: PassiveProvider) { return getPassiveProviderConfig(provider); }
+
+  // #107: Emotional contagion safeguards
+  evaluatePodBroadcast(podId: string, failureCount: number, memberCount: number, lastBroadcastAt: Date | null) {
+    return evaluatePodBroadcast({ podId, failureCount, memberCount, lastBroadcastAt });
+  }
+
+  // #106: Auditor wellness
+  assessAuditorWellness(auditorId: string, consecutiveReviews: number, avgReviewTimeSec: number, recentRejectionRate: number) {
+    return assessAuditorWellness({ auditorId, consecutiveReviews, avgReviewTimeSec, recentRejectionRate });
+  }
+
+  // #105: Generosity loop
+  calculateGenerosityGrant(giverCompletedContracts: number, giverAverageStakeCents: number) {
+    return calculateGenerosityGrant(giverCompletedContracts, giverAverageStakeCents);
+  }
+
+  // #104: Contract rollover
+  generateRolloverOffer(completedContractCategory: string, completedContractStakeCents: number) {
+    return generateRolloverOffer({ completedContractCategory, completedContractStakeCents });
+  }
+
+  // #103: Academy
+  getAcademyProgress(completedIds: string[]) { return getAcademyProgress(completedIds); }
+
+  // #100: Resistance patterns
+  detectResistancePatterns(text: string) { return detectResistancePatterns(text); }
+
+  // #93: Intake assessment
+  getIntakeAssessment() { return INTAKE_ASSESSMENT; }
+  calculateAssessmentProfile(answers: Record<string, number>) { return calculateAssessmentProfile(answers); }
+
+  // #92: DECO oracle stub
+  createDecoProof(url: string, selector: string, expectedValue: string) {
+    return createDecoProof({ url, selector, expectedValue });
+  }
+
+  // #91: Oracle failure fallback
+  resolveOracleFailure(verdicts: any[]) { return resolveOracleFailure(verdicts); }
+
+  // #90: Stablecoin quote
+  quoteStablecoinStake(usdCents: number, stablecoinType: 'USDC' | 'USDT') {
+    return quoteStablecoinStake(usdCents, stablecoinType);
+  }
+
+  // #89: Revenue share
+  calculateRevenueShare(totalPoolCents: number, totalDataPoints: number, userDataPoints: number) {
+    return calculateRevenueShare({ totalPoolCents, totalDataPoints, userDataPoints });
+  }
+
+  // #88: Whistleblower
+  createWhistleblowerReport(category: 'FRAUD' | 'ABUSE' | 'COLLUSION' | 'OTHER') {
+    return createWhistleblowerReport(category);
   }
 }

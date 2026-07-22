@@ -2,7 +2,9 @@ import { Controller, Get, Post, Body, Param, UseGuards, Req } from "@nestjs/comm
 import { AuthGuard } from "../../../guards/auth.guard";
 import { BehavioralEnhancementsService } from "./behavioral-enhancements.service";
 import { BehavioralEnrichmentService } from "./behavioral-enrichment.service";
-import { LifeTransitionType, ImplementationIntention, OathCategory } from "../../../../shared/libs/behavioral-logic";
+import {
+  LifeTransitionType, ImplementationIntention, OathCategory, PassiveProvider,
+} from "../../../../shared/libs/behavioral-logic";
 
 function resolveUserId(req: any): string {
   return req?.id ?? req?.user?.id ?? req?.userId;
@@ -148,5 +150,89 @@ export class BehavioralController {
   @Get("implementation-intention/template/:category")
   async intentionTemplate(@Param("category") category: string) {
     return { template: this.enrichment.getImplementationIntentionTemplate(category as OathCategory) };
+  }
+
+  // #108: Passive proof providers
+  @Get("passive-providers")
+  getPassiveProviders() { return this.enrichment.getPassiveProviders(); }
+
+  @Get("passive-providers/:provider/config")
+  getPassiveProviderConfig(@Param("provider") provider: string) {
+    return this.enrichment.getPassiveProviderConfig(provider as PassiveProvider);
+  }
+
+  // #107: Emotional contagion safeguards
+  @Post("pod/broadcast-evaluate")
+  evaluatePodBroadcast(@Body() body: { podId: string; failureCount: number; memberCount: number; lastBroadcastAt: string | null }) {
+    return this.enrichment.evaluatePodBroadcast(body.podId, body.failureCount, body.memberCount, body.lastBroadcastAt ? new Date(body.lastBroadcastAt) : null);
+  }
+
+  // #106: Auditor wellness
+  @Post("auditor/wellness")
+  assessAuditorWellness(@Body() body: { auditorId: string; consecutiveReviews: number; avgReviewTimeSec: number; recentRejectionRate: number }) {
+    return this.enrichment.assessAuditorWellness(body.auditorId, body.consecutiveReviews, body.avgReviewTimeSec, body.recentRejectionRate);
+  }
+
+  // #105: Generosity loop
+  @Get("generosity-grant/:completedContracts/:avgStakeCents")
+  getGenerosityGrant(@Param("completedContracts") completedContracts: string, @Param("avgStakeCents") avgStakeCents: string) {
+    return this.enrichment.calculateGenerosityGrant(parseInt(completedContracts, 10), parseInt(avgStakeCents, 10));
+  }
+
+  // #104: Contract rollover
+  @Post("contract-rollover")
+  getContractRollover(@Body() body: { category: string; stakeCents: number }) {
+    return this.enrichment.generateRolloverOffer(body.category, body.stakeCents);
+  }
+
+  // #103: Academy
+  @Post("academy/progress")
+  getAcademyProgress(@Body() body: { completedIds: string[] }) {
+    return this.enrichment.getAcademyProgress(body.completedIds);
+  }
+
+  // #100: Resistance patterns
+  @Post("resistance-patterns")
+  detectResistance(@Body() body: { text: string }) {
+    return this.enrichment.detectResistancePatterns(body.text);
+  }
+
+  // #93: Intake assessment
+  @Get("intake-assessment")
+  getIntakeAssessment() { return this.enrichment.getIntakeAssessment(); }
+
+  @Post("intake-assessment/profile")
+  calculateProfile(@Body() body: { answers: Record<string, number> }) {
+    return this.enrichment.calculateAssessmentProfile(body.answers);
+  }
+
+  // #92: DECO oracle stub
+  @Post("deco-proof")
+  createDecoProof(@Body() body: { url: string; selector: string; expectedValue: string }) {
+    return this.enrichment.createDecoProof(body.url, body.selector, body.expectedValue);
+  }
+
+  // #91: Oracle failure fallback
+  @Post("oracle-resolve")
+  resolveOracle(@Body() body: { verdicts: any[] }) {
+    return this.enrichment.resolveOracleFailure(body.verdicts);
+  }
+
+  // #90: Stablecoin quote
+  @Get("stablecoin-quote/:usdCents/:stablecoinType")
+  getStablecoinQuote(@Param("usdCents") usdCents: string, @Param("stablecoinType") stablecoinType: string) {
+    return this.enrichment.quoteStablecoinStake(parseInt(usdCents, 10), stablecoinType as 'USDC' | 'USDT');
+  }
+
+  // #89: Revenue share
+  @Post("revenue-share")
+  calculateRevenueShare(@Body() body: { totalPoolCents: number; totalDataPoints: number; userDataPoints: number }) {
+    return this.enrichment.calculateRevenueShare(body.totalPoolCents, body.totalDataPoints, body.userDataPoints);
+  }
+
+  // #88: Whistleblower
+  @Post("whistleblower-report")
+  createWhistleblowerReport(@Body() body: { category: 'FRAUD' | 'ABUSE' | 'COLLUSION' | 'OTHER' }) {
+    return this.enrichment.createWhistleblowerReport(body.category);
   }
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Brain, Shield, TrendingUp, RefreshCw, Heart, Zap, Activity } from 'lucide-react';
+import { Brain, Shield, TrendingUp, RefreshCw, Heart, Zap, Activity, BookOpen, ClipboardList, Eye } from 'lucide-react';
 import { FrictionAuditWizard } from '../../components/FrictionAuditWizard';
 import { GatewayOathFlow } from '../../components/GatewayOathFlow';
 
@@ -11,6 +11,9 @@ const FEATURES = [
   { href: '/behavioral/habit-strength', label: 'Habit Strength', icon: TrendingUp, desc: 'Track how automatic your habits have become.' },
   { href: '/behavioral/gateway-oath', label: 'Gateway Oath', icon: Zap, desc: 'Start small with micro-stakes and the two-minute rule.' },
   { href: '/behavioral/reentry', label: 'Re-entry Path', icon: RefreshCw, desc: 'Bounce back after a failed contract.' },
+  { href: '/behavioral/academy', label: 'Styx Academy', icon: BookOpen, desc: 'Learn behavioral science through 8 psychoeducation modules.' },
+  { href: '/behavioral/assessment', label: 'Intake Assessment', icon: ClipboardList, desc: 'Discover your behavioral archetype with an 8-question profile.' },
+  { href: '/behavioral/auditor-wellness', label: 'Auditor Wellness', icon: Eye, desc: 'Monitor fatigue and bias risk for peer reviewers.' },
 ];
 
 export default function BehavioralPage() {
