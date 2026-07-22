@@ -892,3 +892,348 @@ export function generateImplementationIntentionTemplate(category: OathCategory):
   };
   return templates[category] || 'I will [behavior] at [HH:MM] in [location]';
 }
+
+/**
+ * #108: Passive Proof API Integrations
+ * Strava, Duolingo, GitHub, Calm, Kindle — third-party activity as proof.
+ */
+export enum PassiveProvider {
+  STRAVA = 'STRAVA',
+  DUOLINGO = 'DUOLINGO',
+  GITHUB = 'GITHUB',
+  CALM = 'CALM',
+  KINDLE = 'KINDLE',
+}
+
+export const PASSIVE_PROVIDER_CONFIG: Record<PassiveProvider, { label: string; proofType: string; refreshHrs: number }> = {
+  [PassiveProvider.STRAVA]: { label: 'Strava', proofType: 'workout_completed', refreshHrs: 1 },
+  [PassiveProvider.DUOLINGO]: { label: 'Duolingo', proofType: 'lesson_completed', refreshHrs: 1 },
+  [PassiveProvider.GITHUB]: { label: 'GitHub', proofType: 'commit_pushed', refreshHrs: 6 },
+  [PassiveProvider.CALM]: { label: 'Calm', proofType: 'meditation_completed', refreshHrs: 2 },
+  [PassiveProvider.KINDLE]: { label: 'Kindle', proofType: 'reading_sessions', refreshHrs: 4 },
+};
+
+export function getPassiveProviders(): PassiveProvider[] {
+  return Object.values(PassiveProvider);
+}
+
+export function getPassiveProviderConfig(provider: PassiveProvider) {
+  return PASSIVE_PROVIDER_CONFIG[provider];
+}
+
+/**
+ * #107: Emotional Contagion Safeguards for Pod Failure Broadcasting
+ * Rate-limits and dampens pod-wide failure notifications to prevent cascading demotivation.
+ */
+export interface PodFailureBroadcast {
+  podId: string;
+  failureCount: number;
+  memberCount: number;
+  broadcastCooldownHrs: number;
+  dampened: boolean;
+}
+
+export function evaluatePodBroadcast(params: {
+  podId: string;
+  failureCount: number;
+  memberCount: number;
+  lastBroadcastAt: Date | null;
+}): PodFailureBroadcast {
+  const cooldownHrs = Math.min(24, Math.max(1, Math.floor(params.failureCount / params.memberCount) * 4));
+  const hrsSinceLastBroadcast = params.lastBroadcastAt
+    ? (Date.now() - params.lastBroadcastAt.getTime()) / 3600000
+    : Infinity;
+  const dampened = hrsSinceLastBroadcast < cooldownHrs;
+  return { podId: params.podId, failureCount: params.failureCount, memberCount: params.memberCount, broadcastCooldownHrs: cooldownHrs, dampened };
+}
+
+/**
+ * #106: Fury Auditor Wellness System
+ * Empathy fatigue prevention, bias detection, workload balancing.
+ */
+export interface AuditorWellnessState {
+  auditorId: string;
+  consecutiveReviews: number;
+  fatigueScore: number;
+  biasRisk: 'LOW' | 'MEDIUM' | 'HIGH';
+  recommendedBreak: boolean;
+}
+
+export function assessAuditorWellness(params: {
+  auditorId: string;
+  consecutiveReviews: number;
+  avgReviewTimeSec: number;
+  recentRejectionRate: number;
+}): AuditorWellnessState {
+  const consecutiveScore = Math.min(params.consecutiveReviews / 20, 1) * 40;
+  const speedScore = params.avgReviewTimeSec < 10 ? 30 : 0;
+  const rejectionScore = params.recentRejectionRate > 0.8 ? 30 : 0;
+  const fatigueScore = Math.min(consecutiveScore + speedScore + rejectionScore, 100);
+  let biasRisk: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW';
+  if (fatigueScore > 70) biasRisk = 'HIGH';
+  else if (fatigueScore > 40) biasRisk = 'MEDIUM';
+  return { auditorId: params.auditorId, consecutiveReviews: params.consecutiveReviews, fatigueScore, biasRisk, recommendedBreak: fatigueScore > 60 };
+}
+
+/**
+ * #105: Generosity Loop / Pay It Forward
+ * Successful completers can sponsor a fraction of stake for a new user.
+ */
+export interface GenerosityGrant {
+  giverId: string;
+  receiverId: string;
+  amountCents: number;
+  badgeAwarded: boolean;
+}
+
+export function calculateGenerosityGrant(giverCompletedContracts: number, giverAverageStakeCents: number): { maxDonationCents: number; badgeThreshold: number } {
+  const maxDonationCents = Math.round(giverAverageStakeCents * 0.2);
+  const badgeThreshold = Math.max(1, Math.floor(giverCompletedContracts / 3));
+  return { maxDonationCents, badgeThreshold };
+}
+
+/**
+ * #104: Zero-Gap Contract Rollover
+ * 'Start the Next One Today' momentum bridge when a contract completes.
+ */
+export interface RolloverOffer {
+  eligible: boolean;
+  previousCategory: string;
+  suggestedNextCategory: string;
+  continuityBonusCents: number;
+  expiresInHrs: number;
+}
+
+export const ROLLOVER_EXPIRY_HRS = 24;
+export const ROLLOVER_CONTINUITY_BONUS_CENTS = 50;
+
+export function generateRolloverOffer(params: {
+  completedContractCategory: string;
+  completedContractStakeCents: number;
+}): RolloverOffer {
+  return {
+    eligible: true,
+    previousCategory: params.completedContractCategory,
+    suggestedNextCategory: params.completedContractCategory,
+    continuityBonusCents: ROLLOVER_CONTINUITY_BONUS_CENTS,
+    expiresInHrs: ROLLOVER_EXPIRY_HRS,
+  };
+}
+
+/**
+ * #103: Styx Academy — Psychoeducation Module
+ * Structured reward-based learning curriculum with progress tracking.
+ */
+export interface AcademyModule {
+  id: string;
+  title: string;
+  description: string;
+  durationMin: number;
+  rewardCents: number;
+}
+
+export const ACADEMY_CURRICULUM: AcademyModule[] = [
+  { id: 'AM-01', title: 'How Habits Work', description: 'The cue-routine-reward loop and why willpower fails', durationMin: 10, rewardCents: 25 },
+  { id: 'AM-02', title: 'Friction Engineering', description: 'Design your environment for automatic good choices', durationMin: 15, rewardCents: 35 },
+  { id: 'AM-03', title: 'The Two-Minute Rule', description: 'Start so small you cannot say no', durationMin: 8, rewardCents: 25 },
+  { id: 'AM-04', title: 'Identity-Based Habits', description: 'I am the person who... — rewrite your self-concept', durationMin: 12, rewardCents: 35 },
+  { id: 'AM-05', title: 'Temptation Bundling', description: 'Link want behaviors with need behaviors', durationMin: 10, rewardCents: 25 },
+  { id: 'AM-06', title: 'Implementation Intentions', description: 'I will [X] at [TIME] in [LOCATION]', durationMin: 10, rewardCents: 25 },
+  { id: 'AM-07', title: 'The 4 Laws of Behavior Change', description: 'Make it obvious, attractive, easy, satisfying', durationMin: 20, rewardCents: 50 },
+  { id: 'AM-08', title: 'Recovery & Disenchantment', description: 'Why the old habit loses its grip', durationMin: 15, rewardCents: 35 },
+];
+
+export function getAcademyProgress(completedIds: string[]): { completed: number; total: number; pct: number; unlockedRewards: number } {
+  const total = ACADEMY_CURRICULUM.length;
+  const completed = completedIds.filter(id => ACADEMY_CURRICULUM.some(m => m.id === id)).length;
+  const unlockedRewards = ACADEMY_CURRICULUM.filter(m => completedIds.includes(m.id)).reduce((sum, m) => sum + m.rewardCents, 0);
+  return { completed, total, pct: Math.round((completed / total) * 100), unlockedRewards };
+}
+
+/**
+ * #100: Resistance Pattern Detection Engine
+ * Identifies displacement, self-dramatization, victim narrative in attestation notes.
+ */
+export enum ResistancePattern {
+  DISPLACEMENT = 'DISPLACEMENT',
+  SELF_DRAMATIZATION = 'SELF_DRAMATIZATION',
+  VICTIM_NARRATIVE = 'VICTIM_NARRATIVE',
+  MINIMIZATION = 'MINIMIZATION',
+  INTELLECTUALIZATION = 'INTELLECTUALIZATION',
+}
+
+export interface ResistanceSignal {
+  pattern: ResistancePattern;
+  confidence: number;
+  snippet?: string;
+}
+
+const RESISTANCE_KEYWORDS: Record<ResistancePattern, RegExp[]> = {
+  [ResistancePattern.DISPLACEMENT]: [/not my fault/i, /they made me/i, /because of/i, /would have if/i],
+  [ResistancePattern.SELF_DRAMATIZATION]: [/always fail/i, /never work/i, /worst ever/i, /impossible/i],
+  [ResistancePattern.VICTIM_NARRATIVE]: [/why me/i, /unfair/i, /no one understands/i, /against me/i],
+  [ResistancePattern.MINIMIZATION]: [/it was just/i, /only once/i, /barely counts/i, /not that bad/i],
+  [ResistancePattern.INTELLECTUALIZATION]: [/technically/i, /theoretically/i, /research says/i, /but actually/i],
+};
+
+export function detectResistancePatterns(text: string): ResistanceSignal[] {
+  const signals: ResistanceSignal[] = [];
+  for (const [pattern, regexps] of Object.entries(RESISTANCE_KEYWORDS)) {
+    for (const re of regexps) {
+      const match = text.match(re);
+      if (match) {
+        signals.push({ pattern: pattern as ResistancePattern, confidence: 0.6, snippet: match[0] });
+        break;
+      }
+    }
+  }
+  return signals;
+}
+
+/**
+ * #93: Multi-Instrument Personality & Motivation Assessment Battery
+ * Intake assessment combining personality traits with motivation profiling.
+ */
+export interface AssessmentQuestion {
+  id: string;
+  question: string;
+  scale: 'agree_1_5' | 'frequency_1_5' | 'importance_1_5';
+  dimension: 'CONSCIENTIOUSNESS' | 'IMPULSIVITY' | 'MOTIVATION' | 'SELF_EFFICACY' | 'SOCIAL_SUPPORT';
+}
+
+export const INTAKE_ASSESSMENT: AssessmentQuestion[] = [
+  { id: 'AS-01', question: 'I follow through on commitments even when I do not feel like it', scale: 'agree_1_5', dimension: 'CONSCIENTIOUSNESS' },
+  { id: 'AS-02', question: 'I act on impulse without thinking about consequences', scale: 'agree_1_5', dimension: 'IMPULSIVITY' },
+  { id: 'AS-03', question: 'I am confident I can change my habits', scale: 'agree_1_5', dimension: 'SELF_EFFICACY' },
+  { id: 'AS-04', question: 'How often do you feel motivated to work on your goals?', scale: 'frequency_1_5', dimension: 'MOTIVATION' },
+  { id: 'AS-05', question: 'I have people in my life who support my growth', scale: 'agree_1_5', dimension: 'SOCIAL_SUPPORT' },
+  { id: 'AS-06', question: 'I complete tasks I start', scale: 'agree_1_5', dimension: 'CONSCIENTIOUSNESS' },
+  { id: 'AS-07', question: 'How important is personal growth to you right now?', scale: 'importance_1_5', dimension: 'MOTIVATION' },
+  { id: 'AS-08', question: 'I can resist temptation when I set my mind to it', scale: 'agree_1_5', dimension: 'IMPULSIVITY' },
+];
+
+export interface AssessmentProfile {
+  conscientiousness: number;
+  impulsivity: number;
+  motivation: number;
+  selfEfficacy: number;
+  socialSupport: number;
+  archetype: 'ACHIEVER' | 'STRUGGLER' | 'SOCIAL_DEPENDENT' | 'IMPULSIVE' | 'BALANCED';
+}
+
+export function calculateAssessmentProfile(answers: Record<string, number>): AssessmentProfile {
+  const dims: Record<string, number[]> = { CONSCIENTIOUSNESS: [], IMPULSIVITY: [], MOTIVATION: [], SELF_EFFICACY: [], SOCIAL_SUPPORT: [] };
+  for (const q of INTAKE_ASSESSMENT) {
+    const val = answers[q.id];
+    if (val != null) dims[q.dimension].push(val);
+  }
+  const avg = (vals: number[]) => (vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 3);
+  const conscientiousness = avg(dims.CONSCIENTIOUSNESS);
+  const impulsivity = avg(dims.IMPULSIVITY);
+  const motivation = avg(dims.MOTIVATION);
+  const selfEfficacy = avg(dims.SELF_EFFICACY);
+  const socialSupport = avg(dims.SOCIAL_SUPPORT);
+  let archetype: AssessmentProfile['archetype'] = 'BALANCED';
+  if (conscientiousness >= 4 && selfEfficacy >= 4) archetype = 'ACHIEVER';
+  else if (impulsivity >= 4 && conscientiousness < 3) archetype = 'IMPULSIVE';
+  else if (socialSupport < 2.5) archetype = 'SOCIAL_DEPENDENT';
+  else if (selfEfficacy < 2.5 && motivation < 3) archetype = 'STRUGGLER';
+  return { conscientiousness, impulsivity, motivation, selfEfficacy, socialSupport, archetype };
+}
+
+/**
+ * #92: DECO Privacy-Preserving Oracle Stub
+ * TLS-based verification without exposing raw data (conceptual model).
+ */
+export interface DecoProofRequest {
+  url: string;
+  selector: string;
+  expectedValue: string;
+}
+
+export interface DecoProofResult {
+  verified: boolean;
+  revealedFields: string[];
+  timestamp: string;
+}
+
+export function createDecoProof(params: DecoProofRequest): DecoProofResult {
+  return { verified: true, revealedFields: [params.selector], timestamp: new Date().toISOString() };
+}
+
+/**
+ * #91: Oracle Failure Fallback — Staked Arbiter Network
+ * When automated verification fails, fall back to human arbiters with skin in the game.
+ */
+export interface ArbiterVerdict {
+  arbiterId: string;
+  contractId: string;
+  verdict: 'UPHELD' | 'OVERTURNED' | 'ESCALATED';
+  stakeAtRiskCents: number;
+}
+
+export function resolveOracleFailure(arbiterVerdicts: ArbiterVerdict[]): ArbiterVerdict {
+  const upheld = arbiterVerdicts.filter(v => v.verdict === 'UPHELD').length;
+  const overturned = arbiterVerdicts.filter(v => v.verdict === 'OVERTURNED').length;
+  const majority: 'UPHELD' | 'OVERTURNED' = upheld >= overturned ? 'UPHELD' : 'OVERTURNED';
+  return { arbiterId: 'consensus', contractId: arbiterVerdicts[0]?.contractId ?? '', verdict: majority, stakeAtRiskCents: Math.max(...arbiterVerdicts.map(v => v.stakeAtRiskCents)) };
+}
+
+/**
+ * #90: Stablecoin-Denominated Stakes (Conceptual)
+ * Crypto payment rail for regulatory flexibility.
+ */
+export interface StablecoinQuote {
+  usdCents: number;
+  stablecoinAmount: string;
+  stablecoinType: 'USDC' | 'USDT';
+  exchangeRate: number;
+}
+
+export function quoteStablecoinStake(usdCents: number, stablecoinType: 'USDC' | 'USDT'): StablecoinQuote {
+  const rate = stablecoinType === 'USDC' ? 1.001 : 1.002;
+  return { usdCents, stablecoinAmount: ((usdCents / 100) * rate).toFixed(6), stablecoinType, exchangeRate: rate };
+}
+
+/**
+ * #89: Data Revenue Sharing — User Behavioral Data Ownership
+ * Users earn from aggregated, anonymized behavioral data sales.
+ */
+export interface RevenueShareRecord {
+  userId: string;
+  period: string;
+  totalPoolCents: number;
+  userShareCents: number;
+  dataPoints: number;
+}
+
+export function calculateRevenueShare(params: {
+  totalPoolCents: number;
+  totalDataPoints: number;
+  userDataPoints: number;
+}): { userShareCents: number; sharePct: number } {
+  if (params.totalDataPoints === 0) return { userShareCents: 0, sharePct: 0 };
+  const sharePct = params.userDataPoints / params.totalDataPoints;
+  return { userShareCents: Math.round(params.totalPoolCents * sharePct), sharePct: Math.round(sharePct * 10000) / 100 };
+}
+
+/**
+ * #88: Asymmetric Whistleblower System
+ * Enhanced anonymous reporting with graduated rewards and protection.
+ */
+export interface WhistleblowerReport {
+  reportId: string;
+  targetUserId: string;
+  category: 'FRAUD' | 'ABUSE' | 'COLLUSION' | 'OTHER';
+  evidenceHash: string;
+  rewardCents: number;
+  anonymityLevel: 'FULL' | 'CONDITIONAL';
+}
+
+export const WHISTLEBLOWER_BASE_REWARD = 500;
+export const WHISTLEBLOWER_MULTIPLIER = { FRAUD: 3, ABUSE: 2, COLLUSION: 1.5, OTHER: 1 };
+
+export function createWhistleblowerReport(category: WhistleblowerReport['category']): { rewardCents: number; anonymityLevel: WhistleblowerReport['anonymityLevel']; escalationPath: string } {
+  const rewardCents = Math.round(WHISTLEBLOWER_BASE_REWARD * (WHISTLEBLOWER_MULTIPLIER[category] ?? 1));
+  return { rewardCents, anonymityLevel: 'FULL', escalationPath: `${category.toLowerCase()}-review-panel` };
+}
