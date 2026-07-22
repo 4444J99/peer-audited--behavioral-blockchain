@@ -153,7 +153,7 @@ describeWithContainerRuntime("FuryRouting (Integration)", () => {
 
     await expect(
       executeProcessJob(proofId, submitterId, 2),
-    ).not.toReject();
+    ).resolves.toBeUndefined();
 
     const proof = await pool.query("SELECT status FROM proofs WHERE id = $1", [proofId]);
     expect(proof.rows[0].status).toBe("MANUAL_REVIEW");

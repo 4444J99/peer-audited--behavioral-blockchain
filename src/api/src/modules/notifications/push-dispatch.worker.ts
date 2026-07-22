@@ -61,7 +61,7 @@ export class PushDispatchWorker implements OnModuleInit {
         type,
         title,
         body ?? null,
-        metadata,
+        metadata ?? null,
         'expo',
         result.status,
         result.providerResult,
