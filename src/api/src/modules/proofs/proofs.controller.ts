@@ -16,11 +16,16 @@ import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { RequestUploadUrlDto, ConfirmUploadDto } from './dto';
 import { ProofsService } from './proofs.service';
 import { getEffectiveVerificationTier, validateProofMedia } from '../../../../shared/config/verification-tiers';
+import { CrisisDetectionService } from '../../../services/security/crisis-detection.service';
+import { CrisisInterventionService } from '../../../services/security/crisis-intervention.service';
+import { Logger } from '@nestjs/common';
 
 @ApiTags('Proofs')
 @ApiBearerAuth()
 @Controller('proofs')
 export class ProofsController {
+  private readonly logger = new Logger(ProofsController.name);
+
   constructor(
     private readonly pool: Pool,
     private readonly r2: R2StorageService,
@@ -29,6 +34,8 @@ export class ProofsController {
     private readonly phash: PHashService,
     private readonly anomaly: AnomalyService,
     private readonly proofsService: ProofsService,
+    private readonly crisisDetection: CrisisDetectionService,
+    private readonly crisisIntervention: CrisisInterventionService,
   ) {}
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
@@ -77,6 +84,33 @@ export class ProofsController {
       userId: contractAccess.ownerUserId,
       contentType: dto.contentType,
     });
+
+    // Aegis Protocol — proactive crisis monitoring on proof descriptions.
+    // When a user embeds crisis language in a proof description, we detect it
+    // early and trigger intervention before the proof enters review.
+    if (dto.description) {
+      try {
+        const crisisResult = this.crisisDetection.analyzeContent(dto.description);
+        if (crisisResult.isCrisis && crisisResult.severity !== 'NONE') {
+          this.logger.warn(
+            `Proactive crisis detection in proof description: user=${contractAccess.ownerUserId} severity=${crisisResult.severity}`,
+          );
+          // Fire-and-forget: do not block proof submission for crisis notification
+          this.crisisIntervention
+            .reportCrisis(
+              contractAccess.ownerUserId,
+              dto.description,
+              crisisResult,
+              'PROOF_DESCRIPTION',
+            )
+            .catch((err) =>
+              this.logger.error(`Proactive crisis notification failed: ${err}`),
+            );
+        }
+      } catch {
+        // Crisis detection must never block proof submission
+      }
+    }
 
     return { proofId, uploadUrl, storageKey: key, expiresInSeconds: 300 };
   }
