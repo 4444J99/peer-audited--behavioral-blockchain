@@ -7,6 +7,9 @@ import { OstrichDetectionService } from "./ostrich-detection.service";
 import { OstrichScheduler } from "./ostrich-scheduler";
 import { ChurnDetectionService } from "./churn-detection.service";
 import { DifficultyCalibrationService } from "./difficulty-calibration.service";
+import { DangerZoneService } from "./danger-zone.service";
+import { AccountabilityPartnerService } from "./accountability-partner.service";
+import { ProgressDashboardService } from "./progress-dashboard.service";
 import { ContractsModule } from "../contracts/contracts.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 
@@ -21,6 +24,9 @@ import { NotificationsModule } from "../notifications/notifications.module";
     OstrichScheduler,
     DifficultyCalibrationService,
     ChurnDetectionService,
+    DangerZoneService,
+    AccountabilityPartnerService,
+    ProgressDashboardService,
   ],
   exports: [
     BehavioralEnhancementsService,
@@ -28,6 +34,9 @@ import { NotificationsModule } from "../notifications/notifications.module";
     RecoveryStatusCalculator,
     OstrichDetectionService,
     DifficultyCalibrationService,
+    DangerZoneService,
+    AccountabilityPartnerService,
+    ProgressDashboardService,
   ],
 })
 export class BehavioralModule {}
