@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PaymentRouterService, PaymentProcessor } from './payment-router.service';
 
 describe('PaymentRouterService', () => {
@@ -77,7 +76,7 @@ describe('PaymentRouterService', () => {
     it('should call Stripe and return real client secret in production for STRIPE', async () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production';
-      const createMock = vi.fn().mockResolvedValue({ client_secret: 'pi_real_secret_123' });
+      const createMock = jest.fn().mockResolvedValue({ client_secret: 'pi_real_secret_123' });
       (service as any).stripe.paymentIntents.create = createMock;
       
       try {
