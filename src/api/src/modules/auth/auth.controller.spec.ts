@@ -2,7 +2,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
-import { RegisterDto, LoginDto } from './dto';
+import { RegisterDto, LoginDto, CreateApiKeyDto } from './dto';
 
 const mockAuthService = {
   register: jest.fn(),
@@ -12,6 +12,9 @@ const mockAuthService = {
   revokeRefreshTokensForUser: jest.fn().mockResolvedValue(undefined),
   verifyToken: jest.fn(),
   verifyTokenIgnoringExpiry: jest.fn(),
+  issueApiKey: jest.fn(),
+  listApiKeys: jest.fn(),
+  revokeApiKey: jest.fn(),
 } as unknown as AuthService;
 
 describe('AuthController', () => {
@@ -147,6 +150,84 @@ describe('AuthController', () => {
       expect(mockAuthService.revokeRefreshTokensForUser).not.toHaveBeenCalled();
       expect(mockResponse.clearCookie).toHaveBeenCalled();
       expect(result).toEqual({ status: 'logged_out' });
+    });
+  });
+
+  describe('API key endpoints', () => {
+    it('should issue an API key for the authenticated user', async () => {
+      (mockAuthService.issueApiKey as jest.Mock).mockResolvedValue({
+        id: 'api-key-id',
+        keyId: 'a'.repeat(24),
+        name: 'automation',
+        prefix: `styx_live_${'a'.repeat(24)}`,
+        apiKey: `styx_live_${'a'.repeat(24)}_secret`, // allow-secret
+        expiresAt: new Date(),
+        createdAt: new Date(),
+      });
+
+      const result = await controller.createApiKey(
+        { id: 'user-123' },
+        plainToInstance(CreateApiKeyDto, {
+          name: 'automation',
+          expiresInDays: 90,
+        }),
+        { authSource: 'bearer' } as any,
+      );
+
+      expect(mockAuthService.issueApiKey).toHaveBeenCalledWith('user-123', {
+        name: 'automation',
+        expiresInDays: 90,
+      });
+      expect(result.apiKey).toContain('styx_live_');
+    });
+
+    it('should reject API-key authentication when issuing a new API key', async () => {
+      await expect(
+        controller.createApiKey(
+          { id: 'user-123' },
+          plainToInstance(CreateApiKeyDto, { name: 'automation' }),
+          { authSource: 'api_key' } as any,
+        ),
+      ).rejects.toThrow('API key issuance requires session authentication');
+
+      expect(mockAuthService.issueApiKey).not.toHaveBeenCalled();
+    });
+
+    it('should list API key metadata for the authenticated user', async () => {
+      (mockAuthService.listApiKeys as jest.Mock).mockResolvedValue([
+        {
+          id: 'api-key-id',
+          keyId: 'b'.repeat(24),
+          name: 'automation',
+          prefix: `styx_live_${'b'.repeat(24)}`,
+          status: 'active',
+        },
+      ]);
+
+      const result = await controller.listApiKeys({ id: 'user-123' });
+
+      expect(mockAuthService.listApiKeys).toHaveBeenCalledWith('user-123');
+      expect(result[0]).not.toHaveProperty('apiKey');
+    });
+
+    it('should revoke an API key for the authenticated user', async () => {
+      (mockAuthService.revokeApiKey as jest.Mock).mockResolvedValue({ revoked: true });
+
+      await expect(
+        controller.revokeApiKey({ id: 'user-123' }, 'c'.repeat(24)),
+      ).resolves.toEqual({ revoked: true });
+
+      expect(mockAuthService.revokeApiKey).toHaveBeenCalledWith('user-123', 'c'.repeat(24));
+    });
+
+    it('should reject invalid API key expiry via DTO validation', async () => {
+      const dto = plainToInstance(CreateApiKeyDto, {
+        name: 'automation',
+        expiresInDays: 366,
+      });
+
+      const errors = await validate(dto);
+      expect(errors.some((e) => e.property === 'expiresInDays')).toBe(true);
     });
   });
 });

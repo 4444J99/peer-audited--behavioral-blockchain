@@ -13,6 +13,7 @@ import { HealthModule } from "./modules/health/health.module";
 import { B2BModule } from "./modules/b2b/b2b.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { PaymentsModule } from "./modules/payments/payments.module";
+import { PayModule } from "./modules/pay/pay.module";
 import { AiModule } from "./modules/ai/ai.module";
 import { ProofsModule } from "./modules/proofs/proofs.module";
 import { FeedModule } from "./modules/feed/feed.module";
@@ -56,6 +57,7 @@ import { MarketingModule } from "./modules/marketing/marketing.module";
     HealthModule,
     B2BModule,
     NotificationsModule,
+    PayModule,
     PaymentsModule,
     AiModule,
     ProofsModule,

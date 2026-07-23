@@ -16,6 +16,15 @@ services:
       STYX_API_PUBLIC_URL: ${STYX_API_PUBLIC_URL:?STYX_API_PUBLIC_URL is required}
       STYX_WEB_PUBLIC_URL: ${STYX_WEB_PUBLIC_URL:?STYX_WEB_PUBLIC_URL is required}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
+      # Required app secrets — the 2026-05-26 hardening removed insecure fallbacks,
+      # so the API throws at use-time if these are unset. Passed through from the
+      # env file (compose.defaults.env for local, real values via Render in prod).
+      JWT_SECRET: ${JWT_SECRET:-}
+      APP_SECRET: ${APP_SECRET:-}
+      ANONYMIZE_SALT: ${ANONYMIZE_SALT:-}
+      ZK_EXHAUST_SECRET: ${ZK_EXHAUST_SECRET:-}
+      STYX_WEBHOOK_SECRET: ${STYX_WEBHOOK_SECRET:-}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-}
     depends_on:
       - styx-postgres
       - styx-redis

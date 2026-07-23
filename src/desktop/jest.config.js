@@ -9,6 +9,10 @@ module.exports = {
     ...tsJestTransformCfg,
   },
   testPathIgnorePatterns: ["/node_modules/", "/dist/"],
+  // V8 coverage provider: the default "babel" provider instruments via
+  // babel-plugin-istanbul → test-exclude, whose minimatch@3 callable API is
+  // broken by the repo-wide minimatch>=10 override. V8 sidesteps that chain.
+  coverageProvider: "v8",
   coverageThreshold: {
     global: {
       lines: 50,

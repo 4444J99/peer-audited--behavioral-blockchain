@@ -18,7 +18,12 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "paths": {
+      "@styx/shared/index": ["../shared/src/index.ts"],
+      "@styx/shared/*": ["../shared/*"],
+      "@styx/shared": ["../shared/src/index.ts"]
+    }
   },
   "include": [
     "next-env.d.ts",

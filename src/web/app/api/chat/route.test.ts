@@ -102,15 +102,14 @@ describe("POST /api/chat", () => {
     expect((res as any).status).toBe(400);
   });
 
-  it("returns 503 when GROQ_API_KEY is not set", async () => {
+  it("returns static fallback when GROQ_API_KEY is not set", async () => {
     delete process.env.GROQ_API_KEY;
-    const res = await POST(makeRequest(
+    await POST(makeRequest(
       { messages: [{ role: "user", content: "hi" }] },
       { "x-forwarded-for": uniqueIp() },
     ));
     expect(NextResponse.json).toHaveBeenCalledWith(
-      { error: "LLM not configured (missing GROQ_API_KEY)" },
-      { status: 503 },
+      expect.objectContaining({ mode: "static_fallback" }),
     );
   });
 
@@ -175,31 +174,28 @@ describe("POST /api/chat", () => {
     expect(args.stream).toBe(true);
   });
 
-  it("forwards OpenAI APIError with its status code", async () => {
+  it("returns static fallback on OpenAI APIError", async () => {
     const apiErr = new MockAPIError("Unauthorized", 401);
-    // Make it look like an OpenAI.APIError to the instanceof check
     Object.setPrototypeOf(apiErr, MockAPIError.prototype);
     mockCreate.mockRejectedValue(apiErr);
 
-    const res = await POST(makeRequest(
+    await POST(makeRequest(
       { messages: [{ role: "user", content: "fail" }] },
       { "x-forwarded-for": uniqueIp() },
     ));
     expect(NextResponse.json).toHaveBeenCalledWith(
-      { error: "LLM API error: Unauthorized" },
-      { status: 401 },
+      expect.objectContaining({ mode: "static_fallback" }),
     );
   });
 
-  it("returns 500 for unexpected non-API errors", async () => {
+  it("returns static fallback for unexpected non-API errors", async () => {
     mockCreate.mockRejectedValue(new Error("network timeout"));
-    const res = await POST(makeRequest(
+    await POST(makeRequest(
       { messages: [{ role: "user", content: "boom" }] },
       { "x-forwarded-for": uniqueIp() },
     ));
     expect(NextResponse.json).toHaveBeenCalledWith(
-      { error: "Internal server error" },
-      { status: 500 },
+      expect.objectContaining({ mode: "static_fallback" }),
     );
   });
 
@@ -392,7 +388,7 @@ describe("POST /api/chat", () => {
       expect(text).toContain("data: [DONE]");
     });
 
-    it("handles stream error mid-response", async () => {
+    it("handles stream error mid-response with static fallback", async () => {
       const stream = {
         [Symbol.asyncIterator]: async function* () {
           yield { choices: [{ delta: { content: "partial" } }] };
@@ -407,7 +403,8 @@ describe("POST /api/chat", () => {
       ));
       const text = await res.text();
       expect(text).toContain(`data: ${JSON.stringify({ content: "partial" })}`);
-      expect(text).toContain(`"error":"stream died"`);
+      expect(text).toContain("static knowledge mode");
+      expect(text).toContain("data: [DONE]");
     });
 
     it("handles empty choices array in stream chunk", async () => {
