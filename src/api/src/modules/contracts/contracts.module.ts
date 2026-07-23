@@ -1,6 +1,7 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ContractsController } from "./contracts.controller";
+import { FitbitController } from "./fitbit.controller";
 import { ContractsService } from "./contracts.service";
 import { ContractsScheduler } from "./contracts.scheduler";
 import { AttestationScheduler } from "./attestation.scheduler";
@@ -12,6 +13,7 @@ import { FuryRouterService } from "../../../services/fury-router/fury-router.ser
 import { AegisProtocolService } from "../../../services/health/aegis.service";
 import { RecoveryProtocolService } from "../../../services/health/recovery-protocol.service";
 import { DynamicPenaltyService } from "../../../services/health/dynamic-penalty.service";
+import { FitbitService } from "../../../services/health/fitbit.service";
 import { HoneypotService } from "../../../services/intelligence/honeypot.service";
 
 import { SurveyService } from "./survey.service";
@@ -50,7 +52,7 @@ const redisProvider = {
     PayModule,
     forwardRef(() => PaymentsModule),
   ],
-  controllers: [ContractsController],
+  controllers: [ContractsController, FitbitController],
   providers: [
     ContractsService,
     ContractsScheduler,
@@ -63,6 +65,7 @@ const redisProvider = {
     AegisProtocolService,
     RecoveryProtocolService,
     DynamicPenaltyService,
+    FitbitService,
     HoneypotService,
     SurveyService,
     WaitlistService,

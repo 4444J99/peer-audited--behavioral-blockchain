@@ -5,6 +5,7 @@ import { FuryWorker } from './fury.worker';
 import { FuryRouterWorker } from '../../../services/fury-router/fury-router.worker';
 import { ConsensusEngine } from './consensus.engine';
 import { EnforcementService } from './enforcement.service';
+import { CollusionDetectionService } from '../../../services/security/collusion-detection.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { R2StorageService } from '../../../services/storage/r2.service';
@@ -23,6 +24,7 @@ import { RoleGuard } from '../../common/guards/role.guard';
     FuryRouterWorker, 
     ConsensusEngine, 
     EnforcementService,
+    CollusionDetectionService,
     LedgerService, 
     TruthLogService, 
     R2StorageService, 
@@ -36,6 +38,7 @@ import { RoleGuard } from '../../common/guards/role.guard';
     FuryRouterWorker, 
     ConsensusEngine, 
     EnforcementService,
+    CollusionDetectionService,
     R2StorageService,
     JudgeService,
   ],

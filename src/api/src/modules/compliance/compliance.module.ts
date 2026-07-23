@@ -13,6 +13,8 @@ import {
   StripeIdentityProviderAdapter,
 } from './identity-provider.service';
 import { MedicalExemptionService } from './medical-exemption.service';
+import { DeviceAttestationService } from '../../../services/security/device-attestation.service';
+import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { ContractsModule } from '../contracts/contracts.module';
 import { EmailModule } from '../email/email.module';
 
@@ -31,6 +33,8 @@ import { EmailModule } from '../email/email.module';
     ComplianceAccessGuard,
     RoleGuard,
     MedicalExemptionService,
+    DeviceAttestationService,
+    TruthLogService,
   ],
   exports: [
     CompliancePolicyService,
@@ -38,6 +42,7 @@ import { EmailModule } from '../email/email.module';
     GeofenceGuard,
     ComplianceAccessGuard,
     MedicalExemptionService,
+    DeviceAttestationService,
   ],
 })
 export class ComplianceModule {}
