@@ -7,6 +7,7 @@ import { NotificationsService } from "./notifications.service";
 import { PushTokensService } from "./push-tokens.service";
 import { PushDispatchWorker } from "./push-dispatch.worker";
 import { ExpoPushProvider } from "./expo-push.provider";
+import { NotificationComposerService } from "./notification-composer.service";
 
 @Module({
   controllers: [NotificationsController, PublicFeedController],
@@ -15,7 +16,8 @@ import { ExpoPushProvider } from "./expo-push.provider";
     PushTokensService,
     ExpoPushProvider,
     PushDispatchWorker,
+    NotificationComposerService,
   ],
-  exports: [NotificationsService, PushTokensService],
+  exports: [NotificationsService, PushTokensService, NotificationComposerService],
 })
 export class NotificationsModule {}
