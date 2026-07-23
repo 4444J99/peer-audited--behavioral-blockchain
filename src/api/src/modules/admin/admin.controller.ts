@@ -33,6 +33,7 @@ import {
   UpdateJurisdictionDto,
   AdminReviewContentDto,
   AdminResolveAppealDto,
+  GetModerationQueueDto,
 } from "./dto";
 import { JurisdictionDispositionMapper } from "../compliance/jurisdiction-disposition.mapper";
 
@@ -237,8 +238,8 @@ export class AdminController {
 
   @Get("moderation/queue")
   @ApiOperation({ summary: "Get the content moderation queue" })
-  async getModerationQueue(@Query("status") status?: string) {
-    return this.moderation.getQueue(status as any);
+  async getModerationQueue(@Query() query: GetModerationQueueDto) {
+    return this.moderation.getQueue(query.status);
   }
 
   @Post("moderation/review/:flagId")

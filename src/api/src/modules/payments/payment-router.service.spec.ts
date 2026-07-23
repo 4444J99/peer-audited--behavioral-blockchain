@@ -87,6 +87,8 @@ describe('PaymentRouterService', () => {
           amount: 10000,
           currency: 'usd',
           metadata: { userId: 'user-2' },
+        }, {
+          idempotencyKey: 'pi-user-2-10000-usd',
         });
       } finally {
         process.env.NODE_ENV = originalEnv;

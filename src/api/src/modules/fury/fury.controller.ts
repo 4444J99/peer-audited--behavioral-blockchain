@@ -201,6 +201,9 @@ export class FuryController {
     if (dto.verdict === 'FAIL' && !dto.rejectionCode) {
       throw new BadRequestException('Rejection code is required when verdict is FAIL');
     }
+    if (dto.verdict === 'PASS' && dto.rejectionCode) {
+      throw new BadRequestException('Rejection code is only valid when verdict is FAIL');
+    }
 
     // Record the verdict. Only a first vote is allowed: `verdict IS NULL` prevents a
     // Fury from re-voting / flipping their verdict and re-triggering consensus.

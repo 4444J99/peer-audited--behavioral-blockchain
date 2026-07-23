@@ -24,8 +24,12 @@ export class PaymentRouterService {
   private stripe: Stripe.Stripe;
 
   constructor() {
-    const apiKey = process.env.STRIPE_SECRET_KEY || "sk_test_mock_key";
-    this.stripe = new Stripe(apiKey, {
+    const apiKey = process.env.STRIPE_SECRET_KEY;
+    const isDev = process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "staging";
+    if (!apiKey && !isDev) {
+      throw new ServiceUnavailableException("Stripe processor not configured for production");
+    }
+    this.stripe = new Stripe(apiKey || "sk_test_mock_key", {
       apiVersion: "2026-05-27.dahlia" as any,
     });
   }
@@ -82,6 +86,8 @@ export class PaymentRouterService {
           ...options.metadata,
           userId: options.userId,
         },
+      }, {
+        idempotencyKey: `pi-${options.userId}-${options.amount}-${options.currency}`,
       });
 
       if (!intent.client_secret) {
