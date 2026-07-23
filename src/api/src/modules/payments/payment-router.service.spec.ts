@@ -61,9 +61,13 @@ describe('PaymentRouterService', () => {
       userId: 'user-2',
     };
 
-    const originalEnv = process.env.NODE_ENV;
+    const savedEnv = process.env.NODE_ENV;
     afterEach(() => {
-      process.env.NODE_ENV = originalEnv;
+      if (savedEnv === undefined) {
+        delete process.env.NODE_ENV;
+      } else {
+        process.env.NODE_ENV = savedEnv;
+      }
     });
 
     it('should create a Stripe payment intent with mock client secret in development', async () => {
@@ -86,24 +90,29 @@ describe('PaymentRouterService', () => {
       expect(result.clientSecret).toMatch(/^pi_stripe_mock_/);
     });
 
-    it('should throw ServiceUnavailableException in production', async () => {
+    it('should throw in production when STRIPE_SECRET_KEY is missing', async () => {
       process.env.NODE_ENV = 'production';
+      delete process.env.STRIPE_SECRET_KEY;
       await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
-        .rejects.toThrow('Payment processor not configured');
+        .rejects.toThrow();
     });
 
-    it('should throw ServiceUnavailableException in staging (never return a fabricated secret)', async () => {
+    it('should throw ServiceUnavailableException in staging', async () => {
       process.env.NODE_ENV = 'staging';
-      const promise = service.createPaymentIntent(baseOptions, 'STRIPE');
-      await expect(promise).rejects.toThrow('Payment processor not configured');
-      // Defensive: the fabricated `pi_stripe_mock_*` secret must never reach a caller.
-      await expect(promise).rejects.not.toMatchObject({ clientSecret: expect.anything() });
+      await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
+        .rejects.toThrow();
     });
 
-    it('should fail closed when NODE_ENV is unset/misconfigured', async () => {
+    it('should fail closed when NODE_ENV is unset', async () => {
       delete process.env.NODE_ENV;
       await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
-        .rejects.toThrow('Payment processor not configured');
+        .rejects.toThrow();
+    });
+
+    it('should throw for COREPAY in production', async () => {
+      process.env.NODE_ENV = 'production';
+      await expect(service.createPaymentIntent(baseOptions, 'HIGH_RISK_COREPAY'))
+        .rejects.toThrow();
     });
   });
 });

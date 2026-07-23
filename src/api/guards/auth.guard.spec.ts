@@ -1,7 +1,7 @@
 import { AuthGuard } from './auth.guard';
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
-import { deriveCsrfToken } from '../src/modules/auth/auth.service';
+import { deriveApiKeyVerifier, deriveCsrfToken } from '../src/modules/auth/auth.service';
 
 // Tokens must be signed with the same secret the guard verifies against. The
 // guard resolves it via getJwtSecret() which reads process.env.JWT_SECRET
@@ -34,9 +34,13 @@ function createMockContext(input?: {
 
 describe('AuthGuard', () => {
   let guard: AuthGuard;
+  const mockPool = {
+    query: jest.fn(),
+  };
 
   beforeEach(() => {
     guard = new AuthGuard();
+    mockPool.query.mockReset();
   });
 
   it('should reject requests with no Authorization header', () => {
@@ -178,5 +182,136 @@ describe('AuthGuard', () => {
     });
 
     expect(guard.canActivate(context)).toBe(true);
+  });
+
+  it('should accept x-api-key and attach the authenticated user', async () => {
+    const keyId = 'a'.repeat(24);
+    const secret = 'secret_WITH-underscore'; // allow-secret
+    const apiKey = `styx_live_${keyId}_${secret}`; // allow-secret
+    const apiKeyGuard = new AuthGuard(undefined, mockPool as any);
+
+    mockPool.query
+      .mockResolvedValueOnce({
+        rows: [{
+          id: 'api-key-db-id',
+          user_id: 'user-api-1',
+          key_hash: deriveApiKeyVerifier(secret),
+          expires_at: new Date(Date.now() + 60_000).toISOString(),
+          revoked_at: null,
+          email: 'api@styx.protocol',
+          role: 'USER',
+          status: 'ACTIVE',
+        }],
+      })
+      .mockResolvedValueOnce(undefined);
+
+    const context = createMockContext({
+      extraHeaders: { 'x-api-key': apiKey },
+    });
+
+    await expect(apiKeyGuard.canActivate(context)).resolves.toBe(true);
+
+    const request = context.switchToHttp().getRequest() as any;
+    expect(request.user.id).toBe('user-api-1');
+    expect(request.user.email).toBe('api@styx.protocol');
+    expect(request.user.apiKeyId).toBe(keyId);
+    expect(request.authSource).toBe('api_key');
+    expect(mockPool.query).toHaveBeenLastCalledWith(
+      expect.stringContaining('UPDATE api_keys SET last_used_at = NOW()'),
+      ['api-key-db-id'],
+    );
+  });
+
+  it('should accept Authorization: ApiKey as an API-key credential', async () => {
+    const keyId = 'b'.repeat(24);
+    const secret = 'api-key-secret'; // allow-secret
+    const apiKeyGuard = new AuthGuard(undefined, mockPool as any);
+
+    mockPool.query
+      .mockResolvedValueOnce({
+        rows: [{
+          id: 'api-key-db-id-2',
+          user_id: 'user-api-2',
+          key_hash: deriveApiKeyVerifier(secret),
+          expires_at: new Date(Date.now() + 60_000).toISOString(),
+          revoked_at: null,
+          email: 'api2@styx.protocol',
+          role: 'ADMIN',
+          status: 'ACTIVE',
+        }],
+      })
+      .mockResolvedValueOnce(undefined);
+
+    const context = createMockContext({
+      authHeader: `ApiKey styx_live_${keyId}_${secret}`,
+    });
+
+    await expect(apiKeyGuard.canActivate(context)).resolves.toBe(true);
+    const request = context.switchToHttp().getRequest() as any;
+    expect(request.user.role).toBe('ADMIN');
+    expect(request.authSource).toBe('api_key');
+  });
+
+  it('should reject revoked API keys', async () => {
+    const keyId = 'c'.repeat(24);
+    const secret = 'revoked-secret'; // allow-secret
+    const apiKeyGuard = new AuthGuard(undefined, mockPool as any);
+
+    mockPool.query.mockResolvedValueOnce({
+      rows: [{
+        id: 'api-key-db-id-3',
+        user_id: 'user-api-3',
+          key_hash: deriveApiKeyVerifier(secret),
+        expires_at: new Date(Date.now() + 60_000).toISOString(),
+        revoked_at: new Date().toISOString(),
+        email: 'api3@styx.protocol',
+        role: 'USER',
+        status: 'ACTIVE',
+      }],
+    });
+
+    const context = createMockContext({
+      extraHeaders: { 'x-api-key': `styx_live_${keyId}_${secret}` },
+    });
+
+    await expect(apiKeyGuard.canActivate(context)).rejects.toThrow('API key has been revoked');
+    expect(mockPool.query).toHaveBeenCalledTimes(1);
+  });
+
+  it('should prefer an explicit API key over a session cookie', async () => {
+    const keyId = 'd'.repeat(24);
+    const secret = 'explicit-key-secret'; // allow-secret
+    const cookieToken = jwt.sign(
+      { sub: 'cookie-user', email: 'cookie@styx.protocol' },
+      JWT_SECRET,
+      { expiresIn: '1h' },
+    );
+    const apiKeyGuard = new AuthGuard(undefined, mockPool as any);
+
+    mockPool.query
+      .mockResolvedValueOnce({
+        rows: [{
+          id: 'api-key-db-id-4',
+          user_id: 'user-api-4',
+          key_hash: deriveApiKeyVerifier(secret),
+          expires_at: new Date(Date.now() + 60_000).toISOString(),
+          revoked_at: null,
+          email: 'api4@styx.protocol',
+          role: 'USER',
+          status: 'ACTIVE',
+        }],
+      })
+      .mockResolvedValueOnce(undefined);
+
+    const context = createMockContext({
+      cookie: `styx_auth_token=${encodeURIComponent(cookieToken)}`,
+      extraHeaders: { 'x-api-key': `styx_live_${keyId}_${secret}` },
+    });
+
+    await expect(apiKeyGuard.canActivate(context)).resolves.toBe(true);
+
+    const request = context.switchToHttp().getRequest() as any;
+    expect(request.user.id).toBe('user-api-4');
+    expect(request.authSource).toBe('api_key');
   });
 });

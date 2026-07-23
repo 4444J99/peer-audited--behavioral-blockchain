@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
 import { createHash, randomUUID } from 'crypto';
+import Stripe from 'stripe';
+
+type StripeClient = InstanceType<typeof Stripe>;
 
 // Matches TruthLogService.GENESIS_HASH / APPEND_LOCK_KEY so audit events written
 // here stay part of the same tamper-evident chain.
@@ -10,8 +13,12 @@ const TRUTH_LOG_APPEND_LOCK_KEY = 0x57_54_4c_47; // 'WTLG'
 @Injectable()
 export class GdprService {
   private readonly logger = new Logger(GdprService.name);
+  private readonly stripe: StripeClient;
 
-  constructor(private readonly pool: Pool) {}
+  constructor(private readonly pool: Pool) {
+    const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
+    this.stripe = new Stripe(apiKey, { apiVersion: '2026-05-27.dahlia' });
+  }
 
   /**
    * Appends an audit event to the tamper-evident event_log, keeping it linked to
@@ -156,6 +163,7 @@ export class GdprService {
       const client: PoolClient = await this.pool.connect();
       try {
         await client.query('BEGIN');
+        await this.cancelStoredSubscriptionIfPresent(client, userId);
         await this.runErasureStatements(client, userId);
         await this.appendTruthLogEventWithClient(client, 'GDPR_ERASURE_COMPLETED', {
           userId,
@@ -170,6 +178,7 @@ export class GdprService {
       }
     } else {
       // Non-transactional fallback (no atomicity guarantee).
+      await this.cancelStoredSubscriptionIfPresent(this.pool, userId);
       await this.runErasureStatements(this.pool, userId);
       await this.appendTruthLogEvent('GDPR_ERASURE_COMPLETED', {
         userId,
@@ -178,6 +187,26 @@ export class GdprService {
     }
 
     this.logger.log(`GDPR erasure completed for user ${userId}`);
+  }
+
+  private async cancelStoredSubscriptionIfPresent(
+    db: Pool | PoolClient,
+    userId: string,
+  ): Promise<void> {
+    const subscriptionResult = await db.query(
+      'SELECT subscription_id FROM users WHERE id = $1',
+      [userId],
+    );
+    const subscriptionId = subscriptionResult.rows[0]?.subscription_id;
+    if (typeof subscriptionId !== 'string' || subscriptionId.trim().length === 0) {
+      return;
+    }
+
+    await this.stripe.subscriptions.cancel(
+      subscriptionId,
+      { prorate: true },
+      { idempotencyKey: `styx-gdpr-cancel-${userId}-${subscriptionId}` },
+    );
   }
 
   /**
@@ -192,7 +221,7 @@ export class GdprService {
   ): Promise<void> {
     // 1. Anonymize the user record. Scrub every direct-PII / identity / compliance
     //    column, not just email/password (PRV3): geolocation, date_of_birth, the
-    //    Stripe customer linkage, KYC compliance_metadata, identity-provider refs
+    //    Stripe customer/subscription linkage, KYC compliance_metadata, identity-provider refs
     //    and Terms-of-Service acceptance metadata.
     await db.query(
       `UPDATE users SET
@@ -201,6 +230,7 @@ export class GdprService {
         last_known_state = NULL,
         date_of_birth = NULL,
         stripe_customer_id = NULL,
+        subscription_id = NULL,
         compliance_metadata = '{}'::jsonb,
         identity_verification_id = NULL,
         identity_provider = NULL,
