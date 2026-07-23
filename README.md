@@ -1,6 +1,6 @@
 # Styx: The Blockchain of Truth
 
-A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes.
+Peer-audited behavioral accountability system using financial stakes and consensus verification to close the wellness program enforcement gap.
 
 > **The expensive problem:** Accountability and corporate-wellness programs leak money because the stakes aren't real, the proof isn't audited, and holding employees' health data is a liability nobody wants to own. Budgets buy good intentions and get no follow-through. Styx is the production-grade enforcement layer that closes the gap: real Stripe FBO escrow (hold / capture / cancel), a double-entry ledger with no phantom money, peer-audited proof-of-completion via the Fury Router (honeypot injection + consensus + bounty economy), loss-aversion physics (λ = 1.955), and a privacy-firewalled B2B tier where the employer funds the pot but never sees an individual's health data — only k-anonymized aggregate engagement.
 >
@@ -30,18 +30,18 @@ A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to 
 ## Quick Start
 
 ```bash
-# Prerequisites: Node.js >= 20, npm 10+, PostgreSQL, Redis
+## Prerequisites: Node.js >= 20, npm 10+, PostgreSQL, Redis
 
-# Configure runtime values for this environment
+## Configure runtime values for this environment
 cp .env.example .env
 
-# Install dependencies across all workspaces
+## Install dependencies across all workspaces
 npm install
 
-# Run database migrations
+## Run database migrations
 npm run dev:migrate
 
-# Run the local application stack (API + Web)
+## Run the local application stack (API + Web)
 npm run dev
 ```
 
@@ -53,8 +53,8 @@ Prefer containers? Bring up the **entire stack** (API + Web + PostgreSQL + Redis
 
 ```bash
 make deploy        # ≡ bash scripts/deploy.sh local
-# → API  http://localhost:3000   (health: /health, docs: /api/docs)
-# → Web  http://localhost:3001
+## → API  http://localhost:3000   (health: /health, docs: /api/docs)
+## → Web  http://localhost:3001
 make deploy-down   # stop and remove the stack
 ```
 
@@ -138,23 +138,23 @@ flowchart TB
 | Pitch deck (canonical Pages artifact, `@styx/pitch` → `docs/`) | https://a-organvm.github.io/peer-audited--behavioral-blockchain/ | `ship-now` (200 OK) |
 | Interactive launch surface (waitlist / sign-up) | `/launch` | `ship-soon` (404 — tracked in Phase Gamma) |
 | Ask Styx LLM Q&A app | `/ask-styx` (deploy-ask-styx workflow) | separate sub-path, not on canonical URL |
-| API (NestJS, Render) | `$API_URL` per Render blueprint (`render.yaml`, `@styx/api`) | `ship-soon` (cut `v*` tag to trigger [`deploy.yml`](.github/workflows/deploy.yml); set Render secrets `RENDER_API_SERVICE_ID`, `RENDER_API_KEY`, `RENDER_WEB_SERVICE_ID`, `API_URL`, `WEB_URL`, `DATABASE_URL`) |
-| Web (Next.js, Render) | `$WEB_URL` per Render blueprint (`render.yaml`, `@styx/web`) | `ship-soon` (same tag-triggered deploy as API) |
+| API (NestJS, Render) | the `API_URL` value per Render blueprint (`render.yaml`, `@styx/api`) | `ship-soon` (cut `v*` tag to trigger [`deploy.yml`](.github/workflows/deploy.yml); set Render secrets `RENDER_API_SERVICE_ID`, `RENDER_API_KEY`, `RENDER_WEB_SERVICE_ID`, `API_URL`, `WEB_URL`, `DATABASE_URL`) |
+| Web (Next.js, Render) | the `WEB_URL` value per Render blueprint (`render.yaml`, `@styx/web`) | `ship-soon` (same tag-triggered deploy as API) |
 
 Full activation ledger (evidence, blockers, reconciliation with the cross-system `activation-ledger-2026-06-10.csv`): [`docs/activation/activation-ledger--peer-audited--2026-06-11.md`](docs/activation/activation-ledger--peer-audited--2026-06-11.md).
 
 Verify the live surface (re-runnable by any user):
 
 ```bash
-# Pitch deck
+## Pitch deck
 curl -sS -o /dev/null -w "%{http_code} %{url_effective}\n" \
   -L https://a-organvm.github.io/peer-audited--behavioral-blockchain/
 
-# API health (after deploy)
-# curl -sS $API_URL/health
+## API health (after deploy)
+## curl -sS <api-url>/health
 
-# Web (after deploy)
-# curl -sS -o /dev/null -w "%{http_code}\n" $WEB_URL
+## Web (after deploy)
+## curl -sS -o /dev/null -w "%{http_code}\n" <web-url>
 ```
 
 **Expected output:** `200 https://a-organvm.github.io/peer-audited--behavioral-blockchain/`
@@ -197,7 +197,7 @@ cd src/web && npx jest                           # Web tests only (166)
 cd src/desktop && npx jest                       # Desktop tests only (128)
 npx jest --testNamePattern="should reject"       # Single test by name
 
-# E2E (Playwright)
+## E2E (Playwright)
 make test-e2e                                    # Headless (chromium + firefox)
 make test-e2e-ui                                 # Interactive UI mode
 npm run test:e2e:headed                          # Headed browser
@@ -217,10 +217,10 @@ node scripts/validation/07-claim-drift-check.js           # Claim drift detectio
 ### Beta Readiness
 
 ```bash
-# Beta profile (default)
+## Beta profile (default)
 BETA_API_URL=https://api-beta.example.com npm run beta:readiness
 
-# Staging profile
+## Staging profile
 READINESS_PROFILE=staging \
 STAGING_API_URL=https://api-staging.example.com \
 npm run beta:readiness
@@ -262,7 +262,7 @@ non-production environments when the API is running:
 
 ```bash
 npm run dev:api
-# Open $STYX_API_PUBLIC_URL/api/docs
+## Open <api-public-url>/api/docs
 ```
 
 ## Environment
@@ -299,8 +299,8 @@ reuse `JWT_SECRET`.
 User API keys are issued from an authenticated session:
 
 ```bash
-curl -X POST "$STYX_API_PUBLIC_URL/auth/api-keys" \
-  -H "Authorization: Bearer $JWT" \
+curl -X POST "<api-public-url>/auth/api-keys" \
+  -H "Authorization: Bearer <jwt>" \
   -H "Content-Type: application/json" \
   -d '{"name":"automation","expiresInDays":90}'
 ```
@@ -308,7 +308,7 @@ curl -X POST "$STYX_API_PUBLIC_URL/auth/api-keys" \
 The `apiKey` field is returned once. Use it on protected API endpoints with:
 
 ```bash
-curl "$STYX_API_PUBLIC_URL/users/me" -H "x-api-key: $STYX_API_KEY"
+curl "<api-public-url>/users/me" -H "x-api-key: <api-key>"
 ```
 
 ## CI Pipeline
