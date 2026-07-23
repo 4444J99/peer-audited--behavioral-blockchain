@@ -414,7 +414,7 @@
       "evidence": "src/api/database/migrations/migrate.ts:1",
       "pr": null,
       "state_updated": "2026-07-22T19:22:44Z",
-      "closed_at": null
+      "closed_at": "2026-07-23T01:15:52Z"
     },
     "29": {
       "action": "CLOSE",
@@ -523,7 +523,7 @@
       "evidence": "src/api/src/modules/payments/payment-router.service.ts:1",
       "pr": null,
       "state_updated": "2026-07-22T19:22:44Z",
-      "closed_at": null
+      "closed_at": "2026-07-23T01:15:52Z"
     },
     "33": {
       "action": "CLOSE",
@@ -580,7 +580,7 @@
       "evidence": "src/api/src/modules/contracts/contracts.service.ts:1",
       "pr": null,
       "state_updated": "2026-07-22T19:22:44Z",
-      "closed_at": null
+      "closed_at": "2026-07-23T01:15:52Z"
     },
     "35": {
       "title": "Migrate mobile tests from deprecated react-test-renderer",
@@ -3679,7 +3679,7 @@
       "evidence": "src/ask-styx/worker/index.ts:1",
       "pr": null,
       "state_updated": "2026-07-22T19:22:44Z",
-      "closed_at": null
+      "closed_at": "2026-07-23T01:15:52Z"
     },
     "160": {
       "title": "feat: add load testing infrastructure (k6/artillery) for Fury Router queue",
