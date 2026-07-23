@@ -1,4 +1,4 @@
-.PHONY: install dev dev-turbo build test clean docker-up pitch test-e2e test-e2e-ui
+.PHONY: install dev dev-turbo build test clean docker-up deploy deploy-down pitch test-e2e test-e2e-ui
 
 install:
 	npm install
@@ -20,6 +20,14 @@ clean:
 
 docker-up:
 	docker compose --env-file .env -f .config/docker/docker-compose.yml up -d
+
+# One-command deploy. `make deploy` brings up the full local stack with zero
+# config; `make deploy TARGET=render` triggers a production deploy on Render.
+deploy:
+	bash scripts/deploy.sh $(or $(TARGET),local)
+
+deploy-down:
+	bash scripts/deploy.sh down
 
 pitch:
 	cd src/pitch && npm run build

@@ -47,6 +47,19 @@ npm run dev
 
 `DATABASE_URL`, `REDIS_URL`, `STYX_API_PUBLIC_URL`, `STYX_WEB_PUBLIC_URL`, and `NEXT_PUBLIC_API_URL` define the runtime endpoints. Docker Compose uses the `STYX_DOCKER_*` variables from the same environment contract.
 
+### One-command deploy
+
+Prefer containers? Bring up the **entire stack** (API + Web + PostgreSQL + Redis) with a single command — no `.env` editing required:
+
+```bash
+make deploy        # ≡ bash scripts/deploy.sh local
+# → API  http://localhost:3000   (health: /health, docs: /api/docs)
+# → Web  http://localhost:3001
+make deploy-down   # stop and remove the stack
+```
+
+It reads dev defaults from `.config/docker/compose.defaults.env` (a present repo-root `.env` is layered on top and wins). The same script deploys to production — `bash scripts/deploy.sh render`. Full guide: [docs/operations/one-command-deploy.md](docs/operations/one-command-deploy.md).
+
 ## Architecture
 
 Turborepo monorepo with **npm** workspaces. Package scope: `@styx/*`.
@@ -154,7 +167,9 @@ A production deploy requires:
 2. **A `v*` tag** pushed to `main` — triggers [`deploy.yml`](.github/workflows/deploy.yml) which deploys API + Web to Render, runs migrations, and smoke-tests both services.
 3. **Render dashboard** manual secrets for `sync: false` vars in `render.yaml` (`STRIPE_SECRET_KEY`, `JWT_SECRET`, `CLOUDFLARE_R2_*`, etc.)
 
-See [`docs/activation/activation-ledger--peer-audited--2026-06-11.md`](docs/activation/activation-ledger--peer-audited--2026-06-11.md) for the full activation checklist.
+Or trigger the same Render deploy from a laptop without a tag — set `RENDER_API_KEY`, `RENDER_API_SERVICE_ID`, `RENDER_WEB_SERVICE_ID` and run `bash scripts/deploy.sh render`. On each `v*` tag, [`docker-publish.yml`](.github/workflows/docker-publish.yml) also pushes versioned `styx-api` / `styx-web` images to GHCR for self-hosting.
+
+See [`docs/operations/one-command-deploy.md`](docs/operations/one-command-deploy.md) for the fast path and [`docs/activation/activation-ledger--peer-audited--2026-06-11.md`](docs/activation/activation-ledger--peer-audited--2026-06-11.md) for the full activation checklist.
 
 ## Key Features
 
@@ -229,6 +244,9 @@ Full policy and gate ownership live in `docs/planning/beta-readiness-contract.md
 | `npm run dev:web`               | Run Web with repo-root env resolution                    |
 | `npm run dev:migrate`           | Run database migrations with repo-root env resolution    |
 | `make docker-up`                | Start services through Docker Compose                    |
+| `make deploy`                   | One-command deploy: full local stack (zero config)       |
+| `make deploy TARGET=render`     | Trigger a production deploy on Render                     |
+| `make deploy-down`              | Stop and remove the local stack                          |
 | `npx turbo run lint`            | TypeScript strict lint                                   |
 | `npm run format`                | Prettier across all workspaces                           |
 | `npm run clean`                 | Clean build artifacts + node_modules                     |
