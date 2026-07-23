@@ -24,6 +24,7 @@ import {
 } from "../../common/decorators/current-user.decorator";
 import { IdentityVerificationService } from "../compliance/identity-verification.service";
 import { IdentityVerificationMode } from "../compliance/identity-provider.service";
+import { ContractsService } from "../contracts/contracts.service";
 
 @ApiTags("Users")
 @Controller("users")
@@ -33,6 +34,7 @@ export class UsersController {
     private readonly gdprService: GdprService,
     private readonly identityVerification: IdentityVerificationService,
     private readonly pushTokens: PushTokensService,
+    private readonly contractsService: ContractsService,
   ) {}
 
   @Get("me")
@@ -204,7 +206,11 @@ export class UsersController {
     if (typeof body?.active !== "boolean") {
       throw new BadRequestException("active (boolean) is required");
     }
-    return this.usersService.setPregnancyExclusion(user.id, body.active);
+    const result = await this.usersService.setPregnancyExclusion(user.id, body.active);
+    if (body.active) {
+      await this.contractsService.suspendPregnancyExcludedContracts(user.id);
+    }
+    return result;
   }
 
   @Get("leaderboard")

@@ -26,6 +26,10 @@ describe('UsersController', () => {
       { exportUserData: jest.fn() } as any,
       identityVerification as unknown as IdentityVerificationService,
       pushTokens as any,
+      {
+        createContract: jest.fn(),
+        suspendPregnancyExcludedContracts: jest.fn(),
+      } as any,  // ContractsService mock
     );
   });
 

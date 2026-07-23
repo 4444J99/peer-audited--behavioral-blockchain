@@ -29,6 +29,12 @@ export class DashboardController {
     return this.dashboardService.getStreakChain(user.id);
   }
 
+  @Get('metrics')
+  @ApiOperation({ summary: 'Get platform-wide ledger & payments metrics' })
+  async getMetrics() {
+    return this.dashboardService.getMetrics();
+  }
+
   @Sse('leaderboard/stream')
   @ApiOperation({ summary: 'Stream live leaderboard rank updates via SSE' })
   streamLeaderboard(@CurrentUser() user: { id: string }): Observable<MessageEvent> {

@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ScheduleModule } from "@nestjs/schedule";
 import { AdminController } from "./admin.controller";
+import { UserModerationController } from "./user-moderation.controller";
 import { AdminScheduler } from "./admin.scheduler";
 import { ModerationService } from "../../../services/security/moderation.service";
 import { CrisisDetectionService } from "../../../services/security/crisis-detection.service";
@@ -15,7 +16,7 @@ import { ProofsModule } from "../proofs/proofs.module";
 
 @Module({
   imports: [ScheduleModule.forRoot(), ContractsModule, ProofsModule],
-  controllers: [AdminController],
+  controllers: [AdminController, UserModerationController],
   providers: [
     ModerationService,
     CrisisDetectionService,

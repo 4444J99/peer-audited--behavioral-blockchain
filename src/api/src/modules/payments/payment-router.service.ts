@@ -3,7 +3,6 @@ import {
   Logger,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { randomBytes } from "crypto";
 import { PayoutProvider } from "../../common/interfaces/payout-provider.interface";
 import { StripePayoutProvider } from "./stripe-payout.provider";
 import { CorepayPayoutProvider } from "./corepay-payout.provider";
@@ -21,6 +20,7 @@ export interface PaymentIntentOptions {
 @Injectable()
 export class PaymentRouterService {
   private readonly logger = new Logger(PaymentRouterService.name);
+
 
   private readonly DISPUTE_RISK_THRESHOLD = 3;
 
@@ -54,14 +54,9 @@ export class PaymentRouterService {
     options: PaymentIntentOptions,
     processor: PaymentProcessor,
   ): Promise<{ clientSecret: string; processor: PaymentProcessor }> {
-    const isProduction = process.env.NODE_ENV === "production";
-    if (isProduction) {
-      throw new ServiceUnavailableException("Payment processor not configured");
-    }
-
     if (processor === "STRIPE") {
       return {
-        clientSecret: `pi_stripe_mock_${Date.now()}_secret_${randomBytes(12).toString("hex")}`,
+        clientSecret: intent.client_secret,
         processor,
       };
     }

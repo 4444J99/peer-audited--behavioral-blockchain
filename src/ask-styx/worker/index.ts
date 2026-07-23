@@ -6,7 +6,7 @@ interface Env {
   ALLOWED_ORIGIN: string;
   LLM_MODEL: string;
   LLM_BASE_URL: string;
-  RATE_LIMIT_KV: KVNamespace;
+  RATE_LIMITER: DurableObjectNamespace;
 }
 
 const SYSTEM_PROMPT = `You are the Styx AI assistant — an expert on the Styx peer-audited behavioral market platform. You help stakeholders (investors, partners, developers) understand how Styx works.
@@ -22,8 +22,6 @@ GUIDELINES:
 KNOWLEDGE BASE:
 ${STYX_KNOWLEDGE}`;
 
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 30;
 
 // Input-validation bounds for the chat request. These cap untrusted client
 // payloads so a single request cannot exhaust the LLM token budget, drive up
@@ -154,33 +152,40 @@ function validateMessages(raw: unknown): ValidationResult {
   return { ok: true, messages: sanitized };
 }
 
-async function isRateLimited(ip: string, kv: KVNamespace): Promise<boolean> {
-  const now = Date.now();
-  const key = `ratelimit:${ip}`;
+export class RateLimiterDO {
+  timestamps: number[] = [];
+  state: DurableObjectState;
 
-  let timestamps: number[] = [];
-  const raw = await kv.get(key);
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        timestamps = parsed.filter((t): t is number => typeof t === 'number');
-      }
-    } catch {
-      // Corrupt KV entry — treat as no prior history; it is overwritten below.
-      logEvent('warn', 'rate_limit_kv_corrupt', { key });
+  constructor(state: DurableObjectState, _env: Env) {
+    this.state = state;
+    this.state.blockConcurrencyWhile(async () => {
+      this.timestamps = await this.state.storage.get<number[]>('timestamps') || [];
+    });
+  }
+
+  async fetch(_request: Request) {
+    const RATE_LIMIT_WINDOW_MS = 60_000;
+    const RATE_LIMIT_MAX = 30;
+    const now = Date.now();
+
+    this.timestamps = this.timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+
+    if (this.timestamps.length >= RATE_LIMIT_MAX) {
+      this.state.storage.put('timestamps', this.timestamps);
+      return new Response("true");
     }
+    
+    this.timestamps.push(now);
+    this.state.storage.put('timestamps', this.timestamps);
+    return new Response("false");
   }
+}
 
-  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-  const ttl = Math.ceil(RATE_LIMIT_WINDOW_MS / 1000);
-  if (recent.length >= RATE_LIMIT_MAX) {
-    await kv.put(key, JSON.stringify(recent), { expirationTtl: ttl });
-    return true;
-  }
-  recent.push(now);
-  await kv.put(key, JSON.stringify(recent), { expirationTtl: ttl });
-  return false;
+async function isRateLimited(ip: string, rateLimiter: DurableObjectNamespace): Promise<boolean> {
+  const id = rateLimiter.idFromName(ip);
+  const obj = rateLimiter.get(id);
+  const response = await obj.fetch(new Request("http://do/"));
+  return (await response.text()) === "true";
 }
 
 export default {
@@ -210,9 +215,9 @@ export default {
 
       let limited = false;
       try {
-        limited = await isRateLimited(ip, env.RATE_LIMIT_KV);
+        limited = await isRateLimited(ip, env.RATE_LIMITER);
       } catch (err) {
-        // Fail open on KV outages so chat stays available, but record it.
+        // Fail open on DO outages so chat stays available, but record it.
         logEvent('error', 'rate_limit_check_failed', {
           requestId,
           error: err instanceof Error ? err.message : String(err),
