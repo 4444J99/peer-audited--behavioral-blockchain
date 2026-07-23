@@ -14,6 +14,10 @@ describe("VideoProcessingWorker", () => {
     validateVideo: jest.Mock;
     transcode: jest.Mock;
   };
+  let mockRedaction: {
+    redact: jest.Mock;
+    getProfileForContentType: jest.Mock;
+  };
   let mockR2: {
     downloadFile: jest.Mock;
     uploadBuffer: jest.Mock;
@@ -25,6 +29,10 @@ describe("VideoProcessingWorker", () => {
       validateVideo: jest.fn(),
       transcode: jest.fn(),
     };
+    mockRedaction = {
+      redact: jest.fn(),
+      getProfileForContentType: jest.fn().mockReturnValue("FACE_BLUR"),
+    };
     mockR2 = {
       downloadFile: jest.fn(),
       uploadBuffer: jest.fn(),
@@ -32,6 +40,7 @@ describe("VideoProcessingWorker", () => {
     worker = new VideoProcessingWorker(
       mockPool as any,
       mockTranscoding as any,
+      mockRedaction as any,
       mockR2 as any,
     );
     jest.clearAllMocks();
@@ -41,7 +50,6 @@ describe("VideoProcessingWorker", () => {
     it("inserts a processing job record", async () => {
       mockPool.query.mockResolvedValue({ rowCount: 1 });
 
-      // Access the private method via bracket notation
       await (worker as any).recordStage("proof-1", "TRANSCODE", "COMPLETED");
 
       expect(mockPool.query).toHaveBeenCalledWith(

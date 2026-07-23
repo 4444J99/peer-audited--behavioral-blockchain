@@ -9,12 +9,16 @@ describe('EnforcementController', () => {
   let enforcementService: {
     evaluateCollusion: jest.Mock;
     appealCase: jest.Mock;
+    confirmCase: jest.Mock;
+    resolveAppeal: jest.Mock;
   };
 
   beforeEach(async () => {
     enforcementService = {
       evaluateCollusion: jest.fn(),
       appealCase: jest.fn(),
+      confirmCase: jest.fn(),
+      resolveAppeal: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -49,9 +53,39 @@ describe('EnforcementController', () => {
     });
   });
 
+  describe('confirm', () => {
+    it('calls confirmCase with default penalty type', async () => {
+      enforcementService.confirmCase.mockResolvedValue({
+        success: true,
+        caseId: 'case-1',
+        status: 'PENALTY_APPLIED',
+      });
+
+      const result = await controller.confirm('case-1', {});
+
+      expect(enforcementService.confirmCase).toHaveBeenCalledWith('case-1', 'REP_BURN', 0);
+      expect(result.status).toBe('PENALTY_APPLIED');
+    });
+
+    it('passes custom penalty type and amount', async () => {
+      enforcementService.confirmCase.mockResolvedValue({
+        success: true,
+        caseId: 'case-2',
+        status: 'PENALTY_APPLIED',
+      });
+
+      const result = await controller.confirm('case-2', {
+        penaltyType: 'STAKE_SLASH',
+        amountCents: 5000,
+      });
+
+      expect(enforcementService.confirmCase).toHaveBeenCalledWith('case-2', 'STAKE_SLASH', 5000);
+    });
+  });
+
   describe('appeal', () => {
     it('calls enforcementService.appealCase and returns the result', async () => {
-      const appealResult = { caseId: 'case-456', status: 'PENDING' };
+      const appealResult = { caseId: 'case-456', status: 'APPEALED' };
       enforcementService.appealCase.mockResolvedValue(appealResult);
 
       const user = { id: 'user-789' };
@@ -65,6 +99,47 @@ describe('EnforcementController', () => {
         'I was unfairly flagged',
       );
       expect(result).toEqual(appealResult);
+    });
+  });
+
+  describe('resolveAppeal', () => {
+    it('calls resolveAppeal with UPHELD outcome', async () => {
+      enforcementService.resolveAppeal.mockResolvedValue({
+        success: true,
+        caseId: 'case-789',
+        outcome: 'UPHELD',
+      });
+
+      const result = await controller.resolveAppeal('case-789', {
+        outcome: 'UPHELD',
+        reason: 'Penalty confirmed after review',
+      });
+
+      expect(enforcementService.resolveAppeal).toHaveBeenCalledWith(
+        'case-789',
+        'UPHELD',
+        'Penalty confirmed after review',
+      );
+      expect(result.outcome).toBe('UPHELD');
+    });
+
+    it('calls resolveAppeal with REVERSED outcome', async () => {
+      enforcementService.resolveAppeal.mockResolvedValue({
+        success: true,
+        caseId: 'case-789',
+        outcome: 'REVERSED',
+      });
+
+      const result = await controller.resolveAppeal('case-789', {
+        outcome: 'REVERSED',
+      });
+
+      expect(enforcementService.resolveAppeal).toHaveBeenCalledWith(
+        'case-789',
+        'REVERSED',
+        undefined,
+      );
+      expect(result.outcome).toBe('REVERSED');
     });
   });
 });

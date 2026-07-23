@@ -9,6 +9,7 @@ import { ProofsService } from './proofs.service';
 import { VideoProcessingService } from './video-processing.service';
 import { VideoProcessingWorker } from './video-processing.worker';
 import { TranscodingService } from '../../../services/media/transcoding.service';
+import { RedactionService } from '../../../services/media/redaction.service';
 import { CrisisModule } from '../crisis/crisis.module';
 
 @Module({
@@ -17,7 +18,7 @@ import { CrisisModule } from '../crisis/crisis.module';
   providers: [
     R2StorageService, FuryRouterService, TruthLogService, PHashService,
     AnomalyService, ProofsService, VideoProcessingService, VideoProcessingWorker,
-    TranscodingService,
+    TranscodingService, RedactionService,
   ],
   exports: [R2StorageService, VideoProcessingService],
 })
