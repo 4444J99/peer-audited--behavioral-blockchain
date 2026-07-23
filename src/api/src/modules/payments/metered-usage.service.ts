@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
-import { BillingService, MeteredEventType } from '../b2b/billing.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
+import { BillingService, MeteredEventType } from "../b2b/billing.service";
 
 @Injectable()
 export class MeteredUsageService {
@@ -35,13 +35,20 @@ export class MeteredUsageService {
 
     this.logger.log(
       `Recorded metered usage [${eventType}] x${quantity} for user ${userId}` +
-        (enterpriseId ? ` (enterprise ${enterpriseId})` : ' (no enterprise; unattributed)'),
+        (enterpriseId
+          ? ` (enterprise ${enterpriseId})`
+          : " (no enterprise; unattributed)"),
     );
 
     if (!enterpriseId) return;
 
     try {
-      await this.billing.recordUsage(enterpriseId, eventType, quantity, eventId);
+      await this.billing.recordUsage(
+        enterpriseId,
+        eventType,
+        quantity,
+        eventId,
+      );
     } catch (err) {
       this.logger.error(
         `Failed to forward metered usage [${eventType}] for enterprise ${enterpriseId} to Stripe: ${
@@ -53,7 +60,7 @@ export class MeteredUsageService {
 
   private async resolveEnterpriseId(userId: string): Promise<string | null> {
     const { rows } = await this.pool.query(
-      'SELECT enterprise_id FROM users WHERE id = $1',
+      "SELECT enterprise_id FROM users WHERE id = $1",
       [userId],
     );
     return rows[0]?.enterprise_id ?? null;
