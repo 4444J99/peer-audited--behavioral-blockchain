@@ -1,3 +1,22 @@
 #!/usr/bin/env node
-require('ts-node').register();
-require('../src/index.ts');
+// The harness and the engines it audits are TypeScript (including `enum`s and
+// dynamically imported target-repo modules), so run the CLI through tsx — the
+// same loader `npm run audit` uses. We spawn tsx as a subprocess rather than
+// registering it in-process to avoid ESM/CJS require-cycle interop pitfalls when
+// dynamically importing target `.ts` engines. (ts-node's CJS-only register did
+// not hook ESM import() at all, and this package is `type: module`.)
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+
+const require = createRequire(import.meta.url);
+const tsxCli = require.resolve('tsx/cli');
+const entry = fileURLToPath(new URL('../src/index.ts', import.meta.url));
+
+const child = spawn(process.execPath, [tsxCli, entry, ...process.argv.slice(2)], {
+  stdio: 'inherit',
+});
+child.on('exit', (code, signal) => {
+  if (signal) process.kill(process.pid, signal);
+  else process.exit(code ?? 1);
+});

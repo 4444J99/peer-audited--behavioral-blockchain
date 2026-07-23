@@ -1,4 +1,16 @@
-import { IsEmail, IsString, MinLength, Matches, IsBoolean, IsDateString, IsOptional } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  Matches,
+  IsBoolean,
+  IsDateString,
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
@@ -47,4 +59,25 @@ export class EnterpriseTokenDto {
   @ApiProperty({ description: 'Enterprise SSO token to exchange for a session JWT' }) // allow-secret
   @IsString()
   enterpriseToken!: string; // allow-secret
+}
+
+export class CreateApiKeyDto {
+  @ApiProperty({ description: 'Human-readable API key name', required: false, maxLength: 80 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  name?: string;
+
+  @ApiProperty({
+    description: 'API key lifetime in days',
+    required: false,
+    minimum: 1,
+    maximum: 365,
+    default: 90,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  expiresInDays?: number;
 }

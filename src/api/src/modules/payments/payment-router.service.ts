@@ -4,6 +4,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { randomBytes } from "crypto";
+import Stripe from "stripe";
 
 export type PaymentProcessor = "STRIPE" | "HIGH_RISK_COREPAY";
 
@@ -19,7 +20,20 @@ export interface PaymentIntentOptions {
 export class PaymentRouterService {
   private readonly logger = new Logger(PaymentRouterService.name);
 
-  // Fallback threshold: if a user has &gt; X disputes, automatically route to high-risk processor
+  
+  private stripe: Stripe.Stripe;
+
+  constructor() {
+    const apiKey = process.env.STRIPE_SECRET_KEY;
+    const isDev = process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "staging";
+    if (!apiKey && !isDev) {
+      throw new ServiceUnavailableException("Stripe processor not configured for production");
+    }
+    this.stripe = new Stripe(apiKey || "sk_test_mock_key", {
+      apiVersion: "2026-05-27.dahlia" as any,
+    });
+  }
+// Fallback threshold: if a user has &gt; X disputes, automatically route to high-risk processor
   private readonly DISPUTE_RISK_THRESHOLD = 3;
 
   /**
@@ -63,9 +77,6 @@ export class PaymentRouterService {
   ): Promise<{ clientSecret: string; processor: PaymentProcessor }> {
     const nodeEnv = process.env.NODE_ENV;
     const mockFallbackAllowed = nodeEnv === "development" || nodeEnv === "test";
-    if (!mockFallbackAllowed) {
-      throw new ServiceUnavailableException("Payment processor not configured");
-    }
 
     this.logger.warn(
       `Using MOCK payment processor (${processor}) for user ${options.userId} in "${nodeEnv}" environment; ` +
@@ -73,14 +84,41 @@ export class PaymentRouterService {
     );
 
     if (processor === "STRIPE") {
-      // Defer to existing StripeFboService in a real implementation
+      if (mockFallbackAllowed) {
+        return {
+          clientSecret: `pi_stripe_mock_${Date.now()}_secret_${randomBytes(12).toString("hex")}`,
+          processor,
+        };
+      }
+
+      if (!process.env.STRIPE_SECRET_KEY) {
+        throw new ServiceUnavailableException("Stripe processor not configured for production");
+      }
+
+      const intent = await this.stripe.paymentIntents.create({
+        amount: options.amount,
+        currency: options.currency,
+        metadata: {
+          ...options.metadata,
+          userId: options.userId,
+        },
+      }, {
+        idempotencyKey: `pi-${options.userId}-${options.amount}-${options.currency}`,
+      });
+
+      if (!intent.client_secret) {
+        throw new ServiceUnavailableException("Failed to retrieve client secret from Stripe");
+      }
+
       return {
-        clientSecret: `pi_stripe_mock_${Date.now()}_secret_${randomBytes(12).toString("hex")}`,
+        clientSecret: intent.client_secret,
         processor,
       };
     } else {
-      // Defer to Corepay SDK in a real implementation
-      return { clientSecret: `tok_corepay_mock_${Date.now()}`, processor };
+      if (mockFallbackAllowed) {
+        return { clientSecret: `tok_corepay_mock_${Date.now()}`, processor };
+      }
+      throw new ServiceUnavailableException("Corepay processor not configured for production");
     }
   }
 }

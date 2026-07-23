@@ -243,7 +243,7 @@ These files at the repo root carry constraints that tooling reads but are easy t
 
 ## Environment
 
-Copy `.env.example` → `.env`. Required vars: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `DATABASE_URL`, `REDIS_URL`, `CLOUDFLARE_R2_ACCESS_KEY`, `CLOUDFLARE_R2_SECRET_KEY`, `JWT_SECRET`. The 2026-05-26 hardening removed insecure fallbacks, so these are now also required at use-time (services throw if unset): `APP_SECRET`, `ANONYMIZE_SALT`, `ZK_EXHAUST_SECRET`, `STYX_WEBHOOK_SECRET`, `INTERNAL_SERVICE_TOKEN`, and `ENTERPRISE_SSO_SECRET` (enterprise SSO is rejected until it is set — no `JWT_SECRET` fallback). Optional: `GEMINI_API_KEY`, `SENTRY_DSN`, Salesforce/HubSpot keys.
+Copy `.env.example` → `.env`. Required vars: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `DATABASE_URL`, `REDIS_URL`, `CLOUDFLARE_R2_ACCESS_KEY`, `CLOUDFLARE_R2_SECRET_KEY`, `JWT_SECRET`, `STYX_API_KEY_PEPPER`. The 2026-05-26 hardening removed insecure fallbacks, so these are now also required at use-time (services throw if unset): `APP_SECRET`, `ANONYMIZE_SALT`, `ZK_EXHAUST_SECRET`, `STYX_WEBHOOK_SECRET`, `INTERNAL_SERVICE_TOKEN`, and `ENTERPRISE_SSO_SECRET` (enterprise SSO is rejected until it is set — no `JWT_SECRET` fallback). Optional: `GEMINI_API_KEY`, `SENTRY_DSN`, Salesforce/HubSpot keys.
 
 Docker services are wired by `.config/docker/docker-compose.yml` using `.env` / `STYX_DOCKER_*` values.
 
