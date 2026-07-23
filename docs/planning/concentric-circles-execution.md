@@ -65,28 +65,38 @@
 ## Circle 3: Gamma — Proof Integrity at Scale
 **Goal:** Scale the reviewer network. Trust the evidence.
 **Launch gate:** Health data integration, video proof pipeline, reviewer redaction, anti-collusion.
+**Status:** COMPLETE (PR #829 merged 2026-07-23)
 
-### Remaining sub-issues:
-- Health data integration (HealthKit, Whoop, Fitbit)
-- Video proof processing pipeline
-- Reviewer identity redaction
-- Anti-collusion routing improvements
-- Collusion penalties and appeals
+### Completed:
+- ✅ Collusion ring detection (voting pattern analysis, union-find clustering, enforcement cases)
+- ✅ Fitbit daily readiness integration (mirrors Whoop SCORED pattern)
+- ✅ Device attestation (iOS App Attest + Android Play Integrity)
+- ✅ HealthKit ingestion + Whoop (from Circle 2)
+- ✅ Video transcoding pipeline (from Circle 2)
+- ✅ Reviewer redaction (from Circle 2)
+- ✅ Enforcement confirm + appeal resolution (from Circle 2)
 
 ---
 
 ## Circle 4: Delta — Retention + Network Effects
 **Goal:** Will people come back? Build the engagement loop.
 **Launch gate:** Danger-zone protections, accountability partners, progress dashboard, push notifications.
+**Status:** IN PROGRESS (PRs #830, #831 merged 2026-07-23)
 
-### Key features (37 remaining):
-- Recovery danger-zone protections (Day 3, Day 21, weekends)
-- Weekend risk multiplier
-- Accountability partner protocol
-- Endowed progress + dynamic downscaling
-- Identity-based onboarding
-- Progress dashboard + live leaderboard
-- Remote push notifications
+### Completed:
+- ✅ Danger-zone protections (Day 3, Day 21, weekend, late-night windows)
+- ✅ Accountability partner protocol (matching, check-in scheduling, escalation ladder)
+- ✅ Progress dashboard (streak tracking, 7 milestones, composite risk score)
+- ✅ Notification composer (8 behavioral push notification types)
+- ✅ Endowed progress engine (6-tier psychological boost, dynamic downscaling)
+- ✅ Push notification infrastructure (from Circle 1/2)
+- ✅ Weekend risk multiplier (VolatilityEngine — from Circle 1)
+
+### Remaining (if needed):
+- Identity-based onboarding (user archetype profiling at intake)
+- Pod/Arena experiment framework (A/B cohort comparison)
+- In-app messaging within pods
+- Practitioner risk intelligence (NLP journal alerts)
 
 ---
 
