@@ -58,4 +58,49 @@ describe('EnforcementService', () => {
       await expect(service.confirmCase('case-x')).rejects.toThrow('Pending case not found');
     });
   });
+
+  describe('resolveAppeal', () => {
+    it('resolves an appeal as UPHELD', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'case-1', reviewer_id: 'fury-1' }],
+      });
+
+      const result = await service.resolveAppeal('case-1', 'UPHELD', 'Penalty confirmed');
+
+      expect(result.outcome).toBe('UPHELD');
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        'FURY_APPEAL_RESOLVED',
+        expect.objectContaining({ outcome: 'UPHELD' }),
+      );
+    });
+
+    it('resolves an appeal as REVERSED and removes penalty', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'case-1', reviewer_id: 'fury-1' }],
+      });
+      mockPool.query.mockResolvedValueOnce({ rowCount: 1 }); // DELETE penalty
+
+      const result = await service.resolveAppeal('case-1', 'REVERSED');
+
+      expect(result.outcome).toBe('REVERSED');
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM fury_penalties'),
+        ['case-1'],
+      );
+    });
+
+    it('throws on invalid outcome', async () => {
+      await expect(
+        service.resolveAppeal('case-1', 'INVALID' as any),
+      ).rejects.toThrow('Outcome must be UPHELD or REVERSED');
+    });
+
+    it('throws when case is not in APPEALED status', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(
+        service.resolveAppeal('case-1', 'UPHELD'),
+      ).rejects.toThrow('Appealed case not found');
+    });
+  });
 });

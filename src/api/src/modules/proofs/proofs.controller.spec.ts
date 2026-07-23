@@ -8,6 +8,8 @@ import { PHashService } from '../../../services/intelligence/phash.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { ProofMediaType } from './dto';
 import { ProofsService } from './proofs.service';
+import { CrisisDetectionService } from '../../../services/security/crisis-detection.service';
+import { CrisisInterventionService } from '../../../services/security/crisis-intervention.service';
 
 describe('ProofsController', () => {
   let controller: ProofsController;
@@ -18,6 +20,8 @@ describe('ProofsController', () => {
   let mockPhash: jest.Mocked<Pick<PHashService, 'computeFrameHash' | 'isDuplicate'>>;
   let mockAnomaly: jest.Mocked<Pick<AnomalyService, 'analyze'>>;
   let mockProofsService: jest.Mocked<Pick<ProofsService, 'getProofUploadContractAccess' | 'getProofUploadConfirmationAccess' | 'getProofDetail'>>;
+  let mockCrisisDetection: jest.Mocked<Pick<CrisisDetectionService, 'analyzeContent'>>;
+  let mockCrisisIntervention: jest.Mocked<Pick<CrisisInterventionService, 'reportCrisis'>>;
 
   beforeEach(() => {
     mockPool = { query: jest.fn() };
@@ -39,6 +43,12 @@ describe('ProofsController', () => {
       getProofUploadConfirmationAccess: jest.fn(),
       getProofDetail: jest.fn(),
     };
+    mockCrisisDetection = {
+      analyzeContent: jest.fn().mockReturnValue({ isCrisis: false, severity: 'NONE', matchedKeywords: [] }),
+    };
+    mockCrisisIntervention = {
+      reportCrisis: jest.fn().mockResolvedValue({ escalated: false }),
+    };
 
     controller = new ProofsController(
       mockPool as unknown as Pool,
@@ -48,6 +58,8 @@ describe('ProofsController', () => {
       mockPhash as unknown as PHashService,
       mockAnomaly as unknown as AnomalyService,
       mockProofsService as unknown as ProofsService,
+      mockCrisisDetection as unknown as CrisisDetectionService,
+      mockCrisisIntervention as unknown as CrisisInterventionService,
     );
     jest.clearAllMocks();
   });

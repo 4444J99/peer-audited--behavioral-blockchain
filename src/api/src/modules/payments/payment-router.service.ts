@@ -4,9 +4,12 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { randomBytes } from "crypto";
+import Stripe from "stripe";
 import { PayoutProvider } from "../../common/interfaces/payout-provider.interface";
 import { StripePayoutProvider } from "./stripe-payout.provider";
 import { CorepayPayoutProvider } from "./corepay-payout.provider";
+
+type StripeClient = InstanceType<typeof Stripe>;
 
 export type PaymentProcessor = "STRIPE" | "HIGH_RISK_COREPAY";
 
@@ -21,14 +24,17 @@ export interface PaymentIntentOptions {
 @Injectable()
 export class PaymentRouterService {
   private readonly logger = new Logger(PaymentRouterService.name);
-
+  private readonly stripe: StripeClient | null;
 
   private readonly DISPUTE_RISK_THRESHOLD = 3;
 
   constructor(
     private readonly stripeProvider: StripePayoutProvider,
     private readonly corepayProvider: CorepayPayoutProvider,
-  ) {}
+  ) {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    this.stripe = secretKey ? new Stripe(secretKey) : null;
+  }
 
   determineProcessor(
     options: PaymentIntentOptions,
@@ -82,7 +88,7 @@ export class PaymentRouterService {
         };
       }
 
-      if (!process.env.STRIPE_SECRET_KEY) {
+      if (!this.stripe) {
         throw new ServiceUnavailableException("Stripe processor not configured for production");
       }
 
