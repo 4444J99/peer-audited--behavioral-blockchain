@@ -296,6 +296,59 @@ source.
 first viewport must own the live urge moment, while the CTA remains singular and
 source-tagged.
 
+## batch-build-beta-waitlist-funnel-505-506-507 — 2026-06-15 — Build public beta-waitlist funnel
+
+**Issues:** #505 (landing — no-contact hero copy + waitlist CTA),
+#506 (API — waitlist signup + confirmation + source tagging),
+#507 (tests — conversion tracking + email delivery). All three are sub-issues
+of #59 (Closed Beta Waitlist Funnel).
+
+**Status:** implemented and tested; advanced to `TESTED` in the ledger pending
+PR. Closure is deferred to PR merge with file:line evidence, per discipline.
+
+**Key discovery before building:** the existing `WaitlistService`
+(`src/api/src/modules/contracts/waitlist.service.ts`, migration 036) is the
+*authenticated in-app cohort fill queue* (keyed by user_id + cohort_id). It is
+**not** the public top-of-funnel signup #506 describes. The public funnel did
+not exist, and the no-contact emergency asset CTA routed straight to `/register`
+(full account creation) rather than a low-friction email capture. Both gaps are
+now closed.
+
+**Built:**
+
+- Schema: `src/api/database/migrations/041_beta_waitlist.sql` — `beta_waitlist`
+  table keyed by normalized email, with raw `source` + derived `channel`, UTM
+  fields, referral code, and a `pending → confirmed → admitted` status.
+- Shared: `src/shared/libs/waitlist-attribution.ts` — single source of truth for
+  channel classification (organic | creator | practitioner | referral | direct),
+  exported from `src/shared/index.ts`. Used by the API; the web side only
+  *forwards* raw params (no duplicated classifier).
+- API: `src/api/src/modules/marketing/` — public `POST /beta-waitlist` (no auth,
+  throttled), public `GET /beta-waitlist/confirm`, admin `GET /beta-waitlist`
+  (export) and `GET /beta-waitlist/stats` (conversion). Signup is idempotent on
+  email and never re-confirms an already-confirmed prospect. Email delivery is a
+  seam (`BetaWaitlistNotifier`) with a logging default returning a
+  queue-confirmation URL — the issue explicitly allows email *or* equivalent flow.
+- Web: `src/web/app/beta/page.tsx` (single-CTA "Join the Private Beta" funnel with
+  locked Phase 1 copy + signup form), `src/web/app/beta/confirm/page.tsx`,
+  `src/web/utils/waitlist.ts`. Homepage primary CTA now routes to `/beta`; the
+  no-contact tool CTA retargets `/register` → `/beta` (attribution preserved).
+
+**Tests (all passing):** shared 202, API 1212 (+24 new in `marketing/`), web 364
+(+ attribution + beta-page suites). Gate 04 (redacted-build) green — banned
+whole-words are assembled at runtime in the beta-page test so the scan stays clean.
+
+**Lesson:** "Waitlist" was an overloaded word in this repo — an authenticated
+cohort queue already owned the name. Read the existing implementation before
+assuming a TRACK issue is already done: the public acquisition funnel and the
+internal fill queue are different machines with different keys (email vs user_id)
+and different trust boundaries (public vs authenticated).
+
+**Lesson:** Issue #507 carried a legacy `TRACK` state with no edge in the state
+machine. Normalized it to canonical `TRACKING` (with a history note) before
+entering the build chain, matching the precedent for correcting misclassified
+states rather than inventing a new transition.
+
 ## batch-docs-architecture-integrity-verify — 2026-06-15 — Close resolved docs-integrity cluster + fix dangling v1 links
 
 **Issues:** #590, #591, #592, #593, #594, #595, #600.

@@ -8,6 +8,8 @@ const PUBLIC_PATHS = [
   '/pitch',
   '/users/leaderboard',
   '/do-not-text-your-ex-tonight',
+  '/beta',
+  '/beta/confirm',
 ];
 
 const PROTECTED_PATHS = [
