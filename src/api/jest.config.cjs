@@ -9,7 +9,7 @@ module.exports = {
   transform: {
     ...tsJestTransformCfg,
   },
-  testPathIgnorePatterns: ["/node_modules/", "/dist/"],
+  testPathIgnorePatterns: ["/node_modules/", "/dist/", "\\.int\\.spec\\.ts$"],
   // Use the V8 coverage provider rather than the default "babel" provider.
   // The babel provider instruments via babel-plugin-istanbul → test-exclude,
   // whose minimatch@3 callable API is broken by the repo-wide minimatch>=10

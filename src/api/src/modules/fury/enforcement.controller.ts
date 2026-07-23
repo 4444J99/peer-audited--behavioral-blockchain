@@ -16,9 +16,22 @@ export class EnforcementController {
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Evaluate collusion incidents from review events (Admin only)' })
   async evaluate(@Body() dto: { proofId: string; flaggedFuries: string[] }) {
-    // Admin/operator-only: submitting flaggedFuries here applies enforcement actions.
     await this.enforcementService.evaluateCollusion(dto.proofId, dto.flaggedFuries);
     return { success: true };
+  }
+
+  @Post('confirm/:caseId')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Confirm a pending enforcement case and apply penalty (Admin only)' })
+  async confirm(
+    @Param('caseId') caseId: string,
+    @Body() dto: { penaltyType?: string; amountCents?: number },
+  ) {
+    return this.enforcementService.confirmCase(
+      caseId,
+      dto.penaltyType || 'REP_BURN',
+      dto.amountCents || 0,
+    );
   }
 
   @Post('appeals/:caseId')
@@ -30,5 +43,14 @@ export class EnforcementController {
   ) {
     return this.enforcementService.appealCase(caseId, user.id, dto.reason);
   }
-}
 
+  @Post('appeals/:caseId/resolve')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Resolve an appeal — approve (uphold penalty) or reverse (overturn)' })
+  async resolveAppeal(
+    @Param('caseId') caseId: string,
+    @Body() dto: { outcome: 'UPHELD' | 'REVERSED'; reason?: string },
+  ) {
+    return this.enforcementService.resolveAppeal(caseId, dto.outcome, dto.reason);
+  }
+}

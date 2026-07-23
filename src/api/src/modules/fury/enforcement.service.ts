@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 
@@ -116,6 +116,52 @@ export class EnforcementService {
     });
 
     return { success: true, caseId, status: 'APPEALED' };
+  }
+
+  /**
+   * Resolves an appeal: UPHELD (penalty stands) or REVERSED (penalty overturned).
+   * Admin-only. Idempotent — resolving an already-resolved appeal is a no-op.
+   */
+  async resolveAppeal(caseId: string, outcome: 'UPHELD' | 'REVERSED', reason?: string) {
+    if (outcome !== 'UPHELD' && outcome !== 'REVERSED') {
+      throw new BadRequestException('Outcome must be UPHELD or REVERSED');
+    }
+
+    const claim = await this.pool.query(
+      `UPDATE fury_enforcement_cases
+       SET status = $1,
+           evidence_json = evidence_json || jsonb_build_object(
+             'appeal_resolution', $1::text,
+             'appeal_reason', COALESCE($3::text, ''),
+             'resolved_at', NOW()::text
+           )
+       WHERE id = $2 AND status = 'APPEALED'
+       RETURNING id, reviewer_id`,
+      [outcome, caseId, reason || null],
+    );
+
+    if (claim.rows.length === 0) {
+      throw new NotFoundException('Appealed case not found or already resolved');
+    }
+
+    const { reviewer_id: reviewerId } = claim.rows[0];
+
+    if (outcome === 'REVERSED') {
+      // Remove the penalty if reversed
+      await this.pool.query(
+        `DELETE FROM fury_penalties WHERE case_id = $1`,
+        [caseId],
+      );
+    }
+
+    await this.truthLog.appendEvent('FURY_APPEAL_RESOLVED', {
+      caseId,
+      reviewerId,
+      outcome,
+      reason: reason || null,
+    });
+
+    return { success: true, caseId, outcome };
   }
 }
 

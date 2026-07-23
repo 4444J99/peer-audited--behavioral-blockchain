@@ -52,6 +52,21 @@ export class R2StorageService {
   }
 
   /**
+   * Upload a buffer directly to R2.
+   * Used by TranscodingService to store processed video and thumbnails.
+   */
+  async uploadBuffer(buffer: Buffer, key: string, contentType: string): Promise<string> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    });
+    await this.s3Client.send(command);
+    return key;
+  }
+
+  /**
    * Download a file from R2 as a Buffer.
    * Used by PHashService for perceptual hash computation on proof media.
    */

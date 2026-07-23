@@ -480,8 +480,7 @@ export const HABIT_STRENGTH_AUTOMATICITY_THRESHOLD = 0.95;
 export const HABIT_STRENGTH_AUTOMATICITY_MIDPOINT = 66; // repetitions to reach 0.5
 export const HABIT_STRENGTH_CURVE_STEEPNESS = 0.07;
 
-export function calculateHabitStrength(completedProofs: number, totalRequired: number): number {
-  const ratio = totalRequired > 0 ? completedProofs / totalRequired : 0;
+export function calculateHabitStrength(completedProofs: number, _totalRequired: number): number {
   // Logistic curve: 1 / (1 + e^(-k * (x - x0)))
   return 1 / (1 + Math.exp(-HABIT_STRENGTH_CURVE_STEEPNESS * (completedProofs - HABIT_STRENGTH_AUTOMATICITY_MIDPOINT)));
 }
