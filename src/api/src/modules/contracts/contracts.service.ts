@@ -1214,13 +1214,6 @@ export class ContractsService {
       );
       contractId = contractResult.rows[0].id;
 
-      if (bountyLinkId) {
-        await phaseAClient.query(
-          `INSERT INTO bounties (contract_id, bounty_link_id) VALUES ($1, $2)`,
-          [contractId, bountyLinkId],
-        );
-      }
-
       if (dto.oathCategory.startsWith("RECOVERY_") && dto.recoveryMetadata) {
         // Find existing user if any
         const partnerUserResult = await phaseAClient.query(
@@ -1277,7 +1270,14 @@ export class ContractsService {
       }
 
       const existing = contractRow.rows[0];
-      if (!(existing.status === "ACTIVE" && existing.payment_intent_id)) {
+      // Guard: only finalize PENDING_STAKE. If SUSPENDED (e.g. pregnancy),
+      // reject and let reconciliation handle it.
+      if (existing.status === "SUSPENDED") {
+        throw new ConflictException(
+          `Contract ${contractId} is suspended; cannot finalize activation`,
+        );
+      }
+      if (!(existing.status === "PENDING_STAKE" && existing.payment_intent_id === null)) {
         await phaseBClient.query(
           `UPDATE contracts
            SET payment_intent_id = $1,
@@ -1292,6 +1292,13 @@ export class ContractsService {
             endsAt.toISOString(),
           ],
         );
+
+        if (bountyLinkId) {
+          await phaseBClient.query(
+            `INSERT INTO bounties (contract_id, bounty_link_id) VALUES ($1, $2)`,
+            [contractId, bountyLinkId],
+          );
+        }
       }
 
       await phaseBClient.query("COMMIT");
@@ -1514,7 +1521,7 @@ export class ContractsService {
       const activeRecoveryContracts = await this.pool.query(
         `SELECT COUNT(*) as count FROM contracts
          WHERE user_id = $1 AND oath_category LIKE 'RECOVERY\\_%' ESCAPE '\\'
-         AND status NOT IN ('COMPLETED', 'FAILED', 'CANCELLED')`,
+         AND status NOT IN ('COMPLETED', 'FAILED', 'CANCELLED', 'SUSPENDED')`,
         [dto.userId],
       );
       const lastRecoveryContract = await this.pool.query(
@@ -3287,6 +3294,58 @@ export class ContractsService {
     });
 
     return result.rows[0];
+  }
+
+
+
+  /**
+   * Mid-challenge penalty-free suspension for pregnancy
+   */
+  async suspendPregnancyExcludedContracts(userId: string): Promise<void> {
+    const { rows } = await this.pool.query(
+      `SELECT id, payment_intent_id, metadata FROM contracts
+       WHERE user_id = $1 AND status IN ('PENDING_STAKE', 'ACTIVE')
+         AND oath_category IN ('WEIGHT_MANAGEMENT', 'CARDIOVASCULAR_STAMINA', 'NUTRITIONAL_TRANSPARENCY', 'SUBSTANCE_ABSTINENCE', 'BEHAVIORAL_DETOX')`,
+      [userId]
+    );
+
+    for (const contract of rows) {
+      // Collect all Stripe payment intent IDs to cancel
+      const intentsToCancel = [contract.payment_intent_id];
+      if (contract.metadata?.additional_payouts) {
+        const additional = JSON.parse(contract.metadata.additional_payouts);
+        if (Array.isArray(additional)) {
+          intentsToCancel.push(...additional);
+        }
+      }
+
+      // Cancel all associated Stripe holds
+      for (const intentId of intentsToCancel) {
+        if (intentId) {
+          try {
+            await this.stripe.cancelHold(intentId);
+          } catch (err) {
+            this.logger.error(`Failed to cancel hold for suspended contract ${contract.id}: ${intentId}`, err);
+            // Record for reconciliation instead of throwing
+            await this.markContractReconcileRequired(
+              contract.id,
+              intentId,
+              `suspend_cancel_failed:${err instanceof Error ? err.message : err}`,
+            );
+          }
+        }
+      }
+      
+      await this.pool.query(
+        `UPDATE contracts SET status = 'SUSPENDED' WHERE id = $1`,
+        [contract.id]
+      );
+
+      await this.truthLog.appendEvent("CONTRACT_SUSPENDED_PREGNANCY", {
+        contractId: contract.id,
+        userId
+      });
+    }
   }
 
   async cancelRecoveryBreak(contractId: string, userId: string) {

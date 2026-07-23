@@ -158,6 +158,7 @@ CREATE TABLE fury_assignments (
     proof_id UUID REFERENCES proofs(id),
     fury_user_id UUID REFERENCES users(id),
     verdict TEXT,
+    rejection_code TEXT,
     reviewed_at TIMESTAMPTZ,
     assigned_at TIMESTAMPTZ DEFAULT NOW(),
     subject_alias TEXT
