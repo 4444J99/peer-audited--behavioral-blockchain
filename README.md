@@ -1,6 +1,6 @@
 # Styx: The Blockchain of Truth
 
-A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes.
+Peer-audited behavioral accountability system using financial stakes and consensus verification to close the wellness program enforcement gap.
 
 > **The expensive problem:** Accountability and corporate-wellness programs leak money because the stakes aren't real, the proof isn't audited, and holding employees' health data is a liability nobody wants to own. Budgets buy good intentions and get no follow-through. Styx is the production-grade enforcement layer that closes the gap: real Stripe FBO escrow (hold / capture / cancel), a double-entry ledger with no phantom money, peer-audited proof-of-completion via the Fury Router (honeypot injection + consensus + bounty economy), loss-aversion physics (λ = 1.955), and a privacy-firewalled B2B tier where the employer funds the pot but never sees an individual's health data — only k-anonymized aggregate engagement.
 >
