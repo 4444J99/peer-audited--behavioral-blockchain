@@ -96,21 +96,26 @@
 - Identity-based onboarding (user archetype profiling at intake)
 - Pod/Arena experiment framework (A/B cohort comparison)
 - In-app messaging within pods
-- Practitioner risk intelligence (NLP journal alerts)
 
 ---
 
 ## Circle 5: Omega — Enterprise Expansion
 **Goal:** Can enterprises buy this? Legal, compliance, revenue.
 **Launch gate:** Legal whitepaper, enterprise compliance, revenue packaging.
+**Status:** IN PROGRESS (PR #833 merged 2026-07-23)
 
-### Key features (29 remaining):
-- Legal defense whitepaper
+### Completed:
+- ✅ Anti-Sybil layer (device fingerprinting, cross-account detection, graduated enforcement)
+- ✅ Practitioner risk intelligence (composite risk profiles, NLP journal analysis)
+- ✅ SOC 2 readiness groundwork (audit log, access controls from earlier circles)
+
+### Remaining:
+- Legal defense whitepaper (human-gated)
 - Enterprise compliance packaging
 - Enterprise revenue packaging
-- SOC 2 readiness
 - CCPA data deletion
 - AML screening
+- State jurisdiction matrix (human-gated)
 
 ---
 
