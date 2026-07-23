@@ -198,13 +198,17 @@ export class FuryController {
   @Post('verdict')
   @ApiOperation({ summary: 'Submit a PASS or FAIL verdict on an assigned proof' })
   async submitVerdict(@CurrentUser() user: { id: string }, @Body() dto: SubmitVerdictDto) {
+    if (dto.verdict === 'FAIL' && !dto.rejectionCode) {
+      throw new BadRequestException('Rejection code is required when verdict is FAIL');
+    }
+
     // Record the verdict. Only a first vote is allowed: `verdict IS NULL` prevents a
     // Fury from re-voting / flipping their verdict and re-triggering consensus.
     const update = await this.pool.query(
-      `UPDATE fury_assignments SET verdict = $1, reviewed_at = NOW()
-       WHERE id = $2 AND fury_user_id = $3 AND verdict IS NULL
+      `UPDATE fury_assignments SET verdict = $1, rejection_code = $2, reviewed_at = NOW()
+       WHERE id = $3 AND fury_user_id = $4 AND verdict IS NULL
        RETURNING proof_id`,
-      [dto.verdict, dto.assignmentId, user.id],
+      [dto.verdict, dto.rejectionCode || null, dto.assignmentId, user.id],
     );
 
     // No row updated → assignment doesn't exist, isn't owned by this Fury, or was
@@ -218,6 +222,7 @@ export class FuryController {
       assignmentId: dto.assignmentId,
       furyUserId: user.id,
       verdict: dto.verdict,
+      ...(dto.rejectionCode ? { rejectionCode: dto.rejectionCode } : {}),
     });
 
     await this.furyWorker.checkConsensus(update.rows[0].proof_id);

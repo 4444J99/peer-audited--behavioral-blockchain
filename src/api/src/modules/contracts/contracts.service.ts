@@ -1214,13 +1214,6 @@ export class ContractsService {
       );
       contractId = contractResult.rows[0].id;
 
-      if (bountyLinkId) {
-        await phaseAClient.query(
-          `INSERT INTO bounties (contract_id, bounty_link_id) VALUES ($1, $2)`,
-          [contractId, bountyLinkId],
-        );
-      }
-
       if (dto.oathCategory.startsWith("RECOVERY_") && dto.recoveryMetadata) {
         // Find existing user if any
         const partnerUserResult = await phaseAClient.query(
@@ -1292,6 +1285,13 @@ export class ContractsService {
             endsAt.toISOString(),
           ],
         );
+
+        if (bountyLinkId) {
+          await phaseBClient.query(
+            `INSERT INTO bounties (contract_id, bounty_link_id) VALUES ($1, $2)`,
+            [contractId, bountyLinkId],
+          );
+        }
       }
 
       await phaseBClient.query("COMMIT");
@@ -1514,7 +1514,7 @@ export class ContractsService {
       const activeRecoveryContracts = await this.pool.query(
         `SELECT COUNT(*) as count FROM contracts
          WHERE user_id = $1 AND oath_category LIKE 'RECOVERY\\_%' ESCAPE '\\'
-         AND status NOT IN ('COMPLETED', 'FAILED', 'CANCELLED')`,
+         AND status NOT IN ('COMPLETED', 'FAILED', 'CANCELLED', 'SUSPENDED')`,
         [dto.userId],
       );
       const lastRecoveryContract = await this.pool.query(
@@ -3287,6 +3287,40 @@ export class ContractsService {
     });
 
     return result.rows[0];
+  }
+
+
+
+  /**
+   * Mid-challenge penalty-free suspension for pregnancy
+   */
+  async suspendPregnancyExcludedContracts(userId: string): Promise<void> {
+    const { rows } = await this.pool.query(
+      `SELECT id, payment_intent_id FROM contracts
+       WHERE user_id = $1 AND status IN ('PENDING_STAKE', 'ACTIVE')
+         AND oath_category IN ('WEIGHT_MANAGEMENT', 'CARDIOVASCULAR_STAMINA', 'NUTRITIONAL_TRANSPARENCY', 'SUBSTANCE_ABSTINENCE', 'BEHAVIORAL_DETOX')`,
+      [userId]
+    );
+
+    for (const contract of rows) {
+      if (contract.payment_intent_id) {
+        try {
+          await this.stripe.cancelHold(contract.payment_intent_id);
+        } catch (err) {
+          this.logger.error(`Failed to cancel hold for suspended contract ${contract.id}`, err);
+        }
+      }
+      
+      await this.pool.query(
+        `UPDATE contracts SET status = 'SUSPENDED' WHERE id = $1`,
+        [contract.id]
+      );
+
+      await this.truthLog.appendEvent("CONTRACT_SUSPENDED_PREGNANCY", {
+        contractId: contract.id,
+        userId
+      });
+    }
   }
 
   async cancelRecoveryBreak(contractId: string, userId: string) {

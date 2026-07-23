@@ -46,3 +46,23 @@ export class UpdateJurisdictionDto {
   @IsEnum(["HOUSE_RETAINED", "REFUND_ONLY"])
   dispositionMode?: "HOUSE_RETAINED" | "REFUND_ONLY";
 }
+
+export class AdminReviewContentDto {
+  @ApiProperty({ description: "Review decision", enum: ["APPROVED", "REMOVED"] })
+  @IsEnum(["APPROVED", "REMOVED"])
+  decision!: "APPROVED" | "REMOVED";
+
+  @ApiProperty({ description: "Admin notes" })
+  @IsString()
+  notes!: string;
+}
+
+export class AdminResolveAppealDto {
+  @ApiProperty({ description: "Appeal resolution", enum: ["UPHELD", "OVERTURNED"] })
+  @IsEnum(["UPHELD", "OVERTURNED"])
+  resolution!: "UPHELD" | "OVERTURNED";
+
+  @ApiProperty({ description: "Admin notes" })
+  @IsString()
+  notes!: string;
+}

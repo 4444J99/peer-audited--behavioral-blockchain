@@ -73,12 +73,32 @@ describe('PaymentRouterService', () => {
       expect(result.clientSecret).toMatch(/^tok_corepay_mock_/);
     });
 
-    it('should throw ServiceUnavailableException in production', async () => {
+    it('should call Stripe and return real client secret in production for STRIPE', async () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      const createMock = jest.fn().mockResolvedValue({ client_secret: 'pi_real_secret_123' });
+      (service as any).stripe.paymentIntents.create = createMock;
+      
+      try {
+        const result = await service.createPaymentIntent(baseOptions, 'STRIPE');
+        expect(result.processor).toBe('STRIPE');
+        expect(result.clientSecret).toBe('pi_real_secret_123');
+        expect(createMock).toHaveBeenCalledWith({
+          amount: 10000,
+          currency: 'usd',
+          metadata: { userId: 'user-2' },
+        });
+      } finally {
+        process.env.NODE_ENV = originalEnv;
+      }
+    });
+
+    it('should throw ServiceUnavailableException in production for COREPAY', async () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production';
       try {
-        await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
-          .rejects.toThrow('Payment processor not configured');
+        await expect(service.createPaymentIntent(baseOptions, 'HIGH_RISK_COREPAY'))
+          .rejects.toThrow('Corepay processor not configured for production');
       } finally {
         process.env.NODE_ENV = originalEnv;
       }

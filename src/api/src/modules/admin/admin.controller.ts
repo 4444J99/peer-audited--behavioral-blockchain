@@ -31,6 +31,8 @@ import {
   AdminCrisisEscalateDto,
   ResolveContractDto,
   UpdateJurisdictionDto,
+  AdminReviewContentDto,
+  AdminResolveAppealDto,
 } from "./dto";
 import { JurisdictionDispositionMapper } from "../compliance/jurisdiction-disposition.mapper";
 
@@ -232,6 +234,42 @@ export class AdminController {
   }
 
   // --- Moderation ---
+
+  @Get("moderation/queue")
+  @ApiOperation({ summary: "Get the content moderation queue" })
+  async getModerationQueue(@Query("status") status?: string) {
+    return this.moderation.getQueue(status as any);
+  }
+
+  @Post("moderation/review/:flagId")
+  @ApiOperation({ summary: "Admin review of flagged content" })
+  async reviewContent(
+    @Param("flagId") flagId: string,
+    @CurrentUser() admin: { id: string },
+    @Body() body: AdminReviewContentDto,
+  ) {
+    return this.moderation.reviewContent(
+      admin.id,
+      flagId,
+      body.decision,
+      body.notes,
+    );
+  }
+
+  @Post("moderation/appeal/:flagId/resolve")
+  @ApiOperation({ summary: "Admin resolve content appeal" })
+  async resolveAppeal(
+    @Param("flagId") flagId: string,
+    @CurrentUser() admin: { id: string },
+    @Body() body: AdminResolveAppealDto,
+  ) {
+    return this.moderation.resolveAppeal(
+      admin.id,
+      flagId,
+      body.resolution,
+      body.notes,
+    );
+  }
 
   @Post("ban/:userId")
   @ApiOperation({ summary: "Ban a user for policy violations" })

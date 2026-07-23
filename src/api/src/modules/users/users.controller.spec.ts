@@ -21,6 +21,7 @@ describe('UsersController', () => {
       usersService as unknown as UsersService,
       { exportUserData: jest.fn() } as any,
       identityVerification as unknown as IdentityVerificationService,
+      { createContract: jest.fn() } as any,  // ContractsService mock
     );
   });
 

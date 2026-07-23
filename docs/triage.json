@@ -23,7 +23,7 @@
         421
       ],
       "started": "2026-06-01T15:40:38Z",
-      "completed": "2026-06-01T15:40:59Z",
+      "completed": "2026-07-23T00:23:39Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -32,15 +32,10 @@
       "phase": "Tier 1 — Quick code features (tests, small fixes)",
       "issues": [
         207,
-        44,
-        45,
-        66,
-        46,
-        47,
-        52
+        44
       ],
       "started": "2026-06-01T15:54:09Z",
-      "completed": "2026-06-01T15:57:13Z",
+      "completed": "2026-07-23T00:23:39Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -52,7 +47,7 @@
         66
       ],
       "started": "2026-06-01T15:57:36Z",
-      "completed": "2026-06-01T16:00:43Z",
+      "completed": "2026-07-23T00:23:39Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -63,7 +58,7 @@
         603
       ],
       "started": "2026-06-01T19:30:13Z",
-      "completed": "2026-06-01T19:30:57Z",
+      "completed": "2026-07-23T00:23:39Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -78,7 +73,7 @@
         551
       ],
       "started": "2026-06-01T19:35:05Z",
-      "completed": "2026-06-01T19:35:29Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -91,7 +86,7 @@
         52
       ],
       "started": "2026-06-01T19:38:23Z",
-      "completed": "2026-06-01T19:43:50Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -108,7 +103,7 @@
         119
       ],
       "started": "2026-06-01T19:44:04Z",
-      "completed": "2026-06-01T19:49:47Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -126,7 +121,7 @@
         430
       ],
       "started": "2026-06-01T19:49:59Z",
-      "completed": "2026-06-01T19:54:39Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -140,7 +135,7 @@
         554
       ],
       "started": "2026-06-01T19:54:52Z",
-      "completed": "2026-06-01T19:56:44Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -151,7 +146,7 @@
         670
       ],
       "started": "2026-06-11T15:55:11Z",
-      "completed": "2026-06-12T09:38:18Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -175,7 +170,7 @@
         651
       ],
       "started": "2026-06-11T16:04:08Z",
-      "completed": "2026-06-11T22:25:15.368584+00:00",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -186,7 +181,7 @@
         676
       ],
       "started": "2026-06-11T16:43:33Z",
-      "completed": "2026-06-11T16:52:20Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -198,7 +193,7 @@
         680
       ],
       "started": "2026-06-11T18:45:09Z",
-      "completed": "2026-06-11T18:47:40Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -209,7 +204,7 @@
         675
       ],
       "started": "2026-06-11T22:20:39.088979+00:00",
-      "completed": "2026-06-11T22:20:39.088979+00:00",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -220,7 +215,7 @@
         673
       ],
       "started": "2026-06-12T09:37:48Z",
-      "completed": "2026-06-12T09:38:18Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -242,7 +237,7 @@
         282
       ],
       "started": "2026-06-12T11:46:15Z",
-      "completed": "2026-06-12T14:49:38Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -250,18 +245,9 @@
       "id": "audit-closed-without-ledger",
       "phase": "Phase 4 — Reopen/audit GitHub-closed issues without triage proof",
       "issues": [
-        28,
-        32,
-        34,
         35,
         42,
         43,
-        58,
-        59,
-        60,
-        61,
-        62,
-        63,
         149,
         150,
         151,
@@ -272,7 +258,6 @@
         156,
         157,
         158,
-        159,
         160,
         161,
         163,
@@ -342,17 +327,12 @@
         565,
         566,
         567,
-        590,
-        593,
-        594,
-        595,
-        600,
         601,
         617,
         663
       ],
       "started": "2026-06-12T12:35:18Z",
-      "completed": "2026-06-12T14:03:10Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -369,7 +349,37 @@
         600
       ],
       "started": "2026-06-15T10:02:54Z",
-      "completed": "2026-06-15T10:03:41Z",
+      "completed": "2026-07-23T00:23:40Z",
+      "reconciled": true,
+      "test_passed": true
+    },
+    {
+      "id": "fix-critical-bugs",
+      "phase": "Phase-2",
+      "issues": [
+        28,
+        32,
+        34,
+        159
+      ],
+      "started": "2026-07-22T19:22:43Z",
+      "completed": "2026-07-23T00:23:40Z",
+      "reconciled": true,
+      "test_passed": true
+    },
+    {
+      "id": "phase3-batch1",
+      "phase": "Phase-3",
+      "issues": [
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "started": "2026-07-22T23:02:47Z",
+      "completed": "2026-07-23T00:23:41Z",
       "reconciled": true,
       "test_passed": true
     }
@@ -382,8 +392,8 @@
         "database"
       ],
       "action": "BUG",
-      "state": "BUG",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "fix-critical-bugs",
       "history": [
         {
           "from": "UNREAD",
@@ -394,11 +404,16 @@
           "from": "INSPECTED",
           "to": "BUG",
           "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "BUG",
+          "to": "CLOSED",
+          "at": "2026-07-22T19:22:44Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/database/migrations/migrate.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:36:44Z",
+      "state_updated": "2026-07-22T19:22:44Z",
       "closed_at": null
     },
     "29": {
@@ -486,8 +501,8 @@
         "security"
       ],
       "action": "BUG",
-      "state": "BUG",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "fix-critical-bugs",
       "history": [
         {
           "from": "UNREAD",
@@ -498,11 +513,16 @@
           "from": "INSPECTED",
           "to": "BUG",
           "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "BUG",
+          "to": "CLOSED",
+          "at": "2026-07-22T19:22:44Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/payments/payment-router.service.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:36:44Z",
+      "state_updated": "2026-07-22T19:22:44Z",
       "closed_at": null
     },
     "33": {
@@ -538,8 +558,8 @@
         "api"
       ],
       "action": "BUG",
-      "state": "BUG",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "fix-critical-bugs",
       "history": [
         {
           "from": "UNREAD",
@@ -550,11 +570,16 @@
           "from": "INSPECTED",
           "to": "BUG",
           "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "BUG",
+          "to": "CLOSED",
+          "at": "2026-07-22T19:22:44Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/contracts/contracts.service.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:36:44Z",
+      "state_updated": "2026-07-22T19:22:44Z",
       "closed_at": null
     },
     "35": {
@@ -1117,8 +1142,8 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "phase3-batch1",
       "history": [
         {
           "from": "UNREAD",
@@ -1129,12 +1154,22 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:11:31Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/users/users.service.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T23:11:31Z",
+      "closed_at": "2026-07-22T23:11:31Z"
     },
     "59": {
       "title": "feat: Closed beta waitlist landing page — pre-launch acquisition funnel",
@@ -1146,8 +1181,8 @@
         "follow-up"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "phase3-batch1",
       "history": [
         {
           "from": "UNREAD",
@@ -1158,12 +1193,22 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:08:07Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/web/app/waitlist/page.tsx:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T23:08:07Z",
+      "closed_at": "2026-07-22T23:08:07Z"
     },
     "60": {
       "title": "feat: Fury violation code taxonomy — structured rejection reasons for auditors",
@@ -1174,8 +1219,8 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "phase3-batch1",
       "history": [
         {
           "from": "UNREAD",
@@ -1186,12 +1231,32 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:08:28Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:08:28Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/fury/fury.controller.ts:200",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T23:08:28Z",
+      "closed_at": "2026-07-22T23:08:28Z"
     },
     "61": {
       "title": "feat: Pregnancy exclusion gate & mid-challenge penalty-free suspension",
@@ -1202,8 +1267,8 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "phase3-batch1",
       "history": [
         {
           "from": "UNREAD",
@@ -1214,12 +1279,32 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:10:11Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:10:11Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/contracts/contracts.service.ts:1517",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T23:10:11Z",
+      "closed_at": "2026-07-22T23:10:11Z"
     },
     "62": {
       "title": "feat: Stake-tiered verification escalation — progressive proof requirements by risk",
@@ -1230,8 +1315,8 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "phase3-batch1",
       "history": [
         {
           "from": "UNREAD",
@@ -1242,12 +1327,32 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:12:05Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:12:05Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/proofs/proofs.service.ts:43",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T23:12:05Z",
+      "closed_at": "2026-07-22T23:12:05Z"
     },
     "63": {
       "title": "feat: UGC moderation pipeline — App Store approval requirement for user-generated proof content",
@@ -1257,8 +1362,8 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "phase3-batch1",
       "history": [
         {
           "from": "UNREAD",
@@ -1269,12 +1374,22 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:09:38Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/admin/admin.controller.ts:235",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T23:09:38Z",
+      "closed_at": "2026-07-22T23:09:38Z"
     },
     "64": {
       "action": "FUTURE",
@@ -3572,8 +3687,8 @@
         "full-breath-audit"
       ],
       "action": "BUG",
-      "state": "BUG",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "fix-critical-bugs",
       "history": [
         {
           "from": "UNREAD",
@@ -3584,11 +3699,16 @@
           "from": "INSPECTED",
           "to": "BUG",
           "at": "2026-06-12T12:36:46Z"
+        },
+        {
+          "from": "BUG",
+          "to": "CLOSED",
+          "at": "2026-07-22T19:22:44Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/ask-styx/worker/index.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:36:46Z",
+      "state_updated": "2026-07-22T19:22:44Z",
       "closed_at": null
     },
     "160": {
