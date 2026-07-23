@@ -4,6 +4,7 @@ import { BadRequestException } from "@nestjs/common";
 import { BehavioralController } from "./behavioral.controller";
 import { BehavioralEnhancementsService } from "./behavioral-enhancements.service";
 import { BehavioralEnrichmentService } from "./behavioral-enrichment.service";
+import { DecoCommitmentService } from "./deco-commitment.service";
 
 describe("BehavioralController", () => {
   let controller: BehavioralController;
@@ -20,7 +21,9 @@ describe("BehavioralController", () => {
       providers: [
         BehavioralEnhancementsService,
         BehavioralEnrichmentService,
+        DecoCommitmentService,
         { provide: Pool, useValue: pool },
+        { provide: "DATABASE_POOL", useValue: pool },
       ],
     }).compile();
 

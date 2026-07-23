@@ -11,6 +11,7 @@ import { DangerZoneService } from "./danger-zone.service";
 import { AccountabilityPartnerService } from "./accountability-partner.service";
 import { ProgressDashboardService } from "./progress-dashboard.service";
 import { EndowedProgressService } from "./endowed-progress.service";
+import { DecoCommitmentService } from "./deco-commitment.service";
 import { ContractsModule } from "../contracts/contracts.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 
@@ -29,6 +30,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
     AccountabilityPartnerService,
     ProgressDashboardService,
     EndowedProgressService,
+    DecoCommitmentService,
   ],
   exports: [
     BehavioralEnhancementsService,
@@ -40,6 +42,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
     AccountabilityPartnerService,
     ProgressDashboardService,
     EndowedProgressService,
+    DecoCommitmentService,
   ],
 })
 export class BehavioralModule {}

@@ -351,3 +351,32 @@ export class SubmitWhoopScoredDto {
   @IsString()
   source?: string;
 }
+
+export class SelfReportDto {
+  @ApiProperty({
+    description: "Whether the user stayed sober today",
+    example: true,
+  })
+  @IsBoolean()
+  stayedSober!: boolean;
+
+  @ApiPropertyOptional({
+    description: "Urge/craving intensity (0-10)",
+    minimum: 0,
+    maximum: 10,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10)
+  urgeLevel?: number;
+
+  @ApiPropertyOptional({
+    description: "Trigger categories (e.g. stress, social, environmental)",
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  triggers?: string[];
+}
