@@ -17,13 +17,13 @@ export default function Home() {
         Private beta for no-contact recovery. Daily accountability, test-money commitments, and a small US allowlist help you keep the boundary intact without pretending this phase is more than it is.
       </p>
 
-      {/* Primary Actions */}
+      {/* Primary Action — single public CTA into the beta waitlist */}
       <div className="flex flex-col sm:flex-row gap-6 mb-24">
         <Link
-          href={user ? '/dashboard' : '/login'}
+          href={user ? '/dashboard' : '/beta'}
           className="px-8 py-4 bg-white text-black font-extrabold rounded-full hover:bg-neutral-200 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
         >
-          START RECOVERY
+          {user ? 'GO TO DASHBOARD' : 'JOIN THE PRIVATE BETA'}
         </Link>
       </div>
       

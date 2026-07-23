@@ -30,6 +30,16 @@ export {
   getAllRealmSlugs,
 } from "./libs/realm-registry";
 
+// Beta-waitlist source attribution (shared by the public funnel and signup API)
+export {
+  WAITLIST_CHANNELS,
+  type WaitlistChannel,
+  type WaitlistAttribution,
+  type AttributionInput,
+  classifyWaitlistChannel,
+  parseWaitlistAttribution,
+} from "./libs/waitlist-attribution";
+
 export interface StyxClientBuildMetadata {
   platform: StyxClientPlatform;
   appVersion: string;

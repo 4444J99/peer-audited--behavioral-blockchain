@@ -39,7 +39,7 @@ describe('DoNotTextYourExTonightPage', () => {
 
     expect(html).toContain('Join the Private Beta');
     expect(html.match(/<a /g)?.length).toBe(1);
-    expect(html).toContain('href="/register?source=do-not-text-tonight&amp;intent=no-contact-urge');
+    expect(html).toContain('href="/beta?source=do-not-text-tonight&amp;intent=no-contact-urge');
     expect(html).toContain('utm_source=emergency_asset');
     expect(html).toContain('utm_campaign=do_not_text_your_ex_tonight');
   });
