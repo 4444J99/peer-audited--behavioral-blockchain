@@ -184,7 +184,7 @@ Comprehensive risk register for Styx covering regulatory, financial, operational
 | **Likelihood** | 3 (Possible) |
 | **Impact** | 3 (Moderate) |
 | **Score** | 9 |
-| **Mitigation** | (1) 3-of-5 quorum makes single-auditor manipulation impossible. (2) $2 auditor stake creates skin-in-the-game against bad-faith voting. (3) Conflict-of-interest detection prevents social-graph collusion. (4) Round-robin assignment with randomization prevents targeting. (5) Auditor reputation tracking with ejection threshold. (6) Statistical anomaly detection for voting patterns (e.g., auditor who always votes FAIL). (7) Elevated 7-Fury panel for disputes. |
+| **Mitigation** | (1) 2-of-3 quorum makes single-auditor manipulation impossible. (2) $2 auditor stake creates skin-in-the-game against bad-faith voting. (3) Conflict-of-interest detection prevents social-graph collusion. (4) Round-robin assignment with randomization prevents targeting. (5) Auditor reputation tracking with ejection threshold. (6) Statistical anomaly detection for voting patterns (e.g., auditor who always votes FAIL). (7) Elevated 7-Fury panel for disputes. |
 | **Owner** | Engineering + Trust & Safety |
 | **Status** | Active -- quorum, COI detection, and round-robin implemented; anomaly detection planned |
 

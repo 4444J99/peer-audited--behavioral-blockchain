@@ -13,9 +13,16 @@ const mockPool = {
 
 describe('GdprService', () => {
   let service: GdprService;
+  let mockStripe: { subscriptions: { cancel: jest.Mock } };
 
   beforeEach(() => {
     service = new GdprService(mockPool);
+    mockStripe = {
+      subscriptions: {
+        cancel: jest.fn().mockResolvedValue({ id: 'sub_cancelled' }),
+      },
+    };
+    (service as any).stripe = mockStripe;
     (mockPool.query as jest.Mock).mockReset();
     (mockPool.connect as jest.Mock).mockReset().mockResolvedValue(mockClient);
     // appendTruthLogEvent runs on a connected client; default every client query
@@ -140,6 +147,34 @@ describe('GdprService', () => {
       expect(updateCall![1][1]).toBe(`deleted-${userId}@anonymized.styx`);
     });
 
+    it('should cancel a stored subscription before scrubbing Stripe linkage', async () => {
+      const userId = 'subscribed-user';
+
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ id: userId }] });
+      mockClient.query.mockReset();
+      mockClient.query
+        .mockResolvedValueOnce({ rows: [] }) // BEGIN
+        .mockResolvedValueOnce({ rows: [{ subscription_id: 'sub_gdpr' }] })
+        .mockResolvedValue({ rows: [] });
+
+      await service.processPendingDeletions();
+
+      expect(mockStripe.subscriptions.cancel).toHaveBeenCalledWith(
+        'sub_gdpr',
+        { prorate: true },
+        { idempotencyKey: 'styx-gdpr-cancel-subscribed-user-sub_gdpr' },
+      );
+      const subscriptionLookupIndex = mockClient.query.mock.calls.findIndex(
+        (call) => typeof call[0] === 'string' && call[0].includes('SELECT subscription_id'),
+      );
+      const scrubIndex = mockClient.query.mock.calls.findIndex(
+        (call) => typeof call[0] === 'string' && call[0].includes('UPDATE users SET'),
+      );
+      expect(subscriptionLookupIndex).toBeGreaterThan(-1);
+      expect(scrubIndex).toBeGreaterThan(subscriptionLookupIndex);
+    });
+
     it('should scrub remaining identity/compliance PII columns on the user (PRV3)', async () => {
       const userId = 'pii-user';
 
@@ -152,6 +187,7 @@ describe('GdprService', () => {
       expect(updateCall).toBeDefined();
       expect(updateCall![0]).toContain('date_of_birth = NULL');
       expect(updateCall![0]).toContain('stripe_customer_id = NULL');
+      expect(updateCall![0]).toContain('subscription_id = NULL');
       expect(updateCall![0]).toContain("compliance_metadata = '{}'::jsonb");
       expect(updateCall![0]).toContain('identity_verification_id = NULL');
       expect(updateCall![0]).toContain('identity_provider = NULL');

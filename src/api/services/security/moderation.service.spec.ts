@@ -294,8 +294,11 @@ describe("ModerationService", () => {
     it("allows user to appeal a reviewed decision", async () => {
       (mockPool.query as jest.Mock)
         .mockResolvedValueOnce({
-          rows: [{ id: "flag-001", status: "REMOVED" }],
+          rows: [{ id: "flag-001", status: "REMOVED", content_type: "PROOF_MEDIA", content_id: "proof-1", reporter_id: "user-001" }],
         }) // lookup
+        .mockResolvedValueOnce({
+          rows: [{ 1: 1 }],
+        }) // ownership check
         .mockResolvedValueOnce({
           rows: [{ id: "flag-001", appeal_status: "PENDING" }],
         }); // update

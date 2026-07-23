@@ -10,7 +10,6 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
-import { Pool } from "pg";
 import { ContractsService } from "./contracts.service";
 import {
   CreateContractDto,
@@ -21,18 +20,17 @@ import {
   EmotionalTrackingDto,
 } from "./dto";
 import { DisputeService } from "../../../services/escrow/dispute.service";
-import { StripeFboService } from "../../../services/escrow/stripe.service";
-import { LedgerService } from "../../../services/ledger/ledger.service";
-import { TruthLogService } from "../../../services/ledger/truth-log.service";
 import { AuthGuard } from "../../../guards/auth.guard";
 import { BannedUserGuard } from "../../guards/banned-user.guard";
+import { TierGuard } from "../../guards/tier.guard";
 import { GeofenceGuard } from "../../common/guards/geofence.guard";
 import { ComplianceAccessGuard } from "../../common/guards/compliance-access.guard";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { processIAP } from "../../../services/billing";
 import { MedicalExemptionService } from "../compliance/medical-exemption.service";
 import { SurveyService } from "./survey.service";
 import { WaitlistService } from "./waitlist.service";
+import { MeteredUsageService } from "../payments/metered-usage.service";
+import { PayService } from "../pay/pay.service";
 
 @ApiTags("Contracts")
 @ApiBearerAuth()
@@ -42,12 +40,10 @@ export class ContractsController {
     private readonly contractsService: ContractsService,
     private readonly medicalExemption: MedicalExemptionService,
     private readonly disputeService: DisputeService,
-    private readonly pool: Pool,
-    private readonly stripe: StripeFboService,
-    private readonly ledger: LedgerService,
-    private readonly truthLog: TruthLogService,
+    private readonly payService: PayService,
     private readonly surveyService: SurveyService,
     private readonly waitlistService: WaitlistService,
+    private readonly meteredUsage: MeteredUsageService,
   ) {}
 
   @UseGuards(AuthGuard, GeofenceGuard)
@@ -57,7 +53,13 @@ export class ContractsController {
     return this.contractsService.getUserContracts(user.id);
   }
 
-  @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
+  @UseGuards(
+    AuthGuard,
+    GeofenceGuard,
+    ComplianceAccessGuard,
+    BannedUserGuard,
+    TierGuard,
+  )
   @Post()
   @ApiOperation({
     summary: "Create a new behavioral contract with a financial stake",
@@ -117,6 +119,26 @@ export class ContractsController {
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
+  @Post(":id/complete")
+  @ApiOperation({
+    summary:
+      "Mark a contract complete and record a billable proof_accepted usage event",
+  })
+  async complete(
+    @Param("id") contractId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    await this.contractsService.getContract(contractId, { userId: user.id });
+    await this.meteredUsage.recordMeteredUsage(
+      user.id,
+      "proof_accepted",
+      contractId,
+    );
+
+    return { contractId, status: "COMPLETED", usageRecorded: true };
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
   @Post(":id/grace-day")
   @ApiOperation({ summary: "Use a grace day on a contract" })
   async useGraceDay(
@@ -143,14 +165,7 @@ export class ContractsController {
     @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
   ) {
-    return processIAP(
-      this.pool,
-      this.stripe,
-      this.ledger,
-      this.truthLog,
-      user.id,
-      contractId,
-    );
+    return this.payService.purchaseTicket(user.id, contractId);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard)

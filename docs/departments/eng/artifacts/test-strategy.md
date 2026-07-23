@@ -87,7 +87,7 @@ Eight custom validation gates run as part of CI. Each gate is a standalone scrip
 |------|----|---------|
 | Phantom Money | `01-phantom-money` | Verifies double-entry ledger balance invariant: sum of all debits equals sum of all credits. Catches off-by-one errors in escrow settlement. |
 | Orphan Contracts | `02-orphan-contracts` | Ensures every contract has a valid user, a funded vault entry, and at least one scheduled verification window. |
-| Fury Quorum | `03-fury-quorum` | Validates that audit consensus requires 3-of-5 agreement and that no single auditor can unilaterally pass/fail a contract. |
+| Fury Quorum | `03-fury-quorum` | Validates that audit consensus requires 2-of-3 agreement and that no single auditor can unilaterally pass/fail a contract. |
 | Aegis Floor | `04-aegis-floor` | Confirms BMI floor (18.5) enforcement in biological oath creation. Rejects contracts that could incentivize dangerous weight loss. |
 | Velocity Cap | `05-velocity-cap` | Validates the 2% weekly loss velocity cap is enforced on all biological oaths. |
 | Escrow Integrity | `06-escrow-integrity` | Cross-references Stripe FBO balance against internal ledger totals. Flags any discrepancy > $0.01. |
@@ -189,7 +189,7 @@ Additional CI workflows:
 ## 7. Testing Principles
 
 1. **Financial correctness over speed.** Every test involving money must assert ledger balance invariants. A fast test that misses a penny is worse than a slow test that catches it.
-2. **Fury consensus is non-negotiable.** No test may bypass the 3-of-5 quorum requirement. If a test needs a quick pass, it must simulate 3 agreeing auditors.
+2. **Fury consensus is non-negotiable.** No test may bypass the consensus rule: **3 assigned auditors, 2-of-3 or 3-of-3 agreement** (per ADR-004). If a test needs a quick pass, it must simulate 2 of 3 agreeing auditors.
 3. **Aegis is a safety system.** Tests for biological oaths must always verify BMI floor and velocity cap enforcement. Skipping Aegis checks in tests is a blocking code review finding.
 4. **Recovery contracts are sensitive.** Tests involving no-contact targets must verify guardrails (max 30 days, max 3 targets, cooldown enforcement).
 5. **The linguistic cloaker is testable.** Verify that user-facing strings use the approved vocabulary (vault, not bet; oath, not wager) in all test assertions.

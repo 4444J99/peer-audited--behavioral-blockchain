@@ -2,7 +2,7 @@ import { Injectable, ConflictException, UnauthorizedException, BadRequestExcepti
 import { Pool, PoolClient } from 'pg';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { randomBytes, createHash, createHmac } from 'crypto';
+import { randomBytes, createHash, createHmac, scryptSync, timingSafeEqual } from 'crypto';
 
 const BCRYPT_ROUNDS = 10;
 const ACCESS_TOKEN_EXPIRY = '15m';
@@ -10,6 +10,9 @@ const TOKEN_EXPIRY = ACCESS_TOKEN_EXPIRY; // alias for backward compat
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 const MAX_FAILED_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
+const DEFAULT_API_KEY_EXPIRY_DAYS = 90;
+const MAX_API_KEY_EXPIRY_DAYS = 365;
+const API_KEY_PREFIX = 'styx_live';
 
 export function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET; // allow-secret
@@ -17,6 +20,14 @@ export function getJwtSecret(): string {
     throw new Error('JWT_SECRET must be set');
   }
   return secret;
+}
+
+export function getApiKeyPepper(): string {
+  const pepper = process.env.STYX_API_KEY_PEPPER; // allow-secret
+  if (!pepper) {
+    throw new Error('STYX_API_KEY_PEPPER must be set');
+  }
+  return pepper;
 }
 
 // Constant-time placeholder hash compared against when no user exists, so that
@@ -43,6 +54,62 @@ export interface AuthPayload {
   token_type?: string;
   iat?: number;
   exp?: number;
+}
+
+export interface ApiKeyAuthPayload {
+  sub: string;
+  email: string;
+  role: string;
+  apiKeyId: string;
+  apiKeyDbId: string;
+}
+
+export interface IssuedApiKey {
+  id: string;
+  keyId: string;
+  name: string;
+  prefix: string;
+  apiKey: string;
+  expiresAt: Date | null;
+  createdAt: Date;
+}
+
+export interface ApiKeySummary {
+  id: string;
+  keyId: string;
+  name: string;
+  prefix: string;
+  createdAt: Date;
+  expiresAt: Date | null;
+  lastUsedAt: Date | null;
+  revokedAt: Date | null;
+  status: 'active' | 'expired' | 'revoked';
+}
+
+export function parseApiKey(apiKey: string): { keyId: string; secret: string } | null { // allow-secret
+  const match = /^styx_live_([a-f0-9]{24})_([A-Za-z0-9_-]+)$/.exec(apiKey);
+  if (!match) {
+    return null;
+  }
+
+  return { keyId: match[1], secret: match[2] }; // allow-secret
+}
+
+export function deriveApiKeyVerifier(secret: string): string { // allow-secret
+  return scryptSync(secret, getApiKeyPepper(), 64, {
+    N: 16_384,
+    r: 8,
+    p: 1,
+  }).toString('hex');
+}
+
+function compareHashes(left: string, right: string): boolean {
+  const leftBuf = Buffer.from(left, 'hex');
+  const rightBuf = Buffer.from(right, 'hex');
+  if (leftBuf.length !== rightBuf.length) {
+    return false;
+  }
+  return timingSafeEqual(leftBuf, rightBuf);
 }
 
 @Injectable()
@@ -331,5 +398,151 @@ export class AuthService {
       `UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = $1 AND revoked = FALSE`,
       [userId],
     );
+  }
+
+  async issueApiKey(
+    userId: string,
+    opts: { name?: string; expiresInDays?: number } = {},
+  ): Promise<IssuedApiKey> {
+    const expiresInDays = opts.expiresInDays ?? DEFAULT_API_KEY_EXPIRY_DAYS;
+    if (
+      !Number.isInteger(expiresInDays) ||
+      expiresInDays < 1 ||
+      expiresInDays > MAX_API_KEY_EXPIRY_DAYS
+    ) {
+      throw new BadRequestException(
+        `expiresInDays must be between 1 and ${MAX_API_KEY_EXPIRY_DAYS}`,
+      );
+    }
+
+    const keyId = randomBytes(12).toString('hex');
+    const secret = randomBytes(32).toString('base64url'); // allow-secret
+    const apiKey = `${API_KEY_PREFIX}_${keyId}_${secret}`; // allow-secret
+    const keyHash = deriveApiKeyVerifier(secret); // allow-secret
+    const name = opts.name?.trim() || 'API key';
+    const prefix = `${API_KEY_PREFIX}_${keyId}`;
+    const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
+
+    const result = await this.pool.query(
+      `INSERT INTO api_keys (user_id, key_id, key_hash, name, prefix, expires_at)
+       SELECT id, $2, $3, $4, $5, $6
+       FROM users
+       WHERE id = $1 AND UPPER(status) = 'ACTIVE'
+       RETURNING id, key_id, name, prefix, expires_at, created_at`,
+      [userId, keyId, keyHash, name, prefix, expiresAt],
+    );
+
+    if (result.rows.length === 0) {
+      throw new UnauthorizedException('User account is not active');
+    }
+
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      keyId: row.key_id,
+      name: row.name,
+      prefix: row.prefix,
+      apiKey,
+      expiresAt: row.expires_at,
+      createdAt: row.created_at,
+    };
+  }
+
+  async listApiKeys(userId: string): Promise<ApiKeySummary[]> {
+    const result = await this.pool.query(
+      `SELECT id, key_id, name, prefix, created_at, expires_at, last_used_at, revoked_at
+       FROM api_keys
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [userId],
+    );
+
+    return result.rows.map((row) => {
+      const revoked = !!row.revoked_at;
+      const expired = !!row.expires_at && new Date(row.expires_at) < new Date();
+      const status: ApiKeySummary['status'] = revoked
+        ? 'revoked'
+        : expired
+          ? 'expired'
+          : 'active';
+      return {
+        id: row.id,
+        keyId: row.key_id,
+        name: row.name,
+        prefix: row.prefix,
+        createdAt: row.created_at,
+        expiresAt: row.expires_at,
+        lastUsedAt: row.last_used_at,
+        revokedAt: row.revoked_at,
+        status,
+      };
+    });
+  }
+
+  async revokeApiKey(userId: string, keyId: string): Promise<{ revoked: boolean }> {
+    const result = await this.pool.query(
+      `UPDATE api_keys
+       SET revoked_at = COALESCE(revoked_at, NOW())
+       WHERE user_id = $1 AND key_id = $2
+       RETURNING id`,
+      [userId, keyId],
+    );
+
+    if (result.rows.length === 0) {
+      throw new UnauthorizedException('API key not found');
+    }
+
+    return { revoked: true };
+  }
+
+  async verifyApiKey(apiKey: string): Promise<ApiKeyAuthPayload> { // allow-secret
+    const parsed = parseApiKey(apiKey);
+    if (!parsed) {
+      throw new UnauthorizedException('Invalid API key');
+    }
+
+    const keyHash = deriveApiKeyVerifier(parsed.secret); // allow-secret
+    const result = await this.pool.query(
+      `SELECT ak.id, ak.user_id, ak.key_hash, ak.expires_at, ak.revoked_at,
+              u.email, u.role, u.status
+       FROM api_keys ak
+       JOIN users u ON u.id = ak.user_id
+       WHERE ak.key_id = $1`,
+      [parsed.keyId],
+    );
+
+    if (result.rows.length === 0) {
+      throw new UnauthorizedException('Invalid API key');
+    }
+
+    const row = result.rows[0];
+    if (!compareHashes(row.key_hash, keyHash)) {
+      throw new UnauthorizedException('Invalid API key');
+    }
+
+    if (row.revoked_at) {
+      throw new UnauthorizedException('API key has been revoked');
+    }
+
+    if (row.expires_at && new Date(row.expires_at) < new Date()) {
+      throw new UnauthorizedException('API key has expired');
+    }
+
+    if (String(row.status || '').toUpperCase() !== 'ACTIVE') {
+      throw new UnauthorizedException('User account is not active');
+    }
+
+    await this.pool.query(
+      `UPDATE api_keys SET last_used_at = NOW() WHERE id = $1`,
+      [row.id],
+    );
+
+    return {
+      sub: row.user_id,
+      email: row.email,
+      role: row.role || 'USER',
+      apiKeyId: parsed.keyId,
+      apiKeyDbId: row.id,
+    };
   }
 }

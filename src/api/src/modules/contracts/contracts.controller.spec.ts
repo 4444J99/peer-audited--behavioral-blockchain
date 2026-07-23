@@ -1,18 +1,21 @@
 import { ContractsController } from "./contracts.controller";
 import { ContractsService } from "./contracts.service";
+import { GUARDS_METADATA } from "@nestjs/common/constants";
 import { DisputeService } from "../../../services/escrow/dispute.service";
-import { StripeFboService } from "../../../services/escrow/stripe.service";
-import { LedgerService } from "../../../services/ledger/ledger.service";
-import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import { Pool } from "pg";
 import { validate } from "class-validator";
 import { plainToInstance } from "class-transformer";
 import { CreateContractDto, SubmitProofDto } from "./dto";
 import { SurveyService } from "./survey.service";
 import { WaitlistService } from "./waitlist.service";
+import { TierGuard } from "../../guards/tier.guard";
+import { MeteredUsageService } from "../payments/metered-usage.service";
+import { PayService } from "../pay/pay.service";
 
 const mockSurveyService = {} as unknown as SurveyService;
 const mockWaitlistService = {} as unknown as WaitlistService;
+const mockMeteredUsage = {
+  recordMeteredUsage: jest.fn(),
+};
 
 const mockContractsService = {
   getUserContracts: jest.fn(),
@@ -30,10 +33,9 @@ const mockContractsService = {
 } as unknown as ContractsService;
 
 const mockDisputeService = {} as unknown as DisputeService;
-const mockPool = {} as unknown as Pool;
-const mockStripe = {} as unknown as StripeFboService;
-const mockLedger = {} as unknown as LedgerService;
-const mockTruthLog = {} as unknown as TruthLogService;
+const mockPayService = {
+  purchaseTicket: jest.fn(),
+} as unknown as jest.Mocked<PayService>;
 
 describe("ContractsController", () => {
   let controller: ContractsController;
@@ -44,12 +46,10 @@ describe("ContractsController", () => {
       mockContractsService,
       {} as any, // mockMedicalExemption
       mockDisputeService,
-      mockPool,
-      mockStripe,
-      mockLedger,
-      mockTruthLog,
+      mockPayService,
       mockSurveyService,
       mockWaitlistService,
+      mockMeteredUsage as any,
     );
     jest.clearAllMocks();
   });
@@ -99,6 +99,16 @@ describe("ContractsController", () => {
         userId: "user-1",
       });
       expect(result).toEqual(mockContract);
+    });
+
+    it("should apply TierGuard to contract creation", () => {
+      const guards =
+        Reflect.getMetadata(
+          GUARDS_METADATA,
+          ContractsController.prototype.create,
+        ) ?? [];
+
+      expect(guards).toContain(TierGuard);
     });
 
     it("should propagate service errors for invalid stake", async () => {
@@ -212,6 +222,43 @@ describe("ContractsController", () => {
     });
   });
 
+  describe("POST /contracts/:id/complete", () => {
+    it("checks ownership and records a billable proof_accepted event", async () => {
+      (mockContractsService.getContract as jest.Mock).mockResolvedValue({
+        id: "c1",
+        userId: "user-1",
+      });
+      mockMeteredUsage.recordMeteredUsage.mockResolvedValue(undefined);
+
+      const result = await controller.complete("c1", testUser);
+
+      expect(mockContractsService.getContract).toHaveBeenCalledWith("c1", {
+        userId: "user-1",
+      });
+      expect(mockMeteredUsage.recordMeteredUsage).toHaveBeenCalledWith(
+        "user-1",
+        "proof_accepted",
+        "c1",
+      );
+      expect(result).toEqual({
+        contractId: "c1",
+        status: "COMPLETED",
+        usageRecorded: true,
+      });
+    });
+
+    it("should not record metered usage when ownership verification fails", async () => {
+      (mockContractsService.getContract as jest.Mock).mockRejectedValue(
+        new Error("Contract not found"),
+      );
+
+      await expect(controller.complete("missing", testUser)).rejects.toThrow(
+        "Contract not found",
+      );
+      expect(mockMeteredUsage.recordMeteredUsage).not.toHaveBeenCalled();
+    });
+  });
+
   describe("POST /contracts/:id/grace-day", () => {
     it("should call contractsService.useGraceDay with contractId and userId", async () => {
       const mockResult = { graceDaysUsed: 1, graceDaysMax: 2 };
@@ -249,6 +296,21 @@ describe("ContractsController", () => {
       const result = await controller.disputeVerdict("c1", testUser);
 
       expect(mockContractsService.fileDispute).toHaveBeenCalledWith(
+        "user-1",
+        "c1",
+      );
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe("POST /contracts/:id/ticket", () => {
+    it("should purchase a ticket through PayService for backwards-compatible routing", async () => {
+      const mockResult = { paymentIntentId: "pi_ticket", amount: 499 };
+      mockPayService.purchaseTicket.mockResolvedValue(mockResult);
+
+      const result = await controller.purchaseTicket("c1", testUser);
+
+      expect(mockPayService.purchaseTicket).toHaveBeenCalledWith(
         "user-1",
         "c1",
       );
