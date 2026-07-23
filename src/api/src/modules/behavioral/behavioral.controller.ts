@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, UseGuards, Req } from "@nestjs/comm
 import { AuthGuard } from "../../../guards/auth.guard";
 import { BehavioralEnhancementsService } from "./behavioral-enhancements.service";
 import { BehavioralEnrichmentService } from "./behavioral-enrichment.service";
+import { DecoCommitmentService } from "./deco-commitment.service";
 import {
   LifeTransitionType, ImplementationIntention, OathCategory, PassiveProvider,
 } from "../../../../shared/libs/behavioral-logic";
@@ -16,6 +17,7 @@ export class BehavioralController {
   constructor(
     private readonly enhancements: BehavioralEnhancementsService,
     private readonly enrichment: BehavioralEnrichmentService,
+    private readonly decoCommitment: DecoCommitmentService,
   ) {}
 
   @Post("device/subscribe")
@@ -208,8 +210,8 @@ export class BehavioralController {
 
   // #92: DECO oracle stub
   @Post("deco-proof")
-  createDecoProof(@Body() body: { url: string; selector: string; expectedValue: string }) {
-    return this.enrichment.createDecoProof(body.url, body.selector, body.expectedValue);
+  async createDecoProof(@Req() req: any, @Body() body: { url: string; selector: string; expectedValue: string }) {
+    return this.decoCommitment.createCommitment(body, resolveUserId(req));
   }
 
   // #91: Oracle failure fallback

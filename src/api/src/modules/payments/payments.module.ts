@@ -16,6 +16,8 @@ import { ReconciliationService } from "./reconciliation.service";
 import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
 import { StripeFboService } from "../../../services/escrow/stripe.service";
+import { FboAccountService } from "./fbo-account.service";
+import { StripeProductionGuard } from "./stripe-production.guard";
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { StripeFboService } from "../../../services/escrow/stripe.service";
     // provider/export and delete stripe-fbo.service.ts to eliminate the divergent payout math.
     StripeFBOService,
     StripeFboService,
+    FboAccountService,
+    StripeProductionGuard,
     CorepayPayoutProvider,
     StripePayoutProvider,
     SettlementService,
@@ -48,6 +52,8 @@ import { StripeFboService } from "../../../services/escrow/stripe.service";
     PaymentRouterService,
     StripeFBOService,
     StripeFboService,
+    FboAccountService,
+    StripeProductionGuard,
     SettlementService,
     ReconciliationService,
   ],

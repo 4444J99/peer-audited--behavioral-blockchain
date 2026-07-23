@@ -253,7 +253,7 @@ export class BehavioralEnrichmentService {
   calculateAssessmentProfile(answers: Record<string, number>) { return calculateAssessmentProfile(answers); }
 
   // #92: DECO oracle stub
-  createDecoProof(url: string, selector: string, expectedValue: string) {
+  async createDecoProof(url: string, selector: string, expectedValue: string) {
     return createDecoProof({ url, selector, expectedValue });
   }
 

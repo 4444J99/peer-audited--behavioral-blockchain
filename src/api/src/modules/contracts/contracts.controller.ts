@@ -18,6 +18,7 @@ import {
   DoubleDownDto,
   SubmitSurveyDto,
   EmotionalTrackingDto,
+  SelfReportDto,
 } from "./dto";
 import { DisputeService } from "../../../services/escrow/dispute.service";
 import { AuthGuard } from "../../../guards/auth.guard";
@@ -194,6 +195,27 @@ export class ContractsController {
       contractId,
       user.id,
       emotionalTracking,
+    );
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
+  @Post(":id/self-report")
+  @ApiOperation({
+    summary:
+      "Binary daily check-in: stayed sober or not, with optional urge/trigger context",
+  })
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  async submitSelfReport(
+    @Param("id") contractId: string,
+    @CurrentUser() user: { id: string },
+    @Body() dto: SelfReportDto,
+  ) {
+    return this.contractsService.submitAttestation(
+      contractId,
+      user.id,
+      dto.stayedSober
+        ? { urgeLevel: dto.urgeLevel, triggers: dto.triggers }
+        : undefined,
     );
   }
 

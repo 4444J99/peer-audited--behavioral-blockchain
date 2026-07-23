@@ -15,6 +15,7 @@ import { RecoveryProtocolService } from "../../../services/health/recovery-proto
 import { DynamicPenaltyService } from "../../../services/health/dynamic-penalty.service";
 import { FitbitService } from "../../../services/health/fitbit.service";
 import { HoneypotService } from "../../../services/intelligence/honeypot.service";
+import { PodOrchestrationService } from "./pod-orchestration.service";
 
 import { SurveyService } from "./survey.service";
 import { WaitlistService } from "./waitlist.service";
@@ -67,6 +68,7 @@ const redisProvider = {
     DynamicPenaltyService,
     FitbitService,
     HoneypotService,
+    PodOrchestrationService,
     SurveyService,
     WaitlistService,
     BannedUserGuard,
