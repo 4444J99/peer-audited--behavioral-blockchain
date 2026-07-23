@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { Pool } from 'pg';
+import { Queue } from 'bullmq';
 import { Subject, Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
+import { PUSH_DISPATCH_QUEUE_NAME, getDefaultQueueOptions } from '../../../config/queue.config';
 
 export interface CreateNotificationDto {
   userId: string;
@@ -22,11 +24,22 @@ export interface Notification {
   created_at: string;
 }
 
+// Notification types eligible for push dispatch
+const PUSH_ELIGIBLE_TYPES = new Set([
+  'CONTRACT_CREATED', 'PARTNER_INVITATION', 'PAYMENT_FAILED',
+  'CHARGE_DISPUTED', 'RAIN_INTERCESSION', 'FURY_ASSIGNMENT',
+  'VERDICT_RESULT', 'DEADLINE_WARNING', 'ATTESTATION_REMINDER',
+  'GRACE_DAY_REMINDER', 'WALLET_UPDATE',
+]);
+
 @Injectable()
 export class NotificationsService {
   private readonly notificationSubject = new Subject<Notification>();
+  private readonly pushQueue: Queue;
 
-  constructor(private readonly pool: Pool) {}
+  constructor(private readonly pool: Pool) {
+    this.pushQueue = new Queue(PUSH_DISPATCH_QUEUE_NAME, getDefaultQueueOptions());
+  }
 
   /**
    * Returns an observable stream of notifications filtered for a specific user.
@@ -50,7 +63,25 @@ export class NotificationsService {
     // Emit to SSE subscribers
     this.notificationSubject.next(notification);
 
+    // Enqueue push dispatch for eligible notification types
+    if (PUSH_ELIGIBLE_TYPES.has(dto.type)) {
+      this.enqueuePush(dto).catch((err) => {
+        // Log but don't fail the notification creation
+        console.error(`Failed to enqueue push for notification: ${err.message}`);
+      });
+    }
+
     return notification;
+  }
+
+  private async enqueuePush(dto: CreateNotificationDto): Promise<void> {
+    await this.pushQueue.add('push-notification', {
+      userId: dto.userId,
+      type: dto.type,
+      title: dto.title,
+      body: dto.body,
+      metadata: dto.metadata,
+    });
   }
 
   async getUserNotifications(userId: string, limit = 20): Promise<Notification[]> {

@@ -1,16 +1,10 @@
-export interface MobileBootstrapResponse {
-  client: { name: string; version: string; channel: string };
-  authState: { authenticated: boolean; userId: string | null; role: string | null };
-  featureFlags: Record<string, boolean>;
-  apiBaseUrl: string;
-}
-
-export interface ReleaseInfoResponse {
-  version: string;
-  build: string;
-  releasedAt: string;
-}
-
+import type {
+  MobileBootstrapResponse,
+  ReleaseInfoResponse,
+  ReferralCodeResponse,
+  ReferralStats,
+  ReferralReward,
+} from "@styx/shared/index";
 import { getApiBase } from "./runtime-config";
 
 // In the browser, route through the Next.js /api rewrite proxy (same-origin)
@@ -659,6 +653,29 @@ export const api = {
     request<{ status: string }>(`/contracts/${contractId}/attestation`, {
       method: "POST",
     }),
+
+  // Referrals
+  getReferralCode: () =>
+    request<ReferralCodeResponse>("/referrals/code"),
+
+  getReferralStats: () =>
+    request<{
+      totalReferrals: number;
+      rewardedReferrals: number;
+      pendingReferrals: number;
+      totalRewardCents: number;
+      rewards: ReferralReward[];
+    }>("/referrals/rewards"),
+
+  // Streak Chain
+  getStreakChain: () =>
+    request<{
+      days: Array<{ date: string; attested: boolean; graceUsed: boolean; chainBroken: boolean }>;
+      currentStreak: number;
+      longestStreak: number;
+      neverMissTwiceActive: boolean;
+      penaltyMultiplier: number;
+    }>("/dashboard/streak"),
 
   // Public feed (no auth)
   getPublicFeed: (limit?: number) =>

@@ -25,15 +25,16 @@ import {
 import { NotificationsModule } from "../notifications/notifications.module";
 import { PaymentsModule } from "../payments/payments.module";
 import { PayModule } from "../pay/pay.module";
+import { ReferralModule } from "../referrals/referral.module";
 import { EmailModule } from "../email/email.module";
 import Redis from "ioredis";
-import { getRedisConnectionConfig } from "../../../config/queue.config";
+import { resolveCacheRedisConfig } from "../../config/runtime";
 
 const redisProvider = {
   provide: ANOMALY_REDIS_CLIENT,
   useFactory: () => {
     try {
-      return new Redis({ ...getRedisConnectionConfig(), lazyConnect: true });
+      return new Redis({ ...resolveCacheRedisConfig(), lazyConnect: true });
     } catch {
       return undefined;
     }
@@ -44,6 +45,7 @@ const redisProvider = {
   imports: [
     ScheduleModule.forRoot(),
     NotificationsModule,
+    ReferralModule,
     EmailModule,
     PayModule,
     forwardRef(() => PaymentsModule),

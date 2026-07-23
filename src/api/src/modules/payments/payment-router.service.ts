@@ -4,7 +4,9 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { randomBytes } from "crypto";
-import Stripe from "stripe";
+import { PayoutProvider } from "../../common/interfaces/payout-provider.interface";
+import { StripePayoutProvider } from "./stripe-payout.provider";
+import { CorepayPayoutProvider } from "./corepay-payout.provider";
 
 export type PaymentProcessor = "STRIPE" | "HIGH_RISK_COREPAY";
 
@@ -13,33 +15,21 @@ export interface PaymentIntentOptions {
   currency: string;
   userId: string;
   metadata?: Record<string, string>;
-  isHighRisk?: boolean; // Flag to force high-risk routing
+  isHighRisk?: boolean;
 }
 
 @Injectable()
 export class PaymentRouterService {
   private readonly logger = new Logger(PaymentRouterService.name);
 
-  
-  private stripe: Stripe.Stripe;
 
-  constructor() {
-    const apiKey = process.env.STRIPE_SECRET_KEY;
-    const isDev = process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "staging";
-    if (!apiKey && !isDev) {
-      throw new ServiceUnavailableException("Stripe processor not configured for production");
-    }
-    this.stripe = new Stripe(apiKey || "sk_test_mock_key", {
-      apiVersion: "2026-05-27.dahlia" as any,
-    });
-  }
-// Fallback threshold: if a user has &gt; X disputes, automatically route to high-risk processor
   private readonly DISPUTE_RISK_THRESHOLD = 3;
 
-  /**
-   * Determines the safest payment processor for a given transaction.
-   * Prevents Stripe shadow-bans by routing high-contention volume to Corepay/Allied Wallet.
-   */
+  constructor(
+    private readonly stripeProvider: StripePayoutProvider,
+    private readonly corepayProvider: CorepayPayoutProvider,
+  ) {}
+
   determineProcessor(
     options: PaymentIntentOptions,
     userTotalDisputes: number,
@@ -54,10 +44,11 @@ export class PaymentRouterService {
       return "HIGH_RISK_COREPAY";
     }
 
-    this.logger.log(
-      `Routing transaction for user ${options.userId} to primary processor (STRIPE)`,
-    );
     return "STRIPE";
+  }
+
+  getProvider(processor: PaymentProcessor): PayoutProvider {
+    return processor === "STRIPE" ? this.stripeProvider : this.corepayProvider;
   }
 
   /**

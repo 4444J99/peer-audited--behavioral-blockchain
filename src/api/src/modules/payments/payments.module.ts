@@ -7,7 +7,9 @@ import { B2BModule } from "../b2b/b2b.module";
 import { MeteredUsageService } from "./metered-usage.service";
 import { PaymentRouterService } from "./payment-router.service";
 import { StripeFBOService } from "./stripe-fbo.service";
+import { CorepayPayoutProvider } from "./corepay-payout.provider";
 import { StripePayoutProvider } from "./stripe-payout.provider";
+import { WebShopController } from "./web-shop.controller";
 import { SettlementService } from "./settlement.service";
 import { SettlementWorker } from "./settlement.worker";
 import { ReconciliationService } from "./reconciliation.service";
@@ -22,7 +24,7 @@ import { StripeFboService } from "../../../services/escrow/stripe.service";
     forwardRef(() => ComplianceModule),
     B2BModule,
   ],
-  controllers: [PaymentsController],
+  controllers: [PaymentsController, WebShopController],
   providers: [
     MeteredUsageService,
     PaymentRouterService,
@@ -32,6 +34,7 @@ import { StripeFboService } from "../../../services/escrow/stripe.service";
     // provider/export and delete stripe-fbo.service.ts to eliminate the divergent payout math.
     StripeFBOService,
     StripeFboService,
+    CorepayPayoutProvider,
     StripePayoutProvider,
     SettlementService,
     SettlementWorker,
@@ -40,6 +43,7 @@ import { StripeFboService } from "../../../services/escrow/stripe.service";
     TruthLogService,
   ],
   exports: [
+    CorepayPayoutProvider,
     MeteredUsageService,
     PaymentRouterService,
     StripeFBOService,
