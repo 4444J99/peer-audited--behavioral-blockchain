@@ -7,7 +7,7 @@
     "dev": "node ../../scripts/dev/run-api.mjs",
     "build": "nest build",
     "lint": "tsc --noEmit",
-    "test": "jest --forceExit",
+    "test": "jest --coverage --forceExit",
     "migrate": "node ../../scripts/dev/run-migrate.mjs"
   },
   "dependencies": {

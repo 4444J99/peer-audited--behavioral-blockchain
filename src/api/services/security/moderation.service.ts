@@ -218,15 +218,16 @@ export class ModerationService {
    * Returns the moderation queue, filtered by status.
    */
   async getQueue(status?: FlagStatus): Promise<ContentFlag[]> {
+    const severityRank = "CASE severity WHEN 'CRITICAL' THEN 4 WHEN 'HIGH' THEN 3 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 1 ELSE 0 END";
     if (status) {
       const result = await this.pool.query(
-        "SELECT * FROM content_flags WHERE status = $1 ORDER BY severity DESC, created_at ASC",
+        `SELECT * FROM content_flags WHERE status = $1 ORDER BY ${severityRank} DESC, created_at ASC`,
         [status],
       );
       return result.rows as ContentFlag[];
     }
     const result = await this.pool.query(
-      "SELECT * FROM content_flags ORDER BY severity DESC, created_at ASC",
+      `SELECT * FROM content_flags ORDER BY ${severityRank} DESC, created_at ASC`,
     );
     return result.rows as ContentFlag[];
   }
@@ -289,10 +290,32 @@ export class ModerationService {
     }
 
     const flag = flagResult.rows[0] as ContentFlag;
+
+    // Verify the flag has been reviewed (not PENDING/UNDER_REVIEW)
     if (flag.status === "PENDING" || flag.status === "UNDER_REVIEW") {
       throw new BadRequestException(
         "Cannot appeal a decision that has not been reviewed yet",
       );
+    }
+
+    // Verify the user owns the flagged content before allowing appeal
+    let ownsContent = false;
+    if (flag.content_type === "PROOF_MEDIA") {
+      const ownershipResult = await this.pool.query(
+        "SELECT 1 FROM proofs WHERE id = $1 AND user_id = $2",
+        [flag.content_id, userId],
+      );
+      ownsContent = ownershipResult.rows.length > 0;
+    } else if (flag.content_type === "PROFILE_TEXT" || flag.content_type === "CONTRACT_TITLE" || flag.content_type === "WHISTLEBLOWER_REPORT") {
+      // These content types are owned by users directly
+      const ownershipResult = await this.pool.query(
+        "SELECT 1 FROM users WHERE id = $1",
+        [userId],
+      );
+      ownsContent = ownershipResult.rows.length > 0 && flag.reporter_id === userId;
+    }
+    if (!ownsContent) {
+      throw new ForbiddenException('You can only appeal moderation decisions on your own content');
     }
 
     const result = await this.pool.query(

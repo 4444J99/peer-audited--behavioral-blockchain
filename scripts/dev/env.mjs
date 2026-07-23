@@ -166,7 +166,7 @@ export function buildMigrateEnv() {
   const isTest = env.NODE_ENV === "test" || process.env.NODE_ENV === "test";
 
   if (!isTest) {
-    requireOne(env, ["DATABASE_URL"], "DATABASE_URL");
+    requireOne(env, ["MIGRATION_DATABASE_URL", "DATABASE_URL"], "DATABASE_URL or MIGRATION_DATABASE_URL");
   }
 
   env.NODE_ENV ||= "development";

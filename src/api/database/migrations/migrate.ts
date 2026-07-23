@@ -37,7 +37,25 @@ export async function getAppliedMigrations(pool: Pool): Promise<Set<string>> {
 export async function getPendingMigrations(pool: Pool): Promise<string[]> {
   const applied = await getAppliedMigrations(pool);
   const files = listMigrationFiles();
-  return files.filter((f: string) => !applied.has(f));
+
+  const fileSet = new Set(files);
+  for (const a of applied) {
+    if (!fileSet.has(a)) {
+      throw new Error(`Schema drift detected: Applied migration ${a} is missing from the filesystem.`);
+    }
+  }
+
+  const pending = files.filter((f: string) => !applied.has(f));
+  const appliedArr = Array.from(applied).sort();
+  const lastApplied = appliedArr.length > 0 ? appliedArr[appliedArr.length - 1] : '';
+  
+  for (const p of pending) {
+    if (lastApplied && p < lastApplied) {
+      throw new Error(`Schema drift detected: Pending migration ${p} is older than applied migration ${lastApplied}.`);
+    }
+  }
+
+  return pending;
 }
 
 /**
@@ -125,7 +143,8 @@ export async function runMigrations(pool: Pool): Promise<string[]> {
 
 // CLI entry point — run directly with `tsx database/migrations/migrate.ts`
 if (require.main === module) {
-  const pool = new Pool({ connectionString: resolveDatabaseUrl() });
+  const connectionString = process.env.MIGRATION_DATABASE_URL || resolveDatabaseUrl();
+  const pool = new Pool({ connectionString });
 
   runMigrations(pool)
     .then((applied) => {

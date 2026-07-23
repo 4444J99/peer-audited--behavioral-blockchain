@@ -1,7 +1,16 @@
-import type {
-  MobileBootstrapResponse,
-  ReleaseInfoResponse,
-} from "@styx/shared/index";
+export interface MobileBootstrapResponse {
+  client: { name: string; version: string; channel: string };
+  authState: { authenticated: boolean; userId: string | null; role: string | null };
+  featureFlags: Record<string, boolean>;
+  apiBaseUrl: string;
+}
+
+export interface ReleaseInfoResponse {
+  version: string;
+  build: string;
+  releasedAt: string;
+}
+
 import { getApiBase } from "./runtime-config";
 
 // In the browser, route through the Next.js /api rewrite proxy (same-origin)
