@@ -2,7 +2,7 @@ import { FuryController } from './fury.controller';
 import { FuryWorker } from './fury.worker';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { Pool } from 'pg';
-
+import { FuryViolationCode } from '../../../../shared/fury-logic/violation-codes';
 describe('FuryController', () => {
   let controller: FuryController;
   let mockPool: { query: jest.Mock };
@@ -99,7 +99,7 @@ describe('FuryController', () => {
       const updateCall = mockPool.query.mock.calls[0];
       expect(updateCall[0]).toMatch(/UPDATE fury_assignments SET verdict/);
       expect(updateCall[0]).toMatch(/verdict IS NULL/);
-      expect(updateCall[1]).toEqual(['PASS', 'assign-1', 'fury-1']);
+      expect(updateCall[1]).toEqual(['PASS', null, 'assign-1', 'fury-1']);
 
       // Verify TruthLog
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('FURY_VERDICT', {
@@ -117,11 +117,11 @@ describe('FuryController', () => {
 
       await controller.submitVerdict(
         { id: 'fury-2' },
-        { assignmentId: 'assign-2', verdict: 'FAIL' },
+        { assignmentId: 'assign-2', verdict: 'FAIL', rejectionCode: FuryViolationCode.MEDIA_TAMPERED },
       );
 
       const updateCall = mockPool.query.mock.calls[0];
-      expect(updateCall[1]).toEqual(['FAIL', 'assign-2', 'fury-2']);
+      expect(updateCall[1]).toEqual(['FAIL', FuryViolationCode.MEDIA_TAMPERED, 'assign-2', 'fury-2']);
     });
 
     it('should reject and not check consensus when no row is updated (invalid assignment or re-vote)', async () => {

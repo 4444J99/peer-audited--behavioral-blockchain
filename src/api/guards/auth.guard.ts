@@ -1,18 +1,36 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+  Optional,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
+import { Pool } from 'pg';
 import * as jwt from 'jsonwebtoken';
 import { timingSafeEqual } from 'crypto';
-import { getJwtSecret, deriveCsrfToken } from '../src/modules/auth/auth.service';
+import {
+  getJwtSecret,
+  deriveCsrfToken,
+  parseApiKey,
+  deriveApiKeyVerifier,
+} from '../src/modules/auth/auth.service';
 import { consumeSseTicket, SseTicketScope } from './sse-ticket.store';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly reflector?: Reflector) {}
+  constructor(
+    @Optional()
+    private readonly reflector?: Reflector,
+    @Optional()
+    private readonly pool?: Pool,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> {
     // Check for @Public() decorator
     const isPublic = this.reflector?.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
@@ -21,6 +39,11 @@ export class AuthGuard implements CanActivate {
     if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest<Request>();
+    const apiKey = this.extractApiKeyFromHeader(request); // allow-secret
+    if (apiKey) {
+      return this.activateWithApiKey(request, apiKey);
+    }
+
     const headerToken = this.extractTokenFromHeader(request); // allow-secret
     const cookieToken = headerToken ? undefined : this.extractTokenFromCookie(request); // allow-secret
     const token = headerToken || cookieToken;
@@ -73,6 +96,88 @@ export class AuthGuard implements CanActivate {
     }
 
     return undefined;
+  }
+
+  private extractApiKeyFromHeader(request: Request): string | undefined {
+    const directHeader = request.headers['x-api-key'];
+    const directApiKey = Array.isArray(directHeader) ? directHeader[0] : directHeader;
+    if (directApiKey) {
+      return directApiKey; // allow-secret
+    }
+
+    const [type, credential] = request.headers.authorization?.split(' ') ?? [];
+    if (type === 'ApiKey' && credential) {
+      return credential; // allow-secret
+    }
+
+    return undefined;
+  }
+
+  private async activateWithApiKey(request: Request, apiKey: string): Promise<boolean> { // allow-secret
+    const parsed = parseApiKey(apiKey);
+    if (!parsed) {
+      throw new UnauthorizedException('Invalid API key');
+    }
+
+    if (!this.pool) {
+      throw new UnauthorizedException('API key authentication is not configured');
+    }
+
+    const keyHash = deriveApiKeyVerifier(parsed.secret); // allow-secret
+    const result = await this.pool.query(
+      `SELECT ak.id, ak.user_id, ak.key_hash, ak.expires_at, ak.revoked_at,
+              u.email, u.role, u.status
+       FROM api_keys ak
+       JOIN users u ON u.id = ak.user_id
+       WHERE ak.key_id = $1`,
+      [parsed.keyId],
+    );
+
+    if (result.rows.length === 0) {
+      throw new UnauthorizedException('Invalid API key');
+    }
+
+    const row = result.rows[0];
+    if (!this.hasMatchingApiKeyHash(row.key_hash, keyHash)) {
+      throw new UnauthorizedException('Invalid API key');
+    }
+
+    if (row.revoked_at) {
+      throw new UnauthorizedException('API key has been revoked');
+    }
+
+    if (row.expires_at && new Date(row.expires_at) < new Date()) {
+      throw new UnauthorizedException('API key has expired');
+    }
+
+    if (String(row.status || '').toUpperCase() !== 'ACTIVE') {
+      throw new UnauthorizedException('User account is not active');
+    }
+
+    await this.pool.query(
+      `UPDATE api_keys SET last_used_at = NOW() WHERE id = $1`,
+      [row.id],
+    );
+
+    (request as any).user = {
+      id: row.user_id,
+      email: row.email,
+      role: row.role || 'USER',
+      sub: row.user_id,
+      apiKeyId: parsed.keyId,
+      apiKeyDbId: row.id,
+    };
+    (request as any).authSource = 'api_key';
+    return true;
+  }
+
+  private hasMatchingApiKeyHash(storedHash: string, presentedHash: string): boolean {
+    const storedBuf = Buffer.from(storedHash, 'hex');
+    const presentedBuf = Buffer.from(presentedHash, 'hex');
+    if (storedBuf.length !== presentedBuf.length) {
+      return false;
+    }
+    return timingSafeEqual(storedBuf, presentedBuf);
   }
 
   private extractTokenFromCookie(request: Request): string | undefined {

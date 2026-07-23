@@ -33,7 +33,7 @@ export type Seed = z.infer<typeof SeedSchema>;
 
 export interface AnalyzerResult {
   check: string;
-  status: 'PASS' | 'FAIL';
+  status: 'PASS' | 'FAIL' | 'SKIP';
   message?: string;
 }
 

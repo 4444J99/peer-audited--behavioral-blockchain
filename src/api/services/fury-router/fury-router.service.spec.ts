@@ -1,5 +1,6 @@
 import { FuryRouterService } from './fury-router.service';
 import { Queue } from 'bullmq';
+import { FURY_CONSENSUS_SIZE } from '../../../shared/libs/behavioral-logic';
 
 describe('FuryRouterService', () => {
   let service: FuryRouterService;
@@ -38,6 +39,15 @@ describe('FuryRouterService', () => {
       expect(addCall[1].dispatchedAt).toBeDefined();
       // Arg 2: job options
       expect(addCall[2].attempts).toBe(3);
+    });
+
+    it('should default to the canonical Fury consensus reviewer count', async () => {
+      (mockQueue.add as jest.Mock).mockResolvedValueOnce({ id: 'bullmq-job-default' });
+
+      await service.routeProof('proof-uuid-default', 'user-def');
+
+      const addCall = (mockQueue.add as jest.Mock).mock.calls[0];
+      expect(addCall[1].requiredReviewers).toBe(FURY_CONSENSUS_SIZE);
     });
   });
 });

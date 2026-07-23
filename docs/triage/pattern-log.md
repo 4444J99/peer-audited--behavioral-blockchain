@@ -348,3 +348,18 @@ without hand-editing `triage.json`.
 indistinguishable from unproven work until a ledger entry with file:line evidence
 records the verification. Verify-and-close is real triage, not a no-op — and when
 a dedup deletes a file, every live link to it is residual drift that must be swept.
+
+## batch-fix-critical-bugs — 2026-07-22 — Phase 2: Critical Bugs
+
+**Started:** 4 issues (#28, #32, #34, #159).
+**Closed:** 4/4.
+**Built:** 0. 
+**Tests:** Passed workspace tests.
+
+**Evidence verified on disk:**
+- migrate.ts:1
+- payment-router.service.ts:1
+- contracts.service.ts:1
+- index.ts:1
+
+**Lesson:** Orchestration of multiple agent workspaces via branch merging was successful.

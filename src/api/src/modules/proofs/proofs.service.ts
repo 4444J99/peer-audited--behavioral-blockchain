@@ -43,10 +43,14 @@ export class ProofsService {
     id: string;
     status: string;
     ownerUserId: string;
+    stakeAmount: number;
+    strikes: number;
+    integrityScore: number;
   }> {
     const contract = await this.pool.query(
-      `SELECT c.id, c.status, c.user_id
+      `SELECT c.id, c.status, c.user_id, c.stake_amount, c.strikes, u.integrity_score
        FROM contracts c
+       JOIN users u ON u.id = c.user_id
        WHERE c.id = $1`,
       [contractId],
     );
@@ -72,6 +76,9 @@ export class ProofsService {
       id: row.id,
       status: row.status,
       ownerUserId: row.user_id,
+      stakeAmount: Number(row.stake_amount),
+      strikes: row.strikes || 0,
+      integrityScore: row.integrity_score,
     };
   }
 

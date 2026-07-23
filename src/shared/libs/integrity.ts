@@ -123,3 +123,8 @@ export function getTierMaxStake(tiers: string[]): number {
   if (tiers.includes('TIER_1_MICRO_STAKES')) return 2000; // $20
   return 0;
 }
+
+export {
+  FURY_CONSENSUS_SIZE as FURY_CONSENSUS_AUDITORS,
+  FURY_CONSENSUS_AGREEMENT_REQUIRED,
+} from './behavioral-logic';

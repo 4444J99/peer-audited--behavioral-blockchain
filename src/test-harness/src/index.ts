@@ -25,7 +25,7 @@ program
 
     // 2. Behavioral Analyzer
     const behavioralAnalyzer = new BehavioralAnalyzer(targetRepo);
-    results.push(behavioralAnalyzer.analyze());
+    results.push(await behavioralAnalyzer.analyze());
 
     // 3. Aesthetic Analyzer (Conditional)
     if (options.url) {
@@ -39,7 +39,7 @@ program
     results.forEach(suite => {
       console.log(`\nAnalyzer: ${suite.analyzer.toUpperCase()}`);
       suite.results.forEach(res => {
-        const icon = res.status === 'PASS' ? '✅' : '❌';
+        const icon = res.status === 'PASS' ? '✅' : res.status === 'SKIP' ? '⏭️' : '❌';
         console.log(`${icon} [${res.check}] ${res.status}${res.message ? `: ${res.message}` : ''}`);
       });
     });

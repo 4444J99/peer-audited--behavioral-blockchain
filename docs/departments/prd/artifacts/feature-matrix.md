@@ -95,7 +95,7 @@ Comprehensive feature inventory for Styx with implementation status, phase gatin
 |---------|--------|-------|----------|-------|
 | Fury application and vetting | Built | Beta | P0 | Minimum integrity score threshold |
 | Auditor stake ($2 per assignment) | Built | Beta | P0 | |
-| 3-of-5 quorum consensus | Built | Beta | P0 | Gate 03 validates |
+| 2-of-3 quorum consensus | Built | Beta | P0 | Gate 03 validates |
 | Round-robin assignment | Built | Beta | P0 | Gate 08 validates fairness |
 | Conflict-of-interest detection | Built | Beta | P0 | Social graph + geographic |
 | Vote casting (PASS/FAIL/NEEDS_MORE_INFO) | Built | Beta | P0 | |

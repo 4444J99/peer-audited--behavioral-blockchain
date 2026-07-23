@@ -15,6 +15,7 @@ import { PHashService } from '../../../services/intelligence/phash.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { RequestUploadUrlDto, ConfirmUploadDto } from './dto';
 import { ProofsService } from './proofs.service';
+import { getEffectiveVerificationTier, validateProofMedia } from '../../../../shared/config/verification-tiers';
 
 @ApiTags('Proofs')
 @ApiBearerAuth()
@@ -44,6 +45,20 @@ export class ProofsController {
 
     if (contractAccess.status !== 'ACTIVE') {
       throw new BadRequestException('Proof submission is only allowed for active contracts');
+    }
+
+    const stakeAmountCents = Math.round(contractAccess.stakeAmount * 100);
+    const tier = getEffectiveVerificationTier(
+      stakeAmountCents,
+      contractAccess.integrityScore,
+      contractAccess.strikes,
+      false
+    );
+
+    const hasVideo = dto.contentType.startsWith('video/');
+    const validationError = validateProofMedia(tier, hasVideo);
+    if (validationError) {
+      throw new BadRequestException(validationError);
     }
 
     const proofResult = await this.pool.query(

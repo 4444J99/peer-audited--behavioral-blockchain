@@ -2,6 +2,11 @@
 
 A peer-audited behavioral market that uses loss aversion (coefficient 1.955) to enforce habit follow-through via financial stakes.
 
+> **The expensive problem:** Accountability and corporate-wellness programs leak money because the stakes aren't real, the proof isn't audited, and holding employees' health data is a liability nobody wants to own. Budgets buy good intentions and get no follow-through. Styx is the production-grade enforcement layer that closes the gap: real Stripe FBO escrow (hold / capture / cancel), a double-entry ledger with no phantom money, peer-audited proof-of-completion via the Fury Router (honeypot injection + consensus + bounty economy), loss-aversion physics (λ = 1.955), and a privacy-firewalled B2B tier where the employer funds the pot but never sees an individual's health data — only k-anonymized aggregate engagement.
+>
+> [**Deploy this for your shop →**](mailto:padavano.anthony@gmail.com)<br>
+> *(If you are a technical recruiter or engineering leader, this repository is the proof-of-work for my architectural weight — a NestJS + Next.js + React Native + Tauri monorepo moving regulated money through a double-entry ledger and Stripe escrow, with 1,107 tests, KYC, geofencing, and CodeQL gates. [Work with the team that built this →](mailto:padavano.anthony@gmail.com))*
+
 ![CI](https://github.com/a-organvm/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-339933)
@@ -41,6 +46,19 @@ npm run dev
 ```
 
 `DATABASE_URL`, `REDIS_URL`, `STYX_API_PUBLIC_URL`, `STYX_WEB_PUBLIC_URL`, and `NEXT_PUBLIC_API_URL` define the runtime endpoints. Docker Compose uses the `STYX_DOCKER_*` variables from the same environment contract.
+
+### One-command deploy
+
+Prefer containers? Bring up the **entire stack** (API + Web + PostgreSQL + Redis) with a single command — no `.env` editing required:
+
+```bash
+make deploy        # ≡ bash scripts/deploy.sh local
+# → API  http://localhost:3000   (health: /health, docs: /api/docs)
+# → Web  http://localhost:3001
+make deploy-down   # stop and remove the stack
+```
+
+It reads dev defaults from `.config/docker/compose.defaults.env` (a present repo-root `.env` is layered on top and wins). The same script deploys to production — `bash scripts/deploy.sh render`. Full guide: [docs/operations/one-command-deploy.md](docs/operations/one-command-deploy.md).
 
 ## Architecture
 
@@ -149,7 +167,9 @@ A production deploy requires:
 2. **A `v*` tag** pushed to `main` — triggers [`deploy.yml`](.github/workflows/deploy.yml) which deploys API + Web to Render, runs migrations, and smoke-tests both services.
 3. **Render dashboard** manual secrets for `sync: false` vars in `render.yaml` (`STRIPE_SECRET_KEY`, `JWT_SECRET`, `CLOUDFLARE_R2_*`, etc.)
 
-See [`docs/activation/activation-ledger--peer-audited--2026-06-11.md`](docs/activation/activation-ledger--peer-audited--2026-06-11.md) for the full activation checklist.
+Or trigger the same Render deploy from a laptop without a tag — set `RENDER_API_KEY`, `RENDER_API_SERVICE_ID`, `RENDER_WEB_SERVICE_ID` and run `bash scripts/deploy.sh render`. On each `v*` tag, [`docker-publish.yml`](.github/workflows/docker-publish.yml) also pushes versioned `styx-api` / `styx-web` images to GHCR for self-hosting.
+
+See [`docs/operations/one-command-deploy.md`](docs/operations/one-command-deploy.md) for the fast path and [`docs/activation/activation-ledger--peer-audited--2026-06-11.md`](docs/activation/activation-ledger--peer-audited--2026-06-11.md) for the full activation checklist.
 
 ## Key Features
 
@@ -224,6 +244,9 @@ Full policy and gate ownership live in `docs/planning/beta-readiness-contract.md
 | `npm run dev:web`               | Run Web with repo-root env resolution                    |
 | `npm run dev:migrate`           | Run database migrations with repo-root env resolution    |
 | `make docker-up`                | Start services through Docker Compose                    |
+| `make deploy`                   | One-command deploy: full local stack (zero config)       |
+| `make deploy TARGET=render`     | Trigger a production deploy on Render                     |
+| `make deploy-down`              | Stop and remove the local stack                          |
 | `npx turbo run lint`            | TypeScript strict lint                                   |
 | `npm run format`                | Prettier across all workspaces                           |
 | `npm run clean`                 | Clean build artifacts + node_modules                     |
@@ -233,7 +256,9 @@ Full policy and gate ownership live in `docs/planning/beta-readiness-contract.md
 
 ## API Documentation
 
-Interactive Swagger/OpenAPI docs are available at `/api/docs` when the API is running:
+Customer-facing API and usage docs live at [`docs/api/api--spec.md`](docs/api/api--spec.md).
+Interactive Swagger/OpenAPI docs are also available at `/api/docs` in
+non-production environments when the API is running:
 
 ```bash
 npm run dev:api
@@ -257,12 +282,34 @@ Copy `.env.example` to `.env` and set:
 | `CLOUDFLARE_R2_ACCESS_KEY`              | Yes                                                | R2 storage access key                                                   |
 | `CLOUDFLARE_R2_SECRET_KEY`              | Yes                                                | R2 storage secret key                                                   |
 | `JWT_SECRET`                            | Yes (prod)                                         | JWT signing secret (enforced in production)                             |
+| `STYX_API_KEY_PEPPER`                   | Yes                                                | Scrypt pepper for stored user API-key verifiers                         |
 | `GEMINI_API_KEY`                        | No                                                 | Gemini AI for goal ethics screening                                     |
 | `KYC_ENFORCEMENT_ENABLED`               | No                                                 | Enable KYC gating (default: `false`)                                    |
 | `GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS` | No                                                 | Fail-open when geo headers missing (default: `true`)                    |
 | `BETA_API_URL`                          | No (required for full beta readiness verification) | Target API URL for `npm run beta:readiness`                             |
 | `BETA_WEB_URL`                          | No                                                 | Optional target web URL for beta readiness                              |
 | `BETA_ENV_LABEL`                        | No                                                 | Expected environment label for `/meta/release` (default: `beta`)        |
+
+The API loads env files through `src/api/src/config/env-path.ts` in this order:
+repo `.env.local`, repo `.env`, `src/api/.env.local`, then `src/api/.env`.
+Set `STYX_API_KEY_PEPPER` in the selected file or deployment secret store before
+issuing or verifying API keys. Generate it with `openssl rand -base64 48`; do not
+reuse `JWT_SECRET`.
+
+User API keys are issued from an authenticated session:
+
+```bash
+curl -X POST "$STYX_API_PUBLIC_URL/auth/api-keys" \
+  -H "Authorization: Bearer $JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"automation","expiresInDays":90}'
+```
+
+The `apiKey` field is returned once. Use it on protected API endpoints with:
+
+```bash
+curl "$STYX_API_PUBLIC_URL/users/me" -H "x-api-key: $STYX_API_KEY"
+```
 
 ## CI Pipeline
 
@@ -295,3 +342,4 @@ MIT. See [LICENSE](LICENSE) for details.
 <sub>[Portfolio](https://4444j99.github.io/portfolio/) · [System Directory](https://4444j99.github.io/portfolio/directory/) · [ORGAN III · Ergon](https://organvm-iii-ergon.github.io/) · Part of the <a href="https://4444j99.github.io/portfolio/directory/">ORGANVM eight-organ system</a></sub>
 
 <!-- SYSTEM-NAV-END -->
+
