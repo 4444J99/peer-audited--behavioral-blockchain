@@ -27,8 +27,10 @@ describe('ComplianceController', () => {
     approveExemption: jest.fn(),
   } as unknown as MedicalExemptionService;
 
+  const mockComplianceArtifact = {} as any;
+
   beforeEach(() => {
-    controller = new ComplianceController(mockPolicy, mockIdentityVerification, mockMedicalExemption);
+    controller = new ComplianceController(mockPolicy, mockIdentityVerification, mockMedicalExemption, mockComplianceArtifact);
     jest.clearAllMocks();
   });
 

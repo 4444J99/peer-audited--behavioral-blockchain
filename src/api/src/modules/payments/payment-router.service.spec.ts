@@ -4,7 +4,12 @@ describe('PaymentRouterService', () => {
   let service: PaymentRouterService;
 
   beforeEach(() => {
-    service = new PaymentRouterService();
+    const mockStripe = { releaseFunds: jest.fn().mockResolvedValue({ status: 'COMPLETED', externalRef: 'pi_mock_1' }) };
+    const mockCorepay = { releaseFunds: jest.fn().mockResolvedValue({ status: 'COMPLETED', externalRef: 'tok_mock_1' }) };
+    service = new PaymentRouterService(
+      mockStripe as any,
+      mockCorepay as any,
+    );
   });
 
   // ─── determineProcessor ───

@@ -82,6 +82,17 @@ export interface MobileBootstrapResponse {
   };
 }
 
+export interface ComplianceArtifactStatus {
+  artifactType: string;
+  version: string | null;
+  contentHash: string | null;
+  signedBy: string | null;
+  signedAt: string | null;
+  expiresAt: string | null;
+  isActive: boolean;
+  jurisdictions: string[];
+}
+
 export interface ReleaseInfoResponse {
   service: "styx-api";
   apiVersion: string;
@@ -104,3 +115,73 @@ export interface ReleaseInfoResponse {
 
 export * from "./libs/behavioral-enhancements";
 export * from "./libs/integrity";
+
+export interface PushTokenRegistration {
+  token: string;
+  platform: 'ios' | 'android' | 'web' | 'unknown';
+  deviceIdentifier?: string;
+}
+
+export interface PushToken {
+  id: string;
+  userId: string;
+  platform: string;
+  token: string;
+  isActive: boolean;
+  lastSeenAt: string;
+  createdAt: string;
+}
+
+export interface PushDeliveryStatus {
+  sent: number;
+  failed: number;
+  unregistered: number;
+  total: number;
+}
+
+export interface ReferralCodeResponse {
+  code: string;
+  url: string;
+}
+
+export interface ReferralStats {
+  totalReferrals: number;
+  rewardedReferrals: number;
+  pendingReferrals: number;
+  totalRewardCents: number;
+}
+
+export interface ReferralReward {
+  id: string;
+  referredUserEmail: string;
+  status: string;
+  rewardAmountCents: number;
+  rewardPaidAt: string | null;
+  createdAt: string;
+}
+
+export type RationalizationCategory =
+  | 'GENUINE_EMERGENCY'
+  | 'LEGITIMATE_BUT_NOT_BLOCKING'
+  | 'PURE_RATIONALIZATION';
+
+export interface RationalizationResult {
+  category: RationalizationCategory;
+  confidence: number;
+  reasoning: string;
+  response: string;
+}
+
+export interface RationalizationHistory {
+  totalLogs: number;
+  genuineEmergency: number;
+  legitimateButNotBlocking: number;
+  pureRationalization: number;
+  recentLogs: Array<{
+    id: string;
+    contextType: string;
+    classification: string;
+    rawText: string;
+    createdAt: string;
+  }>;
+}

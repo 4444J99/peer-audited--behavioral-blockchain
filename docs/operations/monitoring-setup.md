@@ -278,6 +278,38 @@ This end-to-end synthetic check validates the entire contract lifecycle. Run man
 | UptimeRobot | `uptimerobot.com` | External uptime monitoring |
 | Styx Admin | `https://api.styx.app/admin` | Business metrics (authenticated) |
 
+## Cost Alerting
+
+### Automated Cost Monitoring
+
+A cost-alert script (`scripts/cost-alert.sh`) estimates monthly spend by querying the Render API and
+comparing against a configurable threshold. Run it on a schedule:
+
+```bash
+# Manual check
+./scripts/cost-alert.sh --threshold 50
+
+# With Slack notification
+./scripts/cost-alert.sh --threshold 50 --slack-webhook https://hooks.slack.com/services/...
+
+# Via daily cron (Render Cron Jobs or GitHub Actions)
+# 0 9 * * * /path/to/scripts/cost-alert.sh --threshold 50
+```
+
+### Cost Thresholds
+
+| Tier | Monthly Budget | Action |
+|------|---------------|--------|
+| Pre-launch (current) | $50 | Alert if exceeded — review services, disable non-essential |
+| Private beta (500 users) | $200 | Alert at $150 — plan scaling upgrade |
+| Open beta (500-2K users) | $400 | Alert at $350 — evaluate Standard plan |
+| Public GA (2K+) | $1,000+ | Alert at 80% of budget — optimize or raise |
+
+### Manual Tracking
+
+The financial runway tracker (`docs/finance/runway-tracker.md`) is updated monthly with actual spend
+from Render, Stripe, and Cloudflare invoices. Compare automated estimates to actual invoices each cycle.
+
 ## Monitoring Scaling Plan
 
 | User Count | Monitoring Changes |

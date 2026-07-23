@@ -109,43 +109,65 @@ export function resolveDatabaseUrl(): string {
   });
 }
 
-export function resolveRedisConnectionConfig() {
-  const redisUrl = process.env.REDIS_URL;
-  if (redisUrl) {
-    const parsed = new URL(redisUrl);
-    // Default Redis port is 6379 (Redis standard) when the URL has no
-    // explicit port and REDIS_PORT env is unset. Previously this
-    // required REDIS_PORT to be set, which broke the common case of
-    // REDIS_URL=redis://localhost with no port.
-    const port = parsePort(
-      parsed.port || process.env.REDIS_PORT || "6379",
-      "REDIS_URL port",
-    );
-    return {
-      host: parsed.hostname,
-      port,
-      password: parsed.password || undefined, // allow-secret
-      tls: parsed.protocol === "rediss:" ? {} : undefined,
-    };
-  }
+function parseRedisUrl(envKey: string, defaultPort: string) {
+  const redisUrl = process.env[envKey];
+  if (!redisUrl) return undefined;
+
+  const parsed = new URL(redisUrl);
+  const port = parsePort(
+    parsed.port || process.env[`${envKey}_PORT`] || defaultPort,
+    `${envKey} port`,
+  );
+  return {
+    host: parsed.hostname,
+    port,
+    password: parsed.password || undefined, // allow-secret
+    tls: parsed.protocol === "rediss:" ? {} : undefined,
+  };
+}
+
+function resolveRedisByPurpose(
+  urlEnv: string,
+  hostEnv: string,
+  portEnv: string,
+  defaultPort: string,
+) {
+  const fromUrl = parseRedisUrl(urlEnv, defaultPort);
+  if (fromUrl) return fromUrl;
 
   if (process.env.NODE_ENV === "test") {
-    return {
-      host: "127.0.0.1",
-      port: 6379,
-      password: process.env.REDIS_PASSWORD || undefined, // allow-secret
-    };
+    return { host: "127.0.0.1", port: 6379 };
   }
 
-  const host = requireOneEnv(["REDIS_HOST"], "Redis host");
+  const host = requireOneEnv([hostEnv], `${hostEnv}`);
   const port = parsePort(
-    requireOneEnv(["REDIS_PORT"], "Redis port"),
-    "Redis port",
+    requireOneEnv([portEnv], `${portEnv}`),
+    `${portEnv}`,
   );
-
   return {
     host,
     port,
-    password: process.env.REDIS_PASSWORD || undefined, // allow-secret
+    password: process.env[`${hostEnv.replace(/_HOST$/, '_PASSWORD')}`] || undefined, // allow-secret
   };
+}
+
+export function resolveRedisConnectionConfig() {
+  return resolveRedisByPurpose("REDIS_URL", "REDIS_HOST", "REDIS_PORT", "6379");
+}
+
+export function resolveBullmqRedisConfig() {
+  const legacy = resolveRedisByPurpose("REDIS_BULLMQ_URL", "REDIS_BULLMQ_HOST", "REDIS_BULLMQ_PORT", "6380");
+  // If the purpose-specific env vars are not set, fall back to the shared Redis
+  if (legacy.host === "127.0.0.1" && legacy.port === 6379 && process.env.NODE_ENV !== "test") {
+    return resolveRedisConnectionConfig();
+  }
+  return legacy;
+}
+
+export function resolveCacheRedisConfig() {
+  const cfg = resolveRedisByPurpose("REDIS_CACHE_URL", "REDIS_CACHE_HOST", "REDIS_CACHE_PORT", "6381");
+  if (cfg.host === "127.0.0.1" && cfg.port === 6381 && process.env.NODE_ENV !== "test") {
+    return resolveRedisConnectionConfig();
+  }
+  return cfg;
 }

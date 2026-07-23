@@ -6,10 +6,15 @@ import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { PHashService } from '../../../services/intelligence/phash.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { ProofsService } from './proofs.service';
+import { VideoProcessingService } from './video-processing.service';
+import { VideoProcessingWorker } from './video-processing.worker';
 
 @Module({
   controllers: [ProofsController],
-  providers: [R2StorageService, FuryRouterService, TruthLogService, PHashService, AnomalyService, ProofsService],
-  exports: [R2StorageService],
+  providers: [
+    R2StorageService, FuryRouterService, TruthLogService, PHashService,
+    AnomalyService, ProofsService, VideoProcessingService, VideoProcessingWorker,
+  ],
+  exports: [R2StorageService, VideoProcessingService],
 })
 export class ProofsModule {}

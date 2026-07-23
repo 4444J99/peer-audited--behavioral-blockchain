@@ -12,6 +12,9 @@ export function SiteFooter() {
         </div>
 
         <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          <Link href="/help" className="hover:text-neutral-300 transition-colors">
+            Help & FAQ
+          </Link>
           <Link href="/legal/terms" className="hover:text-neutral-300 transition-colors">
             Terms of Service
           </Link>
