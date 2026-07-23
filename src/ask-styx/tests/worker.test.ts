@@ -24,8 +24,21 @@ function makeEnv(overrides: Partial<Record<string, unknown>> = {}) {
     ALLOWED_ORIGIN: 'https://styx.io',
     LLM_MODEL: 'llama-3.3-70b-versatile',
     LLM_BASE_URL: 'https://api.groq.com/openai/v1',
-    RATE_LIMIT_KV: makeKV(),
+    RATE_LIMITER: makeRateLimiterNamespace(),
     ...overrides,
+  };
+}
+
+function makeRateLimiterNamespace() {
+  return {
+    idFromName: (name: string) => ({
+      toString: () => name,
+    }),
+    get: (_id: { toString: () => string }) => ({
+      fetch: async (_request: Request) => {
+        return new Response('false');
+      },
+    }),
   };
 }
 

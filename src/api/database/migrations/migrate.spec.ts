@@ -79,6 +79,22 @@ describe('Migration Runner', () => {
       const pending = await getPendingMigrations(mockPool);
       expect(pending).toEqual([]);
     });
+
+    it('should throw Error on schema drift when applied migration is missing from files', async () => {
+      (fs.readdirSync as jest.Mock).mockReturnValue(['002_add_index.sql']);
+      mockQuery.mockResolvedValue({
+        rows: [{ name: '001_initial_schema.sql' }],
+      });
+      await expect(getPendingMigrations(mockPool)).rejects.toThrow('Schema drift detected: Applied migration 001_initial_schema.sql is missing from the filesystem.');
+    });
+
+    it('should throw Error on schema drift when pending migration is older than latest applied', async () => {
+      (fs.readdirSync as jest.Mock).mockReturnValue(['001_initial_schema.sql', '002_add_index.sql']);
+      mockQuery.mockResolvedValue({
+        rows: [{ name: '002_add_index.sql' }],
+      });
+      await expect(getPendingMigrations(mockPool)).rejects.toThrow('Schema drift detected: Pending migration 001_initial_schema.sql is older than applied migration 002_add_index.sql.');
+    });
   });
 
   describe('runMigrations', () => {

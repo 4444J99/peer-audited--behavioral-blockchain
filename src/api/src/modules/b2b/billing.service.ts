@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import Stripe from 'stripe';
+import { Injectable, Logger } from "@nestjs/common";
+import Stripe from "stripe";
 
 export const METERED_EVENT_TYPES = [
-  'phash_scan',
-  'gemini_call',
-  'anomaly_detection',
-  'proof_accepted',
+  "phash_scan",
+  "gemini_call",
+  "anomaly_detection",
+  "proof_accepted",
 ] as const;
 
 export type MeteredEventType = (typeof METERED_EVENT_TYPES)[number];
@@ -25,8 +25,8 @@ export class BillingService {
   private readonly stripe: StripeClient;
 
   constructor() {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-      apiVersion: '2026-05-27.dahlia',
+    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+      apiVersion: "2026-05-27.dahlia",
     });
   }
 
@@ -42,7 +42,9 @@ export class BillingService {
     eventType: MeteredEventType,
     eventId?: string,
   ): Promise<void> {
-    this.logger.log(`Recorded consumption event [${eventType}] for Enterprise: ${enterpriseId}`);
+    this.logger.log(
+      `Recorded consumption event [${eventType}] for Enterprise: ${enterpriseId}`,
+    );
     await this.recordUsage(enterpriseId, eventType, 1, eventId);
   }
 
@@ -65,7 +67,9 @@ export class BillingService {
   ): Promise<void> {
     const subscription = await this.getMeteredSubscription(enterpriseId);
     if (!subscription) {
-      this.logger.warn(`No metered subscription found for enterprise ${enterpriseId}`);
+      this.logger.warn(
+        `No metered subscription found for enterprise ${enterpriseId}`,
+      );
       return;
     }
 
@@ -90,7 +94,9 @@ export class BillingService {
       { idempotencyKey: identifier },
     );
 
-    this.logger.log(`Recorded ${quantity}x ${metric} usage for enterprise ${enterpriseId}`);
+    this.logger.log(
+      `Recorded ${quantity}x ${metric} usage for enterprise ${enterpriseId}`,
+    );
   }
 
   /**
@@ -100,8 +106,10 @@ export class BillingService {
    * other character that could alter the query semantics.
    */
   private assertSafeQueryValue(value: string): string {
-    if (typeof value !== 'string' || !/^[A-Za-z0-9-]{1,64}$/.test(value)) {
-      throw new Error('Invalid enterpriseId: contains characters not permitted in a billing lookup');
+    if (typeof value !== "string" || !/^[A-Za-z0-9-]{1,64}$/.test(value)) {
+      throw new Error(
+        "Invalid enterpriseId: contains characters not permitted in a billing lookup",
+      );
     }
     return value;
   }
@@ -110,7 +118,9 @@ export class BillingService {
    * Find the metered subscription item for an enterprise.
    * Looks up the active subscription with the matching enterpriseId metadata.
    */
-  private async getMeteredSubscription(enterpriseId: string): Promise<MeteredSubscription | null> {
+  private async getMeteredSubscription(
+    enterpriseId: string,
+  ): Promise<MeteredSubscription | null> {
     // Guard against Stripe Search Query Language injection. enterpriseId is a UUID
     // in our schema; anything containing quotes/backslashes/control chars could
     // break out of the quoted string literal and alter the query, so reject it.
@@ -128,7 +138,7 @@ export class BillingService {
     if (!customerId) return null;
 
     const meteredItem = subscription.items.data.find(
-      (item) => item.price.recurring?.usage_type === 'metered',
+      (item) => item.price.recurring?.usage_type === "metered",
     );
 
     if (!meteredItem) return null;
@@ -142,10 +152,10 @@ export class BillingService {
   }
 
   private resolveStripeCustomerId(customer: unknown): string | null {
-    if (typeof customer === 'string') return customer;
-    if (customer && typeof customer === 'object' && 'id' in customer) {
+    if (typeof customer === "string") return customer;
+    if (customer && typeof customer === "object" && "id" in customer) {
       const id = (customer as { id?: unknown }).id;
-      return typeof id === 'string' ? id : null;
+      return typeof id === "string" ? id : null;
     }
     return null;
   }
@@ -160,10 +170,17 @@ export class BillingService {
   }> {
     const subscription = await this.getMeteredSubscription(enterpriseId);
     if (!subscription) {
-      return { totalUsage: 0, currentPeriodStart: new Date(), currentPeriodEnd: new Date() };
+      return {
+        totalUsage: 0,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(),
+      };
     }
 
-    const meters = await this.stripe.billing.meters.list({ status: 'active', limit: 100 });
+    const meters = await this.stripe.billing.meters.list({
+      status: "active",
+      limit: 100,
+    });
     const relevantMeters = meters.data.filter((meter) =>
       (METERED_EVENT_TYPES as readonly string[]).includes(meter.event_name),
     );
@@ -181,7 +198,11 @@ export class BillingService {
 
     const totalUsage = summaries.reduce(
       (total, summary) =>
-        total + summary.data.reduce((subtotal, current) => subtotal + current.aggregated_value, 0),
+        total +
+        summary.data.reduce(
+          (subtotal, current) => subtotal + current.aggregated_value,
+          0,
+        ),
       0,
     );
 

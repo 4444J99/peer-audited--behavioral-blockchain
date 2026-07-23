@@ -7,7 +7,7 @@
     "start": "react-native start",
     "build": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest --coverage"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "3.1.1",

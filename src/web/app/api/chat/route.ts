@@ -67,10 +67,12 @@ export async function POST(request: NextRequest) {
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return NextResponse.json(
-      { error: "LLM not configured (missing GROQ_API_KEY)" },
-      { status: 503 }
-    );
+    // Graceful degradation: return static knowledge base response
+    const fallbackText = "AI assist is currently running in offline knowledge-base mode.\n\n" + STYX_KNOWLEDGE.slice(0, 1200) + "...";
+    return NextResponse.json({
+      content: fallbackText,
+      mode: "static_fallback"
+    });
   }
 
   try {
@@ -108,13 +110,13 @@ export async function POST(request: NextRequest) {
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
         } catch (err) {
-          const msg =
-            err instanceof Error ? err.message : "Stream error";
+          const fallbackText = "AI assist stream interrupted. Operating in static knowledge mode.\n\n" + STYX_KNOWLEDGE.slice(0, 1000) + "...";
           controller.enqueue(
             encoder.encode(
-              `data: ${JSON.stringify({ error: msg })}\n\n`
+              `data: ${JSON.stringify({ content: fallbackText })}\n\n`
             )
           );
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
         }
       },
@@ -128,16 +130,10 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (err) {
-    if (err instanceof OpenAI.APIError) {
-      const status = err.status || 500;
-      return NextResponse.json(
-        { error: `LLM API error: ${err.message}` },
-        { status: status >= 400 && status < 600 ? status : 500 }
-      );
-    }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    const fallbackText = "AI assist is currently operating in offline knowledge mode.\n\n" + STYX_KNOWLEDGE.slice(0, 1200) + "...";
+    return NextResponse.json({
+      content: fallbackText,
+      mode: "static_fallback"
+    });
   }
 }

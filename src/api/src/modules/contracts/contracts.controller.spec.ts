@@ -15,7 +15,7 @@ const mockSurveyService = {} as unknown as SurveyService;
 const mockWaitlistService = {} as unknown as WaitlistService;
 const mockMeteredUsage = {
   recordMeteredUsage: jest.fn(),
-} as unknown as MeteredUsageService;
+};
 
 const mockContractsService = {
   getUserContracts: jest.fn(),
@@ -49,7 +49,7 @@ describe("ContractsController", () => {
       mockPayService,
       mockSurveyService,
       mockWaitlistService,
-      mockMeteredUsage,
+      mockMeteredUsage as any,
     );
     jest.clearAllMocks();
   });
@@ -223,14 +223,12 @@ describe("ContractsController", () => {
   });
 
   describe("POST /contracts/:id/complete", () => {
-    it("should verify contract ownership and record metered usage once", async () => {
+    it("checks ownership and records a billable proof_accepted event", async () => {
       (mockContractsService.getContract as jest.Mock).mockResolvedValue({
         id: "c1",
         userId: "user-1",
       });
-      (mockMeteredUsage.recordMeteredUsage as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      mockMeteredUsage.recordMeteredUsage.mockResolvedValue(undefined);
 
       const result = await controller.complete("c1", testUser);
 
