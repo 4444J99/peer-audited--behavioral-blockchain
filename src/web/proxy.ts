@@ -8,6 +8,8 @@ const PUBLIC_PATHS = [
   '/pitch',
   '/users/leaderboard',
   '/do-not-text-your-ex-tonight',
+  '/beta',
+  '/beta/confirm',
 ];
 
 const PROTECTED_PATHS = [
@@ -20,6 +22,7 @@ const PROTECTED_PATHS = [
   '/contracts',
   '/hr',
   '/tavern',
+  '/referrals',
 ];
 
 // Browser auth uses HttpOnly cookie sessions. This proxy enforces auth-gating

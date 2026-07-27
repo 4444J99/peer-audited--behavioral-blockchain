@@ -49,7 +49,7 @@ export interface AnonymizedExport {
  */
 const K_ANONYMITY = 5;
 
-const PII_FIELDS = ['email', 'password_hash', 'stripe_customer_id', 'ip_address', 'name', 'first_name', 'last_name', 'phone'] as const;
+const PII_FIELDS = ['email', 'password_hash', 'stripe_customer_id', 'subscription_id', 'ip_address', 'name', 'first_name', 'last_name', 'phone'] as const;
 
 function requireAnonymizeSalt(): string {
   const salt = process.env.ANONYMIZE_SALT; // allow-secret

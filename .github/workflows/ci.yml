@@ -60,10 +60,13 @@ jobs:
       - name: Execute Tests + Lint (Turborepo)
         # NOTE: do not forward `--coverage --ci` here. Those are jest-only flags:
         # `--ci` makes the vitest workspaces (ask-styx, test-harness) throw
-        # `CACError: Unknown option --ci`, and `--coverage` currently fails api
-        # suite-loading. Each workspace owns its own test invocation. Re-introducing
-        # coverage-threshold gating is tracked as a follow-up once coverage mode is
-        # fixed (see docs/audit/2026-05-26-index-propagation-and-vacuum-log.md).
+        # `CACError: Unknown option --ci`. Each workspace owns its own test
+        # invocation instead. Coverage-threshold gating is now ACTIVE: the jest
+        # workspaces (api, web, mobile, desktop) run `jest --coverage` in their
+        # own `test` script and enforce `coverageThreshold` from their jest
+        # config. Coverage mode was unblocked by switching those workspaces to
+        # the V8 `coverageProvider` (the default "babel" provider crashed on the
+        # repo-wide minimatch>=10 override via babel-plugin-istanbul/test-exclude).
         #
         # `test` dependsOn `^build` (upstream builds only, no per-workspace build).
         # `lint` is independent so turbo parallelizes both.

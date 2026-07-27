@@ -2,7 +2,7 @@
   "batches": [
     {
       "id": "close-already-impl",
-      "phase": "Phase 1 — Close already implemented",
+      "phase": "Phase 1 \u2014 Close already implemented",
       "issues": [
         29,
         30,
@@ -23,36 +23,31 @@
         421
       ],
       "started": "2026-06-01T15:40:38Z",
-      "completed": "2026-06-01T15:40:59Z",
+      "completed": "2026-07-23T00:23:39Z",
       "reconciled": true,
       "test_passed": true
     },
     {
       "id": "build-tier1-quick",
-      "phase": "Tier 1 — Quick code features (tests, small fixes)",
+      "phase": "Tier 1 \u2014 Quick code features (tests, small fixes)",
       "issues": [
         207,
-        44,
-        45,
-        66,
-        46,
-        47,
-        52
+        44
       ],
       "started": "2026-06-01T15:54:09Z",
-      "completed": "2026-06-01T15:57:13Z",
+      "completed": "2026-07-23T00:23:39Z",
       "reconciled": true,
       "test_passed": true
     },
     {
       "id": "build-tier2-services",
-      "phase": "Tier 2 — Mobile tests + oracle circuit breaker",
+      "phase": "Tier 2 \u2014 Mobile tests + oracle circuit breaker",
       "issues": [
         45,
         66
       ],
       "started": "2026-06-01T15:57:36Z",
-      "completed": "2026-06-01T16:00:43Z",
+      "completed": "2026-07-23T00:23:39Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -63,7 +58,7 @@
         603
       ],
       "started": "2026-06-01T19:30:13Z",
-      "completed": "2026-06-01T19:30:57Z",
+      "completed": "2026-07-23T00:23:39Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -78,7 +73,7 @@
         551
       ],
       "started": "2026-06-01T19:35:05Z",
-      "completed": "2026-06-01T19:35:29Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -91,7 +86,7 @@
         52
       ],
       "started": "2026-06-01T19:38:23Z",
-      "completed": "2026-06-01T19:43:50Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -108,7 +103,7 @@
         119
       ],
       "started": "2026-06-01T19:44:04Z",
-      "completed": "2026-06-01T19:49:47Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -126,7 +121,7 @@
         430
       ],
       "started": "2026-06-01T19:49:59Z",
-      "completed": "2026-06-01T19:54:39Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -140,24 +135,24 @@
         554
       ],
       "started": "2026-06-01T19:54:52Z",
-      "completed": "2026-06-01T19:56:44Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
     {
       "id": "triage-codereview-p2",
-      "phase": "Phase 4 — Triage Codex P2 review threads",
+      "phase": "Phase 4 \u2014 Triage Codex P2 review threads",
       "issues": [
         670
       ],
       "started": "2026-06-11T15:55:11Z",
-      "completed": "2026-06-12T09:38:18Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
     {
       "id": "close-superseded-burndowns",
-      "phase": "Phase 4 — Close superseded weekly Blocked Handoff Burn-downs (keep #673)",
+      "phase": "Phase 4 \u2014 Close superseded weekly Blocked Handoff Burn-downs (keep #673)",
       "issues": [
         145,
         559,
@@ -175,18 +170,18 @@
         651
       ],
       "started": "2026-06-11T16:04:08Z",
-      "completed": "2026-06-11T22:25:15.368584+00:00",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
     {
       "id": "triage-activation-676",
-      "phase": "Phase 4 — Activation audit (Issue #676)",
+      "phase": "Phase 4 \u2014 Activation audit (Issue #676)",
       "issues": [
         676
       ],
       "started": "2026-06-11T16:43:33Z",
-      "completed": "2026-06-11T16:52:20Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -198,35 +193,35 @@
         680
       ],
       "started": "2026-06-11T18:45:09Z",
-      "completed": "2026-06-11T18:47:40Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
     {
       "id": "triage-activation-675",
-      "phase": "Phase 4 — Activation audit (Issue #675)",
+      "phase": "Phase 4 \u2014 Activation audit (Issue #675)",
       "issues": [
         675
       ],
       "started": "2026-06-11T22:20:39.088979+00:00",
-      "completed": "2026-06-11T22:20:39.088979+00:00",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
     {
       "id": "track-burndown-673",
-      "phase": "Phase 4 — Track current Blocked Handoff Burn-down report",
+      "phase": "Phase 4 \u2014 Track current Blocked Handoff Burn-down report",
       "issues": [
         673
       ],
       "started": "2026-06-12T09:37:48Z",
-      "completed": "2026-06-12T09:38:18Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
     {
       "id": "audit-not-planned-closures",
-      "phase": "Phase 4 — Repair NOT_PLANNED closure drift",
+      "phase": "Phase 4 \u2014 Repair NOT_PLANNED closure drift",
       "issues": [
         569,
         561,
@@ -242,26 +237,17 @@
         282
       ],
       "started": "2026-06-12T11:46:15Z",
-      "completed": "2026-06-12T14:49:38Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
     {
       "id": "audit-closed-without-ledger",
-      "phase": "Phase 4 — Reopen/audit GitHub-closed issues without triage proof",
+      "phase": "Phase 4 \u2014 Reopen/audit GitHub-closed issues without triage proof",
       "issues": [
-        28,
-        32,
-        34,
         35,
         42,
         43,
-        58,
-        59,
-        60,
-        61,
-        62,
-        63,
         149,
         150,
         151,
@@ -272,7 +258,6 @@
         156,
         157,
         158,
-        159,
         160,
         161,
         163,
@@ -342,17 +327,12 @@
         565,
         566,
         567,
-        590,
-        593,
-        594,
-        595,
-        600,
         601,
         617,
         663
       ],
       "started": "2026-06-12T12:35:18Z",
-      "completed": "2026-06-12T14:03:10Z",
+      "completed": "2026-07-23T00:23:40Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -369,7 +349,37 @@
         600
       ],
       "started": "2026-06-15T10:02:54Z",
-      "completed": "2026-06-15T10:03:41Z",
+      "completed": "2026-07-23T00:23:40Z",
+      "reconciled": true,
+      "test_passed": true
+    },
+    {
+      "id": "fix-critical-bugs",
+      "phase": "Phase-2",
+      "issues": [
+        28,
+        32,
+        34,
+        159
+      ],
+      "started": "2026-07-22T19:22:43Z",
+      "completed": "2026-07-23T00:23:40Z",
+      "reconciled": true,
+      "test_passed": true
+    },
+    {
+      "id": "phase3-batch1",
+      "phase": "Phase-3",
+      "issues": [
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "started": "2026-07-22T23:02:47Z",
+      "completed": "2026-07-23T00:23:41Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -393,8 +403,8 @@
         "database"
       ],
       "action": "BUG",
-      "state": "BUG",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "fix-critical-bugs",
       "history": [
         {
           "from": "UNREAD",
@@ -405,12 +415,17 @@
           "from": "INSPECTED",
           "to": "BUG",
           "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "BUG",
+          "to": "CLOSED",
+          "at": "2026-07-22T19:22:44Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/database/migrations/migrate.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:36:44Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T19:22:44Z",
+      "closed_at": "2026-07-23T01:15:52Z"
     },
     "29": {
       "action": "CLOSE",
@@ -497,8 +512,8 @@
         "security"
       ],
       "action": "BUG",
-      "state": "BUG",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "fix-critical-bugs",
       "history": [
         {
           "from": "UNREAD",
@@ -509,12 +524,17 @@
           "from": "INSPECTED",
           "to": "BUG",
           "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "BUG",
+          "to": "CLOSED",
+          "at": "2026-07-22T19:22:44Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/payments/payment-router.service.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:36:44Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T19:22:44Z",
+      "closed_at": "2026-07-23T01:15:52Z"
     },
     "33": {
       "action": "CLOSE",
@@ -549,8 +569,8 @@
         "api"
       ],
       "action": "BUG",
-      "state": "BUG",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "fix-critical-bugs",
       "history": [
         {
           "from": "UNREAD",
@@ -561,12 +581,17 @@
           "from": "INSPECTED",
           "to": "BUG",
           "at": "2026-06-12T12:36:44Z"
+        },
+        {
+          "from": "BUG",
+          "to": "CLOSED",
+          "at": "2026-07-22T19:22:44Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/contracts/contracts.service.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:36:44Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T19:22:44Z",
+      "closed_at": "2026-07-23T01:15:52Z"
     },
     "35": {
       "title": "Migrate mobile tests from deprecated react-test-renderer",
@@ -883,7 +908,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "feat: B2B cohort orchestration — orgs create/manage cohorts for their clients"
+      "title": "feat: B2B cohort orchestration \u2014 orgs create/manage cohorts for their clients"
     },
     "49": {
       "action": "TRACK",
@@ -910,7 +935,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:57Z",
-      "title": "decision: Weekly live sessions — in-app scheduling vs external operational cadence"
+      "title": "decision: Weekly live sessions \u2014 in-app scheduling vs external operational cadence"
     },
     "50": {
       "action": "FUTURE",
@@ -999,7 +1024,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:43:45Z",
-      "title": "feat: Waitlist / cohort fill queue — hold users until cohort reaches minimum"
+      "title": "feat: Waitlist / cohort fill queue \u2014 hold users until cohort reaches minimum"
     },
     "53": {
       "action": "FUTURE",
@@ -1046,7 +1071,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "feat: Motivation profiling at intake — tailor experience to user archetype"
+      "title": "feat: Motivation profiling at intake \u2014 tailor experience to user archetype"
     },
     "55": {
       "action": "FUTURE",
@@ -1118,18 +1143,18 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:57Z",
-      "title": "decision: Community features / local meetups — in-app or operational?"
+      "title": "decision: Community features / local meetups \u2014 in-app or operational?"
     },
     "58": {
-      "title": "feat: Two-way referral program — $5 referrer + $5 referred viral loop",
+      "title": "feat: Two-way referral program \u2014 $5 referrer + $5 referred viral loop",
       "labels": [
         "enhancement",
         "brainstorm-audit",
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "phase3-batch1",
       "history": [
         {
           "from": "UNREAD",
@@ -1140,15 +1165,25 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:11:31Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/users/users.service.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T23:11:31Z",
+      "closed_at": "2026-07-22T23:11:31Z"
     },
     "59": {
-      "title": "feat: Closed beta waitlist landing page — pre-launch acquisition funnel",
+      "title": "feat: Closed beta waitlist landing page \u2014 pre-launch acquisition funnel",
       "labels": [
         "enhancement",
         "brainstorm-audit",
@@ -1157,8 +1192,8 @@
         "follow-up"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "phase3-batch1",
       "history": [
         {
           "from": "UNREAD",
@@ -1169,15 +1204,25 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:08:07Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/web/app/waitlist/page.tsx:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T23:08:07Z",
+      "closed_at": "2026-07-22T23:08:07Z"
     },
     "60": {
-      "title": "feat: Fury violation code taxonomy — structured rejection reasons for auditors",
+      "title": "feat: Fury violation code taxonomy \u2014 structured rejection reasons for auditors",
       "labels": [
         "enhancement",
         "api",
@@ -1185,8 +1230,8 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "phase3-batch1",
       "history": [
         {
           "from": "UNREAD",
@@ -1197,12 +1242,22 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:08:28Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/fury/fury.controller.ts:200",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T23:08:28Z",
+      "closed_at": "2026-07-22T23:08:28Z"
     },
     "61": {
       "title": "feat: Pregnancy exclusion gate & mid-challenge penalty-free suspension",
@@ -1213,8 +1268,8 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "phase3-batch1",
       "history": [
         {
           "from": "UNREAD",
@@ -1225,15 +1280,25 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:10:11Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/contracts/contracts.service.ts:1517",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T23:10:11Z",
+      "closed_at": "2026-07-22T23:10:11Z"
     },
     "62": {
-      "title": "feat: Stake-tiered verification escalation — progressive proof requirements by risk",
+      "title": "feat: Stake-tiered verification escalation \u2014 progressive proof requirements by risk",
       "labels": [
         "enhancement",
         "api",
@@ -1241,8 +1306,8 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "phase3-batch1",
       "history": [
         {
           "from": "UNREAD",
@@ -1253,23 +1318,33 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:12:05Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/proofs/proofs.service.ts:43",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T23:12:05Z",
+      "closed_at": "2026-07-22T23:12:05Z"
     },
     "63": {
-      "title": "feat: UGC moderation pipeline — App Store approval requirement for user-generated proof content",
+      "title": "feat: UGC moderation pipeline \u2014 App Store approval requirement for user-generated proof content",
       "labels": [
         "mobile",
         "brainstorm-audit",
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "phase3-batch1",
       "history": [
         {
           "from": "UNREAD",
@@ -1280,12 +1355,22 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-07-22T23:02:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-07-22T23:09:38Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/admin/admin.controller.ts:235",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T23:09:38Z",
+      "closed_at": "2026-07-22T23:09:38Z"
     },
     "64": {
       "action": "FUTURE",
@@ -1327,7 +1412,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: Post-contract exit interviews — structured feedback collection"
+      "title": "feat: Post-contract exit interviews \u2014 structured feedback collection"
     },
     "66": {
       "action": "BUILD",
@@ -1369,7 +1454,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T16:00:40Z",
-      "title": "feat: Oracle circuit breaker & pausable countdown — safety mechanism for verification failures"
+      "title": "feat: Oracle circuit breaker & pausable countdown \u2014 safety mechanism for verification failures"
     },
     "67": {
       "action": "FUTURE",
@@ -1391,7 +1476,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: Cross-jurisdictional verification consent matrix — privacy compliance per state/country"
+      "title": "feat: Cross-jurisdictional verification consent matrix \u2014 privacy compliance per state/country"
     },
     "68": {
       "action": "FUTURE",
@@ -1413,7 +1498,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: 'Invite Your Coach' B2B self-onboarding — practitioner-led acquisition channel"
+      "title": "feat: 'Invite Your Coach' B2B self-onboarding \u2014 practitioner-led acquisition channel"
     },
     "69": {
       "action": "FUTURE",
@@ -1435,7 +1520,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: Practitioner risk intelligence — composite relapse risk score & NLP journal alerts"
+      "title": "feat: Practitioner risk intelligence \u2014 composite relapse risk score & NLP journal alerts"
     },
     "70": {
       "action": "FUTURE",
@@ -1457,7 +1542,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: Day 21 micro-reward — dopamine danger zone intervention"
+      "title": "feat: Day 21 micro-reward \u2014 dopamine danger zone intervention"
     },
     "71": {
       "action": "FUTURE",
@@ -1478,7 +1563,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: Milestone-triggered shareable resilience reports — social proof for recovery"
+      "title": "feat: Milestone-triggered shareable resilience reports \u2014 social proof for recovery"
     },
     "72": {
       "action": "FUTURE",
@@ -1499,7 +1584,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: Sequential-to-simultaneous habit unlocking engine — multi-behavior progression"
+      "title": "feat: Sequential-to-simultaneous habit unlocking engine \u2014 multi-behavior progression"
     },
     "73": {
       "action": "FUTURE",
@@ -1520,7 +1605,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: Ecological momentary assessment (EMA) — stress pulse micro-surveys"
+      "title": "feat: Ecological momentary assessment (EMA) \u2014 stress pulse micro-surveys"
     },
     "74": {
       "action": "FUTURE",
@@ -1541,7 +1626,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: Stake tapering & incentive fading — gradual transition from extrinsic to intrinsic motivation"
+      "title": "feat: Stake tapering & incentive fading \u2014 gradual transition from extrinsic to intrinsic motivation"
     },
     "75": {
       "action": "FUTURE",
@@ -1562,7 +1647,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: Goodharting detection bounties — anti-gaming verification for metric manipulation"
+      "title": "feat: Goodharting detection bounties \u2014 anti-gaming verification for metric manipulation"
     },
     "76": {
       "action": "FUTURE",
@@ -1583,7 +1668,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: Multi-judge adjudication panel — escalated dispute resolution for high-stakes contracts"
+      "title": "feat: Multi-judge adjudication panel \u2014 escalated dispute resolution for high-stakes contracts"
     },
     "77": {
       "action": "FUTURE",
@@ -1604,7 +1689,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: High-stakes tournament mode — competitive bracket format for group challenges"
+      "title": "feat: High-stakes tournament mode \u2014 competitive bracket format for group challenges"
     },
     "78": {
       "action": "FUTURE",
@@ -1625,7 +1710,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: Consumer premium membership tier — subscription model for power users"
+      "title": "feat: Consumer premium membership tier \u2014 subscription model for power users"
     },
     "79": {
       "action": "FUTURE",
@@ -1647,7 +1732,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "feat: 'Digital Detox' as primary GTM vertical — Screen Time API integration"
+      "title": "feat: 'Digital Detox' as primary GTM vertical \u2014 Screen Time API integration"
     },
     "80": {
       "action": "FUTURE",
@@ -1668,7 +1753,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Video call spot-checks — live verification for high-stakes contracts"
+      "title": "feat: Video call spot-checks \u2014 live verification for high-stakes contracts"
     },
     "81": {
       "action": "FUTURE",
@@ -1689,7 +1774,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Counter-claim & harassment filing — Fury auditor accountability mechanism"
+      "title": "feat: Counter-claim & harassment filing \u2014 Fury auditor accountability mechanism"
     },
     "82": {
       "action": "FUTURE",
@@ -1711,7 +1796,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Proof-of-Personhood / anti-Sybil layer — multi-account abuse prevention"
+      "title": "feat: Proof-of-Personhood / anti-Sybil layer \u2014 multi-account abuse prevention"
     },
     "83": {
       "action": "FUTURE",
@@ -1732,7 +1817,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Decentralized dispute resolution (Schelling-point / Kleros-style) — trustless adjudication"
+      "title": "feat: Decentralized dispute resolution (Schelling-point / Kleros-style) \u2014 trustless adjudication"
     },
     "84": {
       "action": "FUTURE",
@@ -1753,7 +1838,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: 'Inquisitor' RPG mode — gamified progression system for Fury auditors"
+      "title": "feat: 'Inquisitor' RPG mode \u2014 gamified progression system for Fury auditors"
     },
     "85": {
       "action": "FUTURE",
@@ -1775,7 +1860,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Geographic payment routing engine — jurisdiction-aware processor selection"
+      "title": "feat: Geographic payment routing engine \u2014 jurisdiction-aware processor selection"
     },
     "86": {
       "action": "FUTURE",
@@ -1797,7 +1882,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Recovery Ambassador Program — peer referral network for recovery niche"
+      "title": "feat: Recovery Ambassador Program \u2014 peer referral network for recovery niche"
     },
     "87": {
       "action": "FUTURE",
@@ -1818,7 +1903,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Contingency management reward escalation — graduated positive reinforcement schedule"
+      "title": "feat: Contingency management reward escalation \u2014 graduated positive reinforcement schedule"
     },
     "88": {
       "action": "FUTURE",
@@ -1839,7 +1924,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Asymmetric whistleblower system — enhanced anonymous reporting with graduated bounties"
+      "title": "feat: Asymmetric whistleblower system \u2014 enhanced anonymous reporting with graduated bounties"
     },
     "89": {
       "action": "FUTURE",
@@ -1860,7 +1945,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Data revenue sharing with users — behavioral data ownership & compensation"
+      "title": "feat: Data revenue sharing with users \u2014 behavioral data ownership & compensation"
     },
     "90": {
       "action": "FUTURE",
@@ -1881,7 +1966,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Stablecoin-denominated stakes — crypto payment rail for regulatory flexibility"
+      "title": "feat: Stablecoin-denominated stakes \u2014 crypto payment rail for regulatory flexibility"
     },
     "91": {
       "action": "FUTURE",
@@ -1945,7 +2030,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: DECO privacy-preserving oracle — TLS-based verification without data exposure"
+      "title": "feat: DECO privacy-preserving oracle \u2014 TLS-based verification without data exposure"
     },
     "93": {
       "action": "FUTURE",
@@ -2008,7 +2093,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Neurologically-timed instant reward system — per-proof micro-rewards & variable bonuses"
+      "title": "feat: Neurologically-timed instant reward system \u2014 per-proof micro-rewards & variable bonuses"
     },
     "96": {
       "action": "FUTURE",
@@ -2050,7 +2135,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Temptation bundling engine — Premack's Principle reward gating"
+      "title": "feat: Temptation bundling engine \u2014 Premack's Principle reward gating"
     },
     "98": {
       "action": "FUTURE",
@@ -2092,7 +2177,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:50Z",
-      "title": "feat: Gateway Oath tier — Two-Minute Rule with progressive habit shaping ladder"
+      "title": "feat: Gateway Oath tier \u2014 Two-Minute Rule with progressive habit shaping ladder"
     },
     "100": {
       "action": "FUTURE",
@@ -2113,7 +2198,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:40Z",
-      "title": "feat: Resistance pattern detection engine — displacement, self-dramatization, victimhood, healing trap"
+      "title": "feat: Resistance pattern detection engine \u2014 displacement, self-dramatization, victimhood, healing trap"
     },
     "101": {
       "action": "FUTURE",
@@ -2135,7 +2220,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:40Z",
-      "title": "feat: AI rationalization classifier — Pressfield-informed excuse analysis via Gemini"
+      "title": "feat: AI rationalization classifier \u2014 Pressfield-informed excuse analysis via Gemini"
     },
     "102": {
       "action": "FUTURE",
@@ -2157,7 +2242,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:40Z",
-      "title": "feat: BBO (Bigger Better Offer) substitution engine — active craving replacement library"
+      "title": "feat: BBO (Bigger Better Offer) substitution engine \u2014 active craving replacement library"
     },
     "103": {
       "action": "FUTURE",
@@ -2178,7 +2263,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:40Z",
-      "title": "feat: Styx Academy — structured psychoeducation module (reward-based learning curriculum)"
+      "title": "feat: Styx Academy \u2014 structured psychoeducation module (reward-based learning curriculum)"
     },
     "104": {
       "action": "FUTURE",
@@ -2199,7 +2284,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:40Z",
-      "title": "feat: Zero-gap contract rollover — 'Start the Next One Today' momentum bridge"
+      "title": "feat: Zero-gap contract rollover \u2014 'Start the Next One Today' momentum bridge"
     },
     "105": {
       "action": "FUTURE",
@@ -2220,7 +2305,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:40Z",
-      "title": "feat: Generosity loop / Pay It Forward — prosocial reward mechanism for successful completers"
+      "title": "feat: Generosity loop / Pay It Forward \u2014 prosocial reward mechanism for successful completers"
     },
     "106": {
       "action": "FUTURE",
@@ -2241,7 +2326,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:40Z",
-      "title": "feat: Fury auditor wellness system — empathy fatigue prevention, bias detection, distraction flagging"
+      "title": "feat: Fury auditor wellness system \u2014 empathy fatigue prevention, bias detection, distraction flagging"
     },
     "107": {
       "action": "FUTURE",
@@ -2284,7 +2369,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:40Z",
-      "title": "feat: Passive proof API integrations — Strava, Duolingo, GitHub, Calm, Kindle beyond health wearables"
+      "title": "feat: Passive proof API integrations \u2014 Strava, Duolingo, GitHub, Calm, Kindle beyond health wearables"
     },
     "109": {
       "action": "FUTURE",
@@ -2306,7 +2391,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:40Z",
-      "title": "feat: Disenchantment score — reward devaluation tracking over contract lifecycle"
+      "title": "feat: Disenchantment score \u2014 reward devaluation tracking over contract lifecycle"
     },
     "110": {
       "action": "FUTURE",
@@ -2327,7 +2412,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:40Z",
-      "title": "feat: Habit discontinuity window detector — life transitions as acquisition/re-engagement triggers"
+      "title": "feat: Habit discontinuity window detector \u2014 life transitions as acquisition/re-engagement triggers"
     },
     "111": {
       "action": "FUTURE",
@@ -2348,7 +2433,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:40Z",
-      "title": "feat: Implementation intention contract syntax — time + location binding beyond habit stacking"
+      "title": "feat: Implementation intention contract syntax \u2014 time + location binding beyond habit stacking"
     },
     "112": {
       "action": "FUTURE",
@@ -2369,7 +2454,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:40Z",
-      "title": "feat: Goldilocks difficulty calibration — bidirectional adaptive challenge + overambitious timetable guard"
+      "title": "feat: Goldilocks difficulty calibration \u2014 bidirectional adaptive challenge + overambitious timetable guard"
     },
     "113": {
       "action": "BUILD",
@@ -3595,7 +3680,7 @@
       "closed_at": null
     },
     "159": {
-      "title": "fix: ask-styx rate limiter is per-isolate — ineffective at edge scale",
+      "title": "fix: ask-styx rate limiter is per-isolate \u2014 ineffective at edge scale",
       "labels": [
         "bug",
         "security",
@@ -3603,8 +3688,8 @@
         "full-breath-audit"
       ],
       "action": "BUG",
-      "state": "BUG",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "fix-critical-bugs",
       "history": [
         {
           "from": "UNREAD",
@@ -3615,12 +3700,17 @@
           "from": "INSPECTED",
           "to": "BUG",
           "at": "2026-06-12T12:36:46Z"
+        },
+        {
+          "from": "BUG",
+          "to": "CLOSED",
+          "at": "2026-07-22T19:22:44Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/ask-styx/worker/index.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:36:46Z",
-      "closed_at": null
+      "state_updated": "2026-07-22T19:22:44Z",
+      "closed_at": "2026-07-23T01:15:52Z"
     },
     "160": {
       "title": "feat: add load testing infrastructure (k6/artillery) for Fury Router queue",
@@ -3724,10 +3814,10 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T15:40:51Z",
-      "title": "fix: integrity score has no ceiling — fraud penalties become negligible at high scores"
+      "title": "fix: integrity score has no ceiling \u2014 fraud penalties become negligible at high scores"
     },
     "163": {
-      "title": "feat: failure notification UX copy — emotional safety for stake liquidation",
+      "title": "feat: failure notification UX copy \u2014 emotional safety for stake liquidation",
       "labels": [
         "enhancement",
         "P1-beta-enhancer",
@@ -3774,7 +3864,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:41Z",
-      "title": "fix: Redis single point of failure — no HA configuration"
+      "title": "fix: Redis single point of failure \u2014 no HA configuration"
     },
     "165": {
       "action": "FUTURE",
@@ -3800,7 +3890,7 @@
       "title": "feat: offline/fallback LLM for grill-me, ELI5, and ask-styx chat"
     },
     "166": {
-      "title": "process: establish code review protocol — single-developer bus factor mitigation",
+      "title": "process: establish code review protocol \u2014 single-developer bus factor mitigation",
       "labels": [
         "documentation",
         "P1-beta-enhancer",
@@ -4299,7 +4389,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:41Z",
-      "title": "docs: doctoral dissertation — epic tracker"
+      "title": "docs: doctoral dissertation \u2014 epic tracker"
     },
     "187": {
       "action": "CLOSE",
@@ -4325,7 +4415,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T15:40:51Z",
-      "title": "feat: Ask Styx standalone SPA — epic tracker"
+      "title": "feat: Ask Styx standalone SPA \u2014 epic tracker"
     },
     "188": {
       "action": "FUTURE",
@@ -4346,7 +4436,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:41Z",
-      "title": "audit: business/ops gap analysis — epic tracker"
+      "title": "audit: business/ops gap analysis \u2014 epic tracker"
     },
     "189": {
       "action": "FUTURE",
@@ -4367,7 +4457,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:41Z",
-      "title": "audit: stub/placeholder inventory — epic tracker"
+      "title": "audit: stub/placeholder inventory \u2014 epic tracker"
     },
     "190": {
       "action": "FUTURE",
@@ -4388,7 +4478,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:41Z",
-      "title": "audit: architecture completeness matrix — epic tracker"
+      "title": "audit: architecture completeness matrix \u2014 epic tracker"
     },
     "191": {
       "action": "FUTURE",
@@ -4409,7 +4499,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:41Z",
-      "title": "audit: cross-tool comprehensive summary — epic tracker"
+      "title": "audit: cross-tool comprehensive summary \u2014 epic tracker"
     },
     "192": {
       "action": "FUTURE",
@@ -4430,7 +4520,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:41Z",
-      "title": "governance: registry + tier promotion — epic tracker"
+      "title": "governance: registry + tier promotion \u2014 epic tracker"
     },
     "193": {
       "action": "TRACK",
@@ -4557,7 +4647,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "docs: draft Chapter 1 — Introduction and Problem Statement"
+      "title": "docs: draft Chapter 1 \u2014 Introduction and Problem Statement"
     },
     "199": {
       "action": "TRACK",
@@ -4872,7 +4962,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 1 — read core strategic docs (implementation-status, E2G, roadmap)"
+      "title": "audit: Phase 1 \u2014 read core strategic docs (implementation-status, E2G, roadmap)"
     },
     "211": {
       "action": "TRACK",
@@ -4894,7 +4984,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 2 — read market & research foundation (market-analysis, competitor, behavioral-econ)"
+      "title": "audit: Phase 2 \u2014 read market & research foundation (market-analysis, competitor, behavioral-econ)"
     },
     "212": {
       "action": "TRACK",
@@ -4921,7 +5011,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:26Z",
-      "title": "audit: Phase 3 — read infrastructure & ops (render.yaml, .env.example, docker-compose, terraform)"
+      "title": "audit: Phase 3 \u2014 read infrastructure & ops (render.yaml, .env.example, docker-compose, terraform)"
     },
     "213": {
       "action": "TRACK",
@@ -4942,7 +5032,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 4 — search operational detail docs (ops, monitoring, support, hiring)"
+      "title": "audit: Phase 4 \u2014 search operational detail docs (ops, monitoring, support, hiring)"
     },
     "214": {
       "action": "TRACK",
@@ -4964,7 +5054,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 5 — search marketing & content (pitch, positioning, brand)"
+      "title": "audit: Phase 5 \u2014 search marketing & content (pitch, positioning, brand)"
     },
     "215": {
       "action": "TRACK",
@@ -4990,7 +5080,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:27Z",
-      "title": "audit: Phase 6 — search growth & retention (feedback, iteration, testing)"
+      "title": "audit: Phase 6 \u2014 search growth & retention (feedback, iteration, testing)"
     },
     "216": {
       "action": "TRACK",
@@ -5017,7 +5107,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:27Z",
-      "title": "audit: Phase 7 — read business model & metrics (b2b metrics service, revenue docs)"
+      "title": "audit: Phase 7 \u2014 read business model & metrics (b2b metrics service, revenue docs)"
     },
     "217": {
       "action": "TRACK",
@@ -5061,7 +5151,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 1 — grep comment markers (TODO, FIXME, HACK, STUB, WIP)"
+      "title": "audit: Phase 1 \u2014 grep comment markers (TODO, FIXME, HACK, STUB, WIP)"
     },
     "219": {
       "action": "TRACK",
@@ -5083,7 +5173,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 2 — grep function/method stubs (throw not implemented, bare returns)"
+      "title": "audit: Phase 2 \u2014 grep function/method stubs (throw not implemented, bare returns)"
     },
     "220": {
       "action": "TRACK",
@@ -5105,7 +5195,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 3 — grep component/UI placeholders (Coming soon, placeholder text)"
+      "title": "audit: Phase 3 \u2014 grep component/UI placeholders (Coming soon, placeholder text)"
     },
     "221": {
       "action": "TRACK",
@@ -5127,7 +5217,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 4 — grep hardcoded mock data (const mockData, MOCK:, STUB:)"
+      "title": "audit: Phase 4 \u2014 grep hardcoded mock data (const mockData, MOCK:, STUB:)"
     },
     "222": {
       "action": "TRACK",
@@ -5149,7 +5239,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 5 — filename-based detection (stub, placeholder, mock, dummy in name)"
+      "title": "audit: Phase 5 \u2014 filename-based detection (stub, placeholder, mock, dummy in name)"
     },
     "223": {
       "action": "TRACK",
@@ -5171,7 +5261,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 6 — targeted directory scans (services/, modules/, screens/, panels/)"
+      "title": "audit: Phase 6 \u2014 targeted directory scans (services/, modules/, screens/, panels/)"
     },
     "224": {
       "action": "TRACK",
@@ -5220,7 +5310,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:27Z",
-      "title": "audit: Phase 1 — service layer deep dive (40+ files in src/api/services/)"
+      "title": "audit: Phase 1 \u2014 service layer deep dive (40+ files in src/api/services/)"
     },
     "226": {
       "action": "TRACK",
@@ -5247,7 +5337,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:27Z",
-      "title": "audit: Phase 2 — NestJS module layer deep dive (100+ files in src/api/src/modules/)"
+      "title": "audit: Phase 2 \u2014 NestJS module layer deep dive (100+ files in src/api/src/modules/)"
     },
     "227": {
       "action": "TRACK",
@@ -5268,7 +5358,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 3 — shared libraries inventory (src/shared/libs/)"
+      "title": "audit: Phase 3 \u2014 shared libraries inventory (src/shared/libs/)"
     },
     "228": {
       "action": "TRACK",
@@ -5289,7 +5379,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 4 — frontend inventory (src/web/app/, utils/, stores/, components/)"
+      "title": "audit: Phase 4 \u2014 frontend inventory (src/web/app/, utils/, stores/, components/)"
     },
     "229": {
       "action": "TRACK",
@@ -5316,7 +5406,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:27Z",
-      "title": "audit: Phase 5 — mobile inventory (src/mobile/screens/, services/)"
+      "title": "audit: Phase 5 \u2014 mobile inventory (src/mobile/screens/, services/)"
     },
     "230": {
       "action": "TRACK",
@@ -5343,7 +5433,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:27Z",
-      "title": "audit: Phase 6 — desktop inventory (src/desktop/src/panels/)"
+      "title": "audit: Phase 6 \u2014 desktop inventory (src/desktop/src/panels/)"
     },
     "231": {
       "action": "TRACK",
@@ -5365,7 +5455,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 7 — database schema + seed data (schema.sql, seed.sql)"
+      "title": "audit: Phase 7 \u2014 database schema + seed data (schema.sql, seed.sql)"
     },
     "232": {
       "action": "TRACK",
@@ -5386,7 +5476,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:42Z",
-      "title": "audit: Phase 8 — synthesize completeness matrix (19 feature areas, % scoring)"
+      "title": "audit: Phase 8 \u2014 synthesize completeness matrix (19 feature areas, % scoring)"
     },
     "233": {
       "action": "TRACK",
@@ -6246,7 +6336,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:43Z",
-      "title": "feat: activate domain-expert agent contexts — epic tracker"
+      "title": "feat: activate domain-expert agent contexts \u2014 epic tracker"
     },
     "268": {
       "action": "TRACK",
@@ -6387,7 +6477,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:43Z",
-      "title": "audit: UX flow audit — 5 critical flows (friction, safety, a11y, copy)"
+      "title": "audit: UX flow audit \u2014 5 critical flows (friction, safety, a11y, copy)"
     },
     "274": {
       "action": "TRACK",
@@ -6408,7 +6498,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:43Z",
-      "title": "docs: draft FAQ v1 — 10 help articles with linguistic cloaker vocabulary"
+      "title": "docs: draft FAQ v1 \u2014 10 help articles with linguistic cloaker vocabulary"
     },
     "275": {
       "action": "TRACK",
@@ -6549,7 +6639,7 @@
       "closed_at": null
     },
     "281": {
-      "title": "feat: Health data bridge — native UI completion (TKT-P1-007)",
+      "title": "feat: Health data bridge \u2014 native UI completion (TKT-P1-007)",
       "labels": [
         "P1-beta-enhancer",
         "blocked"
@@ -6580,7 +6670,7 @@
       "closed_at": null
     },
     "282": {
-      "title": "feat: Video proof pipeline — processing state UI (TKT-P1-013)",
+      "title": "feat: Video proof pipeline \u2014 processing state UI (TKT-P1-013)",
       "labels": [
         "P1-beta-enhancer"
       ],
@@ -6623,10 +6713,10 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:43Z",
-      "title": "Legal & Compliance Department — Task Tracker"
+      "title": "Legal & Compliance Department \u2014 Task Tracker"
     },
     "284": {
-      "title": "feat: Fury audit masks — workbench masked display (TKT-P1-014)",
+      "title": "feat: Fury audit masks \u2014 workbench masked display (TKT-P1-014)",
       "labels": [
         "P1-beta-enhancer"
       ],
@@ -6669,7 +6759,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:43Z",
-      "title": "Product & Design Department — Task Tracker"
+      "title": "Product & Design Department \u2014 Task Tracker"
     },
     "286": {
       "action": "TRACK",
@@ -6690,10 +6780,10 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:43Z",
-      "title": "Operations & Infrastructure Department — Task Tracker"
+      "title": "Operations & Infrastructure Department \u2014 Task Tracker"
     },
     "287": {
-      "title": "feat: Anti-collusion routing — admin cluster screen (TKT-P1-008)",
+      "title": "feat: Anti-collusion routing \u2014 admin cluster screen (TKT-P1-008)",
       "labels": [
         "P1-beta-enhancer"
       ],
@@ -6736,7 +6826,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:43Z",
-      "title": "Growth & Marketing Department — Task Tracker"
+      "title": "Growth & Marketing Department \u2014 Task Tracker"
     },
     "289": {
       "title": "feat: Collusion slashing & honey-trap enforcement (TKT-P1-015)",
@@ -6782,7 +6872,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:43Z",
-      "title": "Finance & Revenue Department — Task Tracker"
+      "title": "Finance & Revenue Department \u2014 Task Tracker"
     },
     "291": {
       "action": "TRACK",
@@ -6803,7 +6893,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:43Z",
-      "title": "Customer Success Department — Task Tracker"
+      "title": "Customer Success Department \u2014 Task Tracker"
     },
     "292": {
       "title": "feat: Skill-contest whitepaper release gate (TKT-P1-019)",
@@ -6855,7 +6945,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:27Z",
-      "title": "Enterprise Sales / B2B Department — Task Tracker"
+      "title": "Enterprise Sales / B2B Department \u2014 Task Tracker"
     },
     "294": {
       "action": "TRACK",
@@ -7194,7 +7284,7 @@
       "title": "feat: Ostrich effect detection (F-AEGIS-09)"
     },
     "309": {
-      "title": "feat: Finish line spike — double-stake incentive (F-CORE-09)",
+      "title": "feat: Finish line spike \u2014 double-stake incentive (F-CORE-09)",
       "labels": [
         "P1-beta-enhancer"
       ],
@@ -7300,7 +7390,7 @@
       "closed_at": null
     },
     "312": {
-      "title": "feat: HR dashboard — role-based access & org authorization (F-WEB-03)",
+      "title": "feat: HR dashboard \u2014 role-based access & org authorization (F-WEB-03)",
       "labels": [
         "P1-beta-enhancer",
         "b2b"
@@ -7352,7 +7442,7 @@
       "closed_at": null
     },
     "314": {
-      "title": "feat: B2B orchestration panel — billing & scope management (F-DESKTOP-05)",
+      "title": "feat: B2B orchestration panel \u2014 billing & scope management (F-DESKTOP-05)",
       "labels": [
         "desktop",
         "P1-beta-enhancer",
@@ -7379,7 +7469,7 @@
       "closed_at": null
     },
     "315": {
-      "title": "Retain outside legal counsel — find and sign retainer",
+      "title": "Retain outside legal counsel \u2014 find and sign retainer",
       "labels": [
         "P0-beta-blocker",
         "owner:legal-compliance",
@@ -7406,7 +7496,7 @@
       "closed_at": null
     },
     "316": {
-      "title": "Custody model sign-off — lawyer reviews FBO escrow structure",
+      "title": "Custody model sign-off \u2014 lawyer reviews FBO escrow structure",
       "labels": [
         "P0-beta-blocker",
         "owner:legal-compliance",
@@ -7433,7 +7523,7 @@
       "closed_at": null
     },
     "317": {
-      "title": "State jurisdiction matrix sign-off — confirm legal US states",
+      "title": "State jurisdiction matrix sign-off \u2014 confirm legal US states",
       "labels": [
         "P0-beta-blocker",
         "owner:legal-compliance",
@@ -7520,7 +7610,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Cross-jurisdictional consent matrix — data consent by state"
+      "title": "Cross-jurisdictional consent matrix \u2014 data consent by state"
     },
     "321": {
       "action": "TRACK",
@@ -7604,7 +7694,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Enterprise DPA template — Data Processing Agreement"
+      "title": "Enterprise DPA template \u2014 Data Processing Agreement"
     },
     "325": {
       "action": "TRACK",
@@ -7646,7 +7736,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Define beta success metrics — concrete targets"
+      "title": "Define beta success metrics \u2014 concrete targets"
     },
     "327": {
       "action": "BUILD",
@@ -7686,7 +7776,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:54:34Z",
-      "title": "No-Contact recovery UX audit — 5 critical flows"
+      "title": "No-Contact recovery UX audit \u2014 5 critical flows"
     },
     "328": {
       "action": "TRACK",
@@ -7706,7 +7796,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "User interview protocol — structured guide for 10 beta users"
+      "title": "User interview protocol \u2014 structured guide for 10 beta users"
     },
     "329": {
       "action": "TRACK",
@@ -7746,7 +7836,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Feature prioritization from analytics — data-driven backlog"
+      "title": "Feature prioritization from analytics \u2014 data-driven backlog"
     },
     "331": {
       "action": "TRACK",
@@ -7766,7 +7856,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Enterprise UX audit — HR + coach dashboard usability"
+      "title": "Enterprise UX audit \u2014 HR + coach dashboard usability"
     },
     "332": {
       "action": "TRACK",
@@ -7791,7 +7881,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "Uptime monitoring setup — UptimeRobot/BetterUptime"
+      "title": "Uptime monitoring setup \u2014 UptimeRobot/BetterUptime"
     },
     "333": {
       "action": "TRACK",
@@ -7812,7 +7902,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Render starter → production plan upgrade evaluation"
+      "title": "Render starter \u2192 production plan upgrade evaluation"
     },
     "334": {
       "action": "TRACK",
@@ -7858,7 +7948,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "Incident response runbook v1 — severity, escalation, rollback"
+      "title": "Incident response runbook v1 \u2014 severity, escalation, rollback"
     },
     "336": {
       "action": "TRACK",
@@ -7883,7 +7973,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "Load testing — 500 concurrent users simulation"
+      "title": "Load testing \u2014 500 concurrent users simulation"
     },
     "337": {
       "action": "TRACK",
@@ -7929,7 +8019,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "APNs/FCM credential management — secure push notification keys"
+      "title": "APNs/FCM credential management \u2014 secure push notification keys"
     },
     "339": {
       "action": "TRACK",
@@ -7954,7 +8044,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "Load testing — 5,000 concurrent users at scale"
+      "title": "Load testing \u2014 5,000 concurrent users at scale"
     },
     "340": {
       "action": "TRACK",
@@ -7978,7 +8068,7 @@
       "title": "Auto-scaling + cost alerting configuration"
     },
     "341": {
-      "title": "Audience map — early-user channels + first target lists",
+      "title": "Audience map \u2014 early-user channels + first target lists",
       "labels": [
         "P1-beta-enhancer",
         "marketing",
@@ -8005,7 +8095,7 @@
       "closed_at": null
     },
     "342": {
-      "title": "Landing page + beta explainer funnel — no-contact conversion flow",
+      "title": "Landing page + beta explainer funnel \u2014 no-contact conversion flow",
       "labels": [
         "P1-beta-enhancer",
         "marketing",
@@ -8032,7 +8122,7 @@
       "closed_at": null
     },
     "343": {
-      "title": "Social operating system — Jessica/Styx channel architecture + 30-day cadence",
+      "title": "Social operating system \u2014 Jessica/Styx channel architecture + 30-day cadence",
       "labels": [
         "P1-beta-enhancer",
         "marketing",
@@ -8059,7 +8149,7 @@
       "closed_at": null
     },
     "344": {
-      "title": "SEO demand capture — no-contact keywords + first 4 intent articles",
+      "title": "SEO demand capture \u2014 no-contact keywords + first 4 intent articles",
       "labels": [
         "P1-beta-enhancer",
         "marketing",
@@ -8104,7 +8194,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Referral loop — waitlist and cohort invite mechanic"
+      "title": "Referral loop \u2014 waitlist and cohort invite mechanic"
     },
     "346": {
       "action": "TRACK",
@@ -8125,10 +8215,10 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "PR strategy for App Store launch — press kit + target list + narrative"
+      "title": "PR strategy for App Store launch \u2014 press kit + target list + narrative"
     },
     "347": {
-      "title": "Practitioner outreach — one-pager + first 15 outreach + demo loop",
+      "title": "Practitioner outreach \u2014 one-pager + first 15 outreach + demo loop",
       "labels": [
         "P1-beta-enhancer",
         "owner:business-development",
@@ -8173,7 +8263,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Unit economics model v1 — $39 contract profitability"
+      "title": "Unit economics model v1 \u2014 $39 contract profitability"
     },
     "349": {
       "action": "TRACK",
@@ -8193,7 +8283,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Stripe production account setup — real-money switch"
+      "title": "Stripe production account setup \u2014 real-money switch"
     },
     "350": {
       "action": "TRACK",
@@ -8213,7 +8303,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Financial reconciliation process — Stripe vs internal records"
+      "title": "Financial reconciliation process \u2014 Stripe vs internal records"
     },
     "351": {
       "action": "TRACK",
@@ -8253,7 +8343,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "B2B pricing model — $49/$149/$349/$999+ tiers"
+      "title": "B2B pricing model \u2014 $49/$149/$349/$999+ tiers"
     },
     "353": {
       "action": "TRACK",
@@ -8273,7 +8363,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Revenue reporting — MRR, churn, ARPU monthly report"
+      "title": "Revenue reporting \u2014 MRR, churn, ARPU monthly report"
     },
     "354": {
       "action": "TRACK",
@@ -8293,7 +8383,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Support channel setup — email + Discord for beta"
+      "title": "Support channel setup \u2014 email + Discord for beta"
     },
     "355": {
       "action": "TRACK",
@@ -8313,7 +8403,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "FAQ / Help Center v1 — 10 help articles"
+      "title": "FAQ / Help Center v1 \u2014 10 help articles"
     },
     "356": {
       "action": "TRACK",
@@ -8333,7 +8423,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Onboarding email sequence — 7-day drip campaign"
+      "title": "Onboarding email sequence \u2014 7-day drip campaign"
     },
     "357": {
       "action": "TRACK",
@@ -8353,7 +8443,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Churn signal detection — predictive patterns"
+      "title": "Churn signal detection \u2014 predictive patterns"
     },
     "358": {
       "action": "TRACK",
@@ -8399,7 +8489,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "Identify 50 target therapists/coaches — ICP definition"
+      "title": "Identify 50 target therapists/coaches \u2014 ICP definition"
     },
     "360": {
       "action": "TRACK",
@@ -8421,7 +8511,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Outreach sequence — 5-email cold outreach + LinkedIn"
+      "title": "Outreach sequence \u2014 5-email cold outreach + LinkedIn"
     },
     "361": {
       "action": "TRACK",
@@ -8447,7 +8537,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "Enterprise demo environment — sandboxed Render instance"
+      "title": "Enterprise demo environment \u2014 sandboxed Render instance"
     },
     "362": {
       "action": "TRACK",
@@ -8469,7 +8559,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:44Z",
-      "title": "Security questionnaire template — pre-filled answers"
+      "title": "Security questionnaire template \u2014 pre-filled answers"
     },
     "363": {
       "action": "TRACK",
@@ -8491,7 +8581,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:45Z",
-      "title": "First pilot onboarding — 1-3 practitioners"
+      "title": "First pilot onboarding \u2014 1-3 practitioners"
     },
     "364": {
       "action": "TRACK",
@@ -8517,7 +8607,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "Enterprise pricing live — published tiers + billing"
+      "title": "Enterprise pricing live \u2014 published tiers + billing"
     },
     "365": {
       "action": "TRACK",
@@ -8629,7 +8719,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "Internal dogfood beta — founders + 5-10 trusted people"
+      "title": "Internal dogfood beta \u2014 founders + 5-10 trusted people"
     },
     "370": {
       "action": "TRACK",
@@ -8654,7 +8744,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "Monitoring + alerting setup — Sentry + uptime"
+      "title": "Monitoring + alerting setup \u2014 Sentry + uptime"
     },
     "371": {
       "action": "TRACK",
@@ -8674,7 +8764,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:45Z",
-      "title": "Support channel setup — email + Discord"
+      "title": "Support channel setup \u2014 email + Discord"
     },
     "372": {
       "action": "TRACK",
@@ -8695,10 +8785,10 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:45Z",
-      "title": "TestFlight external beta — 50-100 users"
+      "title": "TestFlight external beta \u2014 50-100 users"
     },
     "373": {
-      "title": "Seed user recruitment — creator outreach + first cohort admissions",
+      "title": "Seed user recruitment \u2014 creator outreach + first cohort admissions",
       "labels": [
         "P1-beta-enhancer",
         "owner:business-development",
@@ -8764,7 +8854,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:45Z",
-      "title": "Real-money pilot — 10-25 users"
+      "title": "Real-money pilot \u2014 10-25 users"
     },
     "376": {
       "action": "TRACK",
@@ -8784,7 +8874,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:45Z",
-      "title": "Open beta expansion — 500+ users"
+      "title": "Open beta expansion \u2014 500+ users"
     },
     "377": {
       "action": "TRACK",
@@ -8825,7 +8915,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:45Z",
-      "title": "App Store launch (public) — general availability"
+      "title": "App Store launch (public) \u2014 general availability"
     },
     "379": {
       "action": "TRACK",
@@ -8845,7 +8935,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:45Z",
-      "title": "Mobile Native Engineer (Swift) — contract sourcing"
+      "title": "Mobile Native Engineer (Swift) \u2014 contract sourcing"
     },
     "380": {
       "action": "TRACK",
@@ -8865,7 +8955,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:45Z",
-      "title": "Legal Counsel — retainer engagement"
+      "title": "Legal Counsel \u2014 retainer engagement"
     },
     "381": {
       "action": "TRACK",
@@ -8885,7 +8975,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:45Z",
-      "title": "Kotlin contractor — Android health data bridge"
+      "title": "Kotlin contractor \u2014 Android health data bridge"
     },
     "382": {
       "action": "TRACK",
@@ -8910,7 +9000,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "QA / Beta Coordinator — part-time hire"
+      "title": "QA / Beta Coordinator \u2014 part-time hire"
     },
     "383": {
       "action": "TRACK",
@@ -8930,7 +9020,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:45Z",
-      "title": "Growth / Community Manager — hiring"
+      "title": "Growth / Community Manager \u2014 hiring"
     },
     "384": {
       "action": "TRACK",
@@ -8951,7 +9041,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:45Z",
-      "title": "Enterprise Sales / BD — hiring (if fundraise)"
+      "title": "Enterprise Sales / BD \u2014 hiring (if fundraise)"
     },
     "385": {
       "action": "TRACK",
@@ -8976,10 +9066,10 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "DevOps / SRE — part-time (if fundraise)"
+      "title": "DevOps / SRE \u2014 part-time (if fundraise)"
     },
     "386": {
-      "title": "KYC: Schema — identity_verifications table + API types",
+      "title": "KYC: Schema \u2014 identity_verifications table + API types",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9004,7 +9094,7 @@
       "closed_at": null
     },
     "387": {
-      "title": "KYC: API — verification endpoint + progressive tier logic",
+      "title": "KYC: API \u2014 verification endpoint + progressive tier logic",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9029,7 +9119,7 @@
       "closed_at": null
     },
     "388": {
-      "title": "KYC: UI — identity upload flow + stake tier display",
+      "title": "KYC: UI \u2014 identity upload flow + stake tier display",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9054,7 +9144,7 @@
       "closed_at": null
     },
     "389": {
-      "title": "KYC: Tests — unit + integration for tier transitions",
+      "title": "KYC: Tests \u2014 unit + integration for tier transitions",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9079,7 +9169,7 @@
       "closed_at": null
     },
     "390": {
-      "title": "KYC: Legal — counsel sign-off on verification requirements",
+      "title": "KYC: Legal \u2014 counsel sign-off on verification requirements",
       "labels": [
         "P0-beta-blocker",
         "owner:legal-compliance"
@@ -9105,7 +9195,7 @@
       "closed_at": null
     },
     "391": {
-      "title": "Camera: Native Swift module — photo/video capture with nonce",
+      "title": "Camera: Native Swift module \u2014 photo/video capture with nonce",
       "labels": [
         "P0-beta-blocker",
         "owner:mobile-native"
@@ -9131,7 +9221,7 @@
       "closed_at": null
     },
     "392": {
-      "title": "Camera: API — proof submission endpoint + nonce validation",
+      "title": "Camera: API \u2014 proof submission endpoint + nonce validation",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9156,7 +9246,7 @@
       "closed_at": null
     },
     "393": {
-      "title": "Camera: Schema — proof_submissions table + metadata",
+      "title": "Camera: Schema \u2014 proof_submissions table + metadata",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9181,7 +9271,7 @@
       "closed_at": null
     },
     "394": {
-      "title": "Camera: Tests — capture flow + nonce challenge verification",
+      "title": "Camera: Tests \u2014 capture flow + nonce challenge verification",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9231,7 +9321,7 @@
       "closed_at": null
     },
     "396": {
-      "title": "Settlement: API — deposit/withdrawal/settlement endpoints",
+      "title": "Settlement: API \u2014 deposit/withdrawal/settlement endpoints",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9256,7 +9346,7 @@
       "closed_at": null
     },
     "397": {
-      "title": "Settlement: Schema — transactions + ledger tables",
+      "title": "Settlement: Schema \u2014 transactions + ledger tables",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9281,7 +9371,7 @@
       "closed_at": null
     },
     "398": {
-      "title": "Settlement: Reconciliation — automated Stripe vs internal check",
+      "title": "Settlement: Reconciliation \u2014 automated Stripe vs internal check",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9306,7 +9396,7 @@
       "closed_at": null
     },
     "399": {
-      "title": "Settlement: Tests — full deposit→stake→settle→withdraw flow",
+      "title": "Settlement: Tests \u2014 full deposit\u2192stake\u2192settle\u2192withdraw flow",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9331,7 +9421,7 @@
       "closed_at": null
     },
     "400": {
-      "title": "Settlement: Legal — FBO custody model counsel review",
+      "title": "Settlement: Legal \u2014 FBO custody model counsel review",
       "labels": [
         "P0-beta-blocker",
         "owner:legal-compliance"
@@ -9357,7 +9447,7 @@
       "closed_at": null
     },
     "401": {
-      "title": "Geofence: Policy registry — state availability matrix CRUD",
+      "title": "Geofence: Policy registry \u2014 state availability matrix CRUD",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9382,7 +9472,7 @@
       "closed_at": null
     },
     "402": {
-      "title": "Geofence: Middleware — fail-closed location enforcement",
+      "title": "Geofence: Middleware \u2014 fail-closed location enforcement",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9407,7 +9497,7 @@
       "closed_at": null
     },
     "403": {
-      "title": "Geofence: Admin UI — state matrix management screen",
+      "title": "Geofence: Admin UI \u2014 state matrix management screen",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9432,7 +9522,7 @@
       "closed_at": null
     },
     "404": {
-      "title": "Geofence: Compliance logging — decision audit trail",
+      "title": "Geofence: Compliance logging \u2014 decision audit trail",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9457,7 +9547,7 @@
       "closed_at": null
     },
     "405": {
-      "title": "Geofence: Tests — all protected routes + regression suite",
+      "title": "Geofence: Tests \u2014 all protected routes + regression suite",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9482,7 +9572,7 @@
       "closed_at": null
     },
     "406": {
-      "title": "Forfeit: Policy engine — jurisdiction-aware disposition rules",
+      "title": "Forfeit: Policy engine \u2014 jurisdiction-aware disposition rules",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9507,7 +9597,7 @@
       "closed_at": null
     },
     "407": {
-      "title": "Forfeit: Kill switch — refund-only emergency override",
+      "title": "Forfeit: Kill switch \u2014 refund-only emergency override",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9532,7 +9622,7 @@
       "closed_at": null
     },
     "408": {
-      "title": "Forfeit: Admin UI — kill switch toggle + state mode display",
+      "title": "Forfeit: Admin UI \u2014 kill switch toggle + state mode display",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9557,7 +9647,7 @@
       "closed_at": null
     },
     "409": {
-      "title": "Forfeit: Tests — payout matrix all configured states",
+      "title": "Forfeit: Tests \u2014 payout matrix all configured states",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9582,7 +9672,7 @@
       "closed_at": null
     },
     "410": {
-      "title": "Forfeit: Legal — counsel sign-off on jurisdiction mode mapping",
+      "title": "Forfeit: Legal \u2014 counsel sign-off on jurisdiction mode mapping",
       "labels": [
         "P0-beta-blocker",
         "owner:legal-compliance"
@@ -9608,7 +9698,7 @@
       "closed_at": null
     },
     "411": {
-      "title": "Guardrails: Crisis detection — keyword + pattern matching engine",
+      "title": "Guardrails: Crisis detection \u2014 keyword + pattern matching engine",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9633,7 +9723,7 @@
       "closed_at": null
     },
     "412": {
-      "title": "Guardrails: Intervention flow — pause + resource display UI",
+      "title": "Guardrails: Intervention flow \u2014 pause + resource display UI",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9658,7 +9748,7 @@
       "closed_at": null
     },
     "413": {
-      "title": "Guardrails: API — crisis event logging + escalation trigger",
+      "title": "Guardrails: API \u2014 crisis event logging + escalation trigger",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9683,7 +9773,7 @@
       "closed_at": null
     },
     "414": {
-      "title": "Guardrails: Tests — detection accuracy + false positive rate",
+      "title": "Guardrails: Tests \u2014 detection accuracy + false positive rate",
       "labels": [
         "P0-beta-blocker"
       ],
@@ -9893,7 +9983,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "Ask Styx: Integration tests — E2E question→answer flow"
+      "title": "Ask Styx: Integration tests \u2014 E2E question\u2192answer flow"
     },
     "423": {
       "action": "TRACK",
@@ -10096,7 +10186,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:54:34Z",
-      "title": "DisputeTimeline: Interaction — zoom, filter, detail panels"
+      "title": "DisputeTimeline: Interaction \u2014 zoom, filter, detail panels"
     },
     "430": {
       "action": "BUILD",
@@ -10137,7 +10227,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:54:34Z",
-      "title": "DisputeTimeline: Tests — rendering, state transitions, edge cases"
+      "title": "DisputeTimeline: Tests \u2014 rendering, state transitions, edge cases"
     },
     "431": {
       "action": "TRACK",
@@ -10262,7 +10352,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:56Z",
-      "title": "Agents: Integration tests — multi-agent routing"
+      "title": "Agents: Integration tests \u2014 multi-agent routing"
     },
     "436": {
       "action": "TRACK",
@@ -10342,7 +10432,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "Audit: Map all modules → feature coverage matrix"
+      "title": "Audit: Map all modules \u2192 feature coverage matrix"
     },
     "440": {
       "action": "TRACK",
@@ -10535,7 +10625,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-005: Schema + API — lockdown rules + timelock enforcement"
+      "title": "TKT-P1-005: Schema + API \u2014 lockdown rules + timelock enforcement"
     },
     "449": {
       "action": "TRACK",
@@ -10553,7 +10643,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-005: UI — danger zone indicator + timelock countdown"
+      "title": "TKT-P1-005: UI \u2014 danger zone indicator + timelock countdown"
     },
     "450": {
       "action": "TRACK",
@@ -10571,7 +10661,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-005: Tests — lockdown triggers + timelock expiry"
+      "title": "TKT-P1-005: Tests \u2014 lockdown triggers + timelock expiry"
     },
     "451": {
       "action": "TRACK",
@@ -10589,7 +10679,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-012: Schema + API — risk multiplier rules + schedule config"
+      "title": "TKT-P1-012: Schema + API \u2014 risk multiplier rules + schedule config"
     },
     "452": {
       "action": "TRACK",
@@ -10607,7 +10697,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-012: UI — multiplier indicator + schedule display"
+      "title": "TKT-P1-012: UI \u2014 multiplier indicator + schedule display"
     },
     "453": {
       "action": "TRACK",
@@ -10625,7 +10715,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-012: Tests — multiplier calculation + edge cases"
+      "title": "TKT-P1-012: Tests \u2014 multiplier calculation + edge cases"
     },
     "454": {
       "action": "TRACK",
@@ -10643,7 +10733,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-017: Schema + API — partner linking + notification triggers"
+      "title": "TKT-P1-017: Schema + API \u2014 partner linking + notification triggers"
     },
     "455": {
       "action": "TRACK",
@@ -10661,7 +10751,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-017: UI — partner invitation + status dashboard"
+      "title": "TKT-P1-017: UI \u2014 partner invitation + status dashboard"
     },
     "456": {
       "action": "TRACK",
@@ -10679,7 +10769,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-017: Tests — protocol flow + notification delivery"
+      "title": "TKT-P1-017: Tests \u2014 protocol flow + notification delivery"
     },
     "457": {
       "action": "TRACK",
@@ -10697,7 +10787,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-010: Schema + API — progress tracking + downscale logic"
+      "title": "TKT-P1-010: Schema + API \u2014 progress tracking + downscale logic"
     },
     "458": {
       "action": "TRACK",
@@ -10715,7 +10805,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-010: UI — progress visualization + downscale flow"
+      "title": "TKT-P1-010: UI \u2014 progress visualization + downscale flow"
     },
     "459": {
       "action": "TRACK",
@@ -10733,7 +10823,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-010: Tests — progress calculation + UX state transitions"
+      "title": "TKT-P1-010: Tests \u2014 progress calculation + UX state transitions"
     },
     "460": {
       "action": "TRACK",
@@ -10751,7 +10841,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-016: Schema + API — oath storage + identity binding"
+      "title": "TKT-P1-016: Schema + API \u2014 oath storage + identity binding"
     },
     "461": {
       "action": "TRACK",
@@ -10769,7 +10859,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-016: UI — oath creation flow + identity confirmation"
+      "title": "TKT-P1-016: UI \u2014 oath creation flow + identity confirmation"
     },
     "462": {
       "action": "TRACK",
@@ -10787,7 +10877,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-016: Tests — onboarding flow + oath persistence"
+      "title": "TKT-P1-016: Tests \u2014 onboarding flow + oath persistence"
     },
     "463": {
       "action": "TRACK",
@@ -10805,7 +10895,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-018: Schema + API — gradient calculation + leaderboard data"
+      "title": "TKT-P1-018: Schema + API \u2014 gradient calculation + leaderboard data"
     },
     "464": {
       "action": "TRACK",
@@ -10823,7 +10913,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-018: UI — dashboard visualization + real-time leaderboard"
+      "title": "TKT-P1-018: UI \u2014 dashboard visualization + real-time leaderboard"
     },
     "465": {
       "action": "TRACK",
@@ -10841,7 +10931,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-018: Tests — gradient math + leaderboard ranking"
+      "title": "TKT-P1-018: Tests \u2014 gradient math + leaderboard ranking"
     },
     "466": {
       "action": "TRACK",
@@ -10859,7 +10949,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-006: API — push notification dispatch + device registration"
+      "title": "TKT-P1-006: API \u2014 push notification dispatch + device registration"
     },
     "467": {
       "action": "TRACK",
@@ -10879,7 +10969,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-006: Native — APNs (iOS) + FCM (Android) integration"
+      "title": "TKT-P1-006: Native \u2014 APNs (iOS) + FCM (Android) integration"
     },
     "468": {
       "action": "TRACK",
@@ -10897,7 +10987,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-006: Tests — delivery confirmation + fallback scenarios"
+      "title": "TKT-P1-006: Tests \u2014 delivery confirmation + fallback scenarios"
     },
     "469": {
       "action": "TRACK",
@@ -10917,7 +11007,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-019: Whitepaper draft — skill-vs-chance legal argument"
+      "title": "TKT-P1-019: Whitepaper draft \u2014 skill-vs-chance legal argument"
     },
     "470": {
       "action": "TRACK",
@@ -10937,7 +11027,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-019: Legal review — counsel sign-off on classification"
+      "title": "TKT-P1-019: Legal review \u2014 counsel sign-off on classification"
     },
     "471": {
       "action": "TRACK",
@@ -10955,7 +11045,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-019: Release gate — automated check before contest features"
+      "title": "TKT-P1-019: Release gate \u2014 automated check before contest features"
     },
     "472": {
       "action": "TRACK",
@@ -10973,7 +11063,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-009: Schema + API — exclusion registry + cooling-off periods"
+      "title": "TKT-P1-009: Schema + API \u2014 exclusion registry + cooling-off periods"
     },
     "473": {
       "action": "TRACK",
@@ -10991,7 +11081,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-009: UI — self-exclusion flow + responsible-use settings"
+      "title": "TKT-P1-009: UI \u2014 self-exclusion flow + responsible-use settings"
     },
     "474": {
       "action": "TRACK",
@@ -11009,7 +11099,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-009: Tests — exclusion enforcement + re-entry validation"
+      "title": "TKT-P1-009: Tests \u2014 exclusion enforcement + re-entry validation"
     },
     "475": {
       "action": "TRACK",
@@ -11029,7 +11119,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-007: Native — HealthKit/Google Health Connect integration"
+      "title": "TKT-P1-007: Native \u2014 HealthKit/Google Health Connect integration"
     },
     "476": {
       "action": "TRACK",
@@ -11047,7 +11137,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:46Z",
-      "title": "TKT-P1-007: UI — health data display + consent management"
+      "title": "TKT-P1-007: UI \u2014 health data display + consent management"
     },
     "477": {
       "action": "TRACK",
@@ -11065,7 +11155,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-007: Tests — data sync accuracy + privacy compliance"
+      "title": "TKT-P1-007: Tests \u2014 data sync accuracy + privacy compliance"
     },
     "478": {
       "action": "TRACK",
@@ -11083,7 +11173,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-013: API — video upload + processing pipeline"
+      "title": "TKT-P1-013: API \u2014 video upload + processing pipeline"
     },
     "479": {
       "action": "TRACK",
@@ -11101,7 +11191,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-013: UI — upload progress + processing state display"
+      "title": "TKT-P1-013: UI \u2014 upload progress + processing state display"
     },
     "480": {
       "action": "TRACK",
@@ -11119,7 +11209,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-013: Tests — upload flow + processing state machine"
+      "title": "TKT-P1-013: Tests \u2014 upload flow + processing state machine"
     },
     "481": {
       "action": "TRACK",
@@ -11137,7 +11227,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-014: Schema — mask configuration + audit trail"
+      "title": "TKT-P1-014: Schema \u2014 mask configuration + audit trail"
     },
     "482": {
       "action": "TRACK",
@@ -11155,7 +11245,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-014: UI — masked display toggle + audit workbench"
+      "title": "TKT-P1-014: UI \u2014 masked display toggle + audit workbench"
     },
     "483": {
       "action": "TRACK",
@@ -11173,7 +11263,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-014: Tests — masking rules + display fidelity"
+      "title": "TKT-P1-014: Tests \u2014 masking rules + display fidelity"
     },
     "484": {
       "action": "TRACK",
@@ -11191,7 +11281,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-008: Schema + API — routing algorithm + cluster detection"
+      "title": "TKT-P1-008: Schema + API \u2014 routing algorithm + cluster detection"
     },
     "485": {
       "action": "TRACK",
@@ -11209,7 +11299,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-008: Admin UI — cluster visualization + override controls"
+      "title": "TKT-P1-008: Admin UI \u2014 cluster visualization + override controls"
     },
     "486": {
       "action": "TRACK",
@@ -11227,7 +11317,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-008: Tests — routing fairness + collusion detection accuracy"
+      "title": "TKT-P1-008: Tests \u2014 routing fairness + collusion detection accuracy"
     },
     "487": {
       "action": "TRACK",
@@ -11245,7 +11335,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-015: Schema + API — slashing rules + honey-trap triggers"
+      "title": "TKT-P1-015: Schema + API \u2014 slashing rules + honey-trap triggers"
     },
     "488": {
       "action": "TRACK",
@@ -11263,7 +11353,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-015: Admin UI — enforcement dashboard + evidence review"
+      "title": "TKT-P1-015: Admin UI \u2014 enforcement dashboard + evidence review"
     },
     "489": {
       "action": "TRACK",
@@ -11281,7 +11371,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "TKT-P1-015: Tests — slashing calculation + false positive safeguards"
+      "title": "TKT-P1-015: Tests \u2014 slashing calculation + false positive safeguards"
     },
     "490": {
       "action": "TRACK",
@@ -11299,7 +11389,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Service scaffolding — NestJS module + 19 contract checks"
+      "title": "Service scaffolding \u2014 NestJS module + 19 contract checks"
     },
     "491": {
       "action": "TRACK",
@@ -11324,7 +11414,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:57Z",
-      "title": "CI integration — pre-deploy gate + status reporting"
+      "title": "CI integration \u2014 pre-deploy gate + status reporting"
     },
     "492": {
       "action": "TRACK",
@@ -11342,7 +11432,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Tests — all 19 readiness criteria pass/fail"
+      "title": "Tests \u2014 all 19 readiness criteria pass/fail"
     },
     "493": {
       "action": "TRACK",
@@ -11360,7 +11450,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Schema + API — survey definitions + response storage"
+      "title": "Schema + API \u2014 survey definitions + response storage"
     },
     "494": {
       "action": "TRACK",
@@ -11378,7 +11468,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "UI — survey presentation + completion tracking"
+      "title": "UI \u2014 survey presentation + completion tracking"
     },
     "495": {
       "action": "TRACK",
@@ -11396,7 +11486,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Tests — survey flow + statistical analysis pipeline"
+      "title": "Tests \u2014 survey flow + statistical analysis pipeline"
     },
     "496": {
       "action": "TRACK",
@@ -11414,7 +11504,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Schema — emotional tracking fields (urge, trigger, outcome)"
+      "title": "Schema \u2014 emotional tracking fields (urge, trigger, outcome)"
     },
     "497": {
       "action": "TRACK",
@@ -11432,7 +11522,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "UI — daily attestation emotional input components"
+      "title": "UI \u2014 daily attestation emotional input components"
     },
     "498": {
       "action": "TRACK",
@@ -11450,7 +11540,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Tests — attestation flow + data integrity"
+      "title": "Tests \u2014 attestation flow + data integrity"
     },
     "499": {
       "action": "TRACK",
@@ -11468,7 +11558,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Schema + API — queue management + cohort threshold logic"
+      "title": "Schema + API \u2014 queue management + cohort threshold logic"
     },
     "500": {
       "action": "TRACK",
@@ -11486,7 +11576,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "UI — waitlist position display + notification opt-in"
+      "title": "UI \u2014 waitlist position display + notification opt-in"
     },
     "501": {
       "action": "TRACK",
@@ -11504,7 +11594,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Tests — queue ordering + cohort fill triggers"
+      "title": "Tests \u2014 queue ordering + cohort fill triggers"
     },
     "502": {
       "action": "TRACK",
@@ -11522,7 +11612,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Schema + API — referral tracking + reward distribution"
+      "title": "Schema + API \u2014 referral tracking + reward distribution"
     },
     "503": {
       "action": "TRACK",
@@ -11540,7 +11630,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "UI — referral link generation + reward status"
+      "title": "UI \u2014 referral link generation + reward status"
     },
     "504": {
       "action": "TRACK",
@@ -11558,10 +11648,10 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Tests — referral attribution + double-spend prevention"
+      "title": "Tests \u2014 referral attribution + double-spend prevention"
     },
     "505": {
-      "title": "Landing page — no-contact hero copy + waitlist CTA",
+      "title": "Landing page \u2014 no-contact hero copy + waitlist CTA",
       "labels": [
         "P1-beta-enhancer",
         "marketing",
@@ -11588,7 +11678,7 @@
       "closed_at": null
     },
     "506": {
-      "title": "API — waitlist signup + confirmation email + source tagging",
+      "title": "API \u2014 waitlist signup + confirmation email + source tagging",
       "labels": [
         "api",
         "P1-beta-enhancer",
@@ -11631,7 +11721,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Tests — conversion tracking + email delivery"
+      "title": "Tests \u2014 conversion tracking + email delivery"
     },
     "508": {
       "action": "TRACK",
@@ -11649,7 +11739,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Schema — violation code definitions + rejection reasons"
+      "title": "Schema \u2014 violation code definitions + rejection reasons"
     },
     "509": {
       "action": "TRACK",
@@ -11667,7 +11757,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "API — violation code CRUD + audit trail"
+      "title": "API \u2014 violation code CRUD + audit trail"
     },
     "510": {
       "action": "TRACK",
@@ -11685,7 +11775,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Tests — taxonomy completeness + audit logging"
+      "title": "Tests \u2014 taxonomy completeness + audit logging"
     },
     "511": {
       "action": "TRACK",
@@ -11703,7 +11793,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Schema + API — exclusion criteria + suspension logic"
+      "title": "Schema + API \u2014 exclusion criteria + suspension logic"
     },
     "512": {
       "action": "TRACK",
@@ -11721,7 +11811,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "UI — exclusion request flow + suspension status"
+      "title": "UI \u2014 exclusion request flow + suspension status"
     },
     "513": {
       "action": "TRACK",
@@ -11739,7 +11829,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Tests — exclusion triggers + re-entry validation"
+      "title": "Tests \u2014 exclusion triggers + re-entry validation"
     },
     "514": {
       "action": "TRACK",
@@ -11757,7 +11847,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Schema + API — tier definitions + escalation rules"
+      "title": "Schema + API \u2014 tier definitions + escalation rules"
     },
     "515": {
       "action": "TRACK",
@@ -11775,7 +11865,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "UI — verification requirement display per tier"
+      "title": "UI \u2014 verification requirement display per tier"
     },
     "516": {
       "action": "TRACK",
@@ -11793,7 +11883,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "Tests — tier transitions + escalation triggers"
+      "title": "Tests \u2014 tier transitions + escalation triggers"
     },
     "517": {
       "action": "TRACK",
@@ -11811,7 +11901,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:47Z",
-      "title": "API — content moderation queue + automated filtering"
+      "title": "API \u2014 content moderation queue + automated filtering"
     },
     "518": {
       "action": "TRACK",
@@ -11829,7 +11919,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Admin UI — moderation dashboard + appeal flow"
+      "title": "Admin UI \u2014 moderation dashboard + appeal flow"
     },
     "519": {
       "action": "TRACK",
@@ -11847,7 +11937,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Tests — filter accuracy + moderation latency"
+      "title": "Tests \u2014 filter accuracy + moderation latency"
     },
     "520": {
       "action": "TRACK",
@@ -11865,7 +11955,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Schema + API — circuit breaker state machine + pause logic"
+      "title": "Schema + API \u2014 circuit breaker state machine + pause logic"
     },
     "521": {
       "action": "TRACK",
@@ -11883,7 +11973,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "UI — countdown display + pause/resume controls"
+      "title": "UI \u2014 countdown display + pause/resume controls"
     },
     "522": {
       "action": "TRACK",
@@ -11901,7 +11991,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Tests — state transitions + timer accuracy"
+      "title": "Tests \u2014 state transitions + timer accuracy"
     },
     "523": {
       "action": "TRACK",
@@ -11926,7 +12016,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:57Z",
-      "title": "Infrastructure — k6/artillery setup + test scenarios"
+      "title": "Infrastructure \u2014 k6/artillery setup + test scenarios"
     },
     "524": {
       "action": "TRACK",
@@ -11976,7 +12066,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:57Z",
-      "title": "Tests — baseline establishment + regression thresholds"
+      "title": "Tests \u2014 baseline establishment + regression thresholds"
     },
     "526": {
       "action": "TRACK",
@@ -11994,7 +12084,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Copy — linguistically safe notification templates"
+      "title": "Copy \u2014 linguistically safe notification templates"
     },
     "527": {
       "action": "TRACK",
@@ -12012,7 +12102,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "UI — notification display + acknowledgment flow"
+      "title": "UI \u2014 notification display + acknowledgment flow"
     },
     "528": {
       "action": "TRACK",
@@ -12030,7 +12120,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Tests — copy validation + delivery confirmation"
+      "title": "Tests \u2014 copy validation + delivery confirmation"
     },
     "529": {
       "action": "TRACK",
@@ -12048,7 +12138,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Checklist automation — readiness criteria check script"
+      "title": "Checklist automation \u2014 readiness criteria check script"
     },
     "530": {
       "action": "TRACK",
@@ -12073,7 +12163,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:57Z",
-      "title": "Gate enforcement — CI integration + blocking status"
+      "title": "Gate enforcement \u2014 CI integration + blocking status"
     },
     "531": {
       "action": "TRACK",
@@ -12091,7 +12181,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Checklist automation — financial readiness criteria"
+      "title": "Checklist automation \u2014 financial readiness criteria"
     },
     "532": {
       "action": "TRACK",
@@ -12111,7 +12201,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Gate enforcement — settlement + compliance verification"
+      "title": "Gate enforcement \u2014 settlement + compliance verification"
     },
     "533": {
       "action": "TRACK",
@@ -12129,7 +12219,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Checklist automation — App Store guidelines compliance"
+      "title": "Checklist automation \u2014 App Store guidelines compliance"
     },
     "534": {
       "action": "TRACK",
@@ -12147,7 +12237,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Gate enforcement — legal + UX + performance criteria"
+      "title": "Gate enforcement \u2014 legal + UX + performance criteria"
     },
     "535": {
       "action": "TRACK",
@@ -12170,7 +12260,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:57Z",
-      "title": "Checklist automation — enterprise infrastructure criteria"
+      "title": "Checklist automation \u2014 enterprise infrastructure criteria"
     },
     "536": {
       "action": "TRACK",
@@ -12193,7 +12283,7 @@
       "pr": null,
       "state": "TRACKING",
       "state_updated": "2026-06-01T15:53:57Z",
-      "title": "Gate enforcement — security + DPA + demo readiness"
+      "title": "Gate enforcement \u2014 security + DPA + demo readiness"
     },
     "537": {
       "action": "TRACK",
@@ -12211,7 +12301,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Schema + API — spike calculation + stake doubling logic"
+      "title": "Schema + API \u2014 spike calculation + stake doubling logic"
     },
     "538": {
       "action": "TRACK",
@@ -12229,7 +12319,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "UI — spike indicator + incentive display"
+      "title": "UI \u2014 spike indicator + incentive display"
     },
     "539": {
       "action": "TRACK",
@@ -12247,7 +12337,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Tests — calculation accuracy + edge cases"
+      "title": "Tests \u2014 calculation accuracy + edge cases"
     },
     "540": {
       "action": "TRACK",
@@ -12265,7 +12355,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Schema — per-state compliance flags + feature toggles"
+      "title": "Schema \u2014 per-state compliance flags + feature toggles"
     },
     "541": {
       "action": "TRACK",
@@ -12283,7 +12373,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Admin UI — state toggle management + audit trail"
+      "title": "Admin UI \u2014 state toggle management + audit trail"
     },
     "542": {
       "action": "TRACK",
@@ -12301,7 +12391,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Tests — toggle enforcement + state combinations"
+      "title": "Tests \u2014 toggle enforcement + state combinations"
     },
     "543": {
       "action": "TRACK",
@@ -12319,7 +12409,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "UI — stake amount selector + bounds enforcement"
+      "title": "UI \u2014 stake amount selector + bounds enforcement"
     },
     "544": {
       "action": "TRACK",
@@ -12337,7 +12427,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "API — validation + jurisdictional bounds lookup"
+      "title": "API \u2014 validation + jurisdictional bounds lookup"
     },
     "545": {
       "action": "TRACK",
@@ -12355,7 +12445,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "Tests — bounds enforcement + UX state management"
+      "title": "Tests \u2014 bounds enforcement + UX state management"
     },
     "546": {
       "action": "BUILD",
@@ -12380,7 +12470,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:35:10Z",
-      "title": "Schema + API — RBAC model + org authorization"
+      "title": "Schema + API \u2014 RBAC model + org authorization"
     },
     "547": {
       "action": "BUILD",
@@ -12420,7 +12510,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:56:38Z",
-      "title": "UI — dashboard layout + role-specific views"
+      "title": "UI \u2014 dashboard layout + role-specific views"
     },
     "548": {
       "action": "BUILD",
@@ -12445,7 +12535,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:35:13Z",
-      "title": "Tests — access control + org isolation"
+      "title": "Tests \u2014 access control + org isolation"
     },
     "549": {
       "action": "BUILD",
@@ -12470,7 +12560,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:35:15Z",
-      "title": "Desktop — hash collider algorithm integration"
+      "title": "Desktop \u2014 hash collider algorithm integration"
     },
     "550": {
       "action": "BUILD",
@@ -12495,7 +12585,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:35:18Z",
-      "title": "UI — visualization + parameter controls"
+      "title": "UI \u2014 visualization + parameter controls"
     },
     "551": {
       "action": "BUILD",
@@ -12520,7 +12610,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:35:20Z",
-      "title": "Tests — collision detection accuracy + performance"
+      "title": "Tests \u2014 collision detection accuracy + performance"
     },
     "552": {
       "action": "BUILD",
@@ -12561,7 +12651,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:56:38Z",
-      "title": "Schema + API — org billing model + scope management"
+      "title": "Schema + API \u2014 org billing model + scope management"
     },
     "553": {
       "action": "BUILD",
@@ -12602,7 +12692,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:56:38Z",
-      "title": "UI — billing dashboard + scope controls"
+      "title": "UI \u2014 billing dashboard + scope controls"
     },
     "554": {
       "action": "BUILD",
@@ -12643,7 +12733,7 @@
       "pr": null,
       "state": "CLOSED",
       "state_updated": "2026-06-01T19:56:38Z",
-      "title": "Tests — billing flow + scope enforcement"
+      "title": "Tests \u2014 billing flow + scope enforcement"
     },
     "555": {
       "action": "FUTURE",
@@ -12663,7 +12753,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:48Z",
-      "title": "🏛 Phase Beta — Market-safe money enablement (Alpha→Beta gate)"
+      "title": "\ud83c\udfdb Phase Beta \u2014 Market-safe money enablement (Alpha\u2192Beta gate)"
     },
     "556": {
       "action": "FUTURE",
@@ -12683,7 +12773,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "🏛 Phase Gamma — Proof integrity at scale (Beta→Gamma gate)"
+      "title": "\ud83c\udfdb Phase Gamma \u2014 Proof integrity at scale (Beta\u2192Gamma gate)"
     },
     "557": {
       "action": "FUTURE",
@@ -12703,7 +12793,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "🏛 Phase Delta — Retention + network effects (Gamma→Delta gate)"
+      "title": "\ud83c\udfdb Phase Delta \u2014 Retention + network effects (Gamma\u2192Delta gate)"
     },
     "558": {
       "action": "FUTURE",
@@ -12723,7 +12813,7 @@
       "pr": null,
       "state": "FUTURE",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "🏛 Phase Omega — Enterprise expansion (Delta→Omega gate)"
+      "title": "\ud83c\udfdb Phase Omega \u2014 Enterprise expansion (Delta\u2192Omega gate)"
     },
     "559": {
       "action": "WAITING",
@@ -12753,7 +12843,7 @@
       "title": "Blocked Handoff Burn-down - 2026-03-09"
     },
     "560": {
-      "title": "Emergency acquisition asset — \"Do Not Text Your Ex Tonight\" page/tool",
+      "title": "Emergency acquisition asset \u2014 \"Do Not Text Your Ex Tonight\" page/tool",
       "labels": [
         "P1-beta-enhancer",
         "marketing",
@@ -12801,7 +12891,7 @@
       "closed_at": null
     },
     "561": {
-      "title": "Authority layer — founder essay + beta safety/trust summary",
+      "title": "Authority layer \u2014 founder essay + beta safety/trust summary",
       "labels": [
         "P1-beta-enhancer",
         "marketing",
@@ -13519,7 +13609,7 @@
       "pr": null,
       "state": "TRACK",
       "state_updated": "2026-06-01T15:50:49Z",
-      "title": "expansive inquiry: Styx revenue gap — why no money"
+      "title": "expansive inquiry: Styx revenue gap \u2014 why no money"
     },
     "598": {
       "action": "TRACK",
@@ -13647,7 +13737,7 @@
       "action": "BUG",
       "batch": "bug-603-npm-audit",
       "closed_at": "2026-06-01T19:30:00Z",
-      "evidence": "src/ask-styx/package.json:vitest upgraded 3.2.4→4.1.7 fixing GHSA-5xrq-8626-4rwp; src/test-harness/package.json:same; remaining 25 vulns are expo transitive deps requiring expo 54→56 major bump",
+      "evidence": "src/ask-styx/package.json:vitest upgraded 3.2.4\u21924.1.7 fixing GHSA-5xrq-8626-4rwp; src/test-harness/package.json:same; remaining 25 vulns are expo transitive deps requiring expo 54\u219256 major bump",
       "history": [
         {
           "from": "UNREAD",
@@ -13698,7 +13788,7 @@
       "title": "Blocked Handoff Burn-down - 2026-05-25"
     },
     "617": {
-      "title": "e2e: 7 specs fail under `next start` — auth fixture sets localStorage, app gates on styx_auth_token cookie",
+      "title": "e2e: 7 specs fail under `next start` \u2014 auth fixture sets localStorage, app gates on styx_auth_token cookie",
       "labels": [],
       "action": "BUILD",
       "state": "CLOSED",

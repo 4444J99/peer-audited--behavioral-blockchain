@@ -4,7 +4,12 @@ describe('PaymentRouterService', () => {
   let service: PaymentRouterService;
 
   beforeEach(() => {
-    service = new PaymentRouterService();
+    const mockStripe = { releaseFunds: jest.fn().mockResolvedValue({ status: 'COMPLETED', externalRef: 'pi_mock_1' }) };
+    const mockCorepay = { releaseFunds: jest.fn().mockResolvedValue({ status: 'COMPLETED', externalRef: 'tok_mock_1' }) };
+    service = new PaymentRouterService(
+      mockStripe as any,
+      mockCorepay as any,
+    );
   });
 
   // ─── determineProcessor ───
@@ -61,27 +66,58 @@ describe('PaymentRouterService', () => {
       userId: 'user-2',
     };
 
-    it('should create a Stripe payment intent with mock client secret in dev', async () => {
+    const savedEnv = process.env.NODE_ENV;
+    afterEach(() => {
+      if (savedEnv === undefined) {
+        delete process.env.NODE_ENV;
+      } else {
+        process.env.NODE_ENV = savedEnv;
+      }
+    });
+
+    it('should create a Stripe payment intent with mock client secret in development', async () => {
+      process.env.NODE_ENV = 'development';
       const result = await service.createPaymentIntent(baseOptions, 'STRIPE');
       expect(result.processor).toBe('STRIPE');
       expect(result.clientSecret).toMatch(/^pi_stripe_mock_/);
     });
 
-    it('should create a Corepay payment intent with mock token in dev', async () => {
+    it('should create a Corepay payment intent with mock token in development', async () => {
+      process.env.NODE_ENV = 'development';
       const result = await service.createPaymentIntent(baseOptions, 'HIGH_RISK_COREPAY');
       expect(result.processor).toBe('HIGH_RISK_COREPAY');
       expect(result.clientSecret).toMatch(/^tok_corepay_mock_/);
     });
 
-    it('should throw ServiceUnavailableException in production', async () => {
-      const originalEnv = process.env.NODE_ENV;
+    it('should create a mock client secret in the test environment', async () => {
+      process.env.NODE_ENV = 'test';
+      const result = await service.createPaymentIntent(baseOptions, 'STRIPE');
+      expect(result.clientSecret).toMatch(/^pi_stripe_mock_/);
+    });
+
+    it('should throw in production when STRIPE_SECRET_KEY is missing', async () => {
       process.env.NODE_ENV = 'production';
-      try {
-        await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
-          .rejects.toThrow('Payment processor not configured');
-      } finally {
-        process.env.NODE_ENV = originalEnv;
-      }
+      delete process.env.STRIPE_SECRET_KEY;
+      await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
+        .rejects.toThrow();
+    });
+
+    it('should throw ServiceUnavailableException in staging', async () => {
+      process.env.NODE_ENV = 'staging';
+      await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
+        .rejects.toThrow();
+    });
+
+    it('should fail closed when NODE_ENV is unset', async () => {
+      delete process.env.NODE_ENV;
+      await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
+        .rejects.toThrow();
+    });
+
+    it('should throw for COREPAY in production', async () => {
+      process.env.NODE_ENV = 'production';
+      await expect(service.createPaymentIntent(baseOptions, 'HIGH_RISK_COREPAY'))
+        .rejects.toThrow();
     });
   });
 });

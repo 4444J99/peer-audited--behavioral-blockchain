@@ -38,6 +38,11 @@ export class RegisterDto {
   @IsOptional()
   @IsDateString()
   dateOfBirth?: string;
+
+  @ApiProperty({ description: 'Optional referral code', example: 'ABC123', required: false })
+  @IsOptional()
+  @IsString()
+  referralCode?: string;
 }
 
 export class LoginDto {

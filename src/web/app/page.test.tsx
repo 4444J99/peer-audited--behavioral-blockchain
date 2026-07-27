@@ -2,15 +2,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 jest.mock('next/link', () => {
-  return function MockLink({
-    children,
-    href,
-    className,
-  }: {
-    children: React.ReactNode;
-    href: string;
-    className?: string;
-  }) {
+  return function MockLink({ children, href, className }: { children: React.ReactNode; href: string; className?: string }) {
     return <a href={href} className={className}>{children}</a>;
   };
 });
@@ -26,88 +18,87 @@ jest.mock('../contexts/AuthContext', () => ({
   }),
 }));
 
+jest.mock('lucide-react', () => ({
+  Shield: 'svg',
+  Award: 'svg',
+  Eye: 'svg',
+  HeartHandshake: 'svg',
+  ArrowRight: 'svg',
+  BookOpen: 'svg',
+  MessageCircle: 'svg',
+}));
+
 import Home from './page';
 
 describe('Landing Page', () => {
   it('renders the STYX heading', () => {
     const html = renderToStaticMarkup(<Home />);
-
     expect(html).toContain('STYX');
   });
 
-  it('renders the relationship-recovery beta tagline', () => {
+  it('renders the beta tagline', () => {
     const html = renderToStaticMarkup(<Home />);
-
-    expect(html).toContain('Private beta for no-contact recovery.');
-    expect(html).toContain('test-money commitments');
-    expect(html).toContain('small US allowlist');
+    expect(html).toContain('Peer-audited behavioral accountability');
+    expect(html).toContain('Private Beta');
+    expect(html).toContain('Test-Money Pilot');
   });
 
-  it('renders the START RECOVERY button', () => {
+  it('renders the JOIN THE PRIVATE BETA button', () => {
     const html = renderToStaticMarkup(<Home />);
-
-    expect(html).toContain('START RECOVERY');
+    expect(html).toContain('JOIN THE PRIVATE BETA');
   });
 
-  it('links to login when user is not authenticated', () => {
+  it('routes the public CTA to the beta waitlist when not authenticated', () => {
     const html = renderToStaticMarkup(<Home />);
-
-    expect(html).toContain('href="/login"');
+    expect(html).toContain('href="/beta"');
   });
 
-  it('does not render the removed manifesto or ask CTAs', () => {
+  it('renders trust badges', () => {
     const html = renderToStaticMarkup(<Home />);
-
-    expect(html).not.toContain('VIEW THE MANIFESTO');
-    expect(html).not.toContain('ASK STYX AI');
-    expect(html).not.toContain('href="/pitch"');
-    expect(html).not.toContain('href="/ask"');
+    expect(html).toContain('FBO Escrow Account');
+    expect(html).toContain('Peer-Audited');
+    expect(html).toContain('Loss Aversion');
+    expect(html).toContain('Safety First');
   });
 
-  it('renders the feature grid cards', () => {
+  it('renders the STYX Method section', () => {
     const html = renderToStaticMarkup(<Home />);
-
-    expect(html).toContain('DAILY CHECK-INS');
-    expect(html).toContain('ACCOUNTABILITY PARTNER');
-    expect(html).toContain('TEST-MONEY PILOT');
+    expect(html).toContain('Commit with Stakes');
+    expect(html).toContain('Anonymous Peer Audit');
+    expect(html).toContain('Double-Entry Ledger');
   });
 
-  it('describes the recovery commitment model', () => {
+  it('renders contract category badges', () => {
     const html = renderToStaticMarkup(<Home />);
-
-    expect(html).toContain('daily attestations');
-    expect(html).toContain('trusted person into the loop');
-    expect(html).toContain('No real funds move in this beta');
+    expect(html).toContain('Recovery');
+    expect(html).toContain('Biological');
+    expect(html).toContain('Cognitive');
+    expect(html).toContain('Character');
   });
 
   it('renders the Styx logo circle', () => {
     const html = renderToStaticMarkup(<Home />);
-
     expect(html).toContain('>S</span>');
   });
 
-  it('links only to login when the user is unauthenticated', () => {
+  it('has a behavioral science section', () => {
     const html = renderToStaticMarkup(<Home />);
-
-    expect(html).toContain('href="/login"');
-    expect(html.match(/href=\"\//g)?.length).toBe(1);
+    expect(html).toContain('Built on Behavioral Science');
+    expect(html).toContain('prospect theory');
   });
 
-  it('styles the primary recovery CTA as a white pill button', () => {
+  it('has a FAQ link in bottom CTA', () => {
     const html = renderToStaticMarkup(<Home />);
-
-    expect(html).toContain('class="px-8 py-4 bg-white text-black font-extrabold rounded-full hover:bg-neutral-200 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"');
+    expect(html).toContain('href="/help"');
   });
 
-  it('renders a single recovery CTA', () => {
+  it('does not render the removed manifesto or old CTAs', () => {
     const html = renderToStaticMarkup(<Home />);
-
-    expect(html).toContain('START RECOVERY');
+    expect(html).toContain('JOIN THE PRIVATE BETA');
     expect(html.match(/<a /g)?.length).toBe(1);
   });
 
   it('links to dashboard when user is authenticated', () => {
-    // Reset modules to apply new mock
     jest.resetModules();
     jest.doMock('../contexts/AuthContext', () => ({
       useAuth: () => ({
@@ -117,22 +108,24 @@ describe('Landing Page', () => {
       }),
     }));
     jest.doMock('next/link', () => {
-      return function MockLink({
-        children,
-        href,
-        className,
-      }: {
-        children: React.ReactNode;
-        href: string;
-        className?: string;
-      }) {
+      return function MockLink({ children, href, className }: { children: React.ReactNode; href: string; className?: string }) {
         return <a href={href} className={className}>{children}</a>;
       };
     });
+    jest.doMock('lucide-react', () => ({
+      Shield: 'svg',
+      Award: 'svg',
+      Eye: 'svg',
+      HeartHandshake: 'svg',
+      ArrowRight: 'svg',
+      BookOpen: 'svg',
+      MessageCircle: 'svg',
+    }));
 
     const { default: HomeWithUser } = require('./page');
     const html = renderToStaticMarkup(<HomeWithUser />);
 
     expect(html).toContain('href="/dashboard"');
+    expect(html).toContain('GO TO DASHBOARD');
   });
 });

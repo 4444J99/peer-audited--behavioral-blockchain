@@ -1,0 +1,33 @@
+# CODEOWNERS — auto-request reviewers for critical paths.
+# See https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global default — everyone
+* @4444J99 @jtenen
+
+# Financial integrity — every mutation is a balanced debit/credit pair
+/src/api/services/ledger/ @4444J99 @jtenen
+/src/api/services/escrow/ @4444J99 @jtenen
+/src/api/services/payments/ @4444J99 @jtenen
+
+# Core verification logic
+/src/shared/libs/integrity.ts @4444J99 @jtenen
+/src/api/services/oracles/ @4444J99 @jtenen
+/src/api/services/proofs/ @4444J99 @jtenen
+
+# Security-sensitive paths
+/src/api/services/auth/ @4444J99 @jtenen
+/src/api/services/users/ @4444J99 @jtenen
+/src/api/services/compliance/ @4444J99 @jtenen
+/src/shared/libs/crypto/ @4444J99 @jtenen
+
+# Database migrations
+/src/api/database/migrations/ @4444J99 @jtenen
+
+# CI/CD
+/.github/workflows/ @4444J99 @jtenen
+/scripts/validation/ @4444J99 @jtenen
+
+# Infrastructure config
+/docker-compose.yml @4444J99 @jtenen
+/render.yaml @4444J99 @jtenen
+/infra/ @4444J99 @jtenen

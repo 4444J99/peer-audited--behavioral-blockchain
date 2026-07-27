@@ -31,6 +31,9 @@ import {
   AdminCrisisEscalateDto,
   ResolveContractDto,
   UpdateJurisdictionDto,
+  AdminReviewContentDto,
+  AdminResolveAppealDto,
+  GetModerationQueueDto,
 } from "./dto";
 import { JurisdictionDispositionMapper } from "../compliance/jurisdiction-disposition.mapper";
 
@@ -232,6 +235,42 @@ export class AdminController {
   }
 
   // --- Moderation ---
+
+  @Get("moderation/queue")
+  @ApiOperation({ summary: "Get the content moderation queue" })
+  async getModerationQueue(@Query() query: GetModerationQueueDto) {
+    return this.moderation.getQueue(query.status);
+  }
+
+  @Post("moderation/review/:flagId")
+  @ApiOperation({ summary: "Admin review of flagged content" })
+  async reviewContent(
+    @Param("flagId") flagId: string,
+    @CurrentUser() admin: { id: string },
+    @Body() body: AdminReviewContentDto,
+  ) {
+    return this.moderation.reviewContent(
+      admin.id,
+      flagId,
+      body.decision,
+      body.notes,
+    );
+  }
+
+  @Post("moderation/appeal/:flagId/resolve")
+  @ApiOperation({ summary: "Admin resolve content appeal" })
+  async resolveAppeal(
+    @Param("flagId") flagId: string,
+    @CurrentUser() admin: { id: string },
+    @Body() body: AdminResolveAppealDto,
+  ) {
+    return this.moderation.resolveAppeal(
+      admin.id,
+      flagId,
+      body.resolution,
+      body.notes,
+    );
+  }
 
   @Post("ban/:userId")
   @ApiOperation({ summary: "Ban a user for policy violations" })
@@ -601,6 +640,32 @@ export class AdminController {
       pendingProofs: Number(proofs.rows[0].count),
       avgIntegrity: Math.round(Number(integrity.rows[0].avg) * 100) / 100,
       pendingDisputes: Number(disputes.rows[0].count),
+    };
+  }
+
+  @Get("financial-metrics")
+  @Roles("admin")
+  async financialMetrics() {
+    const result = await this.pool.query(`
+      SELECT
+        COALESCE(COUNT(*) FILTER (WHERE created_at >= date_trunc('month', NOW())), 0) AS new_users_this_month,
+        COALESCE(COUNT(*), 0) AS total_users
+      FROM users
+    `);
+    const paying = await this.pool.query(`
+      SELECT COALESCE(COUNT(DISTINCT user_id), 0) AS paying_users,
+             COALESCE(SUM(stake_amount), 0) AS total_staked
+      FROM contracts WHERE status IN ('ACTIVE', 'COMPLETED')
+    `);
+    return {
+      cac: { current: 0, previous: 0, trend: 0 },
+      ltv: { current: 0, previous: 0, trend: 0 },
+      ltvCacRatio: { current: 0, trend: 0 },
+      paybackDays: { current: 0, trend: 0 },
+      monthlyBurn: { current: 0, previous: 0 },
+      totalUsers: { current: Number(result.rows[0].total_users), newThisMonth: Number(result.rows[0].new_users_this_month) },
+      payingUsers: { current: Number(paying.rows[0].paying_users), pct: 0 },
+      monthlyRevenue: { current: Number(paying.rows[0].total_staked), recurringPct: 0 },
     };
   }
 }

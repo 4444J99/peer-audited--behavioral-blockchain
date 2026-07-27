@@ -10,20 +10,20 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "vitest",
+    "test": "vitest run",
     "lint": "tsc --noEmit",
     "audit": "tsx src/index.ts"
   },
   "dependencies": {
     "commander": "^15.0.0",
-    "js-yaml": "^4.3.0",
+    "js-yaml": "^5.2.1",
     "playwright": "^1.40.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.9.3",
-    "ts-node": "^10.9.0",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vitest": "4.1.8"
   }

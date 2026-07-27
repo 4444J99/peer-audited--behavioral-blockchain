@@ -7,7 +7,7 @@
     "dev": "node ../../scripts/dev/run-api.mjs",
     "build": "nest build",
     "lint": "tsc --noEmit",
-    "test": "jest --forceExit",
+    "test": "jest --coverage --forceExit",
     "migrate": "node ../../scripts/dev/run-migrate.mjs"
   },
   "dependencies": {
@@ -36,7 +36,7 @@
     "pino-pretty": "13.1.3",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",
-    "sharp": "^0.35.1",
+    "sharp": "^0.35.2",
     "stripe": "^22.2.0",
     "swagger-ui-express": "5.0.1",
     "uuid": "14.0.0"

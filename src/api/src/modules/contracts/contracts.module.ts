@@ -1,6 +1,7 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ContractsController } from "./contracts.controller";
+import { FitbitController } from "./fitbit.controller";
 import { ContractsService } from "./contracts.service";
 import { ContractsScheduler } from "./contracts.scheduler";
 import { AttestationScheduler } from "./attestation.scheduler";
@@ -12,6 +13,7 @@ import { FuryRouterService } from "../../../services/fury-router/fury-router.ser
 import { AegisProtocolService } from "../../../services/health/aegis.service";
 import { RecoveryProtocolService } from "../../../services/health/recovery-protocol.service";
 import { DynamicPenaltyService } from "../../../services/health/dynamic-penalty.service";
+import { FitbitService } from "../../../services/health/fitbit.service";
 import { HoneypotService } from "../../../services/intelligence/honeypot.service";
 
 import { SurveyService } from "./survey.service";
@@ -25,15 +27,16 @@ import {
 import { NotificationsModule } from "../notifications/notifications.module";
 import { PaymentsModule } from "../payments/payments.module";
 import { PayModule } from "../pay/pay.module";
+import { ReferralModule } from "../referrals/referral.module";
 import { EmailModule } from "../email/email.module";
 import Redis from "ioredis";
-import { getRedisConnectionConfig } from "../../../config/queue.config";
+import { resolveCacheRedisConfig } from "../../config/runtime";
 
 const redisProvider = {
   provide: ANOMALY_REDIS_CLIENT,
   useFactory: () => {
     try {
-      return new Redis({ ...getRedisConnectionConfig(), lazyConnect: true });
+      return new Redis({ ...resolveCacheRedisConfig(), lazyConnect: true });
     } catch {
       return undefined;
     }
@@ -44,11 +47,12 @@ const redisProvider = {
   imports: [
     ScheduleModule.forRoot(),
     NotificationsModule,
+    ReferralModule,
     EmailModule,
     PayModule,
     forwardRef(() => PaymentsModule),
   ],
-  controllers: [ContractsController],
+  controllers: [ContractsController, FitbitController],
   providers: [
     ContractsService,
     ContractsScheduler,
@@ -61,6 +65,7 @@ const redisProvider = {
     AegisProtocolService,
     RecoveryProtocolService,
     DynamicPenaltyService,
+    FitbitService,
     HoneypotService,
     SurveyService,
     WaitlistService,

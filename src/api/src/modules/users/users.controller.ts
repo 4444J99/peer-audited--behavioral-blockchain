@@ -10,11 +10,13 @@ import {
   ForbiddenException,
   BadRequestException,
   Post,
+  Put,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 import { UsersService } from "./users.service";
 import { GdprService } from "./gdpr.service";
+import { PushTokensService } from "../notifications/push-tokens.service";
 import { AuthGuard } from "../../../guards/auth.guard";
 import {
   CurrentUser,
@@ -22,6 +24,7 @@ import {
 } from "../../common/decorators/current-user.decorator";
 import { IdentityVerificationService } from "../compliance/identity-verification.service";
 import { IdentityVerificationMode } from "../compliance/identity-provider.service";
+import { ContractsService } from "../contracts/contracts.service";
 
 @ApiTags("Users")
 @Controller("users")
@@ -30,6 +33,8 @@ export class UsersController {
     private readonly usersService: UsersService,
     private readonly gdprService: GdprService,
     private readonly identityVerification: IdentityVerificationService,
+    private readonly pushTokens: PushTokensService,
+    private readonly contractsService: ContractsService,
   ) {}
 
   @Get("me")
@@ -137,6 +142,26 @@ export class UsersController {
     return this.usersService.updateSettings(user.id, body);
   }
 
+  @Put("me/push-token")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Register or update a push notification device token" })
+  @UseGuards(AuthGuard)
+  async registerPushToken(
+    @CurrentUser() user: { id: string },
+    @Body() body: { token: string; platform?: string; deviceIdentifier?: string },
+  ) {
+    if (!body.token) {
+      throw new BadRequestException('token is required');
+    }
+    await this.pushTokens.registerToken(
+      user.id,
+      body.token,
+      body.platform || 'unknown',
+      body.deviceIdentifier,
+    );
+    return { success: true };
+  }
+
   @Get("me/data-export")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Export all user data (GDPR Article 20)" })
@@ -181,7 +206,11 @@ export class UsersController {
     if (typeof body?.active !== "boolean") {
       throw new BadRequestException("active (boolean) is required");
     }
-    return this.usersService.setPregnancyExclusion(user.id, body.active);
+    const result = await this.usersService.setPregnancyExclusion(user.id, body.active);
+    if (body.active) {
+      await this.contractsService.suspendPregnancyExcludedContracts(user.id);
+    }
+    return result;
   }
 
   @Get("leaderboard")

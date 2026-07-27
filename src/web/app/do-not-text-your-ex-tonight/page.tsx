@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 const BETA_CTA_HREF =
-  '/register?source=do-not-text-tonight&intent=no-contact-urge&utm_source=emergency_asset&utm_campaign=do_not_text_your_ex_tonight';
+  '/beta?source=do-not-text-tonight&intent=no-contact-urge&utm_source=emergency_asset&utm_campaign=do_not_text_your_ex_tonight';
 
 const feelings = [
   'lonely',

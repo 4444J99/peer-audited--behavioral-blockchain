@@ -6,6 +6,7 @@ describe('UsersController', () => {
   let controller: UsersController;
   let usersService: { getProfile: jest.Mock };
   let identityVerification: any;
+  let pushTokens: { registerToken: jest.Mock };
 
   beforeEach(() => {
     usersService = {
@@ -16,11 +17,19 @@ describe('UsersController', () => {
       startVerificationFlow: jest.fn(),
       completeMockVerification: jest.fn(),
     };
+    pushTokens = {
+      registerToken: jest.fn(),
+    };
 
     controller = new UsersController(
       usersService as unknown as UsersService,
       { exportUserData: jest.fn() } as any,
       identityVerification as unknown as IdentityVerificationService,
+      pushTokens as any,
+      {
+        createContract: jest.fn(),
+        suspendPregnancyExcludedContracts: jest.fn(),
+      } as any,  // ContractsService mock
     );
   });
 
@@ -53,6 +62,29 @@ describe('UsersController', () => {
         is_age_verified: true,
       }));
       expect(usersService.getProfile).toHaveBeenCalledWith('user-1');
+    });
+  });
+
+  describe('registerPushToken', () => {
+    it('should register a valid push token', async () => {
+      const result = await controller.registerPushToken(
+        { id: 'user-1' },
+        { token: 'ExponentPushToken[xxx]', platform: 'ios' },
+      );
+
+      expect(result).toEqual({ success: true });
+      expect(pushTokens.registerToken).toHaveBeenCalledWith(
+        'user-1', 'ExponentPushToken[xxx]', 'ios', undefined,
+      );
+    });
+
+    it('should throw for missing token', async () => {
+      await expect(
+        controller.registerPushToken(
+          { id: 'user-1' },
+          { token: '' },
+        ),
+      ).rejects.toThrow('token is required');
     });
   });
 

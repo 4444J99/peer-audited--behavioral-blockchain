@@ -1,5 +1,6 @@
 import { Global, Module, forwardRef } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
+import { ComplianceArtifactService } from './compliance-artifact.service';
 import { ComplianceController } from './compliance.controller';
 import { CompliancePolicyService } from './compliance-policy.service';
 import { GeofenceGuard } from '../../common/guards/geofence.guard';
@@ -12,6 +13,9 @@ import {
   StripeIdentityProviderAdapter,
 } from './identity-provider.service';
 import { MedicalExemptionService } from './medical-exemption.service';
+import { DeviceAttestationService } from '../../../services/security/device-attestation.service';
+import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { AmlScreeningService } from './aml-screening.service';
 import { ContractsModule } from '../contracts/contracts.module';
 import { EmailModule } from '../email/email.module';
 
@@ -20,6 +24,7 @@ import { EmailModule } from '../email/email.module';
   imports: [DatabaseModule, EmailModule, forwardRef(() => ContractsModule)],
   controllers: [ComplianceController],
   providers: [
+    ComplianceArtifactService,
     CompliancePolicyService,
     IdentityVerificationService,
     IdentityProviderService,
@@ -29,6 +34,9 @@ import { EmailModule } from '../email/email.module';
     ComplianceAccessGuard,
     RoleGuard,
     MedicalExemptionService,
+    DeviceAttestationService,
+    TruthLogService,
+    AmlScreeningService,
   ],
   exports: [
     CompliancePolicyService,
@@ -36,6 +44,8 @@ import { EmailModule } from '../email/email.module';
     GeofenceGuard,
     ComplianceAccessGuard,
     MedicalExemptionService,
+    DeviceAttestationService,
+    AmlScreeningService,
   ],
 })
 export class ComplianceModule {}
