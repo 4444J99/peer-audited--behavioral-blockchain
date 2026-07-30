@@ -1,6 +1,7 @@
-import { Controller, Post, Body, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Logger, UseGuards } from '@nestjs/common';
 import { PaymentRouterService, PaymentProcessor } from './payment-router.service';
 import { CorepayPayoutProvider } from './corepay-payout.provider';
+import { StripeProductionGuard } from './stripe-production.guard';
 
 class WebShopCheckoutDto {
   amount!: number;
@@ -15,6 +16,7 @@ interface CheckoutResponse {
 }
 
 @Controller('payments/web-shop')
+@UseGuards(StripeProductionGuard)
 export class WebShopController {
   private readonly logger = new Logger(WebShopController.name);
 

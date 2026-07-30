@@ -2,6 +2,7 @@ import { SettlementService, SettlementJob } from './settlement.service';
 import { SETTLEMENT_QUEUE_NAME } from '../../../config/queue.config';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CompliancePolicyService } from '../compliance/compliance-policy.service';
+import { SystemFlagsService } from '../compliance/system-flags.service';
 
 jest.mock('bullmq');
 import { Queue } from 'bullmq';
@@ -12,6 +13,7 @@ describe('SettlementService', () => {
   let mockAdd: jest.Mock;
   let mockPool: { query: jest.Mock };
   let mockCompliancePolicy: { evaluateKycRequirement: jest.Mock; getJurisdictionPolicy: jest.Mock };
+  let mockSystemFlags: { get: jest.Mock };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -22,9 +24,11 @@ describe('SettlementService', () => {
       evaluateKycRequirement: jest.fn().mockResolvedValue({ allowed: true }),
       getJurisdictionPolicy: jest.fn(),
     };
+    mockSystemFlags = { get: jest.fn().mockResolvedValue(null) };
     service = new SettlementService(
       mockPool as any,
       mockCompliancePolicy as unknown as CompliancePolicyService,
+      mockSystemFlags as unknown as SystemFlagsService,
     );
   });
 
@@ -156,6 +160,34 @@ describe('SettlementService', () => {
         userRefundCents: 0,
         dispositionMode: 'CAPTURE',
         actualAction: 'CAPTURE',
+      });
+    });
+
+    it('should force REFUND preview when the persisted kill switch is active', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [{ user_id: 'u-ks', stake_amount: 50, status: 'FAILED' }],
+        })
+        .mockResolvedValueOnce({
+          rows: [{ last_known_state: 'TX' }],
+        });
+      mockCompliancePolicy.getJurisdictionPolicy.mockResolvedValueOnce({
+        tier: 'FULL_ACCESS',
+      });
+      mockSystemFlags.get.mockResolvedValueOnce(true);
+
+      const result = await service.getSettlementPreview('c-kill-switch');
+
+      expect(mockSystemFlags.get).toHaveBeenCalledWith(
+        'compliance.refund_only_mode',
+      );
+      expect(result).toMatchObject({
+        stakeAmountCents: 5000,
+        platformFeeCents: 0,
+        bountyPoolCents: 0,
+        userRefundCents: 5000,
+        dispositionMode: 'REFUND',
+        actualAction: 'RELEASE',
       });
     });
 

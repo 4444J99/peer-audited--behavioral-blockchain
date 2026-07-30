@@ -26,8 +26,13 @@ export class FeedController {
   async getFeed(@Query('limit') limit?: string) {
     const max = Math.min(Number(limit) || 20, 50);
 
+    // event_log is append-only and hash-chained over
+    // (sequence_index | event_type | timestamp | previous_hash | payload), so the
+    // actor is read out of the hashed payload rather than a side column that would
+    // sit outside the chain's preimage and be invisible to verifyChain().
     const result = await this.pool.query(
-      `SELECT el.event_type, el.payload, el.created_at, el.actor_id
+      `SELECT el.event_type, el.payload, el.created_at,
+              COALESCE(el.payload->>'userId', el.payload->>'furyUserId', el.payload->>'actorId') AS actor_id
        FROM event_log el
        WHERE el.event_type IN (
          'PROOF_VERIFIED', 'CONTRACT_COMPLETED', 'CONTRACT_FAILED',
@@ -58,7 +63,9 @@ export class FeedController {
       switchMap(() =>
         from(
           this.pool.query(
-            `SELECT el.event_type, el.payload, el.created_at, el.actor_id
+            // Same payload-derived actor as getFeed — event_log carries no actor column.
+            `SELECT el.event_type, el.payload, el.created_at,
+                    COALESCE(el.payload->>'userId', el.payload->>'furyUserId', el.payload->>'actorId') AS actor_id
              FROM event_log el
              WHERE el.created_at > NOW() - INTERVAL '30 seconds'
              AND el.event_type IN (

@@ -9,6 +9,7 @@ import {
   UseGuards,
   ForbiddenException,
   BadRequestException,
+  NotFoundException,
   Post,
   Put,
 } from "@nestjs/common";
@@ -16,6 +17,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 import { UsersService } from "./users.service";
 import { GdprService } from "./gdpr.service";
+import { CcpaService } from "./ccpa.service";
 import { PushTokensService } from "../notifications/push-tokens.service";
 import { AuthGuard } from "../../../guards/auth.guard";
 import {
@@ -35,6 +37,7 @@ export class UsersController {
     private readonly identityVerification: IdentityVerificationService,
     private readonly pushTokens: PushTokensService,
     private readonly contractsService: ContractsService,
+    private readonly ccpaService: CcpaService,
   ) {}
 
   @Get("me")
@@ -177,6 +180,52 @@ export class UsersController {
   @UseGuards(AuthGuard)
   async deleteAccount(@CurrentUser() user: { id: string }) {
     return this.usersService.requestDeletion(user.id);
+  }
+
+  @Post("me/ccpa/deletion-request")
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      "Create a CCPA data deletion request (California residents only, CCPA §1798.105)",
+  })
+  @UseGuards(AuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
+  async createCcpaDeletionRequest(@CurrentUser() user: { id: string }) {
+    // CCPA rights attach to California residents; the GDPR route (DELETE /users/me)
+    // remains available to everyone else.
+    const isCaliforniaResident =
+      await this.ccpaService.verifyCaliforniaResident(user.id);
+    if (!isCaliforniaResident) {
+      throw new ForbiddenException(
+        "CCPA deletion requests are available to California residents only",
+      );
+    }
+    return this.ccpaService.requestDataDeletion(user.id);
+  }
+
+  @Get("me/ccpa/deletion-request")
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Get the status of the latest CCPA deletion request",
+  })
+  @UseGuards(AuthGuard)
+  async getCcpaDeletionRequestStatus(@CurrentUser() user: { id: string }) {
+    const request = await this.ccpaService.getDeletionRequestStatus(user.id);
+    if (!request) {
+      throw new NotFoundException("No CCPA deletion request found");
+    }
+    return request;
+  }
+
+  @Post("me/ccpa/opt-out")
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      "Opt out of the sale of personal information (CCPA Do Not Sell, §1798.120)",
+  })
+  @UseGuards(AuthGuard)
+  async ccpaOptOutSale(@CurrentUser() user: { id: string }) {
+    return this.ccpaService.optOutSale(user.id);
   }
 
   @Post("me/self-exclusion")

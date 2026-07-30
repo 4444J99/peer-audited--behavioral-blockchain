@@ -31,7 +31,7 @@ describe('DangerZoneService', () => {
         .mockResolvedValueOnce({ rows: [{ started_at: threeDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-1');
+      const windows = await service.evaluateDangerWindows('c-1', 'UTC');
       const day3 = windows.find((w) => w.type === 'DAY_3');
       expect(day3).toBeDefined();
       expect(day3!.severity).toBe('HIGH');
@@ -46,7 +46,7 @@ describe('DangerZoneService', () => {
         .mockResolvedValueOnce({ rows: [{ started_at: twentyOneDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 10 }] });
 
-      const windows = await service.evaluateDangerWindows('c-2');
+      const windows = await service.evaluateDangerWindows('c-2', 'UTC');
       const day21 = windows.find((w) => w.type === 'DAY_21');
       expect(day21).toBeDefined();
       expect(day21!.severity).toBe('CRITICAL');
@@ -61,13 +61,13 @@ describe('DangerZoneService', () => {
         .mockResolvedValueOnce({ rows: [{ started_at: threeDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-3');
+      const windows = await service.evaluateDangerWindows('c-3', 'UTC');
       const weekend = windows.find((w) => w.type === 'WEEKEND');
       expect(weekend).toBeDefined();
       expect(weekend!.severity).toBe('MEDIUM');
     });
 
-    it('detects LATE_NIGHT window at 02:00 UTC', async () => {
+    it('detects LATE_NIGHT window at 02:00 local time in UTC', async () => {
       jest.useFakeTimers();
       jest.setSystemTime(new Date('2026-07-23T02:00:00Z'));
       const tenDaysAgo = new Date('2026-07-13T02:00:00Z');
@@ -75,10 +75,85 @@ describe('DangerZoneService', () => {
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-4');
+      const windows = await service.evaluateDangerWindows('c-4', 'UTC');
       const lateNight = windows.find((w) => w.type === 'LATE_NIGHT');
       expect(lateNight).toBeDefined();
       expect(lateNight!.severity).toBe('HIGH');
+    });
+
+    it('fires LATE_NIGHT at 2am America/New_York when the UTC clock reads 06:30', async () => {
+      jest.useFakeTimers();
+      // 2026-07-23T06:30Z is 02:30 EDT (UTC-4) on Thursday in America/New_York.
+      jest.setSystemTime(new Date('2026-07-23T06:30:00Z'));
+      const tenDaysAgo = new Date('2026-07-13T06:30:00Z');
+      pool.query
+        .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
+        .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
+
+      const windows = await service.evaluateDangerWindows('c-tz-1', 'America/New_York');
+      const lateNight = windows.find((w) => w.type === 'LATE_NIGHT');
+      expect(lateNight).toBeDefined();
+      expect(lateNight!.severity).toBe('HIGH');
+      expect(windows.find((w) => w.type === 'WEEKEND')).toBeUndefined();
+    });
+
+    it('does NOT fire LATE_NIGHT for New York users at 02:00 UTC (10pm local)', async () => {
+      jest.useFakeTimers();
+      // 2026-07-23T02:00Z is 22:00 EDT on Wednesday the 22nd in America/New_York.
+      jest.setSystemTime(new Date('2026-07-23T02:00:00Z'));
+      const tenDaysAgo = new Date('2026-07-13T02:00:00Z');
+      pool.query
+        .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
+        .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
+
+      const windows = await service.evaluateDangerWindows('c-tz-2', 'America/New_York');
+      expect(windows.find((w) => w.type === 'LATE_NIGHT')).toBeUndefined();
+      expect(windows.find((w) => w.type === 'WEEKEND')).toBeUndefined();
+    });
+
+    it('evaluates WEEKEND on the local day: Monday 00:30 UTC is still Sunday evening in New York', async () => {
+      jest.useFakeTimers();
+      // 2026-07-27T00:30Z (Monday UTC) is 20:30 EDT Sunday the 26th.
+      jest.setSystemTime(new Date('2026-07-27T00:30:00Z'));
+      const tenDaysAgo = new Date('2026-07-17T00:30:00Z');
+      pool.query
+        .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
+        .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
+
+      const windows = await service.evaluateDangerWindows('c-tz-3', 'America/New_York');
+      expect(windows.find((w) => w.type === 'WEEKEND')).toBeDefined();
+      // Local hour is 20, so UTC hour 0 must NOT register as late night.
+      expect(windows.find((w) => w.type === 'LATE_NIGHT')).toBeUndefined();
+    });
+
+    it('looks up the user timezone from the contract when none is provided', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-07-23T06:30:00Z'));
+      const tenDaysAgo = new Date('2026-07-13T06:30:00Z');
+      pool.query
+        .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
+        .mockResolvedValueOnce({ rows: [{ timezone: 'America/New_York' }] })
+        .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
+
+      const windows = await service.evaluateDangerWindows('c-tz-4');
+      expect(windows.find((w) => w.type === 'LATE_NIGHT')).toBeDefined();
+      expect(pool.query).toHaveBeenCalledWith(
+        expect.stringContaining('JOIN users u ON u.id = c.user_id'),
+        ['c-tz-4', 'America/New_York'],
+      );
+    });
+
+    it('falls back to America/New_York when the stored timezone is invalid', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-07-23T06:30:00Z'));
+      const tenDaysAgo = new Date('2026-07-13T06:30:00Z');
+      pool.query
+        .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
+        .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
+
+      const windows = await service.evaluateDangerWindows('c-tz-5', 'Not/A_Zone');
+      // 06:30Z resolves to 02:30 in the fallback zone → LATE_NIGHT.
+      expect(windows.find((w) => w.type === 'LATE_NIGHT')).toBeDefined();
     });
 
     it('returns empty array when no danger windows are active', async () => {
@@ -89,7 +164,7 @@ describe('DangerZoneService', () => {
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-5');
+      const windows = await service.evaluateDangerWindows('c-5', 'UTC');
       expect(windows).toEqual([]);
     });
 
@@ -101,11 +176,23 @@ describe('DangerZoneService', () => {
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 30 }] });
 
-      const windows = await service.evaluateDangerWindows('c-6');
+      const windows = await service.evaluateDangerWindows('c-6', 'UTC');
       const streakRisk = windows.find((w) => w.type === 'HIGH_STREAK_RISK');
       expect(streakRisk).toBeDefined();
       expect(streakRisk!.severity).toBe('HIGH');
       expect(streakRisk!.message).toBe('Complacency risk from long streak');
+    });
+  });
+
+  describe('getUserTimezone', () => {
+    it('returns the stored timezone for the contract owner', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [{ timezone: 'America/Chicago' }] });
+      expect(await service.getUserTimezone('c-1')).toBe('America/Chicago');
+    });
+
+    it('defaults to America/New_York when the contract has no row', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [] });
+      expect(await service.getUserTimezone('missing')).toBe('America/New_York');
     });
   });
 
@@ -182,7 +269,7 @@ describe('DangerZoneService', () => {
         .mockResolvedValueOnce({ rows: [{ started_at: threeDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      expect(await service.isInDangerZone('c-8')).toBe(true);
+      expect(await service.isInDangerZone('c-8', 'UTC')).toBe(true);
     });
 
     it('returns false when no danger windows are present', async () => {
@@ -193,7 +280,7 @@ describe('DangerZoneService', () => {
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      expect(await service.isInDangerZone('c-9')).toBe(false);
+      expect(await service.isInDangerZone('c-9', 'UTC')).toBe(false);
     });
   });
 });

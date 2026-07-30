@@ -38,6 +38,38 @@ describe('HoneypotInjectorService', () => {
 
       expect(mockRouter.routeProof).toHaveBeenCalledWith('proof-hp-123', 'user-xyz', 3);
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('HONEYPOT_INJECTED', expect.any(Object));
+
+      // injectHoneypot swallows its own errors, so a bad column name would fail
+      // silently in production. Pin the INSERT against the real proofs columns and
+      // against the deliberately out-of-order binding ($3 -> media_uri, $4 -> description).
+      const [insertSql, insertParams] = (mockPool.query as jest.Mock).mock.calls.find(
+        ([sql]: [string]) => typeof sql === 'string' && sql.includes('INSERT INTO proofs'),
+      ) as [string, unknown[]];
+
+      const columns = insertSql
+        .slice(insertSql.indexOf('(') + 1, insertSql.indexOf(')'))
+        .split(',')
+        .map((c) => c.trim());
+      expect(columns).toEqual([
+        'contract_id',
+        'user_id',
+        'status',
+        'content_type',
+        'description',
+        'media_uri',
+        'is_honeypot',
+        'honeypot_expected_verdict',
+        'submitted_at',
+        'uploaded_at',
+      ]);
+
+      const placeholders = insertSql.match(/\$\d+/g) ?? [];
+      expect(Math.max(...placeholders.map((p) => Number(p.slice(1))))).toBe(insertParams.length);
+      expect(insertParams[0]).toBe('contract-abc');
+      expect(insertParams[1]).toBe('user-xyz');
+      expect(insertParams[2]).toMatch(/^honeypots\/synthetic\/.+\.mp4$/);
+      expect(typeof insertParams[3]).toBe('string');
+      expect(['PASS', 'FAIL']).toContain(insertParams[4]);
     });
 
     it('should inject honeypots with a PASS or FAIL expected verdict (SH9: not always FAIL)', async () => {

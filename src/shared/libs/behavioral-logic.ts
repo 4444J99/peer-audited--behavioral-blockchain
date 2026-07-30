@@ -1154,10 +1154,15 @@ export interface DecoProofResult {
   verified: boolean;
   revealedFields: string[];
   timestamp: string;
+  commitmentHash: string;
 }
 
-export function createDecoProof(params: DecoProofRequest): DecoProofResult {
-  return { verified: true, revealedFields: [params.selector], timestamp: new Date().toISOString() };
+export async function createDecoProof(params: DecoProofRequest): Promise<DecoProofResult> {
+  const timestamp = new Date().toISOString();
+  const payload = params.url + params.selector + params.expectedValue + timestamp;
+  const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
+  const commitmentHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+  return { verified: true, revealedFields: [params.selector], timestamp, commitmentHash };
 }
 
 /**

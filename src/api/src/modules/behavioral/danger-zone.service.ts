@@ -4,6 +4,12 @@ import { Pool } from 'pg';
 export type DangerWindowType = 'DAY_3' | 'DAY_21' | 'WEEKEND' | 'LATE_NIGHT' | 'HIGH_STREAK_RISK';
 export type DangerSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
+export const DEFAULT_TIMEZONE = 'America/New_York';
+
+const WEEKDAY_INDEX: Record<string, number> = {
+  Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+};
+
 export interface DangerWindow {
   type: DangerWindowType;
   severity: DangerSeverity;
@@ -20,11 +26,12 @@ export interface ProtectionRecommendation {
 export class DangerZoneService {
   constructor(@Inject('DATABASE_POOL') private pool: Pool) {}
 
-  async evaluateDangerWindows(contractId: string): Promise<DangerWindow[]> {
+  async evaluateDangerWindows(contractId: string, timezone?: string): Promise<DangerWindow[]> {
     const days = await this.getContractDayNumber(contractId);
-    const now = new Date();
-    const dayOfWeek = now.getUTCDay();
-    const hour = now.getUTCHours();
+    const tz = timezone ?? (await this.getUserTimezone(contractId));
+    // Circadian windows must be evaluated on the USER's local clock, not UTC:
+    // a 2am LATE_NIGHT window in America/New_York corresponds to 06-07 UTC.
+    const { dayOfWeek, hour } = this.getLocalDayAndHour(new Date(), tz);
     const windows: DangerWindow[] = [];
 
     if (days >= 2 && days <= 4) {
@@ -134,8 +141,38 @@ export class DangerZoneService {
     return Math.floor(elapsed / 86400000);
   }
 
-  async isInDangerZone(contractId: string): Promise<boolean> {
-    const windows = await this.evaluateDangerWindows(contractId);
+  async getUserTimezone(contractId: string): Promise<string> {
+    const result = await this.pool.query(
+      `SELECT COALESCE(u.timezone, $2) AS timezone
+       FROM contracts c
+       JOIN users u ON u.id = c.user_id
+       WHERE c.id = $1`,
+      [contractId, DEFAULT_TIMEZONE],
+    );
+    return result.rows[0]?.timezone ?? DEFAULT_TIMEZONE;
+  }
+
+  async isInDangerZone(contractId: string, timezone?: string): Promise<boolean> {
+    const windows = await this.evaluateDangerWindows(contractId, timezone);
     return windows.length > 0;
+  }
+
+  private getLocalDayAndHour(at: Date, timeZone: string): { dayOfWeek: number; hour: number } {
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'short',
+      hour: '2-digit',
+      hourCycle: 'h23',
+    };
+    let parts: Intl.DateTimeFormatPart[];
+    try {
+      parts = new Intl.DateTimeFormat('en-US', { ...options, timeZone }).formatToParts(at);
+    } catch {
+      // Invalid stored timezone — fall back to the platform default.
+      parts = new Intl.DateTimeFormat('en-US', { ...options, timeZone: DEFAULT_TIMEZONE }).formatToParts(at);
+    }
+    const weekday = parts.find((p) => p.type === 'weekday')?.value ?? 'Sun';
+    // % 24 guards ICU variants that render midnight as "24" despite h23.
+    const hour = parseInt(parts.find((p) => p.type === 'hour')?.value ?? '0', 10) % 24;
+    return { dayOfWeek: WEEKDAY_INDEX[weekday] ?? 0, hour };
   }
 }

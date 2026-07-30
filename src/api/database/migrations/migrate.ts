@@ -59,13 +59,13 @@ export async function getPendingMigrations(pool: Pool): Promise<string[]> {
 }
 
 /**
- * Detects a database that was provisioned by the consolidated schema.sql init
- * script (mounted at /docker-entrypoint-initdb.d/) but never tracked in
- * schema_migrations. In that state the schema already exists, yet the runner
- * would see every migration as "pending" and crash on the first one:
- * 001_initial_schema.sql issues a bare `CREATE TYPE account_type` /
- * `CREATE TABLE accounts` with no IF NOT EXISTS, producing the exact
- * "relation already exists" schema-drift failure reported in #28.
+ * Detects a database that was provisioned by a legacy consolidated schema.sql
+ * init script (historically mounted at /docker-entrypoint-initdb.d/) but never
+ * tracked in schema_migrations. In that state part of the schema already
+ * exists, yet the runner would see every migration as "pending" and crash on
+ * the first one: 001_initial_schema.sql issues a bare `CREATE TYPE
+ * account_type` / `CREATE TABLE accounts` with no IF NOT EXISTS, producing the
+ * exact "relation already exists" schema-drift failure reported in #28.
  */
 export async function isSchemaPreInitialized(pool: Pool): Promise<boolean> {
   const result = await pool.query(`SELECT to_regclass($1) AS reg`, [
@@ -74,33 +74,91 @@ export async function isSchemaPreInitialized(pool: Pool): Promise<boolean> {
   return result.rows[0]?.reg != null;
 }
 
+// Matches `CREATE TABLE [IF NOT EXISTS] [schema.]name` — CREATE TYPE / INDEX /
+// TRIGGER never match, and `CREATE TEMP TABLE` is excluded by the adjacency of
+// CREATE and TABLE. Group 1 is the (optionally quoted) table name.
+const CREATE_TABLE_RE =
+  /\bCREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(?:"[^"]+"|[A-Za-z_][A-Za-z0-9_$]*)\s*\.\s*)?("[^"]+"|[A-Za-z_][A-Za-z0-9_$]*)/gi;
+
 /**
- * Stamps every known migration file as applied WITHOUT executing it. Used once,
- * when the schema was provisioned by schema.sql but schema_migrations is empty,
- * so the runner adopts that schema as its baseline instead of replaying
- * migrations against tables that already exist. Idempotent via ON CONFLICT, so
- * a partially-stamped baseline is safe to re-run.
+ * The table names a migration file introduces, extracted from its SQL text.
+ * Unquoted identifiers are lowercased (Postgres folds them), quoted ones kept
+ * verbatim, duplicates removed.
+ */
+export function extractCreatedTables(sql: string): string[] {
+  const tables = new Set<string>();
+  for (const match of sql.matchAll(CREATE_TABLE_RE)) {
+    const raw = match[1];
+    tables.add(raw.startsWith('"') ? raw.slice(1, -1) : raw.toLowerCase());
+  }
+  return Array.from(tables);
+}
+
+/**
+ * True when every named table exists in the public schema. Vacuously true for
+ * an empty list (no information_schema round-trip).
+ */
+export async function allTablesExist(pool: Pool, tables: string[]): Promise<boolean> {
+  if (tables.length === 0) return true;
+  const result = await pool.query(
+    `SELECT table_name FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+    [tables],
+  );
+  const found = new Set(result.rows.map((r: { table_name: string }) => r.table_name));
+  return tables.every((t) => found.has(t));
+}
+
+/**
+ * Adopts a legacy schema.sql-provisioned database as a migration baseline by
+ * stamping — WITHOUT executing — only the contiguous prefix of migration files
+ * whose CREATE TABLE objects verifiably exist in information_schema. The old
+ * behavior (stamp EVERY file) silently skipped every table schema.sql never
+ * knew about, so migration-only tables could never come into existence.
+ *
+ * Rules:
+ * - A file whose created tables all exist is stamped as applied.
+ * - A file that creates no tables (ALTER-only) is vacuously covered while
+ *   still inside the prefix: schema.sql was the consolidated snapshot, so
+ *   column-level changes in the covered range are already present.
+ * - The FIRST file with any missing table ends the prefix; it and everything
+ *   after it are left unstamped so runMigrations executes them (they lean on
+ *   IF NOT EXISTS, so replay over a partial schema is safe). Stamping past a
+ *   gap would also violate getPendingMigrations' ordering invariant (a pending
+ *   migration older than an applied one is reported as drift).
+ *
+ * Idempotent via ON CONFLICT, so a partially-stamped baseline is safe to
+ * re-run.
  */
 export async function baselineFromExistingSchema(pool: Pool): Promise<string[]> {
   const files = listMigrationFiles();
+  const stamped: string[] = [];
   for (const file of files) {
+    const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf-8');
+    const tables = extractCreatedTables(sql);
+    if (!(await allTablesExist(pool, tables))) {
+      break;
+    }
     await pool.query(
       `INSERT INTO ${MIGRATIONS_TABLE} (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
       [file],
     );
+    stamped.push(file);
   }
   console.log(
-    `Baselined ${files.length} migration(s) from pre-initialized schema.sql.`,
+    `Baselined ${stamped.length}/${files.length} migration(s) whose schema objects already exist; the rest will execute.`,
   );
-  return files;
+  return stamped;
 }
 
 export async function runMigrations(pool: Pool): Promise<string[]> {
   await ensureMigrationsTable(pool);
 
-  // Drift guard: when schema.sql already provisioned the schema (a fresh
-  // `docker compose up`) but nothing is tracked yet, adopt it as the baseline
-  // rather than replaying migrations that would collide with existing objects.
+  // Drift guard: when a legacy schema.sql init already provisioned (part of)
+  // the schema but nothing is tracked yet, adopt the covered prefix as the
+  // baseline rather than replaying migrations that would collide with existing
+  // objects. On a truly fresh database the sentinel is absent, nothing is
+  // baselined, and the FULL migration chain executes.
   const tracked = await getAppliedMigrations(pool);
   if (tracked.size === 0 && (await isSchemaPreInitialized(pool))) {
     await baselineFromExistingSchema(pool);

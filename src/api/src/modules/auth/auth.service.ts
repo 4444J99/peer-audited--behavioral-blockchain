@@ -1,4 +1,5 @@
-import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, BadRequestException, Optional, Inject } from '@nestjs/common';
+import { ReferralService } from '../referrals/referral.service';
 import { Pool, PoolClient } from 'pg';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
@@ -116,7 +117,9 @@ function compareHashes(left: string, right: string): boolean {
 export class AuthService {
   constructor(
     private readonly pool: Pool,
-    private readonly referralService?: any,
+    @Optional()
+    @Inject(ReferralService)
+    private readonly referralService?: ReferralService,
   ) {}
 
   async register(

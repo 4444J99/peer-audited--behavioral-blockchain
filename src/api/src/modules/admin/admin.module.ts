@@ -6,6 +6,7 @@ import { AdminScheduler } from "./admin.scheduler";
 import { ModerationService } from "../../../services/security/moderation.service";
 import { CrisisDetectionService } from "../../../services/security/crisis-detection.service";
 import { CrisisInterventionService } from "../../../services/security/crisis-intervention.service";
+import { CrisisNotificationService } from "../../../services/security/crisis-notification.service";
 import { HoneypotService } from "../../../services/intelligence/honeypot.service";
 import { AnomalyService } from "../../../services/anomaly/anomaly.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
@@ -21,6 +22,7 @@ import { ProofsModule } from "../proofs/proofs.module";
     ModerationService,
     CrisisDetectionService,
     CrisisInterventionService,
+    CrisisNotificationService,
     HoneypotService,
     AnomalyService,
     TruthLogService,

@@ -1,4 +1,8 @@
-import { Injectable, Logger } from "@nestjs/common";
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from "@nestjs/common";
 import { Pool } from "pg";
 import { CrisisDetectionResult } from "./crisis-detection.service";
 
@@ -97,12 +101,32 @@ export class CrisisNotificationService {
   /**
    * Sends an immediate webhook/alert for CRITICAL crisis events.
    * In production, this integrates with Slack webhook, PagerDuty, or email relay.
-   * Falls back to logging if webhook URL is not configured.
+   *
+   * A missing CRISIS_WEBHOOK_URL in production is a fatal misconfiguration: a
+   * CRITICAL alert with no delivery channel must never degrade to a log line.
+   * We persist an operational alert row (same table/pattern as the missed
+   * follow-up escalation, surfaced on the safety dashboard until acknowledged)
+   * and then throw so callers and monitoring see the failure. Outside
+   * production the warn-only path is kept for local/test convenience.
    */
   private async sendImmediateAlert(notification: CrisisNotification): Promise<void> {
     const webhookUrl = process.env.CRISIS_WEBHOOK_URL;
 
     if (!webhookUrl) {
+      if (process.env.NODE_ENV === "production") {
+        await this.pool.query(
+          `INSERT INTO crisis_notifications (user_id, severity, category, matched_keywords, source, message, acknowledged)
+           VALUES ($1, 'CRITICAL', 'CRISIS_UNSPECIFIED', '[]', 'SYSTEM', $2, false)`,
+          [
+            notification.userId,
+            `OPERATIONAL ALERT: CRISIS_WEBHOOK_URL is not configured — CRITICAL crisis notification ${notification.id} was not delivered to the safety team. Immediate review required.`,
+          ],
+        );
+        throw new InternalServerErrorException(
+          `CRISIS_WEBHOOK_URL is not configured; CRITICAL crisis notification ${notification.id} cannot be delivered`,
+        );
+      }
+
       this.logger.warn(
         `CRITICAL crisis for user ${notification.userId} — no CRISIS_WEBHOOK_URL configured, alert logged only`,
       );

@@ -102,3 +102,14 @@ docs/planning/premortem-transcript-*.md
 docs/planning/planning--parallel-*-prompts--*.md
 .codex/plans/**/*-prompts.md
 .claude/plans/**/*ai-session-audit*.md
+
+# Local verification scratch (see scripts/demo/README.md)
+/src/api/.circle-smoke.mjs
+/src/api/.column-audit.mjs
+
+# Committed terraform binaries removed 2026-07-30 (113MB); install via tfenv/brew
+/terraform
+/terraform_*.zip
+
+# Local redis snapshot from verification runs
+dump.rdb

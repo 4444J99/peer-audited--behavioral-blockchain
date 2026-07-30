@@ -54,6 +54,14 @@ describe('ProofsService', () => {
     expect(result.contentType).toBe('video/mp4');
     expect(result.description).toBe('demo');
     expect(result.uploadedAt).toBe('2026-01-01T00:01:00Z');
+
+    // ...and they must be projected under the column names that actually exist
+    // on `proofs`. submitted_at (record created) and uploaded_at (media confirmed)
+    // are distinct timestamps and are both selected.
+    const [sql] = mockPool.query.mock.calls[0] as [string];
+    for (const column of ['p.content_type', 'p.description', 'p.submitted_at', 'p.uploaded_at']) {
+      expect(sql).toContain(column);
+    }
   });
 
   it('serves the masked asset (never the raw media_uri) to an assigned Fury reviewer even when redaction_status is COMPLETED', async () => {

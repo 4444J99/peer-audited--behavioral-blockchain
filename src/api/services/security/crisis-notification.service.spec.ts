@@ -68,6 +68,160 @@ describe("CrisisNotificationService", () => {
     });
   });
 
+  describe("sendImmediateAlert delivery guarantees (via notifySafetyTeam)", () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    const originalWebhookUrl = process.env.CRISIS_WEBHOOK_URL;
+    const originalFetch = global.fetch;
+
+    afterEach(() => {
+      process.env.NODE_ENV = originalNodeEnv;
+      if (originalWebhookUrl === undefined) {
+        delete process.env.CRISIS_WEBHOOK_URL;
+      } else {
+        process.env.CRISIS_WEBHOOK_URL = originalWebhookUrl;
+      }
+      global.fetch = originalFetch;
+    });
+
+    it("throws and writes an operational alert row for CRITICAL in production when CRISIS_WEBHOOK_URL is unset", async () => {
+      process.env.NODE_ENV = "production";
+      delete process.env.CRISIS_WEBHOOK_URL;
+
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [{ id: "notif-crit", created_at: "2026-07-23T00:00:00Z" }],
+        })
+        .mockResolvedValueOnce({ rowCount: 1 });
+
+      await expect(
+        service.notifySafetyTeam(
+          "user-1",
+          {
+            isCrisis: true,
+            severity: "CRITICAL",
+            matchedKeywords: ["suicide"],
+            category: "SUICIDE",
+          },
+          "SELF_REPORT",
+          "suicide",
+        ),
+      ).rejects.toThrow(/CRISIS_WEBHOOK_URL/);
+
+      // Second insert is the operational alert (SYSTEM source, undeliverable).
+      expect(mockPool.query).toHaveBeenCalledTimes(2);
+      const [alertSql, alertParams] = mockPool.query.mock.calls[1];
+      expect(alertSql).toContain("INSERT INTO crisis_notifications");
+      expect(alertSql).toContain("'SYSTEM'");
+      expect(alertParams[0]).toBe("user-1");
+      expect(alertParams[1]).toMatch(/CRISIS_WEBHOOK_URL/);
+      expect(alertParams[1]).toContain("notif-crit");
+    });
+
+    it("keeps the warn-only path outside production when CRISIS_WEBHOOK_URL is unset", async () => {
+      process.env.NODE_ENV = "test";
+      delete process.env.CRISIS_WEBHOOK_URL;
+
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: "notif-3", created_at: "2026-07-23T00:00:00Z" }],
+      });
+
+      const result = await service.notifySafetyTeam(
+        "user-1",
+        {
+          isCrisis: true,
+          severity: "CRITICAL",
+          matchedKeywords: ["suicide"],
+          category: "SUICIDE",
+        },
+        "SELF_REPORT",
+        "suicide",
+      );
+
+      expect(result.id).toBe("notif-3");
+      expect(mockPool.query).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not throw for non-CRITICAL severities in production without a webhook", async () => {
+      process.env.NODE_ENV = "production";
+      delete process.env.CRISIS_WEBHOOK_URL;
+
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: "notif-high", created_at: "2026-07-23T00:00:00Z" }],
+      });
+
+      const result = await service.notifySafetyTeam(
+        "user-2",
+        { isCrisis: true, severity: "HIGH", matchedKeywords: ["relapse"] },
+        "PROOF_DESCRIPTION",
+        "I relapsed",
+      );
+
+      expect(result.severity).toBe("HIGH");
+      expect(mockPool.query).toHaveBeenCalledTimes(1);
+    });
+
+    it("delivers via webhook and does not throw when CRISIS_WEBHOOK_URL is configured in production", async () => {
+      process.env.NODE_ENV = "production";
+      process.env.CRISIS_WEBHOOK_URL = "https://hooks.example.com/crisis";
+      const mockFetch = jest
+        .fn()
+        .mockResolvedValue({ ok: true, status: 200, statusText: "OK" });
+      global.fetch = mockFetch as unknown as typeof fetch;
+
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: "notif-4", created_at: "2026-07-23T00:00:00Z" }],
+      });
+
+      const result = await service.notifySafetyTeam(
+        "user-1",
+        {
+          isCrisis: true,
+          severity: "CRITICAL",
+          matchedKeywords: ["suicide"],
+          category: "SUICIDE",
+        },
+        "SELF_REPORT",
+        "suicide",
+      );
+
+      expect(result.id).toBe("notif-4");
+      expect(mockPool.query).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://hooks.example.com/crisis",
+        expect.objectContaining({ method: "POST" }),
+      );
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.notificationId).toBe("notif-4");
+      expect(body.action).toBe("IMMEDIATE_REVIEW_REQUIRED");
+    });
+
+    it("logs but does not throw when webhook delivery returns a non-OK response", async () => {
+      process.env.NODE_ENV = "production";
+      process.env.CRISIS_WEBHOOK_URL = "https://hooks.example.com/crisis";
+      global.fetch = jest
+        .fn()
+        .mockResolvedValue({ ok: false, status: 500, statusText: "ISE" }) as unknown as typeof fetch;
+
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: "notif-5", created_at: "2026-07-23T00:00:00Z" }],
+      });
+
+      const result = await service.notifySafetyTeam(
+        "user-1",
+        {
+          isCrisis: true,
+          severity: "CRITICAL",
+          matchedKeywords: ["suicide"],
+          category: "SUICIDE",
+        },
+        "SELF_REPORT",
+        "suicide",
+      );
+
+      expect(result.id).toBe("notif-5");
+    });
+  });
+
   describe("scheduleFollowUp", () => {
     it("schedules a follow-up with correct delay for CRITICAL", async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: "fu-1" }] });
