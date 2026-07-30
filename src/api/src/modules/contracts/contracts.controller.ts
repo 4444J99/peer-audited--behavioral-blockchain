@@ -210,13 +210,16 @@ export class ContractsController {
     @CurrentUser() user: { id: string },
     @Body() dto: SelfReportDto,
   ) {
-    return this.contractsService.submitAttestation(
-      contractId,
-      user.id,
-      dto.stayedSober
-        ? { urgeLevel: dto.urgeLevel, triggers: dto.triggers }
-        : undefined,
-    );
+    if (dto.stayedSober) {
+      return this.contractsService.submitAttestation(contractId, user.id, {
+        urgeLevel: dto.urgeLevel,
+        triggers: dto.triggers,
+      });
+    }
+    return this.contractsService.recordSelfReportedRelapse(contractId, user.id, {
+      urgeLevel: dto.urgeLevel,
+      triggers: dto.triggers,
+    });
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)

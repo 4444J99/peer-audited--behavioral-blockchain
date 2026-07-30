@@ -45,6 +45,7 @@ import {
   FAILURE_COOL_OFF_DAYS,
   DOWNSCALE_STRIKE_THRESHOLD,
   MAX_NOCONTACT_DURATION_DAYS,
+  NOCONTACT_MISS_STRIKE_THRESHOLD,
   checkPregnancyExclusion,
   validateRecoveryGuardrails,
 } from "../../../../shared/libs/behavioral-logic";
@@ -2838,6 +2839,105 @@ export class ContractsService {
     }
 
     return { status: "attested" };
+  }
+
+  /**
+   * Honest binary check-in failure path. A self-reported relapse must never be
+   * credited as a sober day: it records today's row as RELAPSED and applies the
+   * same per-miss escalation as the midnight scheduler (one strike, RAIN
+   * intercession below the threshold, auto-FAIL at it).
+   */
+  async recordSelfReportedRelapse(
+    contractId: string,
+    userId: string,
+    context?: {
+      urgeLevel?: number;
+      triggers?: string[];
+    },
+  ) {
+    const contract = await this.pool.query(
+      `SELECT id, user_id, oath_category, status, strikes
+       FROM contracts WHERE id = $1`,
+      [contractId],
+    );
+
+    if (contract.rows.length === 0) {
+      throw new NotFoundException(`Contract ${contractId} not found`);
+    }
+
+    const c = contract.rows[0];
+    if (c.user_id !== userId) {
+      throw new ForbiddenException("You do not own this contract");
+    }
+
+    if (c.status !== "ACTIVE") {
+      throw new BadRequestException("Contract is not active");
+    }
+
+    if (!String(c.oath_category || "").startsWith("RECOVERY_")) {
+      throw new BadRequestException(
+        "Self-report is only available for Recovery stream contracts",
+      );
+    }
+
+    // The WHERE guard makes the upsert idempotent: a second relapse report on
+    // the same day returns no row and must not accrue a second strike.
+    const upsert = await this.pool.query(
+      `INSERT INTO attestations (contract_id, user_id, attestation_date, status, attested_at, urge_level, triggers)
+       VALUES ($1, $2, CURRENT_DATE, 'RELAPSED', NOW(), $3, $4::jsonb)
+       ON CONFLICT (contract_id, attestation_date) DO UPDATE SET status = 'RELAPSED', attested_at = NOW(),
+       urge_level = EXCLUDED.urge_level, triggers = EXCLUDED.triggers
+       WHERE attestations.status <> 'RELAPSED'
+       RETURNING id`,
+      [
+        contractId,
+        userId,
+        context?.urgeLevel ?? null,
+        JSON.stringify(context?.triggers ?? []),
+      ],
+    );
+
+    if (upsert.rows.length === 0) {
+      return {
+        status: "relapse_recorded" as const,
+        strikes: c.strikes || 0,
+        alreadyRecorded: true,
+      };
+    }
+
+    await this.truthLog.appendEvent("RELAPSE_SELF_REPORTED", {
+      contractId,
+      userId,
+      date: new Date().toISOString().split("T")[0],
+    });
+
+    const updated = await this.pool.query(
+      `UPDATE contracts SET strikes = strikes + 1 WHERE id = $1 AND status = 'ACTIVE' RETURNING strikes`,
+      [contractId],
+    );
+
+    const strikes = updated.rows[0]?.strikes ?? c.strikes ?? 0;
+
+    if (updated.rows.length > 0 && strikes >= NOCONTACT_MISS_STRIKE_THRESHOLD) {
+      await this.resolveContract(contractId, "FAILED");
+      return {
+        status: "relapse_recorded" as const,
+        strikes,
+        contractResolved: "FAILED" as const,
+      };
+    }
+
+    try {
+      await this.notifications?.createRainNotification(
+        userId,
+        contractId,
+        "SELF_REPORTED_RELAPSE",
+      );
+    } catch {
+      // Notification failure must never abort the relapse record
+    }
+
+    return { status: "relapse_recorded" as const, strikes };
   }
 
   async submitWhoopScoredState(

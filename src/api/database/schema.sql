@@ -127,7 +127,7 @@ CREATE TABLE attestations (
     attested_at TIMESTAMPTZ,
     cosigned_by UUID REFERENCES users(id),
     cosigned_at TIMESTAMPTZ,
-    status TEXT DEFAULT 'PENDING',  -- PENDING, ATTESTED, COSIGNED, MISSED
+    status TEXT DEFAULT 'PENDING',  -- PENDING, ATTESTED, COSIGNED, MISSED, RELAPSED
     UNIQUE(contract_id, attestation_date)
 );
 
@@ -462,3 +462,46 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS realm_preferences JSONB DEFAULT '{}';
 
 COMMENT ON COLUMN users.access_tier IS
   'Product access tier: free cannot create contracts, early_access is capped, pro has full contract creation access.';
+
+-- ── Circle 5 backend completion (PR #836) ───────────────────────────────────
+-- Pod failure broadcast log (050 + 057): cohort-scoped, attribution columns,
+-- string pod ids sourced from contracts.metadata.
+CREATE TABLE IF NOT EXISTS pod_broadcast_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    pod_id TEXT NOT NULL,
+    cohort_id TEXT,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    failure_type TEXT,
+    failure_count INTEGER NOT NULL DEFAULT 0,
+    dampened BOOLEAN NOT NULL DEFAULT FALSE,
+    broadcasted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_pbl_pod ON pod_broadcast_log(pod_id);
+CREATE INDEX IF NOT EXISTS idx_pbl_pod_cohort ON pod_broadcast_log(pod_id, cohort_id);
+
+-- DECO web-state commitments (055)
+CREATE TABLE IF NOT EXISTS deco_commitments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    url TEXT NOT NULL,
+    selector TEXT NOT NULL,
+    expected_value TEXT NOT NULL,
+    commitment_hash TEXT NOT NULL UNIQUE,
+    verified BOOLEAN NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_deco_commitments_hash ON deco_commitments(commitment_hash);
+CREATE INDEX IF NOT EXISTS idx_deco_commitments_user ON deco_commitments(user_id);
+
+-- Stripe FBO connected accounts by jurisdiction (056)
+CREATE TABLE IF NOT EXISTS fbo_accounts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    platform_account_id TEXT NOT NULL UNIQUE,
+    platform_name TEXT NOT NULL DEFAULT 'STRIPE',
+    jurisdiction TEXT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    deactivated_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_fbo_accounts_jurisdiction ON fbo_accounts(jurisdiction);
+CREATE INDEX IF NOT EXISTS idx_fbo_accounts_active ON fbo_accounts(is_active) WHERE is_active = TRUE;

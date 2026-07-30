@@ -1649,6 +1649,107 @@ describe("ContractsService", () => {
     });
   });
 
+  // ── recordSelfReportedRelapse ─────────────────────────────────
+
+  describe("recordSelfReportedRelapse", () => {
+    const activeContract = {
+      id: "contract-r1",
+      user_id: "user-1",
+      oath_category: "RECOVERY_NO_CONTACT_TEXT",
+      status: "ACTIVE",
+      strikes: 0,
+    };
+
+    it("records RELAPSED and applies one strike — never credits an attestation", async () => {
+      // Contract lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [activeContract] });
+      // RELAPSED upsert transitions the row
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "attest-1" }] });
+      // Strike update
+      mockPool.query.mockResolvedValueOnce({ rows: [{ strikes: 1 }] });
+
+      const result = await service.recordSelfReportedRelapse(
+        "contract-r1",
+        "user-1",
+        { urgeLevel: 8, triggers: ["late night"] },
+      );
+
+      expect(result).toEqual({ status: "relapse_recorded", strikes: 1 });
+      const upsertCall = mockPool.query.mock.calls[1];
+      expect(upsertCall[0]).toContain("'RELAPSED'");
+      expect(upsertCall[0]).not.toContain("'ATTESTED'");
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        "RELAPSE_SELF_REPORTED",
+        expect.objectContaining({ contractId: "contract-r1", userId: "user-1" }),
+      );
+    });
+
+    it("is idempotent for a same-day repeat report — no second strike", async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ ...activeContract, strikes: 1 }],
+      });
+      // Upsert guard returns no row: today is already RELAPSED
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.recordSelfReportedRelapse(
+        "contract-r1",
+        "user-1",
+      );
+
+      expect(result).toEqual({
+        status: "relapse_recorded",
+        strikes: 1,
+        alreadyRecorded: true,
+      });
+      // Only contract lookup + upsert ran — no strike UPDATE
+      expect(mockPool.query).toHaveBeenCalledTimes(2);
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
+    });
+
+    it("auto-FAILs the contract when the strike threshold is reached", async () => {
+      const resolveSpy = jest
+        .spyOn(service, "resolveContract")
+        .mockResolvedValue({ status: "FAILED" } as any);
+
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ ...activeContract, strikes: 2 }],
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "attest-1" }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ strikes: 3 }] });
+
+      const result = await service.recordSelfReportedRelapse(
+        "contract-r1",
+        "user-1",
+      );
+
+      expect(resolveSpy).toHaveBeenCalledWith("contract-r1", "FAILED");
+      expect(result).toEqual({
+        status: "relapse_recorded",
+        strikes: 3,
+        contractResolved: "FAILED",
+      });
+      resolveSpy.mockRestore();
+    });
+
+    it("throws ForbiddenException for non-owner", async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [activeContract] });
+
+      await expect(
+        service.recordSelfReportedRelapse("contract-r1", "user-impostor"),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it("throws BadRequestException for non-recovery contract", async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ ...activeContract, oath_category: "BIOLOGICAL_CARDIO" }],
+      });
+
+      await expect(
+        service.recordSelfReportedRelapse("contract-r1", "user-1"),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
   // ── submitWhoopScoredState ────────────────────────────────────
 
   describe("submitWhoopScoredState", () => {

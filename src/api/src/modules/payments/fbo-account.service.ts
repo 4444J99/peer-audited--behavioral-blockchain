@@ -97,10 +97,14 @@ export class FboAccountService {
   }
 
   async getAccountForContract(contractId: string): Promise<FboAccount | null> {
+    // Contracts carry no jurisdiction column; the canonical source is the
+    // owner's geofence-maintained users.last_known_state (same source the
+    // settlement path feeds into CompliancePolicyService).
     const result = await this.pool.query(
       `SELECT fa.id, fa.platform_account_id, fa.platform_name, fa.jurisdiction, fa.is_active, fa.created_at
-       FROM fbo_accounts fa
-       JOIN contracts c ON c.jurisdiction = fa.jurisdiction
+       FROM contracts c
+       JOIN users u ON u.id = c.user_id
+       JOIN fbo_accounts fa ON fa.jurisdiction = u.last_known_state
        WHERE c.id = $1 AND fa.is_active = TRUE
        LIMIT 1`,
       [contractId],

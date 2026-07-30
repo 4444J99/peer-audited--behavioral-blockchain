@@ -131,6 +131,27 @@ describe('PodOrchestrationService', () => {
       });
     });
 
+    it('bases the anonymity window on pod join time, not contract creation', async () => {
+      const oldContract = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+      const justJoined = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+      pool.query.mockResolvedValueOnce({
+        rows: [
+          { user_id: 'user-1', display_alias: 'Alice Smith', created_at: oldContract, cohort_joined_at: justJoined },
+          { user_id: 'user-2', display_alias: 'Bob Jones', created_at: oldContract, cohort_joined_at: justJoined },
+        ],
+        rowCount: 2,
+      } as any);
+
+      const result = await service.getPeerIdentities('pod-1', 'cohort-1', 'user-1');
+
+      // A 60-day-old contract that joined the pod 2 days ago is still ANONYMOUS.
+      expect(result[1]).toEqual({
+        userId: 'user-2',
+        revealLevel: 'ANONYMOUS',
+        alias: 'Member 2',
+      });
+    });
+
     it('returns FIRST_NAME for members between 7-29 days', async () => {
       const midDate = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString();
       pool.query.mockResolvedValueOnce({
@@ -226,6 +247,12 @@ describe('PodOrchestrationService', () => {
       expect(result.broadcast).toBe(true);
       expect(result.dampened).toBe(false);
       expect(result.recipientsNotified).toBe(3);
+      // Log insert uses the migration-050/057 column set.
+      expect(pool.query).toHaveBeenNthCalledWith(
+        3,
+        expect.stringContaining('INSERT INTO pod_broadcast_log (pod_id, cohort_id, user_id, failure_type, failure_count)'),
+        ['pod-1', 'cohort-1', 'user-1', 'MISSED_CHECK_IN', 1],
+      );
     });
 
     it('dampens when broadcast is within cooldown', async () => {
