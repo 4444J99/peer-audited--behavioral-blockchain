@@ -137,6 +137,14 @@ FROM (VALUES
   ('d1000000-0000-0000-0000-00000000000c'::uuid, 'CA')   -- hr.lead
 ) AS v(id, state)
 WHERE users.id = v.id
+  -- Never write to an erased user. CcpaService.runErasureStatements sets
+  -- last_known_state = NULL, compliance_metadata = '{}' and status = 'DELETED';
+  -- without this guard the predicate below matches every erased demo user
+  -- (NULL IS DISTINCT FROM 'CA' is true) and a re-run would restore both
+  -- location fields, partially reversing a completed CCPA deletion. Seeding
+  -- the CA residents is what made that path reachable in the first place, so
+  -- this guard has to land with it.
+  AND users.status <> 'DELETED'
   AND (users.last_known_state IS DISTINCT FROM v.state
        OR compliance_metadata ->> 'state' IS DISTINCT FROM v.state);
 
