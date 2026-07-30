@@ -58,8 +58,10 @@ describe('Concentric Circles demo index page', () => {
       '/tavern',
     ];
     for (const href of hrefs) {
-      const matches = html.match(new RegExp(`href="${href.replace(/\//g, '\\/')}"`, 'g'));
-      expect(matches?.length).toBe(1);
+      // Plain substring counting — building a RegExp from the path would need
+      // metacharacter escaping for no benefit.
+      const needle = `href="${href}"`;
+      expect(html.split(needle).length - 1).toBe(1);
     }
   });
 
