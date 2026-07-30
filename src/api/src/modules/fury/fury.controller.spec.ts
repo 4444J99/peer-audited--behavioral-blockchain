@@ -72,6 +72,21 @@ describe('FuryController', () => {
         expect.stringContaining('fury_user_id = $1'),
         ['fury-user-1'],
       );
+
+      // The queue projects every proofs column it maps into the response; each
+      // must exist on the real `proofs` table or the audit queue 500s at runtime.
+      const [sql] = mockPool.query.mock.calls[0] as [string];
+      for (const column of [
+        'p.media_uri',
+        'p.masked_media_uri',
+        'p.redaction_status',
+        'p.content_type',
+        'p.contract_id',
+        'p.submitted_at',
+        'p.description',
+      ]) {
+        expect(sql).toContain(column);
+      }
     });
 
     it('should return empty assignments when Fury has no pending reviews', async () => {

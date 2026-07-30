@@ -170,7 +170,7 @@ export class CollusionDetectionService {
         fa1.fury_user_id AS fury_a,
         fa2.fury_user_id AS fury_b,
         COUNT(*) AS overlap_count,
-        AVG(ABS(EXTRACT(EPOCH FROM (fa1.verdict_at - fa2.verdict_at)))) AS avg_seconds_apart
+        AVG(ABS(EXTRACT(EPOCH FROM (fa1.reviewed_at - fa2.reviewed_at)))) AS avg_seconds_apart
        FROM fury_assignments fa1
        JOIN fury_assignments fa2
          ON fa1.proof_id = fa2.proof_id
@@ -180,6 +180,7 @@ export class CollusionDetectionService {
          AND fa2.verdict IS NOT NULL
          AND fa1.reviewed_at IS NOT NULL
          AND fa2.reviewed_at IS NOT NULL
+         AND p.created_at >= $1
          AND ABS(EXTRACT(EPOCH FROM (fa1.reviewed_at - fa2.reviewed_at))) <= $2
        GROUP BY fa1.fury_user_id, fa2.fury_user_id
        HAVING COUNT(*) >= $3`,

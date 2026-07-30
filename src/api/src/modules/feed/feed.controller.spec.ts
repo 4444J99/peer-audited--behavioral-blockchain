@@ -103,6 +103,17 @@ describe('FeedController', () => {
       expect(result.events).toEqual([]);
     });
 
+    it('should derive the actor from the hashed payload, not an actor_id column', async () => {
+      mockPool.query.mockResolvedValue({ rows: [] });
+
+      await controller.getFeed();
+      const sql = String(mockPool.query.mock.calls[0][0]);
+      expect(sql).toContain("el.payload->>'userId'");
+      expect(sql).toContain('AS actor_id');
+      // event_log has no actor_id column — it is append-only and hash-chained.
+      expect(sql).not.toMatch(/el\.actor_id/);
+    });
+
     it('should use "System" for null actor_id', async () => {
       mockPool.query.mockResolvedValue({
         rows: [{
@@ -115,6 +126,36 @@ describe('FeedController', () => {
 
       const result = await controller.getFeed();
       expect(result.events[0].message).toContain('System');
+    });
+  });
+
+  // ─── streamEvents ───
+
+  describe('streamEvents', () => {
+    it('should derive the actor from the payload in the SSE query too', (done) => {
+      mockPool.query.mockResolvedValue({
+        rows: [
+          {
+            event_type: 'PROOF_VERIFIED',
+            payload: {},
+            created_at: new Date('2026-02-27T10:00:00Z'),
+            actor_id: 'user-abc123',
+          },
+        ],
+      });
+
+      const subscription = controller.streamEvents().subscribe((message) => {
+        const sql = String(mockPool.query.mock.calls[0][0]);
+        expect(sql).toContain("el.payload->>'userId'");
+        expect(sql).toContain('AS actor_id');
+        expect(sql).not.toMatch(/el\.actor_id/);
+
+        const payload = JSON.parse((message as any).data);
+        expect(payload.events[0].message).toContain('styx_user');
+
+        subscription.unsubscribe();
+        done();
+      });
     });
   });
 

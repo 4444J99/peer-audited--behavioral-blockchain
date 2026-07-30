@@ -104,7 +104,8 @@ export class BehavioralController {
     return this.enrichment.classifyAbandonment(resolveUserId(req));
   }
 
-  @Get("temptation-bundles/:category?")
+  // Express 5 (path-to-regexp v8) removed the ':param?' optional syntax
+  @Get(["temptation-bundles", "temptation-bundles/:category"])
   getTemptationBundles(@Param("category") category?: string) {
     return this.enrichment.getTemptationBundles(category);
   }

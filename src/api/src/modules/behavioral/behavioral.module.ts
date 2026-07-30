@@ -12,12 +12,17 @@ import { AccountabilityPartnerService } from "./accountability-partner.service";
 import { ProgressDashboardService } from "./progress-dashboard.service";
 import { EndowedProgressService } from "./endowed-progress.service";
 import { DecoCommitmentService } from "./deco-commitment.service";
+import { PractitionerIntelligenceService } from "./practitioner-intelligence.service";
+import { PractitionerController } from "./practitioner.controller";
+import { RetentionController } from "./retention.controller";
+import { RetentionScheduler } from "./retention.scheduler";
+import { RoleGuard } from "../../common/guards/role.guard";
 import { ContractsModule } from "../contracts/contracts.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [forwardRef(() => ContractsModule), NotificationsModule],
-  controllers: [BehavioralController],
+  controllers: [BehavioralController, PractitionerController, RetentionController],
   providers: [
     BehavioralEnhancementsService,
     BehavioralEnrichmentService,
@@ -31,6 +36,9 @@ import { NotificationsModule } from "../notifications/notifications.module";
     ProgressDashboardService,
     EndowedProgressService,
     DecoCommitmentService,
+    PractitionerIntelligenceService,
+    RetentionScheduler,
+    RoleGuard,
   ],
   exports: [
     BehavioralEnhancementsService,
@@ -43,6 +51,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
     ProgressDashboardService,
     EndowedProgressService,
     DecoCommitmentService,
+    PractitionerIntelligenceService,
   ],
 })
 export class BehavioralModule {}

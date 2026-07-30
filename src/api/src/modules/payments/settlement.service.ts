@@ -6,6 +6,7 @@ import { CompliancePolicyService } from '../compliance/compliance-policy.service
 import { buildSettlementQuote } from './settlement-quote';
 import { isKycRequired } from '../../../../shared/config/stake-tiers';
 import { JurisdictionDispositionMapper } from '../compliance/jurisdiction-disposition.mapper';
+import { SystemFlagsService } from '../compliance/system-flags.service';
 import { toCents } from '../../../../shared/libs/money';
 
 export interface SettlementJob {
@@ -25,6 +26,7 @@ export class SettlementService {
   constructor(
     private readonly pool: Pool,
     private readonly compliancePolicy: CompliancePolicyService,
+    private readonly systemFlags: SystemFlagsService,
   ) {
     this.queue = new Queue(SETTLEMENT_QUEUE_NAME, getDefaultQueueOptions());
   }
@@ -85,6 +87,9 @@ export class SettlementService {
         ? await this.compliancePolicy.getJurisdictionPolicy(lastKnownState)
         : null;
       
+      // The REFUND_ONLY kill switch is durable (system_flags); refresh the
+      // in-process cache so a toggle made on any replica governs this preview.
+      await JurisdictionDispositionMapper.refreshFromStore(this.systemFlags);
       dispositionMode = JurisdictionDispositionMapper.getDispositionMode(jurisdictionPolicy?.tier);
     }
 

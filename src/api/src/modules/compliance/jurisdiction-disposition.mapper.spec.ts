@@ -1,4 +1,7 @@
-import { JurisdictionDispositionMapper } from "./jurisdiction-disposition.mapper";
+import {
+  JurisdictionDispositionMapper,
+  REFUND_ONLY_FLAG_KEY,
+} from "./jurisdiction-disposition.mapper";
 import { JurisdictionTier } from "../../../services/geofencing";
 
 describe("JurisdictionDispositionMapper", () => {
@@ -110,6 +113,66 @@ describe("JurisdictionDispositionMapper", () => {
       JurisdictionDispositionMapper.setRefundOnlyMode(true);
       JurisdictionDispositionMapper.setRefundOnlyMode(false);
       expect(JurisdictionDispositionMapper.isRefundOnlyMode()).toBe(false);
+    });
+  });
+
+  describe("refreshFromStore", () => {
+    it("enables the kill switch when the stored flag is true", async () => {
+      const flags = { get: jest.fn().mockResolvedValue(true) };
+
+      await expect(
+        JurisdictionDispositionMapper.refreshFromStore(flags),
+      ).resolves.toBe(true);
+
+      expect(flags.get).toHaveBeenCalledWith(REFUND_ONLY_FLAG_KEY);
+      expect(JurisdictionDispositionMapper.isRefundOnlyMode()).toBe(true);
+      expect(
+        JurisdictionDispositionMapper.getDispositionMode(
+          JurisdictionTier.TIER_1,
+        ),
+      ).toBe("REFUND");
+    });
+
+    it("disables the kill switch when the stored flag is false", async () => {
+      JurisdictionDispositionMapper.setRefundOnlyMode(true);
+      const flags = { get: jest.fn().mockResolvedValue(false) };
+
+      await expect(
+        JurisdictionDispositionMapper.refreshFromStore(flags),
+      ).resolves.toBe(false);
+
+      expect(JurisdictionDispositionMapper.isRefundOnlyMode()).toBe(false);
+      expect(
+        JurisdictionDispositionMapper.getDispositionMode(
+          JurisdictionTier.TIER_1,
+        ),
+      ).toBe("CAPTURE");
+    });
+
+    it("treats a missing flag row as disabled", async () => {
+      JurisdictionDispositionMapper.setRefundOnlyMode(true);
+      const flags = { get: jest.fn().mockResolvedValue(null) };
+
+      await expect(
+        JurisdictionDispositionMapper.refreshFromStore(flags),
+      ).resolves.toBe(false);
+
+      expect(JurisdictionDispositionMapper.isRefundOnlyMode()).toBe(false);
+    });
+
+    it("fails CLOSED to refund-only when the store is unreachable", async () => {
+      const flags = { get: jest.fn().mockRejectedValue(new Error("DB down")) };
+
+      await expect(
+        JurisdictionDispositionMapper.refreshFromStore(flags),
+      ).resolves.toBe(true);
+
+      expect(JurisdictionDispositionMapper.isRefundOnlyMode()).toBe(true);
+      expect(
+        JurisdictionDispositionMapper.getDispositionMode(
+          JurisdictionTier.TIER_1,
+        ),
+      ).toBe("REFUND");
     });
   });
 

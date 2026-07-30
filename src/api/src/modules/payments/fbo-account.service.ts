@@ -100,11 +100,19 @@ export class FboAccountService {
     // Contracts carry no jurisdiction column; the canonical source is the
     // owner's geofence-maintained users.last_known_state (same source the
     // settlement path feeds into CompliancePolicyService).
+    //
+    // The two sides store different formats: geofencing persists bare state
+    // codes ('CA'), while FBO accounts are registered per ISO-3166-2
+    // subdivision ('US-CA'). Compare on the normalized suffix so
+    // jurisdiction-specific custody routing is not silently bypassed.
     const result = await this.pool.query(
       `SELECT fa.id, fa.platform_account_id, fa.platform_name, fa.jurisdiction, fa.is_active, fa.created_at
        FROM contracts c
        JOIN users u ON u.id = c.user_id
-       JOIN fbo_accounts fa ON fa.jurisdiction = u.last_known_state
+       JOIN fbo_accounts fa
+         ON UPPER(SPLIT_PART(fa.jurisdiction, '-', 2)) = UPPER(SPLIT_PART(u.last_known_state, '-', 2))
+         OR UPPER(fa.jurisdiction) = UPPER(u.last_known_state)
+         OR UPPER(SPLIT_PART(fa.jurisdiction, '-', 2)) = UPPER(u.last_known_state)
        WHERE c.id = $1 AND fa.is_active = TRUE
        LIMIT 1`,
       [contractId],

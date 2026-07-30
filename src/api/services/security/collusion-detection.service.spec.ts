@@ -167,5 +167,37 @@ describe('CollusionDetectionService', () => {
       expect(rings.length).toBe(1);
       expect(rings[0].signals[0].signalType).toBe('TEMPORAL_CORRELATION');
     });
+
+    it('reads verdict timing from fury_assignments.reviewed_at and binds every parameter', async () => {
+      pool.query
+        // findCoordinatedPairs
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any)
+        // findVerdictSyncPairs
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any)
+        // findTemporalCorrelationPairs
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any)
+        // findSharedAssignmentBias - totalFuries
+        .mockResolvedValueOnce({ rows: [{ total_furies: 10 }], rowCount: 1 } as any)
+        // findSharedAssignmentBias - pairs
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
+
+      await service.analyzeWindow(24, 2);
+
+      const [temporalSql, temporalParams] = pool.query.mock.calls[2] as unknown as [
+        string,
+        unknown[],
+      ];
+
+      // fury_assignments timestamps the vote in reviewed_at; there is no verdict_at column.
+      expect(temporalSql).toContain('fa1.reviewed_at - fa2.reviewed_at');
+      expect(temporalSql).not.toContain('verdict_at');
+
+      // Postgres rejects a bind message that supplies more parameters than the
+      // statement references, so every placeholder must appear in the SQL.
+      expect(temporalParams).toHaveLength(3);
+      expect(temporalSql).toContain('p.created_at >= $1');
+      expect(temporalSql).toContain('<= $2');
+      expect(temporalSql).toContain('HAVING COUNT(*) >= $3');
+    });
   });
 });

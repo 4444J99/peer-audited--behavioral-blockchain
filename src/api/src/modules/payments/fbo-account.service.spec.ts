@@ -143,10 +143,13 @@ describe('FboAccountService', () => {
 
       const result = await service.getAccountForContract('contract-abc');
 
-      expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('JOIN fbo_accounts fa ON fa.jurisdiction = u.last_known_state'),
-        ['contract-abc'],
-      );
+      // Jurisdiction is resolved from the owner's geofenced state, compared on
+      // the normalized subdivision so 'CA' still matches an 'US-CA' account.
+      const [sql, params] = mockPool.query.mock.calls[0];
+      expect(sql).toContain('JOIN users u ON u.id = c.user_id');
+      expect(sql).toContain("SPLIT_PART(u.last_known_state, '-', 2)");
+      expect(sql).not.toContain('c.jurisdiction');
+      expect(params).toEqual(['contract-abc']);
       expect(result?.platformAccountId).toBe('acct_ny');
     });
 

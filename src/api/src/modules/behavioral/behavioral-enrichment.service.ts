@@ -80,10 +80,12 @@ export class BehavioralEnrichmentService {
 
   async frictionAudit(userId: string, answers: Record<string, number>) {
     const result = calculateFrictionScore(answers);
+    // Migration 048 created friction_audits for exactly this: one row per audit,
+    // so the score history is queryable instead of a single overwritten blob.
     await this.pool.query(
-      `UPDATE users SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{friction_audit}', $1::jsonb)
-       WHERE id = $2`,
-      [JSON.stringify({ answers, result, auditedAt: new Date().toISOString() }), userId],
+      `INSERT INTO friction_audits (user_id, answers, score, risk_level)
+       VALUES ($1, $2::jsonb, $3, $4)`,
+      [userId, JSON.stringify(answers), result.totalScore, result.riskLevel],
     );
     return result;
   }
