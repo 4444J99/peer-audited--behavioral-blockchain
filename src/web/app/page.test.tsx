@@ -92,10 +92,13 @@ describe('Landing Page', () => {
     expect(html).toContain('href="/help"');
   });
 
-  it('does not render the removed manifesto or old CTAs', () => {
+  it('renders only the intended links: beta waitlist, register, and FAQ', () => {
     const html = renderToStaticMarkup(<Home />);
     expect(html).toContain('JOIN THE PRIVATE BETA');
-    expect(html.match(/<a /g)?.length).toBe(1);
+    expect(html.match(/<a /g)?.length).toBe(3);
+    expect(html).toContain('href="/beta"');
+    expect(html).toContain('href="/register"');
+    expect(html).toContain('href="/help"');
   });
 
   it('links to dashboard when user is authenticated', () => {
