@@ -7,8 +7,10 @@ import {
   LifeTransitionType, ImplementationIntention, OathCategory, PassiveProvider,
 } from "../../../../shared/libs/behavioral-logic";
 
+// The bootstrap middleware sets req.id to a correlation ID, so the
+// authenticated principal must be read from req.user (set by AuthGuard).
 function resolveUserId(req: any): string {
-  return req?.id ?? req?.user?.id ?? req?.userId;
+  return req?.user?.id ?? req?.userId;
 }
 
 @Controller("behavioral")

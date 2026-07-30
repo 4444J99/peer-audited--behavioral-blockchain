@@ -43,6 +43,7 @@ export class PodOrchestrationService {
         c.user_id,
         c.status,
         c.created_at,
+        c.metadata->'cohort'->>'joinedAt' AS cohort_joined_at,
         c.metadata->'cohort'->>'displayAlias' AS display_alias
        FROM contracts c
        WHERE c.metadata->'cohort'->>'cohortId' = $1
@@ -54,7 +55,7 @@ export class PodOrchestrationService {
     const members: PodMember[] = rows.map((row: any) => ({
       userId: row.user_id,
       alias: row.display_alias || 'Participant',
-      joinedAt: new Date(row.created_at),
+      joinedAt: new Date(row.cohort_joined_at || row.created_at),
       contractId: row.contract_id,
       status: row.status === 'ACTIVE' ? 'ACTIVE' : row.status === 'PENDING_STAKE' ? 'ACTIVE' : 'LEFT',
     }));
@@ -157,6 +158,7 @@ export class PodOrchestrationService {
         c.user_id,
         c.status,
         c.created_at,
+        c.metadata->'cohort'->>'joinedAt' AS cohort_joined_at,
         c.metadata->'cohort'->>'displayAlias' AS display_alias
        FROM contracts c
        WHERE c.metadata->'cohort'->>'cohortId' = $1
@@ -168,7 +170,7 @@ export class PodOrchestrationService {
     return rows.map((row: any) => ({
       userId: row.user_id,
       alias: row.display_alias || 'Participant',
-      joinedAt: new Date(row.created_at),
+      joinedAt: new Date(row.cohort_joined_at || row.created_at),
       contractId: row.contract_id,
       status: row.status === 'ACTIVE' ? 'ACTIVE' : row.status === 'PENDING_STAKE' ? 'ACTIVE' : 'LEFT',
     }));
@@ -181,7 +183,7 @@ export class PodOrchestrationService {
   ): Promise<{ broadcast: boolean; dampened: boolean; recipientsNotified: number }> {
     const { rows: broadcastRows } = await this.pool.query(
       `SELECT COUNT(*)::int AS failure_count,
-              MAX(broadcast_at) AS last_broadcast_at
+              MAX(broadcasted_at) AS last_broadcast_at
        FROM pod_broadcast_log
        WHERE pod_id = $1 AND cohort_id = $2`,
       [podId, cohortId],
@@ -206,9 +208,9 @@ export class PodOrchestrationService {
 
     if (!result.dampened) {
       await this.pool.query(
-        `INSERT INTO pod_broadcast_log (pod_id, cohort_id, user_id, failure_type, broadcast_at)
-         VALUES ($1, $2, $3, $4, NOW())`,
-        [podId, cohortId, failureEvent.userId, failureEvent.type],
+        `INSERT INTO pod_broadcast_log (pod_id, cohort_id, user_id, failure_type, failure_count)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [podId, cohortId, failureEvent.userId, failureEvent.type, failureCount],
       );
     }
 
@@ -230,6 +232,7 @@ export class PodOrchestrationService {
       `SELECT DISTINCT ON (c.user_id)
         c.user_id,
         c.metadata->'cohort'->>'displayAlias' AS display_alias,
+        c.metadata->'cohort'->>'joinedAt' AS cohort_joined_at,
         c.created_at
        FROM contracts c
        WHERE c.metadata->'cohort'->>'cohortId' = $1
@@ -242,7 +245,11 @@ export class PodOrchestrationService {
 
     return rows.map((row: any) => {
       const isSelf = row.user_id === requestingUserId;
-      const joinedAt = new Date(row.created_at);
+      // Anonymity windows count from the actual pod join, not contract
+      // creation — an old contract added to a pod starts ANONYMOUS.
+      const joinedAt = row.cohort_joined_at
+        ? new Date(row.cohort_joined_at)
+        : new Date(row.created_at);
       const daysInPod = Math.floor((now.getTime() - joinedAt.getTime()) / (1000 * 60 * 60 * 24));
       const displayAlias = row.display_alias || 'Participant';
 

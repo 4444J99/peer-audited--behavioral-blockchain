@@ -11,7 +11,8 @@ describe("BehavioralController", () => {
   let pool: { query: jest.Mock };
 
   const mockQuery = jest.fn();
-  const user = { id: "user-001" };
+  // Shaped like a real request: AuthGuard sets req.user; req.id is a correlation ID.
+  const user = { id: "req-correlation-id", user: { id: "user-001" } };
 
   beforeEach(async () => {
     mockQuery.mockReset();

@@ -12,6 +12,7 @@ import { CurrentUser, Public } from '../../common/decorators/current-user.decora
 import { AuthGuard } from '../../../guards/auth.guard';
 import { RoleGuard, Roles } from '../../common/guards/role.guard';
 import { JurisdictionDispositionMapper } from '../compliance/jurisdiction-disposition.mapper';
+import { StripeProductionGuard } from './stripe-production.guard';
 import { toCents } from '../../../../shared/libs/money';
 import { MONTHLY_SUBSCRIPTION_PRICE } from '../../../services/billing';
 
@@ -33,6 +34,7 @@ const REUSABLE_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing', 'past_due'
 
 @ApiTags('Payments')
 @Controller('payments')
+@UseGuards(StripeProductionGuard)
 export class PaymentsController implements OnModuleInit {
   private readonly logger = new Logger(PaymentsController.name);
   private readonly stripe: StripeClient;

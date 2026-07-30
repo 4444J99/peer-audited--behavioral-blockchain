@@ -28,6 +28,7 @@ const mockContractsService = {
   fileDispute: jest.fn(),
   getAttestationStatus: jest.fn(),
   submitAttestation: jest.fn(),
+  recordSelfReportedRelapse: jest.fn(),
   submitWhoopScoredState: jest.fn(),
   claimBounty: jest.fn(),
 } as unknown as ContractsService;
@@ -398,6 +399,53 @@ describe("ContractsController", () => {
       await expect(
         controller.submitAttestation("c1", testUser),
       ).rejects.toThrow("Attestation only available for recovery contracts");
+    });
+  });
+
+  describe("POST /contracts/:id/self-report", () => {
+    it("credits an attestation when stayedSober is true", async () => {
+      const mockResult = { status: "attested" };
+      (mockContractsService.submitAttestation as jest.Mock).mockResolvedValue(
+        mockResult,
+      );
+
+      const result = await controller.submitSelfReport("c1", testUser, {
+        stayedSober: true,
+        urgeLevel: 4,
+        triggers: ["evening"],
+      } as any);
+
+      expect(mockContractsService.submitAttestation).toHaveBeenCalledWith(
+        "c1",
+        "user-1",
+        { urgeLevel: 4, triggers: ["evening"] },
+      );
+      expect(
+        mockContractsService.recordSelfReportedRelapse,
+      ).not.toHaveBeenCalled();
+      expect(result).toEqual(mockResult);
+    });
+
+    it("records a relapse — not an attestation — when stayedSober is false", async () => {
+      const mockResult = { status: "relapse_recorded", strikes: 1 };
+      (
+        mockContractsService.recordSelfReportedRelapse as jest.Mock
+      ).mockResolvedValue(mockResult);
+
+      const result = await controller.submitSelfReport("c1", testUser, {
+        stayedSober: false,
+        urgeLevel: 9,
+        triggers: ["saw their story"],
+      } as any);
+
+      expect(
+        mockContractsService.recordSelfReportedRelapse,
+      ).toHaveBeenCalledWith("c1", "user-1", {
+        urgeLevel: 9,
+        triggers: ["saw their story"],
+      });
+      expect(mockContractsService.submitAttestation).not.toHaveBeenCalled();
+      expect(result).toEqual(mockResult);
     });
   });
 

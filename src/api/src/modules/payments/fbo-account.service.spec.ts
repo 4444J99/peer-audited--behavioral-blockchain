@@ -144,7 +144,7 @@ describe('FboAccountService', () => {
       const result = await service.getAccountForContract('contract-abc');
 
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('JOIN contracts c ON c.jurisdiction = fa.jurisdiction'),
+        expect.stringContaining('JOIN fbo_accounts fa ON fa.jurisdiction = u.last_known_state'),
         ['contract-abc'],
       );
       expect(result?.platformAccountId).toBe('acct_ny');
