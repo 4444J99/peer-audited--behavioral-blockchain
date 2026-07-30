@@ -118,3 +118,7 @@ Nature demands a documentation counterpart. This formation maintains its narrati
 *Compliance: Nature and Counterpart are in balance.*
 
 <!-- ORGANVM:AUTO:END -->
+
+## Plan File Discipline
+
+- Use descriptive branch/plan names (e.g. `market-activation`, `irf-propagation`, `audit-engine-extraction`) instead of generic letter labels (`A`, `B`, `C`). Generic letter labels require constant lookup; descriptive names are self-documenting.

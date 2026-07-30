@@ -32,12 +32,18 @@ export class AccountabilityPartnerService {
   ) {}
 
   async requestPartnerMatch(userId: string, categories: string[]): Promise<PartnerMatch> {
+    // text[] has no built-in '&' intersection operator, so the shared-category
+    // count is computed via UNNEST/INTERSECT to stay portable on stock Postgres.
     const { rows } = await this.pool.query(
       `SELECT u.id, u.alias, u.oath_categories
        FROM users u
        WHERE u.id != $1
-         AND u.oath_categories && $2
-       ORDER BY array_length(u.oath_categories & $2, 1) DESC
+         AND u.oath_categories && $2::text[]
+       ORDER BY cardinality(ARRAY(
+         SELECT UNNEST(u.oath_categories)
+         INTERSECT
+         SELECT UNNEST($2::text[])
+       )) DESC
        LIMIT 1`,
       [userId, categories],
     );

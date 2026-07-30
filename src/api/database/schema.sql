@@ -127,7 +127,7 @@ CREATE TABLE attestations (
     attested_at TIMESTAMPTZ,
     cosigned_by UUID REFERENCES users(id),
     cosigned_at TIMESTAMPTZ,
-    status TEXT DEFAULT 'PENDING',  -- PENDING, ATTESTED, COSIGNED, MISSED
+    status TEXT DEFAULT 'PENDING',  -- PENDING, ATTESTED, COSIGNED, MISSED, RELAPSED
     UNIQUE(contract_id, attestation_date)
 );
 
@@ -462,3 +462,240 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS realm_preferences JSONB DEFAULT '{}';
 
 COMMENT ON COLUMN users.access_tier IS
   'Product access tier: free cannot create contracts, early_access is capped, pro has full contract creation access.';
+
+-- ── Circle 5 backend completion (PR #836) ───────────────────────────────────
+-- Pod failure broadcast log (050 + 057): cohort-scoped, attribution columns,
+-- string pod ids sourced from contracts.metadata.
+CREATE TABLE IF NOT EXISTS pod_broadcast_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    pod_id TEXT NOT NULL,
+    cohort_id TEXT,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    failure_type TEXT,
+    failure_count INTEGER NOT NULL DEFAULT 0,
+    dampened BOOLEAN NOT NULL DEFAULT FALSE,
+    broadcasted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_pbl_pod ON pod_broadcast_log(pod_id);
+CREATE INDEX IF NOT EXISTS idx_pbl_pod_cohort ON pod_broadcast_log(pod_id, cohort_id);
+
+-- DECO web-state commitments (055)
+CREATE TABLE IF NOT EXISTS deco_commitments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    url TEXT NOT NULL,
+    selector TEXT NOT NULL,
+    expected_value TEXT NOT NULL,
+    commitment_hash TEXT NOT NULL UNIQUE,
+    verified BOOLEAN NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_deco_commitments_hash ON deco_commitments(commitment_hash);
+CREATE INDEX IF NOT EXISTS idx_deco_commitments_user ON deco_commitments(user_id);
+
+-- Stripe FBO connected accounts by jurisdiction (056)
+CREATE TABLE IF NOT EXISTS fbo_accounts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    platform_account_id TEXT NOT NULL UNIQUE,
+    platform_name TEXT NOT NULL DEFAULT 'STRIPE',
+    jurisdiction TEXT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    deactivated_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_fbo_accounts_jurisdiction ON fbo_accounts(jurisdiction);
+CREATE INDEX IF NOT EXISTS idx_fbo_accounts_active ON fbo_accounts(is_active) WHERE is_active = TRUE;
+-- Circle-5 practitioner intelligence tables (mirrors migration 058)
+CREATE TABLE IF NOT EXISTS practitioner_client_assignments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  practitioner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ended_at TIMESTAMPTZ,
+  CHECK (practitioner_id != client_id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pca_active_pair
+  ON practitioner_client_assignments(practitioner_id, client_id) WHERE active;
+CREATE INDEX IF NOT EXISTS idx_pca_practitioner_active
+  ON practitioner_client_assignments(practitioner_id) WHERE active;
+CREATE INDEX IF NOT EXISTS idx_pca_client
+  ON practitioner_client_assignments(client_id);
+
+-- PractitionerIntelligenceService INSERTs client_id but SELECTs user_id for
+-- the same person, so user_id is a generated mirror of client_id.
+CREATE TABLE IF NOT EXISTS practitioner_alerts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  practitioner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID GENERATED ALWAYS AS (client_id) STORED,
+  alert_type TEXT NOT NULL CHECK (alert_type IN ('RATIONALIZATION', 'DISTRESS_ESCALATION', 'TRIGGER_MENTION', 'CRISIS_LANGUAGE')),
+  excerpt TEXT NOT NULL,
+  severity TEXT NOT NULL CHECK (severity IN ('LOW', 'MEDIUM', 'HIGH')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_practitioner_alerts_client_created
+  ON practitioner_alerts(client_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_practitioner_alerts_practitioner
+  ON practitioner_alerts(practitioner_id);
+
+CREATE TABLE IF NOT EXISTS activity_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  activity_type TEXT NOT NULL DEFAULT 'APP_OPEN',
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_activity_log_user_created
+  ON activity_log(user_id, created_at);
+
+CREATE TABLE IF NOT EXISTS contract_violations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  contract_id UUID REFERENCES contracts(id) ON DELETE SET NULL,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  violation_type TEXT NOT NULL DEFAULT 'ATTESTATION_MISSED',
+  details JSONB NOT NULL DEFAULT '{}'::jsonb,
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_contract_violations_user
+  ON contract_violations(user_id);
+CREATE INDEX IF NOT EXISTS idx_contract_violations_contract
+  ON contract_violations(contract_id);
+
+-- Columns queried by Circle-5 services that predate no other DDL
+ALTER TABLE proofs ADD COLUMN IF NOT EXISTS ip_address TEXT;
+ALTER TABLE proofs ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+UPDATE proofs SET created_at = submitted_at WHERE submitted_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_proofs_ip_address
+  ON proofs(ip_address) WHERE ip_address IS NOT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS alias TEXT;
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS grace_days_total INTEGER NOT NULL DEFAULT 0;-- AML screening infrastructure (migration 059): backing AmlScreeningService
+CREATE TABLE IF NOT EXISTS internal_watchlist (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  list_type TEXT NOT NULL,
+  matched_name TEXT NOT NULL,
+  -- DOUBLE PRECISION (not NUMERIC): node-postgres returns NUMERIC as a string,
+  -- and the service compares confidence numerically against 0.9.
+  confidence DOUBLE PRECISION NOT NULL CHECK (confidence >= 0 AND confidence <= 1),
+  source TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_internal_watchlist_user ON internal_watchlist(user_id);
+CREATE INDEX IF NOT EXISTS idx_internal_watchlist_list_type ON internal_watchlist(list_type);
+
+CREATE TABLE IF NOT EXISTS internal_blocklist (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  reason TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- user_id lookups are served by the UNIQUE constraint's index.
+
+CREATE TABLE IF NOT EXISTS aml_screenings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  risk_level TEXT NOT NULL CHECK (risk_level IN ('CLEAR', 'FLAGGED', 'BLOCKED')),
+  matches JSONB NOT NULL DEFAULT '[]'::jsonb,
+  screened_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_aml_screenings_user_screened ON aml_screenings(user_id, screened_at DESC);
+CREATE INDEX IF NOT EXISTS idx_aml_screenings_risk ON aml_screenings(risk_level);-- Fitbit verified-webhook OAuth grants (Gate 02: notifications carry only refs;
+-- biometric data is fetched server-side with these tokens).
+CREATE TABLE IF NOT EXISTS fitbit_oauth_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  -- Fitbit's stable user identifier (webhook notifications reference this).
+  -- UNIQUE: one wearable identity may back only one account (anti-Sybil).
+  fitbit_user_id TEXT NOT NULL UNIQUE,
+  access_token TEXT,
+  access_token_expires_at TIMESTAMPTZ,
+  refresh_token TEXT NOT NULL,
+  scope TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);-- Circle-4 retention state (mirrors migrations/061_retention_state.sql)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT DEFAULT 'America/New_York';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS alias TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS oath_categories TEXT[] DEFAULT '{}';
+
+CREATE TABLE IF NOT EXISTS retention_notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  contract_id UUID NOT NULL REFERENCES contracts(id) ON DELETE CASCADE,
+  notification_type TEXT NOT NULL,
+  dedupe_key TEXT NOT NULL DEFAULT '',
+  local_date DATE NOT NULL,
+  sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_retention_notifications_daily
+    UNIQUE (user_id, contract_id, notification_type, dedupe_key, local_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_retention_notifications_user_date
+  ON retention_notifications(user_id, local_date);
+CREATE INDEX IF NOT EXISTS idx_partner_checkins_pending_due
+  ON partner_checkins(scheduled_at) WHERE status = 'PENDING';-- Durable system-wide operational flags (e.g. the compliance REFUND_ONLY kill
+-- switch), previously process-local statics reset by every deploy.
+CREATE TABLE IF NOT EXISTS system_flags (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by UUID
+);
+
+-- Crisis alerting tables used by CrisisNotificationService (previously absent
+-- from both schema.sql and migrations; the fail-loud crisis path writes an
+-- operational alert row into crisis_notifications).
+CREATE TABLE IF NOT EXISTS crisis_notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  severity VARCHAR(20) NOT NULL CHECK (severity IN ('MEDIUM', 'HIGH', 'CRITICAL')),
+  category VARCHAR(50) NOT NULL,
+  matched_keywords TEXT NOT NULL DEFAULT '[]',
+  source VARCHAR(30) NOT NULL,
+  message TEXT NOT NULL,
+  acknowledged BOOLEAN NOT NULL DEFAULT FALSE,
+  acknowledged_by UUID,
+  acknowledged_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_crisis_notifications_unacked
+  ON crisis_notifications(acknowledged, created_at);
+
+CREATE TABLE IF NOT EXISTS crisis_follow_ups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  crisis_event_id UUID NOT NULL,
+  scheduled_at TIMESTAMPTZ NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'COMPLETED', 'MISSED')),
+  response TEXT,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_crisis_follow_ups_pending
+  ON crisis_follow_ups(status, scheduled_at);
+
+-- ── Schema-drift repair (migration 064) ─────────────────────────────────────
+ALTER TABLE proofs ADD COLUMN IF NOT EXISTS content_type TEXT;
+ALTER TABLE proofs ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE proofs ADD COLUMN IF NOT EXISTS uploaded_at TIMESTAMPTZ;
+ALTER TABLE attestations ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'self-report';
+
+-- ── DECO commitment privacy (migration 065) ─────────────────────────────────
+-- Commitments store only the hash, the timestamp hashed into it, and the domain.
+ALTER TABLE deco_commitments ADD COLUMN IF NOT EXISTS domain TEXT;
+ALTER TABLE deco_commitments ADD COLUMN IF NOT EXISTS committed_at TEXT;
+ALTER TABLE deco_commitments DROP COLUMN IF EXISTS url;
+ALTER TABLE deco_commitments DROP COLUMN IF EXISTS selector;
+ALTER TABLE deco_commitments DROP COLUMN IF EXISTS expected_value;

@@ -3,6 +3,7 @@ import { ContractsService } from '../contracts/contracts.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CompliancePolicyService } from '../compliance/compliance-policy.service';
 import { SettlementService } from './settlement.service';
+import { SystemFlagsService } from '../compliance/system-flags.service';
 import { Pool } from 'pg';
 import { GUARDS_METADATA } from '@nestjs/common/constants';
 import { AuthGuard } from '../../../guards/auth.guard';
@@ -14,6 +15,7 @@ describe('PaymentsController', () => {
   let mockNotifications: { create: jest.Mock };
   let mockPolicy: { evaluateRequestPolicy: jest.Mock; getJurisdictionPolicy: jest.Mock };
   let mockSettlement: { getSettlementPreview: jest.Mock; getSettlementStatus: jest.Mock; dispatchSettlement: jest.Mock };
+  let mockSystemFlags: { get: jest.Mock };
   let mockStripe: {
     subscriptions: { create: jest.Mock; retrieve: jest.Mock; update: jest.Mock; cancel: jest.Mock };
     customers: { create: jest.Mock; update: jest.Mock };
@@ -52,6 +54,8 @@ describe('PaymentsController', () => {
       generateCustodyReport: jest.fn(),
     };
 
+    mockSystemFlags = { get: jest.fn().mockResolvedValue(null) };
+
     controller = new PaymentsController(
       mockPool as unknown as Pool,
       mockContractsService as unknown as ContractsService,
@@ -59,6 +63,7 @@ describe('PaymentsController', () => {
       mockPolicy as unknown as CompliancePolicyService,
       mockSettlement as unknown as SettlementService,
       mockReconciliation as unknown as import('./reconciliation.service').ReconciliationService,
+      mockSystemFlags as unknown as SystemFlagsService,
     );
     (controller as any).stripe = mockStripe;
   });
@@ -400,6 +405,32 @@ describe('PaymentsController', () => {
         contractId: 'c-2',
         outcome: 'FAIL',
         amountCents: 3900,
+        dispositionMode: 'REFUND',
+      }));
+    });
+
+    it('should force REFUND when the persisted kill switch is active, even in capture-allowed jurisdictions', async () => {
+      mockContractsService.getContract.mockResolvedValue({
+        id: 'c-kill',
+        status: 'FAILED',
+        user_id: 'user-ks',
+        payment_intent_id: 'pi_ks',
+        stake_amount: 50,
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ last_known_state: 'TX' }] });
+      mockPolicy.getJurisdictionPolicy.mockResolvedValueOnce({
+        tier: 'FULL_ACCESS',
+        dispositionMode: 'HOUSE_RETAINED',
+      });
+      mockSystemFlags.get.mockResolvedValueOnce(true);
+
+      await controller.executeSettlement('c-kill', {});
+
+      expect(mockSystemFlags.get).toHaveBeenCalledWith('compliance.refund_only_mode');
+      expect(mockSettlement.dispatchSettlement).toHaveBeenCalledWith(expect.objectContaining({
+        contractId: 'c-kill',
+        outcome: 'FAIL',
+        amountCents: 5000,
         dispositionMode: 'REFUND',
       }));
     });

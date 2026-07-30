@@ -7,9 +7,20 @@ export enum FitbitReadinessState {
   NOT_READY = 'NOT_READY',
 }
 
+export enum FitbitDataProvenance {
+  /**
+   * Data fetched server-side from Fitbit's API after a signature-verified
+   * subscription notification. The ONLY provenance that may credit attestations.
+   */
+  VERIFIED_WEBHOOK = 'VERIFIED_WEBHOOK',
+  /** User-typed data. Journal-only — can never credit attestation state. */
+  MANUAL = 'MANUAL',
+}
+
 export interface FitbitWebhookPayload {
   userId: string;
   contractId: string;
+  provenance: FitbitDataProvenance;
   readinessScore?: number;
   sleepScore?: number;
   restingHeartRate?: number;
@@ -17,6 +28,28 @@ export interface FitbitWebhookPayload {
   state: FitbitReadinessState;
   recordedAt?: string;
   source?: string;
+}
+
+export interface FitbitSleepPayload {
+  userId: string;
+  contractId: string;
+  provenance: FitbitDataProvenance;
+  sleepMinutes: number;
+  sleepDate: string;
+  deepSleepMinutes?: number;
+  remSleepMinutes?: number;
+  source?: string;
+}
+
+export interface FitbitManualEntryPayload {
+  userId: string;
+  contractId: string;
+  readinessScore?: number;
+  sleepScore?: number;
+  restingHeartRate?: number;
+  hrv?: number;
+  sleepMinutes?: number;
+  note?: string;
 }
 
 @Injectable()
@@ -29,15 +62,21 @@ export class FitbitService {
   ) {}
 
   /**
-   * Process a Fitbit daily readiness webhook.
+   * Process a Fitbit daily readiness signal derived from a verified webhook.
    * Only RECOVERY_* contracts accept Fitbit readiness signals.
    * READY state triggers daily attestation credit (same pattern as Whoop SCORED).
+   *
+   * Gate 02 invariant: attestation-crediting data may only enter through the
+   * signature-verified webhook + server-side fetch path. Any other provenance
+   * is treated as a spoof attempt and rejected before touching contract state.
    */
   async processReadinessState(payload: FitbitWebhookPayload): Promise<{
     status: 'recorded' | 'ignored';
     state: FitbitReadinessState;
     attestationApplied: boolean;
   }> {
+    await this.assertVerifiedProvenance(payload.provenance, payload.contractId, payload.userId, payload.source);
+
     const contract = await this.pool.query(
       `SELECT id, user_id, oath_category, status
        FROM contracts WHERE id = $1`,
@@ -69,6 +108,7 @@ export class FitbitService {
         contractId: payload.contractId,
         userId: payload.userId,
         state,
+        provenance: payload.provenance,
         source: payload.source || 'fitbit-webhook',
         recordedAt: payload.recordedAt || new Date().toISOString(),
       });
@@ -107,6 +147,7 @@ export class FitbitService {
       contractId: payload.contractId,
       userId: payload.userId,
       state,
+      provenance: payload.provenance,
       readinessScore: payload.readinessScore,
       sleepScore: payload.sleepScore,
       restingHeartRate: payload.restingHeartRate,
@@ -124,18 +165,12 @@ export class FitbitService {
   }
 
   /**
-   * Process a Fitbit sleep log webhook.
+   * Process Fitbit sleep data fetched server-side after a verified notification.
    * Validates sleep data plausibility and records it for contract advancement.
    */
-  async processSleepData(payload: {
-    userId: string;
-    contractId: string;
-    sleepMinutes: number;
-    sleepDate: string;
-    deepSleepMinutes?: number;
-    remSleepMinutes?: number;
-    source?: string;
-  }): Promise<{ accepted: boolean; reason?: string }> {
+  async processSleepData(payload: FitbitSleepPayload): Promise<{ accepted: boolean; reason?: string }> {
+    await this.assertVerifiedProvenance(payload.provenance, payload.contractId, payload.userId, payload.source);
+
     const contract = await this.pool.query(
       `SELECT id, user_id, oath_category, status
        FROM contracts WHERE id = $1`,
@@ -170,6 +205,7 @@ export class FitbitService {
     await this.truthLog.appendEvent('FITBIT_SLEEP_RECEIVED', {
       contractId: payload.contractId,
       userId: payload.userId,
+      provenance: payload.provenance,
       sleepMinutes: payload.sleepMinutes,
       sleepDate: payload.sleepDate,
       deepSleepMinutes: payload.deepSleepMinutes,
@@ -178,6 +214,75 @@ export class FitbitService {
     });
 
     return { accepted: true };
+  }
+
+  /**
+   * Record a MANUAL self-reported wellness entry. Journal-only: this path never
+   * reads or writes attestations, and there is no parameter through which a
+   * caller can escalate a manual entry into hardware-oracle state.
+   */
+  async recordManualEntry(payload: FitbitManualEntryPayload): Promise<{
+    status: 'recorded';
+    provenance: FitbitDataProvenance.MANUAL;
+    attestationApplied: false;
+  }> {
+    const contract = await this.pool.query(
+      `SELECT id, user_id FROM contracts WHERE id = $1`,
+      [payload.contractId],
+    );
+
+    if (contract.rows.length === 0) {
+      throw new NotFoundException(`Contract ${payload.contractId} not found`);
+    }
+
+    if (contract.rows[0].user_id !== payload.userId) {
+      throw new ForbiddenException('You do not own this contract');
+    }
+
+    await this.truthLog.appendEvent('FITBIT_MANUAL_ENTRY_RECORDED', {
+      contractId: payload.contractId,
+      userId: payload.userId,
+      provenance: FitbitDataProvenance.MANUAL,
+      readinessScore: payload.readinessScore,
+      sleepScore: payload.sleepScore,
+      restingHeartRate: payload.restingHeartRate,
+      hrv: payload.hrv,
+      sleepMinutes: payload.sleepMinutes,
+      note: payload.note,
+      attestationApplied: false,
+      recordedAt: new Date().toISOString(),
+    });
+
+    return {
+      status: 'recorded',
+      provenance: FitbitDataProvenance.MANUAL,
+      attestationApplied: false,
+    };
+  }
+
+  // Typed `| undefined` deliberately: legacy/JS callers may omit provenance,
+  // and an absent value must fail closed exactly like MANUAL.
+  private async assertVerifiedProvenance(
+    provenance: FitbitDataProvenance | undefined,
+    contractId: string,
+    userId: string,
+    source?: string,
+  ): Promise<void> {
+    if (provenance !== FitbitDataProvenance.VERIFIED_WEBHOOK) {
+      this.logger.warn(
+        `Rejected Fitbit ingestion with unverified provenance '${provenance}' for contract ${contractId}`,
+      );
+      await this.truthLog.appendEvent('FITBIT_UNVERIFIED_CREDIT_ATTEMPT', {
+        contractId,
+        userId,
+        provenance: provenance ?? 'UNKNOWN',
+        source: source || 'unknown',
+        recordedAt: new Date().toISOString(),
+      });
+      throw new ForbiddenException(
+        'Fitbit ingestion requires verified webhook provenance; self-reported data never credits attestations',
+      );
+    }
   }
 
   private validateHeartRate(bpm: number): void {
@@ -194,25 +299,34 @@ export class FitbitService {
 
   /**
    * Submit daily attestation for a contract.
-   * Replicates the pattern from ContractsService.submitAttestation.
+   * Replicates the pattern from ContractsService.submitAttestation: the day is
+   * keyed on attestation_date (the unique key the scheduler also writes), and the
+   * row carries a `source` provenance tag so a hardware-oracle credit is
+   * distinguishable from a self-reported one (Gate 02).
    */
   private async submitAttestation(contractId: string, userId: string): Promise<void> {
-    const today = new Date().toISOString().split('T')[0];
-
     const existing = await this.pool.query(
-      `SELECT id FROM attestations
-       WHERE contract_id = $1 AND user_id = $2 AND attested_at::date = $3::date
+      `SELECT id, status FROM attestations
+       WHERE contract_id = $1 AND user_id = $2 AND attestation_date = CURRENT_DATE
        LIMIT 1`,
-      [contractId, userId, today],
+      [contractId, userId],
     );
 
-    if (existing.rows.length > 0) {
+    // A day the user already resolved — attested, cosigned, or admitted as a
+    // relapse — is terminal. A wearable signal never overwrites it.
+    if (
+      existing.rows.length > 0 &&
+      ['ATTESTED', 'COSIGNED', 'RELAPSED'].includes(existing.rows[0].status)
+    ) {
       throw new BadRequestException('Already attested today');
     }
 
     await this.pool.query(
-      `INSERT INTO attestations (contract_id, user_id, source, attested_at)
-       VALUES ($1, $2, 'fitbit-readiness', NOW())`,
+      `INSERT INTO attestations (contract_id, user_id, attestation_date, status, attested_at, source)
+       VALUES ($1, $2, CURRENT_DATE, 'ATTESTED', NOW(), 'fitbit-readiness')
+       ON CONFLICT (contract_id, attestation_date) DO UPDATE SET status = 'ATTESTED', attested_at = NOW(),
+       source = EXCLUDED.source
+       WHERE attestations.status NOT IN ('ATTESTED', 'COSIGNED', 'RELAPSED')`,
       [contractId, userId],
     );
   }

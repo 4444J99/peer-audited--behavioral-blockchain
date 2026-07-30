@@ -10,6 +10,9 @@
 #   bash scripts/deploy.sh render         Trigger a production deploy on Render
 #                                          (mirrors .github/workflows/deploy.yml).
 #   bash scripts/deploy.sh build          Build the API + Web Docker images only.
+#   bash scripts/deploy.sh migrate        Run the DB migration chain against the
+#                                          local stack's PostgreSQL.
+#   bash scripts/deploy.sh seed           Apply idempotent demo seed data.
 #   bash scripts/deploy.sh down           Stop and remove the local stack.
 #   bash scripts/deploy.sh help           Show this help.
 #
@@ -37,10 +40,13 @@ Usage: bash scripts/deploy.sh <target>
 
 Targets:
   local     Build + run the full stack locally (API + Web + PostgreSQL + Redis)
-            via Docker Compose. Zero config needed.
+            via Docker Compose. Runs the DB migration chain before the API
+            starts, then applies demo seed data. Zero config needed.
   render    Trigger a production deploy on Render (mirrors deploy.yml).
             Requires RENDER_API_KEY, RENDER_API_SERVICE_ID, RENDER_WEB_SERVICE_ID.
   build     Build the API + Web Docker images only.
+  migrate   Run the DB migration chain against the local stack's PostgreSQL.
+  seed      Apply demo seed data (idempotent) to the local database.
   down      Stop and remove the local stack.
   logs      Tail logs from the local stack.
   help      Show this help.
@@ -105,8 +111,17 @@ deploy_local() {
     warn "No repo-root .env found — using local dev defaults from compose.defaults.env."
   fi
 
-  info "Building images and starting the Styx stack ..."
-  compose up -d --build
+  # Compose orders the boot itself: postgres (healthy) → styx-migrate
+  # (one-shot, applies the FULL migration chain — the schema is no longer
+  # provisioned by an initdb-mounted schema.sql) → API. `up -d` only returns
+  # once those dependency conditions are met, so a migration failure surfaces
+  # here instead of as a half-broken API.
+  info "Building images and starting the Styx stack (migrations run before the API) ..."
+  compose up -d --build \
+    || die "Stack failed to start — likely the migration step. Inspect with: bash scripts/deploy.sh logs"
+  ok "Migration chain applied."
+
+  seed_local || warn "Seed data failed to apply — the stack runs without demo data (retry: bash scripts/deploy.sh seed)."
 
   local api_port web_port
   api_port="$(env_value STYX_DOCKER_API_PORT)"; api_port="${api_port:-3000}"
@@ -128,6 +143,33 @@ deploy_build() {
   info "Building API + Web images ..."
   compose build
   ok "Images built."
+}
+
+# Run the migration chain as a one-off container (postgres is brought up and
+# waited on via the service healthcheck). Safe to re-run: migrate.ts tracks
+# applied files in schema_migrations and skips them.
+deploy_migrate() {
+  require_docker
+  info "Starting PostgreSQL ..."
+  compose up -d styx-postgres
+  info "Applying the database migration chain ..."
+  compose run --rm styx-migrate || die "Migration run failed."
+  ok "Migration chain applied."
+}
+
+# Apply demo seed data. Every INSERT in seed.sql is ON CONFLICT DO NOTHING, so
+# re-running is safe. Requires the migration chain to have been applied first
+# (seed.sql targets tables the chain creates, e.g. contracts.realm_id).
+seed_local() {
+  require_docker
+  local pg_user pg_db
+  pg_user="$(env_value POSTGRES_USER)"; pg_user="${pg_user:-styx}"
+  pg_db="$(env_value POSTGRES_DB)"; pg_db="${pg_db:-styx}"
+  info "Applying demo seed data (idempotent) ..."
+  compose exec -T styx-postgres \
+    psql -q -v ON_ERROR_STOP=1 -U "$pg_user" -d "$pg_db" -f /opt/styx/seed.sql \
+    || return 1
+  ok "Seed data applied."
 }
 
 deploy_down() {
@@ -180,6 +222,8 @@ main() {
     local)        deploy_local ;;
     render)       deploy_render ;;
     build)        deploy_build ;;
+    migrate)      deploy_migrate ;;
+    seed)         seed_local || die "Seed failed — run migrations first: bash scripts/deploy.sh migrate" ;;
     down)         deploy_down ;;
     logs)         deploy_logs ;;
     help|-h|--help) usage ;;

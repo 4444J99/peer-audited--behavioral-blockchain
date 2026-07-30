@@ -64,6 +64,111 @@ describe('ProofsController', () => {
     jest.clearAllMocks();
   });
 
+  describe('requestUploadUrl', () => {
+    const user = { id: 'user-1' };
+    const contractAccess = {
+      id: 'c-1',
+      status: 'ACTIVE',
+      ownerUserId: 'user-1',
+      stakeAmount: 25,
+      strikes: 0,
+      integrityScore: 100,
+    };
+
+    it('inserts the proof against the real proofs columns and returns the upload URL', async () => {
+      mockProofsService.getProofUploadContractAccess.mockResolvedValue(contractAccess as any);
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-1' }] });
+      mockR2.generateUploadUrl.mockResolvedValue({
+        uploadUrl: 'https://r2.example/upload',
+        key: 'proofs/proof-1.mp4',
+      } as any);
+
+      const result = await controller.requestUploadUrl(user, {
+        contractId: 'c-1',
+        contentType: ProofMediaType.VIDEO,
+        description: 'No Contact compliance — Day 7',
+      });
+
+      expect(result).toEqual({
+        proofId: 'proof-1',
+        uploadUrl: 'https://r2.example/upload',
+        storageKey: 'proofs/proof-1.mp4',
+        expiresInSeconds: 300,
+      });
+
+      // The INSERT must name columns that actually exist on `proofs`
+      // (content_type / description are persisted alongside submitted_at).
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'INSERT INTO proofs (contract_id, user_id, status, content_type, description, submitted_at)',
+        ),
+        ['c-1', 'user-1', ProofMediaType.VIDEO, 'No Contact compliance — Day 7'],
+      );
+    });
+
+    it('binds exactly one VALUES expression per column and one param per placeholder', async () => {
+      mockProofsService.getProofUploadContractAccess.mockResolvedValue(contractAccess as any);
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-1' }] });
+      mockR2.generateUploadUrl.mockResolvedValue({
+        uploadUrl: 'https://r2.example/upload',
+        key: 'proofs/proof-1.mp4',
+      } as any);
+
+      await controller.requestUploadUrl(user, {
+        contractId: 'c-1',
+        contentType: ProofMediaType.VIDEO,
+      });
+
+      const [sql, params] = mockPool.query.mock.calls[0] as [string, unknown[]];
+
+      const columns = sql
+        .slice(sql.indexOf('(') + 1, sql.indexOf(')'))
+        .split(',')
+        .map((c) => c.trim());
+      expect(columns).toEqual([
+        'contract_id',
+        'user_id',
+        'status',
+        'content_type',
+        'description',
+        'submitted_at',
+      ]);
+
+      // NOW() carries its own ')', so bound the VALUES list at the last ')'
+      // before RETURNING rather than at the first one.
+      const valuesStart = sql.indexOf('VALUES (') + 'VALUES ('.length;
+      const values = sql
+        .slice(valuesStart, sql.lastIndexOf(')', sql.indexOf('RETURNING')))
+        .split(',')
+        .map((v) => v.trim());
+      expect(values).toHaveLength(columns.length);
+
+      // Literals ('PENDING_UPLOAD', NOW()) consume no params, so the highest
+      // placeholder index must equal the params array length exactly.
+      const placeholders = sql.match(/\$\d+/g) ?? [];
+      expect(Math.max(...placeholders.map((p) => Number(p.slice(1))))).toBe(params.length);
+      expect(new Set(placeholders).size).toBe(params.length);
+
+      // An omitted description is persisted as NULL, not dropped from the binding.
+      expect(params).toEqual(['c-1', 'user-1', ProofMediaType.VIDEO, null]);
+    });
+
+    it('rejects proof submission when the contract is not ACTIVE', async () => {
+      mockProofsService.getProofUploadContractAccess.mockResolvedValue({
+        ...contractAccess,
+        status: 'COMPLETED',
+      } as any);
+
+      await expect(
+        controller.requestUploadUrl(user, {
+          contractId: 'c-1',
+          contentType: ProofMediaType.VIDEO,
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockPool.query).not.toHaveBeenCalled();
+    });
+  });
+
   describe('confirmUpload', () => {
     const user = { id: 'user-1' };
     // Client-asserted biometric fields are intentionally no longer trusted/persisted.

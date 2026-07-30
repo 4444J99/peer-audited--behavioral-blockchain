@@ -1,6 +1,19 @@
 -- Styx Development Seed Data
 -- Populates a fresh database with demo users, accounts, contracts, and fury assignments.
 -- All IDs are valid UUIDs (hex only: 0-9, a-f).
+--
+-- PREREQUISITE: the FULL migration chain (src/api/database/migrations/*.sql)
+-- must have been applied first (`npm run dev:migrate`, or the styx-migrate
+-- compose service). This file targets the chain's schema — e.g.
+-- contracts.realm_id (NOT NULL since migration 025) and the enterprises table
+-- (migration 037b) — and is applied post-migration by scripts/deploy.sh, never
+-- via /docker-entrypoint-initdb.d/. Every INSERT is ON CONFLICT DO NOTHING,
+-- so re-running is safe.
+
+-- Demo enterprise (referenced by the demo users' enterprise_id)
+INSERT INTO enterprises (id, name, status) VALUES
+  ('e0000000-0000-0000-0000-000000000001', 'Styx Demo Enterprise', 'ACTIVE')
+ON CONFLICT (id) DO NOTHING;
 
 -- System accounts (double-entry ledger requires these)
 INSERT INTO accounts (id, name, type) VALUES
@@ -23,7 +36,8 @@ INSERT INTO users (id, email, password_hash, stripe_customer_id, integrity_score
 ON CONFLICT (id) DO NOTHING;
 
 -- Contracts in different states
-INSERT INTO contracts (id, user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at) VALUES
+-- realm_id is NOT NULL since migration 025; realm rows are seeded by 025 itself.
+INSERT INTO contracts (id, user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, realm_id) VALUES
   (
     'c0000000-0000-0000-0000-000000000001',
     'd0000000-0000-0000-0000-000000000001',
@@ -34,7 +48,8 @@ INSERT INTO contracts (id, user_id, oath_category, verification_method, stake_am
     30,
     'ACTIVE',
     NOW(),
-    NOW() + INTERVAL '30 days'
+    NOW() + INTERVAL '30 days',
+    'BIOLOGICAL_HARDWARE'
   ),
   (
     'c0000000-0000-0000-0000-000000000002',
@@ -46,7 +61,8 @@ INSERT INTO contracts (id, user_id, oath_category, verification_method, stake_am
     14,
     'COMPLETED',
     NOW() - INTERVAL '14 days',
-    NOW()
+    NOW(),
+    'COGNITIVE_DEVICE'
   )
 ON CONFLICT (id) DO NOTHING;
 
@@ -93,7 +109,7 @@ INSERT INTO accounts (id, name, type) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- Recovery contract: ACTIVE no-contact (30 days, started 10 days ago)
-INSERT INTO contracts (id, user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at) VALUES
+INSERT INTO contracts (id, user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, realm_id) VALUES
   (
     'c0000000-0000-0000-0000-000000000003',
     'd0000000-0000-0000-0000-000000000001',
@@ -104,12 +120,13 @@ INSERT INTO contracts (id, user_id, oath_category, verification_method, stake_am
     30,
     'ACTIVE',
     NOW() - INTERVAL '10 days',
-    NOW() + INTERVAL '20 days'
+    NOW() + INTERVAL '20 days',
+    'RECOVERY_ABSTINENCE'
   )
 ON CONFLICT (id) DO NOTHING;
 
 -- Recovery contract: COMPLETED lifecycle example (30 days, finished 5 days ago)
-INSERT INTO contracts (id, user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at) VALUES
+INSERT INTO contracts (id, user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, realm_id) VALUES
   (
     'c0000000-0000-0000-0000-000000000004',
     'd0000000-0000-0000-0000-000000000001',
@@ -120,7 +137,8 @@ INSERT INTO contracts (id, user_id, oath_category, verification_method, stake_am
     30,
     'COMPLETED',
     NOW() - INTERVAL '35 days',
-    NOW() - INTERVAL '5 days'
+    NOW() - INTERVAL '5 days',
+    'RECOVERY_ABSTINENCE'
   )
 ON CONFLICT (id) DO NOTHING;
 
