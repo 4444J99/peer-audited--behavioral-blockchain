@@ -1,18 +1,15 @@
 version: 2
 updates:
+  # Single npm ecosystem root. This is an npm-workspaces monorepo (`src/*`,
+  # `packages/*`) with one authoritative lockfile at the root, and every CI job
+  # installs with `npm ci` from the root. Listing workspace members here as
+  # separate roots made Dependabot edit a member manifest without regenerating
+  # the root lockfile, so `npm ci` failed with "Missing: <pkg> from lock file"
+  # (e.g. #842) and raised duplicate PRs for one bump (#842 vs #843).
+  # Dependabot resolves workspace members from the root manifest on its own.
   - package-ecosystem: "npm"
     directories:
       - "/"
-      - "/packages/audience-engine"
-      - "/packages/audit-engine"
-      - "/packages/styx-cli"
-      - "/src/api"
-      - "/src/ask-styx"
-      - "/src/desktop"
-      - "/src/mobile"
-      - "/src/pitch"
-      - "/src/shared"
-      - "/src/web"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
