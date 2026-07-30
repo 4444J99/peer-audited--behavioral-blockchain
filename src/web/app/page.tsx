@@ -16,31 +16,43 @@ export default function Home() {
             <span className="text-3xl font-black text-black">S</span>
           </div>
 
-      {/* Primary Action — single public CTA into the beta waitlist */}
-      <div className="flex flex-col sm:flex-row gap-6 mb-24">
-        <Link
-          href={user ? '/dashboard' : '/beta'}
-          className="px-8 py-4 bg-white text-black font-extrabold rounded-full hover:bg-neutral-200 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-        >
-          {user ? 'GO TO DASHBOARD' : 'JOIN THE PRIVATE BETA'}
-        </Link>
-      </div>
-      
-      {/* Feature Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left w-full max-w-5xl">
-        <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-red-600/50 transition-colors">
-          <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">DAILY CHECK-INS</h3>
-          <p className="text-neutral-400 leading-relaxed">A focused iOS beta for no-contact recovery, built around daily attestations and a simple accountability rhythm.</p>
-        </div>
-        <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-red-600/50 transition-colors">
-          <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">TEST-MONEY STAKES</h3>
-          <p className="text-neutral-400 leading-relaxed">Small financial commitments via Stripe test mode. Loss aversion makes your commitment real without risking actual funds.</p>
-        </div>
-        <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-red-600/50 transition-colors">
-          <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">PEER AUDIT</h3>
-          <p className="text-neutral-400 leading-relaxed">Anonymous verification by trained peers. No bias, no exceptions — just evidence-based accountability.</p>
-        </div>
-      </div>
+          <span className="inline-block px-4 py-1.5 bg-amber-950/60 border border-amber-800/30 text-amber-400 text-xs font-bold uppercase tracking-widest rounded-full">
+            Private Beta — Test-Money Pilot
+          </span>
+
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-br from-white to-neutral-600">
+            STYX
+          </h1>
+          <p className="text-xl md:text-2xl text-neutral-300 max-w-3xl mx-auto font-medium leading-relaxed">
+            Peer-audited behavioral accountability for no-contact recovery.
+            Back your commitment with stakes, verified by real people, powered by loss aversion.
+          </p>
+
+          {/* Primary Action — single public CTA into the beta waitlist */}
+          <div className="flex flex-col sm:flex-row gap-6 justify-center pt-4">
+            <Link
+              href={user ? '/dashboard' : '/beta'}
+              className="px-8 py-4 bg-white text-black font-extrabold rounded-full hover:bg-neutral-200 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+            >
+              {user ? 'GO TO DASHBOARD' : 'JOIN THE PRIVATE BETA'}
+            </Link>
+          </div>
+
+          {/* Feature Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left w-full max-w-5xl pt-12">
+            <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-red-600/50 transition-colors">
+              <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">DAILY CHECK-INS</h3>
+              <p className="text-neutral-400 leading-relaxed">A focused iOS beta for no-contact recovery, built around daily attestations and a simple accountability rhythm.</p>
+            </div>
+            <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-red-600/50 transition-colors">
+              <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">TEST-MONEY STAKES</h3>
+              <p className="text-neutral-400 leading-relaxed">Small financial commitments via Stripe test mode. Loss aversion makes your commitment real without risking actual funds.</p>
+            </div>
+            <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-red-600/50 transition-colors">
+              <h3 className="text-red-500 font-black text-xl mb-3 tracking-wide">PEER AUDIT</h3>
+              <p className="text-neutral-400 leading-relaxed">Anonymous verification by trained peers. No bias, no exceptions — just evidence-based accountability.</p>
+            </div>
+          </div>
         </div>
       </section>
 
