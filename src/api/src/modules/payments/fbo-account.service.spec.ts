@@ -153,6 +153,44 @@ describe('FboAccountService', () => {
       expect(result?.platformAccountId).toBe('acct_ny');
     });
 
+    it('normalizes undelimited jurisdictions to themselves so the country-level account cannot match a state', async () => {
+      // Regression guard for a collision that only shows up against real rows,
+      // which this suite cannot see because it mocks the pool.
+      //
+      // SPLIT_PART(x, '-', 2) returns '' for any value without a delimiter, so a
+      // bare 'US' jurisdiction and a bare 'CA' state both collapse to '' and
+      // compare equal. That made the country-level fallback account match every
+      // state, and would let a 'CA' (Canada) jurisdiction match a Texas
+      // resident — silently defeating jurisdiction-specific custody routing.
+      //
+      // The fix wraps each side in COALESCE(NULLIF(SPLIT_PART(...), ''), x), so
+      // undelimited values stay as themselves. Asserted on the SQL text because
+      // the comparison happens in Postgres, not in TypeScript.
+      mockPool.query.mockResolvedValue({ rows: [] });
+
+      await service.getAccountForContract('contract-collision');
+
+      const sql: string = mockPool.query.mock.calls[0][0];
+
+      for (const column of ['fa.jurisdiction', 'u.last_known_state']) {
+        expect(sql).toContain(
+          `COALESCE(NULLIF(SPLIT_PART(${column}, '-', 2), ''), ${column})`,
+        );
+      }
+
+      // Every SPLIT_PART must sit inside a NULLIF; a bare one reintroduces the
+      // collision, so the two counts have to match exactly.
+      const occurrences = (haystack: string, needle: string) =>
+        haystack.split(needle).length - 1;
+      expect(occurrences(sql, 'SPLIT_PART(')).toBe(
+        occurrences(sql, 'NULLIF(SPLIT_PART('),
+      );
+
+      // Deterministic pick: without ORDER BY, LIMIT 1 could return any matching
+      // row depending on the plan.
+      expect(sql).toContain('ORDER BY');
+    });
+
     it('should fall back to the default US account when no jurisdiction match exists', async () => {
       const now = new Date('2026-01-01T00:00:00Z');
       mockPool.query

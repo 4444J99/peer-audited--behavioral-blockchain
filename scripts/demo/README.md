@@ -63,7 +63,7 @@ Verified path on a machine with Homebrew Postgres and no Docker:
 ```bash
 createdb styx_demo
 cd src/api
-DATABASE_URL=postgresql://localhost:5432/styx_demo npm run migrate   # 68 migrations
+DATABASE_URL=postgresql://localhost:5432/styx_demo npm run migrate   # 70 migrations
 psql styx_demo -f database/seed.sql
 psql styx_demo -f ../../scripts/demo/seed-circles.sql
 ```

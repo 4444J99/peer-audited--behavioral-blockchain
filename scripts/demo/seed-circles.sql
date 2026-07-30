@@ -93,6 +93,74 @@ UPDATE users SET alias = v.alias FROM (VALUES
   ('d1000000-0000-0000-0000-00000000000c'::uuid, 'Acheron HR Lead')
 ) AS v(id, alias) WHERE users.id = v.id AND users.alias IS DISTINCT FROM v.alias;
 
+-- ---------------------------------------------------------------------------
+-- Jurisdiction placement (users.last_known_state + compliance_metadata.state)
+-- ---------------------------------------------------------------------------
+-- Without this every demo user sits at NULL, and three Circle-5 surfaces go
+-- quiet in ways that look like working software:
+--   * /admin/jurisdictions renders one undifferentiated TIER_3 blob, because
+--     compliance-policy.service.ts falls back to TIER_3 for a missing state.
+--   * POST /users/me/ccpa/deletion-request always 403s — ccpa.service.ts gates
+--     on compliance_metadata.state = 'CA' (CCPA rights attach to California
+--     residents), so with no state nobody can ever exercise it.
+--   * fbo-account.service.ts joins users.last_known_state to
+--     fbo_accounts.jurisdiction; against NULL the join never matches and every
+--     contract silently takes the 'US' fallback, hiding the routing entirely.
+--
+-- The spread deliberately covers all three tiers from services/geofencing.ts so
+-- the jurisdiction console shows real contrast: TIER_1 full access, TIER_2
+-- refund-only (NY), TIER_3 blocked (WA). The two blocked/restricted users are
+-- non-pod consumers, so no seeded contract flow depends on them.
+--
+-- Both columns are written because the codebase reads two different sources:
+-- geofencing persists last_known_state, CCPA reads compliance_metadata.state.
+-- Seeding only one leaves the other half of Circle 5 dark.
+UPDATE users SET
+  last_known_state = v.state,
+  compliance_metadata = COALESCE(compliance_metadata, '{}'::jsonb)
+                        || jsonb_build_object('state', v.state)
+FROM (VALUES
+  -- TIER_1 (full access) — the flagship demo paths
+  ('d1000000-0000-0000-0000-000000000001'::uuid, 'CA'),  -- river   — CCPA demo subject
+  ('d1000000-0000-0000-0000-000000000002'::uuid, 'TX'),  -- ash
+  ('d1000000-0000-0000-0000-000000000003'::uuid, 'FL'),  -- juno
+  ('d1000000-0000-0000-0000-000000000004'::uuid, 'IL'),  -- wren
+  ('d1000000-0000-0000-0000-000000000005'::uuid, 'CA'),  -- sage    — second CA resident
+  -- TIER_2 (refund-only) and TIER_3 (blocked) — non-pod, nothing depends on them
+  ('d1000000-0000-0000-0000-000000000006'::uuid, 'NY'),  -- indigo  — REFUND_ONLY
+  ('d1000000-0000-0000-0000-000000000007'::uuid, 'WA'),  -- marlow  — BLOCKED
+  -- Furies, practitioner, enterprise admin
+  ('d1000000-0000-0000-0000-000000000008'::uuid, 'CA'),  -- alecto
+  ('d1000000-0000-0000-0000-000000000009'::uuid, 'TX'),  -- megaera
+  ('d1000000-0000-0000-0000-00000000000a'::uuid, 'OH'),  -- tisiphone
+  ('d1000000-0000-0000-0000-00000000000b'::uuid, 'CA'),  -- dr.moira
+  ('d1000000-0000-0000-0000-00000000000c'::uuid, 'CA')   -- hr.lead
+) AS v(id, state)
+WHERE users.id = v.id
+  AND (users.last_known_state IS DISTINCT FROM v.state
+       OR compliance_metadata ->> 'state' IS DISTINCT FROM v.state);
+
+-- ---------------------------------------------------------------------------
+-- FBO custody accounts (Circle 5 — Stripe for-benefit-of routing)
+-- ---------------------------------------------------------------------------
+-- fbo-account.service.ts routes a contract to the account whose jurisdiction
+-- matches the owner's state, and falls back to getActiveAccount('US'). The
+-- table shipped empty, so both halves returned null and the routing was
+-- untestable against demo data.
+--
+-- Jurisdictions are registered as ISO-3166-2 subdivisions ('US-CA') while
+-- geofencing persists bare state codes ('CA'); the service normalizes on the
+-- suffix. Seeding both shapes plus the bare 'US' fallback exercises every
+-- branch of that join.
+INSERT INTO fbo_accounts (id, platform_account_id, platform_name, jurisdiction, is_active, deactivated_at) VALUES
+  ('fb000000-0000-0000-0000-000000000001', 'acct_demo_fbo_us_ca', 'STRIPE', 'US-CA', TRUE,  NULL),
+  ('fb000000-0000-0000-0000-000000000002', 'acct_demo_fbo_us_tx', 'STRIPE', 'US-TX', TRUE,  NULL),
+  ('fb000000-0000-0000-0000-000000000003', 'acct_demo_fbo_us_ny', 'STRIPE', 'US-NY', TRUE,  NULL),
+  ('fb000000-0000-0000-0000-000000000004', 'acct_demo_fbo_us',    'STRIPE', 'US',    TRUE,  NULL),
+  -- A deactivated account so "is_active = FALSE is skipped" is visible, not assumed.
+  ('fb000000-0000-0000-0000-000000000005', 'acct_demo_fbo_us_wa', 'STRIPE', 'US-WA', FALSE, NOW() - INTERVAL '9 days')
+ON CONFLICT DO NOTHING;
+
 -- Enterprise seats (admin seat + member seats for the Acheron employees)
 INSERT INTO enterprise_seats (id, enterprise_id, user_id, seat_type, active) VALUES
   ('e5100000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'd1000000-0000-0000-0000-00000000000c', 'ADMIN',  TRUE),
