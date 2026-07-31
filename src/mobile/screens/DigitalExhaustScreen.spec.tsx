@@ -8,6 +8,7 @@ import { ApiClient } from '../services/ApiClient';
 jest.mock('../services/ZKPrivacyEngine', () => ({
   ZKPrivacyEngine: {
     generateLocalProof: jest.fn(),
+    hasLogProvider: jest.fn(() => true),
   },
 }));
 
@@ -33,6 +34,9 @@ describe('DigitalExhaustScreen', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // clearAllMocks does not reset implementations, so restore the default
+    // explicitly — otherwise the no-provider case leaks into later tests.
+    (ZKPrivacyEngine.hasLogProvider as jest.Mock).mockReturnValue(true);
     (ZKPrivacyEngine.generateLocalProof as jest.Mock).mockResolvedValue({
       contractId: 'contract-1',
       timestamp: '2026-03-04T00:00:00.000Z',
@@ -53,6 +57,20 @@ describe('DigitalExhaustScreen', () => {
     const text = container.textContent || '';
     expect(text).toContain('Digital Exhaust Scan');
     expect(text).toContain('Zero-Knowledge Scan');
+  });
+
+  it('offers no scan when there is no log provider to read', () => {
+    (ZKPrivacyEngine.hasLogProvider as jest.Mock).mockReturnValue(false);
+
+    const { queryByText, container } = render(
+      React.createElement(DigitalExhaustScreen, { route: mockRoute, navigation: mockNavigation }),
+    );
+
+    // Without a log source the only reachable verdict would be an unearned
+    // "compliant", so the scan must not be offered at all.
+    expect(queryByText('START SECURE SCAN')).toBeNull();
+    expect(container.textContent).toContain('Scan Unavailable On This Device');
+    expect(ZKPrivacyEngine.generateLocalProof).not.toHaveBeenCalled();
   });
 
   it('runs local scan and submits zk proof marker', async () => {
