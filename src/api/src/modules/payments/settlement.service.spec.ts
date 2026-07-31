@@ -153,10 +153,11 @@ describe('SettlementService', () => {
 
       const result = await service.getSettlementPreview('c-capture');
 
+      // DR-002: the whole forfeited stake goes to the platform, nothing to a pool.
       expect(result).toMatchObject({
         stakeAmountCents: 5000,
-        platformFeeCents: 4000,
-        bountyPoolCents: 1000,
+        platformFeeCents: 5000,
+        bountyPoolCents: 0,
         userRefundCents: 0,
         dispositionMode: 'CAPTURE',
         actualAction: 'CAPTURE',
