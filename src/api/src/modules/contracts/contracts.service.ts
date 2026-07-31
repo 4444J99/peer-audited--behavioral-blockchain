@@ -19,6 +19,7 @@ import { StripeFBOService as RealStripeFBOService } from "../payments/stripe-fbo
 import { SettlementService } from "../payments/settlement.service";
 import { buildSettlementQuote } from "../payments/settlement-quote";
 import { DisputeService } from "../../../services/escrow/dispute.service";
+import { isAppealFeeEnabled } from "../../../services/billing";
 import { FuryRouterService } from "../../../services/fury-router/fury-router.service";
 import { AegisProtocolService } from "../../../services/health/aegis.service";
 import { RecoveryProtocolService } from "../../../services/health/recovery-protocol.service";
@@ -2447,15 +2448,22 @@ export class ContractsService {
     }
     await this.assertCanWriteContractRow(contract.rows[0], { userId });
 
-    // Get user's Stripe customer ID for the appeal fee
+    // Get the user's Stripe customer ID, if any, for the appeal fee.
+    //
+    // DR-004 makes appeals free for the beta cohort, so a missing payment method
+    // must NOT block an appeal — this used to throw unconditionally, which would
+    // have denied the appeal path outright to any beta user who had never saved a
+    // card. When the fee is re-enabled, initiateAppeal raises 402 itself.
     const userResult = await this.pool.query(
       "SELECT stripe_customer_id FROM users WHERE id = $1",
       [userId],
     );
-    if (
-      userResult.rows.length === 0 ||
-      !userResult.rows[0].stripe_customer_id
-    ) {
+    if (userResult.rows.length === 0) {
+      throw new NotFoundException(`User ${userId} not found`);
+    }
+    const stripeCustomerId: string | null =
+      userResult.rows[0].stripe_customer_id ?? null;
+    if (!stripeCustomerId && isAppealFeeEnabled()) {
       throw new BadRequestException(
         "User has no payment method for appeal fee",
       );
@@ -2479,7 +2487,7 @@ export class ContractsService {
     const result = await this.dispute.initiateAppeal(
       userId,
       proofId,
-      userResult.rows[0].stripe_customer_id,
+      stripeCustomerId,
     );
 
     return result;

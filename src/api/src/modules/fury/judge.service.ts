@@ -99,7 +99,7 @@ export class JudgeService {
        FROM disputes d
        JOIN proofs p ON d.proof_id = p.id
        JOIN contracts c ON p.contract_id = c.id
-       WHERE d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'IN_REVIEW')`
+       WHERE d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'PENDING_REVIEW', 'IN_REVIEW')`
     );
 
     return {

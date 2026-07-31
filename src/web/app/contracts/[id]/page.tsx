@@ -125,7 +125,11 @@ export default function ContractDetailPage() {
     setDisputeResult(null);
     try {
       const result = await api.disputeContract(contractId);
-      setDisputeResult(`Appeal filed (${result.appealStatus}). $5 appeal fee authorized.`);
+      setDisputeResult(
+        result.paymentIntentId
+          ? `Appeal filed (${result.appealStatus}). $5 appeal fee authorized.`
+          : `Appeal filed (${result.appealStatus}). No fee was charged.`,
+      );
     } catch (err) {
       setDisputeResult(err instanceof Error ? err.message : 'Failed to file dispute');
     } finally {
@@ -254,8 +258,12 @@ export default function ContractDetailPage() {
                 disabled={disputeLoading}
                 className="w-full py-3 bg-purple-700 hover:bg-purple-600 disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
               >
+                {/* No price on the label: the client cannot see whether the
+                    STYX_APPEAL_FEE_ENABLED escape hatch is on, so a hardcoded
+                    "Free" would lie the moment it is. The result text below
+                    reports what actually happened. */}
                 {disputeLoading ? <Loader2 className="animate-spin" size={16} /> : <FileText size={16} />}
-                File Dispute ($5 Appeal Fee)
+                File Dispute
               </button>
               {disputeResult && (
                 <p className="text-sm text-neutral-400">{disputeResult}</p>

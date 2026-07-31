@@ -1,4 +1,4 @@
-import { ZKPrivacyEngine } from './ZKPrivacyEngine';
+import { ZKPrivacyEngine, NoLogProviderError } from './ZKPrivacyEngine';
 
 jest.mock('expo-crypto', () => ({
   CryptoDigestAlgorithm: { SHA256: 'SHA256' },
@@ -9,6 +9,41 @@ jest.mock('expo-crypto', () => ({
 describe('ZKPrivacyEngine', () => {
   afterEach(() => {
     ZKPrivacyEngine.resetLogProvider();
+  });
+
+  // Regression: the default provider used to return `[]`, which is
+  // indistinguishable from "read the logs, found nothing". With no provider
+  // installed — the state every shipped build was in — every scan reported
+  // compliant and the UI said so, with a stake riding on it. An absent data
+  // source must raise, not resolve clean.
+  it('refuses to produce a verdict when no log provider is installed', async () => {
+    ZKPrivacyEngine.resetLogProvider();
+    expect(ZKPrivacyEngine.hasLogProvider()).toBe(false);
+
+    await expect(
+      ZKPrivacyEngine.generateLocalProof(
+        'contract-1',
+        '+1 (555) 111-2222',
+        new Date('2026-03-03T00:00:00.000Z'),
+        new Date('2026-03-04T00:00:00.000Z'),
+      ),
+    ).rejects.toThrow(NoLogProviderError);
+  });
+
+  it('refuses to produce a breach proof when no log provider is installed', async () => {
+    ZKPrivacyEngine.resetLogProvider();
+
+    await expect(
+      ZKPrivacyEngine.generateBreachProof('+1 (555) 111-2222', {
+        start: new Date('2026-03-03T00:00:00.000Z'),
+        end: new Date('2026-03-04T00:00:00.000Z'),
+      }),
+    ).rejects.toThrow(NoLogProviderError);
+  });
+
+  it('reports a provider as installed once one is set', () => {
+    ZKPrivacyEngine.setLogProvider(async () => []);
+    expect(ZKPrivacyEngine.hasLogProvider()).toBe(true);
   });
 
   it('generates compliance proof when no local logs are found', async () => {

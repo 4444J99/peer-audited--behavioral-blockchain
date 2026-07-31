@@ -9,8 +9,31 @@ export const TICKET_PRICE_BASE = 499; // cents ($4.99)
 /**
  * PI-01: Appeal Friction Fee
  * Charged to users who appeal a Fury audit rejection.
+ *
+ * DR-004 (decided 2026-03-10 by Jessica, business lead — see
+ * docs/planning/planning--founder-decisions-of-record.md): the appeal fee is
+ * REMOVED for the beta cohort. Appeals are submitted at no cost.
+ *
+ *   "Cohort size is small enough to be reviewed without creating an operational
+ *    burden. if we see high volume of frivolous appeals as product scales, we can
+ *    introduce a small $5 appeal fee to discourage abuse."
+ *
+ * So the fee is deferred, not deleted: the amount and the whole hold/capture
+ * mechanism stay, gated by the flag below.
+ *
+ * Note this cannot be expressed by setting the amount to 0 — Stripe rejects a
+ * zero-amount authorization, so `initiateAppeal` would fail closed and nobody
+ * could appeal at all.
  */
 export const APPEAL_FEE_AMOUNT = 500; // cents ($5.00)
+
+/**
+ * Whether to charge {@link APPEAL_FEE_AMOUNT} before accepting an appeal.
+ * Defaults OFF per DR-004; set STYX_APPEAL_FEE_ENABLED=true to reinstate it.
+ */
+export function isAppealFeeEnabled(): boolean {
+  return String(process.env.STYX_APPEAL_FEE_ENABLED).toLowerCase() === 'true';
+}
 
 export interface IAPResult {
   paymentIntentId: string;

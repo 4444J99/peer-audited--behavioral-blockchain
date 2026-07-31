@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import Stripe from 'stripe';
 import { JurisdictionTier } from '../geofencing';
+import { geofenceFailsOpenOnMissingLocation } from '../../src/modules/compliance/compliance-policy.service';
 
 export type StakeDisposition = 'CAPTURE' | 'REFUND';
 
@@ -36,6 +37,47 @@ export class StripeFboService {
     return !key || key === 'sk_test_mock_key';
   }
 
+  /**
+   * Gate on the controls that must be on before real money moves.
+   *
+   * This lives on the charge, not on a controller. A `StripeProductionGuard`
+   * decorating `PaymentsController` would miss `POST /contracts`, which calls
+   * `holdStake` directly, and would also reject `POST /payments/webhook` —
+   * blocking Stripe from settling transactions that were created *before* a
+   * control was switched off. Charging is the thing to gate; reporting is not.
+   *
+   * All three defaults are the Phase 1 pilot's settings, which are correct for a
+   * test-money beta and wrong the moment a live key appears. Nothing connected
+   * those facts, so this makes the coupling structural.
+   */
+  private assertRealMoneyAllowed(operation: string): void {
+    if (this.isDevMode) return; // test-money pilot; nothing real can move
+
+    if (geofenceFailsOpenOnMissingLocation()) {
+      throw new Error(
+        `Refusing to ${operation} with real money while the geofence fails open: an ` +
+          'unresolvable location would be granted FULL_ACCESS, defeating the US-only ' +
+          'boundary (DR-003). Unset GEO_MISSING_HEADER_ACTION or set it to "block".',
+      );
+    }
+
+    if (String(process.env.KYC_ENFORCEMENT_ENABLED).toLowerCase() !== 'true') {
+      throw new Error(
+        `Refusing to ${operation} with real money while KYC enforcement is disabled. ` +
+          'KYC_ENFORCEMENT_ENABLED must be "true" once STRIPE_SECRET_KEY is a live key.',
+      );
+    }
+
+    // Defaults on, so real money requires deliberately setting it to false.
+    if (String(process.env.STYX_TEST_MONEY_MODE ?? 'true').toLowerCase() !== 'false') {
+      throw new Error(
+        `Refusing to ${operation} with real money while STYX_TEST_MONEY_MODE is on — ` +
+          'every tester-facing surface is currently labelled a test-money pilot. ' +
+          'Set STYX_TEST_MONEY_MODE=false to activate real money.',
+      );
+    }
+  }
+
   async createCustomer(userId: string, email?: string): Promise<string> {
     if (this.isDevMode) {
       const id = `cus_dev_${randomUUID().slice(0, 8)}`;
@@ -64,6 +106,7 @@ export class StripeFboService {
     contractId: string,
     idempotencyKeyOverride?: string,
   ): Promise<StripePaymentIntent> {
+    this.assertRealMoneyAllowed('authorize a hold');
     if (this.isDevMode) {
       this.logger.debug(`[DEV] Mock hold ${amountCents}¢ for contract ${contractId}`);
       return {
@@ -101,6 +144,7 @@ export class StripeFboService {
    * capture can never succeed and a fast, clear error beats an opaque Stripe failure.
    */
   async captureStake(paymentIntentId: string, captureAmountCents?: number): Promise<StripePaymentIntent> {
+    this.assertRealMoneyAllowed('capture a stake');
     if (this.isDevMode) {
       // PM18: surface the partial-capture amount in dev so units/partial-capture bugs are not
       // hidden by an amount-agnostic mock. amount_received reflects what would actually be taken.
@@ -179,6 +223,7 @@ export class StripeFboService {
     metadata?: Record<string, any>,
     idempotencyKey?: string,
   ): Promise<StripeTransfer> {
+    this.assertRealMoneyAllowed('transfer funds');
     if (this.isDevMode) {
       this.logger.debug(`[DEV] Mock transfer ${amountCents}¢ to ${destinationAccountId}`);
       return { id: `tr_dev_${randomUUID().slice(0, 8)}`, amount: amountCents } as any;

@@ -21,14 +21,30 @@ describe('StripeProductionGuard', () => {
     expect(guard.canActivate(mockContext)).toBe(true);
   });
 
-  it('should allow in production with valid live keys', () => {
+  /** A production config that satisfies every real-money precondition. */
+  const setLiveProductionEnv = () => {
     process.env.NODE_ENV = 'production';
     process.env.STRIPE_SECRET_KEY = 'sk_live_test_key';
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_secret';
     process.env.STRIPE_PUBLISHABLE_KEY = 'pk_live_test_key';
+    process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+    process.env.STYX_TEST_MONEY_MODE = 'false';
+    delete process.env.GEO_MISSING_HEADER_ACTION;
+    delete process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
+  };
+
+  it('should allow in production with valid live keys', () => {
+    setLiveProductionEnv();
 
     expect(guard.canActivate(mockContext)).toBe(true);
   });
+
+  // The real-money interlocks (geofence fail-open, KYC, STYX_TEST_MONEY_MODE)
+  // are NOT asserted here: enforcing them on this controller-wide guard would
+  // also reject POST /payments/webhook while still missing POST /contracts.
+  // They live on the charge — see stripe.service.spec.ts.
+
+
 
   it('should throw when STRIPE_SECRET_KEY is missing in production', () => {
     process.env.NODE_ENV = 'production';

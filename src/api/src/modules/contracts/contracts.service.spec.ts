@@ -2125,16 +2125,56 @@ describe("ContractsService", () => {
       );
     });
 
-    it("should throw BadRequestException when user has no stripe customer", async () => {
+    // DR-004 inverts this. Appeals are free for the beta cohort, so a user who
+    // has never saved a card must still be able to appeal — this previously threw
+    // BadRequestException, which would have closed the appeal path entirely to
+    // exactly the users the free-appeal decision was meant to serve.
+    it("should let a user with no stripe customer file a dispute (DR-004)", async () => {
       mockPool.query.mockResolvedValueOnce({
-        rows: [{ id: "contract-1", user_id: "user-1" }],
+        rows: [{ id: "contract-1", user_id: "user-1", status: "ACTIVE" }],
       });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ stripe_customer_id: null }],
       });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: "proof-latest" }],
+      });
+
+      await service.fileDispute("user-1", "contract-1");
+
+      expect(mockDispute.initiateAppeal).toHaveBeenCalledWith(
+        "user-1",
+        "proof-latest",
+        null,
+      );
+    });
+
+    it("should still require a payment method when the fee is re-enabled", async () => {
+      process.env.STYX_APPEAL_FEE_ENABLED = "true";
+      try {
+        mockPool.query.mockResolvedValueOnce({
+          rows: [{ id: "contract-1", user_id: "user-1", status: "ACTIVE" }],
+        });
+        mockPool.query.mockResolvedValueOnce({
+          rows: [{ stripe_customer_id: null }],
+        });
+
+        await expect(
+          service.fileDispute("user-1", "contract-1"),
+        ).rejects.toThrow(BadRequestException);
+      } finally {
+        delete process.env.STYX_APPEAL_FEE_ENABLED;
+      }
+    });
+
+    it("should throw NotFoundException when the user does not exist", async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: "contract-1", user_id: "user-1", status: "ACTIVE" }],
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       await expect(service.fileDispute("user-1", "contract-1")).rejects.toThrow(
-        BadRequestException,
+        NotFoundException,
       );
     });
 

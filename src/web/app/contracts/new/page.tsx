@@ -142,7 +142,13 @@ function NewContractPageContent() {
   const maxStakeUsd = Math.floor(Math.max(0, Math.min(failureAdjustedTierMaxStakeUsd, aegisMaxStakeUsd)));
   const selectedStakeUsd = clampStakeAmount(Number.parseFloat(stakeAmount) || 0, maxStakeUsd);
   const usesMvpPlan = selectedStakeUsd === DEFAULT_STAKE_USD;
-  const platformFeeUsd = usesMvpPlan ? PLATFORM_FEE_USD : 0;
+  // The MVP_39 platform fee is metadata only — `normalizeContractPricing`
+  // overrides the stake to $30 and the sole charge is a $30 hold, so no $9 is
+  // ever collected. Showing "Entry total $39" told users they were paying a fee
+  // that never left their card. Display what is actually charged until pricing
+  // is decided (a joint founder call under DR-007; PLATFORM_FEE_USD is retained
+  // for that decision, not deleted).
+  const platformFeeUsd = 0;
   const totalEntryUsd = selectedStakeUsd + platformFeeUsd;
   const requiresKyc = selectedStakeUsd > 0 && requiresCreateContractKyc(selectedStakeUsd);
   const canStake = maxStakeUsd >= MIN_STAKE_USD;
@@ -364,7 +370,7 @@ function NewContractPageContent() {
                 <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Platform fee</p>
                 <p className="mt-1 text-lg font-black text-white">{formatMoney(platformFeeUsd)}</p>
                 <p className="mt-1 text-xs text-neutral-600">
-                  {usesMvpPlan ? 'MVP plan fee' : 'Only applies to the $30 MVP plan'}
+                  No platform fee during beta
                 </p>
               </div>
               <label className="rounded-lg border border-neutral-800 bg-black p-3">

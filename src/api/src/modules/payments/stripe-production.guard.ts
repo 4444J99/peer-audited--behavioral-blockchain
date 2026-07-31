@@ -31,6 +31,14 @@ export class StripeProductionGuard implements CanActivate {
       );
     }
 
+    // NOTE: the real-money interlocks (geofence fail-open, KYC enforcement,
+    // STYX_TEST_MONEY_MODE) deliberately do NOT live here. This guard decorates
+    // the whole PaymentsController, so enforcing them here would also reject
+    // POST /payments/webhook and stop Stripe from settling transactions created
+    // before a control was switched off — while still missing POST /contracts,
+    // which calls StripeFboService.holdStake directly and never passes through
+    // this guard. They are enforced in StripeFboService.assertRealMoneyAllowed(),
+    // on the charge itself, which covers every path and no reporting path.
     return true;
   }
 }
