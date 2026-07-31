@@ -1,6 +1,30 @@
 # Payout Math Worksheet (Jessica Input)
 
-This is the shortest possible worksheet for locking payout economics without dragging Jessica into code details.
+> **ANSWERED 2026-03-10. Closed.**
+>
+> The five minimum answers this worksheet asked for were given the next day. They
+> are recorded as DR-002 through DR-006 in
+> [`planning--founder-decisions-of-record.md`](./planning--founder-decisions-of-record.md),
+> which is authoritative. The blank fields below are the original request, kept
+> for provenance, with the answer stated under each.
+>
+> The "repo conflict" this worksheet was written to resolve is resolved: there is
+> one formula, `100% platform`, in `src/api/src/modules/payments/settlement-quote.ts`.
+
+## Answers At A Glance
+
+| #   | Question                                      | Answer                                                   |
+| --- | --------------------------------------------- | -------------------------------------------------------- |
+| 1   | Failed contract, capture-allowed jurisdiction | 100% platform / 0% Fury / 0% reserve / 0% refund         |
+| 2   | Failed contract, refund-only/unknown          | 100% refund; Phase 1 restricted to the U.S.              |
+| 3   | Appeal fee                                    | Removed for beta ($0); may return at $5 if abuse appears |
+| 4   | Onboarding bonus                              | Removed for beta ($0)                                    |
+| 5   | Beta user-facing payout language              | Generic test-money language only                         |
+
+Items 6 (ticket purchase) and 7 (beta UI) were not part of the five-item brief
+that was actually sent. Item 7 was answered anyway, as #5 above. **The `$4.99`
+ticket price has never been decided** — it remains an open question, not a
+settled default.
 
 ## Use Of This Worksheet
 
@@ -9,6 +33,9 @@ This is the shortest possible worksheet for locking payout economics without dra
 - if a field is left blank, engineering should not invent the answer
 
 ## Current Beta Reality
+
+_State as of 2026-03-09, when this worksheet was written. See
+[Answers At A Glance](#answers-at-a-glance) for what changed._
 
 - completed contract: current system intent is `100% returned to user`
 - failed contract in refund-only or unknown jurisdiction: current system intent is `100% refunded to user`

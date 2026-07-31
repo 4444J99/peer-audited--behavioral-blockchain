@@ -141,7 +141,7 @@ Development threads trace the intellectual and engineering arc of the project fr
 | `DOC-LEG-02` | `docs/legal/legal--compliance-guardrails.md` | #legal #compliance #research | Research memo (external synthesis). Aggregates external analysis and references for legal/compliance exploration. Covers the Aegis Protocol guardrails, stake limits, geofencing requirements, and FTC consumer protection considerations. Labeled as research, not operational policy. |
 | `DOC-LEG-03` | `docs/legal/legal--gatekeeper-compliance.md` | #legal #compliance #platforms | Forensic report on platform survival. Defines the "Linguistic Cloaking" strategy to bypass App Store Guideline 5.3 rejections and payment processor restricted business list bans. Covers Apple, Google Play, Stripe, and high-risk merchant underwriting. |
 | `DOC-LEG-04` | `docs/legal/legal--aegis-protocol.md` | #legal #compliance #governance | Styx Legal Compliance Guardrails (The Aegis Protocol) — operational policy document. Defines skill-based contest classification, BMI floors (18.5), velocity caps (2%/week), age gates, and geofencing jurisdiction tiers. The authoritative compliance reference. |
-| `DOC-LEG-05` | `docs/legal/legal--founder-agreement-draft.md` | #legal #governance | 50/50 Founder Equity Split agreement between Jessica (Marketing) and Partner (Technical). |
+| `DOC-LEG-05` | `docs/legal/legal--founder-agreement-draft.md` | #legal #governance | 50/50 founder equity split, four-year vest with a one-year cliff. Jessica leads business operations and commercial strategy; Anthony leads product and technology — and, per the draft, marketing and audience development too. **Unsigned.** Terms summarised as DR-007 in `docs/planning/planning--founder-decisions-of-record.md`. |
 | `DOC-LEG-06` | `docs/legal/legal--consultation-personal-goals.md` | #legal #consultation | Legal advice on the "Betting on Personal Goals" model and regulatory boundaries. |
 
 ### 4. Architecture & Design
@@ -163,6 +163,7 @@ Development threads trace the intellectual and engineering arc of the project fr
 | `DOC-ROAD-02` | `docs/planning/planning--roadmap--ai-workstreams.md` | #roadmap #architecture #planning | Parallel AI-Engineer Workstreams. Phase-by-phase execution plan for autonomous parallel AI engineers. |
 | `DOC-PLAN-01` | `docs/planning/planning--meeting-notes--2026-02.md` | #planning #brainstorm | Consolidated February 2026 meeting notes covering Pod structures and MVP launch strategy. |
 | `DOC-PLAN-02` | `docs/planning/planning--roadmap--mvp-drive.md` | #planning #roadmap | Drive-sourced MVP roadmap table. |
+| `DOC-PLAN-03` | `docs/planning/planning--founder-decisions-of-record.md` | #planning #governance #compliance | **Authoritative** ledger of founder business decisions (`DR-NNN`) — go-to-market phase sequence, payout splits, appeal fee, onboarding bonus, jurisdiction scope, founder-agreement terms. Decisions get made in Docs, comment threads, and calls; this is the repository's copy, and code that disagrees with an entry is a defect. Also tracks known divergences and decided-but-unbuilt policy. |
 
 ### 6. Implementation & Ship Status
 
@@ -234,7 +235,7 @@ Development threads trace the intellectual and engineering arc of the project fr
 | #research | `DOC-RES-01`–`DOC-RES-21`, `DOC-E2G-01`, `DOC-E2G-02`, `DOC-EXT-01`–`DOC-EXT-08`, `DOC-BRN-01`–`DOC-BRN-05` |
 | #legal / #compliance | `DOC-LEG-01`–`DOC-LEG-06`, `DOC-RES-10`, `DOC-RES-13`, `DOC-RES-16`, `DOC-RES-17`, `DOC-GH-04`, `DOC-IMPL-01` |
 | #architecture | `DOC-ARC-01`–`DOC-ARC-05`, `DOC-ADR-01`, `DOC-RES-10`, `DOC-RES-12`, `DOC-RES-14`, `DOC-ROAD-01`, `DOC-ROAD-02` |
-| #roadmap / #planning | `DOC-ROAD-01`, `DOC-ROAD-02`, `DOC-ARC-04`, `DOC-IMPL-02`, `DOC-PLAN-01`, `DOC-PLAN-02` |
+| #roadmap / #planning | `DOC-ROAD-01`, `DOC-ROAD-02`, `DOC-ARC-04`, `DOC-IMPL-02`, `DOC-PLAN-01`, `DOC-PLAN-02`, `DOC-PLAN-03` |
 | #governance | `DOC-GOV-01`–`DOC-GOV-05`, `DOC-GH-01`–`DOC-GH-04`, `DOC-WS-01`–`DOC-WS-08`, `DOC-IMPL-01`–`DOC-IMPL-03`, `DOC-LEG-05` |
 | #psychology | `DOC-RES-01`–`DOC-RES-03`, `DOC-RES-09`, `DOC-RES-12` |
 | #market / #b2b | `DOC-RES-04`, `DOC-RES-07`, `DOC-RES-08`, `DOC-RES-11`, `DOC-RES-18`–`DOC-RES-20` |
