@@ -1,0 +1,69 @@
+name: Branch Protection Drift
+
+# `.github/rulesets/main.json` is the source of truth for `main`'s protection,
+# but GitHub cannot read it from the repo — it has to be pushed to the API. That
+# gap let the file and the live settings disagree for a week without anyone
+# noticing. This job closes it.
+#
+# Deliberately NOT in the required status checks: it reports on repository
+# configuration, not on the code in the PR, so it must never be the reason a
+# code change cannot merge.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/rulesets/**"
+      - ".github/workflows/branch-protection.yml"
+      - "scripts/branch-protection*"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/rulesets/**"
+      - ".github/workflows/branch-protection.yml"
+      - "scripts/branch-protection*"
+  schedule:
+    # Weekly, so drift introduced through the UI surfaces on its own rather than
+    # waiting for someone to touch the ruleset file.
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+# The rules themselves are read from GET /repos/{o}/{r}/rules/branches/{branch},
+# which needs no special permission — so every rule and parameter in
+# `main.json` is verified here with the default token.
+#
+# Two things still need repo-admin rights, which `GITHUB_TOKEN` cannot be
+# granted (`administration` is not a grantable workflow scope): the ruleset's
+# own fields (enforcement/conditions/bypass_actors), and the presence of classic
+# branch protection — which is enforced as a union with rulesets but does not
+# appear in the effective-rules endpoint. Set BRANCH_PROTECTION_TOKEN to a
+# fine-grained PAT with "Administration: read" to cover both. Without it the run
+# still verifies the rules and prints an explicit NOT VERIFIED list.
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: branch_protection_drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Compare live protection to .github/rulesets/main.json
+        env:
+          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          ./scripts/branch-protection.sh check
+          status=$?
+          set -e
+          case "$status" in
+            0) echo "::notice::Live branch protection matches .github/rulesets/main.json" ;;
+            3) echo "::warning::Could not read the effective branch rules, so nothing was verified. Run 'scripts/branch-protection.sh check' locally as the repo owner." ;;
+            *) echo "::error::Live branch protection has drifted from .github/rulesets/main.json. Reconcile with 'scripts/branch-protection.sh apply'."
+               exit 1 ;;
+          esac

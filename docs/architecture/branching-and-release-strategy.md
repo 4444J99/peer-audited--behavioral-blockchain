@@ -53,35 +53,71 @@ All commits follow [Conventional Commits](https://www.conventionalcommits.org/):
    change history. Merge commits and rebase-merge are disabled.
 4. The squash commit title must be a valid Conventional Commit (the PR title is
    used) so release-drafter categorizes it correctly.
-5. Merging requires **all required checks green**, **1+ approving review
-   including CODEOWNERS**, **all conversations resolved**, and the branch
-   **up to date with `main`** (enforced by the merge queue / strict checks).
+5. Merging requires **all required checks green**. Reviews are welcome but not
+   required, and review threads do not block the merge — see §4 for why.
 
 ### Merge queue
-`main` uses GitHub's **merge queue**. The queue re-runs required checks against
-the post-merge result (`merge_group` event in `ci.yml`), eliminating "green PR
-breaks main because it was behind" races. Authors click *Merge when ready*; the
-queue serializes and validates.
+Not enabled. `ci.yml` still handles the `merge_group` event, so turning the
+queue on is a settings change with no code work. Enable it when concurrent
+contributors start landing conflicting work; with a single committer it adds
+serialization latency and prevents nothing.
 
 ## 4. Branch protection (enforced as code)
 
 Protection for `main` is defined as a GitHub **ruleset** in
-`.github/rulesets/main.json` (import via *Settings → Rules → Rulesets → Import*,
-or `gh api` — see `.github/rulesets/README.md`). It encodes:
+`.github/rulesets/main.json`, applied and verified with
+`scripts/branch-protection.sh` (see `.github/rulesets/README.md`). It encodes:
 
 - Require a pull request before merging — **no direct pushes to `main`**.
-- Require **1+ approving review** + **CODEOWNERS review** + **dismiss stale
-  approvals on new commits** + **require conversation resolution**.
-- Require **status checks to pass** and the branch to be **up to date**
-  (strict). Required contexts:
+- Require **status checks to pass**. Required contexts:
   - `build_and_test` (unit tests + build + lint + validation gates 04/06/07)
   - `Analyze (javascript-typescript)` (CodeQL)
   - `Secret Pattern Detection`
-- Require **linear history** (pairs with squash-merge).
+- Require **linear history** (pairs with squash-merge); **squash** is the only
+  allowed merge method.
 - Block **force-pushes** and **branch deletion** on `main`.
+- Allow **repo admins to bypass**, so the owner cannot be locked out.
 
 Advisory (not required) checks — promote to required once stabilized: `e2e`
 (browser flakiness), `beta_readiness` (needs live infra URLs), `terraform_validate`.
+
+### What is deliberately not required
+
+Approving reviews, CODEOWNERS review, conversation resolution, and strict
+(up-to-date-branch) checks are all **off**. They are team controls, and this repo
+has one committer:
+
+- GitHub does not let you approve your own PR, so requiring an approval would
+  make every PR permanently unmergeable.
+- Three review bots (CodeRabbit, Sourcery, CodeQL) open threads automatically.
+  Those threads keep blocking merges after they go `outdated`, so requiring
+  resolution gates merges on stale bot chatter while carrying no safety signal —
+  the reviews themselves are not required.
+- Strict checks force every open PR to rebase after each merge to `main`, which
+  only pays for itself under concurrent conflicting work.
+
+Restore them when a second regular committer arrives. The protection that
+actually matters for a solo repo is *required status checks*, which is the one
+piece that was missing.
+
+### One protection layer, not two
+
+GitHub has **two independent** systems — classic *branch protection* and
+*rulesets* — and enforces the **union** of both. Classic protection is invisible
+from the Rulesets UI, so a rule relaxed in the ruleset can stay in force with no
+visible cause.
+
+Until 2026-07-30 this repo had both, and they disagreed: this file required
+status checks but had **never been applied** (the live ruleset was a stripped
+copy), while classic protection required conversation resolution. The effective
+policy was "stale bot threads block merges, but CI need not pass" — the inverse
+of the intent, and why `main` could stay red for a week while merges were blocked
+on outdated threads.
+
+Classic protection has been removed. `.github/workflows/branch-protection.yml`
+runs `scripts/branch-protection.sh check` on ruleset changes, on pushes to
+`main`, and weekly; it fails if the live settings drift from this file or if
+classic protection reappears.
 
 ## 5. Environments & promotion flow
 
