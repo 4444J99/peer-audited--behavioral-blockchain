@@ -278,6 +278,36 @@ half-wired — the failure mode Circle 5 already documented twice.
 
 ---
 
+## Undecided — pricing has no entry here at all
+
+Not a divergence from a decision. A **decision vacuum**: five monetization models
+are live in shipped code and no `DR-NNN` covers any of them. Under DR-007 pricing
+is both Jessica's remit (business model and pricing) and a **joint** decision
+(pricing model changes), so engineering cannot pick one.
+
+| Model | Where | Charged? |
+| ----- | ----- | -------- |
+| `MVP_39` — $39 total = $30 stake + $9 fee | `contracts.service.ts:110-112`, `dto.ts:147` | **Stake only.** The $9 is metadata; `normalizeContractPricing` overrides the stake to $30 and the sole charge is a $30 hold. |
+| `EARLY_ACCESS_199` — $199 stake, $0 fee | `contracts.service.ts:113-115` | Stake only |
+| Ticket $4.99 per contract, captured non-refundably | `billing.ts:7`, exposed on two duplicate routes | Yes, if called |
+| Subscription $14.99/mo | `billing.ts:6` → `payments.controller.ts:195` | Yes, if called |
+| Appeal $5.00 | `billing.ts` | No — disabled by DR-004 |
+
+`docs/finance/pricing-strategy.md` exists but carries `generated: true`; it is an
+artifact, not a founder sign-off.
+
+**Fixed 2026-07-31 without deciding anything:** the UI rendered "Entry total $39"
+and the terms of service asserted a **non-refundable $9.00 Platform Fee** — for a
+charge that never occurs. Both now state what is actually charged. Removing a
+false number from a contract users agree to is a defect fix; choosing the real
+number is still the founders' call.
+
+This is DR-002's failure mode at larger scale: DR-002 was two conflicting formulas
+in one file with engineering forbidden to choose. This is five, across code and
+the legal agreement, on the paths that move money.
+
+---
+
 ## Awaiting confirmation
 
 Proposals from Jessica that were framed as sketches rather than rulings, so they
