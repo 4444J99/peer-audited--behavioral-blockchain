@@ -55,16 +55,28 @@ jobs:
 
       - name: Compare live protection to .github/rulesets/main.json
         env:
-          # On `pull_request` this job runs the PR head's copy of
-          # scripts/branch-protection.sh — code the PR author controls. Handing that
-          # an admin-scoped PAT would let anyone with write access exfiltrate it by
-          # editing the script in a branch. (Fork PRs never receive secrets on
-          # `pull_request`; same-repo branch PRs do.) So PR runs get the scoped,
-          # ephemeral GITHUB_TOKEN, which still verifies every rule and parameter —
-          # it just reports the ruleset metadata and classic-protection checks as
-          # NOT VERIFIED. The PAT is reserved for push / schedule / dispatch, where
-          # the script comes from the branch it is protecting.
-          GH_TOKEN: ${{ github.event_name == 'pull_request' && secrets.GITHUB_TOKEN || secrets.BRANCH_PROTECTION_TOKEN || secrets.GITHUB_TOKEN }}
+          # This step executes the CHECKED-OUT scripts/branch-protection.sh, so the
+          # PAT must only be in scope when that script came from a trusted ref.
+          #
+          #   push      — trigger is filtered to `main`; the script is post-merge.
+          #   schedule  — always runs from the default branch.
+          #   dispatch  — THE RUNNER PICKS THE REF. A collaborator can dispatch this
+          #               against a feature branch carrying a modified script.
+          #   pull_request — runs the PR head's script (fork PRs get no secrets;
+          #               same-repo branch PRs do).
+          #
+          # So the PAT is selected for push and schedule only. The other two get the
+          # scoped, ephemeral GITHUB_TOKEN, which still verifies every rule and
+          # parameter in main.json and simply reports the ruleset metadata and
+          # classic-protection checks as NOT VERIFIED.
+          #
+          # This expression closes the dispatch hole. It is NOT, on its own, a
+          # boundary against a same-repo pull_request: that run uses the PR's copy of
+          # THIS FILE, so its author could edit the expression or add a step naming
+          # the secret directly. Read `.github/rulesets/README.md` before creating
+          # BRANCH_PROTECTION_TOKEN — as a plain repository secret it is only safe
+          # while every account with write access is trusted.
+          GH_TOKEN: ${{ (github.event_name == 'push' || github.event_name == 'schedule') && secrets.BRANCH_PROTECTION_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           set +e
           ./scripts/branch-protection.sh check

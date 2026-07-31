@@ -47,7 +47,7 @@ Two things need repo-admin rights, which `GITHUB_TOKEN` **cannot** be granted
    rulesets but does **not** appear in the effective-rules endpoint, so without
    admin rights its return is undetectable.
 
-To cover both, add a repository secret:
+To cover both, add a secret:
 
 | Secret                    | Value                                                              |
 | ------------------------- | ------------------------------------------------------------------ |
@@ -57,6 +57,31 @@ Without it the job still verifies the rules and prints an explicit
 `NOT VERIFIED` list rather than implying full coverage. The job is deliberately
 **not** a required status check: it reports on repository configuration, not on
 the code in the PR, so it must never block a code change.
+
+#### Read this before creating that secret
+
+The drift step executes the **checked-out** `scripts/branch-protection.sh`. Any
+run whose ref an untrusted party controls must therefore not have the PAT in
+scope. The workflow selects it on `push` and `schedule` only — `push` is filtered
+to `main`, and `schedule` always runs from the default branch. `workflow_dispatch`
+is excluded because the dispatcher chooses the ref, and `pull_request` is excluded
+because it runs the PR head's script.
+
+**That expression is not a security boundary against a same-repository PR.** A
+`pull_request` run uses the PR's copy of the workflow file, so its author can edit
+the condition or add a step that names `secrets.BRANCH_PROTECTION_TOKEN` outright.
+Same-repo branch PRs receive repository secrets; only fork PRs are withheld.
+
+So:
+
+- **Solo repo, or every write-access account trusted** — a plain repository secret
+  is fine. That is the situation today, and the PAT is not currently set.
+- **The moment anyone else gets write access** — move it to a **protected
+  environment** secret (Settings → Environments → required reviewers) and add
+  `environment:` to the job. Deployment protection rules gate secret release even
+  when a PR rewrites the workflow, which is the only mechanism here that actually
+  holds. Alternatively, drop the PAT entirely and accept the two `NOT VERIFIED`
+  lines — the rules themselves are still fully checked without it.
 
 ## What it enforces
 
