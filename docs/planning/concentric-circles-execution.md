@@ -238,8 +238,32 @@ read. What remains is counsel review and procurement — see the final subsectio
       `SPLIT_PART(x, '-', 2)` returns `''` for undelimited values, so `US` and `CA`
       compared equal — the country-level fallback account matched *every* state.
       Only visible once real rows existed
+- [x] **CCPA deletions are now actually executed.**
+      `CcpaService.processDeletionRequest` had zero callers — no admin route, no
+      scheduler, no queue consumer. A California resident could submit a request, get
+      a `201`, and see a `PENDING` row while the data was retained indefinitely, past
+      the §1798.130(a)(2) deadline. Every visible signal said the feature worked.
+      `CcpaScheduler` (4:30 AM, half an hour after the GDPR sweep so the two erasure
+      paths never contend for the same rows or the TruthLog append lock) now drives
+      `processPendingDeletions`, mirroring the GDPR sweep including its PII-safe
+      failure logging. `OPT_OUT` rows are excluded — those are do-not-sell flags, and
+      sweeping them would delete the accounts of users who only opted out of sale
+- [x] Fixed a stranding bug the sweep exposed: the `status = 'PROCESSING'` stamp sits
+      outside the erasure transaction, so a rollback did not undo it and one failed
+      erasure pinned that request at `PROCESSING` forever — never retried, never
+      completed. It now returns to `PENDING` on failure, which is safe because the
+      erasure itself is transactional
+- [x] Guarded the demo seed against re-writing jurisdiction data onto an erased user.
+      Erasure sets `last_known_state = NULL` and `compliance_metadata = '{}'`, which is
+      exactly what the seed's idempotency predicate looks for, so a re-run would have
+      partially reversed a completed CCPA deletion
 
-### Remaining engineering — one open decision:
+### Remaining engineering — open decisions, not defects:
+- [ ] **CCPA deletion grace window** is set to 7 days (`CCPA_DELETION_GRACE_DAYS` in
+      `ccpa.service.ts`). CCPA allows 45 days to respond and the sibling GDPR path
+      holds for 30; 30 here would leave only 15 days of slack for a failed sweep to be
+      noticed and retried. It is a policy parameter, not a technical constraint —
+      worth confirming alongside the other counsel items below.
 - [ ] `FboAccountService` has **zero consumers**. It is registered and exported in
       `payments.module.ts`, has a passing spec, and is called by nothing.
       `SettlementService` operates on internal ledger accounts
@@ -291,6 +315,12 @@ runner to baseline-stamp (skip) the rest of the chain.
    the TypeScript is consistent with itself and nothing about whether the query runs.
    Twelve columns that did not exist, and a jurisdiction match that compared `US` equal
    to `CA`, all shipped under passing tests.
+8. **(Added 2026-07-30)** Before calling a feature done, grep for **callers**, not just
+   for the file. `SecurityModule`, `AmlController`, `PractitionerIntelligenceService`,
+   `FboAccountService` and `CcpaService.processDeletionRequest` were each written,
+   tested, and reachable by nobody. The CCPA one is the cautionary case: it returned
+   `201`, wrote a `PENDING` row, and retained the data forever — an unreachable
+   compliance feature is worse than an absent one, because it reports success.
 
 ---
 
