@@ -46,7 +46,7 @@
 |---|---|---|---|---|---|---|---|
 | Alabama | AL | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | ALA. CODE § 13A-12-20; Fantasy Contests Act § 8-19E-1 | ALIGNED (survey: Low) |
 | Alaska | AK | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | ALASKA STAT. § 11.66.200; skill exclusion § 11.66.280(3) | ALIGNED (survey: Low) |
-| Arizona | AZ | TIER_2 | REFUND_ONLY | REFUND | "DFS licensing required" | ARIZ. REV. STAT. § 13-3301; DFS § 5-1201 | ⚠ OPEN QUESTION — survey recommends BLOCK (any-chance history + licensing); code operates refund-only instead |
+| Arizona | AZ | TIER_3 | HARD_BLOCK | REFUND | survey-aligned 2026-07-31 | ARIZ. REV. STAT. § 13-3301; DFS § 5-1201 | ✅ ALIGNED — survey recommends BLOCK (any-chance history + licensing) and the code now blocks. Was TIER_2 refund-only until 2026-07-31. Counsel may relax. |
 | Arkansas | AR | TIER_3 | HARD_BLOCK | REFUND | none encoded (state name only) — OPEN QUESTION | ARK. CODE ANN. § 5-66-101; skill-betting prohibition § 5-66-113 | ALIGNED (survey: Block) |
 | California | CA | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | CAL. PENAL CODE § 330 | ALIGNED (survey: Low) |
 | Colorado | CO | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | COLO. REV. STAT. § 18-10-101 | ALIGNED (survey: Medium — monitor) |
@@ -69,9 +69,9 @@
 | Minnesota | MN | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | MINN. STAT. § 609.75 | ALIGNED (survey: Medium — monitor) |
 | Mississippi | MS | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | MISS. CODE ANN. § 97-33-1 | ALIGNED (survey: Medium — monitor) |
 | Missouri | MO | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | MO. REV. STAT. § 572.010 | ALIGNED (survey: Low) |
-| Montana | MT | TIER_2 | REFUND_ONLY | REFUND | "material element doctrine" | MONT. CODE ANN. § 23-5-112 | ⚠ OPEN QUESTION — survey recommends BLOCK (AG guidance, no safe harbor); code operates refund-only instead |
+| Montana | MT | TIER_3 | HARD_BLOCK | REFUND | survey-aligned 2026-07-31 | MONT. CODE ANN. § 23-5-112 | ✅ ALIGNED — survey recommends BLOCK (AG guidance, no safe harbor) and the code now blocks. Was TIER_2 refund-only until 2026-07-31. Counsel may relax. |
 | Nebraska | NE | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | NEB. REV. STAT. § 28-1101 | ALIGNED (survey: Low) |
-| Nevada | NV | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | NEV. REV. STAT. § 463.010 et seq. | ⚠ OPEN QUESTION — survey recommends BLOCK (full gaming licensure required; GCB enforces). Code grants FULL_ACCESS + CAPTURE. Highest-priority row in this matrix. |
+| Nevada | NV | TIER_3 | HARD_BLOCK | REFUND | survey-aligned 2026-07-31 | NEV. REV. STAT. § 463.010 et seq. | ✅ ALIGNED — survey recommends BLOCK (full gaming licensure required; GCB enforces) and the code now blocks. **Was TIER_1 FULL_ACCESS + CAPTURE until 2026-07-31**, the highest-priority row in this matrix; tightened without counsel because tightening is fail-safe. Counsel may relax. |
 | New Hampshire | NH | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | N.H. REV. STAT. ANN. § 647:2 | ALIGNED (survey: Low) |
 | New Jersey | NJ | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | N.J. STAT. ANN. § 2C:37-1 | ALIGNED (survey: Low) |
 | New Mexico | NM | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | N.M. STAT. ANN. § 30-19-1 | ALIGNED (survey: Medium — monitor tribal compacts) |
@@ -84,7 +84,7 @@
 | Pennsylvania | PA | TIER_2 | REFUND_ONLY | REFUND | "regulated + tax" | 18 PA. CONS. STAT. § 5513 | CODE-CONSERVATIVE (survey: Low, ALLOWED) |
 | Rhode Island | RI | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | R.I. GEN. LAWS § 11-19-1 | ⚠ OPEN QUESTION — survey: Medium, "Any Chance" historical standard mitigated only by DFS safe harbor; confirm TIER_1 |
 | South Carolina | SC | TIER_3 | HARD_BLOCK | REFUND | none encoded (state name only) — OPEN QUESTION | S.C. CODE ANN. § 16-19-10 | CODE-CONSERVATIVE (survey: High but ALLOWED-with-monitoring; code hard-blocks) |
-| South Dakota | SD | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | S.D. CODIFIED LAWS § 22-25-1 | ⚠ OPEN QUESTION — survey recommends BLOCK (broadest "in part upon chance" language; AG opposition). Code grants FULL_ACCESS + CAPTURE. Second-highest-priority row. |
+| South Dakota | SD | TIER_3 | HARD_BLOCK | REFUND | survey-aligned 2026-07-31 | S.D. CODIFIED LAWS § 22-25-1 | ✅ ALIGNED — survey recommends BLOCK (broadest "in part upon chance" language; AG opposition) and the code now blocks. **Was TIER_1 FULL_ACCESS + CAPTURE until 2026-07-31**, the second-highest-priority row. Counsel may relax. |
 | Tennessee | TN | TIER_2 | REFUND_ONLY | REFUND | "regulated DFS" | TENN. CODE ANN. § 39-17-501; skill defense § 39-17-501(c) | CODE-CONSERVATIVE (survey: Low, ALLOWED — explicit skill/endurance defense) |
 | Texas | TX | TIER_1 | FULL_ACCESS | CAPTURE | none encoded — OPEN QUESTION | TEX. PENAL CODE ANN. § 47.01; AG Op. KP-0057 | ALIGNED (survey: Low) |
 | Utah | UT | TIER_3 | HARD_BLOCK | REFUND | "constitutional gambling ban" | UTAH CODE ANN. § 76-10-1101 | ALIGNED (survey: Block) |
@@ -98,20 +98,22 @@
 
 ## Sign-Off Blockers (rank ordered)
 
-1. **NV** — code grants FULL_ACCESS/CAPTURE; survey says full gaming licensure is
-   required and the GCB actively enforces. Either counsel signs off on the deposit-
-   contract distinction for Nevada or NV moves to TIER_2/TIER_3 (one-line change in
-   `STATE_TIERS` + `jurisdictions` row update).
-2. **SD** — same shape: code FULL_ACCESS vs. survey BLOCK on the broadest any-chance
-   statute in the country.
-3. **AZ / MT** — code refund-only vs. survey BLOCK. Is refund-only operation itself
-   defensible in these states?
-4. **OR / RI** — TIER_1 in code with any-chance history per survey.
-5. **Dual source of truth** — `STATE_TIERS` (compile-time, used by guards) vs.
+> **Resolved 2026-07-31 — NV, SD, AZ, MT.** These were blockers 1–3 and are now
+> closed in the fail-safe direction rather than left open: all four are `TIER_3
+> HARD_BLOCK` in both `STATE_TIERS` and the `jurisdictions` registry (migration
+> `066_jurisdiction_survey_reconciliation.sql`). The code is no longer more
+> permissive than our own survey **in these four states** — OR and RI remain open
+> below. **This is not counsel sign-off** — it
+> removes the exposure while the question is open. Counsel may relax any of them;
+> reversing requires a new migration *and* the `STATE_TIERS` edit in the same change.
+
+1. **OR / RI** — TIER_1 in code with any-chance history per survey. Now the only
+   rows where the code may be more permissive than the survey.
+2. **Dual source of truth** — `STATE_TIERS` (compile-time, used by guards) vs.
    `jurisdictions` DB (runtime, admin-editable). Define which one counsel's sign-off
    binds and add a reconciliation check (candidate: extend
    `scripts/validation/09-realm-sync-check.ts` pattern).
-6. **No statutory hooks encoded for TIER_1** — the code carries rationale comments
+3. **No statutory hooks encoded for TIER_1** — the code carries rationale comments
    only for restricted states. Once counsel signs off, per-state statutory citations
    should be added to the `jurisdictions` table (`legal_basis_ref` column pattern
    already exists on `settlement_runs`).

@@ -313,8 +313,10 @@ export const api = {
       body: JSON.stringify(dto),
     }),
 
+  // paymentIntentId is null while appeals are free (DR-004) — there is no hold
+  // to reference.
   disputeContract: (contractId: string) =>
-    request<{ appealStatus: string; paymentIntentId: string }>(
+    request<{ appealStatus: string; paymentIntentId: string | null }>(
       `/contracts/${contractId}/dispute`,
       {
         method: "POST",

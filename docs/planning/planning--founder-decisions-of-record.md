@@ -117,7 +117,19 @@ submitted at no cost.
 The fee is therefore **deferred, not deleted** — the mechanism stays, the price
 goes to zero for beta.
 
-**Not yet implemented.** See [Open implementation](#open-implementation-of-decided-policy).
+**In force since 2026-07-31.** `isAppealFeeEnabled()` in `src/api/services/billing.ts`
+gates the hold; it defaults off and `STYX_APPEAL_FEE_ENABLED=true` reinstates the
+$5 fee if frivolous volume appears, exactly as the rationale anticipates. Free
+appeals carry the `PENDING_REVIEW` status and a null `payment_intent_id`; the
+Judge queue accepts both statuses.
+
+One thing the earlier scoping note got wrong, recorded because it changed the
+work: `disputes.payment_intent_id` was **already nullable**
+(`004_disputes.sql:8`) and resolution **already branched** on
+`if (payment_intent_id && contract_id)`, so no migration was needed. The real
+blocker was `contracts.service.ts`, which rejected any appeal from a user with no
+saved card — that would have closed the appeal path to precisely the beta users
+free appeals were meant to serve.
 
 ---
 
@@ -234,26 +246,25 @@ index entry, no strategy attached) was simply corrected.
 
 ## Open implementation of decided policy
 
-DR-004 and DR-005 are decided but not built. Neither is a one-line change, which
-is why they are named here rather than quietly deferred.
+DR-005 is decided but not built. It is not a one-line change, which is why it is
+named here rather than quietly deferred.
 
-### DR-004 — free appeals
+### ~~DR-004 — free appeals~~ — **built 2026-07-31**
 
-`src/api/services/escrow/dispute.service.ts:107` places a Stripe authorization
-hold of `APPEAL_FEE_AMOUNT` before an appeal is accepted, and the dispute
-lifecycle then captures it on `UPHELD` or cancels it otherwise
-(`STRIPE_CAPTURE_APPEAL_FEE` / `STRIPE_CANCEL_APPEAL_FEE`).
+Kept for the record because the scoping was partly wrong and the correction is
+worth more than the estimate. What actually shipped is under DR-004 above.
 
-**Setting `APPEAL_FEE_AMOUNT` to 0 will not work** — a zero-amount authorization
-is invalid at Stripe, so `initiateAppeal` would fail closed and no user could
-appeal at all. "Free" has to mean _skipping the hold_, which means:
+The unchanged part: setting `APPEAL_FEE_AMOUNT` to 0 would not work, because a
+zero-amount authorization is invalid at Stripe — `initiateAppeal` would fail
+closed and nobody could appeal. "Free" had to mean skipping the hold.
 
-- `disputes.payment_intent_id` becomes nullable, and the `FEE_AUTHORIZED_PENDING_REVIEW`
-  status needs a fee-free counterpart;
-- resolution must branch — no capture or cancel to perform;
-- the compensation path (cancel the hold when persistence fails) is a no-op;
-- `src/api/services/billing.ts:13` keeps the constant, gated by policy, per DR-004's
-  "can introduce a small $5 appeal fee" if volume demands it.
+Two of the four predicted work items did not exist. `disputes.payment_intent_id`
+was already nullable and resolution already branched on the null. The item that
+was missed entirely — and was the actual blocker — was the precondition in
+`contracts.service.ts` that threw `BadRequestException` for any user without a
+saved Stripe customer, which would have denied free appeals to exactly the people
+they were for. Estimating from the service that charges the fee missed the caller
+that gates it.
 
 ### DR-005 — no onboarding bonus
 
@@ -264,6 +275,36 @@ it interacts with divergence 2 above and with `endowed-progress.service.ts`, who
 whole premise is artificial initial advancement. Removing the money without
 deciding what happens to the endowed-progress mechanic leaves a behavioral feature
 half-wired — the failure mode Circle 5 already documented twice.
+
+---
+
+## Undecided — pricing has no entry here at all
+
+Not a divergence from a decision. A **decision vacuum**: five monetization models
+are live in shipped code and no `DR-NNN` covers any of them. Under DR-007 pricing
+is both Jessica's remit (business model and pricing) and a **joint** decision
+(pricing model changes), so engineering cannot pick one.
+
+| Model | Where | Charged? |
+| ----- | ----- | -------- |
+| `MVP_39` — $39 total = $30 stake + $9 fee | `contracts.service.ts:110-112`, `dto.ts:147` | **Stake only.** The $9 is metadata; `normalizeContractPricing` overrides the stake to $30 and the sole charge is a $30 hold. |
+| `EARLY_ACCESS_199` — $199 stake, $0 fee | `contracts.service.ts:113-115` | Stake only |
+| Ticket $4.99 per contract, captured non-refundably | `billing.ts:7`, exposed on two duplicate routes | Yes, if called |
+| Subscription $14.99/mo | `billing.ts:6` → `payments.controller.ts:195` | Yes, if called |
+| Appeal $5.00 | `billing.ts` | No — disabled by DR-004 |
+
+`docs/finance/pricing-strategy.md` exists but carries `generated: true`; it is an
+artifact, not a founder sign-off.
+
+**Fixed 2026-07-31 without deciding anything:** the UI rendered "Entry total $39"
+and the terms of service asserted a **non-refundable $9.00 Platform Fee** — for a
+charge that never occurs. Both now state what is actually charged. Removing a
+false number from a contract users agree to is a defect fix; choosing the real
+number is still the founders' call.
+
+This is DR-002's failure mode at larger scale: DR-002 was two conflicting formulas
+in one file with engineering forbidden to choose. This is five, across code and
+the legal agreement, on the paths that move money.
 
 ---
 
