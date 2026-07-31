@@ -18,9 +18,12 @@ scripts/branch-protection.sh check   # does live match this file?
 scripts/branch-protection.sh apply   # push this file to GitHub
 ```
 
-Both need a token with **repo-admin** rights; `gh auth login` as the repo owner
-covers it. `check` resolves the ruleset by **name**, so deleting and recreating
-it in the UI does not break the script.
+`apply` needs a token with **repo-admin** rights; `gh auth login` as the repo
+owner covers it. `check` verifies every rule and parameter with **any** token —
+admin rights only widen it to cover ruleset metadata and classic branch
+protection (see [Running `check` in CI](#running-check-in-ci)), and without them
+it says so rather than implying full coverage. `check` resolves the ruleset by
+**name**, so deleting and recreating it in the UI does not break the script.
 
 To import through the UI instead: Settings → **Rules** → **Rulesets** →
 **New ruleset** → **Import a ruleset** → upload `main.json`.

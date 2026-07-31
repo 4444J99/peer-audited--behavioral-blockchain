@@ -55,7 +55,16 @@ jobs:
 
       - name: Compare live protection to .github/rulesets/main.json
         env:
-          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN || secrets.GITHUB_TOKEN }}
+          # On `pull_request` this job runs the PR head's copy of
+          # scripts/branch-protection.sh — code the PR author controls. Handing that
+          # an admin-scoped PAT would let anyone with write access exfiltrate it by
+          # editing the script in a branch. (Fork PRs never receive secrets on
+          # `pull_request`; same-repo branch PRs do.) So PR runs get the scoped,
+          # ephemeral GITHUB_TOKEN, which still verifies every rule and parameter —
+          # it just reports the ruleset metadata and classic-protection checks as
+          # NOT VERIFIED. The PAT is reserved for push / schedule / dispatch, where
+          # the script comes from the branch it is protecting.
+          GH_TOKEN: ${{ github.event_name == 'pull_request' && secrets.GITHUB_TOKEN || secrets.BRANCH_PROTECTION_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           set +e
           ./scripts/branch-protection.sh check
