@@ -130,7 +130,12 @@ every push for a week and blocked five dependabot PRs behind it. Fixed in #844.
 ---
 
 ## Circle 2: Beta Launch Readiness (P0 blockers)
-**Goal:** Ship beta-ready product. Real money, real proofs, real safety.
+**Goal:** Ship a beta-ready product — real proofs, real safety, and settlement built to
+real-money standard. **The beta itself ships test-money only**, with no real-money
+settlement (DR-006, and `planning--phase1-private-beta-scope.md`). Earlier revisions of
+this line said "real money", which contradicted both; the money *path* is production-grade,
+the money *mode* is not, and conflating them is how a test-money pilot ends up shipping with
+live settlement wired.
 **Launch gate:** All 38 P0 blockers resolved, deployment pipeline live, production CI/CD active.
 **Status:** ENGINEERING SUBSTANTIALLY BUILT; EXTERNAL DEPENDENCIES OPEN.
 
