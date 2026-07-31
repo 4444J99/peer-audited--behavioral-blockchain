@@ -21,6 +21,26 @@ const spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
 const live = JSON.parse(fs.readFileSync(0, "utf8"));
 const drift = [];
 
+// A token without repo-admin rights can still GET a ruleset, but receives a
+// *redacted* view: the rules come back while admin-only fields are omitted
+// entirely. Diffing that against the file reports drift on every withheld
+// field — a false alarm that would train everyone to ignore this check.
+//
+// `bypass_actors` is the reliable discriminator: an admin read always includes
+// it, as `[]` when there are none. `undefined` means redacted, not empty.
+if (live.bypass_actors === undefined) {
+  console.error(
+    [
+      "SKIP: the ruleset came back redacted — this token lacks repo-admin rights.",
+      "      Rules were returned but admin-only fields (bypass_actors) were withheld,",
+      "      so drift cannot be determined without reporting false positives.",
+      "      In CI, set BRANCH_PROTECTION_TOKEN to a fine-grained PAT with",
+      "      'Administration: read'. Locally, authenticate as the repo owner.",
+    ].join("\n"),
+  );
+  process.exit(3);
+}
+
 /**
  * Order-insensitive canonical form. The API echoes object keys in its own
  * order, and none of the arrays in a ruleset are order-significant
