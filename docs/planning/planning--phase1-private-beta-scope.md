@@ -2,6 +2,17 @@
 
 This document is the scope lock for the first ship-ready private beta.
 
+The no-contact journey, the US-only boundary, and the test-money mode are not
+engineering preferences — they implement founder decisions DR-001 and DR-003 in
+[`planning--founder-decisions-of-record.md`](./planning--founder-decisions-of-record.md).
+Phase 1 leads with no-contact recovery because that is where the launch audience
+already is; fitness and B2B corporate wellness are phases 2 and 3 of the same
+decision, not alternatives to it. Widening this scope is a joint founder call.
+
+Beta economics under this scope are also decided: forfeited stakes go entirely to
+the platform (DR-002), appeals are free (DR-004), there is no onboarding bonus
+(DR-005), and no tester-facing surface quotes a payout percentage (DR-006).
+
 ## Phase 1 Contract
 
 - **Primary user surface**: iOS mobile app (TestFlight external beta)

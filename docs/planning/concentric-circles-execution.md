@@ -68,6 +68,38 @@ running application**. Concrete examples verified against the tree at time of wr
 
 ---
 
+## Where this plan sits (added 2026-07-31)
+
+This is the **engineering** plan: what has to be built and wired for each circle to be
+launchable. It is not the go-to-market plan and it does not decide business policy. Two
+other documents bound it, and this plan is subordinate to both:
+
+- **`planning--founder-decisions-of-record.md`** — business policy decided by the founders
+  (payout splits, pricing, jurisdiction scope). Where a circle's code implements a money or
+  pricing rule, the decision of record is the spec.
+- **`planning--phase1-private-beta-scope.md`** — what actually ships to the first testers.
+  Circles 3–5 are largely **built ahead of** Phase 1, deliberately; the agreed go-to-market
+  sequence is **no-contact recovery → health/fitness → B2B corporate wellness** (DR-001), so
+  most of what Circle 3 and Circle 5 contain is *later-phase capability that exists early*,
+  not Phase 1 launch surface.
+
+A circle being ✅ therefore does **not** mean its features are tester-facing. The Phase 1
+scope lock decides that, and it currently hides everything outside the no-contact journey.
+
+Reconciling this plan against the founder record on 2026-07-31 surfaced one substantive
+engineering item and closed one long-standing block:
+
+- **Closed.** The failed-capture split was decided on 2026-03-10 (DR-002: 100% platform, no
+  Fury pool) and the answer had never reached the repository. `settlement-quote.ts` carried a
+  constant named `PROVISIONAL_FAILED_CAPTURE_BOUNTY_POOL_RATE` "pending Jessica decision" for
+  four and a half months after she had decided. Now applied.
+- **Open.** DR-004 (appeals free in beta) and DR-005 (no onboarding bonus) are decided but
+  unbuilt. Neither is a constant change — see "Open implementation of decided policy" in the
+  decisions-of-record file, in particular that setting the appeal fee to `$0` would make
+  `initiateAppeal` fail closed, because Stripe rejects a zero-amount authorization.
+
+---
+
 ## Current State (as of 2026-07-30)
 
 - 7 packages, **2,937 tests across 260 suites**, all green
@@ -98,7 +130,12 @@ every push for a week and blocked five dependabot PRs behind it. Fixed in #844.
 ---
 
 ## Circle 2: Beta Launch Readiness (P0 blockers)
-**Goal:** Ship beta-ready product. Real money, real proofs, real safety.
+**Goal:** Ship a beta-ready product — real proofs, real safety, and settlement built to
+real-money standard. **The beta itself ships test-money only**, with no real-money
+settlement (DR-006, and `planning--phase1-private-beta-scope.md`). Earlier revisions of
+this line said "real money", which contradicted both; the money *path* is production-grade,
+the money *mode* is not, and conflating them is how a test-money pilot ends up shipping with
+live settlement wired.
 **Launch gate:** All 38 P0 blockers resolved, deployment pipeline live, production CI/CD active.
 **Status:** ENGINEERING SUBSTANTIALLY BUILT; EXTERNAL DEPENDENCIES OPEN.
 
@@ -120,7 +157,34 @@ every push for a week and blocked five dependabot PRs behind it. Fixed in #844.
       verified by arming it, killing the API process, restarting, and confirming
       refund-only mode survived
 
-### 2b: External dependencies (human-gated, still open)
+### 2b: Decided business policy, not yet built
+
+Decided by the business lead, so these are **specs, not proposals**. They are open because
+they take real work, not because anyone is still weighing them.
+
+- [x] Failed-capture split → 100% platform (DR-002) — `settlement-quote.ts`
+- [ ] **Appeals are free in the beta cohort (DR-004).** `dispute.service.ts:107` authorizes a
+      `$5.00` hold before an appeal is accepted, and the dispute lifecycle captures or
+      cancels it. Setting the constant to `0` does **not** work — Stripe rejects a
+      zero-amount authorization, so `initiateAppeal` would fail closed and nobody could
+      appeal at all. Free means *skipping the hold*: a nullable `disputes.payment_intent_id`,
+      a fee-free counterpart to `FEE_AUTHORIZED_PENDING_REVIEW`, and a resolution path with
+      nothing to capture or cancel. Keep `APPEAL_FEE_AMOUNT` behind a policy gate — DR-004
+      explicitly reserves the right to reintroduce the fee if frivolous appeals appear at
+      scale.
+- [ ] **No onboarding bonus in the beta cohort (DR-005).** `grantOnboardingBonus` is called
+      from `contracts.service.ts:1045` and `:1675`, each posting a `$5.00` ledger credit.
+      Suppressing the grant is contained, but the pitch deck sells the bonus as the
+      acquisition mechanic and `endowed-progress.service.ts` is built on artificial initial
+      advancement. Removing the money without deciding what happens to endowed progress
+      leaves a behavioral feature half-wired — the exact failure this plan already documented
+      three times.
+- [ ] **Ticket price `$4.99` was never decided.** `TICKET_PRICE_BASE` in
+      `src/api/services/billing.ts:7` is an engineering default that no business decision
+      covers. It was on the worksheet but not on the five-item brief that was actually sent.
+      Needs an answer before any real-money charge.
+
+### 2c: External dependencies (human-gated, still open)
 - [ ] Legal counsel retention
 - [ ] Stripe Connect FBO production account
 - [ ] State jurisdiction matrix counsel sign-off (draft now exists:

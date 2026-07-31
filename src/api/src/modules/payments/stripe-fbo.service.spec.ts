@@ -105,8 +105,8 @@ describe('StripeFBOService', () => {
   // ─── resolveEscrow — FAIL ───
 
   describe('resolveEscrow (FAIL)', () => {
-    it('should retrieve the intent and apply the canonical 80/20 split on FAIL', async () => {
-      // totalAmount = 10000 => platformFee = 8000, furyPool = 2000
+    it('should retrieve the intent and capture the whole stake on FAIL', async () => {
+      // DR-002: totalAmount = 10000 => platformFee = 10000, furyPool = 0
       mockPaymentIntentsRetrieve.mockResolvedValue({ id: 'pi_test_fail', amount: 10000 });
       mockTransfersCreate.mockResolvedValue({ id: 'tr_test_001' });
 
@@ -119,55 +119,23 @@ describe('StripeFBOService', () => {
         { amount_to_capture: 10000 },
         { idempotencyKey: 'styx_capture_pi_test_fail_10000' },
       );
-      // single fury receives the full 2000 pool (no remainder)
-      expect(mockTransfersCreate).toHaveBeenCalledWith(
-        {
-          amount: 2000,
-          currency: 'usd',
-          destination: 'fury-1',
-          metadata: {
-            paymentIntentId: 'pi_test_fail',
-            purpose: 'FURY_BOUNTY',
-          },
-        },
-        { idempotencyKey: 'styx_bounty_pi_test_fail_fury-1' },
-      );
       expect(result).toBe(true);
     });
 
-    it('should create Stripe transfers for each Fury on FAIL', async () => {
-      // totalAmount = 20000 => platformFee = 16000, furyPool = 4000
-      // bountyPerFury = floor(4000 / 2) = 2000
+    it('should pay no Fury bounty, even with Furies present (DR-002)', async () => {
+      // The forfeited deposit is not redistributed. A zero-amount Stripe transfer is also
+      // invalid, so this must skip the call entirely rather than send 0.
       mockPaymentIntentsRetrieve.mockResolvedValue({ id: 'pi_test_multi_fury', amount: 20000 });
       mockTransfersCreate.mockResolvedValue({ id: 'tr_test_multi' });
 
       await service.resolveEscrow('pi_test_multi_fury', 'FAIL', ['fury-A', 'fury-B']);
 
-      expect(mockTransfersCreate).toHaveBeenCalledTimes(2);
-      expect(mockTransfersCreate).toHaveBeenNthCalledWith(1,
-        {
-          amount: 2000,
-          currency: 'usd',
-          destination: 'fury-A',
-          metadata: {
-            paymentIntentId: 'pi_test_multi_fury',
-            purpose: 'FURY_BOUNTY',
-          },
-        },
-        { idempotencyKey: 'styx_bounty_pi_test_multi_fury_fury-A' },
+      expect(mockPaymentIntentsCapture).toHaveBeenCalledWith(
+        'pi_test_multi_fury',
+        { amount_to_capture: 20000 },
+        { idempotencyKey: 'styx_capture_pi_test_multi_fury_20000' },
       );
-      expect(mockTransfersCreate).toHaveBeenNthCalledWith(2,
-        {
-          amount: 2000,
-          currency: 'usd',
-          destination: 'fury-B',
-          metadata: {
-            paymentIntentId: 'pi_test_multi_fury',
-            purpose: 'FURY_BOUNTY',
-          },
-        },
-        { idempotencyKey: 'styx_bounty_pi_test_multi_fury_fury-B' },
-      );
+      expect(mockTransfersCreate).not.toHaveBeenCalled();
     });
 
     it('should not create any transfers when there are no Furies on FAIL', async () => {
@@ -208,45 +176,29 @@ describe('StripeFBOService', () => {
         { amount_to_capture: 10000 },
         { idempotencyKey: 'styx_capture_pi_auth_10000' },
       );
-      // furyPool = 20% of 10000 = 2000
-      expect(mockTransfersCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ amount: 2000, destination: 'fury-1' }),
-        { idempotencyKey: 'styx_bounty_pi_auth_fury-1' },
-      );
     });
   });
 
   // ─── Fee-split math ───
+  //
+  // The per-Fury remainder distribution moved to `distributeBountyPool` in
+  // settlement-quote.ts and is tested there. Driving it through resolveEscrow is no longer
+  // possible: under DR-002 the pool is 0, so the split is unobservable from this service.
+  // What IS still worth asserting here is that the whole stake reaches the platform.
 
   describe('fee split math', () => {
-    it('should apply the canonical 80/20 split and distribute the FULL bounty pool with no cents lost to rounding', async () => {
-      // totalAmount = 10000 => platformFee = 8000, furyBountyPool = 2000
-      // 3 furies: base = floor(2000 / 3) = 666, remainder = 2 distributed to the first two furies
-      // => 667, 667, 666 (sums to exactly 2000, no cents dropped)
+    it('should capture the entire forfeited stake to the platform (DR-002)', async () => {
       mockPaymentIntentsRetrieve.mockResolvedValue({ id: 'pi_test_math', amount: 10000 });
       mockTransfersCreate.mockResolvedValue({ id: 'tr_math' });
 
       await service.resolveEscrow('pi_test_math', 'FAIL', ['fury-1', 'fury-2', 'fury-3']);
 
-      expect(mockTransfersCreate).toHaveBeenCalledTimes(3);
-      const amounts = mockTransfersCreate.mock.calls.map(c => c[0].amount);
-      expect(amounts).toEqual([667, 667, 666]);
-      // Conservation: every cent of the bounty pool is distributed.
-      expect(amounts.reduce((a, b) => a + b, 0)).toBe(2000);
-    });
-
-    it('should distribute evenly when the pool divides exactly', async () => {
-      // totalAmount = 1000 => platformFee = 800, furyBountyPool = 200
-      // 4 furies: 200 / 4 = 50 exactly, no remainder
-      mockPaymentIntentsRetrieve.mockResolvedValue({ id: 'pi_test_floor', amount: 1000 });
-      mockTransfersCreate.mockResolvedValue({ id: 'tr_floor' });
-
-      await service.resolveEscrow('pi_test_floor', 'FAIL', ['f1', 'f2', 'f3', 'f4']);
-
-      expect(mockTransfersCreate).toHaveBeenCalledTimes(4);
-      const amounts = mockTransfersCreate.mock.calls.map(c => c[0].amount);
-      expect(amounts).toEqual([50, 50, 50, 50]);
-      expect(amounts.reduce((a, b) => a + b, 0)).toBe(200);
+      expect(mockPaymentIntentsCapture).toHaveBeenCalledWith(
+        'pi_test_math',
+        { amount_to_capture: 10000 },
+        { idempotencyKey: 'styx_capture_pi_test_math_10000' },
+      );
+      expect(mockTransfersCreate).not.toHaveBeenCalled();
     });
   });
 });
