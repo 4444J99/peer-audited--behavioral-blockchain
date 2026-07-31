@@ -28,11 +28,15 @@ on:
     - cron: "0 12 * * 1"
   workflow_dispatch:
 
+# `administration` is NOT a grantable GITHUB_TOKEN scope, so the default token
+# can never read rulesets — reading them requires repo-admin rights. Supply a
+# fine-grained PAT with "Administration: read" as the repository secret
+# BRANCH_PROTECTION_TOKEN to make this job authoritative. Without it the script
+# exits 3 and the job warns rather than failing, so a missing secret never
+# blocks anyone; drift is then caught by the weekly run once the secret exists,
+# or locally via `scripts/branch-protection.sh check`.
 permissions:
   contents: read
-  # Required to read rulesets. If the token is not granted it, the script exits
-  # 3 and this job warns instead of failing.
-  administration: read
 
 jobs:
   drift:
@@ -47,7 +51,7 @@ jobs:
 
       - name: Compare live protection to .github/rulesets/main.json
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           set +e
           ./scripts/branch-protection.sh check
@@ -55,7 +59,7 @@ jobs:
           set -e
           case "$status" in
             0) echo "::notice::Live branch protection matches .github/rulesets/main.json" ;;
-            3) echo "::warning::Cannot read rulesets with this token (needs repo admin). Drift not verified — run 'scripts/branch-protection.sh check' locally." ;;
+            3) echo "::warning::Cannot read rulesets — reading them needs repo-admin rights, which GITHUB_TOKEN cannot be granted. Add a fine-grained PAT with 'Administration: read' as the BRANCH_PROTECTION_TOKEN secret to enable this check. Drift not verified; run 'scripts/branch-protection.sh check' locally meanwhile." ;;
             *) echo "::error::Live branch protection has drifted from .github/rulesets/main.json. Reconcile with 'scripts/branch-protection.sh apply'."
                exit 1 ;;
           esac

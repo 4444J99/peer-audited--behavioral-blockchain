@@ -35,12 +35,31 @@ NAME="$(node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync(proc
 
 # Resolve the ruleset by name, not by a hardcoded id, so the script survives a
 # delete-and-recreate in the GitHub UI.
+#
+# Listing rulesets requires repo-admin rights. An under-permissioned token gets
+# a 403, which must not be mistaken for "the ruleset does not exist" — that
+# would report drift where there is none. Sets RULESET_ID (possibly empty) and
+# returns 3 when the API itself is unreadable.
 ruleset_id() {
-  gh api "repos/$REPO/rulesets" --jq ".[] | select(.name==\"$NAME\") | .id" 2>/dev/null | head -1
+  local list
+  if ! list="$(gh api "repos/$REPO/rulesets" 2>/dev/null)"; then
+    return 3
+  fi
+  RULESET_ID="$(printf %s "$list" | NAME="$NAME" node -e '
+    const rs = JSON.parse(require("fs").readFileSync(0, "utf8"));
+    const hit = rs.find((r) => r.name === process.env.NAME);
+    process.stdout.write(hit ? String(hit.id) : "");
+  ')"
 }
 
 cmd_apply() {
-  local id; id="$(ruleset_id)"
+  local id rc=0
+  ruleset_id || rc=$?
+  if [ "$rc" -eq 3 ]; then
+    echo "FAIL: cannot list rulesets on $REPO — this needs a token with repo-admin rights." >&2
+    exit 3
+  fi
+  id="$RULESET_ID"
   if [ -n "$id" ]; then
     echo "Updating ruleset '$NAME' (id=$id) on $REPO"
     gh api -X PUT "repos/$REPO/rulesets/$id" --input "$SPEC" >/dev/null
@@ -59,15 +78,25 @@ cmd_apply() {
 }
 
 cmd_check() {
-  local id live
-  id="$(ruleset_id)"
+  local id live rc=0
+  ruleset_id || rc=$?
+  if [ "$rc" -eq 3 ]; then
+    echo "SKIP: cannot read rulesets on $REPO." >&2
+    echo "      Reading them requires repo-admin rights, which GITHUB_TOKEN cannot" >&2
+    echo "      be granted ('administration' is not a grantable workflow scope)." >&2
+    echo "      In CI, set the BRANCH_PROTECTION_TOKEN secret to a fine-grained PAT" >&2
+    echo "      with 'Administration: read'." >&2
+    exit 3
+  fi
+
+  id="$RULESET_ID"
   if [ -z "$id" ]; then
     echo "FAIL: no ruleset named '$NAME' on $REPO — run: scripts/branch-protection.sh apply" >&2
     exit 1
   fi
 
   if ! live="$(gh api "repos/$REPO/rulesets/$id" 2>/dev/null)"; then
-    echo "SKIP: cannot read rulesets on $REPO (token lacks 'administration: read')." >&2
+    echo "SKIP: cannot read ruleset $id on $REPO (insufficient permissions)." >&2
     exit 3
   fi
 

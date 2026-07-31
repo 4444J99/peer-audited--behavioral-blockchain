@@ -18,12 +18,30 @@ scripts/branch-protection.sh check   # does live match this file?
 scripts/branch-protection.sh apply   # push this file to GitHub
 ```
 
-`check` runs in CI (`.github/workflows/branch-protection.yml`) on every change to
-this directory and on pushes to `main`. It resolves the ruleset by **name**, so
-deleting and recreating it in the UI does not break the script.
+Both need a token with **repo-admin** rights; `gh auth login` as the repo owner
+covers it. `check` resolves the ruleset by **name**, so deleting and recreating
+it in the UI does not break the script.
 
 To import through the UI instead: Settings → **Rules** → **Rulesets** →
 **New ruleset** → **Import a ruleset** → upload `main.json`.
+
+### Running `check` in CI
+
+`.github/workflows/branch-protection.yml` runs it on changes to this directory,
+on pushes to `main`, and weekly.
+
+Reading rulesets requires repo-admin rights, and `administration` is **not** a
+grantable `GITHUB_TOKEN` scope — the default workflow token can never do it. To
+make the CI check authoritative, add a repository secret:
+
+| Secret                    | Value                                                              |
+| ------------------------- | ------------------------------------------------------------------ |
+| `BRANCH_PROTECTION_TOKEN` | Fine-grained PAT scoped to this repo with **Administration: read** |
+
+Without it the job emits a warning and passes, so a missing secret never blocks
+a merge — but drift is then only caught by running `check` locally. The job is
+deliberately **not** a required status check: it reports on repository
+configuration, not on the code in the PR.
 
 ## What it enforces
 
