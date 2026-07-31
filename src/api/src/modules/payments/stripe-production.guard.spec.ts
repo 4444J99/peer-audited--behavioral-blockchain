@@ -28,6 +28,7 @@ describe('StripeProductionGuard', () => {
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_secret';
     process.env.STRIPE_PUBLISHABLE_KEY = 'pk_live_test_key';
     process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+    process.env.STYX_TEST_MONEY_MODE = 'false';
     delete process.env.GEO_MISSING_HEADER_ACTION;
     delete process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
   };
@@ -59,6 +60,22 @@ describe('StripeProductionGuard', () => {
   it('should refuse real money when KYC enforcement is simply unset', () => {
     setLiveProductionEnv();
     delete process.env.KYC_ENFORCEMENT_ENABLED;
+
+    expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
+  });
+
+  // STYX_TEST_MONEY_MODE gated nothing before — it only picked banner text, so
+  // every surface could say "test-money pilot" while a live key moved real money.
+  it('should refuse real money while test-money mode is on', () => {
+    setLiveProductionEnv();
+    process.env.STYX_TEST_MONEY_MODE = 'true';
+
+    expect(() => guard.canActivate(mockContext)).toThrow(/test-money pilot/i);
+  });
+
+  it('should refuse real money when test-money mode is unset, since it defaults on', () => {
+    setLiveProductionEnv();
+    delete process.env.STYX_TEST_MONEY_MODE;
 
     expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
   });

@@ -56,6 +56,19 @@ export class StripeProductionGuard implements CanActivate {
       );
     }
 
+    // STYX_TEST_MONEY_MODE defaults to true and, until now, gated nothing — it
+    // only chose banner text. Every tester-facing surface says "Test-money
+    // pilot" while the actual protection was that STRIPE_SECRET_KEY happened to
+    // be unset. A flag that reads as a safety interlock should be one: while it
+    // is on, no real charge can proceed, so the banner cannot lie.
+    if (String(process.env.STYX_TEST_MONEY_MODE ?? 'true').toLowerCase() !== 'false') {
+      throw new ForbiddenException(
+        'Refusing to move real money while STYX_TEST_MONEY_MODE is on — every ' +
+          'tester-facing surface is currently labelled a test-money pilot. ' +
+          'Set STYX_TEST_MONEY_MODE=false to activate real money.',
+      );
+    }
+
     return true;
   }
 }
