@@ -5,6 +5,14 @@
 - **READ THIS FIRST.** Every claim below was verified against the tree on 2026-07-31.
   Where a doc in this repo disagrees, the doc is stale — say so rather than
   matching it.
+- **Line numbers: grep the symbol, don't trust the number.** Revised 2026-07-31
+  after review. The first version of this file cited line numbers captured while
+  auditing, *before* PR #858 landed — and #858 shifted eleven of them (e.g.
+  `render.yaml` gained a `NODE_VERSION` block, pushing `postgresMajorVersion`
+  from 116 to 149). All citations below are re-derived against `e2e94b7`. The
+  correction that matters more than the numbers: **a handoff written during an
+  audit and merged after a fix is stale on arrival unless the citations are
+  re-derived at merge time.** Your own work will do this to this file too.
 
 ---
 
@@ -65,11 +73,17 @@ pin list verified today:
   `staging-promotion.yml`, `branch-protection.yml` (uses `setup-node@v4` where
   everything else is `v7`). `deploy-ask-styx.yml` **already runs 22** — diverged.
 - Dockerfiles: `.config/docker/Dockerfile`, `src/api/Dockerfile`,
-  `src/web/Dockerfile` — all `node:26-alpine`.
+  `src/web/Dockerfile` — all `node:26-alpine`. **These are not on production's
+  build path.** Both Render services are `runtime: node` (`render.yaml:8`, `:97`),
+  so Render builds from source and never reads a Dockerfile. That makes the
+  26-vs-20 split a *live, untested six-major divergence today*, not a risk the
+  bump introduces: anyone consuming the images runs a runtime CI has never
+  exercised. Decide deliberately whether the images follow Render down to 22, or
+  whether they are dead weight to delete.
 - `render.yaml` — now `NODE_VERSION: "20"` (added in #858). **This is the one the
   original issue missed.** Before #858 production ran whatever Render defaulted
   to; nothing in the repo declared it.
-- `src/mobile`: `react-native@0.86.0` declares `^20.19.4 || ^22.13.0 || ^24.3.0 || >= 25`.
+- `src/mobile`: `react-native@0.86.2` declares `^20.19.4 || ^22.13.0 || ^24.3.0 || >= 25`.
   `expo@57` declares no `engines`. The RN floor is already above `>=20.0.0`.
 - `@types/node` is `^26.1.2` in 8 workspaces (exact `26.1.2` in `src/web`) — three
   majors ahead of the runtime.
@@ -79,16 +93,22 @@ Three shipped packages already declare `node >=22` (`@testing-library/jest-dom@7
 `^29.1.1` because 30 *breaks* on Node 20 (`webidl.util.markAsUncloneable is not a
 function`) — that one is not latent, it is why the pin exists.
 
-**This is a deployment-runtime change.** CI, Docker, and Render must move
-together or production runs something untested. Do not land the CI bump alone.
+**This is a deployment-runtime change.** CI and `render.yaml` are the pair that
+must move together — Render is what production actually runs, and a CI bump alone
+means production runs a version CI no longer tests. The Dockerfiles are a separate,
+already-divergent decision (above); fold them in or delete them, but don't let
+"three-way sync" hide that they aren't in the deploy path at all.
 
 ### 2. TypeScript 6.0.3 → 7.0.2 — deliberately deferred, needs its own PR
 
 TS 7 is the native (Go) compiler and does not expose the JS compiler API `ts-jest`
 requires. All **32 mobile suites failed to load** (0 tests ran) when it was tried
 inside the #855 group bump. Documented procedure: install `@typescript/native` and
-alias `@typescript/typescript6` as `typescript` for `ts-jest`. Nine workspaces use
-`ts-jest`; `ask-styx` and `test-harness` use **Vitest** and are unaffected.
+alias `@typescript/typescript6` as `typescript` for `ts-jest`. **Five** workspaces
+use `ts-jest` — `src/api`, `src/web`, `src/mobile`, `src/desktop`, `src/shared` —
+and those are the only aliasing sites. **Five** use Vitest and are unaffected:
+`src/ask-styx`, `src/test-harness`, and — easy to miss — `packages/audience-engine`,
+`packages/audit-engine`, `packages/styx-cli`.
 
 Held at `6.0.3` / `^6.0.3` across 10 files. Dependabot will keep re-raising it —
 consider an explicit ignore until the migration lands.
@@ -118,8 +138,14 @@ migration files today (docs variously claim 65 and 70 — both wrong).
 - The test step **retries 3×** (`:75-82`), which launders flake into green.
 - `terraform_validate` → `continue-on-error: true`.
 
-The only genuinely enforcing gate is `build_and_test` + CodeQL. Either make these
-real or mark them advisory in their names, but do not leave them looking like gates.
+The only genuinely enforcing gate is `build_and_test` + CodeQL.
+
+**Make them enforcing. Do not take the renaming option** — two of them are already
+labelled honestly (`ci.yml:48` is literally `Security Audit (advisory,
+non-blocking)`, and `:218` carries a `Web-gated and advisory` comment), so
+"rename them" is work that is already done and would let the real ask quietly
+lapse. The ask is that `npm audit`, Gate 05, and `beta_readiness` either block a
+merge or stop being counted as coverage.
 
 ### 5. `scripts/load-test/run-load-tests.mjs` exits 0 without k6
 
@@ -127,8 +153,14 @@ real or mark them advisory in their names, but do not leave them looking like ga
 staging runner" and returns success. It is in no workflow and has **never
 executed**, which silently voids
 `docs/checklists/real-money-pilot-readiness.md:18` ("Rate limiting verified on
-financial endpoints — Verify: load test passes"). Make absence a failure, or
-install k6 in CI.
+financial endpoints — Verify: load test passes").
+
+**Make absence a failure. Installing k6 in CI is not sufficient and is worse than
+doing nothing** — `k6 run` sits inside the *same* `try` as `k6 version`, so once
+k6 exists a genuine load-test failure still lands in the `catch`, prints "k6 binary
+not found locally", and exits 0. You would convert a gate that is honestly absent
+into one that is green on failure and lying about why. Move `k6 run` out of the
+`catch` first; only then does installing k6 buy anything.
 
 ---
 
@@ -136,14 +168,14 @@ install k6 in CI.
 
 | Work | Notes |
 | --- | --- |
-| **DR-005 — remove the onboarding bonus** | Decided 2026-03-10, unbuilt. `ONBOARDING_BONUS_AMOUNT` is declared **three times** (`src/shared/libs/behavioral-logic.ts:63`, `src/web/lib/styx-knowledge.ts:69`, `src/pitch/src/data/constants.ts:9`) with **two** independent `grantOnboardingBonus` implementations; granted from `contracts.service.ts:1045` (idempotent) and `:1675` (**not** idempotent); hardcoded `+$5.00` in `OnboardingWizard.tsx:338`. `endowed-progress.service.ts` is **display-only and grants no money** — it does not block this, contrary to what the ledger implied. Gated on founder answer Q-6. |
-| **`F-SOCIAL-01` accountability partner** | A real beta blocker and genuinely incomplete. `invitePartner` (`contracts.service.ts:3525-3558`) writes a `PENDING` row and an `INVITE_SENT` event **nothing consumes** — no notification is sent. Web's api-client has no partner methods; mobile's three have no callers. `cosignAttestation` requires `status='ACTIVE'`, reachable only via an accept flow no UI calls, so it **always throws** — while `recovery-protocol.service.ts:88` *requires* an active partner for the beta oath type. |
+| **DR-005 — remove the onboarding bonus** | Decided 2026-03-10, unbuilt. `ONBOARDING_BONUS_AMOUNT` is declared **three times** (`src/shared/libs/behavioral-logic.ts:63`, `src/web/lib/styx-knowledge.ts:69`, `src/pitch/src/data/constants.ts:9`) with **two** independent `grantOnboardingBonus` implementations; granted from `contracts.service.ts:1046` (idempotent) and `:1676` (**not** idempotent); hardcoded `+$5.00` in `OnboardingWizard.tsx:339`. `endowed-progress.service.ts` is **display-only and grants no money** — it does not block this, contrary to what the ledger implied. Gated on founder answer Q-6. |
+| **`F-SOCIAL-01` accountability partner** | A real beta blocker and genuinely incomplete — but **do not build an accept flow; two already exist, and that is the bug.** `acceptPartnerInvitation` (`contracts.service.ts:3083`, route `POST :id/partner/accept` at `contracts.controller.ts:257`) matches `partner_user_id = $2 OR partner_email = (SELECT email FROM users WHERE id = $2)`. `respondToInvite` (`:3569`, route `POST :id/accountability/respond` at `:403`) matches `partner_user_id` **only**. Both set `status='ACTIVE'`; they disagree on who can accept, so an invite addressed by email succeeds through one route and 404s through the other. Reconcile them before anything else here. What is genuinely missing is the **UI**, not the flow: `invitePartner` (`:3533`) writes a `PENDING` row and an `INVITE_SENT` event **nothing consumes** — no notification is sent; web's api-client has no partner methods; mobile's three (`ApiClient.ts:301-312`) are wired to the right endpoints but **no screen calls them**. Consequence: `cosignAttestation` (`:3104`) requires `status='ACTIVE'`, which no user can currently reach. **Not** blocked by this: `recovery-protocol.service.ts:88` checks `users.status` — that the partner's email resolves to an ACTIVE *account* — and never reads `accountability_partners`. Recovery-oath creation works today; don't sequence it behind this. |
 | **Mobile proof capture** | There is **no camera**. Zero camera libraries in `src/mobile/package.json` or the lockfile. `ProofCaptureScreen.tsx` is dead code importing an uninstalled package. `createSyntheticCaptureSession` (`proof-media.ts:66`) emits base64 **JSON** labelled `data:video/mp4;base64,…`. |
 | **AML has no external sanctions source** | `aml-screening.service.ts:66-68` reads only `internal_watchlist` — a table we populate ourselves. No OFAC/SDN feed, no HTTP call. Cannot be represented to Stripe underwriting as sanctions screening. |
 | **Anti-Sybil is orphaned** | `security.module.ts` provides and exports `AntiSybilService`; the only consumer is `security.controller.ts:30`. Not injected into auth, signup, contract creation, or payments. |
 | **`ask-styx` is deployed but probably broken** | `deploy-ask-styx.yml:35` injects `VITE_WORKER_URL` from repo variable `ASK_STYX_WORKER_URL`. `gh variable list` returns **empty** — verified today. The Pages deploy succeeds and the app has no worker URL. |
 | **Sentry financial alerts + Aegis integration tests** | Two of the four engineering rows on `real-money-pilot-readiness.md` (16 boxes, 0 checked). The Fury crucible row is satisfiable now — `npx tsx scripts/validation/08-fury-crucible-simulation.ts` passes, 1000 reviews, 97.2% consensus, exit 0. |
-| **Doc drift** | Postgres 15 (`docs/operations/deployment-procedure.md:26`) vs 16 (`render.yaml:116`); "499+ tests" vs ~3,011 actual; "70 migrations" vs 71. Anyone using these as a runbook will be wrong. |
+| **Doc drift** | Postgres 15 (`docs/operations/deployment-procedure.md:25` — the `styx-postgres` row; line 26 is Redis, don't edit that one) vs 16 (`render.yaml:149`); "499+ tests" vs ~3,011 actual; "70 migrations" vs 71. Anyone using these as a runbook will be wrong. |
 
 ---
 
@@ -205,6 +237,12 @@ Starting these produces work that gets thrown away.
 npx turbo run build lint test --concurrency=2     # expect 31/31
 cd src/api && npx jest                             # expect 162 suites / 1931 tests
 ```
+
+`162` is a floor, and it is **not** the file count: `find src/api -name '*.spec.ts'`
+returns **167**, because `jest.config.cjs:12` excludes the 5 `*.int.spec.ts` files
+via `testPathIgnorePatterns`. Seeing 167 is not a discrepancy. If you add suites,
+raise the number here rather than leaving a stale baseline that reads as a
+regression to the next agent.
 
 For migrations, additionally:
 
