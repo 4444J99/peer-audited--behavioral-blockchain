@@ -44,6 +44,33 @@ type ComplianceActionDecisionCore = Pick<
 
 const MINIMUM_AGE_YEARS = 18;
 
+/**
+ * Whether an unresolvable location is treated as FULL_ACCESS instead of blocked.
+ *
+ * Fail CLOSED by default everywhere (including production). A missing or
+ * unparseable geo signal must never silently grant FULL_ACCESS — production must
+ * not be more permissive than dev. Opening up requires an explicit opt-in.
+ *
+ * Exported so `StripeProductionGuard` can refuse to move live money while this is
+ * on, rather than each caller re-deriving the parse and drifting.
+ */
+export function geofenceFailsOpenOnMissingLocation(): boolean {
+  const explicitAction = String(process.env.GEO_MISSING_HEADER_ACTION || "")
+    .trim()
+    .toLowerCase();
+  if (explicitAction) {
+    return (
+      explicitAction === "allow" ||
+      explicitAction === "open" ||
+      explicitAction === "true"
+    );
+  }
+
+  const raw = process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
+  if (raw == null) return false; // fail-closed by default (Phase Beta P0-004)
+  return String(raw).toLowerCase() === "true";
+}
+
 @Injectable()
 export class CompliancePolicyService implements OnModuleInit {
   private readonly logger = new Logger(CompliancePolicyService.name);
@@ -211,23 +238,7 @@ export class CompliancePolicyService implements OnModuleInit {
   }
 
   shouldFailOpenOnMissingLocation(): boolean {
-    // Fail CLOSED by default everywhere (including production). A missing/unparseable
-    // geo signal must never silently grant FULL_ACCESS — production must not be more
-    // permissive than dev. Opening up requires an explicit, deliberate opt-in.
-    const explicitAction = String(process.env.GEO_MISSING_HEADER_ACTION || "")
-      .trim()
-      .toLowerCase();
-    if (explicitAction) {
-      return (
-        explicitAction === "allow" ||
-        explicitAction === "open" ||
-        explicitAction === "true"
-      );
-    }
-
-    const raw = process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
-    if (raw == null) return false; // fail-closed by default (Phase Beta P0-004)
-    return String(raw).toLowerCase() === "true";
+    return geofenceFailsOpenOnMissingLocation();
   }
 
   canCreateContract(input: {

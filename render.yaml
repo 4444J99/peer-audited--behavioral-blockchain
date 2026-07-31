@@ -18,6 +18,14 @@ services:
     startCommand: cd src/api && node dist/api/src/main.js
     healthCheckPath: /health
     envVars:
+      # Pin the runtime. Without this Render picks its own current default, so
+      # production ran a Node version nothing in this repo declared — while CI
+      # tests on 20.x and the Dockerfiles build on 26. Pinned to match CI so
+      # production runs what is actually tested. Moving off Node 20 (EOL
+      # 2026-04-30) is issue #856 and must change this line, the CI matrix, and
+      # the Dockerfiles together.
+      - key: NODE_VERSION
+        value: "20"
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
@@ -61,8 +69,19 @@ services:
         sync: false
       - key: SENTRY_DSN
         sync: false
+      # Fail CLOSED on an unresolvable location. This was `allow`, which made
+      # every request without a usable geo header resolve to TIER_1 FULL_ACCESS
+      # — including non-US IPs, which resolve to null — silently defeating the
+      # US-only boundary (DR-003). The source default is fail-closed and its
+      # comment says production must not be more permissive than dev; this
+      # blueprint was the thing overriding it.
       - key: GEO_MISSING_HEADER_ACTION
-        value: allow
+        value: block
+      # Off is correct for the Phase 1 test-money pilot: KYC runtime enforcement
+      # is explicitly out of scope and must be labelled inactive
+      # (planning--phase1-private-beta-scope.md). It must flip to "true" before
+      # any real-money activation — StripeProductionGuard now refuses to serve a
+      # live key while this is off, so the two cannot drift apart.
       - key: KYC_ENFORCEMENT_ENABLED
         value: "false"
 
@@ -81,6 +100,14 @@ services:
     buildCommand: npm install --include=dev && npx turbo run build --filter=@styx/web
     startCommand: cd src/web && npm start -- --port $PORT
     envVars:
+      # Pin the runtime. Without this Render picks its own current default, so
+      # production ran a Node version nothing in this repo declared — while CI
+      # tests on 20.x and the Dockerfiles build on 26. Pinned to match CI so
+      # production runs what is actually tested. Moving off Node 20 (EOL
+      # 2026-04-30) is issue #856 and must change this line, the CI matrix, and
+      # the Dockerfiles together.
+      - key: NODE_VERSION
+        value: "20"
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL

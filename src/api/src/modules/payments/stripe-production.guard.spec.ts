@@ -21,11 +21,53 @@ describe('StripeProductionGuard', () => {
     expect(guard.canActivate(mockContext)).toBe(true);
   });
 
-  it('should allow in production with valid live keys', () => {
+  /** A production config that satisfies every real-money precondition. */
+  const setLiveProductionEnv = () => {
     process.env.NODE_ENV = 'production';
     process.env.STRIPE_SECRET_KEY = 'sk_live_test_key';
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_secret';
     process.env.STRIPE_PUBLISHABLE_KEY = 'pk_live_test_key';
+    process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+    delete process.env.GEO_MISSING_HEADER_ACTION;
+    delete process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
+  };
+
+  it('should allow in production with valid live keys', () => {
+    setLiveProductionEnv();
+
+    expect(guard.canActivate(mockContext)).toBe(true);
+  });
+
+  // render.yaml shipped GEO_MISSING_HEADER_ACTION=allow and
+  // KYC_ENFORCEMENT_ENABLED=false. Both are right for the test-money pilot and
+  // wrong the instant a live key is configured, and nothing connected those
+  // facts. These two cases make the coupling structural.
+  it('should refuse real money while the geofence fails open', () => {
+    setLiveProductionEnv();
+    process.env.GEO_MISSING_HEADER_ACTION = 'allow';
+
+    expect(() => guard.canActivate(mockContext)).toThrow(/geofence fails open/i);
+  });
+
+  it('should refuse real money when KYC enforcement is disabled', () => {
+    setLiveProductionEnv();
+    process.env.KYC_ENFORCEMENT_ENABLED = 'false';
+
+    expect(() => guard.canActivate(mockContext)).toThrow(/KYC enforcement disabled/i);
+  });
+
+  it('should refuse real money when KYC enforcement is simply unset', () => {
+    setLiveProductionEnv();
+    delete process.env.KYC_ENFORCEMENT_ENABLED;
+
+    expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
+  });
+
+  it('should still allow the pilot config outside production', () => {
+    // The test-money pilot legitimately runs with both controls off.
+    process.env.NODE_ENV = 'development';
+    process.env.GEO_MISSING_HEADER_ACTION = 'allow';
+    process.env.KYC_ENFORCEMENT_ENABLED = 'false';
 
     expect(guard.canActivate(mockContext)).toBe(true);
   });
