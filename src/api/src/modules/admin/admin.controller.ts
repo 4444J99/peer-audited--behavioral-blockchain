@@ -634,7 +634,7 @@ export class AdminController {
         `SELECT COALESCE(AVG(integrity_score), 0) as avg FROM users WHERE status = 'ACTIVE'`,
       ),
       this.pool.query(
-        `SELECT COUNT(*) as count FROM disputes WHERE appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'IN_REVIEW')`,
+        `SELECT COUNT(*) as count FROM disputes WHERE appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'PENDING_REVIEW', 'IN_REVIEW')`,
       ),
     ]);
     return {

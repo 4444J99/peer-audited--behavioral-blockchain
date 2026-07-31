@@ -27,7 +27,7 @@ const faqs = [
   },
   {
     q: 'What if the Fury makes a wrong decision?',
-    a: 'You have 48 hours after a verdict to file an appeal. A panel of 3 additional Furies reviews the original evidence. If 2 of 3 overturn the verdict, your stake is returned. Panel verdicts are final.',
+    a: 'You have 48 hours after a verdict to file an appeal, at no cost. A human Judge reviews the original evidence and the Fury votes. If the Judge overturns the verdict, your stake is returned. Judge decisions are final.',
   },
   {
     q: 'How does no-contact tracking work?',

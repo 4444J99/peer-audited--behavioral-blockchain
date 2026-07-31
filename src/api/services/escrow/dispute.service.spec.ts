@@ -54,7 +54,78 @@ describe('DisputeService', () => {
     jest.clearAllMocks();
   });
 
-  describe('initiateAppeal', () => {
+  describe('initiateAppeal (DR-004: free by default)', () => {
+    // DR-004 removed the appeal fee for the beta cohort. These cases pin the
+    // default path: no Stripe call at all, a fee-free status, and a null
+    // payment_intent_id — the fee cannot be expressed as a 0-amount hold because
+    // Stripe rejects those, which would fail closed and deny every appeal.
+    it('should place no hold and charge nothing by default', async () => {
+      const result = await disputeService.initiateAppeal('user-1', 'proof-1', 'cus_123');
+
+      expect(mockStripeService.holdStake).not.toHaveBeenCalled();
+      expect(result.appealStatus).toBe('PENDING_REVIEW');
+      expect(result.paymentIntentId).toBeNull();
+    });
+
+    it('should let a user with no payment method on file appeal', async () => {
+      const result = await disputeService.initiateAppeal('user-1', 'proof-1', null);
+
+      expect(result.appealStatus).toBe('PENDING_REVIEW');
+      expect(mockStripeService.holdStake).not.toHaveBeenCalled();
+    });
+
+    it('should persist a null payment_intent_id and the fee-free status', async () => {
+      await disputeService.initiateAppeal('user-1', 'proof-1', null);
+
+      const insert = (mockPool.query as jest.Mock).mock.calls.find(([sql]) =>
+        String(sql).includes('INSERT INTO disputes'),
+      );
+      expect(insert).toBeDefined();
+      expect(insert[1]).toEqual(['proof-1', 'user-1', null, 'PENDING_REVIEW']);
+    });
+
+    it('should log a zero-amount appeal event when the fee is off', async () => {
+      await disputeService.initiateAppeal('user-1', 'proof-1', null);
+
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        'APPEAL_INITIATED',
+        expect.objectContaining({ amount: 0, paymentIntentId: null }),
+      );
+    });
+
+    it('should not attempt compensation on persistence failure when nothing was held', async () => {
+      const client = {
+        query: jest.fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockRejectedValueOnce(new Error('db unavailable')) // dispute insert
+          .mockResolvedValueOnce({ rows: [] }), // ROLLBACK
+        release: jest.fn(),
+      };
+      mockPool.connect.mockResolvedValueOnce(client);
+
+      await expect(
+        disputeService.initiateAppeal('user-1', 'proof-1', null),
+      ).rejects.toThrow(HttpException);
+
+      expect(mockStripeService.cancelHold).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('initiateAppeal (fee re-enabled per DR-004 escape hatch)', () => {
+    beforeEach(() => {
+      process.env.STYX_APPEAL_FEE_ENABLED = 'true';
+    });
+
+    afterEach(() => {
+      delete process.env.STYX_APPEAL_FEE_ENABLED;
+    });
+
+    it('should reject an appeal with no payment method while the fee is on', async () => {
+      await expect(
+        disputeService.initiateAppeal('user-1', 'proof-1', null),
+      ).rejects.toThrow(/payment method is required/);
+    });
+
     it('should successfully initiate an appeal if the $5 fee holds', async () => {
       (mockStripeService.holdStake as jest.Mock).mockResolvedValueOnce({
         id: 'pi_test_appeal_fee',

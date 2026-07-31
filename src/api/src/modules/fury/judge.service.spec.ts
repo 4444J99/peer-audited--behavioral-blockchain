@@ -161,9 +161,11 @@ describe('JudgeService', () => {
       expect(disputeSql).toContain('p.contract_id');
       expect(disputeSql).not.toContain('d.contract_id');
 
-      // The lifecycle column is appeal_status, not status.
+      // The lifecycle column is appeal_status, not status. PENDING_REVIEW is the
+      // fee-free counterpart introduced by DR-004 — omitting it here would hide
+      // every free appeal from the Judge queue.
       expect(disputeSql).toContain(
-        `d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'IN_REVIEW')`,
+        `d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'PENDING_REVIEW', 'IN_REVIEW')`,
       );
       expect(disputeSql).not.toContain('d.status');
     });

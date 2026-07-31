@@ -3,7 +3,7 @@ import { Pool, PoolClient } from 'pg';
 import { StripeFboService } from './stripe.service';
 import { TruthLogService } from '../ledger/truth-log.service';
 import { LedgerService } from '../ledger/ledger.service';
-import { APPEAL_FEE_AMOUNT } from '../billing';
+import { APPEAL_FEE_AMOUNT, isAppealFeeEnabled } from '../billing';
 
 interface DisputeDetail {
   id: string;
@@ -88,33 +88,54 @@ export class DisputeService {
 
   /**
    * Initiates an appeal for a rejected audit.
-   * Mandates a $5 friction fee to prevent frivolous escalations to the human judge.
+   *
+   * Free by default (DR-004). The $5 friction fee that used to be mandatory is
+   * retained behind {@link isAppealFeeEnabled} so it can be reinstated if
+   * frivolous appeals become a problem at scale, exactly as DR-004 anticipates.
+   *
+   * `customerId` may be null when the fee is off — a beta user with no payment
+   * method on file must still be able to appeal.
    */
   async initiateAppeal(
     userId: string,
     proofId: string,
-    customerId: string,
-  ): Promise<{ appealStatus: string; paymentIntentId: string }> {
-    let holdResult: { id: string };
-    try {
-      // Hold the $5.00 appeal fee.
-      // PM24: a proofId is NOT a contractId. Passing the raw proofId here previously stamped it
-      // into the PaymentIntent's `metadata.contractId` and the hold idempotency namespace, which
-      // misleads any webhook/lookup that resolves a contract by `metadata.contractId`. Namespace
-      // the scope so it can never be confused with a real contract id, and use a STABLE per-proof
-      // idempotency key so an appeal retry reuses the same hold rather than authorizing twice.
-      const appealScope = `appeal_${proofId}`;
-      holdResult = await this.stripeService.holdStake(
-        customerId,
-        APPEAL_FEE_AMOUNT,
-        appealScope,
-        `styx_appeal_hold_${proofId}`,
-      );
-    } catch (error: any) {
-      throw new HttpException(
-        `Appeal Rejected: Could not authorize the $${(APPEAL_FEE_AMOUNT / 100).toFixed(2)} appeal fee. Reason: ${error.message}`,
-        HttpStatus.PAYMENT_REQUIRED,
-      );
+    customerId: string | null,
+  ): Promise<{ appealStatus: string; paymentIntentId: string | null }> {
+    // DR-004: appeals are free for the beta cohort. When the fee is off there is
+    // no hold to place, so there is also nothing to capture, cancel, or
+    // compensate — every fee-shaped step below is skipped rather than run with a
+    // zero amount, which Stripe would reject outright.
+    const feeEnabled = isAppealFeeEnabled();
+    const appealStatus = feeEnabled ? 'FEE_AUTHORIZED_PENDING_REVIEW' : 'PENDING_REVIEW';
+
+    let holdResult: { id: string } | null = null;
+    if (feeEnabled) {
+      if (!customerId) {
+        throw new HttpException(
+          'Appeal Rejected: a payment method is required while the appeal fee is enabled.',
+          HttpStatus.PAYMENT_REQUIRED,
+        );
+      }
+      try {
+        // Hold the $5.00 appeal fee.
+        // PM24: a proofId is NOT a contractId. Passing the raw proofId here previously stamped it
+        // into the PaymentIntent's `metadata.contractId` and the hold idempotency namespace, which
+        // misleads any webhook/lookup that resolves a contract by `metadata.contractId`. Namespace
+        // the scope so it can never be confused with a real contract id, and use a STABLE per-proof
+        // idempotency key so an appeal retry reuses the same hold rather than authorizing twice.
+        const appealScope = `appeal_${proofId}`;
+        holdResult = await this.stripeService.holdStake(
+          customerId,
+          APPEAL_FEE_AMOUNT,
+          appealScope,
+          `styx_appeal_hold_${proofId}`,
+        );
+      } catch (error: any) {
+        throw new HttpException(
+          `Appeal Rejected: Could not authorize the $${(APPEAL_FEE_AMOUNT / 100).toFixed(2)} appeal fee. Reason: ${error.message}`,
+          HttpStatus.PAYMENT_REQUIRED,
+        );
+      }
     }
 
     const maybeConnect = (this.pool as unknown as { connect?: () => Promise<PoolClient> }).connect;
@@ -131,11 +152,11 @@ export class DisputeService {
 
       await db.query(
         `INSERT INTO disputes (proof_id, user_id, appeal_status, payment_intent_id, created_at)
-         VALUES ($1, $2, 'FEE_AUTHORIZED_PENDING_REVIEW', $3, NOW())
+         VALUES ($1, $2, $4, $3, NOW())
          ON CONFLICT (proof_id) DO UPDATE SET
-           appeal_status = 'FEE_AUTHORIZED_PENDING_REVIEW',
+           appeal_status = $4,
            payment_intent_id = $3`,
-        [proofId, userId, holdResult.id],
+        [proofId, userId, holdResult?.id ?? null, appealStatus],
       );
 
       await db.query(
@@ -160,28 +181,33 @@ export class DisputeService {
     }
 
     if (persistenceError) {
-      try {
-        await this.stripeService.cancelHold(holdResult.id);
-      } catch (cancelErr) {
-        await this.markDisputeReconcileRequired(
-          proofId,
-          holdResult.id,
-          `appeal persistence failure; hold cancellation failed: ${
-            cancelErr instanceof Error ? cancelErr.message : cancelErr
-          }`,
-        );
+      // No hold means nothing to compensate — the failure is a plain 500.
+      if (holdResult) {
+        try {
+          await this.stripeService.cancelHold(holdResult.id);
+        } catch (cancelErr) {
+          await this.markDisputeReconcileRequired(
+            proofId,
+            holdResult.id,
+            `appeal persistence failure; hold cancellation failed: ${
+              cancelErr instanceof Error ? cancelErr.message : cancelErr
+            }`,
+          );
+        }
       }
 
       this.logger.error(
-        `Appeal persistence failed after fee authorization for proof ${proofId}: ${
+        `Appeal persistence failed${holdResult ? ' after fee authorization' : ''} for proof ${proofId}: ${
           persistenceError instanceof Error ? persistenceError.message : persistenceError
         }`,
       );
       throw new HttpException(
         {
           code: 'APPEAL_PERSISTENCE_FAILED',
-          message: 'Appeal fee authorized, but dispute persistence failed. Compensation attempted.',
-          reconciliationRequired: true,
+          message: holdResult
+            ? 'Appeal fee authorized, but dispute persistence failed. Compensation attempted.'
+            : 'Dispute persistence failed. No appeal fee was charged.',
+          reconciliationRequired: !!holdResult,
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
@@ -191,30 +217,37 @@ export class DisputeService {
       await this.truthLog.appendEvent('APPEAL_INITIATED', {
         proofId,
         userId,
-        amount: APPEAL_FEE_AMOUNT,
-        paymentIntentId: holdResult.id,
+        amount: holdResult ? APPEAL_FEE_AMOUNT : 0,
+        paymentIntentId: holdResult?.id ?? null,
       });
     } catch (error) {
+      // Without a hold there is no money to reconcile, but the dispute row is
+      // already committed and unlogged — still flag it, just don't claim a
+      // financial compensation happened.
       await this.markDisputeReconcileRequired(
         proofId,
-        holdResult.id,
+        holdResult?.id ?? null,
         `truth-log failure after appeal persistence: ${error instanceof Error ? error.message : error}`,
       );
-      try {
-        await this.stripeService.cancelHold(holdResult.id);
-      } catch (cancelErr) {
-        await this.markDisputeReconcileRequired(
-          proofId,
-          holdResult.id,
-          `truth-log compensation cancel failed: ${
-            cancelErr instanceof Error ? cancelErr.message : cancelErr
-          }`,
-        );
+      if (holdResult) {
+        try {
+          await this.stripeService.cancelHold(holdResult.id);
+        } catch (cancelErr) {
+          await this.markDisputeReconcileRequired(
+            proofId,
+            holdResult.id,
+            `truth-log compensation cancel failed: ${
+              cancelErr instanceof Error ? cancelErr.message : cancelErr
+            }`,
+          );
+        }
       }
       throw new HttpException(
         {
           code: 'APPEAL_RECONCILIATION_REQUIRED',
-          message: 'Appeal was persisted, but audit logging failed after fee authorization.',
+          message: holdResult
+            ? 'Appeal was persisted, but audit logging failed after fee authorization.'
+            : 'Appeal was persisted, but audit logging failed.',
           reconciliationRequired: true,
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -222,8 +255,8 @@ export class DisputeService {
     }
 
     return {
-      appealStatus: 'FEE_AUTHORIZED_PENDING_REVIEW',
-      paymentIntentId: holdResult.id,
+      appealStatus,
+      paymentIntentId: holdResult?.id ?? null,
     };
   }
 
@@ -241,7 +274,7 @@ export class DisputeService {
        JOIN proofs p ON d.proof_id = p.id
        JOIN users u ON d.user_id = u.id
        JOIN contracts c ON p.contract_id = c.id
-       WHERE d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'IN_REVIEW')
+       WHERE d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'PENDING_REVIEW', 'IN_REVIEW')
        ORDER BY d.created_at ASC`,
     );
     return result.rows;
@@ -329,7 +362,7 @@ export class DisputeService {
          FROM disputes d
          JOIN proofs p ON d.proof_id = p.id
          JOIN users u ON d.user_id = u.id
-         WHERE d.id = $1 AND d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'IN_REVIEW')`,
+         WHERE d.id = $1 AND d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'PENDING_REVIEW', 'IN_REVIEW')`,
         [disputeId],
       );
 
