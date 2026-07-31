@@ -108,6 +108,23 @@ export class DisputeService {
     const feeEnabled = isAppealFeeEnabled();
     const appealStatus = feeEnabled ? 'FEE_AUTHORIZED_PENDING_REVIEW' : 'PENDING_REVIEW';
 
+    // An appeal that already exists keeps the financial terms it was accepted
+    // under. Without this, flipping the fee policy and re-calling the endpoint
+    // would rewrite a live dispute: disabling the fee nulls out a real
+    // payment_intent_id and orphans its authorization, and enabling it charges
+    // $5 for an appeal that was already accepted for free.
+    const existing = await this.pool.query(
+      `SELECT appeal_status, payment_intent_id FROM disputes WHERE proof_id = $1`,
+      [proofId],
+    );
+    const priorAppeal = existing?.rows?.[0];
+    if (priorAppeal) {
+      return {
+        appealStatus: priorAppeal.appeal_status,
+        paymentIntentId: priorAppeal.payment_intent_id ?? null,
+      };
+    }
+
     let holdResult: { id: string } | null = null;
     if (feeEnabled) {
       if (!customerId) {

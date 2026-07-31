@@ -39,55 +39,12 @@ describe('StripeProductionGuard', () => {
     expect(guard.canActivate(mockContext)).toBe(true);
   });
 
-  // render.yaml shipped GEO_MISSING_HEADER_ACTION=allow and
-  // KYC_ENFORCEMENT_ENABLED=false. Both are right for the test-money pilot and
-  // wrong the instant a live key is configured, and nothing connected those
-  // facts. These two cases make the coupling structural.
-  it('should refuse real money while the geofence fails open', () => {
-    setLiveProductionEnv();
-    process.env.GEO_MISSING_HEADER_ACTION = 'allow';
+  // The real-money interlocks (geofence fail-open, KYC, STYX_TEST_MONEY_MODE)
+  // are NOT asserted here: enforcing them on this controller-wide guard would
+  // also reject POST /payments/webhook while still missing POST /contracts.
+  // They live on the charge — see stripe.service.spec.ts.
 
-    expect(() => guard.canActivate(mockContext)).toThrow(/geofence fails open/i);
-  });
 
-  it('should refuse real money when KYC enforcement is disabled', () => {
-    setLiveProductionEnv();
-    process.env.KYC_ENFORCEMENT_ENABLED = 'false';
-
-    expect(() => guard.canActivate(mockContext)).toThrow(/KYC enforcement disabled/i);
-  });
-
-  it('should refuse real money when KYC enforcement is simply unset', () => {
-    setLiveProductionEnv();
-    delete process.env.KYC_ENFORCEMENT_ENABLED;
-
-    expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
-  });
-
-  // STYX_TEST_MONEY_MODE gated nothing before — it only picked banner text, so
-  // every surface could say "test-money pilot" while a live key moved real money.
-  it('should refuse real money while test-money mode is on', () => {
-    setLiveProductionEnv();
-    process.env.STYX_TEST_MONEY_MODE = 'true';
-
-    expect(() => guard.canActivate(mockContext)).toThrow(/test-money pilot/i);
-  });
-
-  it('should refuse real money when test-money mode is unset, since it defaults on', () => {
-    setLiveProductionEnv();
-    delete process.env.STYX_TEST_MONEY_MODE;
-
-    expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
-  });
-
-  it('should still allow the pilot config outside production', () => {
-    // The test-money pilot legitimately runs with both controls off.
-    process.env.NODE_ENV = 'development';
-    process.env.GEO_MISSING_HEADER_ACTION = 'allow';
-    process.env.KYC_ENFORCEMENT_ENABLED = 'false';
-
-    expect(guard.canActivate(mockContext)).toBe(true);
-  });
 
   it('should throw when STRIPE_SECRET_KEY is missing in production', () => {
     process.env.NODE_ENV = 'production';

@@ -19,7 +19,7 @@ const faqs = [
   },
   {
     q: 'How much does it cost?',
-    a: 'Each contract requires a minimum $39 stake ($9 platform fee + $30 escrow). You can stake up to $999 during beta. On success you get the escrow portion back; on failure the entire stake is forfeited.',
+    a: 'You choose your stake, and during the beta there is no platform fee — the amount you commit is the amount held in escrow. On success it is returned in full; on failure it is forfeited. Your maximum stake depends on your Integrity Score tier.',
   },
   {
     q: 'Is my money safe?',

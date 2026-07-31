@@ -1,5 +1,4 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { geofenceFailsOpenOnMissingLocation } from '../compliance/compliance-policy.service';
 
 @Injectable()
 export class StripeProductionGuard implements CanActivate {
@@ -32,43 +31,14 @@ export class StripeProductionGuard implements CanActivate {
       );
     }
 
-    // Past this point a live key is configured, so the next charge moves real
-    // money. The two controls a processor asks about first must therefore be on.
-    //
-    // Both currently ship OFF in render.yaml, which is correct for the
-    // test-money pilot (KYC is explicitly out of Phase 1 scope) and wrong the
-    // moment real money is switched on. Nothing connected those facts, so the
-    // upgrade path ran through a config nobody would re-read. This makes the
-    // coupling structural: you cannot take real money with the pilot's settings.
-
-    if (geofenceFailsOpenOnMissingLocation()) {
-      throw new ForbiddenException(
-        'Refusing to move real money while the geofence fails open: an unresolvable ' +
-          'location would be granted FULL_ACCESS, defeating the US-only boundary (DR-003). ' +
-          'Unset GEO_MISSING_HEADER_ACTION or set it to "block".',
-      );
-    }
-
-    if (String(process.env.KYC_ENFORCEMENT_ENABLED).toLowerCase() !== 'true') {
-      throw new ForbiddenException(
-        'Refusing to move real money with KYC enforcement disabled. ' +
-          'KYC_ENFORCEMENT_ENABLED must be "true" once STRIPE_SECRET_KEY is a live key.',
-      );
-    }
-
-    // STYX_TEST_MONEY_MODE defaults to true and, until now, gated nothing — it
-    // only chose banner text. Every tester-facing surface says "Test-money
-    // pilot" while the actual protection was that STRIPE_SECRET_KEY happened to
-    // be unset. A flag that reads as a safety interlock should be one: while it
-    // is on, no real charge can proceed, so the banner cannot lie.
-    if (String(process.env.STYX_TEST_MONEY_MODE ?? 'true').toLowerCase() !== 'false') {
-      throw new ForbiddenException(
-        'Refusing to move real money while STYX_TEST_MONEY_MODE is on — every ' +
-          'tester-facing surface is currently labelled a test-money pilot. ' +
-          'Set STYX_TEST_MONEY_MODE=false to activate real money.',
-      );
-    }
-
+    // NOTE: the real-money interlocks (geofence fail-open, KYC enforcement,
+    // STYX_TEST_MONEY_MODE) deliberately do NOT live here. This guard decorates
+    // the whole PaymentsController, so enforcing them here would also reject
+    // POST /payments/webhook and stop Stripe from settling transactions created
+    // before a control was switched off — while still missing POST /contracts,
+    // which calls StripeFboService.holdStake directly and never passes through
+    // this guard. They are enforced in StripeFboService.assertRealMoneyAllowed(),
+    // on the charge itself, which covers every path and no reporting path.
     return true;
   }
 }

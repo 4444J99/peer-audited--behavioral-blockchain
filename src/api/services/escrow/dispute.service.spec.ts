@@ -52,6 +52,9 @@ describe('DisputeService', () => {
       mockLedger as any,
     );
     jest.clearAllMocks();
+    // Default: no prior dispute for the proof. initiateAppeal checks for one
+    // first so a fee-policy flip cannot rewrite a live appeal's terms.
+    mockPool.query.mockResolvedValue({ rows: [] });
   });
 
   describe('initiateAppeal (DR-004: free by default)', () => {
@@ -59,6 +62,25 @@ describe('DisputeService', () => {
     // default path: no Stripe call at all, a fee-free status, and a null
     // payment_intent_id — the fee cannot be expressed as a 0-amount hold because
     // Stripe rejects those, which would fail closed and deny every appeal.
+    it('should return the existing appeal instead of rewriting its terms', async () => {
+      // A fee-policy flip must not rewrite a live dispute: disabling the fee
+      // would null out a real payment_intent_id and orphan its authorization.
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [{ appeal_status: 'FEE_AUTHORIZED_PENDING_REVIEW', payment_intent_id: 'pi_existing' }],
+      });
+
+      const result = await disputeService.initiateAppeal('user-1', 'proof-1', null);
+
+      expect(result).toEqual({
+        appealStatus: 'FEE_AUTHORIZED_PENDING_REVIEW',
+        paymentIntentId: 'pi_existing',
+      });
+      const inserted = (mockPool.query as jest.Mock).mock.calls.some(([sql]) =>
+        String(sql).includes('INSERT INTO disputes'),
+      );
+      expect(inserted).toBe(false);
+    });
+
     it('should place no hold and charge nothing by default', async () => {
       const result = await disputeService.initiateAppeal('user-1', 'proof-1', 'cus_123');
 

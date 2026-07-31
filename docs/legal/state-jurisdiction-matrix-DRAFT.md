@@ -102,7 +102,8 @@
 > closed in the fail-safe direction rather than left open: all four are `TIER_3
 > HARD_BLOCK` in both `STATE_TIERS` and the `jurisdictions` registry (migration
 > `066_jurisdiction_survey_reconciliation.sql`). The code is no longer more
-> permissive than our own survey anywhere. **This is not counsel sign-off** — it
+> permissive than our own survey **in these four states** — OR and RI remain open
+> below. **This is not counsel sign-off** — it
 > removes the exposure while the question is open. Counsel may relax any of them;
 > reversing requires a new migration *and* the `STATE_TIERS` edit in the same change.
 

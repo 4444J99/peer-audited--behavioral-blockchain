@@ -75,6 +75,12 @@ services:
       # US-only boundary (DR-003). The source default is fail-closed and its
       # comment says production must not be more permissive than dev; this
       # blueprint was the thing overriding it.
+      # Render terminates TLS and forwards the client address in x-forwarded-for.
+      # Without this, geolocation reads the reverse-proxy socket instead, no US
+      # state resolves, and the fail-closed setting below would 403 every
+      # geofenced route — including read-only ones. The two must ship together.
+      - key: TRUST_PROXY_HEADERS
+        value: "true"
       - key: GEO_MISSING_HEADER_ACTION
         value: block
       # Off is correct for the Phase 1 test-money pilot: KYC runtime enforcement
