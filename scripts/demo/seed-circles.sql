@@ -115,10 +115,26 @@ UPDATE users SET alias = v.alias FROM (VALUES
 -- Both columns are written because the codebase reads two different sources:
 -- geofencing persists last_known_state, CCPA reads compliance_metadata.state.
 -- Seeding only one leaves the other half of Circle 5 dark.
+--
+-- INITIALIZE, NEVER OVERWRITE. This is a live-database seed the README promises
+-- is safe to re-run, and last_known_state is not a demo-owned field:
+-- compliance-policy.service.ts persists the caller's real state on every
+-- request (evaluateUserComplianceForRequest). Assigning unconditionally would
+-- reset a demo user who has since been geofenced elsewhere back to the
+-- hard-coded value here, and silently route their contracts to the stale
+-- jurisdiction's FBO account. Each field is therefore set only when it is
+-- absent, and the two are guarded independently because they drift apart —
+-- CCPA's opt-out path writes compliance_metadata without touching
+-- last_known_state.
 UPDATE users SET
-  last_known_state = v.state,
-  compliance_metadata = COALESCE(compliance_metadata, '{}'::jsonb)
-                        || jsonb_build_object('state', v.state)
+  last_known_state = COALESCE(users.last_known_state, v.state),
+  compliance_metadata =
+    CASE
+      WHEN COALESCE(users.compliance_metadata, '{}'::jsonb) ? 'state'
+        THEN users.compliance_metadata
+      ELSE COALESCE(users.compliance_metadata, '{}'::jsonb)
+           || jsonb_build_object('state', COALESCE(users.last_known_state, v.state))
+    END
 FROM (VALUES
   -- TIER_1 (full access) — the flagship demo paths
   ('d1000000-0000-0000-0000-000000000001'::uuid, 'CA'),  -- river   — CCPA demo subject
@@ -138,15 +154,17 @@ FROM (VALUES
 ) AS v(id, state)
 WHERE users.id = v.id
   -- Never write to an erased user. CcpaService.runErasureStatements sets
-  -- last_known_state = NULL, compliance_metadata = '{}' and status = 'DELETED';
-  -- without this guard the predicate below matches every erased demo user
-  -- (NULL IS DISTINCT FROM 'CA' is true) and a re-run would restore both
-  -- location fields, partially reversing a completed CCPA deletion. Seeding
-  -- the CA residents is what made that path reachable in the first place, so
-  -- this guard has to land with it.
+  -- last_known_state = NULL, compliance_metadata = '{}' and status = 'DELETED'.
+  -- Initialize-only semantics are not enough on their own here: erasure leaves
+  -- both fields exactly as "absent" as a fresh row, so without this guard a
+  -- re-run would refill them and partially reverse a completed CCPA deletion.
+  -- Seeding the CA residents is what made that path reachable in the first
+  -- place, so this guard has to land with it.
   AND users.status <> 'DELETED'
-  AND (users.last_known_state IS DISTINCT FROM v.state
-       OR compliance_metadata ->> 'state' IS DISTINCT FROM v.state);
+  -- Only touch rows that are actually missing something, so a settled database
+  -- reports zero updated rows instead of rewriting identical values.
+  AND (users.last_known_state IS NULL
+       OR NOT (COALESCE(users.compliance_metadata, '{}'::jsonb) ? 'state'));
 
 -- ---------------------------------------------------------------------------
 -- FBO custody accounts (Circle 5 — Stripe for-benefit-of routing)

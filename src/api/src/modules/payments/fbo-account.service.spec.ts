@@ -186,9 +186,14 @@ describe('FboAccountService', () => {
         occurrences(sql, 'NULLIF(SPLIT_PART('),
       );
 
-      // Deterministic pick: without ORDER BY, LIMIT 1 could return any matching
-      // row depending on the plan.
-      expect(sql).toContain('ORDER BY');
+      // Deterministic pick, newest-first. Without ORDER BY, LIMIT 1 could return
+      // any matching row depending on the plan. The direction matters too: the
+      // schema does not enforce one active account per jurisdiction, so the
+      // normal rotation sequence (register the replacement, then deactivate the
+      // old one) leaves both active for a window, and ascending order would
+      // route contracts to the account about to be retired.
+      expect(sql).toContain('ORDER BY fa.created_at DESC');
+      expect(sql).not.toContain('ORDER BY fa.created_at ASC');
     });
 
     it('should fall back to the default US account when no jurisdiction match exists', async () => {

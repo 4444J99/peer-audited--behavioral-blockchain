@@ -113,6 +113,12 @@ export class FboAccountService {
     // match a Texas resident. COALESCE(NULLIF(...), x) keeps undelimited values
     // as themselves, so 'US' stays 'US' and only ever matches via the explicit
     // getActiveAccount('US') fallback below.
+    //
+    // Newest-first, not oldest-first. The schema does not enforce one active
+    // account per jurisdiction, so the normal rotation sequence — register the
+    // replacement, then deactivate the old one — leaves both rows active for a
+    // window. Ascending order would route contracts to the account that is
+    // about to be retired for exactly as long as that window lasts.
     const result = await this.pool.query(
       `SELECT fa.id, fa.platform_account_id, fa.platform_name, fa.jurisdiction, fa.is_active, fa.created_at
        FROM contracts c
@@ -121,7 +127,7 @@ export class FboAccountService {
          ON UPPER(COALESCE(NULLIF(SPLIT_PART(fa.jurisdiction, '-', 2), ''), fa.jurisdiction))
           = UPPER(COALESCE(NULLIF(SPLIT_PART(u.last_known_state, '-', 2), ''), u.last_known_state))
        WHERE c.id = $1 AND fa.is_active = TRUE
-       ORDER BY fa.created_at ASC
+       ORDER BY fa.created_at DESC
        LIMIT 1`,
       [contractId],
     );
