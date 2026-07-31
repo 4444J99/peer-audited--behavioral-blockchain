@@ -27,7 +27,7 @@ export class StripeFboService {
     }
 
     this.stripe = new Stripe(apiKey, {
-      apiVersion: '2026-05-27.dahlia',
+      apiVersion: '2026-07-29.dahlia',
     });
   }
 

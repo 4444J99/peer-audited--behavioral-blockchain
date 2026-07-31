@@ -17,7 +17,7 @@ export class GdprService {
 
   constructor(private readonly pool: Pool) {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
-    this.stripe = new Stripe(apiKey, { apiVersion: '2026-05-27.dahlia' });
+    this.stripe = new Stripe(apiKey, { apiVersion: '2026-07-29.dahlia' });
   }
 
   /**

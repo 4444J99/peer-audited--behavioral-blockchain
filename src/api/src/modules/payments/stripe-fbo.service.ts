@@ -19,7 +19,7 @@ export class StripeFBOService {
   constructor() {
     // In production, this uses a high-risk merchant account API key
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
-      apiVersion: '2026-05-27.dahlia', // Matched to project stripe dependency
+      apiVersion: '2026-07-29.dahlia', // Matched to project stripe dependency
     });
   }
 
