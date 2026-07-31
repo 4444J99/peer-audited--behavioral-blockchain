@@ -5,6 +5,21 @@ import { createHash, randomUUID } from 'crypto';
 const GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
 const TRUTH_LOG_APPEND_LOCK_KEY = 0x57_54_4c_47;
 
+// How long a DELETE request sits before the sweep executes it.
+//
+// CCPA §1798.130(a)(2) gives the business 45 days to respond, which is a
+// ceiling, not a target — the erasure has to have happened by then. This holds
+// the request briefly so a user who submitted by mistake, or whose account is
+// compromised, has a window to contact support before the data is gone, while
+// leaving a wide margin under the statutory deadline.
+//
+// The sibling GDPR path (gdpr.service.ts) uses 30 days for the same reason. 7
+// is chosen here rather than 30 because CCPA's window is 45 days, not the
+// GDPR-style month, so a 30-day hold would leave only 15 days of slack for a
+// failed sweep to be noticed and retried. Adjust with counsel — this is a
+// policy parameter, not a technical constraint.
+const CCPA_DELETION_GRACE_DAYS = 7;
+
 export type CCPADeletionRequest = {
   userId: string;
   requestType: 'DELETE' | 'OPT_OUT';
@@ -90,6 +105,53 @@ export class CcpaService {
     return request;
   }
 
+  /**
+   * Execute every DELETE request that has cleared the grace window.
+   *
+   * Without this, `processDeletionRequest` had no callers at all: a California
+   * resident could submit a deletion request, it was recorded `PENDING`, and
+   * nothing ever ran the erasure. That is worse than an absent feature — it
+   * reports success to the user and to any compliance review while retaining
+   * the data indefinitely, past the CCPA §1798.130(a)(2) deadline.
+   *
+   * Mirrors `GdprService.processPendingDeletions`, including its failure
+   * posture: one bad row must not abort the sweep, and the erasure path never
+   * logs the raw userId or error detail, because the flow does not come back to
+   * clean those logs up. Failures surface as a non-identifying correlation id
+   * plus the error class.
+   *
+   * OPT_OUT requests are deliberately excluded — those are do-not-sell flags,
+   * not erasures, and are handled by `optOutOfSale`.
+   */
+  async processPendingDeletions(): Promise<{ processed: number; skipped: number }> {
+    const pending = await this.pool.query(
+      `SELECT id FROM ccpa_deletion_requests
+       WHERE status = 'PENDING'
+         AND request_type = 'DELETE'
+         AND requested_at <= NOW() - ($1 || ' days')::interval
+       ORDER BY requested_at ASC`,
+      [CCPA_DELETION_GRACE_DAYS],
+    );
+
+    let processed = 0;
+    let skipped = 0;
+
+    for (const row of pending.rows) {
+      try {
+        await this.processDeletionRequest(row.id);
+        processed++;
+      } catch (err) {
+        const correlationId = randomUUID();
+        this.logger.error(
+          `Failed to process CCPA deletion request (correlationId=${correlationId}, error=${err instanceof Error ? err.name : 'Unknown'})`,
+        );
+        skipped++;
+      }
+    }
+
+    return { processed, skipped };
+  }
+
   async processDeletionRequest(requestId: string): Promise<CCPADeletionRequest> {
     const result = await this.pool.query(
       `UPDATE ccpa_deletion_requests SET status = 'PROCESSING' WHERE id = $1 RETURNING *`,
@@ -103,30 +165,54 @@ export class CcpaService {
     const row = result.rows[0];
     const userId = row.user_id;
 
-    if (typeof (this.pool as Partial<Pool>).connect === 'function') {
-      const client: PoolClient = await this.pool.connect();
-      try {
-        await client.query('BEGIN');
-        await this.runErasureStatements(client, userId);
-        await this.appendTruthLogEventWithClient(client, 'CCPA_DELETION_COMPLETED', {
+    // The 'PROCESSING' stamp above is its own statement, outside the erasure
+    // transaction, so a rollback does not undo it. Left alone, a failed erasure
+    // strands the request at 'PROCESSING' forever: the sweep only picks up
+    // 'PENDING', so nothing retries and the user's data is never deleted —
+    // silently blowing the CCPA §1798.130(a)(2) deadline. Returning it to
+    // 'PENDING' is safe precisely because the erasure is transactional: on
+    // failure the data is untouched, so the next sweep can retry cleanly.
+    try {
+      if (typeof (this.pool as Partial<Pool>).connect === 'function') {
+        const client: PoolClient = await this.pool.connect();
+        try {
+          await client.query('BEGIN');
+          await this.runErasureStatements(client, userId);
+          await this.appendTruthLogEventWithClient(client, 'CCPA_DELETION_COMPLETED', {
+            userId,
+            requestId,
+            anonymizedAt: new Date().toISOString(),
+          });
+          await client.query('COMMIT');
+        } catch (e) {
+          // A failed rollback must never mask the error that caused it.
+          try {
+            await client.query('ROLLBACK');
+          } catch {
+            /* swallowed deliberately — the original error is rethrown below */
+          }
+          throw e;
+        } finally {
+          client.release();
+        }
+      } else {
+        await this.runErasureStatements(this.pool, userId);
+        await this.appendTruthLogEvent('CCPA_DELETION_COMPLETED', {
           userId,
           requestId,
           anonymizedAt: new Date().toISOString(),
         });
-        await client.query('COMMIT');
-      } catch (e) {
-        await client.query('ROLLBACK');
-        throw e;
-      } finally {
-        client.release();
       }
-    } else {
-      await this.runErasureStatements(this.pool, userId);
-      await this.appendTruthLogEvent('CCPA_DELETION_COMPLETED', {
-        userId,
-        requestId,
-        anonymizedAt: new Date().toISOString(),
-      });
+    } catch (e) {
+      try {
+        await this.pool.query(
+          `UPDATE ccpa_deletion_requests SET status = 'PENDING' WHERE id = $1 AND status = 'PROCESSING'`,
+          [requestId],
+        );
+      } catch {
+        /* best-effort: never mask the erasure failure with a bookkeeping failure */
+      }
+      throw e;
     }
 
     const completedAt = new Date();
