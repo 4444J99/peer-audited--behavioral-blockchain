@@ -106,6 +106,7 @@ docs/planning/planning--parallel-*-prompts--*.md
 # Local verification scratch (see scripts/demo/README.md)
 /src/api/.circle-smoke.mjs
 /src/api/.column-audit.mjs
+/src/api/.ccpa-sweep-check.mjs
 
 # Committed terraform binaries removed 2026-07-30 (113MB); install via tfenv/brew
 /terraform

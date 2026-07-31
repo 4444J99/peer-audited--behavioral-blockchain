@@ -1,8 +1,42 @@
 # Concentric Circles Execution Plan
 
 **Date:** 2026-07-23
-**Status update:** 2026-07-30 (truth pass — this build, branch `feat/omega-completion`)
+**Status update:** 2026-07-30 (post-merge truth pass — all engineering work is on `main`)
 **Goal:** Ship all phases (Alpha→Omega) as concentric circles. Each circle is launchable independently. Previous circles improve while the next one builds.
+
+---
+
+## Post-Merge State (2026-07-30)
+
+Everything the previous revision described as "added by this branch" is merged. The
+landing sequence was #844 (landing-page heal, which had held `main` red since
+2026-07-23), then #845 (Circle 3–5 wiring + schema-drift repair), #828/#846
+(dependency and workspace hygiene), and #847 (demo jurisdiction substrate).
+
+**Verified against a running system, not just a test suite:**
+
+| Check | Result |
+| --- | --- |
+| `main` CI | green — first successful pipeline since 2026-07-23 |
+| `turbo run test` | 11/11 tasks — **2,937 tests across 260 suites** (api 1902/161, web 386/46, mobile 299/32, shared 202/9, desktop 148/12) |
+| `turbo run build lint` | 21/21 tasks |
+| Fresh empty database | 70 migrations + base seed + circles seed, **zero errors**, idempotent on re-run |
+| Live circle smoke | **23/23 probes** against a booted API |
+
+The test count supersedes the "1,107 tests passing" figure quoted in older revisions.
+
+### What running it caught that the tests could not
+
+Every spec mocks the pg `Pool`, so no SQL had ever executed against a real database.
+Booting the API against a migrated Postgres found what 2,900+ passing unit tests did
+not — most seriously that `proofs.content_type` did not exist, which broke proof
+submission **and the entire Fury peer-audit queue** on `main`. A static audit found 12
+such columns; migrations `063`–`065` reconcile them. Fresh installs were also
+structurally broken: the migration runner stamped all 70 migrations as applied without
+running them, so 46 tables could never exist.
+
+This is now a standing caution, not a historical note: **a green suite here does not
+mean the SQL runs.** Anything touching a query needs a live check.
 
 ---
 
@@ -10,7 +44,8 @@
 
 Earlier revisions of this plan marked Circle 3 "COMPLETE" and listed Circle 4/5 items
 as ✅ when the underlying services had been **built and tested but never wired into the
-running application**. Concrete examples verified against the tree at time of writing:
+running application**. Concrete examples verified against the tree at time of writing
+(all now fixed and merged):
 
 - `SecurityModule` (anti-Sybil, `src/api/src/modules/security/security.module.ts`) was
   never imported by `src/api/src/app.module.ts` — none of its `/security/*` routes were
@@ -35,30 +70,30 @@ running application**. Concrete examples verified against the tree at time of wr
 
 ## Current State (as of 2026-07-30)
 
-- 7 packages; test counts pending the orchestrator's central CI run for this branch
-  (the previously advertised "1,107 tests passing" predates the Circle 3–5 merges and
-  is stale — do not quote it)
-- 25+ NestJS modules built; **not all registered in `app.module.ts`** (see preamble —
-  this branch wires the stragglers)
-- Circle 1 PR backlog merged; **the Circle 1 gate (CI green, zero open PRs) is not yet
-  verified closed**
-- CCPA + AML (PR #835) and anti-Sybil + practitioner intelligence (PR #833) are merged
-  code; AML routes and the security module were unwired until this branch
+- 7 packages, **2,937 tests across 260 suites**, all green
+- 25+ NestJS modules, **all now registered** — `SecurityModule`, `AmlController`, and
+  `PractitionerIntelligenceService` were wired in #845
+- Circle 1 gate **closed**: `main` CI green, PR backlog cleared
+- Every circle has at least one reachable demo surface; `/circles` is the public index
 
 ---
 
 ## Circle 1: Clear the Backlog (merge all PRs)
 **Goal:** All existing code work merged to main. Clean slate.
 **Launch gate:** All 16 PRs merged, CI green, zero open PRs.
-**Status:** MERGED, GATE NOT CLOSED — the 16 tracked PRs were merged, but the gate
-also requires CI green on main and zero open PRs, and neither has been re-verified
-after the Circle 3–5 merges. Do not call this circle closed until the orchestrator's
-central CI run is green and the open-PR count is confirmed zero.
+**Status:** ✅ **CLOSED (2026-07-30).**
+
+The gate had been stuck not on the 16 tracked PRs but on `main` itself: a merge
+(`a83461a`) deleted the landing page's hero — headline, tagline, beta badge — while
+leaving `page.test.tsx` asserting the old copy. That single break kept `main` red on
+every push for a week and blocked five dependabot PRs behind it. Fixed in #844.
 
 - [x] #704, #705, #707, #709, #700, #703, #713, #715, #718, #731, #797, #808, #810,
       #811, #814, #819 merged
-- [ ] CI green on main (re-verify after this branch lands)
-- [ ] Zero open PRs confirmed
+- [x] CI green on `main`
+- [x] PR backlog cleared — #836 superseded by #845; #842 auto-closed once its bump
+      landed; #843 superseded by #846; #838 to be regenerated by Dependabot under the
+      corrected config
 
 ---
 
@@ -81,7 +116,9 @@ central CI run is green and the open-PR count is confirmed zero.
       switch endpoints (`admin.controller.ts` `GET/POST /admin/kill-switch`)
 - [x] Crisis detection — `src/api/services/security/crisis-detection.service.ts`,
       `crisis-intervention.service.ts`, `crisis-notification.service.ts`, crisis module
-- [ ] Kill switch **persistence** — in-memory until this branch (see Circle 5 wiring)
+- [x] Kill switch **persistence** — DB-backed (migration `060_system_flags.sql`);
+      verified by arming it, killing the API process, restarting, and confirming
+      refund-only mode survived
 
 ### 2b: External dependencies (human-gated, still open)
 - [ ] Legal counsel retention
@@ -97,22 +134,27 @@ central CI run is green and the open-PR count is confirmed zero.
 ## Circle 3: Gamma — Proof Integrity at Scale
 **Goal:** Scale the reviewer network. Trust the evidence.
 **Launch gate:** Health data integration, video proof pipeline, reviewer redaction, anti-collusion.
-**Status:** BUILT (PR #829 merged 2026-07-23); WIRING + HARDENING COMPLETED BY THIS BRANCH.
-The previous "COMPLETE" claim conflated merged code with reachable, production-grade
-behavior.
+**Status:** ✅ **ENGINEERING COMPLETE** — built in #829, wired and hardened in #845.
+The earlier "COMPLETE" claim conflated merged code with reachable, production-grade
+behavior; this one is verified against a running system (`/fury` queue, proof submit,
+attestation rejection paths all exercised live).
 
 - [x] Collusion ring detection — `src/api/services/security/collusion-detection.service.ts`
 - [x] Fitbit daily readiness — `src/api/services/health/fitbit.service.ts`,
       `src/api/src/modules/contracts/fitbit.controller.ts` (registered in
       `contracts.module.ts`)
-- [ ] **Verified** Fitbit ingestion — the existing controller accepts authenticated
-      user-submitted readiness; provider-verified ingestion (signature/token
-      verification against Fitbit) is added by this branch
+- [x] **Verified** Fitbit ingestion — provider signature verification + OAuth token
+      storage (migration `062_fitbit_oauth_tokens.sql`); an unsigned webhook is
+      rejected (verified live)
 - [x] Device attestation framework — `src/api/services/security/device-attestation.service.ts`
       (key registry, replay counters, structural checks; migration `051`)
-- [ ] **Real attestation crypto** — App Attest certificate-chain and Play Integrity JWT
-      signature verification (the service's own doc-comment lists these as required for
-      production); added by this branch
+- [x] **Real attestation crypto** — App Attest X509 certificate-chain validation with
+      root-CA pinning and nonce-extension binding (OID 1.2.840.113635.100.8.2), and
+      Play Integrity JWKS signature verification with caching plus `exp`/package-name
+      checks. **Fail-closed**: with no `APPLE_APP_ATTEST_APP_ID` /
+      `GOOGLE_PLAY_INTEGRITY_JWKS_URL` it refuses to verify rather than
+      rubber-stamping. For demos set `DEVICE_ATTESTATION_DEV_BYPASS=true` — verdicts
+      come back labeled `DEV_BYPASS`, never `STRONG` (see `scripts/demo/README.md` §2c)
 - [x] HealthKit ingestion + Whoop (from Circle 2)
 - [x] Video transcoding pipeline — `src/api/src/modules/proofs/video-processing.*`
 - [x] Reviewer redaction (from Circle 2)
@@ -123,7 +165,9 @@ behavior.
 ## Circle 4: Delta — Retention + Network Effects
 **Goal:** Will people come back? Build the engagement loop.
 **Launch gate:** Danger-zone protections, accountability partners, progress dashboard, push notifications.
-**Status:** BUILT (PRs #830, #831 merged 2026-07-23); demo-facing surfaces wired by this branch.
+**Status:** ✅ **ENGINEERING COMPLETE** for the launch-gate items — built in #830/#831,
+demo-facing surfaces wired in #845. Three post-gate items remain unstarted (below);
+they are scope beyond the stated gate, not regressions.
 
 - [x] Danger-zone protections — `src/api/src/modules/behavioral/danger-zone.service.ts`
 - [x] Accountability partner protocol — `accountability-partner.service.ts`, migration `052`
@@ -132,8 +176,11 @@ behavior.
 - [x] Endowed progress engine — `endowed-progress.service.ts`
 - [x] Push notification infrastructure — migration `044`
 - [x] Weekend risk multiplier — migration `022`
-- [ ] Circles (pods) member-facing pages in `src/web/app` — added by this branch
-      (no `circles` route existed before it)
+- [x] Circles (pods) member-facing pages in `src/web/app` — added in #845 (no
+      `circles` route existed before it); `/circles` is now the public demo index
+
+Post-gate scope, still unstarted — these were never part of the Circle 4 launch gate:
+
 - [ ] Identity-based onboarding (user archetype profiling at intake) — not started
 - [ ] Pod/Arena experiment framework (A/B cohort comparison) — not started
 - [ ] In-app messaging within pods — not started
@@ -143,11 +190,12 @@ behavior.
 ## Circle 5: Omega — Enterprise Expansion
 **Goal:** Can enterprises buy this? Legal, compliance, revenue.
 **Launch gate:** Legal whitepaper, enterprise compliance, revenue packaging.
-**Status:** IN PROGRESS. PR #833 (anti-Sybil, practitioner intelligence) and PR #835
-(CCPA deletion, AML screening) are **merged** — the prior revision wrongly listed
-CCPA/AML as "Remaining." What actually remained was wiring, which this branch does.
+**Status:** ✅ **ENGINEERING COMPLETE; HUMAN-GATED ITEMS OPEN.** #833 (anti-Sybil,
+practitioner intelligence) and #835 (CCPA deletion, AML screening) supplied the code;
+#845 wired it into reachable routes and UI; #847 seeded the substrate those routes
+read. What remains is counsel review and procurement — see the final subsection.
 
-### Merged before this branch:
+### Merged in #833 / #835:
 - [x] Anti-Sybil layer — `src/api/src/modules/security/anti-sybil.service.ts`,
       migration `053_anti_sybil.sql` (PR #833)
 - [x] Practitioner risk intelligence —
@@ -158,21 +206,72 @@ CCPA/AML as "Remaining." What actually remained was wiring, which this branch do
       migrations `054` + `059_aml_tables.sql` (PR #835)
 - [x] SOC 2 groundwork — hash-chained TruthLog
       (`src/api/services/ledger/truth-log.service.ts`), guards
-      (`src/api/src/guards/auth.guard.ts`, `src/api/src/common/guards/role.guard.ts`)
+      (`src/api/guards/auth.guard.ts`, `src/api/src/common/guards/role.guard.ts`)
 
-### Wired/added by this branch (`feat/omega-completion`):
-- [ ] Register `SecurityModule` in `app.module.ts`; register `AmlController` in
-      `compliance.module.ts`; register `PractitionerIntelligenceService` in
-      `behavioral.module.ts`
-- [ ] Migrations 058, 060–062 (fills the 057→059 numbering gap; kill-switch state,
-      retention policy, and demo-seed support tables)
-- [ ] Real attestation crypto (see Circle 3)
-- [ ] Verified Fitbit ingestion (see Circle 3)
-- [ ] Persisted kill switch (DB-backed refund-only mode surviving restart; replaces the
-      static boolean in `jurisdiction-disposition.mapper.ts`)
-- [ ] Data-retention scheduler (automated purge per retention policy, complementing the
-      existing 4 AM GDPR erasure sweep in `src/api/src/modules/users/gdpr.scheduler.ts`)
-- [ ] Demo seed + KYC / practitioner / circles pages in `src/web/app`
+### Wired/added in #845:
+- [x] `SecurityModule` registered in `app.module.ts`; `AmlController` registered in
+      `compliance.module.ts`; `PractitionerIntelligenceService` provided in
+      `behavioral.module.ts` — all `/security/*`, `/compliance/aml/*` and practitioner
+      routes are now reachable (verified live, including the 403 denial paths)
+- [x] Migrations 058, 060–062 (fills the 057→059 numbering gap; kill-switch state,
+      retention policy, practitioner and Fitbit OAuth tables)
+- [x] Migrations 063–065 — schema-drift reconciliation; `063` recovers columns that
+      existed only in `schema.sql` and never in the migration chain, `064` adds
+      `proofs.content_type`/`description`/`uploaded_at` and `attestations.source`
+      (whose absence was breaking proof submission and the Fury queue on `main`),
+      `065` drops the DECO plaintext columns
+- [x] Real attestation crypto (see Circle 3)
+- [x] Verified Fitbit ingestion (see Circle 3)
+- [x] Persisted kill switch — DB-backed refund-only mode replacing the static boolean
+      in `jurisdiction-disposition.mapper.ts`; survives a process kill (verified)
+- [x] Data-retention scheduler — automated purge per retention policy, complementing
+      the 4 AM GDPR erasure sweep in `src/api/src/modules/users/gdpr.scheduler.ts`
+- [x] Demo seed + KYC / practitioner / circles pages in `src/web/app`
+
+### Added in #847:
+- [x] Demo jurisdiction substrate — all twelve demo users placed across the three
+      geofencing tiers, and `fbo_accounts` seeded. Without it `/admin/jurisdictions`
+      rendered every user as an identical TIER_3 fallback, CCPA deletion returned 403
+      for everyone (it gates on `compliance_metadata.state = 'CA'`, and no user had a
+      state), and FBO routing was inert against an empty table
+- [x] Fixed a state-match collision in `fbo-account.service.ts`: a bare
+      `SPLIT_PART(x, '-', 2)` returns `''` for undelimited values, so `US` and `CA`
+      compared equal — the country-level fallback account matched *every* state.
+      Only visible once real rows existed
+- [x] **CCPA deletions are now actually executed.**
+      `CcpaService.processDeletionRequest` had zero callers — no admin route, no
+      scheduler, no queue consumer. A California resident could submit a request, get
+      a `201`, and see a `PENDING` row while the data was retained indefinitely, past
+      the §1798.130(a)(2) deadline. Every visible signal said the feature worked.
+      `CcpaScheduler` (4:30 AM, half an hour after the GDPR sweep so the two erasure
+      paths never contend for the same rows or the TruthLog append lock) now drives
+      `processPendingDeletions`, mirroring the GDPR sweep including its PII-safe
+      failure logging. `OPT_OUT` rows are excluded — those are do-not-sell flags, and
+      sweeping them would delete the accounts of users who only opted out of sale
+- [x] Fixed a stranding bug the sweep exposed: the `status = 'PROCESSING'` stamp sits
+      outside the erasure transaction, so a rollback did not undo it and one failed
+      erasure pinned that request at `PROCESSING` forever — never retried, never
+      completed. It now returns to `PENDING` on failure, which is safe because the
+      erasure itself is transactional
+- [x] Guarded the demo seed against re-writing jurisdiction data onto an erased user.
+      Erasure sets `last_known_state = NULL` and `compliance_metadata = '{}'`, which is
+      exactly what the seed's idempotency predicate looks for, so a re-run would have
+      partially reversed a completed CCPA deletion
+
+### Remaining engineering — open decisions, not defects:
+- [ ] **CCPA deletion grace window** is set to 7 days (`CCPA_DELETION_GRACE_DAYS` in
+      `ccpa.service.ts`). CCPA allows 45 days to respond and the sibling GDPR path
+      holds for 30; 30 here would leave only 15 days of slack for a failed sweep to be
+      noticed and retried. It is a policy parameter, not a technical constraint —
+      worth confirming alongside the other counsel items below.
+- [ ] `FboAccountService` has **zero consumers**. It is registered and exported in
+      `payments.module.ts`, has a passing spec, and is called by nothing.
+      `SettlementService` operates on internal ledger accounts
+      (`debit_account_id`/`credit_account_id`); this service maps to external Stripe
+      *connected* accounts. Wiring them together means deciding that payouts route
+      through jurisdiction-partitioned custody — a compliance and architecture call
+      that changes money movement, not a defect to patch. #847 made the data and the
+      query correct so the decision is cheap to act on either way.
 
 ### Remaining (human-gated — cannot be closed by engineering):
 - [ ] Legal defense whitepaper counsel review — review-ready draft now at
@@ -188,6 +287,21 @@ CCPA/AML as "Remaining." What actually remained was wiring, which this branch do
 
 ---
 
+## Running the demo
+
+Every circle has a reachable surface. `scripts/demo/README.md` is the operator's guide —
+boot sequence (including a no-Docker local-Postgres path), the twelve demo logins, and
+what to look at on each page. `/circles` is the public index that walks Alpha → Omega
+and links each one.
+
+Ordering is load-bearing: **migrate → base seed (`src/api/database/seed.sql`) → circles
+seed (`scripts/demo/seed-circles.sql`)**. The circles seed references base-seed system
+accounts, so running it first fails on a foreign key. Never provision from `schema.sql` —
+it is a reference snapshot, and an initdb-provisioned database causes the migration
+runner to baseline-stamp (skip) the rest of the chain.
+
+---
+
 ## Execution Strategy
 1. **Circle 1 first** - merge everything, get a clean baseline
 2. **Circle 2 in parallel** - start P0 blockers while PRs are merging
@@ -196,6 +310,17 @@ CCPA/AML as "Remaining." What actually remained was wiring, which this branch do
 5. **Previous circles improve** - while building Circle 3, Circle 2 gets hardening/bugfixes
 6. **(Added 2026-07-30)** A circle's checkbox is only ✅ when code is written, tested,
    AND wired into a reachable surface — merged-but-unregistered modules do not count.
+7. **(Added 2026-07-30)** For anything touching SQL, "tested" means **executed against a
+   real database**. Every spec in this repo mocks the pg `Pool`, so a green suite proves
+   the TypeScript is consistent with itself and nothing about whether the query runs.
+   Twelve columns that did not exist, and a jurisdiction match that compared `US` equal
+   to `CA`, all shipped under passing tests.
+8. **(Added 2026-07-30)** Before calling a feature done, grep for **callers**, not just
+   for the file. `SecurityModule`, `AmlController`, `PractitionerIntelligenceService`,
+   `FboAccountService` and `CcpaService.processDeletionRequest` were each written,
+   tested, and reachable by nobody. The CCPA one is the cautionary case: it returned
+   `201`, wrote a `PENDING` row, and retained the data forever — an unreachable
+   compliance feature is worse than an absent one, because it reports success.
 
 ---
 
