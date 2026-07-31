@@ -1,48 +1,101 @@
 # Branch protection as code
 
-`main.json` is the GitHub **ruleset** that protects `main`. It is the source of
-truth for branch protection so the policy is reviewable and versioned rather
-than living only in repo settings. See
+`main.json` is the GitHub **ruleset** that protects `main`, and it is the _only_
+layer of protection on this repo (see [One layer, not two](#one-layer-not-two)).
+It is the source of truth so the policy is reviewable and versioned rather than
+living only in repo settings. See
 [`docs/architecture/branching-and-release-strategy.md`](../../docs/architecture/branching-and-release-strategy.md)
 §4 for the rationale.
 
-> GitHub branch protection cannot be set from the repo contents alone — it must
-> be applied to the repository settings once (and re-applied when this file
-> changes). Do it via the UI import or the API below.
+> GitHub cannot read this file from the repo contents — it must be pushed to the
+> API whenever it changes. `scripts/branch-protection.sh` does that, and its
+> `check` mode detects when the live settings have drifted away from this file.
 
-## Apply via UI
-
-Settings → **Rules** → **Rulesets** → **New ruleset** → **Import a ruleset** →
-upload `main.json`.
-
-## Apply / update via API
+## Apply / verify
 
 ```bash
-OWNER=a-organvm
-REPO=peer-audited--behavioral-blockchain
-
-# Create (first time)
-gh api -X POST "repos/$OWNER/$REPO/rulesets" \
-  -H "Accept: application/vnd.github+json" \
-  --input .github/rulesets/main.json
-
-# Update (subsequent changes — replace <id> with the ruleset id)
-gh api -X PUT "repos/$OWNER/$REPO/rulesets/<id>" \
-  -H "Accept: application/vnd.github+json" \
-  --input .github/rulesets/main.json
-
-# List existing rulesets to find the id
-gh api "repos/$OWNER/$REPO/rulesets"
+scripts/branch-protection.sh check   # does live match this file?
+scripts/branch-protection.sh apply   # push this file to GitHub
 ```
+
+Both need a token with **repo-admin** rights; `gh auth login` as the repo owner
+covers it. `check` resolves the ruleset by **name**, so deleting and recreating
+it in the UI does not break the script.
+
+To import through the UI instead: Settings → **Rules** → **Rulesets** →
+**New ruleset** → **Import a ruleset** → upload `main.json`.
+
+### Running `check` in CI
+
+`.github/workflows/branch-protection.yml` runs it on changes to this directory,
+on pushes to `main`, and weekly.
+
+Every **rule and parameter** in `main.json` is verified with the default
+`GITHUB_TOKEN`, because the rules are read from
+`GET /repos/{owner}/{repo}/rules/branches/{branch}`, which needs no special
+permission.
+
+Two things need repo-admin rights, which `GITHUB_TOKEN` **cannot** be granted
+(`administration` is not a grantable workflow scope):
+
+1. the ruleset's own fields — `enforcement`, `conditions`, `bypass_actors`
+   (a non-admin token gets a redacted copy with these withheld);
+2. whether **classic branch protection** exists — it is enforced as a union with
+   rulesets but does **not** appear in the effective-rules endpoint, so without
+   admin rights its return is undetectable.
+
+To cover both, add a repository secret:
+
+| Secret                    | Value                                                              |
+| ------------------------- | ------------------------------------------------------------------ |
+| `BRANCH_PROTECTION_TOKEN` | Fine-grained PAT scoped to this repo with **Administration: read** |
+
+Without it the job still verifies the rules and prints an explicit
+`NOT VERIFIED` list rather than implying full coverage. The job is deliberately
+**not** a required status check: it reports on repository configuration, not on
+the code in the PR, so it must never block a code change.
 
 ## What it enforces
 
-- No direct pushes / force-pushes / deletion of `main`.
-- PR required: 1+ approval, **CODEOWNERS** review, stale-approval dismissal,
-  conversation resolution; **squash** is the only allowed merge method.
-- Required, strict (up-to-date) status checks: `build_and_test`,
-  `Analyze (javascript-typescript)`, `Secret Pattern Detection`.
-- Linear history + merge queue (squash, all-green grouping).
+- No direct pushes, force-pushes, or deletion of `main`; linear history.
+- A PR is required. **Squash** is the only allowed merge method.
+- Required status checks: `build_and_test`, `Analyze (javascript-typescript)`,
+  `Secret Pattern Detection`.
+- Repo **admins can bypass**, so the owner can never be locked out of their own
+  repository.
+
+Deliberately **not** enforced, and why:
+
+| Not required               | Why                                                                                                                                                                                                                                                            |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Approving reviews          | Solo maintainer. GitHub does not let you approve your own PR, so requiring even one approval makes every PR permanently unmergeable.                                                                                                                           |
+| CODEOWNERS review          | Same reason.                                                                                                                                                                                                                                                   |
+| Conversation resolution    | Three review bots (CodeRabbit, Sourcery, CodeQL) post threads automatically. Those threads stay merge-blocking even after they go `outdated`, so this gates merges on stale bot chatter while carrying no safety signal — reviews themselves are not required. |
+| Strict (up-to-date) checks | Forces every open PR to rebase after each merge to `main`. Real value only with concurrent contributors landing conflicting work.                                                                                                                              |
+| Merge queue                | Same — needs contention to be worth its latency.                                                                                                                                                                                                               |
+
+Promote any of these the moment the repo gains a second regular committer. They
+are the right controls for a team and pure friction for one person.
+
+## One layer, not two
+
+GitHub has **two independent** protection systems — classic _branch protection_
+and _rulesets_ — and enforces the **union** of both. A rule relaxed here stays in
+force if classic protection still sets it, and classic protection is invisible
+from the Rulesets UI.
+
+This is not hypothetical. Until 2026-07-30 this repo had both:
+
+- this file requiring status checks (**never applied** — the live ruleset was a
+  stripped-down copy), and
+- classic protection requiring conversation resolution.
+
+The effective policy was therefore "stale bot threads block merges, but CI does
+not have to pass" — the exact inverse of the intent, and the reason `main` could
+sit red for a week while merges stayed blocked on resolved-but-outdated threads.
+
+**Do not re-add classic branch protection.** `scripts/branch-protection.sh check`
+fails if it reappears.
 
 ## Keeping check names in sync
 
@@ -51,8 +104,15 @@ The `required_status_checks[].context` values must exactly match GitHub
 this file and re-apply, or merges will block forever waiting on a check that
 never reports. Current mapping:
 
-| Context here | Produced by |
-|--------------|-------------|
-| `build_and_test` | `.github/workflows/ci.yml` job `build_and_test` |
-| `Analyze (javascript-typescript)` | `.github/workflows/codeql.yml` |
-| `Secret Pattern Detection` | `.github/workflows/secret-scan.yml` job name |
+| Context here                      | Produced by                                     |
+| --------------------------------- | ----------------------------------------------- |
+| `build_and_test`                  | `.github/workflows/ci.yml` job `build_and_test` |
+| `Analyze (javascript-typescript)` | `.github/workflows/codeql.yml`                  |
+| `Secret Pattern Detection`        | `.github/workflows/secret-scan.yml` job name    |
+
+Verify a context actually reports before adding it:
+
+```bash
+gh pr checks <pr-number>          # names reported on a PR
+gh api repos/{owner}/{repo}/commits/main/check-runs --jq '.check_runs[].name'
+```
