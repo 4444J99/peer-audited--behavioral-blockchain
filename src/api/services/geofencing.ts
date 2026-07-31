@@ -42,8 +42,9 @@ export const STATE_TIERS: Record<string, JurisdictionTier> = {
     // BLOCK for all four while the code was more permissive. NV and SD were
     // TIER_1 (FULL_ACCESS + CAPTURE) — i.e. we would have captured a forfeited
     // deposit in two states whose own research says licensure is required.
-    // AZ and MT were TIER_2 (refund-only). See the ⚠ OPEN QUESTION rows in
-    // docs/legal/state-jurisdiction-matrix-DRAFT.md.
+    // AZ and MT were TIER_2 (refund-only). These four rows are now ALIGNED in
+    // docs/legal/state-jurisdiction-matrix-DRAFT.md (code tier matches the
+    // survey recommendation); they were its top sign-off blockers before this.
     //
     // Tightening needs no counsel; relaxing does. Counsel sign-off is issue
     // #317 — until it lands, the survey is the most authoritative source we
