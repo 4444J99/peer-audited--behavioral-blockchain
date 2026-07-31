@@ -28,13 +28,17 @@ on:
     - cron: "0 12 * * 1"
   workflow_dispatch:
 
-# `administration` is NOT a grantable GITHUB_TOKEN scope, so the default token
-# can never read rulesets — reading them requires repo-admin rights. Supply a
-# fine-grained PAT with "Administration: read" as the repository secret
-# BRANCH_PROTECTION_TOKEN to make this job authoritative. Without it the script
-# exits 3 and the job warns rather than failing, so a missing secret never
-# blocks anyone; drift is then caught by the weekly run once the secret exists,
-# or locally via `scripts/branch-protection.sh check`.
+# The rules themselves are read from GET /repos/{o}/{r}/rules/branches/{branch},
+# which needs no special permission — so every rule and parameter in
+# `main.json` is verified here with the default token.
+#
+# Two things still need repo-admin rights, which `GITHUB_TOKEN` cannot be
+# granted (`administration` is not a grantable workflow scope): the ruleset's
+# own fields (enforcement/conditions/bypass_actors), and the presence of classic
+# branch protection — which is enforced as a union with rulesets but does not
+# appear in the effective-rules endpoint. Set BRANCH_PROTECTION_TOKEN to a
+# fine-grained PAT with "Administration: read" to cover both. Without it the run
+# still verifies the rules and prints an explicit NOT VERIFIED list.
 permissions:
   contents: read
 
@@ -59,7 +63,7 @@ jobs:
           set -e
           case "$status" in
             0) echo "::notice::Live branch protection matches .github/rulesets/main.json" ;;
-            3) echo "::warning::Cannot read rulesets — reading them needs repo-admin rights, which GITHUB_TOKEN cannot be granted. Add a fine-grained PAT with 'Administration: read' as the BRANCH_PROTECTION_TOKEN secret to enable this check. Drift not verified; run 'scripts/branch-protection.sh check' locally meanwhile." ;;
+            3) echo "::warning::Could not read the effective branch rules, so nothing was verified. Run 'scripts/branch-protection.sh check' locally as the repo owner." ;;
             *) echo "::error::Live branch protection has drifted from .github/rulesets/main.json. Reconcile with 'scripts/branch-protection.sh apply'."
                exit 1 ;;
           esac

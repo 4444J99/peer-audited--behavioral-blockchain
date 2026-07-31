@@ -30,18 +30,30 @@ To import through the UI instead: Settings → **Rules** → **Rulesets** →
 `.github/workflows/branch-protection.yml` runs it on changes to this directory,
 on pushes to `main`, and weekly.
 
-Reading rulesets requires repo-admin rights, and `administration` is **not** a
-grantable `GITHUB_TOKEN` scope — the default workflow token can never do it. To
-make the CI check authoritative, add a repository secret:
+Every **rule and parameter** in `main.json` is verified with the default
+`GITHUB_TOKEN`, because the rules are read from
+`GET /repos/{owner}/{repo}/rules/branches/{branch}`, which needs no special
+permission.
+
+Two things need repo-admin rights, which `GITHUB_TOKEN` **cannot** be granted
+(`administration` is not a grantable workflow scope):
+
+1. the ruleset's own fields — `enforcement`, `conditions`, `bypass_actors`
+   (a non-admin token gets a redacted copy with these withheld);
+2. whether **classic branch protection** exists — it is enforced as a union with
+   rulesets but does **not** appear in the effective-rules endpoint, so without
+   admin rights its return is undetectable.
+
+To cover both, add a repository secret:
 
 | Secret                    | Value                                                              |
 | ------------------------- | ------------------------------------------------------------------ |
 | `BRANCH_PROTECTION_TOKEN` | Fine-grained PAT scoped to this repo with **Administration: read** |
 
-Without it the job emits a warning and passes, so a missing secret never blocks
-a merge — but drift is then only caught by running `check` locally. The job is
-deliberately **not** a required status check: it reports on repository
-configuration, not on the code in the PR.
+Without it the job still verifies the rules and prints an explicit
+`NOT VERIFIED` list rather than implying full coverage. The job is deliberately
+**not** a required status check: it reports on repository configuration, not on
+the code in the PR, so it must never block a code change.
 
 ## What it enforces
 

@@ -2,52 +2,44 @@
 /**
  * Compare live GitHub branch protection against `.github/rulesets/main.json`.
  *
- * Driven by `scripts/branch-protection.sh check`, which supplies the live
- * ruleset on stdin and signals classic-protection presence via CLASSIC=1.
+ * Driven by `scripts/branch-protection.sh check`, which supplies on stdin:
  *
- * Exits 0 when they match, 1 on drift (with a per-field report).
+ *   { effective: [...],        // GET /repos/{o}/{r}/rules/branches/{branch}
+ *     ruleset:   {...}|null,   // GET /repos/{o}/{r}/rulesets/{id}  (admin only)
+ *     classic:   true|false|null }  // classic protection present / absent / unknown
+ *
+ * `effective` needs no special permission and carries full rule parameters, so
+ * the core policy is verifiable with any token. `ruleset` and `classic` require
+ * repo admin; when they are unavailable the checks that depend on them are
+ * reported as UNVERIFIED rather than silently passed.
+ *
+ * Exits 0 when everything checked matches, 1 on drift, 3 when nothing could be
+ * verified at all.
  */
 import fs from "node:fs";
 
 const specPath = process.argv[2];
 if (!specPath) {
   console.error(
-    "usage: branch-protection-diff.mjs <spec.json>  (live ruleset JSON on stdin)",
+    "usage: branch-protection-diff.mjs <spec.json>  (payload JSON on stdin)",
   );
   process.exit(2);
 }
 
 const spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
-const live = JSON.parse(fs.readFileSync(0, "utf8"));
-const drift = [];
+const { effective, ruleset, classic } = JSON.parse(fs.readFileSync(0, "utf8"));
+const branch = process.env.BRANCH || "the default branch";
 
-// A token without repo-admin rights can still GET a ruleset, but receives a
-// *redacted* view: the rules come back while admin-only fields are omitted
-// entirely. Diffing that against the file reports drift on every withheld
-// field — a false alarm that would train everyone to ignore this check.
-//
-// `bypass_actors` is the reliable discriminator: an admin read always includes
-// it, as `[]` when there are none. `undefined` means redacted, not empty.
-if (live.bypass_actors === undefined) {
-  console.error(
-    [
-      "SKIP: the ruleset came back redacted — this token lacks repo-admin rights.",
-      "      Rules were returned but admin-only fields (bypass_actors) were withheld,",
-      "      so drift cannot be determined without reporting false positives.",
-      "      In CI, set BRANCH_PROTECTION_TOKEN to a fine-grained PAT with",
-      "      'Administration: read'. Locally, authenticate as the repo owner.",
-    ].join("\n"),
-  );
-  process.exit(3);
-}
+const drift = [];
+const unverified = [];
 
 /**
  * Order-insensitive canonical form. The API echoes object keys in its own
  * order, and none of the arrays in a ruleset are order-significant
  * (`bypass_actors`, `required_status_checks`, `allowed_merge_methods`,
- * `include`/`exclude`), so both are normalized before comparison. Without this
- * the check reports drift every run and gets ignored — the failure mode a
- * drift check exists to prevent.
+ * `include`/`exclude`), so both sides are normalized before comparison.
+ * Without this the check would report drift on every run and get ignored —
+ * the failure mode a drift check exists to prevent.
  */
 const canon = (v) => {
   if (Array.isArray(v)) {
@@ -72,21 +64,15 @@ const cmp = (path, want, got) => {
   }
 };
 
-for (const key of [
-  "name",
-  "target",
-  "enforcement",
-  "conditions",
-  "bypass_actors",
-]) {
-  if (key in spec) cmp(key, spec[key], live[key]);
-}
+// --- Rules and their parameters (no special permission required) -------------
 
-const liveByType = new Map((live.rules ?? []).map((r) => [r.type, r]));
+const liveByType = new Map((effective ?? []).map((r) => [r.type, r]));
 for (const want of spec.rules ?? []) {
   const got = liveByType.get(want.type);
   if (!got) {
-    drift.push(`rules[${want.type}]\n    file: present\n    live: MISSING`);
+    drift.push(
+      `rules[${want.type}]\n    file: present\n    live: NOT IN EFFECT on '${branch}'`,
+    );
     continue;
   }
   liveByType.delete(want.type);
@@ -98,20 +84,55 @@ for (const want of spec.rules ?? []) {
 }
 for (const type of liveByType.keys()) {
   drift.push(
-    `rules[${type}]\n    file: absent\n    live: PRESENT (not declared in the file)`,
+    `rules[${type}]\n    file: absent\n    live: IN EFFECT on '${branch}' (not declared in the file)`,
   );
 }
 
-if (process.env.CLASSIC === "1") {
-  drift.push(
-    [
-      "classic branch protection on 'main'",
-      "    file: rulesets only (single source of truth)",
-      "    live: PRESENT - GitHub enforces the union of classic protection and",
-      "          rulesets, so this silently overrides the file. Remove it.",
-    ].join("\n"),
+// --- Ruleset-object fields (admin only) --------------------------------------
+
+if (ruleset && ruleset.bypass_actors !== undefined) {
+  for (const key of [
+    "name",
+    "target",
+    "enforcement",
+    "conditions",
+    "bypass_actors",
+  ]) {
+    if (key in spec) cmp(key, spec[key], ruleset[key]);
+  }
+} else {
+  unverified.push(
+    "enforcement / conditions / bypass_actors — the ruleset object is readable\n" +
+      "    only with repo-admin rights, and a non-admin token receives a redacted\n" +
+      "    copy with those fields withheld.",
   );
 }
+
+// --- Classic branch protection (admin only) ----------------------------------
+//
+// Classic protection is enforced as a union with rulesets but does NOT appear
+// in the effective-rules endpoint (verified empirically), so this is the only
+// way to see it. That makes it the one gap a non-admin token cannot close.
+
+if (classic === true) {
+  drift.push(
+    [
+      `classic branch protection on '${branch}'`,
+      "    file: rulesets only (single source of truth)",
+      "    live: PRESENT - GitHub enforces the union of classic protection and",
+      "          rulesets, and classic rules are invisible from the Rulesets UI,",
+      "          so this can silently override the file. Remove it.",
+    ].join("\n"),
+  );
+} else if (classic === null) {
+  unverified.push(
+    "classic branch protection — probing it requires repo-admin rights, and it\n" +
+      "    does not surface in the effective-rules endpoint. If it were re-added,\n" +
+      "    this run could not tell.",
+  );
+}
+
+// --- Report ------------------------------------------------------------------
 
 if (drift.length > 0) {
   console.error(
@@ -122,9 +143,24 @@ if (drift.length > 0) {
   process.exit(1);
 }
 
+const checkedRules = (spec.rules ?? []).length;
+if (checkedRules === 0 && unverified.length > 0) {
+  console.error("SKIP: nothing could be verified.");
+  process.exit(3);
+}
+
 console.log(
-  `OK: live ruleset "${spec.name}" matches .github/rulesets/main.json`,
+  `OK: ${checkedRules} rule(s) in effect on '${branch}' match .github/rulesets/main.json`,
 );
+if (unverified.length > 0) {
+  console.log("\nNOT VERIFIED by this run:");
+  for (const u of unverified) console.log(`  - ${u}`);
+  console.log(
+    "\n  Set BRANCH_PROTECTION_TOKEN (fine-grained PAT, 'Administration: read')\n" +
+      "  in CI, or run this locally as the repo owner, to cover them.",
+  );
+  process.exit(0);
+}
 console.log(
-  "OK: no classic branch protection on 'main' (rulesets are the only layer)",
+  `OK: no classic branch protection on '${branch}' (rulesets are the only layer)`,
 );
