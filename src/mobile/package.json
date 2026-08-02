@@ -33,6 +33,6 @@
     "jest-environment-jsdom": "30.4.1",
     "react-dom": "19.2.8",
     "ts-jest": "^29.1.0",
-    "typescript": "7.0.2"
+    "typescript": "^6.0.3"
   }
 }
