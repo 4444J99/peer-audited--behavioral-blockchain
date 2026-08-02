@@ -61,7 +61,7 @@ describe('PayService', () => {
     mockStripe.holdStake.mockResolvedValueOnce({ id: 'pi_ticket' });
     mockStripe.captureStake.mockResolvedValueOnce({
       id: 'pi_ticket',
-      status: 'succeeded',
+      status: 'CAPTURED',
     });
     mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'acct-revenue' }] });
     mockLedger.recordTransaction.mockResolvedValueOnce('entry-1');

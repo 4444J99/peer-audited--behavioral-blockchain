@@ -507,6 +507,11 @@ describe("ContractsService", () => {
     });
 
     it("should finalize phase-B activation exactly once with a single bounty insert", async () => {
+      // The NO_CONTACT_BOUNDARY createContract response builds a whistleblower
+      // bounty link via resolveWebPublicUrl(); provide the env it requires.
+      const originalWebUrl = process.env.STYX_WEB_PUBLIC_URL;
+      process.env.STYX_WEB_PUBLIC_URL = "https://styx.test";
+      try {
       mockPool.connect = jest.fn();
 
       mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user
@@ -595,6 +600,13 @@ describe("ContractsService", () => {
       expect(bountyCalls).toHaveLength(1);
       expect(phaseAClient.release).toHaveBeenCalled();
       expect(phaseBClient.release).toHaveBeenCalled();
+      } finally {
+        if (originalWebUrl === undefined) {
+          delete process.env.STYX_WEB_PUBLIC_URL;
+        } else {
+          process.env.STYX_WEB_PUBLIC_URL = originalWebUrl;
+        }
+      }
     });
 
     it("should mark contract RECONCILE_REQUIRED when compensation cancel fails after phase-B DB failure", async () => {

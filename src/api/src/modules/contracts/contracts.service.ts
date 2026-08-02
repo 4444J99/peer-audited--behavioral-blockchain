@@ -3325,6 +3325,14 @@ export class ContractsService {
 
     if (!user) throw new NotFoundException("User not found");
 
+    // The Stripe rail requires a payment-method handle up front — a bare,
+    // source-less customer cannot fund a double-down, so refuse with the same
+    // friendly error createContract uses. The ledger rail needs no outside
+    // payment method; its handle is provisioned on demand by the port.
+    if (this.escrow.rail !== "LEDGER" && !user.stripe_customer_id) {
+      throw new BadRequestException("User has no payment method on file");
+    }
+
     // 1. Hold additional funds via the escrow rail BEFORE the DB mutation so a
     //    hold failure can't leave the ledger ahead of the actual custody. The
     //    hold is the only step that lives outside the DB transaction; if the
