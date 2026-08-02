@@ -6,7 +6,7 @@ import {
 import { ContractsService, CreateContractInput } from "./contracts.service";
 import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import { StripeFboService } from "../../../services/escrow/stripe.service";
+import { EscrowProvider } from "../../common/interfaces/payout-provider.interface";
 import { DisputeService } from "../../../services/escrow/dispute.service";
 import { FuryRouterService } from "../../../services/fury-router/fury-router.service";
 import { AegisProtocolService } from "../../../services/health/aegis.service";
@@ -32,11 +32,16 @@ describe("ContractsService", () => {
   } as unknown as TruthLogService;
 
   const mockStripe = {
+    rail: "STRIPE",
+    movesRealMoney: false,
     holdStake: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
     captureStake: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
     cancelHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
+    retrieveHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
+    createCustomer: jest.fn().mockResolvedValue("cus_test_1"),
+    transferFunds: jest.fn().mockResolvedValue({ id: "tr_test_1", amountCents: 0 }),
     resolveDisposition: jest.fn().mockReturnValue("REFUND"),
-  } as unknown as StripeFboService;
+  } as unknown as EscrowProvider;
 
   const mockRealStripe = {
     resolveEscrow: jest.fn().mockResolvedValue(true),

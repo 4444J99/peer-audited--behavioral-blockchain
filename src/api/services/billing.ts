@@ -1,4 +1,4 @@
-import { StripeFboService } from './escrow/stripe.service';
+import { EscrowProvider } from '../src/common/interfaces/payout-provider.interface';
 import { LedgerService } from './ledger/ledger.service';
 import { TruthLogService } from './ledger/truth-log.service';
 import { Pool } from 'pg';
@@ -42,50 +42,62 @@ export interface IAPResult {
 
 /**
  * Process a one-off ticket purchase for a contract.
- * Creates a Stripe PaymentIntent, records a ledger entry, and logs to TruthLog.
+ * Creates a hold + capture on the configured escrow rail, records a ledger entry,
+ * and logs to TruthLog.
  */
 export async function processIAP(
   pool: Pool,
-  stripe: StripeFboService,
+  escrow: EscrowProvider,
   ledger: LedgerService,
   truthLog: TruthLogService,
   userId: string,
   contractId: string,
 ): Promise<IAPResult> {
-  // Get user's Stripe customer ID
+  // Get the user's rail-scoped customer handle
   const userResult = await pool.query(
-    'SELECT stripe_customer_id, account_id FROM users WHERE id = $1',
+    'SELECT email, stripe_customer_id, account_id FROM users WHERE id = $1',
     [userId],
   );
   if (userResult.rows.length === 0) {
     throw new Error(`User ${userId} not found`);
   }
 
-  const { stripe_customer_id, account_id } = userResult.rows[0];
-  if (!stripe_customer_id) {
-    throw new Error('User has no payment method on file');
+  const { email, stripe_customer_id, account_id } = userResult.rows[0];
+
+  // The handle is rail-scoped: the ledger rail holds from the user's ledger
+  // account (provisioned on demand), the Stripe rail from the customer handle.
+  let customerHandle: string;
+  if (escrow.rail === 'LEDGER') {
+    customerHandle = account_id
+      ? account_id
+      : await escrow.createCustomer(userId, email);
+  } else {
+    if (!stripe_customer_id) {
+      throw new Error('User has no payment method on file');
+    }
+    customerHandle = stripe_customer_id;
   }
 
   // PM19: a STABLE per-(user, contract) idempotency key so a retry of this purchase reuses the
-  // same PaymentIntent rather than minting a fresh nonce key — which would create a second intent,
+  // same hold rather than minting a fresh nonce key — which would create a second hold,
   // re-charge TICKET_PRICE_BASE, and post a duplicate ledger entry. The same stable key threads
   // through capture and the ledger posting so the entire purchase is idempotent end-to-end.
   const iapKey = `styx_iap_${userId}_${contractId}`;
 
-  // Create Stripe payment intent for the ticket price
-  const paymentIntent = await stripe.holdStake(
-    stripe_customer_id,
+  // Authorize the hold for the ticket price
+  const hold = await escrow.holdStake(
+    customerHandle,
     TICKET_PRICE_BASE,
     contractId,
     iapKey,
   );
 
   // Capture immediately — tickets are non-refundable.
-  // PM20: verify the capture actually succeeded before recording revenue. If Stripe returns a
-  // non-succeeded status WITHOUT throwing, we must NOT write a TICKET_PURCHASE ledger entry /
+  // PM20: verify the capture actually succeeded before recording revenue. If the rail returns
+  // a non-CAPTURED status WITHOUT throwing, we must NOT write a TICKET_PURCHASE ledger entry /
   // TruthLog event for money that was never collected.
-  const captured = await stripe.captureStake(paymentIntent.id);
-  if (captured.status !== 'succeeded') {
+  const captured = await escrow.captureStake(hold.id);
+  if (captured.status !== 'CAPTURED') {
     throw new Error(
       `IAP capture for contract ${contractId} did not succeed (status: ${captured.status}); ` +
         `revenue not recorded.`,
@@ -93,7 +105,9 @@ export async function processIAP(
   }
 
   // Record in ledger: user → revenue
-  if (account_id) {
+  // On the ledger rail the hold+capture postings already moved the funds
+  // user → SYSTEM_ESCROW → SYSTEM_REVENUE; this entry is the Stripe-rail mirror.
+  if (account_id && escrow.rail !== 'LEDGER') {
     const revenueResult = await pool.query(
       `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
     );
@@ -106,7 +120,7 @@ export async function processIAP(
         { type: 'TICKET_PURCHASE', userId },
         undefined,
         // PM19: DB-enforced single-posting for the ticket revenue entry, so even a retry that
-        // reaches the ledger (e.g. after the Stripe call was already idempotent) cannot double-post.
+        // reaches the ledger (e.g. after the rail call was already idempotent) cannot double-post.
         iapKey,
       );
     }
@@ -117,8 +131,8 @@ export async function processIAP(
     userId,
     contractId,
     amount: TICKET_PRICE_BASE,
-    paymentIntentId: paymentIntent.id,
+    paymentIntentId: hold.id,
   });
 
-  return { paymentIntentId: paymentIntent.id, amount: TICKET_PRICE_BASE };
+  return { paymentIntentId: hold.id, amount: TICKET_PRICE_BASE };
 }

@@ -6,13 +6,18 @@ import {
   MONTHLY_SUBSCRIPTION_PRICE,
   TICKET_PRICE_BASE,
 } from '../../../services/billing';
-import { StripeFboService } from '../../../services/escrow/stripe.service';
+import { EscrowProvider } from '../../common/interfaces/payout-provider.interface';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 
 describe('PayService', () => {
   let mockPool: { query: jest.Mock };
-  let mockStripe: { holdStake: jest.Mock; captureStake: jest.Mock };
+  let mockStripe: {
+    rail: string;
+    movesRealMoney: boolean;
+    holdStake: jest.Mock;
+    captureStake: jest.Mock;
+  };
   let mockLedger: { recordTransaction: jest.Mock };
   let mockTruthLog: { appendEvent: jest.Mock };
   let mockBilling: { recordUsage: jest.Mock; getUsageSummary: jest.Mock };
@@ -21,6 +26,8 @@ describe('PayService', () => {
   beforeEach(() => {
     mockPool = { query: jest.fn() };
     mockStripe = {
+      rail: 'STRIPE',
+      movesRealMoney: false,
       holdStake: jest.fn(),
       captureStake: jest.fn(),
     };
@@ -32,7 +39,7 @@ describe('PayService', () => {
     };
     service = new PayService(
       mockPool as unknown as Pool,
-      mockStripe as unknown as StripeFboService,
+      mockStripe as unknown as EscrowProvider,
       mockLedger as unknown as LedgerService,
       mockTruthLog as unknown as TruthLogService,
       mockBilling as unknown as BillingService,

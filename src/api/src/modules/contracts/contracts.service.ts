@@ -13,7 +13,10 @@ import {
 import { Pool, PoolClient } from "pg";
 import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import { StripeFboService } from "../../../services/escrow/stripe.service";
+import {
+  ESCROW_PROVIDER,
+  EscrowProvider,
+} from "../../common/interfaces/payout-provider.interface";
 import { JurisdictionTier } from "../../../services/geofencing";
 import { StripeFBOService as RealStripeFBOService } from "../payments/stripe-fbo.service";
 import { SettlementService } from "../payments/settlement.service";
@@ -137,7 +140,7 @@ export class ContractsService {
     private readonly pool: Pool,
     private readonly ledger: LedgerService,
     private readonly truthLog: TruthLogService,
-    private readonly stripe: StripeFboService,
+    @Inject(ESCROW_PROVIDER) private readonly escrow: EscrowProvider,
     private readonly realStripe: RealStripeFBOService,
     private readonly dispute: DisputeService,
     private readonly furyRouter: FuryRouterService,
@@ -161,6 +164,34 @@ export class ContractsService {
 
   private stakeAmountToCents(stakeAmount: number | string): number {
     return toCents(Number(stakeAmount));
+  }
+
+  /**
+   * Resolve the rail-scoped customer handle for a stake.
+   *
+   * The handle lives in a different column per rail: `users.stripe_customer_id`
+   * on the Stripe rail, `users.account_id` on the ledger rail. The port's
+   * `createCustomer` provisions one on demand (persisting it for the rail it
+   * owns), so a caller that only needs the handle never branches on the column
+   * itself — only on which column to fall back to.
+   */
+  private async resolveEscrowCustomerHandle(user: {
+    id: string;
+    email?: string;
+    stripe_customer_id?: string | null;
+    account_id?: string | null;
+  }): Promise<string> {
+    if (this.escrow.rail === "LEDGER") {
+      if (user.account_id) return user.account_id;
+      return this.escrow.createCustomer(user.id, user.email);
+    }
+    if (user.stripe_customer_id) return user.stripe_customer_id;
+    const handle = await this.escrow.createCustomer(user.id, user.email);
+    await this.pool.query(
+      "UPDATE users SET stripe_customer_id = $1 WHERE id = $2",
+      [handle, user.id],
+    );
+    return handle;
   }
 
   private async assertCanReadContractRow(
@@ -314,7 +345,7 @@ export class ContractsService {
 
     // Phase Beta P0-011: Resolve disposition via escrow service
     const disposition = jurisdictionTier
-      ? this.stripe.resolveDisposition(outcome, jurisdictionTier)
+      ? this.escrow.resolveDisposition(outcome, jurisdictionTier)
       : outcome === "COMPLETED"
         ? ("REFUND" as const)
         : ("CAPTURE" as const);
@@ -696,22 +727,22 @@ export class ContractsService {
     switch (effect.effect_type) {
       case "STRIPE_CANCEL_HOLD":
         if (payload.paymentIntentId) {
-          await this.stripe.cancelHold(payload.paymentIntentId);
+          await this.escrow.cancelHold(payload.paymentIntentId);
         }
         return;
       case "STRIPE_CAPTURE_STAKE":
         if (payload.paymentIntentId) {
-          await this.stripe.captureStake(payload.paymentIntentId);
+          await this.escrow.captureStake(payload.paymentIntentId);
         }
         return;
       case "STRIPE_CAPTURE_APPEAL_FEE":
         if (payload.paymentIntentId) {
-          await this.stripe.captureStake(payload.paymentIntentId);
+          await this.escrow.captureStake(payload.paymentIntentId);
         }
         return;
       case "STRIPE_CANCEL_APPEAL_FEE":
         if (payload.paymentIntentId) {
-          await this.stripe.cancelHold(payload.paymentIntentId);
+          await this.escrow.cancelHold(payload.paymentIntentId);
         }
         return;
       case "LEDGER_STAKE_RETURN":
@@ -1082,7 +1113,9 @@ export class ContractsService {
       });
     }
 
-    if (user.account_id && escrowAccountId) {
+    // On the ledger rail the escrow provider's holdStake already posts the
+    // STAKE_HOLD double-entry; posting it again here would double the debit.
+    if (this.escrow.rail !== "LEDGER" && user.account_id && escrowAccountId) {
       const stakeHoldKey = `${baseKey}:ledger:stake-hold`;
       if (!(await this.hasContractLedgerSideEffect(contractId, stakeHoldKey))) {
         await this.ledger.recordTransaction(
@@ -1256,8 +1289,10 @@ export class ContractsService {
       phaseAClient.release();
     }
 
-    const paymentIntent = await this.stripe.holdStake(
-      user.stripe_customer_id,
+    const customerHandle = await this.resolveEscrowCustomerHandle(user);
+
+    const paymentIntent = await this.escrow.holdStake(
+      customerHandle,
       toCents(dto.stakeAmount),
       contractId,
     );
@@ -1321,7 +1356,7 @@ export class ContractsService {
       }
 
       try {
-        await this.stripe.cancelHold(paymentIntent.id);
+        await this.escrow.cancelHold(paymentIntent.id);
       } catch (cancelErr) {
         await this.markContractReconcileRequired(
           contractId,
@@ -1351,7 +1386,7 @@ export class ContractsService {
         `contract_create_side_effect_failure:${err instanceof Error ? err.message : err}`,
       );
       try {
-        await this.stripe.cancelHold(paymentIntent.id);
+        await this.escrow.cancelHold(paymentIntent.id);
       } catch {
         // Reconciliation state already recorded above.
       }
@@ -1578,8 +1613,11 @@ export class ContractsService {
       bountyLinkId = crypto.randomBytes(32).toString("hex");
     }
 
-    // 5. Hold stake via Stripe FBO
-    if (!user.stripe_customer_id) {
+    // 5. Hold stake via the configured escrow rail
+    //    The Stripe rail requires a payment-method handle up front. The ledger
+    //    rail needs no outside payment method — its handle (the user's ledger
+    //    account) is provisioned on demand by the port's createCustomer.
+    if (this.escrow.rail !== "LEDGER" && !user.stripe_customer_id) {
       throw new BadRequestException("User has no payment method on file");
     }
 
@@ -1639,8 +1677,9 @@ export class ContractsService {
     const contractId = contractResult.rows[0].id;
 
     // Hold stake with real contract ID
-    const paymentIntent = await this.stripe.holdStake(
-      user.stripe_customer_id,
+    const customerHandle = await this.resolveEscrowCustomerHandle(user);
+    const paymentIntent = await this.escrow.holdStake(
+      customerHandle,
       toCents(dto.stakeAmount),
       contractId,
     );
@@ -1694,8 +1733,10 @@ export class ContractsService {
       });
     }
 
-    // 8. Record ledger entry (user asset → escrow liability)
-    if (user.account_id) {
+    // 8. Record ledger entry (user asset → escrow liability).
+    //    On the ledger rail the escrow provider's holdStake already posted this
+    //    entry — posting it again would double the debit.
+    if (this.escrow.rail !== "LEDGER" && user.account_id) {
       // Use a system escrow account — create one if needed
       const escrowResult = await this.pool.query(
         `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
@@ -2127,7 +2168,7 @@ export class ContractsService {
             );
             const tier = (jurisdiction.rows[0]?.tier ||
               JurisdictionTier.TIER_3) as JurisdictionTier;
-            dispositionMode = this.stripe.resolveDisposition("FAILED", tier);
+            dispositionMode = this.escrow.resolveDisposition("FAILED", tier);
           }
           const quote = buildSettlementQuote(
             stakeAmountCents,
@@ -3221,21 +3262,21 @@ export class ContractsService {
       throw new BadRequestException("Contract is not active");
 
     const userResult = await this.pool.query(
-      "SELECT stripe_customer_id, account_id FROM users WHERE id = $1",
+      "SELECT id, email, stripe_customer_id, account_id FROM users WHERE id = $1",
       [userId],
     );
     const user = userResult.rows[0];
 
-    if (!user.stripe_customer_id)
-      throw new BadRequestException("No payment method on file");
+    if (!user) throw new NotFoundException("User not found");
 
-    // 1. Hold additional funds via Stripe BEFORE the DB mutation so a Stripe
-    //    failure can't leave the ledger ahead of the actual hold. The hold is
-    //    the only step that lives outside the DB transaction; if the
+    // 1. Hold additional funds via the escrow rail BEFORE the DB mutation so a
+    //    hold failure can't leave the ledger ahead of the actual custody. The
+    //    hold is the only step that lives outside the DB transaction; if the
     //    transaction below fails we compensate by cancelling the hold so funds
     //    are never authorized without a matching ledger record.
-    const paymentIntent = await this.stripe.holdStake(
-      user.stripe_customer_id,
+    const customerHandle = await this.resolveEscrowCustomerHandle(user);
+    const paymentIntent = await this.escrow.holdStake(
+      customerHandle,
       additionalAmountCents,
       contractId,
     );
@@ -3301,11 +3342,12 @@ export class ContractsService {
         );
 
         // Ledger entry for the increase, inside the same transaction. The
-        // sideEffectKey makes the posting idempotent on retry.
+        // sideEffectKey makes the posting idempotent on retry. On the ledger
+        // rail the hold above already posted the increase.
         const escrowResult = await db.query(
           `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
         );
-        if (user.account_id && escrowResult.rows.length > 0) {
+        if (this.escrow.rail !== "LEDGER" && user.account_id && escrowResult.rows.length > 0) {
           await this.ledger.recordTransaction(
             user.account_id,
             escrowResult.rows[0].id,
@@ -3336,7 +3378,7 @@ export class ContractsService {
         const escrowResult = await db.query(
           `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
         );
-        if (user.account_id && escrowResult.rows.length > 0) {
+        if (this.escrow.rail !== "LEDGER" && user.account_id && escrowResult.rows.length > 0) {
           await this.ledger.recordTransaction(
             user.account_id,
             escrowResult.rows[0].id,
@@ -3361,7 +3403,7 @@ export class ContractsService {
       // Compensation: the Stripe hold succeeded but the ledger/contract mutation
       // failed, so cancel the hold to avoid funds authorized without a record.
       try {
-        await this.stripe.cancelHold(paymentIntent.id);
+        await this.escrow.cancelHold(paymentIntent.id);
       } catch (cancelErr) {
         this.logger.error(
           `Double-down compensation failed for contract ${contractId}, orphaned hold ${paymentIntent.id}: ${
@@ -3479,7 +3521,7 @@ export class ContractsService {
       for (const intentId of intentsToCancel) {
         if (intentId) {
           try {
-            await this.stripe.cancelHold(intentId);
+            await this.escrow.cancelHold(intentId);
           } catch (err) {
             this.logger.error(`Failed to cancel hold for suspended contract ${contract.id}: ${intentId}`, err);
             // Record for reconciliation instead of throwing
