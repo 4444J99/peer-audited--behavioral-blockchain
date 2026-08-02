@@ -15,9 +15,9 @@ import { SettlementWorker } from "./settlement.worker";
 import { ReconciliationService } from "./reconciliation.service";
 import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import { StripeFboService } from "../../../services/escrow/stripe.service";
 import { FboAccountService } from "./fbo-account.service";
 import { StripeProductionGuard } from "./stripe-production.guard";
+import { EscrowModule } from "./escrow.module";
 
 @Module({
   imports: [
@@ -25,6 +25,7 @@ import { StripeProductionGuard } from "./stripe-production.guard";
     NotificationsModule,
     forwardRef(() => ComplianceModule),
     B2BModule,
+    EscrowModule,
   ],
   controllers: [PaymentsController, WebShopController],
   providers: [
@@ -35,7 +36,6 @@ import { StripeProductionGuard } from "./stripe-production.guard";
     // is migrated to the canonical StripeFboService + SettlementWorker path, remove this
     // provider/export and delete stripe-fbo.service.ts to eliminate the divergent payout math.
     StripeFBOService,
-    StripeFboService,
     FboAccountService,
     StripeProductionGuard,
     CorepayPayoutProvider,
@@ -47,11 +47,11 @@ import { StripeProductionGuard } from "./stripe-production.guard";
     TruthLogService,
   ],
   exports: [
+    EscrowModule,
     CorepayPayoutProvider,
     MeteredUsageService,
     PaymentRouterService,
     StripeFBOService,
-    StripeFboService,
     FboAccountService,
     StripeProductionGuard,
     SettlementService,

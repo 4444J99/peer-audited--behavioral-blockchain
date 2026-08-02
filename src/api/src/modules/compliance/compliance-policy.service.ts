@@ -1,6 +1,8 @@
 import { Injectable, Logger, OnModuleInit, Optional } from "@nestjs/common";
 import { Request } from "express";
+import { readFileSync } from "fs";
 import * as geoip from "geoip-lite";
+import { Reader, type CityResponse } from "maxmind";
 import { Pool } from "pg";
 import {
   JurisdictionTier,
@@ -20,6 +22,40 @@ export type ComplianceAction =
   | "READ_ONLY"
   | "UNKNOWN";
 
+/**
+ * Which resolver produced the geo signal, in precedence order. The chain is a
+ * configuration entry: adding a better source is adding a link, not a branch.
+ */
+export type GeoSource =
+  | "cf-ipstate"
+  | "cloudfront-viewer-country-region"
+  | "maxmind"
+  | "ip-lookup"
+  | "x-styx-state"
+  | "none";
+
+/**
+ * How the state (or the absence of one) was established. "ip-country-only" means
+ * the chain resolved a country but no state — too coarse to pin a tier, precise
+ * enough to admit read-only access for a permitted country.
+ */
+export type GeoStateSource =
+  | "cf-ipstate"
+  | "cloudfront-viewer-country-region"
+  | "maxmind"
+  | "ip-lookup"
+  | "x-styx-state"
+  | "ip-country-only"
+  | "none";
+
+/** One link in the ordered geo chain. */
+export interface GeoResolution {
+  country: string | null;
+  region: string | null;
+  source: GeoSource;
+  confidence: number;
+}
+
 export interface ComplianceDecision {
   allowed: boolean;
   code?:
@@ -32,7 +68,10 @@ export interface ComplianceDecision {
   action: ComplianceAction;
   tier: JurisdictionTier;
   state: string | null;
-  stateSource: "cf-ipstate" | "x-styx-state" | "ip-lookup" | "none";
+  country: string | null;
+  source: GeoSource;
+  stateSource: GeoStateSource;
+  confidence: number;
   missingLocation: boolean;
   overrideIgnoredInProduction: boolean;
 }
@@ -74,6 +113,8 @@ export function geofenceFailsOpenOnMissingLocation(): boolean {
 @Injectable()
 export class CompliancePolicyService implements OnModuleInit {
   private readonly logger = new Logger(CompliancePolicyService.name);
+
+  private maxMindReader: Reader<CityResponse> | null = null;
 
   private static readonly RESTRICTED_REFUND_ONLY_ACTIONS =
     new Set<ComplianceAction>([
@@ -331,6 +372,9 @@ export class CompliancePolicyService implements OnModuleInit {
           decision.code ?? null,
           JSON.stringify({
             stateSource: decision.stateSource,
+            source: decision.source,
+            confidence: decision.confidence,
+            country: decision.country,
             missingLocation: decision.missingLocation,
             requiredMode: decision.requiredMode,
           }),
@@ -434,6 +478,29 @@ export class CompliancePolicyService implements OnModuleInit {
     const action = this.resolveActionFromRequest(req);
 
     if (!state && !this.shouldFailOpenOnMissingLocation()) {
+      // The state is unresolved, so this is a blocked request — UNLESS the
+      // chain still resolved a country and it is a permitted one, AND the
+      // action is purely read-only. A US client whose IP resolves to
+      // `{country:'US', region:''}` (common across the bundled GeoLite
+      // ranges, e.g. 8.8.8.8) must not be locked out of their dashboard.
+      // No monetized path can reach this carve-out: READ_ONLY is in neither
+      // RESTRICTED_REFUND_ONLY_ACTIONS nor KYC_GATED_ACTIONS.
+      if (location.country === "US" && action === "READ_ONLY") {
+        return {
+          allowed: true,
+          requiredMode: "FULL_ACCESS",
+          action,
+          tier: JurisdictionTier.TIER_1,
+          state: null,
+          country: location.country,
+          source: location.source,
+          stateSource: "ip-country-only",
+          confidence: location.confidence,
+          missingLocation: true,
+          overrideIgnoredInProduction: location.overrideIgnoredInProduction,
+        };
+      }
+
       return {
         allowed: false,
         code: "JURISDICTION_BLOCKED",
@@ -442,7 +509,10 @@ export class CompliancePolicyService implements OnModuleInit {
         action,
         tier,
         state: null,
-        stateSource: location.source,
+        country: location.country,
+        source: location.source,
+        stateSource: this.deriveStateSource(location),
+        confidence: location.confidence,
         missingLocation: true,
         overrideIgnoredInProduction: location.overrideIgnoredInProduction,
       };
@@ -454,10 +524,23 @@ export class CompliancePolicyService implements OnModuleInit {
       action,
       tier,
       state,
-      stateSource: location.source,
+      country: location.country,
+      source: location.source,
+      stateSource: this.deriveStateSource(location),
+      confidence: location.confidence,
       missingLocation: !state,
       overrideIgnoredInProduction: location.overrideIgnoredInProduction,
     };
+  }
+
+  private deriveStateSource(location: {
+    state: string | null;
+    country: string | null;
+    source: GeoSource;
+  }): GeoStateSource {
+    if (location.state) return location.source;
+    if (location.country) return "ip-country-only";
+    return "none";
   }
 
   private evaluateActionPolicy(
@@ -511,27 +594,25 @@ export class CompliancePolicyService implements OnModuleInit {
 
   private resolveStateFromRequest(req: Request): {
     state: string | null;
-    source: "cf-ipstate" | "x-styx-state" | "ip-lookup" | "none";
+    country: string | null;
+    source: GeoSource;
+    confidence: number;
     overrideIgnoredInProduction: boolean;
   } {
     const trustProxy = this.trustProxyHeaders();
 
-    // cf-ipstate is the Cloudflare-injected geo signal. It is only authoritative when
-    // we are actually behind Cloudflare (TRUST_PROXY_HEADERS=true); otherwise a client
-    // could spoof it to bypass a PROHIBITED jurisdiction block.
+    // 1. Trusted proxy/CDN geo headers. These are only authoritative when we are
+    //    actually behind a trusted edge (TRUST_PROXY_HEADERS=true); otherwise a
+    //    client could spoof them to bypass a PROHIBITED jurisdiction block.
     if (trustProxy) {
-      const cfIpState = normalizeStateCode(
-        this.toSingleHeaderValue(req.headers["cf-ipstate"]),
-      );
-      if (cfIpState) {
-        return {
-          state: cfIpState,
-          source: "cf-ipstate",
-          overrideIgnoredInProduction: false,
-        };
+      const proxyResolution = this.resolveFromProxyGeoHeaders(req);
+      if (proxyResolution) {
+        return this.toLocation(proxyResolution, false);
       }
     }
 
+    // 2. Dev-only explicit override — bypasses geo entirely. Unchanged behavior:
+    //    honored outside production, and flagged (not honored) in production.
     const override = normalizeStateCode(
       this.toSingleHeaderValue(req.headers["x-styx-state"]),
     );
@@ -539,24 +620,162 @@ export class CompliancePolicyService implements OnModuleInit {
     if (override && !isProduction) {
       return {
         state: override,
+        country: "US",
         source: "x-styx-state",
+        confidence: 1,
         overrideIgnoredInProduction: false,
       };
     }
 
-    const ipState = this.lookupStateFromRequestIp(req, trustProxy);
-    if (ipState) {
-      return {
-        state: ipState,
-        source: "ip-lookup",
-        overrideIgnoredInProduction: !!override && isProduction,
-      };
+    // 3. IP-based chain: MaxMind GeoLite2 City when configured (the fix for the
+    //    *data*), then geoip-lite as the always-present floor. `override` above is
+    //    dev-only; in production its presence is recorded so it is visible that a
+    //    client-supplied override was attempted and ignored.
+    const maxMindResolution = this.resolveFromMaxMind(req, trustProxy);
+    if (maxMindResolution) {
+      return this.toLocation(
+        maxMindResolution,
+        !!override && isProduction,
+      );
+    }
+
+    const geoipResolution = this.lookupFromGeoipLite(req, trustProxy);
+    if (geoipResolution) {
+      return this.toLocation(geoipResolution, !!override && isProduction);
     }
 
     return {
       state: null,
+      country: null,
       source: "none",
+      confidence: 0,
       overrideIgnoredInProduction: !!override && isProduction,
+    };
+  }
+
+  private toLocation(
+    resolution: GeoResolution,
+    overrideIgnoredInProduction: boolean,
+  ): {
+    state: string | null;
+    country: string | null;
+    source: GeoSource;
+    confidence: number;
+    overrideIgnoredInProduction: boolean;
+  } {
+    return {
+      state: resolution.region,
+      country: resolution.country,
+      source: resolution.source,
+      confidence: resolution.confidence,
+      overrideIgnoredInProduction,
+    };
+  }
+
+  /**
+   * Trusted-edge geo headers, in precedence order: `cf-ipstate` (Cloudflare, a US
+   * state code) then `cloudfront-viewer-country-region` (AWS, `US-CA` or `US`).
+   * The guard already logged the latter as a diagnostic; wire it as a source
+   * rather than deleting the signal.
+   */
+  private resolveFromProxyGeoHeaders(req: Request): GeoResolution | null {
+    const cfIpState = normalizeStateCode(
+      this.toSingleHeaderValue(req.headers["cf-ipstate"]),
+    );
+    if (cfIpState) {
+      return {
+        country: "US",
+        region: cfIpState,
+        source: "cf-ipstate",
+        confidence: 1,
+      };
+    }
+
+    const cloudfront = this.toSingleHeaderValue(
+      req.headers["cloudfront-viewer-country-region"],
+    );
+    if (!cloudfront) return null;
+    const parts = String(cloudfront)
+      .split("-")
+      .map((part) => part.trim().toUpperCase());
+    const country = parts[0] || null;
+    if (!country) return null;
+    const regionCode = parts.slice(1).join("-") || null;
+    return {
+      country,
+      region:
+        country === "US" && regionCode
+          ? normalizeStateCode(regionCode)
+          : null,
+      source: "cloudfront-viewer-country-region",
+      confidence: 1,
+    };
+  }
+
+  /**
+   * MaxMind GeoLite2 City lookup when `MAXMIND_DB_PATH` is set. The reader is
+   * constructed once (read-only mmdb buffer) and cached; a bad/missing file
+   * degrades to the next link instead of throwing at boot.
+   */
+  private resolveFromMaxMind(
+    req: Request,
+    trustProxy: boolean,
+  ): GeoResolution | null {
+    const dbPath = process.env.MAXMIND_DB_PATH;
+    if (!dbPath) return null;
+
+    try {
+      if (!this.maxMindReader) {
+        this.maxMindReader = new Reader<CityResponse>(
+          readFileSync(dbPath),
+        );
+      }
+      const ip = this.extractClientIp(req, trustProxy);
+      if (!ip) return null;
+
+      const record = this.maxMindReader.get(ip);
+      if (!record) return null;
+
+      const country = record.country?.iso_code ?? null;
+      if (!country) return null;
+      const region =
+        country === "US" ? record.subdivisions?.[0]?.iso_code ?? null : null;
+
+      return {
+        country,
+        region: region ? normalizeStateCode(region) : null,
+        source: "maxmind",
+        confidence: record.country?.confidence ?? 0.8,
+      };
+    } catch (err) {
+      this.logger.warn(
+        `MaxMind GeoLite2 lookup failed (MAXMIND_DB_PATH=${dbPath}): ${err instanceof Error ? err.message : err}`,
+      );
+      return null;
+    }
+  }
+
+  private lookupFromGeoipLite(
+    req: Request,
+    trustProxy: boolean,
+  ): GeoResolution | null {
+    const ip = this.extractClientIp(req, trustProxy);
+    if (!ip) return null;
+
+    const geo = geoip.lookup(ip);
+    if (!geo) return null;
+    // Non-US resolutions stay "location unknown" — the tier map is US-only and
+    // fail-closed is the default for any jurisdiction outside it.
+    if (geo.country !== "US") return null;
+
+    const region = geo.region ? normalizeStateCode(geo.region) : null;
+    return {
+      country: "US",
+      region,
+      source: "ip-lookup",
+      // A bundled GeoLite range can resolve country with an empty region — that
+      // is still a genuine (if coarse) resolution, and worth less confidence.
+      confidence: region ? 0.7 : 0.4,
     };
   }
 
@@ -586,21 +805,6 @@ export class CompliancePolicyService implements OnModuleInit {
     if (!value) return null;
     if (Array.isArray(value)) return value[0] ?? null;
     return value;
-  }
-
-  private lookupStateFromRequestIp(
-    req: Request,
-    trustProxy: boolean,
-  ): string | null {
-    const ip = this.extractClientIp(req, trustProxy);
-    if (!ip) return null;
-
-    const geo = geoip.lookup(ip);
-    if (!geo || geo.country !== "US" || !geo.region) {
-      return null;
-    }
-
-    return normalizeStateCode(geo.region);
   }
 
   /**

@@ -99,6 +99,18 @@ function normalizeHttpExceptionPayload(
   };
 }
 
+/**
+ * Stacks are reflected verbatim in 500 bodies only when explicitly opted in.
+ * NODE_ENV !== 'production' alone is not enough: a mis-set NODE_ENV (dev,
+ * empty, staging-with-prod-data) must not dump absolute paths on its own.
+ */
+function shouldExposeStack(): boolean {
+  return (
+    process.env.NODE_ENV !== 'production' &&
+    process.env.STYX_DEBUG_ERROR_DETAILS === 'true'
+  );
+}
+
 @Catch()
 export class GlobalHttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalHttpExceptionFilter.name);
@@ -130,7 +142,7 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       trace_id: traceId,
     };
 
-    if (process.env.NODE_ENV !== 'production' && exception instanceof Error && exception.stack) {
+    if (shouldExposeStack() && exception instanceof Error && exception.stack) {
       body.details = { name: exception.name, stack: exception.stack };
     }
 

@@ -19,6 +19,10 @@ export class GeofenceGuard implements CanActivate {
         method: request.method,
         hasCfIpState: !!request.headers['cf-ipstate'],
         hasCloudfrontViewerCountryRegion: !!request.headers['cloudfront-viewer-country-region'],
+        country: decision.country,
+        stateSource: decision.stateSource,
+        source: decision.source,
+        confidence: decision.confidence,
         failOpen: this.compliancePolicy.shouldFailOpenOnMissingLocation(),
       });
     }
