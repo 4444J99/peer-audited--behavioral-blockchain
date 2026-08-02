@@ -39,7 +39,9 @@ const redisProvider = {
   provide: ANOMALY_REDIS_CLIENT,
   useFactory: () => {
     try {
-      return new Redis({ ...resolveCacheRedisConfig(), lazyConnect: true });
+      const config = resolveCacheRedisConfig();
+      if (!config) return undefined;
+      return new Redis({ ...config, lazyConnect: true });
     } catch {
       return undefined;
     }
