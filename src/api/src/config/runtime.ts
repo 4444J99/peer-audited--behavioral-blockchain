@@ -171,3 +171,18 @@ export function resolveCacheRedisConfig() {
   }
   return cfg;
 }
+
+/**
+ * Whether the pilot is running on test money. Defaults ON.
+ *
+ * The escrow rail factory selects from this: true → LedgerEscrowProvider (real
+ * balances on the internal ledger, no outside rail attached); false →
+ * StripeEscrowProvider. This is the same predicate StripeFboService uses to arm
+ * its real-money interlocks, so the rail selection and the interlock can never
+ * disagree about which mode is active.
+ */
+export function testMoneyModeEnabled(): boolean {
+  return (
+    String(process.env.STYX_TEST_MONEY_MODE ?? "true").toLowerCase() !== "false"
+  );
+}
