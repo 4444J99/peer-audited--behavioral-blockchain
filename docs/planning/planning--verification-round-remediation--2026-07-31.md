@@ -283,18 +283,18 @@ createdb styx_v858 && npm run dev:migrate          # 71 migrations incl. 066
 npm run dev:api & npm run dev:web
 ```
 
-| # | Drive | Expect |
-|---|---|---|
-| 1 | `POST /contracts` on the **ledger** rail (`STYX_TEST_MONEY_MODE=true`, no Stripe key), then query `contracts` + `ledger_entries` | `ACTIVE`, hold id set, one bounty row, a balanced user→`SYSTEM_ESCROW` pair. Repeat the finalize → no duplicate bounty |
-| 2 | Same with a real `sk_test_…` key and `STYX_TEST_MONEY_MODE=false` | 201 on the Stripe rail — not the 500 "Refusing to authorize a hold with real money" |
-| 3 | Force the hold to fail, then run the scheduler pass | Row lands `RECONCILE_REQUIRED`, is swept, and a second create is allowed (slot not burned) |
-| 4 | `GET /contracts` with `x-forwarded-for: 8.8.8.8`, `TRUST_PROXY=true` + `GEO=block` | **200**, `source: ip-country-only`. Contrast: `POST /contracts` same header → 403 `JURISDICTION_BLOCKED`; `91.198.174.192` (NL) → 403 on both |
-| 5 | Same request with `MAXMIND_DB_PATH` set | Resolves to a real state, `source: maxmind`, higher confidence in the audit row |
-| 6 | Boot with no `STRIPE_SECRET_KEY`; boot with only `REDIS_URL` | Both listen on :3900, `/health` 200 |
-| 7 | Load `/dashboard` and `/help` in Chrome | Styled — real utilities and live `@theme` tokens, not native `<details>` and blue links. Screenshot both |
-| 8 | Log in from an IP with no region | Dashboard renders; contracts section shows the jurisdiction notice; no "backend service is reachable" |
-| 9 | `GET /api/docs`, paste the `CreateContractDto` example verbatim into `POST /contracts` | Accepted |
-| 10 | `npm run web` in `src/mobile`, open `DigitalExhaustScreen` with no log provider installed | "Scan Unavailable" — **not** a clean `COMPLIANT`. Screenshot |
-| 11 | Trigger a 500 with `NODE_ENV` and `STYX_DEBUG_ERROR_DETAILS` unset | No `details.stack` in the body |
+| # | Drive | Expect | Outcome |
+|---|---|---|---|
+| 1 | `POST /contracts` on the **ledger** rail (`STYX_TEST_MONEY_MODE=true`, no Stripe key), then query `contracts` + `ledger_entries` | `ACTIVE`, hold id set, one bounty row, a balanced user→`SYSTEM_ESCROW` pair. Repeat the finalize → no duplicate bounty | **PASS** — exactly-once ledger; balanced pair; no duplicate bounty |
+| 2 | Same with a real `sk_test_…` key and `STYX_TEST_MONEY_MODE=false` | 201 on the Stripe rail — not the 500 "Refusing to authorize a hold with real money" | **BLOCKED → #865** — no `sk_test_…` key available (dependency-free ask); logged as an issue |
+| 3 | Force the hold to fail, then run the scheduler pass | Row lands `RECONCILE_REQUIRED`, is swept, and a second create is allowed (slot not burned) | **PASS** — `56dd6ac6-…` → `STAKE_FAILED` + `CONTRACT_RECONCILED_STAKE_FAILED`; second create allowed |
+| 4 | `GET /contracts` with `x-forwarded-for: 8.8.8.8`, `TRUST_PROXY=true` + `GEO=block` | **200**, `source: ip-country-only`. Contrast: `POST /contracts` same header → 403 `JURISDICTION_BLOCKED`; `91.198.174.192` (NL) → 403 on both | **PASS** — US 200 `ip-country-only`; NL 403 on both routes |
+| 5 | Same request with `MAXMIND_DB_PATH` set | Resolves to a real state, `source: maxmind`, higher confidence in the audit row | **BLOCKED → #866** — no `GeoLite2-City.mmdb` (MaxMind license); graceful degradation proven via `MAXMIND_DB_PATH=/nonexistent/…` → boots `/health` 200 + fallback |
+| 6 | Boot with no `STRIPE_SECRET_KEY`; boot with only `REDIS_URL` | Both listen on :3900, `/health` 200 | **PASS** — Stripe absent + Redis single-URL redundancy boot clean |
+| 7 | Load `/dashboard` and `/help` in Chrome | Styled — real utilities and live `@theme` tokens, not native `<details>` and blue links. Screenshot both | **PASS** — `docs/verification/verify-row7-dashboard.png`, `verify-row7-help.png` |
+| 8 | Log in from an IP with no region | Dashboard renders; contracts section shows the jurisdiction notice; no "backend service is reachable" | **BLOCKED → #867** — jurisdiction notice unreachable: only `/contracts` is geofence-guarded and `page.tsx:58` `.catch(() => [])` swallows the 403 |
+| 9 | `GET /api/docs`, paste the `CreateContractDto` example verbatim into `POST /contracts` | Accepted | **PASS** — schema-example body → 201 (contract `3f7a8934-…`, `MVP_39` plan override) |
+| 10 | `npm run web` in `src/mobile`, open `DigitalExhaustScreen` with no log provider installed | "Scan Unavailable" — **not** a clean `COMPLIANT`. Screenshot | **PASS** — "Scan Unavailable On This Device" fail-closed rendered (F1 web target + `registerRootComponent` entry + `DigitalExhaust` deep link); `docs/verification/verify-row10-mobile-digital-exhaust.png` |
+| 11 | Trigger a 500 with `NODE_ENV` and `STYX_DEBUG_ERROR_DETAILS` unset | No `details.stack` in the body | **PASS** — `{"error_code":"INTERNAL_SERVER_ERROR","message":"…","trace_id":"…"}` — no `details` key, no stack |
 
 Screenshots for 4, 7, 8, 10 delivered via `SendUserFile`; the report names what was sent.

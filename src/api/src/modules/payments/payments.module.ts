@@ -18,7 +18,6 @@ import { TruthLogService } from "../../../services/ledger/truth-log.service";
 import { FboAccountService } from "./fbo-account.service";
 import { StripeProductionGuard } from "./stripe-production.guard";
 import { EscrowModule } from "./escrow.module";
-import { StripeFboService } from "../../../services/escrow/stripe.service";
 
 @Module({
   imports: [
@@ -48,11 +47,11 @@ import { StripeFboService } from "../../../services/escrow/stripe.service";
     TruthLogService,
   ],
   exports: [
+    EscrowModule,
     CorepayPayoutProvider,
     MeteredUsageService,
     PaymentRouterService,
     StripeFBOService,
-    StripeFboService,
     FboAccountService,
     StripeProductionGuard,
     SettlementService,

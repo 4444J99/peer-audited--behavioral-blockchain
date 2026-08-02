@@ -1,6 +1,7 @@
 {
   "name": "@styx/mobile",
   "version": "0.0.1",
+  "main": "index.js",
   "scripts": {
     "android": "expo run:android",
     "ios": "expo run:ios",
