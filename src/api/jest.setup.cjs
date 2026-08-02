@@ -13,6 +13,7 @@ const TEST_ENV_DEFAULTS = {
   ZK_EXHAUST_SECRET: 'test-zk-exhaust-secret-not-for-production',
   STYX_WEBHOOK_SECRET: 'test-webhook-secret-not-for-production',
   STRIPE_IDENTITY_WEBHOOK_SECRET: 'test-stripe-identity-webhook-secret',
+  STRIPE_SECRET_KEY: 'sk_test_mock_key',
 };
 
 for (const [key, value] of Object.entries(TEST_ENV_DEFAULTS)) {

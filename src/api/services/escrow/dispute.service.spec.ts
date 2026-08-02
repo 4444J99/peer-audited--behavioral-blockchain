@@ -1,5 +1,5 @@
 import { DisputeService } from './dispute.service';
-import { StripeFboService } from './stripe.service';
+import { EscrowProvider } from '../../src/common/interfaces/payout-provider.interface';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Pool } from 'pg';
 import { LedgerService } from '../ledger/ledger.service';
@@ -36,12 +36,16 @@ describe('DisputeService', () => {
     };
 
     const stripeMock = {
+      rail: 'STRIPE',
+      movesRealMoney: false,
       holdStake: jest.fn(),
       captureStake: jest.fn(),
       cancelHold: jest.fn(),
-      refundStake: jest.fn(),
-      transferBounty: jest.fn(),
-    } as unknown as StripeFboService;
+      retrieveHold: jest.fn(),
+      createCustomer: jest.fn(),
+      transferFunds: jest.fn(),
+      resolveDisposition: jest.fn(),
+    } as unknown as EscrowProvider;
 
     mockStripeService = stripeMock;
 

@@ -6,7 +6,7 @@ import {
 import { ContractsService, CreateContractInput } from "./contracts.service";
 import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import { StripeFboService } from "../../../services/escrow/stripe.service";
+import { EscrowProvider } from "../../common/interfaces/payout-provider.interface";
 import { DisputeService } from "../../../services/escrow/dispute.service";
 import { FuryRouterService } from "../../../services/fury-router/fury-router.service";
 import { AegisProtocolService } from "../../../services/health/aegis.service";
@@ -32,11 +32,16 @@ describe("ContractsService", () => {
   } as unknown as TruthLogService;
 
   const mockStripe = {
+    rail: "STRIPE",
+    movesRealMoney: false,
     holdStake: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
     captureStake: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
     cancelHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
+    retrieveHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
+    createCustomer: jest.fn().mockResolvedValue("cus_test_1"),
+    transferFunds: jest.fn().mockResolvedValue({ id: "tr_test_1", amountCents: 0 }),
     resolveDisposition: jest.fn().mockReturnValue("REFUND"),
-  } as unknown as StripeFboService;
+  } as unknown as EscrowProvider;
 
   const mockRealStripe = {
     resolveEscrow: jest.fn().mockResolvedValue(true),
@@ -499,6 +504,109 @@ describe("ContractsService", () => {
       expect(mockStripe.cancelHold).toHaveBeenCalledWith("pi_tx_fail_1");
       expect(phaseAClient.release).toHaveBeenCalled();
       expect(phaseBClient.release).toHaveBeenCalled();
+    });
+
+    it("should finalize phase-B activation exactly once with a single bounty insert", async () => {
+      // The NO_CONTACT_BOUNDARY createContract response builds a whistleblower
+      // bounty link via resolveWebPublicUrl(); provide the env it requires.
+      const originalWebUrl = process.env.STYX_WEB_PUBLIC_URL;
+      process.env.STYX_WEB_PUBLIC_URL = "https://styx.test";
+      try {
+      mockPool.connect = jest.fn();
+
+      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // total failures
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // activeRecoveryContracts
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // lastRecoveryContract
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // lastRecoveryFailure
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] }); // prior contracts
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // hasContractLedgerSideEffect
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // hasTruthLogSideEffect
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // partner lookup
+
+      const phaseAClient = {
+        query: jest
+          .fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockResolvedValueOnce({ rows: [{ id: "contract-tx-happy" }] }) // INSERT contract
+          .mockResolvedValueOnce({ rows: [] }) // accountability partner SELECT
+          .mockResolvedValueOnce({ rows: [] }) // INSERT accountability_partners
+          .mockResolvedValueOnce({ rows: [] }), // COMMIT
+        release: jest.fn(),
+      };
+
+      const phaseBClient = {
+        query: jest
+          .fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockResolvedValueOnce({
+            rows: [
+              {
+                id: "contract-tx-happy",
+                status: "PENDING_STAKE",
+                payment_intent_id: null,
+              },
+            ],
+          }) // SELECT FOR UPDATE
+          .mockResolvedValueOnce({ rows: [] }) // finalize UPDATE
+          .mockResolvedValueOnce({ rows: [] }) // bounty INSERT
+          .mockResolvedValueOnce({ rows: [] }), // COMMIT
+        release: jest.fn(),
+      };
+
+      (mockPool.connect as jest.Mock)
+        .mockResolvedValueOnce(phaseAClient)
+        .mockResolvedValueOnce(phaseBClient);
+
+      (mockStripe.holdStake as jest.Mock).mockResolvedValueOnce({
+        id: "pi_tx_happy_1",
+      });
+
+      const dto: CreateContractInput = {
+        userId: "user-1",
+        oathCategory: OathCategory.NO_CONTACT_BOUNDARY,
+        verificationMethod: VerificationMethod.DAILY_ATTESTATION,
+        stakeAmount: 15,
+        durationDays: 14,
+        recoveryMetadata: {
+          accountabilityPartnerEmail: "friend@example.com",
+          noContactIdentifiers: ["hash_abc"],
+          acknowledgments: {
+            voluntary: true,
+            noMinors: true,
+            noDependents: true,
+            noLegalObligations: true,
+          },
+        },
+      };
+
+      const result = await service.createContract(dto);
+
+      expect(result.contractId).toBe("contract-tx-happy");
+      expect(result.paymentIntentId).toBe("pi_tx_happy_1");
+      expect(mockStripe.holdStake).toHaveBeenCalledTimes(1);
+      expect(mockStripe.cancelHold).not.toHaveBeenCalled();
+
+      const updateCalls = phaseBClient.query.mock.calls.filter(
+        ([sql]: [string]) =>
+          typeof sql === "string" && sql.includes("SET payment_intent_id"),
+      );
+      expect(updateCalls).toHaveLength(1);
+      const bountyCalls = phaseBClient.query.mock.calls.filter(
+        ([sql]: [string]) =>
+          typeof sql === "string" && sql.includes("INSERT INTO bounties"),
+      );
+      expect(bountyCalls).toHaveLength(1);
+      expect(phaseAClient.release).toHaveBeenCalled();
+      expect(phaseBClient.release).toHaveBeenCalled();
+      } finally {
+        if (originalWebUrl === undefined) {
+          delete process.env.STYX_WEB_PUBLIC_URL;
+        } else {
+          process.env.STYX_WEB_PUBLIC_URL = originalWebUrl;
+        }
+      }
     });
 
     it("should mark contract RECONCILE_REQUIRED when compensation cancel fails after phase-B DB failure", async () => {

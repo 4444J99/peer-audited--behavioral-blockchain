@@ -6,6 +6,19 @@ export interface BaseStyxResponse {
   message?: string;
 }
 
+/**
+ * Error envelope contract — the API serializes every failure as this shape
+ * (see `api/src/common/filters/global-http-exception.filter.ts`). One
+ * definition shared by the API server, the web client, and every other client
+ * so `error_code` can never drift across surfaces.
+ */
+export interface StyxErrorEnvelope {
+  error_code: string;
+  message: string;
+  trace_id: string | null;
+  details?: unknown;
+}
+
 export type StyxClientPlatform =
   | "ios"
   | "android"

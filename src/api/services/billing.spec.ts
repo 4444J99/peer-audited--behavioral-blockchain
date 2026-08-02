@@ -2,13 +2,14 @@ import { processIAP, TICKET_PRICE_BASE } from './billing';
 
 describe('processIAP', () => {
   let mockPool: { query: jest.Mock };
-  let mockStripe: { holdStake: jest.Mock; captureStake: jest.Mock };
+  let mockStripe: { rail: string; holdStake: jest.Mock; captureStake: jest.Mock };
   let mockLedger: { recordTransaction: jest.Mock };
   let mockTruthLog: { appendEvent: jest.Mock };
 
   beforeEach(() => {
     mockPool = { query: jest.fn() };
     mockStripe = {
+      rail: 'STRIPE',
       holdStake: jest.fn(),
       captureStake: jest.fn(),
     };
@@ -25,7 +26,7 @@ describe('processIAP', () => {
 
     // Stripe hold
     mockStripe.holdStake.mockResolvedValueOnce({ id: 'pi_test_123' });
-    mockStripe.captureStake.mockResolvedValueOnce({ id: 'pi_test_123', status: 'succeeded' });
+    mockStripe.captureStake.mockResolvedValueOnce({ id: 'pi_test_123', status: 'CAPTURED' });
 
     // Revenue account lookup
     mockPool.query.mockResolvedValueOnce({
@@ -96,7 +97,7 @@ describe('processIAP', () => {
     });
 
     mockStripe.holdStake.mockResolvedValueOnce({ id: 'pi_no_acc' });
-    mockStripe.captureStake.mockResolvedValueOnce({ id: 'pi_no_acc', status: 'succeeded' });
+    mockStripe.captureStake.mockResolvedValueOnce({ id: 'pi_no_acc', status: 'CAPTURED' });
     mockTruthLog.appendEvent.mockResolvedValueOnce(undefined);
 
     const result = await processIAP(

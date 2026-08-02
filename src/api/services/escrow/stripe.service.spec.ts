@@ -50,7 +50,7 @@ describe('StripeFboService (dev mode)', () => {
     });
 
     // Non-dev (live Stripe) idempotency behaviour. We stub the private stripe client and
-    // force isDevMode=false so the retrieve/capture branch runs.
+        // force isMockMode=false so the retrieve/capture branch runs.
     describe('idempotent retry (non-dev mode)', () => {
       let liveService: StripeFboService;
       let mockStripe: { paymentIntents: { retrieve: jest.Mock; capture: jest.Mock } };
@@ -70,7 +70,11 @@ describe('StripeFboService (dev mode)', () => {
           },
         };
         // Bypass dev-mode short-circuit and inject the mocked Stripe client.
-        Object.defineProperty(liveService, 'isDevMode', { get: () => false });
+        // The rail split (isMockMode vs movesRealMoney) means a live-money test
+        // stubs both: mock mode off so the Stripe branch runs, and movesRealMoney
+        // on so assertRealMoneyAllowed() still gates the call like production.
+        Object.defineProperty(liveService, 'isMockMode', { get: () => false });
+        Object.defineProperty(liveService, 'movesRealMoney', { get: () => true });
         (liveService as any).stripe = mockStripe;
       });
 
@@ -147,7 +151,8 @@ describe('StripeFboService (dev mode)', () => {
       delete process.env.GEO_MISSING_HEADER_ACTION;
       liveService = new StripeFboService();
       mockStripe = { transfers: { create: jest.fn().mockResolvedValue({ id: 'tr_live_1', amount: 1000 }) } };
-      Object.defineProperty(liveService, 'isDevMode', { get: () => false });
+      Object.defineProperty(liveService, 'isMockMode', { get: () => false });
+      Object.defineProperty(liveService, 'movesRealMoney', { get: () => true });
       (liveService as any).stripe = mockStripe;
     });
 

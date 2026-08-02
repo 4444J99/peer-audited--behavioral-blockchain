@@ -6,6 +6,7 @@ import type { LinkingOptions } from '@react-navigation/native';
  * Supports:
  *   styx://contracts/:contractId       → ContractDetail
  *   styx://contracts/:contractId/attest → Attestation (daily check-in)
+ *   styx://contracts/:contractId/digital-exhaust → DigitalExhaust (automatic scan)
  *   styx://contracts/new               → CreateContract
  *   styx://fury                        → Fury queue
  *   styx://wallet                      → Wallet
@@ -32,6 +33,7 @@ export const linking: LinkingOptions<any> = {
           ContractList: 'contracts',
           ContractDetail: 'contracts/:contractId',
           Attestation: 'contracts/:contractId/attest',
+          DigitalExhaust: 'contracts/:contractId/digital-exhaust',
           CreateContract: 'contracts/new',
         },
       },

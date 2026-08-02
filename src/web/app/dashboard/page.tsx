@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Activity, ShieldCheck, Flame, History, User, Loader2, AlertTriangle, LogOut, Bell, Settings, ScrollText, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { api } from '../../services/api-client';
+import { api, ApiError } from '../../services/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import Leaderboard from '../../components/Leaderboard';
 import NotificationPanel from '../../components/NotificationPanel';
@@ -45,7 +45,7 @@ export default function IdentityDashboard() {
   const [streakData, setStreakData] = useState<any>(null);
   const [streakLoading, setStreakLoading] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function IdentityDashboard() {
         const [balanceData, historyData, contractData, streakChain] = await Promise.all([
           api.getBalance() as any,
           api.getHistory(10) as any,
-          api.getUserContracts() as any,
+          api.getUserContracts().catch(() => []),
           api.getStreakChain().catch(() => null),
         ]);
         setBalance(balanceData);
@@ -64,7 +64,7 @@ export default function IdentityDashboard() {
         if (streakChain) setStreakData(streakChain);
         if (contractData.length === 0) setShowOnboarding(true);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+        setError(err instanceof Error ? err : new Error('Failed to load dashboard'));
       } finally {
         setLoading(false);
         setStreakLoading(false);
@@ -88,12 +88,26 @@ export default function IdentityDashboard() {
   }
 
   if (error) {
+    const apiError = error instanceof ApiError ? error : null;
+    const jurisdictionBlocked = apiError?.code === 'JURISDICTION_BLOCKED';
+    const isNetworkError = apiError?.status === 0;
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <AlertTriangle className="mx-auto text-red-500" size={48} />
-          <p className="text-red-400 font-bold">{error}</p>
-          <p className="text-neutral-500 text-sm">Ensure the backend service is reachable.</p>
+        <div className="text-center space-y-4 max-w-md px-6">
+          <AlertTriangle className={`mx-auto ${jurisdictionBlocked ? 'text-yellow-500' : 'text-red-500'}`} size={48} />
+          {jurisdictionBlocked ? (
+            <>
+              <p className="text-yellow-400 font-bold">Not available in your jurisdiction</p>
+              <p className="text-neutral-400 text-sm">{error.message}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-red-400 font-bold">{error.message}</p>
+              {isNetworkError && (
+                <p className="text-neutral-500 text-sm">Ensure the backend service is reachable.</p>
+              )}
+            </>
+          )}
         </div>
       </div>
     );

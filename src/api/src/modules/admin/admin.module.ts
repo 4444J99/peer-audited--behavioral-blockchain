@@ -14,9 +14,17 @@ import { FuryRouterService } from "../../../services/fury-router/fury-router.ser
 import { RoleGuard } from "../../common/guards/role.guard";
 import { ContractsModule } from "../contracts/contracts.module";
 import { ProofsModule } from "../proofs/proofs.module";
+import { PaymentsModule } from "../payments/payments.module";
+import { EscrowModule } from "../payments/escrow.module";
 
 @Module({
-  imports: [ScheduleModule.forRoot(), ContractsModule, ProofsModule],
+  imports: [
+    ScheduleModule.forRoot(),
+    ContractsModule,
+    ProofsModule,
+    PaymentsModule,
+    EscrowModule,
+  ],
   controllers: [AdminController, UserModerationController],
   providers: [
     ModerationService,

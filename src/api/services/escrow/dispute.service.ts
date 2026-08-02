@@ -1,6 +1,10 @@
-import { Injectable, HttpException, HttpStatus, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, NotFoundException, Logger, Inject } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
-import { StripeFboService } from './stripe.service';
+import {
+  ESCROW_PROVIDER,
+  EscrowHold,
+  EscrowProvider,
+} from '../../src/common/interfaces/payout-provider.interface';
 import { TruthLogService } from '../ledger/truth-log.service';
 import { LedgerService } from '../ledger/ledger.service';
 import { APPEAL_FEE_AMOUNT, isAppealFeeEnabled } from '../billing';
@@ -28,7 +32,7 @@ export class DisputeService {
 
   constructor(
     private readonly pool: Pool,
-    private readonly stripeService: StripeFboService,
+    @Inject(ESCROW_PROVIDER) private readonly escrow: EscrowProvider,
     private readonly truthLog: TruthLogService,
     private readonly ledger: LedgerService,
   ) {}
@@ -125,7 +129,7 @@ export class DisputeService {
       };
     }
 
-    let holdResult: { id: string } | null = null;
+    let holdResult: EscrowHold | null = null;
     if (feeEnabled) {
       if (!customerId) {
         throw new HttpException(
@@ -141,7 +145,7 @@ export class DisputeService {
         // the scope so it can never be confused with a real contract id, and use a STABLE per-proof
         // idempotency key so an appeal retry reuses the same hold rather than authorizing twice.
         const appealScope = `appeal_${proofId}`;
-        holdResult = await this.stripeService.holdStake(
+        holdResult = await this.escrow.holdStake(
           customerId,
           APPEAL_FEE_AMOUNT,
           appealScope,
@@ -201,7 +205,7 @@ export class DisputeService {
       // No hold means nothing to compensate — the failure is a plain 500.
       if (holdResult) {
         try {
-          await this.stripeService.cancelHold(holdResult.id);
+          await this.escrow.cancelHold(holdResult.id);
         } catch (cancelErr) {
           await this.markDisputeReconcileRequired(
             proofId,
@@ -248,7 +252,7 @@ export class DisputeService {
       );
       if (holdResult) {
         try {
-          await this.stripeService.cancelHold(holdResult.id);
+          await this.escrow.cancelHold(holdResult.id);
         } catch (cancelErr) {
           await this.markDisputeReconcileRequired(
             proofId,
