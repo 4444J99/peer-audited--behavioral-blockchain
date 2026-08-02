@@ -8,7 +8,6 @@ import { ContractsScheduler } from "./contracts.scheduler";
 import { AttestationScheduler } from "./attestation.scheduler";
 import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import { StripeFboService } from "../../../services/escrow/stripe.service";
 import { DisputeService } from "../../../services/escrow/dispute.service";
 import { FuryRouterService } from "../../../services/fury-router/fury-router.service";
 import { AegisProtocolService } from "../../../services/health/aegis.service";
@@ -29,6 +28,7 @@ import {
 } from "../../../services/anomaly/anomaly.service";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { PaymentsModule } from "../payments/payments.module";
+import { EscrowModule } from "../payments/escrow.module";
 import { PayModule } from "../pay/pay.module";
 import { ReferralModule } from "../referrals/referral.module";
 import { EmailModule } from "../email/email.module";
@@ -39,7 +39,9 @@ const redisProvider = {
   provide: ANOMALY_REDIS_CLIENT,
   useFactory: () => {
     try {
-      return new Redis({ ...resolveCacheRedisConfig(), lazyConnect: true });
+      const config = resolveCacheRedisConfig();
+      if (!config) return undefined;
+      return new Redis({ ...config, lazyConnect: true });
     } catch {
       return undefined;
     }
@@ -54,6 +56,7 @@ const redisProvider = {
     EmailModule,
     PayModule,
     forwardRef(() => PaymentsModule),
+    EscrowModule,
   ],
   controllers: [ContractsController, FitbitController, FitbitWebhookController],
   providers: [
@@ -62,7 +65,6 @@ const redisProvider = {
     AttestationScheduler,
     LedgerService,
     TruthLogService,
-    StripeFboService,
     DisputeService,
     FuryRouterService,
     AegisProtocolService,

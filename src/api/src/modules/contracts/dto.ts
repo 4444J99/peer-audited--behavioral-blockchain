@@ -16,6 +16,10 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  OathCategory,
+  VerificationMethod,
+} from "../../../../shared/libs/behavioral-logic";
 
 export class HealthMetricsDto {
   @ApiProperty({ description: "Current weight in pounds", example: 180 })
@@ -162,14 +166,16 @@ export class CreateContractDto {
   @ApiProperty({
     description:
       "Oath category (Biological, Cognitive, Professional, Creative, Environmental, Character, Recovery)",
-    example: "Biological",
+    enum: Object.values(OathCategory),
+    example: OathCategory.DEEP_WORK_FOCUS,
   })
   @IsString()
   oathCategory!: string;
 
   @ApiProperty({
     description: "Verification method (photo, video, sensor, text)",
-    example: "photo",
+    enum: Object.values(VerificationMethod),
+    example: VerificationMethod.API_SCREEN_TIME,
   })
   @IsString()
   verificationMethod!: string;
