@@ -1297,6 +1297,8 @@ export class ContractsService {
       contractId,
     );
 
+    // Tracks a concurrent finalizer that activated this contract before us.
+    let activationAlreadyApplied = false;
     const phaseBClient = await poolWithConnect.connect();
     try {
       await phaseBClient.query("BEGIN");
@@ -1323,7 +1325,9 @@ export class ContractsService {
           `Contract ${contractId} is suspended; cannot finalize activation`,
         );
       }
-      if (!(existing.status === "PENDING_STAKE" && existing.payment_intent_id === null)) {
+      if (existing.status === "PENDING_STAKE" && existing.payment_intent_id === null) {
+        // We won the race: this is the first (and only) finalizer, so record
+        // our hold as the contract's payment intent and activate.
         await phaseBClient.query(
           `UPDATE contracts
            SET payment_intent_id = $1,
@@ -1345,6 +1349,12 @@ export class ContractsService {
             [contractId, bountyLinkId],
           );
         }
+      } else {
+        // We lost the race: a concurrent finalizer already recorded a payment
+        // intent and activated this contract. Our hold never became the
+        // recorded one — it is orphaned and must be released. Do that AFTER
+        // COMMIT so a cancel failure cannot roll back the winner's activation.
+        activationAlreadyApplied = true;
       }
 
       await phaseBClient.query("COMMIT");
@@ -1370,6 +1380,20 @@ export class ContractsService {
       );
     } finally {
       phaseBClient.release();
+    }
+
+    // Losing racer: release the hold we authorized, outside the transaction so
+    // the winner's COMMIT stays intact.
+    if (activationAlreadyApplied) {
+      try {
+        await this.escrow.cancelHold(paymentIntent.id);
+      } catch (cancelErr) {
+        await this.markContractReconcileRequired(
+          contractId,
+          paymentIntent.id,
+          `phase_b_lost_race_hold_cancel:${cancelErr instanceof Error ? cancelErr.message : cancelErr}`,
+        );
+      }
     }
 
     try {
