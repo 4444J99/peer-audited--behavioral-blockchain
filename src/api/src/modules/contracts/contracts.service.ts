@@ -1291,11 +1291,27 @@ export class ContractsService {
 
     const customerHandle = await this.resolveEscrowCustomerHandle(user);
 
-    const paymentIntent = await this.escrow.holdStake(
-      customerHandle,
-      toCents(dto.stakeAmount),
-      contractId,
-    );
+    // A failed authorization must not leave a half-created PENDING_STAKE row
+    // floating with no payment intent and no record of what happened. Dead-letter
+    // it to RECONCILE_REQUIRED so the admin sweep can act on it.
+    let paymentIntent;
+    try {
+      paymentIntent = await this.escrow.holdStake(
+        customerHandle,
+        toCents(dto.stakeAmount),
+        contractId,
+      );
+    } catch (holdErr) {
+      await this.markContractReconcileRequired(
+        contractId,
+        null,
+        `phase_b_hold_failed:${holdErr instanceof Error ? holdErr.message : holdErr}`,
+      );
+      throw new InternalServerErrorException(
+        `Contract activation failed: stake authorization did not succeed. ` +
+          `Contract ${contractId} marked RECONCILE_REQUIRED.`,
+      );
+    }
 
     // Tracks a concurrent finalizer that activated this contract before us.
     let activationAlreadyApplied = false;
@@ -1702,11 +1718,27 @@ export class ContractsService {
 
     // Hold stake with real contract ID
     const customerHandle = await this.resolveEscrowCustomerHandle(user);
-    const paymentIntent = await this.escrow.holdStake(
-      customerHandle,
-      toCents(dto.stakeAmount),
-      contractId,
-    );
+    // A failed authorization must not leave a half-created PENDING_STAKE row
+    // floating with no payment intent and no record of what happened. Dead-letter
+    // it to RECONCILE_REQUIRED so the admin sweep can act on it.
+    let paymentIntent;
+    try {
+      paymentIntent = await this.escrow.holdStake(
+        customerHandle,
+        toCents(dto.stakeAmount),
+        contractId,
+      );
+    } catch (holdErr) {
+      await this.markContractReconcileRequired(
+        contractId,
+        null,
+        `contract_create_hold_failed:${holdErr instanceof Error ? holdErr.message : holdErr}`,
+      );
+      throw new InternalServerErrorException(
+        `Contract creation failed: stake authorization did not succeed. ` +
+          `Contract ${contractId} marked RECONCILE_REQUIRED.`,
+      );
+    }
 
     // Activate contract with payment intent
     await this.pool.query(
