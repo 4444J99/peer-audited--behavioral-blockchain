@@ -4,6 +4,7 @@ import type {
   ReferralCodeResponse,
   ReferralStats,
   ReferralReward,
+  StyxErrorEnvelope,
 } from "@styx/shared/index";
 import { getApiBase } from "./runtime-config";
 
@@ -59,12 +60,48 @@ function getRequestId(res: Response): string | null {
   );
 }
 
-async function parseErrorMessage(res: Response): Promise<string> {
+/**
+ * Typed API failure. `status` lets callers distinguish a real answer from an
+ * outage (a 403 with code JURISDICTION_BLOCKED is the backend working, not the
+ * network failing); `code` is the API's own `error_code` (shared envelope
+ * contract) when it was serialized.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code: string | null;
+  readonly traceId: string | null;
+
+  constructor(
+    message: string,
+    status: number,
+    code: string | null = null,
+    traceId: string | null = null,
+  ) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.traceId = traceId;
+  }
+}
+
+interface ParsedError {
+  message: string;
+  code: string | null;
+  traceId: string | null;
+}
+
+async function parseErrorEnvelope(res: Response): Promise<ParsedError> {
   let message = `API ${res.status}`;
+  let code: string | null = null;
   try {
     const contentType = res.headers?.get?.("content-type") || "";
     if (contentType.includes("application/json")) {
-      const payload = await res.json();
+      const payload = (await res.json()) as Partial<StyxErrorEnvelope> & {
+        error?: { message?: unknown; code?: unknown } | undefined;
+        error_description?: unknown;
+        code?: unknown;
+      };
       const envelopeMessage =
         payload?.message ||
         payload?.error?.message ||
@@ -77,6 +114,9 @@ async function parseErrorMessage(res: Response): Promise<string> {
       }
       if (errorCode) {
         message += ` (${String(errorCode)})`;
+      }
+      if (typeof errorCode === "string" && errorCode.length > 0) {
+        code = errorCode;
       }
     } else {
       const text = await res.text();
@@ -95,7 +135,7 @@ async function parseErrorMessage(res: Response): Promise<string> {
   if (requestId) {
     message += ` [request_id: ${requestId}]`;
   }
-  return message;
+  return { message, code, traceId: requestId };
 }
 
 let isRefreshing = false;
@@ -125,8 +165,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       headers: mergedHeaders,
     });
   } catch {
-    throw new Error(
+    throw new ApiError(
       "Styx service is temporarily unavailable. Please try again shortly.",
+      0,
+      null,
+      null,
     );
   }
 
@@ -140,11 +183,15 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       return request<T>(path, options);
     } catch {
       isRefreshing = false;
-      throw new Error(await parseErrorMessage(res));
+      const parsed = await parseErrorEnvelope(res);
+      throw new ApiError(parsed.message, res.status, parsed.code, parsed.traceId);
     }
   }
 
-  if (!res.ok) throw new Error(await parseErrorMessage(res));
+  if (!res.ok) {
+    const parsed = await parseErrorEnvelope(res);
+    throw new ApiError(parsed.message, res.status, parsed.code, parsed.traceId);
+  }
   if (res.status === 204) return undefined as T;
   const contentType = res.headers?.get?.("content-type") || "";
   if (contentType.includes("application/json") || contentType === "") {
