@@ -99,7 +99,7 @@ npm run format                          # Prettier: **/*.{ts,tsx,md}
 6. Gate 05: behavioral physics check (skipped if `CI_GATE05_API_URL` not set)
 7. Gate 06: security invariant check
 8. Gate 07: claim drift check (`npm run validate:claims`)
-9. Beta readiness (uploads `artifacts/beta-readiness-summary.json`)
+9. Hosted beta-promotion readiness (strict target URLs; uploads `artifacts/beta-readiness-summary.json`)
 10. Terraform validate (`infra/terraform/`)
 11. E2E Playwright (chromium + firefox matrix)
 12. CodeQL

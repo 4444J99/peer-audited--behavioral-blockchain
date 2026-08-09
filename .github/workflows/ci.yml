@@ -145,48 +145,6 @@ jobs:
           fi
           echo "build_and_test_matrix succeeded — gate passed."
 
-  beta_readiness:
-    runs-on: ubuntu-latest
-    needs: build_and_test_matrix
-    continue-on-error: true
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v7
-
-      - name: Use Node.js 24.x
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24.x
-          cache: "npm"
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Run Beta Readiness Suite
-        env:
-          READINESS_PROFILE: beta
-          # Advisory in PR CI: beta readiness validates a LIVE deployed target, which
-          # PRs don't have. The suite returns an explicit incomplete receipt when
-          # no target is set; this advisory job may report that state, while the
-          # deploy/promotion workflows require a target and enforce it.
-          READINESS_REQUIRE_TARGETS: "false"
-          # Explicitly empty the target URLs on PR CI so the suite takes the
-          # skip-clean path regardless of any stale secret (e.g. a CI_GATE05_API_URL
-          # pointing at a broken/old environment). Deploy & promotion workflows set
-          # these where a live URL actually exists.
-          BETA_API_URL: ""
-          BETA_WEB_URL: ""
-          BETA_ENV_LABEL: ""
-        run: npm run beta:readiness
-
-      - name: Upload Beta Readiness Summary
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: beta-readiness-summary
-          path: artifacts/beta-readiness-summary.json
-          retention-days: 14
-
   terraform_validate:
     runs-on: ubuntu-latest
 
@@ -234,7 +192,7 @@ jobs:
   e2e_browsers:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [build_and_test_matrix, beta_readiness, changed-files]
+    needs: [build_and_test_matrix, changed-files]
     if: needs.changed-files.outputs.web == 'true'
     strategy:
       fail-fast: false

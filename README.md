@@ -331,7 +331,7 @@ curl "<api-public-url>/users/me" -H "x-api-key: <api-key>"
 5. **Gate 04** — Redacted build check (no gambling terminology in production)
 6. **Gate 06** — Security invariant check (no hardcoded secrets)
 7. **Gate 07** — Claim drift detection
-8. **Beta Readiness** — `npm run beta:readiness` (strict target enforcement in CI) + upload `artifacts/beta-readiness-summary.json`
+8. **Hosted Beta Readiness** — the beta-promotion workflow runs `npm run beta:readiness` with required target URLs and uploads `artifacts/beta-readiness-summary.json`; PR CI makes no hosted-beta claim.
 9. **Terraform** — `terraform fmt -check`, `terraform validate`
 10. **E2E** — Playwright (chromium + firefox matrix)
 11. **CodeQL** — JS/TS static analysis

@@ -95,10 +95,10 @@ Schema:
 
 ## CI Policy
 
-- CI runs the readiness suite in a dedicated `beta_readiness` job.
-- CI sets `READINESS_REQUIRE_TARGETS=true` (missing target URLs fail readiness).
+- The hosted beta-promotion workflow runs the readiness suite in a dedicated `beta_readiness` job.
+- That job sets `READINESS_REQUIRE_TARGETS=true` (missing target URLs fail readiness).
 - Artifact upload is unconditional (`if: always()`).
-- `beta_readiness` is required before E2E execution.
+- `beta_readiness` is required before beta promotion is marked ready. PR E2E is independent of a hosted-beta receipt and cannot stand in for one.
 
 ## Change Control
 
