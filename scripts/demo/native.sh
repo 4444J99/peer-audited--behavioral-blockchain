@@ -276,8 +276,19 @@ down() {
 
 reset() {
   require_native_tools
+  [[ "$database_name" =~ ^[A-Za-z0-9_]+$ ]] || die "STYX_DEMO_NATIVE_DATABASE must contain only letters, numbers, and underscores."
   down
   if database_exists; then
+    # `down` owns the API and web parents, but their database pools can take a
+    # moment to release child connections.  Terminate only sessions attached to
+    # this explicitly named synthetic database so an immediate reset is
+    # repeatable without touching any other local PostgreSQL database.
+    psql -d postgres -v ON_ERROR_STOP=1 -v database_name="$database_name" <<'SQL'
+SELECT pg_terminate_backend(pid)
+FROM pg_stat_activity
+WHERE datname = :'database_name'
+  AND pid <> pg_backend_pid();
+SQL
     info "Dropping only synthetic database ${database_name} ..."
     dropdb "$database_name"
   fi
