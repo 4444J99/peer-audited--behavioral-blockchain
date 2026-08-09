@@ -55,10 +55,37 @@ write_state() {
 }
 
 load_state() {
-  [ -f "$state_file" ] || return 1
-  # The state file is written only by write_state above and contains fixed,
-  # unquoted local values; it deliberately contains no credentials.
-  source "$state_file"
+  [ -r "$state_file" ] || return 1
+  state_database_name=""
+  state_redis_port=""
+  state_api_pid=""
+  state_web_pid=""
+  state_native_marker=""
+  state_api_url=""
+  state_web_url=""
+
+  local key value
+  while IFS='=' read -r key value; do
+    case "$key" in
+      STYX_DEMO_NATIVE) state_native_marker="$value" ;;
+      STYX_DEMO_API_URL) state_api_url="$value" ;;
+      STYX_DEMO_WEB_URL) state_web_url="$value" ;;
+      STYX_DEMO_DATABASE) state_database_name="$value" ;;
+      STYX_DEMO_REDIS_PORT) state_redis_port="$value" ;;
+      STYX_DEMO_API_PID) state_api_pid="$value" ;;
+      STYX_DEMO_WEB_PID) state_web_pid="$value" ;;
+      "") ;;
+      *) die "native demo state contains an unrecognized key; remove $state_file only after inspecting it." ;;
+    esac
+  done < "$state_file"
+
+  [[ "$state_native_marker" == "1" ]] || die "native demo state is missing its marker."
+  [[ "$state_database_name" =~ ^[A-Za-z0-9_]+$ ]] || die "native demo state has an invalid database name."
+  [[ "$state_redis_port" =~ ^[0-9]+$ ]] || die "native demo state has an invalid Redis port."
+  [[ "$state_api_pid" =~ ^[0-9]+$ ]] || die "native demo state has an invalid API PID."
+  [[ "$state_web_pid" =~ ^[0-9]+$ ]] || die "native demo state has an invalid web PID."
+  [[ "$state_api_url" =~ ^http://127\.0\.0\.1:[0-9]+$ ]] || die "native demo state has an invalid API URL."
+  [[ "$state_web_url" =~ ^http://127\.0\.0\.1:[0-9]+$ ]] || die "native demo state has an invalid web URL."
 }
 
 stop_pid() {
@@ -171,8 +198,13 @@ launch() {
 
 down() {
   if load_state; then
-    stop_pid "${STYX_DEMO_WEB_PID:-}" "native web"
-    stop_pid "${STYX_DEMO_API_PID:-}" "native API"
+    # A persisted state owns the exact resource names that launch created.
+    # Use it rather than fresh defaults so a custom demo cannot stop or drop
+    # another local demo's database or Redis instance.
+    database_name="$state_database_name"
+    redis_port="$state_redis_port"
+    stop_pid "$state_web_pid" "native web"
+    stop_pid "$state_api_pid" "native API"
   fi
   if redis-cli -p "$redis_port" ping >/dev/null 2>&1; then
     info "Stopping native Redis on ${redis_port} ..."
@@ -184,7 +216,7 @@ down() {
 
 reset() {
   require_native_tools
-  down || true
+  down
   if psql -d postgres -Atqc "SELECT 1 FROM pg_database WHERE datname = '${database_name}'" | grep -qx 1; then
     info "Dropping only synthetic database ${database_name} ..."
     dropdb "$database_name"

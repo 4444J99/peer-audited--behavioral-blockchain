@@ -8,9 +8,10 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { chromium } from 'playwright';
+import { fileURLToPath } from 'node:url';
 
-const repoRoot = path.resolve(import.meta.dirname, '../..');
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(scriptDir, '../..');
 const tourUrl = process.env.STYX_TOUR_URL || 'http://127.0.0.1:3101/tour';
 const outputDir = path.join(repoRoot, 'docs/demo/assets');
 const outputPath = path.join(outputDir, 'styx-tour-fallback.mp4');
@@ -19,6 +20,16 @@ const recordingDir = mkdtempSync(path.join(tmpdir(), 'styx-tour-recording-'));
 mkdirSync(outputDir, { recursive: true });
 
 try {
+  const ffmpegCheck = spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' });
+  if (ffmpegCheck.error || ffmpegCheck.status !== 0) {
+    throw new Error('ffmpeg is required to create the MP4 fallback. Install ffmpeg, then retry.');
+  }
+  let chromium;
+  try {
+    ({ chromium } = await import('playwright'));
+  } catch {
+    throw new Error('Playwright is required to record the Tour fallback. Run npm ci and npx playwright install chromium, then retry.');
+  }
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({
     viewport: { width: 1280, height: 720 },
