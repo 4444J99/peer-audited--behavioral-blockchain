@@ -9,7 +9,7 @@ Peer-audited behavioral accountability system using financial stakes and consens
 
 ![CI](https://github.com/a-organvm/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
-![Node](https://img.shields.io/badge/node-%3E%3D20-339933)
+![Node](https://img.shields.io/badge/node-24%20LTS-339933)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 ---
@@ -30,7 +30,7 @@ Peer-audited behavioral accountability system using financial stakes and consens
 ## Quick Start
 
 ```bash
-## Prerequisites: Node.js >= 20, npm 10+, PostgreSQL, Redis
+## Prerequisites: Node.js 24 LTS, npm 10+, PostgreSQL, Redis
 
 ## Configure runtime values for this environment
 cp .env.example .env
@@ -59,6 +59,15 @@ make deploy-down   # stop and remove the stack
 ```
 
 It reads dev defaults from `.config/docker/compose.defaults.env` (a present repo-root `.env` is layered on top and wins). The same script deploys to production — `bash scripts/deploy.sh render`. Full guide: [docs/operations/one-command-deploy.md](docs/operations/one-command-deploy.md).
+
+### Private synthetic demo
+
+For the truth-labeled, test-money-only demo, use `npm run demo:launch`. It
+uses Docker Compose when present, with an isolated native PostgreSQL/Redis
+fallback for travel machines without Docker. Use `npm run demo:reset` to recreate the named synthetic stack, then
+`npm run demo:verify` to prove the API, database, browser, ledger, proof, and
+behavioral routes on that exact commit. Open `/tour` for the guided explanation.
+This is not a hosted beta, real-money service, or public launch.
 
 ## Architecture
 
@@ -118,7 +127,7 @@ flowchart TB
 
 ### Tech Stack
 
-- **Runtime**: Node.js 20+
+- **Runtime**: Node.js 24 LTS
 - **Package Manager**: npm (workspaces + Turborepo)
 - **Database**: PostgreSQL 15 (double-entry ledger with ACID)
 - **Queue**: Redis 7 + BullMQ (Fury Router)
@@ -342,4 +351,3 @@ MIT. See [LICENSE](LICENSE) for details.
 <sub>[Portfolio](https://4444j99.github.io/portfolio/) · [System Directory](https://4444j99.github.io/portfolio/directory/) · [ORGAN III · Ergon](https://organvm-iii-ergon.github.io/) · Part of the <a href="https://4444j99.github.io/portfolio/directory/">ORGANVM eight-organ system</a></sub>
 
 <!-- SYSTEM-NAV-END -->
-

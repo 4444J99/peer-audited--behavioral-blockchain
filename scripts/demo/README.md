@@ -29,18 +29,25 @@ All 12 demo users share the base-seed password: `demo-password-123`. <!-- allow-
 
 From the repo root:
 
-### 1. Bring up the stack
+### 1. Bring up the deterministic synthetic stack
 
 ```bash
-make deploy            # = bash scripts/deploy.sh local
+npm run demo:launch
 ```
 
-or, equivalently:
+The launcher builds the named `styx-demo` Compose project when Docker is
+available. Without Docker, it creates only the explicitly named local
+`styx_demo_styxlaunch` database and Redis port `6391`. Both paths run the
+complete migration chain and apply both synthetic seed layers. It is
+test-money only; it neither contacts a payment account nor uses personal data.
+Before presenting a signed-in route, run:
 
 ```bash
-docker compose --env-file .config/docker/compose.defaults.env \
-  -f .config/docker/docker-compose.yml up -d --build
+npm run demo:verify
 ```
+
+The verifier is the live API/database/browser/ledger/proof/behavioral receipt
+for the current commit. A missing Docker runtime is a failure, not a green demo.
 
 `schema.sql` is a **reference snapshot only** and is deliberately not mounted into
 `/docker-entrypoint-initdb.d/` — an initdb-provisioned database froze at that table
@@ -91,19 +98,14 @@ Attestation is **fail-closed**: without `APPLE_APP_ATTEST_APP_ID` /
 For a demo, set `DEVICE_ATTESTATION_DEV_BYPASS=true` (non-production only) — verdicts
 come back labeled `deviceIntegrity: 'DEV_BYPASS'`, never `STRONG`.
 
-### 3. Apply the demo cohort
+### 3. Reapply the synthetic demo cohort (only if needed)
 
 ```bash
-psql "postgres://styx:styx_local_dev@localhost:5432/styx" -f scripts/demo/seed-circles.sql
+bash scripts/deploy.sh seed
 ```
 
-or without a local `psql`:
-
-```bash
-docker compose --env-file .config/docker/compose.defaults.env \
-  -f .config/docker/docker-compose.yml \
-  exec -T styx-postgres psql -U styx -d styx < scripts/demo/seed-circles.sql
-```
+The launcher already performs this idempotent step. Use it only to restore
+missing synthetic rows without resetting the demo project.
 
 ### 4. Tour it
 
@@ -126,9 +128,9 @@ circle and links every surface.
 ## Resetting
 
 ```bash
-bash scripts/deploy.sh down
-docker volume rm docker_styx-pg-data   # name may be prefixed by the compose project
-make deploy
+npm run demo:reset
 ```
 
-Then repeat steps 2–3.
+This removes only the containers and volumes belonging to the named
+`styx-demo` Compose project, then recreates migrations and both synthetic seed
+layers. Follow it with `npm run demo:verify` before presenting the stack.

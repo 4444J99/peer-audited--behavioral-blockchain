@@ -28,8 +28,9 @@ const DEMO_USER = {
   password: "demo-password-123",
 }; // allow-secret
 const FURY_USERS = [
-  { email: "fury@styx.protocol", password: "demo-password-123" }, // allow-secret
-  { email: "admin@styx.protocol", password: "demo-password-123" }, // allow-secret
+  { email: "alecto@demo.styx.protocol", password: "demo-password-123" }, // allow-secret
+  { email: "megaera@demo.styx.protocol", password: "demo-password-123" }, // allow-secret
+  { email: "tisiphone@demo.styx.protocol", password: "demo-password-123" }, // allow-secret
 ];
 
 async function request<T>(
@@ -70,8 +71,14 @@ async function runTheFullLoop() {
   );
 
   // Step 1: Verify API is alive
-  const healthRes = await fetch(`${API_BASE}/health`);
+  const healthRes = await fetch(`${API_BASE}/health/ready`);
+  if (!healthRes.ok) {
+    throw new Error(`API readiness failed: ${healthRes.status}`);
+  }
   const health = await healthRes.json();
+  if (health.status !== "ready") {
+    throw new Error(`API readiness returned ${health.status}`);
+  }
   console.log(`[HEALTH] API status: ${health.status}`);
 
   // Step 2: Login as demo user
@@ -100,12 +107,9 @@ async function runTheFullLoop() {
     console.log(`[STEP 1] Contract created: ${contractId}`);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    console.log(
-      `[STEP 1] Contract creation failed (may require Stripe): ${message}`,
-    );
-    console.log(
-      "⚠️  GATE 03 SKIPPED: Cannot complete full loop without payment integration.",
-    );
+    console.error(`[STEP 1] Contract creation failed: ${message}`);
+    console.error("⚠️  GATE 03 INCOMPLETE: the lifecycle did not start.");
+    process.exitCode = 2;
     return;
   }
 
@@ -164,6 +168,13 @@ async function runTheFullLoop() {
     }
   }
   console.log(`[STEP 3] ${verdictsSubmitted} verdict(s) submitted.`);
+  if (verdictsSubmitted !== FURY_USERS.length) {
+    console.error(
+      `⚠️  GATE 03 INCOMPLETE: expected ${FURY_USERS.length} Fury verdicts, received ${verdictsSubmitted}.`,
+    );
+    process.exitCode = 2;
+    return;
+  }
 
   // Step 6: Verify contract state
   console.log(`[STEP 4] Checking final contract state...`);
@@ -221,9 +232,10 @@ async function runTheFullLoop() {
       "✅ GATE 03 PASSED: End-to-end lifecycle completed with bounty disbursement.",
     );
   } else {
-    console.log(
-      "⚠️  GATE 03 PARTIAL: Lifecycle completed but bounty disbursement not confirmed (Furies may lack account_id).",
+    console.error(
+      "⚠️  GATE 03 INCOMPLETE: lifecycle evidence lacks a confirmed Fury bounty disbursement.",
     );
+    process.exitCode = 2;
   }
 }
 

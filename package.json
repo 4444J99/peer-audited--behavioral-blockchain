@@ -16,6 +16,10 @@
     "dev:turbo": "turbo run dev",
     "test": "turbo run test",
     "load-test": "node scripts/load-test/run-load-tests.mjs",
+    "demo:launch": "bash scripts/demo/launch.sh",
+    "demo:reset": "bash scripts/demo/reset.sh",
+    "demo:down": "bash scripts/demo/native.sh down",
+    "demo:verify": "bash scripts/demo/verify-live-stack.sh",
     "lint": "turbo run lint",
     "validate:claims": "node scripts/validation/07-claim-drift-check.js",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
@@ -41,7 +45,7 @@
     "typescript": "^6.0.3"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=24.0.0 <25"
   },
   "overrides": {
     "fast-xml-parser": ">=5.3.8",

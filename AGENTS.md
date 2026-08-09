@@ -63,7 +63,7 @@ Turborepo + npm workspaces. Package scope: `@styx/*`. Root `tsconfig.json` maps 
 ### Setup & Dev Commands
 
 ```bash
-# Prerequisites: Node.js >= 20, Docker, npm 10+
+# Prerequisites: Node.js 24 LTS, Docker, npm 10+
 cp .env.example .env                    # fill runtime URLs, ports, DB, Redis, secrets
 make docker-up                          # Docker Compose uses .env / STYX_DOCKER_* values
 make install                            # npm install (all workspaces)

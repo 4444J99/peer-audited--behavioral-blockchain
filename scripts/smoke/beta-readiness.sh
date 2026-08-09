@@ -214,4 +214,10 @@ if [[ "${OVERALL_STATUS}" == "fail" ]]; then
   exit 1
 fi
 
+if [[ "${OVERALL_STATUS}" == "incomplete" ]]; then
+  # An unavailable target is not a pass.  Exit 2 lets callers record an
+  # explicit inconclusive receipt without confusing it with a failed check.
+  exit 2
+fi
+
 exit 0

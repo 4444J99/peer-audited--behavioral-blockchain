@@ -9,27 +9,32 @@ export const options = {
   ],
   thresholds: {
     http_req_duration: ['p(95)<500'],
+    checks: ['rate==1.0'],
   },
 };
 
 export default function () {
-  const url = __ENV.API_BASE_URL || 'http://localhost:3000';
-  const payload = JSON.stringify({
-    contractId: 'c1111111-1111-1111-1111-111111111111',
-    description: 'k6 load test proof submission',
-    mediaUri: 'https://storage.styx.app/proofs/k6-test.mp4',
+  const url = __ENV.K6_API_BASE_URL;
+  const email = __ENV.K6_FURY_EMAIL || 'alecto@demo.styx.protocol';
+  const password = __ENV.K6_FURY_PASSWORD || 'demo-password-123'; // allow-secret: synthetic seed credential
+  if (!url) {
+    throw new Error('K6_API_BASE_URL is required.');
+  }
+
+  const loginRes = http.post(`${url}/auth/login`, JSON.stringify({ email, password }), {
+    headers: { 'Content-Type': 'application/json' },
   });
+  const loggedIn = check(loginRes, {
+    'Fury demo login status is 200': (r) => r.status === 200,
+  });
+  if (!loggedIn) return;
 
-  const params = {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer k6-test-token',
-    },
-  };
-
-  const res = http.post(`${url}/api/v1/proofs`, payload, params);
+  const token = loginRes.json('token'); // allow-secret: short-lived synthetic session token
+  const res = http.get(`${url}/fury/queue`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   check(res, {
-    'status is 200 or 201 or 401': (r) => [200, 201, 401, 403].includes(r.status),
+    'Fury queue status is 200': (r) => r.status === 200,
     'response time < 500ms': (r) => r.timings.duration < 500,
   });
 
