@@ -28,7 +28,7 @@ INSERT INTO accounts (id, name, type) VALUES
   ('a0000000-0000-0000-0000-000000000012', 'USER_admin', 'ASSET')
 ON CONFLICT (name) DO NOTHING;
 
--- Demo users (password: demo-password-123, bcrypt cost 10) -- allow-secret
+-- Demo users (bootstrap hash is replaced during local demo provisioning).
 INSERT INTO users (id, email, password_hash, stripe_customer_id, integrity_score, account_id, role, enterprise_id, status) VALUES
   ('d0000000-0000-0000-0000-000000000001', 'demo@styx.protocol', '$2b$10$Qvqvkece7/TpoSbDjHr75eHpT7blt9.4dwoub11ClSk2/PCk4tehe', 'cus_demo_001', 75, 'a0000000-0000-0000-0000-000000000010', 'USER', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE'),
   ('d0000000-0000-0000-0000-000000000002', 'fury@styx.protocol', '$2b$10$Qvqvkece7/TpoSbDjHr75eHpT7blt9.4dwoub11ClSk2/PCk4tehe', 'cus_fury_001', 90, 'a0000000-0000-0000-0000-000000000011', 'FURY', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE'),

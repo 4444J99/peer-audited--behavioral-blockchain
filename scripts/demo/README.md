@@ -7,23 +7,25 @@ live database is always safe.
 
 ## What it seeds
 
-| Circle | Data |
-| --- | --- |
-| Alpha (wedge) | 4 `beta_waitlist` prospects (organic/creator/practitioner/referral channels), 3 `waitlist_entries` queued for `cohort-2026-08` |
-| Beta (contracts) | 7 no-contact consumers with ACTIVE `RECOVERY_NO_CONTACT_TEXT` contracts, day-accurate attestation streaks (perfect, missed-and-recovered, wobbling), today's `PENDING` check-ins, ledger stake holds/return/forfeit |
-| Gamma (proof integrity) | 3 Fury auditors (Alecto, Megaera, Tisiphone) with a pending 3-way proof review + a resolved consensus, `fury_realm_expertise` rows, KYC states across users (`VERIFIED` / `PENDING` / `NOT_STARTED`) |
-| Delta (retention/pods) | 5-member pod `pod-cerberus` via `contracts.metadata.cohort`, accountability-partner links (incl. one email-only PENDING invite), partner check-ins, a dampened `pod_broadcast_log` failure signal |
-| Omega (enterprise) | Enterprise `e0000000-0000-0000-0000-000000000001` ("Acheron Logistics Group" — the id `/hr` defaults to), seats + scopes, contract mix (ACTIVE/COMPLETED/FAILED) that lights up `/api/b2b/metrics`, 1 practitioner with client assignments + journal alerts (guarded — see below) |
+| Circle                  | Data                                                                                                                                                                                                                                                                              |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Alpha (wedge)           | 4 `beta_waitlist` prospects (organic/creator/practitioner/referral channels), 3 `waitlist_entries` queued for `cohort-2026-08`                                                                                                                                                    |
+| Beta (contracts)        | 7 no-contact consumers with ACTIVE `RECOVERY_NO_CONTACT_TEXT` contracts, day-accurate attestation streaks (perfect, missed-and-recovered, wobbling), today's `PENDING` check-ins, ledger stake holds/return/forfeit                                                               |
+| Gamma (proof integrity) | 3 Fury auditors (Alecto, Megaera, Tisiphone) with a pending 3-way proof review + a resolved consensus, `fury_realm_expertise` rows, KYC states across users (`VERIFIED` / `PENDING` / `NOT_STARTED`)                                                                              |
+| Delta (retention/pods)  | 5-member pod `pod-cerberus` via `contracts.metadata.cohort`, accountability-partner links (incl. one email-only PENDING invite), partner check-ins, a dampened `pod_broadcast_log` failure signal                                                                                 |
+| Omega (enterprise)      | Enterprise `e0000000-0000-0000-0000-000000000001` ("Acheron Logistics Group" — the id `/hr` defaults to), seats + scopes, contract mix (ACTIVE/COMPLETED/FAILED) that lights up `/api/b2b/metrics`, 1 practitioner with client assignments + journal alerts (guarded — see below) |
 
-All 12 demo users share the base-seed password: `demo-password-123`. <!-- allow-secret: local demo seed credential, not a real secret -->
+The launcher provisions a random synthetic-only password for all 12 demo users.
+After launch, retrieve it locally with `npm run demo:credentials`; never copy it
+into a recording, slide, or message.
 
-| Login | Role | Use it on |
-| --- | --- | --- |
-| `river@demo.styx.protocol` | USER (pod member, 21-day streak) | `/dashboard`, `/recovery`, `/contracts/*` |
-| `sage@demo.styx.protocol` | USER (KYC `PENDING`) | `/kyc` |
-| `alecto@demo.styx.protocol` | FURY (pending 3-way review) | `/fury` |
-| `dr.moira@demo.styx.protocol` | PRACTITIONER | `/practitioner` |
-| `hr.lead@acheron.example` | ADMIN (Acheron enterprise) | `/hr`, `/admin/jurisdictions` |
+| Login                         | Role                             | Use it on                                 |
+| ----------------------------- | -------------------------------- | ----------------------------------------- |
+| `river@demo.styx.protocol`    | USER (pod member, 21-day streak) | `/dashboard`, `/recovery`, `/contracts/*` |
+| `sage@demo.styx.protocol`     | USER (KYC `PENDING`)             | `/kyc`                                    |
+| `alecto@demo.styx.protocol`   | FURY (pending 3-way review)      | `/fury`                                   |
+| `dr.moira@demo.styx.protocol` | PRACTITIONER                     | `/practitioner`                           |
+| `hr.lead@acheron.example`     | ADMIN (Acheron enterprise)       | `/hr`, `/admin/jurisdictions`             |
 
 ## How to run
 
@@ -32,7 +34,7 @@ From the repo root:
 ### 1. Bring up the deterministic synthetic stack
 
 ```bash
-npm run demo:launch
+npm run demo:reset:verify
 ```
 
 The launcher builds the named `styx-demo` Compose project when Docker is
@@ -40,11 +42,9 @@ available. Without Docker, it creates only the explicitly named local
 `styx_demo_styxlaunch` database and Redis port `6391`. Both paths run the
 complete migration chain and apply both synthetic seed layers. It is
 test-money only; it neither contacts a payment account nor uses personal data.
-Before presenting a signed-in route, run:
-
-```bash
-npm run demo:verify
-```
+Before presenting a signed-in route, run the single reset-and-verify command
+above. `npm run demo:verify` remains available to recheck an already running
+demo.
 
 The verifier is the live API/database/browser/ledger/proof/behavioral receipt
 for the current commit. A missing Docker runtime is a failure, not a green demo.
@@ -84,12 +84,14 @@ REDIS_BULLMQ_URL=redis://localhost:6379 \
 REDIS_CACHE_URL=redis://localhost:6379 \
 STYX_API_PUBLIC_URL=http://localhost:4310 \
 NEXT_PUBLIC_API_URL=http://localhost:4310 \
-STRIPE_SECRET_KEY=sk_test_mock_key STRIPE_PUBLISHABLE_KEY=pk_test_mock_key \
-JWT_SECRET=dev-jwt-secret-0123456789abcdef STYX_API_KEY_PEPPER=dev-pepper \
-APP_SECRET=dev-app-secret ANONYMIZE_SALT=dev-salt ZK_EXHAUST_SECRET=dev-zk \
-STYX_WEBHOOK_SECRET=dev-wh INTERNAL_SERVICE_TOKEN=dev-internal \
-ENTERPRISE_SSO_SECRET=dev-sso PORT=4310 npm run dev
+PORT=4310 npm run dev
 ```
+
+For a manually assembled local stack, inject the required test-only secrets
+(`JWT_SECRET`, `APP_SECRET`, `ANONYMIZE_SALT`, `ZK_EXHAUST_SECRET`,
+`STYX_WEBHOOK_SECRET`, `INTERNAL_SERVICE_TOKEN`, `ENTERPRISE_SSO_SECRET`, Stripe
+test keys, and `STYX_DEMO_PASSWORD`) from an untracked local secret store. The
+standard `npm run demo:launch` path generates process-local values for you.
 
 ### 2c. Exercising device attestation in a demo
 

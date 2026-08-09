@@ -92,6 +92,7 @@ Required beta secrets in that workflow:
 - `BETA_API_URL`
 - `BETA_DATABASE_URL`
 - `BETA_WEB_URL`
+- `BETA_DEMO_PASSWORD` (synthetic beta verification account only)
 - optional `BETA_ENV_LABEL`
 
 ## 6. Rollback / Failure Notes

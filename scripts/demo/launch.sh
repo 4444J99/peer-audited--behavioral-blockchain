@@ -5,6 +5,8 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$repo_root"
+source "$repo_root/scripts/demo/local-secrets.sh"
+ensure_demo_secrets
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
   exec bash scripts/deploy.sh local
 fi

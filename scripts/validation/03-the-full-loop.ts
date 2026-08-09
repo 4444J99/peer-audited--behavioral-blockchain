@@ -21,16 +21,22 @@ function requireApiBase(): string {
 }
 
 const API_BASE = requireApiBase();
+const demoPassword = process.env.STYX_DEMO_PASSWORD; // allow-secret: injected synthetic validation password
+if (!demoPassword) {
+  throw new Error(
+    "STYX_DEMO_PASSWORD is required for the live full-loop validation.",
+  );
+}
 
-// Demo credentials — must match seed.sql (password: demo-password-123, bcrypt cost 10)
+// All synthetic test identities are provisioned with the injected runtime password.
 const DEMO_USER = {
   email: "demo@styx.protocol",
-  password: "demo-password-123",
-}; // allow-secret
+  password: demoPassword, // allow-secret: injected synthetic validation password
+};
 const FURY_USERS = [
-  { email: "alecto@demo.styx.protocol", password: "demo-password-123" }, // allow-secret
-  { email: "megaera@demo.styx.protocol", password: "demo-password-123" }, // allow-secret
-  { email: "tisiphone@demo.styx.protocol", password: "demo-password-123" }, // allow-secret
+  { email: "alecto@demo.styx.protocol", password: demoPassword }, // allow-secret: injected synthetic validation password
+  { email: "megaera@demo.styx.protocol", password: demoPassword }, // allow-secret: injected synthetic validation password
+  { email: "tisiphone@demo.styx.protocol", password: demoPassword }, // allow-secret: injected synthetic validation password
 ];
 
 async function request<T>(

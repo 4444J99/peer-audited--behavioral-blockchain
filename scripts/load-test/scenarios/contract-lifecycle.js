@@ -12,11 +12,11 @@ export const options = {
 
 export default function () {
   const url = __ENV.K6_API_BASE_URL;
-  const email = __ENV.K6_DEMO_EMAIL || 'river@demo.styx.protocol';
-  const password = __ENV.K6_DEMO_PASSWORD || 'demo-password-123'; // allow-secret: synthetic seed credential
+  const email = __ENV.K6_DEMO_EMAIL;
+  const password = __ENV.K6_DEMO_PASSWORD; // allow-secret: injected load-test credential
 
-  if (!url) {
-    throw new Error('K6_API_BASE_URL is required.');
+  if (!url || !email || !password) {
+    throw new Error('K6_API_BASE_URL, K6_DEMO_EMAIL, and K6_DEMO_PASSWORD are required.');
   }
   
   const healthRes = http.get(`${url}/health`);

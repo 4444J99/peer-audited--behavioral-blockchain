@@ -5,7 +5,7 @@ Peer-audited behavioral accountability system using financial stakes and consens
 > **The expensive problem:** Accountability and corporate-wellness programs leak money because the stakes aren't real, the proof isn't audited, and holding employees' health data is a liability nobody wants to own. Budgets buy good intentions and get no follow-through. Styx is the production-grade enforcement layer that closes the gap: real Stripe FBO escrow (hold / capture / cancel), a double-entry ledger with no phantom money, peer-audited proof-of-completion via the Fury Router (honeypot injection + consensus + bounty economy), loss-aversion physics (λ = 1.955), and a privacy-firewalled B2B tier where the employer funds the pot but never sees an individual's health data — only k-anonymized aggregate engagement.
 >
 > [**Deploy this for your shop →**](mailto:padavano.anthony@gmail.com)<br>
-> *(If you are a technical recruiter or engineering leader, this repository is the proof-of-work for my architectural weight — a NestJS + Next.js + React Native + Tauri monorepo moving regulated money through a double-entry ledger and Stripe escrow, with 1,107 tests, KYC, geofencing, and CodeQL gates. [Work with the team that built this →](mailto:padavano.anthony@gmail.com))*
+> _(If you are a technical recruiter or engineering leader, this repository is the proof-of-work for my architectural weight — a NestJS + Next.js + React Native + Tauri monorepo moving regulated money through a double-entry ledger and Stripe escrow, with 1,107 tests, KYC, geofencing, and CodeQL gates. [Work with the team that built this →](mailto:padavano.anthony@gmail.com))_
 
 ![CI](https://github.com/a-organvm/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
@@ -142,13 +142,13 @@ flowchart TB
 
 ## Live Status
 
-| Surface | URL | Status |
-|---|---|---|
-| Pitch deck (canonical Pages artifact, `@styx/pitch` → `docs/`) | https://a-organvm.github.io/peer-audited--behavioral-blockchain/ | `ship-now` (200 OK) |
-| Interactive launch surface (waitlist / sign-up) | `/launch` | `ship-soon` (404 — tracked in Phase Gamma) |
-| Ask Styx LLM Q&A app | `/ask-styx` (deploy-ask-styx workflow) | separate sub-path, not on canonical URL |
-| API (NestJS, Render) | the `API_URL` value per Render blueprint (`render.yaml`, `@styx/api`) | `ship-soon` (cut `v*` tag to trigger [`deploy.yml`](.github/workflows/deploy.yml); set Render secrets `RENDER_API_SERVICE_ID`, `RENDER_API_KEY`, `RENDER_WEB_SERVICE_ID`, `API_URL`, `WEB_URL`, `DATABASE_URL`) |
-| Web (Next.js, Render) | the `WEB_URL` value per Render blueprint (`render.yaml`, `@styx/web`) | `ship-soon` (same tag-triggered deploy as API) |
+| Surface                                                        | URL                                                                   | Status                                                                                                                                                                                                          |
+| -------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pitch deck (canonical Pages artifact, `@styx/pitch` → `docs/`) | https://a-organvm.github.io/peer-audited--behavioral-blockchain/      | `ship-now` (200 OK)                                                                                                                                                                                             |
+| Interactive launch surface (waitlist / sign-up)                | `/launch`                                                             | `ship-soon` (404 — tracked in Phase Gamma)                                                                                                                                                                      |
+| Ask Styx LLM Q&A app                                           | `/ask-styx` (deploy-ask-styx workflow)                                | separate sub-path, not on canonical URL                                                                                                                                                                         |
+| API (NestJS, Render)                                           | the `API_URL` value per Render blueprint (`render.yaml`, `@styx/api`) | `ship-soon` (cut `v*` tag to trigger [`deploy.yml`](.github/workflows/deploy.yml); set Render secrets `RENDER_API_SERVICE_ID`, `RENDER_API_KEY`, `RENDER_WEB_SERVICE_ID`, `API_URL`, `WEB_URL`, `DATABASE_URL`) |
+| Web (Next.js, Render)                                          | the `WEB_URL` value per Render blueprint (`render.yaml`, `@styx/web`) | `ship-soon` (same tag-triggered deploy as API)                                                                                                                                                                  |
 
 Full activation ledger (evidence, blockers, reconciliation with the cross-system `activation-ledger-2026-06-10.csv`): [`docs/activation/activation-ledger--peer-audited--2026-06-11.md`](docs/activation/activation-ledger--peer-audited--2026-06-11.md).
 
@@ -254,7 +254,7 @@ Full policy and gate ownership live in `docs/planning/beta-readiness-contract.md
 | `npm run dev:migrate`           | Run database migrations with repo-root env resolution    |
 | `make docker-up`                | Start services through Docker Compose                    |
 | `make deploy`                   | One-command deploy: full local stack (zero config)       |
-| `make deploy TARGET=render`     | Trigger a production deploy on Render                     |
+| `make deploy TARGET=render`     | Trigger a production deploy on Render                    |
 | `make deploy-down`              | Stop and remove the local stack                          |
 | `npx turbo run lint`            | TypeScript strict lint                                   |
 | `npm run format`                | Prettier across all workspaces                           |
@@ -298,6 +298,7 @@ Copy `.env.example` to `.env` and set:
 | `BETA_API_URL`                          | No (required for full beta readiness verification) | Target API URL for `npm run beta:readiness`                             |
 | `BETA_WEB_URL`                          | No                                                 | Optional target web URL for beta readiness                              |
 | `BETA_ENV_LABEL`                        | No                                                 | Expected environment label for `/meta/release` (default: `beta`)        |
+| `STYX_DEMO_PASSWORD`                    | No (required for authenticated hosted beta checks) | Runtime password for synthetic verification accounts only               |
 
 The API loads env files through `src/api/src/config/env-path.ts` in this order:
 repo `.env.local`, repo `.env`, `src/api/.env.local`, then `src/api/.env`.

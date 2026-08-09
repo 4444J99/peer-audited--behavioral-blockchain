@@ -178,6 +178,16 @@ seed_local() {
   compose exec -T styx-postgres \
     psql -q -v ON_ERROR_STOP=1 -U "$pg_user" -d "$pg_db" -f /opt/styx/seed-circles.sql \
     || return 1
+  if [ -n "${STYX_DEMO_PASSWORD:-}" ]; then
+    local password_hash
+    password_hash="$(node scripts/demo/hash-synthetic-password.mjs)"
+    compose exec -T styx-postgres \
+      psql -q -v ON_ERROR_STOP=1 -U "$pg_user" -d "$pg_db" -v password_hash="$password_hash" <<'SQL' \
+      || return 1
+UPDATE users SET password_hash = :'password_hash'
+WHERE email LIKE '%@demo.styx.protocol' OR email = 'hr.lead@acheron.example';
+SQL
+  fi
   ok "Seed data applied."
 }
 

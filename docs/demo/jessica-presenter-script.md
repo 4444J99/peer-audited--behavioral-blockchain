@@ -10,7 +10,7 @@ Open `/tour` and pause at the accounting-boundary card.
 
 ## Demo 1 — individual commitment, proof, and auditable result — 2 minutes
 
-1. Sign in as `river@demo.styx.protocol` with the synthetic demo password shown in the local runbook.
+1. Run `npm run demo:credentials` locally, then sign in as `river@demo.styx.protocol` with that synthetic-only password. Do not copy the value into the presentation.
 2. Open the dashboard, then a commitment and its proof record.
 3. Show the check-in history and the test-credit ledger entry.
 
