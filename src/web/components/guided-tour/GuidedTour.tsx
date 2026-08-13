@@ -20,7 +20,7 @@
  *    registry's vocabulary is asserted against /tour by the recorder.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   PERSONA_ACCOUNTS,
@@ -31,6 +31,13 @@ import {
   type TourStep,
   type TruthLabel,
 } from '../../lib/guided-tour/registry';
+import {
+  getViewerName,
+  registerSession,
+  sendNote,
+  setViewerName,
+  trackEvents,
+} from '../../lib/guided-tour/feedback';
 
 /** Audience depth. `layperson` sees the summary only; everyone else sees mechanism too. */
 const AUDIENCES = [
@@ -99,6 +106,15 @@ export default function GuidedTour() {
   const [audience, setAudience] = useState<AudienceId>('layperson');
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const [anchored, setAnchored] = useState<AnchoredStep[]>([]);
+  const [viewerName, setViewerNameState] = useState('');
+  const [note, setNote] = useState('');
+  const [noteStatus, setNoteStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
+  // Where the current route was entered, so a route_view can carry real dwell time
+  // rather than a bare count. A count says which pages were opened; dwell says
+  // which ones held anyone's attention, which is the question worth asking.
+  const enteredAt = useRef<number>(Date.now());
+  const previousPath = useRef<string | null>(null);
+  const flushed = useRef(false);
 
   const route = useMemo<TourRoute | undefined>(
     () => (pathname ? matchTourRoute(pathname) : undefined),
@@ -122,6 +138,53 @@ export default function GuidedTour() {
   useEffect(() => {
     window.localStorage.setItem(AUDIENCE_STORAGE_KEY, audience);
   }, [audience]);
+
+  // Announce this browser once. Everyone in the room shares the same synthetic
+  // accounts, so a per-browser id plus a name they type is the only attribution
+  // that means anything.
+  useEffect(() => {
+    if (!isGuidedTourEnabled()) return;
+    const stored = getViewerName();
+    setViewerNameState(stored);
+    registerSession(stored, audience);
+    // Intentionally mount-only: re-registering on every audience change would
+    // turn one viewer into many.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Close the previous route's dwell when the path changes, and again when the
+  // tab is hidden or closed -- otherwise the last route every viewer looked at,
+  // often the one that mattered most, is the one that never reports.
+  useEffect(() => {
+    if (!isGuidedTourEnabled()) return undefined;
+
+    const flush = () => {
+      const from = previousPath.current;
+      if (!from || flushed.current) return;
+      const dwellMs = Date.now() - enteredAt.current;
+      if (dwellMs < 400) return; // a pass-through redirect is not a visit
+      // Exactly once per route. A browser navigation fires BOTH visibilitychange
+      // and pagehide, so an unguarded flush double-counts every view and doubles
+      // every dwell figure -- quietly, and in the direction that flatters the demo.
+      flushed.current = true;
+      trackEvents([{ type: 'route_view', route: from, dwellMs }]);
+    };
+
+    flush();
+    previousPath.current = pathname ?? null;
+    enteredAt.current = Date.now();
+    flushed.current = false;
+
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', flush);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     window.localStorage.setItem(OPEN_STORAGE_KEY, String(open));
@@ -212,7 +275,15 @@ export default function GuidedTour() {
           <button
             type="button"
             aria-label={`Explain: ${step.title}`}
-            onClick={() => setActiveStep(activeStep === step.index ? null : step.index)}
+            onClick={() => {
+              const opening = activeStep !== step.index;
+              setActiveStep(opening ? step.index : null);
+              // Only opens are tracked. Which explanations people actually reach
+              // for is the signal; closing one says nothing.
+              if (opening) {
+                trackEvents([{ type: 'tooltip_open', route: route.path, detail: step.title }]);
+              }
+            }}
             className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-amber-300 bg-amber-500 text-xs font-black text-black shadow-lg transition hover:scale-110"
           >
             {step.index + 1}
@@ -289,7 +360,12 @@ export default function GuidedTour() {
                 <button
                   key={entry.id}
                   type="button"
-                  onClick={() => setAudience(entry.id)}
+                  onClick={() => {
+                    setAudience(entry.id);
+                    trackEvents([
+                      { type: 'audience_change', route: route.path, detail: entry.id },
+                    ]);
+                  }}
                   className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${
                     audience === entry.id
                       ? 'border-white bg-white text-black'
@@ -300,6 +376,64 @@ export default function GuidedTour() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="mt-6 border-t border-neutral-800 pt-5">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-500">
+              Leave a note on this page
+            </p>
+            <input
+              value={viewerName}
+              onChange={(event) => {
+                setViewerNameState(event.target.value);
+                setViewerName(event.target.value);
+              }}
+              placeholder="Your name (optional)"
+              className="mt-3 w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-white placeholder:text-neutral-600"
+            />
+            <textarea
+              value={note}
+              onChange={(event) => {
+                setNote(event.target.value);
+                if (noteStatus !== 'idle') setNoteStatus('idle');
+              }}
+              rows={3}
+              placeholder="Confusing? Wrong? Missing? Say it here."
+              className="mt-2 w-full resize-y rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm leading-6 text-white placeholder:text-neutral-600"
+            />
+            <button
+              type="button"
+              disabled={!note.trim() || noteStatus === 'saving'}
+              onClick={async () => {
+                setNoteStatus('saving');
+                const ok = await sendNote(route.path, note.trim());
+                if (ok) {
+                  setNote('');
+                  setNoteStatus('saved');
+                  trackEvents([{ type: 'nav', route: route.path, detail: 'note_added' }]);
+                } else {
+                  // Never silently swallow this one: a viewer who thinks their
+                  // note was recorded and finds it missing is worse than no note.
+                  setNoteStatus('failed');
+                }
+              }}
+              className="mt-2 w-full rounded-full bg-amber-400 px-4 py-2 text-sm font-black text-black disabled:opacity-30"
+            >
+              {noteStatus === 'saving' ? 'Sending…' : 'Send note'}
+            </button>
+            {noteStatus === 'saved' && (
+              <p className="mt-2 text-xs font-bold text-emerald-400">Saved. Thank you.</p>
+            )}
+            {noteStatus === 'failed' && (
+              <p className="mt-2 text-xs leading-5 text-amber-300">
+                Could not reach the note collector, so this was <strong>not</strong> saved. Tell the
+                presenter — they may not have started it.
+              </p>
+            )}
+            <p className="mt-3 text-[11px] leading-5 text-neutral-600">
+              Notes and which pages you opened are recorded on the presenter&apos;s machine to
+              improve the demo. No account data, page content, or device details are collected.
+            </p>
           </div>
         </div>
 

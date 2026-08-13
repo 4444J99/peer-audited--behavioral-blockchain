@@ -18,6 +18,51 @@ The launcher creates a random synthetic-only login password outside version cont
 
 The demo data is synthetic. With Docker, reset removes only containers and volumes in the named `styx-demo` Compose project. Without Docker, it uses only the explicitly named local database `styx_demo_styxlaunch` and Redis port `6391`. Neither path selects a hosted environment or payment account.
 
+## Showing it to people in the room
+
+The demo already binds every interface, so anyone on the same Wi-Fi can open it. The one address
+that will **not** work from their device is the `127.0.0.1` one the launcher prints.
+
+```bash
+npm run demo:feedback     # start the note + interaction collector first
+npm run demo:share        # prints the LAN URL, a QR code, and writes a printable PNG
+```
+
+`demo:share` resolves the address on the interface carrying the default route, refuses to print an
+address that is not actually answering, and tells you whether the collector is running — an empty
+report afterwards should never be the first sign that it was not.
+
+Everyone scans the QR, opens the tour, and drives it themselves. Read the synthetic password aloud
+from `npm run demo:credentials`; never put it on a slide.
+
+Two practical failure modes: the address changes when you join a different network (re-run
+`demo:share`), and a sleeping machine drops everyone (`caffeinate -d` while presenting).
+
+### Notes and interaction tracking
+
+Every viewer can leave a note on any page, from the panel itself, with an optional name. Notes are
+recorded against the route they were left on, which is what makes them actionable later — "this was
+confusing" is worth much more when you know which screen it was about.
+
+```bash
+npm run demo:feedback:report   # who came, where they lingered, what they wrote
+```
+
+The report also prints **NOBODY OPENED** — the routes no one reached. That list is usually the more
+useful half: a route nobody opened during a walkthrough is unreachable, uninteresting, or badly
+signposted, and a report that only shows what people *did* look at hides all three.
+
+The collector is a **separate process** on purpose (`scripts/demo/feedback-server.mjs`, port 4312,
+append-only NDJSON under `artifacts/`, gitignored). It is not part of the product API: rehearsal
+telemetry must never land in a migration, a seed, or the product database, and a telemetry failure
+must never be able to break a demo launch. If it is not running, the tour behaves exactly as it does
+without it — except that a viewer who tries to send a note is told plainly that it was not saved.
+
+What is recorded: a random per-browser id, a name the viewer types, routes and dwell time, tooltip
+opens, explanation depth, and notes. What is not: no IP addresses, no user agents, no account
+identity, no page content. Everyone shares the same synthetic accounts, so account identity would be
+noise — the self-entered name is the only attribution, and the panel says so on screen.
+
 ## The guided tour (self-driving, for five different readers)
 
 The demo explains itself. Every route in the app carries a synced panel on the right with the
