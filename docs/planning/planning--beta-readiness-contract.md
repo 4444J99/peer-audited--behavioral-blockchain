@@ -31,6 +31,7 @@ For `READINESS_PROFILE=beta`:
 - `BETA_API_URL` (required target for full verification)
 - `BETA_WEB_URL` (optional)
 - `BETA_ENV_LABEL` (optional, defaults to `beta`)
+- `STYX_DEMO_PASSWORD` (required for authenticated synthetic-account checks; supplied to promotion as `BETA_DEMO_PASSWORD`)
 
 For `READINESS_PROFILE=staging`:
 
@@ -46,16 +47,16 @@ Control flags:
 
 ## Gate Matrix
 
-| Gate | Required | Command | Owner | Notes |
-|---|---|---|---|---|
-| `api_ready` | Yes | `scripts/smoke/check-api-ready.sh` | API / Platform | Polls `/health/ready` until ready or timeout |
-| `api_release_meta` | Yes | `scripts/smoke/check-api-release.sh` | API / Platform | Validates `/meta/release` contract |
-| `web_availability` | No | `scripts/smoke/check-web.sh` | Web / Platform | Optional if `*_WEB_URL` is configured |
-| `critical_endpoints` | Yes | `scripts/smoke/check-endpoints.sh` | API / Web | Validates health, auth guards, legal routes |
-| `ledger_invariant` | Yes | `scripts/validation/01-phantom-money-check.ts` | API | Verifies no phantom-money behavior |
-| `behavioral_constants` | No | `scripts/validation/05-behavioral-physics-check.ts` | API / Shared | Exit code `2` is recorded as `skipped` |
-| `security_invariants` | Yes | `scripts/validation/06-security-invariant-check.ts` | Platform | Compiled-output secret/backdoor sweep |
-| `claim_drift` | Yes | `scripts/validation/07-claim-drift-check.js` | Platform / Docs | Ensures docs path references remain valid |
+| Gate                   | Required | Command                                             | Owner           | Notes                                        |
+| ---------------------- | -------- | --------------------------------------------------- | --------------- | -------------------------------------------- |
+| `api_ready`            | Yes      | `scripts/smoke/check-api-ready.sh`                  | API / Platform  | Polls `/health/ready` until ready or timeout |
+| `api_release_meta`     | Yes      | `scripts/smoke/check-api-release.sh`                | API / Platform  | Validates `/meta/release` contract           |
+| `web_availability`     | No       | `scripts/smoke/check-web.sh`                        | Web / Platform  | Optional if `*_WEB_URL` is configured        |
+| `critical_endpoints`   | Yes      | `scripts/smoke/check-endpoints.sh`                  | API / Web       | Validates health, auth guards, legal routes  |
+| `ledger_invariant`     | Yes      | `scripts/validation/01-phantom-money-check.ts`      | API             | Verifies no phantom-money behavior           |
+| `behavioral_constants` | No       | `scripts/validation/05-behavioral-physics-check.ts` | API / Shared    | Exit code `2` is recorded as `skipped`       |
+| `security_invariants`  | Yes      | `scripts/validation/06-security-invariant-check.ts` | Platform        | Compiled-output secret/backdoor sweep        |
+| `claim_drift`          | Yes      | `scripts/validation/07-claim-drift-check.js`        | Platform / Docs | Ensures docs path references remain valid    |
 
 ## Status Semantics
 
@@ -95,10 +96,10 @@ Schema:
 
 ## CI Policy
 
-- CI runs the readiness suite in a dedicated `beta_readiness` job.
-- CI sets `READINESS_REQUIRE_TARGETS=true` (missing target URLs fail readiness).
+- The hosted beta-promotion workflow runs the readiness suite in a dedicated `beta_readiness` job.
+- That job sets `READINESS_REQUIRE_TARGETS=true` (missing target URLs fail readiness).
 - Artifact upload is unconditional (`if: always()`).
-- `beta_readiness` is required before E2E execution.
+- `beta_readiness` is required before beta promotion is marked ready. PR E2E is independent of a hosted-beta receipt and cannot stand in for one.
 
 ## Change Control
 

@@ -1,6 +1,7 @@
 import {
   allTablesExist,
   baselineFromExistingSchema,
+  compareMigrationFiles,
   ensureMigrationsTable,
   extractCreatedTables,
   getAppliedMigrations,
@@ -150,12 +151,18 @@ describe('Migration Runner', () => {
       await expect(getPendingMigrations(mockPool)).rejects.toThrow('Schema drift detected: Applied migration 001_initial_schema.sql is missing from the filesystem.');
     });
 
-    it('should throw Error on schema drift when pending migration is older than latest applied', async () => {
+    it('should throw Error when applied migrations are not a contiguous prefix', async () => {
       (fs.readdirSync as jest.Mock).mockReturnValue(['001_initial_schema.sql', '002_add_index.sql']);
       mockQuery.mockResolvedValue({
         rows: [{ name: '002_add_index.sql' }],
       });
-      await expect(getPendingMigrations(mockPool)).rejects.toThrow('Schema drift detected: Pending migration 001_initial_schema.sql is older than applied migration 002_add_index.sql.');
+      await expect(getPendingMigrations(mockPool)).rejects.toThrow('Schema drift detected: Pending migration 001_initial_schema.sql precedes applied migration 002_add_index.sql.');
+    });
+
+    it('orders numeric sequences before their descriptive stems and amendments', () => {
+      expect(
+        ['100_future.sql', '037b_amendment.sql', '9_legacy.sql', '037_base.sql'].sort(compareMigrationFiles),
+      ).toEqual(['9_legacy.sql', '037_base.sql', '037b_amendment.sql', '100_future.sql']);
     });
   });
 

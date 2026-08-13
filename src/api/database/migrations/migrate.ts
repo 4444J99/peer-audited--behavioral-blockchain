@@ -5,6 +5,7 @@ import { resolveDatabaseUrl } from '../../src/config/runtime';
 
 const MIGRATIONS_TABLE = 'schema_migrations';
 const MIGRATIONS_DIR = path.join(__dirname);
+const MIGRATION_NAME_RE = /^(\d+)([A-Za-z]*)(?:_|$)/;
 
 // Sentinel table created both by the very first migration (001) and by the
 // consolidated schema.sql init script. Its presence means the database has
@@ -22,11 +23,35 @@ export async function ensureMigrationsTable(pool: Pool): Promise<void> {
   `);
 }
 
+/**
+ * Sort migration names by their numeric sequence before the descriptive stem.
+ *
+ * The repository already contains sibling migrations (for example 041_* and
+ * 043_*), plus the historical 037b_* amendment.  Plain string sorting happens
+ * to work for today's zero-padded names, but it is not the contract: a future
+ * 100_* migration or an unpadded repair must still be ordered predictably.
+ */
+export function compareMigrationFiles(left: string, right: string): number {
+  const leftMatch = left.match(MIGRATION_NAME_RE);
+  const rightMatch = right.match(MIGRATION_NAME_RE);
+  if (!leftMatch || !rightMatch) return left.localeCompare(right);
+
+  const numberDelta = Number(leftMatch[1]) - Number(rightMatch[1]);
+  if (numberDelta !== 0) return numberDelta;
+
+  // The base sequence runs before its lettered amendment (037 before 037b).
+  const suffixDelta = leftMatch[2].localeCompare(rightMatch[2]);
+  if (suffixDelta !== 0) return suffixDelta;
+
+  // Sibling migrations remain stable and transparent by their full filename.
+  return left.localeCompare(right);
+}
+
 export function listMigrationFiles(): string[] {
   return fs
     .readdirSync(MIGRATIONS_DIR)
     .filter((f: string) => f.endsWith('.sql'))
-    .sort();
+    .sort(compareMigrationFiles);
 }
 
 export async function getAppliedMigrations(pool: Pool): Promise<Set<string>> {
@@ -45,17 +70,21 @@ export async function getPendingMigrations(pool: Pool): Promise<string[]> {
     }
   }
 
-  const pending = files.filter((f: string) => !applied.has(f));
-  const appliedArr = Array.from(applied).sort();
-  const lastApplied = appliedArr.length > 0 ? appliedArr[appliedArr.length - 1] : '';
-  
-  for (const p of pending) {
-    if (lastApplied && p < lastApplied) {
-      throw new Error(`Schema drift detected: Pending migration ${p} is older than applied migration ${lastApplied}.`);
-    }
+  const firstPendingIndex = files.findIndex((file) => !applied.has(file));
+  if (firstPendingIndex === -1) return [];
+
+  // Applied migrations must be one contiguous prefix.  The old latest-name
+  // comparison could pass an applied migration after a gap when sibling names
+  // or future non-padded numbers were introduced, silently changing ordering.
+  const appliedAfterGap = files.find((file, index) => index > firstPendingIndex && applied.has(file));
+  if (appliedAfterGap) {
+    const firstPending = files[firstPendingIndex];
+    throw new Error(
+      `Schema drift detected: Pending migration ${firstPending} precedes applied migration ${appliedAfterGap}.`,
+    );
   }
 
-  return pending;
+  return files.slice(firstPendingIndex);
 }
 
 /**

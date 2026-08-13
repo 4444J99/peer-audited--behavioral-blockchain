@@ -9,7 +9,7 @@
 -- re-running this file against a live database is safe.
 --
 -- Cast:
---   12 users total (all passwords: demo-password-123):
+--   12 users total (passwords are injected during local demo provisioning):
 --     7 no-contact consumers  d1..0001-0007 (5-member pod via contracts.metadata.cohort)
 --     3 Fury auditors         d1..0008-000a (Alecto, Megaera, Tisiphone)
 --     1 practitioner          d1..000b
@@ -48,7 +48,7 @@ INSERT INTO enterprise_scopes (id, enterprise_id, scope_key, limit_value, curren
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
--- Users (bcrypt hash reused from base seed: demo-password-123) -- allow-secret
+-- Users (the bootstrap hash is replaced during local demo provisioning).
 -- Consumers 1-3 and 7 are Acheron employees so the /hr metrics light up.
 -- ---------------------------------------------------------------------------
 INSERT INTO users (

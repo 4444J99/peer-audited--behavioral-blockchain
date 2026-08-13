@@ -151,7 +151,7 @@ Located in `scripts/smoke/`:
 The `ci.yml` GitHub Actions workflow orchestrates the full test pipeline:
 
 ```
-1. Checkout + install (npm ci, Node 20)
+1. Checkout + install (npm ci, Node 24 LTS)
 2. Security audit (advisory, --audit-level=high)
 3. Test (turbo run test, all workspaces)
 4. Build (turbo run build)

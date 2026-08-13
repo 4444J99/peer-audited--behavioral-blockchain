@@ -21,10 +21,16 @@ function requireApiBase(): string {
 }
 
 const API_BASE = requireApiBase();
+const demoPassword = process.env.STYX_DEMO_PASSWORD; // allow-secret: injected synthetic validation password
+if (!demoPassword) {
+  throw new Error(
+    "STYX_DEMO_PASSWORD is required for the live ledger validation.",
+  );
+}
 const DEMO_USER = {
   email: "demo@styx.protocol",
-  password: "demo-password-123",
-}; // allow-secret
+  password: demoPassword, // allow-secret: injected synthetic validation password
+};
 
 async function request<T>(
   path: string,
