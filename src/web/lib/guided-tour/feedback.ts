@@ -33,14 +33,37 @@ function collectorBase(): string | null {
   return `${window.location.protocol}//${window.location.hostname}:${collectorPort}`;
 }
 
+/**
+ * A random id from the platform CSPRNG, or nothing.
+ *
+ * There is deliberately no Math.random() fallback. This id is only a correlation
+ * key for demo telemetry, but a predictable identifier is still the wrong thing to
+ * mint, and every browser that can run this app has crypto.getRandomValues. If some
+ * environment somehow lacks it, returning "" degrades to not tracking -- which is
+ * the correct failure for a layer that must never affect the demo.
+ */
+function mintId(): string {
+  const webCrypto: Crypto | undefined = typeof crypto !== 'undefined' ? crypto : undefined;
+  if (!webCrypto) return '';
+
+  // crypto.randomUUID is restricted to SECURE CONTEXTS, so it is undefined on
+  // http://<lan-ip>:4311 -- which is precisely how the room opens this demo. The
+  // TypeScript lib types declare it unconditionally, so this has to be a runtime
+  // check; getRandomValues has no such restriction and is the real path here.
+  const randomUUID = (webCrypto as Crypto & { randomUUID?: () => string }).randomUUID;
+  if (typeof randomUUID === 'function') return randomUUID.call(webCrypto);
+
+  const bytes = new Uint8Array(16);
+  webCrypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
 export function getSessionId(): string {
   if (typeof window === 'undefined') return '';
   let id = window.localStorage.getItem(SESSION_KEY);
   if (!id) {
-    id =
-      typeof crypto !== 'undefined' && 'randomUUID' in crypto
-        ? crypto.randomUUID()
-        : `s-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    id = mintId();
+    if (!id) return '';
     window.localStorage.setItem(SESSION_KEY, id);
   }
   return id;
@@ -74,17 +97,23 @@ async function post(path: string, body: unknown): Promise<boolean> {
 }
 
 export function registerSession(name: string, audience: string): void {
-  void post('/session', { sessionId: getSessionId(), name, audience });
+  const sessionId = getSessionId();
+  if (!sessionId) return;
+  void post('/session', { sessionId, name, audience });
 }
 
 export function trackEvents(events: FeedbackEvent[]): void {
-  if (!events.length) return;
-  void post('/events', { sessionId: getSessionId(), events });
+  const sessionId = getSessionId();
+  if (!sessionId || !events.length) return;
+  void post('/events', { sessionId, events });
 }
 
 export function sendNote(route: string, text: string): Promise<boolean> {
+  const sessionId = getSessionId();
+  // A note without a session still deserves to reach the presenter, so this is the
+  // one path that proceeds anonymously rather than dropping the viewer's words.
   return post('/notes', {
-    sessionId: getSessionId(),
+    sessionId: sessionId || 'anonymous',
     name: getViewerName(),
     route,
     text,
