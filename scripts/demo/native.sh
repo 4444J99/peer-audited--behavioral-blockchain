@@ -276,8 +276,18 @@ launch() {
 
   write_state
   trap - EXIT
+
+  # Bring the note/interaction collector up with the demo, so a presenter never has
+  # to remember a second command. It keeps its OWN pid file rather than a key in this
+  # state file, whose parsers reject unknown keys -- and it is explicitly non-fatal:
+  # telemetry failing must never turn a working demo into a failed launch.
+  if ! bash "$repo_root/scripts/demo/feedback.sh" start; then
+    echo "WARN: notes/interaction collector did not start; the demo is unaffected." >&2
+  fi
+
   ok "Native synthetic, test-money demo is live."
   echo "  Tour: http://127.0.0.1:${web_port}/tour"
+  echo "  Share: npm run demo:share"
   echo "  Verify: npm run demo:verify"
   echo "  Stop: bash scripts/demo/native.sh down"
 }
@@ -301,6 +311,10 @@ down() {
     fi
   fi
   rm -f "$state_file"
+  # Goes down with the demo it belongs to. Everything already collected is kept, so a
+  # reset (down then launch) costs nothing but a brief gap. Non-fatal for the same
+  # reason as the start side.
+  bash "$repo_root/scripts/demo/feedback.sh" stop >/dev/null 2>&1 || true
   ok "Native synthetic demo stopped. Database ${database_name} is retained until reset."
 }
 
