@@ -311,6 +311,10 @@ down() {
     fi
   fi
   rm -f "$state_file"
+  # Goes down with the demo it belongs to. Everything already collected is kept, so a
+  # reset (down then launch) costs nothing but a brief gap. Non-fatal for the same
+  # reason as the start side.
+  bash "$repo_root/scripts/demo/feedback.sh" stop >/dev/null 2>&1 || true
   ok "Native synthetic demo stopped. Database ${database_name} is retained until reset."
 }
 

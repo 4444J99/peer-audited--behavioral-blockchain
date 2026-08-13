@@ -24,14 +24,19 @@ The demo already binds every interface, so anyone on the same Wi-Fi can open it.
 that will **not** work from their device is the `127.0.0.1` one the launcher prints.
 
 ```bash
-npm run demo:feedback     # start the note + interaction collector (detached)
 npm run demo:share        # prints the LAN URL, a QR code, and writes a printable PNG
 ```
 
-The collector detaches the same way the demo does, so closing the terminal does not stop it.
-`npm run demo:feedback:status` reports whether it is up and how much it has collected;
-`npm run demo:feedback:stop` ends it and keeps the data. Starting it twice is safe — it reports the
-running instance rather than fighting for the port.
+That is the only command you need. The note/interaction collector now starts **with** the demo and
+stops with it — `demo:launch` and `demo:reset:verify` bring it up detached, `demo:down` takes it
+down, and everything collected is retained across a reset. Closing the terminal stops none of it.
+
+Its start is deliberately non-fatal: if the collector cannot start, the launch prints a warning and
+the demo comes up anyway. Telemetry must never turn a working demo into a failed launch.
+
+The separate controls remain for when you want them: `npm run demo:feedback:status` (up? how much
+collected?), `demo:feedback:stop`, `demo:feedback` to start it again. Starting twice is safe — it
+reports the running instance rather than fighting for the port.
 
 `demo:share` resolves the address on the interface carrying the default route, refuses to print an
 address that is not actually answering, and tells you whether the collector is running — an empty
