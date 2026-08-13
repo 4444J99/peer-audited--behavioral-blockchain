@@ -112,23 +112,50 @@ load_state() {
   [[ -n "$state_demo_password" && "$state_demo_password" != *$'\n'* ]] || die "native demo state has an invalid synthetic password."
 }
 
+# A stopped process must not leave a listener behind. The API is started through
+# scripts/dev/run-api.mjs, which spawns the Nest server as a child, so signalling
+# only the parent reparents a live server to init -- it keeps its port, and the
+# next launch's readiness probe then passes against a stale server still bound to
+# the database this reset just dropped. Signal the children too, and escalate.
+terminate_tree() {
+  local pid="$1"
+  [[ "$pid" =~ ^[0-9]+$ ]] || return 0
+  kill -0 "$pid" 2>/dev/null || return 0
+  pkill -TERM -P "$pid" 2>/dev/null || true
+  kill -TERM "$pid" 2>/dev/null || true
+  for _ in 1 2 3 4 5; do
+    kill -0 "$pid" 2>/dev/null || return 0
+    sleep 1
+  done
+  pkill -KILL -P "$pid" 2>/dev/null || true
+  kill -KILL "$pid" 2>/dev/null || true
+  for _ in 1 2 3; do
+    kill -0 "$pid" 2>/dev/null || return 0
+    sleep 1
+  done
+  return 1
+}
+
 stop_pid() {
   local pid="$1" label="$2"
   if [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" 2>/dev/null; then
     info "Stopping ${label} (pid ${pid}) ..."
-    kill "$pid"
-    for _ in 1 2 3 4 5; do
-      kill -0 "$pid" 2>/dev/null || return 0
-      sleep 1
-    done
-    die "${label} did not stop cleanly (pid ${pid}); inspect it before retrying."
+    terminate_tree "$pid" ||
+      die "${label} did not stop cleanly (pid ${pid}); inspect it before retrying."
   fi
 }
 
 wait_for_http() {
   local url="$1" label="$2"
   for _ in $(seq 1 40); do
-    if curl -fsS -o /dev/null "$url" 2>/dev/null; then
+    # -q ignores the operator's curlrc. An ambient --http2 there (curl reads
+    # $CURL_HOME/.curlrc) makes curl request an h2c upgrade on plain HTTP, which
+    # Next answers by closing the connection -- so a perfectly healthy demo reads
+    # as "never became ready", and no browser reproduces it because browsers do
+    # not attempt h2c over cleartext. This demo speaks local HTTP/1.1; pin that
+    # rather than inherit whatever the machine happens to prefer. The same flag
+    # also drops an inherited --location and --max-time from the probe.
+    if curl -q -fsS --http1.1 --max-time 10 -o /dev/null "$url" 2>/dev/null; then
       ok "${label} is ready."
       return 0
     fi
@@ -209,8 +236,11 @@ start_redis() {
 cleanup_failed_launch() {
   local exit_status="$1"
   [[ "$exit_status" -ne 0 ]] || return 0
-  if [[ "${web_pid:-}" =~ ^[0-9]+$ ]]; then kill "$web_pid" 2>/dev/null || true; fi
-  if [[ "${api_pid:-}" =~ ^[0-9]+$ ]]; then kill "$api_pid" 2>/dev/null || true; fi
+  # Wait for these to actually die rather than firing a signal and exiting: an
+  # orphan that outlives the failed launch keeps its port, and the operator's
+  # next attempt fails somewhere confusingly far from the real cause.
+  if [[ "${web_pid:-}" =~ ^[0-9]+$ ]]; then terminate_tree "$web_pid" || true; fi
+  if [[ "${api_pid:-}" =~ ^[0-9]+$ ]]; then terminate_tree "$api_pid" || true; fi
   if [[ "${redis_managed:-0}" == "1" && "${redis_pid:-}" =~ ^[0-9]+$ ]] && kill -0 "$redis_pid" 2>/dev/null; then
     redis-cli -p "$redis_port" shutdown nosave 2>/dev/null || true
   fi

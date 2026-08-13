@@ -16,6 +16,30 @@ The local package is a private synthetic demonstration. “Ready” means only t
 
 Until every row is proven, the external beta remains blocked. The safe public statement is “private synthetic demo only.”
 
+## Gate audit — 2026-08-13
+
+Read-only audit of live state. No gate was attempted or cleared; this section records what is
+actually true so the table above is not read from memory. Re-derive it, do not trust it stale.
+
+| Gate | Status | Evidence read today |
+| --- | --- | --- |
+| Hosted test-money environment | **Open** | No hosted deployment has been promoted. The `beta` environment exists but no promotion receipt is attached to a commit. |
+| Deployment credentials | **Materially advanced — no longer a blanket blocker** | The `beta` environment holds `RENDER_API_KEY`, `RENDER_BETA_API_SERVICE_ID`, `RENDER_BETA_WEB_SERVICE_ID`, `BETA_API_URL`, `BETA_WEB_URL`, `BETA_DATABASE_URL`, `BETA_ENV_LABEL`. One named gap remains: `.github/workflows/beta-promotion.yml` also consumes `secrets.BETA_DEMO_PASSWORD`, which is **not** set in any scope. |
+| Stripe test credentials | **Open** | No Stripe credential exists at repository or environment scope. The local demo does not need one — `scripts/demo/local-secrets.sh` generates a process-local value and the test-money rail never contacts Stripe — so this gate blocks only the *hosted* beta. |
+| Geography behavior | **Open** | Not verifiable without a hosted environment. `src/api/services/security/geofence.service.ts` and `compliance-policy.service.ts` are the implementing surfaces; the native demo runs with `GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS=true`, which is a demo posture, not a verified jurisdiction path. |
+| Consent and support operations | **Open** | Founder/operations owner; no approved operational receipt is attached. |
+| Repaired live verification | **Passed locally, on the Docker-free native path** | `npm run demo:reset:verify` exited 0 twice consecutively today, reporting the live API, browser, ledger, proof, behavioral, coach and enterprise-preview checks plus 12 synthetic identities. This is the local half only; the hosted equivalent remains unrun. |
+
+Phase epics, read live: **#555 Beta, #556 Gamma, #557 Delta, #558 Omega — all four OPEN**, all
+labelled `epic`, none updated since 2026-07-30.
+
+Two findings outside the table, recorded so they are not rediscovered:
+
+- `.github/workflows/deploy-ask-styx.yml` builds with `VITE_WORKER_URL: ${{ vars.ASK_STYX_WORKER_URL }}`,
+  and **no Actions variable is defined at repository or environment scope**. The published Ask Styx
+  page therefore ships an empty worker URL. This is the pre-existing state, not a regression.
+- The `staging` and `github-pages` environments hold no secrets or variables.
+
 ## Real money or public launch — deliberately blocked
 
 | Gate | Why it remains a gate |
