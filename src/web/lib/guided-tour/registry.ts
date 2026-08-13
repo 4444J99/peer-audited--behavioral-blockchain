@@ -618,10 +618,17 @@ const splitSegments = (value: string): string[] => value.split("/").filter(Boole
  * subtly wrong.
  */
 export function matchTourRoute(pathname: string): TourRoute | undefined {
-  const direct = TOUR_BY_PATH.get(pathname);
+  // The Cloudflare snapshot builds with trailingSlash, so usePathname() reports
+  // "/tour/" while every registry key is "/tour". Left unnormalised the tour simply
+  // does not appear on the hosted build -- silently, since a missing panel looks like
+  // a route that was never added rather than a lookup miss.
+  const normalised =
+    pathname.length > 1 && pathname.endsWith('/') ? pathname.replace(/\/+$/, '') : pathname;
+
+  const direct = TOUR_BY_PATH.get(normalised);
   if (direct) return direct;
 
-  const actual = splitSegments(pathname);
+  const actual = splitSegments(normalised);
   return TOUR_ROUTES.find((route) => {
     if (!route.path.includes("[")) return false;
     const expected = splitSegments(route.path);
