@@ -605,16 +605,31 @@ export const TOUR_ROUTES: TourRoute[] = [
 
 export const TOUR_BY_PATH = new Map(TOUR_ROUTES.map((route) => [route.path, route]));
 
-/** Matches a live pathname to a registry entry, including dynamic segments. */
+const splitSegments = (value: string): string[] => value.split("/").filter(Boolean);
+
+/**
+ * Matches a live pathname to a registry entry, including dynamic segments.
+ *
+ * Compares segment by segment rather than compiling the registry path into a
+ * regex. Building a pattern by escaping a string is the sink CodeQL flags as
+ * incomplete sanitization (js/incomplete-sanitization) -- and escaping is the
+ * wrong tool here anyway, since a dynamic segment is exactly "one segment, any
+ * value", which a direct comparison expresses without an escaping rule to get
+ * subtly wrong.
+ */
 export function matchTourRoute(pathname: string): TourRoute | undefined {
   const direct = TOUR_BY_PATH.get(pathname);
   if (direct) return direct;
+
+  const actual = splitSegments(pathname);
   return TOUR_ROUTES.find((route) => {
     if (!route.path.includes("[")) return false;
-    const pattern = new RegExp(
-      `^${route.path.replace(/\[[^\]]+\]/g, "[^/]+").replace(/\//g, "\\/")}$`,
+    const expected = splitSegments(route.path);
+    if (expected.length !== actual.length) return false;
+    return expected.every(
+      (segment, index) =>
+        (segment.startsWith("[") && segment.endsWith("]")) || segment === actual[index],
     );
-    return pattern.test(pathname);
   });
 }
 
