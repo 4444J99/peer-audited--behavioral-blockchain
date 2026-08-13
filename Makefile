@@ -33,7 +33,7 @@ pitch:
 	cd src/pitch && npm run build
 
 test-e2e:
-	npx playwright test
+	npm run test:e2e
 
 test-e2e-ui:
 	npx playwright test --ui

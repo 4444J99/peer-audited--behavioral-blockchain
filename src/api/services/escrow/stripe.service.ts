@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import Stripe from 'stripe';
 import { JurisdictionTier } from '../geofencing';
 import { geofenceFailsOpenOnMissingLocation } from '../../src/modules/compliance/compliance-policy.service';
+import { testMoneyModeEnabled } from '../../src/config/runtime';
 
 import { resolveStakeDisposition } from './disposition';
 import type { StakeDisposition } from '../../src/common/interfaces/payout-provider.interface';
@@ -23,7 +24,16 @@ export class StripeFboService {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
     const isProduction = process.env.NODE_ENV === 'production';
 
-    if (isProduction && (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_mock_key')) {
+    // The test-money rail never calls Stripe. It is valid for the local demo
+    // and beta runtime to have no Stripe credential even when the container
+    // otherwise uses production optimisations. Requiring a key here made the
+    // dependency graph lie: EscrowModule correctly selected LedgerEscrowProvider
+    // but constructing this unused adapter still stopped the API from booting.
+    if (
+      isProduction &&
+      !testMoneyModeEnabled() &&
+      (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_mock_key')
+    ) {
       throw new Error(
         'FATAL: STRIPE_SECRET_KEY is required in production. ' +
         'Set a valid Stripe secret key to prevent mock mode in production.'

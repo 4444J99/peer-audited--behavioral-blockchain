@@ -5,11 +5,11 @@ Peer-audited behavioral accountability system using financial stakes and consens
 > **The expensive problem:** Accountability and corporate-wellness programs leak money because the stakes aren't real, the proof isn't audited, and holding employees' health data is a liability nobody wants to own. Budgets buy good intentions and get no follow-through. Styx is the production-grade enforcement layer that closes the gap: real Stripe FBO escrow (hold / capture / cancel), a double-entry ledger with no phantom money, peer-audited proof-of-completion via the Fury Router (honeypot injection + consensus + bounty economy), loss-aversion physics (λ = 1.955), and a privacy-firewalled B2B tier where the employer funds the pot but never sees an individual's health data — only k-anonymized aggregate engagement.
 >
 > [**Deploy this for your shop →**](mailto:padavano.anthony@gmail.com)<br>
-> *(If you are a technical recruiter or engineering leader, this repository is the proof-of-work for my architectural weight — a NestJS + Next.js + React Native + Tauri monorepo moving regulated money through a double-entry ledger and Stripe escrow, with 1,107 tests, KYC, geofencing, and CodeQL gates. [Work with the team that built this →](mailto:padavano.anthony@gmail.com))*
+> _(If you are a technical recruiter or engineering leader, this repository is the proof-of-work for my architectural weight — a NestJS + Next.js + React Native + Tauri monorepo moving regulated money through a double-entry ledger and Stripe escrow, with 1,107 tests, KYC, geofencing, and CodeQL gates. [Work with the team that built this →](mailto:padavano.anthony@gmail.com))_
 
 ![CI](https://github.com/a-organvm/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
-![Node](https://img.shields.io/badge/node-%3E%3D20-339933)
+![Node](https://img.shields.io/badge/node-24%20LTS-339933)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 ---
@@ -30,7 +30,7 @@ Peer-audited behavioral accountability system using financial stakes and consens
 ## Quick Start
 
 ```bash
-## Prerequisites: Node.js >= 20, npm 10+, PostgreSQL, Redis
+## Prerequisites: Node.js 24 LTS, npm 10+, PostgreSQL, Redis
 
 ## Configure runtime values for this environment
 cp .env.example .env
@@ -59,6 +59,15 @@ make deploy-down   # stop and remove the stack
 ```
 
 It reads dev defaults from `.config/docker/compose.defaults.env` (a present repo-root `.env` is layered on top and wins). The same script deploys to production — `bash scripts/deploy.sh render`. Full guide: [docs/operations/one-command-deploy.md](docs/operations/one-command-deploy.md).
+
+### Private synthetic demo
+
+For the truth-labeled, test-money-only demo, use `npm run demo:launch`. It
+uses Docker Compose when present, with an isolated native PostgreSQL/Redis
+fallback for travel machines without Docker. Use `npm run demo:reset` to recreate the named synthetic stack, then
+`npm run demo:verify` to prove the API, database, browser, ledger, proof, and
+behavioral routes on that exact commit. Open `/tour` for the guided explanation.
+This is not a hosted beta, real-money service, or public launch.
 
 ## Architecture
 
@@ -118,7 +127,7 @@ flowchart TB
 
 ### Tech Stack
 
-- **Runtime**: Node.js 20+
+- **Runtime**: Node.js 24 LTS
 - **Package Manager**: npm (workspaces + Turborepo)
 - **Database**: PostgreSQL 15 (double-entry ledger with ACID)
 - **Queue**: Redis 7 + BullMQ (Fury Router)
@@ -133,13 +142,13 @@ flowchart TB
 
 ## Live Status
 
-| Surface | URL | Status |
-|---|---|---|
-| Pitch deck (canonical Pages artifact, `@styx/pitch` → `docs/`) | https://a-organvm.github.io/peer-audited--behavioral-blockchain/ | `ship-now` (200 OK) |
-| Interactive launch surface (waitlist / sign-up) | `/launch` | `ship-soon` (404 — tracked in Phase Gamma) |
-| Ask Styx LLM Q&A app | `/ask-styx` (deploy-ask-styx workflow) | separate sub-path, not on canonical URL |
-| API (NestJS, Render) | the `API_URL` value per Render blueprint (`render.yaml`, `@styx/api`) | `ship-soon` (cut `v*` tag to trigger [`deploy.yml`](.github/workflows/deploy.yml); set Render secrets `RENDER_API_SERVICE_ID`, `RENDER_API_KEY`, `RENDER_WEB_SERVICE_ID`, `API_URL`, `WEB_URL`, `DATABASE_URL`) |
-| Web (Next.js, Render) | the `WEB_URL` value per Render blueprint (`render.yaml`, `@styx/web`) | `ship-soon` (same tag-triggered deploy as API) |
+| Surface                                                        | URL                                                                   | Status                                                                                                                                                                                                          |
+| -------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pitch deck (canonical Pages artifact, `@styx/pitch` → `docs/`) | https://a-organvm.github.io/peer-audited--behavioral-blockchain/      | `ship-now` (200 OK)                                                                                                                                                                                             |
+| Interactive launch surface (waitlist / sign-up)                | `/launch`                                                             | `ship-soon` (404 — tracked in Phase Gamma)                                                                                                                                                                      |
+| Ask Styx LLM Q&A app                                           | `/ask-styx` (deploy-ask-styx workflow)                                | separate sub-path, not on canonical URL                                                                                                                                                                         |
+| API (NestJS, Render)                                           | the `API_URL` value per Render blueprint (`render.yaml`, `@styx/api`) | `ship-soon` (cut `v*` tag to trigger [`deploy.yml`](.github/workflows/deploy.yml); set Render secrets `RENDER_API_SERVICE_ID`, `RENDER_API_KEY`, `RENDER_WEB_SERVICE_ID`, `API_URL`, `WEB_URL`, `DATABASE_URL`) |
+| Web (Next.js, Render)                                          | the `WEB_URL` value per Render blueprint (`render.yaml`, `@styx/web`) | `ship-soon` (same tag-triggered deploy as API)                                                                                                                                                                  |
 
 Full activation ledger (evidence, blockers, reconciliation with the cross-system `activation-ledger-2026-06-10.csv`): [`docs/activation/activation-ledger--peer-audited--2026-06-11.md`](docs/activation/activation-ledger--peer-audited--2026-06-11.md).
 
@@ -245,7 +254,7 @@ Full policy and gate ownership live in `docs/planning/beta-readiness-contract.md
 | `npm run dev:migrate`           | Run database migrations with repo-root env resolution    |
 | `make docker-up`                | Start services through Docker Compose                    |
 | `make deploy`                   | One-command deploy: full local stack (zero config)       |
-| `make deploy TARGET=render`     | Trigger a production deploy on Render                     |
+| `make deploy TARGET=render`     | Trigger a production deploy on Render                    |
 | `make deploy-down`              | Stop and remove the local stack                          |
 | `npx turbo run lint`            | TypeScript strict lint                                   |
 | `npm run format`                | Prettier across all workspaces                           |
@@ -289,6 +298,7 @@ Copy `.env.example` to `.env` and set:
 | `BETA_API_URL`                          | No (required for full beta readiness verification) | Target API URL for `npm run beta:readiness`                             |
 | `BETA_WEB_URL`                          | No                                                 | Optional target web URL for beta readiness                              |
 | `BETA_ENV_LABEL`                        | No                                                 | Expected environment label for `/meta/release` (default: `beta`)        |
+| `STYX_DEMO_PASSWORD`                    | No (required for authenticated hosted beta checks) | Runtime password for synthetic verification accounts only               |
 
 The API loads env files through `src/api/src/config/env-path.ts` in this order:
 repo `.env.local`, repo `.env`, `src/api/.env.local`, then `src/api/.env`.
@@ -322,7 +332,7 @@ curl "<api-public-url>/users/me" -H "x-api-key: <api-key>"
 5. **Gate 04** — Redacted build check (no gambling terminology in production)
 6. **Gate 06** — Security invariant check (no hardcoded secrets)
 7. **Gate 07** — Claim drift detection
-8. **Beta Readiness** — `npm run beta:readiness` (strict target enforcement in CI) + upload `artifacts/beta-readiness-summary.json`
+8. **Hosted Beta Readiness** — the beta-promotion workflow runs `npm run beta:readiness` with required target URLs and uploads `artifacts/beta-readiness-summary.json`; PR CI makes no hosted-beta claim.
 9. **Terraform** — `terraform fmt -check`, `terraform validate`
 10. **E2E** — Playwright (chromium + firefox matrix)
 11. **CodeQL** — JS/TS static analysis
@@ -342,4 +352,3 @@ MIT. See [LICENSE](LICENSE) for details.
 <sub>[Portfolio](https://4444j99.github.io/portfolio/) · [System Directory](https://4444j99.github.io/portfolio/directory/) · [ORGAN III · Ergon](https://organvm-iii-ergon.github.io/) · Part of the <a href="https://4444j99.github.io/portfolio/directory/">ORGANVM eight-organ system</a></sub>
 
 <!-- SYSTEM-NAV-END -->
-

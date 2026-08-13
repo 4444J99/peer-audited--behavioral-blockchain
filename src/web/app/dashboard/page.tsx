@@ -55,7 +55,15 @@ export default function IdentityDashboard() {
         const [balanceData, historyData, contractData, streakChain] = await Promise.all([
           api.getBalance() as any,
           api.getHistory(10) as any,
-          api.getUserContracts().catch(() => []),
+          // A jurisdiction block is a deliberate product state, not an empty
+          // contract list.  Preserve it so the dashboard can explain the gate
+          // instead of making the account appear ready with no data.
+          api.getUserContracts().catch((err) => {
+            if (err instanceof ApiError && err.code === 'JURISDICTION_BLOCKED') {
+              throw err;
+            }
+            return [];
+          }),
           api.getStreakChain().catch(() => null),
         ]);
         setBalance(balanceData);

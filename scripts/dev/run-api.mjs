@@ -22,6 +22,17 @@ const child = spawn(
   },
 );
 
+// This process is only a launcher; the Nest server is the child. Without
+// forwarding, terminating the launcher leaves the server alive and reparented to
+// init, still holding the API port -- and the demo launcher's next readiness
+// probe then passes against that stale server, bound to a database the reset in
+// between has already dropped and recreated. Forward instead of orphaning.
+for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
+  process.on(signal, () => {
+    if (child.exitCode === null && child.signalCode === null) child.kill(signal);
+  });
+}
+
 child.on("exit", (code, signal) => {
   if (signal) process.kill(process.pid, signal);
   process.exit(code ?? 0);
