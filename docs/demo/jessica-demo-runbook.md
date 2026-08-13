@@ -24,9 +24,14 @@ The demo already binds every interface, so anyone on the same Wi-Fi can open it.
 that will **not** work from their device is the `127.0.0.1` one the launcher prints.
 
 ```bash
-npm run demo:feedback     # start the note + interaction collector first
+npm run demo:feedback     # start the note + interaction collector (detached)
 npm run demo:share        # prints the LAN URL, a QR code, and writes a printable PNG
 ```
+
+The collector detaches the same way the demo does, so closing the terminal does not stop it.
+`npm run demo:feedback:status` reports whether it is up and how much it has collected;
+`npm run demo:feedback:stop` ends it and keeps the data. Starting it twice is safe — it reports the
+running instance rather than fighting for the port.
 
 `demo:share` resolves the address on the interface carrying the default route, refuses to print an
 address that is not actually answering, and tells you whether the collector is running — an empty
@@ -52,8 +57,14 @@ The report also prints **NOBODY OPENED** — the routes no one reached. That lis
 useful half: a route nobody opened during a walkthrough is unreachable, uninteresting, or badly
 signposted, and a report that only shows what people *did* look at hides all three.
 
-The collector is a **separate process** on purpose (`scripts/demo/feedback-server.mjs`, port 4312,
-append-only NDJSON under `artifacts/`, gitignored). It is not part of the product API: rehearsal
+The collector is a **separate, detached process** on purpose (`scripts/demo/feedback.sh` supervising
+`feedback-server.mjs`, port 4312, append-only NDJSON under `artifacts/`, gitignored). Detaching
+matters because of an asymmetry that is otherwise silent: the demo survives the terminal that
+launched it, so a foreground collector would stop while the demo kept working perfectly — and the
+first sign would be an empty report after everyone had gone home. `demo:share` probes its health for
+the same reason.
+
+It is not part of the product API: rehearsal
 telemetry must never land in a migration, a seed, or the product database, and a telemetry failure
 must never be able to break a demo launch. If it is not running, the tour behaves exactly as it does
 without it — except that a viewer who tries to send a note is told plainly that it was not saved.
