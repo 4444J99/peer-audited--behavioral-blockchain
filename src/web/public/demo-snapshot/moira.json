@@ -1,0 +1,268 @@
+{
+  "GET /users/me": {
+    "id": "d1000000-0000-0000-0000-00000000000b",
+    "email": "dr.moira@demo.styx.protocol",
+    "integrity_score": 99,
+    "tier": "STANDARD",
+    "contract_count": 0,
+    "total_staked": 0,
+    "role": "PRACTITIONER",
+    "status": "ACTIVE",
+    "created_at": "2026-08-13T09:36:48.432Z",
+    "compliance": {
+      "kyc_status": "VERIFIED",
+      "age_verification_status": "VERIFIED",
+      "identity_provider": "MOCK",
+      "identity_verification_id": "ivs_mock_demo_moira",
+      "identity_verified_at": "2026-05-15T09:36:48.432Z",
+      "is_kyc_verified": true,
+      "is_age_verified": true,
+      "terms_accepted_at": "2026-05-13T09:36:48.432Z",
+      "terms_version": "2026-04"
+    }
+  },
+  "GET /auth/csrf": {
+    "csrfToken": "72c8e490b4883f2ca1c5641a58151d36d1463a9035ed37e4eca725208494ba91"
+  },
+  "GET /practitioner/dashboard": [
+    {
+      "clientId": "d1000000-0000-0000-0000-000000000002",
+      "clientAlias": "Ash Mercer",
+      "riskProfile": {
+        "userId": "d1000000-0000-0000-0000-000000000002",
+        "riskScore": 30,
+        "riskLevel": "GREEN",
+        "factors": [
+          {
+            "type": "ATTESTATION_CONSISTENCY",
+            "weight": 0.25,
+            "value": 1,
+            "description": "1 missed check-ins in the last 14 days"
+          },
+          {
+            "type": "TIME_OF_DAY",
+            "weight": 0.15,
+            "value": 0,
+            "description": "0% of activity between midnight and 4am"
+          },
+          {
+            "type": "GRACE_DAY_BURN",
+            "weight": 0.2,
+            "value": 0,
+            "description": "0% of grace days consumed"
+          },
+          {
+            "type": "ENGAGEMENT_TRAJECTORY",
+            "weight": 0.15,
+            "value": 0,
+            "description": "0% decline in app opens"
+          },
+          {
+            "type": "WEEKEND_COMPLIANCE",
+            "weight": 0.1,
+            "value": 0.5,
+            "description": "50% lower compliance on weekends"
+          },
+          {
+            "type": "PREVIOUS_VIOLATIONS",
+            "weight": 0.15,
+            "value": 0,
+            "description": "0 previous contract violations"
+          }
+        ],
+        "trend": "STABLE",
+        "lastUpdated": "2026-08-13T09:38:23.784Z"
+      },
+      "recentAlerts": [
+        {
+          "id": "83e39f6c-9adc-4b82-a7a6-5ba0dac4a50e",
+          "userId": "d1000000-0000-0000-0000-000000000002",
+          "alertType": "RATIONALIZATION",
+          "excerpt": "just one more time",
+          "severity": "MEDIUM",
+          "createdAt": "2026-08-11T09:36:48.447Z"
+        }
+      ],
+      "adherenceRate": 87,
+      "streakDays": 13,
+      "nextCheckIn": "2026-08-13T03:00:00.000Z"
+    },
+    {
+      "clientId": "d1000000-0000-0000-0000-000000000001",
+      "clientAlias": "River Quinn",
+      "riskProfile": {
+        "userId": "d1000000-0000-0000-0000-000000000001",
+        "riskScore": 6,
+        "riskLevel": "GREEN",
+        "factors": [
+          {
+            "type": "ATTESTATION_CONSISTENCY",
+            "weight": 0.25,
+            "value": 0,
+            "description": "0 missed check-ins in the last 14 days"
+          },
+          {
+            "type": "TIME_OF_DAY",
+            "weight": 0.15,
+            "value": 0,
+            "description": "0% of activity between midnight and 4am"
+          },
+          {
+            "type": "GRACE_DAY_BURN",
+            "weight": 0.2,
+            "value": 0,
+            "description": "0% of grace days consumed"
+          },
+          {
+            "type": "ENGAGEMENT_TRAJECTORY",
+            "weight": 0.15,
+            "value": 0,
+            "description": "0% decline in app opens"
+          },
+          {
+            "type": "WEEKEND_COMPLIANCE",
+            "weight": 0.1,
+            "value": 0.5555555555555556,
+            "description": "56% lower compliance on weekends"
+          },
+          {
+            "type": "PREVIOUS_VIOLATIONS",
+            "weight": 0.15,
+            "value": 0,
+            "description": "0 previous contract violations"
+          }
+        ],
+        "trend": "DECLINING",
+        "lastUpdated": "2026-08-13T09:38:23.786Z"
+      },
+      "recentAlerts": [],
+      "adherenceRate": 95,
+      "streakDays": 21,
+      "nextCheckIn": "2026-08-13T03:00:00.000Z"
+    },
+    {
+      "clientId": "d1000000-0000-0000-0000-000000000005",
+      "clientAlias": "Sage Ellis",
+      "riskProfile": {
+        "userId": "d1000000-0000-0000-0000-000000000005",
+        "riskScore": 3,
+        "riskLevel": "GREEN",
+        "factors": [
+          {
+            "type": "ATTESTATION_CONSISTENCY",
+            "weight": 0.25,
+            "value": 0,
+            "description": "0 missed check-ins in the last 14 days"
+          },
+          {
+            "type": "TIME_OF_DAY",
+            "weight": 0.15,
+            "value": 0,
+            "description": "0% of activity between midnight and 4am"
+          },
+          {
+            "type": "GRACE_DAY_BURN",
+            "weight": 0.2,
+            "value": 0,
+            "description": "0% of grace days consumed"
+          },
+          {
+            "type": "ENGAGEMENT_TRAJECTORY",
+            "weight": 0.15,
+            "value": 0,
+            "description": "0% decline in app opens"
+          },
+          {
+            "type": "WEEKEND_COMPLIANCE",
+            "weight": 0.1,
+            "value": 0.33333333333333337,
+            "description": "33% lower compliance on weekends"
+          },
+          {
+            "type": "PREVIOUS_VIOLATIONS",
+            "weight": 0.15,
+            "value": 0,
+            "description": "0 previous contract violations"
+          }
+        ],
+        "trend": "STABLE",
+        "lastUpdated": "2026-08-13T09:38:23.788Z"
+      },
+      "recentAlerts": [
+        {
+          "id": "2fcafddd-e1d5-4425-b24f-824ef4c3b600",
+          "userId": "d1000000-0000-0000-0000-000000000005",
+          "alertType": "TRIGGER_MENTION",
+          "excerpt": "saw them at the cafe near work",
+          "severity": "LOW",
+          "createdAt": "2026-08-10T09:36:48.447Z"
+        }
+      ],
+      "adherenceRate": 83,
+      "streakDays": 5,
+      "nextCheckIn": "2026-08-13T03:00:00.000Z"
+    },
+    {
+      "clientId": "d1000000-0000-0000-0000-000000000006",
+      "clientAlias": "Indigo Park",
+      "riskProfile": {
+        "userId": "d1000000-0000-0000-0000-000000000006",
+        "riskScore": 28,
+        "riskLevel": "GREEN",
+        "factors": [
+          {
+            "type": "ATTESTATION_CONSISTENCY",
+            "weight": 0.25,
+            "value": 2,
+            "description": "2 missed check-ins in the last 14 days"
+          },
+          {
+            "type": "TIME_OF_DAY",
+            "weight": 0.15,
+            "value": 0,
+            "description": "0% of activity between midnight and 4am"
+          },
+          {
+            "type": "GRACE_DAY_BURN",
+            "weight": 0.2,
+            "value": 0,
+            "description": "0% of grace days consumed"
+          },
+          {
+            "type": "ENGAGEMENT_TRAJECTORY",
+            "weight": 0.15,
+            "value": 0,
+            "description": "0% decline in app opens"
+          },
+          {
+            "type": "WEEKEND_COMPLIANCE",
+            "weight": 0.1,
+            "value": 0.33333333333333337,
+            "description": "33% lower compliance on weekends"
+          },
+          {
+            "type": "PREVIOUS_VIOLATIONS",
+            "weight": 0.15,
+            "value": 0,
+            "description": "0 previous contract violations"
+          }
+        ],
+        "trend": "DECLINING",
+        "lastUpdated": "2026-08-13T09:38:23.789Z"
+      },
+      "recentAlerts": [
+        {
+          "id": "c5f367ef-daee-4c6d-8ec6-58097a700bda",
+          "userId": "d1000000-0000-0000-0000-000000000006",
+          "alertType": "DISTRESS_ESCALATION",
+          "excerpt": "falling apart",
+          "severity": "HIGH",
+          "createdAt": "2026-08-12T09:36:48.447Z"
+        }
+      ],
+      "adherenceRate": 77,
+      "streakDays": 10,
+      "nextCheckIn": "2026-08-13T03:00:00.000Z"
+    }
+  ]
+}

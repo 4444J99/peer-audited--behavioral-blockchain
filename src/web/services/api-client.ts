@@ -7,6 +7,7 @@ import type {
   StyxErrorEnvelope,
 } from "@styx/shared/index";
 import { getApiBase } from "./runtime-config";
+import { isSnapshotMode, snapshotRespond } from "./snapshot";
 
 // In the browser, route through the Next.js /api rewrite proxy (same-origin)
 // to avoid cross-origin cookie/CORS issues.  On the server (SSR), call the
@@ -142,6 +143,17 @@ let isRefreshing = false;
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const method = String(options?.method || "GET").toUpperCase();
+
+  // The Cloudflare snapshot has no API behind it. Every call is answered from
+  // fixtures captured off a verified demo run, and writes are refused in plain
+  // language rather than faked -- see services/snapshot.ts. Inlined at build time,
+  // so a normal build never reaches this branch.
+  if (isSnapshotMode()) {
+    const snapshot = await snapshotRespond<T>(path, method);
+    if (snapshot.ok) return snapshot.data;
+    throw new ApiError(snapshot.message, snapshot.status, null, null);
+  }
+
   const needsCsrf =
     method === "POST" ||
     method === "PUT" ||

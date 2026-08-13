@@ -79,6 +79,37 @@ opens, explanation depth, and notes. What is not: no IP addresses, no user agent
 identity, no page content. Everyone shares the same synthetic accounts, so account identity would be
 noise — the self-entered name is the only attribution, and the panel says so on screen.
 
+## Showing it to people who are NOT in the room
+
+The LAN demo needs everyone on the same Wi-Fi. For an investor or a remote reviewer there is a
+Cloudflare Pages snapshot: the same app, exported as static files, with **no API, no PostgreSQL and
+no Redis** behind it.
+
+```bash
+npm run snapshot:capture   # fixtures, recorded off the running demo
+npm run snapshot:build     # static export into src/web/out
+npm run snapshot:serve     # preview on http://127.0.0.1:4315
+npm run snapshot:deploy    # wrangler pages deploy
+```
+
+Reads are answered from fixtures captured by driving the real demo as each persona and recording
+what the app actually requests — not hand-written, because a hand-written fixture drifts and renders
+a plausible, wrong screen. The capture refuses to write an empty snapshot for the same reason.
+
+What the snapshot deliberately cannot do: **writes**. Creating a contract or attesting is refused in
+plain language rather than faked into looking successful, and a screen with no captured fixture says
+so instead of rendering an empty page that reads as a real but empty product. Anyone who needs to
+actually click through a write needs the live demo.
+
+Two operational traps, both of which cost real time:
+
+- A snapshot build **overwrites `.next`**, so the running local demo afterwards serves snapshot
+  client code that answers from fixtures and never calls `/api`. Run `npm run demo:reset:verify`
+  before capturing again. `snapshot:build` prints this reminder.
+- Preview with `snapshot:serve`, never `serve -s`. SPA mode rewrites every unmatched path to
+  `index.html`, so each route returns the landing page with a `200` while the URL bar still looks
+  right — a preview that looks fine and tests nothing.
+
 ## The guided tour (self-driving, for five different readers)
 
 The demo explains itself. Every route in the app carries a synced panel on the right with the

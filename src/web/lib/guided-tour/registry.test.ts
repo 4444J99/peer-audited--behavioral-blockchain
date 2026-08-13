@@ -76,4 +76,13 @@ describe("guided tour registry", () => {
     expect(matchTourRoute("/dashboard")?.path).toBe("/dashboard");
     expect(matchTourRoute("/not-a-real-route")).toBeUndefined();
   });
+
+  // The Cloudflare snapshot builds with trailingSlash, so every pathname arrives with
+  // one. Without normalisation the tour disappears entirely on the hosted build.
+  it("matches paths that arrive with a trailing slash", () => {
+    expect(matchTourRoute("/dashboard/")?.path).toBe("/dashboard");
+    expect(matchTourRoute("/tour/")?.path).toBe("/tour");
+    expect(matchTourRoute("/realms/fitness/")?.path).toBe("/realms/[slug]");
+    expect(matchTourRoute("/")?.path).toBe("/");
+  });
 });

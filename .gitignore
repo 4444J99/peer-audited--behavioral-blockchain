@@ -123,3 +123,10 @@ docs/planning/planning--parallel-*-prompts--*.md
 
 # Local redis snapshot from verification runs
 dump.rdb
+
+# Cloudflare snapshot fixtures.
+# Some machines carry a global gitignore rule for `public/` (core.excludesFile),
+# which would silently drop these and leave a hosted snapshot with no data at all.
+# Repository rules take precedence over the global file, so state the intent here.
+!src/web/public/
+!src/web/public/**
