@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SiteFooter } from "../components/SiteFooter";
+import GuidedTour from "../components/guided-tour/GuidedTour";
 
 export const metadata: Metadata = {
   title: "Styx | Relationship Recovery",
@@ -31,6 +32,9 @@ export default function RootLayout({
         ) : null}
         <Providers><main className="flex-1">{children}</main></Providers>
         <SiteFooter />
+        {/* Demo builds only -- GuidedTour renders nothing unless the guided-tour
+            or test-money flag is set at build time. */}
+        <GuidedTour />
       </body>
     </html>
   );

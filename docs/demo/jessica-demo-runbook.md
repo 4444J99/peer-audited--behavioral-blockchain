@@ -18,6 +18,31 @@ The launcher creates a random synthetic-only login password outside version cont
 
 The demo data is synthetic. With Docker, reset removes only containers and volumes in the named `styx-demo` Compose project. Without Docker, it uses only the explicitly named local database `styx_demo_styxlaunch` and Redis port `6391`. Neither path selects a hosted environment or payment account.
 
+## The guided tour (self-driving, for five different readers)
+
+The demo explains itself. Every route in the app carries a synced panel on the right with the
+route's truth label, a plain-language summary, and — for anyone past "New to this" — the mechanism
+behind it. Numbered markers anchor to real elements on the page; clicking one says what that element
+is. Arrow keys move between chapters.
+
+This is what lets you, Jessica, an investor, a user tester and someone who has never heard of a
+commitment contract all open the same demo and each get an explanation pitched at them: the
+**Explain it for** control at the bottom of the panel switches depth without changing what is shown.
+The choice is remembered per browser, so five people can be at five different depths simultaneously.
+
+Coverage is enforced, not asserted: `src/web/lib/guided-tour/registry.test.ts` fails if any route in
+`src/web/app` has no entry, if an entry points at a route that no longer exists, or if any summary is
+short enough to be a placeholder. Widening the tour is a data edit in
+`src/web/lib/guided-tour/registry.ts` — the overlay engine knows nothing about any specific route.
+
+Two honest limits to state if asked. The truth labels in the panel are the tour's, sourced from
+`/tour`'s own vocabulary — most routes do not render a label themselves. And a marker whose element
+has moved is dropped silently rather than mispointing, so a UI change degrades the tour instead of
+breaking the demo underneath it.
+
+The tour is compiled out of any build that is not a demo build: it renders only when
+`NEXT_PUBLIC_STYX_GUIDED_TOUR` or `NEXT_PUBLIC_STYX_TEST_MONEY_MODE` is `true` at build time.
+
 ## Rehearsed route
 
 | Moment               | Route / account                           | Truth label                  |
