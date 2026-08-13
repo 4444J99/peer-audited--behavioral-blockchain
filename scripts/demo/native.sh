@@ -276,8 +276,18 @@ launch() {
 
   write_state
   trap - EXIT
+
+  # Bring the note/interaction collector up with the demo, so a presenter never has
+  # to remember a second command. It keeps its OWN pid file rather than a key in this
+  # state file, whose parsers reject unknown keys -- and it is explicitly non-fatal:
+  # telemetry failing must never turn a working demo into a failed launch.
+  if ! bash "$repo_root/scripts/demo/feedback.sh" start; then
+    echo "WARN: notes/interaction collector did not start; the demo is unaffected." >&2
+  fi
+
   ok "Native synthetic, test-money demo is live."
   echo "  Tour: http://127.0.0.1:${web_port}/tour"
+  echo "  Share: npm run demo:share"
   echo "  Verify: npm run demo:verify"
   echo "  Stop: bash scripts/demo/native.sh down"
 }
