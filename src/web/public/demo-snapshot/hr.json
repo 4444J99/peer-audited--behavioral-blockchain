@@ -8,21 +8,21 @@
     "total_staked": 0,
     "role": "ADMIN",
     "status": "ACTIVE",
-    "created_at": "2026-08-13T09:36:48.432Z",
+    "created_at": "2026-08-14T14:18:50.287Z",
     "compliance": {
       "kyc_status": "VERIFIED",
       "age_verification_status": "VERIFIED",
       "identity_provider": "MOCK",
       "identity_verification_id": "ivs_mock_demo_hrlead",
-      "identity_verified_at": "2026-07-14T09:36:48.432Z",
+      "identity_verified_at": "2026-07-15T14:18:50.287Z",
       "is_kyc_verified": true,
       "is_age_verified": true,
-      "terms_accepted_at": "2026-07-13T09:36:48.432Z",
+      "terms_accepted_at": "2026-07-14T14:18:50.287Z",
       "terms_version": "2026-05"
     }
   },
   "GET /auth/csrf": {
-    "csrfToken": "3e0b510549e1bc6638f44d1a0f8afd28b1eb1ee135acd229d9b244d7533f0aac"
+    "csrfToken": "80c9d6f3e1647d4b88d2d820aae55459fe5ab1d616bc92642508f998ba647d80"
   },
   "GET /b2b/metrics/e0000000-0000-0000-0000-000000000001": {
     "enterpriseId": "e0000000-0000-0000-0000-000000000001",
@@ -42,6 +42,42 @@
     "pendingDisputes": 0
   },
   "GET /admin/disputes": [],
+  "GET /admin/financial-metrics": {
+    "cac": {
+      "current": 0,
+      "previous": 0,
+      "trend": 0
+    },
+    "ltv": {
+      "current": 0,
+      "previous": 0,
+      "trend": 0
+    },
+    "ltvCacRatio": {
+      "current": 0,
+      "trend": 0
+    },
+    "paybackDays": {
+      "current": 0,
+      "trend": 0
+    },
+    "monthlyBurn": {
+      "current": 0,
+      "previous": 0
+    },
+    "totalUsers": {
+      "current": 15,
+      "newThisMonth": 15
+    },
+    "payingUsers": {
+      "current": 8,
+      "pct": 0
+    },
+    "monthlyRevenue": {
+      "current": 445,
+      "recurringPct": 0
+    }
+  },
   "GET /admin/kill-switch": {
     "refundOnlyMode": false
   },
@@ -52,357 +88,357 @@
         "name": "Alaska",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "AL",
         "name": "Alabama",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "AR",
         "name": "Arkansas",
         "tier": "HARD_BLOCK",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "AZ",
         "name": "Arizona",
         "tier": "HARD_BLOCK",
         "disposition_mode": "REFUND_ONLY",
-        "updated_at": "2026-08-13T09:36:48.371Z"
+        "updated_at": "2026-08-14T14:18:50.230Z"
       },
       {
         "code": "CA",
         "name": "California",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "CO",
         "name": "Colorado",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "CT",
         "name": "Connecticut",
         "tier": "REFUND_ONLY",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "DC",
         "name": "District of Columbia",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "DE",
         "name": "Delaware",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "FL",
         "name": "Florida",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "GA",
         "name": "Georgia",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "HI",
         "name": "Hawaii",
         "tier": "HARD_BLOCK",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "IA",
         "name": "Iowa",
         "tier": "REFUND_ONLY",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "ID",
         "name": "Idaho",
         "tier": "HARD_BLOCK",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "IL",
         "name": "Illinois",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "IN",
         "name": "Indiana",
         "tier": "REFUND_ONLY",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "KS",
         "name": "Kansas",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "KY",
         "name": "Kentucky",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "LA",
         "name": "Louisiana",
         "tier": "REFUND_ONLY",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "MA",
         "name": "Massachusetts",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "MD",
         "name": "Maryland",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "ME",
         "name": "Maine",
         "tier": "REFUND_ONLY",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "MI",
         "name": "Michigan",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "MN",
         "name": "Minnesota",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "MO",
         "name": "Missouri",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "MS",
         "name": "Mississippi",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "MT",
         "name": "Montana",
         "tier": "HARD_BLOCK",
         "disposition_mode": "REFUND_ONLY",
-        "updated_at": "2026-08-13T09:36:48.371Z"
+        "updated_at": "2026-08-14T14:18:50.230Z"
       },
       {
         "code": "NC",
         "name": "North Carolina",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "ND",
         "name": "North Dakota",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "NE",
         "name": "Nebraska",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "NH",
         "name": "New Hampshire",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "NJ",
         "name": "New Jersey",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "NM",
         "name": "New Mexico",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "NV",
         "name": "Nevada",
         "tier": "HARD_BLOCK",
         "disposition_mode": "REFUND_ONLY",
-        "updated_at": "2026-08-13T09:36:48.371Z"
+        "updated_at": "2026-08-14T14:18:50.230Z"
       },
       {
         "code": "NY",
         "name": "New York",
         "tier": "REFUND_ONLY",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "OH",
         "name": "Ohio",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "OK",
         "name": "Oklahoma",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "OR",
         "name": "Oregon",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "PA",
         "name": "Pennsylvania",
         "tier": "REFUND_ONLY",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "RI",
         "name": "Rhode Island",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "SC",
         "name": "South Carolina",
         "tier": "HARD_BLOCK",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "SD",
         "name": "South Dakota",
         "tier": "HARD_BLOCK",
         "disposition_mode": "REFUND_ONLY",
-        "updated_at": "2026-08-13T09:36:48.371Z"
+        "updated_at": "2026-08-14T14:18:50.230Z"
       },
       {
         "code": "TN",
         "name": "Tennessee",
         "tier": "REFUND_ONLY",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "TX",
         "name": "Texas",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "UT",
         "name": "Utah",
         "tier": "HARD_BLOCK",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "VA",
         "name": "Virginia",
         "tier": "REFUND_ONLY",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "VT",
         "name": "Vermont",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "WA",
         "name": "Washington",
         "tier": "HARD_BLOCK",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "WI",
         "name": "Wisconsin",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "WV",
         "name": "West Virginia",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       },
       {
         "code": "WY",
         "name": "Wyoming",
         "tier": "FULL_ACCESS",
         "disposition_mode": "HOUSE_RETAINED",
-        "updated_at": "2026-08-13T09:36:48.182Z"
+        "updated_at": "2026-08-14T14:18:50.058Z"
       }
     ]
   }

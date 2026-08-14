@@ -62,7 +62,11 @@ export class BehavioralEnrichmentService {
   async getHabitStrength(userId: string) {
     const { rows } = await this.pool.query(
       `SELECT
-        COUNT(*) FILTER (WHERE status IN ('ATTESTED','COSIGNED'))::int AS completed,
+        -- a.status, not status: contracts also has a status column, so the bare
+        -- reference made this whole endpoint 500 with "column reference \"status\"
+        -- is ambiguous". The states below ('ATTESTED','COSIGNED') are attestation
+        -- states, so the attestation is the one that was always meant.
+        COUNT(*) FILTER (WHERE a.status IN ('ATTESTED','COSIGNED'))::int AS completed,
         COUNT(*)::int AS total
        FROM attestations a
        JOIN contracts c ON c.id = a.contract_id
