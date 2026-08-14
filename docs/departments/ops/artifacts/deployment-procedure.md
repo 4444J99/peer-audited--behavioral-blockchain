@@ -137,16 +137,16 @@ After Render reports the deploy is live:
 
 ```bash
 # API health check
-./scripts/check-api-ready.sh
+bash scripts/smoke/check-api-ready.sh
 
 # Web health check
-./scripts/check-web.sh
+bash scripts/smoke/check-web.sh
 
 # Full endpoint smoke test
-./scripts/check-endpoints.sh
+bash scripts/smoke/check-endpoints.sh
 
 # Beta readiness (comprehensive)
-./scripts/beta-readiness.sh
+bash scripts/smoke/beta-readiness.sh
 ```
 
 ### 4. Post-Deploy Smoke Tests

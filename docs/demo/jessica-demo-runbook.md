@@ -99,6 +99,14 @@ npm run snapshot:serve     # preview on http://127.0.0.1:4315
 npm run snapshot:deploy    # runs verify first, then wrangler pages deploy
 ```
 
+**The snapshot is published at `https://styx-demo-snapshot.pages.dev`** (first deployed
+2026-08-14, all 48 routes verified against the live host). `snapshot:deploy` re-publishes to
+the same address; the URL is safe to hand to anyone — there is nothing behind it to break
+into. One first-deploy lesson is now baked into the script: the deploy pins `--branch main`,
+because wrangler otherwise labels the upload with the checkout's git branch and a
+non-production branch becomes a *preview* deployment — the canonical URL serves nothing
+while the deploy output still says "Success".
+
 `snapshot:verify` is the gate, and `snapshot:deploy` runs it for you — you cannot publish
 a snapshot that fails it. It exists because none of the cheaper checks can see the failure
 that matters: a broken route still builds, still exports an HTML file, and still answers
@@ -133,12 +141,43 @@ Two operational traps, both of which cost real time:
 
 Two things to say honestly if someone asks:
 
-- The snapshot sends **no telemetry**. The note/interaction collector is a machine on the
-  presenter's LAN and does not exist behind a public host, so notes are a live-demo feature only.
-  Ask a remote reviewer for comments directly.
+- The snapshot sends **no telemetry**. The note/interaction collector does not exist behind the
+  pages.dev host, so notes there are a live-demo and hosted-beta feature. Ask a snapshot
+  reviewer for comments directly.
 - `/admin/cac-ltv` now shows real synthetic user, paying-user and revenue counts, but **CAC, LTV,
   payback and burn are still hard-coded zeros in the API** — the product does not compute them
   yet. That is a real gap, not a snapshot artifact; do not present those four tiles as measured.
+
+### The hosted beta, for a remote tester who needs to actually DO things
+
+The snapshot refuses writes by design. When a remote tester needs to create a contract,
+attest, or drive any real interaction, use the **Render beta** — the same app and API,
+hosted, seeded with the same synthetic personas, tour on every route.
+
+```bash
+gh workflow run beta-promotion.yml -f promotion_target=beta -f run_migrations=true
+```
+
+That one dispatch is the whole lifecycle: it checks the secrets, ensures the Render services
+and their env vars (the tour flags are baked at build time — this is what turns the tour ON),
+deploys API + web, migrates, **seeds the synthetic accounts and binds them to the beta demo
+password**, then refuses to declare `promotion_ready` until three predicates pass: the smoke
+suite, the strict readiness suite, and `beta_verify` — every tour route, signed in per
+persona, tour present, no API errors.
+
+What the tester needs from you: the beta web URL (it lives in the Render dashboard and in
+the repo's `beta` environment secrets — deliberately not printed in this public file), one
+account (`river@demo.styx.protocol` covers 40 of 48 tour chapters), and the demo password —
+**spoken, never written**. The password is minted locally and stored in
+`artifacts/styx-beta.env` (gitignored, 0600); the same value lives in the `BETA_DEMO_PASSWORD`
+environment secret, and the `seed_beta` job is what keeps the two from drifting.
+
+Notes and interaction tracking DO work on the beta: the promotion workflow provisions a
+hosted collector (`styx-beta-feedback` on Render, 1GB disk) and bakes its URL into the web
+build. Reading the summary requires the bearer token in `BETA_FEEDBACK_TOKEN` — viewer names
+and notes are not public. Two honest limits: sessions hard-expire after 7 days of refresh
+cookies; and the beta shares one synthetic world, so two testers at once will see each
+other's contracts on the shared accounts — that is the design, not a leak.
 
 ## The guided tour (self-driving, for five different readers)
 

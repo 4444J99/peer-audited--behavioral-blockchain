@@ -142,7 +142,7 @@ node scripts/validation/07-claim-drift-check.js            # Claim drift
 BETA_API_URL=https://api-beta.example.com npm run beta:readiness
 ```
 
-Writes `artifacts/beta-readiness-summary.json`. Full policy: `docs/planning/beta-readiness-contract.md`.
+Writes `artifacts/beta-readiness-summary.json`. Full policy: `docs/planning/planning--beta-readiness-contract.md`.
 
 ---
 

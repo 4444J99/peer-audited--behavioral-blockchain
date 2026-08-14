@@ -105,6 +105,12 @@ Schema:
 - That job sets `READINESS_REQUIRE_TARGETS=true` (missing target URLs fail readiness).
 - Artifact upload is unconditional (`if: always()`).
 - `beta_readiness` is required before beta promotion is marked ready. PR E2E is independent of a hosted-beta receipt and cannot stand in for one.
+- The workflow additionally runs `seed_beta` (idempotent synthetic data + password binding —
+  without it the readiness suite's authenticated gate has no account to log into) and
+  `beta_verify` (`scripts/demo/verify-beta.mjs`: every guided-tour route, signed in per
+  persona, tour present, no API errors). `promotion_ready` requires smoke + readiness +
+  verify together; these are workflow-level gates around this contract's suite, not new
+  rows in the Gate Matrix above.
 
 ## Change Control
 
