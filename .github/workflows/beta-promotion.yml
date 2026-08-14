@@ -60,9 +60,10 @@ jobs:
           BETA_WEB_URL: ${{ secrets.BETA_WEB_URL }}
           BETA_DATABASE_URL: ${{ secrets.BETA_DATABASE_URL }}
           BETA_DEMO_PASSWORD: ${{ secrets.BETA_DEMO_PASSWORD }}
+          BETA_FEEDBACK_TOKEN: ${{ secrets.BETA_FEEDBACK_TOKEN }}
         run: |
           missing=0
-          for key in RENDER_API_KEY RENDER_BETA_API_SERVICE_ID RENDER_BETA_WEB_SERVICE_ID BETA_API_URL BETA_WEB_URL BETA_DATABASE_URL BETA_DEMO_PASSWORD; do
+          for key in RENDER_API_KEY RENDER_BETA_API_SERVICE_ID RENDER_BETA_WEB_SERVICE_ID BETA_API_URL BETA_WEB_URL BETA_DATABASE_URL BETA_DEMO_PASSWORD BETA_FEEDBACK_TOKEN; do
             if [ -z "${!key:-}" ]; then
               echo "::error::Missing required beta secret: ${key}"
               missing=1
@@ -88,10 +89,40 @@ jobs:
         run: |
           echo "Manual approval gate passed for beta promotion."
 
-  deploy_beta_api:
+  # NEXT_PUBLIC_* values are baked into the web bundle at BUILD time, so env
+  # assurance must precede the deploys: an unset NEXT_PUBLIC_STYX_GUIDED_TOUR
+  # compiles the entire tour out of the bundle while the Private-Beta banner
+  # defaults ON. This job also finds-or-creates the feedback collector service
+  # (never fatal — telemetry must not turn a working launch into a failed one).
+  ensure_beta_env:
     runs-on: ubuntu-latest
     needs: [preflight, manual_approval]
     if: ${{ always() && needs.preflight.result == 'success' && (!inputs.require_manual_approval || needs.manual_approval.result == 'success') }}
+    environment: beta
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      - name: Ensure Render services, collector, and env vars
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_BETA_API_SERVICE_ID: ${{ secrets.RENDER_BETA_API_SERVICE_ID }}
+          RENDER_BETA_WEB_SERVICE_ID: ${{ secrets.RENDER_BETA_WEB_SERVICE_ID }}
+          BETA_FEEDBACK_TOKEN: ${{ secrets.BETA_FEEDBACK_TOKEN }}
+        run: node scripts/demo/render-ensure-beta.mjs
+
+  deploy_beta_api:
+    runs-on: ubuntu-latest
+    needs: [preflight, manual_approval, ensure_beta_env]
+    if: ${{ always() && needs.preflight.result == 'success' && needs.ensure_beta_env.result == 'success' && (!inputs.require_manual_approval || needs.manual_approval.result == 'success') }}
     environment: beta
     steps:
       - name: Checkout
@@ -107,8 +138,8 @@ jobs:
 
   deploy_beta_web:
     runs-on: ubuntu-latest
-    needs: [preflight, manual_approval]
-    if: ${{ always() && needs.preflight.result == 'success' && (!inputs.require_manual_approval || needs.manual_approval.result == 'success') }}
+    needs: [preflight, manual_approval, ensure_beta_env]
+    if: ${{ always() && needs.preflight.result == 'success' && needs.ensure_beta_env.result == 'success' && (!inputs.require_manual_approval || needs.manual_approval.result == 'success') }}
     environment: beta
     steps:
       - name: Checkout
@@ -148,11 +179,61 @@ jobs:
           DATABASE_URL: ${{ secrets.BETA_DATABASE_URL }}
         run: cd src/api && npm run migrate
 
+  # Migrations create the SCHEMA; nothing before this job ever created the DATA.
+  # Without it the beta users table is empty and the readiness gate's one
+  # authenticated check (login as demo@styx.protocol) can never pass — which is
+  # half of why the beta has been dark since March. Both seed files are
+  # idempotent (ON CONFLICT DO NOTHING + table-existence guards), so re-running
+  # is safe; the password UPDATE binds the seeded accounts to the same
+  # BETA_DEMO_PASSWORD the readiness job logs in with, closing the drift window.
+  seed_beta:
+    runs-on: ubuntu-latest
+    needs: [deploy_beta_api, migrate_beta]
+    environment: beta
+    timeout-minutes: 10
+    if: ${{ always() && needs.deploy_beta_api.result == 'success' && (needs.migrate_beta.result == 'success' || needs.migrate_beta.result == 'skipped') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Apply synthetic seeds (idempotent)
+        env:
+          DATABASE_URL: ${{ secrets.BETA_DATABASE_URL }}
+          PGSSLMODE: require
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f src/api/database/seed.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/demo/seed-circles.sql
+
+      - name: Bind the synthetic accounts to the beta demo password
+        env:
+          DATABASE_URL: ${{ secrets.BETA_DATABASE_URL }}
+          PGSSLMODE: require
+          STYX_DEMO_PASSWORD: ${{ secrets.BETA_DEMO_PASSWORD }}
+        run: |
+          password_hash="$(node scripts/demo/hash-synthetic-password.mjs)"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -v password_hash="$password_hash" <<'SQL'
+          UPDATE users SET password_hash = :'password_hash'
+          WHERE email LIKE '%@demo.styx.protocol'
+             OR email = 'hr.lead@acheron.example'
+             OR email IN ('demo@styx.protocol', 'fury@styx.protocol', 'admin@styx.protocol');
+          SQL
+
   smoke_beta:
     runs-on: ubuntu-latest
-    needs: [deploy_beta_api, deploy_beta_web, migrate_beta]
+    needs: [deploy_beta_api, deploy_beta_web, migrate_beta, seed_beta]
     environment: beta
-    if: ${{ always() && needs.deploy_beta_api.result == 'success' && needs.deploy_beta_web.result == 'success' && (needs.migrate_beta.result == 'success' || needs.migrate_beta.result == 'skipped') }}
+    if: ${{ always() && needs.deploy_beta_api.result == 'success' && needs.deploy_beta_web.result == 'success' && (needs.migrate_beta.result == 'success' || needs.migrate_beta.result == 'skipped') && needs.seed_beta.result == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -175,9 +256,9 @@ jobs:
   # receipt into either a green beta claim or an unrelated red PR check.
   beta_readiness:
     runs-on: ubuntu-latest
-    needs: [deploy_beta_api, deploy_beta_web, migrate_beta]
+    needs: [deploy_beta_api, deploy_beta_web, migrate_beta, seed_beta]
     environment: beta
-    if: ${{ always() && needs.deploy_beta_api.result == 'success' && needs.deploy_beta_web.result == 'success' && (needs.migrate_beta.result == 'success' || needs.migrate_beta.result == 'skipped') }}
+    if: ${{ always() && needs.deploy_beta_api.result == 'success' && needs.deploy_beta_web.result == 'success' && (needs.migrate_beta.result == 'success' || needs.migrate_beta.result == 'skipped') && needs.seed_beta.result == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -211,10 +292,47 @@ jobs:
           path: artifacts/beta-readiness-summary.json
           retention-days: 14
 
+  # The live sweep: all guided-tour routes, signed in per persona, tour present,
+  # no API errors through the rewrite. An HTTP 200 alone proves nothing — a
+  # broken route carries its error as text inside the page, which is exactly how
+  # 8 of 48 snapshot routes shipped broken past every cheaper gate.
+  beta_verify:
+    runs-on: ubuntu-latest
+    needs: [deploy_beta_web, seed_beta]
+    environment: beta
+    timeout-minutes: 20
+    if: ${{ always() && needs.deploy_beta_web.result == 'success' && needs.seed_beta.result == 'success' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Wait for the web deploy to serve the new build
+        run: sleep 60
+
+      - name: Sweep every tour route on the live beta
+        env:
+          STYX_BETA_WEB_URL: ${{ secrets.BETA_WEB_URL }}
+          STYX_DEMO_PASSWORD: ${{ secrets.BETA_DEMO_PASSWORD }}
+        run: node scripts/demo/verify-beta.mjs
+
   promotion_ready:
     runs-on: ubuntu-latest
-    needs: [smoke_beta, beta_readiness]
-    if: ${{ always() && needs.smoke_beta.result == 'success' && needs.beta_readiness.result == 'success' }}
+    needs: [smoke_beta, beta_readiness, beta_verify]
+    if: ${{ always() && needs.smoke_beta.result == 'success' && needs.beta_readiness.result == 'success' && needs.beta_verify.result == 'success' }}
     steps:
       - name: Mark beta promotion gate passed
         run: |

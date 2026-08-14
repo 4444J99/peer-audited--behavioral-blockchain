@@ -22,16 +22,45 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, "../..");
-const dataDir = path.join(repoRoot, "artifacts/demo-feedback");
+// Hosted runs (Render) point this at a mounted disk so notes survive restarts;
+// locally it stays the gitignored artifacts/ directory.
+const dataDir = process.env.STYX_DEMO_FEEDBACK_DIR || path.join(repoRoot, "artifacts/demo-feedback");
 export const FILES = {
   sessions: path.join(dataDir, "sessions.ndjson"),
   events: path.join(dataDir, "events.ndjson"),
   notes: path.join(dataDir, "notes.ndjson"),
 };
 
-const port = Number(process.env.STYX_DEMO_FEEDBACK_PORT || 4312);
+// PORT first: hosting platforms (Render) inject it and health-check the port
+// they assigned — binding 4312 there means the service never reports healthy.
+const port = Number(process.env.PORT || process.env.STYX_DEMO_FEEDBACK_PORT || 4312);
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_TEXT = 4000;
+
+// /summary exposes every viewer name and note. On a LAN rehearsal that is the
+// presenter's own machine; on a public host it must be token-gated. Unset token
+// (the local demo) keeps the endpoint open — behavior there is unchanged.
+const summaryToken = process.env.STYX_FEEDBACK_SUMMARY_TOKEN || "";
+
+// A public collector is an open POST target. This is not abuse-proof — any
+// value the browser can send, anyone can send — but a per-IP ceiling keeps one
+// script from flooding the NDJSON while costing real viewers nothing.
+const WRITE_LIMIT_PER_MINUTE = 240;
+const writeCounts = new Map();
+function overWriteLimit(req) {
+  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  const ip = forwarded || req.socket.remoteAddress || "unknown";
+  const now = Date.now();
+  const entry = writeCounts.get(ip) || { windowStart: now, count: 0 };
+  if (now - entry.windowStart > 60_000) {
+    entry.windowStart = now;
+    entry.count = 0;
+  }
+  entry.count += 1;
+  writeCounts.set(ip, entry);
+  if (writeCounts.size > 10_000) writeCounts.clear(); // bounded memory, worst case resets limits
+  return entry.count > WRITE_LIMIT_PER_MINUTE;
+}
 
 await mkdir(dataDir, { recursive: true });
 
@@ -168,7 +197,7 @@ const server = createServer(async (req, res) => {
   // every viewer arrives from a different device origin. It stores no secrets and
   // reads nothing from the product database.
   res.setHeader("access-control-allow-origin", "*");
-  res.setHeader("access-control-allow-headers", "content-type");
+  res.setHeader("access-control-allow-headers", "content-type,authorization");
   res.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
 
   if (req.method === "OPTIONS") {
@@ -184,6 +213,10 @@ const server = createServer(async (req, res) => {
 
   try {
     if (req.method === "GET" && url.pathname === "/health") return send(200, { ok: true });
+
+    if (req.method === "POST" && overWriteLimit(req)) {
+      return send(429, { error: "too many requests" });
+    }
 
     if (req.method === "POST" && url.pathname === "/session") {
       const body = await readBody(req);
@@ -229,6 +262,9 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === "GET" && (url.pathname === "/summary" || url.pathname === "/")) {
+      if (summaryToken && req.headers.authorization !== `Bearer ${summaryToken}`) {
+        return send(401, { error: "summary requires a bearer token on this host" });
+      }
       const [sessions, events, notes] = await Promise.all([
         readNdjson(FILES.sessions),
         readNdjson(FILES.events),

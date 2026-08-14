@@ -200,7 +200,12 @@ set_synthetic_password() {
   password_hash="$(node24 node scripts/demo/hash-synthetic-password.mjs)"
   psql -d "$database_name" -v ON_ERROR_STOP=1 -v password_hash="$password_hash" <<'SQL'
 UPDATE users SET password_hash = :'password_hash'
-WHERE email LIKE '%@demo.styx.protocol' OR email = 'hr.lead@acheron.example';
+WHERE email LIKE '%@demo.styx.protocol'
+   OR email = 'hr.lead@acheron.example'
+   -- Base-seed accounts from seed.sql live on @styx.protocol, which the LIKE
+   -- above does NOT match. Gate 01 (phantom-money) logs in as demo@ — leaving
+   -- these on the committed bootstrap hash makes the readiness gate unpassable.
+   OR email IN ('demo@styx.protocol', 'fury@styx.protocol', 'admin@styx.protocol');
 SQL
 }
 

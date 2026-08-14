@@ -119,8 +119,21 @@ deploy() {
   # Publishing is the one irreversible step here, so the predicate runs first. A
   # snapshot that renders "API 404" to an investor is worse than no snapshot.
   verify
+  # `pages deploy` does NOT create a missing project — it prompts interactively,
+  # which in a non-TTY shell is a hang or a hard failure. Create it explicitly
+  # the first time; the export is pushed as a direct upload, so the production
+  # branch name is a label, not a git linkage.
+  if ! npx --yes wrangler pages project list 2>/dev/null | grep -q "\b${project}\b"; then
+    info "Pages project '${project}' does not exist yet — creating it ..."
+    npx --yes wrangler pages project create "$project" --production-branch main
+  fi
   info "Deploying to Cloudflare Pages project '${project}' ..."
-  npx --yes wrangler pages deploy "$out_dir" --project-name "$project"
+  # --branch main: wrangler otherwise infers the CHECKOUT's git branch, and any
+  # non-production branch makes this a preview deployment — the canonical
+  # ${project}.pages.dev URL keeps serving the previous production build (or
+  # nothing at all on a first deploy). A direct-upload snapshot has no real git
+  # linkage; the branch here is a routing label, so pin it to production.
+  npx --yes wrangler pages deploy "$out_dir" --project-name "$project" --branch main
 }
 
 case "${1:-}" in
