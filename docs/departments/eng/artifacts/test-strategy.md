@@ -133,7 +133,7 @@ Located in `scripts/`:
 
 | Script | Purpose | When Used |
 |--------|---------|-----------|
-| `beta-readiness.sh` | Runs all 8 gates + coverage check + Playwright smoke suite. Outputs a pass/fail report with gate-by-gate status. | Before any beta promotion. |
+| `beta-readiness.sh` | Runs the readiness gate suite — remote smoke checks plus validation gates 01/04/05/06/07 — and writes `artifacts/beta-readiness-summary.json` with per-gate status and required flags. (No coverage check and no Playwright in this script; the live-route Playwright sweep is the separate `beta_verify` workflow job.) | Before any beta promotion. |
 | `check-endpoints.sh` | Hits all public API endpoints with health/readiness probes. Verifies 200 responses, correct content-types, and CORS headers. | Post-deploy verification. |
 | `smoke-stripe.sh` | Creates a test customer, initiates a $1 charge, verifies webhook receipt, refunds. End-to-end Stripe FBO smoke test. | After Stripe config changes. |
 | `smoke-fury.sh` | Creates a contract, submits mock proof, triggers Fury assignment, verifies audit flow completes. | After Fury algorithm changes. |
