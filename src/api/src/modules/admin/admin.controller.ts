@@ -647,7 +647,11 @@ export class AdminController {
   }
 
   @Get("financial-metrics")
-  @Roles("admin")
+  // "ADMIN", not "admin": RoleGuard compares against the role stored in the DB and
+  // getAllAndOverride lets a handler-level @Roles replace the class-level one, so the
+  // lowercase form silently overrode @Roles("ADMIN") with a value no user can hold.
+  // The endpoint 403'd every caller -- including real admins -- for its whole life.
+  @Roles("ADMIN")
   async financialMetrics() {
     const result = await this.pool.query(`
       SELECT

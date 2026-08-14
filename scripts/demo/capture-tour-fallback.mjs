@@ -41,6 +41,11 @@ try {
     viewport: { width: 1280, height: 720 },
     recordVideo: { dir: recordingDir, size: { width: 1280, height: 720 } },
   });
+  // A recorder is not an attendee; keep it out of the feedback report.
+  await context.addInitScript(
+    ([key, value]) => window.localStorage.setItem(key, value),
+    ["styx.guidedTour.telemetry", "off"],
+  );
   const page = await context.newPage();
   await page.goto(tourUrl, { waitUntil: "networkidle" });
   const video = page.video();

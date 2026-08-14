@@ -79,6 +79,12 @@ opens, explanation depth, and notes. What is not: no IP addresses, no user agent
 identity, no page content. Everyone shares the same synthetic accounts, so account identity would be
 noise — the self-entered name is the only attribution, and the panel says so on screen.
 
+**Automation is excluded.** Every script that drives the demo in a browser — the fixture capture,
+the snapshot sweep, both recorders — sets `styx.guidedTour.telemetry = off` in localStorage and is
+therefore absent from the report. Before that existed, the report showed "8 viewer(s)" for a demo
+no human had ever opened: a confident wrong answer to the only question the report exists to
+answer. Set the same key by hand on a device you do not want counted.
+
 ## Showing it to people who are NOT in the room
 
 The LAN demo needs everyone on the same Wi-Fi. For an investor or a remote reviewer there is a
@@ -88,9 +94,24 @@ no Redis** behind it.
 ```bash
 npm run snapshot:capture   # fixtures, recorded off the running demo
 npm run snapshot:build     # static export into src/web/out
+npm run snapshot:verify    # drives all 48 routes; exit 0 ⟺ shippable
 npm run snapshot:serve     # preview on http://127.0.0.1:4315
-npm run snapshot:deploy    # wrangler pages deploy
+npm run snapshot:deploy    # runs verify first, then wrangler pages deploy
 ```
+
+`snapshot:verify` is the gate, and `snapshot:deploy` runs it for you — you cannot publish
+a snapshot that fails it. It exists because none of the cheaper checks can see the failure
+that matters: a broken route still builds, still exports an HTML file, and still answers
+`200`, because the error is *text inside the page*. It fails on three things — a route that
+reaches for `/api`, a route that calls anything off-origin, and a route the snapshot layer
+had no fixture for.
+
+That last one is the valuable one, and it is worth reading as a product signal rather than
+a packaging problem: the capture only records successful responses, so **a missing fixture
+usually means that endpoint is broken on the live demo.** It found two, both invisible
+until then because the pages caught their own errors and rendered a plausible empty state —
+`/admin/cac-ltv` reported "$0 revenue, 0 users" for a permanently-403 endpoint, and
+`/behavioral/habit-strength` was returning a 500 from an ambiguous SQL column.
 
 Reads are answered from fixtures captured by driving the real demo as each persona and recording
 what the app actually requests — not hand-written, because a hand-written fixture drifts and renders
@@ -109,6 +130,15 @@ Two operational traps, both of which cost real time:
 - Preview with `snapshot:serve`, never `serve -s`. SPA mode rewrites every unmatched path to
   `index.html`, so each route returns the landing page with a `200` while the URL bar still looks
   right — a preview that looks fine and tests nothing.
+
+Two things to say honestly if someone asks:
+
+- The snapshot sends **no telemetry**. The note/interaction collector is a machine on the
+  presenter's LAN and does not exist behind a public host, so notes are a live-demo feature only.
+  Ask a remote reviewer for comments directly.
+- `/admin/cac-ltv` now shows real synthetic user, paying-user and revenue counts, but **CAC, LTV,
+  payback and burn are still hard-coded zeros in the API** — the product does not compute them
+  yet. That is a real gap, not a snapshot artifact; do not present those four tiles as measured.
 
 ## The guided tour (self-driving, for five different readers)
 

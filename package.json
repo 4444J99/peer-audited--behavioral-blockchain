@@ -26,6 +26,7 @@
     "snapshot:capture": "bash scripts/demo/snapshot.sh capture",
     "snapshot:build": "bash scripts/demo/snapshot.sh build",
     "snapshot:serve": "bash scripts/demo/snapshot.sh serve",
+    "snapshot:verify": "bash scripts/demo/snapshot.sh verify",
     "snapshot:deploy": "bash scripts/demo/snapshot.sh deploy",
     "demo:feedback": "bash scripts/demo/feedback.sh start",
     "demo:feedback:stop": "bash scripts/demo/feedback.sh stop",

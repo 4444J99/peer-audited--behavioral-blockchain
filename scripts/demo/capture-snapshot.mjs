@@ -67,6 +67,13 @@ const written = [];
 
 for (const [persona, email] of Object.entries(PERSONAS)) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  // This run drives all five personas across every route. Without the opt-out it
+  // lands in the feedback report as five attentive viewers, and the report's whole
+  // job is to say who actually came.
+  await context.addInitScript(
+    ([key, value]) => window.localStorage.setItem(key, value),
+    ["styx.guidedTour.telemetry", "off"],
+  );
 
   // POST /auth/login is throttled at 5 per 60s per IP; five personas is right at the
   // edge, so pace them rather than tripping it half way through a capture.
