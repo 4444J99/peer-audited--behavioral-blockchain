@@ -13,10 +13,31 @@
  *     identical to "nobody interacted".
  *  3. It sends only what the viewer can see themselves: a random id, a name they
  *     typed, the route, and their own note. No identity, no page content.
+ *  4. It is OFF in the hosted snapshot. The collector is a machine on the
+ *     presenter's LAN; from a pages.dev origin, rule 2 would aim every viewer at
+ *     `https://<pages-host>:4312`, which cannot exist. That request is not merely
+ *     futile -- over HTTPS the browser blocks it as mixed content and logs an
+ *     error on every page, and any remote viewer's traffic would be attributed to
+ *     nothing. Measured while verifying the snapshot: a headless sweep of the
+ *     static export wrote 54 phantom sessions into the presenter's real
+ *     collector.
  */
+import { isSnapshotMode } from '../../services/snapshot';
 
 const SESSION_KEY = 'styx.guidedTour.sessionId';
 const NAME_KEY = 'styx.guidedTour.name';
+
+/**
+ * Opt-out, set by anything driving the demo in a browser that is not a person.
+ *
+ * Automation reaches these pages constantly -- the fixture capture drives all five
+ * personas, the snapshot verifier sweeps 48 routes -- and each of those runs was
+ * landing in the report as an attendee. Before this existed the report showed
+ * "8 viewer(s)" for a demo no human had ever opened, which is worse than showing
+ * nothing: it is a confident, wrong answer to the only question the report exists
+ * to answer.
+ */
+const OPT_OUT_KEY = 'styx.guidedTour.telemetry';
 
 export type FeedbackEvent = {
   type: 'route_view' | 'tooltip_open' | 'audience_change' | 'nav';
@@ -30,6 +51,13 @@ const collectorPort = process.env.NEXT_PUBLIC_STYX_FEEDBACK_PORT || '4312';
 /** Same hostname the viewer used, so every device reports to the presenter's machine. */
 function collectorBase(): string | null {
   if (typeof window === 'undefined') return null;
+  if (isSnapshotMode()) return null; // rule 4: no collector exists behind a static host
+  try {
+    if (window.localStorage.getItem(OPT_OUT_KEY) === 'off') return null;
+  } catch {
+    // localStorage can throw in a locked-down context; that is not a reason to
+    // break the demo, and telemetry is the layer that must yield (rule 1).
+  }
   return `${window.location.protocol}//${window.location.hostname}:${collectorPort}`;
 }
 

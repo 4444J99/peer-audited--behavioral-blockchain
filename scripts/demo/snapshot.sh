@@ -80,9 +80,45 @@ serve() {
   node24 npx --yes serve "$out_dir" -l 4315
 }
 
+# Sweeps every registry route on the built export and fails if any of them still
+# reaches for a backend. Serves on its own port so it never collides with a preview
+# someone left running, and always takes its server back down.
+verify() {
+  [ -f "$out_dir/index.html" ] || die "nothing built. Run: npm run snapshot:build"
+  local port="${STYX_SNAPSHOT_VERIFY_PORT:-4316}"
+
+  # verify_pid is deliberately NOT local: the EXIT trap fires after this function
+  # has returned, so a local would already be out of scope and `set -u` would abort
+  # the cleanup with "pid: unbound variable" -- masking the real exit code.
+  verify_pid=""
+  cleanup() { [ -n "${verify_pid:-}" ] && kill "$verify_pid" 2>/dev/null || true; }
+  trap cleanup EXIT
+
+  info "Serving the export on 127.0.0.1:${port} for verification ..."
+  node24 npx --yes serve "$out_dir" -l "$port" >/dev/null 2>&1 &
+  verify_pid=$!
+
+  # -q --http1.1: an --http2 line in the operator's curlrc makes this request an h2c
+  # upgrade that the server answers by closing the connection. Cost a full session once.
+  local ready=0 i
+  for i in $(seq 1 40); do
+    if curl -q -fsS --http1.1 --max-time 5 -o /dev/null "http://127.0.0.1:${port}/tour/" 2>/dev/null; then
+      ready=1
+      break
+    fi
+    sleep 1
+  done
+  [ "$ready" -eq 1 ] || die "the verification server never became ready on port ${port}."
+
+  node24 node "$repo_root/scripts/demo/verify-snapshot.mjs" "http://127.0.0.1:${port}"
+}
+
 deploy() {
   [ -f "$out_dir/index.html" ] || die "nothing built. Run: npm run snapshot:build"
   command -v npx >/dev/null 2>&1 || die "npx is required to run wrangler."
+  # Publishing is the one irreversible step here, so the predicate runs first. A
+  # snapshot that renders "API 404" to an investor is worse than no snapshot.
+  verify
   info "Deploying to Cloudflare Pages project '${project}' ..."
   npx --yes wrangler pages deploy "$out_dir" --project-name "$project"
 }
@@ -91,6 +127,7 @@ case "${1:-}" in
   capture) capture ;;
   build) build ;;
   serve) serve ;;
+  verify) verify ;;
   deploy) deploy ;;
-  *) die "usage: bash scripts/demo/snapshot.sh {capture|build|serve|deploy}" ;;
+  *) die "usage: bash scripts/demo/snapshot.sh {capture|build|serve|verify|deploy}" ;;
 esac

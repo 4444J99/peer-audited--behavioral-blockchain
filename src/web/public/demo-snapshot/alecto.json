@@ -8,16 +8,16 @@
     "total_staked": 0,
     "role": "FURY",
     "status": "ACTIVE",
-    "created_at": "2026-08-13T09:36:48.432Z",
+    "created_at": "2026-08-14T14:18:50.287Z",
     "compliance": {
       "kyc_status": "VERIFIED",
       "age_verification_status": "VERIFIED",
       "identity_provider": "MOCK",
       "identity_verification_id": "ivs_mock_demo_alecto",
-      "identity_verified_at": "2026-06-14T09:36:48.432Z",
+      "identity_verified_at": "2026-06-15T14:18:50.287Z",
       "is_kyc_verified": true,
       "is_age_verified": true,
-      "terms_accepted_at": "2026-06-13T09:36:48.432Z",
+      "terms_accepted_at": "2026-06-14T14:18:50.287Z",
       "terms_version": "2026-04"
     }
   }

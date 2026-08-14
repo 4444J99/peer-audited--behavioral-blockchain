@@ -8,21 +8,18 @@
     "total_staked": 0,
     "role": "PRACTITIONER",
     "status": "ACTIVE",
-    "created_at": "2026-08-13T09:36:48.432Z",
+    "created_at": "2026-08-14T14:18:50.287Z",
     "compliance": {
       "kyc_status": "VERIFIED",
       "age_verification_status": "VERIFIED",
       "identity_provider": "MOCK",
       "identity_verification_id": "ivs_mock_demo_moira",
-      "identity_verified_at": "2026-05-15T09:36:48.432Z",
+      "identity_verified_at": "2026-05-16T14:18:50.287Z",
       "is_kyc_verified": true,
       "is_age_verified": true,
-      "terms_accepted_at": "2026-05-13T09:36:48.432Z",
+      "terms_accepted_at": "2026-05-14T14:18:50.287Z",
       "terms_version": "2026-04"
     }
-  },
-  "GET /auth/csrf": {
-    "csrfToken": "72c8e490b4883f2ca1c5641a58151d36d1463a9035ed37e4eca725208494ba91"
   },
   "GET /practitioner/dashboard": [
     {
@@ -71,21 +68,21 @@
           }
         ],
         "trend": "STABLE",
-        "lastUpdated": "2026-08-13T09:38:23.784Z"
+        "lastUpdated": "2026-08-14T14:20:32.258Z"
       },
       "recentAlerts": [
         {
-          "id": "83e39f6c-9adc-4b82-a7a6-5ba0dac4a50e",
+          "id": "e5ac8af2-836a-4325-ba76-79b5883cdf55",
           "userId": "d1000000-0000-0000-0000-000000000002",
           "alertType": "RATIONALIZATION",
           "excerpt": "just one more time",
           "severity": "MEDIUM",
-          "createdAt": "2026-08-11T09:36:48.447Z"
+          "createdAt": "2026-08-12T14:18:50.306Z"
         }
       ],
       "adherenceRate": 87,
       "streakDays": 13,
-      "nextCheckIn": "2026-08-13T03:00:00.000Z"
+      "nextCheckIn": "2026-08-14T03:00:00.000Z"
     },
     {
       "clientId": "d1000000-0000-0000-0000-000000000001",
@@ -133,19 +130,19 @@
           }
         ],
         "trend": "DECLINING",
-        "lastUpdated": "2026-08-13T09:38:23.786Z"
+        "lastUpdated": "2026-08-14T14:20:32.261Z"
       },
       "recentAlerts": [],
       "adherenceRate": 95,
       "streakDays": 21,
-      "nextCheckIn": "2026-08-13T03:00:00.000Z"
+      "nextCheckIn": "2026-08-14T03:00:00.000Z"
     },
     {
       "clientId": "d1000000-0000-0000-0000-000000000005",
       "clientAlias": "Sage Ellis",
       "riskProfile": {
         "userId": "d1000000-0000-0000-0000-000000000005",
-        "riskScore": 3,
+        "riskScore": 8,
         "riskLevel": "GREEN",
         "factors": [
           {
@@ -175,8 +172,8 @@
           {
             "type": "WEEKEND_COMPLIANCE",
             "weight": 0.1,
-            "value": 0.33333333333333337,
-            "description": "33% lower compliance on weekends"
+            "value": 0.75,
+            "description": "75% lower compliance on weekends"
           },
           {
             "type": "PREVIOUS_VIOLATIONS",
@@ -186,29 +183,29 @@
           }
         ],
         "trend": "STABLE",
-        "lastUpdated": "2026-08-13T09:38:23.788Z"
+        "lastUpdated": "2026-08-14T14:20:32.264Z"
       },
       "recentAlerts": [
         {
-          "id": "2fcafddd-e1d5-4425-b24f-824ef4c3b600",
+          "id": "791681df-e722-4058-b514-2be679abcd04",
           "userId": "d1000000-0000-0000-0000-000000000005",
           "alertType": "TRIGGER_MENTION",
           "excerpt": "saw them at the cafe near work",
           "severity": "LOW",
-          "createdAt": "2026-08-10T09:36:48.447Z"
+          "createdAt": "2026-08-11T14:18:50.306Z"
         }
       ],
       "adherenceRate": 83,
       "streakDays": 5,
-      "nextCheckIn": "2026-08-13T03:00:00.000Z"
+      "nextCheckIn": "2026-08-14T03:00:00.000Z"
     },
     {
       "clientId": "d1000000-0000-0000-0000-000000000006",
       "clientAlias": "Indigo Park",
       "riskProfile": {
         "userId": "d1000000-0000-0000-0000-000000000006",
-        "riskScore": 28,
-        "riskLevel": "GREEN",
+        "riskScore": 31,
+        "riskLevel": "YELLOW",
         "factors": [
           {
             "type": "ATTESTATION_CONSISTENCY",
@@ -237,8 +234,8 @@
           {
             "type": "WEEKEND_COMPLIANCE",
             "weight": 0.1,
-            "value": 0.33333333333333337,
-            "description": "33% lower compliance on weekends"
+            "value": 0.5714285714285714,
+            "description": "57% lower compliance on weekends"
           },
           {
             "type": "PREVIOUS_VIOLATIONS",
@@ -248,21 +245,21 @@
           }
         ],
         "trend": "DECLINING",
-        "lastUpdated": "2026-08-13T09:38:23.789Z"
+        "lastUpdated": "2026-08-14T14:20:32.266Z"
       },
       "recentAlerts": [
         {
-          "id": "c5f367ef-daee-4c6d-8ec6-58097a700bda",
+          "id": "781cf344-41a5-4199-8f07-bc4453ca76b0",
           "userId": "d1000000-0000-0000-0000-000000000006",
           "alertType": "DISTRESS_ESCALATION",
           "excerpt": "falling apart",
           "severity": "HIGH",
-          "createdAt": "2026-08-12T09:36:48.447Z"
+          "createdAt": "2026-08-13T14:18:50.306Z"
         }
       ],
       "adherenceRate": 77,
       "streakDays": 10,
-      "nextCheckIn": "2026-08-13T03:00:00.000Z"
+      "nextCheckIn": "2026-08-14T03:00:00.000Z"
     }
   ]
 }
