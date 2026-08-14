@@ -46,7 +46,7 @@ This checklist defines the requirements for promoting Styx from PUBLIC_PROCESS t
 - [ ] Playwright E2E suite green on Safari (latest)
 - [ ] Playwright E2E suite green on Edge (latest)
 - [ ] Mobile viewport E2E tests passing (375px, 414px, 390px widths)
-- [ ] Beta readiness suite passing (`scripts/beta-readiness.sh`)
+- [ ] Beta readiness suite passing (`scripts/smoke/beta-readiness.sh`)
 
 ### Performance
 - [ ] Load test completed: API p99 < 2 seconds at 1,000 concurrent users
