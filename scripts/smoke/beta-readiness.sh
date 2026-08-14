@@ -46,9 +46,13 @@ add_gate() {
   local name="$1"
   local status="$2"
   local duration_ms="$3"
-  local message="$4"
+  local required="$4"
+  local message="$5"
 
-  printf '%s\t%s\t%s\t%s\n' "${name}" "${status}" "${duration_ms}" "${message}" >> "${GATE_ROWS_FILE}"
+  # `required` travels into the artifact so a reader can tell a skipped optional
+  # gate from a skipped REQUIRED one. Message stays last: it is the only field
+  # that could ever contain a tab, and the bounded split preserves it.
+  printf '%s\t%s\t%s\t%s\t%s\n' "${name}" "${status}" "${duration_ms}" "${required}" "${message}" >> "${GATE_ROWS_FILE}"
 }
 
 mark_failure_if_required() {
@@ -98,7 +102,7 @@ run_gate() {
     mark_failure_if_required "${required}"
   fi
 
-  add_gate "${name}" "${status}" "${duration_ms}" "${message}"
+  add_gate "${name}" "${status}" "${duration_ms}" "${required}" "${message}"
 }
 
 skip_gate() {
@@ -106,7 +110,7 @@ skip_gate() {
   local required="$2"
   local message="$3"
 
-  add_gate "${name}" "skipped" "0" "${message}"
+  add_gate "${name}" "skipped" "0" "${required}" "${message}"
   if [[ "${required}" == "true" && "${REQUIRE_TARGETS}" == "true" ]]; then
     OVERALL_STATUS="fail"
   else
@@ -127,7 +131,19 @@ echo ""
 # ── Remote target gates (require deployed environment) ──
 
 if [[ -z "${TARGET_API_URL}" ]]; then
-  skip_gate "target_api" "true" "missing target API URL for profile '${PROFILE}'"
+  # Record every remote gate individually, with the same names and required
+  # flags the else-branch uses. A single merged "target_api" row hid WHICH
+  # required gates never ran: the artifact read "3 passed, 1 skipped" while
+  # every gate that touches a running app was simply absent from the record.
+  # Overall-status arithmetic is unchanged: skip_gate's assignments are
+  # idempotent, and at least one required gate is present either way.
+  no_target="missing target API URL for profile '${PROFILE}'"
+  skip_gate "api_ready" "true" "${no_target}"
+  skip_gate "api_release_meta" "true" "${no_target}"
+  skip_gate "web_availability" "false" "${no_target}"
+  skip_gate "critical_endpoints" "true" "${no_target}"
+  skip_gate "ledger_invariant" "true" "${no_target}"
+  skip_gate "behavioral_constants" "false" "${no_target}"
 else
   export API_URL="${TARGET_API_URL%/}"
   export EXPECTED_ENV_LABEL="${TARGET_ENV_LABEL}"
@@ -170,12 +186,13 @@ with open(rows_path, "r", encoding="utf-8") as handle:
         raw = raw.rstrip("\n")
         if not raw:
             continue
-        name, status, duration_ms, message = raw.split("\t", 3)
+        name, status, duration_ms, required, message = raw.split("\t", 4)
         gates.append(
             {
                 "name": name,
                 "status": status,
                 "durationMs": int(duration_ms),
+                "required": required == "true",
                 "message": message,
             }
         )

@@ -69,6 +69,10 @@ Rules:
 - Optional gate failures are recorded but do not fail overall.
 - A skipped required gate sets overall status to `incomplete` when `READINESS_REQUIRE_TARGETS=false`.
 - Missing target URLs are recorded as `skipped`; they fail overall only when `READINESS_REQUIRE_TARGETS=true`.
+- When the target API URL is missing, **each remote gate is recorded as its own `skipped` row**
+  (`api_ready`, `api_release_meta`, `web_availability`, `critical_endpoints`, `ledger_invariant`,
+  `behavioral_constants`) with its required flag, so the artifact shows exactly which required
+  gates never ran. A single merged placeholder row is not a valid recording.
 
 ## Output Artifact
 
@@ -88,6 +92,7 @@ Schema:
       "name": "api_ready",
       "status": "passed",
       "durationMs": 11000,
+      "required": true,
       "message": "ok"
     }
   ]
