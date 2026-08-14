@@ -42,13 +42,17 @@ export class AuthController {
       maxAge: ACCESS_TOKEN_MAX_AGE_MS,
     });
 
-    // Refresh token — long-lived (7 days), restricted to /auth/refresh path
+    // Refresh token — long-lived (7 days). Path must be '/': the browser only
+    // ever reaches this API through the web app's /api rewrite, so the path it
+    // sees for refresh is /api/auth/refresh — a path-scoped '/auth/refresh'
+    // cookie is never sent and every silent refresh 401s, hard-logging users
+    // out when the 15-minute access token expires.
     const refreshToken = await this.authService.generateRefreshToken(userId); // allow-secret
     res.cookie('styx_refresh_token', refreshToken, {
       httpOnly: true,
       secure,
       sameSite,
-      path: '/auth/refresh',
+      path: '/',
       maxAge: REFRESH_TOKEN_MAX_AGE_MS,
     });
 
@@ -65,6 +69,9 @@ export class AuthController {
     const secure = process.env.NODE_ENV === 'production';
     const sameSite = 'lax' as const;
     res.clearCookie('styx_auth_token', { path: '/', secure, sameSite });
+    res.clearCookie('styx_refresh_token', { path: '/', secure, sameSite });
+    // Also clear any legacy path-scoped copy from before the path fix, so a
+    // stale cookie cannot shadow future sessions on direct-origin clients.
     res.clearCookie('styx_refresh_token', { path: '/auth/refresh', secure, sameSite });
     res.clearCookie('styx_csrf_token', { path: '/', secure, sameSite });
   }
@@ -124,11 +131,14 @@ export class AuthController {
       maxAge: ACCESS_TOKEN_MAX_AGE_MS,
     });
 
+    // Rotation must keep path '/' too — fixing only the login site would make
+    // the FIRST silent refresh succeed and the second (which carries the
+    // rotated cookie issued here) fail with the same hard logout.
     res.cookie('styx_refresh_token', result.refreshToken, {
       httpOnly: true,
       secure,
       sameSite,
-      path: '/auth/refresh',
+      path: '/',
       maxAge: REFRESH_TOKEN_MAX_AGE_MS,
     });
 
