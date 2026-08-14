@@ -9,6 +9,7 @@ const mockAuthService = {
   login: jest.fn(),
   exchangeEnterpriseToken: jest.fn(),
   generateRefreshToken: jest.fn().mockResolvedValue('mock-refresh-token'), // allow-secret
+  refreshAccessToken: jest.fn(),
   revokeRefreshTokensForUser: jest.fn().mockResolvedValue(undefined),
   verifyToken: jest.fn(),
   verifyTokenIgnoringExpiry: jest.fn(),
@@ -117,6 +118,51 @@ describe('AuthController', () => {
       const dto = plainToInstance(LoginDto, { email: 'test@styx.protocol', password: 'short' }); // allow-secret
       const errors = await validate(dto);
       expect(errors.some((e) => e.property === 'password')).toBe(false);
+    });
+
+    it('sets the refresh cookie on path "/" so it survives the web /api rewrite', async () => {
+      // Browsers reach this API only through the web app's /api rewrite, so the
+      // path they see for refresh is /api/auth/refresh. A cookie scoped to
+      // '/auth/refresh' is never sent back, every silent refresh 401s, and the
+      // user is hard-logged-out when the 15-minute access token expires.
+      (mockAuthService.login as jest.Mock).mockResolvedValue({
+        userId: 'user-id',
+        token: 'jwt-token', // allow-secret
+      });
+
+      await controller.login(
+        plainToInstance(LoginDto, {
+          email: 'test@styx.protocol',
+          password: 'secure123', // allow-secret
+        }),
+        mockResponse,
+      );
+
+      const refreshCall = (mockResponse.cookie as jest.Mock).mock.calls.find(
+        ([name]: [string]) => name === 'styx_refresh_token',
+      );
+      expect(refreshCall).toBeDefined();
+      expect(refreshCall[2].path).toBe('/');
+    });
+
+    it('re-issues the ROTATED refresh cookie on path "/" as well', async () => {
+      // Fixing only the login site would make the first silent refresh succeed
+      // and the second fail: rotation issues a fresh cookie, and if that copy
+      // reverts to a scoped path the hard logout just moves 15 minutes later.
+      (mockAuthService as any).refreshAccessToken.mockResolvedValue({
+        userId: 'user-id',
+        token: 'rotated-jwt', // allow-secret
+        refreshToken: 'rotated-refresh', // allow-secret
+      });
+      const req = { headers: { cookie: 'styx_refresh_token=old-refresh' } } as any;
+
+      await controller.refresh(req, mockResponse);
+
+      const rotatedCall = (mockResponse.cookie as jest.Mock).mock.calls.find(
+        ([name]: [string]) => name === 'styx_refresh_token',
+      );
+      expect(rotatedCall).toBeDefined();
+      expect(rotatedCall[2].path).toBe('/');
     });
   });
 
