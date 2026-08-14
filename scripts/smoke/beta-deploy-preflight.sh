@@ -4,11 +4,17 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
-GITHUB_REPO="${GITHUB_REPO:-organvm-iii-ergon/peer-audited--behavioral-blockchain}"
+# Default must match the repo this workflow actually deploys. The old default
+# (organvm-iii-ergon/...) audited a different org's repo and reported every
+# secret absent while the real environment was fully configured.
+GITHUB_REPO="${GITHUB_REPO:-4444J99/peer-audited--behavioral-blockchain}"
 GITHUB_ENVIRONMENT="${GITHUB_ENVIRONMENT:-beta}"
 OUTPUT_PATH="${BETA_DEPLOY_PREFLIGHT_OUTPUT_PATH:-${REPO_ROOT}/artifacts/release/evidence--beta-deploy-preflight.md}"
 STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+# Keep in lockstep with the preflight loop in .github/workflows/beta-promotion.yml —
+# this audit previously omitted BETA_DEMO_PASSWORD and reported "all green" while
+# the workflow's own preflight failed on it.
 required_env_secrets=(
   "RENDER_API_KEY"
   "RENDER_BETA_API_SERVICE_ID"
@@ -16,6 +22,7 @@ required_env_secrets=(
   "BETA_API_URL"
   "BETA_WEB_URL"
   "BETA_DATABASE_URL"
+  "BETA_DEMO_PASSWORD"
 )
 
 optional_env_secrets=(
@@ -134,7 +141,7 @@ IFS='|' read -r READINESS_STATUS READINESS_PASSED READINESS_FAILED READINESS_SKI
   echo ""
   echo "## Notes"
   echo ""
-  echo "- The beta promotion workflow now checks \`RENDER_API_KEY\`, \`RENDER_BETA_API_SERVICE_ID\`, \`RENDER_BETA_WEB_SERVICE_ID\`, \`BETA_API_URL\`, \`BETA_WEB_URL\`, and \`BETA_DATABASE_URL\` before deploy."
+  echo "- The beta promotion workflow now checks \`RENDER_API_KEY\`, \`RENDER_BETA_API_SERVICE_ID\`, \`RENDER_BETA_WEB_SERVICE_ID\`, \`BETA_API_URL\`, \`BETA_WEB_URL\`, \`BETA_DATABASE_URL\`, and \`BETA_DEMO_PASSWORD\` before deploy."
   echo "- \`npm run beta:readiness\` now runs local gates even without deployed targets; strict mode still fails until target URLs exist."
   echo "- This audit only checks GitHub configuration presence. It cannot prove that the secret values point to live Render or database resources."
 } > "${OUTPUT_PATH}"
