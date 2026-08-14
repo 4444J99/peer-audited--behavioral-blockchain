@@ -48,6 +48,13 @@ export type FeedbackEvent = {
 
 const collectorPort = process.env.NEXT_PUBLIC_STYX_FEEDBACK_PORT || '4312';
 
+/**
+ * Hosted deployments (the Render beta) set an absolute collector URL at build
+ * time; rule 2's same-hostname derivation is meaningless there because the
+ * collector is its own service, not a port on the web host.
+ */
+const configuredCollector = process.env.NEXT_PUBLIC_STYX_FEEDBACK_URL || '';
+
 /** Same hostname the viewer used, so every device reports to the presenter's machine. */
 function collectorBase(): string | null {
   if (typeof window === 'undefined') return null;
@@ -58,6 +65,7 @@ function collectorBase(): string | null {
     // localStorage can throw in a locked-down context; that is not a reason to
     // break the demo, and telemetry is the layer that must yield (rule 1).
   }
+  if (configuredCollector) return configuredCollector.replace(/\/+$/, '');
   return `${window.location.protocol}//${window.location.hostname}:${collectorPort}`;
 }
 
