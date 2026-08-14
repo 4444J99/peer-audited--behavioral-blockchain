@@ -141,8 +141,12 @@ export class UsersService {
   }
 
   async getUserHistory(userId: string, limit = 50) {
+    // event_log is the tamper-evident audit table this service itself appends
+    // to; no migration has ever created a "truth_log", so the old name made
+    // this endpoint a guaranteed 500 that /profile swallowed into an empty
+    // history panel.
     const result = await this.pool.query(
-      `SELECT event_type, payload, created_at FROM truth_log
+      `SELECT event_type, payload, created_at FROM event_log
        WHERE payload->>'userId' = $1
        ORDER BY created_at DESC
        LIMIT $2`,

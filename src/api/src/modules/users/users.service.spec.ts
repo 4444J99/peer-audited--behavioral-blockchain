@@ -82,6 +82,23 @@ describe("UsersService", () => {
     });
   });
 
+  describe("getUserHistory", () => {
+    it("queries event_log — the audit table this service writes — not a table that never existed", async () => {
+      // The old query named "truth_log", which no migration ever created; every
+      // call 500'd and /profile swallowed it into a plausible empty history.
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [{ event_type: "CONTRACT_CREATED", payload: {}, created_at: "2026-01-01" }],
+      });
+
+      const rows = await service.getUserHistory("user-1");
+
+      expect(rows).toHaveLength(1);
+      const sql = (mockPool.query as jest.Mock).mock.calls[0][0] as string;
+      expect(sql).toContain("FROM event_log");
+      expect(sql).not.toContain("truth_log");
+    });
+  });
+
   describe("getPublicProfile", () => {
     it("should return limited public profile fields", async () => {
       const publicData = {
