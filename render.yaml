@@ -43,6 +43,38 @@ services:
         generateValue: true
       - key: STYX_API_KEY_PEPPER
         generateValue: true
+      # These six have NO insecure runtime fallback — the API throws at boot (or
+      # on first use) when any is unset (.env.example documents the contract;
+      # ENTERPRISE_SSO_SECRET is enforced in auth.service). The blueprint
+      # generated only JWT_SECRET and the pepper, so a fresh blueprint deploy
+      # crash-looped before serving its first request. All are API-internal
+      # (no web/worker consumer needs the same value), so per-service
+      # generation is correct.
+      - key: APP_SECRET
+        generateValue: true
+      - key: ANONYMIZE_SALT
+        generateValue: true
+      - key: ZK_EXHAUST_SECRET
+        generateValue: true
+      - key: STYX_WEBHOOK_SECRET
+        generateValue: true
+      - key: INTERNAL_SERVICE_TOKEN
+        generateValue: true
+      - key: ENTERPRISE_SSO_SECRET
+        generateValue: true
+      # /meta/release reports environment.label from this; the deploy smoke
+      # (check-api-release.sh) fails hard on a mismatch with its expected
+      # label. The blueprint never set it, so a blueprint-provisioned service
+      # reported no label and could not pass its own smoke.
+      - key: STYX_ENV_LABEL
+        value: production
+      # NOTE: this and styx-web's NEXT_PUBLIC_API_URL form a circular
+      # fromService pair. On the FIRST blueprint sync, whichever service builds
+      # before the other exists gets an empty value baked in — for styx-web that
+      # means the docker-compose fallback host (dead on Render) is compiled into
+      # the bundle and every /api call 502s until styx-web is manually
+      # redeployed AFTER styx-api is live. Render resolves both on subsequent
+      # deploys; the trap is first-sync only.
       - key: CORS_ORIGINS
         fromService:
           name: styx-web
