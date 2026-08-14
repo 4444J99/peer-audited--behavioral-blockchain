@@ -128,7 +128,12 @@ deploy() {
     npx --yes wrangler pages project create "$project" --production-branch main
   fi
   info "Deploying to Cloudflare Pages project '${project}' ..."
-  npx --yes wrangler pages deploy "$out_dir" --project-name "$project"
+  # --branch main: wrangler otherwise infers the CHECKOUT's git branch, and any
+  # non-production branch makes this a preview deployment — the canonical
+  # ${project}.pages.dev URL keeps serving the previous production build (or
+  # nothing at all on a first deploy). A direct-upload snapshot has no real git
+  # linkage; the branch here is a routing label, so pin it to production.
+  npx --yes wrangler pages deploy "$out_dir" --project-name "$project" --branch main
 }
 
 case "${1:-}" in
