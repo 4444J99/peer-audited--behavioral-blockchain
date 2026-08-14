@@ -28,6 +28,7 @@
     "snapshot:serve": "bash scripts/demo/snapshot.sh serve",
     "snapshot:verify": "bash scripts/demo/snapshot.sh verify",
     "snapshot:deploy": "bash scripts/demo/snapshot.sh deploy",
+    "beta:verify": "node scripts/demo/verify-beta.mjs",
     "demo:feedback": "bash scripts/demo/feedback.sh start",
     "demo:feedback:stop": "bash scripts/demo/feedback.sh stop",
     "demo:feedback:status": "bash scripts/demo/feedback.sh status",

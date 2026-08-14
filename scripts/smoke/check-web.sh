@@ -20,10 +20,20 @@ for i in $(seq 1 "$MAX_ATTEMPTS"); do
   echo "Web smoke check attempt ${i}/${MAX_ATTEMPTS}: ${WEB_URL}"
   http_code="$(curl -sS -o "$tmp_body" -w "%{http_code}" "$WEB_URL" || echo "000")"
   if [ "$http_code" = "200" ]; then
-    echo "✅ Web smoke test passed"
-    exit 0
+    # The root is a client component that renders even when the API link is
+    # completely broken, so a 200 here proves liveness only. /api/health
+    # traverses the Next rewrite into the API — it fails precisely when
+    # NEXT_PUBLIC_API_URL was absent at build time and the docker-compose
+    # fallback host got baked in, which nothing else detects.
+    proxy_code="$(curl -sS -o "$tmp_body" -w "%{http_code}" "$WEB_URL/api/health" || echo "000")"
+    if [ "$proxy_code" = "200" ]; then
+      echo "✅ Web smoke test passed (root 200, /api/health proxy 200)"
+      exit 0
+    fi
+    echo "⚠️  Root is 200 but /api/health via the rewrite returned ${proxy_code} — retrying..."
+  else
+    echo "⚠️  HTTP ${http_code} — retrying..."
   fi
-  echo "⚠️  HTTP ${http_code} — retrying..."
   sleep "$INTERVAL_SECONDS"
 done
 
