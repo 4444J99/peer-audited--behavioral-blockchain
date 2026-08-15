@@ -10,6 +10,7 @@ import { ProofMediaType } from './dto';
 import { ProofsService } from './proofs.service';
 import { CrisisDetectionService } from '../../../services/security/crisis-detection.service';
 import { CrisisInterventionService } from '../../../services/security/crisis-intervention.service';
+import { VideoProcessingService } from './video-processing.service';
 
 describe('ProofsController', () => {
   let controller: ProofsController;
@@ -22,6 +23,7 @@ describe('ProofsController', () => {
   let mockProofsService: jest.Mocked<Pick<ProofsService, 'getProofUploadContractAccess' | 'getProofUploadConfirmationAccess' | 'getProofDetail'>>;
   let mockCrisisDetection: jest.Mocked<Pick<CrisisDetectionService, 'analyzeContent'>>;
   let mockCrisisIntervention: jest.Mocked<Pick<CrisisInterventionService, 'reportCrisis'>>;
+  let mockVideoProcessing: jest.Mocked<Pick<VideoProcessingService, 'dispatchForProcessing'>>;
 
   beforeEach(() => {
     mockPool = { query: jest.fn() };
@@ -49,6 +51,9 @@ describe('ProofsController', () => {
     mockCrisisIntervention = {
       reportCrisis: jest.fn().mockResolvedValue({ escalated: false }),
     };
+    mockVideoProcessing = {
+      dispatchForProcessing: jest.fn().mockResolvedValue(undefined),
+    };
 
     controller = new ProofsController(
       mockPool as unknown as Pool,
@@ -60,6 +65,7 @@ describe('ProofsController', () => {
       mockProofsService as unknown as ProofsService,
       mockCrisisDetection as unknown as CrisisDetectionService,
       mockCrisisIntervention as unknown as CrisisInterventionService,
+      mockVideoProcessing as unknown as VideoProcessingService,
     );
     jest.clearAllMocks();
   });
@@ -196,6 +202,49 @@ describe('ProofsController', () => {
         expect.stringContaining('UPDATE proofs'),
         expect.arrayContaining([expect.any(String), 'p-1', '["EXIF_TIMESTAMP_DISCREPANCY"]', '{}'])
       );
+    });
+
+    // The whole redaction pipeline was built, registered, exported and specced —
+    // and called by nobody, so masked_media_uri was never populated on a real
+    // proof and Fury reviewers were served raw media. This assertion is the
+    // guard against it silently returning to zero callers.
+    it('enqueues redaction before routing the proof to reviewers', async () => {
+      mockProofsService.getProofUploadConfirmationAccess.mockResolvedValue({
+        status: 'PENDING_UPLOAD',
+        contractId: 'c-1',
+        ownerUserId: 'user-1',
+      } as any);
+      mockR2.downloadFile.mockResolvedValue(Buffer.from('fake-media'));
+      mockAnomaly.analyze.mockResolvedValue({ rejected: false, flags: [] });
+      mockPhash.computeFrameHash.mockResolvedValue('hash-123');
+      mockPhash.isDuplicate.mockResolvedValue({ duplicate: false, closestDistance: 64 });
+      mockPool.query.mockResolvedValue({ rows: [] });
+
+      await controller.confirmUpload('p-1', user, dto);
+
+      expect(mockVideoProcessing.dispatchForProcessing).toHaveBeenCalledWith('p-1');
+      expect(mockVideoProcessing.dispatchForProcessing.mock.invocationCallOrder[0]).toBeLessThan(
+        (mockFuryRouter.routeProof as jest.Mock).mock.invocationCallOrder[0],
+      );
+    });
+
+    it('still routes the proof when redaction dispatch fails (reviewers see no media, not raw media)', async () => {
+      mockProofsService.getProofUploadConfirmationAccess.mockResolvedValue({
+        status: 'PENDING_UPLOAD',
+        contractId: 'c-1',
+        ownerUserId: 'user-1',
+      } as any);
+      mockR2.downloadFile.mockResolvedValue(Buffer.from('fake-media'));
+      mockAnomaly.analyze.mockResolvedValue({ rejected: false, flags: [] });
+      mockPhash.computeFrameHash.mockResolvedValue('hash-123');
+      mockPhash.isDuplicate.mockResolvedValue({ duplicate: false, closestDistance: 64 });
+      mockPool.query.mockResolvedValue({ rows: [] });
+      mockVideoProcessing.dispatchForProcessing.mockRejectedValueOnce(new Error('redis down'));
+
+      const result = await controller.confirmUpload('p-1', user, dto);
+
+      expect(result.status).toBe('PENDING_REVIEW');
+      expect(mockFuryRouter.routeProof).toHaveBeenCalled();
     });
 
     it('should reject duplicate proofs', async () => {
