@@ -8,6 +8,7 @@ import { AnomalyService } from '../../../services/anomaly/anomaly.service';
 import { ProofsService } from './proofs.service';
 import { VideoProcessingService } from './video-processing.service';
 import { VideoProcessingWorker } from './video-processing.worker';
+import { VideoProcessingScheduler } from './video-processing.scheduler';
 import { TranscodingService } from '../../../services/media/transcoding.service';
 import { RedactionService } from '../../../services/media/redaction.service';
 import { CrisisModule } from '../crisis/crisis.module';
@@ -18,7 +19,7 @@ import { CrisisModule } from '../crisis/crisis.module';
   providers: [
     R2StorageService, FuryRouterService, TruthLogService, PHashService,
     AnomalyService, ProofsService, VideoProcessingService, VideoProcessingWorker,
-    TranscodingService, RedactionService,
+    VideoProcessingScheduler, TranscodingService, RedactionService,
   ],
   exports: [R2StorageService, VideoProcessingService],
 })
