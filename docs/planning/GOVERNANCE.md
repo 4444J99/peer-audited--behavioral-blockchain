@@ -39,7 +39,9 @@ It performs three outputs:
 
 Tracking criteria in the burn-down is intentionally inclusive:
 
-- `label:blocked` AND (`owner:*` label OR legacy range #123-#144)
+- `label:blocked` AND (`owner:*` label OR legacy range #123-#148)
+  (range corrected 2026-08-15: the register runs #123-#148 with #145 never created —
+  #146/#147/#148 were tracked only via `owner:*` labels under the old #123-#144 wording)
 
 This keeps legacy blockers visible while still auditing missing metadata as drift.
 
