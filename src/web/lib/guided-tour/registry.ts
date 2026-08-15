@@ -601,6 +601,16 @@ export const TOUR_ROUTES: TourRoute[] = [
     summary: "How stakes, evidence and disputes are actually decided.",
     detail: "The operational rulebook behind the truth log.",
   },
+  {
+    path: "/legal/compliance-artifacts",
+    title: "Compliance artifacts",
+    chapter: "Trust and limits",
+    persona: "none",
+    label: "working",
+    summary: "The compliance documents this build ships, and the hash CI checks them against.",
+    detail:
+      "The release gate hashes this artifact set on every run, so what is published here and what CI enforces cannot drift apart silently.",
+  },
 ];
 
 export const TOUR_BY_PATH = new Map(TOUR_ROUTES.map((route) => [route.path, route]));
