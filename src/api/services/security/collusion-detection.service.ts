@@ -360,6 +360,16 @@ export class CollusionDetectionService {
   /**
    * Open enforcement cases for confirmed collusion rings.
    * Only sanctions rings above the threshold.
+   *
+   * Idempotent per reviewer. `analyzeWindow` looks back over a rolling window that
+   * is wider than the scheduler's cadence, so the same ring is re-detected on every
+   * sweep until an admin dispositions it — and `ringId` is minted fresh each run
+   * (`ring-N-${Date.now()}`), so it cannot itself be the dedupe key. Without a guard
+   * an unreviewed ring would accrue a new PENDING_REVIEW case per member per sweep
+   * and bury the queue. The INSERT...SELECT...WHERE NOT EXISTS is atomic within the
+   * single statement (same shape as EnforcementService.applyPenalty): a reviewer who
+   * already has an open COLLUSION_RING case matches zero rows and is skipped, so the
+   * returned ids are the cases this call actually created.
    */
   async sanctionRing(ring: CollusionRing): Promise<string[]> {
     const caseIds: string[] = [];
@@ -368,7 +378,13 @@ export class CollusionDetectionService {
       const result = await this.pool.query(
         `INSERT INTO fury_enforcement_cases
          (reviewer_id, case_type, confidence, status, evidence_json)
-         VALUES ($1, 'COLLUSION_RING', $2, 'PENDING_REVIEW', $3)
+         SELECT $1, 'COLLUSION_RING', $2, 'PENDING_REVIEW', $3::jsonb
+         WHERE NOT EXISTS (
+           SELECT 1 FROM fury_enforcement_cases
+           WHERE reviewer_id = $1
+             AND case_type = 'COLLUSION_RING'
+             AND status = 'PENDING_REVIEW'
+         )
          RETURNING id`,
         [
           furyId,
@@ -384,6 +400,11 @@ export class CollusionDetectionService {
           }),
         ],
       );
+
+      if (result.rows.length === 0) {
+        // This reviewer already has an open collusion case awaiting review.
+        continue;
+      }
 
       const caseId = result.rows[0].id;
       caseIds.push(caseId);

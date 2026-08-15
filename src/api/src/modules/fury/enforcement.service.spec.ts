@@ -204,4 +204,140 @@ describe('EnforcementService', () => {
       ).rejects.toThrow('Appealed case not found');
     });
   });
+  describe('evaluateCollusion (auto-open from consensus)', () => {
+    it('opens a PENDING_REVIEW case and logs it for each flagged Fury', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ id: 'case-hp-1' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 'case-hp-2' }] });
+
+      await service.evaluateCollusion('proof-9', ['fury-1', 'fury-2']);
+
+      expect(mockPool.query).toHaveBeenCalledTimes(2);
+      expect(mockPool.query.mock.calls[0][0]).toMatch(/HONEYPOT_FAILURE/);
+      expect(mockPool.query.mock.calls[0][0]).toMatch(/PENDING_REVIEW/);
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledTimes(2);
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        'FURY_ENFORCEMENT_CASE_OPENED',
+        expect.objectContaining({ caseId: 'case-hp-1', proofId: 'proof-9' }),
+      );
+    });
+
+    it('does not double-file when the consensus block re-runs on the LC5 retry path', async () => {
+      // The guarded INSERT matches zero rows because a case for this
+      // (reviewer, proof) already exists.
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await service.evaluateCollusion('proof-9', ['fury-1']);
+
+      const insertSql = mockPool.query.mock.calls[0][0];
+      expect(insertSql).toMatch(/WHERE NOT EXISTS/);
+      expect(insertSql).toMatch(/evidence_json->>'proofId' = \$3/);
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
+    });
+
+    it('is a no-op when nothing was flagged', async () => {
+      await service.evaluateCollusion('proof-9', []);
+
+      expect(mockPool.query).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('listCases (admin read API)', () => {
+    it('returns cases joined to their penalty and reviewer standing', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'case-1',
+            reviewer_id: 'fury-1',
+            case_type: 'COLLUSION_RING',
+            confidence: 0.9,
+            status: 'PENDING_REVIEW',
+            evidence_json: { ringId: 'ring-1' },
+            created_at: '2026-08-15T00:00:00.000Z',
+            integrity_score: 40,
+            reviewer_status: 'ACTIVE',
+            penalty_type: null,
+            amount_cents: null,
+            applied_at: null,
+          },
+        ],
+      });
+
+      const result = await service.listCases({ status: 'PENDING_REVIEW' });
+
+      expect(result.cases).toHaveLength(1);
+      expect(mockPool.query.mock.calls[0][1]).toEqual([
+        'PENDING_REVIEW',
+        null,
+        50,
+      ]);
+    });
+
+    it('never selects the reviewer email onto this list surface', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      await service.listCases();
+
+      expect(mockPool.query.mock.calls[0][0]).not.toMatch(/email/);
+    });
+
+    it('clamps an absent, junk, or oversized limit', async () => {
+      mockPool.query.mockResolvedValue({ rows: [] });
+
+      await service.listCases();
+      await service.listCases({ limit: NaN });
+      await service.listCases({ limit: 100000 });
+      await service.listCases({ limit: 10 });
+
+      expect(mockPool.query.mock.calls[0][1][2]).toBe(50);
+      expect(mockPool.query.mock.calls[1][1][2]).toBe(50);
+      expect(mockPool.query.mock.calls[2][1][2]).toBe(200);
+      expect(mockPool.query.mock.calls[3][1][2]).toBe(10);
+    });
+  });
+
+  describe('listCollusionRings (admin read API)', () => {
+    it('groups member cases back into rings on evidence_json.ringId', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            ring_id: 'ring-1-1700000000000',
+            detected_at: '2026-08-15T00:00:00.000Z',
+            confidence: 0.91,
+            member_count: 3,
+            pending_count: 3,
+            penalized_count: 0,
+            appealed_count: 0,
+            signal_count: 4,
+            signal_types: ['COORDINATED_VOTE', 'VERDICT_SYNC'],
+            members: [
+              { caseId: 'case-1', reviewerId: 'fury-1', status: 'PENDING_REVIEW', integrityScore: 40 },
+            ],
+          },
+        ],
+      });
+
+      const result = await service.listCollusionRings({ sinceHours: 48 });
+
+      expect(result.rings).toHaveLength(1);
+      expect(result.rings[0].ring_id).toBe('ring-1-1700000000000');
+
+      const [sql, params] = mockPool.query.mock.calls[0];
+      expect(sql).toMatch(/GROUP BY c\.evidence_json->>'ringId'/);
+      expect(sql).toMatch(/c\.case_type = 'COLLUSION_RING'/);
+      expect(params).toEqual([48, 50]);
+    });
+
+    it('clamps the lookback window rather than trusting the query string', async () => {
+      mockPool.query.mockResolvedValue({ rows: [] });
+
+      await service.listCollusionRings();
+      await service.listCollusionRings({ sinceHours: NaN });
+      await service.listCollusionRings({ sinceHours: 999999 });
+
+      expect(mockPool.query.mock.calls[0][1][0]).toBe(24 * 30);
+      expect(mockPool.query.mock.calls[1][1][0]).toBe(24 * 30);
+      expect(mockPool.query.mock.calls[2][1][0]).toBe(24 * 365);
+    });
+  });
 });
