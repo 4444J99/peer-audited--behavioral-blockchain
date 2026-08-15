@@ -508,11 +508,38 @@ curl -sS -X POST "$STYX_API_URL/b2b/webhook/test" \
     "enterpriseId": "ent_123",
     "url": "https://customer.example.com/styx/webhook"
   }'
+
+curl -sS "$STYX_API_URL/b2b/webhook/subscriptions/ent_123" \
+  -H "Authorization: Bearer $TOKEN"
 ```
+
+`register` persists the subscription and returns its `subscriptionId`;
+re-registering the same URL reactivates the existing row rather than creating a
+duplicate. Registration runs the URL through the same guard delivery uses, so an
+unreachable-by-policy target is refused with a `400` at registration time.
 
 Webhook targets must use `http` or `https`, must not include credentials, and
 must not resolve to loopback, private, link-local, localhost, or obfuscated IP
 addresses. Delivery uses up to 3 attempts with exponential backoff.
+
+Every active subscription of the enterprise receives a `CONTRACT_RESOLVED` event
+when a contract belonging to one of its members resolves:
+
+```json
+{
+  "type": "CONTRACT_RESOLVED",
+  "enterpriseId": "ent_123",
+  "subject": "9f2c…",
+  "outcome": "COMPLETED",
+  "occurredAt": "2026-08-15T00:00:00.000Z"
+}
+```
+
+`subject` is the salted pseudonym also used by the HR export — stable for the
+same employee within the same enterprise, and not reversible to a user. The
+event carries no goal, category, stake amount, or proof reference: the privacy
+firewall means an employer learns that engagement happened, not what a person is
+working on.
 
 Webhook deliveries include:
 
@@ -691,7 +718,8 @@ Auth requirements use these labels:
 |--------|------|------|---------|
 | `GET` | `/b2b/metrics/:enterpriseId` | Enterprise Admin | Enterprise completion and integrity metrics. |
 | `GET` | `/b2b/billing/:enterpriseId` | Enterprise Admin | Read-only billing summary. |
-| `POST` | `/b2b/webhook/register` | Enterprise Admin | Register webhook URL. |
+| `POST` | `/b2b/webhook/register` | Enterprise Admin | Register (or reactivate) a webhook subscription. |
+| `GET` | `/b2b/webhook/subscriptions/:enterpriseId` | Enterprise Admin | List active webhook subscriptions. |
 | `POST` | `/b2b/webhook/test` | Enterprise Admin | Send signed test webhook event. |
 | `GET` | `/b2b/export/hr/:enterpriseId` | Enterprise Admin | Pseudonymized HR export with small-cohort suppression. |
 | `GET` | `/b2b/datalake/:enterpriseId` | Enterprise Admin | Time-bounded analytics snapshot. Query: `start`, `end`. |

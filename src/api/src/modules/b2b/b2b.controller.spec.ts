@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { B2BController } from './b2b.controller';
 import { BillingService } from './billing.service';
 import { WebhookService } from './webhook.service';
+import { WebhookSubscriptionService } from './webhook-subscription.service';
 import { MetricsService } from './metrics.service';
 import { AnonymizeService } from './anonymize.service';
 import { DataLakeService } from './datalake.service';
@@ -26,6 +27,11 @@ describe('B2BController', () => {
   const mockWebhook = {
     dispatchEnterpriseMetricEvent: jest.fn(),
   } as unknown as WebhookService;
+
+  const mockWebhookSubscriptions = {
+    register: jest.fn(),
+    listActive: jest.fn(),
+  } as unknown as WebhookSubscriptionService;
 
   const mockMetrics = {
     getEnterpriseMetrics: jest.fn(),
@@ -64,10 +70,14 @@ describe('B2BController', () => {
   } as unknown as CrmService;
 
   beforeEach(() => {
+    // Both the webhook-subscription store and the CRM service were injected by
+    // separate changes landing together; the argument order here follows the
+    // controller's own constructor.
     controller = new B2BController(
       mockPool,
       mockBilling,
       mockWebhook,
+      mockWebhookSubscriptions,
       mockMetrics,
       mockAnonymize,
       mockDataLake,
@@ -76,6 +86,14 @@ describe('B2BController', () => {
     jest.clearAllMocks();
     (mockPool.query as jest.Mock).mockResolvedValue({
       rows: [{ enterprise_id: 'ent-001', role: 'ADMIN' }],
+    });
+    (mockWebhookSubscriptions.register as jest.Mock).mockResolvedValue({
+      id: 'sub-1',
+      enterpriseId: 'ent-001',
+      url: 'https://example.com/webhook',
+      active: true,
+      lastDeliveryAt: null,
+      lastDeliveryOk: null,
     });
   });
 
@@ -117,17 +135,58 @@ describe('B2BController', () => {
   });
 
   describe('registerWebhook', () => {
-    it('should register a webhook URL', async () => {
+    it('should persist the registration and return its subscription id', async () => {
       const result = await controller.registerWebhook(adminUser, {
         enterpriseId: 'ent-001',
         url: 'https://example.com/webhook',
       });
 
+      expect(mockWebhookSubscriptions.register).toHaveBeenCalledWith(
+        'ent-001',
+        'https://example.com/webhook',
+        'admin-1',
+      );
       expect(result).toEqual({
         status: 'registered',
+        subscriptionId: 'sub-1',
         enterpriseId: 'ent-001',
         url: 'https://example.com/webhook',
       });
+    });
+
+    it('should reject before persisting when the caller is not an admin of the enterprise', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [{ enterprise_id: 'other-ent', role: 'ADMIN' }],
+      });
+
+      await expect(
+        controller.registerWebhook(adminUser, {
+          enterpriseId: 'ent-001',
+          url: 'https://example.com/webhook',
+        }),
+      ).rejects.toThrow();
+      expect(mockWebhookSubscriptions.register).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('listWebhookSubscriptions', () => {
+    it('should return the active subscriptions of the enterprise', async () => {
+      const rows = [
+        {
+          id: 'sub-1',
+          enterpriseId: 'ent-001',
+          url: 'https://example.com/webhook',
+          active: true,
+          lastDeliveryAt: null,
+          lastDeliveryOk: null,
+        },
+      ];
+      (mockWebhookSubscriptions.listActive as jest.Mock).mockResolvedValueOnce(rows);
+
+      await expect(
+        controller.listWebhookSubscriptions(adminUser, 'ent-001'),
+      ).resolves.toEqual(rows);
+      expect(mockWebhookSubscriptions.listActive).toHaveBeenCalledWith('ent-001');
     });
   });
 
