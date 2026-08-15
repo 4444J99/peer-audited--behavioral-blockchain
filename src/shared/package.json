@@ -3,6 +3,17 @@
   "version": "0.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./libs/*": {
+      "types": "./dist/libs/*.d.ts",
+      "default": "./dist/libs/*.js"
+    },
+    "./*": "./*"
+  },
   "scripts": {
     "build": "tsc",
     "lint": "tsc --noEmit",
