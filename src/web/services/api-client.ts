@@ -410,6 +410,46 @@ export interface DashboardProgress {
   };
 }
 
+export interface EnforcementCase {
+  id: string;
+  reviewer_id: string;
+  case_type: string;
+  confidence: number;
+  status: string;
+  evidence_json: Record<string, unknown>;
+  created_at: string;
+  integrity_score: number | null;
+  reviewer_status: string | null;
+  penalty_type: string | null;
+  amount_cents: number | null;
+  applied_at: string | null;
+}
+
+export interface CollusionRingMember {
+  caseId: string;
+  reviewerId: string;
+  status: string;
+  integrityScore: number | null;
+}
+
+/**
+ * A ring is reconstructed server-side by grouping member cases on
+ * evidence_json.ringId — there is no rings table, so `ring_id` is the detection
+ * run's identifier and not a stable primary key across sweeps.
+ */
+export interface CollusionRing {
+  ring_id: string;
+  detected_at: string;
+  confidence: number;
+  member_count: number;
+  pending_count: number;
+  penalized_count: number;
+  appealed_count: number;
+  signal_count: number | null;
+  signal_types: string[] | null;
+  members: CollusionRingMember[];
+}
+
 export const api = {
   health: () => request<{ status: string }>("/health"),
   getMobileBootstrap: () =>
@@ -819,6 +859,43 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
+
+  getCollusionRings: (sinceHours?: number, limit?: number) => {
+    const params = new URLSearchParams();
+    if (sinceHours) params.set("sinceHours", String(sinceHours));
+    if (limit) params.set("limit", String(limit));
+    const qs = params.toString();
+    return request<{ rings: CollusionRing[] }>(
+      `/fury/enforcement/rings${qs ? `?${qs}` : ""}`,
+    );
+  },
+
+  getEnforcementCases: (opts?: {
+    status?: string;
+    caseType?: string;
+    limit?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (opts?.status) params.set("status", opts.status);
+    if (opts?.caseType) params.set("caseType", opts.caseType);
+    if (opts?.limit) params.set("limit", String(opts.limit));
+    const qs = params.toString();
+    return request<{ cases: EnforcementCase[] }>(
+      `/fury/enforcement/cases${qs ? `?${qs}` : ""}`,
+    );
+  },
+
+  confirmEnforcementCase: (
+    caseId: string,
+    data?: { penaltyType?: string; amountCents?: number },
+  ) =>
+    request<{ success: boolean; caseId: string; status: string }>(
+      `/fury/enforcement/confirm/${caseId}`,
+      {
+        method: "POST",
+        body: JSON.stringify(data ?? {}),
+      },
+    ),
 
   getKillSwitch: () =>
     request<{ refundOnlyMode: boolean }>("/admin/kill-switch"),

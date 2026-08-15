@@ -11,6 +11,8 @@ describe('EnforcementController', () => {
     appealCase: jest.Mock;
     confirmCase: jest.Mock;
     resolveAppeal: jest.Mock;
+    listCases: jest.Mock;
+    listCollusionRings: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -19,6 +21,8 @@ describe('EnforcementController', () => {
       appealCase: jest.fn(),
       confirmCase: jest.fn(),
       resolveAppeal: jest.fn(),
+      listCases: jest.fn(),
+      listCollusionRings: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -144,6 +148,47 @@ describe('EnforcementController', () => {
         undefined,
       );
       expect(result.outcome).toBe('REVERSED');
+    });
+  });
+  describe('listCases', () => {
+    it('passes the status/caseType filters straight through', async () => {
+      enforcementService.listCases.mockResolvedValue({ cases: [] });
+
+      const result = await controller.listCases('PENDING_REVIEW', 'COLLUSION_RING', '25');
+
+      expect(enforcementService.listCases).toHaveBeenCalledWith({
+        status: 'PENDING_REVIEW',
+        caseType: 'COLLUSION_RING',
+        limit: 25,
+      });
+      expect(result).toEqual({ cases: [] });
+    });
+
+    it('hands an absent limit to the service as NaN so the service clamps it', async () => {
+      enforcementService.listCases.mockResolvedValue({ cases: [] });
+
+      await controller.listCases();
+
+      expect(enforcementService.listCases).toHaveBeenCalledWith({
+        status: undefined,
+        caseType: undefined,
+        limit: NaN,
+      });
+    });
+  });
+
+  describe('listRings', () => {
+    it('returns the grouped rings for the admin screen', async () => {
+      const rings = [{ ring_id: 'ring-1', member_count: 3 }];
+      enforcementService.listCollusionRings.mockResolvedValue({ rings });
+
+      const result = await controller.listRings('48', '10');
+
+      expect(enforcementService.listCollusionRings).toHaveBeenCalledWith({
+        sinceHours: 48,
+        limit: 10,
+      });
+      expect(result).toEqual({ rings });
     });
   });
 });
