@@ -152,18 +152,28 @@ Two things to say honestly if someone asks:
 
 The snapshot refuses writes by design. When a remote tester needs to create a contract,
 attest, or drive any real interaction, use the **Render beta** — the same app and API,
-hosted, seeded with the same synthetic personas, tour on every route.
+hosted, seeded with the same synthetic personas, tour on every route. **The beta is live
+(launched and 47/47-route verified 2026-08-15)**, and it re-verifies its own database
+contract on every boot: the API service's start command runs migrations (including the
+baseline-drift repair) and the idempotent seeder (`scripts/demo/seed-beta.mjs`, password
+bind included) before starting the app — so a dead or drifted database heals on the next
+deploy or wake, with no separate operational step.
 
 ```bash
 gh workflow run beta-promotion.yml -f promotion_target=beta -f run_migrations=true
 ```
 
-That one dispatch is the whole lifecycle: it checks the secrets, ensures the Render services
-and their env vars (the tour flags are baked at build time — this is what turns the tour ON),
-deploys API + web, migrates, **seeds the synthetic accounts and binds them to the beta demo
-password**, then refuses to declare `promotion_ready` until three predicates pass: the smoke
-suite, the strict readiness suite, and `beta_verify` — every tour route, signed in per
-persona, tour present, no API errors.
+That one dispatch is the whole CI lifecycle: it checks the secrets, ensures the Render
+services and their env vars (the tour flags are baked at build time — this is what turns
+the tour ON), deploys API + web, migrates, **seeds the synthetic accounts and binds them
+to the beta demo password**, then refuses to declare `promotion_ready` until three
+predicates pass: the smoke suite, the strict readiness suite, and `beta_verify` — every
+tour route, signed in per persona, tour present, no API errors. (The workflow lane needs a
+valid `RENDER_API_KEY` in the `beta` environment; the 2026-03 key was revoked vendor-side.
+Equivalent operator path with the Render CLI: `render login`, then `render deploys create`
+per service — the boot-path seeding above does the database half automatically. Local
+verification without CI: `npm run beta:verify` with `STYX_BETA_WEB_URL` and
+`STYX_DEMO_PASSWORD` set.)
 
 What the tester needs from you: the beta web URL (it lives in the Render dashboard and in
 the repo's `beta` environment secrets — deliberately not printed in this public file), one
@@ -172,10 +182,12 @@ account (`river@demo.styx.protocol` covers 40 of 48 tour chapters), and the demo
 `artifacts/styx-beta.env` (gitignored, 0600); the same value lives in the `BETA_DEMO_PASSWORD`
 environment secret, and the `seed_beta` job is what keeps the two from drifting.
 
-Notes and interaction tracking DO work on the beta: the promotion workflow provisions a
-hosted collector (`styx-beta-feedback` on Render, 1GB disk) and bakes its URL into the web
-build. Reading the summary requires the bearer token in `BETA_FEEDBACK_TOKEN` — viewer names
-and notes are not public. Two honest limits: sessions hard-expire after 7 days of refresh
+Notes and interaction tracking DO work on the beta: the collector is a free Cloudflare
+Worker (`scripts/demo/feedback-worker/`, deployed at `styx-beta-feedback.ivixivi.workers.dev`,
+KV-backed) whose URL is baked into the web build — the Render collector service the
+promotion workflow tries to provision stays unavailable on this account (no payment method;
+its 402 warning is expected and non-fatal). Reading the summary requires the bearer token in
+`BETA_FEEDBACK_TOKEN` — viewer names and notes are not public. Two honest limits: sessions hard-expire after 7 days of refresh
 cookies; and the beta shares one synthetic world, so two testers at once will see each
 other's contracts on the shared accounts — that is the design, not a leak.
 
