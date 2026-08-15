@@ -18,6 +18,7 @@ import { ProofsService } from './proofs.service';
 import { getEffectiveVerificationTier, validateProofMedia } from '../../../../shared/config/verification-tiers';
 import { CrisisDetectionService } from '../../../services/security/crisis-detection.service';
 import { CrisisInterventionService } from '../../../services/security/crisis-intervention.service';
+import { VideoProcessingService } from './video-processing.service';
 import { Logger } from '@nestjs/common';
 
 @ApiTags('Proofs')
@@ -36,6 +37,7 @@ export class ProofsController {
     private readonly proofsService: ProofsService,
     private readonly crisisDetection: CrisisDetectionService,
     private readonly crisisIntervention: CrisisInterventionService,
+    private readonly videoProcessing: VideoProcessingService,
   ) {}
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
@@ -274,6 +276,18 @@ export class ProofsController {
         JSON.stringify(dto.deviceMetadata || {}),
       ],
     );
+
+    // Enqueue redaction BEFORE routing to reviewers. Nothing called this before
+    // — VideoProcessingService was registered, exported, specced, and invoked by
+    // zero code paths — so masked_media_uri was never populated on a real proof
+    // and the Fury queue had no redacted asset to serve. Redaction failing must
+    // not block the audit: the queue now fails CLOSED (no masked asset means no
+    // url), so a reviewer sees no media rather than the raw original.
+    await this.videoProcessing.dispatchForProcessing(proofId).catch((err) => {
+      this.logger.error(
+        `Redaction dispatch failed for proof ${proofId}: ${err?.message}. The proof stays NOT_STARTED for the sweeper; reviewers receive no media until it is redacted.`,
+      );
+    });
 
     const jobId = await this.furyRouter.routeProof(proofId, proofAccess.ownerUserId);
 
