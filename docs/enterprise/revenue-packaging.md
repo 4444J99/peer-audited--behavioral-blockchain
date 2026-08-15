@@ -113,7 +113,10 @@ build-vs-sell gap in the ladder.
    (`GET /b2b/export/hr/:enterpriseId`), data-lake export. Anonymization before export:
    `src/api/src/modules/b2b/anonymize.service.ts`.
 5. **CRM handoff** — `src/api/src/modules/b2b/crm.service.ts` with Salesforce/HubSpot
-   connectors (`src/api/src/modules/b2b/connectors/`).
+   connectors (`src/api/src/modules/b2b/connectors/`), reachable over the same
+   enterprise-scoped surface: `GET /b2b/crm/integrity/:enterpriseId`,
+   `POST /b2b/crm/events/:enterpriseId`, `POST /b2b/crm/interactions/:enterpriseId`,
+   `POST /b2b/crm/sync/:enterpriseId`.
 
 **What enterprise buys, control-wise:** the compliance packaging in
 `docs/enterprise/compliance-packaging.md` (audit log, access controls, geofence,

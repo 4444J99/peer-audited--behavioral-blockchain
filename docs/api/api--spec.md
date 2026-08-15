@@ -461,6 +461,35 @@ curl -sS "$STYX_API_URL/b2b/datalake/ent_123?start=2026-01-01&end=2026-04-01" \
 The response includes `contractMetrics`, `behavioralTrends`, and
 `cohortAnalysis`. Small groups are suppressed to reduce re-identification risk.
 
+### CRM Handoff
+
+```bash
+curl -sS "$STYX_API_URL/b2b/crm/integrity/ent_123" \
+  -H "Authorization: Bearer $TOKEN"
+
+curl -sS -X POST "$STYX_API_URL/b2b/crm/events/ent_123" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employeeId": "emp_456",
+    "eventType": "contract_completed",
+    "metadata": { "integrityDelta": 5 }
+  }'
+```
+
+`GET /b2b/crm/integrity/:enterpriseId` returns `averageIntegrity`,
+`activeContracts`, and `behavioralVelocity` aggregated over the enterprise's
+active users — never per-employee health data.
+
+`eventType` (and `type` on `/b2b/crm/interactions/:enterpriseId`) must be one of
+`contract_created`, `contract_completed`, `contract_failed`, `integrity_change`;
+anything else is rejected with `400` rather than forwarded to the customer's CRM.
+Event timestamps are stamped server-side. On `/b2b/crm/sync/:enterpriseId` the CRM
+tenant is taken from the verified path parameter, not from the request body.
+
+When no CRM connector is configured (`SALESFORCE_BASE_URL` / `HUBSPOT_API_KEY`
+unset) these routes succeed and log only — they never fail the caller.
+
 ### Register And Test Enterprise Webhooks
 
 ```bash
@@ -666,6 +695,10 @@ Auth requirements use these labels:
 | `POST` | `/b2b/webhook/test` | Enterprise Admin | Send signed test webhook event. |
 | `GET` | `/b2b/export/hr/:enterpriseId` | Enterprise Admin | Pseudonymized HR export with small-cohort suppression. |
 | `GET` | `/b2b/datalake/:enterpriseId` | Enterprise Admin | Time-bounded analytics snapshot. Query: `start`, `end`. |
+| `GET` | `/b2b/crm/integrity/:enterpriseId` | Enterprise Admin | Aggregate corporate integrity score. |
+| `POST` | `/b2b/crm/events/:enterpriseId` | Enterprise Admin | Push an employee behavioral event to the configured CRM connectors. |
+| `POST` | `/b2b/crm/interactions/:enterpriseId` | Enterprise Admin | Log a CRM interaction against an employee email. |
+| `POST` | `/b2b/crm/sync/:enterpriseId` | Enterprise Admin | Sync an enterprise employee into the configured CRM. |
 
 ### Notifications And Public Feed
 
