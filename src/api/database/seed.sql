@@ -152,6 +152,14 @@ INSERT INTO contracts (id, user_id, oath_category, verification_method, stake_am
   )
 ON CONFLICT (id) DO NOTHING;
 
+-- Whistleblower bounty link on the active recovery contract, so the public
+-- /whistleblower/demo intake resolves end-to-end on demo/beta hosts
+-- (issue #892: the route had no seeded link anywhere, and claimBounty joins
+-- bounties by bounty_link_id).
+INSERT INTO bounties (id, contract_id, bounty_link_id, status) VALUES
+  ('bb000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', 'demo', 'ACTIVE')
+ON CONFLICT (id) DO NOTHING;
+
 -- Accountability partner for the active recovery contract
 INSERT INTO accountability_partners (id, contract_id, partner_user_id, partner_email, status, invited_at, accepted_at) VALUES
   (
