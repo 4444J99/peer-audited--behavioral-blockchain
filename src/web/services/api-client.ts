@@ -668,6 +668,20 @@ export const api = {
       method: "DELETE",
     }),
 
+  // Responsible use (TKT-P1-009): both endpoints existed server-side with
+  // enforcement in contract creation; this is their first client surface.
+  setSelfExclusion: (durationDays: number) =>
+    request<{ status: string; expiresAt: string }>("/users/me/self-exclusion", {
+      method: "POST",
+      body: JSON.stringify({ durationDays }),
+    }),
+
+  setPregnancyExclusion: (active: boolean) =>
+    request<{ status: string }>("/users/me/pregnancy-exclusion", {
+      method: "POST",
+      body: JSON.stringify({ active }),
+    }),
+
   // AI
   grillMe: (slideContent: string) =>
     request<{ questions: string[] }>("/ai/grill-me", {

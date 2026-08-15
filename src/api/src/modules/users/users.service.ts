@@ -93,7 +93,8 @@ export class UsersService {
       `SELECT id, email, integrity_score, role, status, created_at,
               kyc_status, age_verification_status, identity_provider,
               identity_verification_id, identity_verified_at,
-              terms_accepted_at, terms_version
+              terms_accepted_at, terms_version,
+              self_exclusion_expires_at, pregnancy_exclusion, pregnancy_exclusion_at
        FROM users WHERE id = $1`,
       [userId],
     );
@@ -123,6 +124,17 @@ export class UsersService {
       role: row.role,
       status: row.status,
       created_at: row.created_at,
+      // Responsible-use runtime state (TKT-P1-009): the enforcement has been
+      // live in contracts.service for some time, but the profile never exposed
+      // it, so no client surface could SHOW a user their own exclusion.
+      responsible_use: {
+        self_exclusion_expires_at: row.self_exclusion_expires_at ?? null,
+        self_exclusion_active:
+          !!row.self_exclusion_expires_at &&
+          new Date(row.self_exclusion_expires_at) > new Date(),
+        pregnancy_exclusion: row.pregnancy_exclusion ?? false,
+        pregnancy_exclusion_at: row.pregnancy_exclusion_at ?? null,
+      },
       compliance: {
         kyc_status: row.kyc_status ?? "NOT_STARTED",
         age_verification_status: row.age_verification_status ?? "NOT_STARTED",
