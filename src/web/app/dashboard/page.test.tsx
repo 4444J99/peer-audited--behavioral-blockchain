@@ -1,5 +1,8 @@
+/** @jest-environment jsdom */
+
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { render, screen, waitFor } from '@testing-library/react';
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -16,6 +19,7 @@ jest.mock('next/link', () => {
 });
 
 jest.mock('../../services/api-client', () => ({
+  ApiError: class ApiError extends Error {},
   api: {
     getBalance: jest.fn().mockResolvedValue({
       userId: '1',
@@ -28,6 +32,8 @@ jest.mock('../../services/api-client', () => ({
     getHistory: jest.fn().mockResolvedValue({ transactions: [] }),
     getUserContracts: jest.fn().mockResolvedValue([]),
     getLeaderboard: jest.fn().mockResolvedValue([]),
+    getStreakChain: jest.fn().mockResolvedValue(null),
+    getDashboardProgress: jest.fn().mockResolvedValue(null),
     getNotifications: jest.fn().mockResolvedValue([]),
     getUnreadCount: jest.fn().mockResolvedValue({ count: 0 }),
     issueNotificationStreamCookie: jest.fn(),
@@ -49,6 +55,37 @@ jest.mock('../../contexts/AuthContext', () => ({
 jest.mock('../../components/Leaderboard.css', () => ({}));
 
 import IdentityDashboard from './page';
+import { api } from '../../services/api-client';
+
+const mockApi = api as unknown as {
+  getUserContracts: jest.Mock;
+  getDashboardProgress: jest.Mock;
+};
+
+const ACTIVE_CONTRACT = {
+  id: 'c-1',
+  oath_category: 'NO_CONTACT',
+  stake_amount: '25.00',
+  status: 'ACTIVE',
+  ends_at: '2026-09-01T00:00:00Z',
+};
+
+const PROGRESS = {
+  activeContracts: [
+    {
+      id: 'c-1',
+      oath_category: 'NO_CONTACT',
+      status: 'ACTIVE',
+      stake_amount: '25.00',
+      duration_days: 30,
+      started_at: '2026-08-01T00:00:00Z',
+      ends_at: '2026-09-01T00:00:00Z',
+      streak: '9',
+    },
+  ],
+  protectedVaultBalanceCents: 1250,
+  summary: { totalActiveStakeUsd: 25, longestStreak: 9 },
+};
 
 describe('Dashboard Page', () => {
   it('renders the loading state initially', () => {
@@ -70,5 +107,40 @@ describe('Dashboard Page', () => {
     // These appear in the loading state because the header renders immediately
     // Actually the loading state is a separate branch. Let's verify the loading UI elements.
     expect(html).toContain('Loading Recovery Dashboard');
+  });
+
+  describe('goal gradient', () => {
+    beforeEach(() => {
+      mockApi.getUserContracts.mockResolvedValue([ACTIVE_CONTRACT]);
+      mockApi.getDashboardProgress.mockResolvedValue(PROGRESS);
+    });
+
+    afterEach(() => {
+      mockApi.getUserContracts.mockResolvedValue([]);
+      mockApi.getDashboardProgress.mockResolvedValue(null);
+    });
+
+    it('renders vault balance and per-contract completion from /dashboard/progress', async () => {
+      render(<IdentityDashboard />);
+
+      expect(await screen.findByText('GOAL GRADIENT')).toBeDefined();
+      expect(mockApi.getDashboardProgress).toHaveBeenCalled();
+      // 1250 cents of PROTECTED_VAULT hold — not derivable from the ledger balance.
+      expect(screen.getByText('TEST-$12.50')).toBeDefined();
+      // 9 attested days of a 30-day oath.
+      expect(screen.getByText(/9\/30 days/)).toBeDefined();
+      expect(screen.getByText(/30%/)).toBeDefined();
+      expect(screen.getByText(/Longest streak 9 days/)).toBeDefined();
+    });
+
+    it('omits the section — without breaking the page — when progress is unavailable', async () => {
+      mockApi.getDashboardProgress.mockRejectedValue(new Error('offline'));
+
+      render(<IdentityDashboard />);
+
+      expect(await screen.findByText('TRUTH LOG')).toBeDefined();
+      await waitFor(() => expect(mockApi.getDashboardProgress).toHaveBeenCalled());
+      expect(screen.queryByText('GOAL GRADIENT')).toBeNull();
+    });
   });
 });

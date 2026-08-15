@@ -1,10 +1,15 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { api, LeaderboardEntry } from '../services/api-client';
+import React, { useCallback, useEffect, useState } from 'react';
+import { api, getAuthToken, LeaderboardEntry } from '../services/api-client';
 import './Leaderboard.css';
 
 type Period = 'weekly' | 'monthly' | 'alltime';
+
+const BOARD_SIZE = 10;
+// Matches the server's SSE tick, so the fallback path is no staler than the stream.
+const POLL_INTERVAL_MS = 30000;
+const SSE_RECONNECT_MS = 5000;
 
 interface TierInfo {
   name: string;
@@ -41,17 +46,120 @@ export default function Leaderboard() {
   const [period, setPeriod] = useState<Period>('alltime');
   const [furyOfWeek, setFuryOfWeek] = useState<LeaderboardEntry | null>(null);
 
+  const applyBoard = useCallback((data: LeaderboardEntry[]) => {
+    setLeaders(data);
+    // Fury of the Week = highest integrity score (first in sorted list)
+    if (data.length > 0) setFuryOfWeek(data[0]);
+  }, []);
+
   useEffect(() => {
     setLoading(true);
-    api.getLeaderboard(10, period === 'alltime' ? undefined : period)
-      .then((data) => {
-        setLeaders(data);
-        // Fury of the Week = highest integrity score (first in sorted list)
-        if (data.length > 0) setFuryOfWeek(data[0]);
-      })
-      .catch(() => setLeaders([]))
-      .finally(() => setLoading(false));
-  }, [period]);
+
+    // Route through the Next.js /api rewrite so the SSE request is same-origin
+    // and carries the HttpOnly stream ticket cookie.
+    const API_BASE = '/api';
+    const apiPeriod = period === 'alltime' ? undefined : period;
+    let eventSource: EventSource | null = null;
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
+
+    const loadBoard = async () => {
+      try {
+        const data = await api.getLeaderboard(BOARD_SIZE, apiPeriod);
+        if (stopped) return;
+        applyBoard(data);
+      } catch {
+        if (!stopped) setLeaders([]);
+      } finally {
+        if (!stopped) setLoading(false);
+      }
+    };
+
+    const startPolling = () => {
+      if (pollInterval) return;
+      pollInterval = setInterval(() => {
+        void loadBoard();
+      }, POLL_INTERVAL_MS);
+    };
+
+    const stopPolling = () => {
+      if (!pollInterval) return;
+      clearInterval(pollInterval);
+      pollInterval = null;
+    };
+
+    const scheduleReconnect = () => {
+      if (stopped || reconnectTimer) return;
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        void connectStream();
+      }, SSE_RECONNECT_MS);
+    };
+
+    const connectStream = async () => {
+      if (stopped) return;
+
+      // The stream is guarded; an anonymous viewer and any runtime without
+      // EventSource (SSR, older embedded webviews) stay on the polling path.
+      const token = getAuthToken(); // allow-secret
+      if (!token || typeof EventSource === 'undefined') {
+        startPolling();
+        return;
+      }
+
+      try {
+        await api.issueLeaderboardStreamCookie();
+        if (stopped) return;
+
+        const params = new URLSearchParams({ limit: String(BOARD_SIZE) });
+        if (apiPeriod) params.set('period', apiPeriod);
+
+        const source = new EventSource(
+          `${API_BASE}/dashboard/leaderboard/stream?${params.toString()}`,
+          { withCredentials: true },
+        );
+        eventSource = source;
+
+        source.onopen = () => {
+          stopPolling();
+        };
+
+        source.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (!Array.isArray(data)) return;
+            applyBoard(data as LeaderboardEntry[]);
+            setLoading(false);
+          } catch {
+            // Invalid message — ignore
+          }
+        };
+
+        source.onerror = () => {
+          source.close();
+          if (eventSource === source) {
+            eventSource = null;
+          }
+          startPolling();
+          scheduleReconnect();
+        };
+      } catch {
+        // SSE not available — use polling
+        startPolling();
+      }
+    };
+
+    void loadBoard();
+    void connectStream();
+
+    return () => {
+      stopped = true;
+      eventSource?.close();
+      stopPolling();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+  }, [period, applyBoard]);
 
   return (
     <div className="bg-black border border-gray-800 p-6 rounded-lg text-white">
