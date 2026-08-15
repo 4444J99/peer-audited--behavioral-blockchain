@@ -109,14 +109,11 @@ for (const [persona, personaRoutes] of groups) {
 
   const page = await context.newPage();
   for (const route of personaRoutes) {
-    // The whistleblower route is only concrete in the STATIC export (its
-    // generateStaticParams id); no bounty link is seeded, so on a live host the
-    // page legitimately 404s. Skip it BY NAME — a silent cap would read as
-    // "covered everything" when it didn't.
-    if (route.path.startsWith("/whistleblower/")) {
-      skipped.push(`${route.path} — no seeded bounty link on a live host (static-export-only concrete id)`);
-      continue;
-    }
+    // The whistleblower route is live since #892's fix: the dynamic segment
+    // directory was literally named %5BlinkId%5D (URL-encoded brackets), so
+    // Next served it as a static segment and every concrete id 404'd; the
+    // seed now also provides the 'demo' bounty link, so the sweep covers it
+    // like any other route.
     const apiErrors = new Set();
     const onResponse = (response) => {
       const url = new URL(response.url());
