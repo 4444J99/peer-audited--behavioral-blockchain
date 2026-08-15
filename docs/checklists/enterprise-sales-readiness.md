@@ -8,7 +8,7 @@ Every item must pass before we actively sell to enterprise customers.
 - [ ] **Security questionnaire pre-filled** — answers to the 50 most common enterprise security questions available as a PDF. Verify: doc exists in docs/enterprise/. Owner: H:LC
 - [ ] **SLA/SOW template finalized** — uptime guarantee, support response times, data processing terms. Verify: reviewed by counsel. Owner: H:LC
 - [ ] **Vendor security review packet compiled** — SOC 2 reports, penetration test summary, data flow diagram, infrastructure diagram, subprocessor list. Verify: packet sent to first prospect. Owner: H:LC + H:ENG
-- [ ] **HIPAA BAA ready to sign** — for healthcare enterprise customers. Verify: BAA template reviewed by counsel. Owner: H:LC
+- [ ] **HIPAA BAA ready to sign** — for healthcare enterprise customers. Verify: BAA template reviewed by counsel. Template drafted at [`../legal/hipaa-baa-template-DRAFT.md`](../legal/hipaa-baa-template-DRAFT.md); **counsel review has not happened**, and its §0 lists nine technical prerequisites that are not met — including that the schema has no PHI classification at all. Owner: H:LC
 
 ## Product & Infrastructure
 
@@ -24,7 +24,7 @@ Every item must pass before we actively sell to enterprise customers.
 - [ ] **Enterprise pricing finalized** — Starter $49/mo (5 clients), Growth $149/mo (25), Scale $349/mo (75), Enterprise $999+/mo. Verify: pricing page or proposal template. Owner: H:FO
 - [ ] **Outreach sequences tested** — 5-touch, 21-day cold email/LinkedIn sequence for ICP targets. Verify: 10+ prospects contacted, response rate measured. Owner: H:BD
 - [ ] **Case studies / social proof assets** — 3+ case studies from beta pilot practitioners. Verify: written, approved by subjects. Owner: H:GRO
-- [ ] **Security whitepaper published** — encryption, access control, infrastructure architecture, audit logging. Verify: available on website or upon request. Owner: H:ENG
+- [ ] **Security whitepaper published** — encryption, access control, infrastructure architecture, audit logging. Written at [`../enterprise/security-whitepaper.md`](../enterprise/security-whitepaper.md); every control names its implementing file and unimplemented controls are listed separately in its §12. Remaining: publish it on the website or into the prospect packet. Verify: available on website or upon request. Owner: H:ENG
 - [ ] **Pilot pipeline active** — 3+ enterprise prospects in active evaluation. Verify: CRM pipeline report. Owner: H:BD
 - [ ] **Referral partner program documented** — commission structure, onboarding process, partner portal. Verify: partner agreement template. Owner: H:BD
 
