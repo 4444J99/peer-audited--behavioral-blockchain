@@ -544,6 +544,16 @@ export const TOUR_ROUTES: TourRoute[] = [
     detail: "Not a customer-facing surface. Shown so the operational cost of running the product is visible rather than assumed.",
   },
   {
+    path: "/admin/collusion",
+    title: "Detected collusion rings",
+    chapter: "The employer",
+    persona: "hr",
+    label: "future",
+    summary: "Where an operator reviews reviewers who appear to be voting together, and acts on it.",
+    detail:
+      "The ring-detection engine analysed nothing for months — it was written, tested, registered, and called by no scheduler. It now runs on a cadence and opens enforcement cases automatically; this screen is where a human confirms or overturns what it found.",
+  },
+  {
     path: "/admin/cac-ltv",
     title: "Acquisition cost and lifetime value",
     chapter: "The employer",

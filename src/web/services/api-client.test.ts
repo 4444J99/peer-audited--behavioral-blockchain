@@ -407,4 +407,47 @@ describe('Web API client', () => {
       expect(JSON.parse(opts.body)).toEqual({ slideContent: 'Slide 1: TAM is $5B' });
     });
   });
+  describe('collusion / enforcement admin reads', () => {
+    it('sends the ring lookback window as a query parameter', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ rings: [] }));
+
+      await api.getCollusionRings(720);
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('/fury/enforcement/rings?sinceHours=720');
+    });
+
+    it('omits the query string entirely when no ring filters are given', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ rings: [] }));
+
+      await api.getCollusionRings();
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('/fury/enforcement/rings');
+      expect(url).not.toContain('?');
+    });
+
+    it('sends the case filters the admin screen uses', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ cases: [] }));
+
+      await api.getEnforcementCases({ status: 'PENDING_REVIEW', caseType: 'COLLUSION_RING' });
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('status=PENDING_REVIEW');
+      expect(url).toContain('caseType=COLLUSION_RING');
+    });
+
+    it('POSTs a confirmation with the penalty type', async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonOk({ success: true, caseId: 'case-1', status: 'PENALTY_APPLIED' }),
+      );
+
+      await api.confirmEnforcementCase('case-1', { penaltyType: 'REP_BURN' });
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/fury/enforcement/confirm/case-1');
+      expect(opts.method).toBe('POST');
+      expect(JSON.parse(opts.body)).toEqual({ penaltyType: 'REP_BURN' });
+    });
+  });
 });

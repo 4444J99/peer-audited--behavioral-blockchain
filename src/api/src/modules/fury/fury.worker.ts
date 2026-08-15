@@ -8,6 +8,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { HoneypotService } from '../../../services/intelligence/honeypot.service';
+import { EnforcementService } from './enforcement.service';
 import { shouldDemoteFury, AUDITOR_STAKE_AMOUNT } from '../../../../shared/libs/integrity';
 
 interface FuryRouteJob {
@@ -31,6 +32,7 @@ export class FuryWorker implements OnModuleInit {
     @Optional() @Inject(LedgerService) private readonly ledger?: LedgerService,
     @Optional() @Inject(TruthLogService) private readonly truthLog?: TruthLogService,
     @Optional() @Inject(HoneypotService) private readonly honeypotService?: HoneypotService,
+    @Optional() @Inject(EnforcementService) private readonly enforcement?: EnforcementService,
   ) {}
 
   onModuleInit() {
@@ -168,6 +170,22 @@ export class FuryWorker implements OnModuleInit {
           await this.honeypotService.gradeHoneypotPerformance(proofId, result.flaggedFuries);
         } catch (err) {
           this.logger.error(`Honeypot grading failed for proof ${proofId}: ${err instanceof Error ? err.message : err}`);
+        }
+      }
+
+      // Open the enforcement case for a honeypot miss here, where the flagged set is
+      // in hand. Previously evaluateCollusion was reachable only from an ADMIN POST,
+      // so a Fury could fail every honeypot injected at it and no case would ever be
+      // filed unless a human noticed and typed the request. Non-fatal by design: the
+      // integrity penalty above has already landed, and stranding the proof in
+      // RESOLVING over a case-filing failure would cost more than the missed case.
+      if (is_honeypot && this.enforcement && result.flaggedFuries.length > 0) {
+        try {
+          await this.enforcement.evaluateCollusion(proofId, result.flaggedFuries);
+        } catch (err) {
+          this.logger.error(
+            `Enforcement case filing failed for honeypot proof ${proofId}: ${err instanceof Error ? err.message : err}`,
+          );
         }
       }
 

@@ -7,6 +7,63 @@ import { AUDITOR_STAKE_AMOUNT } from '../../../../shared/libs/integrity';
 /** Penalty types that move money, and therefore need a real amount and a reversible ledger leg. */
 const FINANCIAL_PENALTY_TYPES = new Set(['STAKE_SLASH']);
 
+const DEFAULT_READ_LIMIT = 50;
+const MAX_READ_LIMIT = 200;
+const DEFAULT_RING_WINDOW_HOURS = 24 * 30;
+const MAX_RING_WINDOW_HOURS = 24 * 365;
+
+export interface EnforcementCaseRow {
+  id: string;
+  reviewer_id: string;
+  case_type: string;
+  confidence: number;
+  status: string;
+  evidence_json: Record<string, unknown>;
+  created_at: string;
+  integrity_score: number | null;
+  reviewer_status: string | null;
+  penalty_type: string | null;
+  amount_cents: number | null;
+  applied_at: string | null;
+}
+
+export interface CollusionRingMember {
+  caseId: string;
+  reviewerId: string;
+  status: string;
+  integrityScore: number | null;
+}
+
+export interface CollusionRingRow {
+  ring_id: string;
+  detected_at: string;
+  confidence: number;
+  member_count: number;
+  pending_count: number;
+  penalized_count: number;
+  appealed_count: number;
+  signal_count: number | null;
+  signal_types: string[] | null;
+  members: CollusionRingMember[];
+}
+
+/**
+ * Query-string numbers arrive as strings and an unbounded LIMIT is a trivial
+ * memory-pressure lever on an authenticated endpoint, so both read paths clamp
+ * rather than trusting the caller.
+ */
+function clampLimit(raw: number | string | undefined): number {
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_READ_LIMIT;
+  return Math.min(Math.floor(parsed), MAX_READ_LIMIT);
+}
+
+function clampSinceHours(raw: number | string | undefined): number {
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_RING_WINDOW_HOURS;
+  return Math.min(Math.floor(parsed), MAX_RING_WINDOW_HOURS);
+}
+
 @Injectable()
 export class EnforcementService {
   private readonly logger = new Logger(EnforcementService.name);
@@ -27,12 +84,34 @@ export class EnforcementService {
       // Open an enforcement case for failing a honeypot. A single honeypot miss is
       // suggestive, not conclusive — the case stays PENDING_REVIEW and the penalty
       // (REP_BURN) is only applied after a reviewer confirms it via confirmCase().
+      //
+      // Idempotent per (reviewer, proof). Now that FuryWorker.checkConsensus calls
+      // this automatically, the LC5 retry path matters: a post-claim failure reverts
+      // the proof to UNDER_REVIEW and the whole consensus block re-runs, which would
+      // otherwise file a second case for the same honeypot miss. Same
+      // INSERT...SELECT...WHERE NOT EXISTS shape as applyPenalty — atomic within the
+      // statement, so a concurrent re-entry cannot duplicate either.
       const caseResult = await this.pool.query(
         `INSERT INTO fury_enforcement_cases (reviewer_id, case_type, confidence, status, evidence_json)
-         VALUES ($1, 'HONEYPOT_FAILURE', 0.5, 'PENDING_REVIEW', $2)
+         SELECT $1, 'HONEYPOT_FAILURE', 0.5, 'PENDING_REVIEW', $2::jsonb
+         WHERE NOT EXISTS (
+           SELECT 1 FROM fury_enforcement_cases
+           WHERE reviewer_id = $1
+             AND case_type = 'HONEYPOT_FAILURE'
+             AND evidence_json->>'proofId' = $3
+         )
          RETURNING id`,
-        [furyId, JSON.stringify({ proofId, reason: 'Verdict disagreed with honeypot expected result' })]
+        [
+          furyId,
+          JSON.stringify({ proofId, reason: 'Verdict disagreed with honeypot expected result' }),
+          proofId,
+        ]
       );
+
+      if (caseResult.rows.length === 0) {
+        // A case for this reviewer on this proof already exists (idempotent no-op).
+        continue;
+      }
 
       const caseId = caseResult.rows[0].id;
 
@@ -43,6 +122,95 @@ export class EnforcementService {
         caseType: 'HONEYPOT_FAILURE',
       });
     }
+  }
+
+  /**
+   * Read side of the enforcement queue — what an admin triages before calling
+   * confirmCase / resolveAppeal.
+   *
+   * `users.email` is deliberately not selected. This is a list surface over every
+   * flagged reviewer, and reviewer_id is the identifier the rest of the admin
+   * surface already keys on; integrity_score is the signal an admin actually needs
+   * next to a case. The single-user admin lookup remains the place email is read.
+   */
+  async listCases(
+    filters: { status?: string; caseType?: string; limit?: number } = {},
+  ): Promise<{ cases: EnforcementCaseRow[] }> {
+    const limit = clampLimit(filters.limit);
+
+    const result = await this.pool.query(
+      `SELECT
+         c.id,
+         c.reviewer_id,
+         c.case_type,
+         c.confidence,
+         c.status,
+         c.evidence_json,
+         c.created_at,
+         u.integrity_score,
+         u.status AS reviewer_status,
+         p.penalty_type,
+         p.amount_cents,
+         p.applied_at
+       FROM fury_enforcement_cases c
+       LEFT JOIN users u ON u.id = c.reviewer_id
+       LEFT JOIN fury_penalties p ON p.case_id = c.id
+       WHERE ($1::text IS NULL OR c.status = $1)
+         AND ($2::text IS NULL OR c.case_type = $2)
+       ORDER BY c.created_at DESC
+       LIMIT $3`,
+      [filters.status || null, filters.caseType || null, limit],
+    );
+
+    return { cases: result.rows };
+  }
+
+  /**
+   * Collusion detections grouped back into the rings that produced them.
+   *
+   * There is no rings table: `CollusionDetectionService.sanctionRing` writes one
+   * case per ring member and carries the cluster identity in evidence_json.ringId,
+   * so the ring is reconstructed by grouping on that key. signalTypes is taken from
+   * the earliest member's evidence because every member of one ring is written with
+   * the same signal summary in the same call.
+   */
+  async listCollusionRings(
+    options: { sinceHours?: number; limit?: number } = {},
+  ): Promise<{ rings: CollusionRingRow[] }> {
+    const limit = clampLimit(options.limit);
+    const sinceHours = clampSinceHours(options.sinceHours);
+
+    const result = await this.pool.query(
+      `SELECT
+         c.evidence_json->>'ringId' AS ring_id,
+         MIN(c.created_at) AS detected_at,
+         MAX(c.confidence) AS confidence,
+         COUNT(*)::int AS member_count,
+         COUNT(*) FILTER (WHERE c.status = 'PENDING_REVIEW')::int AS pending_count,
+         COUNT(*) FILTER (WHERE c.status = 'PENALTY_APPLIED')::int AS penalized_count,
+         COUNT(*) FILTER (WHERE c.status = 'APPEALED')::int AS appealed_count,
+         MAX((c.evidence_json->>'signalCount')::int) AS signal_count,
+         (jsonb_agg(c.evidence_json->'signalTypes' ORDER BY c.created_at))->0 AS signal_types,
+         jsonb_agg(
+           jsonb_build_object(
+             'caseId', c.id,
+             'reviewerId', c.reviewer_id,
+             'status', c.status,
+             'integrityScore', u.integrity_score
+           ) ORDER BY c.created_at
+         ) AS members
+       FROM fury_enforcement_cases c
+       LEFT JOIN users u ON u.id = c.reviewer_id
+       WHERE c.case_type = 'COLLUSION_RING'
+         AND c.evidence_json->>'ringId' IS NOT NULL
+         AND c.created_at >= NOW() - ($1::int * INTERVAL '1 hour')
+       GROUP BY c.evidence_json->>'ringId'
+       ORDER BY MIN(c.created_at) DESC
+       LIMIT $2`,
+      [sinceHours, limit],
+    );
+
+    return { rings: result.rows };
   }
 
   /**
