@@ -31,6 +31,15 @@ const nextConfig = {
         trailingSlash: true,
       }
     : {}),
+  // The Docker image's runner stage copies .next/standalone and runs
+  // src/web/server.js — output that only exists when Next builds in
+  // standalone mode. Gated on the env the Dockerfile sets (same pattern as
+  // SNAPSHOT above) so the Render path (`next start`) and the snapshot
+  // export keep their existing build shapes. Issue #890: the Dockerfile
+  // assumed standalone output that no config ever produced.
+  ...(!SNAPSHOT && process.env.STYX_DOCKER_BUILD === "true"
+    ? { output: "standalone" }
+    : {}),
   async rewrites() {
     // Static export has no proxy layer. In snapshot mode the client answers from
     // bundled fixtures and never calls /api at all.
