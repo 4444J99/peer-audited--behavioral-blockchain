@@ -157,6 +157,11 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Attestation rows for active recovery contract: realistic 10-day streak
 -- Days 1-8: ATTESTED (cosigned by partner for some)
+-- The dates are CURRENT_DATE-relative while the ids are fixed, so a re-seed on
+-- a LATER day collides on the pkey while the old (contract_id, attestation_date)
+-- arbiter never fired (the dates had shifted). The seed owns every row of this
+-- synthetic contract — replace them wholesale so re-seeding refreshes the streak.
+DELETE FROM attestations WHERE contract_id = 'c0000000-0000-0000-0000-000000000003';
 INSERT INTO attestations (id, contract_id, user_id, attestation_date, attested_at, cosigned_by, cosigned_at, status) VALUES
   ('ae000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000001', CURRENT_DATE - 9, NOW() - INTERVAL '9 days', 'd0000000-0000-0000-0000-000000000002', NOW() - INTERVAL '9 days' + INTERVAL '2 hours', 'COSIGNED'),
   ('ae000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000001', CURRENT_DATE - 8, NOW() - INTERVAL '8 days', 'd0000000-0000-0000-0000-000000000002', NOW() - INTERVAL '8 days' + INTERVAL '1 hour', 'COSIGNED'),
@@ -171,7 +176,7 @@ INSERT INTO attestations (id, contract_id, user_id, attestation_date, attested_a
   ('ae000000-0000-0000-0000-000000000009', 'c0000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000001', CURRENT_DATE - 1, NOW() - INTERVAL '1 day', 'd0000000-0000-0000-0000-000000000002', NOW() - INTERVAL '1 day' + INTERVAL '4 hours', 'COSIGNED'),
   -- Today: PENDING (not yet attested — realistic for a tester opening the app)
   ('ae000000-0000-0000-0000-000000000010', 'c0000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000001', CURRENT_DATE, NULL, NULL, NULL, 'PENDING')
-ON CONFLICT (contract_id, attestation_date) DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 -- Seed truth log entries
 INSERT INTO event_log (id, event_type, payload, previous_hash, current_hash) VALUES
