@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Activity, ShieldCheck, Flame, History, User, Loader2, AlertTriangle, LogOut, Bell, Settings, ScrollText, HelpCircle } from 'lucide-react';
+import { Activity, ShieldCheck, Flame, History, User, Loader2, LogOut, Bell, Settings, ScrollText, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, ApiError } from '../../services/api-client';
@@ -10,6 +10,7 @@ import Leaderboard from '../../components/Leaderboard';
 import NotificationPanel from '../../components/NotificationPanel';
 import StreakChain from '../../components/StreakChain';
 import { OnboardingWizard } from '../../components/OnboardingWizard';
+import { DashboardErrorNotice } from '../../components/DashboardErrorNotice';
 
 interface BalanceData {
   id: string;
@@ -96,29 +97,7 @@ export default function IdentityDashboard() {
   }
 
   if (error) {
-    const apiError = error instanceof ApiError ? error : null;
-    const jurisdictionBlocked = apiError?.code === 'JURISDICTION_BLOCKED';
-    const isNetworkError = apiError?.status === 0;
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center space-y-4 max-w-md px-6">
-          <AlertTriangle className={`mx-auto ${jurisdictionBlocked ? 'text-yellow-500' : 'text-red-500'}`} size={48} />
-          {jurisdictionBlocked ? (
-            <>
-              <p className="text-yellow-400 font-bold">Not available in your jurisdiction</p>
-              <p className="text-neutral-400 text-sm">{error.message}</p>
-            </>
-          ) : (
-            <>
-              <p className="text-red-400 font-bold">{error.message}</p>
-              {isNetworkError && (
-                <p className="text-neutral-500 text-sm">Ensure the backend service is reachable.</p>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    );
+    return <DashboardErrorNotice error={error} />;
   }
 
   const integrityScore = balance?.integrity_score ?? 0;
