@@ -2410,6 +2410,156 @@ describe("ContractsService", () => {
     });
   });
 
+  // ── getPartnerships ──────────────────────────────────────────
+
+  describe("getPartnerships", () => {
+    it("should read the partner side of the relationship, not the owner side", async () => {
+      const rows = [
+        {
+          id: "ap-2",
+          contract_id: "c-2",
+          status: "ACTIVE",
+          owner_email: "owner@styx.app",
+        },
+      ];
+      mockPool.query.mockResolvedValueOnce({ rows });
+
+      const result = await service.getPartnerships("partner-1");
+
+      expect(result).toEqual(rows);
+      const [sql, params] = mockPool.query.mock.calls[0];
+      expect(sql).toContain("ap.partner_user_id = $1");
+      expect(sql).toContain("ap.status = 'ACTIVE'");
+      expect(params).toEqual(["partner-1"]);
+    });
+  });
+
+  // ── partner lifecycle notifications ──────────────────────────
+
+  describe("partner lifecycle notifications", () => {
+    // The service takes notifications as an @Optional() dependency and every
+    // other case in this file passes `undefined`, so this block builds its own
+    // instance with the collaborator wired in.
+    let notifyPool: { query: jest.Mock };
+    let notifyService: ContractsService;
+    const mockNotifications = { create: jest.fn().mockResolvedValue({}) };
+
+    beforeEach(() => {
+      notifyPool = { query: jest.fn().mockResolvedValue({ rows: [] }) };
+      mockNotifications.create.mockClear();
+      notifyService = new ContractsService(
+        notifyPool as unknown as Pool,
+        mockLedger,
+        mockTruthLog,
+        mockStripe,
+        mockRealStripe as any,
+        mockDispute,
+        mockFuryRouter,
+        mockAegis,
+        mockRecovery,
+        mockDynamicPenalty as any,
+        mockAnomaly,
+        mockNotifications as any,
+        undefined, // compliancePolicy
+        mockSettlement,
+      );
+    });
+
+    it("notifies the invitee when a partner is invited", async () => {
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ id: "c-1", user_id: "owner-1" }] }) // contract
+        .mockResolvedValueOnce({ rows: [{ id: "partner-9" }] }) // partner lookup
+        .mockResolvedValueOnce({ rows: [] }) // INSERT accountability_partners
+        .mockResolvedValueOnce({ rows: [] }); // INSERT event
+
+      await notifyService.invitePartner("c-1", "owner-1", "friend@styx.app");
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "partner-9",
+          type: "PARTNER_INVITATION",
+          metadata: { contractId: "c-1" },
+        }),
+      );
+    });
+
+    it("notifies the owner when the invitation is declined", async () => {
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ id: "ap-1" }] }) // UPDATE RETURNING
+        .mockResolvedValueOnce({ rows: [] }) // INSERT event
+        .mockResolvedValueOnce({ rows: [{ user_id: "owner-1" }] }); // owner lookup
+
+      await notifyService.respondToInvite("c-1", "partner-9", false);
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "owner-1",
+          type: "PARTNER_INVITATION_DECLINED",
+        }),
+      );
+    });
+
+    it("notifies the owner when the invitation is accepted", async () => {
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ id: "ap-1" }] }) // UPDATE RETURNING
+        .mockResolvedValueOnce({ rows: [{ user_id: "owner-1" }] }); // owner lookup
+
+      await notifyService.acceptPartnerInvitation("c-1", "partner-9");
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "owner-1",
+          type: "PARTNER_INVITATION_ACCEPTED",
+        }),
+      );
+    });
+
+    it("notifies the owner when an attestation is co-signed", async () => {
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ "?column?": 1 }] }) // partner check
+        .mockResolvedValueOnce({ rows: [{ id: "attest-1" }] }) // latest attestation
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE attestation
+        .mockResolvedValueOnce({ rows: [{ user_id: "owner-1" }] }); // owner lookup
+
+      await notifyService.cosignAttestation("c-1", "partner-9");
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "owner-1",
+          type: "ATTESTATION_COSIGNED",
+        }),
+      );
+    });
+
+    it("notifies the owner when a recovery break is vetoed", async () => {
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ id: "ap-1" }] }) // active partner check
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE recovery_break_requests
+        .mockResolvedValueOnce({ rows: [] }) // INSERT event
+        .mockResolvedValueOnce({ rows: [{ user_id: "owner-1" }] }); // owner lookup
+
+      await notifyService.vetoRecoveryBreak("c-1", "partner-9");
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "owner-1",
+          type: "RECOVERY_BREAK_VETOED",
+        }),
+      );
+    });
+
+    it("returns successfully when the notification collaborator throws", async () => {
+      mockNotifications.create.mockRejectedValueOnce(new Error("queue down"));
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ id: "ap-1" }] })
+        .mockResolvedValueOnce({ rows: [{ user_id: "owner-1" }] });
+
+      await expect(
+        notifyService.acceptPartnerInvitation("c-1", "partner-9"),
+      ).resolves.toEqual({ status: "active" });
+    });
+  });
+
   // ── processHealthKitSample ───────────────────────────────────
 
   describe("processHealthKitSample", () => {

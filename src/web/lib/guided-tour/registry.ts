@@ -611,6 +611,17 @@ export const TOUR_ROUTES: TourRoute[] = [
     detail:
       "The release gate hashes this artifact set on every run, so what is published here and what CI enforces cannot drift apart silently.",
   },
+  {
+    path: "/partner",
+    title: "The accountability partner",
+    chapter: "Hold the line",
+    persona: "river",
+    label: "working",
+    summary:
+      "Someone a person names to hold them to their promise: they accept the role, co-sign the daily check-ins, and can veto a break request.",
+    detail:
+      "The partner protocol ran server-side for months with no surface — every endpoint guarded, tested, and reachable by nobody. This is that protocol made usable: pending invitations, accept or decline, co-sign an attestation, and the veto that makes a partner more than a spectator.",
+  },
 ];
 
 export const TOUR_BY_PATH = new Map(TOUR_ROUTES.map((route) => [route.path, route]));

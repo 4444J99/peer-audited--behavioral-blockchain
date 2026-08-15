@@ -85,6 +85,26 @@ export class ContractsController {
     return this.contractsService.getCohortSnapshot(cohortId, user.id);
   }
 
+  // Single-segment literal routes MUST stay above @Get(":id"): Nest registers
+  // handlers in declaration order and Express serves the first match, so a
+  // literal declared after the wildcard is dead — "invitations" was being
+  // routed into getContract() as a contract id.
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get("invitations")
+  @ApiOperation({ summary: "List pending accountability partner invitations" })
+  async getInvitations(@CurrentUser() user: { id: string }) {
+    return this.contractsService.getPendingInvitations(user.id);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get("partnerships")
+  @ApiOperation({
+    summary: "List contracts the authenticated user is an active partner on",
+  })
+  async getPartnerships(@CurrentUser() user: { id: string }) {
+    return this.contractsService.getPartnerships(user.id);
+  }
+
   @UseGuards(AuthGuard, GeofenceGuard)
   @Get(":id")
   @ApiOperation({ summary: "Get a single contract by ID" })
@@ -238,13 +258,6 @@ export class ContractsController {
       ...dto,
       userId: user.id,
     });
-  }
-
-  @UseGuards(AuthGuard, GeofenceGuard)
-  @Get("invitations")
-  @ApiOperation({ summary: "List pending accountability partner invitations" })
-  async getInvitations(@CurrentUser() user: { id: string }) {
-    return this.contractsService.getPendingInvitations(user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)

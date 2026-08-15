@@ -38,6 +38,8 @@ jest.mock('../../../services/api-client', () => ({
     submitProof: jest.fn(),
     useGraceDay: jest.fn(),
     disputeContract: jest.fn(),
+    getAccountabilityStatus: jest.fn().mockResolvedValue({ partners: [], history: [] }),
+    invitePartner: jest.fn(),
   },
 }));
 
