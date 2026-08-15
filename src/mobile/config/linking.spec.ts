@@ -1,4 +1,4 @@
-import { linking, resolveNotificationDeepLink } from './linking';
+import { isEnterpriseSSOLink, linking, resolveNotificationDeepLink } from './linking';
 
 describe('deep link configuration', () => {
   it('declares styx:// and com.styxprotocol.app:// prefixes', () => {
@@ -25,6 +25,30 @@ describe('deep link configuration', () => {
     const screens = linking.config?.screens as Record<string, any>;
     expect(screens.Profile.screens.ProfileMain).toBe('profile');
     expect(screens.Profile.screens.Settings).toBe('settings');
+  });
+});
+
+describe('isEnterpriseSSOLink', () => {
+  it('matches the styx:// enterprise SSO entry point', () => {
+    expect(isEnterpriseSSOLink('styx://enterprise/callback?token=abc')).toBe(true); // allow-secret
+  });
+
+  it('matches the bundle-id scheme too', () => {
+    expect(isEnterpriseSSOLink('com.styxprotocol.app://enterprise/callback?token=abc')).toBe(true); // allow-secret
+  });
+
+  it('does not match other styx deep links', () => {
+    expect(isEnterpriseSSOLink('styx://wallet')).toBe(false);
+    expect(isEnterpriseSSOLink('styx://contracts/abc-123/attest')).toBe(false);
+  });
+
+  it('does not match foreign schemes', () => {
+    expect(isEnterpriseSSOLink('https://example.com/enterprise/?token=abc')).toBe(false); // allow-secret
+  });
+
+  it('is deliberately absent from config.screens — it is an auth handoff, not a route', () => {
+    const screens = linking.config?.screens as Record<string, any>;
+    expect(Object.values(screens)).not.toContain('enterprise');
   });
 });
 

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Pool } from 'pg';
 import { SalesforceConnector } from './connectors/salesforce.connector';
 import { HubSpotConnector } from './connectors/hubspot.connector';
-import { CrmConnector, EmployeeEvent } from './connectors/crm-connector.interface';
+import { CrmConnector, EmployeeEvent, EmployeeEventType } from './connectors/crm-connector.interface';
 
 export interface CrmUser {
   email: string;
@@ -68,7 +68,13 @@ export class CrmService {
     this.logger.log(`[CRM_SYNC] Synced ${users.length} users for enterprise ${enterpriseId}`);
   }
 
-  async logInteraction(email: string, type: string, metadata: Record<string, any>): Promise<void> {
+  /**
+   * `type` is the connector event union rather than a free-text string: this used to
+   * cast an arbitrary string through `as`, which meant a caller could put any label
+   * on the wire to a customer's CRM. Narrowing it here pushes the rejection to the
+   * edge (the controller validates the HTTP body against EMPLOYEE_EVENT_TYPES).
+   */
+  async logInteraction(email: string, type: EmployeeEventType, metadata: Record<string, any>): Promise<void> {
     this.logger.log(`[CRM_INTERACTION] ${email} - ${type}: ${JSON.stringify(metadata)}`);
 
     if (!this.connector) {
@@ -77,7 +83,7 @@ export class CrmService {
 
     const event: EmployeeEvent = {
       employeeId: email,
-      eventType: type as EmployeeEvent['eventType'],
+      eventType: type,
       timestamp: new Date(),
       metadata,
     };
