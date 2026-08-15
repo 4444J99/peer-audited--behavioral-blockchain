@@ -21,6 +21,34 @@ import { consumeSseTicket, SseTicketScope } from './sse-ticket.store';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 
+interface SseStreamRoute {
+  pathSuffix: string;
+  scope: SseTicketScope;
+  cookieName: string;
+}
+
+// One table for every ticket-bearing SSE route. The previous two-scope form
+// derived the cookie name from a ternary, so any third scope would silently
+// have been looked up under the fury cookie — a lookup that fails open into
+// the query-param path rather than reporting the mistake.
+const SSE_STREAM_ROUTES: readonly SseStreamRoute[] = [
+  {
+    pathSuffix: '/notifications/stream',
+    scope: 'notifications',
+    cookieName: 'styx_notifications_sse_ticket',
+  },
+  {
+    pathSuffix: '/fury/stream',
+    scope: 'fury',
+    cookieName: 'styx_fury_sse_ticket',
+  },
+  {
+    pathSuffix: '/dashboard/leaderboard/stream',
+    scope: 'leaderboard',
+    cookieName: 'styx_leaderboard_sse_ticket',
+  },
+];
+
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
@@ -212,8 +240,8 @@ export class AuthGuard implements CanActivate {
   }
 
   private consumeSseTicketForRequest(request: Request): string | null {
-    const scope = this.getSseStreamScope(request);
-    if (!scope) {
+    const route = this.getSseStreamRoute(request);
+    if (!route) {
       return null;
     }
 
@@ -223,30 +251,21 @@ export class AuthGuard implements CanActivate {
     // the query param, which is retained because the EventSource clients that cannot
     // attach an Authorization header still rely on /…/stream-ticket. Single-use +
     // 60s TTL bounds the exposure of any leaked query-param ticket.
-    const cookieName = scope === 'notifications'
-      ? 'styx_notifications_sse_ticket'
-      : 'styx_fury_sse_ticket';
-    const cookieTicketPreferred = this.getCookieValue(request, cookieName);
+    const cookieTicketPreferred = this.getCookieValue(request, route.cookieName);
     if (cookieTicketPreferred) {
-      return consumeSseTicket(cookieTicketPreferred, scope);
+      return consumeSseTicket(cookieTicketPreferred, route.scope);
     }
 
     if (request.query && typeof request.query.ticket === 'string') {
-      return consumeSseTicket(request.query.ticket, scope);
+      return consumeSseTicket(request.query.ticket, route.scope);
     }
 
     return null;
   }
 
-  private getSseStreamScope(request: Request): SseTicketScope | null {
+  private getSseStreamRoute(request: Request): SseStreamRoute | null {
     const rawPath = (request.originalUrl || request.path || '').split('?')[0];
-    if (rawPath.endsWith('/notifications/stream')) {
-      return 'notifications';
-    }
-    if (rawPath.endsWith('/fury/stream')) {
-      return 'fury';
-    }
-    return null;
+    return SSE_STREAM_ROUTES.find((route) => rawPath.endsWith(route.pathSuffix)) ?? null;
   }
 
   private getCookieValue(request: Request, name: string): string | null {

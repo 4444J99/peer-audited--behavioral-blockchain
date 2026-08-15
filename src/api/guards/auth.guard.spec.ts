@@ -2,6 +2,7 @@ import { AuthGuard } from './auth.guard';
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { deriveApiKeyVerifier, deriveCsrfToken } from '../src/modules/auth/auth.service';
+import { issueSseTicket } from './sse-ticket.store';
 
 // Tokens must be signed with the same secret the guard verifies against. The
 // guard resolves it via getJwtSecret() which reads process.env.JWT_SECRET
@@ -13,9 +14,11 @@ function createMockContext(input?: {
   cookie?: string;
   method?: string;
   extraHeaders?: Record<string, string>;
+  originalUrl?: string;
 }): ExecutionContext {
   const request: any = {
     method: input?.method || 'GET',
+    originalUrl: input?.originalUrl,
     headers: {
       authorization: input?.authHeader,
       cookie: input?.cookie,
@@ -313,5 +316,47 @@ describe('AuthGuard', () => {
     const request = context.switchToHttp().getRequest() as any;
     expect(request.user.id).toBe('user-api-4');
     expect(request.authSource).toBe('api_key');
+  });
+
+  describe('SSE stream tickets', () => {
+    it('accepts a leaderboard ticket cookie on the leaderboard stream', () => {
+      const { ticket } = issueSseTicket('leaderboard-user', 'leaderboard');
+
+      const context = createMockContext({
+        originalUrl: '/dashboard/leaderboard/stream?limit=10&period=weekly',
+        cookie: `styx_leaderboard_sse_ticket=${ticket}`,
+      });
+
+      expect(guard.canActivate(context)).toBe(true);
+
+      const request = context.switchToHttp().getRequest() as any;
+      expect(request.user.id).toBe('leaderboard-user');
+      // AU9: a ticket principal never carries privilege.
+      expect(request.user.role).toBe('USER');
+    });
+
+    it('rejects a notifications ticket presented on the leaderboard stream', () => {
+      const { ticket } = issueSseTicket('cross-scope-user', 'notifications');
+
+      const context = createMockContext({
+        originalUrl: '/dashboard/leaderboard/stream',
+        cookie: `styx_leaderboard_sse_ticket=${ticket}`,
+      });
+
+      expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+    });
+
+    it('does not treat the leaderboard cookie as valid on the fury stream', () => {
+      const { ticket } = issueSseTicket('fury-target', 'leaderboard');
+
+      // The fury stream looks up its OWN cookie name, so a leaderboard cookie is
+      // simply absent there — it must not be picked up by a fallthrough.
+      const context = createMockContext({
+        originalUrl: '/fury/stream',
+        cookie: `styx_leaderboard_sse_ticket=${ticket}`,
+      });
+
+      expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+    });
   });
 });

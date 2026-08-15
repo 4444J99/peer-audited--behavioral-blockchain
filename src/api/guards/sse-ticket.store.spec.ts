@@ -36,4 +36,12 @@ describe('sse-ticket.store', () => {
   it('returns null for an unknown ticket', () => {
     expect(consumeSseTicket('does-not-exist', 'fury')).toBeNull();
   });
+
+  it('keeps the leaderboard scope isolated from the other streams', () => {
+    const { ticket } = issueSseTicket('user-4', 'leaderboard');
+
+    expect(consumeSseTicket(ticket, 'notifications')).toBeNull();
+    expect(consumeSseTicket(ticket, 'fury')).toBeNull();
+    expect(consumeSseTicket(ticket, 'leaderboard')).toBe('user-4');
+  });
 });
