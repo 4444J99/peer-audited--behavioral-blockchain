@@ -109,7 +109,7 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
 
     setIsUploading(true);
     try {
-      const { uploadUrl, proofId, storageKey } = await UploadService.requestPreSignedUrl(
+      const { uploadUrl, proofId, storageKey, captureNonce } = await UploadService.requestPreSignedUrl(
         contractId,
         'video/mp4',
         `Live camera submission | capture-hash:${captureHash || 'none'} | ${captureLabel || 'n/a'}`,
@@ -120,7 +120,16 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
         throw new Error('Video blob failed to transmit to Cloudflare R2.');
       }
 
-      const dispatchSuccess = await UploadService.confirmUpload(proofId, storageKey);
+      // This build's capture path is synthetic (createSyntheticCaptureSession),
+      // and it declares that rather than letting the server guess. The nonce is
+      // echoed regardless so the plumbing is exercised on the path that exists
+      // today, not only on the native one that arrives with #141.
+      const dispatchSuccess = await UploadService.confirmUpload(
+        proofId,
+        storageKey,
+        'SYNTHETIC_BETA',
+        captureNonce,
+      );
       if (!dispatchSuccess) {
         throw new Error('Proof upload confirmed failed during queue dispatch.');
       }

@@ -143,7 +143,13 @@ describe('UploadService', () => {
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({ Authorization: 'Bearer mock-jwt-token' }),
-        body: JSON.stringify({ storageKey: 'proofs/proof_123/video.mp4' }),
+        // captureSource defaults to the honest value for this build; captureNonce
+        // is absent here because the caller did not pass one, and JSON.stringify
+        // drops undefined rather than sending null.
+        body: JSON.stringify({
+          storageKey: 'proofs/proof_123/video.mp4',
+          captureSource: 'SYNTHETIC_BETA',
+        }),
       }),
     );
   });
