@@ -46,7 +46,7 @@ jobs:
               .filter((issue) => {
                 const labels = issue.labels.map(labelName);
                 const hasOwnerLabel = labels.some((name) => name.startsWith("owner:"));
-                const isLegacyRange = issue.number >= 123 && issue.number <= 144;
+                const isLegacyRange = issue.number >= 123 && issue.number <= 148;
                 return hasOwnerLabel || isLegacyRange;
               })
               .sort((a, b) => a.number - b.number);
@@ -189,7 +189,7 @@ jobs:
               "",
               "## Notes",
               "- This report is generated automatically via `.github/workflows/blocked-handoff-burndown.yml`.",
-              "- Tracking criteria: `label:blocked` AND (`owner:*` label OR legacy issue range #123-#144).",
+              "- Tracking criteria: `label:blocked` AND (`owner:*` label OR legacy issue range #123-#148).",
               "",
             ].join("\n");
 
@@ -199,6 +199,7 @@ jobs:
             });
 
             const maybeIssue = existing.data.items.find((item) => !item.pull_request);
+            let currentNumber;
             if (maybeIssue) {
               await github.rest.issues.update({
                 owner,
@@ -206,6 +207,7 @@ jobs:
                 issue_number: maybeIssue.number,
                 body,
               });
+              currentNumber = maybeIssue.number;
               core.info(`Updated existing burn-down issue #${maybeIssue.number}`);
             } else {
               const created = await github.rest.issues.create({
@@ -215,7 +217,35 @@ jobs:
                 body,
                 labels: ["documentation", "devops", "blocked"],
               });
+              currentNumber = created.data.number;
               core.info(`Created burn-down issue #${created.data.number}`);
+            }
+
+            // One live tracker at a time. Without this, each Monday's run left the
+            // prior week's issue open — three trackers were open simultaneously by
+            // 2026-08-15 (#839/#869/#875). Close every other open burn-down issue
+            // as superseded by the current one.
+            const priorTrackers = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${owner}/${repo} is:issue is:open in:title "Blocked Handoff Burn-down"`,
+              per_page: 20,
+            });
+            for (const item of priorTrackers.data.items) {
+              if (item.pull_request || item.number === currentNumber) continue;
+              if (!item.title.startsWith("Blocked Handoff Burn-down")) continue;
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: item.number,
+                body: `Superseded by #${currentNumber} (the current weekly burn-down). One live tracker at a time.`,
+              });
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: item.number,
+                state: "closed",
+                state_reason: "not_planned",
+              });
+              core.info(`Closed superseded burn-down issue #${item.number}`);
             }
 
       - name: Checkout code
