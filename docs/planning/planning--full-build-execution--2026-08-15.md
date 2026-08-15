@@ -50,15 +50,35 @@ Each wave = one-concern branches → PR → CI green → squash-merge. A checkli
 `docs/checklists/` gets checked **only** with an evidence link, per the standing caution:
 code counts when it is written, tested, AND wired into a reachable surface.
 
-### Wave 0 — Readiness truth (IN FLIGHT)
+## The finding that reshaped this program
+
+A code-first probe of every remaining item (2026-08-15) returned **22 features that are
+complete, tested, registered — and reachable by nobody**. Not missing work: *unwired* work.
+The estate's status registries counted them as shipped because the files exist. Two were
+live defects:
+
+- **Fury reviewers were served RAW, unredacted proof media.** `VideoProcessingService`
+  had zero callers, so `masked_media_uri` was never populated, and the Fury queue's
+  `redaction_status === 'COMPLETED'` test (production writes `'MASKED'`) fell through to
+  `row.media_uri`. Its test could not fail: the R2 mock was `{}`. Fixed in PR #914.
+- **A Fury who won an appeal never got the money back.** `resolveAppeal`'s REVERSED branch
+  deleted a bookkeeping row while the ledger had already taken the stake. Fixed in PR #920.
+
+This is the standing caution made concrete: **a checkbox is ✅ only when the code is
+written, tested, AND wired into a reachable surface.** Every wave below now ends with a
+grep for callers, not for files.
+
+### Wave 0 — Readiness truth ✅
 - [x] Regenerate `beta-readiness` against the live beta (was stale "incomplete")
 - [x] Gate 05 self-consistency fix — PR #902 (invariant over guard-identity; fresh probe
       user; state tests opt-in). Verified exit 0 against the live beta.
 - [x] Seed DOB fix — PR #903 (age gate blocked every seeded persona's contract creation;
       found by gate 01 against the live beta)
-- [ ] After #903 deploys: rerun readiness → **all 9 gates green** is this wave's predicate
+- [x] TierGuard's $0-escrow ceiling blocks the whole create loop on the test-money rail —
+      filed as styx#905 with two candidate fixes (financial-permission surface: the
+      decision was filed rather than shipped by an unattended agent session)
 
-### Wave 1 — Registry truth pass (one PR) + estate hygiene
+### Wave 1 — Registry truth pass (one PR) + estate hygiene ✅ (#906, #907)
 - Reconcile the six registries to code truth with evidence links per row: ticket pack gains
   a status column; triage ticket states annotated; matrix/backlog/implementation-status rows
   corrected (KYC, geofence, push, weekend multiplier, cross-lobby, video pipeline)
@@ -72,7 +92,11 @@ code counts when it is written, tested, AND wired into a reachable surface.
 - Dependabot lane: let #872/#882/#883 merge on green; #897 (43-package group) rebased and
   judged against the root `overrides` block after the waves land
 
-### Wave 2 — Beta residuals (the near-term engineering slice)
+### Wave 2 — Beta residuals ✅ — every issue closed (#908–#912)
+The whistleblower fix turned out to be a route directory literally named `%5BlinkId%5D`
+(percent-encoded brackets), so Next served it as a *static* segment and every concrete id
+404'd — verified live before and after: 404 → 200.
+
 - #867 jurisdiction notice unreachable (the repo's only `bug`-labeled issue): typed
   `ApiError` already exists — give the contracts call its own catch and render the notice
 - #890 Dockerfile/`output:'standalone'` mismatch · #893 baked `NEXT_PUBLIC_API_URL` in the
