@@ -148,6 +148,7 @@ export default function ResponsibleUsePage() {
               <li><Link href="/legal/terms" className="text-red-500 hover:text-red-400">Terms of Service</Link></li>
               <li><Link href="/legal/privacy" className="text-red-500 hover:text-red-400">Privacy Policy</Link></li>
               <li><Link href="/legal/rules" className="text-red-500 hover:text-red-400">Contest Official Rules</Link></li>
+              <li><Link href="/legal/compliance-artifacts" className="text-red-500 hover:text-red-400">Compliance Artifact Register</Link></li>
             </ul>
           </section>
         </div>

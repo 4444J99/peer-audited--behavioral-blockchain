@@ -27,6 +27,9 @@ export function SiteFooter() {
           <Link href="/legal/responsible-use" className="hover:text-neutral-300 transition-colors">
             Responsible Use
           </Link>
+          <Link href="/legal/compliance-artifacts" className="hover:text-neutral-300 transition-colors">
+            Compliance Artifacts
+          </Link>
         </nav>
 
         <span className="text-neutral-600">&copy; {new Date().getFullYear()} Styx Protocol</span>

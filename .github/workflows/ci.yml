@@ -132,6 +132,21 @@ jobs:
       - name: Gate 07 — Claim Drift Check
         run: npm run validate:claims
 
+      - name: Gate 08 — Compliance Artifact Check (integration)
+        env:
+          DATABASE_URL: ${{ secrets.CI_GATE08_DATABASE_URL }}
+        # The gate reads the `compliance_artifacts` table via psql — there is no
+        # offline mode, so like Gate 05 it needs a real database pointed at it.
+        # The blocking copy of this gate runs in deploy.yml against the
+        # production DATABASE_URL; this step gives PRs an earlier verdict once a
+        # CI-reachable database is armed.
+        run: |
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::warning::Skipping Gate 08 (NOT VERIFIED): set CI_GATE08_DATABASE_URL to a database carrying the compliance_artifacts table."
+            exit 0
+          fi
+          bash scripts/validation/08-compliance-artifact-check.sh
+
   # Stable required-check name for branch protection. Aggregates the matrix
   # result so the required context (`build_and_test`) never changes shape
   # even if the matrix axis grows (e.g. adding Node 22.x for fan-out tests).

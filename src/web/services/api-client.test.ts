@@ -126,6 +126,32 @@ describe('Web API client', () => {
 
       expect(mockFetch.mock.calls[0][0]).toContain('/meta/release');
     });
+
+    it('getComplianceArtifacts() hits /compliance/artifacts', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk([]));
+
+      await api.getComplianceArtifacts();
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/compliance/artifacts');
+    });
+
+    it('getComplianceArtifacts() returns the artifact list verbatim', async () => {
+      const artifacts = [
+        {
+          artifactType: 'skill_contest_whitepaper',
+          version: '1.0.0',
+          contentHash: 'a'.repeat(64),
+          signedBy: 'Outside Counsel',
+          signedAt: '2026-01-01T00:00:00.000Z',
+          expiresAt: null,
+          isActive: true,
+          jurisdictions: ['US'],
+        },
+      ];
+      mockFetch.mockResolvedValueOnce(jsonOk(artifacts));
+
+      await expect(api.getComplianceArtifacts()).resolves.toEqual(artifacts);
+    });
   });
 
   describe('register()', () => {
