@@ -1,4 +1,11 @@
-import { UploadService } from './UploadService';
+import {
+  UploadService,
+  PROCESSING_POLL_INITIAL_MS,
+  PROCESSING_POLL_MAX_MS,
+  PROCESSING_POLL_DEADLINE_MS,
+} from './UploadService';
+import { ApiClient } from './ApiClient';
+import type { ProofProcessingStatus } from './ApiClient';
 
 jest.mock('./SessionService', () => ({
   SessionService: {
@@ -6,11 +13,43 @@ jest.mock('./SessionService', () => ({
   },
 }));
 
+jest.mock('./ApiClient', () => ({
+  ApiClient: {
+    getProcessingStatus: jest.fn(),
+  },
+}));
+
+function status(
+  overallStatus: string,
+  jobs: ProofProcessingStatus['jobs'] = [],
+): ProofProcessingStatus {
+  return { proofId: 'proof_123', overallStatus, jobs };
+}
+
+/**
+ * Drives the poll without real timers: `sleep` advances a virtual clock that
+ * `now` reads, so a 5-minute deadline resolves in microseconds and every
+ * recorded delay is exactly what the backoff asked for.
+ */
+function createVirtualClock() {
+  let current = 0;
+  const slept: number[] = [];
+  return {
+    slept,
+    now: () => current,
+    sleep: async (ms: number) => {
+      slept.push(ms);
+      current += ms;
+    },
+  };
+}
+
 const mockFetch = jest.fn();
 (globalThis as any).fetch = mockFetch;
 
 beforeEach(() => {
   mockFetch.mockReset();
+  (ApiClient.getProcessingStatus as jest.Mock).mockReset();
 });
 
 describe('UploadService', () => {
@@ -115,5 +154,129 @@ describe('UploadService', () => {
     const ok = await UploadService.confirmUpload('proof_123', 'proofs/proof_123/video.mp4');
 
     expect(ok).toBe(false);
+  });
+
+  it('getProcessingStatus() rehydrates the session token and delegates to ApiClient', async () => {
+    (ApiClient.getProcessingStatus as jest.Mock).mockResolvedValueOnce(status('PROCESSING'));
+
+    const result = await UploadService.getProcessingStatus('proof_123');
+
+    expect(result).toEqual(status('PROCESSING'));
+    expect(ApiClient.getProcessingStatus).toHaveBeenCalledWith('proof_123');
+  });
+});
+
+describe('UploadService.pollProcessingStatus()', () => {
+  it('reports every reading and resolves on COMPLETED', async () => {
+    const clock = createVirtualClock();
+    (ApiClient.getProcessingStatus as jest.Mock)
+      .mockResolvedValueOnce(status('NOT_STARTED'))
+      .mockResolvedValueOnce(
+        status('PROCESSING', [
+          { stage: 'TRANSCODE', status: 'IN_PROGRESS', error: null, updated_at: 't1' },
+        ]),
+      )
+      .mockResolvedValueOnce(status('COMPLETED'));
+
+    const seen: string[] = [];
+    const final = await UploadService.pollProcessingStatus(
+      'proof_123',
+      (s) => seen.push(s.overallStatus),
+      { now: clock.now, sleep: clock.sleep },
+    );
+
+    expect(seen).toEqual(['NOT_STARTED', 'PROCESSING', 'COMPLETED']);
+    expect(final?.overallStatus).toBe('COMPLETED');
+    expect(ApiClient.getProcessingStatus).toHaveBeenCalledTimes(3);
+  });
+
+  it('stops on FAILED without polling again', async () => {
+    const clock = createVirtualClock();
+    (ApiClient.getProcessingStatus as jest.Mock).mockResolvedValueOnce(
+      status('FAILED', [
+        { stage: 'VALIDATE', status: 'FAILED', error: 'Source video is not decodable', updated_at: 't1' },
+      ]),
+    );
+
+    const final = await UploadService.pollProcessingStatus('proof_123', () => {}, {
+      now: clock.now,
+      sleep: clock.sleep,
+    });
+
+    expect(final?.overallStatus).toBe('FAILED');
+    expect(ApiClient.getProcessingStatus).toHaveBeenCalledTimes(1);
+    expect(clock.slept).toEqual([]);
+  });
+
+  it('backs off exponentially from 2s and caps at 30s', async () => {
+    const clock = createVirtualClock();
+    (ApiClient.getProcessingStatus as jest.Mock).mockResolvedValue(status('PROCESSING'));
+
+    await expect(
+      UploadService.pollProcessingStatus('proof_123', () => {}, {
+        now: clock.now,
+        sleep: clock.sleep,
+      }),
+    ).rejects.toThrow('Proof is still processing after 300s.');
+
+    expect(clock.slept.slice(0, 5)).toEqual([2_000, 4_000, 8_000, 16_000, 30_000]);
+    expect(Math.max(...clock.slept)).toBe(PROCESSING_POLL_MAX_MS);
+    expect(clock.slept[0]).toBe(PROCESSING_POLL_INITIAL_MS);
+    // Each sleep is clamped to the time left, so the loop lands exactly on the
+    // deadline instead of overshooting it by up to a full backoff interval.
+    expect(clock.slept.reduce((a, b) => a + b, 0)).toBe(PROCESSING_POLL_DEADLINE_MS);
+  });
+
+  it('retries through a transient request failure and still completes', async () => {
+    const clock = createVirtualClock();
+    (ApiClient.getProcessingStatus as jest.Mock)
+      .mockRejectedValueOnce(new Error('Network request failed'))
+      .mockResolvedValueOnce(status('COMPLETED'));
+
+    const seen: string[] = [];
+    const final = await UploadService.pollProcessingStatus(
+      'proof_123',
+      (s) => seen.push(s.overallStatus),
+      { now: clock.now, sleep: clock.sleep },
+    );
+
+    expect(seen).toEqual(['COMPLETED']);
+    expect(final?.overallStatus).toBe('COMPLETED');
+    expect(clock.slept).toEqual([2_000]);
+  });
+
+  it('surfaces the last request error when the deadline passes without a reading', async () => {
+    const clock = createVirtualClock();
+    (ApiClient.getProcessingStatus as jest.Mock).mockRejectedValue(new Error('API 503'));
+
+    await expect(
+      UploadService.pollProcessingStatus('proof_123', () => {}, {
+        now: clock.now,
+        sleep: clock.sleep,
+        deadlineMs: 10_000,
+      }),
+    ).rejects.toThrow('Could not reach the processing pipeline: API 503');
+  });
+
+  it('resolves null and stops polling once the caller cancels', async () => {
+    const clock = createVirtualClock();
+    let cancelled = false;
+    (ApiClient.getProcessingStatus as jest.Mock).mockImplementation(async () => {
+      cancelled = true;
+      return status('PROCESSING');
+    });
+
+    const onUpdate = jest.fn();
+    const final = await UploadService.pollProcessingStatus('proof_123', onUpdate, {
+      now: clock.now,
+      sleep: clock.sleep,
+      isCancelled: () => cancelled,
+    });
+
+    expect(final).toBeNull();
+    // Cancellation is checked before the reading is published, so a view that
+    // has already unmounted never receives a state update.
+    expect(onUpdate).not.toHaveBeenCalled();
+    expect(ApiClient.getProcessingStatus).toHaveBeenCalledTimes(1);
   });
 });

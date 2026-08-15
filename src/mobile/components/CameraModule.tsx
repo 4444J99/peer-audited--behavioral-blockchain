@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { UploadService } from '../services/UploadService';
 import { ApiClient } from '../services/ApiClient';
+import type { ProofProcessingStatus } from '../services/ApiClient';
 import { createCameraWatermark, createSyntheticCaptureSession } from '../utils/proof-media';
 
 /**
@@ -18,6 +19,63 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
   const [watermark, setWatermark] = useState<string | null>(null);
   const [captureStartedAt, setCaptureStartedAt] = useState<number | null>(null);
   const [captureLabel, setCaptureLabel] = useState<string | null>(null);
+
+  // Backend pipeline state, deliberately separate from isUploading: that flag
+  // tracks the raw R2 PUT, which is already finished when any of this begins.
+  const [processingProofId, setProcessingProofId] = useState<string | null>(null);
+  const [processingStatus, setProcessingStatus] = useState<ProofProcessingStatus | null>(null);
+  const [processingError, setProcessingError] = useState<string | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
+
+  // A poll outlives the render that started it, so it needs a channel the running
+  // loop can read: refs, not state. The generation counter orphans a superseded
+  // poll (dismiss, or a retry started while the previous round is mid-sleep) —
+  // a single boolean cannot, because clearing it to re-arm would also un-cancel
+  // the loop it was meant to stop.
+  const unmountedRef = useRef(false);
+  const pollGenerationRef = useRef(0);
+  useEffect(() => {
+    return () => {
+      unmountedRef.current = true;
+    };
+  }, []);
+
+  const watchProcessing = async (proofId: string) => {
+    const generation = ++pollGenerationRef.current;
+    const isStale = () => unmountedRef.current || pollGenerationRef.current !== generation;
+
+    setProcessingProofId(proofId);
+    setProcessingStatus(null);
+    setProcessingError(null);
+    setIsPolling(true);
+    try {
+      await UploadService.pollProcessingStatus(
+        proofId,
+        (status) => {
+          if (!isStale()) {
+            setProcessingStatus(status);
+          }
+        },
+        { isCancelled: isStale },
+      );
+    } catch (error: any) {
+      if (!isStale()) {
+        setProcessingError(error.message);
+      }
+    } finally {
+      if (!isStale()) {
+        setIsPolling(false);
+      }
+    }
+  };
+
+  const dismissProcessing = () => {
+    pollGenerationRef.current += 1;
+    setProcessingProofId(null);
+    setProcessingStatus(null);
+    setProcessingError(null);
+    setIsPolling(false);
+  };
 
   const toggleRecording = () => {
     if (isRecording) {
@@ -71,21 +129,102 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
         mediaUri: storageKey,
       });
 
-      Alert.alert(
-        'Beta Proof Secured',
-        'Your recording has been sent to the Fury Router for validation. NOTE: This is a synthetic capture path for the Phase 1 Beta pilot.',
-      );
       setVideoUri(null);
       setCaptureHash(null);
       setWatermark(null);
       setCaptureStartedAt(null);
       setCaptureLabel(null);
+      setIsUploading(false);
+      // The upload is only half the story: transcode/redact runs on a worker and
+      // the proof is not reviewable until it lands. Hold the user on a live
+      // processing view instead of the old terminal "secured" alert, which
+      // claimed completion the pipeline had not reached.
+      await watchProcessing(proofId);
     } catch (error: any) {
       Alert.alert('Upload Failed', error.message);
     } finally {
       setIsUploading(false);
     }
   };
+
+  if (processingProofId) {
+    // The API orders proof_processing_jobs newest-first, so jobs[0] is the stage
+    // the worker is on right now.
+    const latestJob = processingStatus?.jobs?.[0] || null;
+    const failedJob = processingStatus?.jobs?.find((job) => job.status === 'FAILED') || null;
+    const overallStatus = processingStatus?.overallStatus || 'NOT_STARTED';
+    const hasFailed = overallStatus === 'FAILED' || processingError !== null;
+    const hasCompleted = overallStatus === 'COMPLETED' && !processingError;
+
+    return (
+      <View style={styles.container}>
+        <View style={styles.betaBanner}>
+          <Text style={styles.betaBannerText}>PROOF PROCESSING</Text>
+        </View>
+
+        <View style={styles.processingPanel}>
+          {hasFailed ? (
+            <>
+              <Text style={styles.processingFailedTitle}>Processing Failed</Text>
+              <Text style={styles.processingDetail}>
+                {processingError ||
+                  failedJob?.error ||
+                  'The processing pipeline could not finish this proof.'}
+              </Text>
+              {failedJob ? (
+                <Text style={styles.processingStage}>Failed at stage: {failedJob.stage}</Text>
+              ) : null}
+              <View style={styles.actionRow}>
+                <TouchableOpacity
+                  style={styles.discardButton}
+                  onPress={dismissProcessing}
+                >
+                  <Text style={styles.discardText}>RECORD ANOTHER</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.submitButton}
+                  onPress={() => watchProcessing(processingProofId)}
+                >
+                  <Text style={styles.submitText}>RETRY</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : hasCompleted ? (
+            <>
+              <Text style={styles.processingDoneTitle}>Processing Complete</Text>
+              <Text style={styles.processingDetail}>
+                Your proof is redacted and queued with the Fury Router for validation.
+              </Text>
+              <TouchableOpacity style={styles.submitButton} onPress={dismissProcessing}>
+                <Text style={styles.submitText}>DONE</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {isPolling ? <ActivityIndicator size="large" color="#FF3B30" /> : null}
+              <Text style={styles.processingTitle}>
+                {overallStatus === 'NOT_STARTED'
+                  ? 'Waiting for the processing worker...'
+                  : 'Processing your proof...'}
+              </Text>
+              <Text style={styles.processingStage}>
+                {latestJob
+                  ? `Stage: ${latestJob.stage} — ${latestJob.status}`
+                  : 'No pipeline stage reported yet.'}
+              </Text>
+              <Text style={styles.processingDetail}>
+                Transcoding and identity redaction run on a background worker. You can leave this
+                screen; processing continues either way.
+              </Text>
+              <TouchableOpacity style={styles.discardButton} onPress={dismissProcessing}>
+                <Text style={styles.discardText}>RUN IN BACKGROUND</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -186,5 +325,11 @@ const styles = StyleSheet.create({
   captureMeta: { alignItems: 'center', paddingBottom: 10 },
   captureMetaText: { color: '#888', fontSize: 12 },
   betaBanner: { backgroundColor: '#20150d', padding: 8, borderBottomWidth: 1, borderBottomColor: '#4a2a16' },
+  processingPanel: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30 },
+  processingTitle: { color: '#FFF', fontSize: 18, fontWeight: 'bold', marginTop: 20, textAlign: 'center' },
+  processingDoneTitle: { color: '#34C759', fontSize: 20, fontWeight: '900', textAlign: 'center' },
+  processingFailedTitle: { color: '#FF3B30', fontSize: 20, fontWeight: '900', textAlign: 'center' },
+  processingStage: { color: '#FFB26B', fontFamily: 'monospace', fontSize: 12, marginTop: 12, textAlign: 'center' },
+  processingDetail: { color: '#888', fontSize: 13, marginTop: 12, marginBottom: 20, textAlign: 'center' },
   betaBannerText: { color: '#ffb26b', fontSize: 10, fontWeight: '800', textAlign: 'center', letterSpacing: 1 },
 });
