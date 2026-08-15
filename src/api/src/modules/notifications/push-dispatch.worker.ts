@@ -66,6 +66,7 @@ export class PushDispatchWorker implements OnModuleInit {
         result.status,
         result.providerResult,
         result.errorMessage,
+        result.ticketId,
       );
 
       if (result.status === 'UNREGISTERED') {
