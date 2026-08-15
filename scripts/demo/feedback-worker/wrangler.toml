@@ -1,0 +1,10 @@
+# Cloudflare Worker config for the hosted beta feedback collector.
+# Deploy: npx wrangler deploy   (from this directory; wrangler OAuth session)
+# The KV namespace id is public-safe — access requires account credentials.
+name = "styx-beta-feedback"
+main = "worker.mjs"
+compatibility_date = "2026-08-01"
+
+kv_namespaces = [
+  { binding = "styx_feedback", id = "e8c62ce96bfc450686d5a54d2c07fd8e" }
+]
