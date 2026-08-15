@@ -97,10 +97,12 @@ engineering item and closed one long-standing block:
   off; `STYX_APPEAL_FEE_ENABLED=true` reinstates) — the decisions ledger records it and the
   ledger wins over this doc's earlier "unbuilt" reading. The zero-amount-authorization trap
   still holds: never set `APPEAL_FEE_AMOUNT` to `0`; the flag skips the hold instead.
-- **Open (DR-005).** The onboarding-bonus removal is decided but unbuilt —
-  `grantOnboardingBonus` is still called from `contracts.service.ts`. Q-6's recorded default
-  (keep the mechanic, remove the money, flag-deferred like DR-004) is the Delta-wave item in
-  `planning--full-build-execution--2026-08-15.md`.
+- **Built (DR-005).** The onboarding-bonus removal shipped 2026-08-15 behind
+  `isOnboardingBonusEnabled()` (default off; `STYX_ONBOARDING_BONUS_ENABLED=true` reinstates),
+  gating both `grantOnboardingBonus` call sites in `contracts.service.ts`. Q-6's recorded
+  default — keep the mechanic, remove the money, flag-deferred like DR-004 — is what was
+  built. The zeroing trap is sharper here than for the fee: `recordTransaction` rejects a
+  non-positive amount, so a `$0` bonus throws and dead-letters the contract.
 
 ---
 
@@ -176,13 +178,13 @@ they take real work, not because anyone is still weighing them.
       nothing to capture or cancel. Keep `APPEAL_FEE_AMOUNT` behind a policy gate — DR-004
       explicitly reserves the right to reintroduce the fee if frivolous appeals appear at
       scale.
-- [ ] **No onboarding bonus in the beta cohort (DR-005).** `grantOnboardingBonus` is called
-      from `contracts.service.ts:1045` and `:1675`, each posting a `$5.00` ledger credit.
-      Suppressing the grant is contained, but the pitch deck sells the bonus as the
-      acquisition mechanic and `endowed-progress.service.ts` is built on artificial initial
-      advancement. Removing the money without deciding what happens to endowed progress
-      leaves a behavioral feature half-wired — the exact failure this plan already documented
-      three times.
+- [x] **No onboarding bonus in the beta cohort (DR-005).** Shipped 2026-08-15:
+      `isOnboardingBonusEnabled()` gates both `grantOnboardingBonus` call sites, defaults off,
+      and `STYX_ONBOARDING_BONUS_ENABLED=true` reinstates the credit. The endowed-progress
+      objection did not survive contact with the code — that service grants no money, it only
+      computes a display boost and a read-only downscaling multiplier, so the money decision
+      was never coupled to the behavioral one. The pitch deck still sells the bonus; that is a
+      marketing-copy divergence, not a half-wired feature.
 - [ ] **Ticket price `$4.99` was never decided.** `TICKET_PRICE_BASE` in
       `src/api/services/billing.ts:7` is an engineering default that no business decision
       covers. It was on the worksheet but not on the five-item brief that was actually sent.

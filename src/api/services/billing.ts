@@ -35,6 +35,36 @@ export function isAppealFeeEnabled(): boolean {
   return String(process.env.STYX_APPEAL_FEE_ENABLED).toLowerCase() === 'true';
 }
 
+/**
+ * PI-02: Endowed-Progress Onboarding Bonus
+ * A one-time credit posted to a user's account on their first contract, to
+ * create artificial initial advancement (`ONBOARDING_BONUS_AMOUNT` in
+ * src/shared/libs/behavioral-logic.ts).
+ *
+ * DR-005 (decided 2026-03-10 by Jessica, business lead — same source as DR-004):
+ * the $5.00 onboarding bonus is REMOVED for the beta cohort.
+ *
+ *   "We can consider adding credits or bonuses later if we want to improve
+ *    conversion or test additional engagement mechanics."
+ *
+ * Same shape as DR-004: deferred, not deleted. The amount, `grantOnboardingBonus`,
+ * and both grant paths in contracts.service.ts all stay; this flag decides whether
+ * the grant runs.
+ *
+ * And as with the appeal fee, this cannot be expressed by zeroing the amount:
+ * `LedgerService.recordTransaction` rejects a non-positive amount outright, so a
+ * $0 bonus would throw inside contract-creation side effects and dead-letter every
+ * first contract to RECONCILE_REQUIRED. Skipping the grant is the only form that
+ * leaves the mechanism intact.
+ *
+ * Defaults OFF per DR-005; set STYX_ONBOARDING_BONUS_ENABLED=true to reinstate it.
+ */
+export function isOnboardingBonusEnabled(): boolean {
+  return (
+    String(process.env.STYX_ONBOARDING_BONUS_ENABLED).toLowerCase() === 'true'
+  );
+}
+
 export interface IAPResult {
   paymentIntentId: string;
   amount: number;

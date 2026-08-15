@@ -366,6 +366,20 @@ export const api = {
       grace_days_max: number;
     }>(`/contracts/${id}`),
 
+  // `downscaling.multiplier` is advisory only — it is rendered as stake guidance
+  // and never applied to a submitted amount (see lib/stake-guidance.ts).
+  getEndowedProgress: (contractId: string) =>
+    request<{
+      contractId: string;
+      realProgress: number;
+      endowedBoost: number;
+      displayProgress: number;
+      currentTier: string;
+      nextTierAt: number;
+      motivation: string;
+      downscaling: { multiplier: number; reason: string };
+    }>(`/behavioral/retention/endowed-progress/${contractId}`),
+
   createContract: (dto: CreateContractDto | Record<string, unknown>) =>
     request<{ contractId: string; paymentIntentId: string }>("/contracts", {
       method: "POST",

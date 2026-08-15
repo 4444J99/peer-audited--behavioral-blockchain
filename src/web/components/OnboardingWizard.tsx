@@ -334,10 +334,11 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                   <span className="text-neutral-500 text-sm">Perceived Loss</span>
                   <span className="font-bold text-neutral-300">${perceivedLoss}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-neutral-500 text-sm">Onboarding Bonus</span>
-                  <span className="font-bold text-green-400">+$5.00</span>
-                </div>
+                {/* No onboarding-bonus row: DR-005 defers the $5.00 grant for
+                    the beta cohort, and the client cannot see whether the
+                    STYX_ONBOARDING_BONUS_ENABLED escape hatch is on, so a
+                    hardcoded "+$5.00" promised money that is not credited. The
+                    wallet ledger reports what was actually granted. */}
               </div>
 
               <p className="text-sm text-neutral-500">
