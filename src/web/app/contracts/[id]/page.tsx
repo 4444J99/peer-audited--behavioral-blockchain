@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { api } from '../../../services/api-client';
 import { useAuth } from '../../../contexts/AuthContext';
+import RecoveryLockCountdown from '../../../components/RecoveryLockCountdown';
+import DangerZoneBanner from '../../../components/DangerZoneBanner';
 
 type ContractStatus = 'ACTIVE' | 'COMPLETED' | 'FAILED' | 'PENDING_REVIEW' | 'PAYMENT_FAILED' | 'DISPUTED';
 
@@ -168,6 +170,7 @@ export default function ContractDetailPage() {
   const elapsedMs = Math.min(now.getTime() - startedAt.getTime(), totalMs);
   const progressPct = totalMs > 0 ? Math.round((elapsedMs / totalMs) * 100) : 0;
   const daysRemaining = Math.max(0, Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+  const isRecovery = contract.oath_category.startsWith('RECOVERY_');
 
   return (
     <div className="min-h-screen bg-black text-white font-sans p-6 md:p-12 max-w-4xl mx-auto">
@@ -189,6 +192,13 @@ export default function ContractDetailPage() {
           <span className={`font-bold text-sm ${statusCfg.color}`}>{statusCfg.label}</span>
         </div>
       </div>
+
+      {/* Danger windows — the API only evaluates them for ACTIVE contracts. */}
+      {contract.status === 'ACTIVE' && (
+        <div className="mb-6">
+          <DangerZoneBanner contractId={contract.id} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Stake & Timeline */}
@@ -328,6 +338,16 @@ export default function ContractDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Recovery timelock — the break gate only exists on the recovery stream. */}
+      {isRecovery && (
+        <div className="mt-8">
+          <RecoveryLockCountdown
+            contractId={contract.id}
+            canRequestBreak={contract.status === 'ACTIVE'}
+          />
+        </div>
+      )}
 
       {/* Proof History */}
       {proofs.length > 0 && (
