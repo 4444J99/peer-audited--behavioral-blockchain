@@ -41,6 +41,17 @@ export function getCsrfToken(): string {
   return currentCsrfToken;
 }
 
+/**
+ * The CSRF cookie is deliberately readable (httpOnly: false — double-submit
+ * pattern) and its value is deterministic per session, so session hydration
+ * can take it straight from the cookie instead of calling GET /auth/csrf on
+ * every page load (#891: the per-load call tripped the endpoint's rate limit
+ * on ordinary fast navigation).
+ */
+export function readCsrfCookie(): string | null {
+  return readCookie("styx_csrf_token");
+}
+
 function readCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
   const cookies = document.cookie.split(";");
