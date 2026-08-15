@@ -347,8 +347,9 @@ export class FuryWorker implements OnModuleInit {
         if (furyUser.rows.length === 0 || !furyUser.rows[0].account_id) continue;
 
         try {
-          await this.ledger!.recordTransaction(
-            furyUser.rows[0].account_id,
+          const debitAccountId = furyUser.rows[0].account_id;
+          const transactionId = await this.ledger!.recordTransaction(
+            debitAccountId,
             revenueAccountId,
             AUDITOR_STAKE_AMOUNT,
             contractId ?? undefined,
@@ -362,6 +363,20 @@ export class FuryWorker implements OnModuleInit {
             amount: AUDITOR_STAKE_AMOUNT,
             reason: 'honeypot_failure',
           });
+
+          // Record the automatic slash AS an enforcement case with a penalty row
+          // pointing at the ledger transaction. Without this the money moved here
+          // and the appeal flow had no object to reverse: resolveAppeal could only
+          // delete a fury_penalties row that never existed for an automatic slash,
+          // so a Fury who won an appeal stayed slashed. The case is opened already
+          // PENALTY_APPLIED because the charge has, in fact, already happened.
+          await this.recordAutomaticPenaltyCase(
+            furyId,
+            proofId,
+            transactionId,
+            debitAccountId,
+            AUDITOR_STAKE_AMOUNT,
+          );
         } catch (err) {
           this.logger.error(`Failed to charge honeypot penalty for Fury ${furyId}: ${err instanceof Error ? err.message : err}`);
         }
@@ -418,6 +433,57 @@ export class FuryWorker implements OnModuleInit {
       } catch (err) {
         this.logger.error(`Failed to process bounty for Fury ${vote.furyUserId}: ${err instanceof Error ? err.message : err}`);
       }
+    }
+  }
+
+  /**
+   * Records an already-charged automatic slash as an appealable enforcement case.
+   *
+   * Opened directly as PENALTY_APPLIED because the money has already moved — this
+   * is bookkeeping catching up with the ledger, not a decision. Idempotent on the
+   * ledger transaction id so a replayed consensus (the charge itself is
+   * idempotency-keyed) cannot open a second case for the same money.
+   */
+  private async recordAutomaticPenaltyCase(
+    furyId: string,
+    proofId: string,
+    transactionId: string,
+    debitAccountId: string,
+    amountCents: number,
+  ): Promise<void> {
+    try {
+      const existing = await this.pool.query(
+        `SELECT 1 FROM fury_penalties WHERE ledger_transaction_id = $1`,
+        [transactionId],
+      );
+      if (existing.rows.length > 0) return;
+
+      const caseResult = await this.pool.query(
+        `INSERT INTO fury_enforcement_cases (reviewer_id, case_type, confidence, status, evidence_json)
+         VALUES ($1, 'HONEYPOT_FAILURE', 1.0, 'PENALTY_APPLIED', $2)
+         RETURNING id`,
+        [
+          furyId,
+          JSON.stringify({
+            proofId,
+            reason: 'Automatic honeypot slash applied at consensus',
+            automatic: true,
+          }),
+        ],
+      );
+
+      await this.pool.query(
+        `INSERT INTO fury_penalties
+           (case_id, penalty_type, amount_cents, ledger_transaction_id, ledger_debit_account_id)
+         VALUES ($1, 'STAKE_SLASH', $2, $3, $4)`,
+        [caseResult.rows[0].id, amountCents, transactionId, debitAccountId],
+      );
+    } catch (err) {
+      // Never let bookkeeping failure roll back a charge that already succeeded;
+      // surface it loudly instead, because an unrecorded slash is unappealable.
+      this.logger.error(
+        `Charged Fury ${furyId} but FAILED to record the enforcement case for transaction ${transactionId}: ${err instanceof Error ? err.message : err}. This penalty cannot be appealed until reconciled.`,
+      );
     }
   }
 }

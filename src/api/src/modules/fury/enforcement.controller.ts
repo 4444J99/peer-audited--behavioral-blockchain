@@ -27,10 +27,13 @@ export class EnforcementController {
     @Param('caseId') caseId: string,
     @Body() dto: { penaltyType?: string; amountCents?: number },
   ) {
+    // `dto.amountCents || 0` silently turned a missing or malformed amount into a
+    // free penalty. A financial penalty type now requires a real amount; the
+    // service derives the default from the auditor stake rather than guessing 0.
     return this.enforcementService.confirmCase(
       caseId,
       dto.penaltyType || 'REP_BURN',
-      dto.amountCents || 0,
+      dto.amountCents,
     );
   }
 
