@@ -9,6 +9,7 @@ Materials for selling Styx to therapists, coaches, clinics, and corporate wellne
 - **Ideal Customer Profile (ICP)** — Who we're selling to: breakup recovery coaches, therapists specializing in relationship trauma, corporate EAPs
 - **Outreach templates** — Cold email sequences, LinkedIn messages, conference follow-ups
 - **Security questionnaire** — Pre-filled answers to common enterprise security questions (SOC 2, data handling, encryption)
+- **[Security whitepaper](security-whitepaper.md)** — The architecture behind those answers: the hash-chained TruthLog, the double-entry ledger invariants, auth and role guards, the jurisdiction/geofence matrix, App Attest and Play Integrity verification, media redaction, and the honeypot/consensus peer-audit model. Every control names its implementing file; §12 lists what is *not* implemented. The questionnaire links here rather than restating it
 - **SLA template** — Service Level Agreement defining uptime guarantees and support response times
 - **Demo scripts** — How to walk a prospect through the platform
 - **Pricing proposals** — Templates for each B2B tier ($49 Starter / $149 Growth / $349 Scale / $999+ Enterprise)
