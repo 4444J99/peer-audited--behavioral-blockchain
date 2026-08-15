@@ -8,13 +8,23 @@ ALTER TABLE deco_commitments ADD COLUMN IF NOT EXISTS domain TEXT;
 ALTER TABLE deco_commitments ADD COLUMN IF NOT EXISTS committed_at TEXT;
 
 -- Backfill the domain from any existing plaintext before dropping it.
-UPDATE deco_commitments
-   SET domain = NULLIF(SPLIT_PART(SPLIT_PART(url, '://', 2), '/', 1), '')
- WHERE domain IS NULL
-   AND EXISTS (
-     SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'deco_commitments' AND column_name = 'url'
-   );
+-- Dynamic SQL on purpose: a plain UPDATE referencing url fails at PARSE time
+-- once the column is dropped — the runtime EXISTS guard never gets a say — so
+-- an idempotent replay of this file (baseline-drift repair) would error. The
+-- EXECUTE defers parsing until the guard has confirmed the column exists.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_name = 'deco_commitments' AND column_name = 'url'
+  ) THEN
+    EXECUTE $q$
+      UPDATE deco_commitments
+         SET domain = NULLIF(SPLIT_PART(SPLIT_PART(url, '://', 2), '/', 1), '')
+       WHERE domain IS NULL
+    $q$;
+  END IF;
+END $$;
 
 ALTER TABLE deco_commitments DROP COLUMN IF EXISTS url;
 ALTER TABLE deco_commitments DROP COLUMN IF EXISTS selector;

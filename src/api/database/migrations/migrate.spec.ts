@@ -8,6 +8,7 @@ import {
   getPendingMigrations,
   isSchemaPreInitialized,
   listMigrationFiles,
+  repairBaselineDrift,
   runMigrations,
 } from './migrate';
 
@@ -42,9 +43,11 @@ function routeQueries(options: {
   existingTables: string[];
   sentinelPresent: boolean;
   stamped?: string[];
+  executed?: string[];
 }): string[] {
   const existing = new Set(options.existingTables);
   const stamped = options.stamped ?? [];
+  const executed = options.executed ?? [];
 
   mockQuery.mockImplementation(async (text: string, params?: unknown[]) => {
     if (text.includes('CREATE TABLE IF NOT EXISTS schema_migrations')) {
@@ -65,6 +68,12 @@ function routeQueries(options: {
     }
     if (text.includes('SELECT name FROM schema_migrations')) {
       return { rows: stamped.map((name) => ({ name })) };
+    }
+    // Raw migration DDL executed by the baseline path (ALTER-only files) or
+    // by repairBaselineDrift's replay.
+    if (/^\s*(ALTER|CREATE INDEX|DROP|DO)\b/i.test(text)) {
+      executed.push(text);
+      return { rows: [] };
     }
     throw new Error(`Unexpected query in test: ${text}`);
   });
@@ -255,7 +264,12 @@ describe('Migration Runner', () => {
       expect(mockConnect).not.toHaveBeenCalled();
     });
 
-    it('vacuously covers ALTER-only migrations inside the prefix', async () => {
+    it('executes ALTER-only migrations inside the prefix before stamping them', async () => {
+      // The old behavior stamped these as "vacuously covered by schema.sql" —
+      // true only when the snapshot matches the migration tree's vintage. A
+      // database provisioned months earlier was stamped for columns it never
+      // received (the 2026-08-15 beta grace_period_month 500). ALTER-only
+      // files are idempotent by contract, so the baseline now runs them.
       (fs.readdirSync as jest.Mock).mockReturnValue([
         '001_initial_schema.sql',
         '007_user_compliance_identity_fields.sql',
@@ -267,15 +281,20 @@ describe('Migration Runner', () => {
           'ALTER TABLE users ADD COLUMN IF NOT EXISTS legal_name TEXT;',
         '050_behavioral_omega_tables.sql': 'CREATE TABLE IF NOT EXISTS pod_broadcast_log (id UUID);',
       });
+      const executed: string[] = [];
       const stamped = routeQueries({
         existingTables: ['accounts'],
         sentinelPresent: true,
+        executed,
       });
 
       await baselineFromExistingSchema(mockPool);
       expect(stamped).toEqual([
         '001_initial_schema.sql',
         '007_user_compliance_identity_fields.sql',
+      ]);
+      expect(executed).toEqual([
+        'ALTER TABLE users ADD COLUMN IF NOT EXISTS legal_name TEXT;',
       ]);
     });
 
@@ -321,13 +340,21 @@ describe('Migration Runner', () => {
         .mockResolvedValueOnce({ rows: [] }) // ensureMigrationsTable CREATE TABLE
         .mockResolvedValueOnce({ rows: [] }) // tracked getAppliedMigrations (empty)
         .mockResolvedValueOnce({ rows: [{ reg: null }] }) // isSchemaPreInitialized -> fresh DB
-        .mockResolvedValueOnce({ rows: [] }); // getPendingMigrations -> getAppliedMigrations (empty)
+        .mockResolvedValueOnce({ rows: [] }) // getPendingMigrations -> getAppliedMigrations (empty)
+        .mockResolvedValueOnce({
+          // repairBaselineDrift -> getAppliedMigrations (both now applied)
+          rows: [{ name: '001_initial_schema.sql' }, { name: '002_add_index.sql' }],
+        })
+        .mockResolvedValueOnce({ rows: [] }); // repair replays 002 (ALTER-only class)
 
       (fs.readdirSync as jest.Mock).mockReturnValue([
         '001_initial_schema.sql',
         '002_add_index.sql',
       ]);
       (fs.readFileSync as jest.Mock)
+        .mockReturnValueOnce('CREATE TABLE accounts (...);')
+        .mockReturnValueOnce('CREATE INDEX idx_foo ON bar(baz);')
+        // repairBaselineDrift re-reads the applied set
         .mockReturnValueOnce('CREATE TABLE accounts (...);')
         .mockReturnValueOnce('CREATE INDEX idx_foo ON bar(baz);');
 
@@ -353,9 +380,13 @@ describe('Migration Runner', () => {
       mockQuery
         .mockResolvedValueOnce({ rows: [] }) // CREATE TABLE
         .mockResolvedValueOnce({ rows: [{ name: '001_initial_schema.sql' }] }) // tracked (non-empty -> no baseline)
-        .mockResolvedValueOnce({ rows: [{ name: '001_initial_schema.sql' }] }); // getPendingMigrations -> getAppliedMigrations
+        .mockResolvedValueOnce({ rows: [{ name: '001_initial_schema.sql' }] }) // getPendingMigrations -> getAppliedMigrations
+        .mockResolvedValueOnce({ rows: [{ name: '001_initial_schema.sql' }] }); // repairBaselineDrift -> getAppliedMigrations
 
       (fs.readdirSync as jest.Mock).mockReturnValue(['001_initial_schema.sql']);
+      // repairBaselineDrift re-reads the applied file; a CREATE TABLE file is
+      // not replayed, so no further pool queries happen.
+      (fs.readFileSync as jest.Mock).mockReturnValue('CREATE TABLE accounts (id UUID);');
 
       const applied = await runMigrations(mockPool);
       expect(applied).toEqual([]);
@@ -379,6 +410,46 @@ describe('Migration Runner', () => {
       await expect(runMigrations(mockPool)).rejects.toThrow('syntax error');
       expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
       expect(mockClient.release).toHaveBeenCalled();
+    });
+  });
+
+  describe('repairBaselineDrift', () => {
+    it('replays applied ALTER-only migrations and skips table-creating ones', async () => {
+      mockQuery
+        .mockResolvedValueOnce({
+          // getAppliedMigrations: both files tracked
+          rows: [{ name: '001_initial_schema.sql' }, { name: '029_grace_month.sql' }],
+        })
+        .mockResolvedValueOnce({ rows: [] }); // replay of 029's ALTER
+
+      (fs.readdirSync as jest.Mock).mockReturnValue([
+        '001_initial_schema.sql',
+        '029_grace_month.sql',
+      ]);
+      routeMigrationSql({
+        '001_initial_schema.sql': 'CREATE TABLE accounts (id UUID);',
+        '029_grace_month.sql':
+          'ALTER TABLE contracts ADD COLUMN IF NOT EXISTS grace_period_month TEXT;',
+      });
+
+      await expect(repairBaselineDrift(mockPool)).resolves.toEqual(['029_grace_month.sql']);
+      expect(mockQuery).toHaveBeenCalledWith(
+        'ALTER TABLE contracts ADD COLUMN IF NOT EXISTS grace_period_month TEXT;',
+      );
+    });
+
+    it('leaves unapplied files alone', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // getAppliedMigrations: nothing tracked
+
+      (fs.readdirSync as jest.Mock).mockReturnValue(['029_grace_month.sql']);
+      routeMigrationSql({
+        '029_grace_month.sql':
+          'ALTER TABLE contracts ADD COLUMN IF NOT EXISTS grace_period_month TEXT;',
+      });
+
+      await expect(repairBaselineDrift(mockPool)).resolves.toEqual([]);
+      // Only the applied-set lookup happened; nothing was replayed.
+      expect(mockQuery).toHaveBeenCalledTimes(1);
     });
   });
 

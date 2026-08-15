@@ -168,6 +168,15 @@ export async function baselineFromExistingSchema(pool: Pool): Promise<string[]> 
     if (!(await allTablesExist(pool, tables))) {
       break;
     }
+    // ALTER-only files were previously stamped as "vacuously covered by the
+    // schema.sql snapshot" — true only when the snapshot is the same vintage
+    // as the migration tree. A database provisioned months earlier stamps
+    // columns it never received (2026-08-15: grace_period_month on the
+    // March-provisioned beta). Every ALTER-only file is idempotent by
+    // contract, so execute it instead of assuming.
+    if (tables.length === 0) {
+      await pool.query(sql);
+    }
     await pool.query(
       `INSERT INTO ${MIGRATIONS_TABLE} (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
       [file],
@@ -178,6 +187,33 @@ export async function baselineFromExistingSchema(pool: Pool): Promise<string[]> 
     `Baselined ${stamped.length}/${files.length} migration(s) whose schema objects already exist; the rest will execute.`,
   );
   return stamped;
+}
+
+/**
+ * Re-executes every applied migration that creates no tables. Databases
+ * baselined by an earlier version of baselineFromExistingSchema stamped
+ * ALTER-only files without running them (see the comment in that function);
+ * the hole is invisible until a query hits a missing column. Every ALTER-only
+ * file is idempotent by contract (IF NOT EXISTS DDL, fixed-point writes), so
+ * replaying the applied set is a fast no-op on healthy databases and a repair
+ * on drifted ones.
+ */
+export async function repairBaselineDrift(pool: Pool): Promise<string[]> {
+  const appliedSet = await getAppliedMigrations(pool);
+  const repaired: string[] = [];
+  for (const file of listMigrationFiles()) {
+    if (!appliedSet.has(file)) continue;
+    const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf-8');
+    if (extractCreatedTables(sql).length > 0) continue;
+    await pool.query(sql);
+    repaired.push(file);
+  }
+  if (repaired.length > 0) {
+    console.log(
+      `Baseline-drift repair replayed ${repaired.length} ALTER-only applied migration(s).`,
+    );
+  }
+  return repaired;
 }
 
 export async function runMigrations(pool: Pool): Promise<string[]> {
@@ -197,6 +233,7 @@ export async function runMigrations(pool: Pool): Promise<string[]> {
 
   if (pending.length === 0) {
     console.log('No pending migrations.');
+    await repairBaselineDrift(pool);
     return [];
   }
 
@@ -225,6 +262,7 @@ export async function runMigrations(pool: Pool): Promise<string[]> {
     }
   }
 
+  await repairBaselineDrift(pool);
   return applied;
 }
 
