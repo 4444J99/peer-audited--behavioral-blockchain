@@ -22,6 +22,9 @@ jest.mock('../../../services/api-client', () => ({
   api: {
     createContract: jest.fn().mockResolvedValue({ id: 'new-id' }),
     getUserContracts: jest.fn().mockResolvedValue([]),
+    getEndowedProgress: jest.fn().mockResolvedValue({
+      downscaling: { multiplier: 1, reason: 'no downscaling applied' },
+    }),
   },
 }));
 

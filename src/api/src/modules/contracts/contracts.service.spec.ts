@@ -15,6 +15,7 @@ import { AnomalyService } from "../../../services/anomaly/anomaly.service";
 import { SettlementService } from "../payments/settlement.service";
 import {
   OathCategory,
+  ONBOARDING_BONUS_AMOUNT,
   VerificationMethod,
 } from "../../../../shared/libs/behavioral-logic";
 import { Pool } from "pg";
@@ -666,6 +667,159 @@ describe("ContractsService", () => {
       );
       expect(reconcileUpdateCall).toBeDefined();
       expect(mockStripe.cancelHold).toHaveBeenCalledWith("pi_tx_fail_2");
+    });
+  });
+
+  // ── onboarding bonus (DR-005) ───────────────────────────────────
+
+  describe("onboarding bonus (DR-005)", () => {
+    const onboardingLedgerCalls = () =>
+      (mockLedger.recordTransaction as jest.Mock).mock.calls.filter(
+        ([, , , , metadata]) => metadata?.type === "ONBOARDING_BONUS",
+      );
+
+    const onboardingTruthLogCalls = () =>
+      (mockTruthLog.appendEvent as jest.Mock).mock.calls.filter(
+        ([event]) => event === "ONBOARDING_BONUS_GRANTED",
+      );
+
+    // Prior-contract count 0 throughout: a first contract is the only state in
+    // which the grant is eligible at all, so every assertion below isolates the
+    // flag rather than the eligibility rule.
+    const queueSinglePhaseFirstContract = () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // total failures
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "contract-1" }] }); // INSERT contract
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts ACTIVE
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // prior contracts
+    };
+
+    // The transactional path reaches the grant through
+    // runContractCreationActivationSideEffects instead, so it needs its own
+    // coverage — a flag wired at only one of the two call sites still pays the
+    // bonus on every contract created with a pool that supports connect().
+    const queueTwoPhaseFirstContract = () => {
+      mockPool.connect = jest.fn();
+      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // total failures
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // prior contracts
+
+      const phaseAClient = {
+        query: jest
+          .fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockResolvedValueOnce({ rows: [{ id: "contract-tx-1" }] }) // INSERT contract
+          .mockResolvedValueOnce({ rows: [] }), // COMMIT
+        release: jest.fn(),
+      };
+
+      const phaseBClient = {
+        query: jest
+          .fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockResolvedValueOnce({
+            rows: [
+              {
+                id: "contract-tx-1",
+                status: "PENDING_STAKE",
+                payment_intent_id: null,
+              },
+            ],
+          }) // SELECT FOR UPDATE
+          .mockResolvedValueOnce({ rows: [] }) // finalize UPDATE
+          .mockResolvedValueOnce({ rows: [] }), // COMMIT
+        release: jest.fn(),
+      };
+
+      (mockPool.connect as jest.Mock)
+        .mockResolvedValueOnce(phaseAClient)
+        .mockResolvedValueOnce(phaseBClient);
+
+      (mockStripe.holdStake as jest.Mock).mockResolvedValueOnce({
+        id: "pi_tx_bonus_1",
+      });
+    };
+
+    afterEach(() => {
+      delete process.env.STYX_ONBOARDING_BONUS_ENABLED;
+    });
+
+    it("grants nothing on a first contract while the bonus is deferred", async () => {
+      queueSinglePhaseFirstContract();
+
+      await service.createContract(validDto);
+
+      expect(onboardingLedgerCalls()).toHaveLength(0);
+      expect(onboardingTruthLogCalls()).toHaveLength(0);
+    });
+
+    it("grants the full bonus when the bonus is reinstated", async () => {
+      process.env.STYX_ONBOARDING_BONUS_ENABLED = "true";
+      queueSinglePhaseFirstContract();
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "escrow-acct" }] }); // SYSTEM_ESCROW
+
+      await service.createContract(validDto);
+
+      expect(onboardingLedgerCalls()).toEqual([
+        [
+          "escrow-acct",
+          "acct-1",
+          ONBOARDING_BONUS_AMOUNT,
+          "contract-1",
+          { type: "ONBOARDING_BONUS", userId: "user-1" },
+        ],
+      ]);
+      expect(onboardingTruthLogCalls()).toEqual([
+        [
+          "ONBOARDING_BONUS_GRANTED",
+          {
+            userId: "user-1",
+            amount: ONBOARDING_BONUS_AMOUNT,
+            contractId: "contract-1",
+          },
+        ],
+      ]);
+    });
+
+    it("grants nothing on the transactional path while the bonus is deferred", async () => {
+      queueTwoPhaseFirstContract();
+
+      await service.createContract(validDto);
+
+      expect(onboardingLedgerCalls()).toHaveLength(0);
+      expect(onboardingTruthLogCalls()).toHaveLength(0);
+    });
+
+    it("grants the full bonus on the transactional path when reinstated", async () => {
+      process.env.STYX_ONBOARDING_BONUS_ENABLED = "true";
+      queueTwoPhaseFirstContract();
+
+      await service.createContract(validDto);
+
+      expect(onboardingLedgerCalls()).toEqual([
+        [
+          "escrow-acct",
+          "acct-1",
+          ONBOARDING_BONUS_AMOUNT,
+          "contract-tx-1",
+          expect.objectContaining({
+            type: "ONBOARDING_BONUS",
+            userId: "user-1",
+          }),
+        ],
+      ]);
+      expect(onboardingTruthLogCalls()).toEqual([
+        [
+          "ONBOARDING_BONUS_GRANTED",
+          expect.objectContaining({
+            userId: "user-1",
+            amount: ONBOARDING_BONUS_AMOUNT,
+            contractId: "contract-tx-1",
+          }),
+        ],
+      ]);
     });
   });
 

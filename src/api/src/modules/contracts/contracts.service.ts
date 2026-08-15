@@ -22,7 +22,10 @@ import { StripeFBOService as RealStripeFBOService } from "../payments/stripe-fbo
 import { SettlementService } from "../payments/settlement.service";
 import { buildSettlementQuote } from "../payments/settlement-quote";
 import { DisputeService } from "../../../services/escrow/dispute.service";
-import { isAppealFeeEnabled } from "../../../services/billing";
+import {
+  isAppealFeeEnabled,
+  isOnboardingBonusEnabled,
+} from "../../../services/billing";
 import { FuryRouterService } from "../../../services/fury-router/fury-router.service";
 import { AegisProtocolService } from "../../../services/health/aegis.service";
 import { RecoveryProtocolService } from "../../../services/health/recovery-protocol.service";
@@ -1074,10 +1077,16 @@ export class ContractsService {
     );
     const escrowAccountId = escrowResult.rows[0]?.id ?? null;
 
+    // DR-005: the onboarding bonus is deferred for the beta cohort. When the
+    // flag is off every money-shaped step below is skipped rather than run at a
+    // zero amount — recordTransaction rejects a non-positive amount, so a zeroed
+    // bonus would throw here and dead-letter every first contract to
+    // RECONCILE_REQUIRED. See isOnboardingBonusEnabled.
+    const bonusEnabled = isOnboardingBonusEnabled();
     const bonus = grantOnboardingBonus(
       Number(priorContracts.rows[0]?.count ?? 0),
     );
-    if (bonus.granted && user.account_id && escrowAccountId) {
+    if (bonusEnabled && bonus.granted && user.account_id && escrowAccountId) {
       const bonusLedgerKey = `${baseKey}:ledger:onboarding-bonus`;
       if (
         !(await this.hasContractLedgerSideEffect(contractId, bonusLedgerKey))
@@ -1763,13 +1772,15 @@ export class ContractsService {
       );
     }
 
-    // 7. Check for onboarding bonus (first contract)
+    // 7. Check for onboarding bonus (first contract). Deferred for the beta
+    //    cohort by DR-005 — same skip-the-grant treatment as the two-phase path
+    //    above; see isOnboardingBonusEnabled.
     const priorContracts = await this.pool.query(
       `SELECT COUNT(*) as count FROM contracts WHERE user_id = $1 AND id != $2`,
       [dto.userId, contractId],
     );
     const bonus = grantOnboardingBonus(Number(priorContracts.rows[0].count));
-    if (bonus.granted && user.account_id) {
+    if (isOnboardingBonusEnabled() && bonus.granted && user.account_id) {
       const escrowCheck = await this.pool.query(
         `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
       );

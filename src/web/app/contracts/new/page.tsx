@@ -2,12 +2,17 @@
 
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Flame, ArrowLeft, Loader2, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { Flame, ArrowLeft, Info, Loader2, ShieldCheck, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '../../../services/api-client';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getAllowedTiers, getDisplayTier, getTierMaxStake } from '../../../../shared/libs/integrity';
 import { getRealmBySlug } from '../../../../shared/libs/realm-registry';
+import {
+  deriveStakeGuidance,
+  findMostRecentActiveContract,
+  type DownscalingSignal,
+} from '../../../lib/stake-guidance';
 
 const OATH_CATEGORIES = [
   // { value: 'BIOLOGICAL_WEIGHT', label: 'Weight Management', stream: 'Biological' },
@@ -116,6 +121,7 @@ function NewContractPageContent() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [failureCount, setFailureCount] = useState<number | null>(null);
+  const [downscaling, setDownscaling] = useState<DownscalingSignal | null>(null);
 
   // Recovery stream fields
   const [apEmail, setApEmail] = useState('');
@@ -152,6 +158,9 @@ function NewContractPageContent() {
   const totalEntryUsd = selectedStakeUsd + platformFeeUsd;
   const requiresKyc = selectedStakeUsd > 0 && requiresCreateContractKyc(selectedStakeUsd);
   const canStake = maxStakeUsd >= MIN_STAKE_USD;
+  // Read-only: the behavioral engine's downscale is shown next to the amount,
+  // never applied to it. See lib/stake-guidance.ts for why.
+  const stakeGuidance = deriveStakeGuidance(downscaling, selectedStakeUsd);
   const displayTier = getDisplayTier(integrityScore).replace(/_/g, ' ');
   const failureLimitCopy = effectiveFailureCount == null
     ? 'Server checks failure history again at submit.'
@@ -169,9 +178,23 @@ function NewContractPageContent() {
 
     api.getUserContracts()
       .then((contracts) => {
-        if (cancelled) return;
+        if (cancelled) return undefined;
         const failedContracts = contracts.filter((contract) => contract.status === 'FAILED').length;
         setFailureCount(failedContracts);
+
+        // The endowed-progress downscale is contract-scoped, so guidance for
+        // this new contract is read off the one the user is currently running.
+        const activeContract = findMostRecentActiveContract(contracts);
+        if (!activeContract) return undefined;
+
+        return api.getEndowedProgress(activeContract.id)
+          .then((progress) => {
+            if (!cancelled) setDownscaling(progress.downscaling);
+          })
+          .catch(() => {
+            // Guidance is advisory: losing it must not disturb the failure-count
+            // fallback below, which is a real safety limit.
+          });
       })
       .catch(() => {
         if (!cancelled) {
@@ -390,6 +413,23 @@ function NewContractPageContent() {
                 </span>
               </label>
             </div>
+
+            {stakeGuidance && (
+              <div className="flex items-start gap-3 rounded-lg border border-sky-900 bg-sky-950/30 p-3">
+                <Info size={16} className="mt-0.5 shrink-0 text-sky-400" />
+                <div className="text-xs text-sky-200">
+                  <p className="font-bold uppercase tracking-widest text-sky-300">Behavioral guidance</p>
+                  <p className="mt-1">
+                    Your active contract is carrying a {stakeGuidance.reductionPercent}% downscale
+                    ({stakeGuidance.reason}). At that factor this stake would be{' '}
+                    {formatMoney(stakeGuidance.suggestedStakeUsd)}.
+                  </p>
+                  <p className="mt-1 text-sky-400">
+                    Guidance only — you stake {formatMoney(selectedStakeUsd)} unless you change it yourself.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-col gap-3 border-t border-neutral-800 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-neutral-500">

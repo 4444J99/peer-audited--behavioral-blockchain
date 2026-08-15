@@ -1,4 +1,8 @@
-import { processIAP, TICKET_PRICE_BASE } from './billing';
+import {
+  isOnboardingBonusEnabled,
+  processIAP,
+  TICKET_PRICE_BASE,
+} from './billing';
 
 describe('processIAP', () => {
   let mockPool: { query: jest.Mock };
@@ -128,5 +132,35 @@ describe('processIAP', () => {
 
     expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
     expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe('isOnboardingBonusEnabled', () => {
+  const original = process.env.STYX_ONBOARDING_BONUS_ENABLED;
+
+  afterEach(() => {
+    if (original === undefined) {
+      delete process.env.STYX_ONBOARDING_BONUS_ENABLED;
+    } else {
+      process.env.STYX_ONBOARDING_BONUS_ENABLED = original;
+    }
+  });
+
+  it('defaults OFF when unset (DR-005 beta cohort)', () => {
+    delete process.env.STYX_ONBOARDING_BONUS_ENABLED;
+
+    expect(isOnboardingBonusEnabled()).toBe(false);
+  });
+
+  it('is reinstated only by an explicit true', () => {
+    process.env.STYX_ONBOARDING_BONUS_ENABLED = 'TRUE';
+    expect(isOnboardingBonusEnabled()).toBe(true);
+
+    // Anything else stays off: a stray or truthy-looking value must not
+    // silently reinstate a grant that moves money.
+    for (const value of ['false', '1', 'yes', '']) {
+      process.env.STYX_ONBOARDING_BONUS_ENABLED = value;
+      expect(isOnboardingBonusEnabled()).toBe(false);
+    }
   });
 });

@@ -144,7 +144,24 @@ The $5.00 endowed-progress onboarding bonus is **removed for the beta cohort**.
 
 Same shape as DR-004: deferred, not deleted.
 
-**Not yet implemented.** See [Open implementation](#open-implementation-of-decided-policy).
+**In force since 2026-08-15.** `isOnboardingBonusEnabled()` in
+`src/api/services/billing.ts` gates the grant at both call sites in
+`contracts.service.ts` — the transactional activation side effects and the
+non-transactional fallback path. It defaults off and
+`STYX_ONBOARDING_BONUS_ENABLED=true` reinstates the $5 credit. With the flag off a
+first contract posts no `ONBOARDING_BONUS` ledger entry and emits no
+`ONBOARDING_BONUS_GRANTED` truth-log event.
+
+The zeroing trap is the same as DR-004's and one step sharper:
+`LedgerService.recordTransaction` rejects a non-positive amount, so setting
+`ONBOARDING_BONUS_AMOUNT` to 0 would throw inside contract-creation side effects
+and dead-letter every first contract to `RECONCILE_REQUIRED`. The flag skips the
+grant instead.
+
+The user-facing `+$5.00` line in `OnboardingWizard.tsx` is gone for the same
+reason DR-004 removed the appeal-fee price from its button label: the client
+cannot see the server flag, so any hardcoded figure is a promise the cohort does
+not receive.
 
 ---
 
@@ -246,8 +263,9 @@ index entry, no strategy attached) was simply corrected.
 
 ## Open implementation of decided policy
 
-DR-005 is decided but not built. It is not a one-line change, which is why it is
-named here rather than quietly deferred.
+Empty as of 2026-08-15: every decision above is now in force in code. The two
+entries below are kept because each estimate was wrong in a way worth more than
+the estimate.
 
 ### ~~DR-004 — free appeals~~ — **built 2026-07-31**
 
@@ -266,15 +284,20 @@ saved Stripe customer, which would have denied free appeals to exactly the peopl
 they were for. Estimating from the service that charges the fee missed the caller
 that gates it.
 
-### DR-005 — no onboarding bonus
+### ~~DR-005 — no onboarding bonus~~ — **built 2026-08-15**
 
-`grantOnboardingBonus` (`src/shared/libs/behavioral-logic.ts:231`) is called from
-two paths in `contracts.service.ts` (`:1045`, `:1675`), each posting a
-`ONBOARDING_BONUS_AMOUNT` ledger credit. Suppressing the grant is contained, but
-it interacts with divergence 2 above and with `endowed-progress.service.ts`, whose
-whole premise is artificial initial advancement. Removing the money without
-deciding what happens to the endowed-progress mechanic leaves a behavioral feature
-half-wired — the failure mode Circle 5 already documented twice.
+What shipped is under DR-005 above. The scoping error worth recording: this was
+held open on the belief that suppressing the grant would leave
+`endowed-progress.service.ts` half-wired, because "its whole premise is artificial
+initial advancement." That service grants no money at all — it computes a display
+boost and a downscaling multiplier, both read-only. The two mechanics share a name
+and nothing else, so the money decision was never coupled to the behavioral one.
+
+The real coupling was elsewhere and was not predicted: `grantOnboardingBonus` is
+called from **two** paths in `contracts.service.ts`, the transactional one and the
+non-transactional fallback, and only one of them is idempotent. A flag wired at a
+single call site would have looked correct in review and still paid the bonus on
+every contract created through a pool that supports `connect()`.
 
 ---
 
