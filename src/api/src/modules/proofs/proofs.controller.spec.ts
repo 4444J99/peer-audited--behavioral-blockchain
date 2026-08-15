@@ -100,6 +100,9 @@ describe('ProofsController', () => {
         uploadUrl: 'https://r2.example/upload',
         storageKey: 'proofs/proof-1.mp4',
         expiresInSeconds: 300,
+        // The capture nonce is issued HERE, server-side, so that a later
+        // NATIVE_CAMERA claim has something only this server could have given it.
+        captureNonce: expect.any(String),
       });
 
       // The INSERT must name columns that actually exist on `proofs`
@@ -180,6 +183,96 @@ describe('ProofsController', () => {
     // Client-asserted biometric fields are intentionally no longer trusted/persisted.
     const dto = { storageKey: 'proofs/p1' };
 
+    // Capture provenance (TKT-P0-002). The product's authority is
+    // verifiability, and until now nothing recorded whether a camera produced a
+    // proof at all — today's mobile path base64-encodes JSON behind a
+    // data:video/mp4 prefix. capture_verified is asserted by the SERVER against
+    // a nonce it issued; a client cannot talk its way into it.
+    describe('capture provenance', () => {
+      const primeConfirm = (issuedNonce: string | null) => {
+        mockProofsService.getProofUploadConfirmationAccess.mockResolvedValue({
+          status: 'PENDING_UPLOAD',
+          contractId: 'c-1',
+          ownerUserId: 'user-1',
+        } as any);
+        mockR2.downloadFile.mockResolvedValue(Buffer.from('fake-media'));
+        mockAnomaly.analyze.mockResolvedValue({ rejected: false, flags: [] });
+        mockPhash.computeFrameHash.mockResolvedValue('hash-123');
+        mockPhash.isDuplicate.mockResolvedValue({ duplicate: false, closestDistance: 64 });
+        mockPool.query.mockImplementation((sql: string) => {
+          if (/SELECT capture_nonce/.test(sql)) {
+            return Promise.resolve({ rows: [{ capture_nonce: issuedNonce }] });
+          }
+          return Promise.resolve({ rows: [] });
+        });
+      };
+
+      const finalizeArgs = () => {
+        const call = mockPool.query.mock.calls.find((c: any[]) =>
+          /UPDATE proofs[\s\S]*capture_source/.test(String(c[0])),
+        );
+        expect(call).toBeDefined();
+        return call![1] as any[];
+      };
+
+      it('marks a native capture verified only when it echoes the issued nonce', async () => {
+        primeConfirm('server-issued-nonce');
+
+        await controller.confirmUpload('p-1', user, {
+          storageKey: 'proofs/p1',
+          captureSource: 'NATIVE_CAMERA',
+          captureNonce: 'server-issued-nonce',
+        } as any);
+
+        const args = finalizeArgs();
+        expect(args).toContain('NATIVE_CAMERA');
+        expect(args).toContain(true);
+      });
+
+      it('refuses to verify a native claim whose nonce does not match, and flags it', async () => {
+        primeConfirm('server-issued-nonce');
+
+        const result = await controller.confirmUpload('p-1', user, {
+          storageKey: 'proofs/p1',
+          captureSource: 'NATIVE_CAMERA',
+          captureNonce: 'attacker-guessed-nonce',
+        } as any);
+
+        const args = finalizeArgs();
+        expect(args).toContain('NATIVE_CAMERA');
+        expect(args).toContain(false);
+        expect(result.flags).toContain('CAPTURE_NONCE_MISMATCH');
+      });
+
+      it('records the synthetic beta path as synthetic, flagged and never verified', async () => {
+        primeConfirm('server-issued-nonce');
+
+        const result = await controller.confirmUpload('p-1', user, {
+          storageKey: 'proofs/p1',
+          captureSource: 'SYNTHETIC_BETA',
+          captureNonce: 'server-issued-nonce',
+        } as any);
+
+        const args = finalizeArgs();
+        expect(args).toContain('SYNTHETIC_BETA');
+        expect(args).toContain(false);
+        expect(result.flags).toContain('SYNTHETIC_CAPTURE');
+      });
+
+      it('records an unreported source as UNKNOWN rather than assuming either answer', async () => {
+        primeConfirm('server-issued-nonce');
+
+        const result = await controller.confirmUpload('p-1', user, {
+          storageKey: 'proofs/p1',
+        } as any);
+
+        const args = finalizeArgs();
+        expect(args).toContain(null);
+        expect(args).toContain(false);
+        expect(result.flags).toContain('CAPTURE_SOURCE_UNKNOWN');
+      });
+    });
+
     it('should finalize proof with anomaly flags (no client biometric data persisted)', async () => {
       mockProofsService.getProofUploadConfirmationAccess.mockResolvedValue({
         status: 'PENDING_UPLOAD',
@@ -200,7 +293,15 @@ describe('ProofsController', () => {
       // Finalize UPDATE now only persists storageKey, proofId, anomaly flags and device metadata.
       expect(mockPool.query).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE proofs'),
-        expect.arrayContaining([expect.any(String), 'p-1', '["EXIF_TIMESTAMP_DISCREPANCY"]', '{}'])
+        expect.arrayContaining(['p-1', '{}'])
+      );
+      // Anomaly flags now also carry capture provenance; the EXIF flag survives
+      // alongside the unknown-source flag rather than being replaced by it.
+      const finalize = mockPool.query.mock.calls.find((c: any[]) =>
+        /UPDATE proofs[\s\S]*capture_source/.test(String(c[0])),
+      );
+      expect(JSON.parse(String((finalize![1] as any[])[2]))).toEqual(
+        expect.arrayContaining(['EXIF_TIMESTAMP_DISCREPANCY']),
       );
     });
 

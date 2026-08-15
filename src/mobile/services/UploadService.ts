@@ -41,7 +41,7 @@ export class UploadService {
     contractId: string,
     fileType: string,
     description?: string,
-  ): Promise<{ uploadUrl: string; proofId: string; storageKey: string }> {
+  ): Promise<{ uploadUrl: string; proofId: string; storageKey: string; captureNonce?: string }> {
     console.log(`UploadService: Requesting Pre-Signed URL for ${fileType} (contract=${contractId})...`);
 
     const token = await SessionService.getToken();
@@ -103,7 +103,21 @@ export class UploadService {
   /**
    * Notifies the Styx API that the upload is complete, dispatching the job to the BullMQ Fury Router.
    */
-  static async confirmUpload(proofId: string, storageKey: string): Promise<boolean> {
+  /**
+   * @param captureSource How the media was produced. This client's Phase-1 path
+   *   is SYNTHETIC_BETA and says so: the server flags it, and a proof that
+   *   cannot say where it came from is worth less than one that admits it was
+   *   a placeholder. Never report NATIVE_CAMERA for a fabricated capture — the
+   *   server would still refuse to mark it verified without the issued nonce,
+   *   but the lie would be recorded as the proof's provenance.
+   * @param captureNonce The nonce returned by requestPreSignedUrl, echoed back.
+   */
+  static async confirmUpload(
+    proofId: string,
+    storageKey: string,
+    captureSource: 'NATIVE_CAMERA' | 'SYNTHETIC_BETA' = 'SYNTHETIC_BETA',
+    captureNonce?: string,
+  ): Promise<boolean> {
     console.log(`UploadService: Confirming upload for Proof [${proofId}]. Dispatching to Fury Router...`);
 
     const token = await SessionService.getToken();
@@ -113,7 +127,7 @@ export class UploadService {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ storageKey }),
+      body: JSON.stringify({ storageKey, captureSource, captureNonce }),
     });
 
     if (!res.ok) {
