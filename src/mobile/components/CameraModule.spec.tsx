@@ -89,9 +89,14 @@ describe('CameraModule', () => {
         expect.stringContaining('data:video/mp4;base64,'),
         'https://r2.example.com/upload',
       );
+      // The client declares its capture source rather than letting the server
+      // guess: this build's path is synthetic, and saying so is what lets the
+      // server flag it instead of recording an unknown origin.
       expect(UploadService.confirmUpload).toHaveBeenCalledWith(
         'proof_123',
         'proofs/proof_123/video.mp4',
+        'SYNTHETIC_BETA',
+        undefined,
       );
       expect(ApiClient.submitProof).toHaveBeenCalledWith('contract-1', {
         mediaUri: 'proofs/proof_123/video.mp4',

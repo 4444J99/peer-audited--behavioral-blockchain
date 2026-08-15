@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Param, Body, Headers, UseGuards, BadRequestException, ConflictException, ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { timingSafeEqual } from 'crypto';
+import { timingSafeEqual, randomBytes } from 'crypto';
 import { Pool } from 'pg';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { BannedUserGuard } from '../../guards/banned-user.guard';
@@ -114,7 +114,18 @@ export class ProofsController {
       }
     }
 
-    return { proofId, uploadUrl, storageKey: key, expiresInSeconds: 300 };
+    // Issue the capture nonce here, server-side, and persist it. The mobile
+    // client already generated a nonce of its own (Date.now + Math.random) and
+    // stamped it into the watermark — but a value the client both mints and
+    // presents proves nothing. Only a nonce the SERVER issued and can compare
+    // against turns "this claims to be a live capture" into a checkable claim.
+    const captureNonce = randomBytes(16).toString('hex');
+    await this.pool.query(
+      `UPDATE proofs SET capture_nonce = $1 WHERE id = $2`,
+      [captureNonce, proofId],
+    );
+
+    return { proofId, uploadUrl, storageKey: key, expiresInSeconds: 300, captureNonce };
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
@@ -257,6 +268,36 @@ export class ProofsController {
       );
     }
 
+    // Capture provenance. `capture_verified` is asserted by the SERVER, never
+    // reported by the client: a claim of NATIVE_CAMERA only counts when the
+    // proof echoes the nonce this server issued at upload-url time. Everything
+    // else — a synthetic beta capture, a missing source, a wrong nonce — is
+    // recorded as what it is and flagged, so an unverified proof can never read
+    // as a verified one downstream.
+    const issued = await this.pool.query(
+      `SELECT capture_nonce FROM proofs WHERE id = $1`,
+      [proofId],
+    );
+    const issuedNonce: string | null = issued.rows[0]?.capture_nonce ?? null;
+    const nonceMatches =
+      !!issuedNonce &&
+      !!dto.captureNonce &&
+      dto.captureNonce.length === issuedNonce.length &&
+      timingSafeEqual(Buffer.from(dto.captureNonce), Buffer.from(issuedNonce));
+
+    const captureSource = dto.captureSource ?? null;
+    const captureVerified = captureSource === 'NATIVE_CAMERA' && nonceMatches;
+
+    if (captureSource === 'SYNTHETIC_BETA') {
+      // The disclosed Phase-1 path. Flagged, not rejected — but never silent.
+      combinedFlags.push('SYNTHETIC_CAPTURE');
+    } else if (captureSource === null) {
+      combinedFlags.push('CAPTURE_SOURCE_UNKNOWN');
+    } else if (!nonceMatches) {
+      // Claims a live capture but cannot echo the nonce it was issued.
+      combinedFlags.push('CAPTURE_NONCE_MISMATCH');
+    }
+
     // 3. Finalize Proof with Anomaly Metadata.
     // Client-asserted biometric verification is NOT trusted: a client could set
     // biometricVerified/biometricType arbitrarily. These are only meaningful when
@@ -267,13 +308,17 @@ export class ProofsController {
            media_uri = $1,
            uploaded_at = NOW(),
            anomaly_flags = $3,
-           device_metadata = $4
+           device_metadata = $4,
+           capture_source = $5,
+           capture_verified = $6
        WHERE id = $2`,
       [
         dto.storageKey,
         proofId,
         JSON.stringify(combinedFlags),
         JSON.stringify(dto.deviceMetadata || {}),
+        captureSource,
+        captureVerified,
       ],
     );
 
