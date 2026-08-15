@@ -153,7 +153,9 @@ Two things to say honestly if someone asks:
 The snapshot refuses writes by design. When a remote tester needs to create a contract,
 attest, or drive any real interaction, use the **Render beta** — the same app and API,
 hosted, seeded with the same synthetic personas, tour on every route. **The beta is live
-(launched and 47/47-route verified 2026-08-15)**, and it re-verifies its own database
+(launched 2026-08-15, and 51/51-route verified with ZERO skips after the full-build
+program landed the partner, compliance-artifact, collusion-admin and whistleblower
+surfaces)**, and it re-verifies its own database
 contract on every boot: the API service's start command runs migrations (including the
 baseline-drift repair) and the idempotent seeder (`scripts/demo/seed-beta.mjs`, password
 bind included) before starting the app — so a dead or drifted database heals on the next
@@ -175,9 +177,23 @@ per service — the boot-path seeding above does the database half automatically
 verification without CI: `npm run beta:verify` with `STYX_BETA_WEB_URL` and
 `STYX_DEMO_PASSWORD` set.)
 
+**A deploy that ADDS A ROUTE needs the build cache cleared.** Turbo caches the web
+build, and a cache hit serves a bundle that predates the new page — the route then 404s
+in production while the file is demonstrably on `main`, and every other route works. Seen
+2026-08-15: `/admin/collusion` 404'd through two ordinary redeploys of the correct commit
+and appeared immediately on a `clearCache: "clear"` deploy. Add `--clear-cache` (CLI) or
+`{"clearCache":"clear"}` (REST) whenever the diff adds a file under `src/web/app/`.
+
+**Verify auth-gated routes SIGNED IN, never with bare curl.** Everything under
+`/dashboard`, `/admin`, `/partner`, `/contracts` (see `src/web/proxy.ts`'s
+`PROTECTED_PATHS`) redirects an unauthenticated request to `/login` — which `curl -L`
+reports as **200**. An unauthenticated probe of a protected route can only ever prove the
+gate works; it cannot tell a live page from a missing one. `npm run beta:verify` is the
+honest check, and it is what caught the stale-cache 404 that curl had called healthy.
+
 What the tester needs from you: the beta web URL (it lives in the Render dashboard and in
 the repo's `beta` environment secrets — deliberately not printed in this public file), one
-account (`river@demo.styx.protocol` covers 40 of 48 tour chapters), and the demo password —
+account (`river@demo.styx.protocol` covers most of the 51 tour chapters), and the demo password —
 **spoken, never written**. The password is minted locally and stored in
 `artifacts/styx-beta.env` (gitignored, 0600); the same value lives in the `BETA_DEMO_PASSWORD`
 environment secret, and the `seed_beta` job is what keeps the two from drifting.
