@@ -21,6 +21,9 @@ COPY src/shared ./src/shared
 # Build Next.js
 WORKDIR /app/src/web
 ENV NEXT_TELEMETRY_DISABLED=1
+# Selects output:'standalone' in next.config.js — the runner stage below copies
+# .next/standalone and runs server.js, which only exist in standalone mode.
+ENV STYX_DOCKER_BUILD=true
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_WEB_URL
 ARG NEXT_PUBLIC_STYX_ENV_LABEL
