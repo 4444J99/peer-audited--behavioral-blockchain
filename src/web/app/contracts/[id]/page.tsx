@@ -5,9 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, Clock, CheckCircle, XCircle, Loader2, AlertTriangle,
-  Send, Calendar, Shield, FileText,
+  Send, Calendar, Shield, FileText, UserPlus,
 } from 'lucide-react';
 import { api } from '../../../services/api-client';
+import type { AccountabilityStatus } from '../../../services/api-client';
 import { useAuth } from '../../../contexts/AuthContext';
 import RecoveryLockCountdown from '../../../components/RecoveryLockCountdown';
 import DangerZoneBanner from '../../../components/DangerZoneBanner';
@@ -72,6 +73,12 @@ export default function ContractDetailPage() {
   const [disputeLoading, setDisputeLoading] = useState(false);
   const [disputeResult, setDisputeResult] = useState<string | null>(null);
 
+  // Accountability partner (owner side)
+  const [partnerStatus, setPartnerStatus] = useState<AccountabilityStatus | null>(null);
+  const [partnerEmail, setPartnerEmail] = useState('');
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteResult, setInviteResult] = useState<string | null>(null);
+
   useEffect(() => {
     if (authLoading || !authUser) return;
     async function load() {
@@ -79,6 +86,9 @@ export default function ContractDetailPage() {
         const contractData = await api.getContract(contractId);
         setContract(contractData as any);
         setProofs(contractData.proofs as any || []);
+        // A contract with no partners is the normal case, not an error — the
+        // roster stays null and the panel renders its invite form.
+        setPartnerStatus(await api.getAccountabilityStatus(contractId).catch(() => null));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load contract');
       } finally {
@@ -136,6 +146,22 @@ export default function ContractDetailPage() {
       setDisputeResult(err instanceof Error ? err.message : 'Failed to file dispute');
     } finally {
       setDisputeLoading(false);
+    }
+  };
+
+  const handleInvitePartner = async () => {
+    if (!partnerEmail.trim()) return;
+    setInviteLoading(true);
+    setInviteResult(null);
+    try {
+      await api.invitePartner(contractId, partnerEmail.trim());
+      setPartnerEmail('');
+      setInviteResult('Invitation sent. They accept it from their partner page.');
+      setPartnerStatus(await api.getAccountabilityStatus(contractId).catch(() => partnerStatus));
+    } catch (err) {
+      setInviteResult(err instanceof Error ? err.message : 'Failed to invite partner');
+    } finally {
+      setInviteLoading(false);
     }
   };
 
@@ -375,6 +401,73 @@ export default function ContractDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Accountability Partner — owner side of the partner protocol */}
+      <div className="mt-8 p-6 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-4">
+        <h2 className="font-bold text-sm uppercase tracking-widest text-neutral-500">
+          Accountability Partner
+        </h2>
+
+        {partnerStatus && partnerStatus.partners.length > 0 ? (
+          <div className="space-y-2">
+            {partnerStatus.partners.map((partner) => (
+              <div
+                key={`${partner.partner_user_id}-${partner.email}`}
+                className="flex items-center justify-between p-3 bg-black rounded-xl border border-neutral-800"
+              >
+                <p className="font-bold text-sm break-all">{partner.email}</p>
+                <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                  partner.status === 'ACTIVE' ? 'bg-green-900/30 text-green-400' :
+                  partner.status === 'PENDING' ? 'bg-blue-900/30 text-blue-400' :
+                  'bg-red-900/30 text-red-400'
+                }`}>
+                  {partner.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-neutral-500">
+            No partner on this contract. A partner co-signs your daily attestations.
+          </p>
+        )}
+
+        <div className="space-y-3">
+          <input
+            type="email"
+            value={partnerEmail}
+            onChange={(e) => setPartnerEmail(e.target.value)}
+            placeholder="partner@example.com"
+            className="w-full px-4 py-3 bg-black border border-neutral-700 rounded-xl text-white placeholder-neutral-600 focus:outline-none focus:border-red-600"
+          />
+          <button
+            onClick={handleInvitePartner}
+            disabled={inviteLoading || !partnerEmail.trim()}
+            className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+          >
+            {inviteLoading ? <Loader2 className="animate-spin" size={16} /> : <UserPlus size={16} />}
+            Invite Partner
+          </button>
+          {inviteResult && <p className="text-sm text-neutral-400">{inviteResult}</p>}
+        </div>
+
+        {partnerStatus && partnerStatus.history.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-xs uppercase tracking-widest text-neutral-500">Partner Ledger</h3>
+            {partnerStatus.history.map((event) => (
+              <div
+                key={event.id}
+                className="flex items-center justify-between p-3 bg-black rounded-xl border border-neutral-800"
+              >
+                <span className="text-sm font-bold">{event.event_type.replace(/_/g, ' ')}</span>
+                <span className="text-xs text-neutral-500">
+                  {event.created_at ? new Date(event.created_at).toLocaleString() : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

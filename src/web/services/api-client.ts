@@ -256,6 +256,61 @@ export interface VerdictDto {
   flagged?: boolean;
 }
 
+/** A PENDING accountability_partners row joined to the contract it covers. */
+export interface PartnerInvitation {
+  id: string;
+  contract_id: string;
+  partner_user_id: string | null;
+  partner_email: string | null;
+  status: string;
+  invited_at: string | null;
+  accepted_at: string | null;
+  oath_category: string;
+  stake_amount: string;
+  owner_email: string;
+}
+
+/** An ACTIVE partnership from the partner's side of the relationship. */
+export interface Partnership {
+  id: string;
+  contract_id: string;
+  status: string;
+  accepted_at: string | null;
+  oath_category: string;
+  stake_amount: string;
+  ends_at: string | null;
+  contract_status: string;
+  owner_email: string;
+}
+
+/** A partner_checkins row, serialized by AccountabilityPartnerService. */
+export interface PartnerCheckIn {
+  id: string;
+  contractId: string;
+  partnerId: string;
+  type: "SCHEDULED" | "EMERGENCY" | "STREAK_MILESTONE";
+  status: "PENDING" | "COMPLETED" | "MISSED" | "ESCALATED";
+  scheduledAt: string;
+  completedAt?: string;
+  message?: string;
+}
+
+export interface AccountabilityStatus {
+  partners: Array<{
+    email: string;
+    status: string;
+    partner_user_id: string;
+  }>;
+  history: Array<{
+    id: string;
+    contract_id: string;
+    actor_id: string;
+    event_type: string;
+    payload: Record<string, unknown> | null;
+    created_at: string;
+  }>;
+}
+
 export interface LeaderboardEntry {
   id: string;
   email: string;
@@ -811,6 +866,72 @@ export const api = {
   submitAttestation: (contractId: string) =>
     request<{ status: string }>(`/contracts/${contractId}/attestation`, {
       method: "POST",
+    }),
+
+  // Accountability partners (TKT-P1-017). The endpoints were guarded and
+  // tested server-side with no web caller at all; these are their first
+  // browser surface. Routes mirror the mobile ApiClient where both exist.
+  getPartnerInvitations: () =>
+    request<PartnerInvitation[]>("/contracts/invitations"),
+
+  getPartnerships: () => request<Partnership[]>("/contracts/partnerships"),
+
+  // Accepting goes through /partner/accept rather than
+  // /accountability/respond: it also claims an email-only invitation by
+  // stamping partner_user_id, which the respond path requires to already
+  // be set. Declining has no equivalent, so it uses respond.
+  acceptPartnerInvitation: (contractId: string) =>
+    request<{ status: string }>(`/contracts/${contractId}/partner/accept`, {
+      method: "POST",
+    }),
+
+  respondToPartnerInvite: (contractId: string, accept: boolean) =>
+    request<{ success: boolean; status: string }>(
+      `/contracts/${contractId}/accountability/respond`,
+      {
+        method: "POST",
+        body: JSON.stringify({ accept }),
+      },
+    ),
+
+  cosignAttestation: (contractId: string) =>
+    request<{ status: string }>(`/contracts/${contractId}/attestation/cosign`, {
+      method: "POST",
+    }),
+
+  vetoRecoveryBreak: (contractId: string) =>
+    request<{ success: boolean; message: string }>(
+      `/contracts/${contractId}/recovery/veto-break`,
+      {
+        method: "POST",
+      },
+    ),
+
+  invitePartner: (contractId: string, email: string) =>
+    request<{ success: boolean; partnerId: string }>(
+      `/contracts/${contractId}/accountability/invite`,
+      {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      },
+    ),
+
+  getAccountabilityStatus: (contractId: string) =>
+    request<AccountabilityStatus>(
+      `/contracts/${contractId}/accountability/status`,
+    ),
+
+  // Behavioral-retention check-ins. Both endpoints authorize either
+  // participant, so the partner and the owner reach the same thread.
+  getPartnerCheckIns: (contractId: string, limit?: number) =>
+    request<PartnerCheckIn[]>(
+      `/behavioral/retention/partners/check-ins/${contractId}${limit ? `?limit=${limit}` : ""}`,
+    ),
+
+  completePartnerCheckIn: (checkInId: string, message: string) =>
+    request<PartnerCheckIn>("/behavioral/retention/partners/check-in", {
+      method: "POST",
+      body: JSON.stringify({ checkInId, message }),
     }),
 
   // Referrals

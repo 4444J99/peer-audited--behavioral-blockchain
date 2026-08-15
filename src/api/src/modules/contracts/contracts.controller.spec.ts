@@ -1,6 +1,6 @@
 import { ContractsController } from "./contracts.controller";
 import { ContractsService } from "./contracts.service";
-import { GUARDS_METADATA } from "@nestjs/common/constants";
+import { GUARDS_METADATA, PATH_METADATA } from "@nestjs/common/constants";
 import { DisputeService } from "../../../services/escrow/dispute.service";
 import { validate } from "class-validator";
 import { plainToInstance } from "class-transformer";
@@ -31,6 +31,10 @@ const mockContractsService = {
   recordSelfReportedRelapse: jest.fn(),
   submitWhoopScoredState: jest.fn(),
   claimBounty: jest.fn(),
+  getPendingInvitations: jest.fn(),
+  getPartnerships: jest.fn(),
+  respondToInvite: jest.fn(),
+  vetoRecoveryBreak: jest.fn(),
 } as unknown as ContractsService;
 
 const mockDisputeService = {} as unknown as DisputeService;
@@ -527,6 +531,91 @@ describe("ContractsController", () => {
         "link-abc",
         "r2://evidence.jpg",
         "10.0.0.1",
+      );
+    });
+  });
+
+  describe("accountability partner routes", () => {
+    // Nest registers handlers in declaration order and Express serves the
+    // first match, so a single-segment literal declared after @Get(":id") is
+    // unreachable — GET /contracts/invitations was resolving to findOne().
+    const declarationOrder = () =>
+      Object.getOwnPropertyNames(ContractsController.prototype).filter(
+        (name) => name !== "constructor",
+      );
+
+    const pathOf = (handler: string) =>
+      Reflect.getMetadata(
+        PATH_METADATA,
+        (ContractsController.prototype as any)[handler],
+      );
+
+    it("declares every single-segment literal GET before the :id wildcard", () => {
+      const order = declarationOrder();
+      const wildcardIndex = order.indexOf("findOne");
+      expect(pathOf("findOne")).toBe(":id");
+
+      for (const handler of ["getInvitations", "getPartnerships"]) {
+        const path = pathOf(handler);
+        expect(path).not.toContain("/");
+        expect(order.indexOf(handler)).toBeLessThan(wildcardIndex);
+      }
+    });
+
+    it("GET /contracts/invitations delegates to getPendingInvitations", async () => {
+      const invitations = [{ id: "ap-1", contract_id: "c1" }];
+      (mockContractsService.getPendingInvitations as jest.Mock).mockResolvedValue(
+        invitations,
+      );
+
+      const result = await controller.getInvitations(testUser);
+
+      expect(mockContractsService.getPendingInvitations).toHaveBeenCalledWith(
+        "user-1",
+      );
+      expect(result).toEqual(invitations);
+    });
+
+    it("GET /contracts/partnerships delegates to getPartnerships", async () => {
+      const partnerships = [{ id: "ap-2", contract_id: "c2", status: "ACTIVE" }];
+      (mockContractsService.getPartnerships as jest.Mock).mockResolvedValue(
+        partnerships,
+      );
+
+      const result = await controller.getPartnerships(testUser);
+
+      expect(mockContractsService.getPartnerships).toHaveBeenCalledWith("user-1");
+      expect(result).toEqual(partnerships);
+    });
+
+    it("POST /contracts/:id/recovery/veto-break passes the acting partner", async () => {
+      (mockContractsService.vetoRecoveryBreak as jest.Mock).mockResolvedValue({
+        success: true,
+        message: "Recovery break vetoed by partner",
+      });
+
+      await controller.vetoRecoveryBreak("c-9", testUser);
+
+      expect(mockContractsService.vetoRecoveryBreak).toHaveBeenCalledWith(
+        "c-9",
+        "user-1",
+      );
+    });
+
+    it("POST /contracts/:id/accountability/respond forwards the accept flag", async () => {
+      (mockContractsService.respondToInvite as jest.Mock).mockResolvedValue({
+        success: true,
+        status: "DECLINED",
+      });
+
+      await controller.respondToAccountabilityInvite("c-9", testUser, {
+        accept: false,
+      });
+
+      expect(mockContractsService.respondToInvite).toHaveBeenCalledWith(
+        "c-9",
+        "user-1",
+        false,
       );
     });
   });

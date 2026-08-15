@@ -273,6 +273,103 @@ describe('Web API client', () => {
     });
   });
 
+  describe('accountability partner endpoints', () => {
+    it('getPartnerInvitations() hits the literal /contracts/invitations route', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk([]));
+
+      await api.getPartnerInvitations();
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/contracts/invitations');
+    });
+
+    it('getPartnerships() hits /contracts/partnerships', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk([]));
+
+      await api.getPartnerships();
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/contracts/partnerships');
+    });
+
+    it('acceptPartnerInvitation() posts to the partner-accept path', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ status: 'active' }));
+
+      await api.acceptPartnerInvitation('c-7');
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/contracts/c-7/partner/accept');
+      expect(opts.method).toBe('POST');
+    });
+
+    it('respondToPartnerInvite() carries the accept flag', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ success: true, status: 'DECLINED' }));
+
+      await api.respondToPartnerInvite('c-7', false);
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/contracts/c-7/accountability/respond');
+      expect(JSON.parse(opts.body)).toEqual({ accept: false });
+    });
+
+    it('cosignAttestation() posts to the cosign path', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ status: 'cosigned' }));
+
+      await api.cosignAttestation('c-7');
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/contracts/c-7/attestation/cosign');
+      expect(opts.method).toBe('POST');
+    });
+
+    it('vetoRecoveryBreak() posts to the veto path', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ success: true, message: 'vetoed' }));
+
+      await api.vetoRecoveryBreak('c-7');
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/contracts/c-7/recovery/veto-break');
+      expect(opts.method).toBe('POST');
+    });
+
+    it('invitePartner() sends the invitee email', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ success: true, partnerId: 'p-1' }));
+
+      await api.invitePartner('c-7', 'friend@styx.io');
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/contracts/c-7/accountability/invite');
+      expect(JSON.parse(opts.body)).toEqual({ email: 'friend@styx.io' });
+    });
+
+    it('getAccountabilityStatus() hits the status path', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ partners: [], history: [] }));
+
+      await api.getAccountabilityStatus('c-7');
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/contracts/c-7/accountability/status');
+    });
+
+    it('getPartnerCheckIns() appends the limit only when given', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk([]));
+      await api.getPartnerCheckIns('c-7');
+      expect(mockFetch.mock.calls[0][0]).toContain('/behavioral/retention/partners/check-ins/c-7');
+      expect(mockFetch.mock.calls[0][0]).not.toContain('limit=');
+
+      mockFetch.mockResolvedValueOnce(jsonOk([]));
+      await api.getPartnerCheckIns('c-7', 5);
+      expect(mockFetch.mock.calls[1][0]).toContain('limit=5');
+    });
+
+    it('completePartnerCheckIn() sends the check-in id and message', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ id: 'chk-1' }));
+
+      await api.completePartnerCheckIn('chk-1', 'still holding');
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/behavioral/retention/partners/check-in');
+      expect(JSON.parse(opts.body)).toEqual({ checkInId: 'chk-1', message: 'still holding' });
+    });
+  });
+
   describe('grillMe()', () => {
     it('sends POST to /ai/grill-me', async () => {
       mockFetch.mockResolvedValueOnce(jsonOk({ questions: ['What is your TAM?'] }));

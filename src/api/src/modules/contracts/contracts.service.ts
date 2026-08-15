@@ -3177,6 +3177,42 @@ export class ContractsService {
     return result.rows;
   }
 
+  /**
+   * Contracts the user is an ACTIVE accountability partner on.
+   *
+   * The mirror of getPendingInvitations, and the only read that answers
+   * "what am I partnered on" — getActivePartnerships (retention) runs the
+   * opposite direction (an owner's partners), so a partner had no way to
+   * find their own contracts again after accepting an invitation.
+   */
+  async getPartnerships(userId: string) {
+    const result = await this.pool.query(
+      `SELECT ap.id, ap.contract_id, ap.status, ap.accepted_at,
+              c.oath_category, c.stake_amount, c.ends_at,
+              c.status AS contract_status,
+              u.email AS owner_email
+       FROM accountability_partners ap
+       JOIN contracts c ON ap.contract_id = c.id
+       JOIN users u ON c.user_id = u.id
+       WHERE ap.partner_user_id = $1 AND ap.status = 'ACTIVE'
+       ORDER BY ap.accepted_at DESC NULLS LAST`,
+      [userId],
+    );
+    return result.rows;
+  }
+
+  /**
+   * Owner of a contract, or null when the row is gone. Partner lifecycle
+   * notifications address the owner, who is never the actor performing them.
+   */
+  private async getContractOwnerId(contractId: string): Promise<string | null> {
+    const { rows } = await this.pool.query(
+      `SELECT user_id FROM contracts WHERE id = $1`,
+      [contractId],
+    );
+    return rows[0]?.user_id ?? null;
+  }
+
   async acceptPartnerInvitation(contractId: string, partnerUserId: string) {
     const result = await this.pool.query(
       `UPDATE accountability_partners
@@ -3194,6 +3230,22 @@ export class ContractsService {
       contractId,
       partnerUserId,
     });
+
+    // Notify the contract owner (non-critical)
+    try {
+      const ownerId = await this.getContractOwnerId(contractId);
+      if (ownerId) {
+        await this.notifications?.create({
+          userId: ownerId,
+          type: "PARTNER_INVITATION_ACCEPTED",
+          title: "Partner Accepted",
+          body: "Your accountability partner accepted the invitation and can now co-sign your attestations.",
+          metadata: { contractId, partnerUserId },
+        });
+      }
+    } catch {
+      // Notification failure must never abort an accepted invitation
+    }
 
     return { status: "active" };
   }
@@ -3236,6 +3288,22 @@ export class ContractsService {
       contractId,
       partnerUserId,
     });
+
+    // Notify the contract owner (non-critical)
+    try {
+      const ownerId = await this.getContractOwnerId(contractId);
+      if (ownerId) {
+        await this.notifications?.create({
+          userId: ownerId,
+          type: "ATTESTATION_COSIGNED",
+          title: "Attestation Co-Signed",
+          body: "Your accountability partner co-signed today's attestation.",
+          metadata: { contractId, attestationId, partnerUserId },
+        });
+      }
+    } catch {
+      // Notification failure must never abort a recorded co-signature
+    }
 
     return { status: "cosigned" };
   }
@@ -3669,6 +3737,20 @@ export class ContractsService {
       [contractId, userId, JSON.stringify({ partnerId })],
     );
 
+    // Notify the invitee (non-critical). Without this the invitation is a
+    // PENDING row and an event log line — nothing the invited user can see.
+    try {
+      await this.notifications?.create({
+        userId: partnerId,
+        type: "PARTNER_INVITATION",
+        title: "Partner Invitation",
+        body: "You have been invited to be an accountability partner on a Styx contract.",
+        metadata: { contractId },
+      });
+    } catch {
+      // Notification failure must never abort a recorded invitation
+    }
+
     return { success: true, partnerId };
   }
 
@@ -3690,6 +3772,28 @@ export class ContractsService {
       "INSERT INTO accountability_partner_events (contract_id, actor_id, event_type) VALUES (\$1, \$2, \$3)",
       [contractId, partnerId, accept ? "INVITE_ACCEPTED" : "INVITE_DECLINED"],
     );
+
+    // Notify the contract owner (non-critical). A decline is the case that
+    // most needs a signal: the owner is otherwise left waiting on a partner
+    // who will never arrive.
+    try {
+      const ownerId = await this.getContractOwnerId(contractId);
+      if (ownerId) {
+        await this.notifications?.create({
+          userId: ownerId,
+          type: accept
+            ? "PARTNER_INVITATION_ACCEPTED"
+            : "PARTNER_INVITATION_DECLINED",
+          title: accept ? "Partner Accepted" : "Partner Declined",
+          body: accept
+            ? "Your accountability partner accepted the invitation and can now co-sign your attestations."
+            : "Your accountability partner declined the invitation. Invite someone else to keep the contract covered.",
+          metadata: { contractId, partnerId },
+        });
+      }
+    } catch {
+      // Notification failure must never abort a recorded response
+    }
 
     return { success: true, status };
   }
@@ -3713,6 +3817,24 @@ export class ContractsService {
       "INSERT INTO accountability_partner_events (contract_id, actor_id, event_type) VALUES (\$1, \$2, 'VETO_TRIGGERED')",
       [contractId, partnerId],
     );
+
+    // Notify the contract owner (non-critical). A veto cancels a break the
+    // owner queued and is waiting on — silence here reads as the timelock
+    // simply never releasing.
+    try {
+      const ownerId = await this.getContractOwnerId(contractId);
+      if (ownerId) {
+        await this.notifications?.create({
+          userId: ownerId,
+          type: "RECOVERY_BREAK_VETOED",
+          title: "Break Vetoed",
+          body: "Your accountability partner vetoed the intentional break you queued. The contract stays active.",
+          metadata: { contractId, partnerId },
+        });
+      }
+    } catch {
+      // Notification failure must never abort a recorded veto
+    }
 
     return { success: true, message: "Recovery break vetoed by partner" };
   }
