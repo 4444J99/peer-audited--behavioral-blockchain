@@ -466,3 +466,13 @@ BEGIN
     );
   END IF;
 END $$;
+
+-- Circle personas are synthetic ADULTS. Same rationale as the stamp in
+-- src/api/database/seed.sql: the age gate fails closed on NULL date_of_birth
+-- for monetized actions, and this file inserts the @demo.styx.protocol and
+-- hr.lead@acheron.example personas AFTER that stamp has already run.
+-- Fills NULLs only — never overwrites a real value.
+UPDATE users SET date_of_birth = DATE '1990-01-15'
+WHERE date_of_birth IS NULL
+  AND (email LIKE '%@demo.styx.protocol'
+       OR email = 'hr.lead@acheron.example');

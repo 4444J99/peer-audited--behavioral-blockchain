@@ -35,6 +35,16 @@ INSERT INTO users (id, email, password_hash, stripe_customer_id, integrity_score
   ('d0000000-0000-0000-0000-000000000003', 'admin@styx.protocol', '$2b$10$Qvqvkece7/TpoSbDjHr75eHpT7blt9.4dwoub11ClSk2/PCk4tehe', 'cus_admin_001', 200, 'a0000000-0000-0000-0000-000000000012', 'ADMIN', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE')
 ON CONFLICT (id) DO NOTHING;
 
+-- Seeded personas are synthetic ADULTS. The age gate (migration 008 +
+-- compliance policy) fails closed on a NULL date_of_birth for every monetized
+-- action, so without this stamp no demo account can create a contract in a
+-- FULL_ACCESS jurisdiction. Fills NULLs only — never overwrites a real value.
+UPDATE users SET date_of_birth = DATE '1990-01-15'
+WHERE date_of_birth IS NULL
+  AND (email LIKE '%@demo.styx.protocol'
+       OR email = 'hr.lead@acheron.example'
+       OR email IN ('demo@styx.protocol', 'fury@styx.protocol', 'admin@styx.protocol'));
+
 -- Contracts in different states
 -- realm_id is NOT NULL since migration 025; realm rows are seeded by 025 itself.
 INSERT INTO contracts (id, user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, realm_id) VALUES
