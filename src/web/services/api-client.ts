@@ -262,6 +262,41 @@ export interface LeaderboardEntry {
   created_at: string;
 }
 
+/**
+ * A queued intentional break on a recovery contract (TKT-P1-005). `status` is
+ * the row's stored value except for the one case the server derives: a
+ * PENDING_COOLDOWN row whose `unlock_at` has passed is returned as UNLOCKED.
+ * The client renders that field as given — it never decides the lock state
+ * from its own clock, which can be wrong or deliberately wound forward.
+ */
+export interface RecoveryBreakRequest {
+  id: string;
+  contract_id: string;
+  requested_at: string;
+  unlock_at: string;
+  reason: string | null;
+  status: "PENDING_COOLDOWN" | "UNLOCKED" | "CANCELLED" | "CONSUMED";
+}
+
+export interface DangerWindow {
+  type: string;
+  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  message: string;
+}
+
+export interface ProtectionRecommendation {
+  type: string;
+  action: string;
+  description: string;
+}
+
+export interface ContractDangerStatus {
+  contractId: string;
+  inDangerZone: boolean;
+  windows: DangerWindow[];
+  recommendations: ProtectionRecommendation[];
+}
+
 export const api = {
   health: () => request<{ status: string }>("/health"),
   getMobileBootstrap: () =>
@@ -392,6 +427,41 @@ export const api = {
         method: "POST",
       },
     ),
+
+  // Recovery timelock (TKT-P1-005). A recovery contract cannot be broken on
+  // impulse: the break is queued, and only the 24h cooldown expiring unlocks
+  // it. `activeRequest` is null when nothing has ever been queued.
+  getRecoveryLockStatus: (contractId: string) =>
+    request<{ activeRequest: RecoveryBreakRequest | null }>(
+      `/contracts/${contractId}/recovery/lock-status`,
+    ),
+
+  requestRecoveryBreak: (contractId: string, reason: string) =>
+    request<RecoveryBreakRequest>(
+      `/contracts/${contractId}/recovery/break-request`,
+      {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      },
+    ),
+
+  cancelRecoveryBreak: (contractId: string) =>
+    request<{ success: boolean; request: RecoveryBreakRequest }>(
+      `/contracts/${contractId}/recovery/break-cancel`,
+      {
+        method: "POST",
+      },
+    ),
+
+  // Danger windows are evaluated per user across every ACTIVE contract, so
+  // there is no per-contract route to call — a caller scoped to one contract
+  // filters the `contracts` array itself.
+  getDangerZoneStatus: () =>
+    request<{
+      timezone: string;
+      inDangerZone: boolean;
+      contracts: ContractDangerStatus[];
+    }>("/behavioral/retention/danger-zone"),
 
   // Fury — userId comes from JWT
   getFuryAssignments: () =>
