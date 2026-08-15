@@ -102,7 +102,25 @@ async function ensureEnv(role, serviceId, wanted, current) {
   }
 }
 
-/** 2. Find-or-create the collector. Never fatal. */
+/**
+ * 2. Resolve the collector. An EXTERNAL collector URL wins (#894): the live
+ * collector is a Cloudflare Worker (KV-backed, token-gated summary), so when
+ * STYX_BETA_FEEDBACK_URL is configured, Render provisioning is skipped
+ * entirely — no find-or-create, no paid service, no 402 on free-tier
+ * workspaces. Only when no external URL is configured does the legacy Render
+ * path below run. The URL is public by design (baked into the shipped
+ * bundle); only the summary token is secret.
+ */
+async function resolveFeedbackUrl(ownerId) {
+  const external = (process.env.STYX_BETA_FEEDBACK_URL || "").replace(/\/+$/, "");
+  if (external) {
+    console.log("feedback collector: external URL configured — skipping Render provisioning");
+    return external;
+  }
+  return ensureFeedbackService(ownerId);
+}
+
+/** Legacy Render path: find-or-create the collector. Never fatal. */
 async function ensureFeedbackService(ownerId) {
   try {
     const found = await render("GET", `/services?name=${encodeURIComponent(feedbackName)}&limit=20`);
@@ -171,7 +189,7 @@ async function ensureFeedbackService(ownerId) {
 const apiService = await ensureLive("api", apiServiceId);
 await ensureLive("web", webServiceId);
 
-const feedbackUrl = await ensureFeedbackService(apiService.ownerId);
+const feedbackUrl = await resolveFeedbackUrl(apiService.ownerId);
 
 console.log("ensuring beta env vars (key names only) ...");
 const apiCurrent = await listEnvKeys(apiServiceId);

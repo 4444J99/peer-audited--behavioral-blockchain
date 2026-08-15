@@ -117,6 +117,10 @@ jobs:
           RENDER_BETA_API_SERVICE_ID: ${{ secrets.RENDER_BETA_API_SERVICE_ID }}
           RENDER_BETA_WEB_SERVICE_ID: ${{ secrets.RENDER_BETA_WEB_SERVICE_ID }}
           BETA_FEEDBACK_TOKEN: ${{ secrets.BETA_FEEDBACK_TOKEN }}
+          # External collector (the Cloudflare Worker, #894). Public by design —
+          # a repo VARIABLE, not a secret. When set, the ensure script skips
+          # Render collector provisioning entirely.
+          STYX_BETA_FEEDBACK_URL: ${{ vars.STYX_BETA_FEEDBACK_URL }}
         run: node scripts/demo/render-ensure-beta.mjs
 
   deploy_beta_api:
