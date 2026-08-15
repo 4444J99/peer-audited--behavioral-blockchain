@@ -80,5 +80,8 @@
     "yaml": "2.8.3",
     "cross-spawn": "7.0.5",
     "postcss": "8.5.15"
+  },
+  "dependencies": {
+    "class-validator": "^0.15.1"
   }
 }
