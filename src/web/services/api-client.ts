@@ -298,6 +298,31 @@ export interface ContractDangerStatus {
   recommendations: ProtectionRecommendation[];
 }
 
+/**
+ * One ACTIVE contract as GET /dashboard/progress reports it. `stake_amount` and
+ * `streak` arrive as strings: Postgres serializes NUMERIC and COUNT(*) (BIGINT)
+ * as text to preserve precision the JSON number type would lose.
+ */
+export interface ActiveContractProgress {
+  id: string;
+  oath_category: string;
+  status: string;
+  stake_amount: string;
+  duration_days: number;
+  started_at: string;
+  ends_at: string;
+  streak: string;
+}
+
+export interface DashboardProgress {
+  activeContracts: ActiveContractProgress[];
+  protectedVaultBalanceCents: number;
+  summary: {
+    totalActiveStakeUsd: number;
+    longestStreak: number;
+  };
+}
+
 export const api = {
   health: () => request<{ status: string }>("/health"),
   getMobileBootstrap: () =>
@@ -825,6 +850,19 @@ export const api = {
       totalRewardCents: number;
       rewards: ReferralReward[];
     }>("/referrals/rewards"),
+
+  issueLeaderboardStreamCookie: () =>
+    request<{ expiresInSeconds: number }>(
+      "/dashboard/leaderboard/stream-cookie",
+      {
+        method: "POST",
+        credentials: "include",
+      },
+    ),
+
+  // Goal gradient
+  getDashboardProgress: () =>
+    request<DashboardProgress>("/dashboard/progress"),
 
   // Streak Chain
   getStreakChain: () =>
