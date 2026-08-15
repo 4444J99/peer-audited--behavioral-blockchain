@@ -191,6 +191,31 @@ describe('Web API client', () => {
     });
   });
 
+  describe('getEndowedProgress()', () => {
+    it('reads the retention endpoint for one contract and returns its downscaling', async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonOk({
+          contractId: 'c1',
+          realProgress: 0.75,
+          endowedBoost: 0.02,
+          displayProgress: 0.77,
+          currentTier: 'Mastery',
+          nextTierAt: 0.9,
+          motivation: 'This is who you are now.',
+          downscaling: { multiplier: 0.85, reason: 'weekend vulnerability in final 30%' },
+        }),
+      );
+
+      const result = await api.getEndowedProgress('c1');
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/behavioral/retention/endowed-progress/c1');
+      expect(result.downscaling).toEqual({
+        multiplier: 0.85,
+        reason: 'weekend vulnerability in final 30%',
+      });
+    });
+  });
+
   describe('submitProof()', () => {
     it('sends to correct contract path', async () => {
       mockFetch.mockResolvedValueOnce(jsonOk({ proofId: 'p1', jobId: 'j1' }));
