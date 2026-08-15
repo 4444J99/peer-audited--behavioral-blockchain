@@ -105,6 +105,35 @@ The whistleblower fix turned out to be a route directory literally named `%5Blin
 - #892 whistleblower link unseeded → seed a demo bounty link so the route is reachable
 - #894 collector: Worker is live; make `ensure`-script honor an external collector URL, then close
 
+### Waves 3–5 — shipped 2026-08-15
+
+Executed as one pass: a code-first probe of all 17 remaining items, then twelve
+build agents in isolated worktrees, each delivering a verified PR. What landed:
+
+| PR | What it fixed |
+|---|---|
+| #914 | **Fury reviewers were served RAW media** — dispatcher had zero callers; queue tested `'COMPLETED'` while production writes `'MASKED'` and fell through to the original; its test could not fail (R2 mock was `{}`). Now fails closed. |
+| #920 | **A won appeal never refunded** — REVERSED deleted a row while the ledger had taken the stake. Slash is now an appealable case carrying its ledger leg; reversal posts a compensating entry (migration 069). |
+| #913 | Responsible-use controls got a surface a user can reach (enforcement was always live). |
+| #915 | Recovery timelock + danger-zone client surface (five endpoints, zero callers). |
+| #916 | Push *delivery receipts* — "delivered" was a send-time ticket. |
+| #917 | Proof processing-state UI against the already-live endpoint. |
+| #918 | Release gate 08 wired into CI — a correct gate no workflow invoked. |
+| #919 | Leaderboard consumes the live SSE stream; `/dashboard/progress` consumed. |
+| #921 | DR-005 onboarding bonus behind a flag, mirroring DR-004's pattern. |
+| #922 | Partner protocol made reachable — and found `GET /contracts/invitations` shadowed by `@Get(":id")`. |
+| #924 | Identity-based oath bound to the contract. |
+| #925 | Collusion engine scheduled and routed into cases (it ran nowhere). |
+| #926 | CrmService given an HTTP surface; mobile SSO deep link wired; dead billing duplicate removed. |
+| #927 | security.txt, CSP headers, webhook subscriptions persisted. |
+| #928 | The four missing legal drafts + security whitepaper. |
+| #929 | Capture provenance — the database now records whether a camera produced a proof. |
+
+Two agent PRs added routes without guided-tour entries and CI caught both, which
+is the registry gate working exactly as designed.
+
+<details><summary>Original wave plans (superseded by the table above)</summary>
+
 ### Wave 3 — Gamma: proof integrity
 - TKT-P1-009 responsible-use RUNTIME controls (self-exclusion registry, cooling-off
   enforcement, re-entry validation) — only static disclosure pages exist today
@@ -151,6 +180,24 @@ The whistleblower fix turned out to be a route directory literally named `%5Blin
 - Checklist truth stamps with evidence links; registries re-checked for contradictions
 - `no-dangling` predicate: every issue in the near-term engineering slice closed or carrying
   its irreducible-atom label; every wave PR merged; readiness green; docs true
+
+</details>
+
+## What the next session should NOT have to rediscover
+
+The registries were not merely stale — they were **structurally unable** to
+distinguish a shipped feature from an unreachable one, because they record file
+existence. That is what let 22 features, two of them live defects, sit "done"
+for months. The completion matrix now carries the reading rule inline.
+
+Concretely, before marking anything IMPLEMENTED here or there:
+
+1. `grep` for CALLERS of the symbol, not for the file. A service in a module's
+   `providers[]` that no controller injects is not shipped.
+2. Check the test on the path can FAIL. A mock injected as `{}` makes every
+   branch below it unreachable, and the suite still reports green.
+3. For a UI claim, find the route or component that renders it. An endpoint with
+   no client is a plan, not a feature.
 
 ## Agent hard-stops (standing decisions this program must not touch)
 
