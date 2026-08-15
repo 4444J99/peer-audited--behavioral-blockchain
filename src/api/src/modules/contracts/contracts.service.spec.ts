@@ -823,6 +823,117 @@ describe("ContractsService", () => {
     });
   });
 
+  // ── identity-oath binding (TKT-P1-016) ──────────────────────────
+
+  describe("createContract identity binding", () => {
+    const noContactDto: CreateContractInput = {
+      userId: "user-1",
+      oathCategory: OathCategory.NO_CONTACT_BOUNDARY,
+      verificationMethod: VerificationMethod.DAILY_ATTESTATION,
+      stakeAmount: 15,
+      durationDays: 14,
+    };
+
+    // Routed by SQL shape rather than call order: the identity lookup is not a
+    // pool query at all (it goes through IdentityOathService), so an ordered
+    // chain would encode the wrong contract.
+    function buildRoutedPool() {
+      return {
+        query: jest.fn().mockImplementation((sql: string) => {
+          if (sql.includes("FROM users WHERE id"))
+            return Promise.resolve({ rows: [activeUser] });
+          if (sql.includes("SELECT created_at FROM contracts"))
+            return Promise.resolve({ rows: [] });
+          if (sql.includes("SELECT updated_at FROM contracts"))
+            return Promise.resolve({ rows: [] });
+          if (sql.includes("id != $2"))
+            return Promise.resolve({ rows: [{ count: "1" }] });
+          if (sql.includes("COUNT(*)"))
+            return Promise.resolve({ rows: [{ count: 0 }] });
+          if (sql.includes("INSERT INTO contracts"))
+            return Promise.resolve({ rows: [{ id: "contract-1" }] });
+          if (sql.includes("SYSTEM_ESCROW"))
+            return Promise.resolve({ rows: [{ id: "escrow-acct" }] });
+          return Promise.resolve({ rows: [] });
+        }),
+      };
+    }
+
+    function buildService(pool: { query: jest.Mock }, identityOaths: any) {
+      return new ContractsService(
+        pool as unknown as Pool,
+        mockLedger,
+        mockTruthLog,
+        mockStripe,
+        mockRealStripe as any,
+        mockDispute,
+        mockFuryRouter,
+        mockAegis,
+        mockRecovery,
+        mockDynamicPenalty as any,
+        mockAnomaly,
+        undefined, // notifications
+        undefined, // compliancePolicy
+        mockSettlement,
+        undefined, // referralService
+        undefined, // enterpriseWebhooks
+        identityOaths,
+      );
+    }
+
+    function insertParams(pool: { query: jest.Mock }) {
+      const call = pool.query.mock.calls.find(
+        ([sql]: [string]) =>
+          typeof sql === "string" && sql.includes("INSERT INTO contracts"),
+      );
+      return call?.[1] as unknown[];
+    }
+
+    let originalWebUrl: string | undefined;
+
+    beforeEach(() => {
+      // The NO_CONTACT_BOUNDARY response builds a whistleblower bounty link.
+      originalWebUrl = process.env.STYX_WEB_PUBLIC_URL;
+      process.env.STYX_WEB_PUBLIC_URL = "https://styx.test";
+    });
+
+    afterEach(() => {
+      if (originalWebUrl === undefined) delete process.env.STYX_WEB_PUBLIC_URL;
+      else process.env.STYX_WEB_PUBLIC_URL = originalWebUrl;
+    });
+
+    it("binds the new contract to the activated identity oath", async () => {
+      const pool = buildRoutedPool();
+      const identityOaths = {
+        getActivatedOath: jest.fn().mockResolvedValue({ id: "oath-1" }),
+      };
+
+      await buildService(pool, identityOaths).createContract(noContactDto);
+
+      expect(identityOaths.getActivatedOath).toHaveBeenCalledWith(
+        "user-1",
+        OathCategory.NO_CONTACT_BOUNDARY,
+      );
+      expect(insertParams(pool)).toContain("oath-1");
+    });
+
+    it("still creates the contract when no identity has been declared", async () => {
+      const pool = buildRoutedPool();
+      const identityOaths = {
+        getActivatedOath: jest.fn().mockResolvedValue(null),
+      };
+
+      const result = await buildService(pool, identityOaths).createContract(
+        noContactDto,
+      );
+
+      expect(result.contractId).toBe("contract-1");
+      // Trailing bind parameter is the identity oath id.
+      const params = insertParams(pool);
+      expect(params[params.length - 1]).toBeNull();
+    });
+  });
+
   // ── getContract ─────────────────────────────────────────────────
 
   describe("getContract", () => {
@@ -847,6 +958,37 @@ describe("ContractsService", () => {
         proof_count: 0,
         proofs: [],
         grace_days_max: 2,
+        identity_oath: null,
+      });
+    });
+
+    it("returns the identity the contract is bound to", async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: "contract-1",
+            user_id: "user-1",
+            email: "user@styx.app",
+            integrity_score: 55,
+            proof_count: "0",
+            identity_oath_id: "oath-1",
+            identity_archetype_id: "BOUNDARY_KEEPER",
+            identity_label: "The Boundary Keeper",
+            identity_pledge_copy: "I am becoming someone who keeps the distance they chose.",
+            identity_copy_variant: "DECLARATIVE",
+          },
+        ],
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // proofs list
+
+      const result = await service.getContract("contract-1");
+
+      expect(result.identity_oath).toEqual({
+        id: "oath-1",
+        archetype_id: "BOUNDARY_KEEPER",
+        identity_label: "The Boundary Keeper",
+        pledge_copy: "I am becoming someone who keeps the distance they chose.",
+        copy_variant: "DECLARATIVE",
       });
     });
 

@@ -699,3 +699,30 @@ ALTER TABLE deco_commitments ADD COLUMN IF NOT EXISTS committed_at TEXT;
 ALTER TABLE deco_commitments DROP COLUMN IF EXISTS url;
 ALTER TABLE deco_commitments DROP COLUMN IF EXISTS selector;
 ALTER TABLE deco_commitments DROP COLUMN IF EXISTS expected_value;
+
+-- ── Identity-based oath onboarding (migration 069) ──────────────────────────
+-- Onboarding asks who the user is becoming, not what they will do; the
+-- declaration is stored per user per oath category and the contract is bound to
+-- it. `copy_variant` records the activation-copy arm the pledge was composed
+-- under, so a later change to the assignment function cannot rewrite a sentence
+-- the user already agreed to.
+CREATE TABLE IF NOT EXISTS user_identity_oaths (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  oath_category TEXT NOT NULL,
+  archetype_id TEXT NOT NULL,
+  identity_label TEXT NOT NULL,
+  pledge_copy TEXT NOT NULL,
+  copy_variant TEXT NOT NULL,
+  activated_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_user_identity_oaths_user_category UNIQUE (user_id, oath_category)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_identity_oaths_user
+  ON user_identity_oaths(user_id);
+
+ALTER TABLE contracts
+  ADD COLUMN IF NOT EXISTS identity_oath_id UUID
+  REFERENCES user_identity_oaths(id) ON DELETE SET NULL;
