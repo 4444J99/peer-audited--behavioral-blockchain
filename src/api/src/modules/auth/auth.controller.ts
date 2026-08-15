@@ -181,8 +181,13 @@ export class AuthController {
 
   @Get('csrf')
   @ApiOperation({ summary: 'Refresh CSRF cookie for browser session requests' })
-  // AU5: rate-limit CSRF cookie issuance like the other auth endpoints.
-  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  // Rate-limited, but NOT like login/register: this endpoint requires an
+  // already-valid session cookie and DERIVES a deterministic token from it —
+  // it is a refill path, not a credential surface, so credential-stuffing
+  // limits don't transfer. 5/min tripped ordinary fast navigation and shared
+  // NAT egress (#891); 30/min stays far below abuse scale for an HMAC derive
+  // while never firing on human browsing.
+  @Throttle({ default: { ttl: 60000, limit: 30 } })
   async csrf(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     // The CSRF token is bound to the active session, so it can only be derived
     // for a request that already carries a valid access-token cookie.
