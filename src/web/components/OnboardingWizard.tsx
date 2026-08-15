@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ChevronRight, ChevronLeft, Flame, Shield, DollarSign, CreditCard, X,
+  ChevronRight, ChevronLeft, Flame, Shield, DollarSign, CreditCard, X, UserCheck,
 } from 'lucide-react';
+import { api } from '../services/api-client';
+import { IDENTITY_ARCHETYPES } from '../../shared/libs/identity-oath';
 
 const OATH_CATEGORIES = [
   { id: 'RECOVERY_NOCONTACT', label: 'No Contact', icon: '\u{1F6AB}', description: 'Absolute severance. No texts, calls, or DMs.', color: 'border-red-700 hover:border-red-500' },
@@ -27,25 +29,68 @@ interface OnboardingWizardProps {
 
 export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) {
   const [step, setStep] = useState(0);
+  const [selectedArchetype, setSelectedArchetype] = useState('');
+  const [pledgeCopy, setPledgeCopy] = useState('');
+  const [identitySaving, setIdentitySaving] = useState(false);
+  const [identityError, setIdentityError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [stakeAmount, setStakeAmount] = useState(25);
   const [customStake, setCustomStake] = useState('');
   const router = useRouter();
 
-  const totalSteps = 5;
+  const totalSteps = 6;
+
+  // Resume: a returning user reads back the identity they already declared
+  // instead of being asked who they are becoming a second time. An unreachable
+  // API leaves the step empty rather than blocking onboarding.
+  useEffect(() => {
+    let cancelled = false;
+
+    api.getIdentityOath()
+      .then((state) => {
+        if (cancelled || !state.oath) return;
+        setSelectedArchetype(state.oath.archetypeId);
+        setPledgeCopy(state.oath.pledgeCopy);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const canProceed = (): boolean => {
     switch (step) {
       case 0: return true; // Welcome — always
-      case 1: return selectedCategory !== ''; // Must select category
-      case 2: return stakeAmount >= 5 && stakeAmount <= MAX_BETA_STAKE; // Valid stake
-      case 3: return true; // Payment info — always
-      case 4: return true; // Redirect
+      case 1: return selectedArchetype !== '' && !identitySaving; // Must declare an identity
+      case 2: return selectedCategory !== ''; // Must select category
+      case 3: return stakeAmount >= 5 && stakeAmount <= MAX_BETA_STAKE; // Valid stake
+      case 4: return true; // Payment info — always
+      case 5: return true; // Redirect
       default: return true;
     }
   };
 
-  const handleNext = () => {
+  const declareIdentity = async (): Promise<boolean> => {
+    setIdentitySaving(true);
+    setIdentityError(null);
+    try {
+      // The pledge sentence is composed server-side, so what the summary shows
+      // is the wording actually stored against the contract.
+      const oath = await api.declareIdentityOath(selectedArchetype);
+      setPledgeCopy(oath.pledgeCopy);
+      return true;
+    } catch {
+      setIdentityError('Could not save your identity. Check your connection and try again.');
+      return false;
+    } finally {
+      setIdentitySaving(false);
+    }
+  };
+
+  const handleNext = async () => {
+    if (step === 1 && !(await declareIdentity())) return;
+
     if (step < totalSteps - 1) {
       setStep(step + 1);
     } else {
@@ -73,6 +118,9 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
   };
 
   const perceivedLoss = (stakeAmount * LOSS_AVERSION_LAMBDA).toFixed(2);
+  const identityLabel =
+    IDENTITY_ARCHETYPES.find((archetype) => archetype.id === selectedArchetype)?.label
+    ?? 'Not declared';
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -152,8 +200,51 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             </div>
           )}
 
-          {/* Step 1: Choose Oath Category */}
+          {/* Step 1: Declare Identity */}
           {step === 1 && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-black tracking-tight">Who Are You Becoming?</h2>
+                <p className="text-neutral-400 text-sm mt-1">
+                  No Contact is not a chore list. Name the person you are becoming —
+                  your contract is bound to that, not to a task.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                {IDENTITY_ARCHETYPES.map((archetype) => (
+                  <button
+                    key={archetype.id}
+                    onClick={() => setSelectedArchetype(archetype.id)}
+                    className={`p-4 rounded-xl border-2 text-left transition-all ${
+                      selectedArchetype === archetype.id
+                        ? 'border-red-500 bg-red-900/20'
+                        : 'border-neutral-800 bg-black hover:border-neutral-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 mb-1">
+                      <UserCheck size={18} className="text-red-500 shrink-0" />
+                      <span className="font-bold text-white">{archetype.label}</span>
+                    </div>
+                    <p className="text-sm text-neutral-300">I am becoming {archetype.becoming}.</p>
+                    <p className="text-xs text-neutral-500 mt-1">{archetype.description}</p>
+                  </button>
+                ))}
+              </div>
+
+              {identityError && (
+                <p className="text-sm text-red-400">{identityError}</p>
+              )}
+
+              <p className="text-xs text-neutral-600">
+                You can change who you are becoming later. The declaration is yours — it is
+                never shown to the person you are going No Contact with.
+              </p>
+            </div>
+          )}
+
+          {/* Step 2: Choose Oath Category */}
+          {step === 2 && (
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-black tracking-tight">Choose Your First Oath</h2>
@@ -184,8 +275,8 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             </div>
           )}
 
-          {/* Step 2: Set Stakes */}
-          {step === 2 && (
+          {/* Step 3: Set Stakes */}
+          {step === 3 && (
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-black tracking-tight">Set Your Stakes</h2>
@@ -262,8 +353,8 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             </div>
           )}
 
-          {/* Step 3: Connect Payment */}
-          {step === 3 && (
+          {/* Step 4: Connect Payment */}
+          {step === 4 && (
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-black tracking-tight">Connect Payment</h2>
@@ -307,8 +398,8 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             </div>
           )}
 
-          {/* Step 4: Ready to Go */}
-          {step === 4 && (
+          {/* Step 5: Ready to Go */}
+          {step === 5 && (
             <div className="space-y-6 text-center">
               <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center mx-auto">
                 <Flame className="text-black" size={40} />
@@ -321,7 +412,23 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                 </p>
               </div>
 
+              {pledgeCopy && (
+                <div className="p-5 bg-red-900/10 border border-red-900/30 rounded-xl text-left">
+                  <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                    Your Declaration
+                  </p>
+                  <p className="mt-2 text-lg font-bold text-white">{pledgeCopy}</p>
+                  <p className="mt-2 text-xs text-neutral-500">
+                    Bound to every contract you open in this stream.
+                  </p>
+                </div>
+              )}
+
               <div className="p-6 bg-black border border-neutral-800 rounded-xl text-left space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-neutral-500 text-sm">Identity</span>
+                  <span className="font-bold">{identityLabel}</span>
+                </div>
                 <div className="flex justify-between items-center">
                   <span className="text-neutral-500 text-sm">Oath Stream</span>
                   <span className="font-bold capitalize">{selectedCategory || 'Not selected'}</span>
@@ -379,7 +486,11 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             disabled={!canProceed()}
             className="px-8 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black rounded-xl transition-colors flex items-center gap-2"
           >
-            {step === totalSteps - 1 ? 'Create Contract' : 'Continue'}
+            {identitySaving
+              ? 'Saving...'
+              : step === totalSteps - 1
+                ? 'Create Contract'
+                : 'Continue'}
             <ChevronRight size={18} />
           </button>
         </div>

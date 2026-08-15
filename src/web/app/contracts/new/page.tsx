@@ -122,6 +122,7 @@ function NewContractPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [failureCount, setFailureCount] = useState<number | null>(null);
   const [downscaling, setDownscaling] = useState<DownscalingSignal | null>(null);
+  const [identityPledge, setIdentityPledge] = useState<string | null>(null);
 
   // Recovery stream fields
   const [apEmail, setApEmail] = useState('');
@@ -201,6 +202,23 @@ function NewContractPageContent() {
           setFailureCount(profileFailureCount);
         }
       });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // The identity declared at onboarding is what this contract binds to, so it
+  // is shown at the moment of committing rather than only in the wizard.
+  useEffect(() => {
+    if (!user) return undefined;
+    let cancelled = false;
+
+    api.getIdentityOath()
+      .then((state) => {
+        if (!cancelled) setIdentityPledge(state.oath?.pledgeCopy ?? null);
+      })
+      .catch(() => undefined);
 
     return () => {
       cancelled = true;
@@ -308,6 +326,16 @@ function NewContractPageContent() {
       </header>
 
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-8">
+        {/* Declared identity (TKT-P1-016) */}
+        {identityPledge && (
+          <div className="p-5 bg-red-900/10 border border-red-900/30 rounded-xl">
+            <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+              Your Declaration
+            </p>
+            <p className="mt-2 text-lg font-bold text-white">{identityPledge}</p>
+          </div>
+        )}
+
         {/* Oath Category */}
         <div>
           <label className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-3">

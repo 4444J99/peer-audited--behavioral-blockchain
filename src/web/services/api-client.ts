@@ -311,6 +311,38 @@ export interface AccountabilityStatus {
   }>;
 }
 
+/** The identity declaration a contract is bound to (TKT-P1-016). */
+export interface IdentityOathSummary {
+  id: string;
+  archetype_id: string;
+  identity_label: string;
+  pledge_copy: string;
+  copy_variant: string;
+}
+
+export interface IdentityOathRecord {
+  id: string;
+  userId: string;
+  oathCategory: string;
+  archetypeId: string;
+  identityLabel: string;
+  pledgeCopy: string;
+  copyVariant: string;
+  activatedAt: string | null;
+}
+
+export interface IdentityOathState {
+  oathCategory: string;
+  oath: IdentityOathRecord | null;
+  completed: boolean;
+  archetypes: Array<{
+    id: string;
+    label: string;
+    becoming: string;
+    description: string;
+  }>;
+}
+
 export interface LeaderboardEntry {
   id: string;
   email: string;
@@ -441,6 +473,18 @@ export const api = {
       }>;
     }>(`/wallet/history${limit ? `?limit=${limit}` : ""}`),
 
+  // Onboarding — identity-based oath declaration (TKT-P1-016)
+  getIdentityOath: (oathCategory?: string) =>
+    request<IdentityOathState>(
+      `/onboarding/identity-oath${oathCategory ? `?oathCategory=${encodeURIComponent(oathCategory)}` : ""}`,
+    ),
+
+  declareIdentityOath: (archetypeId: string, oathCategory?: string) =>
+    request<IdentityOathRecord>("/onboarding/identity-oath", {
+      method: "POST",
+      body: JSON.stringify({ archetypeId, oathCategory }),
+    }),
+
   // Contracts — userId comes from JWT
   getUserContracts: () =>
     request<
@@ -482,6 +526,7 @@ export const api = {
         media_url: string | null;
       }>;
       grace_days_max: number;
+      identity_oath: IdentityOathSummary | null;
     }>(`/contracts/${id}`),
 
   // `downscaling.multiplier` is advisory only — it is rendered as stake guidance

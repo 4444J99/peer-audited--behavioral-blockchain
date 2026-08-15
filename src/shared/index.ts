@@ -53,6 +53,22 @@ export {
   parseWaitlistAttribution,
 } from "./libs/waitlist-attribution";
 
+// Identity-based oath onboarding (shared by the web wizard and the API)
+export {
+  IDENTITY_OATH_CATEGORIES,
+  IDENTITY_COPY_VARIANTS,
+  IDENTITY_ARCHETYPES,
+  type IdentityOathCategory,
+  type IdentityCopyVariant,
+  type IdentityArchetype,
+  type IdentityOathDeclaration,
+  getIdentityArchetype,
+  isIdentityOathCategory,
+  assignCopyVariant,
+  buildPledgeCopy,
+  composeIdentityOath,
+} from "./libs/identity-oath";
+
 export interface StyxClientBuildMetadata {
   platform: StyxClientPlatform;
   appVersion: string;

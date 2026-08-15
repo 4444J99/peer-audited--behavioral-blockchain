@@ -8,7 +8,7 @@ import {
   Send, Calendar, Shield, FileText, UserPlus,
 } from 'lucide-react';
 import { api } from '../../../services/api-client';
-import type { AccountabilityStatus } from '../../../services/api-client';
+import type { AccountabilityStatus, IdentityOathSummary } from '../../../services/api-client';
 import { useAuth } from '../../../contexts/AuthContext';
 import RecoveryLockCountdown from '../../../components/RecoveryLockCountdown';
 import DangerZoneBanner from '../../../components/DangerZoneBanner';
@@ -38,6 +38,7 @@ interface ContractData {
   email: string;
   integrity_score: number;
   proofs?: Proof[];
+  identity_oath?: IdentityOathSummary | null;
 }
 
 interface Proof {
@@ -219,12 +220,26 @@ export default function ContractDetailPage() {
         </div>
       </div>
 
+      {/* Identity the contract is bound to (TKT-P1-016) — first, because it is
+          who the person said they were becoming; everything below is mechanics. */}
+      {contract.identity_oath && (
+        <div className="mb-6 p-5 bg-red-900/10 border border-red-900/30 rounded-2xl">
+          <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+            {contract.identity_oath.identity_label}
+          </p>
+          <p className="mt-2 text-lg font-bold text-white">
+            {contract.identity_oath.pledge_copy}
+          </p>
+        </div>
+      )}
+
       {/* Danger windows — the API only evaluates them for ACTIVE contracts. */}
       {contract.status === 'ACTIVE' && (
         <div className="mb-6">
           <DangerZoneBanner contractId={contract.id} />
         </div>
       )}
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Stake & Timeline */}
