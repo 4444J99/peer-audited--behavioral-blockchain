@@ -63,7 +63,11 @@ describe('EnforcementController', () => {
 
       const result = await controller.confirm('case-1', {});
 
-      expect(enforcementService.confirmCase).toHaveBeenCalledWith('case-1', 'REP_BURN', 0);
+      // A missing amount must reach the service AS MISSING. The controller used
+      // to coerce it with `dto.amountCents || 0`, which turned an omitted amount
+      // into a free STAKE_SLASH; the service now derives the real amount (or
+      // rejects a non-positive one) and can only do that if it sees undefined.
+      expect(enforcementService.confirmCase).toHaveBeenCalledWith('case-1', 'REP_BURN', undefined);
       expect(result.status).toBe('PENALTY_APPLIED');
     });
 

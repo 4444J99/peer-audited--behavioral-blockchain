@@ -1,6 +1,11 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { LedgerService } from '../../../services/ledger/ledger.service';
+import { AUDITOR_STAKE_AMOUNT } from '../../../../shared/libs/integrity';
+
+/** Penalty types that move money, and therefore need a real amount and a reversible ledger leg. */
+const FINANCIAL_PENALTY_TYPES = new Set(['STAKE_SLASH']);
 
 @Injectable()
 export class EnforcementService {
@@ -9,6 +14,10 @@ export class EnforcementService {
   constructor(
     private readonly pool: Pool,
     private readonly truthLog: TruthLogService,
+    // A penalty that took money can only be undone by moving money back. Without
+    // the ledger this service could delete its own bookkeeping and call it a
+    // reversal — which is exactly what it used to do.
+    private readonly ledger: LedgerService,
   ) {}
 
   async evaluateCollusion(proofId: string, flaggedFuries: string[]): Promise<void> {
@@ -40,7 +49,18 @@ export class EnforcementService {
    * Confirms a pending enforcement case after review and applies the penalty.
    * Penalties are never auto-applied before this confirmation step.
    */
-  async confirmCase(caseId: string, penaltyType: string = 'REP_BURN', amountCents: number = 0) {
+  async confirmCase(caseId: string, penaltyType: string = 'REP_BURN', amountCents?: number) {
+    // A STAKE_SLASH with no amount used to become a silent $0 penalty — the case
+    // read as punished while nothing was taken. Derive from the auditor stake
+    // when the caller omits it, and refuse a non-positive explicit amount.
+    const resolvedAmount = FINANCIAL_PENALTY_TYPES.has(penaltyType)
+      ? amountCents ?? AUDITOR_STAKE_AMOUNT
+      : amountCents ?? 0;
+    if (FINANCIAL_PENALTY_TYPES.has(penaltyType) && resolvedAmount <= 0) {
+      throw new BadRequestException(
+        `${penaltyType} is a financial penalty and requires a positive amountCents.`,
+      );
+    }
     // Atomically claim the case (TOCTOU-safe): only the caller that flips
     // PENDING_REVIEW -> PENALTY_APPLIED proceeds, so two concurrent confirmations
     // can't both apply a penalty. The loser matches zero rows and is rejected.
@@ -55,8 +75,8 @@ export class EnforcementService {
       throw new NotFoundException('Pending case not found');
     }
 
-    await this.applyPenalty(caseId, penaltyType, amountCents);
-    return { success: true, caseId, status: 'PENALTY_APPLIED' };
+    await this.applyPenalty(caseId, penaltyType, resolvedAmount);
+    return { success: true, caseId, status: 'PENALTY_APPLIED', amountCents: resolvedAmount };
   }
 
   async applyPenalty(caseId: string, penaltyType: string, amountCents: number = 0) {
@@ -146,12 +166,9 @@ export class EnforcementService {
 
     const { reviewer_id: reviewerId } = claim.rows[0];
 
+    let refundedCents = 0;
     if (outcome === 'REVERSED') {
-      // Remove the penalty if reversed
-      await this.pool.query(
-        `DELETE FROM fury_penalties WHERE case_id = $1`,
-        [caseId],
-      );
+      refundedCents = await this.reversePenalty(caseId, reviewerId);
     }
 
     await this.truthLog.appendEvent('FURY_APPEAL_RESOLVED', {
@@ -159,9 +176,90 @@ export class EnforcementService {
       reviewerId,
       outcome,
       reason: reason || null,
+      refundedCents,
     });
 
-    return { success: true, caseId, outcome };
+    return { success: true, caseId, outcome, refundedCents };
+  }
+
+  /**
+   * Undoes a penalty. Returns the cents actually refunded (0 for a
+   * non-financial penalty such as REP_BURN, which has no ledger effect to undo).
+   *
+   * Compensating entry, not a deletion: the original charge stays on the ledger
+   * and a reversing transaction is posted against it, because a double-entry
+   * ledger records what happened, and the slash did happen. `reversal_transaction_id`
+   * makes this idempotent — re-resolving an already-reversed case refunds nothing
+   * a second time.
+   */
+  private async reversePenalty(caseId: string, reviewerId: string): Promise<number> {
+    const penalty = await this.pool.query(
+      `SELECT id, amount_cents, ledger_transaction_id, ledger_debit_account_id, reversal_transaction_id
+       FROM fury_penalties
+       WHERE case_id = $1`,
+      [caseId],
+    );
+
+    if (penalty.rows.length === 0) return 0;
+    const row = penalty.rows[0];
+
+    if (row.reversal_transaction_id) {
+      // Already refunded by an earlier resolution — do not pay twice.
+      return Number(row.amount_cents ?? 0);
+    }
+
+    const amountCents = Number(row.amount_cents ?? 0);
+    if (!row.ledger_transaction_id || !row.ledger_debit_account_id || amountCents <= 0) {
+      // A penalty with no financial leg (REP_BURN, or a legacy row predating the
+      // ledger link in migration 069). Mark it reversed; there is no money to move.
+      await this.pool.query(
+        `UPDATE fury_penalties SET reversed_at = NOW() WHERE id = $1`,
+        [row.id],
+      );
+      return 0;
+    }
+
+    const revenue = await this.pool.query(
+      `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE'`,
+    );
+    if (revenue.rows.length === 0) {
+      throw new BadRequestException(
+        'Cannot reverse a financial penalty: SYSTEM_REVENUE account is missing.',
+      );
+    }
+
+    // Mirror of the original charge: revenue pays the reviewer back.
+    const reversalId = await this.ledger.recordTransaction(
+      revenue.rows[0].id,
+      row.ledger_debit_account_id,
+      amountCents,
+      undefined,
+      {
+        type: 'FURY_PENALTY_REVERSAL',
+        caseId,
+        reviewerId,
+        reversesTransactionId: row.ledger_transaction_id,
+      },
+      undefined,
+      `fury-appeal-reversal:${caseId}`,
+    );
+
+    await this.pool.query(
+      `UPDATE fury_penalties
+       SET reversed_at = NOW(), reversal_transaction_id = $2
+       WHERE id = $1`,
+      [row.id, reversalId],
+    );
+
+    await this.truthLog.appendEvent('FURY_PENALTY_REVERSED', {
+      caseId,
+      reviewerId,
+      amountCents,
+      reversalTransactionId: reversalId,
+      reversesTransactionId: row.ledger_transaction_id,
+    });
+
+    return amountCents;
   }
 }
 
