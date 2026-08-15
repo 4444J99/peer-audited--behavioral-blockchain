@@ -876,6 +876,7 @@ describe("ContractsService", () => {
         undefined, // compliancePolicy
         mockSettlement,
         undefined, // referralService
+        undefined, // enterpriseWebhooks
         identityOaths,
       );
     }
