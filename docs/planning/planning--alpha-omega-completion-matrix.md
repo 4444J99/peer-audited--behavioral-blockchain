@@ -53,7 +53,7 @@ hosted test-money beta is LIVE and 47/47-route verified as of 2026-08-15)*
 | `F-LEGAL-01` | Contest Official Rules Engine | `IMPLEMENTED` | **[BETA-BLOCKER]** | Required for promotional law compliance. |
 | `F-LEGAL-02` | Responsible Use Disclosures | `IMPLEMENTED` | **[BETA-BLOCKER]** | FTC compliance. |
 | `F-CORE-04` | Stripe FBO Escrow | `IMPLEMENTED` | **[TEST-MONEY]** | Real-money settlement logic is present, but the disclosed beta path remains test-money only. |
-| `F-AEGIS-06` | Responsible-Use Runtime Controls | `NOT_STARTED` | `[POST-BETA]` | Row added 2026-08-15 (was absent). Only the static `/legal/responsible-use` disclosure page shipped; self-exclusion registry, cooling-off enforcement and re-entry validation are unbuilt (TKT-P1-009, Gamma wave). |
+| `F-AEGIS-06` | Responsible-Use Runtime Controls | `IMPLEMENTED` | `[POST-BETA]` | Enforcement was always live (`contracts.service.ts` blocks creation on `self_exclusion_expires_at`); what was missing was any surface a user could reach. `getProfile` now exposes `responsible_use` and Settings carries the exclusion controls (#913). |
 | `F-AEGIS-02` | Jurisdiction Geofencing | `PARTIAL` | **[BETA-BLOCKER]** | Compliance policy is fail-closed, but a legacy geofence service still defaults non-US / unresolved IPs to `TIER_1`. The US-only boundary is not fully isolated until enforcement paths converge. |
 | `F-UX-02` | Endowed Progress ($5 Bonus) | `IMPLEMENTED` | `[BETA-ENHANCER]` | Onboarding bonus logic verified in ContractsService. |
 
@@ -70,11 +70,11 @@ hosted test-money beta is LIVE and 47/47-route verified as of 2026-08-15)*
 | `F-FURY-05` | Honeypot Injection | `IMPLEMENTED` | **[BETA-BLOCKER]** | Anti-cheat for reviewers. Tests Fury vigilance. |
 | `F-SOCIAL-02`| Whistleblower Bounty Links | `IMPLEMENTED` | **[BETA-BLOCKER]** | The Ex-Bounty. Asymmetric information gathering. |
 | `F-VERIFY-01`| pHash Duplicate Detection | `IMPLEMENTED` | `[BETA-ENHANCER]` | Blocks re-upload of identical proof media. |
-| `F-MOBILE-01`| Native iOS Camera Module | `STUB` | `[PILOT-EXCEPTION]*` | *Current Phase 1 path is explicitly synthetic-capture-only. Native capture is required before public/open beta or adversarial scale, but not for the disclosed invite-only pilot.* |
+| `F-MOBILE-01`| Native iOS Camera Module | `STUB` (provenance recorded) | `[PILOT-EXCEPTION]*` | *Phase 1 remains synthetic-capture-only by scope lock — `createSyntheticCaptureSession` base64-encodes JSON behind a `data:video/mp4` prefix.* What changed 2026-08-15: the database now RECORDS that fact. Migration 070 adds `capture_source`/`capture_nonce`/`capture_verified`; the server issues the nonce and decides verification itself, and a synthetic capture is flagged `SYNTHETIC_CAPTURE` rather than being indistinguishable from a real one (#929). Native capture still rides #141. |
 | `F-FURY-03` | Cross-Lobby Auditing | `IMPLEMENTED` | `[POST-BETA]` | Geographic/Social isolation logic implemented in FuryRouterWorker (`fury-router.worker.ts:77-97`). Admin cluster-detection screen remains open (TKT-P1-008 UI half). |
-| `F-VERIFY-07` | Video Proof Pipeline | `PARTIAL` | `[POST-BETA]` | Row added 2026-08-15 (was absent). Backend transcoding built (`video-processing.service.ts` + worker, with specs); processing-state UI open (TKT-P1-013). |
+| `F-VERIFY-07` | Video Proof Pipeline | `IMPLEMENTED` | **[BETA-BLOCKER]** | Was built AND UNREACHED: `dispatchForProcessing` had zero callers, so `masked_media_uri` was never populated and the Fury queue served RAW media. Enqueued at `confirmUpload` + a 10-min sweeper, and the queue now fails closed (#914). Processing-state UI shipped (#917). |
 | `F-FURY-04` | Fury Audit Masks (Identity Redaction) | `PARTIAL` | `[POST-BETA]` | Row added 2026-08-15 (was absent). `redact` paths exist in proofs.service + desktop; reviewer-surface masking unverified end-to-end (TKT-P1-014 — Gamma wave probes before building). |
-| `F-FURY-09` | Collusion Slashing + Appeal | `PARTIAL` | `[POST-BETA]` | Row added 2026-08-15 (was absent). `fury_penalties` + idempotent `applyPenalty` + review-gated `confirmCase` exist (enforcement.service.ts); slashing depth and the appeal surface to verify/finish (TKT-P1-015). |
+| `F-FURY-09` | Collusion Slashing + Appeal | `IMPLEMENTED` | `[POST-BETA]` | A won appeal used to refund NOTHING — the REVERSED branch deleted a bookkeeping row while the ledger had already taken the stake. The slash is now recorded as an appealable case carrying its ledger leg, and reversal posts a compensating entry (migration 069, #920). Detection wired to open cases automatically (#925). |
 
 ---
 
@@ -89,10 +89,10 @@ hosted test-money beta is LIVE and 47/47-route verified as of 2026-08-15)*
 | `F-DESKTOP-03`| Exile Panel (Ban Management) | `IMPLEMENTED` | **[BETA-BLOCKER]** | Internal admin capability for bad actors. |
 | `F-UX-05` | Goal-Gradient Dashboard | `IMPLEMENTED` | `[BETA-ENHANCER]` | Visual progression and streak logic verified. |
 | `F-MOBILE-03`| Push Notifications | `IMPLEMENTED` | `[BETA-ENHANCER]` | Local and service-layer notification logic present. |
-| `F-SOCIAL-01`| Accountability Partner | `PARTIAL` | **[BETA-BLOCKER]** | Recovery guardrails, invite/accept/cosign/veto endpoints, and partner rows exist server-side; partner-facing acceptance/cosign UX is not yet surfaced end-to-end in the mobile client. |
+| `F-SOCIAL-01`| Accountability Partner | `IMPLEMENTED` (web) | **[BETA-BLOCKER]** | The web partner surface ships (#922): pending invitations, accept/decline, cosign, veto, plus partner-lifecycle notifications that fired nowhere before. It also uncovered that `GET /contracts/invitations` was UNREACHABLE — declared after `@Get(":id")`, so every call resolved to `findOne("invitations")`. Mobile screens remain the open half. |
 | `F-CORE-10` | Weekend Multiplier | `IMPLEMENTED` | `[BETA-ENHANCER]` | Dynamic staking logic for high-risk windows active. |
-| `F-CORE-11` | 24-Hour Time-Lock (Recovery) | `NOT_STARTED` | `[POST-BETA]` | Row added 2026-08-15 (was absent). `danger-zone.service.ts` provides risk-window analysis; the withdrawal timelock/friction mechanism itself is unbuilt (TKT-P1-005, Delta wave). |
-| `F-UX-01` | Identity-Based Onboarding | `NOT_STARTED` | `[POST-BETA]` | Row added 2026-08-15 (was absent). No oath storage, identity binding, or onboarding UI (TKT-P1-016, Delta wave). |
+| `F-CORE-11` | 24-Hour Time-Lock (Recovery) | `IMPLEMENTED` | `[POST-BETA]` | The backend (break-request/cancel/lock-status + `recovery_break_requests`) was complete, guarded, tested — and called by zero client code. Countdown, cancel CTA and danger-zone banners now ship on the contract page (#915). |
+| `F-UX-01` | Identity-Based Onboarding | `IMPLEMENTED` | `[POST-BETA]` | Identity oath persisted and bound to the contract, surfaced at creation and on the contract page (#924). Phase-1 copy is no-contact only, per the scope lock. |
 
 ---
 
@@ -109,6 +109,23 @@ hosted test-money beta is LIVE and 47/47-route verified as of 2026-08-15)*
 | `F-B2B-04` | Corporate Integrity Score | `IMPLEMENTED` | `[POST-BETA]` | Aggregate org health metric implemented in CrmService. |
 
 ---
+
+## ⚠️ How to read a status in this matrix (2026-08-15)
+
+An audit of every remaining item found **22 features that were complete, tested,
+registered — and reachable by nobody.** They were not missing work; they were
+*unwired* work, and this matrix counted them as shipped because the files
+existed. Two of them were live defects: Fury reviewers received raw unredacted
+media because the redaction dispatcher had zero callers, and a Fury who won an
+appeal was never refunded because the reversal deleted bookkeeping while the
+ledger had taken the money.
+
+So a status in this table means what the estate's own standing caution says and
+nothing more: **a feature is IMPLEMENTED only when the code is written, tested,
+AND reached by something.** Before marking a row, grep for CALLERS, not for the
+file — and check that a test on the path can actually fail (the Fury queue's
+spec injected its storage mock as `{}`, so the branch that leaked raw media was
+never exercised by any assertion).
 
 ## 🔍 Peer-Review Logic Checks
 
