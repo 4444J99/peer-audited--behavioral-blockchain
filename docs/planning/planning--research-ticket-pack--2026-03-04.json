@@ -11,7 +11,7 @@
       "id": "TKT-P0-001",
       "title": "Real-Money FBO Settlement Activation",
       "priority": "P0",
-      "status": "proposed",
+      "status": "implemented-activation-gated",
       "dependencies": [],
       "api": [
         "POST /payments/settlements/:contractId/preview",
@@ -30,13 +30,15 @@
         "custody model review",
         "processor terms validation",
         "auditability sign-off"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "Escrow port + Stripe/Corepay/Ledger rails + STYX_TEST_MONEY_MODE interlock (#868). Activation is human-gated: merchant account #133 (sequenced after counsel per Q-8), counsel #315-#317."
     },
     {
       "id": "TKT-P0-002",
       "title": "Native iOS Camera Proof Capture (Gallery Disabled)",
       "priority": "P0",
-      "status": "proposed",
+      "status": "open-synthetic-only",
       "dependencies": [],
       "api": [
         "POST /proofs/upload-url with captureSource + nonce"
@@ -53,13 +55,15 @@
       "legal_gates": [
         "camera disclosure check",
         "privacy copy update"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "CameraModule still routes createSyntheticCaptureSession (self-labeled non-production). Native capture unbuilt — Gamma wave; device verification rides Q-7/#141."
     },
     {
       "id": "TKT-P0-003",
       "title": "KYC Runtime Enforcement + Progressive Stake Tiers",
       "priority": "P0",
-      "status": "proposed",
+      "status": "implemented-runtime--vendor-gated",
       "dependencies": [
         "TKT-P0-001"
       ],
@@ -79,13 +83,15 @@
       "legal_gates": [
         "vendor DPA",
         "jurisdiction policy check"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "Runtime KYC gate default-ON in production (compliance-policy.service.ts:140-183); age gate unconditional on monetized actions. Identity vendor adapter remains mock pending Stripe Identity contract (#132). Phase 1 labels identity checks non-production per scope lock."
     },
     {
       "id": "TKT-P0-004",
       "title": "Geofence Fail-Closed Hardening + Policy Registry",
       "priority": "P0",
-      "status": "proposed",
+      "status": "implemented",
       "dependencies": [],
       "api": [
         "GET /compliance/policy/effective"
@@ -98,13 +104,15 @@
       ],
       "legal_gates": [
         "state matrix counsel approval"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "SH7 fail-closed default in geofencing.ts + GeoResolver provenance chain with stateSource recording (#868); live-verified 2026-07-31 row 4."
     },
     {
       "id": "TKT-P1-005",
       "title": "Recovery Danger-Zone Lockdowns + 24h Timelock",
       "priority": "P1",
-      "status": "proposed",
+      "status": "open",
       "dependencies": [],
       "api": [
         "POST /contracts/:id/recovery/break-request",
@@ -120,13 +128,15 @@
       ],
       "legal_gates": [
         "non-coercive contract language review"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "danger-zone.service.ts provides risk-window analysis, but the 24h withdrawal timelock/friction mechanism is unbuilt — Delta wave."
     },
     {
       "id": "TKT-P1-006",
       "title": "Remote Push Pipeline (APNs/FCM) + Policy Matrix",
       "priority": "P1",
-      "status": "proposed",
+      "status": "implemented-verification-open",
       "dependencies": [],
       "api": [
         "POST /notifications/push/register"
@@ -140,13 +150,15 @@
       ],
       "legal_gates": [
         "consent and preference policy review"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "Remote sender exists: ExpoPushProvider posts to exp.host; push-tokens.service registers. Open: delivery-receipt verification; APNs key for standalone builds (#127)."
     },
     {
       "id": "TKT-P1-007",
       "title": "Native HealthKit Bridge + Server Metadata Filter",
       "priority": "P1",
-      "status": "proposed",
+      "status": "blocked-native-bridge",
       "dependencies": [],
       "api": [
         "POST /oracles/healthkit/samples"
@@ -159,13 +171,15 @@
       ],
       "legal_gates": [
         "health-data minimization and disclosure review"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "HealthKitMetadataGuard.ts built + tested standalone; the native bridge that feeds it is unbuilt (#124). The registry's only WAITING ticket."
     },
     {
       "id": "TKT-P1-008",
       "title": "Cross-Lobby Anti-Collusion Routing",
       "priority": "P1",
-      "status": "proposed",
+      "status": "implemented-admin-ui-open",
       "dependencies": [],
       "api": [
         "Fury assignment exclusion controls"
@@ -179,13 +193,15 @@
       ],
       "legal_gates": [
         "fairness/bias review"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "Reviewer exclusions live: same-state/guild/enterprise/partner isolation in fury-router.worker.ts:77-97. Open: admin cluster-detection/override screen — Gamma wave."
     },
     {
       "id": "TKT-P1-009",
       "title": "Self-Exclusion + Responsible-Use Runtime Controls",
       "priority": "P1",
-      "status": "proposed",
+      "status": "open",
       "dependencies": [],
       "api": [
         "POST /compliance/self-exclusion",
@@ -199,13 +215,15 @@
       ],
       "legal_gates": [
         "terms/responsible-use legal review"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "Only static disclosure pages shipped (/legal/responsible-use). Self-exclusion registry, cooling-off enforcement, re-entry validation unbuilt — Gamma wave."
     },
     {
       "id": "TKT-P1-010",
       "title": "Endowed Progress + Downscale UX Completion",
       "priority": "P1",
-      "status": "proposed",
+      "status": "partial",
       "dependencies": [
         "TKT-P0-001"
       ],
@@ -222,13 +240,15 @@
       ],
       "legal_gates": [
         "skill/commitment framing copy review"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "Endowed progress built (DR-005 money-removal pending as a flag-deferral like DR-004); downscale intervention flow + bounded-stake UI open — Delta wave."
     },
     {
       "id": "TKT-P0-011",
       "title": "Forfeit Disposition Policy Engine + Refund-Only Kill Switch",
       "priority": "P0",
-      "status": "proposed",
+      "status": "implemented-initial-scope",
       "dependencies": [
         "TKT-P0-001",
         "TKT-P0-004"
@@ -250,13 +270,15 @@
       "legal_gates": [
         "per-state mode mapping sign-off",
         "refund-only trigger criteria approval"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "Refund-only kill switch DB-persisted + boot-rehydrated (2026-07-30 stub-inventory); TIER_2 refund-only enforcement implemented initial scope; broader disposition engine remains initial."
     },
     {
       "id": "TKT-P1-012",
       "title": "Weekend Multiplier Policy Engine (Recovery Stream)",
       "priority": "P1",
-      "status": "proposed",
+      "status": "implemented",
       "dependencies": [
         "TKT-P1-005"
       ],
@@ -273,13 +295,15 @@
       ],
       "legal_gates": [
         "penalty disclosure copy review"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "Dynamic weekend staking active in contracts.service + behavioral module; matrix recorded it 2026-03-10, backlog corrected in this truth pass."
     },
     {
       "id": "TKT-P1-013",
       "title": "Video Proof Processing Pipeline Completion",
       "priority": "P1",
-      "status": "proposed",
+      "status": "partial-ui-open",
       "dependencies": [
         "TKT-P0-002"
       ],
@@ -299,13 +323,15 @@
       ],
       "legal_gates": [
         "raw-media retention policy approval"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "video-processing.service.ts + video-processing.worker.ts built with specs; processing-state UI open — Gamma wave. (Was once closed NOT_PLANNED and reinstated.)"
     },
     {
       "id": "TKT-P1-014",
       "title": "Fury Audit Masks (Identity Redaction) Runtime",
       "priority": "P1",
-      "status": "proposed",
+      "status": "open-verify-first",
       "dependencies": [
         "TKT-P1-013"
       ],
@@ -325,13 +351,15 @@
       ],
       "legal_gates": [
         "biometric redaction policy review"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "redaction hits exist in proofs.service + desktop surfaces; reviewer-surface masks unverified end-to-end — Gamma wave probes before building."
     },
     {
       "id": "TKT-P1-015",
       "title": "Collusion Slashing + Honey-Trap Enforcement",
       "priority": "P1",
-      "status": "proposed",
+      "status": "partial",
       "dependencies": [
         "TKT-P1-008",
         "TKT-P1-014"
@@ -350,13 +378,15 @@
       ],
       "legal_gates": [
         "reviewer sanctions and appeal policy approval"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "fury_penalties + idempotent applyPenalty + review-gated confirmCase exist (enforcement.service.ts); slashing calculation depth, false-positive safeguards and the appeal surface to verify/finish — Gamma wave."
     },
     {
       "id": "TKT-P1-016",
       "title": "Identity-Based Oath Onboarding Flow",
       "priority": "P1",
-      "status": "proposed",
+      "status": "open",
       "dependencies": [
         "TKT-P1-010"
       ],
@@ -372,13 +402,15 @@
       ],
       "legal_gates": [
         "onboarding language compliance review"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "No oath storage, identity binding, or onboarding UI — Delta wave."
     },
     {
       "id": "TKT-P1-017",
       "title": "Accountability Partner Protocol Completion",
       "priority": "P1",
-      "status": "proposed",
+      "status": "partial-ux-open",
       "dependencies": [
         "TKT-P1-005"
       ],
@@ -398,13 +430,15 @@
       ],
       "legal_gates": [
         "partner authority and visibility disclosure approval"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "Server lifecycle complete (invite/accept/cosign/veto endpoints, partner rows); partner-facing mobile UX missing entirely — Delta wave."
     },
     {
       "id": "TKT-P1-018",
       "title": "Goal-Gradient Dashboard + Live Leaderboard Completion",
       "priority": "P1",
-      "status": "proposed",
+      "status": "partial",
       "dependencies": [
         "TKT-P1-010",
         "TKT-P1-006"
@@ -423,13 +457,15 @@
       ],
       "legal_gates": [
         "terminology sanitization pass for new labels"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "Goal-gradient dashboard built; Tavern leaderboard built and deliberately HIDDEN per Phase-1 scope lock; live (WebSocket/SSE) transport partial — Delta wave."
     },
     {
       "id": "TKT-P1-019",
       "title": "Skill-Contest Whitepaper + Release Gate",
       "priority": "P1",
-      "status": "proposed",
+      "status": "open-buildable-gate",
       "dependencies": [
         "TKT-P0-011"
       ],
@@ -445,7 +481,9 @@
       "legal_gates": [
         "counsel-signed whitepaper version approval",
         "release gate enforcement for missing artifact"
-      ]
+      ],
+      "status_updated": "2026-08-15",
+      "status_evidence": "Whitepaper draft exists (docs/legal/legal--skill-based-contest-whitepaper.md); counsel sign-off is #136; the automated release gate is unbuilt — Omega wave. Registry defect: duplicate triage parents #177/#292."
     }
   ],
   "coverage_delta": [
@@ -583,5 +621,9 @@
       "source_feature": "F-LEGAL-05",
       "ticket_id": "TKT-P1-019"
     }
-  ]
+  ],
+  "status_truth_pass": {
+    "date": "2026-08-15",
+    "method": "code-first reconciliation; see docs/planning/planning--full-build-execution--2026-08-15.md"
+  }
 }

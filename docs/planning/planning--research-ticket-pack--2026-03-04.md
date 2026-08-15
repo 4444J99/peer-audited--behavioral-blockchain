@@ -1,5 +1,13 @@
 # Research Ticket Pack (Second Pass) — 2026-03-04
 
+> **Status truth pass (2026-08-15):** the `.json` twin of this pack now carries a
+> code-verified `status` / `status_evidence` per ticket (they had read `proposed`
+> since March while the code moved on). Summary: P0-001/003/004/011 and P1-006/008/012
+> are implemented (three with named open remainders); P1-010/013/015/017/018 partial;
+> P0-002, P1-005/009/014/016/019 open (Gamma/Delta/Omega waves); P1-007 blocked on the
+> native bridge (#124). Method + wave assignments:
+> `docs/planning/planning--full-build-execution--2026-08-15.md`.
+
 ## Scope
 This pack converts unresolved research and partial controls into executable implementation tickets.
 

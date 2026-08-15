@@ -8,11 +8,19 @@
 For the Phase 1 Beta (Test-Money Pilot, iOS, No-Contact Recovery, US-only), the system requires strict gating. Items marked **[BETA-BLOCKER]** must be `IMPLEMENTED` for Beta to ship. Items marked **[TEST-MONEY]** or `[PILOT-EXCEPTION]` are closed-pilot allowances that must be re-opened before any public or real-money expansion. Items marked **[POST-BETA]** are explicitly deferred to later phases.
 
 ### Readiness Status Summary
+*(refreshed 2026-08-15 truth pass — six previously-absent feature rows added below; the
+hosted test-money beta is LIVE and 47/47-route verified as of 2026-08-15)*
 *   **Alpha (Core Trust):** 100% Implemented
-*   **Beta (Market-Safe Money Enablement):** Pilot-usable with caveats (geofence consistency and disclosed non-production identity controls remain open)
-*   **Gamma (Proof Integrity):** Core backend implemented; public-scale proof authenticity remains incomplete
+*   **Beta (Market-Safe Money Enablement):** Engineering-complete — the March geofence
+    finding is FIXED (SH7 fail-closed + GeoResolver provenance, #868) and KYC runtime
+    enforcement is default-ON in production; remaining P0s are legal atoms (#315-#317)
+    and the identity-vendor contract (#132), with identity checks disclosed non-production
+    for the pilot
+*   **Gamma (Proof Integrity):** Core backend implemented; native capture still synthetic
+    (TKT-P0-002) and public-scale proof authenticity incomplete
 *   **Delta (Retention):** Backend recovery-partner flows exist, but end-user partner UX is incomplete
-*   **Omega (Enterprise):** Not re-verified in this worksheet
+*   **Omega (Enterprise):** Not re-verified in this worksheet (re-verification is the
+    full-build program's Wave 5)
 
 ---
 
@@ -45,6 +53,7 @@ For the Phase 1 Beta (Test-Money Pilot, iOS, No-Contact Recovery, US-only), the 
 | `F-LEGAL-01` | Contest Official Rules Engine | `IMPLEMENTED` | **[BETA-BLOCKER]** | Required for promotional law compliance. |
 | `F-LEGAL-02` | Responsible Use Disclosures | `IMPLEMENTED` | **[BETA-BLOCKER]** | FTC compliance. |
 | `F-CORE-04` | Stripe FBO Escrow | `IMPLEMENTED` | **[TEST-MONEY]** | Real-money settlement logic is present, but the disclosed beta path remains test-money only. |
+| `F-AEGIS-06` | Responsible-Use Runtime Controls | `NOT_STARTED` | `[POST-BETA]` | Row added 2026-08-15 (was absent). Only the static `/legal/responsible-use` disclosure page shipped; self-exclusion registry, cooling-off enforcement and re-entry validation are unbuilt (TKT-P1-009, Gamma wave). |
 | `F-AEGIS-02` | Jurisdiction Geofencing | `PARTIAL` | **[BETA-BLOCKER]** | Compliance policy is fail-closed, but a legacy geofence service still defaults non-US / unresolved IPs to `TIER_1`. The US-only boundary is not fully isolated until enforcement paths converge. |
 | `F-UX-02` | Endowed Progress ($5 Bonus) | `IMPLEMENTED` | `[BETA-ENHANCER]` | Onboarding bonus logic verified in ContractsService. |
 
@@ -62,7 +71,10 @@ For the Phase 1 Beta (Test-Money Pilot, iOS, No-Contact Recovery, US-only), the 
 | `F-SOCIAL-02`| Whistleblower Bounty Links | `IMPLEMENTED` | **[BETA-BLOCKER]** | The Ex-Bounty. Asymmetric information gathering. |
 | `F-VERIFY-01`| pHash Duplicate Detection | `IMPLEMENTED` | `[BETA-ENHANCER]` | Blocks re-upload of identical proof media. |
 | `F-MOBILE-01`| Native iOS Camera Module | `STUB` | `[PILOT-EXCEPTION]*` | *Current Phase 1 path is explicitly synthetic-capture-only. Native capture is required before public/open beta or adversarial scale, but not for the disclosed invite-only pilot.* |
-| `F-FURY-03` | Cross-Lobby Auditing | `IMPLEMENTED` | `[POST-BETA]` | Geographic/Social isolation logic implemented in FuryRouterWorker. |
+| `F-FURY-03` | Cross-Lobby Auditing | `IMPLEMENTED` | `[POST-BETA]` | Geographic/Social isolation logic implemented in FuryRouterWorker (`fury-router.worker.ts:77-97`). Admin cluster-detection screen remains open (TKT-P1-008 UI half). |
+| `F-VERIFY-07` | Video Proof Pipeline | `PARTIAL` | `[POST-BETA]` | Row added 2026-08-15 (was absent). Backend transcoding built (`video-processing.service.ts` + worker, with specs); processing-state UI open (TKT-P1-013). |
+| `F-FURY-04` | Fury Audit Masks (Identity Redaction) | `PARTIAL` | `[POST-BETA]` | Row added 2026-08-15 (was absent). `redact` paths exist in proofs.service + desktop; reviewer-surface masking unverified end-to-end (TKT-P1-014 — Gamma wave probes before building). |
+| `F-FURY-09` | Collusion Slashing + Appeal | `PARTIAL` | `[POST-BETA]` | Row added 2026-08-15 (was absent). `fury_penalties` + idempotent `applyPenalty` + review-gated `confirmCase` exist (enforcement.service.ts); slashing depth and the appeal surface to verify/finish (TKT-P1-015). |
 
 ---
 
@@ -79,6 +91,8 @@ For the Phase 1 Beta (Test-Money Pilot, iOS, No-Contact Recovery, US-only), the 
 | `F-MOBILE-03`| Push Notifications | `IMPLEMENTED` | `[BETA-ENHANCER]` | Local and service-layer notification logic present. |
 | `F-SOCIAL-01`| Accountability Partner | `PARTIAL` | **[BETA-BLOCKER]** | Recovery guardrails, invite/accept/cosign/veto endpoints, and partner rows exist server-side; partner-facing acceptance/cosign UX is not yet surfaced end-to-end in the mobile client. |
 | `F-CORE-10` | Weekend Multiplier | `IMPLEMENTED` | `[BETA-ENHANCER]` | Dynamic staking logic for high-risk windows active. |
+| `F-CORE-11` | 24-Hour Time-Lock (Recovery) | `NOT_STARTED` | `[POST-BETA]` | Row added 2026-08-15 (was absent). `danger-zone.service.ts` provides risk-window analysis; the withdrawal timelock/friction mechanism itself is unbuilt (TKT-P1-005, Delta wave). |
+| `F-UX-01` | Identity-Based Onboarding | `NOT_STARTED` | `[POST-BETA]` | Row added 2026-08-15 (was absent). No oath storage, identity binding, or onboarding UI (TKT-P1-016, Delta wave). |
 
 ---
 

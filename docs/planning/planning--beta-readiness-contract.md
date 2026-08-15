@@ -49,6 +49,7 @@ Control flags:
 
 | Gate                   | Required | Command                                             | Owner           | Notes                                        |
 | ---------------------- | -------- | --------------------------------------------------- | --------------- | -------------------------------------------- |
+| `build_check`          | Yes      | (in `scripts/smoke/beta-readiness.sh`)              | Platform        | Local build/lint preflight; ran in every recorded artifact but was missing from this matrix until 2026-08-15 |
 | `api_ready`            | Yes      | `scripts/smoke/check-api-ready.sh`                  | API / Platform  | Polls `/health/ready` until ready or timeout |
 | `api_release_meta`     | Yes      | `scripts/smoke/check-api-release.sh`                | API / Platform  | Validates `/meta/release` contract           |
 | `web_availability`     | No       | `scripts/smoke/check-web.sh`                        | Web / Platform  | Optional if `*_WEB_URL` is configured        |

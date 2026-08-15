@@ -93,10 +93,14 @@ engineering item and closed one long-standing block:
   Fury pool) and the answer had never reached the repository. `settlement-quote.ts` carried a
   constant named `PROVISIONAL_FAILED_CAPTURE_BOUNTY_POOL_RATE` "pending Jessica decision" for
   four and a half months after she had decided. Now applied.
-- **Open.** DR-004 (appeals free in beta) and DR-005 (no onboarding bonus) are decided but
-  unbuilt. Neither is a constant change — see "Open implementation of decided policy" in the
-  decisions-of-record file, in particular that setting the appeal fee to `$0` would make
-  `initiateAppeal` fail closed, because Stripe rejects a zero-amount authorization.
+- **Built (DR-004).** Free appeals shipped 2026-07-31 behind `isAppealFeeEnabled()` (default
+  off; `STYX_APPEAL_FEE_ENABLED=true` reinstates) — the decisions ledger records it and the
+  ledger wins over this doc's earlier "unbuilt" reading. The zero-amount-authorization trap
+  still holds: never set `APPEAL_FEE_AMOUNT` to `0`; the flag skips the hold instead.
+- **Open (DR-005).** The onboarding-bonus removal is decided but unbuilt —
+  `grantOnboardingBonus` is still called from `contracts.service.ts`. Q-6's recorded default
+  (keep the mechanic, remove the money, flag-deferred like DR-004) is the Delta-wave item in
+  `planning--full-build-execution--2026-08-15.md`.
 
 ---
 
