@@ -74,13 +74,19 @@ This checklist defines the requirements for promoting Styx from PUBLIC_PROCESS t
 - [ ] Age verification: 18+ requirement enforced at account creation
 
 ### Legal Documents
-- [ ] Terms of Service published at styx.app/terms and reviewed by legal counsel
-- [ ] Privacy Policy published at styx.app/privacy and reviewed by legal counsel
-- [ ] Escrow Agreement published (terms governing stake holding and release)
-- [ ] Fury Auditor Agreement published (terms governing peer audit obligations)
-- [ ] Dispute Resolution Policy published (appeal process, panel review, timelines)
-- [ ] Cookie Policy and consent banner implemented (CCPA compliance for US users)
-- [ ] Gambling classification legal opinion on file (Styx is skill-based + peer-audited, not gambling)
+
+Every item here has two halves: **drafting** (buildable in-house) and **counsel sign-off** (blocked
+on retaining outside counsel — issue #315). A linked draft below means the drafting half is done; it
+does **not** mean the gate passes. Each draft carries a "DRAFT — not counsel-reviewed" banner and an
+open-questions section naming what only counsel can close.
+
+- [ ] Terms of Service published at styx.app/terms and reviewed by legal counsel — draft: [`../legal/terms-of-service.md`](../legal/terms-of-service.md)
+- [ ] Privacy Policy published at styx.app/privacy and reviewed by legal counsel — draft: [`../legal/privacy-policy.md`](../legal/privacy-policy.md)
+- [ ] Escrow Agreement published (terms governing stake holding and release) — draft: [`../legal/escrow-agreement-DRAFT.md`](../legal/escrow-agreement-DRAFT.md)
+- [ ] Fury Auditor Agreement published (terms governing peer audit obligations) — draft: [`../legal/fury-auditor-agreement-DRAFT.md`](../legal/fury-auditor-agreement-DRAFT.md) (**worker-classification risk is unresolved — see its §11**)
+- [ ] Dispute Resolution Policy published (appeal process, panel review, timelines) — **not drafted**
+- [ ] Cookie Policy and consent banner implemented (CCPA compliance for US users) — policy draft: [`../legal/cookie-policy-DRAFT.md`](../legal/cookie-policy-DRAFT.md); **the consent banner does not exist in `src/web`, and whether one is required on the current cookie set is a counsel question (see its §6)**
+- [ ] Gambling classification legal opinion on file (Styx is skill-based + peer-audited, not gambling) — blocked: issue #136
 
 ---
 

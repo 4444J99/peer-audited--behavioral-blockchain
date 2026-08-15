@@ -12,12 +12,24 @@ date: "2026-03-08"
 
 ## Overview
 
-This document provides pre-filled answers to standard enterprise security questionnaire topics for Styx. Use this as a reference when responding to prospect security reviews, RFPs, or compliance audits. All answers reflect the current state of the platform as of 2026-03-08.
+This document provides pre-filled answers to standard enterprise security questionnaire topics for Styx. Use this as a reference when responding to prospect security reviews, RFPs, or compliance audits.
 
 **Product:** Styx — Peer-Audited Behavioral Accountability Platform
 **Company:** ORGANVM (sole proprietorship, US-based)
 **Infrastructure:** Render (Oregon, US), Cloudflare, Stripe
 **Data classification:** PII, financial (escrow), behavioral/health data
+
+> **This document answers the questionnaire. [`security-whitepaper.md`](../../../enterprise/security-whitepaper.md)
+> describes the architecture.** The two are deliberately non-overlapping: operational facts
+> (hosting, subprocessors, retention, backup/DR, incident response, vendor risk) live here;
+> mechanism (the hash-chained TruthLog, the ledger invariants, guards, geofencing, device
+> attestation, redaction, honeypots, consensus) lives in the whitepaper, with a file path for every
+> claim. Where an answer below needs mechanism to be credible, it links rather than restates — a
+> restated control is a control that goes stale silently. Send both documents to a prospect; send
+> the whitepaper alone to an engineer.
+>
+> The whitepaper's **§12 Roadmap** is the authoritative list of what is *not* implemented. Where
+> this questionnaire says "planned" or "not yet", §12 is the source of truth.
 
 ---
 
@@ -33,14 +45,17 @@ This document provides pre-filled answers to standard enterprise security questi
 
 ## 2. Authentication & Authorization
 
+Full mechanism, with file paths: [`security-whitepaper.md` §4](../../../enterprise/security-whitepaper.md#4-authentication-and-authorization).
+
 | Question | Answer |
 |----------|--------|
-| What authentication method is used? | Email/password with bcrypt hashing (cost factor 12). JWT tokens for session management (short-lived access tokens + refresh tokens). |
-| Is multi-factor authentication (MFA) supported? | Planned for launch. Email-based OTP for consumer accounts. TOTP (authenticator app) for practitioner and enterprise accounts. |
-| Is single sign-on (SSO) supported? | SAML 2.0 SSO is planned for the Enterprise tier ($999+/mo). Not yet implemented. |
-| What authorization model is used? | Role-based access control (RBAC) with four roles: Admin, Practitioner, Client, Fury. Each role has scoped permissions. Practitioners can only view their own clients. Furies can only view assigned contracts. |
-| How are API tokens managed? | JWT access tokens expire after 15 minutes. Refresh tokens expire after 7 days. Tokens are signed with RS256 (asymmetric keys). Revocation is supported via a token blacklist in Redis. |
-| Are passwords stored securely? | Yes. Passwords are hashed with bcrypt (cost factor 12). Plaintext passwords are never stored or logged. Password reset uses time-limited, single-use tokens. |
+| What authentication method is used? | Email/password with bcrypt hashing. JWT tokens for session management (15-minute access tokens + 7-day refresh tokens, rotated on each refresh). |
+| Is multi-factor authentication (MFA) supported? | **No — not implemented.** Whitepaper §12. |
+| Is single sign-on (SSO) supported? | **SAML 2.0 is not implemented.** An enterprise token-exchange path exists that verifies a pre-shared HS256 assertion against a dedicated secret; it is not SAML and should not be described as such. Whitepaper §4.1 and §12. |
+| What authorization model is used? | Role-based access control. Roles in the codebase: `USER`, `FURY`, `PRACTITIONER`, `ADMIN`. The distinguishing property is that role and ban status are re-read from the database on every request rather than trusted from the session token, so a demotion or ban takes effect immediately instead of at token expiry. Whitepaper §4.3. |
+| How are API tokens managed? | Access tokens expire after 15 minutes; refresh tokens after 7 days, and only their SHA-256 hash is stored. Signing is **HS256 (symmetric)** — not RS256. There is **no revocation blacklist**; revocation is achieved by refresh-token rotation plus the per-request database role/ban check. Whitepaper §4.1, §12. |
+| Are passwords stored securely? | Yes. bcrypt (`bcryptjs`), cost factor **10**. Plaintext passwords are never stored or logged. Login runs a bcrypt compare against a fixed dummy hash even for non-existent accounts so response timing does not disclose account existence. Whitepaper §4.1. |
+| How is CSRF handled? | Double-submit token derived cryptographically from the session token, so a fabricated cookie value cannot validate. Whitepaper §4.2. |
 
 ## 3. Infrastructure & Hosting
 
@@ -55,6 +70,8 @@ This document provides pre-filled answers to standard enterprise security questi
 | Is the infrastructure multi-tenant or single-tenant? | Multi-tenant application layer with logical data isolation. Each practitioner's data is scoped by organization ID. Database queries enforce tenant isolation via row-level filtering. Enterprise single-tenant deployments are not currently available. |
 
 ## 4. Data Residency & Privacy
+
+Pseudonymization, media redaction, and the export/erasure implementation: [`security-whitepaper.md` §8](../../../enterprise/security-whitepaper.md#8-privacy-engineering) and [§7.1](../../../enterprise/security-whitepaper.md#71-auditors-never-see-raw-media). Note the one structural caveat it records: the append-only audit log is immutable by database trigger, so erasure anonymizes the user record rather than rewriting log history.
 
 | Question | Answer |
 |----------|--------|
@@ -90,16 +107,21 @@ This document provides pre-filled answers to standard enterprise security questi
 
 ## 7. Compliance & Certifications
 
+The complete list of what is **not** implemented is [`security-whitepaper.md` §12](../../../enterprise/security-whitepaper.md#12-roadmap--not-yet-implemented). Do not answer a compliance question from this section without checking it.
+
 | Question | Answer |
 |----------|--------|
 | Is the platform SOC 2 Type II certified? | Not yet. SOC 2 Type II audit is planned post-launch (targeting Q4 2026). Current security practices are designed to meet SOC 2 Trust Service Criteria. |
-| Is the platform HIPAA compliant? | HIPAA Business Associate Agreements (BAAs) are planned for the Enterprise tier ($999+/mo). Current security controls (encryption, access controls, audit logging) support HIPAA requirements, but BAAs are not yet executed. Practitioners handling PHI should consult their compliance officer. |
+| Is the platform HIPAA compliant? | No — and "HIPAA compliant" is not a status that exists as a certification. Styx is not a covered entity. HIPAA Business Associate Agreements are planned for the Enterprise tier ($999+/mo); **none has been executed**, and the template is an un-reviewed draft ([`../legal/hipaa-baa-template-DRAFT.md`](../../../legal/hipaa-baa-template-DRAFT.md)), whose §0 lists the technical prerequisites that are not yet met. Practitioners handling PHI should consult their compliance officer. |
+| Is there a security whitepaper? | Yes — [`security-whitepaper.md`](../../../enterprise/security-whitepaper.md). It names the implementing file for every control it claims and lists unimplemented controls separately in §12. |
 | Is the platform PCI DSS compliant? | Styx itself does not process or store payment card data. All payment processing is handled by Stripe, which is PCI DSS Level 1 certified. Styx operates in SAQ A-EP scope (redirect/iframe integration). |
 | Is there a privacy policy? | Yes. Published at styx.app/privacy. Covers data collection, usage, sharing, retention, and user rights. |
 | Is there a terms of service? | Yes. Published at styx.app/terms. Covers user obligations, financial stakes, dispute resolution, and liability limitations. |
 | Are data processing agreements (DPAs) available? | DPAs are available for Enterprise tier customers upon request. |
 
 ## 8. Penetration Testing & Vulnerability Management
+
+Supply-chain and release-gate detail: [`security-whitepaper.md` §10](../../../enterprise/security-whitepaper.md#10-software-supply-chain-and-secure-development).
 
 | Question | Answer |
 |----------|--------|
@@ -130,7 +152,7 @@ All subprocessors are US-based. No data is shared with subprocessors for adverti
 |----------|--------|
 | Who has access to production systems? | Sole founder (admin). No shared accounts. No contractor access to production databases. |
 | Is the principle of least privilege enforced? | Yes. Application-level RBAC scopes all database queries by role. Infrastructure access is limited to the founder via Render and Cloudflare dashboards with MFA enabled. |
-| Are access logs maintained? | Yes. Render and Cloudflare maintain access logs. Application-level audit logs track all financial transactions, Fury verdicts, and admin actions. |
+| Are access logs maintained? | Yes. Render and Cloudflare maintain access logs. Application-level audit logging is the hash-chained, append-only TruthLog — financial transactions, Fury verdicts, admin actions, and device-attestation rejections all append to it, and it carries a database trigger that rejects `UPDATE` and `DELETE`. Mechanism and its limits: [`security-whitepaper.md` §2](../../../enterprise/security-whitepaper.md#2-the-truthlog-a-hash-chained-append-only-event-log). |
 | Are background checks performed? | Not applicable (sole founder). Fury auditors undergo identity verification (government ID) but are not employees. |
 | Is there security awareness training? | Not applicable at current scale (sole founder). Planned for when team expands. |
 
