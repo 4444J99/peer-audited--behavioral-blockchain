@@ -4,7 +4,33 @@
  */
 
 import { SessionService } from './SessionService';
+import { ApiClient } from './ApiClient';
+import type { ProofProcessingStatus } from './ApiClient';
 import { API_BASE } from '../config/api';
+
+/** First gap between processing-status polls. */
+export const PROCESSING_POLL_INITIAL_MS = 2_000;
+/** Ceiling the exponential backoff settles at. */
+export const PROCESSING_POLL_MAX_MS = 30_000;
+/** Total wall-clock budget before the client stops asking and surfaces a retry. */
+export const PROCESSING_POLL_DEADLINE_MS = 300_000;
+
+const TERMINAL_PROCESSING_STATUSES = ['COMPLETED', 'FAILED'];
+
+function isTerminalProcessingStatus(overallStatus: string): boolean {
+  return TERMINAL_PROCESSING_STATUSES.includes(overallStatus);
+}
+
+export interface ProcessingPollOptions {
+  initialDelayMs?: number;
+  maxDelayMs?: number;
+  deadlineMs?: number;
+  /** Injected in tests so the poll runs without real timers. */
+  sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
+  /** Polled between rounds so an unmounting view can stop the loop. */
+  isCancelled?: () => boolean;
+}
 
 export class UploadService {
   /**
@@ -96,5 +122,80 @@ export class UploadService {
     }
 
     return true;
+  }
+
+  /**
+   * Reads the backend video-processing pipeline state for one proof.
+   *
+   * Routed through ApiClient rather than a bare fetch so the caller gets the
+   * shared error-envelope parsing (request_id, error_code). `getToken()` is
+   * awaited for its side effect: it rehydrates ApiClient's in-memory auth token
+   * after a cold start, where only AsyncStorage still holds the session.
+   */
+  static async getProcessingStatus(proofId: string): Promise<ProofProcessingStatus> {
+    await SessionService.getToken();
+    return ApiClient.getProcessingStatus(proofId);
+  }
+
+  /**
+   * Polls the processing pipeline until it reaches a terminal state, reporting
+   * every reading through `onUpdate` so a view can render progress live.
+   *
+   * Backs off exponentially from 2s to a 30s ceiling under a 5-minute budget:
+   * transcode + redact runs on a BullMQ worker with its own retries, so a tight
+   * poll would hammer the API for minutes with nothing new to say.
+   *
+   * Resolves with the terminal reading, or `null` if `isCancelled` went true.
+   * Rejects only when the deadline passes without a terminal state — a fetch
+   * failure mid-poll is transient (the worker is unaffected) and is retried
+   * until that same deadline.
+   */
+  static async pollProcessingStatus(
+    proofId: string,
+    onUpdate: (status: ProofProcessingStatus) => void,
+    options: ProcessingPollOptions = {},
+  ): Promise<ProofProcessingStatus | null> {
+    const initialDelayMs = options.initialDelayMs ?? PROCESSING_POLL_INITIAL_MS;
+    const maxDelayMs = options.maxDelayMs ?? PROCESSING_POLL_MAX_MS;
+    const deadlineMs = options.deadlineMs ?? PROCESSING_POLL_DEADLINE_MS;
+    const now = options.now ?? (() => Date.now());
+    const sleep =
+      options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+    const isCancelled = options.isCancelled ?? (() => false);
+
+    const startedAt = now();
+    let delayMs = initialDelayMs;
+    let lastError: string | null = null;
+
+    while (!isCancelled()) {
+      try {
+        const status = await UploadService.getProcessingStatus(proofId);
+        lastError = null;
+        if (isCancelled()) {
+          return null;
+        }
+        onUpdate(status);
+        if (isTerminalProcessingStatus(status.overallStatus)) {
+          return status;
+        }
+      } catch (e: any) {
+        lastError = e?.message || String(e);
+        console.warn(`UploadService: Processing-status poll failed for ${proofId}: ${lastError}`);
+      }
+
+      const remainingMs = deadlineMs - (now() - startedAt);
+      if (remainingMs <= 0) {
+        throw new Error(
+          lastError
+            ? `Could not reach the processing pipeline: ${lastError}`
+            : `Proof is still processing after ${Math.round(deadlineMs / 1000)}s.`,
+        );
+      }
+
+      await sleep(Math.min(delayMs, remainingMs));
+      delayMs = Math.min(delayMs * 2, maxDelayMs);
+    }
+
+    return null;
   }
 }

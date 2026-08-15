@@ -3,6 +3,25 @@ import type { MobileBootstrapResponse, ReleaseInfoResponse } from '@styx/shared/
 
 let authToken: string | null = null;
 
+/** One row of `proof_processing_jobs`, newest first as the API orders them. */
+export interface ProofProcessingJob {
+  stage: string;
+  status: string;
+  error: string | null;
+  updated_at: string;
+}
+
+export interface ProofProcessingStatus {
+  proofId: string;
+  /**
+   * Mirrors `proofs.processing_status`. Terminal values are COMPLETED and FAILED;
+   * NOT_STARTED (the column default, also returned when the row is missing the
+   * value) and PROCESSING are in-flight.
+   */
+  overallStatus: string;
+  jobs: ProofProcessingJob[];
+}
+
 const MOBILE_APP_VERSION = process.env.EXPO_PUBLIC_STYX_MOBILE_VERSION || '0.0.0-dev';
 const MOBILE_APP_BUILD = process.env.EXPO_PUBLIC_STYX_MOBILE_BUILD || 'dev';
 
@@ -175,6 +194,9 @@ getContracts: () =>
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  getProcessingStatus: (proofId: string) =>
+    request<ProofProcessingStatus>(`/proofs/${proofId}/processing-status`),
 
   useGraceDay: (contractId: string) =>
     request<{ success: boolean; graceDaysRemaining: number }>(`/contracts/${contractId}/grace-day`, {
