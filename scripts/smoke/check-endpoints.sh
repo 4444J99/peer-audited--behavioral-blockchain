@@ -123,6 +123,7 @@ if [ -n "${WEB_URL:-}" ]; then
   check_body_contains "GET /legal/privacy"         "${WEB_URL}/legal/privacy"         "Privacy Policy"
   check_body_contains "GET /legal/rules"           "${WEB_URL}/legal/rules"           "Contest Official Rules"
   check_body_contains "GET /legal/responsible-use" "${WEB_URL}/legal/responsible-use" "Responsible Use"
+  check_body_contains "GET /legal/compliance-artifacts" "${WEB_URL}/legal/compliance-artifacts" "Compliance Artifact Register"
 fi
 
 # ── Summary ──

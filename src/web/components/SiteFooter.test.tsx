@@ -44,6 +44,13 @@ describe('SiteFooter', () => {
     expect(html).toContain('Responsible Use');
   });
 
+  it('renders the Compliance Artifacts link', () => {
+    const html = renderToStaticMarkup(<SiteFooter />);
+
+    expect(html).toContain('href="/legal/compliance-artifacts"');
+    expect(html).toContain('Compliance Artifacts');
+  });
+
   it('renders copyright with the current year', () => {
     const html = renderToStaticMarkup(<SiteFooter />);
     const currentYear = new Date().getFullYear().toString();

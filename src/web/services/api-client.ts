@@ -1,4 +1,5 @@
 import type {
+  ComplianceArtifactStatus,
   MobileBootstrapResponse,
   ReleaseInfoResponse,
   ReferralCodeResponse,
@@ -267,6 +268,8 @@ export const api = {
   getMobileBootstrap: () =>
     request<MobileBootstrapResponse>("/mobile/bootstrap"),
   getReleaseInfo: () => request<ReleaseInfoResponse>("/meta/release"),
+  getComplianceArtifacts: () =>
+    request<ComplianceArtifactStatus[]>("/compliance/artifacts"),
 
   // Auth
   register: (
