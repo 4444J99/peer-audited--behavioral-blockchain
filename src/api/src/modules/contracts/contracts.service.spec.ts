@@ -1271,6 +1271,84 @@ describe("ContractsService", () => {
     });
   });
 
+  // ── B2B webhook fan-out ────────────────────────────────────────
+
+  describe("enterprise webhook side effect", () => {
+    const contractRow = {
+      user_id: "user-9",
+      stake_amount: 100,
+      payment_intent_id: null,
+      metadata: {},
+    };
+
+    function effectsFor(userRow: Record<string, unknown>) {
+      return (service as any).buildContractResolutionSideEffects({
+        contractId: "contract-1",
+        outcome: "COMPLETED",
+        contractRow,
+        userRow,
+        escrowAccountId: null,
+        revenueAccountId: null,
+        bountyPoolAccountId: null,
+      });
+    }
+
+    it("should enqueue a webhook effect when the contract owner has an enterprise", () => {
+      const effect = effectsFor({
+        account_id: "acct-1",
+        enterprise_id: "ent-001",
+      }).find((e: any) => e.effectType === "B2B_WEBHOOK_CONTRACT_RESOLVED");
+
+      expect(effect).toBeDefined();
+      expect(effect.dedupeKey).toBe(
+        "contract-resolution:contract-1:COMPLETED:b2b-webhook",
+      );
+      expect(effect.payload).toEqual(
+        expect.objectContaining({
+          enterpriseId: "ent-001",
+          userId: "user-9",
+        }),
+      );
+      expect(typeof effect.payload.occurredAt).toBe("string");
+    });
+
+    it("should enqueue nothing for a consumer contract", () => {
+      const effects = effectsFor({ account_id: "acct-1", enterprise_id: null });
+      expect(
+        effects.some(
+          (e: any) => e.effectType === "B2B_WEBHOOK_CONTRACT_RESOLVED",
+        ),
+      ).toBe(false);
+    });
+
+    it("should hand the fan-out to the subscription service on dispatch", async () => {
+      const enqueueContractResolved = jest.fn().mockResolvedValue(1);
+      (service as any).enterpriseWebhooks = { enqueueContractResolved };
+
+      await (service as any).dispatchContractResolutionSideEffect({
+        id: "fx-1",
+        contract_id: "contract-1",
+        outcome: "FAILED",
+        effect_type: "B2B_WEBHOOK_CONTRACT_RESOLVED",
+        dedupe_key: "contract-resolution:contract-1:FAILED:b2b-webhook",
+        payload: {
+          enterpriseId: "ent-001",
+          userId: "user-9",
+          occurredAt: "2026-08-15T00:00:00.000Z",
+        },
+        status: "PROCESSING",
+        attempts: 1,
+      });
+
+      expect(enqueueContractResolved).toHaveBeenCalledWith({
+        enterpriseId: "ent-001",
+        userId: "user-9",
+        outcome: "FAILED",
+        occurredAt: "2026-08-15T00:00:00.000Z",
+      });
+    });
+  });
+
   // ── getContractProofs ──────────────────────────────────────────
 
   describe("getContractProofs", () => {

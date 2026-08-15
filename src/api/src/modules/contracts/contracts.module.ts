@@ -32,6 +32,7 @@ import { EscrowModule } from "../payments/escrow.module";
 import { PayModule } from "../pay/pay.module";
 import { ReferralModule } from "../referrals/referral.module";
 import { EmailModule } from "../email/email.module";
+import { B2BModule } from "../b2b/b2b.module";
 import Redis from "ioredis";
 import { resolveCacheRedisConfig } from "../../config/runtime";
 
@@ -55,6 +56,10 @@ const redisProvider = {
     ReferralModule,
     EmailModule,
     PayModule,
+    // Contract resolution fans out to enterprise webhook subscribers; B2BModule
+    // owns that store and its delivery queue. It imports nothing, so this edge
+    // is one-way and needs no forwardRef.
+    B2BModule,
     forwardRef(() => PaymentsModule),
     EscrowModule,
   ],

@@ -16,6 +16,7 @@ export const FURY_ROUTER_QUEUE_NAME = 'FURY_ROUTER_QUEUE';
 export const SETTLEMENT_QUEUE_NAME = 'SETTLEMENT_QUEUE';
 export const VIDEO_PROCESSING_QUEUE_NAME = 'VIDEO_PROCESSING_QUEUE';
 export const PUSH_DISPATCH_QUEUE_NAME = 'PUSH_DISPATCH_QUEUE';
+export const ENTERPRISE_WEBHOOK_QUEUE_NAME = 'ENTERPRISE_WEBHOOK_QUEUE';
 
 export const getDefaultQueueOptions = (): QueueOptions => ({
   connection: getRedisConnectionConfig(),
