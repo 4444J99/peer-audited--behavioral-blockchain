@@ -61,6 +61,7 @@ import {
   getRealmForCategory,
   RealmId,
 } from "../../../../shared/libs/realm-registry";
+import { IdentityOathService } from "../onboarding/identity-oath.service";
 
 import {
   CreateContractDto as CreateContractDtoBase,
@@ -168,6 +169,9 @@ export class ContractsService {
     @Optional()
     @Inject(WebhookSubscriptionService)
     private readonly enterpriseWebhooks?: WebhookSubscriptionService,
+    @Optional()
+    @Inject(IdentityOathService)
+    private readonly identityOaths?: IdentityOathService,
   ) {}
 
   private stakeAmountToCents(stakeAmount: number | string): number {
@@ -1253,6 +1257,25 @@ export class ContractsService {
     }
   }
 
+  /**
+   * The activated identity declaration this contract belongs to, if any.
+   *
+   * A missing declaration does not block creation: the identity step is an
+   * onboarding-flow requirement, and refusing every API-created contract
+   * without one would strand every account that predates it.
+   */
+  private async resolveIdentityOathId(
+    userId: string,
+    oathCategory: string,
+  ): Promise<string | null> {
+    if (!this.identityOaths) return null;
+    const oath = await this.identityOaths.getActivatedOath(
+      userId,
+      oathCategory,
+    );
+    return oath?.id ?? null;
+  }
+
   private async createContractTwoPhase(input: {
     dto: CreateContractInput;
     user: any;
@@ -1261,6 +1284,7 @@ export class ContractsService {
     endsAt: Date;
     contractMetadata: Record<string, any>;
     pricingMetadata?: PricingMetadata;
+    identityOathId: string | null;
   }): Promise<{
     contractId: string;
     paymentIntentId: string;
@@ -1275,6 +1299,7 @@ export class ContractsService {
       endsAt,
       contractMetadata,
       pricingMetadata,
+      identityOathId,
     } = input;
     const poolWithConnect = this.pool as unknown as {
       connect: () => Promise<PoolClient>;
@@ -1290,8 +1315,8 @@ export class ContractsService {
         dto.realmId ?? getRealmForCategory(dto.oathCategory as OathCategory);
 
       const contractResult = await phaseAClient.query(
-        `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id, realm_id)
-         VALUES ($1, $2, $3, $4, NULL, $5, 'PENDING_STAKE', $6, $7, $8, $9, $10)
+        `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id, realm_id, identity_oath_id)
+         VALUES ($1, $2, $3, $4, NULL, $5, 'PENDING_STAKE', $6, $7, $8, $9, $10, $11)
          RETURNING id`,
         [
           dto.userId,
@@ -1304,6 +1329,7 @@ export class ContractsService {
           JSON.stringify(contractMetadata),
           bountyLinkId,
           realmId,
+          identityOathId,
         ],
       );
       contractId = contractResult.rows[0].id;
@@ -1731,6 +1757,15 @@ export class ContractsService {
       contractMetadata.pricing = pricingPlan.pricingMetadata;
     }
 
+    // TKT-P1-016: a contract is the practice of a declared identity, so it
+    // carries the oath the user activated during onboarding. Null is a normal
+    // state — categories without an identity journey, and every contract
+    // created before the identity step existed.
+    const identityOathId = await this.resolveIdentityOathId(
+      dto.userId,
+      dto.oathCategory,
+    );
+
     const supportsTransactionalPath =
       typeof (this.pool as unknown as { connect?: unknown }).connect ===
       "function";
@@ -1744,13 +1779,14 @@ export class ContractsService {
         endsAt,
         contractMetadata,
         pricingMetadata: pricingPlan.pricingMetadata,
+        identityOathId,
       });
     }
 
     // Insert contract first with PENDING_STAKE status (mirrors two-phase pattern)
     const contractResult = await this.pool.query(
-      `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id)
-       VALUES ($1, $2, $3, $4, NULL, $5, 'PENDING_STAKE', $6, $7, $8, $9)
+      `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id, identity_oath_id)
+       VALUES ($1, $2, $3, $4, NULL, $5, 'PENDING_STAKE', $6, $7, $8, $9, $10)
        RETURNING id`,
       [
         dto.userId,
@@ -1762,6 +1798,7 @@ export class ContractsService {
         endsAt.toISOString(),
         JSON.stringify(contractMetadata),
         bountyLinkId,
+        identityOathId,
       ],
     );
     const contractId = contractResult.rows[0].id;
@@ -1893,9 +1930,14 @@ export class ContractsService {
   async getContract(contractId: string, requester?: ContractReadRequester) {
     const result = await this.pool.query(
       `SELECT c.*, u.email, u.integrity_score,
+              io.archetype_id AS identity_archetype_id,
+              io.identity_label AS identity_label,
+              io.pledge_copy AS identity_pledge_copy,
+              io.copy_variant AS identity_copy_variant,
               (SELECT COUNT(*) FROM proofs p WHERE p.contract_id = c.id) as proof_count
-       FROM contracts c 
+       FROM contracts c
        JOIN users u ON c.user_id = u.id
+       LEFT JOIN user_identity_oaths io ON io.id = c.identity_oath_id
        WHERE c.id = $1`,
       [contractId],
     );
@@ -1919,6 +1961,17 @@ export class ContractsService {
       proof_count: parseInt(row.proof_count, 10),
       proofs: proofsResult.rows,
       grace_days_max: 2, // Hardcoded for beta
+      // Nested rather than left as flat columns so a client can render "who you
+      // said you were becoming" without reassembling four sibling fields.
+      identity_oath: row.identity_oath_id
+        ? {
+            id: row.identity_oath_id,
+            archetype_id: row.identity_archetype_id,
+            identity_label: row.identity_label,
+            pledge_copy: row.identity_pledge_copy,
+            copy_variant: row.identity_copy_variant,
+          }
+        : null,
     };
   }
 
