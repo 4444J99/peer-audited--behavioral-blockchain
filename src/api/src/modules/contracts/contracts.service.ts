@@ -35,6 +35,7 @@ import { resolveWebPublicUrl } from "../../config/runtime";
 
 import { NotificationsService } from "../notifications/notifications.service";
 import { CompliancePolicyService } from "../compliance/compliance-policy.service";
+import { WebhookSubscriptionService } from "../b2b/webhook-subscription.service";
 import {
   calculateIntegrity,
   getAllowedTiers,
@@ -95,7 +96,8 @@ type ContractResolutionSideEffectType =
   | "LEDGER_STAKE_CAPTURE"
   | "LEDGER_BOUNTY_POOL_TOPUP"
   | "TRUTH_CONTRACT_RESOLVED"
-  | "NOTIFY_CONTRACT_RESOLVED";
+  | "NOTIFY_CONTRACT_RESOLVED"
+  | "B2B_WEBHOOK_CONTRACT_RESOLVED";
 
 interface ContractResolutionSideEffectRow {
   id: string;
@@ -163,6 +165,9 @@ export class ContractsService {
     private readonly settlementService?: SettlementService,
     @Optional()
     private readonly referralService?: any,
+    @Optional()
+    @Inject(WebhookSubscriptionService)
+    private readonly enterpriseWebhooks?: WebhookSubscriptionService,
   ) {}
 
   private stakeAmountToCents(stakeAmount: number | string): number {
@@ -514,6 +519,28 @@ export class ContractsService {
       },
     });
 
+    // B2B engagement signal. Only for a contract whose owner belongs to an
+    // enterprise — a consumer contract has nobody to notify. The pseudonym is
+    // derived downstream (WebhookSubscriptionService) rather than here, so no
+    // employee identifier is ever written into an outbox payload that an operator
+    // can read; `userId` is the key that derives it, and it never leaves Styx.
+    if (userRow?.enterprise_id) {
+      effects.push({
+        contractId,
+        outcome,
+        effectType: "B2B_WEBHOOK_CONTRACT_RESOLVED",
+        dedupeKey: `${baseKey}:b2b-webhook`,
+        payload: {
+          enterpriseId: userRow.enterprise_id,
+          userId: contractRow.user_id,
+          // Stamped at resolution, not at delivery: a retry hours later must
+          // still report when the contract actually resolved.
+          occurredAt: new Date().toISOString(),
+          sideEffectKey: `${baseKey}:b2b-webhook`,
+        },
+      });
+    }
+
     return effects;
   }
 
@@ -808,6 +835,20 @@ export class ContractsService {
         }
 
         await this.notifications?.create(payload);
+        return;
+      }
+      case "B2B_WEBHOOK_CONTRACT_RESOLVED": {
+        // Undefined only where ContractsService is constructed directly (unit
+        // tests); the wired app always has it via ContractsModule -> B2BModule.
+        if (!this.enterpriseWebhooks) {
+          return;
+        }
+        await this.enterpriseWebhooks.enqueueContractResolved({
+          enterpriseId: payload.enterpriseId,
+          userId: payload.userId,
+          outcome: effect.outcome as "COMPLETED" | "FAILED",
+          occurredAt: payload.occurredAt,
+        });
         return;
       }
       default:

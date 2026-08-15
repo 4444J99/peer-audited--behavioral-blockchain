@@ -16,6 +16,7 @@ import { RoleGuard, Roles } from '../../common/guards/role.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { BillingService } from './billing.service';
 import { WebhookService } from './webhook.service';
+import { WebhookSubscriptionService } from './webhook-subscription.service';
 import { MetricsService } from './metrics.service';
 import { AnonymizeService } from './anonymize.service';
 import { DataLakeService } from './datalake.service';
@@ -32,6 +33,7 @@ export class B2BController {
     private readonly pool: Pool,
     private readonly billing: BillingService,
     private readonly webhook: WebhookService,
+    private readonly webhookSubscriptions: WebhookSubscriptionService,
     private readonly metrics: MetricsService,
     private readonly anonymize: AnonymizeService,
     private readonly dataLake: DataLakeService,
@@ -120,11 +122,27 @@ export class B2BController {
     @Body() body: { enterpriseId: string; url: string },
   ) {
     await this.assertEnterpriseMembership(user.id, body.enterpriseId);
+    const subscription = await this.webhookSubscriptions.register(
+      body.enterpriseId,
+      body.url,
+      user.id,
+    );
     return {
       status: 'registered',
-      enterpriseId: body.enterpriseId,
-      url: body.url,
+      subscriptionId: subscription.id,
+      enterpriseId: subscription.enterpriseId,
+      url: subscription.url,
     };
+  }
+
+  @Get('webhook/subscriptions/:enterpriseId')
+  @ApiOperation({ summary: 'List the active webhook subscriptions of an enterprise' })
+  async listWebhookSubscriptions(
+    @CurrentUser() user: { id: string },
+    @Param('enterpriseId') enterpriseId: string,
+  ) {
+    await this.assertEnterpriseMembership(user.id, enterpriseId);
+    return this.webhookSubscriptions.listActive(enterpriseId);
   }
 
   @Post('webhook/test')

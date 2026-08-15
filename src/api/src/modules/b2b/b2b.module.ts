@@ -2,6 +2,8 @@ import { Module } from "@nestjs/common";
 import { B2BController } from "./b2b.controller";
 import { BillingService } from "./billing.service";
 import { WebhookService } from "./webhook.service";
+import { WebhookSubscriptionService } from "./webhook-subscription.service";
+import { EnterpriseWebhookWorker } from "./enterprise-webhook.worker";
 import { MetricsService } from "./metrics.service";
 import { AnonymizeService } from "./anonymize.service";
 import { DataLakeService } from "./datalake.service";
@@ -16,6 +18,8 @@ import { RoleGuard } from "../../common/guards/role.guard";
   providers: [
     BillingService,
     WebhookService,
+    WebhookSubscriptionService,
+    EnterpriseWebhookWorker,
     MetricsService,
     AnonymizeService,
     DataLakeService,
@@ -28,6 +32,7 @@ import { RoleGuard } from "../../common/guards/role.guard";
   exports: [
     BillingService,
     WebhookService,
+    WebhookSubscriptionService,
     MetricsService,
     AnonymizeService,
     DataLakeService,

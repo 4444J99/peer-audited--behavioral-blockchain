@@ -1,0 +1,20 @@
+# Styx vulnerability disclosure (RFC 9116).
+#
+# Contact is GitHub's private advisory form rather than a mailbox: .github/SECURITY.md
+# already routes reports there ("Do NOT open a public GitHub issue"), and this repo is
+# public — an address published here would be the only new attack surface the file adds.
+#
+# Canonical names the Cloudflare Pages snapshot host (the default project in
+# scripts/demo/snapshot.sh). It is the one public origin that serves THIS Next app;
+# the Render web service URL is deploy-time configuration (WEB_URL) and has no fixed
+# value to publish. Add a second Canonical line when that host is pinned.
+#
+# Served as a static file from src/web/public/ so it survives the snapshot build too:
+# NEXT_PUBLIC_STYX_SNAPSHOT uses output:"export", which has no server to run a route
+# handler, but copies public/ verbatim into out/.
+
+Contact: https://github.com/4444J99/peer-audited--behavioral-blockchain/security/advisories/new
+Expires: 2027-08-01T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://styx-demo-snapshot.pages.dev/.well-known/security.txt
+Policy: https://github.com/4444J99/peer-audited--behavioral-blockchain/blob/main/.github/SECURITY.md
