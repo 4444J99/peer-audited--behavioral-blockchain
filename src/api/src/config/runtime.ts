@@ -171,3 +171,15 @@ export function resolveCacheRedisConfig() {
   }
   return cfg;
 }
+
+// Issue #905: the live beta runs the test-money rail. Financial-permission
+// surfaces must not apply real-money exposure ceilings to it, so every such
+// surface derives the rail from this single predicate instead of re-reading
+// the env var (truthiness here must match beta.controller's envFlag).
+export function isTestMoneyModeEnabled(): boolean {
+  const raw = process.env.STYX_TEST_MONEY_MODE;
+  if (raw == null) {
+    return true;
+  }
+  return ["1", "true", "yes", "on"].includes(raw.toLowerCase());
+}
