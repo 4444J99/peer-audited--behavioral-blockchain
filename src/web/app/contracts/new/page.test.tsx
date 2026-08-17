@@ -22,6 +22,9 @@ jest.mock('../../../services/api-client', () => ({
   api: {
     createContract: jest.fn().mockResolvedValue({ id: 'new-id' }),
     getUserContracts: jest.fn().mockResolvedValue([]),
+    getEndowedProgress: jest.fn().mockResolvedValue({
+      downscaling: { multiplier: 1, reason: 'no downscaling applied' },
+    }),
   },
 }));
 
@@ -105,9 +108,19 @@ describe('New Contract Page', () => {
     expect(html).toContain('You could lose');
     expect(html).toContain('Refundable stake');
     expect(html).toContain('Platform fee');
-    expect(html).toContain('$9.00');
     expect(html).toContain('Entry total');
-    expect(html).toContain('$39.00');
+  });
+
+  // The $9 MVP_39 platform fee is metadata only — normalizeContractPricing
+  // overrides the stake to $30 and the sole charge is a $30 hold, so no fee is
+  // collected. This page used to advertise "$9.00" and "Entry total $39.00" for
+  // money that never moves. Quote what is actually charged.
+  it('does not advertise a platform fee that is never charged', () => {
+    const html = renderToStaticMarkup(<NewContractPage />);
+
+    expect(html).not.toContain('$39.00');
+    expect(html).toContain('$30.00');
+    expect(html).toContain('No platform fee during beta');
   });
 
   it('renders tier and Aegis safety copy for the selected amount', () => {
@@ -132,7 +145,7 @@ describe('New Contract Page', () => {
     expect(html).toContain('MICRO tier cap');
     expect(html).toContain('$20.00');
     expect(html).toContain('No KYC required');
-    expect(html).toContain('Only applies to the $30 MVP plan');
+    expect(html).toContain('No platform fee during beta');
   });
 
   it('renders failure-history cap copy when failed contracts are known', () => {

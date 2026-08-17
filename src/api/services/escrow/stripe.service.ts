@@ -2,8 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import Stripe from 'stripe';
 import { JurisdictionTier } from '../geofencing';
+import { geofenceFailsOpenOnMissingLocation } from '../../src/modules/compliance/compliance-policy.service';
+import { testMoneyModeEnabled } from '../../src/config/runtime';
 
-export type StakeDisposition = 'CAPTURE' | 'REFUND';
+import { resolveStakeDisposition } from './disposition';
+import type { StakeDisposition } from '../../src/common/interfaces/payout-provider.interface';
+
+export type { StakeDisposition };
 
 type StripeClient = InstanceType<typeof Stripe>;
 type StripePaymentIntent = Awaited<ReturnType<StripeClient['paymentIntents']['retrieve']>>;
@@ -19,7 +24,16 @@ export class StripeFboService {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
     const isProduction = process.env.NODE_ENV === 'production';
 
-    if (isProduction && (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_mock_key')) {
+    // The test-money rail never calls Stripe. It is valid for the local demo
+    // and beta runtime to have no Stripe credential even when the container
+    // otherwise uses production optimisations. Requiring a key here made the
+    // dependency graph lie: EscrowModule correctly selected LedgerEscrowProvider
+    // but constructing this unused adapter still stopped the API from booting.
+    if (
+      isProduction &&
+      !testMoneyModeEnabled() &&
+      (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_mock_key')
+    ) {
       throw new Error(
         'FATAL: STRIPE_SECRET_KEY is required in production. ' +
         'Set a valid Stripe secret key to prevent mock mode in production.'
@@ -27,17 +41,80 @@ export class StripeFboService {
     }
 
     this.stripe = new Stripe(apiKey, {
-      apiVersion: '2026-05-27.dahlia',
+      apiVersion: '2026-07-29.dahlia',
     });
   }
 
-  private get isDevMode(): boolean {
+  /**
+   * No Stripe API call at all — fabricate identifiers locally.
+   *
+   * True only when there is no credential, or the explicit `sk_test_mock_key` sentinel
+   * is set. This is about whether we can *reach* Stripe, and nothing else.
+   */
+  private get isMockMode(): boolean {
     const key = process.env.STRIPE_SECRET_KEY;
     return !key || key === 'sk_test_mock_key';
   }
 
+  /**
+   * Whether money on this rail can leave a real account.
+   *
+   * Only a live credential moves real money; `sk_test_*` reaches Stripe's test mode,
+   * where nothing is real by construction. These two facts used to share one getter
+   * (`isDevMode`), which meant an ordinary `sk_test_…` key — the value `.env.example`
+   * documents — was treated as real money and every charge path refused to run, while
+   * the error text it raised already named the correct predicate ("once
+   * STRIPE_SECRET_KEY is a live key"). Splitting them makes the two questions
+   * separately answerable: "can we call Stripe?" and "is this real?".
+   */
+  get movesRealMoney(): boolean {
+    const key = process.env.STRIPE_SECRET_KEY ?? '';
+    return key.startsWith('sk_live_') || key.startsWith('rk_live_');
+  }
+
+  /**
+   * Gate on the controls that must be on before real money moves.
+   *
+   * This lives on the charge, not on a controller. A `StripeProductionGuard`
+   * decorating `PaymentsController` would miss `POST /contracts`, which calls
+   * `holdStake` directly, and would also reject `POST /payments/webhook` —
+   * blocking Stripe from settling transactions that were created *before* a
+   * control was switched off. Charging is the thing to gate; reporting is not.
+   *
+   * All three defaults are the Phase 1 pilot's settings, which are correct for a
+   * test-money beta and wrong the moment a live key appears. Nothing connected
+   * those facts, so this makes the coupling structural.
+   */
+  private assertRealMoneyAllowed(operation: string): void {
+    if (!this.movesRealMoney) return; // test mode or mock; nothing real can move
+
+    if (geofenceFailsOpenOnMissingLocation()) {
+      throw new Error(
+        `Refusing to ${operation} with real money while the geofence fails open: an ` +
+          'unresolvable location would be granted FULL_ACCESS, defeating the US-only ' +
+          'boundary (DR-003). Unset GEO_MISSING_HEADER_ACTION or set it to "block".',
+      );
+    }
+
+    if (String(process.env.KYC_ENFORCEMENT_ENABLED).toLowerCase() !== 'true') {
+      throw new Error(
+        `Refusing to ${operation} with real money while KYC enforcement is disabled. ` +
+          'KYC_ENFORCEMENT_ENABLED must be "true" once STRIPE_SECRET_KEY is a live key.',
+      );
+    }
+
+    // Defaults on, so real money requires deliberately setting it to false.
+    if (String(process.env.STYX_TEST_MONEY_MODE ?? 'true').toLowerCase() !== 'false') {
+      throw new Error(
+        `Refusing to ${operation} with real money while STYX_TEST_MONEY_MODE is on — ` +
+          'every tester-facing surface is currently labelled a test-money pilot. ' +
+          'Set STYX_TEST_MONEY_MODE=false to activate real money.',
+      );
+    }
+  }
+
   async createCustomer(userId: string, email?: string): Promise<string> {
-    if (this.isDevMode) {
+    if (this.isMockMode) {
       const id = `cus_dev_${randomUUID().slice(0, 8)}`;
       this.logger.debug(`[DEV] Created mock customer ${id}`);
       return id;
@@ -64,7 +141,8 @@ export class StripeFboService {
     contractId: string,
     idempotencyKeyOverride?: string,
   ): Promise<StripePaymentIntent> {
-    if (this.isDevMode) {
+    this.assertRealMoneyAllowed('authorize a hold');
+    if (this.isMockMode) {
       this.logger.debug(`[DEV] Mock hold ${amountCents}¢ for contract ${contractId}`);
       return {
         id: `pi_dev_${randomUUID().slice(0, 8)}`,
@@ -101,7 +179,8 @@ export class StripeFboService {
    * capture can never succeed and a fast, clear error beats an opaque Stripe failure.
    */
   async captureStake(paymentIntentId: string, captureAmountCents?: number): Promise<StripePaymentIntent> {
-    if (this.isDevMode) {
+    this.assertRealMoneyAllowed('capture a stake');
+    if (this.isMockMode) {
       // PM18: surface the partial-capture amount in dev so units/partial-capture bugs are not
       // hidden by an amount-agnostic mock. amount_received reflects what would actually be taken.
       this.logger.debug(
@@ -145,7 +224,7 @@ export class StripeFboService {
   }
 
   async retrieveIntent(paymentIntentId: string): Promise<StripePaymentIntent> {
-    if (this.isDevMode) {
+    if (this.isMockMode) {
       this.logger.debug(`[DEV] Mock retrieve ${paymentIntentId}`);
       return { id: paymentIntentId, status: 'succeeded' } as any;
     }
@@ -153,7 +232,7 @@ export class StripeFboService {
   }
 
   async cancelHold(paymentIntentId: string): Promise<StripePaymentIntent> {
-    if (this.isDevMode) {
+    if (this.isMockMode) {
       this.logger.debug(`[DEV] Mock cancel ${paymentIntentId}`);
       return { id: paymentIntentId, status: 'canceled' } as any;
     }
@@ -179,7 +258,8 @@ export class StripeFboService {
     metadata?: Record<string, any>,
     idempotencyKey?: string,
   ): Promise<StripeTransfer> {
-    if (this.isDevMode) {
+    this.assertRealMoneyAllowed('transfer funds');
+    if (this.isMockMode) {
       this.logger.debug(`[DEV] Mock transfer ${amountCents}¢ to ${destinationAccountId}`);
       return { id: `tr_dev_${randomUUID().slice(0, 8)}`, amount: amountCents } as any;
     }
@@ -206,30 +286,15 @@ export class StripeFboService {
 
   /**
    * Phase Beta P0-011: Refund-only disposition engine.
-   * In TIER_2 (REFUND_ONLY) jurisdictions, forfeited stakes MUST route back to the user
-   * as a refund, not captured as platform revenue. This prevents gambling classification.
    *
-   * For contract success: always REFUND (return stake to user).
-   * For contract failure:
-   *   TIER_1 → CAPTURE (platform revenue)
-   *   TIER_2 → REFUND (mandatory user refund)
-   *   TIER_3 → should not exist (hard-blocked), but defaults to REFUND for safety
+   * Jurisdiction policy, not rail mechanics — the answer must be identical whether the
+   * stake sits on Stripe or the internal ledger, so the implementation lives in
+   * `./disposition` and every rail delegates to it.
    */
   resolveDisposition(
     outcome: 'COMPLETED' | 'FAILED',
     jurisdictionTier: JurisdictionTier,
   ): StakeDisposition {
-    // Successful contracts always return stake to user
-    if (outcome === 'COMPLETED') {
-      return 'REFUND';
-    }
-
-    // Failed contracts: only TIER_1 captures as platform revenue
-    if (jurisdictionTier === JurisdictionTier.TIER_1) {
-      return 'CAPTURE';
-    }
-
-    // TIER_2 and TIER_3: refund-only (P0-011 compliance requirement)
-    return 'REFUND';
+    return resolveStakeDisposition(outcome, jurisdictionTier);
   }
 }

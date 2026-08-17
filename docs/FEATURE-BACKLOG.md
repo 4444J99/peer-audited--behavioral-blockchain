@@ -167,7 +167,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-CORE-10: Weekend Multiplier (Dynamic Staking)
 
-- **Status**: NOT_STARTED
+- **Status**: IMPLEMENTED (truth pass 2026-08-15 — dynamic staking active in `src/api/src/modules/contracts/contracts.service.ts` and the behavioral module; the completion matrix recorded this on 2026-03-10 and this file was never updated)
 - **Phase**: Beta
 - **Priority**: P1 (for Recovery contracts)
 - **Source**: `research--breakup-psychology-loss-aversion.md` §1
@@ -294,7 +294,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-VERIFY-07: Video Proof Pipeline
 
-- **Status**: PARTIAL
+- **Status**: PARTIAL (truth pass 2026-08-15 — the backend transcoding pipeline is BUILT: `src/api/src/modules/proofs/video-processing.service.ts` + `video-processing.worker.ts` with specs; the open remainder is the processing-state UI, TKT-P1-013's live half)
 - **Phase**: Gamma
 - **Priority**: P1
 - **Source**: `architecture--feasibility-stack.md` §S4.2, `research--habit-application.md` §Pillar 5
@@ -398,7 +398,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-FURY-03: Cross-Lobby Auditing (Anti-Collusion)
 
-- **Status**: NOT_STARTED
+- **Status**: IMPLEMENTED (truth pass 2026-08-15 — geographic/social/corporate/partner reviewer exclusion live in `src/api/services/fury-router/fury-router.worker.ts:77-97`; the admin cluster-detection screen remains the open remainder, tracked as TKT-P1-008's UI half)
 - **Phase**: Gamma
 - **Priority**: P1
 - **Source**: `research--evaluation-to-growth--strategic-review.md` §3.2
@@ -481,7 +481,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-AEGIS-02: Geofencing by Jurisdiction Tier
 
-- **Status**: PARTIAL
+- **Status**: IMPLEMENTED (truth pass 2026-08-15 — the March finding's fail-open legacy path is fixed: `src/api/services/geofencing.ts` SH7 fail-closed default, plus the GeoResolver provenance chain with `stateSource` recording in `compliance-policy.service.ts`, landed in #868 and live-verified 2026-07-31 row 4)
 - **Phase**: Beta
 - **Priority**: P0
 - **Source**: `legal--compliance-guardrails.md` §50-State, `legal--gatekeeper-compliance.md` §2, `planning--roadmap.md` §Beta (checked)
@@ -513,11 +513,11 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-AEGIS-05: KYC / Identity Verification
 
-- **Status**: NOT_STARTED
-- **Phase**: Phase2+
-- **Priority**: P2
-- **Source**: `legal--aegis-protocol.md`, `legal--compliance-guardrails.md` §4.D, `planning--implementation-status.md` (Planned)
-- **Existing Code**: `src/api/src/modules/compliance/identity-verification.service.ts`, `src/api/src/modules/compliance/identity-provider.service.ts` (spec files exist, implementation status unclear)
+- **Status**: PARTIAL (truth pass 2026-08-15 — the RUNTIME enforcement half is built and default-ON in production: `compliance-policy.service.ts:140-183` requires an explicit `KYC_ENFORCEMENT_ENABLED=false` to disable, and the age gate enforces unconditionally on monetized actions; the identity VENDOR adapter remains mock/non-production pending the Stripe Identity contract, blocked-handoff #132. Phase 1 deliberately labels identity checks non-production per the scope lock. NOTE: this row's P2 classification has always contradicted the roadmap's Beta lock of TKT-P0-003 — the runtime half is now moot, and the vendor half is genuinely post-beta.)
+- **Phase**: Phase2+ (vendor contract); runtime enforcement shipped
+- **Priority**: P2 (vendor half)
+- **Source**: `legal--aegis-protocol.md`, `legal--compliance-guardrails.md` §4.D, `planning--implementation-status.md`
+- **Existing Code**: `src/api/src/modules/compliance/identity-verification.service.ts`, `src/api/src/modules/compliance/identity-provider.service.ts` (mock + Stripe Identity adapters), `compliance-policy.service.ts` (enforcement)
 - **Spec**: Collect legal name, DOB, address. Full ID verification for higher stakes. Enforces age limits. Reduces fraud/money-laundering risk.
 - **Dependencies**: Third-party KYC provider (Stripe Identity, Jumio, etc.)
 - **Legal/Compliance**: Required for AML compliance. Even without MSB status, reduces regulatory risk.
@@ -801,7 +801,7 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 #### F-MOBILE-03: Push Notifications
 
-- **Status**: PARTIAL
+- **Status**: PARTIAL (truth pass 2026-08-15 — MORE built than recorded: local scheduling AND a remote sender exist — `ExpoPushProvider` posts to exp.host in `src/api/src/modules/notifications/expo-push.provider.ts` with `push-tokens.service.ts` registration; open remainder is delivery-receipt verification and the APNs key for standalone builds, blocked-handoff #127)
 - **Phase**: Beta
 - **Priority**: P1
 - **Source**: `research--behavioral-engineering-masters.md` §RAIN, general UX

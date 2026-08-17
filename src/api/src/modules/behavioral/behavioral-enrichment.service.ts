@@ -62,7 +62,11 @@ export class BehavioralEnrichmentService {
   async getHabitStrength(userId: string) {
     const { rows } = await this.pool.query(
       `SELECT
-        COUNT(*) FILTER (WHERE status IN ('ATTESTED','COSIGNED'))::int AS completed,
+        -- a.status, not status: contracts also has a status column, so the bare
+        -- reference made this whole endpoint 500 with "column reference \"status\"
+        -- is ambiguous". The states below ('ATTESTED','COSIGNED') are attestation
+        -- states, so the attestation is the one that was always meant.
+        COUNT(*) FILTER (WHERE a.status IN ('ATTESTED','COSIGNED'))::int AS completed,
         COUNT(*)::int AS total
        FROM attestations a
        JOIN contracts c ON c.id = a.contract_id
@@ -80,10 +84,12 @@ export class BehavioralEnrichmentService {
 
   async frictionAudit(userId: string, answers: Record<string, number>) {
     const result = calculateFrictionScore(answers);
+    // Migration 048 created friction_audits for exactly this: one row per audit,
+    // so the score history is queryable instead of a single overwritten blob.
     await this.pool.query(
-      `UPDATE users SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{friction_audit}', $1::jsonb)
-       WHERE id = $2`,
-      [JSON.stringify({ answers, result, auditedAt: new Date().toISOString() }), userId],
+      `INSERT INTO friction_audits (user_id, answers, score, risk_level)
+       VALUES ($1, $2::jsonb, $3, $4)`,
+      [userId, JSON.stringify(answers), result.totalScore, result.riskLevel],
     );
     return result;
   }
@@ -253,7 +259,7 @@ export class BehavioralEnrichmentService {
   calculateAssessmentProfile(answers: Record<string, number>) { return calculateAssessmentProfile(answers); }
 
   // #92: DECO oracle stub
-  createDecoProof(url: string, selector: string, expectedValue: string) {
+  async createDecoProof(url: string, selector: string, expectedValue: string) {
     return createDecoProof({ url, selector, expectedValue });
   }
 

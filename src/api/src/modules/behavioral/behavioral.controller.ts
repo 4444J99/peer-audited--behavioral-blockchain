@@ -2,12 +2,15 @@ import { Controller, Get, Post, Body, Param, UseGuards, Req } from "@nestjs/comm
 import { AuthGuard } from "../../../guards/auth.guard";
 import { BehavioralEnhancementsService } from "./behavioral-enhancements.service";
 import { BehavioralEnrichmentService } from "./behavioral-enrichment.service";
+import { DecoCommitmentService } from "./deco-commitment.service";
 import {
   LifeTransitionType, ImplementationIntention, OathCategory, PassiveProvider,
 } from "../../../../shared/libs/behavioral-logic";
 
+// The bootstrap middleware sets req.id to a correlation ID, so the
+// authenticated principal must be read from req.user (set by AuthGuard).
 function resolveUserId(req: any): string {
-  return req?.id ?? req?.user?.id ?? req?.userId;
+  return req?.user?.id ?? req?.userId;
 }
 
 @Controller("behavioral")
@@ -16,6 +19,7 @@ export class BehavioralController {
   constructor(
     private readonly enhancements: BehavioralEnhancementsService,
     private readonly enrichment: BehavioralEnrichmentService,
+    private readonly decoCommitment: DecoCommitmentService,
   ) {}
 
   @Post("device/subscribe")
@@ -100,7 +104,8 @@ export class BehavioralController {
     return this.enrichment.classifyAbandonment(resolveUserId(req));
   }
 
-  @Get("temptation-bundles/:category?")
+  // Express 5 (path-to-regexp v8) removed the ':param?' optional syntax
+  @Get(["temptation-bundles", "temptation-bundles/:category"])
   getTemptationBundles(@Param("category") category?: string) {
     return this.enrichment.getTemptationBundles(category);
   }
@@ -208,8 +213,8 @@ export class BehavioralController {
 
   // #92: DECO oracle stub
   @Post("deco-proof")
-  createDecoProof(@Body() body: { url: string; selector: string; expectedValue: string }) {
-    return this.enrichment.createDecoProof(body.url, body.selector, body.expectedValue);
+  async createDecoProof(@Req() req: any, @Body() body: { url: string; selector: string; expectedValue: string }) {
+    return this.decoCommitment.createCommitment(body, resolveUserId(req));
   }
 
   // #91: Oracle failure fallback

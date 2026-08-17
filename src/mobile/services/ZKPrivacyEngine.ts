@@ -86,8 +86,32 @@ function toLocalTelephonyLog(entry: AnyLogEntry): LocalTelephonyLog {
   };
 }
 
+export class NoLogProviderError extends Error {
+  constructor() {
+    super(
+      'No telephony log provider is installed. A no-contact scan cannot be ' +
+        'performed on this device, and MUST NOT be reported as compliant. ' +
+        'Install one with ZKPrivacyEngine.setLogProvider() before scanning.',
+    );
+    this.name = 'NoLogProviderError';
+  }
+}
+
 export class ZKPrivacyEngine {
-  private static readonly defaultLogProvider: LogProvider = async () => [];
+  /**
+   * Fail-closed default.
+   *
+   * This previously returned `[]`, which is indistinguishable from "we read the
+   * logs and found nothing" — so with no provider installed (the state every
+   * build shipped in, since `setLogProvider` had no production caller) every
+   * scan reported `breachDetected: false` and the UI rendered "compliance
+   * verified". A no-contact contract has money staked on that verdict, so an
+   * absent data source must raise, never resolve clean.
+   */
+  private static readonly defaultLogProvider: LogProvider = async () => {
+    throw new NoLogProviderError();
+  };
+
   private static logProvider: LogProvider = ZKPrivacyEngine.defaultLogProvider;
 
   static setLogProvider(provider: LogProvider): void {
@@ -96,6 +120,11 @@ export class ZKPrivacyEngine {
 
   static resetLogProvider(): void {
     this.logProvider = this.defaultLogProvider;
+  }
+
+  /** True when a real log source is installed and a scan can produce a verdict. */
+  static hasLogProvider(): boolean {
+    return this.logProvider !== this.defaultLogProvider;
   }
 
   static async generateLocalProof(

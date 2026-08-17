@@ -77,7 +77,14 @@ Daily work involves reviewing Terms of Service violation flags and monitoring fo
 | L8 | Founder Agreement | `docs/legal/legal--founder-agreement-draft.md` | SHAPE | 90 | — | active |
 | L9 | Performance Wagering Analysis | `docs/legal/legal--performance-wagering.md` | SHAPE | 90 | — | active |
 | L10 | State Exclusion List | `docs/departments/leg/artifacts/state-exclusion-list.md` | SHAPE | 90 | — | dormant |
-| L11 | Fury Auditor Agreement Template | `docs/departments/leg/artifacts/fury-auditor-agreement.md` | SHAPE | 60 | — | dormant |
+| L11 | Fury Auditor Agreement Template | `docs/legal/fury-auditor-agreement-DRAFT.md` | SHAPE | 60 | 2026-08-15 | draft — counsel review pending (#315); §11 worker-classification risk open |
+| L13 | HIPAA BAA Template | `docs/legal/hipaa-baa-template-DRAFT.md` | SHAPE | 90 | 2026-08-15 | draft — do not execute; §0 lists unmet prerequisites |
+| L16 | Stake Custody and Escrow Agreement | `docs/legal/escrow-agreement-DRAFT.md` | SHAPE | 60 | 2026-08-15 | draft — counsel review pending (#315, #136) |
+| L17 | Cookie and Local Storage Policy | `docs/legal/cookie-policy-DRAFT.md` | SHAPE | 90 | 2026-08-15 | draft — consent banner not implemented (§6) |
+
+The L11 path moved to `docs/legal/` when the agreement was first drafted (2026-08-15). The
+`docs/departments/leg/artifacts/` directory holds an older partial mirror of the LEG estate and no
+copy of this artifact; `docs/legal/` is where the phase gate looks for it.
 
 ## 4. Generative Prompts (GEN:)
 

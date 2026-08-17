@@ -111,7 +111,7 @@ describe('SettlementWorker', () => {
 
   const callProcess = (w: SettlementWorker, job: Job) => (w as any).process(job);
 
-  it('should calculate deterministic quote and top up bounty pool on capture', async () => {
+  it('should calculate a deterministic quote and post the whole stake to revenue on capture', async () => {
     setupClientQueries({ existingRun: null });
     mockStripeProvider.captureFunds.mockResolvedValue(successResult);
 
@@ -139,11 +139,13 @@ describe('SettlementWorker', () => {
       'styx_settle_run-claimed_REAL_MONEY_SETTLEMENT_CAPTURE',
     );
 
-    // Bounty pool top-up (20% of 10000).
-    expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
+    // DR-002: no bounty pool, so no top-up entry at all. Asserting its absence is the
+    // regression guard — a reintroduced pool would silently move money out of revenue
+    // on every capture.
+    expect(mockLedger.recordTransaction).not.toHaveBeenCalledWith(
       'acct-revenue',
       'acct-bounty',
-      2000,
+      expect.anything(),
       'c-1',
       expect.objectContaining({ type: 'BOUNTY_POOL_TOPUP' }),
       mockClient,
@@ -200,8 +202,11 @@ describe('SettlementWorker', () => {
   // UNIQUE index), NOT (contract, type, amount).
 
   it('should skip re-posting a capture entry whose idempotency key already exists (true retry dedupe)', async () => {
-    // The capture posting for THIS run already exists → must NOT be re-posted, but the bounty
-    // top-up (a different type → different key) is still new and must be written.
+    // The capture posting for THIS run already exists → must NOT be re-posted.
+    // (This test used to also assert that the bounty top-up, being a distinct type and
+    // therefore a distinct key, still posted. DR-002 removed the bounty pool, so a capture
+    // is now the only posting on this path; the distinct-key-still-posts property is
+    // covered by the PM5 test below.)
     setupClientQueries({
       existingRun: null,
       existingKeys: ['styx_settle_run-claimed_REAL_MONEY_SETTLEMENT_CAPTURE'],
@@ -226,11 +231,10 @@ describe('SettlementWorker', () => {
       mockClient,
       'styx_settle_run-claimed_REAL_MONEY_SETTLEMENT_CAPTURE',
     );
-    // The bounty top-up is a distinct type (distinct key) and must still be posted.
-    expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
+    expect(mockLedger.recordTransaction).not.toHaveBeenCalledWith(
       'acct-revenue',
       'acct-bounty',
-      2000,
+      expect.anything(),
       'c-dup',
       expect.objectContaining({ type: 'BOUNTY_POOL_TOPUP' }),
       mockClient,

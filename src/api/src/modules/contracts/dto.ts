@@ -21,6 +21,10 @@ import {
 import { Type } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { isTestMoneyModeEnabled } from "../../config/runtime";
+import {
+  OathCategory,
+  VerificationMethod,
+} from "../../../../shared/libs/behavioral-logic";
 
 const REAL_MONEY_MIN_STAKE_USD = 0.01;
 
@@ -191,14 +195,16 @@ export class CreateContractDto {
   @ApiProperty({
     description:
       "Oath category (Biological, Cognitive, Professional, Creative, Environmental, Character, Recovery)",
-    example: "Biological",
+    enum: Object.values(OathCategory),
+    example: OathCategory.DEEP_WORK_FOCUS,
   })
   @IsString()
   oathCategory!: string;
 
   @ApiProperty({
     description: "Verification method (photo, video, sensor, text)",
-    example: "photo",
+    enum: Object.values(VerificationMethod),
+    example: VerificationMethod.API_SCREEN_TIME,
   })
   @IsString()
   verificationMethod!: string;
@@ -379,4 +385,33 @@ export class SubmitWhoopScoredDto {
   @IsOptional()
   @IsString()
   source?: string;
+}
+
+export class SelfReportDto {
+  @ApiProperty({
+    description: "Whether the user stayed sober today",
+    example: true,
+  })
+  @IsBoolean()
+  stayedSober!: boolean;
+
+  @ApiPropertyOptional({
+    description: "Urge/craving intensity (0-10)",
+    minimum: 0,
+    maximum: 10,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10)
+  urgeLevel?: number;
+
+  @ApiPropertyOptional({
+    description: "Trigger categories (e.g. stress, social, environmental)",
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  triggers?: string[];
 }

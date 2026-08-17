@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, Loader2, AlertTriangle, Settings, Lock, Bell, Wallet,
-  Eye, EyeOff, Trash2, ExternalLink, Check,
+  Eye, EyeOff, Trash2, ExternalLink, Check, ShieldOff,
 } from 'lucide-react';
 import { api } from '../../services/api-client';
 import { useAuth } from '../../contexts/AuthContext';
@@ -28,6 +28,14 @@ export default function SettingsPage() {
   // Linguistic cloak
   const [cloakEnabled, setCloakEnabled] = useState(false);
 
+  // Responsible use (server-backed, unlike the localStorage prefs above)
+  const [selfExclusionExpiresAt, setSelfExclusionExpiresAt] = useState<string | null>(null);
+  const [pregnancyExclusion, setPregnancyExclusion] = useState(false);
+  const [exclusionDays, setExclusionDays] = useState('30');
+  const [exclusionConfirm, setExclusionConfirm] = useState('');
+  const selfExclusionActive =
+    !!selfExclusionExpiresAt && new Date(selfExclusionExpiresAt) > new Date();
+
   // UI state
   const [saving, setSaving] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -47,7 +55,61 @@ export default function SettingsPage() {
     if (savedPushNotifs !== null) {
       setPushNotifs(savedPushNotifs === 'true');
     }
+    // Responsible-use state is SERVER truth, not a local preference.
+    api.getMe()
+      .then((me: any) => {
+        const ru = me?.responsible_use;
+        if (!ru) return;
+        setSelfExclusionExpiresAt(ru.self_exclusion_expires_at ?? null);
+        setPregnancyExclusion(Boolean(ru.pregnancy_exclusion));
+      })
+      .catch(() => {
+        // Non-fatal: the section renders its controls without current state.
+      });
   }, [authUser, authLoading]);
+
+  const handleSelfExclusion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+    if (exclusionConfirm.trim().toUpperCase() !== 'EXCLUDE') {
+      setMessage({ type: 'error', text: 'Type EXCLUDE to confirm — self-exclusion cannot be lifted early.' });
+      clearMessage();
+      return;
+    }
+    setSaving('self-exclusion');
+    try {
+      const result = await api.setSelfExclusion(Number(exclusionDays));
+      setSelfExclusionExpiresAt(result.expiresAt);
+      setExclusionConfirm('');
+      setMessage({ type: 'success', text: 'Self-exclusion activated. Contract creation is blocked until it expires.' });
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Could not activate self-exclusion.' });
+    } finally {
+      setSaving('');
+      clearMessage();
+    }
+  };
+
+  const handlePregnancyExclusion = async () => {
+    setMessage(null);
+    setSaving('pregnancy-exclusion');
+    try {
+      const next = !pregnancyExclusion;
+      await api.setPregnancyExclusion(next);
+      setPregnancyExclusion(next);
+      setMessage({
+        type: 'success',
+        text: next
+          ? 'Pregnancy exclusion active — penalty-bearing contracts are blocked and active ones suspended.'
+          : 'Pregnancy exclusion deactivated.',
+      });
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Could not update pregnancy exclusion.' });
+    } finally {
+      setSaving('');
+      clearMessage();
+    }
+  };
 
   const clearMessage = () => {
     setTimeout(() => setMessage(null), 5000);
@@ -361,7 +423,91 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Section 5: Danger Zone */}
+        {/* Section 5: Responsible Use (server-backed — TKT-P1-009's first client surface) */}
+        <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <ShieldOff className="text-amber-500" size={20} />
+            <h2 className="font-bold uppercase tracking-widest text-sm">Responsible Use</h2>
+          </div>
+
+          <p className="text-neutral-400 text-sm mb-4">
+            These controls restrict your own account. Self-exclusion blocks new financial
+            commitments for the period you choose and cannot be lifted early. Both actions are
+            recorded on the tamper-evident audit chain.
+          </p>
+
+          {selfExclusionActive ? (
+            <div className="p-4 bg-amber-950/40 border border-amber-800 rounded-xl max-w-md mb-4">
+              <p className="font-bold text-amber-400">Self-exclusion active</p>
+              <p className="text-sm text-neutral-400">
+                Contract creation is blocked until{' '}
+                {new Date(selfExclusionExpiresAt as string).toLocaleDateString()}. This cannot be
+                lifted early.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSelfExclusion} className="p-4 bg-black rounded-xl border border-neutral-800 max-w-md mb-4 space-y-3">
+              <p className="font-bold">Self-exclusion</p>
+              <label className="block text-xs text-neutral-500 uppercase tracking-widest">
+                Duration
+                <select
+                  value={exclusionDays}
+                  onChange={(e) => setExclusionDays(e.target.value)}
+                  className="mt-1 w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm"
+                >
+                  <option value="7">7 days</option>
+                  <option value="30">30 days</option>
+                  <option value="90">90 days</option>
+                  <option value="180">180 days</option>
+                  <option value="365">365 days</option>
+                </select>
+              </label>
+              <label className="block text-xs text-neutral-500 uppercase tracking-widest">
+                Type EXCLUDE to confirm
+                <input
+                  type="text"
+                  value={exclusionConfirm}
+                  onChange={(e) => setExclusionConfirm(e.target.value)}
+                  placeholder="EXCLUDE"
+                  className="mt-1 w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={saving === 'self-exclusion'}
+                className="px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 rounded-lg font-bold text-sm flex items-center gap-2"
+              >
+                {saving === 'self-exclusion' ? <Loader2 className="animate-spin" size={16} /> : <ShieldOff size={16} />}
+                Activate self-exclusion
+              </button>
+            </form>
+          )}
+
+          <div className="flex items-center justify-between p-4 bg-black rounded-xl border border-neutral-800 max-w-md">
+            <div>
+              <p className="font-bold">Pregnancy exclusion</p>
+              <p className="text-xs text-neutral-500">
+                {pregnancyExclusion
+                  ? 'Active — penalty-bearing contracts are blocked and active ones suspended.'
+                  : 'Blocks penalty-bearing contracts while active; existing ones are suspended.'}
+              </p>
+            </div>
+            <button
+              onClick={handlePregnancyExclusion}
+              disabled={saving === 'pregnancy-exclusion'}
+              aria-label="Toggle pregnancy exclusion"
+              className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 ${
+                pregnancyExclusion ? 'bg-amber-600' : 'bg-neutral-700'
+              }`}
+            >
+              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                pregnancyExclusion ? 'translate-x-6' : 'translate-x-0.5'
+              }`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Section 6: Danger Zone */}
         <div className="p-6 bg-neutral-900 border border-red-900/50 rounded-2xl">
           <div className="flex items-center gap-3 mb-4">
             <Trash2 className="text-red-500" size={20} />

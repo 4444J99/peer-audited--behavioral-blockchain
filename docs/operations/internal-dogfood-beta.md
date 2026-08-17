@@ -124,8 +124,8 @@ Want in?
 
 | Component | Value |
 |-----------|-------|
-| API URL | `https://styx-dogfood-api.onrender.com` |
-| Web URL | `https://styx-dogfood.onrender.com` |
+| API URL | *(none live — `styx-dogfood-api.onrender.com` was never stood up; probes return Render's `no-server`. The hosted environment that exists today is the beta: `.github/workflows/beta-promotion.yml` + the `beta` environment secrets.)* |
+| Web URL | *(none live — same for `styx-dogfood.onrender.com`)* |
 | Database | Separate PostgreSQL instance (Render) |
 | Stripe mode | Test mode |
 | Feature flags | All enabled (including Fury, KYC mock, etc.) |

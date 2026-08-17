@@ -5,6 +5,7 @@ dotenv.config({ path: resolvedEnvFilePath });
 console.info(`[Bootstrap] Loaded environment from ${resolvedEnvFilePath}`);
 
 import { NestFactory } from '@nestjs/core';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
@@ -25,7 +26,9 @@ async function bootstrap() {
   initSentry();
   const isProduction = process.env.NODE_ENV === 'production';
 
-  const app = await NestFactory.create(AppModule, {
+  // Explicit adapter: platform-express can be nested under src/api/node_modules
+  // by npm's hoisting, where @nestjs/core's lazy loader cannot resolve it.
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(), {
     rawBody: true, // Required for Stripe webhook signature verification
     bufferLogs: true,
   });

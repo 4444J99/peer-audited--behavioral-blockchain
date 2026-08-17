@@ -63,7 +63,7 @@ Turborepo + npm workspaces. Package scope: `@styx/*`. Root `tsconfig.json` maps 
 ### Setup & Dev Commands
 
 ```bash
-# Prerequisites: Node.js >= 20, Docker, npm 10+
+# Prerequisites: Node.js 24 LTS, Docker, npm 10+
 cp .env.example .env                    # fill runtime URLs, ports, DB, Redis, secrets
 make docker-up                          # Docker Compose uses .env / STYX_DOCKER_* values
 make install                            # npm install (all workspaces)
@@ -99,7 +99,7 @@ npm run format                          # Prettier: **/*.{ts,tsx,md}
 6. Gate 05: behavioral physics check (skipped if `CI_GATE05_API_URL` not set)
 7. Gate 06: security invariant check
 8. Gate 07: claim drift check (`npm run validate:claims`)
-9. Beta readiness (uploads `artifacts/beta-readiness-summary.json`)
+9. Hosted beta-promotion readiness (strict target URLs; uploads `artifacts/beta-readiness-summary.json`)
 10. Terraform validate (`infra/terraform/`)
 11. E2E Playwright (chromium + firefox matrix)
 12. CodeQL
@@ -142,7 +142,7 @@ node scripts/validation/07-claim-drift-check.js            # Claim drift
 BETA_API_URL=https://api-beta.example.com npm run beta:readiness
 ```
 
-Writes `artifacts/beta-readiness-summary.json`. Full policy: `docs/planning/beta-readiness-contract.md`.
+Writes `artifacts/beta-readiness-summary.json`. Full policy: `docs/planning/planning--beta-readiness-contract.md`.
 
 ---
 

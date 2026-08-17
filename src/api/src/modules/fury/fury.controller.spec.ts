@@ -6,6 +6,11 @@ import { FuryViolationCode } from '../../../../shared/fury-logic/violation-codes
 describe('FuryController', () => {
   let controller: FuryController;
   let mockPool: { query: jest.Mock };
+  // The R2 mock used to be `{}` — generateViewUrl always threw, every viewUrl
+  // resolved to null through the catch, and the masked-vs-raw selection branch
+  // was never exercised by any test. That is why the queue shipped serving raw
+  // media to peer reviewers: the assertion could not fail.
+  let mockR2: { generateViewUrl: jest.Mock };
 
   const mockFuryWorker = {
     checkConsensus: jest.fn().mockResolvedValue(undefined),
@@ -17,11 +22,14 @@ describe('FuryController', () => {
 
   beforeEach(() => {
     mockPool = { query: jest.fn() };
+    mockR2 = {
+      generateViewUrl: jest.fn(async (key: string) => `https://signed.example/${key}`),
+    };
     controller = new FuryController(
       mockPool as unknown as Pool,
       mockFuryWorker,
       mockTruthLog,
-      {} as any
+      mockR2 as any
     );
     jest.clearAllMocks();
   });
@@ -72,6 +80,72 @@ describe('FuryController', () => {
         expect.stringContaining('fury_user_id = $1'),
         ['fury-user-1'],
       );
+
+      // The queue projects every proofs column it maps into the response; each
+      // must exist on the real `proofs` table or the audit queue 500s at runtime.
+      const [sql] = mockPool.query.mock.calls[0] as [string];
+      for (const column of [
+        'p.media_uri',
+        'p.masked_media_uri',
+        'p.redaction_status',
+        'p.content_type',
+        'p.contract_id',
+        'p.submitted_at',
+        'p.description',
+      ]) {
+        expect(sql).toContain(column);
+      }
+    });
+
+    // The invariant: a Fury auditor is NEVER served raw media, and the decision
+    // keys on the PRESENCE of a masked asset — not on the redaction_status
+    // string, which the production finalize path writes as 'MASKED' while the
+    // dev-only worker fallback writes 'COMPLETED'. The old code compared against
+    // 'COMPLETED' only and fell through to media_uri, so the production path
+    // leaked the unredacted original to peer reviewers.
+    it.each(['MASKED', 'COMPLETED', 'NOT_APPLICABLE', null])(
+      'signs the MASKED asset and never the raw one (redaction_status=%s)',
+      async (redactionStatus) => {
+        mockPool.query.mockResolvedValueOnce({
+          rows: [
+            {
+              assignment_id: 'a-1',
+              proof_id: 'p-1',
+              media_uri: 'raw/original.mp4',
+              masked_media_uri: 'masked/redacted.mp4',
+              redaction_status: redactionStatus,
+              oath_category: 'RECOVERY_NOCONTACT',
+            },
+          ],
+        });
+
+        const result = await controller.getAssignments({ id: 'fury-user-1' });
+
+        expect(result.assignments[0].viewUrl).toBe('https://signed.example/masked/redacted.mp4');
+        expect(mockR2.generateViewUrl).toHaveBeenCalledWith('masked/redacted.mp4');
+        expect(mockR2.generateViewUrl).not.toHaveBeenCalledWith('raw/original.mp4');
+      },
+    );
+
+    it('fails CLOSED — no masked asset means no url, never the raw original', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            assignment_id: 'a-1',
+            proof_id: 'p-1',
+            media_uri: 'raw/original.mp4',
+            masked_media_uri: null,
+            // Even a status claiming redaction finished cannot conjure an asset.
+            redaction_status: 'COMPLETED',
+            oath_category: 'RECOVERY_NOCONTACT',
+          },
+        ],
+      });
+
+      const result = await controller.getAssignments({ id: 'fury-user-1' });
+
+      expect(result.assignments[0].viewUrl).toBeNull();
+      expect(mockR2.generateViewUrl).not.toHaveBeenCalled();
     });
 
     it('should return empty assignments when Fury has no pending reviews', async () => {

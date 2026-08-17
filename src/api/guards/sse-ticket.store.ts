@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
 
-export type SseTicketScope = 'notifications' | 'fury';
+export type SseTicketScope = 'notifications' | 'fury' | 'leaderboard';
 
 interface SseTicketRecord {
   userId: string;

@@ -61,8 +61,8 @@ describe('JudgeService', () => {
       expect(pool.connect).toHaveBeenCalled();
       expect(clientMock.query).toHaveBeenCalledWith('BEGIN');
       expect(clientMock.query).toHaveBeenCalledWith(
-        `UPDATE disputes SET status = 'RESOLVED', resolution = $1, resolved_at = NOW(), judge_id = $2 WHERE id = $3`,
-        ['PASS', 'j-789', 'd-123'],
+        `UPDATE disputes SET appeal_status = $1, judge_notes = $2, resolved_at = NOW(), judge_user_id = $3 WHERE id = $4`,
+        ['RESOLVED_OVERTURNED', 'Evidence looks good upon review', 'j-789', 'd-123'],
       );
       expect(clientMock.query).toHaveBeenCalledWith('COMMIT');
       expect(clientMock.release).toHaveBeenCalled();
@@ -93,6 +93,12 @@ describe('JudgeService', () => {
       });
 
       await expect(service.resolveDispute(resolution)).rejects.toThrow('DB Error');
+
+      // A FAIL verdict leaves the original rejection standing.
+      expect(clientMock.query).toHaveBeenCalledWith(
+        `UPDATE disputes SET appeal_status = $1, judge_notes = $2, resolved_at = NOW(), judge_user_id = $3 WHERE id = $4`,
+        ['RESOLVED_UPHELD', 'Tampered proof', 'j-789', 'd-123'],
+      );
 
       expect(clientMock.query).toHaveBeenCalledWith('ROLLBACK');
       expect(clientMock.release).toHaveBeenCalled();
@@ -138,6 +144,30 @@ describe('JudgeService', () => {
         splitProofs: [{ proof_id: 'p-1' }],
         disputes: [{ id: 'd-1' }],
       });
+    });
+
+    it('should reach contracts through proofs and filter on appeal_status', async () => {
+      pool.query.mockResolvedValue({ rows: [] });
+
+      await service.getPendingQueue();
+
+      const disputeSql: string = pool.query.mock.calls
+        .map((call: any[]) => call[0])
+        .find((sql: string) => sql.includes('FROM disputes'));
+
+      // disputes has no contract_id — the contract is reached via proofs.contract_id.
+      expect(disputeSql).toContain('JOIN proofs p ON d.proof_id = p.id');
+      expect(disputeSql).toContain('JOIN contracts c ON p.contract_id = c.id');
+      expect(disputeSql).toContain('p.contract_id');
+      expect(disputeSql).not.toContain('d.contract_id');
+
+      // The lifecycle column is appeal_status, not status. PENDING_REVIEW is the
+      // fee-free counterpart introduced by DR-004 — omitting it here would hide
+      // every free appeal from the Judge queue.
+      expect(disputeSql).toContain(
+        `d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'PENDING_REVIEW', 'IN_REVIEW')`,
+      );
+      expect(disputeSql).not.toContain('d.status');
     });
   });
 });

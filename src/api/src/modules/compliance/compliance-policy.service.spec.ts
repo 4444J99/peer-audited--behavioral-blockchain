@@ -465,6 +465,60 @@ describe('CompliancePolicyService', () => {
       expect(result.missingLocation).toBe(false);
     });
 
+    it('should admit a US country-only resolution for read-only actions', () => {
+      mockLookup.mockReturnValue({ country: 'US', region: '' });
+      const req = makeRequest({
+        method: 'GET',
+        originalUrl: '/contracts',
+        headers: { 'x-forwarded-for': '8.8.8.8' },
+      });
+      const result = service.evaluateRequestPolicy(req);
+      expect(result.allowed).toBe(true);
+      expect(result.state).toBe(null);
+      expect(result.country).toBe('US');
+      expect(result.stateSource).toBe('ip-country-only');
+      expect(result.source).toBe('ip-lookup');
+      expect(result.missingLocation).toBe(true);
+    });
+
+    it('should still block a US country-only resolution for monetized actions', () => {
+      mockLookup.mockReturnValue({ country: 'US', region: '' });
+      const req = makeRequest({
+        method: 'POST',
+        originalUrl: '/contracts',
+        headers: { 'x-forwarded-for': '8.8.8.8' },
+      });
+      const result = service.evaluateRequestPolicy(req);
+      expect(result.allowed).toBe(false);
+      expect(result.code).toBe('JURISDICTION_BLOCKED');
+    });
+
+    it('should resolve state from the CloudFront country-region header when trusted', () => {
+      const req = makeRequest({
+        method: 'GET',
+        originalUrl: '/contracts',
+        headers: { 'cloudfront-viewer-country-region': 'US-CA' },
+      });
+      const result = service.evaluateRequestPolicy(req);
+      expect(result.state).toBe('CA');
+      expect(result.stateSource).toBe('cloudfront-viewer-country-region');
+      expect(result.source).toBe('cloudfront-viewer-country-region');
+      expect(result.country).toBe('US');
+    });
+
+    it('should treat a non-US country-only resolution as unknown and block', () => {
+      const req = makeRequest({
+        method: 'GET',
+        originalUrl: '/contracts',
+        headers: { 'cloudfront-viewer-country-region': 'NL' },
+      });
+      const result = service.evaluateRequestPolicy(req);
+      expect(result.allowed).toBe(false);
+      expect(result.code).toBe('JURISDICTION_BLOCKED');
+      expect(result.country).toBe('NL');
+      expect(result.stateSource).toBe('ip-country-only');
+    });
+
     it('should use IP lookup in production even when x-styx-state override is ignored', () => {
       process.env.NODE_ENV = 'production';
       mockLookup.mockReturnValue({ country: 'US', region: 'NY' });

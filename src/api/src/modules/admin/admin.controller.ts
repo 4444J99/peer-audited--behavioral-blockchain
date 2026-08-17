@@ -35,7 +35,7 @@ import {
   AdminResolveAppealDto,
   GetModerationQueueDto,
 } from "./dto";
-import { JurisdictionDispositionMapper } from "../compliance/jurisdiction-disposition.mapper";
+import { SystemFlagsService } from "../compliance/system-flags.service";
 
 @ApiTags("Admin")
 @ApiBearerAuth()
@@ -55,6 +55,7 @@ export class AdminController {
     private readonly truthLog: TruthLogService,
     private readonly identityVerification: IdentityVerificationService,
     private readonly pool: Pool,
+    private readonly systemFlags: SystemFlagsService,
   ) {}
 
   // --- Crisis Intervention ---
@@ -187,9 +188,9 @@ export class AdminController {
   @ApiOperation({
     summary: "Get current kill switch status (refund-only mode)",
   })
-  getKillSwitch() {
+  async getKillSwitch() {
     return {
-      refundOnlyMode: JurisdictionDispositionMapper.isRefundOnlyMode(),
+      refundOnlyMode: await this.systemFlags.getRefundOnlyMode(),
     };
   }
 
@@ -201,7 +202,9 @@ export class AdminController {
     @Body() body: { enabled: boolean },
     @CurrentUser() admin: { id: string },
   ) {
-    JurisdictionDispositionMapper.setRefundOnlyMode(body.enabled);
+    // Persist first: the state must survive deploys and reach every replica,
+    // and the audit event must never record a toggle that failed to land.
+    await this.systemFlags.setRefundOnlyMode(body.enabled, admin.id);
 
     await this.truthLog.appendEvent("KILL_SWITCH_TOGGLED", {
       adminId: admin.id,
@@ -631,7 +634,7 @@ export class AdminController {
         `SELECT COALESCE(AVG(integrity_score), 0) as avg FROM users WHERE status = 'ACTIVE'`,
       ),
       this.pool.query(
-        `SELECT COUNT(*) as count FROM disputes WHERE appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'IN_REVIEW')`,
+        `SELECT COUNT(*) as count FROM disputes WHERE appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'PENDING_REVIEW', 'IN_REVIEW')`,
       ),
     ]);
     return {
@@ -644,7 +647,11 @@ export class AdminController {
   }
 
   @Get("financial-metrics")
-  @Roles("admin")
+  // "ADMIN", not "admin": RoleGuard compares against the role stored in the DB and
+  // getAllAndOverride lets a handler-level @Roles replace the class-level one, so the
+  // lowercase form silently overrode @Roles("ADMIN") with a value no user can hold.
+  // The endpoint 403'd every caller -- including real admins -- for its whole life.
+  @Roles("ADMIN")
   async financialMetrics() {
     const result = await this.pool.query(`
       SELECT

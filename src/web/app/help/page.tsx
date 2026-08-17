@@ -19,7 +19,7 @@ const faqs = [
   },
   {
     q: 'How much does it cost?',
-    a: 'Each contract requires a minimum $39 stake ($9 platform fee + $30 escrow). You can stake up to $999 during beta. On success you get the escrow portion back; on failure the entire stake is forfeited.',
+    a: 'You choose your stake, and during the beta there is no platform fee — the amount you commit is the amount held in escrow. On success it is returned in full; on failure it is forfeited. Your maximum stake depends on your Integrity Score tier.',
   },
   {
     q: 'Is my money safe?',
@@ -27,7 +27,7 @@ const faqs = [
   },
   {
     q: 'What if the Fury makes a wrong decision?',
-    a: 'You have 48 hours after a verdict to file an appeal. A panel of 3 additional Furies reviews the original evidence. If 2 of 3 overturn the verdict, your stake is returned. Panel verdicts are final.',
+    a: 'You have 48 hours after a verdict to file an appeal, at no cost. A human Judge reviews the original evidence and the Fury votes. If the Judge overturns the verdict, your stake is returned. Judge decisions are final.',
   },
   {
     q: 'How does no-contact tracking work?',

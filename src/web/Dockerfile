@@ -1,5 +1,5 @@
 # STAGE 1: Builder
-FROM node:26-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -21,10 +21,24 @@ COPY src/shared ./src/shared
 # Build Next.js
 WORKDIR /app/src/web
 ENV NEXT_TELEMETRY_DISABLED=1
+# Selects output:'standalone' in next.config.js — the runner stage below copies
+# .next/standalone and runs server.js, which only exist in standalone mode.
+ENV STYX_DOCKER_BUILD=true
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_WEB_URL
+ARG NEXT_PUBLIC_STYX_ENV_LABEL
+ARG NEXT_PUBLIC_STYX_TEST_MONEY_MODE
+ARG NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_WEB_URL=${NEXT_PUBLIC_WEB_URL}
+ENV NEXT_PUBLIC_STYX_ENV_LABEL=${NEXT_PUBLIC_STYX_ENV_LABEL}
+ENV NEXT_PUBLIC_STYX_TEST_MONEY_MODE=${NEXT_PUBLIC_STYX_TEST_MONEY_MODE}
+ENV NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI=${NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI}
+RUN test -n "$NEXT_PUBLIC_API_URL"
 RUN npm run build
 
 # STAGE 2: Runner
-FROM node:26-alpine AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 

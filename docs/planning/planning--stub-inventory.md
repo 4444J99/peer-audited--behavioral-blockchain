@@ -134,3 +134,48 @@ find src scripts .config -type f \( -iname '*stub*' -o -iname '*placeholder*' -o
 ## Residual Work
 
 The audit does not close the native mobile camera bridge gap. It clarifies that the gap is visible and tracked rather than hidden as a production stub. The current beta camera path is labeled synthetic and should remain so until native Swift/Kotlin capture is implemented and tested.
+
+## Structural Debt (added 2026-07-30, branch `feat/omega-completion`)
+
+The 2026-06-06 audit above scanned for *stub-shaped code*. It could not catch the
+dominant debt pattern that actually accumulated afterward: **complete, tested modules
+that were never wired into the running application**. A file-level stub scan reports
+these as healthy. This section records that class of debt honestly — what this branch
+closed, and what remains open.
+
+### Closed by this branch
+
+| Debt item | Evidence before | Resolution |
+| --- | --- | --- |
+| `SecurityModule` (anti-Sybil) built but unreachable | `src/api/src/modules/security/security.module.ts` existed; `src/api/src/app.module.ts` never imported it — no `/security/*` route was live | Registered in `app.module.ts` |
+| AML HTTP surface built but unreachable | `src/api/src/modules/compliance/aml.controller.ts` (`/compliance/aml/*`) absent from `compliance.module.ts` `controllers` (only `ComplianceController` registered) | Registered in `compliance.module.ts` |
+| Practitioner intelligence built but unprovided | `src/api/src/modules/behavioral/practitioner-intelligence.service.ts` not in `behavioral.module.ts` providers | Registered; practitioner web pages added |
+| Kill switch not restart-safe | `JurisdictionDispositionMapper.refundOnlyMode` is a static in-memory boolean (`src/api/src/modules/compliance/jurisdiction-disposition.mapper.ts`); a deploy or crash silently disarmed an armed compliance kill switch | Persisted to DB; state re-hydrated on boot |
+| Attestation crypto incomplete | `src/api/services/security/device-attestation.service.ts` performed structural + counter checks; its own doc-comment lists App Attest root-cert chain validation and Play Integrity JWT verification as required for production | Real signature/chain verification implemented (credential provisioning still human-gated, below) |
+| Fitbit ingestion unverified | `src/api/src/modules/contracts/fitbit.controller.ts` accepted authenticated user-submitted readiness with no provider verification | Provider-verified ingestion added |
+| Migration numbering gap | Sequence jumped `057_pod_broadcast_log_cohort.sql` → `059_aml_tables.sql`; `058` never existed | Migrations 058, 060–062 land with this branch's wiring (kill-switch state, retention policy, demo seed support) |
+| No general retention scheduler | Only the GDPR erasure sweep existed (`src/api/src/modules/users/gdpr.scheduler.ts`, daily 04:00 cron) | Data-retention scheduler added for policy-driven purge beyond explicit erasure requests |
+| Demo-critical web pages missing | No `kyc`, `practitioner`, or `circles` routes under `src/web/app/` despite the backing services being merged | Pages + demo seed added |
+| Docs claimed CCPA/AML "remaining" | `docs/planning/concentric-circles-execution.md` listed CCPA data deletion and AML screening under Circle 5 "Remaining" although PR #835 had merged them (`src/api/src/modules/users/ccpa.service.ts`, `src/api/src/modules/compliance/aml-screening.service.ts`, migrations `054`/`059`) | Truth pass applied 2026-07-30 |
+
+### Still open (not closed by this branch)
+
+| Debt item | Nature | Where tracked |
+| --- | --- | --- |
+| Native mobile camera bridge (Swift/Kotlin) | Implementation gap; beta path is transparently synthetic | This report's Mobile section; `docs/CLAUDE.md` Remaining Limitations |
+| HealthKit/Google Fit native bridges | Architectural stubs in `src/mobile/services/` | `docs/CLAUDE.md` Remaining Limitations |
+| Apple App Attest root cert + Play Integrity secret provisioning | Ops/credentials, not code; attestation fails closed without them | `docs/enterprise/compliance-packaging.md` §2 |
+| Stripe Identity production contract (KYC provider) | Vendor decision; mock adapter is the non-production default (`identity-provider.service.ts`) | Circle 2b, `docs/planning/concentric-circles-execution.md` |
+| AML watchlist data feed (OFAC/sanctions) | `internal_watchlist`/`internal_blocklist` are internal tables with no external feed | `docs/enterprise/compliance-packaging.md` §2 |
+| Practitioner seat billing | No Stripe price objects or seat-count entitlement code for the published $49/$149/$349/$999 tiers | `docs/enterprise/revenue-packaging.md` Tier 2 |
+| `STATE_TIERS` (TS) vs `jurisdictions` (DB) dual source of truth | Admin DB edits do not update the compile-time map that guards read; no reconciliation check | `docs/legal/state-jurisdiction-matrix-DRAFT.md` Sign-Off Blockers #5 |
+| NV/SD/AZ/MT tier assignments vs 50-state survey | Code more permissive than survey recommendation; counsel decision, not code | `docs/legal/state-jurisdiction-matrix-DRAFT.md` |
+| Non-English key in CCPA types | `PersonalInfoCategory` in `src/api/src/modules/users/ccpa.service.ts` declares the field `'收集目的'` (should be `collectionPurpose`) — harmless but wrong, and a consumer-facing type | New; fix in a follow-up PR (rename is API-visible) |
+| SOC 2 audit engagement, counsel retention, FBO production account | Human-gated business processes | Circle 2b / Circle 5 "Remaining (human-gated)" |
+
+### Rule extracted
+
+A stub scan answers "is this file finished?" It cannot answer "is this file *load-bearing*?"
+Future audits of this repo must include a wiring pass: every `*.module.ts` diffed
+against `app.module.ts` imports, every `*.controller.ts` diffed against its module's
+`controllers` array, and every migration sequence checked for gaps.

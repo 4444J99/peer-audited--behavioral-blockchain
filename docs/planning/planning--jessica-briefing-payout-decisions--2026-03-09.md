@@ -1,6 +1,20 @@
 # Jessica Briefing: Payout Decisions
 
+> **ANSWERED 2026-03-10. Closed.**
+>
+> All five items were decided the day after this brief went out. The answers, with Jessica's rationale and the conditions for revisiting each one, are recorded as DR-002 through DR-006 in [`planning--founder-decisions-of-record.md`](./planning--founder-decisions-of-record.md). **That file is authoritative; this one is the historical request.**
+>
+> The answers are reproduced below so this document is not misread as still pending — which is exactly what happened for four and a half months, because the reply lived only in comments on the shared copy of this brief and nothing carried it back into the repository.
+
 This is the shortest business brief for locking payout economics without dragging you into code or planning noise.
+
+## Answers (Jessica, 2026-03-10)
+
+1. **Failed contract, capture-allowed jurisdiction:** `100% platform / 0% Fury pool / 0% reserve / 0% user refund`
+2. **Refund-only or unknown jurisdiction:** full refund — and restrict Phase 1 to the U.S.
+3. **Appeal fee:** remove for beta — no fee
+4. **Onboarding bonus:** remove for beta
+5. **Beta user-facing payout language:** keep generic only
 
 ## What This Is
 
@@ -19,16 +33,18 @@ There is a conflict in the repo today. Two different formulas exist.
 - model A: `80% platform / 20% Fury pool`
 - model B: `15% platform / 85% Fury pool`
 
-Your answer:
+Answer (DR-002):
 
-- platform: `_____ %`
-- Fury pool: `_____ %`
-- reserve / insurance pool: `_____ %`
-- user refund: `_____ %`
+- platform: `100 %`
+- Fury pool: `0 %`
+- reserve / insurance pool: `0 %`
+- user refund: `0 %`
 
 Rule:
 
 - total must equal `100%`
+
+> Keep payout as simple as possible so we can isolate the behavioral hypothesis: money at risk + pod visibility + reputation. Removing the Fury pool and reserve pool in Phase 1 avoids unnecessary complexity in the initial build and eliminates ambiguity around betting/prizes. Revisit only once completion rates and pod engagement are validated.
 
 ### 2. Failed contract payout in refund-only or unknown jurisdictions
 
@@ -36,10 +52,12 @@ Recommended default:
 
 - `100% refund to user`
 
-Your answer:
+Answer (DR-003):
 
-- `100% refund to user`
-- `other: ____________________`
+- `100% refund to user`, and Phase 1 is **restricted to the U.S.**
+- terms and agreements must cover the commitment deposit and forfeiture conditions
+
+> Restricting to the US will limit any issues, but some states may still raise disputes.
 
 ### 3. Appeal fee
 
@@ -47,11 +65,13 @@ Current amount:
 
 - `$5.00`
 
-Your answer:
+Answer (DR-004):
 
-- keep `$5.00`: `yes / no`
-- if no, new amount: `$_____`
-- status: `beta-only / launch / undecided`
+- keep `$5.00`: **no**
+- new amount: `$0` — appeals are submitted at no cost
+- status: `beta-only`
+
+> Cohort size is small enough to be reviewed without creating an operational burden. If we see a high volume of frivolous appeals as the product scales, we can introduce a small $5 appeal fee to discourage abuse.
 
 ### 4. Onboarding bonus
 
@@ -59,11 +79,13 @@ Current amount:
 
 - `$5.00`
 
-Your answer:
+Answer (DR-005):
 
-- keep `$5.00`: `yes / no`
-- if no, new amount: `$_____`
-- status: `beta-only / launch / invite-only / undecided`
+- keep `$5.00`: **no**
+- new amount: `$0`
+- status: `beta-only`
+
+> For the beta cohort. We can consider adding credits or bonuses later if we want to improve conversion or test additional engagement mechanics.
 
 ### 5. What should beta users see?
 
@@ -71,11 +93,9 @@ Recommended default:
 
 - `generic test-money language only`
 
-Your answer:
+Answer (DR-006):
 
 - `generic test-money language only`
-- `show provisional payout percentages`
-- `show exact future economics`
 
 ## What Does Not Need Your Decision Today
 

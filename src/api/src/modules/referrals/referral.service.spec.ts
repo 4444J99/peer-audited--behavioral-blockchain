@@ -146,6 +146,13 @@ describe('ReferralService', () => {
       expect(stats.pendingReferrals).toBe(1);
       expect(stats.totalRewardCents).toBe(1000);
       expect(stats.rewards).toHaveLength(1);
+      expect(stats.rewards[0].referredUserEmail).toBe('user2@test.com');
+
+      // referrals has no email column — referred_user_email is an alias produced
+      // by the join to users, so the join must stay in the query.
+      const rewardsSql = String(mockPool.query.mock.calls[1][0]);
+      expect(rewardsSql).toContain('u.email AS referred_user_email');
+      expect(rewardsSql).toContain('JOIN users u ON u.id = r.referred_user_id');
     });
   });
 });

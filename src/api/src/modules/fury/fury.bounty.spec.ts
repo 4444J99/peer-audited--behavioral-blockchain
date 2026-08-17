@@ -100,12 +100,19 @@ describe('FuryWorker — Bounty Economy', () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'revenue-account' }] });
 
       if (isHoneypot) {
-        // For honeypot: look up each flagged Fury's account_id
+        // For honeypot: look up each flagged Fury's account_id, then the three
+        // queries that record the automatic slash AS an appealable enforcement
+        // case (dedupe probe, case insert, penalty insert). Without that record
+        // the appeal flow has no object to reverse and a Fury who wins an appeal
+        // stays slashed.
         for (const furyId of flaggedFuries) {
           const accountId = furyAccountIds[furyId] ?? 'fury-acct-' + furyId;
           mockPool.query.mockResolvedValueOnce({
             rows: [{ account_id: accountId }],
           });
+          mockPool.query.mockResolvedValueOnce({ rows: [] }); // no existing penalty for this txn
+          mockPool.query.mockResolvedValueOnce({ rows: [{ id: `case-${furyId}` }] }); // case insert
+          mockPool.query.mockResolvedValueOnce({ rows: [] }); // penalty insert
         }
       } else {
         // For regular: look up each voter's account_id
@@ -217,6 +224,20 @@ describe('FuryWorker — Bounty Economy', () => {
     });
 
     await worker.checkConsensus('proof-hp-bounty');
+
+    // The automatic slash must land in the case system, carrying the ledger
+    // transaction it charged — otherwise resolveAppeal has nothing to reverse
+    // and a Fury who wins an appeal never gets the money back.
+    const sql = mockPool.query.mock.calls.map((c: any[]) => String(c[0]));
+    expect(sql.some((s) => /INSERT INTO fury_enforcement_cases/.test(s))).toBe(true);
+    const penaltyInsert = mockPool.query.mock.calls.find((c: any[]) =>
+      /INSERT INTO fury_penalties/.test(String(c[0])),
+    );
+    expect(penaltyInsert).toBeDefined();
+    expect(String(penaltyInsert![0])).toMatch(/ledger_transaction_id/);
+    expect(penaltyInsert![1]).toEqual(
+      expect.arrayContaining([AUDITOR_STAKE_AMOUNT, 'acct-corrupt']),
+    );
 
     // Only the flagged Fury gets a penalty
     expect(mockLedger.recordTransaction).toHaveBeenCalled();
