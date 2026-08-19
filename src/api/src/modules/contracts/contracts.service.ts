@@ -31,7 +31,7 @@ import { AegisProtocolService } from "../../../services/health/aegis.service";
 import { RecoveryProtocolService } from "../../../services/health/recovery-protocol.service";
 import { DynamicPenaltyService } from "../../../services/health/dynamic-penalty.service";
 import { AnomalyService } from "../../../services/anomaly/anomaly.service";
-import { resolveWebPublicUrl } from "../../config/runtime";
+import { resolveWebPublicUrl, testMoneyModeEnabled } from "../../config/runtime";
 
 import { NotificationsService } from "../notifications/notifications.service";
 import { CompliancePolicyService } from "../compliance/compliance-policy.service";
@@ -864,18 +864,18 @@ export class ContractsService {
 
   private buildCreateContractResponse(
     contractId: string,
-    paymentIntentId: string,
+    paymentIntentId: string | null,
     bountyLinkId: string | null,
     pricing?: PricingMetadata,
   ): {
     contractId: string;
-    paymentIntentId: string;
+    paymentIntentId: string | null;
     bountyLink?: string;
     pricing?: PricingMetadata;
   } {
     const response: {
       contractId: string;
-      paymentIntentId: string;
+      paymentIntentId: string | null;
       bountyLink?: string;
       pricing?: PricingMetadata;
     } = {
@@ -1287,7 +1287,7 @@ export class ContractsService {
     identityOathId: string | null;
   }): Promise<{
     contractId: string;
-    paymentIntentId: string;
+    paymentIntentId: string | null;
     bountyLink?: string;
     pricing?: PricingMetadata;
   }> {
@@ -1370,23 +1370,29 @@ export class ContractsService {
     // A failed authorization must not leave a half-created PENDING_STAKE row
     // floating with no payment intent and no record of what happened. Dead-letter
     // it to RECONCILE_REQUIRED so the admin sweep can act on it.
+    //
+    // Issue #905: $0-escrow on the test-money rail skips the ledger hold entirely —
+    // the ledger rejects non-positive amounts and there is nothing to custody.
     let paymentIntent;
-    try {
-      paymentIntent = await this.escrow.holdStake(
-        customerHandle,
-        toCents(dto.stakeAmount),
-        contractId,
-      );
-    } catch (holdErr) {
-      await this.markContractReconcileRequired(
-        contractId,
-        null,
-        `phase_b_hold_failed:${holdErr instanceof Error ? holdErr.message : holdErr}`,
-      );
-      throw new InternalServerErrorException(
-        `Contract activation failed: stake authorization did not succeed. ` +
-          `Contract ${contractId} marked RECONCILE_REQUIRED.`,
-      );
+    const stakeCents = toCents(dto.stakeAmount);
+    if (stakeCents > 0) {
+      try {
+        paymentIntent = await this.escrow.holdStake(
+          customerHandle,
+          stakeCents,
+          contractId,
+        );
+      } catch (holdErr) {
+        await this.markContractReconcileRequired(
+          contractId,
+          null,
+          `phase_b_hold_failed:${holdErr instanceof Error ? holdErr.message : holdErr}`,
+        );
+        throw new InternalServerErrorException(
+          `Contract activation failed: stake authorization did not succeed. ` +
+            `Contract ${contractId} marked RECONCILE_REQUIRED.`,
+        );
+      }
     }
 
     // Tracks a concurrent finalizer that activated this contract before us.
@@ -1421,14 +1427,14 @@ export class ContractsService {
         // We won the race: this is the first (and only) finalizer, so record
         // our hold as the contract's payment intent and activate.
         await phaseBClient.query(
-          `UPDATE contracts
-           SET payment_intent_id = $1,
-               status = 'ACTIVE',
-               started_at = COALESCE(started_at, $3),
-               ends_at = COALESCE(ends_at, $4)
-           WHERE id = $2`,
+           `UPDATE contracts
+            SET payment_intent_id = $1,
+                status = 'ACTIVE',
+                started_at = COALESCE(started_at, $3),
+                ends_at = COALESCE(ends_at, $4)
+            WHERE id = $2`,
           [
-            paymentIntent.id,
+            paymentIntent?.id ?? null,
             contractId,
             now.toISOString(),
             endsAt.toISOString(),
@@ -1457,14 +1463,16 @@ export class ContractsService {
         // Preserve original failure.
       }
 
-      try {
-        await this.escrow.cancelHold(paymentIntent.id);
-      } catch (cancelErr) {
-        await this.markContractReconcileRequired(
-          contractId,
-          paymentIntent.id,
-          `phase_b_finalize_failed:${cancelErr instanceof Error ? cancelErr.message : cancelErr}`,
-        );
+      if (paymentIntent) {
+        try {
+          await this.escrow.cancelHold(paymentIntent.id);
+        } catch (cancelErr) {
+          await this.markContractReconcileRequired(
+            contractId,
+            paymentIntent.id,
+            `phase_b_finalize_failed:${cancelErr instanceof Error ? cancelErr.message : cancelErr}`,
+          );
+        }
       }
 
       throw new InternalServerErrorException(
@@ -1476,7 +1484,7 @@ export class ContractsService {
 
     // Losing racer: release the hold we authorized, outside the transaction so
     // the winner's COMMIT stays intact.
-    if (activationAlreadyApplied) {
+    if (activationAlreadyApplied && paymentIntent) {
       try {
         await this.escrow.cancelHold(paymentIntent.id);
       } catch (cancelErr) {
@@ -1496,15 +1504,17 @@ export class ContractsService {
         bountyLinkId,
       });
     } catch (err) {
-      await this.markContractReconcileRequired(
-        contractId,
-        paymentIntent.id,
-        `contract_create_side_effect_failure:${err instanceof Error ? err.message : err}`,
-      );
-      try {
-        await this.escrow.cancelHold(paymentIntent.id);
-      } catch {
-        // Reconciliation state already recorded above.
+      if (paymentIntent) {
+        await this.markContractReconcileRequired(
+          contractId,
+          paymentIntent.id,
+          `contract_create_side_effect_failure:${err instanceof Error ? err.message : err}`,
+        );
+        try {
+          await this.escrow.cancelHold(paymentIntent.id);
+        } catch {
+          // Reconciliation state already recorded above.
+        }
       }
       throw new InternalServerErrorException(
         "Contract finalization side effects failed. Reconciliation required.",
@@ -1513,7 +1523,7 @@ export class ContractsService {
 
     return this.buildCreateContractResponse(
       contractId,
-      paymentIntent.id,
+      paymentIntent?.id ?? null,
       bountyLinkId,
       pricingMetadata,
     );
@@ -1521,7 +1531,7 @@ export class ContractsService {
 
   async createContract(dto: CreateContractInput): Promise<{
     contractId: string;
-    paymentIntentId: string;
+    paymentIntentId: string | null;
     bountyLink?: string;
     pricing?: PricingMetadata;
   }> {
@@ -1808,29 +1818,34 @@ export class ContractsService {
     // A failed authorization must not leave a half-created PENDING_STAKE row
     // floating with no payment intent and no record of what happened. Dead-letter
     // it to RECONCILE_REQUIRED so the admin sweep can act on it.
+    //
+    // Issue #905: $0-escrow on the test-money rail skips the ledger hold entirely.
     let paymentIntent;
-    try {
-      paymentIntent = await this.escrow.holdStake(
-        customerHandle,
-        toCents(dto.stakeAmount),
-        contractId,
-      );
-    } catch (holdErr) {
-      await this.markContractReconcileRequired(
-        contractId,
-        null,
-        `contract_create_hold_failed:${holdErr instanceof Error ? holdErr.message : holdErr}`,
-      );
-      throw new InternalServerErrorException(
-        `Contract creation failed: stake authorization did not succeed. ` +
-          `Contract ${contractId} marked RECONCILE_REQUIRED.`,
-      );
+    const stakeCents = toCents(dto.stakeAmount);
+    if (stakeCents > 0) {
+      try {
+        paymentIntent = await this.escrow.holdStake(
+          customerHandle,
+          stakeCents,
+          contractId,
+        );
+      } catch (holdErr) {
+        await this.markContractReconcileRequired(
+          contractId,
+          null,
+          `contract_create_hold_failed:${holdErr instanceof Error ? holdErr.message : holdErr}`,
+        );
+        throw new InternalServerErrorException(
+          `Contract creation failed: stake authorization did not succeed. ` +
+            `Contract ${contractId} marked RECONCILE_REQUIRED.`,
+        );
+      }
     }
 
     // Activate contract with payment intent
     await this.pool.query(
       `UPDATE contracts SET status = 'ACTIVE', payment_intent_id = $1 WHERE id = $2`,
-      [paymentIntent.id, contractId],
+      [paymentIntent?.id ?? null, contractId],
     );
 
     if (bountyLinkId) {
@@ -1921,7 +1936,7 @@ export class ContractsService {
 
     return this.buildCreateContractResponse(
       contractId,
-      paymentIntent.id,
+      paymentIntent?.id ?? null,
       bountyLinkId,
       pricingPlan.pricingMetadata,
     );
