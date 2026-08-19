@@ -459,16 +459,15 @@ describe("ContractsService — Behavioral Physics", () => {
         "contract-r1",
       );
 
-      const stakeHoldCall = mockLedger.recordTransaction.mock.calls.find(
-        ([, , , , metadata]: [unknown, unknown, unknown, unknown, any]) =>
-          metadata?.type === "STAKE_HOLD",
-      );
+      const stakeHoldCall = jest
+        .mocked(mockLedger.recordTransaction)
+        .mock.calls.find((args) => args[4]?.type === "STAKE_HOLD");
       expect(stakeHoldCall).toBeDefined();
       expect(stakeHoldCall![2]).toBe(0);
 
-      const createdEvent = mockTruthLog.appendEvent.mock.calls.find(
-        ([type]: [string]) => type === "CONTRACT_CREATED",
-      );
+      const createdEvent = jest
+        .mocked(mockTruthLog.appendEvent)
+        .mock.calls.find((args) => args[0] === "CONTRACT_CREATED");
       expect(createdEvent).toBeDefined();
       expect(createdEvent![1].stakeAmount).toBe(0);
       expect(createdEvent![1].oathCategory).toBe("RECOVERY_NOCONTACT");
