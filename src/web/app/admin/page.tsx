@@ -140,6 +140,9 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans p-6 md:p-12 max-w-6xl mx-auto">
+      <div className="mx-auto max-w-4xl px-4 py-3 mb-6 rounded-xl border border-amber-700/40 bg-amber-950/40 text-amber-200 text-xs font-bold uppercase tracking-wider text-center">
+        OPERATOR CONSOLE — Administrative tools for platform management. In production, access is restricted to authorized operators.
+      </div>
       <div className="flex items-center gap-4 mb-8">
         <Link href="/dashboard" className="text-neutral-400 hover:text-white transition-colors">
           <ArrowLeft size={24} />
