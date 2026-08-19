@@ -18,16 +18,35 @@ describe('geofencing', () => {
     });
 
     it('should classify TIER_2 restricted states', () => {
-      const tier2States = ['NY', 'CT', 'MT', 'AZ', 'IA', 'LA', 'ME', 'TN', 'VA', 'IN', 'PA'];
+      const tier2States = ['NY', 'CT', 'IA', 'LA', 'ME', 'TN', 'VA', 'IN', 'PA'];
       for (const state of tier2States) {
         expect(STATE_TIERS[state]).toBe(JurisdictionTier.TIER_2);
       }
     });
 
     it('should classify TIER_1 permissive states', () => {
-      const tier1States = ['CA', 'TX', 'FL', 'IL', 'OH', 'GA', 'NC', 'MI', 'NJ', 'CO', 'NV'];
+      const tier1States = ['CA', 'TX', 'FL', 'IL', 'OH', 'GA', 'NC', 'MI', 'NJ', 'CO'];
       for (const state of tier1States) {
         expect(STATE_TIERS[state]).toBe(JurisdictionTier.TIER_1);
+      }
+    });
+
+    // Reconciled 2026-07-31: our own 50-state survey recommends BLOCK for all
+    // four, while the code granted NV/SD full access with capture and AZ/MT
+    // refund-only. Capturing a forfeited deposit in a state whose research says
+    // a gaming licence is required is the exposure this closes. Counsel may
+    // relax these (#317); the code must not be looser than the survey until it does.
+    it('should hard-block the states our own survey recommends blocking', () => {
+      for (const state of ['NV', 'SD', 'AZ', 'MT']) {
+        expect(STATE_TIERS[state]).toBe(JurisdictionTier.TIER_3);
+      }
+    });
+
+    it('should never capture a forfeited stake in a survey-blocked state', () => {
+      for (const state of ['NV', 'SD', 'AZ', 'MT']) {
+        expect(classifyJurisdiction({ country: 'US', region: state }).tier).not.toBe(
+          JurisdictionTier.TIER_1,
+        );
       }
     });
 

@@ -39,7 +39,7 @@ Companion markup for counsel review: `docs/legal/appendices/appendix-b--terms-of
 
 **"Deposit"** means the financial amount a User places into the Vault when creating an Oath.
 
-**"Platform Fee"** means the non-refundable service fee charged by the Company for each Oath ($9.00 for a standard $39.00 Oath, or proportional for other amounts).
+**"Platform Fee"** means any non-refundable service fee charged by the Company for an Oath, in the amount disclosed to the User at the point of purchase. No Platform Fee is charged during the beta.
 
 **"Bounty"** means the compensation paid to Furies for completing proof verification audits.
 
@@ -177,10 +177,21 @@ All payments are processed through Stripe. By using Styx, you also agree to Stri
 
 | Fee Type | Amount | Refundable |
 |----------|--------|------------|
-| Platform Fee (standard Oath) | $9.00 | No |
+| Platform Fee (standard Oath) | $0.00 during beta; otherwise as disclosed at purchase | No |
 | Oath Deposit (standard) | $30.00 (held in escrow) | Yes (on successful completion) |
 | Fury Auditor Deposit | $2.00 per audit | Yes (on quorum-aligned vote) |
+| Appeal Fee | $0.00 during beta (DR-004) | N/A |
 | Withdrawal Fee | $0.00 | N/A |
+
+> **Drafting note (2026-07-31, for counsel review).** This table previously stated
+> a $9.00 non-refundable Platform Fee on a $39.00 Oath. No such fee is charged:
+> `normalizeContractPricing` treats the fee as metadata and the only charge is the
+> $30.00 deposit hold. Asserting a fee the system does not collect is the kind of
+> discrepancy a regulator or a chargeback reads badly, so the amounts have been
+> replaced with what the code actually does. **Setting the real number is a
+> pricing decision reserved to the founders jointly (DR-007) and has not been
+> made** — see the pricing entry in
+> `docs/planning/planning--founder-decisions-of-record.md`.
 
 ### 6.4 Taxes
 

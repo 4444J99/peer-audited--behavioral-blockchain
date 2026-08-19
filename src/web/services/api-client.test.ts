@@ -126,6 +126,32 @@ describe('Web API client', () => {
 
       expect(mockFetch.mock.calls[0][0]).toContain('/meta/release');
     });
+
+    it('getComplianceArtifacts() hits /compliance/artifacts', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk([]));
+
+      await api.getComplianceArtifacts();
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/compliance/artifacts');
+    });
+
+    it('getComplianceArtifacts() returns the artifact list verbatim', async () => {
+      const artifacts = [
+        {
+          artifactType: 'skill_contest_whitepaper',
+          version: '1.0.0',
+          contentHash: 'a'.repeat(64),
+          signedBy: 'Outside Counsel',
+          signedAt: '2026-01-01T00:00:00.000Z',
+          expiresAt: null,
+          isActive: true,
+          jurisdictions: ['US'],
+        },
+      ];
+      mockFetch.mockResolvedValueOnce(jsonOk(artifacts));
+
+      await expect(api.getComplianceArtifacts()).resolves.toEqual(artifacts);
+    });
   });
 
   describe('register()', () => {
@@ -162,6 +188,31 @@ describe('Web API client', () => {
       expect(url).toContain('/contracts');
       expect(opts.method).toBe('POST');
       expect(JSON.parse(opts.body)).toEqual(dto);
+    });
+  });
+
+  describe('getEndowedProgress()', () => {
+    it('reads the retention endpoint for one contract and returns its downscaling', async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonOk({
+          contractId: 'c1',
+          realProgress: 0.75,
+          endowedBoost: 0.02,
+          displayProgress: 0.77,
+          currentTier: 'Mastery',
+          nextTierAt: 0.9,
+          motivation: 'This is who you are now.',
+          downscaling: { multiplier: 0.85, reason: 'weekend vulnerability in final 30%' },
+        }),
+      );
+
+      const result = await api.getEndowedProgress('c1');
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/behavioral/retention/endowed-progress/c1');
+      expect(result.downscaling).toEqual({
+        multiplier: 0.85,
+        reason: 'weekend vulnerability in final 30%',
+      });
     });
   });
 
@@ -247,6 +298,103 @@ describe('Web API client', () => {
     });
   });
 
+  describe('accountability partner endpoints', () => {
+    it('getPartnerInvitations() hits the literal /contracts/invitations route', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk([]));
+
+      await api.getPartnerInvitations();
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/contracts/invitations');
+    });
+
+    it('getPartnerships() hits /contracts/partnerships', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk([]));
+
+      await api.getPartnerships();
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/contracts/partnerships');
+    });
+
+    it('acceptPartnerInvitation() posts to the partner-accept path', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ status: 'active' }));
+
+      await api.acceptPartnerInvitation('c-7');
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/contracts/c-7/partner/accept');
+      expect(opts.method).toBe('POST');
+    });
+
+    it('respondToPartnerInvite() carries the accept flag', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ success: true, status: 'DECLINED' }));
+
+      await api.respondToPartnerInvite('c-7', false);
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/contracts/c-7/accountability/respond');
+      expect(JSON.parse(opts.body)).toEqual({ accept: false });
+    });
+
+    it('cosignAttestation() posts to the cosign path', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ status: 'cosigned' }));
+
+      await api.cosignAttestation('c-7');
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/contracts/c-7/attestation/cosign');
+      expect(opts.method).toBe('POST');
+    });
+
+    it('vetoRecoveryBreak() posts to the veto path', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ success: true, message: 'vetoed' }));
+
+      await api.vetoRecoveryBreak('c-7');
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/contracts/c-7/recovery/veto-break');
+      expect(opts.method).toBe('POST');
+    });
+
+    it('invitePartner() sends the invitee email', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ success: true, partnerId: 'p-1' }));
+
+      await api.invitePartner('c-7', 'friend@styx.io');
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/contracts/c-7/accountability/invite');
+      expect(JSON.parse(opts.body)).toEqual({ email: 'friend@styx.io' });
+    });
+
+    it('getAccountabilityStatus() hits the status path', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ partners: [], history: [] }));
+
+      await api.getAccountabilityStatus('c-7');
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/contracts/c-7/accountability/status');
+    });
+
+    it('getPartnerCheckIns() appends the limit only when given', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk([]));
+      await api.getPartnerCheckIns('c-7');
+      expect(mockFetch.mock.calls[0][0]).toContain('/behavioral/retention/partners/check-ins/c-7');
+      expect(mockFetch.mock.calls[0][0]).not.toContain('limit=');
+
+      mockFetch.mockResolvedValueOnce(jsonOk([]));
+      await api.getPartnerCheckIns('c-7', 5);
+      expect(mockFetch.mock.calls[1][0]).toContain('limit=5');
+    });
+
+    it('completePartnerCheckIn() sends the check-in id and message', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ id: 'chk-1' }));
+
+      await api.completePartnerCheckIn('chk-1', 'still holding');
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/behavioral/retention/partners/check-in');
+      expect(JSON.parse(opts.body)).toEqual({ checkInId: 'chk-1', message: 'still holding' });
+    });
+  });
+
   describe('grillMe()', () => {
     it('sends POST to /ai/grill-me', async () => {
       mockFetch.mockResolvedValueOnce(jsonOk({ questions: ['What is your TAM?'] }));
@@ -257,6 +405,49 @@ describe('Web API client', () => {
       expect(url).toContain('/ai/grill-me');
       expect(opts.method).toBe('POST');
       expect(JSON.parse(opts.body)).toEqual({ slideContent: 'Slide 1: TAM is $5B' });
+    });
+  });
+  describe('collusion / enforcement admin reads', () => {
+    it('sends the ring lookback window as a query parameter', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ rings: [] }));
+
+      await api.getCollusionRings(720);
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('/fury/enforcement/rings?sinceHours=720');
+    });
+
+    it('omits the query string entirely when no ring filters are given', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ rings: [] }));
+
+      await api.getCollusionRings();
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('/fury/enforcement/rings');
+      expect(url).not.toContain('?');
+    });
+
+    it('sends the case filters the admin screen uses', async () => {
+      mockFetch.mockResolvedValueOnce(jsonOk({ cases: [] }));
+
+      await api.getEnforcementCases({ status: 'PENDING_REVIEW', caseType: 'COLLUSION_RING' });
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('status=PENDING_REVIEW');
+      expect(url).toContain('caseType=COLLUSION_RING');
+    });
+
+    it('POSTs a confirmation with the penalty type', async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonOk({ success: true, caseId: 'case-1', status: 'PENALTY_APPLIED' }),
+      );
+
+      await api.confirmEnforcementCase('case-1', { penaltyType: 'REP_BURN' });
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/fury/enforcement/confirm/case-1');
+      expect(opts.method).toBe('POST');
+      expect(JSON.parse(opts.body)).toEqual({ penaltyType: 'REP_BURN' });
     });
   });
 });

@@ -22,12 +22,28 @@ interface MeteredSubscription {
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
-  private readonly stripe: StripeClient;
+  private stripeClient: StripeClient | null = null;
 
-  constructor() {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-      apiVersion: "2026-05-27.dahlia",
+  /**
+   * Lazily-initialized Stripe client. Constructing `new Stripe(...)` at DI time
+   * throws when STRIPE_SECRET_KEY is unset, aborting boot — and the pilot's stated
+   * safety property is that safety comes from the key being unset (the ledger rail
+   * moves no outside money). Boot must succeed; only an actual metered-billing call
+   * throws, and it throws a named error, not a Stripe SDK construction failure.
+   */
+  private get stripe(): StripeClient {
+    if (this.stripeClient) return this.stripeClient;
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) {
+      throw new Error(
+        "BillingService: STRIPE_SECRET_KEY is unset, so metered B2B billing is " +
+          "unavailable. Configure a Stripe key to enable enterprise usage billing.",
+      );
+    }
+    this.stripeClient = new Stripe(key, {
+      apiVersion: "2026-07-29.dahlia",
     });
+    return this.stripeClient;
   }
 
   /**

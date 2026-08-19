@@ -109,7 +109,52 @@ export function resolveDatabaseUrl(): string {
   });
 }
 
-function parseRedisUrl(envKey: string, defaultPort: string) {
+export interface RedisConnectionConfig {
+  host: string;
+  port: number;
+  password?: string; // allow-secret
+  tls?: Record<string, unknown>;
+}
+
+interface RedisPurposeDescriptor {
+  urlEnv: string;
+  hostEnv: string;
+  portEnv: string;
+  defaultPort: string;
+}
+
+/**
+ * Small purpose registry: a new queue is a table row, not a copied function.
+ * Each purpose reads a purpose-specific URL (or host/port pair) and falls back
+ * to the shared `default` connection when unconfigured.
+ */
+const REDIS_PURPOSES: Record<string, RedisPurposeDescriptor> = {
+  default: {
+    urlEnv: "REDIS_URL",
+    hostEnv: "REDIS_HOST",
+    portEnv: "REDIS_PORT",
+    defaultPort: "6379",
+  },
+  bullmq: {
+    urlEnv: "REDIS_BULLMQ_URL",
+    hostEnv: "REDIS_BULLMQ_HOST",
+    portEnv: "REDIS_BULLMQ_PORT",
+    defaultPort: "6380",
+  },
+  cache: {
+    urlEnv: "REDIS_CACHE_URL",
+    hostEnv: "REDIS_CACHE_HOST",
+    portEnv: "REDIS_CACHE_PORT",
+    defaultPort: "6381",
+  },
+};
+
+type RedisPurpose = keyof typeof REDIS_PURPOSES;
+
+function parseRedisUrl(
+  envKey: string,
+  defaultPort: string,
+): RedisConnectionConfig | undefined {
   const redisUrl = process.env[envKey];
   if (!redisUrl) return undefined;
 
@@ -126,12 +171,16 @@ function parseRedisUrl(envKey: string, defaultPort: string) {
   };
 }
 
+/**
+ * Resolve the connection config for one Redis purpose, or `null` when that
+ * purpose is entirely unconfigured. Absence returns `null` so callers can fall
+ * back to the shared connection; a *partial* host/port pair is misconfiguration
+ * and still throws rather than guessing.
+ */
 function resolveRedisByPurpose(
-  urlEnv: string,
-  hostEnv: string,
-  portEnv: string,
-  defaultPort: string,
-) {
+  purpose: RedisPurpose,
+): RedisConnectionConfig | null {
+  const { urlEnv, hostEnv, portEnv, defaultPort } = REDIS_PURPOSES[purpose];
   const fromUrl = parseRedisUrl(urlEnv, defaultPort);
   if (fromUrl) return fromUrl;
 
@@ -139,35 +188,56 @@ function resolveRedisByPurpose(
     return { host: "127.0.0.1", port: 6379 };
   }
 
-  const host = requireOneEnv([hostEnv], `${hostEnv}`);
-  const port = parsePort(
-    requireOneEnv([portEnv], `${portEnv}`),
-    `${portEnv}`,
-  );
+  const host = process.env[hostEnv];
+  const port = process.env[portEnv];
+  if (!host && !port) return null;
+
   return {
-    host,
-    port,
-    password: process.env[`${hostEnv.replace(/_HOST$/, '_PASSWORD')}`] || undefined, // allow-secret
+    host: requireOneEnv([hostEnv], `${hostEnv}`),
+    port: parsePort(requireOneEnv([portEnv], `${portEnv}`), `${portEnv}`),
+    password: process.env[`${hostEnv.replace(/_HOST$/, "_PASSWORD")}`] || undefined, // allow-secret
   };
 }
 
-export function resolveRedisConnectionConfig() {
-  return resolveRedisByPurpose("REDIS_URL", "REDIS_HOST", "REDIS_PORT", "6379");
+export function resolveRedisConnectionConfig(): RedisConnectionConfig | null {
+  return resolveRedisByPurpose("default");
 }
 
-export function resolveBullmqRedisConfig() {
-  const legacy = resolveRedisByPurpose("REDIS_BULLMQ_URL", "REDIS_BULLMQ_HOST", "REDIS_BULLMQ_PORT", "6380");
-  // If the purpose-specific env vars are not set, fall back to the shared Redis
-  if (legacy.host === "127.0.0.1" && legacy.port === 6379 && process.env.NODE_ENV !== "test") {
-    return resolveRedisConnectionConfig();
-  }
-  return legacy;
+export function resolveBullmqRedisConfig(): RedisConnectionConfig | null {
+  return (
+    resolveRedisByPurpose("bullmq") ?? resolveRedisConnectionConfig()
+  );
 }
 
-export function resolveCacheRedisConfig() {
-  const cfg = resolveRedisByPurpose("REDIS_CACHE_URL", "REDIS_CACHE_HOST", "REDIS_CACHE_PORT", "6381");
-  if (cfg.host === "127.0.0.1" && cfg.port === 6381 && process.env.NODE_ENV !== "test") {
-    return resolveRedisConnectionConfig();
+export function resolveCacheRedisConfig(): RedisConnectionConfig | null {
+  return (
+    resolveRedisByPurpose("cache") ?? resolveRedisConnectionConfig()
+  );
+}
+
+/**
+ * Whether the pilot is running on test money. Defaults ON.
+ *
+ * The escrow rail factory selects from this: true → LedgerEscrowProvider (real
+ * balances on the internal ledger, no outside rail attached); false →
+ * StripeEscrowProvider. This is the same predicate StripeFboService uses to arm
+ * its real-money interlocks, so the rail selection and the interlock can never
+ * disagree about which mode is active.
+ */
+export function testMoneyModeEnabled(): boolean {
+  return (
+    String(process.env.STYX_TEST_MONEY_MODE ?? "true").toLowerCase() !== "false"
+  );
+}
+
+// Issue #905: the live beta runs the test-money rail. Financial-permission
+// surfaces must not apply real-money exposure ceilings to it, so every such
+// surface derives the rail from this single predicate instead of re-reading
+// the env var (truthiness here must match beta.controller's envFlag).
+export function isTestMoneyModeEnabled(): boolean {
+  const raw = process.env.STYX_TEST_MONEY_MODE;
+  if (raw == null) {
+    return true;
   }
-  return cfg;
+  return ["1", "true", "yes", "on"].includes(raw.toLowerCase());
 }

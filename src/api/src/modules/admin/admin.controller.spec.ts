@@ -13,6 +13,10 @@ describe("AdminController", () => {
   let mockPool: { query: jest.Mock };
   let mockAnomaly: { computePHash: jest.Mock; hammingDistance: jest.Mock };
   let mockTruthLog: { verifyChain: jest.Mock; appendEvent: jest.Mock };
+  let mockSystemFlags: {
+    getRefundOnlyMode: jest.Mock;
+    setRefundOnlyMode: jest.Mock;
+  };
 
   const mockModeration = {
     banUser: jest.fn(),
@@ -48,6 +52,10 @@ describe("AdminController", () => {
       verifyChain: jest.fn(),
       appendEvent: jest.fn().mockResolvedValue("evt-hash"),
     };
+    mockSystemFlags = {
+      getRefundOnlyMode: jest.fn().mockResolvedValue(false),
+      setRefundOnlyMode: jest.fn().mockResolvedValue(undefined),
+    };
     controller = new AdminController(
       mockModeration,
       mockCrisisDetection,
@@ -60,6 +68,7 @@ describe("AdminController", () => {
       mockTruthLog as any,
       mockIdentityVerification,
       mockPool as unknown as Pool,
+      mockSystemFlags as any,
     );
     jest.clearAllMocks();
   });
@@ -360,6 +369,60 @@ describe("AdminController", () => {
       });
       expect(result.contracts).toHaveLength(1);
       expect(result.disputeFeeSideEffects).toHaveLength(1);
+    });
+  });
+
+  describe("kill switch", () => {
+    it("reads kill switch state from the durable store", async () => {
+      mockSystemFlags.getRefundOnlyMode.mockResolvedValueOnce(true);
+
+      const result = await controller.getKillSwitch();
+
+      expect(result).toEqual({ refundOnlyMode: true });
+      expect(mockSystemFlags.getRefundOnlyMode).toHaveBeenCalledTimes(1);
+    });
+
+    it("persists kill switch activation and audits it", async () => {
+      const result = await controller.setKillSwitch(
+        { enabled: true },
+        { id: "ADMIN_root" },
+      );
+
+      expect(mockSystemFlags.setRefundOnlyMode).toHaveBeenCalledWith(
+        true,
+        "ADMIN_root",
+      );
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        "KILL_SWITCH_TOGGLED",
+        expect.objectContaining({ adminId: "ADMIN_root", enabled: true }),
+      );
+      expect(result.refundOnlyMode).toBe(true);
+      expect(result.message).toContain("Kill switch ACTIVE");
+    });
+
+    it("persists kill switch deactivation", async () => {
+      const result = await controller.setKillSwitch(
+        { enabled: false },
+        { id: "ADMIN_root" },
+      );
+
+      expect(mockSystemFlags.setRefundOnlyMode).toHaveBeenCalledWith(
+        false,
+        "ADMIN_root",
+      );
+      expect(result.refundOnlyMode).toBe(false);
+      expect(result.message).toContain("Kill switch INACTIVE");
+    });
+
+    it("does not audit a toggle that failed to persist", async () => {
+      mockSystemFlags.setRefundOnlyMode.mockRejectedValueOnce(
+        new Error("DB down"),
+      );
+
+      await expect(
+        controller.setKillSwitch({ enabled: true }, { id: "ADMIN_root" }),
+      ).rejects.toThrow("DB down");
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
     });
   });
 

@@ -34,12 +34,18 @@ export class JudgeService {
     // override logged / a contract resolved when the local write fails, commit the
     // local dispute-status change FIRST, then perform the external side-effects.
     if (res.disputeId) {
+      // `disputes` (004_disputes) carries its lifecycle in `appeal_status`, the adjudicator in
+      // `judge_user_id` and the written rationale in `judge_notes` — there is no status/
+      // resolution/judge_id column. A dispute row only exists because an appeal was filed
+      // against a rejection, so a PASS verdict overturns that rejection and a FAIL upholds it,
+      // matching the vocabulary DisputeService and the admin queue already read.
+      const appealStatus = res.verdict === 'PASS' ? 'RESOLVED_OVERTURNED' : 'RESOLVED_UPHELD';
       const client = await this.pool.connect();
       try {
         await client.query('BEGIN');
         await client.query(
-          `UPDATE disputes SET status = 'RESOLVED', resolution = $1, resolved_at = NOW(), judge_id = $2 WHERE id = $3`,
-          [res.verdict, res.judgeId, res.disputeId]
+          `UPDATE disputes SET appeal_status = $1, judge_notes = $2, resolved_at = NOW(), judge_user_id = $3 WHERE id = $4`,
+          [appealStatus, res.reason, res.judgeId, res.disputeId]
         );
         await client.query('COMMIT');
       } catch (e) {
@@ -85,11 +91,15 @@ export class JudgeService {
       `
     );
 
+    // A dispute points at a proof, not a contract — the contract is reached through
+    // proofs.contract_id. `contract_id` is projected explicitly because callers feed it
+    // straight back into resolveDispute().
     const activeDisputes = await this.pool.query(
-      `SELECT d.*, c.user_id, c.oath_category 
+      `SELECT d.*, p.contract_id, c.user_id, c.oath_category
        FROM disputes d
-       JOIN contracts c ON d.contract_id = c.id
-       WHERE d.status = 'PENDING'`
+       JOIN proofs p ON d.proof_id = p.id
+       JOIN contracts c ON p.contract_id = c.id
+       WHERE d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'PENDING_REVIEW', 'IN_REVIEW')`
     );
 
     return {

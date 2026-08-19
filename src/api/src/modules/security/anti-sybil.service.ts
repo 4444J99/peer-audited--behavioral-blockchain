@@ -131,7 +131,7 @@ export class AntiSybilService {
     }
 
     const ipResult = await this.pool.query(
-      `SELECT DISTINCT ip_address FROM proofs
+      `SELECT ip_address FROM proofs
        WHERE user_id = $1 AND ip_address IS NOT NULL
        ORDER BY created_at DESC LIMIT 1`,
       [userId],

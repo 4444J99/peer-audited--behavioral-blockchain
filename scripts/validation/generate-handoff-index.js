@@ -127,7 +127,7 @@ async function run() {
     .filter((issue) => {
       const labels = issue.labels.map(labelName);
       const hasOwnerLabel = labels.some((name) => name.startsWith("owner:"));
-      const isLegacyRange = issue.number >= 123 && issue.number <= 144;
+      const isLegacyRange = issue.number >= 123 && issue.number <= 148;
       return hasOwnerLabel || isLegacyRange;
     })
     .sort((a, b) => a.number - b.number);

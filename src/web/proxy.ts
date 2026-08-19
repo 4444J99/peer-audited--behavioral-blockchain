@@ -23,6 +23,7 @@ const PROTECTED_PATHS = [
   '/hr',
   '/tavern',
   '/referrals',
+  '/partner',
 ];
 
 // Browser auth uses HttpOnly cookie sessions. This proxy enforces auth-gating

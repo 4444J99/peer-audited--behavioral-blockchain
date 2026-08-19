@@ -16,6 +16,25 @@
     "dev:turbo": "turbo run dev",
     "test": "turbo run test",
     "load-test": "node scripts/load-test/run-load-tests.mjs",
+    "demo:launch": "bash scripts/demo/launch.sh",
+    "demo:reset": "bash scripts/demo/reset.sh",
+    "demo:reset:verify": "bash scripts/demo/reset.sh verify",
+    "demo:down": "bash scripts/demo/native.sh down",
+    "demo:credentials": "bash scripts/demo/credentials.sh",
+    "demo:verify": "bash scripts/demo/verify-live-stack.sh",
+    "demo:share": "bash scripts/demo/share.sh",
+    "snapshot:capture": "bash scripts/demo/snapshot.sh capture",
+    "snapshot:build": "bash scripts/demo/snapshot.sh build",
+    "snapshot:serve": "bash scripts/demo/snapshot.sh serve",
+    "snapshot:verify": "bash scripts/demo/snapshot.sh verify",
+    "snapshot:deploy": "bash scripts/demo/snapshot.sh deploy",
+    "beta:verify": "node scripts/demo/verify-beta.mjs",
+    "demo:feedback": "bash scripts/demo/feedback.sh start",
+    "demo:feedback:stop": "bash scripts/demo/feedback.sh stop",
+    "demo:feedback:status": "bash scripts/demo/feedback.sh status",
+    "demo:feedback:report": "node scripts/demo/feedback-report.mjs",
+    "demo:capture:tour": "node scripts/demo/capture-tour-fallback.mjs",
+    "demo:capture:rehearsal": "bash scripts/demo/capture-signed-in-rehearsal.sh",
     "lint": "turbo run lint",
     "validate:claims": "node scripts/validation/07-claim-drift-check.js",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
@@ -28,27 +47,27 @@
     "docs:ingest": "node scripts/analysis/ingest-doc-intelligence.js"
   },
   "devDependencies": {
-    "@nestjs/common": "11.1.26",
-    "@nestjs/core": "11.1.26",
-    "@playwright/test": "1.60.0",
-    "eslint": "^10.4.1",
+    "@nestjs/common": "11.1.28",
+    "@nestjs/core": "11.1.28",
+    "@playwright/test": "1.62.0",
+    "eslint": "^10.8.0",
     "jest-util": "^30.4.1",
-    "prettier": "^3.8.4",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "tsx": "4.22.4",
-    "turbo": "2.9.18",
+    "prettier": "^3.9.6",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tsx": "4.23.1",
+    "turbo": "2.10.7",
     "typescript": "^6.0.3"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=24.0.0 <25"
   },
   "overrides": {
     "fast-xml-parser": ">=5.3.8",
     "ajv": ">=8.18.0",
     "minimatch": ">=10.2.1",
-    "@nestjs/common": "11.1.26",
-    "@nestjs/core": "11.1.26",
+    "@nestjs/common": "11.1.28",
+    "@nestjs/core": "11.1.28",
     "@nestjs/platform-express": "11.1.26",
     "@nestjs/testing": "11.1.26",
     "@angular-devkit/core": {
@@ -61,5 +80,8 @@
     "yaml": "2.8.3",
     "cross-spawn": "7.0.5",
     "postcss": "8.5.15"
+  },
+  "dependencies": {
+    "class-validator": "^0.15.1"
   }
 }

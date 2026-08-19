@@ -13,9 +13,42 @@ import {
   IsPositive,
   ArrayMaxSize,
   ArrayMinSize,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
 } from "class-validator";
 import { Type } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { isTestMoneyModeEnabled } from "../../config/runtime";
+import {
+  OathCategory,
+  VerificationMethod,
+} from "../../../../shared/libs/behavioral-logic";
+
+const REAL_MONEY_MIN_STAKE_USD = 0.01;
+
+// Issue #905: on the test-money rail a $0 escrow (free) contract is a
+// legitimate shape — the early-access ceiling exists precisely to cap
+// real-money exposure, and nothing moves outside money in the pilot. On the
+// real-money rail the $0.01 floor is unchanged.
+@ValidatorConstraint({ name: "stakeMinimum", async: false })
+export class StakeMinimumConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) {
+      return false;
+    }
+    const minimum = isTestMoneyModeEnabled() ? 0 : REAL_MONEY_MIN_STAKE_USD;
+    return amount >= minimum;
+  }
+
+  defaultMessage(args: ValidationArguments): string {
+    return `${args.property} must be at least ${
+      isTestMoneyModeEnabled() ? 0 : REAL_MONEY_MIN_STAKE_USD
+    }`;
+  }
+}
 
 export class HealthMetricsDto {
   @ApiProperty({ description: "Current weight in pounds", example: 180 })
@@ -162,14 +195,16 @@ export class CreateContractDto {
   @ApiProperty({
     description:
       "Oath category (Biological, Cognitive, Professional, Creative, Environmental, Character, Recovery)",
-    example: "Biological",
+    enum: Object.values(OathCategory),
+    example: OathCategory.DEEP_WORK_FOCUS,
   })
   @IsString()
   oathCategory!: string;
 
   @ApiProperty({
     description: "Verification method (photo, video, sensor, text)",
-    example: "photo",
+    enum: Object.values(VerificationMethod),
+    example: VerificationMethod.API_SCREEN_TIME,
   })
   @IsString()
   verificationMethod!: string;
@@ -178,10 +213,10 @@ export class CreateContractDto {
     description:
       "Financial stake amount in USD (will be converted to cents internally)",
     example: 50,
-    minimum: 0.01,
+    minimum: 0,
   })
   @IsNumber()
-  @Min(0.01)
+  @Validate(StakeMinimumConstraint)
   stakeAmount!: number;
 
   @ApiProperty({
@@ -350,4 +385,33 @@ export class SubmitWhoopScoredDto {
   @IsOptional()
   @IsString()
   source?: string;
+}
+
+export class SelfReportDto {
+  @ApiProperty({
+    description: "Whether the user stayed sober today",
+    example: true,
+  })
+  @IsBoolean()
+  stayedSober!: boolean;
+
+  @ApiPropertyOptional({
+    description: "Urge/craving intensity (0-10)",
+    minimum: 0,
+    maximum: 10,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10)
+  urgeLevel?: number;
+
+  @ApiPropertyOptional({
+    description: "Trigger categories (e.g. stress, social, environmental)",
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  triggers?: string[];
 }

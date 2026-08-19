@@ -12,6 +12,8 @@ import { CurrentUser, Public } from '../../common/decorators/current-user.decora
 import { AuthGuard } from '../../../guards/auth.guard';
 import { RoleGuard, Roles } from '../../common/guards/role.guard';
 import { JurisdictionDispositionMapper } from '../compliance/jurisdiction-disposition.mapper';
+import { SystemFlagsService } from '../compliance/system-flags.service';
+import { StripeProductionGuard } from './stripe-production.guard';
 import { toCents } from '../../../../shared/libs/money';
 import { MONTHLY_SUBSCRIPTION_PRICE } from '../../../services/billing';
 
@@ -33,6 +35,7 @@ const REUSABLE_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing', 'past_due'
 
 @ApiTags('Payments')
 @Controller('payments')
+@UseGuards(StripeProductionGuard)
 export class PaymentsController implements OnModuleInit {
   private readonly logger = new Logger(PaymentsController.name);
   private readonly stripe: StripeClient;
@@ -45,9 +48,10 @@ export class PaymentsController implements OnModuleInit {
     private readonly compliancePolicy: CompliancePolicyService,
     private readonly settlementService: SettlementService,
     private readonly reconciliationService: ReconciliationService,
+    private readonly systemFlags: SystemFlagsService,
   ) {
     const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
-    this.stripe = new Stripe(apiKey, { apiVersion: '2026-05-27.dahlia' });
+    this.stripe = new Stripe(apiKey, { apiVersion: '2026-07-29.dahlia' });
     this.webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''; // allow-secret
   }
 
@@ -362,6 +366,9 @@ export class PaymentsController implements OnModuleInit {
           ? await this.compliancePolicy.getJurisdictionPolicy(lastKnownState)
           : null;
 
+        // The REFUND_ONLY kill switch is durable (system_flags); refresh the
+        // in-process cache so a toggle made on any replica governs this dispatch.
+        await JurisdictionDispositionMapper.refreshFromStore(this.systemFlags);
         dispositionMode = JurisdictionDispositionMapper.getDispositionMode(jurisdictionPolicy?.tier);
       }
     }

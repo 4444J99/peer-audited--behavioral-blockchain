@@ -68,7 +68,7 @@ export class StripeIdentityProviderAdapter implements IdentityProviderAdapter {
     if (process.env.NODE_ENV === 'production' && apiKey === 'sk_test_mock_key') {
       throw new Error('STRIPE_SECRET_KEY must be a real key in production (mock key is not allowed)');
     }
-    this.stripe = new Stripe(apiKey, { apiVersion: '2026-05-27.dahlia' });
+    this.stripe = new Stripe(apiKey, { apiVersion: '2026-07-29.dahlia' });
   }
 
   get isAvailable(): boolean {

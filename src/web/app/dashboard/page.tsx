@@ -1,15 +1,16 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Activity, ShieldCheck, Flame, History, User, Loader2, AlertTriangle, LogOut, Bell, Settings, ScrollText, HelpCircle } from 'lucide-react';
+import { Activity, ShieldCheck, Flame, History, User, Loader2, LogOut, Bell, Settings, ScrollText, HelpCircle, Target } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { api } from '../../services/api-client';
+import { api, ApiError, DashboardProgress } from '../../services/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import Leaderboard from '../../components/Leaderboard';
 import NotificationPanel from '../../components/NotificationPanel';
 import StreakChain from '../../components/StreakChain';
 import { OnboardingWizard } from '../../components/OnboardingWizard';
+import { DashboardErrorNotice } from '../../components/DashboardErrorNotice';
 
 interface BalanceData {
   id: string;
@@ -44,27 +45,40 @@ export default function IdentityDashboard() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [streakData, setStreakData] = useState<any>(null);
   const [streakLoading, setStreakLoading] = useState(true);
+  const [progress, setProgress] = useState<DashboardProgress | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (authLoading || !authUser) return;
     async function load() {
       try {
-        const [balanceData, historyData, contractData, streakChain] = await Promise.all([
+        const [balanceData, historyData, contractData, streakChain, progressData] = await Promise.all([
           api.getBalance() as any,
           api.getHistory(10) as any,
-          api.getUserContracts() as any,
+          // A jurisdiction block is a deliberate product state, not an empty
+          // contract list.  Preserve it so the dashboard can explain the gate
+          // instead of making the account appear ready with no data.
+          api.getUserContracts().catch((err) => {
+            if (err instanceof ApiError && err.code === 'JURISDICTION_BLOCKED') {
+              throw err;
+            }
+            return [];
+          }),
           api.getStreakChain().catch(() => null),
+          // Goal-gradient telemetry is a supplement, not a load-bearing panel:
+          // its failure must not blank the ledger the way a balance failure does.
+          api.getDashboardProgress().catch(() => null),
         ]);
         setBalance(balanceData);
         setTransactions(historyData.transactions);
         setContracts(contractData);
         if (streakChain) setStreakData(streakChain);
+        if (progressData) setProgress(progressData);
         if (contractData.length === 0) setShowOnboarding(true);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+        setError(err instanceof Error ? err : new Error('Failed to load dashboard'));
       } finally {
         setLoading(false);
         setStreakLoading(false);
@@ -88,15 +102,7 @@ export default function IdentityDashboard() {
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <AlertTriangle className="mx-auto text-red-500" size={48} />
-          <p className="text-red-400 font-bold">{error}</p>
-          <p className="text-neutral-500 text-sm">Ensure the backend service is reachable.</p>
-        </div>
-      </div>
-    );
+    return <DashboardErrorNotice error={error} />;
   }
 
   const integrityScore = balance?.integrity_score ?? 0;
@@ -123,6 +129,9 @@ export default function IdentityDashboard() {
         <div className="flex flex-wrap items-center gap-2 md:gap-3">
           <Link href="/wallet" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors">
             WALLET
+          </Link>
+          <Link href="/partner" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors">
+            PARTNER
           </Link>
           <Link href="/settings" className="px-3 md:px-4 py-2 bg-neutral-900 rounded-full border border-neutral-800 text-xs md:text-sm font-bold text-neutral-400 hover:text-white transition-colors flex items-center gap-1">
             <Settings size={14} />
@@ -196,6 +205,62 @@ export default function IdentityDashboard() {
             penaltyMultiplier={streakData?.penaltyMultiplier ?? 1}
             loading={streakLoading}
           />
+
+          {/* Goal Gradient — how far each active oath has actually come, and the
+              vault those days are filling.  Neither number is derivable from what
+              the rest of this page loads: /contracts carries no attestation count
+              and /balance is the spendable ledger, not the PROTECTED_VAULT hold. */}
+          {progress && (progress.activeContracts.length > 0 || progress.protectedVaultBalanceCents > 0) && (
+            <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-3xl">
+              <div className="flex items-center gap-3 mb-6">
+                <Target className="text-neutral-500" size={20} />
+                <h2 className="text-neutral-500 font-bold tracking-widest text-sm">GOAL GRADIENT</h2>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-xs text-neutral-500 uppercase tracking-widest mb-1">Protected Vault</p>
+                <p className="text-3xl font-black text-white">
+                  TEST-${(progress.protectedVaultBalanceCents / 100).toFixed(2)}
+                </p>
+              </div>
+
+              {progress.activeContracts.length === 0 ? (
+                <p className="text-neutral-500 text-sm">No active oath in progress.</p>
+              ) : (
+                <div className="space-y-4">
+                  {progress.activeContracts.map((c) => {
+                    const totalDays = Number(c.duration_days) || 0;
+                    const attestedDays = Number(c.streak) || 0;
+                    const pct = totalDays > 0
+                      ? Math.min(100, Math.round((attestedDays / totalDays) * 100))
+                      : 0;
+                    return (
+                      <div key={c.id}>
+                        <div className="flex justify-between items-baseline mb-1">
+                          <span className="text-sm font-bold">
+                            {(c.oath_category || 'CONTRACT').replace(/_/g, ' ')}
+                          </span>
+                          <span className="text-xs text-neutral-500">
+                            {attestedDays}/{totalDays} days &bull; {pct}%
+                          </span>
+                        </div>
+                        <div className="h-2 bg-black rounded-full overflow-hidden border border-neutral-800">
+                          <div
+                            className="h-full bg-red-600 rounded-full transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <p className="text-[10px] text-neutral-600 uppercase tracking-widest mt-6">
+                Longest streak {progress.summary.longestStreak} days
+              </p>
+            </div>
+          )}
 
           {/* Leaderboard hidden in Phase 1 Beta */}
           {/* <Leaderboard /> */}

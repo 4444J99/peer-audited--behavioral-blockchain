@@ -112,6 +112,30 @@ describe('CollusionDetectionService', () => {
         }),
       );
     });
+
+    it('skips a reviewer who already has an open collusion case', async () => {
+      // The scheduler's 24h lookback re-detects an unreviewed ring on every 6h
+      // sweep and mints a fresh ringId each time, so the guard — not the ringId —
+      // is what keeps the queue from filling with duplicates.
+      pool.query
+        // fury-a: guarded INSERT matches nothing (case already open)
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any)
+        // fury-b: newly filed
+        .mockResolvedValueOnce({ rows: [{ id: 'case-2' }], rowCount: 1 } as any);
+
+      const caseIds = await service.sanctionRing({
+        ringId: 'ring-test-2',
+        furyIds: ['fury-a', 'fury-b'],
+        confidence: 0.9,
+        signals: [],
+        recommendedAction: 'SANCTION',
+      });
+
+      expect(caseIds).toEqual(['case-2']);
+      expect(truthLog.appendEvent).toHaveBeenCalledTimes(1);
+      expect(pool.query.mock.calls[0][0]).toMatch(/WHERE NOT EXISTS/);
+      expect(pool.query.mock.calls[0][0]).toMatch(/status = 'PENDING_REVIEW'/);
+    });
   });
 
   describe('signal detection', () => {
@@ -166,6 +190,38 @@ describe('CollusionDetectionService', () => {
       // Should have at least 1 ring with the temporal signal
       expect(rings.length).toBe(1);
       expect(rings[0].signals[0].signalType).toBe('TEMPORAL_CORRELATION');
+    });
+
+    it('reads verdict timing from fury_assignments.reviewed_at and binds every parameter', async () => {
+      pool.query
+        // findCoordinatedPairs
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any)
+        // findVerdictSyncPairs
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any)
+        // findTemporalCorrelationPairs
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any)
+        // findSharedAssignmentBias - totalFuries
+        .mockResolvedValueOnce({ rows: [{ total_furies: 10 }], rowCount: 1 } as any)
+        // findSharedAssignmentBias - pairs
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
+
+      await service.analyzeWindow(24, 2);
+
+      const [temporalSql, temporalParams] = pool.query.mock.calls[2] as unknown as [
+        string,
+        unknown[],
+      ];
+
+      // fury_assignments timestamps the vote in reviewed_at; there is no verdict_at column.
+      expect(temporalSql).toContain('fa1.reviewed_at - fa2.reviewed_at');
+      expect(temporalSql).not.toContain('verdict_at');
+
+      // Postgres rejects a bind message that supplies more parameters than the
+      // statement references, so every placeholder must appear in the SQL.
+      expect(temporalParams).toHaveLength(3);
+      expect(temporalSql).toContain('p.created_at >= $1');
+      expect(temporalSql).toContain('<= $2');
+      expect(temporalSql).toContain('HAVING COUNT(*) >= $3');
     });
   });
 });

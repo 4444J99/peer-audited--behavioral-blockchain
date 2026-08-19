@@ -27,11 +27,14 @@ CREATE TABLE IF NOT EXISTS compliance_artifacts (
   -- Soft delete — superseded versions remain for audit trail
   superseded_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-  -- Only one active version per artifact type
-  CONSTRAINT uq_active_artifact UNIQUE (artifact_type) WHERE is_active = true
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Only one active version per artifact type (partial unique index; an inline
+-- UNIQUE table constraint cannot carry a WHERE clause)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_active_artifact
+  ON compliance_artifacts(artifact_type)
+  WHERE is_active = true;
 
 CREATE INDEX IF NOT EXISTS idx_compliance_artifacts_type_active
   ON compliance_artifacts(artifact_type)

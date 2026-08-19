@@ -36,4 +36,6 @@ Every item must pass before we submit to Apple for App Store review.
 
 ## Pass Criteria
 
-All 22 checkboxes checked = gate passed. Any open item blocks App Store submission.
+All 20 checkboxes checked = gate passed. Any open item blocks App Store submission.
+(Count corrected 2026-08-15: the document has always contained 20 items — 6 App Review +
+4 UGC + 6 Technical + 4 Legal; "22" was a drafting error.)

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import { api, setAuthToken, setCsrfToken } from '../services/api-client';
+import { api, setAuthToken, setCsrfToken, readCsrfCookie } from '../services/api-client';
 
 interface User {
   id: string;
@@ -70,9 +70,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         setUser(me);
         try {
-          const csrf = await api.getCsrf();
-          if (cancelled) return;
-          setCsrfToken(csrf.csrfToken);
+          // The CSRF cookie is readable by design (double-submit) and its
+          // value is deterministic per session — hydration takes it from the
+          // cookie and only calls the refresh endpoint when the cookie is
+          // missing. Calling on every page load tripped the endpoint's rate
+          // limit under ordinary fast navigation (#891).
+          const cookieCsrf = readCsrfCookie();
+          if (cookieCsrf) {
+            setCsrfToken(cookieCsrf);
+          } else {
+            const csrf = await api.getCsrf();
+            if (cancelled) return;
+            setCsrfToken(csrf.csrfToken);
+          }
         } catch {
           // Non-fatal: mutating requests will refresh/retry if needed.
         }
