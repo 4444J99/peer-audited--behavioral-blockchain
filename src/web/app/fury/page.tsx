@@ -134,6 +134,9 @@ export default function FuryWorkbench() {
 
   return (
     <div className="min-h-screen bg-black text-white p-6 md:p-12 font-sans flex flex-col">
+      <div className="mx-auto max-w-4xl px-4 py-3 mb-6 rounded-xl border border-amber-700/40 bg-amber-950/40 text-amber-200 text-xs font-bold uppercase tracking-wider text-center">
+        SYNTHETIC DEMO — This Fury review queue shows seeded peer-audited proof assignments. In production, auditors are anonymous and reviews are binding.
+      </div>
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-red-900/40 pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-red-600 rounded-none flex items-center justify-center -rotate-12 shadow-[0_0_20px_rgba(220,38,38,0.5)]">

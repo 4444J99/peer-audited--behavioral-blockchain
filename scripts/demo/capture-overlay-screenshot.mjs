@@ -1,0 +1,13 @@
+import { chromium } from 'playwright';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(__dirname, '../..');
+const OUT = path.join(repoRoot, 'docs/demo/assets');
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+await page.goto('http://127.0.0.1:4311/tour', { waitUntil: 'networkidle', timeout: 15000 });
+await page.waitForTimeout(2000);
+await page.screenshot({ path: path.join(OUT, 'tour-with-overlay-desktop-1440.png'), fullPage: false });
+console.log('✓ Tour with guided tour overlay screenshot saved');
+await browser.close();

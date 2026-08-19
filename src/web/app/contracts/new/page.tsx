@@ -310,6 +310,9 @@ function NewContractPageContent() {
 
   return (
     <div className="min-h-screen bg-black text-white p-6 md:p-12">
+      <div className="mx-auto max-w-4xl px-4 py-3 mb-6 rounded-xl border border-amber-700/40 bg-amber-950/40 text-amber-200 text-xs font-bold uppercase tracking-wider text-center">
+        TEST-MONEY MODE — Stakes are recorded in test credits. No real funds are held or transferred.
+      </div>
       <header className="flex items-center gap-4 mb-12 border-b border-neutral-800 pb-6">
         <Link href="/dashboard" className="p-2 bg-neutral-900 rounded-lg border border-neutral-800 hover:bg-neutral-800 transition-colors">
           <ArrowLeft size={20} />

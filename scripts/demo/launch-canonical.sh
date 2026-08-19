@@ -267,17 +267,17 @@ vertical_slice_test() {
   ")" || die "Could not extract admin token."
   ok "Admin login succeeded."
 
-  info "Creating a \$0 test-money contract ..."
+  info "Creating a \$0 test-money no-contact contract ..."
   local create_response
   create_response="$(curl -q -fsS --http1.1 --max-time 10 \
     -X POST "${api_url}/contracts" \
     -H "content-type: application/json" \
     -H "authorization: Bearer ${token}" \
-    -d '{"amount":0,"currency":"USD","testMoney":true,"description":"Canonical demo test contract"}' \
+    -d '{"oathCategory":"RECOVERY_NOCONTACT","verificationMethod":"ATTESTATION","stakeAmount":0,"durationDays":30,"recoveryMetadata":{"accountabilityPartnerEmail":"megaera@demo.styx.protocol","noContactIdentifiers":["hash_demo"],"acknowledgments":{"voluntary":true,"noMinors":true,"noDependents":true,"noLegalObligations":true}}}' \
     2>/dev/null)" || die "Contract creation failed."
   local contract_id
   contract_id="$(echo "$create_response" | node24 -e "
-    let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{const r=JSON.parse(d); console.log(r.id||r.contractId||'');});
+    let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{const r=JSON.parse(d); console.log(r.contractId||r.id||'');});
   " 2>/dev/null || true)"
   if [[ -n "$contract_id" ]]; then
     ok "Test contract created: ${contract_id}."
@@ -563,6 +563,17 @@ DIAGRAM
   echo -e "    Reset:  bash scripts/demo/native.sh reset"
   echo -e "    Verify: bash scripts/demo/verify-live-stack.sh"
   echo ""
+
+  # ── Open browser ────────────────────────────────────────────────────────
+  local canonical_url="http://127.0.0.1:${web_port}/tour"
+  info "Opening ${canonical_url} in your browser ..."
+  if command -v open >/dev/null 2>&1; then
+    open "$canonical_url"
+  elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$canonical_url"
+  else
+    warn "Could not detect browser opener. Navigate to: ${canonical_url}"
+  fi
 }
 
 main "$@"
