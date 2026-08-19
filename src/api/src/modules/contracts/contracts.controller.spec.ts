@@ -642,6 +642,47 @@ describe("ContractsController", () => {
       expect(errors.some((e) => e.property === "stakeAmount")).toBe(true);
     });
 
+    it("should accept a $0 stakeAmount on the test-money rail", async () => {
+      const dto = plainToInstance(CreateContractDto, {
+        oathCategory: "Recovery",
+        verificationMethod: "ATTESTATION",
+        stakeAmount: 0,
+        durationDays: 30,
+        recoveryMetadata: {
+          accountabilityPartnerEmail: "friend@example.com",
+          acknowledgments: {
+            voluntary: true,
+            noMinors: true,
+            noDependents: true,
+            noLegalObligations: true,
+          },
+        },
+      });
+      const errors = await validate(dto);
+      expect(errors.some((e) => e.property === "stakeAmount")).toBe(false);
+    });
+
+    it("should reject a $0 stakeAmount on the real-money rail", async () => {
+      const original = process.env.STYX_TEST_MONEY_MODE;
+      process.env.STYX_TEST_MONEY_MODE = "false";
+      try {
+        const dto = plainToInstance(CreateContractDto, {
+          oathCategory: "Biological",
+          verificationMethod: "photo",
+          stakeAmount: 0,
+          durationDays: 30,
+        });
+        const errors = await validate(dto);
+        expect(errors.some((e) => e.property === "stakeAmount")).toBe(true);
+      } finally {
+        if (original === undefined) {
+          delete process.env.STYX_TEST_MONEY_MODE;
+        } else {
+          process.env.STYX_TEST_MONEY_MODE = original;
+        }
+      }
+    });
+
     it("should reject CreateContractDto with durationDays over 365", async () => {
       const dto = plainToInstance(CreateContractDto, {
         oathCategory: "Biological",

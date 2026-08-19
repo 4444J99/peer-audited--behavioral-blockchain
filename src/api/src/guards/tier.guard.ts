@@ -6,6 +6,7 @@ import {
   Injectable,
 } from "@nestjs/common";
 import { Pool } from "pg";
+import { isTestMoneyModeEnabled } from "../config/runtime";
 
 export enum AccessTier {
   FREE = "free",
@@ -51,8 +52,13 @@ export class TierGuard implements CanActivate {
       );
     }
 
+    // Issue #905: the escrow ceiling caps an early-access user's REAL-money
+    // exposure. On the test-money rail nothing moves outside money, so the
+    // ceiling is skipped there (the active-contracts cap below stays
+    // unconditional on both rails).
     const requestedEscrowUsd = this.resolveRequestedEscrowUsd(request.body);
     if (
+      !isTestMoneyModeEnabled() &&
       requestedEscrowUsd > EARLY_ACCESS_MAX_ESCROW_USD &&
       !this.isEarlyAccessPaidPlan(request.body)
     ) {

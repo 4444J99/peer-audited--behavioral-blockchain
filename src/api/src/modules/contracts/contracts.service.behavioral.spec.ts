@@ -438,5 +438,39 @@ describe("ContractsService — Behavioral Physics", () => {
       const result = await service.createContract(dto);
       expect(result.contractId).toBe("contract-r2");
     });
+
+    // Issue #905: the early-access $0-escrow ceiling must not block synthetic
+    // adults on the test-money rail. A $0-escrow no-contact contract must pass
+    // the full creation pipeline: stake hold (0¢), ledger STAKE_HOLD, and the
+    // CONTRACT_CREATED truth-log receipt.
+    it("should create a $0-escrow no-contact contract end to end (issue #905)", async () => {
+      const dto: CreateContractInput = {
+        ...recoveryDto,
+        stakeAmount: 0,
+      };
+      mockSuccessfulRecoveryFlow();
+
+      const result = await service.createContract(dto);
+
+      expect(result.contractId).toBe("contract-r1");
+      expect(mockStripe.holdStake).toHaveBeenCalledWith(
+        "cus_test_1",
+        0,
+        "contract-r1",
+      );
+
+      const stakeHoldCall = jest
+        .mocked(mockLedger.recordTransaction)
+        .mock.calls.find((args) => args[4]?.type === "STAKE_HOLD");
+      expect(stakeHoldCall).toBeDefined();
+      expect(stakeHoldCall![2]).toBe(0);
+
+      const createdEvent = jest
+        .mocked(mockTruthLog.appendEvent)
+        .mock.calls.find((args) => args[0] === "CONTRACT_CREATED");
+      expect(createdEvent).toBeDefined();
+      expect(createdEvent![1].stakeAmount).toBe(0);
+      expect(createdEvent![1].oathCategory).toBe("RECOVERY_NOCONTACT");
+    });
   });
 });

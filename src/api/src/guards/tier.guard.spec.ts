@@ -4,11 +4,24 @@ import { AccessTier, TierGuard } from "./tier.guard";
 describe("TierGuard", () => {
   let guard: TierGuard;
   let mockPool: { query: jest.Mock };
+  const ORIGINAL_TEST_MONEY_MODE = process.env.STYX_TEST_MONEY_MODE;
 
   beforeEach(() => {
     mockPool = { query: jest.fn() };
     guard = new TierGuard(mockPool as any);
   });
+
+  afterEach(() => {
+    if (ORIGINAL_TEST_MONEY_MODE === undefined) {
+      delete process.env.STYX_TEST_MONEY_MODE;
+    } else {
+      process.env.STYX_TEST_MONEY_MODE = ORIGINAL_TEST_MONEY_MODE;
+    }
+  });
+
+  function setTestMoneyMode(enabled: boolean) {
+    process.env.STYX_TEST_MONEY_MODE = enabled ? "true" : "false";
+  }
 
   function createContext(
     user?: { id?: string } | null,
@@ -73,7 +86,8 @@ describe("TierGuard", () => {
     ).rejects.toThrow(/requires early access or pro/);
   });
 
-  it("denies early-access users when requested stake is greater than $0", async () => {
+  it("denies early-access users when requested stake is greater than $0 on the real-money rail", async () => {
+    setTestMoneyMode(false);
     mockPool.query.mockResolvedValueOnce({
       rows: [{ access_tier: AccessTier.EARLY_ACCESS }],
     });
@@ -84,7 +98,8 @@ describe("TierGuard", () => {
     expect(mockPool.query).toHaveBeenCalledTimes(1);
   });
 
-  it("treats MVP_39 pricing as a positive escrow request for early-access users", async () => {
+  it("treats MVP_39 pricing as a positive escrow request for early-access users on the real-money rail", async () => {
+    setTestMoneyMode(false);
     mockPool.query.mockResolvedValueOnce({
       rows: [{ access_tier: AccessTier.EARLY_ACCESS }],
     });
@@ -99,7 +114,8 @@ describe("TierGuard", () => {
     ).rejects.toThrow(/limited to \$0 escrow/);
   });
 
-  it("allows early-access users to use the explicit EARLY_ACCESS_199 plan below the active-contract cap", async () => {
+  it("allows early-access users to use the explicit EARLY_ACCESS_199 plan below the active-contract cap on the real-money rail", async () => {
+    setTestMoneyMode(false);
     mockPool.query
       .mockResolvedValueOnce({
         rows: [{ access_tier: AccessTier.EARLY_ACCESS }],
@@ -114,6 +130,50 @@ describe("TierGuard", () => {
         ),
       ),
     ).resolves.toBe(true);
+  });
+
+  it("skips the escrow ceiling for early-access users on the test-money rail", async () => {
+    setTestMoneyMode(true);
+    mockPool.query
+      .mockResolvedValueOnce({
+        rows: [{ access_tier: AccessTier.EARLY_ACCESS }],
+      })
+      .mockResolvedValueOnce({ rows: [{ count: 2 }] });
+
+    await expect(
+      guard.canActivate(createContext({ id: "user-1" }, { stakeAmount: 500 })),
+    ).resolves.toBe(true);
+  });
+
+  it("skips the escrow ceiling for MVP_39 pricing on the test-money rail", async () => {
+    setTestMoneyMode(true);
+    mockPool.query
+      .mockResolvedValueOnce({
+        rows: [{ access_tier: AccessTier.EARLY_ACCESS }],
+      })
+      .mockResolvedValueOnce({ rows: [{ count: 2 }] });
+
+    await expect(
+      guard.canActivate(
+        createContext(
+          { id: "user-1" },
+          { stakeAmount: 0, pricing: { plan: "MVP_39" } },
+        ),
+      ),
+    ).resolves.toBe(true);
+  });
+
+  it("keeps the active-contract cap on the test-money rail", async () => {
+    setTestMoneyMode(true);
+    mockPool.query
+      .mockResolvedValueOnce({
+        rows: [{ access_tier: AccessTier.EARLY_ACCESS }],
+      })
+      .mockResolvedValueOnce({ rows: [{ count: 3 }] });
+
+    await expect(
+      guard.canActivate(createContext({ id: "user-1" }, { stakeAmount: 500 })),
+    ).rejects.toThrow(/limited to 3 active contracts/);
   });
 
   it("denies early-access users at the active-contract cap", async () => {
