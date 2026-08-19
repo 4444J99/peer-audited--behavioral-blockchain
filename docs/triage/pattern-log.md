@@ -416,3 +416,19 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
 - index.ts:1
 
 **Lesson:** Orchestration of multiple agent workspaces via branch merging was successful.
+
+## batch-fix-testmoney-escrow — 2026-08-19 — Tier 3: Beta test-money rail fixes
+
+**Started:** 1 issue (#905).
+**Closed:** 1/1.
+**Built:** 1. **Tests:** Passed workspace tests (src/api 170/170 suites, 2108/2108 tests, tsc clean).
+
+**Evidence verified on disk:**
+- runtime.ts:237 (isTestMoneyModeEnabled — rail predicate)
+- tier.guard.ts (escrow ceiling rail-aware)
+- contracts/dto.ts:36 (StakeMinimumConstraint — $0 stake on test-money rail)
+- scripts/validation/03-the-full-loop.ts ($0-escrow no-contact slice)
+
+**Went right:** PR #938 landed first, then the ledger recorded the PR_MERGED → CLOSED chain — full PR lifecycle captured with evidence + pr link. Reconcile passed first try.
+
+**Lesson:** An issue fixed, merged, and closed on GitHub is still an UNREAD ledger orphan until the triage batch records the lifecycle. Close the issue AND the ledger in the same maintenance pass.

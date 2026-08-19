@@ -382,6 +382,17 @@
       "completed": "2026-07-23T00:23:41Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "fix-testmoney-escrow",
+      "phase": "Tier 3 \u2014 Beta test-money rail fixes",
+      "issues": [
+        905
+      ],
+      "started": "2026-08-19T13:24:52Z",
+      "completed": "2026-08-19T13:31:00Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -14168,6 +14179,57 @@
       "pr": null,
       "state_updated": "2026-06-01T15:50:50Z",
       "closed_at": null
+    },
+    "905": {
+      "title": "TierGuard's early-access $0-escrow ceiling blocks the entire create loop on the test-money beta",
+      "labels": [
+        "bug",
+        "blocker"
+      ],
+      "action": "BUG",
+      "state": "CLOSED",
+      "batch": "fix-testmoney-escrow",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-08-19T13:24:52Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUILD_STARTED",
+          "at": "2026-08-19T13:24:52Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-08-19T13:24:52Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-08-19T13:24:52Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-08-19T13:24:52Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-08-19T13:24:52Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-08-19T13:24:52Z"
+        }
+      ],
+      "evidence": "src/api/src/config/runtime.ts:237",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/938",
+      "state_updated": "2026-08-19T13:24:52Z",
+      "closed_at": "2026-08-19T13:31:00Z"
     }
   }
 }
