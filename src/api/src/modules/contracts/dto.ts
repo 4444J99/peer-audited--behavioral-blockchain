@@ -13,13 +13,42 @@ import {
   IsPositive,
   ArrayMaxSize,
   ArrayMinSize,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
 } from "class-validator";
 import { Type } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { isTestMoneyModeEnabled } from "../../config/runtime";
 import {
   OathCategory,
   VerificationMethod,
 } from "../../../../shared/libs/behavioral-logic";
+
+const REAL_MONEY_MIN_STAKE_USD = 0.01;
+
+// Issue #905: on the test-money rail a $0 escrow (free) contract is a
+// legitimate shape — the early-access ceiling exists precisely to cap
+// real-money exposure, and nothing moves outside money in the pilot. On the
+// real-money rail the $0.01 floor is unchanged.
+@ValidatorConstraint({ name: "stakeMinimum", async: false })
+export class StakeMinimumConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) {
+      return false;
+    }
+    const minimum = isTestMoneyModeEnabled() ? 0 : REAL_MONEY_MIN_STAKE_USD;
+    return amount >= minimum;
+  }
+
+  defaultMessage(args: ValidationArguments): string {
+    return `${args.property} must be at least ${
+      isTestMoneyModeEnabled() ? 0 : REAL_MONEY_MIN_STAKE_USD
+    }`;
+  }
+}
 
 export class HealthMetricsDto {
   @ApiProperty({ description: "Current weight in pounds", example: 180 })
@@ -184,10 +213,10 @@ export class CreateContractDto {
     description:
       "Financial stake amount in USD (will be converted to cents internally)",
     example: 50,
-    minimum: 0.01,
+    minimum: 0,
   })
   @IsNumber()
-  @Min(0.01)
+  @Validate(StakeMinimumConstraint)
   stakeAmount!: number;
 
   @ApiProperty({

@@ -1,4 +1,9 @@
-import { normalizeBaseUrl, parsePort, resolveDatabaseUrl } from './runtime';
+import {
+  isTestMoneyModeEnabled,
+  normalizeBaseUrl,
+  parsePort,
+  resolveDatabaseUrl,
+} from './runtime';
 
 describe('normalizeBaseUrl', () => {
   it('should strip a single trailing slash', () => {
@@ -113,5 +118,33 @@ describe('resolveDatabaseUrl (migration runner credential source)', () => {
     expect(() => resolveDatabaseUrl()).toThrow(
       'PostgreSQL port must be a valid TCP port',
     );
+  });
+});
+
+describe('isTestMoneyModeEnabled (Issue #905 rail predicate)', () => {
+  const saved = process.env.STYX_TEST_MONEY_MODE;
+
+  afterEach(() => {
+    if (saved === undefined) delete process.env.STYX_TEST_MONEY_MODE;
+    else process.env.STYX_TEST_MONEY_MODE = saved;
+  });
+
+  it('defaults to true when unset (matches beta feature flag)', () => {
+    delete process.env.STYX_TEST_MONEY_MODE;
+    expect(isTestMoneyModeEnabled()).toBe(true);
+  });
+
+  it('treats truthy labels as enabled', () => {
+    for (const value of ['1', 'true', 'TRUE', 'yes', 'on']) {
+      process.env.STYX_TEST_MONEY_MODE = value;
+      expect(isTestMoneyModeEnabled()).toBe(true);
+    }
+  });
+
+  it('treats falsy labels as disabled', () => {
+    for (const value of ['0', 'false', 'no', 'off', 'anything-else']) {
+      process.env.STYX_TEST_MONEY_MODE = value;
+      expect(isTestMoneyModeEnabled()).toBe(false);
+    }
   });
 });
