@@ -11,12 +11,20 @@ export default function NotFound() {
             This path does not exist on the Styx truth ledger.
           </p>
         </div>
-        <Link
-          href="/dashboard"
-          className="inline-block px-6 py-3 bg-red-600 hover:bg-red-700 rounded-xl text-white font-bold transition-colors"
-        >
-          Return to Dashboard
-        </Link>
+        <div className="flex items-center justify-center gap-3">
+          <Link
+            href="/dashboard"
+            className="inline-block px-6 py-3 bg-red-600 hover:bg-red-700 rounded-xl text-white font-bold transition-colors"
+          >
+            Return to Dashboard
+          </Link>
+          <Link
+            href="/tour"
+            className="inline-block px-6 py-3 bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 rounded-xl text-white font-bold transition-colors"
+          >
+            Take the Tour
+          </Link>
+        </div>
       </div>
     </div>
   );

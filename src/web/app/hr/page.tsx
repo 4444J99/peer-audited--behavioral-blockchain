@@ -122,6 +122,9 @@ export default function HRDashboard() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-12 font-sans">
+      <div className="mx-auto max-w-4xl px-4 py-3 mb-6 rounded-xl border border-blue-700/40 bg-blue-950/40 text-blue-200 text-xs font-bold uppercase tracking-wider text-center">
+        FUTURE PREVIEW — Enterprise analytics are a development preview. Individual data is structurally redacted in any production deployment.
+      </div>
       <header className="mb-12 border-b border-gray-800 pb-6 flex justify-between items-end gap-6">
         <div>
           <h1 className="text-3xl font-black tracking-tighter uppercase text-gray-300">Styx Corporate</h1>
