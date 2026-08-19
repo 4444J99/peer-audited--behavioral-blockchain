@@ -57,4 +57,29 @@ describe("BehavioralEnrichmentService", () => {
     const result = await service.checkGatewayOathEligibility("user-1", 100, 7);
     expect(result.allowed).toBe(true);
   });
+
+  it("frictionAudit persists to friction_audits, not a users JSONB blob", async () => {
+    mockPool.query.mockResolvedValue({ rows: [] });
+    const answers = {
+      good_habit_steps: 4,
+      bad_habit_access: 5,
+      environment_triggers: 4,
+      social_support: 3,
+      time_availability: 4,
+    };
+
+    const result = await service.frictionAudit("user-1", answers);
+
+    const [sql, params] = mockPool.query.mock.calls[0];
+    expect(String(sql)).toContain(
+      "INSERT INTO friction_audits (user_id, answers, score, risk_level)",
+    );
+    // users has no `metadata` column — the audit belongs in its own table.
+    expect(String(sql)).not.toMatch(/UPDATE users/);
+    expect(params[0]).toBe("user-1");
+    expect(JSON.parse(params[1])).toEqual(answers);
+    expect(params[2]).toBe(result.totalScore);
+    expect(params[3]).toBe(result.riskLevel);
+    expect(result.riskLevel).toBe("high");
+  });
 });

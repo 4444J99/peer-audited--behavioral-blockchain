@@ -38,11 +38,25 @@ export const STATE_TIERS: Record<string, JurisdictionTier> = {
     'ID': JurisdictionTier.TIER_3,  // Idaho
     'SC': JurisdictionTier.TIER_3,  // South Carolina
 
+    // Reconciled 2026-07-31 to match our own 50-state survey, which recommends
+    // BLOCK for all four while the code was more permissive. NV and SD were
+    // TIER_1 (FULL_ACCESS + CAPTURE) — i.e. we would have captured a forfeited
+    // deposit in two states whose own research says licensure is required.
+    // AZ and MT were TIER_2 (refund-only). These four rows are now ALIGNED in
+    // docs/legal/state-jurisdiction-matrix-DRAFT.md (code tier matches the
+    // survey recommendation); they were its top sign-off blockers before this.
+    //
+    // Tightening needs no counsel; relaxing does. Counsel sign-off is issue
+    // #317 — until it lands, the survey is the most authoritative source we
+    // have and the code should not be looser than it.
+    'NV': JurisdictionTier.TIER_3,  // Nevada — full gaming licensure required; GCB enforces
+    'SD': JurisdictionTier.TIER_3,  // South Dakota — broadest "in part upon chance" language
+    'AZ': JurisdictionTier.TIER_3,  // Arizona — any-chance history + DFS licensing
+    'MT': JurisdictionTier.TIER_3,  // Montana — AG guidance, no safe harbor
+
     // TIER_2: Restricted — requires licenses or bonding, refund-only mode
     'NY': JurisdictionTier.TIER_2,  // New York — requires bonding for large prizes
     'CT': JurisdictionTier.TIER_2,  // Connecticut — regulated
-    'MT': JurisdictionTier.TIER_2,  // Montana — material element doctrine
-    'AZ': JurisdictionTier.TIER_2,  // Arizona — DFS licensing required
     'IA': JurisdictionTier.TIER_2,  // Iowa — regulated
     'LA': JurisdictionTier.TIER_2,  // Louisiana — parish-level regulation
     'ME': JurisdictionTier.TIER_2,  // Maine — skill game licensing
@@ -71,7 +85,6 @@ export const STATE_TIERS: Record<string, JurisdictionTier> = {
     'OK': JurisdictionTier.TIER_1,
     'OR': JurisdictionTier.TIER_1,
     'KY': JurisdictionTier.TIER_1,
-    'NV': JurisdictionTier.TIER_1,
     'KS': JurisdictionTier.TIER_1,
     'NE': JurisdictionTier.TIER_1,
     'MS': JurisdictionTier.TIER_1,
@@ -79,7 +92,6 @@ export const STATE_TIERS: Record<string, JurisdictionTier> = {
     'WV': JurisdictionTier.TIER_1,
     'NH': JurisdictionTier.TIER_1,
     'ND': JurisdictionTier.TIER_1,
-    'SD': JurisdictionTier.TIER_1,
     'DE': JurisdictionTier.TIER_1,
     'RI': JurisdictionTier.TIER_1,
     'VT': JurisdictionTier.TIER_1,

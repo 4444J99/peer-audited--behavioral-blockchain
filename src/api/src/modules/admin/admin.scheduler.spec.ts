@@ -1,5 +1,7 @@
 import { AdminScheduler } from './admin.scheduler';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { EscrowProvider } from '../../common/interfaces/payout-provider.interface';
+import { Pool } from 'pg';
 
 describe('AdminScheduler', () => {
   let scheduler: AdminScheduler;
@@ -10,7 +12,9 @@ describe('AdminScheduler', () => {
       verifyChain: jest.fn(),
       appendEvent: jest.fn(),
     } as any;
-    scheduler = new AdminScheduler(truthLog);
+    const mockPool = { query: jest.fn() } as unknown as Pool;
+    const mockEscrow = { retrieveHold: jest.fn() } as unknown as EscrowProvider;
+    scheduler = new AdminScheduler(mockPool, mockEscrow, truthLog);
   });
 
   it('should log success when chain is valid', async () => {

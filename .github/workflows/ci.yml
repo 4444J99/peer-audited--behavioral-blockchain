@@ -7,6 +7,9 @@ on:
     branches: ["main"]
   merge_group:
 
+permissions:
+  contents: read
+
 jobs:
   # Matrix executes the actual build/test work. Renamed from `build_and_test`
   # so the canonical required-check name (`build_and_test`, the summary job
@@ -20,7 +23,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [24.x]
 
     steps:
       - name: Checkout Repository
@@ -45,19 +48,24 @@ jobs:
           restore-keys: |
             turbo-
 
-      - name: Security Audit (advisory, non-blocking)
-        run: npm audit --audit-level=high || echo "::warning::npm audit reported high-severity advisories; review but not blocking the merge."
+      - name: Dependency audit (advisory; not a required security gate)
+        run: npm audit --audit-level=high
+        # Existing high-severity transitive findings require separate dependency
+        # upgrades. Keep their nonzero audit result visible rather than masking
+        # it in shell, but do not misrepresent this advisory report as one of
+        # the merge-required security gates (CodeQL and secret scanning).
+        continue-on-error: true
 
       - name: Compute changed workspaces
         id: changed
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "filter=--filter=...[origin/main]" >> $GITHUB_OUTPUT
+            echo "filter=--filter=...[origin/main]" >> "$GITHUB_OUTPUT"
           else
-            echo "filter=" >> $GITHUB_OUTPUT
+            echo "filter=" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Execute Tests + Lint (Turborepo)
+      - name: Execute Tests (Turborepo)
         # NOTE: do not forward `--coverage --ci` here. Those are jest-only flags:
         # `--ci` makes the vitest workspaces (ask-styx, test-harness) throw
         # `CACError: Unknown option --ci`. Each workspace owns its own test
@@ -69,11 +77,20 @@ jobs:
         # repo-wide minimatch>=10 override via babel-plugin-istanbul/test-exclude).
         #
         # `test` dependsOn `^build` (upstream builds only, no per-workspace build).
-        # `lint` is independent so turbo parallelizes both.
+        # Lint has its own step after the build, so a flaky test retry does
+        # not mask or multiply the static check.
         # Retry loop catches flaky exit-code-1 (open-handle timeouts, etc).
         run: |
+          filter="${{ steps.changed.outputs.filter }}"
+          run_turbo() {
+            if [[ -n "$filter" ]]; then
+              npx turbo run test "$filter"
+            else
+              npx turbo run test
+            fi
+          }
           for attempt in 1 2 3; do
-            if npx turbo run test lint ${{ steps.changed.outputs.filter }}; then
+            if run_turbo; then
               exit 0
             fi
             echo "::warning::Test run failed (attempt $attempt/3), retrying in 10s..."
@@ -93,6 +110,9 @@ jobs:
       - name: Build for Validation Gates (Turborepo)
         run: npx turbo run build
 
+      - name: Lint (Turborepo)
+        run: npx turbo run lint
+
       - name: Gate 04 — Redacted Build Check
         run: bash scripts/validation/04-redacted-build-check.sh
 
@@ -111,6 +131,21 @@ jobs:
 
       - name: Gate 07 — Claim Drift Check
         run: npm run validate:claims
+
+      - name: Gate 08 — Compliance Artifact Check (integration)
+        env:
+          DATABASE_URL: ${{ secrets.CI_GATE08_DATABASE_URL }}
+        # The gate reads the `compliance_artifacts` table via psql — there is no
+        # offline mode, so like Gate 05 it needs a real database pointed at it.
+        # The blocking copy of this gate runs in deploy.yml against the
+        # production DATABASE_URL; this step gives PRs an earlier verdict once a
+        # CI-reachable database is armed.
+        run: |
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::warning::Skipping Gate 08 (NOT VERIFIED): set CI_GATE08_DATABASE_URL to a database carrying the compliance_artifacts table."
+            exit 0
+          fi
+          bash scripts/validation/08-compliance-artifact-check.sh
 
   # Stable required-check name for branch protection. Aggregates the matrix
   # result so the required context (`build_and_test`) never changes shape
@@ -132,51 +167,8 @@ jobs:
           fi
           echo "build_and_test_matrix succeeded — gate passed."
 
-  beta_readiness:
-    runs-on: ubuntu-latest
-    needs: build_and_test_matrix
-    continue-on-error: true
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v7
-
-      - name: Use Node.js 20.x
-        uses: actions/setup-node@v7
-        with:
-          node-version: 20.x
-          cache: "npm"
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Run Beta Readiness Suite
-        env:
-          READINESS_PROFILE: beta
-          # Advisory in PR CI: beta readiness validates a LIVE deployed target, which
-          # PRs don't have. Don't hard-require targets here (that turned "no live URL"
-          # into a red check) — the suite skips cleanly when no target is set. The
-          # deploy/promotion workflows set this true where a live URL exists.
-          READINESS_REQUIRE_TARGETS: "false"
-          # Explicitly empty the target URLs on PR CI so the suite takes the
-          # skip-clean path regardless of any stale secret (e.g. a CI_GATE05_API_URL
-          # pointing at a broken/old environment). Deploy & promotion workflows set
-          # these where a live URL actually exists.
-          BETA_API_URL: ""
-          BETA_WEB_URL: ""
-          BETA_ENV_LABEL: ""
-        run: npm run beta:readiness
-
-      - name: Upload Beta Readiness Summary
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: beta-readiness-summary
-          path: artifacts/beta-readiness-summary.json
-          retention-days: 14
-
   terraform_validate:
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout Repository
@@ -211,20 +203,19 @@ jobs:
         run: |
           BASE="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
           if git diff --name-only "$BASE" | grep -qE "^(src/web/|e2e/|src/shared/|\.config/playwright/)"; then
-            echo "web=true" >> $GITHUB_OUTPUT
+            echo "web=true" >> "$GITHUB_OUTPUT"
           else
-            echo "web=false" >> $GITHUB_OUTPUT
+            echo "web=false" >> "$GITHUB_OUTPUT"
           fi
 
   # Browser E2E work. Renamed from `e2e` → `e2e_browsers` so the stable required-check
   # name (`e2e`, the summary gate below) never changes shape and always posts a result.
-  # Web-gated and advisory (continue-on-error), exactly as before — only the job id moved.
+  # Web-gated: browser failures are merge-blocking whenever browser-relevant files change.
   e2e_browsers:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [build_and_test_matrix, beta_readiness, changed-files]
+    needs: [build_and_test_matrix, changed-files]
     if: needs.changed-files.outputs.web == 'true'
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -233,10 +224,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v7
 
-      - name: Use Node.js 20.x
+      - name: Use Node.js 24.x
         uses: actions/setup-node@v7
         with:
-          node-version: 20.x
+          node-version: 24.x
           cache: "npm"
 
       - name: Install Dependencies
@@ -272,10 +263,8 @@ jobs:
   # already documented on `build_and_test`). This summary job ALWAYS runs (`if: always()`
   # is mandatory) so the required `e2e` context always reports a real conclusion:
   #   - no web-affecting changes  -> pass (the browser suite is not applicable)
-  #   - web changed               -> reflect the browser result (advisory: a browser
-  #                                   failure warns but does not block, matching the
-  #                                   `continue-on-error` design; `build_and_test` in
-  #                                   .github/rulesets/main.json is the enforcing gate).
+  #   - web changed               -> reflect the browser result and fail on any
+  #                                   unsuccessful browser matrix outcome.
   e2e:
     runs-on: ubuntu-latest
     needs: [changed-files, e2e_browsers]
@@ -289,14 +278,11 @@ jobs:
             echo "No web-affecting changes — browser E2E suite not applicable; gate passes."
             exit 0
           fi
-          if [[ "$res" == "cancelled" ]]; then
-            echo "::error::e2e_browsers was cancelled — gate fails."
+          if [[ "$res" != "success" ]]; then
+            echo "::error::e2e_browsers concluded '$res' — gate fails."
             exit 1
           fi
-          if [[ "$res" != "success" ]]; then
-            echo "::warning::e2e_browsers concluded '$res' (advisory; see e2e_browsers checks). build_and_test is the enforcing gate."
-          fi
-          echo "e2e gate passes (e2e_browsers result: $res)."
+          echo "e2e_browsers succeeded — gate passes."
           exit 0
 
   # NOTE: CodeQL analysis runs in the dedicated .github/workflows/codeql.yml

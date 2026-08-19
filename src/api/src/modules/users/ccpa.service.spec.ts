@@ -238,4 +238,122 @@ describe('CcpaService', () => {
       expect(result?.denialReason).toBe('Legal hold active');
     });
   });
+
+  describe('processPendingDeletions', () => {
+    // Before this sweep existed, processDeletionRequest had no callers at all:
+    // a request was recorded PENDING and nothing ever ran the erasure, which
+    // reports success while retaining the data past the CCPA §1798.130(a)(2)
+    // deadline.
+
+    it('selects only PENDING DELETE requests past the grace window, oldest first', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.processPendingDeletions();
+
+      const [sql, params] = (mockPool.query as jest.Mock).mock.calls[0];
+      expect(sql).toContain("status = 'PENDING'");
+      // OPT_OUT rows are do-not-sell flags, not erasures — sweeping them would
+      // delete the accounts of users who only opted out of data sale.
+      expect(sql).toContain("request_type = 'DELETE'");
+      expect(sql).toContain('requested_at <=');
+      expect(sql).toContain('ORDER BY requested_at ASC');
+      expect(params).toEqual([7]);
+      expect(result).toEqual({ processed: 0, skipped: 0 });
+    });
+
+    it('processes every due request and counts them', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [{ id: 'req-1' }, { id: 'req-2' }],
+      });
+      const spy = jest
+        .spyOn(service, 'processDeletionRequest')
+        .mockResolvedValue({} as never);
+
+      const result = await service.processPendingDeletions();
+
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(spy).toHaveBeenCalledWith('req-1');
+      expect(spy).toHaveBeenCalledWith('req-2');
+      expect(result).toEqual({ processed: 2, skipped: 0 });
+      spy.mockRestore();
+    });
+
+    it('keeps sweeping after a failure and never logs the userId or error detail', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [{ id: 'req-bad' }, { id: 'req-good' }],
+      });
+      const spy = jest
+        .spyOn(service, 'processDeletionRequest')
+        .mockRejectedValueOnce(new Error('user-123 leaked into the message'))
+        .mockResolvedValueOnce({} as never);
+      const errorSpy = jest.spyOn((service as any).logger, 'error');
+
+      const result = await service.processPendingDeletions();
+
+      // One bad row must not abort the sweep.
+      expect(result).toEqual({ processed: 1, skipped: 1 });
+      expect(spy).toHaveBeenCalledTimes(2);
+
+      // The erasure path does not come back to clean its logs up, so the
+      // message carries a correlation id and the error class only.
+      const logged = errorSpy.mock.calls[0][0] as string;
+      expect(logged).toContain('correlationId=');
+      expect(logged).toContain('error=Error');
+      expect(logged).not.toContain('user-123');
+      expect(logged).not.toContain('leaked into the message');
+      spy.mockRestore();
+    });
+  });
+
+  describe('processDeletionRequest failure recovery', () => {
+    it("returns a failed request to PENDING so the next sweep retries it", async () => {
+      // The 'PROCESSING' stamp is its own statement, outside the erasure
+      // transaction, so a rollback does not undo it. Without this reset a
+      // failed erasure strands the request at 'PROCESSING' forever — the sweep
+      // only picks up 'PENDING', so the data is never deleted and nothing
+      // retries.
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({
+          rows: [{ user_id: 'user-123', request_type: 'DELETE', requested_at: new Date() }],
+        })
+        .mockResolvedValueOnce({ rows: [] }); // the reset back to PENDING
+
+      mockClient.query.mockImplementation((sql: string) => {
+        if (typeof sql === 'string' && sql.startsWith('BEGIN')) return Promise.resolve({ rows: [] });
+        if (typeof sql === 'string' && sql.startsWith('ROLLBACK')) return Promise.resolve({ rows: [] });
+        return Promise.reject(new Error('erasure blew up'));
+      });
+
+      await expect(service.processDeletionRequest('req-1')).rejects.toThrow('erasure blew up');
+
+      const resetCall = (mockPool.query as jest.Mock).mock.calls.find(
+        ([sql]) => typeof sql === 'string' && sql.includes("SET status = 'PENDING'"),
+      );
+      expect(resetCall).toBeDefined();
+      expect(resetCall[0]).toContain("AND status = 'PROCESSING'");
+      expect(resetCall[1]).toEqual(['req-1']);
+
+      // The transaction must still have been rolled back.
+      expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
+      expect(mockClient.release).toHaveBeenCalled();
+    });
+
+    it('does not let a failed status reset mask the original erasure error', async () => {
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({
+          rows: [{ user_id: 'user-123', request_type: 'DELETE', requested_at: new Date() }],
+        })
+        .mockRejectedValueOnce(new Error('bookkeeping also failed'));
+
+      mockClient.query.mockImplementation((sql: string) => {
+        if (typeof sql === 'string' && (sql.startsWith('BEGIN') || sql.startsWith('ROLLBACK'))) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.reject(new Error('erasure blew up'));
+      });
+
+      // The caller must see why the erasure failed, not why the cleanup did.
+      await expect(service.processDeletionRequest('req-1')).rejects.toThrow('erasure blew up');
+    });
+  });
 });

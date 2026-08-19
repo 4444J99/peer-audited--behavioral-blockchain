@@ -10,6 +10,10 @@
 #   bash scripts/deploy.sh render         Trigger a production deploy on Render
 #                                          (mirrors .github/workflows/deploy.yml).
 #   bash scripts/deploy.sh build          Build the API + Web Docker images only.
+#   bash scripts/deploy.sh migrate        Run the DB migration chain against the
+#                                          local stack's PostgreSQL.
+#   bash scripts/deploy.sh seed           Apply idempotent synthetic demo data.
+#   bash scripts/deploy.sh reset          Rebuild the synthetic demo from zero.
 #   bash scripts/deploy.sh down           Stop and remove the local stack.
 #   bash scripts/deploy.sh help           Show this help.
 #
@@ -37,10 +41,14 @@ Usage: bash scripts/deploy.sh <target>
 
 Targets:
   local     Build + run the full stack locally (API + Web + PostgreSQL + Redis)
-            via Docker Compose. Zero config needed.
+            via Docker Compose. Runs the DB migration chain before the API
+            starts, then applies demo seed data. Zero config needed.
   render    Trigger a production deploy on Render (mirrors deploy.yml).
             Requires RENDER_API_KEY, RENDER_API_SERVICE_ID, RENDER_WEB_SERVICE_ID.
   build     Build the API + Web Docker images only.
+  migrate   Run the DB migration chain against the local stack's PostgreSQL.
+  seed      Apply demo seed data (idempotent) to the local database.
+  reset     Remove only the Styx demo volumes, rebuild, migrate, and reseed.
   down      Stop and remove the local stack.
   logs      Tail logs from the local stack.
   help      Show this help.
@@ -59,7 +67,8 @@ require_docker() {
 # Build the `docker compose` argument list: defaults env first, then .env so a
 # user-provided .env overrides the defaults.
 compose() {
-  local args=(--env-file "$DEFAULTS_ENV")
+  local project_name="${STYX_DEMO_COMPOSE_PROJECT:-styx-demo}"
+  local args=(--project-name "$project_name" --env-file "$DEFAULTS_ENV")
   if [ -f "$ROOT_ENV" ]; then
     args+=(--env-file "$ROOT_ENV")
   fi
@@ -105,22 +114,33 @@ deploy_local() {
     warn "No repo-root .env found — using local dev defaults from compose.defaults.env."
   fi
 
-  info "Building images and starting the Styx stack ..."
-  compose up -d --build
+  # Compose orders the boot itself: postgres (healthy) → styx-migrate
+  # (one-shot, applies the FULL migration chain — the schema is no longer
+  # provisioned by an initdb-mounted schema.sql) → API. `up -d` only returns
+  # once those dependency conditions are met, so a migration failure surfaces
+  # here instead of as a half-broken API.
+  info "Building images and starting the Styx stack (migrations run before the API) ..."
+  compose up -d --build \
+    || die "Stack failed to start — likely the migration step. Inspect with: bash scripts/deploy.sh logs"
+  ok "Migration chain applied."
+
+  seed_local || die "Synthetic demo seed failed. The stack is not ready; retry: bash scripts/deploy.sh seed"
 
   local api_port web_port
   api_port="$(env_value STYX_DOCKER_API_PORT)"; api_port="${api_port:-3000}"
   web_port="$(env_value STYX_DOCKER_WEB_PORT)"; web_port="${web_port:-3001}"
 
-  wait_for_http "http://localhost:${api_port}/health" "API" 40 || true
-  wait_for_http "http://localhost:${web_port}/" "Web" 40 || true
+  wait_for_http "http://localhost:${api_port}/health/ready" "API" 40 \
+    || die "API did not become ready; the demo is not live. Inspect: bash scripts/deploy.sh logs"
+  wait_for_http "http://localhost:${web_port}/tour" "Web tour" 40 \
+    || die "Web tour did not become reachable; the demo is not live. Inspect: bash scripts/deploy.sh logs"
 
   echo
-  ok "Styx is live:"
+  ok "Synthetic, test-money Styx demo is live:"
   printf '   API   → http://localhost:%s  (health: /health, docs: /api/docs)\n' "$api_port"
   printf '   Web   → http://localhost:%s\n' "$web_port"
   echo
-  info "Logs:  bash scripts/deploy.sh logs    Stop:  bash scripts/deploy.sh down"
+  info "Verify: npm run demo:verify    Logs: bash scripts/deploy.sh logs    Stop: bash scripts/deploy.sh down"
 }
 
 deploy_build() {
@@ -128,6 +148,59 @@ deploy_build() {
   info "Building API + Web images ..."
   compose build
   ok "Images built."
+}
+
+# Run the migration chain as a one-off container (postgres is brought up and
+# waited on via the service healthcheck). Safe to re-run: migrate.ts tracks
+# applied files in schema_migrations and skips them.
+deploy_migrate() {
+  require_docker
+  info "Starting PostgreSQL ..."
+  compose up -d styx-postgres
+  info "Applying the database migration chain ..."
+  compose run --rm styx-migrate || die "Migration run failed."
+  ok "Migration chain applied."
+}
+
+# Apply both synthetic seed layers. Every INSERT is guarded so re-running is
+# safe; a reset starts from empty volumes to make the starting state repeatable.
+# Requires the full migration chain (the circle layer targets migration-owned
+# tables such as practitioner assignments and enterprise metrics).
+seed_local() {
+  require_docker
+  local pg_user pg_db
+  pg_user="$(env_value POSTGRES_USER)"; pg_user="${pg_user:-styx}"
+  pg_db="$(env_value POSTGRES_DB)"; pg_db="${pg_db:-styx}"
+  info "Applying demo seed data (idempotent) ..."
+  compose exec -T styx-postgres \
+    psql -q -v ON_ERROR_STOP=1 -U "$pg_user" -d "$pg_db" -f /opt/styx/seed.sql \
+    || return 1
+  compose exec -T styx-postgres \
+    psql -q -v ON_ERROR_STOP=1 -U "$pg_user" -d "$pg_db" -f /opt/styx/seed-circles.sql \
+    || return 1
+  if [ -n "${STYX_DEMO_PASSWORD:-}" ]; then
+    local password_hash
+    password_hash="$(node scripts/demo/hash-synthetic-password.mjs)"
+    compose exec -T styx-postgres \
+      psql -q -v ON_ERROR_STOP=1 -U "$pg_user" -d "$pg_db" -v password_hash="$password_hash" <<'SQL' \
+      || return 1
+UPDATE users SET password_hash = :'password_hash'
+WHERE email LIKE '%@demo.styx.protocol'
+   OR email = 'hr.lead@acheron.example'
+   -- Base-seed accounts from seed.sql live on @styx.protocol, which the LIKE
+   -- above does NOT match. Gate 01 (phantom-money) logs in as demo@ — leaving
+   -- these on the committed bootstrap hash makes the readiness gate unpassable.
+   OR email IN ('demo@styx.protocol', 'fury@styx.protocol', 'admin@styx.protocol');
+SQL
+  fi
+  ok "Seed data applied."
+}
+
+deploy_reset() {
+  require_docker
+  info "Removing only the Styx Compose volumes and containers ..."
+  compose down --volumes --remove-orphans
+  deploy_local
 }
 
 deploy_down() {
@@ -180,6 +253,9 @@ main() {
     local)        deploy_local ;;
     render)       deploy_render ;;
     build)        deploy_build ;;
+    migrate)      deploy_migrate ;;
+    seed)         seed_local || die "Seed failed — run migrations first: bash scripts/deploy.sh migrate" ;;
+    reset)        deploy_reset ;;
     down)         deploy_down ;;
     logs)         deploy_logs ;;
     help|-h|--help) usage ;;

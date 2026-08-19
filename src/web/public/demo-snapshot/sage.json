@@ -1,0 +1,12 @@
+{
+  "GET /users/me/compliance": {
+    "userId": "d1000000-0000-0000-0000-000000000005",
+    "kycStatus": "PENDING",
+    "ageVerificationStatus": "PENDING",
+    "identityProvider": "MOCK",
+    "identityVerificationId": "ivs_mock_demo_sage",
+    "identityVerifiedAt": null,
+    "isKycVerified": false,
+    "isAgeVerified": false
+  }
+}

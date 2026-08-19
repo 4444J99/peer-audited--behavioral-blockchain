@@ -42,6 +42,9 @@ describe("UsersService", () => {
         identity_provider: null,
         identity_verification_id: null,
         identity_verified_at: null,
+        self_exclusion_expires_at: "2099-01-01T00:00:00.000Z",
+        pregnancy_exclusion: true,
+        pregnancy_exclusion_at: "2026-08-01T00:00:00.000Z",
       };
       (mockPool.query as jest.Mock)
         .mockResolvedValueOnce({ rows: [user] })
@@ -65,6 +68,14 @@ describe("UsersService", () => {
             is_kyc_verified: false,
             is_age_verified: false,
           }),
+          // Responsible-use runtime state must be EXPOSED, not just enforced —
+          // without it no client can show a user their own exclusion (TKT-P1-009).
+          responsible_use: expect.objectContaining({
+            self_exclusion_expires_at: "2099-01-01T00:00:00.000Z",
+            self_exclusion_active: true,
+            pregnancy_exclusion: true,
+            pregnancy_exclusion_at: "2026-08-01T00:00:00.000Z",
+          }),
         }),
       );
       expect(mockPool.query).toHaveBeenCalledWith(
@@ -79,6 +90,23 @@ describe("UsersService", () => {
       await expect(service.getProfile("unknown-id")).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe("getUserHistory", () => {
+    it("queries event_log — the audit table this service writes — not a table that never existed", async () => {
+      // The old query named "truth_log", which no migration ever created; every
+      // call 500'd and /profile swallowed it into a plausible empty history.
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [{ event_type: "CONTRACT_CREATED", payload: {}, created_at: "2026-01-01" }],
+      });
+
+      const rows = await service.getUserHistory("user-1");
+
+      expect(rows).toHaveLength(1);
+      const sql = (mockPool.query as jest.Mock).mock.calls[0][0] as string;
+      expect(sql).toContain("FROM event_log");
+      expect(sql).not.toContain("truth_log");
     });
   });
 

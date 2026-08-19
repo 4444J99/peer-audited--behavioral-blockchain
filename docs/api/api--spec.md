@@ -461,6 +461,35 @@ curl -sS "$STYX_API_URL/b2b/datalake/ent_123?start=2026-01-01&end=2026-04-01" \
 The response includes `contractMetrics`, `behavioralTrends`, and
 `cohortAnalysis`. Small groups are suppressed to reduce re-identification risk.
 
+### CRM Handoff
+
+```bash
+curl -sS "$STYX_API_URL/b2b/crm/integrity/ent_123" \
+  -H "Authorization: Bearer $TOKEN"
+
+curl -sS -X POST "$STYX_API_URL/b2b/crm/events/ent_123" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employeeId": "emp_456",
+    "eventType": "contract_completed",
+    "metadata": { "integrityDelta": 5 }
+  }'
+```
+
+`GET /b2b/crm/integrity/:enterpriseId` returns `averageIntegrity`,
+`activeContracts`, and `behavioralVelocity` aggregated over the enterprise's
+active users — never per-employee health data.
+
+`eventType` (and `type` on `/b2b/crm/interactions/:enterpriseId`) must be one of
+`contract_created`, `contract_completed`, `contract_failed`, `integrity_change`;
+anything else is rejected with `400` rather than forwarded to the customer's CRM.
+Event timestamps are stamped server-side. On `/b2b/crm/sync/:enterpriseId` the CRM
+tenant is taken from the verified path parameter, not from the request body.
+
+When no CRM connector is configured (`SALESFORCE_BASE_URL` / `HUBSPOT_API_KEY`
+unset) these routes succeed and log only — they never fail the caller.
+
 ### Register And Test Enterprise Webhooks
 
 ```bash
@@ -479,11 +508,38 @@ curl -sS -X POST "$STYX_API_URL/b2b/webhook/test" \
     "enterpriseId": "ent_123",
     "url": "https://customer.example.com/styx/webhook"
   }'
+
+curl -sS "$STYX_API_URL/b2b/webhook/subscriptions/ent_123" \
+  -H "Authorization: Bearer $TOKEN"
 ```
+
+`register` persists the subscription and returns its `subscriptionId`;
+re-registering the same URL reactivates the existing row rather than creating a
+duplicate. Registration runs the URL through the same guard delivery uses, so an
+unreachable-by-policy target is refused with a `400` at registration time.
 
 Webhook targets must use `http` or `https`, must not include credentials, and
 must not resolve to loopback, private, link-local, localhost, or obfuscated IP
 addresses. Delivery uses up to 3 attempts with exponential backoff.
+
+Every active subscription of the enterprise receives a `CONTRACT_RESOLVED` event
+when a contract belonging to one of its members resolves:
+
+```json
+{
+  "type": "CONTRACT_RESOLVED",
+  "enterpriseId": "ent_123",
+  "subject": "9f2c…",
+  "outcome": "COMPLETED",
+  "occurredAt": "2026-08-15T00:00:00.000Z"
+}
+```
+
+`subject` is the salted pseudonym also used by the HR export — stable for the
+same employee within the same enterprise, and not reversible to a user. The
+event carries no goal, category, stake amount, or proof reference: the privacy
+firewall means an employer learns that engagement happened, not what a person is
+working on.
 
 Webhook deliveries include:
 
@@ -662,10 +718,15 @@ Auth requirements use these labels:
 |--------|------|------|---------|
 | `GET` | `/b2b/metrics/:enterpriseId` | Enterprise Admin | Enterprise completion and integrity metrics. |
 | `GET` | `/b2b/billing/:enterpriseId` | Enterprise Admin | Read-only billing summary. |
-| `POST` | `/b2b/webhook/register` | Enterprise Admin | Register webhook URL. |
+| `POST` | `/b2b/webhook/register` | Enterprise Admin | Register (or reactivate) a webhook subscription. |
+| `GET` | `/b2b/webhook/subscriptions/:enterpriseId` | Enterprise Admin | List active webhook subscriptions. |
 | `POST` | `/b2b/webhook/test` | Enterprise Admin | Send signed test webhook event. |
 | `GET` | `/b2b/export/hr/:enterpriseId` | Enterprise Admin | Pseudonymized HR export with small-cohort suppression. |
 | `GET` | `/b2b/datalake/:enterpriseId` | Enterprise Admin | Time-bounded analytics snapshot. Query: `start`, `end`. |
+| `GET` | `/b2b/crm/integrity/:enterpriseId` | Enterprise Admin | Aggregate corporate integrity score. |
+| `POST` | `/b2b/crm/events/:enterpriseId` | Enterprise Admin | Push an employee behavioral event to the configured CRM connectors. |
+| `POST` | `/b2b/crm/interactions/:enterpriseId` | Enterprise Admin | Log a CRM interaction against an employee email. |
+| `POST` | `/b2b/crm/sync/:enterpriseId` | Enterprise Admin | Sync an enterprise employee into the configured CRM. |
 
 ### Notifications And Public Feed
 

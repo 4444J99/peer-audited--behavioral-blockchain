@@ -1,5 +1,6 @@
 import { Linking } from 'react-native';
 import { ApiClient, setAuthToken } from './ApiClient';
+import { isEnterpriseSSOLink } from '../config/linking';
 
 type SSOCallback = (result: { success: boolean; userId?: string; error?: string }) => void;
 
@@ -28,7 +29,7 @@ export class EnterpriseSSO {
     const { url } = event;
     console.log(`EnterpriseSSO: Intercepted deep link [${url}]`);
 
-    if (!url.startsWith('styx://enterprise/')) {
+    if (!isEnterpriseSSOLink(url)) {
       return;
     }
 

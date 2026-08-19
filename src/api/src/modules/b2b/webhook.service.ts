@@ -52,6 +52,16 @@ export class WebhookService {
     return result.success;
   }
 
+  /**
+   * Run a URL through the delivery-time SSRF guard without sending anything.
+   * Registration uses this so an internal address is refused at the call that
+   * supplies it, rather than at the settlement that would later try to reach it.
+   * Throws with the guard's own message; resolves for anything deliverable.
+   */
+  async assertDeliverableUrl(url: string): Promise<void> {
+    await this.assertSafeWebhookUrl(url);
+  }
+
   async deliverWithRetry(
     url: string,
     payload: Record<string, unknown>,

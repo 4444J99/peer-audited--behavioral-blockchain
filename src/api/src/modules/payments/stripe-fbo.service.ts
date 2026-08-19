@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
-import { buildSettlementQuote } from './settlement-quote';
+import { buildSettlementQuote, distributeBountyPool } from './settlement-quote';
 
 type StripeClient = InstanceType<typeof Stripe>;
 
@@ -19,7 +19,7 @@ export class StripeFBOService {
   constructor() {
     // In production, this uses a high-risk merchant account API key
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
-      apiVersion: '2026-05-27.dahlia', // Matched to project stripe dependency
+      apiVersion: '2026-07-29.dahlia', // Matched to project stripe dependency
     });
   }
 
@@ -120,16 +120,13 @@ export class StripeFBOService {
       );
       this.logger.log(`Platform captured $${platformFee / 100} fee (slashed stake $${totalAmount / 100}).`);
 
-      // Transfer bounties to Fury connected accounts.
+      // Transfer bounties to Fury connected accounts. Under DR-002 the pool is 0, so every
+      // share is 0 and the loop issues no transfers.
       if (furies.length > 0) {
-        // Distribute the pool deterministically so NO cents are lost to flooring: the base
-        // per-fury share goes to everyone, and the leftover remainder cents are handed, one
-        // each, to the first `remainder` furies (deterministic ordering).
-        const basePerFury = Math.floor(furyBountyPool / furies.length);
-        const remainder = furyBountyPool - basePerFury * furies.length;
+        const shares = distributeBountyPool(furyBountyPool, furies.length);
         for (let i = 0; i < furies.length; i++) {
           const furyId = furies[i];
-          const bountyAmount = basePerFury + (i < remainder ? 1 : 0);
+          const bountyAmount = shares[i];
           if (bountyAmount <= 0) continue;
           await this.stripe.transfers.create(
             {

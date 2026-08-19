@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SiteFooter } from "../components/SiteFooter";
+import GuidedTour from "../components/guided-tour/GuidedTour";
 
 export const metadata: Metadata = {
   title: "Styx | Relationship Recovery",
@@ -19,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen flex flex-col">
+      <body className="antialiased min-h-screen flex flex-col bg-background text-foreground">
         {PRIVATE_BETA ? (
           <div className="w-full border-b border-amber-700/40 bg-amber-950/80 px-4 py-2 text-xs text-amber-200">
             <span className="font-semibold uppercase tracking-wide">Private Beta</span>
@@ -31,6 +32,9 @@ export default function RootLayout({
         ) : null}
         <Providers><main className="flex-1">{children}</main></Providers>
         <SiteFooter />
+        {/* Demo builds only -- GuidedTour renders nothing unless the guided-tour
+            or test-money flag is set at build time. */}
+        <GuidedTour />
       </body>
     </html>
   );

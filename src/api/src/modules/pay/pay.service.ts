@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
 import { BillingService } from '../b2b/billing.service';
 import {
@@ -6,7 +6,10 @@ import {
   TICKET_PRICE_BASE,
   processIAP,
 } from '../../../services/billing';
-import { StripeFboService } from '../../../services/escrow/stripe.service';
+import {
+  ESCROW_PROVIDER,
+  EscrowProvider,
+} from '../../common/interfaces/payout-provider.interface';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { RecordMeteredUsageDto } from './dto';
@@ -21,7 +24,7 @@ export interface PayPriceList {
 export class PayService {
   constructor(
     private readonly pool: Pool,
-    private readonly stripe: StripeFboService,
+    @Inject(ESCROW_PROVIDER) private readonly escrow: EscrowProvider,
     private readonly ledger: LedgerService,
     private readonly truthLog: TruthLogService,
     private readonly billing: BillingService,
@@ -38,7 +41,7 @@ export class PayService {
   purchaseTicket(userId: string, contractId: string) {
     return processIAP(
       this.pool,
-      this.stripe,
+      this.escrow,
       this.ledger,
       this.truthLog,
       userId,

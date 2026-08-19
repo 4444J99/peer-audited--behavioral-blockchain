@@ -146,7 +146,8 @@ Includes release readiness:
 - `8` readiness gates from [planning--beta-readiness-contract.md](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/docs/planning/planning--beta-readiness-contract.md)
 - real `BETA_API_URL`
 - optional real `BETA_WEB_URL`
-- current artifact target: [beta-readiness-summary.json](/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/artifacts/beta-readiness-summary.json)
+- current artifact target: `artifacts/beta-readiness-summary.json` (repo-relative; the previous
+  absolute link leaked a machine-local worktree path into a public repo)
 
 Preferred adjacent mobile boundary tests (`15`) if those files changed:
 

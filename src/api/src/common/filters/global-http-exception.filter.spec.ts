@@ -72,9 +72,6 @@ describe('GlobalHttpExceptionFilter', () => {
   });
 
   it('handles unknown errors as 500 with trace_id', () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'test';
-
     filter.catch(new Error('boom'), host);
 
     expect(status).toHaveBeenCalledWith(500);
@@ -82,9 +79,42 @@ describe('GlobalHttpExceptionFilter', () => {
     expect(payload.error_code).toBe('INTERNAL_SERVER_ERROR');
     expect(payload.message).toBe('boom');
     expect(payload.trace_id).toBe('trace-123');
-    expect(payload.details).toBeDefined();
+    expect(payload.details).toBeUndefined();
+  });
 
-    process.env.NODE_ENV = originalEnv;
+  it('reflects stack details only when NODE_ENV is non-production AND STYX_DEBUG_ERROR_DETAILS=true', () => {
+    const originalEnv = process.env.NODE_ENV;
+    const originalFlag = process.env.STYX_DEBUG_ERROR_DETAILS;
+    process.env.NODE_ENV = 'test';
+    process.env.STYX_DEBUG_ERROR_DETAILS = 'true';
+
+    try {
+      filter.catch(new Error('boom'), host);
+    } finally {
+      if (originalEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = originalEnv;
+      if (originalFlag === undefined) delete process.env.STYX_DEBUG_ERROR_DETAILS;
+      else process.env.STYX_DEBUG_ERROR_DETAILS = originalFlag;
+    }
+
+    const payload = json.mock.calls[0][0];
+    expect(payload.details).toBeDefined();
+    expect(payload.details.stack).toContain('Error: boom');
+  });
+
+  it('does not reflect stacks under a non-production NODE_ENV without the explicit flag', () => {
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'test';
+
+    try {
+      filter.catch(new Error('boom'), host);
+    } finally {
+      if (originalEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = originalEnv;
+    }
+
+    const payload = json.mock.calls[0][0];
+    expect(payload.details).toBeUndefined();
   });
 });
 

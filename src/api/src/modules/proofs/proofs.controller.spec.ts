@@ -10,6 +10,7 @@ import { ProofMediaType } from './dto';
 import { ProofsService } from './proofs.service';
 import { CrisisDetectionService } from '../../../services/security/crisis-detection.service';
 import { CrisisInterventionService } from '../../../services/security/crisis-intervention.service';
+import { VideoProcessingService } from './video-processing.service';
 
 describe('ProofsController', () => {
   let controller: ProofsController;
@@ -22,6 +23,7 @@ describe('ProofsController', () => {
   let mockProofsService: jest.Mocked<Pick<ProofsService, 'getProofUploadContractAccess' | 'getProofUploadConfirmationAccess' | 'getProofDetail'>>;
   let mockCrisisDetection: jest.Mocked<Pick<CrisisDetectionService, 'analyzeContent'>>;
   let mockCrisisIntervention: jest.Mocked<Pick<CrisisInterventionService, 'reportCrisis'>>;
+  let mockVideoProcessing: jest.Mocked<Pick<VideoProcessingService, 'dispatchForProcessing'>>;
 
   beforeEach(() => {
     mockPool = { query: jest.fn() };
@@ -49,6 +51,9 @@ describe('ProofsController', () => {
     mockCrisisIntervention = {
       reportCrisis: jest.fn().mockResolvedValue({ escalated: false }),
     };
+    mockVideoProcessing = {
+      dispatchForProcessing: jest.fn().mockResolvedValue(undefined),
+    };
 
     controller = new ProofsController(
       mockPool as unknown as Pool,
@@ -60,14 +65,213 @@ describe('ProofsController', () => {
       mockProofsService as unknown as ProofsService,
       mockCrisisDetection as unknown as CrisisDetectionService,
       mockCrisisIntervention as unknown as CrisisInterventionService,
+      mockVideoProcessing as unknown as VideoProcessingService,
     );
     jest.clearAllMocks();
+  });
+
+  describe('requestUploadUrl', () => {
+    const user = { id: 'user-1' };
+    const contractAccess = {
+      id: 'c-1',
+      status: 'ACTIVE',
+      ownerUserId: 'user-1',
+      stakeAmount: 25,
+      strikes: 0,
+      integrityScore: 100,
+    };
+
+    it('inserts the proof against the real proofs columns and returns the upload URL', async () => {
+      mockProofsService.getProofUploadContractAccess.mockResolvedValue(contractAccess as any);
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-1' }] });
+      mockR2.generateUploadUrl.mockResolvedValue({
+        uploadUrl: 'https://r2.example/upload',
+        key: 'proofs/proof-1.mp4',
+      } as any);
+
+      const result = await controller.requestUploadUrl(user, {
+        contractId: 'c-1',
+        contentType: ProofMediaType.VIDEO,
+        description: 'No Contact compliance — Day 7',
+      });
+
+      expect(result).toEqual({
+        proofId: 'proof-1',
+        uploadUrl: 'https://r2.example/upload',
+        storageKey: 'proofs/proof-1.mp4',
+        expiresInSeconds: 300,
+        // The capture nonce is issued HERE, server-side, so that a later
+        // NATIVE_CAMERA claim has something only this server could have given it.
+        captureNonce: expect.any(String),
+      });
+
+      // The INSERT must name columns that actually exist on `proofs`
+      // (content_type / description are persisted alongside submitted_at).
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'INSERT INTO proofs (contract_id, user_id, status, content_type, description, submitted_at)',
+        ),
+        ['c-1', 'user-1', ProofMediaType.VIDEO, 'No Contact compliance — Day 7'],
+      );
+    });
+
+    it('binds exactly one VALUES expression per column and one param per placeholder', async () => {
+      mockProofsService.getProofUploadContractAccess.mockResolvedValue(contractAccess as any);
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-1' }] });
+      mockR2.generateUploadUrl.mockResolvedValue({
+        uploadUrl: 'https://r2.example/upload',
+        key: 'proofs/proof-1.mp4',
+      } as any);
+
+      await controller.requestUploadUrl(user, {
+        contractId: 'c-1',
+        contentType: ProofMediaType.VIDEO,
+      });
+
+      const [sql, params] = mockPool.query.mock.calls[0] as [string, unknown[]];
+
+      const columns = sql
+        .slice(sql.indexOf('(') + 1, sql.indexOf(')'))
+        .split(',')
+        .map((c) => c.trim());
+      expect(columns).toEqual([
+        'contract_id',
+        'user_id',
+        'status',
+        'content_type',
+        'description',
+        'submitted_at',
+      ]);
+
+      // NOW() carries its own ')', so bound the VALUES list at the last ')'
+      // before RETURNING rather than at the first one.
+      const valuesStart = sql.indexOf('VALUES (') + 'VALUES ('.length;
+      const values = sql
+        .slice(valuesStart, sql.lastIndexOf(')', sql.indexOf('RETURNING')))
+        .split(',')
+        .map((v) => v.trim());
+      expect(values).toHaveLength(columns.length);
+
+      // Literals ('PENDING_UPLOAD', NOW()) consume no params, so the highest
+      // placeholder index must equal the params array length exactly.
+      const placeholders = sql.match(/\$\d+/g) ?? [];
+      expect(Math.max(...placeholders.map((p) => Number(p.slice(1))))).toBe(params.length);
+      expect(new Set(placeholders).size).toBe(params.length);
+
+      // An omitted description is persisted as NULL, not dropped from the binding.
+      expect(params).toEqual(['c-1', 'user-1', ProofMediaType.VIDEO, null]);
+    });
+
+    it('rejects proof submission when the contract is not ACTIVE', async () => {
+      mockProofsService.getProofUploadContractAccess.mockResolvedValue({
+        ...contractAccess,
+        status: 'COMPLETED',
+      } as any);
+
+      await expect(
+        controller.requestUploadUrl(user, {
+          contractId: 'c-1',
+          contentType: ProofMediaType.VIDEO,
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockPool.query).not.toHaveBeenCalled();
+    });
   });
 
   describe('confirmUpload', () => {
     const user = { id: 'user-1' };
     // Client-asserted biometric fields are intentionally no longer trusted/persisted.
     const dto = { storageKey: 'proofs/p1' };
+
+    // Capture provenance (TKT-P0-002). The product's authority is
+    // verifiability, and until now nothing recorded whether a camera produced a
+    // proof at all — today's mobile path base64-encodes JSON behind a
+    // data:video/mp4 prefix. capture_verified is asserted by the SERVER against
+    // a nonce it issued; a client cannot talk its way into it.
+    describe('capture provenance', () => {
+      const primeConfirm = (issuedNonce: string | null) => {
+        mockProofsService.getProofUploadConfirmationAccess.mockResolvedValue({
+          status: 'PENDING_UPLOAD',
+          contractId: 'c-1',
+          ownerUserId: 'user-1',
+        } as any);
+        mockR2.downloadFile.mockResolvedValue(Buffer.from('fake-media'));
+        mockAnomaly.analyze.mockResolvedValue({ rejected: false, flags: [] });
+        mockPhash.computeFrameHash.mockResolvedValue('hash-123');
+        mockPhash.isDuplicate.mockResolvedValue({ duplicate: false, closestDistance: 64 });
+        mockPool.query.mockImplementation((sql: string) => {
+          if (/SELECT capture_nonce/.test(sql)) {
+            return Promise.resolve({ rows: [{ capture_nonce: issuedNonce }] });
+          }
+          return Promise.resolve({ rows: [] });
+        });
+      };
+
+      const finalizeArgs = () => {
+        const call = mockPool.query.mock.calls.find((c: any[]) =>
+          /UPDATE proofs[\s\S]*capture_source/.test(String(c[0])),
+        );
+        expect(call).toBeDefined();
+        return call![1] as any[];
+      };
+
+      it('marks a native capture verified only when it echoes the issued nonce', async () => {
+        primeConfirm('server-issued-nonce');
+
+        await controller.confirmUpload('p-1', user, {
+          storageKey: 'proofs/p1',
+          captureSource: 'NATIVE_CAMERA',
+          captureNonce: 'server-issued-nonce',
+        } as any);
+
+        const args = finalizeArgs();
+        expect(args).toContain('NATIVE_CAMERA');
+        expect(args).toContain(true);
+      });
+
+      it('refuses to verify a native claim whose nonce does not match, and flags it', async () => {
+        primeConfirm('server-issued-nonce');
+
+        const result = await controller.confirmUpload('p-1', user, {
+          storageKey: 'proofs/p1',
+          captureSource: 'NATIVE_CAMERA',
+          captureNonce: 'attacker-guessed-nonce',
+        } as any);
+
+        const args = finalizeArgs();
+        expect(args).toContain('NATIVE_CAMERA');
+        expect(args).toContain(false);
+        expect(result.flags).toContain('CAPTURE_NONCE_MISMATCH');
+      });
+
+      it('records the synthetic beta path as synthetic, flagged and never verified', async () => {
+        primeConfirm('server-issued-nonce');
+
+        const result = await controller.confirmUpload('p-1', user, {
+          storageKey: 'proofs/p1',
+          captureSource: 'SYNTHETIC_BETA',
+          captureNonce: 'server-issued-nonce',
+        } as any);
+
+        const args = finalizeArgs();
+        expect(args).toContain('SYNTHETIC_BETA');
+        expect(args).toContain(false);
+        expect(result.flags).toContain('SYNTHETIC_CAPTURE');
+      });
+
+      it('records an unreported source as UNKNOWN rather than assuming either answer', async () => {
+        primeConfirm('server-issued-nonce');
+
+        const result = await controller.confirmUpload('p-1', user, {
+          storageKey: 'proofs/p1',
+        } as any);
+
+        const args = finalizeArgs();
+        expect(args).toContain(null);
+        expect(args).toContain(false);
+        expect(result.flags).toContain('CAPTURE_SOURCE_UNKNOWN');
+      });
+    });
 
     it('should finalize proof with anomaly flags (no client biometric data persisted)', async () => {
       mockProofsService.getProofUploadConfirmationAccess.mockResolvedValue({
@@ -89,8 +293,59 @@ describe('ProofsController', () => {
       // Finalize UPDATE now only persists storageKey, proofId, anomaly flags and device metadata.
       expect(mockPool.query).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE proofs'),
-        expect.arrayContaining([expect.any(String), 'p-1', '["EXIF_TIMESTAMP_DISCREPANCY"]', '{}'])
+        expect.arrayContaining(['p-1', '{}'])
       );
+      // Anomaly flags now also carry capture provenance; the EXIF flag survives
+      // alongside the unknown-source flag rather than being replaced by it.
+      const finalize = mockPool.query.mock.calls.find((c: any[]) =>
+        /UPDATE proofs[\s\S]*capture_source/.test(String(c[0])),
+      );
+      expect(JSON.parse(String((finalize![1] as any[])[2]))).toEqual(
+        expect.arrayContaining(['EXIF_TIMESTAMP_DISCREPANCY']),
+      );
+    });
+
+    // The whole redaction pipeline was built, registered, exported and specced —
+    // and called by nobody, so masked_media_uri was never populated on a real
+    // proof and Fury reviewers were served raw media. This assertion is the
+    // guard against it silently returning to zero callers.
+    it('enqueues redaction before routing the proof to reviewers', async () => {
+      mockProofsService.getProofUploadConfirmationAccess.mockResolvedValue({
+        status: 'PENDING_UPLOAD',
+        contractId: 'c-1',
+        ownerUserId: 'user-1',
+      } as any);
+      mockR2.downloadFile.mockResolvedValue(Buffer.from('fake-media'));
+      mockAnomaly.analyze.mockResolvedValue({ rejected: false, flags: [] });
+      mockPhash.computeFrameHash.mockResolvedValue('hash-123');
+      mockPhash.isDuplicate.mockResolvedValue({ duplicate: false, closestDistance: 64 });
+      mockPool.query.mockResolvedValue({ rows: [] });
+
+      await controller.confirmUpload('p-1', user, dto);
+
+      expect(mockVideoProcessing.dispatchForProcessing).toHaveBeenCalledWith('p-1');
+      expect(mockVideoProcessing.dispatchForProcessing.mock.invocationCallOrder[0]).toBeLessThan(
+        (mockFuryRouter.routeProof as jest.Mock).mock.invocationCallOrder[0],
+      );
+    });
+
+    it('still routes the proof when redaction dispatch fails (reviewers see no media, not raw media)', async () => {
+      mockProofsService.getProofUploadConfirmationAccess.mockResolvedValue({
+        status: 'PENDING_UPLOAD',
+        contractId: 'c-1',
+        ownerUserId: 'user-1',
+      } as any);
+      mockR2.downloadFile.mockResolvedValue(Buffer.from('fake-media'));
+      mockAnomaly.analyze.mockResolvedValue({ rejected: false, flags: [] });
+      mockPhash.computeFrameHash.mockResolvedValue('hash-123');
+      mockPhash.isDuplicate.mockResolvedValue({ duplicate: false, closestDistance: 64 });
+      mockPool.query.mockResolvedValue({ rows: [] });
+      mockVideoProcessing.dispatchForProcessing.mockRejectedValueOnce(new Error('redis down'));
+
+      const result = await controller.confirmUpload('p-1', user, dto);
+
+      expect(result.status).toBe('PENDING_REVIEW');
+      expect(mockFuryRouter.routeProof).toHaveBeenCalled();
     });
 
     it('should reject duplicate proofs', async () => {

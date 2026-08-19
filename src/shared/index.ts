@@ -6,6 +6,19 @@ export interface BaseStyxResponse {
   message?: string;
 }
 
+/**
+ * Error envelope contract — the API serializes every failure as this shape
+ * (see `api/src/common/filters/global-http-exception.filter.ts`). One
+ * definition shared by the API server, the web client, and every other client
+ * so `error_code` can never drift across surfaces.
+ */
+export interface StyxErrorEnvelope {
+  error_code: string;
+  message: string;
+  trace_id: string | null;
+  details?: unknown;
+}
+
 export type StyxClientPlatform =
   | "ios"
   | "android"
@@ -39,6 +52,22 @@ export {
   classifyWaitlistChannel,
   parseWaitlistAttribution,
 } from "./libs/waitlist-attribution";
+
+// Identity-based oath onboarding (shared by the web wizard and the API)
+export {
+  IDENTITY_OATH_CATEGORIES,
+  IDENTITY_COPY_VARIANTS,
+  IDENTITY_ARCHETYPES,
+  type IdentityOathCategory,
+  type IdentityCopyVariant,
+  type IdentityArchetype,
+  type IdentityOathDeclaration,
+  getIdentityArchetype,
+  isIdentityOathCategory,
+  assignCopyVariant,
+  buildPledgeCopy,
+  composeIdentityOath,
+} from "./libs/identity-oath";
 
 export interface StyxClientBuildMetadata {
   platform: StyxClientPlatform;

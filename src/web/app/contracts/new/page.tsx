@@ -2,12 +2,17 @@
 
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Flame, ArrowLeft, Loader2, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { Flame, ArrowLeft, Info, Loader2, ShieldCheck, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '../../../services/api-client';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getAllowedTiers, getDisplayTier, getTierMaxStake } from '../../../../shared/libs/integrity';
 import { getRealmBySlug } from '../../../../shared/libs/realm-registry';
+import {
+  deriveStakeGuidance,
+  findMostRecentActiveContract,
+  type DownscalingSignal,
+} from '../../../lib/stake-guidance';
 
 const OATH_CATEGORIES = [
   // { value: 'BIOLOGICAL_WEIGHT', label: 'Weight Management', stream: 'Biological' },
@@ -116,6 +121,8 @@ function NewContractPageContent() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [failureCount, setFailureCount] = useState<number | null>(null);
+  const [downscaling, setDownscaling] = useState<DownscalingSignal | null>(null);
+  const [identityPledge, setIdentityPledge] = useState<string | null>(null);
 
   // Recovery stream fields
   const [apEmail, setApEmail] = useState('');
@@ -142,10 +149,19 @@ function NewContractPageContent() {
   const maxStakeUsd = Math.floor(Math.max(0, Math.min(failureAdjustedTierMaxStakeUsd, aegisMaxStakeUsd)));
   const selectedStakeUsd = clampStakeAmount(Number.parseFloat(stakeAmount) || 0, maxStakeUsd);
   const usesMvpPlan = selectedStakeUsd === DEFAULT_STAKE_USD;
-  const platformFeeUsd = usesMvpPlan ? PLATFORM_FEE_USD : 0;
+  // The MVP_39 platform fee is metadata only — `normalizeContractPricing`
+  // overrides the stake to $30 and the sole charge is a $30 hold, so no $9 is
+  // ever collected. Showing "Entry total $39" told users they were paying a fee
+  // that never left their card. Display what is actually charged until pricing
+  // is decided (a joint founder call under DR-007; PLATFORM_FEE_USD is retained
+  // for that decision, not deleted).
+  const platformFeeUsd = 0;
   const totalEntryUsd = selectedStakeUsd + platformFeeUsd;
   const requiresKyc = selectedStakeUsd > 0 && requiresCreateContractKyc(selectedStakeUsd);
   const canStake = maxStakeUsd >= MIN_STAKE_USD;
+  // Read-only: the behavioral engine's downscale is shown next to the amount,
+  // never applied to it. See lib/stake-guidance.ts for why.
+  const stakeGuidance = deriveStakeGuidance(downscaling, selectedStakeUsd);
   const displayTier = getDisplayTier(integrityScore).replace(/_/g, ' ');
   const failureLimitCopy = effectiveFailureCount == null
     ? 'Server checks failure history again at submit.'
@@ -163,15 +179,46 @@ function NewContractPageContent() {
 
     api.getUserContracts()
       .then((contracts) => {
-        if (cancelled) return;
+        if (cancelled) return undefined;
         const failedContracts = contracts.filter((contract) => contract.status === 'FAILED').length;
         setFailureCount(failedContracts);
+
+        // The endowed-progress downscale is contract-scoped, so guidance for
+        // this new contract is read off the one the user is currently running.
+        const activeContract = findMostRecentActiveContract(contracts);
+        if (!activeContract) return undefined;
+
+        return api.getEndowedProgress(activeContract.id)
+          .then((progress) => {
+            if (!cancelled) setDownscaling(progress.downscaling);
+          })
+          .catch(() => {
+            // Guidance is advisory: losing it must not disturb the failure-count
+            // fallback below, which is a real safety limit.
+          });
       })
       .catch(() => {
         if (!cancelled) {
           setFailureCount(profileFailureCount);
         }
       });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // The identity declared at onboarding is what this contract binds to, so it
+  // is shown at the moment of committing rather than only in the wizard.
+  useEffect(() => {
+    if (!user) return undefined;
+    let cancelled = false;
+
+    api.getIdentityOath()
+      .then((state) => {
+        if (!cancelled) setIdentityPledge(state.oath?.pledgeCopy ?? null);
+      })
+      .catch(() => undefined);
 
     return () => {
       cancelled = true;
@@ -279,6 +326,16 @@ function NewContractPageContent() {
       </header>
 
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-8">
+        {/* Declared identity (TKT-P1-016) */}
+        {identityPledge && (
+          <div className="p-5 bg-red-900/10 border border-red-900/30 rounded-xl">
+            <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+              Your Declaration
+            </p>
+            <p className="mt-2 text-lg font-bold text-white">{identityPledge}</p>
+          </div>
+        )}
+
         {/* Oath Category */}
         <div>
           <label className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-3">
@@ -364,7 +421,7 @@ function NewContractPageContent() {
                 <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Platform fee</p>
                 <p className="mt-1 text-lg font-black text-white">{formatMoney(platformFeeUsd)}</p>
                 <p className="mt-1 text-xs text-neutral-600">
-                  {usesMvpPlan ? 'MVP plan fee' : 'Only applies to the $30 MVP plan'}
+                  No platform fee during beta
                 </p>
               </div>
               <label className="rounded-lg border border-neutral-800 bg-black p-3">
@@ -384,6 +441,23 @@ function NewContractPageContent() {
                 </span>
               </label>
             </div>
+
+            {stakeGuidance && (
+              <div className="flex items-start gap-3 rounded-lg border border-sky-900 bg-sky-950/30 p-3">
+                <Info size={16} className="mt-0.5 shrink-0 text-sky-400" />
+                <div className="text-xs text-sky-200">
+                  <p className="font-bold uppercase tracking-widest text-sky-300">Behavioral guidance</p>
+                  <p className="mt-1">
+                    Your active contract is carrying a {stakeGuidance.reductionPercent}% downscale
+                    ({stakeGuidance.reason}). At that factor this stake would be{' '}
+                    {formatMoney(stakeGuidance.suggestedStakeUsd)}.
+                  </p>
+                  <p className="mt-1 text-sky-400">
+                    Guidance only — you stake {formatMoney(selectedStakeUsd)} unless you change it yourself.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-col gap-3 border-t border-neutral-800 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-neutral-500">

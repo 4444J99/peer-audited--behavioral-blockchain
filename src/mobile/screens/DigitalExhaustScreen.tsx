@@ -22,6 +22,11 @@ export default function DigitalExhaustScreen({ route, navigation }: Props) {
   const [proof, setProof] = useState<ExhaustProof | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // No native telephony bridge ships yet, so on most builds there is no log
+  // source to read. Say so plainly rather than offering a scan whose only
+  // possible outcome would be an unearned "compliant".
+  const canScan = ZKPrivacyEngine.hasLogProvider();
+
   const startScan = async () => {
     setScanning(true);
     try {
@@ -86,7 +91,16 @@ export default function DigitalExhaustScreen({ route, navigation }: Props) {
         </Text>
       </View>
 
-      {scanning ? (
+      {!canScan ? (
+        <View style={styles.unavailableCard}>
+          <Text style={styles.unavailableTitle}>Scan Unavailable On This Device</Text>
+          <Text style={styles.unavailableText}>
+            This build has no telephony log source, so a no-contact scan cannot be
+            performed here and will not be reported either way. Use your daily
+            check-in to attest compliance instead.
+          </Text>
+        </View>
+      ) : scanning ? (
         <View style={styles.scanState}>
           <ActivityIndicator size="large" color="#ef4444" />
           <Text style={styles.scanText}>Analyzing local telephony logs...</Text>
@@ -147,6 +161,17 @@ const styles = StyleSheet.create({
   privacyTitle: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 12, textAlign: 'center' },
   privacyText: { color: '#aaa', fontSize: 14, lineHeight: 20, textAlign: 'center' },
   bold: { color: '#fff', fontWeight: 'bold' },
+
+  unavailableCard: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#3a3a4e',
+    alignItems: 'center',
+  },
+  unavailableTitle: { color: '#f59e0b', fontSize: 16, fontWeight: '900', marginBottom: 12, textAlign: 'center' },
+  unavailableText: { color: '#aaa', fontSize: 14, lineHeight: 20, textAlign: 'center' },
 
   scanState: { alignItems: 'center', padding: 40 },
   scanText: { color: '#fff', fontSize: 16, fontWeight: '600', marginTop: 20 },

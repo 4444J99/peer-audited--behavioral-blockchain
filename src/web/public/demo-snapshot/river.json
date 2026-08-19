@@ -1,0 +1,769 @@
+{
+  "GET /users/me": {
+    "id": "d1000000-0000-0000-0000-000000000001",
+    "email": "river@demo.styx.protocol",
+    "integrity_score": 82,
+    "tier": "STANDARD",
+    "contract_count": 2,
+    "total_staked": 55,
+    "role": "USER",
+    "status": "ACTIVE",
+    "created_at": "2026-08-14T14:18:50.287Z",
+    "compliance": {
+      "kyc_status": "VERIFIED",
+      "age_verification_status": "VERIFIED",
+      "identity_provider": "MOCK",
+      "identity_verification_id": "ivs_mock_demo_river",
+      "identity_verified_at": "2026-07-20T14:18:50.287Z",
+      "is_kyc_verified": true,
+      "is_age_verified": true,
+      "terms_accepted_at": "2026-07-19T14:18:50.287Z",
+      "terms_version": "2026-05"
+    }
+  },
+  "GET /auth/csrf": {
+    "csrfToken": "9e31ed9608f1a63e1377d2010e8c508e68ca3477b3b9a7bf1f3f71ee4601c0d2"
+  },
+  "GET /contracts": [
+    {
+      "id": "c1000000-0000-0000-0000-000000000001",
+      "user_id": "d1000000-0000-0000-0000-000000000001",
+      "oath_category": "RECOVERY_NO_CONTACT_TEXT",
+      "verification_method": "SELF_REPORT",
+      "stake_amount": "40.0000",
+      "payment_intent_id": "pi_demo_river_01",
+      "duration_days": 60,
+      "status": "ACTIVE",
+      "grace_days_used": 0,
+      "strikes": 0,
+      "started_at": "2026-07-24T14:18:50.292Z",
+      "ends_at": "2026-09-22T14:18:50.292Z",
+      "created_at": "2026-08-14T14:18:50.292Z",
+      "updated_at": "2026-08-14T14:18:50.292Z",
+      "bounty_link_id": null,
+      "realm_id": "RECOVERY_ABSTINENCE",
+      "grace_period_month": null,
+      "implementation_intention": null,
+      "life_transition_type": null,
+      "life_transition_date": null,
+      "grace_days_total": 0,
+      "metadata": {
+        "cohort": {
+          "podId": "pod-cerberus",
+          "cohortId": "cohort-2026-07",
+          "joinedAt": "2026-07-08T00:00:00Z",
+          "displayAlias": "River"
+        }
+      },
+      "reconcile_attempts": 0,
+      "proof_count": 0
+    },
+    {
+      "id": "c1000000-0000-0000-0000-00000000000a",
+      "user_id": "d1000000-0000-0000-0000-000000000001",
+      "oath_category": "COGNITIVE_FOCUS",
+      "verification_method": "SCREENTIME",
+      "stake_amount": "15.0000",
+      "payment_intent_id": "pi_demo_river_02",
+      "duration_days": 14,
+      "status": "ACTIVE",
+      "grace_days_used": 0,
+      "strikes": 0,
+      "started_at": "2026-08-08T14:18:50.292Z",
+      "ends_at": "2026-08-22T14:18:50.292Z",
+      "created_at": "2026-08-14T14:18:50.292Z",
+      "updated_at": "2026-08-14T14:18:50.292Z",
+      "bounty_link_id": null,
+      "realm_id": "COGNITIVE_DEVICE",
+      "grace_period_month": null,
+      "implementation_intention": null,
+      "life_transition_type": null,
+      "life_transition_date": null,
+      "grace_days_total": 0,
+      "metadata": {},
+      "reconcile_attempts": 0,
+      "proof_count": 2
+    }
+  ],
+  "GET /dashboard/streak": {
+    "days": [
+      {
+        "date": "2026-07-16",
+        "attested": false,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-07-17",
+        "attested": false,
+        "graceUsed": false,
+        "chainBroken": true
+      },
+      {
+        "date": "2026-07-18",
+        "attested": false,
+        "graceUsed": false,
+        "chainBroken": true
+      },
+      {
+        "date": "2026-07-19",
+        "attested": false,
+        "graceUsed": false,
+        "chainBroken": true
+      },
+      {
+        "date": "2026-07-20",
+        "attested": false,
+        "graceUsed": false,
+        "chainBroken": true
+      },
+      {
+        "date": "2026-07-21",
+        "attested": false,
+        "graceUsed": false,
+        "chainBroken": true
+      },
+      {
+        "date": "2026-07-22",
+        "attested": false,
+        "graceUsed": false,
+        "chainBroken": true
+      },
+      {
+        "date": "2026-07-23",
+        "attested": false,
+        "graceUsed": false,
+        "chainBroken": true
+      },
+      {
+        "date": "2026-07-24",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-07-25",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-07-26",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-07-27",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-07-28",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-07-29",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-07-30",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-07-31",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-01",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-02",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-03",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-04",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-05",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-06",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-07",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-08",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-09",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-10",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-11",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-12",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-13",
+        "attested": true,
+        "graceUsed": false,
+        "chainBroken": false
+      },
+      {
+        "date": "2026-08-14",
+        "attested": false,
+        "graceUsed": false,
+        "chainBroken": false
+      }
+    ],
+    "currentStreak": 21,
+    "longestStreak": 21,
+    "neverMissTwiceActive": false,
+    "penaltyMultiplier": 2
+  },
+  "GET /wallet/balance": {
+    "id": "d1000000-0000-0000-0000-000000000001",
+    "email": "river@demo.styx.protocol",
+    "integrity_score": 82,
+    "allowed_tiers": [
+      "TIER_1_MICRO_STAKES",
+      "TIER_2_STANDARD"
+    ],
+    "ledger_balance": -55,
+    "status": "ACTIVE"
+  },
+  "GET /wallet/history?limit=10": {
+    "transactions": [
+      {
+        "id": "ee100000-0000-0000-0000-000000000001",
+        "type": "STAKE_HOLD",
+        "amount": -40,
+        "timestamp": "2026-08-14T14:18:50.303Z",
+        "description": "STAKE_HOLD"
+      },
+      {
+        "id": "ee100000-0000-0000-0000-000000000008",
+        "type": "STAKE_HOLD",
+        "amount": -15,
+        "timestamp": "2026-08-14T14:18:50.303Z",
+        "description": "STAKE_HOLD"
+      }
+    ]
+  },
+  "GET /wallet/history": {
+    "transactions": [
+      {
+        "id": "ee100000-0000-0000-0000-000000000001",
+        "type": "STAKE_HOLD",
+        "amount": -40,
+        "timestamp": "2026-08-14T14:18:50.303Z",
+        "description": "STAKE_HOLD"
+      },
+      {
+        "id": "ee100000-0000-0000-0000-000000000008",
+        "type": "STAKE_HOLD",
+        "amount": -15,
+        "timestamp": "2026-08-14T14:18:50.303Z",
+        "description": "STAKE_HOLD"
+      }
+    ]
+  },
+  "GET /notifications": [
+    {
+      "id": "dd100000-0000-0000-0000-000000000001",
+      "user_id": "d1000000-0000-0000-0000-000000000001",
+      "type": "STREAK_MILESTONE",
+      "title": "21 days of no contact",
+      "body": "Three full weeks. Your pod cosigned yesterday's attestation.",
+      "read": false,
+      "metadata": {
+        "streak": 21,
+        "contractId": "c1000000-0000-0000-0000-000000000001"
+      },
+      "created_at": "2026-08-14T14:18:50.305Z"
+    }
+  ],
+  "GET /notifications/unread-count": {
+    "count": 1
+  },
+  "GET /contracts/c1000000-0000-0000-0000-000000000001": {
+    "id": "c1000000-0000-0000-0000-000000000001",
+    "user_id": "d1000000-0000-0000-0000-000000000001",
+    "oath_category": "RECOVERY_NO_CONTACT_TEXT",
+    "verification_method": "SELF_REPORT",
+    "stake_amount": "40.0000",
+    "payment_intent_id": "pi_demo_river_01",
+    "duration_days": 60,
+    "status": "ACTIVE",
+    "grace_days_used": 0,
+    "strikes": 0,
+    "started_at": "2026-07-24T14:18:50.292Z",
+    "ends_at": "2026-09-22T14:18:50.292Z",
+    "created_at": "2026-08-14T14:18:50.292Z",
+    "updated_at": "2026-08-14T14:18:50.292Z",
+    "bounty_link_id": null,
+    "realm_id": "RECOVERY_ABSTINENCE",
+    "grace_period_month": null,
+    "implementation_intention": null,
+    "life_transition_type": null,
+    "life_transition_date": null,
+    "grace_days_total": 0,
+    "metadata": {
+      "cohort": {
+        "podId": "pod-cerberus",
+        "cohortId": "cohort-2026-07",
+        "joinedAt": "2026-07-08T00:00:00Z",
+        "displayAlias": "River"
+      }
+    },
+    "reconcile_attempts": 0,
+    "email": "river@demo.styx.protocol",
+    "integrity_score": 82,
+    "proof_count": 0,
+    "proofs": [],
+    "grace_days_max": 2
+  },
+  "GET /contracts/c1000000-0000-0000-0000-000000000001/attestation": {
+    "contractId": "c1000000-0000-0000-0000-000000000001",
+    "oathCategory": "RECOVERY_NO_CONTACT_TEXT",
+    "streakDays": 0,
+    "daysRemaining": 39,
+    "graceDaysAvailable": 2,
+    "todayAttested": false,
+    "totalStrikes": 0
+  },
+  "GET /wallet/history?limit=20": {
+    "transactions": [
+      {
+        "id": "ee100000-0000-0000-0000-000000000001",
+        "type": "STAKE_HOLD",
+        "amount": -40,
+        "timestamp": "2026-08-14T14:18:50.303Z",
+        "description": "STAKE_HOLD"
+      },
+      {
+        "id": "ee100000-0000-0000-0000-000000000008",
+        "type": "STAKE_HOLD",
+        "amount": -15,
+        "timestamp": "2026-08-14T14:18:50.303Z",
+        "description": "STAKE_HOLD"
+      }
+    ]
+  },
+  "GET /realms": [
+    {
+      "id": "BIOLOGICAL_HARDWARE",
+      "displayName": "Biological Hardware",
+      "slug": "biological-hardware",
+      "oracleType": "HARDWARE",
+      "tagline": "Body metrics verified by hardware oracles",
+      "theme": {
+        "primary": "#dc2626",
+        "accent": "#991b1b"
+      },
+      "stats": {
+        "activeContracts": 1,
+        "totalStaked": 50
+      }
+    },
+    {
+      "id": "COGNITIVE_DEVICE",
+      "displayName": "Cognitive Device",
+      "slug": "cognitive-device",
+      "oracleType": "DEVICE",
+      "tagline": "Focus and digital habits tracked by device APIs",
+      "theme": {
+        "primary": "#3b82f6",
+        "accent": "#1d4ed8"
+      },
+      "stats": {
+        "activeContracts": 1,
+        "totalStaked": 15
+      }
+    },
+    {
+      "id": "PROFESSIONAL_API",
+      "displayName": "Professional API",
+      "slug": "professional-api",
+      "oracleType": "API",
+      "tagline": "Work output verified by third-party integrations",
+      "theme": {
+        "primary": "#f59e0b",
+        "accent": "#b45309"
+      },
+      "stats": {
+        "activeContracts": 0,
+        "totalStaked": 0
+      }
+    },
+    {
+      "id": "CREATIVE_PROCESS",
+      "displayName": "Creative Process",
+      "slug": "creative-process",
+      "oracleType": "PROCESS",
+      "tagline": "Creation verified by time-lapse and peer review",
+      "theme": {
+        "primary": "#a855f7",
+        "accent": "#7e22ce"
+      },
+      "stats": {
+        "activeContracts": 0,
+        "totalStaked": 0
+      }
+    },
+    {
+      "id": "ENVIRONMENTAL_VISUAL",
+      "displayName": "Environmental Visual",
+      "slug": "environmental-visual",
+      "oracleType": "VISUAL",
+      "tagline": "Environment and habits verified by visual proof",
+      "theme": {
+        "primary": "#10b981",
+        "accent": "#047857"
+      },
+      "stats": {
+        "activeContracts": 0,
+        "totalStaked": 0
+      }
+    },
+    {
+      "id": "CHARACTER_SOCIAL",
+      "displayName": "Character Social",
+      "slug": "character-social",
+      "oracleType": "MULTI",
+      "tagline": "Community engagement verified by multi-oracle consensus",
+      "theme": {
+        "primary": "#06b6d4",
+        "accent": "#0e7490"
+      },
+      "stats": {
+        "activeContracts": 0,
+        "totalStaked": 0
+      }
+    },
+    {
+      "id": "RECOVERY_ABSTINENCE",
+      "displayName": "Recovery Abstinence",
+      "slug": "recovery-abstinence",
+      "oracleType": "ABSTINENCE",
+      "tagline": "Recovery commitments verified by attestation and peer review",
+      "theme": {
+        "primary": "#f97316",
+        "accent": "#c2410c"
+      },
+      "stats": {
+        "activeContracts": 8,
+        "totalStaked": 285
+      }
+    }
+  ],
+  "GET /realms/recovery-abstinence/contracts": {
+    "realmId": "RECOVERY_ABSTINENCE",
+    "realmSlug": "recovery-abstinence",
+    "contracts": [
+      {
+        "id": "c1000000-0000-0000-0000-000000000001",
+        "oath_category": "RECOVERY_NO_CONTACT_TEXT",
+        "verification_method": "SELF_REPORT",
+        "stake_amount": "40.0000",
+        "status": "ACTIVE",
+        "duration_days": 60,
+        "started_at": "2026-07-24T14:18:50.292Z",
+        "ends_at": "2026-09-22T14:18:50.292Z",
+        "created_at": "2026-08-14T14:18:50.292Z"
+      }
+    ]
+  },
+  "GET /realms/recovery-abstinence": {
+    "id": "RECOVERY_ABSTINENCE",
+    "displayName": "Recovery Abstinence",
+    "slug": "recovery-abstinence",
+    "streamPrefix": "RECOVERY",
+    "oracleType": "ABSTINENCE",
+    "tagline": "Recovery commitments verified by attestation and peer review",
+    "guardrails": [
+      {
+        "key": "RECOVERY_MAX_DURATION",
+        "description": "Contracts capped at 30 days"
+      },
+      {
+        "key": "RECOVERY_MAX_TARGETS",
+        "description": "Max 3 no-contact identifiers"
+      },
+      {
+        "key": "RECOVERY_AP_REQUIRED",
+        "description": "Accountability partner mandatory"
+      }
+    ],
+    "bridges": [
+      {
+        "targetRealm": "BIOLOGICAL_HARDWARE",
+        "direction": "READ",
+        "dataScope": "health_safety_flags",
+        "rationale": "Recovery realm reads health safety signals to prevent harm"
+      }
+    ],
+    "visibility": "PRIVATE",
+    "theme": {
+      "primary": "#f97316",
+      "accent": "#c2410c"
+    },
+    "stats": {
+      "activeContracts": 8,
+      "totalStaked": 285
+    }
+  },
+  "GET /feed?limit=50": {
+    "events": [
+      {
+        "id": "e1100000-0000-0000-0000-000000000002",
+        "type": "contract_created",
+        "message": "Someone committed $40 to a  behavioral oath",
+        "timestamp": "2026-08-14T14:18:50.306Z"
+      },
+      {
+        "id": "e1100000-0000-0000-0000-000000000003",
+        "type": "contract_created",
+        "message": "System event recorded",
+        "timestamp": "2026-08-14T14:18:50.306Z"
+      },
+      {
+        "id": "e1000000-0000-0000-0000-000000000001",
+        "type": "contract_created",
+        "message": "Someone committed $50 to a  behavioral oath",
+        "timestamp": "2026-08-14T14:18:50.270Z"
+      },
+      {
+        "id": "e1000000-0000-0000-0000-000000000002",
+        "type": "contract_created",
+        "message": "System event recorded",
+        "timestamp": "2026-08-14T14:18:50.270Z"
+      }
+    ]
+  },
+  "GET /feed": {
+    "events": [
+      {
+        "id": "e1100000-0000-0000-0000-000000000002",
+        "type": "contract_created",
+        "message": "Someone committed $40 to a  behavioral oath",
+        "timestamp": "2026-08-14T14:18:50.306Z"
+      },
+      {
+        "id": "e1100000-0000-0000-0000-000000000003",
+        "type": "contract_created",
+        "message": "System event recorded",
+        "timestamp": "2026-08-14T14:18:50.306Z"
+      },
+      {
+        "id": "e1000000-0000-0000-0000-000000000001",
+        "type": "contract_created",
+        "message": "Someone committed $50 to a  behavioral oath",
+        "timestamp": "2026-08-14T14:18:50.270Z"
+      },
+      {
+        "id": "e1000000-0000-0000-0000-000000000002",
+        "type": "contract_created",
+        "message": "System event recorded",
+        "timestamp": "2026-08-14T14:18:50.270Z"
+      }
+    ]
+  },
+  "GET /users/leaderboard?limit=10": [
+    {
+      "id": "d0000000-0000-0000-0000-000000000003",
+      "email": "admin@styx.protocol",
+      "integrity_score": 200,
+      "created_at": "2026-08-14T14:18:50.264Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-00000000000b",
+      "email": "dr.moira@demo.styx.protocol",
+      "integrity_score": 99,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-000000000008",
+      "email": "alecto@demo.styx.protocol",
+      "integrity_score": 95,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-000000000004",
+      "email": "wren@demo.styx.protocol",
+      "integrity_score": 93,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-000000000009",
+      "email": "megaera@demo.styx.protocol",
+      "integrity_score": 91,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d0000000-0000-0000-0000-000000000002",
+      "email": "fury@styx.protocol",
+      "integrity_score": 90,
+      "created_at": "2026-08-14T14:18:50.264Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-00000000000a",
+      "email": "tisiphone@demo.styx.protocol",
+      "integrity_score": 88,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-00000000000c",
+      "email": "hr.lead@acheron.example",
+      "integrity_score": 85,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-000000000001",
+      "email": "river@demo.styx.protocol",
+      "integrity_score": 82,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d0000000-0000-0000-0000-000000000001",
+      "email": "demo@styx.protocol",
+      "integrity_score": 75,
+      "created_at": "2026-08-14T14:18:50.264Z"
+    }
+  ],
+  "GET /users/leaderboard": [
+    {
+      "id": "d0000000-0000-0000-0000-000000000003",
+      "email": "admin@styx.protocol",
+      "integrity_score": 200,
+      "created_at": "2026-08-14T14:18:50.264Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-00000000000b",
+      "email": "dr.moira@demo.styx.protocol",
+      "integrity_score": 99,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-000000000008",
+      "email": "alecto@demo.styx.protocol",
+      "integrity_score": 95,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-000000000004",
+      "email": "wren@demo.styx.protocol",
+      "integrity_score": 93,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-000000000009",
+      "email": "megaera@demo.styx.protocol",
+      "integrity_score": 91,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d0000000-0000-0000-0000-000000000002",
+      "email": "fury@styx.protocol",
+      "integrity_score": 90,
+      "created_at": "2026-08-14T14:18:50.264Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-00000000000a",
+      "email": "tisiphone@demo.styx.protocol",
+      "integrity_score": 88,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-00000000000c",
+      "email": "hr.lead@acheron.example",
+      "integrity_score": 85,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d1000000-0000-0000-0000-000000000001",
+      "email": "river@demo.styx.protocol",
+      "integrity_score": 82,
+      "created_at": "2026-08-14T14:18:50.287Z"
+    },
+    {
+      "id": "d0000000-0000-0000-0000-000000000001",
+      "email": "demo@styx.protocol",
+      "integrity_score": 75,
+      "created_at": "2026-08-14T14:18:50.264Z"
+    }
+  ],
+  "GET /referrals/code": {
+    "code": "10DBB17C",
+    "url": "https://styx.app/join/10DBB17C"
+  },
+  "GET /referrals/rewards": {
+    "totalReferrals": 0,
+    "rewardedReferrals": 0,
+    "pendingReferrals": 0,
+    "totalRewardCents": 0,
+    "rewards": []
+  },
+  "GET /behavioral/habit-strength": {
+    "strength": 0.04,
+    "label": "Fragile"
+  },
+  "GET /behavioral/reentry/eligibility": {
+    "eligible": false,
+    "attemptNumber": 0,
+    "reducedStakeCents": 0,
+    "reason": "Re-entry cooldown: 7 days remaining"
+  }
+}

@@ -113,12 +113,14 @@ npx tsx scripts/validation/05-behavioral-physics-check.ts  # Algorithm constants
 3. Run `make test` and `npx turbo run lint` locally.
 4. Open a Pull Request into `main` using the PR template — start it as a
    **draft** while iterating, mark **ready for review** when CI is green.
-5. Address review feedback; resolve all conversations.
+5. Address review feedback. Resolving threads is good practice but is **not**
+   required to merge — several review bots open threads automatically and those
+   stay open after they go stale.
 6. Merging requires the **`build_and_test`, CodeQL, and Secret Pattern
-   Detection** checks green, **1+ approval incl. CODEOWNERS**, and the branch
-   up to date. Click **Merge when ready** — the **merge queue** revalidates
-   against the post-merge result and **squash-merges** (the only allowed
-   method). Direct pushes to `main` are blocked.
+   Detection** checks green. Approvals are not required (this repo has a single
+   maintainer, and GitHub does not permit self-approval). **Squash** is the only
+   allowed merge method. Direct pushes to `main` are blocked.
+   Rationale and the full policy: `.github/rulesets/README.md`.
 
 ### PR Checklist
 

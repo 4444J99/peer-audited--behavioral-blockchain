@@ -18,6 +18,7 @@ import {
   DoubleDownDto,
   SubmitSurveyDto,
   EmotionalTrackingDto,
+  SelfReportDto,
 } from "./dto";
 import { DisputeService } from "../../../services/escrow/dispute.service";
 import { AuthGuard } from "../../../guards/auth.guard";
@@ -82,6 +83,26 @@ export class ContractsController {
     @CurrentUser() user: { id: string },
   ) {
     return this.contractsService.getCohortSnapshot(cohortId, user.id);
+  }
+
+  // Single-segment literal routes MUST stay above @Get(":id"): Nest registers
+  // handlers in declaration order and Express serves the first match, so a
+  // literal declared after the wildcard is dead — "invitations" was being
+  // routed into getContract() as a contract id.
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get("invitations")
+  @ApiOperation({ summary: "List pending accountability partner invitations" })
+  async getInvitations(@CurrentUser() user: { id: string }) {
+    return this.contractsService.getPendingInvitations(user.id);
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard)
+  @Get("partnerships")
+  @ApiOperation({
+    summary: "List contracts the authenticated user is an active partner on",
+  })
+  async getPartnerships(@CurrentUser() user: { id: string }) {
+    return this.contractsService.getPartnerships(user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard)
@@ -198,6 +219,30 @@ export class ContractsController {
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
+  @Post(":id/self-report")
+  @ApiOperation({
+    summary:
+      "Binary daily check-in: stayed sober or not, with optional urge/trigger context",
+  })
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  async submitSelfReport(
+    @Param("id") contractId: string,
+    @CurrentUser() user: { id: string },
+    @Body() dto: SelfReportDto,
+  ) {
+    if (dto.stayedSober) {
+      return this.contractsService.submitAttestation(contractId, user.id, {
+        urgeLevel: dto.urgeLevel,
+        triggers: dto.triggers,
+      });
+    }
+    return this.contractsService.recordSelfReportedRelapse(contractId, user.id, {
+      urgeLevel: dto.urgeLevel,
+      triggers: dto.triggers,
+    });
+  }
+
+  @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
   @Post(":id/whoop/scored")
   @ApiOperation({
     summary:
@@ -213,13 +258,6 @@ export class ContractsController {
       ...dto,
       userId: user.id,
     });
-  }
-
-  @UseGuards(AuthGuard, GeofenceGuard)
-  @Get("invitations")
-  @ApiOperation({ summary: "List pending accountability partner invitations" })
-  async getInvitations(@CurrentUser() user: { id: string }) {
-    return this.contractsService.getPendingInvitations(user.id);
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)

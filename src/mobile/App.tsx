@@ -7,6 +7,7 @@ import { SessionService } from './services/SessionService';
 import { OfflineCache } from './services/OfflineCache';
 import { ApiClient } from './services/ApiClient';
 import { NotificationService } from './services/NotificationService';
+import { EnterpriseSSO } from './services/EnterpriseSSO';
 import { linking, resolveNotificationDeepLink } from './config/linking';
 import {
   getMobileBetaBannerText,
@@ -220,6 +221,24 @@ export default function App() {
     return () => {
       mounted = false;
     };
+  }, []);
+
+  // Corporate SSO: styx://enterprise/?token=... carries a one-time token that // allow-secret
+  // EnterpriseSSO redeems against POST /auth/enterprise. The listener is registered
+  // unconditionally on mount rather than behind the login gate, because the link IS
+  // how these employees authenticate — it has to work from a logged-out cold start,
+  // which is why initializeDeepLinkListener also drains Linking.getInitialURL().
+  useEffect(() => {
+    EnterpriseSSO.initializeDeepLinkListener((result) => {
+      if (result.success) {
+        setIsLoggedIn(true);
+      } else {
+        console.warn(`Enterprise SSO handoff failed: ${result.error}`);
+      }
+    }).catch((err) => {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`Enterprise SSO listener failed to initialize: ${message}`);
+    });
   }, []);
 
   // Handle push notification taps → navigate via deep link

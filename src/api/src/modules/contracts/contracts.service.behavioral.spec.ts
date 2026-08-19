@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { ContractsService, CreateContractInput } from "./contracts.service";
 import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import { StripeFboService } from "../../../services/escrow/stripe.service";
+import { EscrowProvider } from "../../common/interfaces/payout-provider.interface";
 import { DisputeService } from "../../../services/escrow/dispute.service";
 import { FuryRouterService } from "../../../services/fury-router/fury-router.service";
 import { AegisProtocolService } from "../../../services/health/aegis.service";
@@ -28,10 +28,15 @@ describe("ContractsService — Behavioral Physics", () => {
     appendEvent: jest.fn().mockResolvedValue("log-id"),
   } as unknown as TruthLogService;
   const mockStripe = {
+    rail: "STRIPE",
+    movesRealMoney: false,
     holdStake: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
     captureStake: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
     cancelHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
-  } as unknown as StripeFboService;
+    retrieveHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
+    createCustomer: jest.fn().mockResolvedValue("cus_test_1"),
+    transferFunds: jest.fn().mockResolvedValue({ id: "tr_test_1", amountCents: 0 }),
+  } as unknown as EscrowProvider;
   const mockRealStripe = { resolveEscrow: jest.fn().mockResolvedValue(true) };
   const mockFuryRouter = {
     routeProof: jest.fn().mockResolvedValue("job-id-1"),
@@ -432,6 +437,40 @@ describe("ContractsService — Behavioral Physics", () => {
 
       const result = await service.createContract(dto);
       expect(result.contractId).toBe("contract-r2");
+    });
+
+    // Issue #905: the early-access $0-escrow ceiling must not block synthetic
+    // adults on the test-money rail. A $0-escrow no-contact contract must pass
+    // the full creation pipeline: stake hold (0¢), ledger STAKE_HOLD, and the
+    // CONTRACT_CREATED truth-log receipt.
+    it("should create a $0-escrow no-contact contract end to end (issue #905)", async () => {
+      const dto: CreateContractInput = {
+        ...recoveryDto,
+        stakeAmount: 0,
+      };
+      mockSuccessfulRecoveryFlow();
+
+      const result = await service.createContract(dto);
+
+      expect(result.contractId).toBe("contract-r1");
+      expect(mockStripe.holdStake).toHaveBeenCalledWith(
+        "cus_test_1",
+        0,
+        "contract-r1",
+      );
+
+      const stakeHoldCall = jest
+        .mocked(mockLedger.recordTransaction)
+        .mock.calls.find((args) => args[4]?.type === "STAKE_HOLD");
+      expect(stakeHoldCall).toBeDefined();
+      expect(stakeHoldCall![2]).toBe(0);
+
+      const createdEvent = jest
+        .mocked(mockTruthLog.appendEvent)
+        .mock.calls.find((args) => args[0] === "CONTRACT_CREATED");
+      expect(createdEvent).toBeDefined();
+      expect(createdEvent![1].stakeAmount).toBe(0);
+      expect(createdEvent![1].oathCategory).toBe("RECOVERY_NOCONTACT");
     });
   });
 });

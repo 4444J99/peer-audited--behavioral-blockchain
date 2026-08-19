@@ -50,12 +50,18 @@ describe('StripeFboService (dev mode)', () => {
     });
 
     // Non-dev (live Stripe) idempotency behaviour. We stub the private stripe client and
-    // force isDevMode=false so the retrieve/capture branch runs.
+        // force isMockMode=false so the retrieve/capture branch runs.
     describe('idempotent retry (non-dev mode)', () => {
       let liveService: StripeFboService;
       let mockStripe: { paymentIntents: { retrieve: jest.Mock; capture: jest.Mock } };
 
       beforeEach(() => {
+        // These simulate a live-money environment, so they must also satisfy the
+        // real-money interlocks in assertRealMoneyAllowed() — otherwise the call
+        // is refused before it reaches the Stripe client under test.
+        process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+        process.env.STYX_TEST_MONEY_MODE = 'false';
+        delete process.env.GEO_MISSING_HEADER_ACTION;
         liveService = new StripeFboService();
         mockStripe = {
           paymentIntents: {
@@ -64,7 +70,11 @@ describe('StripeFboService (dev mode)', () => {
           },
         };
         // Bypass dev-mode short-circuit and inject the mocked Stripe client.
-        Object.defineProperty(liveService, 'isDevMode', { get: () => false });
+        // The rail split (isMockMode vs movesRealMoney) means a live-money test
+        // stubs both: mock mode off so the Stripe branch runs, and movesRealMoney
+        // on so assertRealMoneyAllowed() still gates the call like production.
+        Object.defineProperty(liveService, 'isMockMode', { get: () => false });
+        Object.defineProperty(liveService, 'movesRealMoney', { get: () => true });
         (liveService as any).stripe = mockStripe;
       });
 
@@ -133,9 +143,16 @@ describe('StripeFboService (dev mode)', () => {
     let mockStripe: { transfers: { create: jest.Mock } };
 
     beforeEach(() => {
+      // These simulate a live-money environment, so they must also satisfy the
+      // real-money interlocks in assertRealMoneyAllowed() — otherwise the call
+      // is refused before it reaches the Stripe client under test.
+      process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+      process.env.STYX_TEST_MONEY_MODE = 'false';
+      delete process.env.GEO_MISSING_HEADER_ACTION;
       liveService = new StripeFboService();
       mockStripe = { transfers: { create: jest.fn().mockResolvedValue({ id: 'tr_live_1', amount: 1000 }) } };
-      Object.defineProperty(liveService, 'isDevMode', { get: () => false });
+      Object.defineProperty(liveService, 'isMockMode', { get: () => false });
+      Object.defineProperty(liveService, 'movesRealMoney', { get: () => true });
       (liveService as any).stripe = mockStripe;
     });
 
@@ -196,5 +213,85 @@ describe('StripeFboService (dev mode)', () => {
     it('should return REFUND for failed TIER_3 contracts (safety fallback)', () => {
       expect(service.resolveDisposition('FAILED', JurisdictionTier.TIER_3)).toBe('REFUND');
     });
+  });
+});
+
+describe('StripeFboService real-money interlocks', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    // A live key is what makes every check below active.
+    process.env.STRIPE_SECRET_KEY = 'sk_live_interlock_test';
+    process.env.KYC_ENFORCEMENT_ENABLED = 'true';
+    process.env.STYX_TEST_MONEY_MODE = 'false';
+    delete process.env.GEO_MISSING_HEADER_ACTION;
+    delete process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  // These live on the charge rather than on StripeProductionGuard: that guard
+  // decorates the whole PaymentsController, so it would reject
+  // POST /payments/webhook (blocking Stripe from settling transactions created
+  // before a control was switched off) while still missing POST /contracts,
+  // which calls holdStake directly and never passes through it.
+  it('refuses to hold real money while the geofence fails open', async () => {
+    process.env.GEO_MISSING_HEADER_ACTION = 'allow';
+    const service = new StripeFboService();
+
+    await expect(service.holdStake('cus_1', 3000, 'contract-1')).rejects.toThrow(
+      /geofence fails open/i,
+    );
+  });
+
+  it('refuses to hold real money while KYC enforcement is off', async () => {
+    process.env.KYC_ENFORCEMENT_ENABLED = 'false';
+    const service = new StripeFboService();
+
+    await expect(service.holdStake('cus_1', 3000, 'contract-1')).rejects.toThrow(
+      /KYC enforcement is disabled/i,
+    );
+  });
+
+  it('refuses to hold real money while test-money mode is on', async () => {
+    process.env.STYX_TEST_MONEY_MODE = 'true';
+    const service = new StripeFboService();
+
+    await expect(service.holdStake('cus_1', 3000, 'contract-1')).rejects.toThrow(
+      /test-money pilot/i,
+    );
+  });
+
+  it('refuses when test-money mode is unset, since it defaults on', async () => {
+    delete process.env.STYX_TEST_MONEY_MODE;
+    const service = new StripeFboService();
+
+    await expect(service.holdStake('cus_1', 3000, 'contract-1')).rejects.toThrow(
+      /test-money pilot/i,
+    );
+  });
+
+  it('guards capture and transfer, not just the initial hold', async () => {
+    process.env.STYX_TEST_MONEY_MODE = 'true';
+    const service = new StripeFboService();
+
+    await expect(service.captureStake('pi_1')).rejects.toThrow(/test-money pilot/i);
+    await expect(service.transferFunds(1000, 'acct_1')).rejects.toThrow(/test-money pilot/i);
+  });
+
+  it('leaves the test-money pilot untouched', async () => {
+    // The pilot legitimately runs with all three controls in their default
+    // state; nothing real can move because the key is a mock.
+    process.env.STRIPE_SECRET_KEY = 'sk_test_mock_key';
+    process.env.KYC_ENFORCEMENT_ENABLED = 'false';
+    process.env.STYX_TEST_MONEY_MODE = 'true';
+    process.env.GEO_MISSING_HEADER_ACTION = 'allow';
+    const service = new StripeFboService();
+
+    const held = await service.holdStake('cus_1', 3000, 'contract-1');
+    expect(held.id).toMatch(/^pi_dev_/);
   });
 });

@@ -16,6 +16,12 @@ services:
       STYX_API_PUBLIC_URL: ${STYX_API_PUBLIC_URL:?STYX_API_PUBLIC_URL is required}
       STYX_WEB_PUBLIC_URL: ${STYX_WEB_PUBLIC_URL:?STYX_WEB_PUBLIC_URL is required}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
+      STYX_TEST_MONEY_MODE: ${STYX_TEST_MONEY_MODE:?STYX_TEST_MONEY_MODE is required}
+      STYX_ENV_LABEL: ${STYX_ENV_LABEL:?STYX_ENV_LABEL is required}
+      STYX_PRIVATE_BETA: ${STYX_PRIVATE_BETA:?STYX_PRIVATE_BETA is required}
+      STYX_ALLOWLIST_US_ONLY: ${STYX_ALLOWLIST_US_ONLY:?STYX_ALLOWLIST_US_ONLY is required}
+      STYX_FEATURE_B2B_HR_UI: ${STYX_FEATURE_B2B_HR_UI:?STYX_FEATURE_B2B_HR_UI is required}
+      GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS: ${GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS:?GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS is required}
       # Required app secrets — the 2026-05-26 hardening removed insecure fallbacks,
       # so the API throws at use-time if these are unset. Passed through from the
       # env file (compose.defaults.env for local, real values via Render in prod).
@@ -26,12 +32,46 @@ services:
       STYX_WEBHOOK_SECRET: ${STYX_WEBHOOK_SECRET:-}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-}
     depends_on:
-      - styx-postgres
-      - styx-redis
+      styx-postgres:
+        condition: service_healthy
+      styx-redis:
+        condition: service_started
+      # The API never runs DDL itself — it must not boot before the migration
+      # chain has fully applied.
+      styx-migrate:
+        condition: service_completed_successfully
+    networks:
+      - styx-network
+
+  # One-shot migration runner. The database schema comes EXCLUSIVELY from the
+  # migration chain (src/api/database/migrations/*.sql) applied by migrate.ts.
+  # schema.sql is a reference snapshot only and is deliberately NOT mounted
+  # into /docker-entrypoint-initdb.d/: initdb-provisioned databases froze at
+  # schema.sql's table set and made migrate.ts baseline-stamp (skip) every
+  # migration, so migration-only tables could never exist on a fresh install.
+  # Reuses the API image's builder stage, which carries the migration sources
+  # and dev dependencies (tsx).
+  styx-migrate:
+    build:
+      context: ../..
+      dockerfile: src/api/Dockerfile
+      target: builder
+    working_dir: /app/src/api
+    command: ["npx", "tsx", "database/migrations/migrate.ts"]
+    restart: "no"
+    environment:
+      MIGRATION_DATABASE_URL: ${STYX_DOCKER_DATABASE_URL:?STYX_DOCKER_DATABASE_URL is required}
+    depends_on:
+      styx-postgres:
+        condition: service_healthy
     networks:
       - styx-network
 
   # Core Ledger Database (PostgreSQL)
+  # Schema is NOT provisioned here. A fresh volume starts empty; the
+  # styx-migrate service applies the full migration chain before the API
+  # starts. Demo data (seed.sql) is applied post-migration by
+  # `bash scripts/deploy.sh local` (or `... seed`) — never via initdb.
   styx-postgres:
     image: ${STYX_DOCKER_POSTGRES_IMAGE:?STYX_DOCKER_POSTGRES_IMAGE is required}
     restart: always
@@ -43,8 +83,15 @@ services:
       - "${STYX_DOCKER_POSTGRES_PORT:?STYX_DOCKER_POSTGRES_PORT is required}:${POSTGRES_PORT:?POSTGRES_PORT is required}"
     volumes:
       - styx-pg-data:/var/lib/postgresql/data
-      - ../../src/api/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ../../src/api/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+      # Read-only copy for the deploy script's post-migration seed step.
+      - ../../src/api/database/seed.sql:/opt/styx/seed.sql:ro
+      - ../../scripts/demo/seed-circles.sql:/opt/styx/seed-circles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
     networks:
       - styx-network
 
@@ -67,6 +114,11 @@ services:
       dockerfile: src/web/Dockerfile
       args:
         WEB_CONTAINER_PORT: ${STYX_DOCKER_WEB_CONTAINER_PORT:?STYX_DOCKER_WEB_CONTAINER_PORT is required}
+        NEXT_PUBLIC_API_URL: ${STYX_DOCKER_API_INTERNAL_URL:?STYX_DOCKER_API_INTERNAL_URL is required}
+        NEXT_PUBLIC_WEB_URL: ${NEXT_PUBLIC_WEB_URL:-}
+        NEXT_PUBLIC_STYX_ENV_LABEL: ${STYX_ENV_LABEL:?STYX_ENV_LABEL is required}
+        NEXT_PUBLIC_STYX_TEST_MONEY_MODE: ${STYX_TEST_MONEY_MODE:?STYX_TEST_MONEY_MODE is required}
+        NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI: ${STYX_FEATURE_B2B_HR_UI:?STYX_FEATURE_B2B_HR_UI is required}
     ports:
       - "${STYX_DOCKER_WEB_PORT:?STYX_DOCKER_WEB_PORT is required}:${STYX_DOCKER_WEB_CONTAINER_PORT:?STYX_DOCKER_WEB_CONTAINER_PORT is required}"
     environment:
@@ -75,6 +127,9 @@ services:
       NEXT_PUBLIC_API_URL: ${STYX_DOCKER_API_INTERNAL_URL:?STYX_DOCKER_API_INTERNAL_URL is required}
       STYX_WEB_PUBLIC_URL: ${STYX_WEB_PUBLIC_URL:?STYX_WEB_PUBLIC_URL is required}
       NEXT_PUBLIC_WEB_URL: ${NEXT_PUBLIC_WEB_URL:-}
+      NEXT_PUBLIC_STYX_ENV_LABEL: ${STYX_ENV_LABEL:?STYX_ENV_LABEL is required}
+      NEXT_PUBLIC_STYX_TEST_MONEY_MODE: ${STYX_TEST_MONEY_MODE:?STYX_TEST_MONEY_MODE is required}
+      NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI: ${STYX_FEATURE_B2B_HR_UI:?STYX_FEATURE_B2B_HR_UI is required}
     depends_on:
       - styx-api
     networks:

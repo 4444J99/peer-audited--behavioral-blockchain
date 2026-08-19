@@ -18,6 +18,11 @@ services:
     startCommand: cd src/api && node dist/api/src/main.js
     healthCheckPath: /health
     envVars:
+      # Pin the runtime. Without this Render picks its own current default, so
+      # production runs the same supported Node 24 LTS line as CI and the
+      # Dockerfiles. TypeScript 7 is intentionally a separate migration.
+      - key: NODE_VERSION
+        value: "24"
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
@@ -38,6 +43,38 @@ services:
         generateValue: true
       - key: STYX_API_KEY_PEPPER
         generateValue: true
+      # These six have NO insecure runtime fallback — the API throws at boot (or
+      # on first use) when any is unset (.env.example documents the contract;
+      # ENTERPRISE_SSO_SECRET is enforced in auth.service). The blueprint
+      # generated only JWT_SECRET and the pepper, so a fresh blueprint deploy
+      # crash-looped before serving its first request. All are API-internal
+      # (no web/worker consumer needs the same value), so per-service
+      # generation is correct.
+      - key: APP_SECRET
+        generateValue: true
+      - key: ANONYMIZE_SALT
+        generateValue: true
+      - key: ZK_EXHAUST_SECRET
+        generateValue: true
+      - key: STYX_WEBHOOK_SECRET
+        generateValue: true
+      - key: INTERNAL_SERVICE_TOKEN
+        generateValue: true
+      - key: ENTERPRISE_SSO_SECRET
+        generateValue: true
+      # /meta/release reports environment.label from this; the deploy smoke
+      # (check-api-release.sh) fails hard on a mismatch with its expected
+      # label. The blueprint never set it, so a blueprint-provisioned service
+      # reported no label and could not pass its own smoke.
+      - key: STYX_ENV_LABEL
+        value: production
+      # NOTE: this and styx-web's NEXT_PUBLIC_API_URL form a circular
+      # fromService pair. On the FIRST blueprint sync, whichever service builds
+      # before the other exists gets an empty value baked in — for styx-web that
+      # means the docker-compose fallback host (dead on Render) is compiled into
+      # the bundle and every /api call 502s until styx-web is manually
+      # redeployed AFTER styx-api is live. Render resolves both on subsequent
+      # deploys; the trap is first-sync only.
       - key: CORS_ORIGINS
         fromService:
           name: styx-web
@@ -61,8 +98,25 @@ services:
         sync: false
       - key: SENTRY_DSN
         sync: false
+      # Fail CLOSED on an unresolvable location. This was `allow`, which made
+      # every request without a usable geo header resolve to TIER_1 FULL_ACCESS
+      # — including non-US IPs, which resolve to null — silently defeating the
+      # US-only boundary (DR-003). The source default is fail-closed and its
+      # comment says production must not be more permissive than dev; this
+      # blueprint was the thing overriding it.
+      # Render terminates TLS and forwards the client address in x-forwarded-for.
+      # Without this, geolocation reads the reverse-proxy socket instead, no US
+      # state resolves, and the fail-closed setting below would 403 every
+      # geofenced route — including read-only ones. The two must ship together.
+      - key: TRUST_PROXY_HEADERS
+        value: "true"
       - key: GEO_MISSING_HEADER_ACTION
-        value: allow
+        value: block
+      # Off is correct for the Phase 1 test-money pilot: KYC runtime enforcement
+      # is explicitly out of scope and must be labelled inactive
+      # (planning--phase1-private-beta-scope.md). It must flip to "true" before
+      # any real-money activation — StripeProductionGuard now refuses to serve a
+      # live key while this is off, so the two cannot drift apart.
       - key: KYC_ENFORCEMENT_ENABLED
         value: "false"
 
@@ -81,6 +135,11 @@ services:
     buildCommand: npm install --include=dev && npx turbo run build --filter=@styx/web
     startCommand: cd src/web && npm start -- --port $PORT
     envVars:
+      # Pin the runtime. Without this Render picks its own current default, so
+      # production runs the same supported Node 24 LTS line as CI and the
+      # Dockerfiles. TypeScript 7 is intentionally a separate migration.
+      - key: NODE_VERSION
+        value: "24"
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL

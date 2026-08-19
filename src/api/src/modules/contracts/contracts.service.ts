@@ -13,12 +13,19 @@ import {
 import { Pool, PoolClient } from "pg";
 import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import { StripeFboService } from "../../../services/escrow/stripe.service";
+import {
+  ESCROW_PROVIDER,
+  EscrowProvider,
+} from "../../common/interfaces/payout-provider.interface";
 import { JurisdictionTier } from "../../../services/geofencing";
 import { StripeFBOService as RealStripeFBOService } from "../payments/stripe-fbo.service";
 import { SettlementService } from "../payments/settlement.service";
 import { buildSettlementQuote } from "../payments/settlement-quote";
 import { DisputeService } from "../../../services/escrow/dispute.service";
+import {
+  isAppealFeeEnabled,
+  isOnboardingBonusEnabled,
+} from "../../../services/billing";
 import { FuryRouterService } from "../../../services/fury-router/fury-router.service";
 import { AegisProtocolService } from "../../../services/health/aegis.service";
 import { RecoveryProtocolService } from "../../../services/health/recovery-protocol.service";
@@ -28,6 +35,7 @@ import { resolveWebPublicUrl } from "../../config/runtime";
 
 import { NotificationsService } from "../notifications/notifications.service";
 import { CompliancePolicyService } from "../compliance/compliance-policy.service";
+import { WebhookSubscriptionService } from "../b2b/webhook-subscription.service";
 import {
   calculateIntegrity,
   getAllowedTiers,
@@ -45,6 +53,7 @@ import {
   FAILURE_COOL_OFF_DAYS,
   DOWNSCALE_STRIKE_THRESHOLD,
   MAX_NOCONTACT_DURATION_DAYS,
+  NOCONTACT_MISS_STRIKE_THRESHOLD,
   checkPregnancyExclusion,
   validateRecoveryGuardrails,
 } from "../../../../shared/libs/behavioral-logic";
@@ -52,6 +61,7 @@ import {
   getRealmForCategory,
   RealmId,
 } from "../../../../shared/libs/realm-registry";
+import { IdentityOathService } from "../onboarding/identity-oath.service";
 
 import {
   CreateContractDto as CreateContractDtoBase,
@@ -87,7 +97,8 @@ type ContractResolutionSideEffectType =
   | "LEDGER_STAKE_CAPTURE"
   | "LEDGER_BOUNTY_POOL_TOPUP"
   | "TRUTH_CONTRACT_RESOLVED"
-  | "NOTIFY_CONTRACT_RESOLVED";
+  | "NOTIFY_CONTRACT_RESOLVED"
+  | "B2B_WEBHOOK_CONTRACT_RESOLVED";
 
 interface ContractResolutionSideEffectRow {
   id: string;
@@ -135,7 +146,7 @@ export class ContractsService {
     private readonly pool: Pool,
     private readonly ledger: LedgerService,
     private readonly truthLog: TruthLogService,
-    private readonly stripe: StripeFboService,
+    @Inject(ESCROW_PROVIDER) private readonly escrow: EscrowProvider,
     private readonly realStripe: RealStripeFBOService,
     private readonly dispute: DisputeService,
     private readonly furyRouter: FuryRouterService,
@@ -155,10 +166,44 @@ export class ContractsService {
     private readonly settlementService?: SettlementService,
     @Optional()
     private readonly referralService?: any,
+    @Optional()
+    @Inject(WebhookSubscriptionService)
+    private readonly enterpriseWebhooks?: WebhookSubscriptionService,
+    @Optional()
+    @Inject(IdentityOathService)
+    private readonly identityOaths?: IdentityOathService,
   ) {}
 
   private stakeAmountToCents(stakeAmount: number | string): number {
     return toCents(Number(stakeAmount));
+  }
+
+  /**
+   * Resolve the rail-scoped customer handle for a stake.
+   *
+   * The handle lives in a different column per rail: `users.stripe_customer_id`
+   * on the Stripe rail, `users.account_id` on the ledger rail. The port's
+   * `createCustomer` provisions one on demand (persisting it for the rail it
+   * owns), so a caller that only needs the handle never branches on the column
+   * itself — only on which column to fall back to.
+   */
+  private async resolveEscrowCustomerHandle(user: {
+    id: string;
+    email?: string;
+    stripe_customer_id?: string | null;
+    account_id?: string | null;
+  }): Promise<string> {
+    if (this.escrow.rail === "LEDGER") {
+      if (user.account_id) return user.account_id;
+      return this.escrow.createCustomer(user.id, user.email);
+    }
+    if (user.stripe_customer_id) return user.stripe_customer_id;
+    const handle = await this.escrow.createCustomer(user.id, user.email);
+    await this.pool.query(
+      "UPDATE users SET stripe_customer_id = $1 WHERE id = $2",
+      [handle, user.id],
+    );
+    return handle;
   }
 
   private async assertCanReadContractRow(
@@ -312,7 +357,7 @@ export class ContractsService {
 
     // Phase Beta P0-011: Resolve disposition via escrow service
     const disposition = jurisdictionTier
-      ? this.stripe.resolveDisposition(outcome, jurisdictionTier)
+      ? this.escrow.resolveDisposition(outcome, jurisdictionTier)
       : outcome === "COMPLETED"
         ? ("REFUND" as const)
         : ("CAPTURE" as const);
@@ -477,6 +522,28 @@ export class ContractsService {
         },
       },
     });
+
+    // B2B engagement signal. Only for a contract whose owner belongs to an
+    // enterprise — a consumer contract has nobody to notify. The pseudonym is
+    // derived downstream (WebhookSubscriptionService) rather than here, so no
+    // employee identifier is ever written into an outbox payload that an operator
+    // can read; `userId` is the key that derives it, and it never leaves Styx.
+    if (userRow?.enterprise_id) {
+      effects.push({
+        contractId,
+        outcome,
+        effectType: "B2B_WEBHOOK_CONTRACT_RESOLVED",
+        dedupeKey: `${baseKey}:b2b-webhook`,
+        payload: {
+          enterpriseId: userRow.enterprise_id,
+          userId: contractRow.user_id,
+          // Stamped at resolution, not at delivery: a retry hours later must
+          // still report when the contract actually resolved.
+          occurredAt: new Date().toISOString(),
+          sideEffectKey: `${baseKey}:b2b-webhook`,
+        },
+      });
+    }
 
     return effects;
   }
@@ -694,22 +761,22 @@ export class ContractsService {
     switch (effect.effect_type) {
       case "STRIPE_CANCEL_HOLD":
         if (payload.paymentIntentId) {
-          await this.stripe.cancelHold(payload.paymentIntentId);
+          await this.escrow.cancelHold(payload.paymentIntentId);
         }
         return;
       case "STRIPE_CAPTURE_STAKE":
         if (payload.paymentIntentId) {
-          await this.stripe.captureStake(payload.paymentIntentId);
+          await this.escrow.captureStake(payload.paymentIntentId);
         }
         return;
       case "STRIPE_CAPTURE_APPEAL_FEE":
         if (payload.paymentIntentId) {
-          await this.stripe.captureStake(payload.paymentIntentId);
+          await this.escrow.captureStake(payload.paymentIntentId);
         }
         return;
       case "STRIPE_CANCEL_APPEAL_FEE":
         if (payload.paymentIntentId) {
-          await this.stripe.cancelHold(payload.paymentIntentId);
+          await this.escrow.cancelHold(payload.paymentIntentId);
         }
         return;
       case "LEDGER_STAKE_RETURN":
@@ -772,6 +839,20 @@ export class ContractsService {
         }
 
         await this.notifications?.create(payload);
+        return;
+      }
+      case "B2B_WEBHOOK_CONTRACT_RESOLVED": {
+        // Undefined only where ContractsService is constructed directly (unit
+        // tests); the wired app always has it via ContractsModule -> B2BModule.
+        if (!this.enterpriseWebhooks) {
+          return;
+        }
+        await this.enterpriseWebhooks.enqueueContractResolved({
+          enterpriseId: payload.enterpriseId,
+          userId: payload.userId,
+          outcome: effect.outcome as "COMPLETED" | "FAILED",
+          occurredAt: payload.occurredAt,
+        });
         return;
       }
       default:
@@ -1041,10 +1122,16 @@ export class ContractsService {
     );
     const escrowAccountId = escrowResult.rows[0]?.id ?? null;
 
+    // DR-005: the onboarding bonus is deferred for the beta cohort. When the
+    // flag is off every money-shaped step below is skipped rather than run at a
+    // zero amount — recordTransaction rejects a non-positive amount, so a zeroed
+    // bonus would throw here and dead-letter every first contract to
+    // RECONCILE_REQUIRED. See isOnboardingBonusEnabled.
+    const bonusEnabled = isOnboardingBonusEnabled();
     const bonus = grantOnboardingBonus(
       Number(priorContracts.rows[0]?.count ?? 0),
     );
-    if (bonus.granted && user.account_id && escrowAccountId) {
+    if (bonusEnabled && bonus.granted && user.account_id && escrowAccountId) {
       const bonusLedgerKey = `${baseKey}:ledger:onboarding-bonus`;
       if (
         !(await this.hasContractLedgerSideEffect(contractId, bonusLedgerKey))
@@ -1080,7 +1167,9 @@ export class ContractsService {
       });
     }
 
-    if (user.account_id && escrowAccountId) {
+    // On the ledger rail the escrow provider's holdStake already posts the
+    // STAKE_HOLD double-entry; posting it again here would double the debit.
+    if (this.escrow.rail !== "LEDGER" && user.account_id && escrowAccountId) {
       const stakeHoldKey = `${baseKey}:ledger:stake-hold`;
       if (!(await this.hasContractLedgerSideEffect(contractId, stakeHoldKey))) {
         await this.ledger.recordTransaction(
@@ -1168,6 +1257,25 @@ export class ContractsService {
     }
   }
 
+  /**
+   * The activated identity declaration this contract belongs to, if any.
+   *
+   * A missing declaration does not block creation: the identity step is an
+   * onboarding-flow requirement, and refusing every API-created contract
+   * without one would strand every account that predates it.
+   */
+  private async resolveIdentityOathId(
+    userId: string,
+    oathCategory: string,
+  ): Promise<string | null> {
+    if (!this.identityOaths) return null;
+    const oath = await this.identityOaths.getActivatedOath(
+      userId,
+      oathCategory,
+    );
+    return oath?.id ?? null;
+  }
+
   private async createContractTwoPhase(input: {
     dto: CreateContractInput;
     user: any;
@@ -1176,6 +1284,7 @@ export class ContractsService {
     endsAt: Date;
     contractMetadata: Record<string, any>;
     pricingMetadata?: PricingMetadata;
+    identityOathId: string | null;
   }): Promise<{
     contractId: string;
     paymentIntentId: string;
@@ -1190,6 +1299,7 @@ export class ContractsService {
       endsAt,
       contractMetadata,
       pricingMetadata,
+      identityOathId,
     } = input;
     const poolWithConnect = this.pool as unknown as {
       connect: () => Promise<PoolClient>;
@@ -1205,8 +1315,8 @@ export class ContractsService {
         dto.realmId ?? getRealmForCategory(dto.oathCategory as OathCategory);
 
       const contractResult = await phaseAClient.query(
-        `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id, realm_id)
-         VALUES ($1, $2, $3, $4, NULL, $5, 'PENDING_STAKE', $6, $7, $8, $9, $10)
+        `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id, realm_id, identity_oath_id)
+         VALUES ($1, $2, $3, $4, NULL, $5, 'PENDING_STAKE', $6, $7, $8, $9, $10, $11)
          RETURNING id`,
         [
           dto.userId,
@@ -1219,6 +1329,7 @@ export class ContractsService {
           JSON.stringify(contractMetadata),
           bountyLinkId,
           realmId,
+          identityOathId,
         ],
       );
       contractId = contractResult.rows[0].id;
@@ -1254,12 +1365,32 @@ export class ContractsService {
       phaseAClient.release();
     }
 
-    const paymentIntent = await this.stripe.holdStake(
-      user.stripe_customer_id,
-      toCents(dto.stakeAmount),
-      contractId,
-    );
+    const customerHandle = await this.resolveEscrowCustomerHandle(user);
 
+    // A failed authorization must not leave a half-created PENDING_STAKE row
+    // floating with no payment intent and no record of what happened. Dead-letter
+    // it to RECONCILE_REQUIRED so the admin sweep can act on it.
+    let paymentIntent;
+    try {
+      paymentIntent = await this.escrow.holdStake(
+        customerHandle,
+        toCents(dto.stakeAmount),
+        contractId,
+      );
+    } catch (holdErr) {
+      await this.markContractReconcileRequired(
+        contractId,
+        null,
+        `phase_b_hold_failed:${holdErr instanceof Error ? holdErr.message : holdErr}`,
+      );
+      throw new InternalServerErrorException(
+        `Contract activation failed: stake authorization did not succeed. ` +
+          `Contract ${contractId} marked RECONCILE_REQUIRED.`,
+      );
+    }
+
+    // Tracks a concurrent finalizer that activated this contract before us.
+    let activationAlreadyApplied = false;
     const phaseBClient = await poolWithConnect.connect();
     try {
       await phaseBClient.query("BEGIN");
@@ -1286,7 +1417,9 @@ export class ContractsService {
           `Contract ${contractId} is suspended; cannot finalize activation`,
         );
       }
-      if (!(existing.status === "PENDING_STAKE" && existing.payment_intent_id === null)) {
+      if (existing.status === "PENDING_STAKE" && existing.payment_intent_id === null) {
+        // We won the race: this is the first (and only) finalizer, so record
+        // our hold as the contract's payment intent and activate.
         await phaseBClient.query(
           `UPDATE contracts
            SET payment_intent_id = $1,
@@ -1308,6 +1441,12 @@ export class ContractsService {
             [contractId, bountyLinkId],
           );
         }
+      } else {
+        // We lost the race: a concurrent finalizer already recorded a payment
+        // intent and activated this contract. Our hold never became the
+        // recorded one — it is orphaned and must be released. Do that AFTER
+        // COMMIT so a cancel failure cannot roll back the winner's activation.
+        activationAlreadyApplied = true;
       }
 
       await phaseBClient.query("COMMIT");
@@ -1319,7 +1458,7 @@ export class ContractsService {
       }
 
       try {
-        await this.stripe.cancelHold(paymentIntent.id);
+        await this.escrow.cancelHold(paymentIntent.id);
       } catch (cancelErr) {
         await this.markContractReconcileRequired(
           contractId,
@@ -1333,6 +1472,20 @@ export class ContractsService {
       );
     } finally {
       phaseBClient.release();
+    }
+
+    // Losing racer: release the hold we authorized, outside the transaction so
+    // the winner's COMMIT stays intact.
+    if (activationAlreadyApplied) {
+      try {
+        await this.escrow.cancelHold(paymentIntent.id);
+      } catch (cancelErr) {
+        await this.markContractReconcileRequired(
+          contractId,
+          paymentIntent.id,
+          `phase_b_lost_race_hold_cancel:${cancelErr instanceof Error ? cancelErr.message : cancelErr}`,
+        );
+      }
     }
 
     try {
@@ -1349,7 +1502,7 @@ export class ContractsService {
         `contract_create_side_effect_failure:${err instanceof Error ? err.message : err}`,
       );
       try {
-        await this.stripe.cancelHold(paymentIntent.id);
+        await this.escrow.cancelHold(paymentIntent.id);
       } catch {
         // Reconciliation state already recorded above.
       }
@@ -1576,8 +1729,11 @@ export class ContractsService {
       bountyLinkId = crypto.randomBytes(32).toString("hex");
     }
 
-    // 5. Hold stake via Stripe FBO
-    if (!user.stripe_customer_id) {
+    // 5. Hold stake via the configured escrow rail
+    //    The Stripe rail requires a payment-method handle up front. The ledger
+    //    rail needs no outside payment method — its handle (the user's ledger
+    //    account) is provisioned on demand by the port's createCustomer.
+    if (this.escrow.rail !== "LEDGER" && !user.stripe_customer_id) {
       throw new BadRequestException("User has no payment method on file");
     }
 
@@ -1601,6 +1757,15 @@ export class ContractsService {
       contractMetadata.pricing = pricingPlan.pricingMetadata;
     }
 
+    // TKT-P1-016: a contract is the practice of a declared identity, so it
+    // carries the oath the user activated during onboarding. Null is a normal
+    // state — categories without an identity journey, and every contract
+    // created before the identity step existed.
+    const identityOathId = await this.resolveIdentityOathId(
+      dto.userId,
+      dto.oathCategory,
+    );
+
     const supportsTransactionalPath =
       typeof (this.pool as unknown as { connect?: unknown }).connect ===
       "function";
@@ -1614,13 +1779,14 @@ export class ContractsService {
         endsAt,
         contractMetadata,
         pricingMetadata: pricingPlan.pricingMetadata,
+        identityOathId,
       });
     }
 
     // Insert contract first with PENDING_STAKE status (mirrors two-phase pattern)
     const contractResult = await this.pool.query(
-      `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id)
-       VALUES ($1, $2, $3, $4, NULL, $5, 'PENDING_STAKE', $6, $7, $8, $9)
+      `INSERT INTO contracts (user_id, oath_category, verification_method, stake_amount, payment_intent_id, duration_days, status, started_at, ends_at, metadata, bounty_link_id, identity_oath_id)
+       VALUES ($1, $2, $3, $4, NULL, $5, 'PENDING_STAKE', $6, $7, $8, $9, $10)
        RETURNING id`,
       [
         dto.userId,
@@ -1632,16 +1798,34 @@ export class ContractsService {
         endsAt.toISOString(),
         JSON.stringify(contractMetadata),
         bountyLinkId,
+        identityOathId,
       ],
     );
     const contractId = contractResult.rows[0].id;
 
     // Hold stake with real contract ID
-    const paymentIntent = await this.stripe.holdStake(
-      user.stripe_customer_id,
-      toCents(dto.stakeAmount),
-      contractId,
-    );
+    const customerHandle = await this.resolveEscrowCustomerHandle(user);
+    // A failed authorization must not leave a half-created PENDING_STAKE row
+    // floating with no payment intent and no record of what happened. Dead-letter
+    // it to RECONCILE_REQUIRED so the admin sweep can act on it.
+    let paymentIntent;
+    try {
+      paymentIntent = await this.escrow.holdStake(
+        customerHandle,
+        toCents(dto.stakeAmount),
+        contractId,
+      );
+    } catch (holdErr) {
+      await this.markContractReconcileRequired(
+        contractId,
+        null,
+        `contract_create_hold_failed:${holdErr instanceof Error ? holdErr.message : holdErr}`,
+      );
+      throw new InternalServerErrorException(
+        `Contract creation failed: stake authorization did not succeed. ` +
+          `Contract ${contractId} marked RECONCILE_REQUIRED.`,
+      );
+    }
 
     // Activate contract with payment intent
     await this.pool.query(
@@ -1666,13 +1850,15 @@ export class ContractsService {
       );
     }
 
-    // 7. Check for onboarding bonus (first contract)
+    // 7. Check for onboarding bonus (first contract). Deferred for the beta
+    //    cohort by DR-005 — same skip-the-grant treatment as the two-phase path
+    //    above; see isOnboardingBonusEnabled.
     const priorContracts = await this.pool.query(
       `SELECT COUNT(*) as count FROM contracts WHERE user_id = $1 AND id != $2`,
       [dto.userId, contractId],
     );
     const bonus = grantOnboardingBonus(Number(priorContracts.rows[0].count));
-    if (bonus.granted && user.account_id) {
+    if (isOnboardingBonusEnabled() && bonus.granted && user.account_id) {
       const escrowCheck = await this.pool.query(
         `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
       );
@@ -1692,8 +1878,10 @@ export class ContractsService {
       });
     }
 
-    // 8. Record ledger entry (user asset → escrow liability)
-    if (user.account_id) {
+    // 8. Record ledger entry (user asset → escrow liability).
+    //    On the ledger rail the escrow provider's holdStake already posted this
+    //    entry — posting it again would double the debit.
+    if (this.escrow.rail !== "LEDGER" && user.account_id) {
       // Use a system escrow account — create one if needed
       const escrowResult = await this.pool.query(
         `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
@@ -1742,9 +1930,14 @@ export class ContractsService {
   async getContract(contractId: string, requester?: ContractReadRequester) {
     const result = await this.pool.query(
       `SELECT c.*, u.email, u.integrity_score,
+              io.archetype_id AS identity_archetype_id,
+              io.identity_label AS identity_label,
+              io.pledge_copy AS identity_pledge_copy,
+              io.copy_variant AS identity_copy_variant,
               (SELECT COUNT(*) FROM proofs p WHERE p.contract_id = c.id) as proof_count
-       FROM contracts c 
+       FROM contracts c
        JOIN users u ON c.user_id = u.id
+       LEFT JOIN user_identity_oaths io ON io.id = c.identity_oath_id
        WHERE c.id = $1`,
       [contractId],
     );
@@ -1768,6 +1961,17 @@ export class ContractsService {
       proof_count: parseInt(row.proof_count, 10),
       proofs: proofsResult.rows,
       grace_days_max: 2, // Hardcoded for beta
+      // Nested rather than left as flat columns so a client can render "who you
+      // said you were becoming" without reassembling four sibling fields.
+      identity_oath: row.identity_oath_id
+        ? {
+            id: row.identity_oath_id,
+            archetype_id: row.identity_archetype_id,
+            identity_label: row.identity_label,
+            pledge_copy: row.identity_pledge_copy,
+            copy_variant: row.identity_copy_variant,
+          }
+        : null,
     };
   }
 
@@ -2125,7 +2329,7 @@ export class ContractsService {
             );
             const tier = (jurisdiction.rows[0]?.tier ||
               JurisdictionTier.TIER_3) as JurisdictionTier;
-            dispositionMode = this.stripe.resolveDisposition("FAILED", tier);
+            dispositionMode = this.escrow.resolveDisposition("FAILED", tier);
           }
           const quote = buildSettlementQuote(
             stakeAmountCents,
@@ -2446,15 +2650,22 @@ export class ContractsService {
     }
     await this.assertCanWriteContractRow(contract.rows[0], { userId });
 
-    // Get user's Stripe customer ID for the appeal fee
+    // Get the user's Stripe customer ID, if any, for the appeal fee.
+    //
+    // DR-004 makes appeals free for the beta cohort, so a missing payment method
+    // must NOT block an appeal — this used to throw unconditionally, which would
+    // have denied the appeal path outright to any beta user who had never saved a
+    // card. When the fee is re-enabled, initiateAppeal raises 402 itself.
     const userResult = await this.pool.query(
       "SELECT stripe_customer_id FROM users WHERE id = $1",
       [userId],
     );
-    if (
-      userResult.rows.length === 0 ||
-      !userResult.rows[0].stripe_customer_id
-    ) {
+    if (userResult.rows.length === 0) {
+      throw new NotFoundException(`User ${userId} not found`);
+    }
+    const stripeCustomerId: string | null =
+      userResult.rows[0].stripe_customer_id ?? null;
+    if (!stripeCustomerId && isAppealFeeEnabled()) {
       throw new BadRequestException(
         "User has no payment method for appeal fee",
       );
@@ -2478,7 +2689,7 @@ export class ContractsService {
     const result = await this.dispute.initiateAppeal(
       userId,
       proofId,
-      userResult.rows[0].stripe_customer_id,
+      stripeCustomerId,
     );
 
     return result;
@@ -2776,6 +2987,14 @@ export class ContractsService {
       if (["ATTESTED", "COSIGNED"].includes(row.status)) {
         throw new BadRequestException("Already attested today");
       }
+      // A self-reported relapse is terminal for its date: allowing it to be
+      // overwritten with ATTESTED would leave the strike in place while streaks,
+      // dashboards, and partner co-signing all counted the day as sober.
+      if (row.status === "RELAPSED") {
+        throw new BadRequestException(
+          "A relapse was already reported for today and cannot be converted to an attestation",
+        );
+      }
       // Update the PENDING row to ATTESTED
       await this.pool.query(
         `UPDATE attestations SET status = 'ATTESTED', attested_at = NOW(),
@@ -2798,7 +3017,7 @@ export class ContractsService {
          VALUES ($1, $2, CURRENT_DATE, 'ATTESTED', NOW(), $3, $4::jsonb, $5::jsonb)
          ON CONFLICT (contract_id, attestation_date) DO UPDATE SET status = 'ATTESTED', attested_at = NOW(),
          urge_level = EXCLUDED.urge_level, triggers = EXCLUDED.triggers, coping_mechanisms = EXCLUDED.coping_mechanisms
-         WHERE attestations.status NOT IN ('ATTESTED', 'COSIGNED')`,
+         WHERE attestations.status NOT IN ('ATTESTED', 'COSIGNED', 'RELAPSED')`,
         [
           contractId,
           userId,
@@ -2838,6 +3057,136 @@ export class ContractsService {
     }
 
     return { status: "attested" };
+  }
+
+  /**
+   * Honest binary check-in failure path. A self-reported relapse must never be
+   * credited as a sober day: it records today's row as RELAPSED and applies the
+   * same per-miss escalation as the midnight scheduler (one strike, RAIN
+   * intercession below the threshold, auto-FAIL at it).
+   */
+  async recordSelfReportedRelapse(
+    contractId: string,
+    userId: string,
+    context?: {
+      urgeLevel?: number;
+      triggers?: string[];
+    },
+  ) {
+    const contract = await this.pool.query(
+      `SELECT id, user_id, oath_category, status, strikes
+       FROM contracts WHERE id = $1`,
+      [contractId],
+    );
+
+    if (contract.rows.length === 0) {
+      throw new NotFoundException(`Contract ${contractId} not found`);
+    }
+
+    const c = contract.rows[0];
+    if (c.user_id !== userId) {
+      throw new ForbiddenException("You do not own this contract");
+    }
+
+    if (c.status !== "ACTIVE") {
+      throw new BadRequestException("Contract is not active");
+    }
+
+    if (!String(c.oath_category || "").startsWith("RECOVERY_")) {
+      throw new BadRequestException(
+        "Self-report is only available for Recovery stream contracts",
+      );
+    }
+
+    // The RELAPSED row and its strike must land together: a partial write would
+    // leave a relapse that never escalates. Both happen in one transaction, and
+    // the ON CONFLICT guard keeps a same-day repeat from accruing a second strike.
+    const poolWithConnect = this.pool as unknown as {
+      connect: () => Promise<PoolClient>;
+    };
+    const client = await poolWithConnect.connect();
+
+    let recordedNow = false;
+    let strikes = c.strikes || 0;
+    try {
+      await client.query("BEGIN");
+
+      const upsert = await client.query(
+        `INSERT INTO attestations (contract_id, user_id, attestation_date, status, attested_at, urge_level, triggers)
+         VALUES ($1, $2, CURRENT_DATE, 'RELAPSED', NOW(), $3, $4::jsonb)
+         ON CONFLICT (contract_id, attestation_date) DO UPDATE SET status = 'RELAPSED', attested_at = NOW(),
+         urge_level = EXCLUDED.urge_level, triggers = EXCLUDED.triggers
+         WHERE attestations.status <> 'RELAPSED'
+         RETURNING id`,
+        [
+          contractId,
+          userId,
+          context?.urgeLevel ?? null,
+          JSON.stringify(context?.triggers ?? []),
+        ],
+      );
+
+      recordedNow = upsert.rows.length > 0;
+
+      if (recordedNow) {
+        const updated = await client.query(
+          `UPDATE contracts SET strikes = strikes + 1 WHERE id = $1 AND status = 'ACTIVE' RETURNING strikes`,
+          [contractId],
+        );
+        strikes = updated.rows[0]?.strikes ?? strikes;
+      }
+
+      await client.query("COMMIT");
+    } catch (err) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        // A failed rollback must never mask the error that caused it
+      }
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    // Escalation is replayed on every call, not just the first. A retry after a
+    // crashed run therefore finishes the work the previous attempt skipped
+    // instead of short-circuiting on the already-written RELAPSED row.
+    if (strikes >= NOCONTACT_MISS_STRIKE_THRESHOLD) {
+      // resolveContract re-checks and locks the status, so replay never double-settles.
+      await this.resolveContract(contractId, "FAILED");
+      return {
+        status: "relapse_recorded" as const,
+        strikes,
+        contractResolved: "FAILED" as const,
+        ...(recordedNow ? {} : { alreadyRecorded: true as const }),
+      };
+    }
+
+    if (!recordedNow) {
+      return {
+        status: "relapse_recorded" as const,
+        strikes,
+        alreadyRecorded: true as const,
+      };
+    }
+
+    await this.truthLog.appendEvent("RELAPSE_SELF_REPORTED", {
+      contractId,
+      userId,
+      date: new Date().toISOString().split("T")[0],
+    });
+
+    try {
+      await this.notifications?.createRainNotification(
+        userId,
+        contractId,
+        "SELF_REPORTED_RELAPSE",
+      );
+    } catch {
+      // Notification failure must never abort the relapse record
+    }
+
+    return { status: "relapse_recorded" as const, strikes };
   }
 
   async submitWhoopScoredState(
@@ -2933,6 +3282,42 @@ export class ContractsService {
     return result.rows;
   }
 
+  /**
+   * Contracts the user is an ACTIVE accountability partner on.
+   *
+   * The mirror of getPendingInvitations, and the only read that answers
+   * "what am I partnered on" — getActivePartnerships (retention) runs the
+   * opposite direction (an owner's partners), so a partner had no way to
+   * find their own contracts again after accepting an invitation.
+   */
+  async getPartnerships(userId: string) {
+    const result = await this.pool.query(
+      `SELECT ap.id, ap.contract_id, ap.status, ap.accepted_at,
+              c.oath_category, c.stake_amount, c.ends_at,
+              c.status AS contract_status,
+              u.email AS owner_email
+       FROM accountability_partners ap
+       JOIN contracts c ON ap.contract_id = c.id
+       JOIN users u ON c.user_id = u.id
+       WHERE ap.partner_user_id = $1 AND ap.status = 'ACTIVE'
+       ORDER BY ap.accepted_at DESC NULLS LAST`,
+      [userId],
+    );
+    return result.rows;
+  }
+
+  /**
+   * Owner of a contract, or null when the row is gone. Partner lifecycle
+   * notifications address the owner, who is never the actor performing them.
+   */
+  private async getContractOwnerId(contractId: string): Promise<string | null> {
+    const { rows } = await this.pool.query(
+      `SELECT user_id FROM contracts WHERE id = $1`,
+      [contractId],
+    );
+    return rows[0]?.user_id ?? null;
+  }
+
   async acceptPartnerInvitation(contractId: string, partnerUserId: string) {
     const result = await this.pool.query(
       `UPDATE accountability_partners
@@ -2950,6 +3335,22 @@ export class ContractsService {
       contractId,
       partnerUserId,
     });
+
+    // Notify the contract owner (non-critical)
+    try {
+      const ownerId = await this.getContractOwnerId(contractId);
+      if (ownerId) {
+        await this.notifications?.create({
+          userId: ownerId,
+          type: "PARTNER_INVITATION_ACCEPTED",
+          title: "Partner Accepted",
+          body: "Your accountability partner accepted the invitation and can now co-sign your attestations.",
+          metadata: { contractId, partnerUserId },
+        });
+      }
+    } catch {
+      // Notification failure must never abort an accepted invitation
+    }
 
     return { status: "active" };
   }
@@ -2992,6 +3393,22 @@ export class ContractsService {
       contractId,
       partnerUserId,
     });
+
+    // Notify the contract owner (non-critical)
+    try {
+      const ownerId = await this.getContractOwnerId(contractId);
+      if (ownerId) {
+        await this.notifications?.create({
+          userId: ownerId,
+          type: "ATTESTATION_COSIGNED",
+          title: "Attestation Co-Signed",
+          body: "Your accountability partner co-signed today's attestation.",
+          metadata: { contractId, attestationId, partnerUserId },
+        });
+      }
+    } catch {
+      // Notification failure must never abort a recorded co-signature
+    }
 
     return { status: "cosigned" };
   }
@@ -3074,21 +3491,29 @@ export class ContractsService {
       throw new BadRequestException("Contract is not active");
 
     const userResult = await this.pool.query(
-      "SELECT stripe_customer_id, account_id FROM users WHERE id = $1",
+      "SELECT id, email, stripe_customer_id, account_id FROM users WHERE id = $1",
       [userId],
     );
     const user = userResult.rows[0];
 
-    if (!user.stripe_customer_id)
-      throw new BadRequestException("No payment method on file");
+    if (!user) throw new NotFoundException("User not found");
 
-    // 1. Hold additional funds via Stripe BEFORE the DB mutation so a Stripe
-    //    failure can't leave the ledger ahead of the actual hold. The hold is
-    //    the only step that lives outside the DB transaction; if the
+    // The Stripe rail requires a payment-method handle up front — a bare,
+    // source-less customer cannot fund a double-down, so refuse with the same
+    // friendly error createContract uses. The ledger rail needs no outside
+    // payment method; its handle is provisioned on demand by the port.
+    if (this.escrow.rail !== "LEDGER" && !user.stripe_customer_id) {
+      throw new BadRequestException("User has no payment method on file");
+    }
+
+    // 1. Hold additional funds via the escrow rail BEFORE the DB mutation so a
+    //    hold failure can't leave the ledger ahead of the actual custody. The
+    //    hold is the only step that lives outside the DB transaction; if the
     //    transaction below fails we compensate by cancelling the hold so funds
     //    are never authorized without a matching ledger record.
-    const paymentIntent = await this.stripe.holdStake(
-      user.stripe_customer_id,
+    const customerHandle = await this.resolveEscrowCustomerHandle(user);
+    const paymentIntent = await this.escrow.holdStake(
+      customerHandle,
       additionalAmountCents,
       contractId,
     );
@@ -3154,11 +3579,12 @@ export class ContractsService {
         );
 
         // Ledger entry for the increase, inside the same transaction. The
-        // sideEffectKey makes the posting idempotent on retry.
+        // sideEffectKey makes the posting idempotent on retry. On the ledger
+        // rail the hold above already posted the increase.
         const escrowResult = await db.query(
           `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
         );
-        if (user.account_id && escrowResult.rows.length > 0) {
+        if (this.escrow.rail !== "LEDGER" && user.account_id && escrowResult.rows.length > 0) {
           await this.ledger.recordTransaction(
             user.account_id,
             escrowResult.rows[0].id,
@@ -3189,7 +3615,7 @@ export class ContractsService {
         const escrowResult = await db.query(
           `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
         );
-        if (user.account_id && escrowResult.rows.length > 0) {
+        if (this.escrow.rail !== "LEDGER" && user.account_id && escrowResult.rows.length > 0) {
           await this.ledger.recordTransaction(
             user.account_id,
             escrowResult.rows[0].id,
@@ -3214,7 +3640,7 @@ export class ContractsService {
       // Compensation: the Stripe hold succeeded but the ledger/contract mutation
       // failed, so cancel the hold to avoid funds authorized without a record.
       try {
-        await this.stripe.cancelHold(paymentIntent.id);
+        await this.escrow.cancelHold(paymentIntent.id);
       } catch (cancelErr) {
         this.logger.error(
           `Double-down compensation failed for contract ${contractId}, orphaned hold ${paymentIntent.id}: ${
@@ -3332,7 +3758,7 @@ export class ContractsService {
       for (const intentId of intentsToCancel) {
         if (intentId) {
           try {
-            await this.stripe.cancelHold(intentId);
+            await this.escrow.cancelHold(intentId);
           } catch (err) {
             this.logger.error(`Failed to cancel hold for suspended contract ${contract.id}: ${intentId}`, err);
             // Record for reconciliation instead of throwing
@@ -3416,6 +3842,20 @@ export class ContractsService {
       [contractId, userId, JSON.stringify({ partnerId })],
     );
 
+    // Notify the invitee (non-critical). Without this the invitation is a
+    // PENDING row and an event log line — nothing the invited user can see.
+    try {
+      await this.notifications?.create({
+        userId: partnerId,
+        type: "PARTNER_INVITATION",
+        title: "Partner Invitation",
+        body: "You have been invited to be an accountability partner on a Styx contract.",
+        metadata: { contractId },
+      });
+    } catch {
+      // Notification failure must never abort a recorded invitation
+    }
+
     return { success: true, partnerId };
   }
 
@@ -3437,6 +3877,28 @@ export class ContractsService {
       "INSERT INTO accountability_partner_events (contract_id, actor_id, event_type) VALUES (\$1, \$2, \$3)",
       [contractId, partnerId, accept ? "INVITE_ACCEPTED" : "INVITE_DECLINED"],
     );
+
+    // Notify the contract owner (non-critical). A decline is the case that
+    // most needs a signal: the owner is otherwise left waiting on a partner
+    // who will never arrive.
+    try {
+      const ownerId = await this.getContractOwnerId(contractId);
+      if (ownerId) {
+        await this.notifications?.create({
+          userId: ownerId,
+          type: accept
+            ? "PARTNER_INVITATION_ACCEPTED"
+            : "PARTNER_INVITATION_DECLINED",
+          title: accept ? "Partner Accepted" : "Partner Declined",
+          body: accept
+            ? "Your accountability partner accepted the invitation and can now co-sign your attestations."
+            : "Your accountability partner declined the invitation. Invite someone else to keep the contract covered.",
+          metadata: { contractId, partnerId },
+        });
+      }
+    } catch {
+      // Notification failure must never abort a recorded response
+    }
 
     return { success: true, status };
   }
@@ -3460,6 +3922,24 @@ export class ContractsService {
       "INSERT INTO accountability_partner_events (contract_id, actor_id, event_type) VALUES (\$1, \$2, 'VETO_TRIGGERED')",
       [contractId, partnerId],
     );
+
+    // Notify the contract owner (non-critical). A veto cancels a break the
+    // owner queued and is waiting on — silence here reads as the timelock
+    // simply never releasing.
+    try {
+      const ownerId = await this.getContractOwnerId(contractId);
+      if (ownerId) {
+        await this.notifications?.create({
+          userId: ownerId,
+          type: "RECOVERY_BREAK_VETOED",
+          title: "Break Vetoed",
+          body: "Your accountability partner vetoed the intentional break you queued. The contract stays active.",
+          metadata: { contractId, partnerId },
+        });
+      }
+    } catch {
+      // Notification failure must never abort a recorded veto
+    }
 
     return { success: true, message: "Recovery break vetoed by partner" };
   }

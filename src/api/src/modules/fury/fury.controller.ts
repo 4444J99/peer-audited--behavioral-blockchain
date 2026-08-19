@@ -129,10 +129,17 @@ export class FuryController {
       result.rows.map(async (row: any) => {
         let viewUrl: string | null = null;
 
-        // Prefer masked media if redaction is completed
-        const mediaToView = (row.redaction_status === 'COMPLETED' && row.masked_media_uri)
-          ? row.masked_media_uri
-          : row.media_uri;
+        // A Fury auditor is NEVER authorized to see raw media. This mirrors the
+        // rule already enforced in ProofsService.getProofDetail: key the decision
+        // on the PRESENCE OF A MASKED ASSET, never on the redaction_status
+        // string, which is inconsistent across the codebase ('MASKED' from the
+        // production finalize path in proofs.controller.ts, 'COMPLETED' from the
+        // dev-only direct-DB fallback in video-processing.worker.ts, plus
+        // 'NOT_APPLICABLE'/null). The old code compared against 'COMPLETED'
+        // ONLY — so on the production path the test failed and it fell through
+        // to `row.media_uri`, serving peer reviewers the unredacted original.
+        // Fail closed: no masked asset means no url at all.
+        const mediaToView = row.masked_media_uri ?? null;
 
         if (mediaToView) {
           try {

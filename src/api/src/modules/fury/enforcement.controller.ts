@@ -1,4 +1,4 @@
-import { Controller, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Param, Query, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { RoleGuard, Roles } from '../../common/guards/role.guard';
@@ -11,6 +11,27 @@ import { EnforcementService } from './enforcement.service';
 @UseGuards(AuthGuard, RoleGuard)
 export class EnforcementController {
   constructor(private readonly enforcementService: EnforcementService) {}
+
+  @Get('cases')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'List enforcement cases with their penalty state (Admin only)' })
+  async listCases(
+    @Query('status') status?: string,
+    @Query('caseType') caseType?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.enforcementService.listCases({ status, caseType, limit: Number(limit) });
+  }
+
+  @Get('rings')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'List detected collusion rings, grouped from their member cases (Admin only)' })
+  async listRings(@Query('sinceHours') sinceHours?: string, @Query('limit') limit?: string) {
+    return this.enforcementService.listCollusionRings({
+      sinceHours: Number(sinceHours),
+      limit: Number(limit),
+    });
+  }
 
   @Post('evaluate')
   @Roles('ADMIN')
@@ -27,10 +48,13 @@ export class EnforcementController {
     @Param('caseId') caseId: string,
     @Body() dto: { penaltyType?: string; amountCents?: number },
   ) {
+    // `dto.amountCents || 0` silently turned a missing or malformed amount into a
+    // free penalty. A financial penalty type now requires a real amount; the
+    // service derives the default from the auditor stake rather than guessing 0.
     return this.enforcementService.confirmCase(
       caseId,
       dto.penaltyType || 'REP_BURN',
-      dto.amountCents || 0,
+      dto.amountCents,
     );
   }
 

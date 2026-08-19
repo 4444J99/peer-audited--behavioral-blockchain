@@ -1,11 +1,14 @@
 import type {
+  ComplianceArtifactStatus,
   MobileBootstrapResponse,
   ReleaseInfoResponse,
   ReferralCodeResponse,
   ReferralStats,
   ReferralReward,
+  StyxErrorEnvelope,
 } from "@styx/shared/index";
 import { getApiBase } from "./runtime-config";
+import { isSnapshotMode, snapshotRespond } from "./snapshot";
 
 // In the browser, route through the Next.js /api rewrite proxy (same-origin)
 // to avoid cross-origin cookie/CORS issues.  On the server (SSR), call the
@@ -39,6 +42,17 @@ export function getCsrfToken(): string {
   return currentCsrfToken;
 }
 
+/**
+ * The CSRF cookie is deliberately readable (httpOnly: false — double-submit
+ * pattern) and its value is deterministic per session, so session hydration
+ * can take it straight from the cookie instead of calling GET /auth/csrf on
+ * every page load (#891: the per-load call tripped the endpoint's rate limit
+ * on ordinary fast navigation).
+ */
+export function readCsrfCookie(): string | null {
+  return readCookie("styx_csrf_token");
+}
+
 function readCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
   const cookies = document.cookie.split(";");
@@ -59,12 +73,48 @@ function getRequestId(res: Response): string | null {
   );
 }
 
-async function parseErrorMessage(res: Response): Promise<string> {
+/**
+ * Typed API failure. `status` lets callers distinguish a real answer from an
+ * outage (a 403 with code JURISDICTION_BLOCKED is the backend working, not the
+ * network failing); `code` is the API's own `error_code` (shared envelope
+ * contract) when it was serialized.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code: string | null;
+  readonly traceId: string | null;
+
+  constructor(
+    message: string,
+    status: number,
+    code: string | null = null,
+    traceId: string | null = null,
+  ) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.traceId = traceId;
+  }
+}
+
+interface ParsedError {
+  message: string;
+  code: string | null;
+  traceId: string | null;
+}
+
+async function parseErrorEnvelope(res: Response): Promise<ParsedError> {
   let message = `API ${res.status}`;
+  let code: string | null = null;
   try {
     const contentType = res.headers?.get?.("content-type") || "";
     if (contentType.includes("application/json")) {
-      const payload = await res.json();
+      const payload = (await res.json()) as Partial<StyxErrorEnvelope> & {
+        error?: { message?: unknown; code?: unknown } | undefined;
+        error_description?: unknown;
+        code?: unknown;
+      };
       const envelopeMessage =
         payload?.message ||
         payload?.error?.message ||
@@ -77,6 +127,9 @@ async function parseErrorMessage(res: Response): Promise<string> {
       }
       if (errorCode) {
         message += ` (${String(errorCode)})`;
+      }
+      if (typeof errorCode === "string" && errorCode.length > 0) {
+        code = errorCode;
       }
     } else {
       const text = await res.text();
@@ -95,13 +148,24 @@ async function parseErrorMessage(res: Response): Promise<string> {
   if (requestId) {
     message += ` [request_id: ${requestId}]`;
   }
-  return message;
+  return { message, code, traceId: requestId };
 }
 
 let isRefreshing = false;
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const method = String(options?.method || "GET").toUpperCase();
+
+  // The Cloudflare snapshot has no API behind it. Every call is answered from
+  // fixtures captured off a verified demo run, and writes are refused in plain
+  // language rather than faked -- see services/snapshot.ts. Inlined at build time,
+  // so a normal build never reaches this branch.
+  if (isSnapshotMode()) {
+    const snapshot = await snapshotRespond<T>(path, method);
+    if (snapshot.ok) return snapshot.data;
+    throw new ApiError(snapshot.message, snapshot.status, null, null);
+  }
+
   const needsCsrf =
     method === "POST" ||
     method === "PUT" ||
@@ -125,8 +189,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       headers: mergedHeaders,
     });
   } catch {
-    throw new Error(
+    throw new ApiError(
       "Styx service is temporarily unavailable. Please try again shortly.",
+      0,
+      null,
+      null,
     );
   }
 
@@ -140,11 +207,15 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       return request<T>(path, options);
     } catch {
       isRefreshing = false;
-      throw new Error(await parseErrorMessage(res));
+      const parsed = await parseErrorEnvelope(res);
+      throw new ApiError(parsed.message, res.status, parsed.code, parsed.traceId);
     }
   }
 
-  if (!res.ok) throw new Error(await parseErrorMessage(res));
+  if (!res.ok) {
+    const parsed = await parseErrorEnvelope(res);
+    throw new ApiError(parsed.message, res.status, parsed.code, parsed.traceId);
+  }
   if (res.status === 204) return undefined as T;
   const contentType = res.headers?.get?.("content-type") || "";
   if (contentType.includes("application/json") || contentType === "") {
@@ -185,6 +256,93 @@ export interface VerdictDto {
   flagged?: boolean;
 }
 
+/** A PENDING accountability_partners row joined to the contract it covers. */
+export interface PartnerInvitation {
+  id: string;
+  contract_id: string;
+  partner_user_id: string | null;
+  partner_email: string | null;
+  status: string;
+  invited_at: string | null;
+  accepted_at: string | null;
+  oath_category: string;
+  stake_amount: string;
+  owner_email: string;
+}
+
+/** An ACTIVE partnership from the partner's side of the relationship. */
+export interface Partnership {
+  id: string;
+  contract_id: string;
+  status: string;
+  accepted_at: string | null;
+  oath_category: string;
+  stake_amount: string;
+  ends_at: string | null;
+  contract_status: string;
+  owner_email: string;
+}
+
+/** A partner_checkins row, serialized by AccountabilityPartnerService. */
+export interface PartnerCheckIn {
+  id: string;
+  contractId: string;
+  partnerId: string;
+  type: "SCHEDULED" | "EMERGENCY" | "STREAK_MILESTONE";
+  status: "PENDING" | "COMPLETED" | "MISSED" | "ESCALATED";
+  scheduledAt: string;
+  completedAt?: string;
+  message?: string;
+}
+
+export interface AccountabilityStatus {
+  partners: Array<{
+    email: string;
+    status: string;
+    partner_user_id: string;
+  }>;
+  history: Array<{
+    id: string;
+    contract_id: string;
+    actor_id: string;
+    event_type: string;
+    payload: Record<string, unknown> | null;
+    created_at: string;
+  }>;
+}
+
+/** The identity declaration a contract is bound to (TKT-P1-016). */
+export interface IdentityOathSummary {
+  id: string;
+  archetype_id: string;
+  identity_label: string;
+  pledge_copy: string;
+  copy_variant: string;
+}
+
+export interface IdentityOathRecord {
+  id: string;
+  userId: string;
+  oathCategory: string;
+  archetypeId: string;
+  identityLabel: string;
+  pledgeCopy: string;
+  copyVariant: string;
+  activatedAt: string | null;
+}
+
+export interface IdentityOathState {
+  oathCategory: string;
+  oath: IdentityOathRecord | null;
+  completed: boolean;
+  archetypes: Array<{
+    id: string;
+    label: string;
+    becoming: string;
+    description: string;
+  }>;
+}
+
 export interface LeaderboardEntry {
   id: string;
   email: string;
@@ -192,11 +350,113 @@ export interface LeaderboardEntry {
   created_at: string;
 }
 
+/**
+ * A queued intentional break on a recovery contract (TKT-P1-005). `status` is
+ * the row's stored value except for the one case the server derives: a
+ * PENDING_COOLDOWN row whose `unlock_at` has passed is returned as UNLOCKED.
+ * The client renders that field as given — it never decides the lock state
+ * from its own clock, which can be wrong or deliberately wound forward.
+ */
+export interface RecoveryBreakRequest {
+  id: string;
+  contract_id: string;
+  requested_at: string;
+  unlock_at: string;
+  reason: string | null;
+  status: "PENDING_COOLDOWN" | "UNLOCKED" | "CANCELLED" | "CONSUMED";
+}
+
+export interface DangerWindow {
+  type: string;
+  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  message: string;
+}
+
+export interface ProtectionRecommendation {
+  type: string;
+  action: string;
+  description: string;
+}
+
+export interface ContractDangerStatus {
+  contractId: string;
+  inDangerZone: boolean;
+  windows: DangerWindow[];
+  recommendations: ProtectionRecommendation[];
+}
+
+/**
+ * One ACTIVE contract as GET /dashboard/progress reports it. `stake_amount` and
+ * `streak` arrive as strings: Postgres serializes NUMERIC and COUNT(*) (BIGINT)
+ * as text to preserve precision the JSON number type would lose.
+ */
+export interface ActiveContractProgress {
+  id: string;
+  oath_category: string;
+  status: string;
+  stake_amount: string;
+  duration_days: number;
+  started_at: string;
+  ends_at: string;
+  streak: string;
+}
+
+export interface DashboardProgress {
+  activeContracts: ActiveContractProgress[];
+  protectedVaultBalanceCents: number;
+  summary: {
+    totalActiveStakeUsd: number;
+    longestStreak: number;
+  };
+}
+
+export interface EnforcementCase {
+  id: string;
+  reviewer_id: string;
+  case_type: string;
+  confidence: number;
+  status: string;
+  evidence_json: Record<string, unknown>;
+  created_at: string;
+  integrity_score: number | null;
+  reviewer_status: string | null;
+  penalty_type: string | null;
+  amount_cents: number | null;
+  applied_at: string | null;
+}
+
+export interface CollusionRingMember {
+  caseId: string;
+  reviewerId: string;
+  status: string;
+  integrityScore: number | null;
+}
+
+/**
+ * A ring is reconstructed server-side by grouping member cases on
+ * evidence_json.ringId — there is no rings table, so `ring_id` is the detection
+ * run's identifier and not a stable primary key across sweeps.
+ */
+export interface CollusionRing {
+  ring_id: string;
+  detected_at: string;
+  confidence: number;
+  member_count: number;
+  pending_count: number;
+  penalized_count: number;
+  appealed_count: number;
+  signal_count: number | null;
+  signal_types: string[] | null;
+  members: CollusionRingMember[];
+}
+
 export const api = {
   health: () => request<{ status: string }>("/health"),
   getMobileBootstrap: () =>
     request<MobileBootstrapResponse>("/mobile/bootstrap"),
   getReleaseInfo: () => request<ReleaseInfoResponse>("/meta/release"),
+  getComplianceArtifacts: () =>
+    request<ComplianceArtifactStatus[]>("/compliance/artifacts"),
 
   // Auth
   register: (
@@ -253,6 +513,18 @@ export const api = {
       }>;
     }>(`/wallet/history${limit ? `?limit=${limit}` : ""}`),
 
+  // Onboarding — identity-based oath declaration (TKT-P1-016)
+  getIdentityOath: (oathCategory?: string) =>
+    request<IdentityOathState>(
+      `/onboarding/identity-oath${oathCategory ? `?oathCategory=${encodeURIComponent(oathCategory)}` : ""}`,
+    ),
+
+  declareIdentityOath: (archetypeId: string, oathCategory?: string) =>
+    request<IdentityOathRecord>("/onboarding/identity-oath", {
+      method: "POST",
+      body: JSON.stringify({ archetypeId, oathCategory }),
+    }),
+
   // Contracts — userId comes from JWT
   getUserContracts: () =>
     request<
@@ -294,7 +566,22 @@ export const api = {
         media_url: string | null;
       }>;
       grace_days_max: number;
+      identity_oath: IdentityOathSummary | null;
     }>(`/contracts/${id}`),
+
+  // `downscaling.multiplier` is advisory only — it is rendered as stake guidance
+  // and never applied to a submitted amount (see lib/stake-guidance.ts).
+  getEndowedProgress: (contractId: string) =>
+    request<{
+      contractId: string;
+      realProgress: number;
+      endowedBoost: number;
+      displayProgress: number;
+      currentTier: string;
+      nextTierAt: number;
+      motivation: string;
+      downscaling: { multiplier: number; reason: string };
+    }>(`/behavioral/retention/endowed-progress/${contractId}`),
 
   createContract: (dto: CreateContractDto | Record<string, unknown>) =>
     request<{ contractId: string; paymentIntentId: string }>("/contracts", {
@@ -313,13 +600,50 @@ export const api = {
       body: JSON.stringify(dto),
     }),
 
+  // paymentIntentId is null while appeals are free (DR-004) — there is no hold
+  // to reference.
   disputeContract: (contractId: string) =>
-    request<{ appealStatus: string; paymentIntentId: string }>(
+    request<{ appealStatus: string; paymentIntentId: string | null }>(
       `/contracts/${contractId}/dispute`,
       {
         method: "POST",
       },
     ),
+
+  // Recovery timelock (TKT-P1-005). A recovery contract cannot be broken on
+  // impulse: the break is queued, and only the 24h cooldown expiring unlocks
+  // it. `activeRequest` is null when nothing has ever been queued.
+  getRecoveryLockStatus: (contractId: string) =>
+    request<{ activeRequest: RecoveryBreakRequest | null }>(
+      `/contracts/${contractId}/recovery/lock-status`,
+    ),
+
+  requestRecoveryBreak: (contractId: string, reason: string) =>
+    request<RecoveryBreakRequest>(
+      `/contracts/${contractId}/recovery/break-request`,
+      {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      },
+    ),
+
+  cancelRecoveryBreak: (contractId: string) =>
+    request<{ success: boolean; request: RecoveryBreakRequest }>(
+      `/contracts/${contractId}/recovery/break-cancel`,
+      {
+        method: "POST",
+      },
+    ),
+
+  // Danger windows are evaluated per user across every ACTIVE contract, so
+  // there is no per-contract route to call — a caller scoped to one contract
+  // filters the `contracts` array itself.
+  getDangerZoneStatus: () =>
+    request<{
+      timezone: string;
+      inDangerZone: boolean;
+      contracts: ContractDangerStatus[];
+    }>("/behavioral/retention/danger-zone"),
 
   // Fury — userId comes from JWT
   getFuryAssignments: () =>
@@ -536,6 +860,43 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  getCollusionRings: (sinceHours?: number, limit?: number) => {
+    const params = new URLSearchParams();
+    if (sinceHours) params.set("sinceHours", String(sinceHours));
+    if (limit) params.set("limit", String(limit));
+    const qs = params.toString();
+    return request<{ rings: CollusionRing[] }>(
+      `/fury/enforcement/rings${qs ? `?${qs}` : ""}`,
+    );
+  },
+
+  getEnforcementCases: (opts?: {
+    status?: string;
+    caseType?: string;
+    limit?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (opts?.status) params.set("status", opts.status);
+    if (opts?.caseType) params.set("caseType", opts.caseType);
+    if (opts?.limit) params.set("limit", String(opts.limit));
+    const qs = params.toString();
+    return request<{ cases: EnforcementCase[] }>(
+      `/fury/enforcement/cases${qs ? `?${qs}` : ""}`,
+    );
+  },
+
+  confirmEnforcementCase: (
+    caseId: string,
+    data?: { penaltyType?: string; amountCents?: number },
+  ) =>
+    request<{ success: boolean; caseId: string; status: string }>(
+      `/fury/enforcement/confirm/${caseId}`,
+      {
+        method: "POST",
+        body: JSON.stringify(data ?? {}),
+      },
+    ),
+
   getKillSwitch: () =>
     request<{ refundOnlyMode: boolean }>("/admin/kill-switch"),
 
@@ -596,6 +957,20 @@ export const api = {
       method: "DELETE",
     }),
 
+  // Responsible use (TKT-P1-009): both endpoints existed server-side with
+  // enforcement in contract creation; this is their first client surface.
+  setSelfExclusion: (durationDays: number) =>
+    request<{ status: string; expiresAt: string }>("/users/me/self-exclusion", {
+      method: "POST",
+      body: JSON.stringify({ durationDays }),
+    }),
+
+  setPregnancyExclusion: (active: boolean) =>
+    request<{ status: string }>("/users/me/pregnancy-exclusion", {
+      method: "POST",
+      body: JSON.stringify({ active }),
+    }),
+
   // AI
   grillMe: (slideContent: string) =>
     request<{ questions: string[] }>("/ai/grill-me", {
@@ -654,6 +1029,72 @@ export const api = {
       method: "POST",
     }),
 
+  // Accountability partners (TKT-P1-017). The endpoints were guarded and
+  // tested server-side with no web caller at all; these are their first
+  // browser surface. Routes mirror the mobile ApiClient where both exist.
+  getPartnerInvitations: () =>
+    request<PartnerInvitation[]>("/contracts/invitations"),
+
+  getPartnerships: () => request<Partnership[]>("/contracts/partnerships"),
+
+  // Accepting goes through /partner/accept rather than
+  // /accountability/respond: it also claims an email-only invitation by
+  // stamping partner_user_id, which the respond path requires to already
+  // be set. Declining has no equivalent, so it uses respond.
+  acceptPartnerInvitation: (contractId: string) =>
+    request<{ status: string }>(`/contracts/${contractId}/partner/accept`, {
+      method: "POST",
+    }),
+
+  respondToPartnerInvite: (contractId: string, accept: boolean) =>
+    request<{ success: boolean; status: string }>(
+      `/contracts/${contractId}/accountability/respond`,
+      {
+        method: "POST",
+        body: JSON.stringify({ accept }),
+      },
+    ),
+
+  cosignAttestation: (contractId: string) =>
+    request<{ status: string }>(`/contracts/${contractId}/attestation/cosign`, {
+      method: "POST",
+    }),
+
+  vetoRecoveryBreak: (contractId: string) =>
+    request<{ success: boolean; message: string }>(
+      `/contracts/${contractId}/recovery/veto-break`,
+      {
+        method: "POST",
+      },
+    ),
+
+  invitePartner: (contractId: string, email: string) =>
+    request<{ success: boolean; partnerId: string }>(
+      `/contracts/${contractId}/accountability/invite`,
+      {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      },
+    ),
+
+  getAccountabilityStatus: (contractId: string) =>
+    request<AccountabilityStatus>(
+      `/contracts/${contractId}/accountability/status`,
+    ),
+
+  // Behavioral-retention check-ins. Both endpoints authorize either
+  // participant, so the partner and the owner reach the same thread.
+  getPartnerCheckIns: (contractId: string, limit?: number) =>
+    request<PartnerCheckIn[]>(
+      `/behavioral/retention/partners/check-ins/${contractId}${limit ? `?limit=${limit}` : ""}`,
+    ),
+
+  completePartnerCheckIn: (checkInId: string, message: string) =>
+    request<PartnerCheckIn>("/behavioral/retention/partners/check-in", {
+      method: "POST",
+      body: JSON.stringify({ checkInId, message }),
+    }),
+
   // Referrals
   getReferralCode: () =>
     request<ReferralCodeResponse>("/referrals/code"),
@@ -666,6 +1107,19 @@ export const api = {
       totalRewardCents: number;
       rewards: ReferralReward[];
     }>("/referrals/rewards"),
+
+  issueLeaderboardStreamCookie: () =>
+    request<{ expiresInSeconds: number }>(
+      "/dashboard/leaderboard/stream-cookie",
+      {
+        method: "POST",
+        credentials: "include",
+      },
+    ),
+
+  // Goal gradient
+  getDashboardProgress: () =>
+    request<DashboardProgress>("/dashboard/progress"),
 
   // Streak Chain
   getStreakChain: () =>

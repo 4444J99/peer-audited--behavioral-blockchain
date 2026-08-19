@@ -6,7 +6,7 @@ import {
 import { ContractsService, CreateContractInput } from "./contracts.service";
 import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import { StripeFboService } from "../../../services/escrow/stripe.service";
+import { EscrowProvider } from "../../common/interfaces/payout-provider.interface";
 import { DisputeService } from "../../../services/escrow/dispute.service";
 import { FuryRouterService } from "../../../services/fury-router/fury-router.service";
 import { AegisProtocolService } from "../../../services/health/aegis.service";
@@ -15,6 +15,7 @@ import { AnomalyService } from "../../../services/anomaly/anomaly.service";
 import { SettlementService } from "../payments/settlement.service";
 import {
   OathCategory,
+  ONBOARDING_BONUS_AMOUNT,
   VerificationMethod,
 } from "../../../../shared/libs/behavioral-logic";
 import { Pool } from "pg";
@@ -32,11 +33,16 @@ describe("ContractsService", () => {
   } as unknown as TruthLogService;
 
   const mockStripe = {
+    rail: "STRIPE",
+    movesRealMoney: false,
     holdStake: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
     captureStake: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
     cancelHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
+    retrieveHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
+    createCustomer: jest.fn().mockResolvedValue("cus_test_1"),
+    transferFunds: jest.fn().mockResolvedValue({ id: "tr_test_1", amountCents: 0 }),
     resolveDisposition: jest.fn().mockReturnValue("REFUND"),
-  } as unknown as StripeFboService;
+  } as unknown as EscrowProvider;
 
   const mockRealStripe = {
     resolveEscrow: jest.fn().mockResolvedValue(true),
@@ -501,6 +507,109 @@ describe("ContractsService", () => {
       expect(phaseBClient.release).toHaveBeenCalled();
     });
 
+    it("should finalize phase-B activation exactly once with a single bounty insert", async () => {
+      // The NO_CONTACT_BOUNDARY createContract response builds a whistleblower
+      // bounty link via resolveWebPublicUrl(); provide the env it requires.
+      const originalWebUrl = process.env.STYX_WEB_PUBLIC_URL;
+      process.env.STYX_WEB_PUBLIC_URL = "https://styx.test";
+      try {
+      mockPool.connect = jest.fn();
+
+      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // total failures
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // activeRecoveryContracts
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // lastRecoveryContract
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // lastRecoveryFailure
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] }); // prior contracts
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // hasContractLedgerSideEffect
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // hasTruthLogSideEffect
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // partner lookup
+
+      const phaseAClient = {
+        query: jest
+          .fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockResolvedValueOnce({ rows: [{ id: "contract-tx-happy" }] }) // INSERT contract
+          .mockResolvedValueOnce({ rows: [] }) // accountability partner SELECT
+          .mockResolvedValueOnce({ rows: [] }) // INSERT accountability_partners
+          .mockResolvedValueOnce({ rows: [] }), // COMMIT
+        release: jest.fn(),
+      };
+
+      const phaseBClient = {
+        query: jest
+          .fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockResolvedValueOnce({
+            rows: [
+              {
+                id: "contract-tx-happy",
+                status: "PENDING_STAKE",
+                payment_intent_id: null,
+              },
+            ],
+          }) // SELECT FOR UPDATE
+          .mockResolvedValueOnce({ rows: [] }) // finalize UPDATE
+          .mockResolvedValueOnce({ rows: [] }) // bounty INSERT
+          .mockResolvedValueOnce({ rows: [] }), // COMMIT
+        release: jest.fn(),
+      };
+
+      (mockPool.connect as jest.Mock)
+        .mockResolvedValueOnce(phaseAClient)
+        .mockResolvedValueOnce(phaseBClient);
+
+      (mockStripe.holdStake as jest.Mock).mockResolvedValueOnce({
+        id: "pi_tx_happy_1",
+      });
+
+      const dto: CreateContractInput = {
+        userId: "user-1",
+        oathCategory: OathCategory.NO_CONTACT_BOUNDARY,
+        verificationMethod: VerificationMethod.DAILY_ATTESTATION,
+        stakeAmount: 15,
+        durationDays: 14,
+        recoveryMetadata: {
+          accountabilityPartnerEmail: "friend@example.com",
+          noContactIdentifiers: ["hash_abc"],
+          acknowledgments: {
+            voluntary: true,
+            noMinors: true,
+            noDependents: true,
+            noLegalObligations: true,
+          },
+        },
+      };
+
+      const result = await service.createContract(dto);
+
+      expect(result.contractId).toBe("contract-tx-happy");
+      expect(result.paymentIntentId).toBe("pi_tx_happy_1");
+      expect(mockStripe.holdStake).toHaveBeenCalledTimes(1);
+      expect(mockStripe.cancelHold).not.toHaveBeenCalled();
+
+      const updateCalls = phaseBClient.query.mock.calls.filter(
+        ([sql]: [string]) =>
+          typeof sql === "string" && sql.includes("SET payment_intent_id"),
+      );
+      expect(updateCalls).toHaveLength(1);
+      const bountyCalls = phaseBClient.query.mock.calls.filter(
+        ([sql]: [string]) =>
+          typeof sql === "string" && sql.includes("INSERT INTO bounties"),
+      );
+      expect(bountyCalls).toHaveLength(1);
+      expect(phaseAClient.release).toHaveBeenCalled();
+      expect(phaseBClient.release).toHaveBeenCalled();
+      } finally {
+        if (originalWebUrl === undefined) {
+          delete process.env.STYX_WEB_PUBLIC_URL;
+        } else {
+          process.env.STYX_WEB_PUBLIC_URL = originalWebUrl;
+        }
+      }
+    });
+
     it("should mark contract RECONCILE_REQUIRED when compensation cancel fails after phase-B DB failure", async () => {
       mockPool.connect = jest.fn();
 
@@ -561,6 +670,270 @@ describe("ContractsService", () => {
     });
   });
 
+  // ── onboarding bonus (DR-005) ───────────────────────────────────
+
+  describe("onboarding bonus (DR-005)", () => {
+    const onboardingLedgerCalls = () =>
+      (mockLedger.recordTransaction as jest.Mock).mock.calls.filter(
+        ([, , , , metadata]) => metadata?.type === "ONBOARDING_BONUS",
+      );
+
+    const onboardingTruthLogCalls = () =>
+      (mockTruthLog.appendEvent as jest.Mock).mock.calls.filter(
+        ([event]) => event === "ONBOARDING_BONUS_GRANTED",
+      );
+
+    // Prior-contract count 0 throughout: a first contract is the only state in
+    // which the grant is eligible at all, so every assertion below isolates the
+    // flag rather than the eligibility rule.
+    const queueSinglePhaseFirstContract = () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // total failures
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "contract-1" }] }); // INSERT contract
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts ACTIVE
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // prior contracts
+    };
+
+    // The transactional path reaches the grant through
+    // runContractCreationActivationSideEffects instead, so it needs its own
+    // coverage — a flag wired at only one of the two call sites still pays the
+    // bonus on every contract created with a pool that supports connect().
+    const queueTwoPhaseFirstContract = () => {
+      mockPool.connect = jest.fn();
+      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // total failures
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // prior contracts
+
+      const phaseAClient = {
+        query: jest
+          .fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockResolvedValueOnce({ rows: [{ id: "contract-tx-1" }] }) // INSERT contract
+          .mockResolvedValueOnce({ rows: [] }), // COMMIT
+        release: jest.fn(),
+      };
+
+      const phaseBClient = {
+        query: jest
+          .fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockResolvedValueOnce({
+            rows: [
+              {
+                id: "contract-tx-1",
+                status: "PENDING_STAKE",
+                payment_intent_id: null,
+              },
+            ],
+          }) // SELECT FOR UPDATE
+          .mockResolvedValueOnce({ rows: [] }) // finalize UPDATE
+          .mockResolvedValueOnce({ rows: [] }), // COMMIT
+        release: jest.fn(),
+      };
+
+      (mockPool.connect as jest.Mock)
+        .mockResolvedValueOnce(phaseAClient)
+        .mockResolvedValueOnce(phaseBClient);
+
+      (mockStripe.holdStake as jest.Mock).mockResolvedValueOnce({
+        id: "pi_tx_bonus_1",
+      });
+    };
+
+    afterEach(() => {
+      delete process.env.STYX_ONBOARDING_BONUS_ENABLED;
+    });
+
+    it("grants nothing on a first contract while the bonus is deferred", async () => {
+      queueSinglePhaseFirstContract();
+
+      await service.createContract(validDto);
+
+      expect(onboardingLedgerCalls()).toHaveLength(0);
+      expect(onboardingTruthLogCalls()).toHaveLength(0);
+    });
+
+    it("grants the full bonus when the bonus is reinstated", async () => {
+      process.env.STYX_ONBOARDING_BONUS_ENABLED = "true";
+      queueSinglePhaseFirstContract();
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: "escrow-acct" }] }); // SYSTEM_ESCROW
+
+      await service.createContract(validDto);
+
+      expect(onboardingLedgerCalls()).toEqual([
+        [
+          "escrow-acct",
+          "acct-1",
+          ONBOARDING_BONUS_AMOUNT,
+          "contract-1",
+          { type: "ONBOARDING_BONUS", userId: "user-1" },
+        ],
+      ]);
+      expect(onboardingTruthLogCalls()).toEqual([
+        [
+          "ONBOARDING_BONUS_GRANTED",
+          {
+            userId: "user-1",
+            amount: ONBOARDING_BONUS_AMOUNT,
+            contractId: "contract-1",
+          },
+        ],
+      ]);
+    });
+
+    it("grants nothing on the transactional path while the bonus is deferred", async () => {
+      queueTwoPhaseFirstContract();
+
+      await service.createContract(validDto);
+
+      expect(onboardingLedgerCalls()).toHaveLength(0);
+      expect(onboardingTruthLogCalls()).toHaveLength(0);
+    });
+
+    it("grants the full bonus on the transactional path when reinstated", async () => {
+      process.env.STYX_ONBOARDING_BONUS_ENABLED = "true";
+      queueTwoPhaseFirstContract();
+
+      await service.createContract(validDto);
+
+      expect(onboardingLedgerCalls()).toEqual([
+        [
+          "escrow-acct",
+          "acct-1",
+          ONBOARDING_BONUS_AMOUNT,
+          "contract-tx-1",
+          expect.objectContaining({
+            type: "ONBOARDING_BONUS",
+            userId: "user-1",
+          }),
+        ],
+      ]);
+      expect(onboardingTruthLogCalls()).toEqual([
+        [
+          "ONBOARDING_BONUS_GRANTED",
+          expect.objectContaining({
+            userId: "user-1",
+            amount: ONBOARDING_BONUS_AMOUNT,
+            contractId: "contract-tx-1",
+          }),
+        ],
+      ]);
+    });
+  });
+
+  // ── identity-oath binding (TKT-P1-016) ──────────────────────────
+
+  describe("createContract identity binding", () => {
+    const noContactDto: CreateContractInput = {
+      userId: "user-1",
+      oathCategory: OathCategory.NO_CONTACT_BOUNDARY,
+      verificationMethod: VerificationMethod.DAILY_ATTESTATION,
+      stakeAmount: 15,
+      durationDays: 14,
+    };
+
+    // Routed by SQL shape rather than call order: the identity lookup is not a
+    // pool query at all (it goes through IdentityOathService), so an ordered
+    // chain would encode the wrong contract.
+    function buildRoutedPool() {
+      return {
+        query: jest.fn().mockImplementation((sql: string) => {
+          if (sql.includes("FROM users WHERE id"))
+            return Promise.resolve({ rows: [activeUser] });
+          if (sql.includes("SELECT created_at FROM contracts"))
+            return Promise.resolve({ rows: [] });
+          if (sql.includes("SELECT updated_at FROM contracts"))
+            return Promise.resolve({ rows: [] });
+          if (sql.includes("id != $2"))
+            return Promise.resolve({ rows: [{ count: "1" }] });
+          if (sql.includes("COUNT(*)"))
+            return Promise.resolve({ rows: [{ count: 0 }] });
+          if (sql.includes("INSERT INTO contracts"))
+            return Promise.resolve({ rows: [{ id: "contract-1" }] });
+          if (sql.includes("SYSTEM_ESCROW"))
+            return Promise.resolve({ rows: [{ id: "escrow-acct" }] });
+          return Promise.resolve({ rows: [] });
+        }),
+      };
+    }
+
+    function buildService(pool: { query: jest.Mock }, identityOaths: any) {
+      return new ContractsService(
+        pool as unknown as Pool,
+        mockLedger,
+        mockTruthLog,
+        mockStripe,
+        mockRealStripe as any,
+        mockDispute,
+        mockFuryRouter,
+        mockAegis,
+        mockRecovery,
+        mockDynamicPenalty as any,
+        mockAnomaly,
+        undefined, // notifications
+        undefined, // compliancePolicy
+        mockSettlement,
+        undefined, // referralService
+        undefined, // enterpriseWebhooks
+        identityOaths,
+      );
+    }
+
+    function insertParams(pool: { query: jest.Mock }) {
+      const call = pool.query.mock.calls.find(
+        ([sql]: [string]) =>
+          typeof sql === "string" && sql.includes("INSERT INTO contracts"),
+      );
+      return call?.[1] as unknown[];
+    }
+
+    let originalWebUrl: string | undefined;
+
+    beforeEach(() => {
+      // The NO_CONTACT_BOUNDARY response builds a whistleblower bounty link.
+      originalWebUrl = process.env.STYX_WEB_PUBLIC_URL;
+      process.env.STYX_WEB_PUBLIC_URL = "https://styx.test";
+    });
+
+    afterEach(() => {
+      if (originalWebUrl === undefined) delete process.env.STYX_WEB_PUBLIC_URL;
+      else process.env.STYX_WEB_PUBLIC_URL = originalWebUrl;
+    });
+
+    it("binds the new contract to the activated identity oath", async () => {
+      const pool = buildRoutedPool();
+      const identityOaths = {
+        getActivatedOath: jest.fn().mockResolvedValue({ id: "oath-1" }),
+      };
+
+      await buildService(pool, identityOaths).createContract(noContactDto);
+
+      expect(identityOaths.getActivatedOath).toHaveBeenCalledWith(
+        "user-1",
+        OathCategory.NO_CONTACT_BOUNDARY,
+      );
+      expect(insertParams(pool)).toContain("oath-1");
+    });
+
+    it("still creates the contract when no identity has been declared", async () => {
+      const pool = buildRoutedPool();
+      const identityOaths = {
+        getActivatedOath: jest.fn().mockResolvedValue(null),
+      };
+
+      const result = await buildService(pool, identityOaths).createContract(
+        noContactDto,
+      );
+
+      expect(result.contractId).toBe("contract-1");
+      // Trailing bind parameter is the identity oath id.
+      const params = insertParams(pool);
+      expect(params[params.length - 1]).toBeNull();
+    });
+  });
+
   // ── getContract ─────────────────────────────────────────────────
 
   describe("getContract", () => {
@@ -585,6 +958,37 @@ describe("ContractsService", () => {
         proof_count: 0,
         proofs: [],
         grace_days_max: 2,
+        identity_oath: null,
+      });
+    });
+
+    it("returns the identity the contract is bound to", async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: "contract-1",
+            user_id: "user-1",
+            email: "user@styx.app",
+            integrity_score: 55,
+            proof_count: "0",
+            identity_oath_id: "oath-1",
+            identity_archetype_id: "BOUNDARY_KEEPER",
+            identity_label: "The Boundary Keeper",
+            identity_pledge_copy: "I am becoming someone who keeps the distance they chose.",
+            identity_copy_variant: "DECLARATIVE",
+          },
+        ],
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // proofs list
+
+      const result = await service.getContract("contract-1");
+
+      expect(result.identity_oath).toEqual({
+        id: "oath-1",
+        archetype_id: "BOUNDARY_KEEPER",
+        identity_label: "The Boundary Keeper",
+        pledge_copy: "I am becoming someone who keeps the distance they chose.",
+        copy_variant: "DECLARATIVE",
       });
     });
 
@@ -1163,6 +1567,84 @@ describe("ContractsService", () => {
     });
   });
 
+  // ── B2B webhook fan-out ────────────────────────────────────────
+
+  describe("enterprise webhook side effect", () => {
+    const contractRow = {
+      user_id: "user-9",
+      stake_amount: 100,
+      payment_intent_id: null,
+      metadata: {},
+    };
+
+    function effectsFor(userRow: Record<string, unknown>) {
+      return (service as any).buildContractResolutionSideEffects({
+        contractId: "contract-1",
+        outcome: "COMPLETED",
+        contractRow,
+        userRow,
+        escrowAccountId: null,
+        revenueAccountId: null,
+        bountyPoolAccountId: null,
+      });
+    }
+
+    it("should enqueue a webhook effect when the contract owner has an enterprise", () => {
+      const effect = effectsFor({
+        account_id: "acct-1",
+        enterprise_id: "ent-001",
+      }).find((e: any) => e.effectType === "B2B_WEBHOOK_CONTRACT_RESOLVED");
+
+      expect(effect).toBeDefined();
+      expect(effect.dedupeKey).toBe(
+        "contract-resolution:contract-1:COMPLETED:b2b-webhook",
+      );
+      expect(effect.payload).toEqual(
+        expect.objectContaining({
+          enterpriseId: "ent-001",
+          userId: "user-9",
+        }),
+      );
+      expect(typeof effect.payload.occurredAt).toBe("string");
+    });
+
+    it("should enqueue nothing for a consumer contract", () => {
+      const effects = effectsFor({ account_id: "acct-1", enterprise_id: null });
+      expect(
+        effects.some(
+          (e: any) => e.effectType === "B2B_WEBHOOK_CONTRACT_RESOLVED",
+        ),
+      ).toBe(false);
+    });
+
+    it("should hand the fan-out to the subscription service on dispatch", async () => {
+      const enqueueContractResolved = jest.fn().mockResolvedValue(1);
+      (service as any).enterpriseWebhooks = { enqueueContractResolved };
+
+      await (service as any).dispatchContractResolutionSideEffect({
+        id: "fx-1",
+        contract_id: "contract-1",
+        outcome: "FAILED",
+        effect_type: "B2B_WEBHOOK_CONTRACT_RESOLVED",
+        dedupe_key: "contract-resolution:contract-1:FAILED:b2b-webhook",
+        payload: {
+          enterpriseId: "ent-001",
+          userId: "user-9",
+          occurredAt: "2026-08-15T00:00:00.000Z",
+        },
+        status: "PROCESSING",
+        attempts: 1,
+      });
+
+      expect(enqueueContractResolved).toHaveBeenCalledWith({
+        enterpriseId: "ent-001",
+        userId: "user-9",
+        outcome: "FAILED",
+        occurredAt: "2026-08-15T00:00:00.000Z",
+      });
+    });
+  });
+
   // ── getContractProofs ──────────────────────────────────────────
 
   describe("getContractProofs", () => {
@@ -1649,6 +2131,169 @@ describe("ContractsService", () => {
     });
   });
 
+  // ── recordSelfReportedRelapse ─────────────────────────────────
+
+  describe("recordSelfReportedRelapse", () => {
+    const activeContract = {
+      id: "contract-r1",
+      user_id: "user-1",
+      oath_category: "RECOVERY_NO_CONTACT_TEXT",
+      status: "ACTIVE",
+      strikes: 0,
+    };
+
+    // The RELAPSED write and its strike share one transaction, so the service
+    // reaches for a pooled client rather than pool.query.
+    const txClient = (
+      upsertRows: Array<{ id: string }>,
+      strikeRows: Array<{ strikes: number }> = [],
+    ) => ({
+      query: jest
+        .fn()
+        .mockResolvedValueOnce({ rows: [] }) // BEGIN
+        .mockResolvedValueOnce({ rows: upsertRows }) // RELAPSED upsert
+        .mockResolvedValueOnce({ rows: strikeRows }) // strike UPDATE (skipped when no upsert)
+        .mockResolvedValueOnce({ rows: [] }), // COMMIT
+      release: jest.fn(),
+    });
+
+    it("records RELAPSED and applies one strike — never credits an attestation", async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [activeContract] });
+      const client = txClient([{ id: "attest-1" }], [{ strikes: 1 }]);
+      mockPool.connect = jest.fn().mockResolvedValue(client);
+
+      const result = await service.recordSelfReportedRelapse(
+        "contract-r1",
+        "user-1",
+        { urgeLevel: 8, triggers: ["late night"] },
+      );
+
+      expect(result).toEqual({ status: "relapse_recorded", strikes: 1 });
+      const upsertSql = client.query.mock.calls[1][0];
+      expect(upsertSql).toContain("'RELAPSED'");
+      expect(upsertSql).not.toContain("'ATTESTED'");
+      expect(client.query).toHaveBeenNthCalledWith(1, "BEGIN");
+      expect(client.query).toHaveBeenNthCalledWith(4, "COMMIT");
+      expect(client.release).toHaveBeenCalled();
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        "RELAPSE_SELF_REPORTED",
+        expect.objectContaining({ contractId: "contract-r1", userId: "user-1" }),
+      );
+    });
+
+    it("is idempotent for a same-day repeat report — no second strike", async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ ...activeContract, strikes: 1 }],
+      });
+      // Upsert guard returns no row: today is already RELAPSED.
+      const client = txClient([]);
+      mockPool.connect = jest.fn().mockResolvedValue(client);
+
+      const result = await service.recordSelfReportedRelapse(
+        "contract-r1",
+        "user-1",
+      );
+
+      expect(result).toEqual({
+        status: "relapse_recorded",
+        strikes: 1,
+        alreadyRecorded: true,
+      });
+      // BEGIN, upsert, COMMIT — no strike UPDATE.
+      expect(client.query).toHaveBeenCalledTimes(3);
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
+    });
+
+    it("rolls back and rethrows when the transaction fails", async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [activeContract] });
+      const client = {
+        query: jest
+          .fn()
+          .mockResolvedValueOnce({ rows: [] }) // BEGIN
+          .mockRejectedValueOnce(new Error("deadlock detected")), // upsert
+        release: jest.fn(),
+      };
+      mockPool.connect = jest.fn().mockResolvedValue(client);
+
+      await expect(
+        service.recordSelfReportedRelapse("contract-r1", "user-1"),
+      ).rejects.toThrow("deadlock detected");
+      expect(client.query).toHaveBeenCalledWith("ROLLBACK");
+      expect(client.release).toHaveBeenCalled();
+    });
+
+    it("resumes escalation on a retry that finds the relapse already written", async () => {
+      // A previous attempt committed the RELAPSED row and the strike, then died
+      // before resolving the contract. The retry must still auto-FAIL it.
+      const resolveSpy = jest
+        .spyOn(service, "resolveContract")
+        .mockResolvedValue({ status: "FAILED" } as any);
+
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ ...activeContract, strikes: 3 }],
+      });
+      const client = txClient([]);
+      mockPool.connect = jest.fn().mockResolvedValue(client);
+
+      const result = await service.recordSelfReportedRelapse(
+        "contract-r1",
+        "user-1",
+      );
+
+      expect(resolveSpy).toHaveBeenCalledWith("contract-r1", "FAILED");
+      expect(result).toEqual({
+        status: "relapse_recorded",
+        strikes: 3,
+        contractResolved: "FAILED",
+        alreadyRecorded: true,
+      });
+      resolveSpy.mockRestore();
+    });
+
+    it("auto-FAILs the contract when the strike threshold is reached", async () => {
+      const resolveSpy = jest
+        .spyOn(service, "resolveContract")
+        .mockResolvedValue({ status: "FAILED" } as any);
+
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ ...activeContract, strikes: 2 }],
+      });
+      const client = txClient([{ id: "attest-1" }], [{ strikes: 3 }]);
+      mockPool.connect = jest.fn().mockResolvedValue(client);
+
+      const result = await service.recordSelfReportedRelapse(
+        "contract-r1",
+        "user-1",
+      );
+
+      expect(resolveSpy).toHaveBeenCalledWith("contract-r1", "FAILED");
+      expect(result).toEqual({
+        status: "relapse_recorded",
+        strikes: 3,
+        contractResolved: "FAILED",
+      });
+      resolveSpy.mockRestore();
+    });
+
+    it("throws ForbiddenException for non-owner", async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [activeContract] });
+
+      await expect(
+        service.recordSelfReportedRelapse("contract-r1", "user-impostor"),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it("throws BadRequestException for non-recovery contract", async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ ...activeContract, oath_category: "BIOLOGICAL_CARDIO" }],
+      });
+
+      await expect(
+        service.recordSelfReportedRelapse("contract-r1", "user-1"),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
   // ── submitWhoopScoredState ────────────────────────────────────
 
   describe("submitWhoopScoredState", () => {
@@ -1962,16 +2607,56 @@ describe("ContractsService", () => {
       );
     });
 
-    it("should throw BadRequestException when user has no stripe customer", async () => {
+    // DR-004 inverts this. Appeals are free for the beta cohort, so a user who
+    // has never saved a card must still be able to appeal — this previously threw
+    // BadRequestException, which would have closed the appeal path entirely to
+    // exactly the users the free-appeal decision was meant to serve.
+    it("should let a user with no stripe customer file a dispute (DR-004)", async () => {
       mockPool.query.mockResolvedValueOnce({
-        rows: [{ id: "contract-1", user_id: "user-1" }],
+        rows: [{ id: "contract-1", user_id: "user-1", status: "ACTIVE" }],
       });
       mockPool.query.mockResolvedValueOnce({
         rows: [{ stripe_customer_id: null }],
       });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: "proof-latest" }],
+      });
+
+      await service.fileDispute("user-1", "contract-1");
+
+      expect(mockDispute.initiateAppeal).toHaveBeenCalledWith(
+        "user-1",
+        "proof-latest",
+        null,
+      );
+    });
+
+    it("should still require a payment method when the fee is re-enabled", async () => {
+      process.env.STYX_APPEAL_FEE_ENABLED = "true";
+      try {
+        mockPool.query.mockResolvedValueOnce({
+          rows: [{ id: "contract-1", user_id: "user-1", status: "ACTIVE" }],
+        });
+        mockPool.query.mockResolvedValueOnce({
+          rows: [{ stripe_customer_id: null }],
+        });
+
+        await expect(
+          service.fileDispute("user-1", "contract-1"),
+        ).rejects.toThrow(BadRequestException);
+      } finally {
+        delete process.env.STYX_APPEAL_FEE_ENABLED;
+      }
+    });
+
+    it("should throw NotFoundException when the user does not exist", async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: "contract-1", user_id: "user-1", status: "ACTIVE" }],
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       await expect(service.fileDispute("user-1", "contract-1")).rejects.toThrow(
-        BadRequestException,
+        NotFoundException,
       );
     });
 
@@ -2096,6 +2781,156 @@ describe("ContractsService", () => {
       await expect(
         service.cosignAttestation("contract-1", "partner-1"),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // ── getPartnerships ──────────────────────────────────────────
+
+  describe("getPartnerships", () => {
+    it("should read the partner side of the relationship, not the owner side", async () => {
+      const rows = [
+        {
+          id: "ap-2",
+          contract_id: "c-2",
+          status: "ACTIVE",
+          owner_email: "owner@styx.app",
+        },
+      ];
+      mockPool.query.mockResolvedValueOnce({ rows });
+
+      const result = await service.getPartnerships("partner-1");
+
+      expect(result).toEqual(rows);
+      const [sql, params] = mockPool.query.mock.calls[0];
+      expect(sql).toContain("ap.partner_user_id = $1");
+      expect(sql).toContain("ap.status = 'ACTIVE'");
+      expect(params).toEqual(["partner-1"]);
+    });
+  });
+
+  // ── partner lifecycle notifications ──────────────────────────
+
+  describe("partner lifecycle notifications", () => {
+    // The service takes notifications as an @Optional() dependency and every
+    // other case in this file passes `undefined`, so this block builds its own
+    // instance with the collaborator wired in.
+    let notifyPool: { query: jest.Mock };
+    let notifyService: ContractsService;
+    const mockNotifications = { create: jest.fn().mockResolvedValue({}) };
+
+    beforeEach(() => {
+      notifyPool = { query: jest.fn().mockResolvedValue({ rows: [] }) };
+      mockNotifications.create.mockClear();
+      notifyService = new ContractsService(
+        notifyPool as unknown as Pool,
+        mockLedger,
+        mockTruthLog,
+        mockStripe,
+        mockRealStripe as any,
+        mockDispute,
+        mockFuryRouter,
+        mockAegis,
+        mockRecovery,
+        mockDynamicPenalty as any,
+        mockAnomaly,
+        mockNotifications as any,
+        undefined, // compliancePolicy
+        mockSettlement,
+      );
+    });
+
+    it("notifies the invitee when a partner is invited", async () => {
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ id: "c-1", user_id: "owner-1" }] }) // contract
+        .mockResolvedValueOnce({ rows: [{ id: "partner-9" }] }) // partner lookup
+        .mockResolvedValueOnce({ rows: [] }) // INSERT accountability_partners
+        .mockResolvedValueOnce({ rows: [] }); // INSERT event
+
+      await notifyService.invitePartner("c-1", "owner-1", "friend@styx.app");
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "partner-9",
+          type: "PARTNER_INVITATION",
+          metadata: { contractId: "c-1" },
+        }),
+      );
+    });
+
+    it("notifies the owner when the invitation is declined", async () => {
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ id: "ap-1" }] }) // UPDATE RETURNING
+        .mockResolvedValueOnce({ rows: [] }) // INSERT event
+        .mockResolvedValueOnce({ rows: [{ user_id: "owner-1" }] }); // owner lookup
+
+      await notifyService.respondToInvite("c-1", "partner-9", false);
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "owner-1",
+          type: "PARTNER_INVITATION_DECLINED",
+        }),
+      );
+    });
+
+    it("notifies the owner when the invitation is accepted", async () => {
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ id: "ap-1" }] }) // UPDATE RETURNING
+        .mockResolvedValueOnce({ rows: [{ user_id: "owner-1" }] }); // owner lookup
+
+      await notifyService.acceptPartnerInvitation("c-1", "partner-9");
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "owner-1",
+          type: "PARTNER_INVITATION_ACCEPTED",
+        }),
+      );
+    });
+
+    it("notifies the owner when an attestation is co-signed", async () => {
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ "?column?": 1 }] }) // partner check
+        .mockResolvedValueOnce({ rows: [{ id: "attest-1" }] }) // latest attestation
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE attestation
+        .mockResolvedValueOnce({ rows: [{ user_id: "owner-1" }] }); // owner lookup
+
+      await notifyService.cosignAttestation("c-1", "partner-9");
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "owner-1",
+          type: "ATTESTATION_COSIGNED",
+        }),
+      );
+    });
+
+    it("notifies the owner when a recovery break is vetoed", async () => {
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ id: "ap-1" }] }) // active partner check
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE recovery_break_requests
+        .mockResolvedValueOnce({ rows: [] }) // INSERT event
+        .mockResolvedValueOnce({ rows: [{ user_id: "owner-1" }] }); // owner lookup
+
+      await notifyService.vetoRecoveryBreak("c-1", "partner-9");
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "owner-1",
+          type: "RECOVERY_BREAK_VETOED",
+        }),
+      );
+    });
+
+    it("returns successfully when the notification collaborator throws", async () => {
+      mockNotifications.create.mockRejectedValueOnce(new Error("queue down"));
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ id: "ap-1" }] })
+        .mockResolvedValueOnce({ rows: [{ user_id: "owner-1" }] });
+
+      await expect(
+        notifyService.acceptPartnerInvitation("c-1", "partner-9"),
+      ).resolves.toEqual({ status: "active" });
     });
   });
 
