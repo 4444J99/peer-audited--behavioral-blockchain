@@ -91,6 +91,9 @@ export default function WalletDashboard() {
 
   return (
     <div className="min-h-screen bg-black text-white p-6 md:p-12">
+      <div className="mx-auto max-w-4xl px-4 py-3 mb-6 rounded-xl border border-amber-700/40 bg-amber-950/40 text-amber-200 text-xs font-bold uppercase tracking-wider text-center">
+        TEST-MONEY LEDGER — Balances and transactions are synthetic. This demonstrates the accountability flow without real financial instruments.
+      </div>
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12 border-b border-neutral-800 pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-lime-500 rounded-full flex items-center justify-center">

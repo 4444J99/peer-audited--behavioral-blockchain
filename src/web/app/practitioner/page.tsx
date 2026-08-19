@@ -217,6 +217,9 @@ export default function PractitionerPage() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white p-6 md:p-12 font-sans">
+      <div className="mx-auto max-w-4xl px-4 py-3 mb-6 rounded-xl border border-amber-700/40 bg-amber-950/40 text-amber-200 text-xs font-bold uppercase tracking-wider text-center">
+        SYNTHETIC DEMO — This practitioner console shows seeded client data. In production, practitioners see only assigned clients with consent.
+      </div>
       <header className="mb-10 border-b border-neutral-800 pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tighter uppercase">
