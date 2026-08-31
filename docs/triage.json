@@ -14246,7 +14246,7 @@
       "title": "Agent action evidence layer: immutable execution, approval, and review records",
       "labels": [],
       "action": "BUILD",
-      "state": "TESTED",
+      "state": "PR_CREATED",
       "batch": "agent-action-evidence-2026-08-31",
       "history": [
         {
@@ -14268,11 +14268,16 @@
           "from": "BUILD_DONE",
           "to": "TESTED",
           "at": "2026-08-31T13:48:47Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-08-31T14:01:33Z"
         }
       ],
       "evidence": "src/api/src/modules/agent-action-evidence/agent-action-evidence.service.spec.ts",
-      "pr": null,
-      "state_updated": "2026-08-31T13:48:47Z",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/956",
+      "state_updated": "2026-08-31T14:01:33Z",
       "closed_at": null
     }
   }

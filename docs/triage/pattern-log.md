@@ -4,6 +4,7 @@
 
 **Started:** 1 issue (#955). **Built:** 1. **Tests:** 44/44 focused tests
 passed (14 agent-action service/controller tests plus 30 migration-runner tests).
+**Draft PR:** #956.
 
 **Evidence:** `organvm.execution/v1` now has an append-only PostgreSQL event
 store, per-execution hash chain, transactional Styx truth-log anchor, guarded
