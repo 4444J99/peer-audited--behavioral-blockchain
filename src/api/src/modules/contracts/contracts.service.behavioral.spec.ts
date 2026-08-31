@@ -440,9 +440,8 @@ describe("ContractsService — Behavioral Physics", () => {
     });
 
     // Issue #905: the early-access $0-escrow ceiling must not block synthetic
-    // adults on the test-money rail. A $0-escrow no-contact contract must pass
-    // the full creation pipeline: stake hold (0¢), ledger STAKE_HOLD, and the
-    // CONTRACT_CREATED truth-log receipt.
+    // adults on the test-money rail. With nothing to custody, the provider hold
+    // is skipped while the ledger and CONTRACT_CREATED truth receipts remain.
     it("should create a $0-escrow no-contact contract end to end (issue #905)", async () => {
       const dto: CreateContractInput = {
         ...recoveryDto,
@@ -453,11 +452,7 @@ describe("ContractsService — Behavioral Physics", () => {
       const result = await service.createContract(dto);
 
       expect(result.contractId).toBe("contract-r1");
-      expect(mockStripe.holdStake).toHaveBeenCalledWith(
-        "cus_test_1",
-        0,
-        "contract-r1",
-      );
+      expect(mockStripe.holdStake).not.toHaveBeenCalled();
 
       const stakeHoldCall = jest
         .mocked(mockLedger.recordTransaction)
