@@ -279,7 +279,7 @@ function constantTimeEquals(a: Buffer, b: Buffer): boolean {
  * 0x04 || X || Y for a P-256 key — the byte sequence Apple hashes to derive keyId.
  */
 function uncompressedEcPoint(publicKey: crypto.KeyObject): Buffer {
-  const jwk = publicKey.export({ format: 'jwk' }) as crypto.JsonWebKey;
+  const jwk = publicKey.export({ format: 'jwk' }) as crypto.webcrypto.JsonWebKey;
   if (jwk.kty !== 'EC' || jwk.crv !== 'P-256' || !jwk.x || !jwk.y) {
     throw new Error('credential key is not an EC P-256 key');
   }
@@ -895,7 +895,7 @@ export class DeviceAttestationService {
 
     let publicKey: crypto.KeyObject;
     try {
-      publicKey = crypto.createPublicKey({ key: jwk as crypto.JsonWebKey, format: 'jwk' });
+      publicKey = crypto.createPublicKey({ key: jwk as crypto.webcrypto.JsonWebKey, format: 'jwk' });
     } catch {
       return this.rejectAndroid(userId, 'Google signing key could not be imported', [
         'invalid_signing_key',
