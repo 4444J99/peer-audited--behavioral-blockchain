@@ -1,13 +1,73 @@
 # Styx: The Blockchain of Truth
 
-Peer-audited behavioral accountability system using financial stakes and consensus verification to close the wellness program enforcement gap.
+> A software prototype for creating behavioral commitments, collecting proof,
+> and routing that proof through peer review, with test-money and payment-adapter
+> paths for studying how financial stakes change follow-through.
 
-> **The expensive problem:** Accountability and corporate-wellness programs leak money because the stakes aren't real, the proof isn't audited, and holding employees' health data is a liability nobody wants to own. Budgets buy good intentions and get no follow-through. Styx is the production-grade enforcement layer that closes the gap: real Stripe FBO escrow (hold / capture / cancel), a double-entry ledger with no phantom money, peer-audited proof-of-completion via the Fury Router (honeypot injection + consensus + bounty economy), loss-aversion physics (λ = 1.955), and a privacy-firewalled B2B tier where the employer funds the pot but never sees an individual's health data — only k-anonymized aggregate engagement.
+[Start with the plain-language explanation](docs/audiences/general.md) ·
+[Read the technical edition](docs/audiences/technical.md) ·
+[Study the humanities questions](docs/audiences/humanities.md) ·
+[Assess an operational use](docs/audiences/business.md) ·
+[Inspect contribution evidence](docs/audiences/evaluator.md) ·
+[Audit the claims](docs/evidence/README.md)
+
+## What am I looking at?
+
+This is the source repository and project record for Styx. A repository is the
+organized collection of code, tests, documentation, design decisions, and
+revision history used to build and inspect a software project.
+
+Styx is currently a **prototype**, not a publicly verified production service.
+The repository contains implemented API, web, mobile, desktop, synthetic-demo,
+and deployment paths. On 2026-08-31, the public Pages URL returned an HTML shell,
+but its required assets and the documented launch routes returned `404`; no
+public API or full web deployment was independently verified. See the
+[evidence record](docs/evidence/README.md) for the exact boundary.
+
+## Choose your reading path
+
+| I am reading as... | Start here | First question answered |
+| --- | --- | --- |
+| A general or nontechnical reader | [Plain-language edition](docs/audiences/general.md) | What is this, and what happens when someone uses it? |
+| A software engineer | [Technical edition](docs/audiences/technical.md) | How is it built, tested, and bounded? |
+| A humanities scholar, artist, or educator | [Humanities edition](docs/audiences/humanities.md) | What does peer judgment turn into knowledge, memory, and power? |
+| An operator, founder, or prospective client | [Business edition](docs/audiences/business.md) | What workflow might this change, and what is only proposed? |
+| A hiring manager, collaborator, or funder | [Evaluator edition](docs/audiences/evaluator.md) | What did Anthony contribute, and where is the evidence? |
+
+## Project at a glance
+
+| | |
+| --- | --- |
+| **What it is** | A multi-interface behavioral-commitment prototype with peer proof review, a double-entry ledger, and configurable payment/compliance controls. |
+| **Problem addressed** | Ordinary accountability systems often separate the promise, the evidence, and the consequence; Styx explores one auditable workflow connecting all three. |
+| **Current state** | `PROTOTYPE`. Local synthetic, test-money flows and deployment automation exist; a usable public product deployment was not verified on 2026-08-31. |
+| **Intended users** | The current product wedge is adults using no-contact or breakup-recovery commitments. Fitness/wellness and employer-funded programs are later proposed applications. |
+| **Anthony's role** | Product/technical policy and implementation lead, as recorded in the repository's founder decision ledger; that record cites an unsigned founder-agreement draft and does not establish sole authorship or ownership. |
+| **Evidence** | Source modules, automated tests, CI and deployment workflows, architecture records, and the claim-to-control matrix. |
+| **Known limitations** | No verified public adoption, revenue, behavioral outcome, enterprise-scale performance, or production payment settlement is claimed here. The current public Pages artifact is incomplete. |
+
+## Canonical long-form documentation
+
+The detailed project narrative continues below. Its architectural and product
+depth is preserved; the audience editions above change the order and vocabulary,
+not the underlying facts.
+
+> **The expensive problem:** Accountability and corporate-wellness programs can
+> spend heavily on participation without establishing whether commitments were
+> completed. Styx prototypes an enforcement layer that joins payment hold /
+> capture / cancel paths, a double-entry ledger, peer-audited proof via the Fury
+> Router, loss-aversion modeling (λ = 1.955), and an enterprise tier designed to
+> expose aggregate engagement rather than individual health records. The
+> corporate-wellness application is proposed; it is not represented here as a
+> customer deployment.
 >
-> [**Deploy this for your shop →**](mailto:padavano.anthony@gmail.com)<br>
-> _(If you are a technical recruiter or engineering leader, this repository is the proof-of-work for my architectural weight — a NestJS + Next.js + React Native + Tauri monorepo moving regulated money through a double-entry ledger and Stripe escrow, with 1,107 tests, KYC, geofencing, and CodeQL gates. [Work with the team that built this →](mailto:padavano.anthony@gmail.com))_
+> [**Discuss a bounded prototype evaluation →**](mailto:padavano.anthony@gmail.com)<br>
+> _(If you are a technical recruiter or engineering leader, this repository is
+> inspectable proof of a NestJS + Next.js + React Native + Tauri monorepo with a
+> double-entry ledger, payment-adapter paths, KYC and geofencing controls, CI
+> gates, and extensive automated tests. [Inspect the contribution record →](docs/audiences/evaluator.md))_
 
-![CI](https://github.com/a-organvm/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/workflows/ci.yml/badge.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Node](https://img.shields.io/badge/node-24%20LTS-339933)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -142,22 +202,31 @@ flowchart TB
 
 ## Live Status
 
-| Surface                                                        | URL                                                                   | Status                                                                                                                                                                                                          |
-| -------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pitch deck (canonical Pages artifact, `@styx/pitch` → `docs/`) | https://a-organvm.github.io/peer-audited--behavioral-blockchain/      | `ship-now` (200 OK)                                                                                                                                                                                             |
-| Interactive launch surface (waitlist / sign-up)                | `/launch`                                                             | `ship-soon` (404 — tracked in Phase Gamma)                                                                                                                                                                      |
-| Ask Styx LLM Q&A app                                           | `/ask-styx` (deploy-ask-styx workflow)                                | separate sub-path, not on canonical URL                                                                                                                                                                         |
-| API (NestJS, Render)                                           | the `API_URL` value per Render blueprint (`render.yaml`, `@styx/api`) | `ship-soon` (cut `v*` tag to trigger [`deploy.yml`](.github/workflows/deploy.yml); set Render secrets `RENDER_API_SERVICE_ID`, `RENDER_API_KEY`, `RENDER_WEB_SERVICE_ID`, `API_URL`, `WEB_URL`, `DATABASE_URL`) |
-| Web (Next.js, Render)                                          | the `WEB_URL` value per Render blueprint (`render.yaml`, `@styx/web`) | `ship-soon` (same tag-triggered deploy as API)                                                                                                                                                                  |
+Status below is a dated observation, not a deployment promise. It was checked on
+**2026-08-31**.
 
-Full activation ledger (evidence, blockers, reconciliation with the cross-system `activation-ledger-2026-06-10.csv`): [`docs/activation/activation-ledger--peer-audited--2026-06-11.md`](docs/activation/activation-ledger--peer-audited--2026-06-11.md).
+| Surface | URL or location | Observed status |
+| --- | --- | --- |
+| Source repository | `https://github.com/4444J99/peer-audited--behavioral-blockchain` | Public source and documentation were accessible. |
+| Current GitHub Pages root | `https://4444j99.github.io/peer-audited--behavioral-blockchain/` | Returned `200`, but the HTML identified itself as “Ask Styx” and referenced `/ask-styx/` assets that returned `404`; this is **not a usable demo receipt**. |
+| Former organization Pages root | `https://a-organvm.github.io/peer-audited--behavioral-blockchain/` | Returned `404`; the older activation ledger is stale on this point. |
+| Launch and Ask Styx routes | `/launch`, `/ask-styx` | Returned `404` under the current Pages root. |
+| API and full web application | Render blueprints and workflows in the repository | Deployment paths exist in source. No public target was independently verified for this update. |
+
+The historical [activation ledger](docs/activation/activation-ledger--peer-audited--2026-06-11.md)
+remains useful as an earlier record, but its live-URL result has been superseded
+by the dated [evidence check](docs/evidence/README.md#deployment-observation).
 
 Verify the live surface (re-runnable by any user):
 
 ```bash
-## Pitch deck
+## Current Pages root
 curl -sS -o /dev/null -w "%{http_code} %{url_effective}\n" \
-  -L https://a-organvm.github.io/peer-audited--behavioral-blockchain/
+  -L https://4444j99.github.io/peer-audited--behavioral-blockchain/
+
+## Required Ask Styx asset referenced by that HTML shell
+curl -sS -o /dev/null -w "%{http_code} %{url_effective}\n" \
+  -L https://4444j99.github.io/ask-styx/assets/index-D1Ny8FSA.js
 
 ## API health (after deploy)
 ## curl -sS <api-url>/health
@@ -166,7 +235,8 @@ curl -sS -o /dev/null -w "%{http_code} %{url_effective}\n" \
 ## curl -sS -o /dev/null -w "%{http_code}\n" <web-url>
 ```
 
-**Expected output:** `200 https://a-organvm.github.io/peer-audited--behavioral-blockchain/`
+**Observed on 2026-08-31:** the root returned `200`; the referenced asset returned
+`404`. A root-page status alone proves only that an HTML shell responds.
 
 ### Deploying
 
@@ -196,14 +266,35 @@ See [`docs/operations/one-command-deploy.md`](docs/operations/one-command-deploy
 
 ## Testing
 
-**1,107 tests** across all workspaces (Jest + ts-jest) plus Playwright E2E.
+At commit `42c853ff514f26533d5308d21b117da85c7a1da2`, the repository
+defines **3,382 Jest/Vitest tests across 290 files in 10 test-bearing workspaces**. A
+fresh local diagnostic run on 2026-08-31 passed 3,378 and failed 4, so this is
+not presented as an all-green release receipt. The former README said `1,107`
+while its own four subtotals summed to `1,207`; both figures are obsolete.
+
+| Workspace | Defined tests | Fresh result |
+| --- | ---: | ---: |
+| API | 2,108 | 2,104 passed; 4 failed |
+| Web | 481 | 481 passed |
+| Mobile | 324 | 324 passed |
+| Desktop | 148 | 148 passed |
+| Shared | 215 | 215 passed |
+| Ask Styx | 46 | 46 passed |
+| Test harness | 4 | 4 passed |
+| Audience engine | 21 | 21 passed |
+| Audit engine | 31 | 31 passed |
+| Styx CLI | 4 | 4 passed |
+
+The run also found root manifest/lockfile drift that prevents a clean `npm ci`.
+See the exact commands, compatibility workaround, and failure classification in
+the [2026-08-31 verification receipt](docs/evidence/verification--2026-08-31.md).
 
 ```bash
 make test                                        # All unit/integration tests via Turborepo
-cd src/api && npx jest                           # API tests only (640)
-cd src/mobile && npx jest                        # Mobile tests only (273)
-cd src/web && npx jest                           # Web tests only (166)
-cd src/desktop && npx jest                       # Desktop tests only (128)
+cd src/api && npx jest                           # API tests only
+cd src/mobile && npx jest                        # Mobile tests only
+cd src/web && npx jest                           # Web tests only
+cd src/desktop && npx jest                       # Desktop tests only
 npx jest --testNamePattern="should reject"       # Single test by name
 
 ## E2E (Playwright)
@@ -236,7 +327,8 @@ npm run beta:readiness
 ```
 
 This writes `artifacts/beta-readiness-summary.json` with gate-level `passed`/`failed`/`skipped` statuses.
-Full policy and gate ownership live in `docs/planning/beta-readiness-contract.md`.
+Full policy and gate ownership live in
+[`docs/planning/planning--beta-readiness-contract.md`](docs/planning/planning--beta-readiness-contract.md).
 
 ## Commands
 

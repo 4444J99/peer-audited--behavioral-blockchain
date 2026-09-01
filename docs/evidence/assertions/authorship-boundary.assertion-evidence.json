@@ -1,0 +1,26 @@
+{
+  "contract_name": "assertion-evidence.v1",
+  "contract_version": 1,
+  "assertion_id": "styx.authorship-boundary",
+  "assertion_class": "historical_record",
+  "statement": "The repository's founder decision ledger records Jessica Tenenbaum as business and commercial policy lead and Anthony Padavano as product and technical policy and implementation lead, while explicitly identifying the underlying founder agreement as unsigned.",
+  "verification_state": "verified",
+  "evidence_references": [
+    {
+      "evidence_id": "styx-founder-decisions",
+      "independence_group": "repository-founder-record",
+      "evidence_type": "owner_record",
+      "reference": "docs/planning/planning--founder-decisions-of-record.md",
+      "body_hash": "sha256:120523e62fb7e8769ca589b93c3a7fef87e3d1b9d71bf3770516922a9f1f637e",
+      "observed_at": "2026-08-31T22:41:11Z"
+    },
+    {
+      "evidence_id": "styx-authorship-shortlog-check",
+      "independence_group": "fresh-git-history-verification",
+      "evidence_type": "fresh_verifier_receipt",
+      "reference": "docs/evidence/verification--2026-08-31.md",
+      "body_hash": "sha256:e75c92133042ce1d9ea6fd65af05e44788b20c15b90d0c4e0dc1911d1278a955",
+      "observed_at": "2026-08-31T22:41:11Z"
+    }
+  ]
+}

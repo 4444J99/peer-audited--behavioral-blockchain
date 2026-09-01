@@ -1,0 +1,26 @@
+{
+  "contract_name": "assertion-evidence.v1",
+  "contract_version": 1,
+  "assertion_id": "styx.prototype-status",
+  "assertion_class": "historical_record",
+  "statement": "At commit 42c853ff514f26533d5308d21b117da85c7a1da2, Styx is a substantial multi-workspace software prototype; implemented source and local demonstration paths do not by themselves establish a public production service.",
+  "verification_state": "verified",
+  "evidence_references": [
+    {
+      "evidence_id": "styx-implementation-matrix",
+      "independence_group": "repository-implementation-record",
+      "evidence_type": "primary_source",
+      "reference": "docs/planning/planning--implementation-status.md",
+      "body_hash": "sha256:99b585940629bea578c05c291364429989a2c328b74f90bce42111bf891db81c",
+      "observed_at": "2026-08-31T22:41:11Z"
+    },
+    {
+      "evidence_id": "styx-fresh-verification-receipt",
+      "independence_group": "fresh-local-and-http-verification",
+      "evidence_type": "fresh_verifier_receipt",
+      "reference": "docs/evidence/verification--2026-08-31.md",
+      "body_hash": "sha256:e75c92133042ce1d9ea6fd65af05e44788b20c15b90d0c4e0dc1911d1278a955",
+      "observed_at": "2026-08-31T22:41:11Z"
+    }
+  ]
+}
