@@ -51,8 +51,12 @@ ReReview ==
   /\ status' = "IN_REVIEW"
   /\ UNCHANGED <<escalations, feeAction>>
 
+StayTerminal ==
+  /\ status \in Terminal
+  /\ UNCHANGED vars
+
 Next ==
-  Review \/ Uphold \/ Overturn \/ Escalate \/ ReReview
+  Review \/ Uphold \/ Overturn \/ Escalate \/ ReReview \/ StayTerminal
 
 Resolve ==
   Uphold \/ Overturn
