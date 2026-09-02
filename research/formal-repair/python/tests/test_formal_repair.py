@@ -11,6 +11,7 @@ from PIL import Image, ImageEnhance
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from runtime_contract import load_runtime_contract
 from styx_ledger import Transaction, run_ledger, total_balance
 from t7_markov import exact_expected_cycles, simulate_cycles
 from t9_hamming import hamming_ball_probability, hamming_distance, phash64
@@ -42,6 +43,23 @@ class LedgerInvariantTests(unittest.TestCase):
 
 
 class MarkovRepairTests(unittest.TestCase):
+    def test_runtime_contract_matches_model_defaults(self) -> None:
+        contract = load_runtime_contract()
+        self.assertEqual(contract.threshold, 20)
+        self.assertEqual(contract.correct_bonus, 5)
+        self.assertEqual(contract.miss_penalty, 5)
+        self.assertEqual(contract.ceiling, 100)
+        self.assertEqual(contract.cadence_hours, 6)
+        self.assertEqual(
+            exact_expected_cycles(
+                Fraction(0),
+                threshold=contract.threshold,
+                step=contract.miss_penalty,
+                ceiling=contract.ceiling,
+            ),
+            7,
+        )
+
     def test_deterministic_threshold_is_seven_cycles(self) -> None:
         self.assertEqual(exact_expected_cycles(Fraction(0)), 7)
 
