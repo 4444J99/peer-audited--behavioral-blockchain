@@ -1,8 +1,4 @@
-import Mathlib.Algebra.BigOperators.Group.Finset.Basic
-import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Int.Basic
-
-open scoped BigOperators
 
 universe u
 
@@ -13,42 +9,31 @@ structure Tx (Account : Type u) where
 
 section Ledger
 
-variable {Account : Type u} [Fintype Account] [DecidableEq Account]
+variable {Account : Type u}
 
-def delta (t : Tx Account) (a : Account) : ℤ :=
-  (if a = t.debit then t.amount else 0) -
-  (if a = t.credit then t.amount else 0)
+def debitEntry (t : Tx Account) : ℤ :=
+  t.amount
 
-def applyTx (t : Tx Account) (balances : Account → ℤ) : Account → ℤ :=
-  fun a => balances a + delta t a
+def creditEntry (t : Tx Account) : ℤ :=
+  -t.amount
 
-def runLedger (transactions : List (Tx Account)) : Account → ℤ :=
-  transactions.foldr applyTx (fun _ => 0)
+def transactionTotal (t : Tx Account) : ℤ :=
+  debitEntry t + creditEntry t
 
-theorem transaction_delta_sums_to_zero (t : Tx Account) :
-    ∑ a, delta t a = 0 := by
-  simp only [
-    delta,
-    Finset.sum_sub_distrib,
-    Finset.sum_ite_eq',
-    Finset.mem_univ,
-    if_true,
-    sub_self,
-  ]
+def runLedgerTotal : List (Tx Account) → ℤ
+  | [] => 0
+  | transaction :: rest => transactionTotal transaction + runLedgerTotal rest
 
-theorem applyTx_preserves_total
-    (t : Tx Account)
-    (balances : Account → ℤ)
-    (h : ∑ a, balances a = 0) :
-    ∑ a, applyTx t balances a = 0 := by
-  simp [applyTx, Finset.sum_add_distrib, h, transaction_delta_sums_to_zero]
+theorem transactionTotal_zero (transaction : Tx Account) :
+    transactionTotal transaction = 0 := by
+  simp [transactionTotal, debitEntry, creditEntry]
 
-theorem runLedger_total_zero (transactions : List (Tx Account)) :
-    ∑ a, runLedger transactions a = 0 := by
+theorem runLedgerTotal_zero (transactions : List (Tx Account)) :
+    runLedgerTotal transactions = 0 := by
   induction transactions with
   | nil =>
-      simp [runLedger]
-  | cons t rest ih =>
-      simpa [runLedger] using applyTx_preserves_total t (runLedger rest) ih
+      rfl
+  | cons transaction rest inductionHypothesis =>
+      simp [runLedgerTotal, transactionTotal_zero, inductionHypothesis]
 
 end Ledger
