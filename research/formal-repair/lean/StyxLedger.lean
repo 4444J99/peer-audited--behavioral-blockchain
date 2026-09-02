@@ -27,16 +27,7 @@ def runLedger (transactions : List (Tx Account)) : Account → ℤ :=
 
 theorem transaction_delta_sums_to_zero (t : Tx Account) :
     ∑ a, delta t a = 0 := by
-  have debitSum : (∑ a : Account, if a = t.debit then t.amount else 0) = t.amount := by
-    simp
-  have creditSum : (∑ a : Account, if a = t.credit then t.amount else 0) = t.amount := by
-    simp
-  rw [show (∑ a, delta t a) =
-      (∑ a : Account, if a = t.debit then t.amount else 0) -
-      (∑ a : Account, if a = t.credit then t.amount else 0) by
-        simp [delta, Finset.sum_sub_distrib]]
-  rw [debitSum, creditSum]
-  simp
+  simp only [delta, Finset.sum_sub_distrib, Fintype.sum_ite_eq', sub_self]
 
 theorem applyTx_preserves_total
     (t : Tx Account)
