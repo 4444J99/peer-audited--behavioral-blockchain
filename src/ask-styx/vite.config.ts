@@ -3,7 +3,8 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/ask-styx/',
+  // deploy-ask-styx.yml publishes this bundle at the repository project Pages root.
+  base: '/peer-audited--behavioral-blockchain/',
   test: {
     environment: 'jsdom',
     globals: true,
