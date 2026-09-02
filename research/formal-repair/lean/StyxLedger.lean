@@ -16,8 +16,8 @@ section Ledger
 variable {Account : Type u} [Fintype Account] [DecidableEq Account]
 
 def delta (t : Tx Account) (a : Account) : ℤ :=
-  (if t.debit = a then t.amount else 0) -
-  (if t.credit = a then t.amount else 0)
+  (if a = t.debit then t.amount else 0) -
+  (if a = t.credit then t.amount else 0)
 
 def applyTx (t : Tx Account) (balances : Account → ℤ) : Account → ℤ :=
   fun a => balances a + delta t a
@@ -27,7 +27,16 @@ def runLedger (transactions : List (Tx Account)) : Account → ℤ :=
 
 theorem transaction_delta_sums_to_zero (t : Tx Account) :
     ∑ a, delta t a = 0 := by
-  simp [delta, Finset.sum_sub_distrib]
+  have debitSum : (∑ a : Account, if a = t.debit then t.amount else 0) = t.amount := by
+    simp
+  have creditSum : (∑ a : Account, if a = t.credit then t.amount else 0) = t.amount := by
+    simp
+  rw [show (∑ a, delta t a) =
+      (∑ a : Account, if a = t.debit then t.amount else 0) -
+      (∑ a : Account, if a = t.credit then t.amount else 0) by
+        simp [delta, Finset.sum_sub_distrib]]
+  rw [debitSum, creditSum]
+  simp
 
 theorem applyTx_preserves_total
     (t : Tx Account)
