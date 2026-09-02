@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -57,15 +57,31 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      - name: Bootstrap Elan
+        run: |
+          curl --proto '=https' --tlsv1.2 --fail --silent --show-error \
+            https://elan.lean-lang.org/elan-init.sh \
+            | sh -s -- -y
+          echo "${HOME}/.elan/bin" >> "${GITHUB_PATH}"
+
+      - name: Resolve pinned Lean and Mathlib dependencies
+        working-directory: research/formal-repair/lean
+        run: |
+          lake update
+          test -f lake-manifest.json
 
       - name: Build pinned Lean and Mathlib project
         uses: leanprover/lean-action@v1
         with:
           lake-package-directory: research/formal-repair/lean
+          auto-config: false
           build: true
           test: false
           lint: false
+          axiom-audit: true
+          axiom-audit-root: StyxLedger
 
   tla-model:
     name: TLA+ dispute model
@@ -73,10 +89,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -93,4 +109,4 @@ jobs:
 
       - name: Model-check invariants and liveness
         working-directory: research/formal-repair/tla
-        run: java -jar "${RUNNER_TEMP}/tla2tools.jar" -config StyxDispute.cfg StyxDispute.tla
+        run: java -XX:+UseParallelGC -jar "${RUNNER_TEMP}/tla2tools.jar" -config StyxDispute.cfg StyxDispute.tla
