@@ -66,13 +66,13 @@ jobs:
             | sh -s -- -y
           echo "${HOME}/.elan/bin" >> "${GITHUB_PATH}"
 
-      - name: Resolve pinned Lean and Mathlib dependencies
+      - name: Resolve pinned Lean project
         working-directory: research/formal-repair/lean
         run: |
           lake update
           test -f lake-manifest.json
 
-      - name: Build pinned Lean and Mathlib project
+      - name: Build and audit pinned Lean proof
         uses: leanprover/lean-action@v1
         with:
           lake-package-directory: research/formal-repair/lean
