@@ -1,0 +1,96 @@
+name: Formal Repair
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "research/formal-repair/**"
+      - ".github/workflows/formal-repair.yml"
+  push:
+    branches:
+      - "formal-repair-*"
+    paths:
+      - "research/formal-repair/**"
+      - ".github/workflows/formal-repair.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: formal-repair-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-models:
+    name: Python models and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: research/formal-repair/python/requirements.txt
+
+      - name: Install isolated dependencies
+        run: python -m pip install --requirement research/formal-repair/python/requirements.txt
+
+      - name: Compile Python sources
+        run: python -m compileall -q research/formal-repair/python
+
+      - name: Run executable repair checks
+        run: python -m unittest discover -s research/formal-repair/python/tests -v
+
+      - name: Print exact reference calculations
+        run: |
+          python research/formal-repair/python/t7_markov.py
+          python research/formal-repair/python/t9_hamming.py
+
+  lean-proof:
+    name: Lean ledger proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build pinned Lean and Mathlib project
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: research/formal-repair/lean
+          build: true
+          test: false
+          lint: false
+
+  tla-model:
+    name: TLA+ dispute model
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Download official TLA+ tools
+        run: |
+          curl --fail --location --retry 3 \
+            https://github.com/tlaplus/tlaplus/releases/latest/download/tla2tools.jar \
+            --output "${RUNNER_TEMP}/tla2tools.jar"
+
+      - name: Parse specification
+        working-directory: research/formal-repair/tla
+        run: java -cp "${RUNNER_TEMP}/tla2tools.jar" tla2sany.SANY StyxDispute.tla
+
+      - name: Model-check invariants and liveness
+        working-directory: research/formal-repair/tla
+        run: java -jar "${RUNNER_TEMP}/tla2tools.jar" -config StyxDispute.cfg StyxDispute.tla
