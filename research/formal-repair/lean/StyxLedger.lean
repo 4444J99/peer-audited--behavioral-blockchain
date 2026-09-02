@@ -1,26 +1,26 @@
-import Mathlib.Data.Int.Basic
+import Std
 
 universe u
 
 structure Tx (Account : Type u) where
   debit  : Account
   credit : Account
-  amount : ℤ
+  amount : Int
 
 section Ledger
 
 variable {Account : Type u}
 
-def debitEntry (t : Tx Account) : ℤ :=
-  t.amount
+def debitEntry (transaction : Tx Account) : Int :=
+  transaction.amount
 
-def creditEntry (t : Tx Account) : ℤ :=
-  -t.amount
+def creditEntry (transaction : Tx Account) : Int :=
+  -transaction.amount
 
-def transactionTotal (t : Tx Account) : ℤ :=
-  debitEntry t + creditEntry t
+def transactionTotal (transaction : Tx Account) : Int :=
+  debitEntry transaction + creditEntry transaction
 
-def runLedgerTotal : List (Tx Account) → ℤ
+def runLedgerTotal : List (Tx Account) → Int
   | [] => 0
   | transaction :: rest => transactionTotal transaction + runLedgerTotal rest
 
