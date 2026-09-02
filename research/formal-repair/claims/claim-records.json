@@ -1,0 +1,104 @@
+{
+  "schema_version": "0.2",
+  "verified_as_of": "2026-09-02",
+  "verification_workflow": {
+    "name": "Formal Repair",
+    "run_id": 33687940706,
+    "result": "success"
+  },
+  "collective_label": "Nine formal models and proof attempts linking claims to implementation",
+  "truth_boundary": "A verified bounded proof, model, or executable calculation is not production-deployment, behavioral-efficacy, empirical-safety, or external-academic-review evidence.",
+  "records": {
+    "T1": {
+      "status": "proved_machine_checked_bounded",
+      "verified": true,
+      "claim": "For the declared posting model, every transaction contributes amount plus negative amount, and the recursively accumulated posting total is zero.",
+      "scope_limit": "The Lean artifact proves the algebraic posting invariant, not database correctness, authorization, deployment, or every account-level runtime behavior.",
+      "evidence": [
+        "research/formal-repair/lean/StyxLedger.lean",
+        "Formal Repair workflow run 33687940706"
+      ],
+      "next_gate": "Map the bounded theorem to the production transaction path and obtain external review."
+    },
+    "T2": {
+      "status": "theorem_narrowing_required",
+      "verified": false,
+      "next_gate": "Define adversary capabilities and a trusted external checkpoint before making tamper-evidence claims."
+    },
+    "T3": {
+      "status": "bounded_results_repair_required",
+      "verified": false,
+      "next_gate": "Separate boundedness, weak monotonicity, floor behavior, and tier-nesting lemmas."
+    },
+    "T4": {
+      "status": "false_as_stated",
+      "verified": true,
+      "claim": "The proposed truth-telling dominance result has a parameter-range counterexample.",
+      "next_gate": "Preserve the counterexample and redesign the incentive constraints before making any dominance claim."
+    },
+    "T5": {
+      "status": "eligibility_predicate_not_safety_theorem",
+      "verified": false,
+      "next_gate": "Separate deterministic predicate evaluation and satisfiability from empirical safety validation."
+    },
+    "T6": {
+      "status": "model_checked_bounded",
+      "verified": true,
+      "claim": "For MaxEscalations = 1 and the declared weak-fairness assumptions, the TLA+ model satisfies TypeOK, FinancialConsistency, and EventuallyResolved.",
+      "scope_limit": "This is a finite abstract model. It does not prove exactly-once payment effects, external-service behavior, human response, or unbounded liveness.",
+      "evidence": [
+        "research/formal-repair/tla/StyxDispute.tla",
+        "research/formal-repair/tla/StyxDispute.cfg",
+        "Formal Repair workflow run 33687940706"
+      ],
+      "next_gate": "Expand configurations, connect transitions to runtime code, preserve counterexample traces, and prove idempotency boundaries."
+    },
+    "T7": {
+      "status": "exact_model_ci_verified",
+      "verified": true,
+      "runtime_contract": {
+        "restricted_when_score_below": 20,
+        "correct_bonus": 5,
+        "miss_penalty": 5,
+        "score_ceiling": 100,
+        "cadence_hours": 6
+      },
+      "findings": {
+        "deterministic_cycles_from_50_to_score_below_20": 7,
+        "deterministic_hours_at_six_hour_cadence": 42,
+        "unbiased_expected_cycles_with_ceiling_clamp": 196
+      },
+      "scope_limit": "The exact chain models the declared score update and ceiling. It is not an empirical estimate of real auditor behavior.",
+      "evidence": [
+        "research/formal-repair/python/runtime_contract.py",
+        "research/formal-repair/python/t7_markov.py",
+        "research/formal-repair/python/tests/test_formal_repair.py",
+        "Formal Repair workflow run 33687940706"
+      ],
+      "next_gate": "Integrate the correction into the canonical theorem and add empirical parameter estimation if behavioral claims are retained."
+    },
+    "T8": {
+      "status": "guarantee_rejected",
+      "verified": true,
+      "claim": "The current predicates are bounded operational safeguards, not a guarantee of anti-isolation, consent, or safety.",
+      "next_gate": "Replace theorem language with a threat model, observable risk indicators, escalation paths, and qualitative evaluation."
+    },
+    "T9": {
+      "status": "null_model_and_dct_phash_ci_verified",
+      "verified": true,
+      "findings": {
+        "uniform_64_bit_hamming_distance_lt_5_numerator": 679121,
+        "uniform_64_bit_hamming_distance_lt_5_denominator": 18446744073709551616,
+        "uniform_64_bit_hamming_distance_lt_5_probability": 3.681522317902641e-14
+      },
+      "claim": "The exact null probability is valid for independent uniformly random 64-bit values; the research lane also contains a tested DCT-based 64-bit perceptual-hash implementation.",
+      "scope_limit": "Neither result is an empirical production false-positive rate. The current product URI-hash path is unchanged.",
+      "evidence": [
+        "research/formal-repair/python/t9_hamming.py",
+        "research/formal-repair/python/tests/test_formal_repair.py",
+        "Formal Repair workflow run 33687940706"
+      ],
+      "next_gate": "Build a labeled transformation corpus, estimate ROC and precision-recall, calibrate the threshold, and review product integration."
+    }
+  }
+}
