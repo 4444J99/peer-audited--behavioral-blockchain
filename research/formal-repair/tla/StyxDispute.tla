@@ -58,7 +58,10 @@ Resolve ==
   Uphold \/ Overturn
 
 Spec ==
-  Init /\ [][Next]_vars /\ WF_vars(Resolve)
+  /\ Init
+  /\ [][Next]_vars
+  /\ WF_vars(Review)
+  /\ WF_vars(Resolve)
 
 TypeOK ==
   /\ status \in States
