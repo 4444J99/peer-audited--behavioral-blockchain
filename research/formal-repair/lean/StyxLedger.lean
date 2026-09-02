@@ -1,4 +1,4 @@
-import Std.Tactic.Omega
+import Std
 
 universe u
 
@@ -27,7 +27,7 @@ def runLedgerTotal : List (Tx Account) → Int
 theorem transactionTotal_zero (transaction : Tx Account) :
     transactionTotal transaction = 0 := by
   unfold transactionTotal debitEntry creditEntry
-  omega
+  rw [Int.add_neg_eq_sub, Int.sub_self]
 
 theorem runLedgerTotal_zero (transactions : List (Tx Account)) :
     runLedgerTotal transactions = 0 := by
