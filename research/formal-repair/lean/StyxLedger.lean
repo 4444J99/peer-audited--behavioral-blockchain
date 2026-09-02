@@ -1,4 +1,4 @@
-import Std
+import Std.Tactic.Omega
 
 universe u
 
@@ -26,7 +26,8 @@ def runLedgerTotal : List (Tx Account) → Int
 
 theorem transactionTotal_zero (transaction : Tx Account) :
     transactionTotal transaction = 0 := by
-  simp [transactionTotal, debitEntry, creditEntry]
+  unfold transactionTotal debitEntry creditEntry
+  omega
 
 theorem runLedgerTotal_zero (transactions : List (Tx Account)) :
     runLedgerTotal transactions = 0 := by
@@ -34,6 +35,7 @@ theorem runLedgerTotal_zero (transactions : List (Tx Account)) :
   | nil =>
       rfl
   | cons transaction rest inductionHypothesis =>
-      simp [runLedgerTotal, transactionTotal_zero, inductionHypothesis]
+      rw [runLedgerTotal, transactionTotal_zero, inductionHypothesis]
+      rfl
 
 end Ledger
