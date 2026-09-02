@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.1",
+  "verified_as_of": "2026-09-02",
+  "collective_label": "Nine formal models and proof attempts linking claims to implementation",
+  "records": {
+    "T1": {
+      "status": "candidate_machine_proof_written",
+      "verified": false,
+      "next_gate": "Compile Lean source in clean CI with pinned Lean/Mathlib versions"
+    },
+    "T2": {
+      "status": "theorem_narrowing_required",
+      "verified": false,
+      "next_gate": "Define adversary and external checkpoint model"
+    },
+    "T3": {
+      "status": "bounded_results_repair_required",
+      "verified": false,
+      "next_gate": "Separate boundedness, weak monotonicity, and tier-nesting lemmas"
+    },
+    "T4": {
+      "status": "false_as_stated",
+      "verified": true,
+      "next_gate": "Preserve counterexample and redesign incentive constraints"
+    },
+    "T5": {
+      "status": "eligibility_predicate_not_safety_theorem",
+      "verified": false,
+      "next_gate": "Separate satisfiability from empirical safety validation"
+    },
+    "T6": {
+      "status": "candidate_tla_spec_written",
+      "verified": false,
+      "next_gate": "Run TLC; retain counterexample traces; verify liveness assumptions"
+    },
+    "T7": {
+      "status": "exact_python_model_and_tests_executed",
+      "verified": true,
+      "findings": {
+        "deterministic_cycles_to_score_below_20": 7,
+        "unbiased_expected_cycles_with_ceiling_clamp": 196
+      },
+      "next_gate": "Map constants to runtime code and add CI"
+    },
+    "T8": {
+      "status": "guarantee_rejected",
+      "verified": true,
+      "next_gate": "Replace theorem with bounded operational risk controls"
+    },
+    "T9": {
+      "status": "null_model_and_dct_phash_tests_executed",
+      "verified": true,
+      "findings": {
+        "uniform_64_bit_hamming_distance_lt_5_numerator": 679121,
+        "uniform_64_bit_hamming_distance_lt_5_denominator": 18446744073709551616,
+        "uniform_64_bit_hamming_distance_lt_5_probability": 3.681522317902641e-14
+      },
+      "next_gate": "Replace URI-hash stub and run labeled empirical calibration"
+    }
+  }
+}
