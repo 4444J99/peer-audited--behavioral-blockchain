@@ -276,10 +276,23 @@ function constantTimeEquals(a: Buffer, b: Buffer): boolean {
 }
 
 /**
+ * Local JWK shape for Node 24 / current @types/node.
+ * The API workspace loads `types: ["jest", "node"]` only, so DOM/crypto
+ * namespace JWK aliases are not reliable compile targets.
+ */
+type JsonWebKeyLike = {
+  kty?: string;
+  crv?: string;
+  x?: string;
+  y?: string;
+  [key: string]: unknown;
+};
+
+/**
  * 0x04 || X || Y for a P-256 key — the byte sequence Apple hashes to derive keyId.
  */
 function uncompressedEcPoint(publicKey: crypto.KeyObject): Buffer {
-  const jwk = publicKey.export({ format: 'jwk' }) as crypto.webcrypto.JsonWebKey;
+  const jwk = publicKey.export({ format: 'jwk' }) as JsonWebKeyLike;
   if (jwk.kty !== 'EC' || jwk.crv !== 'P-256' || !jwk.x || !jwk.y) {
     throw new Error('credential key is not an EC P-256 key');
   }
@@ -895,7 +908,7 @@ export class DeviceAttestationService {
 
     let publicKey: crypto.KeyObject;
     try {
-      publicKey = crypto.createPublicKey({ key: jwk as crypto.webcrypto.JsonWebKey, format: 'jwk' });
+      publicKey = crypto.createPublicKey({ key: jwk, format: 'jwk' } as Parameters<typeof crypto.createPublicKey>[0]);
     } catch {
       return this.rejectAndroid(userId, 'Google signing key could not be imported', [
         'invalid_signing_key',
