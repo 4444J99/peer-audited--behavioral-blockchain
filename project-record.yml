@@ -1,0 +1,194 @@
+contract_name: project-record.v1
+contract_version: 1
+project_id: styx
+name: Styx
+canonical_repository: 4444J99/peer-audited--behavioral-blockchain
+former_repositories:
+  - a-organvm/peer-audited--behavioral-blockchain
+  - organvm-iii-ergon/peer-audited--behavioral-blockchain
+repository_role: canonical
+documentation_class: A
+
+one_sentence: >-
+  A prototype software system that models behavioral commitments, peer review
+  of completion evidence, and test-money accounting across API, web, mobile,
+  and desktop surfaces.
+
+problem: >-
+  The project explores how software can make personal commitments inspectable
+  and reviewable while separating individual evidence from aggregate operator
+  views and preserving explicit limits around money, privacy, and deployment.
+
+intended_users:
+  - people evaluating commitment-based accountability tools
+  - software engineers studying ledger and peer-review architecture
+  - researchers studying behavioral accountability and verification
+  - operators assessing possible cohort or wellness applications
+
+implementation_status: PROTOTYPE
+deployment_status: not-deployed
+
+authorship:
+  owner: Anthony James Padavano (repository steward; legal project ownership unresolved)
+  role: principal technical and product implementer
+  contributions:
+    - monorepo architecture and implementation
+    - product and technical decision-making
+    - verification, deployment, and documentation tooling
+  collaborators:
+    - Jessica Tenenbaum — business operations and commercial strategy; role source is an unsigned founder agreement draft
+  generated:
+    - AI-assisted changes and automated dependency or workflow commits are present in repository history
+  inherited:
+    - third-party open-source frameworks and libraries declared in package manifests
+  external:
+    - payment, hosting, storage, and AI providers are integration dependencies rather than evidence of production approval
+
+claim_references:
+  - id: prototype-status
+    claim_posture: partial
+    assertion_contract: assertion-evidence.v1
+    assertion_id: styx.prototype-status
+    assertion_ref: docs/evidence/assertions/prototype-status.assertion-evidence.json
+    scope: status
+    placements: [readme, general, technical, business, evaluator, evidence]
+
+  - id: deployment-boundary
+    claim_posture: contradicted
+    assertion_contract: assertion-evidence.v1
+    assertion_id: styx.deployment-boundary
+    assertion_ref: docs/evidence/assertions/deployment-boundary.assertion-evidence.json
+    scope: deployment
+    placements: [readme, general, technical, business, evaluator, evidence]
+
+  - id: authorship-boundary
+    claim_posture: implemented
+    assertion_contract: assertion-evidence.v1
+    assertion_id: styx.authorship-boundary
+    assertion_ref: docs/evidence/assertions/authorship-boundary.assertion-evidence.json
+    scope: authorship
+    placements: [readme, evaluator, evidence]
+
+  - id: test-suite-receipt
+    claim_posture: partial
+    assertion_contract: assertion-evidence.v1
+    assertion_id: styx.test-suite
+    assertion_ref: docs/evidence/assertions/test-suite.assertion-evidence.json
+    scope: performance
+    placements: [readme, technical, evaluator, evidence]
+
+  - id: proposed-industry-applications
+    claim_posture: proposed
+    assertion_contract: assertion-evidence.v1
+    assertion_id: styx.proposed-industry-applications
+    assertion_ref: docs/evidence/assertions/proposed-industry-applications.assertion-evidence.json
+    scope: capability
+    placements: [business, evidence]
+
+limitations:
+  - id: synthetic-demo-only
+    statement: >-
+      Retained launch evidence supports a private synthetic, test-money demo;
+      it does not establish a hosted beta, real-money service, clinical
+      deployment, or public launch.
+    assertion_ref: docs/evidence/assertions/deployment-boundary.assertion-evidence.json
+    assertion_id: styx.deployment-boundary
+
+  - id: no-outcome-or-adoption-evidence
+    statement: >-
+      The repository does not substantiate user adoption, revenue, conversion,
+      clinical outcomes, or enterprise-scale operation.
+
+  - id: ownership-unresolved
+    statement: >-
+      The founder agreement describing ownership and role allocation is
+      unsigned; repository stewardship must not be presented as adjudicated
+      legal ownership.
+    assertion_ref: docs/evidence/assertions/authorship-boundary.assertion-evidence.json
+    assertion_id: styx.authorship-boundary
+
+  - id: commit-bound-test-count
+    statement: >-
+      Automated-test totals are commit-bound engineering evidence and do not
+      establish deployment readiness, market validation, or outcomes.
+    assertion_ref: docs/evidence/assertions/test-suite.assertion-evidence.json
+    assertion_id: styx.test-suite
+
+audience_routes:
+  - mode: general
+    path: docs/audiences/general.md
+    primary_question: What is Styx, what happens when it is used, and what exists today?
+    surface: public
+    search_intents: [informational, problem]
+
+  - mode: technical
+    path: docs/audiences/technical.md
+    primary_question: How is Styx built, tested, and bounded at runtime?
+    surface: public
+    search_intents: [technical, implementation]
+
+  - mode: humanities
+    path: docs/audiences/humanities.md
+    primary_question: What does Styx imply about trust, proof, punishment, and behavioral governance?
+    surface: public
+    search_intents: [research, informational]
+
+  - mode: business
+    path: docs/audiences/business.md
+    primary_question: What workflow might Styx change, and which operational claims remain unproven?
+    surface: public
+    search_intents: [commercial, problem]
+
+  - mode: evaluator
+    path: docs/audiences/evaluator.md
+    primary_question: What did Anthony build, with whom, and where can the evidence be inspected?
+    surface: public
+    search_intents: [hiring, technical]
+
+industries:
+  - name: relationship recovery programs
+    status: proposed
+    claim_references: [proposed-industry-applications]
+  - name: health and fitness accountability
+    status: proposed
+    claim_references: [proposed-industry-applications]
+  - name: corporate wellness
+    status: proposed
+    claim_references: [proposed-industry-applications]
+
+concepts:
+  - behavioral-accountability
+  - commitment-devices
+  - double-entry-accounting
+  - loss-aversion
+  - peer-verification
+
+search_intents:
+  - intent: informational
+    terms:
+      - peer-audited behavioral accountability
+      - commitment verification software
+  - intent: technical
+    terms:
+      - NestJS double-entry ledger architecture
+      - peer-review consensus system TypeScript
+  - intent: research
+    terms:
+      - trust punishment and behavioral governance
+      - loss aversion commitment devices
+  - intent: commercial
+    terms:
+      - cohort accountability workflow prototype
+      - corporate wellness accountability system
+  - intent: hiring
+    terms:
+      - full-stack systems architecture portfolio
+      - regulated-workflow TypeScript portfolio
+
+links:
+  repository: https://github.com/4444J99/peer-audited--behavioral-blockchain
+  documentation: docs/audiences/general.md
+  evidence: docs/evidence/README.md
+
+generated_at: "2026-08-31T22:41:11Z"
+verified_at: "2026-08-31T22:41:11Z"

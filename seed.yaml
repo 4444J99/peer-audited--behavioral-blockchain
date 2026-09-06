@@ -1,4 +1,4 @@
-# seed.yaml — Automation Contract for organvm-iii-ergon/peer-audited--behavioral-blockchain
+# seed.yaml — Automation Contract for 4444J99/peer-audited--behavioral-blockchain
 # Schema: seed/v1.0
 # Updated: 2026-03-11 (organ-chain-reset: real edges replace boilerplate)
 
@@ -6,13 +6,13 @@ schema_version: "1.0"
 organ: III
 organ_name: Commerce
 repo: peer-audited--behavioral-blockchain
-org: organvm-iii-ergon
+org: 4444J99
 
 metadata:
-  implementation_status: ACTIVE
+  implementation_status: PROTOTYPE
   tier: flagship
   promotion_status: PUBLIC_PROCESS
-  last_validated: "2026-06-07"
+  last_validated: "2026-08-31"
   generated: "2026-02-22"
   language: typescript
   tags: [nestjs, nextjs, react-native, tauri, stripe, groq, llama, postgresql, redis]
@@ -23,9 +23,13 @@ agents:
     workflow: .github/workflows/ci.yml
     description: "Continuous integration pipeline"
   - name: governance-auditor
-    trigger: schedule
+    trigger: on_schedule
     workflow: .github/workflows/blocked-handoff-burndown.yml
     description: "Weekly automated audit and index generation for blocked handoffs"
+
+# seed/v1's agents[].trigger enum cannot represent GitHub issue events. Preserve
+# this truthful extension instead of misclassifying the live workflow as manual.
+issue_triggered_agents:
   - name: governance-intake
     trigger: on_issue
     workflow: .github/workflows/blocked-handoff-intake.yml
@@ -43,8 +47,8 @@ consumes:
     description: "CI/CD and promotion governance rules"
 
 produces:
-  - type: product
-    description: "Styx: peer-audited behavioral market platform (NestJS API, Next.js web, React Native mobile, Tauri desktop)"
+  - type: product-artifact
+    description: "Styx prototype source across NestJS API, Next.js web, React Native mobile, and Tauri desktop workspaces; no complete public deployment is evidenced"
   - type: community_signal
     description: "Product milestones trigger community events"
     consumers: [organvm-vi-koinonia/community-hub]
