@@ -62,7 +62,7 @@ An evaluator can inspect:
 - structured logs, trace IDs, health checks, Sentry hooks, and incident runbooks;
 - decision records that separate implemented controls from research and plans.
 
-The fresh-check caveat is material: `npm ci` currently fails because the root
+The fresh-check caveat is material: At the 2026-08-31 verification receipt, `npm ci` failed because the root
 manifest and lockfile are out of sync. A legacy-peer dependency installation can
 support diagnostic test execution, but it is not a clean reproducible-install
 receipt. See [test verification](../evidence/README.md#test-verification).
