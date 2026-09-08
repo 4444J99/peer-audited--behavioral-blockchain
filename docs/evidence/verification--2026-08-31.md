@@ -125,14 +125,14 @@ No public API or complete web target was independently verified in this check.
 `git shortlog -sne HEAD` at the verified commit reported:
 
 ```text
-178  4444jPPP <etceter4@etceter4.com>
-118  Anthony James Padavano <padavano.anthony@gmail.com>
- 73  Anthony James Padavano <etceter4@etceter4.com>
+178  4444jPPP <email redacted>
+118  Anthony James Padavano <email redacted>
+ 73  Anthony James Padavano <email redacted>
  43  dependabot[bot]
  18  Test User
  12  github-actions[bot]
  10  Claude
-  3  4444jPPP <padavano.anthony@gmail.com>
+  3  4444jPPP <email redacted>
 ```
 
 Path-scoped shortlogs place explicit Anthony and `4444jPPP` identities across
