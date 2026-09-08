@@ -27,8 +27,11 @@ Unit tests run in the workspaces of the Turborepo monorepo. Most use Jest + ts-j
 | `src/desktop` | Jest | `*.spec.ts` |
 | `src/ask-styx` | **Vitest** (`vitest run`) | `*.test.ts` |
 | `src/test-harness` | **Vitest** | `*.test.ts` |
+| `packages/audience-engine` | **Vitest** | `*.test.ts` |
+| `packages/audit-engine` | **Vitest** | `*.spec.ts` |
+| `packages/styx-cli` | **Vitest** | `*.test.ts` |
 
-(`src/pitch` has no tests. Workspace globs: `src/*` and `packages/*`; `packages/` is currently empty.)
+(`src/pitch` has no tests. Workspace globs: `src/*` and `packages/*`; the table covers the ten tested workspaces.)
 
 **Naming conventions:**
 - `*.spec.ts` for API service/module tests and shared library tests (NestJS convention)
