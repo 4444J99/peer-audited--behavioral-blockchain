@@ -1,0 +1,19 @@
+{
+  "contract_name": "assertion-evidence.v1",
+  "contract_version": 1,
+  "assertion_id": "styx.proposed-industry-applications",
+  "assertion_class": "inference",
+  "statement": "Because Styx models commitments, evidence review, scoped roles, aggregate reporting, and test-money ledger consequences, relationship-recovery programs, health or fitness accountability, and corporate wellness are substantive proposed operating contexts; no deployment or outcome in those contexts is established.",
+  "inference_label": "Proposed operating-context mapping, not customer, deployment, or outcome evidence.",
+  "verification_state": "verified",
+  "evidence_references": [
+    {
+      "evidence_id": "styx-business-context-analysis",
+      "independence_group": "reader-mode-business-analysis",
+      "evidence_type": "artifact",
+      "reference": "docs/audiences/business.md",
+      "body_hash": "sha256:4b8b1c026827904cd6e69654971f33a81155ea22f8a79eeae9eacdc538f30c6e",
+      "observed_at": "2026-08-31T22:41:11Z"
+    }
+  ]
+}
