@@ -224,9 +224,9 @@ Verify the live surface (re-runnable by any user):
 curl -sS -o /dev/null -w "%{http_code} %{url_effective}\n" \
   -L https://4444j99.github.io/peer-audited--behavioral-blockchain/
 
-## Required Ask Styx asset referenced by that HTML shell
-curl -sS -o /dev/null -w "%{http_code} %{url_effective}\n" \
-  -L https://4444j99.github.io/ask-styx/assets/index-D1Ny8FSA.js
+## Discover required assets from the current HTML, then request each host path
+curl -sSL https://4444j99.github.io/peer-audited--behavioral-blockchain/ \
+  | grep -Eo '(src|href)="[^"]+\.(js|css)"'
 
 ## API health (after deploy)
 ## curl -sS <api-url>/health
@@ -235,8 +235,8 @@ curl -sS -o /dev/null -w "%{http_code} %{url_effective}\n" \
 ## curl -sS -o /dev/null -w "%{http_code}\n" <web-url>
 ```
 
-**Observed on 2026-08-31:** the root returned `200`; the referenced asset returned
-`404`. A root-page status alone proves only that an HTML shell responds.
+**Observed on 2026-09-08:** the root returned `200`; both referenced assets returned
+`404`. See [`docs/evidence/verification--2026-09-08.md`](docs/evidence/verification--2026-09-08.md). A root-page status alone proves only that an HTML shell responds.
 
 ### Deploying
 
