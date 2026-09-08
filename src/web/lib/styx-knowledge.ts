@@ -1125,13 +1125,13 @@ schema_version: "1.0"
 organ: III
 organ_name: Commerce
 repo: peer-audited--behavioral-blockchain
-org: organvm-iii-ergon
+org: 4444J99
 
 metadata:
-  implementation_status: ACTIVE
+  implementation_status: PROTOTYPE
   tier: flagship
   promotion_status: PUBLIC_PROCESS
-  last_validated: "2026-03-11"
+  last_validated: "2026-09-08"
   generated: "2026-02-22"
   language: typescript
   tags: [nestjs, nextjs, react-native, tauri, stripe, groq, llama, postgresql, redis]
@@ -1142,7 +1142,7 @@ agents:
     workflow: .github/workflows/ci.yml
     description: "Continuous integration pipeline"
   - name: governance-auditor
-    trigger: schedule
+    trigger: on_schedule
     workflow: .github/workflows/blocked-handoff-burndown.yml
     description: "Weekly automated audit and index generation for blocked handoffs"
   - name: governance-intake
