@@ -3,12 +3,11 @@
   "contract_version": 1,
   "assertion_id": "styx.deployment-boundary",
   "assertion_class": "current_state",
-  "statement": "On 2026-08-31, the current GitHub Pages root returned an Ask Styx HTML shell whose required assets returned 404, the former Pages root and documented launch routes returned 404, and no usable public API or complete web deployment was independently verified.",
+  "statement": "On 2026-09-08, the declared GitHub Pages root returned an Ask Styx HTML shell whose required JavaScript and CSS assets returned 404; no usable public API or complete web deployment was independently verified.",
   "verification_state": "verified",
   "freshness": {
-    "verified_at": "2026-08-31T22:41:11Z",
-    "max_age_seconds": 86400,
-    "status": "fresh"
+    "verified_at": "2026-09-08T12:55:21Z",
+    "max_age_seconds": 86400
   },
   "evidence_references": [
     {
@@ -20,12 +19,11 @@
       "observed_at": "2026-08-31T22:41:11Z"
     },
     {
-      "evidence_id": "styx-public-surface-check",
+      "evidence_id": "styx-public-surface-check-2026-09-08",
       "independence_group": "fresh-external-http-verification",
       "evidence_type": "fresh_verifier_receipt",
-      "reference": "docs/evidence/verification--2026-08-31.md",
-      "body_hash": "sha256:e75c92133042ce1d9ea6fd65af05e44788b20c15b90d0c4e0dc1911d1278a955",
-      "observed_at": "2026-08-31T22:41:11Z"
+      "reference": "docs/evidence/verification--2026-09-08.md",
+      "observed_at": "2026-09-08T12:55:21Z"
     }
   ]
 }
