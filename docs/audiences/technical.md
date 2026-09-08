@@ -133,10 +133,10 @@ before evaluating a release.
 
 ## Known technical debt and verification gaps
 
-- A fresh checkout currently has dependency-lock drift, so `npm ci` is not a
-  clean reproducibility receipt until the lockfile is reconciled.
-- The documented public Pages root is not a functioning application as of
-  2026-08-31; its HTML references missing assets.
+- At the 2026-08-31 verification receipt, a fresh checkout had dependency-lock
+  drift, so `npm ci` did not provide a clean reproducibility receipt.
+- At the 2026-09-08 verification receipt, the documented public Pages root was
+  not a functioning application; its HTML referenced missing assets.
 - A deployment workflow or Render blueprint proves deployability intent, not a
   presently healthy target.
 - Several controls depend on provider credentials, databases, queues, or live
