@@ -29,7 +29,8 @@ implementation_status: PROTOTYPE
 deployment_status: not-deployed
 
 authorship:
-  owner: Anthony James Padavano (repository steward; legal project ownership unresolved)
+  repository_steward: Anthony James Padavano
+  legal_ownership_status: unresolved
   role: principal technical and product implementer
   contributions:
     - monorepo architecture and implementation
@@ -74,7 +75,7 @@ claim_references:
     assertion_contract: assertion-evidence.v1
     assertion_id: styx.test-suite
     assertion_ref: docs/evidence/assertions/test-suite.assertion-evidence.json
-    scope: performance
+    scope: testing
     placements: [readme, technical, evaluator, evidence]
 
   - id: proposed-industry-applications
