@@ -158,6 +158,25 @@ export const MOCK_NOTIFICATIONS: unknown[] = [];
  * unrelated to these endpoints.
  */
 export async function setupAuthenticatedMocks(page: Page) {
+  // Register this catch-all first so it stays lowest-priority: Playwright runs
+  // matching route handlers in reverse registration order, so the specific mocks
+  // below win first. Any authenticated /api/* request that isn't matched by a
+  // more specific mock reaches this handler and fails fast with an actionable
+  // error, instead of falling through to the Next.js rewrite and surfacing as
+  // `getaddrinfo EAI_AGAIN styx-api` in CI. Note: a later handler that calls
+  // route.continue() (rather than route.fallback()) terminates the chain and
+  // sends the request straight to the network, bypassing this catch-all — see
+  // the **/api/contracts* handler below for why it uses route.fallback().
+  await page.route('**/api/**', (route) =>
+    route.fulfill({
+      status: 501,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: `Unmocked API route in e2e test: ${route.request().method()} ${route.request().url()}. Add a specific page.route() mock in setupAuthenticatedMocks() for this endpoint.`,
+      }),
+    }),
+  );
+
   await page.route('**/api/auth/csrf', (route) =>
     route.fulfill({
       status: 200,
@@ -206,7 +225,12 @@ export async function setupAuthenticatedMocks(page: Page) {
         body: JSON.stringify(MOCK_CONTRACTS),
       });
     }
-    return route.continue();
+    // route.continue() would send this straight to the network, bypassing the
+    // **/api/** catch-all above (Playwright's route chain only keeps going
+    // through earlier-registered handlers via route.fallback()). Use
+    // route.fallback() so unmocked non-GET contract requests still fail fast
+    // with the catch-all's actionable 501 instead of an EAI_AGAIN network error.
+    return route.fallback();
   });
 
   await page.route('**/api/contracts/*/accountability/status', (route) =>
