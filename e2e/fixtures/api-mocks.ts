@@ -132,6 +132,18 @@ export const MOCK_ENDOWED_PROGRESS = {
 
 export const MOCK_ACCOUNTABILITY_STATUS = { partners: [], history: [] };
 
+export const MOCK_RECOVERY_LOCK_STATUS = { activeRequest: null };
+
+export const MOCK_DANGER_ZONE_STATUS = {
+  timezone: 'UTC',
+  inDangerZone: false,
+  contracts: [],
+};
+
+export const MOCK_FURY_QUEUE = { assignments: [] };
+
+export const MOCK_NOTIFICATIONS: unknown[] = [];
+
 /**
  * Set up standard API route mocks for authenticated pages.
  * Call this before navigating to any authenticated route.
@@ -258,6 +270,89 @@ export async function setupAuthenticatedMocks(page: Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(MOCK_FURY_STATS),
+    }),
+  );
+
+  await page.route('**/api/fury/queue*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_FURY_QUEUE),
+    }),
+  );
+
+  await page.route('**/api/fury/stream-cookie', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ expiresInSeconds: 3600 }),
+    }),
+  );
+
+  await page.route('**/api/fury/stream-ticket', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ticket: 'e2e-fury-stream-ticket', expiresInSeconds: 60 }),
+    }),
+  );
+
+  await page.route('**/api/contracts/*/recovery/lock-status', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_RECOVERY_LOCK_STATUS),
+    }),
+  );
+
+  await page.route('**/api/behavioral/retention/danger-zone', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_DANGER_ZONE_STATUS),
+    }),
+  );
+
+  // Bare `*` in a glob never crosses `/`, so `**/api/notifications*` would
+  // miss `/notifications/unread-count`. Register the collection route and
+  // the sub-path routes separately.
+  await page.route('**/api/notifications', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_NOTIFICATIONS),
+    }),
+  );
+
+  await page.route('**/api/notifications/unread-count', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ count: 0 }),
+    }),
+  );
+
+  await page.route('**/api/notifications/stream-ticket', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ticket: 'e2e-notifications-stream-ticket', expiresInSeconds: 60 }),
+    }),
+  );
+
+  await page.route('**/api/notifications/stream-cookie', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ expiresInSeconds: 3600 }),
+    }),
+  );
+
+  await page.route('**/api/notifications/*/read', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ status: 'ok' }),
     }),
   );
 }
