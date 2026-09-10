@@ -74,6 +74,9 @@ compose_env_value() {
     override="$(grep -E "^${key}=" "$repo_root/.env" | tail -n1 | cut -d= -f2- || true)"
     [[ -n "$override" ]] && value="$override"
   fi
+  if printenv "$key" >/dev/null; then
+    value="${!key}"
+  fi
   printf '%s' "$value"
 }
 
