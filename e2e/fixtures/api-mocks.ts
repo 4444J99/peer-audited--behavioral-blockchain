@@ -158,6 +158,21 @@ export const MOCK_NOTIFICATIONS: unknown[] = [];
  * unrelated to these endpoints.
  */
 export async function setupAuthenticatedMocks(page: Page) {
+  // Register this catch-all first so it stays lowest-priority: Playwright runs
+  // matching route handlers in reverse registration order, so the specific mocks
+  // below win first and any newly added authenticated /api/* call fails fast here
+  // with an actionable error instead of falling through to the Next.js rewrite
+  // and surfacing as `getaddrinfo EAI_AGAIN styx-api` in CI.
+  await page.route('**/api/**', (route) =>
+    route.fulfill({
+      status: 501,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: `Unmocked API route in e2e test: ${route.request().method()} ${route.request().url()}. Add a specific page.route() mock in setupAuthenticatedMocks() for this endpoint.`,
+      }),
+    }),
+  );
+
   await page.route('**/api/auth/csrf', (route) =>
     route.fulfill({
       status: 200,
