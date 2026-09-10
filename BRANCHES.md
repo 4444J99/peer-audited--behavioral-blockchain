@@ -50,6 +50,7 @@ This section is intentionally live-check guidance, not a hardcoded snapshot. Use
 the repo itself to inspect the current branch and PR posture:
 
 ```bash
+git fetch --all --prune
 git branch -a --sort=-committerdate
 gh pr list --state open
 ```
