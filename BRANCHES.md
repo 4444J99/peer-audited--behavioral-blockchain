@@ -11,7 +11,7 @@ This file is the root-level summary for human readers and local review.
 - Work happens in short-lived branches that are merged by PR into `main`.
 - Merges use squash-merge only.
 - Branches are deleted after merge.
-- Production releases are tag-driven (`vX.Y.Z`) from `main`.
+- Production releases are triggered by pushing a `vX.Y.Z` tag or via manual `workflow_dispatch` on `main`.
 
 ## Branch families
 
@@ -23,7 +23,7 @@ Rules:
 - protected and cannot be pushed directly
 - required CI must pass before merging
 - branch deletion and force-push are blocked
-- production deploys are triggered from tagged releases on `main`
+- production deploys are triggered by pushing a `vX.Y.Z` tag or via manual `workflow_dispatch` on `main`
 
 ### Feature and maintenance branches
 
@@ -42,22 +42,27 @@ Examples:
 - `feat/agent-action-evidence`
 - `fix/restore-ts6-and-pages-checkout`
 - `docs/activation-ci-evidence-20260908`
-- `formal-repair-starter-2026-09-02` is a descriptive branch name for a temporary repair lane; it should still be treated as short-lived and merged or retired promptly.
+- **Exception:** `formal-repair-starter-2026-09-02` predates this naming policy and does not match the standard prefixes above. It is a one-off, intentional exception for a temporary repair lane and should still be treated as short-lived — merge or retire it promptly rather than treating it as a new precedent.
 
 ## Repo evidence: current branch inventory
 
-Verified against the live repo state on 2026-09-10:
+This section is intentionally live-check guidance, not a hardcoded snapshot. Use
+the repo itself to inspect the current branch and PR posture:
 
-- `main` — canonical trunk and protected deployment branch
-- `4444j99-behavioral-blockchain-audit` — local audit/review branch for investigation and evidence gathering
-- `capture/main-deferred` — older deferred branch that remains explicitly outside the current default work path
-- `docs/activation-ci-evidence-20260908` — branch backing an open PR for evidence and CI classification work (`#967`)
-- `feat/agent-action-evidence` — branch backing an open feature PR (`#956`)
-- `fix/restore-ts6-and-pages-checkout` — branch backing an open fix PR (`#952`)
-- `formal-repair-starter-2026-09-02` — short-lived repair lane still in progress via PR `#961`
-- `dependabot/...` — automated dependency update branches, some still open and some already merged or closed
+```bash
+git fetch --all --prune
+git branch -a --sort=-committerdate
+gh pr list --state open
+```
 
-The current branch posture is consistent with the repo’s documented model: a stable trunk plus a small number of short-lived, focused work branches that are merged through PRs into `main`.
+GitHub UI shortcuts:
+
+- Branches: <https://github.com/4444J99/peer-audited--behavioral-blockchain/branches>
+- Open PRs: <https://github.com/4444J99/peer-audited--behavioral-blockchain/pulls>
+
+When you check the live inventory, the expected posture is still the same: one
+stable trunk (`main`) plus a small number of short-lived, focused work branches
+that are merged through PRs into `main`.
 
 ## Working rules for this repo
 
@@ -76,7 +81,7 @@ The current branch posture is consistent with the repo’s documented model: a s
 Branch hygiene is not a substitute for CI. The repo’s release and promotion flow still governs correctness:
 
 - required CI on PRs
-- tag-based production release from `main`
+- production release triggered by pushing a `vX.Y.Z` tag or via manual `workflow_dispatch` on `main`
 - staging / beta / production gates
 - no direct main pushes
 
