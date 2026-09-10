@@ -78,8 +78,11 @@ test.describe('Dashboard', () => {
 
     const walletLink = page.locator('a[href*="wallet"]').first();
     if (await walletLink.isVisible()) {
+      // Next.js Link performs a client-side transition with no full page
+      // load, so `networkidle` can resolve before the router has pushed the
+      // new URL (observed as flaky on chromium). Wait on the URL itself.
       await walletLink.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForURL('**/wallet');
       expect(page.url()).toContain('wallet');
     }
   });
