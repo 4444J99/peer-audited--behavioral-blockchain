@@ -49,14 +49,14 @@
   "devDependencies": {
     "@nestjs/common": "11.2.1",
     "@nestjs/core": "11.2.1",
-    "@playwright/test": "1.62.1",
+    "@playwright/test": "1.63.0",
     "eslint": "^10.9.0",
-    "jest-util": "^30.4.1",
+    "jest-util": "^30.5.1",
     "prettier": "^3.9.6",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "tsx": "4.23.12",
-    "turbo": "2.10.11",
+    "tsx": "4.23.13",
+    "turbo": "2.10.12",
     "typescript": "^7.0.2"
   },
   "engines": {
