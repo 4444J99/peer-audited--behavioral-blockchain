@@ -18,7 +18,7 @@
 #   bash scripts/deploy.sh help           Show this help.
 #
 # The local target reads .config/docker/compose.defaults.env for sane defaults;
-# a present repo-root .env is layered on top and wins (override any value there).
+# a present repo-root .env is layered on top, and exported shell values win last.
 # ----------------------------------------------------------------------------
 set -euo pipefail
 
@@ -54,7 +54,7 @@ Targets:
   help      Show this help.
 
 The local target reads .config/docker/compose.defaults.env for sane defaults;
-a present repo-root .env is layered on top and wins (override any value there).
+a present repo-root .env is layered on top, and exported shell values win last.
 EOF
 }
 
@@ -76,7 +76,7 @@ compose() {
   docker compose "${args[@]}" "$@"
 }
 
-# Read a value from the resolved env (defaults overridden by .env).
+# Read a value from the resolved env (defaults, then .env, then shell exports).
 env_value() {
   local key="$1" val=""
   [ -f "$DEFAULTS_ENV" ] && val="$(grep -E "^${key}=" "$DEFAULTS_ENV" | tail -n1 | cut -d= -f2- || true)"
@@ -84,6 +84,9 @@ env_value() {
     local override
     override="$(grep -E "^${key}=" "$ROOT_ENV" | tail -n1 | cut -d= -f2- || true)"
     [ -n "$override" ] && val="$override"
+  fi
+  if printenv "$key" >/dev/null; then
+    val="${!key}"
   fi
   printf '%s' "$val"
 }
