@@ -459,7 +459,7 @@
         172
       ],
       "started": "2026-09-11T12:00:10Z",
-      "completed": "2026-09-11T12:10:32Z",
+      "completed": "2026-09-11T12:21:54Z",
       "reconciled": true,
       "test_passed": true
     },
@@ -1889,6 +1889,16 @@
           "from": "TESTED",
           "to": "PR_CREATED",
           "at": "2026-09-11T12:00:57Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-09-11T12:21:42Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-09-11T12:21:42Z"
         }
       ],
       "labels": [
@@ -1897,8 +1907,8 @@
         "P2-post-beta"
       ],
       "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/979",
-      "state": "PR_CREATED",
-      "state_updated": "2026-09-11T12:00:57Z",
+      "state": "CLOSED",
+      "state_updated": "2026-09-11T12:21:42Z",
       "title": "feat: Proof-of-Personhood / anti-Sybil layer — multi-account abuse prevention"
     },
     "83": {
@@ -2904,14 +2914,24 @@
           "from": "TESTED",
           "to": "PR_CREATED",
           "at": "2026-09-11T12:00:57Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-09-11T12:21:42Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-09-11T12:21:42Z"
         }
       ],
       "labels": [
         "devops"
       ],
       "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/979",
-      "state": "PR_CREATED",
-      "state_updated": "2026-09-11T12:00:57Z",
+      "state": "CLOSED",
+      "state_updated": "2026-09-11T12:21:42Z",
       "title": "Update wrangler.toml ALLOWED_ORIGIN after confirming GH Pages URL"
     },
     "123": {
@@ -4166,7 +4186,7 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "PR_CREATED",
+      "state": "CLOSED",
       "batch": "s5-product-completion-2026-09-11",
       "history": [
         {
@@ -4198,11 +4218,21 @@
           "from": "TESTED",
           "to": "PR_CREATED",
           "at": "2026-09-11T12:00:58Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-09-11T12:21:42Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-09-11T12:21:42Z"
         }
       ],
       "evidence": "src/mobile/screens/DashboardScreen.tsx:190",
       "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/979",
-      "state_updated": "2026-09-11T12:00:58Z",
+      "state_updated": "2026-09-11T12:21:42Z",
       "closed_at": null
     },
     "173": {
@@ -12994,7 +13024,7 @@
         "stale"
       ],
       "action": "BUILD",
-      "state": "PR_CREATED",
+      "state": "CLOSED",
       "batch": "audit-not-planned-closures",
       "history": [
         {
@@ -13026,11 +13056,21 @@
           "from": "TESTED",
           "to": "PR_CREATED",
           "at": "2026-06-12T12:53:05Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-09-11T12:21:58Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-09-11T12:21:58Z"
         }
       ],
       "evidence": "src/web/app/do-not-text-your-ex-tonight/page.test.tsx:1",
       "pr": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/697",
-      "state_updated": "2026-06-12T12:53:05Z",
+      "state_updated": "2026-09-11T12:21:58Z",
       "closed_at": null
     },
     "561": {
@@ -14297,7 +14337,7 @@
         "blocked"
       ],
       "action": "UNCLASSIFIED",
-      "state": "PR_MERGED",
+      "state": "CLOSED",
       "batch": "bug-865-rail-neutral-escrow",
       "history": [
         {
@@ -14329,11 +14369,16 @@
           "from": "PR_CREATED",
           "to": "PR_MERGED",
           "at": "2026-09-11T11:33:25Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-09-11T12:21:58Z"
         }
       ],
       "evidence": "src/api/src/modules/payments/settlement.worker.ts:24",
       "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/975",
-      "state_updated": "2026-09-11T11:33:25Z",
+      "state_updated": "2026-09-11T12:21:58Z",
       "closed_at": null
     },
     "866": {
@@ -14420,7 +14465,7 @@
         "bug"
       ],
       "action": "UNCLASSIFIED",
-      "state": "PR_CREATED",
+      "state": "CLOSED",
       "batch": "bug-936-cac-ltv",
       "history": [
         {
@@ -14447,11 +14492,21 @@
           "from": "TESTED",
           "to": "PR_CREATED",
           "at": "2026-09-11T00:35:07Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-09-11T12:21:59Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-09-11T12:21:59Z"
         }
       ],
       "evidence": "src/api/src/modules/admin/admin.controller.ts:705",
       "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/973",
-      "state_updated": "2026-09-11T00:35:07Z",
+      "state_updated": "2026-09-11T12:21:59Z",
       "closed_at": null
     },
     "937": {
@@ -14460,7 +14515,7 @@
         "bug"
       ],
       "action": "UNCLASSIFIED",
-      "state": "PR_CREATED",
+      "state": "CLOSED",
       "batch": "bug-937-demo-truth",
       "history": [
         {
@@ -14487,18 +14542,28 @@
           "from": "TESTED",
           "to": "PR_CREATED",
           "at": "2026-09-11T01:00:17Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-09-11T12:21:59Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-09-11T12:21:59Z"
         }
       ],
       "evidence": "scripts/dev/run-api.mjs:5",
       "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/974",
-      "state_updated": "2026-09-11T01:00:17Z",
+      "state_updated": "2026-09-11T12:21:59Z",
       "closed_at": null
     },
     "955": {
       "title": "Agent action evidence layer: immutable execution, approval, and review records",
       "labels": [],
       "action": "BUILD",
-      "state": "PR_CREATED",
+      "state": "CLOSED",
       "batch": "agent-action-evidence-2026-08-31",
       "history": [
         {
@@ -14525,11 +14590,21 @@
           "from": "TESTED",
           "to": "PR_CREATED",
           "at": "2026-08-31T14:01:33Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-09-11T12:21:59Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-09-11T12:21:59Z"
         }
       ],
-      "evidence": "src/api/src/modules/agent-action-evidence/agent-action-evidence.service.spec.ts",
+      "evidence": "src/api/src/modules/agent-action/agent-action.service.ts:1",
       "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/956",
-      "state_updated": "2026-08-31T14:01:33Z",
+      "state_updated": "2026-09-11T12:21:59Z",
       "closed_at": null
     },
     "966": {
