@@ -44,38 +44,55 @@
   "GET /admin/disputes": [],
   "GET /admin/financial-metrics": {
     "cac": {
-      "current": 0,
-      "previous": 0,
-      "trend": 0
+      "current": null,
+      "previous": null,
+      "trend": null,
+      "status": "unavailable",
+      "reason": "No sales, marketing, or operating-cost ledger exists in the test-money demo."
     },
     "ltv": {
-      "current": 0,
+      "current": 55.63,
       "previous": 0,
-      "trend": 0
+      "trend": 100,
+      "status": "measured"
     },
     "ltvCacRatio": {
-      "current": 0,
-      "trend": 0
+      "current": null,
+      "previous": null,
+      "trend": null,
+      "status": "unavailable",
+      "reason": "LTV:CAC ratio is unavailable until CAC has a measured acquisition-cost source."
     },
     "paybackDays": {
-      "current": 0,
-      "trend": 0
+      "current": null,
+      "previous": null,
+      "trend": null,
+      "status": "unavailable",
+      "reason": "Payback period is unavailable until CAC has a measured acquisition-cost source."
     },
     "monthlyBurn": {
-      "current": 0,
-      "previous": 0
+      "current": null,
+      "previous": null,
+      "trend": null,
+      "status": "unavailable",
+      "reason": "No sales, marketing, or operating-cost ledger exists in the test-money demo."
     },
     "totalUsers": {
       "current": 15,
-      "newThisMonth": 15
+      "newThisMonth": 15,
+      "status": "measured"
     },
     "payingUsers": {
       "current": 8,
-      "pct": 0
+      "pct": 53.33,
+      "status": "measured"
     },
     "monthlyRevenue": {
       "current": 445,
-      "recurringPct": 0
+      "previous": 0,
+      "recurringPct": 0,
+      "status": "measured",
+      "label": "test_money_contract_value"
     }
   },
   "GET /admin/kill-switch": {

@@ -1,5 +1,21 @@
 # Pattern Log — Triage Session Journal
 
+## bug-936-cac-ltv — 2026-09-11 — CAC/LTV demo truth repair
+
+**Started:** 1 issue (#936). **Built:** 1. **Tests:** API typecheck, web
+typecheck, API build, web build, and PR #973 Node 24 CI all passed.
+
+**Evidence:** `/admin/financial-metrics` no longer returns silent hard-coded
+zeros for the whole CAC/LTV panel. It measures total users, new users this
+month, paying users, subscription-linked percentage, current/previous test-money
+contract value, and LTV from active/completed contracts. CAC, LTV:CAC, payback,
+and monthly burn now carry explicit unavailable status because the test-money
+demo has no sales, marketing, or operating-cost ledger.
+
+**Lesson:** Business metrics in the demo must be either measured or explicitly
+unavailable. A plausible `$0` tile is false-green product evidence when no data
+source exists.
+
 ## agent-action-evidence-2026-08-31 — Applied AI
 
 **Started:** 1 issue (#955). **Built:** 1. **Tests:** 44/44 focused tests

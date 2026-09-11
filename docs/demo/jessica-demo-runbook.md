@@ -60,7 +60,7 @@ npm run demo:feedback:report   # who came, where they lingered, what they wrote
 
 The report also prints **NOBODY OPENED** — the routes no one reached. That list is usually the more
 useful half: a route nobody opened during a walkthrough is unreachable, uninteresting, or badly
-signposted, and a report that only shows what people *did* look at hides all three.
+signposted, and a report that only shows what people _did_ look at hides all three.
 
 The collector is a **separate, detached process** on purpose (`scripts/demo/feedback.sh` supervising
 `feedback-server.mjs`, port 4312, append-only NDJSON under `artifacts/`, gitignored). Detaching
@@ -104,13 +104,13 @@ npm run snapshot:deploy    # runs verify first, then wrangler pages deploy
 the same address; the URL is safe to hand to anyone — there is nothing behind it to break
 into. One first-deploy lesson is now baked into the script: the deploy pins `--branch main`,
 because wrangler otherwise labels the upload with the checkout's git branch and a
-non-production branch becomes a *preview* deployment — the canonical URL serves nothing
+non-production branch becomes a _preview_ deployment — the canonical URL serves nothing
 while the deploy output still says "Success".
 
 `snapshot:verify` is the gate, and `snapshot:deploy` runs it for you — you cannot publish
 a snapshot that fails it. It exists because none of the cheaper checks can see the failure
 that matters: a broken route still builds, still exports an HTML file, and still answers
-`200`, because the error is *text inside the page*. It fails on three things — a route that
+`200`, because the error is _text inside the page_. It fails on three things — a route that
 reaches for `/api`, a route that calls anything off-origin, and a route the snapshot layer
 had no fixture for.
 
@@ -144,9 +144,10 @@ Two things to say honestly if someone asks:
 - The snapshot sends **no telemetry**. The note/interaction collector does not exist behind the
   pages.dev host, so notes there are a live-demo and hosted-beta feature. Ask a snapshot
   reviewer for comments directly.
-- `/admin/cac-ltv` now shows real synthetic user, paying-user and revenue counts, but **CAC, LTV,
-  payback and burn are still hard-coded zeros in the API** — the product does not compute them
-  yet. That is a real gap, not a snapshot artifact; do not present those four tiles as measured.
+- `/admin/cac-ltv` now shows measured synthetic user counts, paying-user counts, subscription-linked
+  percentage, test-money contract value, and LTV derived from active/completed contracts. CAC,
+  LTV:CAC, payback, and monthly burn are explicitly marked unavailable because the demo has no
+  sales, marketing, or operating-cost ledger. Do not present unavailable tiles as measured.
 
 ### The hosted beta, for a remote tester who needs to actually DO things
 
@@ -245,10 +246,10 @@ The tour is compiled out of any build that is not a demo build: it renders only 
 
 Two fallbacks exist. Both are silent screen recordings of the local synthetic demo.
 
-| File | What it shows | Command |
-| --- | --- | --- |
-| `docs/demo/assets/styx-tour-fallback.mp4` | The static `/tour` page only. No signed-in session, and not proof of the live-stack gate. | `npm run demo:capture:tour` |
-| `docs/demo/assets/styx-signed-in-rehearsal.mp4` | All four moments in the table above, in order, signed in. | `npm run demo:capture:rehearsal` |
+| File                                            | What it shows                                                                             | Command                          |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------- |
+| `docs/demo/assets/styx-tour-fallback.mp4`       | The static `/tour` page only. No signed-in session, and not proof of the live-stack gate. | `npm run demo:capture:tour`      |
+| `docs/demo/assets/styx-signed-in-rehearsal.mp4` | All four moments in the table above, in order, signed in.                                 | `npm run demo:capture:rehearsal` |
 
 The rehearsal recorder runs the full live-stack gate itself before recording, so the artifact cannot
 exist without a passing verification on the same commit — and its opening card names that commit and

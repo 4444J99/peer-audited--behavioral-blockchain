@@ -37,6 +37,56 @@ import {
 } from "./dto";
 import { SystemFlagsService } from "../compliance/system-flags.service";
 
+type FinancialMetricStatus = "measured" | "unavailable";
+
+interface FinancialMetric {
+  current: number | null;
+  previous?: number | null;
+  trend?: number | null;
+  status: FinancialMetricStatus;
+  reason?: string;
+}
+
+function finiteNumber(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function rounded(value: number, decimals = 2): number {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+}
+
+function percentage(part: number, total: number): number {
+  return total > 0 ? rounded((part / total) * 100) : 0;
+}
+
+function trend(current: number, previous: number): number {
+  if (previous === 0) {
+    return current > 0 ? 100 : 0;
+  }
+  return rounded(((current - previous) / previous) * 100);
+}
+
+function measuredMetric(current: number, previous: number): FinancialMetric {
+  return {
+    current: rounded(current),
+    previous: rounded(previous),
+    trend: trend(current, previous),
+    status: "measured",
+  };
+}
+
+function unavailableMetric(reason: string): FinancialMetric {
+  return {
+    current: null,
+    previous: null,
+    trend: null,
+    status: "unavailable",
+    reason,
+  };
+}
+
 @ApiTags("Admin")
 @ApiBearerAuth()
 @Controller("admin")
@@ -653,26 +703,80 @@ export class AdminController {
   // The endpoint 403'd every caller -- including real admins -- for its whole life.
   @Roles("ADMIN")
   async financialMetrics() {
-    const result = await this.pool.query(`
+    const users = await this.pool.query(`
       SELECT
         COALESCE(COUNT(*) FILTER (WHERE created_at >= date_trunc('month', NOW())), 0) AS new_users_this_month,
+        COALESCE(COUNT(*) FILTER (WHERE subscription_id IS NOT NULL), 0) AS subscription_users,
         COALESCE(COUNT(*), 0) AS total_users
       FROM users
     `);
-    const paying = await this.pool.query(`
-      SELECT COALESCE(COUNT(DISTINCT user_id), 0) AS paying_users,
-             COALESCE(SUM(stake_amount), 0) AS total_staked
-      FROM contracts WHERE status IN ('ACTIVE', 'COMPLETED')
+    const contracts = await this.pool.query(`
+      SELECT
+        COALESCE(COUNT(DISTINCT user_id), 0) AS paying_users,
+        COALESCE(SUM(stake_amount), 0) AS total_contract_value,
+        COALESCE(
+          SUM(stake_amount) FILTER (
+            WHERE created_at >= date_trunc('month', NOW())
+          ),
+          0
+        ) AS current_month_contract_value,
+        COALESCE(
+          SUM(stake_amount) FILTER (
+            WHERE created_at >= date_trunc('month', NOW()) - INTERVAL '1 month'
+              AND created_at < date_trunc('month', NOW())
+          ),
+          0
+        ) AS previous_month_contract_value
+      FROM contracts
+      WHERE status IN ('ACTIVE', 'COMPLETED')
     `);
+
+    const totalUsers = finiteNumber(users.rows[0].total_users);
+    const newUsersThisMonth = finiteNumber(users.rows[0].new_users_this_month);
+    const subscriptionUsers = finiteNumber(users.rows[0].subscription_users);
+    const payingUsers = finiteNumber(contracts.rows[0].paying_users);
+    const totalContractValue = finiteNumber(
+      contracts.rows[0].total_contract_value,
+    );
+    const currentMonthContractValue = finiteNumber(
+      contracts.rows[0].current_month_contract_value,
+    );
+    const previousMonthContractValue = finiteNumber(
+      contracts.rows[0].previous_month_contract_value,
+    );
+    const currentLtv = payingUsers > 0 ? totalContractValue / payingUsers : 0;
+    const previousLtv =
+      payingUsers > 0 ? previousMonthContractValue / payingUsers : 0;
+    const missingAcquisitionCostReason =
+      "No sales, marketing, or operating-cost ledger exists in the test-money demo.";
+
     return {
-      cac: { current: 0, previous: 0, trend: 0 },
-      ltv: { current: 0, previous: 0, trend: 0 },
-      ltvCacRatio: { current: 0, trend: 0 },
-      paybackDays: { current: 0, trend: 0 },
-      monthlyBurn: { current: 0, previous: 0 },
-      totalUsers: { current: Number(result.rows[0].total_users), newThisMonth: Number(result.rows[0].new_users_this_month) },
-      payingUsers: { current: Number(paying.rows[0].paying_users), pct: 0 },
-      monthlyRevenue: { current: Number(paying.rows[0].total_staked), recurringPct: 0 },
+      cac: unavailableMetric(missingAcquisitionCostReason),
+      ltv: measuredMetric(currentLtv, previousLtv),
+      ltvCacRatio: unavailableMetric(
+        "LTV:CAC ratio is unavailable until CAC has a measured acquisition-cost source.",
+      ),
+      paybackDays: unavailableMetric(
+        "Payback period is unavailable until CAC has a measured acquisition-cost source.",
+      ),
+      monthlyBurn: unavailableMetric(missingAcquisitionCostReason),
+      totalUsers: {
+        current: totalUsers,
+        newThisMonth: newUsersThisMonth,
+        status: "measured",
+      },
+      payingUsers: {
+        current: payingUsers,
+        pct: percentage(payingUsers, totalUsers),
+        status: "measured",
+      },
+      monthlyRevenue: {
+        current: rounded(currentMonthContractValue),
+        previous: rounded(previousMonthContractValue),
+        recurringPct: percentage(subscriptionUsers, payingUsers),
+        status: "measured",
+        label: "test_money_contract_value",
+      },
     };
   }
 }
