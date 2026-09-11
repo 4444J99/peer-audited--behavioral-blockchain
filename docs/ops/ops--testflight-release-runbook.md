@@ -52,11 +52,11 @@ Record here:
 - uploader:
 - upload timestamp:
 
-Current gap to resolve:
+Current lane implementation:
 
-- The repo does not contain a proven TestFlight upload lane.
-- `src/mobile/eas.json` still has blank `appleId`, `ascAppId`, and `appleTeamId` under `submit.production`.
-- Until those are configured and a real upload occurs, this runbook remains draft-only.
+- Fastlane `:beta` lane implemented in `src/mobile/fastlane/Fastfile` for automated prebuild, signed Release archive, and TestFlight upload via App Store Connect API Key (`APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_KEY_CONTENT`).
+- Alternatively, Expo EAS build path: `npx eas build --platform ios --profile beta` with `eas submit --platform ios`.
+- Human handoff requirement: Provision live App Store Connect API key secrets in CI/CD environment.
 
 ## 4. Post-Upload Checks
 
