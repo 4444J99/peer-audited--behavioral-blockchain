@@ -14348,7 +14348,7 @@
         "bug"
       ],
       "action": "UNCLASSIFIED",
-      "state": "TESTED",
+      "state": "PR_CREATED",
       "batch": "bug-937-demo-truth",
       "history": [
         {
@@ -14370,11 +14370,16 @@
           "from": "BUILD_DONE",
           "to": "TESTED",
           "at": "2026-09-11T00:59:29Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-09-11T01:00:17Z"
         }
       ],
-      "evidence": "scripts/dev/run-api.mjs:1",
-      "pr": null,
-      "state_updated": "2026-09-11T00:59:29Z",
+      "evidence": "scripts/dev/run-api.mjs:5",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/974",
+      "state_updated": "2026-09-11T01:00:17Z",
       "closed_at": null
     }
   }
