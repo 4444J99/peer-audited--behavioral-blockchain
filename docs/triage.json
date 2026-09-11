@@ -14297,7 +14297,7 @@
         "bug"
       ],
       "action": "UNCLASSIFIED",
-      "state": "TESTED",
+      "state": "PR_CREATED",
       "batch": "bug-936-cac-ltv",
       "history": [
         {
@@ -14319,11 +14319,16 @@
           "from": "BUILD_DONE",
           "to": "TESTED",
           "at": "2026-09-11T00:34:20Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-09-11T00:35:07Z"
         }
       ],
-      "evidence": "src/api/src/modules/admin/admin.controller.spec.ts:243",
-      "pr": null,
-      "state_updated": "2026-09-11T00:34:20Z",
+      "evidence": "src/api/src/modules/admin/admin.controller.ts:705",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/973",
+      "state_updated": "2026-09-11T00:35:07Z",
       "closed_at": null
     }
   }
