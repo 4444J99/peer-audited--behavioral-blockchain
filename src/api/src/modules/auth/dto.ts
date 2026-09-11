@@ -43,6 +43,14 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   referralCode?: string;
+
+  @ApiProperty({ description: 'Optional device fingerprint for multi-account fraud prevention', required: false })
+  @IsOptional()
+  deviceFingerprint?: {
+    hash?: string;
+    platform: 'ios' | 'android' | 'web';
+    rawVendorId?: string;
+  };
 }
 
 export class LoginDto {

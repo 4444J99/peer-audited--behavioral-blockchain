@@ -3,7 +3,7 @@ import { Pool } from 'pg';
 import { createHash } from 'crypto';
 
 export interface DeviceFingerprint {
-  hash: string;
+  hash?: string;
   platform: 'ios' | 'android' | 'web';
   rawVendorId?: string;
 }
@@ -50,7 +50,7 @@ export class AntiSybilService {
   ): Promise<void> {
     const hashed = fingerprint.rawVendorId
       ? AntiSybilService.hashFingerprint(fingerprint.rawVendorId)
-      : fingerprint.hash;
+      : (fingerprint.hash ?? '');
 
     await this.pool.query(
       `INSERT INTO sybil_device_fingerprints (user_id, device_hash, platform, created_at)

@@ -10,6 +10,8 @@ jest.mock('../services/ApiClient', () => ({
     getNotifications: jest.fn(() => new Promise(() => {})),
     getContracts: jest.fn(() => new Promise(() => {})),
     getAttestationStatus: jest.fn(() => new Promise(() => {})),
+    getPendingInvitations: jest.fn(() => Promise.resolve([])),
+    acceptPartnerInvitation: jest.fn(() => Promise.resolve({ status: 'ACTIVE' })),
   },
 }));
 
@@ -179,5 +181,41 @@ describe('DashboardScreen – render tests', () => {
     fireEvent.click(getByText('Profile').closest('button') as HTMLElement);
 
     expect(navigation.navigate).toHaveBeenCalledWith('Profile');
+  });
+
+  it('renders pending partner invitations and allows accepting them', async () => {
+    ApiClient.getMe.mockResolvedValueOnce({
+      integrity_score: 80,
+      tier: 'STANDARD',
+      contract_count: 0,
+      total_staked: 0,
+    });
+    ApiClient.getBalance.mockResolvedValueOnce({
+      ledger_balance: 50.0,
+    });
+    ApiClient.getNotifications.mockResolvedValueOnce({
+      notifications: [],
+    });
+    ApiClient.getContracts.mockResolvedValueOnce([]);
+    ApiClient.getPendingInvitations.mockResolvedValueOnce([
+      {
+        id: 'inv-1',
+        contract_id: 'contract-abc',
+        owner_email: 'friend@styx.protocol',
+        oath_category: 'RECOVERY_SCREEN_TIME',
+        stake_amount: '25.00',
+      },
+    ]);
+
+    const { getByText } = render(
+      React.createElement(DashboardScreen, { navigation }),
+    );
+
+    await waitFor(() => expect(getByText('Partner Invitations')).toBeTruthy());
+    expect(getByText('From: friend@styx.protocol')).toBeTruthy();
+    expect(getByText('Accept')).toBeTruthy();
+
+    fireEvent.click(getByText('Accept').closest('button') as HTMLElement);
+    expect(ApiClient.acceptPartnerInvitation).toHaveBeenCalledWith('contract-abc');
   });
 });

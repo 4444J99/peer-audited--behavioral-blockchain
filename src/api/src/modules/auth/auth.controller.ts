@@ -85,6 +85,7 @@ export class AuthController {
       termsAccepted: dto.termsAccepted,
       dateOfBirth: dto.dateOfBirth ?? '',
       referralCode: dto.referralCode,
+      deviceFingerprint: dto.deviceFingerprint,
     });
     await this.issueBrowserSessionCookies(res, result.userId, result.token);
     return result;

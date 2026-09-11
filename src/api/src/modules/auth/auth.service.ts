@@ -1,5 +1,6 @@
 import { Injectable, ConflictException, UnauthorizedException, BadRequestException, Optional, Inject } from '@nestjs/common';
 import { ReferralService } from '../referrals/referral.service';
+import { AntiSybilService, DeviceFingerprint } from '../security/anti-sybil.service';
 import { Pool, PoolClient } from 'pg';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
@@ -120,12 +121,21 @@ export class AuthService {
     @Optional()
     @Inject(ReferralService)
     private readonly referralService?: ReferralService,
+    @Optional()
+    @Inject(AntiSybilService)
+    private readonly antiSybil?: AntiSybilService,
   ) {}
 
   async register(
     email: string,
     password: string, // allow-secret
-    opts: { ageConfirmation: boolean; termsAccepted: boolean; dateOfBirth: string; referralCode?: string },
+    opts: {
+      ageConfirmation: boolean;
+      termsAccepted: boolean;
+      dateOfBirth: string;
+      referralCode?: string;
+      deviceFingerprint?: DeviceFingerprint;
+    },
   ): Promise<{ userId: string; token: string }> { // allow-secret
     const maybeConnect = (this.pool as unknown as { connect?: () => Promise<PoolClient> }).connect;
     const client = typeof maybeConnect === 'function' ? await maybeConnect.call(this.pool) : null;
@@ -194,6 +204,14 @@ export class AuthService {
         this.referralService.attributeReferral(opts.referralCode, userId).catch((err: Error) => {
           console.error(`Failed to attribute referral: ${err.message}`);
         });
+      }
+
+      if (opts.deviceFingerprint && this.antiSybil) {
+        this.antiSybil
+          .registerDeviceFingerprint(userId, opts.deviceFingerprint)
+          .catch((err: Error) => {
+            console.error(`Failed to register device fingerprint: ${err.message}`);
+          });
       }
 
       return { userId, token };
