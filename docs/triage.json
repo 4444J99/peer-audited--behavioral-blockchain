@@ -452,14 +452,28 @@
     },
     {
       "id": "s5-product-completion-2026-09-11",
-      "phase": "5",
+      "phase": "S5 product completion lane: anti-sybil registration, Ask Styx CORS, mobile partner UI",
       "issues": [
         82,
         122,
         172
       ],
       "started": "2026-09-11T12:00:10Z",
-      "completed": "2026-09-11T12:01:02Z",
+      "completed": "2026-09-11T12:10:32Z",
+      "reconciled": true,
+      "test_passed": true
+    },
+    {
+      "id": "blocked-legal-vendor-2026-09-11",
+      "phase": "S1 blocked/verdict lane: legal counsel and vendor provisioning blockers",
+      "issues": [
+        315,
+        316,
+        317,
+        141
+      ],
+      "started": "2026-09-11T12:02:12Z",
+      "completed": "2026-09-11T12:10:20Z",
       "reconciled": true,
       "test_passed": true
     }
@@ -3328,14 +3342,19 @@
     },
     "141": {
       "action": "WAITING",
-      "batch": null,
+      "batch": "blocked-legal-vendor-2026-09-11",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/mobile/eas.json:1",
       "history": [
         {
           "from": "UNREAD",
           "to": "TRACK",
           "at": "2026-06-01T15:50:41Z"
+        },
+        {
+          "from": "WAITING",
+          "to": "WAITING",
+          "at": "2026-09-11T12:02:22Z"
         }
       ],
       "labels": [
@@ -3349,7 +3368,7 @@
       ],
       "pr": null,
       "state": "WAITING",
-      "state_updated": "2026-06-01T15:50:41Z",
+      "state_updated": "2026-09-11T12:02:22Z",
       "title": "[Blocked] Beta Ops: App Store Connect + TestFlight Provisioning"
     },
     "142": {
@@ -7584,9 +7603,9 @@
         "owner:legal-compliance",
         "legal"
       ],
-      "action": "TRACK",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "action": "WAITING",
+      "state": "WAITING",
+      "batch": "blocked-legal-vendor-2026-09-11",
       "history": [
         {
           "from": "UNREAD",
@@ -7597,11 +7616,16 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "WAITING",
+          "at": "2026-09-11T12:02:14Z"
         }
       ],
-      "evidence": null,
+      "evidence": "docs/legal/appendices/appendix-e--counsel-submission-checklist.md:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:36:48Z",
+      "state_updated": "2026-09-11T12:02:14Z",
       "closed_at": null
     },
     "316": {
@@ -7611,9 +7635,9 @@
         "owner:legal-compliance",
         "legal"
       ],
-      "action": "TRACK",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "action": "WAITING",
+      "state": "WAITING",
+      "batch": "blocked-legal-vendor-2026-09-11",
       "history": [
         {
           "from": "UNREAD",
@@ -7624,11 +7648,16 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "WAITING",
+          "at": "2026-09-11T12:02:15Z"
         }
       ],
-      "evidence": null,
+      "evidence": "docs/legal/legal--aegis-protocol.md:145",
       "pr": null,
-      "state_updated": "2026-06-12T12:36:48Z",
+      "state_updated": "2026-09-11T12:02:15Z",
       "closed_at": null
     },
     "317": {
@@ -7638,9 +7667,9 @@
         "owner:legal-compliance",
         "legal"
       ],
-      "action": "TRACK",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "action": "WAITING",
+      "state": "WAITING",
+      "batch": "blocked-legal-vendor-2026-09-11",
       "history": [
         {
           "from": "UNREAD",
@@ -7651,11 +7680,16 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:36:48Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "WAITING",
+          "at": "2026-09-11T12:02:18Z"
         }
       ],
-      "evidence": null,
+      "evidence": "docs/legal/legal--50-state-skill-contest-survey.md:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:36:48Z",
+      "state_updated": "2026-09-11T12:02:18Z",
       "closed_at": null
     },
     "318": {

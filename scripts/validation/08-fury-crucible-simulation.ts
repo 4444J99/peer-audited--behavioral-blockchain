@@ -1,8 +1,11 @@
 /**
  * Validation Gate 08: Fury Crucible (Adversarial Agent Simulation)
- * 
+ * — self-contained, no infra required, enforced in PR CI.
+ * Disambiguation: compliance-artifact check is Gate 08b (deploy-gated,
+ * needs DATABASE_URL); this crucible is Gate 08 (always runs).
+ *
  * Implements Vector 2: The Crucible
- * 
+ *
  * Simulates a high-volume adversarial environment against the Fury Network.
  * Spawns simulated reviewers:
  *  - Honest Furies (95% accuracy)
