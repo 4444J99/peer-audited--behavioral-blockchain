@@ -240,6 +240,83 @@ describe("AdminController", () => {
     });
   });
 
+  describe("financialMetrics", () => {
+    it("returns measured user and test-money contract metrics without fabricating CAC", async () => {
+      mockPool.query
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              total_users: "15",
+              new_users_this_month: "5",
+              subscription_users: "4",
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              paying_users: "8",
+              total_contract_value: "445",
+              current_month_contract_value: "320",
+              previous_month_contract_value: "160",
+            },
+          ],
+        });
+
+      const result = await controller.financialMetrics();
+
+      expect(result.totalUsers).toEqual({
+        current: 15,
+        newThisMonth: 5,
+        status: "measured",
+      });
+      expect(result.payingUsers).toEqual({
+        current: 8,
+        pct: 53.33,
+        status: "measured",
+      });
+      expect(result.monthlyRevenue).toEqual({
+        current: 320,
+        previous: 160,
+        recurringPct: 50,
+        status: "measured",
+        label: "test_money_contract_value",
+      });
+      expect(result.ltv).toEqual({
+        current: 55.63,
+        previous: 20,
+        trend: 178.13,
+        status: "measured",
+      });
+      expect(result.cac).toEqual(
+        expect.objectContaining({
+          current: null,
+          previous: null,
+          trend: null,
+          status: "unavailable",
+        }),
+      );
+      expect(result.ltvCacRatio).toEqual(
+        expect.objectContaining({
+          current: null,
+          status: "unavailable",
+        }),
+      );
+      expect(result.paybackDays).toEqual(
+        expect.objectContaining({
+          current: null,
+          status: "unavailable",
+        }),
+      );
+      expect(result.monthlyBurn).toEqual(
+        expect.objectContaining({
+          current: null,
+          status: "unavailable",
+        }),
+      );
+    });
+  });
+
   describe("completeIdentityVerificationForUser", () => {
     it("should delegate to IdentityVerificationService mock completion", async () => {
       (
