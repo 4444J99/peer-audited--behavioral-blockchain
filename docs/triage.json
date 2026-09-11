@@ -476,6 +476,20 @@
       "completed": "2026-09-11T12:10:20Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "expand-product-core-2026-09-11",
+      "phase": "Phase Delta",
+      "issues": [
+        85,
+        54,
+        48,
+        81
+      ],
+      "started": "2026-09-11T12:56:50Z",
+      "completed": "2026-09-11T13:07:01Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -971,14 +985,44 @@
     },
     "48": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "expand-product-core-2026-09-11",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/api/src/modules/b2b/cohort-orchestration.service.ts:1",
       "history": [
         {
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:47Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T12:56:53Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-09-11T13:06:55Z"
         }
       ],
       "labels": [
@@ -988,9 +1032,9 @@
         "P2-post-beta",
         "b2b"
       ],
-      "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:47Z",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/983",
+      "state": "CLOSED",
+      "state_updated": "2026-09-11T13:06:55Z",
       "title": "feat: B2B cohort orchestration — orgs create/manage cohorts for their clients"
     },
     "49": {
@@ -1134,14 +1178,44 @@
     },
     "54": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "expand-product-core-2026-09-11",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/shared/libs/motivation-archetype.ts:1",
       "history": [
         {
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:48Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T12:56:53Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-09-11T13:06:55Z"
         }
       ],
       "labels": [
@@ -1151,9 +1225,9 @@
         "P2-post-beta",
         "recovery"
       ],
-      "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:48Z",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/983",
+      "state": "CLOSED",
+      "state_updated": "2026-09-11T13:06:55Z",
       "title": "feat: Motivation profiling at intake — tailor experience to user archetype"
     },
     "55": {
@@ -1840,23 +1914,53 @@
     },
     "81": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "expand-product-core-2026-09-11",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/api/src/modules/fury/counter-claim.service.ts:1",
       "history": [
         {
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:50Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T12:56:53Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-09-11T13:06:55Z"
         }
       ],
       "labels": [
         "brainstorm-audit",
         "P2-post-beta"
       ],
-      "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:50Z",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/983",
+      "state": "CLOSED",
+      "state_updated": "2026-09-11T13:06:55Z",
       "title": "feat: Counter-claim & harassment filing — Fury auditor accountability mechanism"
     },
     "82": {
@@ -1955,14 +2059,44 @@
     },
     "85": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "expand-product-core-2026-09-11",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/api/src/modules/payments/payment-router.service.ts:74",
       "history": [
         {
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:50Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T12:56:53Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-11T13:06:54Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-09-11T13:06:55Z"
+        },
+        {
+          "from": "PR_MERGED",
+          "to": "CLOSED",
+          "at": "2026-09-11T13:06:55Z"
         }
       ],
       "labels": [
@@ -1970,9 +2104,9 @@
         "brainstorm-audit",
         "P2-post-beta"
       ],
-      "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:50Z",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/983",
+      "state": "CLOSED",
+      "state_updated": "2026-09-11T13:06:55Z",
       "title": "feat: Geographic payment routing engine — jurisdiction-aware processor selection"
     },
     "86": {
