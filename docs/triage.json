@@ -451,6 +451,19 @@
       "test_passed": true
     },
     {
+      "id": "s5-product-completion-2026-09-11",
+      "phase": "S5 product completion lane: anti-sybil registration, Ask Styx CORS, mobile partner UI",
+      "issues": [
+        82,
+        122,
+        172
+      ],
+      "started": "2026-09-11T12:00:10Z",
+      "completed": "2026-09-11T12:10:32Z",
+      "reconciled": true,
+      "test_passed": true
+    },
+    {
       "id": "blocked-legal-vendor-2026-09-11",
       "phase": "S1 blocked/verdict lane: legal counsel and vendor provisioning blockers",
       "issues": [
@@ -460,7 +473,7 @@
         141
       ],
       "started": "2026-09-11T12:02:12Z",
-      "completed": "2026-09-11T12:02:40Z",
+      "completed": "2026-09-11T12:10:20Z",
       "reconciled": true,
       "test_passed": true
     }
@@ -1848,14 +1861,34 @@
     },
     "82": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "s5-product-completion-2026-09-11",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/api/src/modules/auth/auth.service.ts:210",
       "history": [
         {
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:50Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T12:00:14Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-11T12:00:14Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-11T12:00:14Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-09-11T12:00:57Z"
         }
       ],
       "labels": [
@@ -1863,9 +1896,9 @@
         "brainstorm-audit",
         "P2-post-beta"
       ],
-      "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:50Z",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/979",
+      "state": "PR_CREATED",
+      "state_updated": "2026-09-11T12:00:57Z",
       "title": "feat: Proof-of-Personhood / anti-Sybil layer — multi-account abuse prevention"
     },
     "83": {
@@ -2838,9 +2871,9 @@
     },
     "122": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "s5-product-completion-2026-09-11",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/ask-styx/worker/wrangler.toml:15",
       "history": [
         {
           "from": "UNREAD",
@@ -2851,14 +2884,34 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-01T15:53:56Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T12:00:14Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-11T12:00:14Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-11T12:00:14Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-09-11T12:00:57Z"
         }
       ],
       "labels": [
         "devops"
       ],
-      "pr": null,
-      "state": "TRACKING",
-      "state_updated": "2026-06-01T15:53:56Z",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/979",
+      "state": "PR_CREATED",
+      "state_updated": "2026-09-11T12:00:57Z",
       "title": "Update wrangler.toml ALLOWED_ORIGIN after confirming GH Pages URL"
     },
     "123": {
@@ -4113,8 +4166,8 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "PR_CREATED",
+      "batch": "s5-product-completion-2026-09-11",
       "history": [
         {
           "from": "UNREAD",
@@ -4125,11 +4178,31 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T12:00:15Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-11T12:00:15Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-11T12:00:15Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-09-11T12:00:58Z"
         }
       ],
-      "evidence": null,
-      "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
+      "evidence": "src/mobile/screens/DashboardScreen.tsx:190",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/979",
+      "state_updated": "2026-09-11T12:00:58Z",
       "closed_at": null
     },
     "173": {

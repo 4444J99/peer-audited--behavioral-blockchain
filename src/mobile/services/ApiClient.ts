@@ -339,4 +339,15 @@ getContracts: () =>
       method: 'POST',
       body: JSON.stringify({ durationDays }),
     }),
+
+  // Security / Anti-Sybil
+  registerDeviceFingerprint: (fingerprint: {
+    hash?: string;
+    platform: 'ios' | 'android' | 'web';
+    rawVendorId?: string;
+  }) =>
+    request<{ registered: boolean }>('/security/device-fingerprint', {
+      method: 'POST',
+      body: JSON.stringify(fingerprint),
+    }),
 };

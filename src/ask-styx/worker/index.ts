@@ -82,6 +82,20 @@ function corsHeaders(origin: string, requestId: string) {
   };
 }
 
+export function resolveAllowedOrigin(
+  requestOrigin: string | null,
+  configuredOrigin: string | undefined,
+): string {
+  if (!configuredOrigin || configuredOrigin === '*') {
+    return requestOrigin || '*';
+  }
+  const allowedList = configuredOrigin.split(',').map((s) => s.trim());
+  if (requestOrigin && allowedList.includes(requestOrigin)) {
+    return requestOrigin;
+  }
+  return allowedList[0] || '*';
+}
+
 function jsonError(
   message: string,
   status: number,
@@ -191,7 +205,8 @@ async function isRateLimited(ip: string, rateLimiter: DurableObjectNamespace): P
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const requestId = newRequestId();
-    const origin = env.ALLOWED_ORIGIN || '*';
+    const requestOrigin = request.headers.get('origin');
+    const origin = resolveAllowedOrigin(requestOrigin, env.ALLOWED_ORIGIN);
     const headers = corsHeaders(origin, requestId);
 
     try {
