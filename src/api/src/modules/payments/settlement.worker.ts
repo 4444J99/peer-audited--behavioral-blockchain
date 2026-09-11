@@ -1,13 +1,18 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
-import { Worker, Job } from 'bullmq';
-import { Pool, PoolClient } from 'pg';
-import { SETTLEMENT_QUEUE_NAME, getRedisConnectionConfig } from '../../../config/queue.config';
-import { StripePayoutProvider } from './stripe-payout.provider';
-import { LedgerService } from '../../../services/ledger/ledger.service';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { PayoutStatus } from '../../common/interfaces/payout-provider.interface';
-import { buildSettlementQuote } from './settlement-quote';
-import { toCents } from '../../../../shared/libs/money';
+import { Inject, Injectable, OnModuleInit, Logger } from "@nestjs/common";
+import { Worker, Job } from "bullmq";
+import { Pool, PoolClient } from "pg";
+import {
+  SETTLEMENT_QUEUE_NAME,
+  getRedisConnectionConfig,
+} from "../../../config/queue.config";
+import { LedgerService } from "../../../services/ledger/ledger.service";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import {
+  ESCROW_PROVIDER,
+  EscrowProvider,
+} from "../../common/interfaces/payout-provider.interface";
+import { buildSettlementQuote } from "./settlement-quote";
+import { toCents } from "../../../../shared/libs/money";
 
 @Injectable()
 export class SettlementWorker implements OnModuleInit {
@@ -16,7 +21,7 @@ export class SettlementWorker implements OnModuleInit {
 
   constructor(
     private readonly pool: Pool,
-    private readonly stripeProvider: StripePayoutProvider,
+    @Inject(ESCROW_PROVIDER) private readonly escrow: EscrowProvider,
     private readonly ledger: LedgerService,
     private readonly truthLog: TruthLogService,
   ) {}
@@ -27,46 +32,83 @@ export class SettlementWorker implements OnModuleInit {
       async (job: Job) => this.process(job),
       { connection: getRedisConnectionConfig(), concurrency: 2 },
     );
-    this.logger.log('Settlement worker initialized and listening on SETTLEMENT_QUEUE');
+    this.logger.log(
+      "Settlement worker initialized and listening on SETTLEMENT_QUEUE",
+    );
   }
 
   private async process(job: Job): Promise<void> {
-    const { contractId, outcome, paymentIntentId, amountCents, furies, dispositionMode } = job.data;
-    this.logger.log(`Processing settlement for contract ${contractId} (${outcome})...`);
+    const {
+      contractId,
+      outcome,
+      escrowHoldId,
+      paymentIntentId,
+      amountCents,
+      dispositionMode,
+    } = job.data;
+    const holdId = escrowHoldId ?? paymentIntentId;
+    this.logger.log(
+      `Processing settlement for contract ${contractId} (${outcome})...`,
+    );
+    if (!holdId) {
+      throw new Error(
+        `Settlement job for contract ${contractId} has no escrow hold id`,
+      );
+    }
 
     // PM26: never trust the job-supplied amountCents blindly. A stale/replayed/manipulated
     // amount would settle the wrong sum AND post a ledger entry that disagrees with the
     // contract. Re-derive the server-authoritative stake from the contract and reject a
     // mismatch so reconciliation/operators can investigate rather than money moving silently.
-    const settledAmountCents = await this.resolveAuthoritativeAmount(contractId, amountCents);
+    const settledAmountCents = await this.resolveAuthoritativeAmount(
+      contractId,
+      amountCents,
+    );
 
     // TKT-P0-001: Deterministic Payout Breakdown
-    const quote = buildSettlementQuote(settledAmountCents, outcome, dispositionMode);
+    const quote = buildSettlementQuote(
+      settledAmountCents,
+      outcome,
+      dispositionMode,
+    );
 
     // Atomically claim (or resume) the run for this (contract, outcome). We take a
     // FOR UPDATE lock on the contract row so that two concurrent workers (concurrency: 2)
     // or a BullMQ retry cannot race the "already succeeded?" check against the INSERT.
     // The lock is held only for this short claim transaction, never across the Stripe call.
-    const runId = await this.claimRun(contractId, outcome, settledAmountCents, dispositionMode, quote);
+    const runId = await this.claimRun(
+      contractId,
+      outcome,
+      settledAmountCents,
+      dispositionMode,
+      quote,
+    );
     if (!runId) {
-      this.logger.log(`Settlement for contract ${contractId} (${outcome}) already succeeded. Skipping.`);
+      this.logger.log(
+        `Settlement for contract ${contractId} (${outcome}) already succeeded. Skipping.`,
+      );
       return;
     }
 
     try {
-      let result;
       const actualAction = quote.actualAction;
+      const hold =
+        actualAction === "RELEASE"
+          ? await this.escrow.cancelHold(holdId)
+          : await this.escrow.captureStake(holdId, settledAmountCents);
 
-      if (actualAction === 'RELEASE') {
-        result = await this.stripeProvider.releaseFunds(paymentIntentId, settledAmountCents);
-      } else {
-        result = await this.stripeProvider.captureFunds(paymentIntentId, settledAmountCents, { furies, runId });
-      }
-
-      if (result.status === PayoutStatus.SUCCESS) {
+      if (hold.id) {
         // Finalize the ledger and mark the run SUCCESS in ONE transaction so a crash/retry
         // between the two can never leave money recorded with the run still PROCESSING.
-        await this.finalizeSettlement(contractId, outcome, settledAmountCents, runId, dispositionMode, quote, result.providerTransactionId);
+        await this.finalizeSettlement(
+          contractId,
+          outcome,
+          settledAmountCents,
+          runId,
+          dispositionMode,
+          quote,
+          hold.id,
+        );
 
         // PM28: the audit append happens AFTER the finalize commit (we must never append a
         // SETTLEMENT_COMPLETED before the money/ledger are committed). Because the run is now
@@ -74,13 +116,13 @@ export class SettlementWorker implements OnModuleInit {
         // failure HERE must NOT throw (that would also mark the already-settled run FAILED). Make
         // it best-effort and log loudly for reconciliation if it fails.
         try {
-          await this.truthLog.appendEvent('SETTLEMENT_COMPLETED', {
+          await this.truthLog.appendEvent("SETTLEMENT_COMPLETED", {
             contractId,
             outcome,
             runId,
             dispositionMode,
             actualAction,
-            providerTransactionId: result.providerTransactionId,
+            providerTransactionId: hold.id,
             quote,
           });
         } catch (appendErr: any) {
@@ -90,9 +132,11 @@ export class SettlementWorker implements OnModuleInit {
               `Money has moved; flag for reconciliation.`,
           );
         }
-        this.logger.log(`Settlement successful for contract ${contractId} (Action: ${actualAction})`);
+        this.logger.log(
+          `Settlement successful for contract ${contractId} (Action: ${actualAction})`,
+        );
       } else {
-        throw new Error(result.error || 'Provider returned failure status without error message');
+        throw new Error("Escrow provider returned a hold without an id");
       }
     } catch (err: any) {
       // PM31: only flip to FAILED if WE still own the run as PROCESSING. A concurrent worker
@@ -100,7 +144,7 @@ export class SettlementWorker implements OnModuleInit {
       // back to FAILED by this loser's catch block (which would mis-drive reconciliation/claimRun).
       await this.pool.query(
         `UPDATE settlement_runs SET status = 'FAILED', last_error = $1 WHERE id = $2 AND status = 'PROCESSING'`,
-        [err.message, runId]
+        [err.message, runId],
       );
       this.logger.error(`Settlement failed for ${contractId}: ${err.message}`);
       throw err;
@@ -117,10 +161,16 @@ export class SettlementWorker implements OnModuleInit {
    * back to the job-supplied amount so existing call paths keep working, but a present-yet-
    * mismatched stake is always rejected rather than silently settling the wrong sum.
    */
-  private async resolveAuthoritativeAmount(contractId: string, jobAmountCents: number): Promise<number> {
+  private async resolveAuthoritativeAmount(
+    contractId: string,
+    jobAmountCents: number,
+  ): Promise<number> {
     let stakeAmount: unknown;
     try {
-      const res = await this.pool.query('SELECT stake_amount FROM contracts WHERE id = $1', [contractId]);
+      const res = await this.pool.query(
+        "SELECT stake_amount FROM contracts WHERE id = $1",
+        [contractId],
+      );
       if (res.rows.length === 0) {
         // Contract not found in this context — trust the dispatched amount (legacy/test path).
         return jobAmountCents;
@@ -164,10 +214,12 @@ export class SettlementWorker implements OnModuleInit {
   ): Promise<string | null> {
     const client = await this.pool.connect();
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
 
       // Serialize concurrent settlement attempts for this contract.
-      await client.query('SELECT id FROM contracts WHERE id = $1 FOR UPDATE', [contractId]);
+      await client.query("SELECT id FROM contracts WHERE id = $1 FOR UPDATE", [
+        contractId,
+      ]);
 
       const existing = await client.query(
         `SELECT id, status, started_at FROM settlement_runs
@@ -186,14 +238,17 @@ export class SettlementWorker implements OnModuleInit {
       const STALE_PROCESSING_MS = 5 * 60 * 1000;
 
       if (existing.rows.length > 0) {
-        if (existing.rows[0].status === 'SUCCESS') {
-          await client.query('COMMIT');
+        if (existing.rows[0].status === "SUCCESS") {
+          await client.query("COMMIT");
           return null;
         }
-        if (existing.rows[0].status === 'PROCESSING') {
+        if (existing.rows[0].status === "PROCESSING") {
           const startedAt = new Date(existing.rows[0].started_at).getTime();
-          if (Number.isFinite(startedAt) && Date.now() - startedAt < STALE_PROCESSING_MS) {
-            await client.query('COMMIT');
+          if (
+            Number.isFinite(startedAt) &&
+            Date.now() - startedAt < STALE_PROCESSING_MS
+          ) {
+            await client.query("COMMIT");
             return null;
           }
         }
@@ -203,9 +258,14 @@ export class SettlementWorker implements OnModuleInit {
           `UPDATE settlement_runs
            SET status = 'PROCESSING', amount_cents = $2, disposition_mode = $3, quote_json = $4, last_error = NULL, started_at = NOW()
            WHERE id = $1`,
-          [existing.rows[0].id, amountCents, dispositionMode || (outcome === 'PASS' ? 'REFUND' : 'CAPTURE'), JSON.stringify(quote)],
+          [
+            existing.rows[0].id,
+            amountCents,
+            dispositionMode || (outcome === "PASS" ? "REFUND" : "CAPTURE"),
+            JSON.stringify(quote),
+          ],
         );
-        await client.query('COMMIT');
+        await client.query("COMMIT");
         return existing.rows[0].id;
       }
 
@@ -213,12 +273,18 @@ export class SettlementWorker implements OnModuleInit {
         `INSERT INTO settlement_runs (contract_id, outcome, amount_cents, status, started_at, disposition_mode, quote_json)
          VALUES ($1, $2, $3, 'PROCESSING', NOW(), $4, $5)
          RETURNING id`,
-        [contractId, outcome, amountCents, dispositionMode || (outcome === 'PASS' ? 'REFUND' : 'CAPTURE'), JSON.stringify(quote)],
+        [
+          contractId,
+          outcome,
+          amountCents,
+          dispositionMode || (outcome === "PASS" ? "REFUND" : "CAPTURE"),
+          JSON.stringify(quote),
+        ],
       );
-      await client.query('COMMIT');
+      await client.query("COMMIT");
       return inserted.rows[0].id;
     } catch (e) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw e;
     } finally {
       client.release();
@@ -243,8 +309,16 @@ export class SettlementWorker implements OnModuleInit {
   ) {
     const client = await this.pool.connect();
     try {
-      await client.query('BEGIN');
-      await this.finalizeLedger(client, contractId, outcome, amountCents, runId, dispositionMode, quote);
+      await client.query("BEGIN");
+      await this.finalizeLedger(
+        client,
+        contractId,
+        outcome,
+        amountCents,
+        runId,
+        dispositionMode,
+        quote,
+      );
       // PM6: guard the SUCCESS transition with the expected PROCESSING state so a second
       // (concurrent / stale-reclaimed) worker cannot clobber a run that another worker is
       // also finalizing. The DB-enforced ledger idempotency key (PM4) is what actually
@@ -253,9 +327,9 @@ export class SettlementWorker implements OnModuleInit {
         `UPDATE settlement_runs SET status = 'SUCCESS', provider_tx_id = $1, completed_at = NOW() WHERE id = $2 AND status = 'PROCESSING'`,
         [providerTransactionId, runId],
       );
-      await client.query('COMMIT');
+      await client.query("COMMIT");
     } catch (e) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw e;
     } finally {
       client.release();
@@ -269,7 +343,7 @@ export class SettlementWorker implements OnModuleInit {
     amountCents: number,
     runId: string,
     dispositionMode?: string,
-    quote?: any
+    quote?: any,
   ) {
     const contractResult = await client.query(
       `SELECT c.user_id, u.account_id, a_escrow.id as escrow_account_id, a_revenue.id as revenue_account_id, a_bounty.id as bounty_pool_account_id
@@ -279,27 +353,31 @@ export class SettlementWorker implements OnModuleInit {
        CROSS JOIN accounts a_revenue WHERE a_revenue.name = 'SYSTEM_REVENUE'
        CROSS JOIN accounts a_bounty WHERE a_bounty.name = 'FURY_BOUNTY_POOL'
        WHERE c.id = $1`,
-      [contractId]
+      [contractId],
     );
 
     if (contractResult.rows.length === 0) {
-      throw new Error(`Contract ${contractId} or system accounts not found for ledger finalization`);
+      throw new Error(
+        `Contract ${contractId} or system accounts not found for ledger finalization`,
+      );
     }
     const row = contractResult.rows[0];
 
-    const shouldReturnToUser = quote?.actualAction === 'RELEASE'
-      || outcome === 'PASS'
-      || dispositionMode === 'REFUND';
+    const shouldReturnToUser =
+      quote?.actualAction === "RELEASE" ||
+      outcome === "PASS" ||
+      dispositionMode === "REFUND";
 
     const metadata = {
       settlement_run_id: runId,
-      provider: 'stripe',
+      provider: this.escrow.rail.toLowerCase(),
+      escrowRail: this.escrow.rail,
       outcome,
-      dispositionMode
+      dispositionMode,
     };
 
     if (shouldReturnToUser) {
-      const txType = 'REAL_MONEY_SETTLEMENT_RELEASE';
+      const txType = "REAL_MONEY_SETTLEMENT_RELEASE";
       // entryExists is a FAST PATH only, keyed on the same per-(run, type) idempotency key as the
       // DB UNIQUE index — so it short-circuits ONLY a true retry of this run, never a legitimately
       // distinct re-settlement under a new run (PM5). The DB key below is the authoritative
@@ -311,13 +389,20 @@ export class SettlementWorker implements OnModuleInit {
         row.account_id,
         amountCents,
         contractId,
-        { ...metadata, type: txType, reason: outcome === 'FAIL' ? 'REFUND_ONLY_JURISDICTION' : 'CONTRACT_SUCCESS' },
+        {
+          ...metadata,
+          type: txType,
+          reason:
+            outcome === "FAIL"
+              ? "REFUND_ONLY_JURISDICTION"
+              : "CONTRACT_SUCCESS",
+        },
         client,
         key,
       );
     } else {
       // Capture to Revenue
-      const captureType = 'REAL_MONEY_SETTLEMENT_CAPTURE';
+      const captureType = "REAL_MONEY_SETTLEMENT_CAPTURE";
       const captureKey = this.settlementEntryKey(runId, captureType);
       if (!(await this.entryExists(client, captureKey))) {
         await this.ledger.recordTransaction(
@@ -333,7 +418,7 @@ export class SettlementWorker implements OnModuleInit {
 
       // Move portion to Bounty Pool
       if (quote?.bountyPoolCents > 0) {
-        const topupType = 'BOUNTY_POOL_TOPUP';
+        const topupType = "BOUNTY_POOL_TOPUP";
         const topupKey = this.settlementEntryKey(runId, topupType);
         if (!(await this.entryExists(client, topupKey))) {
           await this.ledger.recordTransaction(
@@ -375,9 +460,12 @@ export class SettlementWorker implements OnModuleInit {
    * The DB constraint remains the authoritative guard; this only avoids an unnecessary INSERT
    * attempt on the common retry path.
    */
-  private async entryExists(client: PoolClient, idempotencyKey: string): Promise<boolean> {
+  private async entryExists(
+    client: PoolClient,
+    idempotencyKey: string,
+  ): Promise<boolean> {
     const existing = await client.query(
-      'SELECT id FROM entries WHERE idempotency_key = $1',
+      "SELECT id FROM entries WHERE idempotency_key = $1",
       [idempotencyKey],
     );
     return existing.rows.length > 0;

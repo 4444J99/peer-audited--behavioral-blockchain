@@ -1,20 +1,30 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
-import { Queue } from 'bullmq';
-import { Pool } from 'pg';
-import { SETTLEMENT_QUEUE_NAME, getDefaultQueueOptions } from '../../../config/queue.config';
-import { CompliancePolicyService } from '../compliance/compliance-policy.service';
-import { buildSettlementQuote } from './settlement-quote';
-import { isKycRequired } from '../../../../shared/config/stake-tiers';
-import { JurisdictionDispositionMapper } from '../compliance/jurisdiction-disposition.mapper';
-import { SystemFlagsService } from '../compliance/system-flags.service';
-import { toCents } from '../../../../shared/libs/money';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from "@nestjs/common";
+import { Queue } from "bullmq";
+import { Pool } from "pg";
+import {
+  SETTLEMENT_QUEUE_NAME,
+  getDefaultQueueOptions,
+} from "../../../config/queue.config";
+import { CompliancePolicyService } from "../compliance/compliance-policy.service";
+import { buildSettlementQuote } from "./settlement-quote";
+import { isKycRequired } from "../../../../shared/config/stake-tiers";
+import { JurisdictionDispositionMapper } from "../compliance/jurisdiction-disposition.mapper";
+import { SystemFlagsService } from "../compliance/system-flags.service";
+import { toCents } from "../../../../shared/libs/money";
 
 export interface SettlementJob {
   contractId: string;
-  outcome: 'PASS' | 'FAIL';
-  paymentIntentId: string;
+  outcome: "PASS" | "FAIL";
+  escrowHoldId?: string;
+  /** @deprecated Use escrowHoldId. Kept for existing queue consumers during migration. */
+  paymentIntentId?: string;
   amountCents: number;
-  dispositionMode?: 'CAPTURE' | 'REFUND';
+  dispositionMode?: "CAPTURE" | "REFUND";
   furies?: string[];
 }
 
@@ -32,8 +42,13 @@ export class SettlementService {
   }
 
   async dispatchSettlement(job: SettlementJob) {
-    this.logger.log(`Dispatching settlement for contract ${job.contractId} (${job.outcome})`);
-    
+    this.logger.log(
+      `Dispatching settlement for contract ${job.contractId} (${job.outcome})`,
+    );
+    if (!job.escrowHoldId && !job.paymentIntentId) {
+      throw new BadRequestException("Settlement requires an escrow hold id");
+    }
+
     // Route settlement-time KYC decisions through the same policy used at contract creation.
     if (isKycRequired(job.amountCents)) {
       const contractResult = await this.pool.query(
@@ -41,7 +56,7 @@ export class SettlementService {
         [job.contractId],
       );
       if (contractResult.rows.length === 0) {
-        throw new NotFoundException('Contract not found');
+        throw new NotFoundException("Contract not found");
       }
 
       const kycResult = await this.compliancePolicy.evaluateKycRequirement(
@@ -49,13 +64,16 @@ export class SettlementService {
         job.amountCents / 100,
       );
       if (!kycResult.allowed) {
-        throw new BadRequestException(kycResult.reason || 'KYC verification required for settlements above threshold');
+        throw new BadRequestException(
+          kycResult.reason ||
+            "KYC verification required for settlements above threshold",
+        );
       }
     }
 
-    await this.queue.add('settle', job, {
+    await this.queue.add("settle", job, {
       attempts: 10,
-      backoff: { type: 'exponential', delay: 10000 },
+      backoff: { type: "exponential", delay: 10000 },
       removeOnComplete: true,
       jobId: `settlement_${job.contractId}_${job.outcome}`,
     });
@@ -64,44 +82,50 @@ export class SettlementService {
   async getSettlementPreview(contractId: string) {
     const contract = await this.pool.query(
       "SELECT user_id, stake_amount, status FROM contracts WHERE id = $1",
-      [contractId]
+      [contractId],
     );
-    if (contract.rows.length === 0) throw new NotFoundException('Contract not found');
-    
+    if (contract.rows.length === 0)
+      throw new NotFoundException("Contract not found");
+
     const row = contract.rows[0];
-    if (row.status !== 'COMPLETED' && row.status !== 'FAILED') {
-      throw new BadRequestException('Settlement preview is only available for resolved contracts');
+    if (row.status !== "COMPLETED" && row.status !== "FAILED") {
+      throw new BadRequestException(
+        "Settlement preview is only available for resolved contracts",
+      );
     }
 
     const amountCents = toCents(Number(row.stake_amount));
-    const outcome: 'PASS' | 'FAIL' = row.status === 'COMPLETED' ? 'PASS' : 'FAIL';
-    let dispositionMode: 'CAPTURE' | 'REFUND' | undefined;
+    const outcome: "PASS" | "FAIL" =
+      row.status === "COMPLETED" ? "PASS" : "FAIL";
+    let dispositionMode: "CAPTURE" | "REFUND" | undefined;
 
-    if (outcome === 'FAIL') {
+    if (outcome === "FAIL") {
       const userResult = await this.pool.query(
-        'SELECT last_known_state FROM users WHERE id = $1',
+        "SELECT last_known_state FROM users WHERE id = $1",
         [row.user_id],
       );
       const lastKnownState = userResult.rows[0]?.last_known_state ?? null;
       const jurisdictionPolicy = lastKnownState
         ? await this.compliancePolicy.getJurisdictionPolicy(lastKnownState)
         : null;
-      
+
       // The REFUND_ONLY kill switch is durable (system_flags); refresh the
       // in-process cache so a toggle made on any replica governs this preview.
       await JurisdictionDispositionMapper.refreshFromStore(this.systemFlags);
-      dispositionMode = JurisdictionDispositionMapper.getDispositionMode(jurisdictionPolicy?.tier);
+      dispositionMode = JurisdictionDispositionMapper.getDispositionMode(
+        jurisdictionPolicy?.tier,
+      );
     }
 
     const quote = buildSettlementQuote(amountCents, outcome, dispositionMode);
-    
+
     return {
       contractId,
       stakeAmountCents: amountCents,
       platformFeeCents: quote.platformFeeCents,
       bountyPoolCents: quote.bountyPoolCents,
       userRefundCents: quote.userRefundCents,
-      dispositionMode: dispositionMode ?? 'REFUND',
+      dispositionMode: dispositionMode ?? "REFUND",
       actualAction: quote.actualAction,
       status: row.status,
     };
@@ -110,17 +134,17 @@ export class SettlementService {
   async getSettlementStatus(contractId: string) {
     const runs = await this.pool.query(
       "SELECT * FROM settlement_runs WHERE contract_id = $1 ORDER BY started_at DESC",
-      [contractId]
+      [contractId],
     );
-    
+
     const ledgerEntries = await this.pool.query(
       "SELECT * FROM entries WHERE contract_id = $1 ORDER BY created_at DESC",
-      [contractId]
+      [contractId],
     );
 
     return {
       contractId,
-      runs: runs.rows.map(run => ({
+      runs: runs.rows.map((run) => ({
         id: run.id,
         contractId: run.contract_id,
         outcome: run.outcome,
@@ -133,7 +157,7 @@ export class SettlementService {
         startedAt: run.started_at,
         completedAt: run.completed_at,
       })),
-      ledgerEntries: ledgerEntries.rows.map(entry => ({
+      ledgerEntries: ledgerEntries.rows.map((entry) => ({
         id: entry.id,
         debitAccountId: entry.debit_account_id,
         creditAccountId: entry.credit_account_id,
