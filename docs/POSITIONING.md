@@ -25,7 +25,7 @@ There are two high-ticket buyers for this capability, served by the same proof.
 ### B. The Talent Buyer (Hire / Acquire)
 
 - **Who:** VPs of Engineering, Directors of Product, and elite technical recruiters at fintech, payments, marketplace, and health-tech companies.
-- **Why they pay:** They are buying the hands that shipped a regulated-money product end to end — a double-entry ACID ledger, Stripe FBO escrow (hold / capture / cancel), a BullMQ consensus engine, KYC via Stripe Identity, geofencing by US jurisdiction, and a four-surface monorepo (NestJS API, Next.js web, React Native mobile, Tauri desktop) with 1,107 tests and CI gates (validation gates, CodeQL, Playwright E2E).
+- **Why they pay:** They are buying the hands that shipped a regulated-money product end to end — a double-entry ACID ledger, Stripe FBO escrow (hold / capture / cancel), a BullMQ consensus engine, KYC via Stripe Identity, geofencing by US jurisdiction, and a four-surface monorepo (NestJS API, Next.js web, React Native mobile, Tauri desktop) with automated test suites and CI gates (validation gates, CodeQL, Playwright E2E).
 - **The Signal:** They are filling Senior / Staff engineering and technical-leadership roles in the $100k–$200k+ band.
 
 ## 3. Why It's High-Ticket (The "Weight")
@@ -35,7 +35,7 @@ We do not negotiate and we do not do "Fiverr-style" gigs. The engagement starts 
 - **Regulated-money architecture:** A double-entry ledger where every transaction is a balanced debit/credit pair (no phantom money), Stripe FBO escrow, a SHA-256 hash-chained audit log for tamper-evident history, KYC/age verification, and geofenced jurisdiction tiers.
 - **A trust engine, not a toy:** The Fury Router runs anonymous peer review through a BullMQ queue with honeypot injection to QA reviewer accuracy, a consensus engine to aggregate verdicts, and a bounty economy that pays correct verdicts and penalizes false accusations. The entire value proposition is that money movement is *provably* correct.
 - **A privacy firewall enterprises can't cheaply build:** Aggregate-only analytics, k-anonymity enforcement, and a hard `403` on any attempt to read individual data with a B2B admin token.
-- **Verification rigor:** 1,107 tests, dedicated validation gates (phantom-money check, oracle spoof check, full-loop, claim-drift), CodeQL, an E2E matrix, and Terraform IaC.
+- **Verification rigor:** automated test suites, dedicated validation gates (phantom-money check, oracle spoof check, full-loop, claim-drift), CodeQL, an E2E matrix, and Terraform IaC.
 - **Scarcity:** Engineers who can bridge behavioral economics, escrowed payments, anti-fraud consensus, and multi-platform delivery — under strict compliance — are rare.
 
 ## 4. The Engagement-Depth Ladder (The "Ascent")
