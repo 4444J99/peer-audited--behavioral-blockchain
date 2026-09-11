@@ -22,7 +22,7 @@ Styx deploys to Render (Oregon region) via tag-triggered GitHub Actions workflow
 |---------|---------------|------|------|
 | styx-api | `styx-api` | 3000 | Web Service (NestJS 11) |
 | styx-web | `styx-web` | 3001 | Web Service (Next.js 16) |
-| styx-postgres | `styx-postgres` | 5432 | Managed PostgreSQL 15 |
+| styx-postgres | `styx-postgres` | 5432 | Managed PostgreSQL 16 |
 | styx-redis | `styx-redis` | 6379 | Managed Redis 7 |
 
 ### Deploy Flow
@@ -36,16 +36,15 @@ Developer
     │
     └── GitHub Actions (deploy.yml)
             │
-            ├── Run full test suite (499+ tests)
-            ├── Run 8 validation gates
-            ├── Build Docker images
-            ├── Push to Render via deploy hook
+            ├── Run workspace test suites
+            ├── Run configured validation gates
+            ├── Trigger Render API/Web deploys
             │
             └── Render
-                    ├── Pull image
+                    ├── Build services from source
                     ├── Run health check
                     ├── If healthy → route traffic
-                    └── If unhealthy → auto-rollback
+                    └── If unhealthy → fail the workflow and trigger the best-effort redeploy fallback
 ```
 
 ## GitHub Actions Workflows
@@ -56,9 +55,10 @@ Developer
 | `deploy.yml` | Tag `v*` | Full deploy pipeline |
 | `beta-promotion.yml` | Manual dispatch | Promote to beta environment |
 | `staging-promotion.yml` | Manual dispatch | Promote to staging |
-| `security-scan.yml` | Weekly + PR | Dependency vulnerability scan |
-| `e2e.yml` | Deploy completion | Playwright end-to-end tests |
-| `validate-gates.yml` | PR | Run 8 validation gates |
+| `secret-scan.yml` | Push, PR, weekly | Secret pattern detection |
+| `codeql.yml` | Push, PR, weekly | CodeQL static analysis |
+| `release.yml` | Release/tag workflow | Release artifact workflow |
+| `deploy-ask-styx.yml` | Ask Styx changes | Ask Styx Pages/worker deployment |
 
 ## Pre-Deploy Checklist
 
@@ -67,30 +67,23 @@ Complete every item before creating a release tag:
 ### Code Quality
 
 - [ ] All tests pass: `npm run test` across all packages
-- [ ] Lint clean: `npm run lint` (ESLint + Prettier)
-- [ ] Type-check clean: `npm run typecheck` (TypeScript strict mode)
+- [ ] Lint clean: `npm run lint` (workspace TypeScript strict checks)
 - [ ] No `console.log` in production code (use pino structured logging)
 
 ### Validation Gates (8 gates)
 
-Run the full gate suite:
-
-```bash
-npm run validate:all
-```
-
-Individual gates:
+CI runs the blocking build/test/lint path and the validation gates in `.github/workflows/ci.yml`. Local gate commands:
 
 | Gate | Command | What It Checks |
 |------|---------|---------------|
-| 1. Unit Tests | `npm run test` | 499+ tests pass |
+| 1. Unit Tests | `npm run test` | Workspace test suites pass |
 | 2. Lint | `npm run lint` | No lint errors |
-| 3. Type Safety | `npm run typecheck` | No TypeScript errors |
-| 4. Security | `npm audit --audit-level=high` | No high/critical vulns |
-| 5. Ledger Integrity | `npm run validate:ledger` | Double-entry reconciliation |
-| 6. API Readiness | `npm run validate:api` | All endpoints respond correctly |
+| 3. Build | `npm run build` | Workspaces build successfully |
+| 4. Redacted Build | `bash scripts/validation/04-redacted-build-check.sh` | Production build does not leak forbidden vocabulary |
+| 5. Security Invariant | `npx tsx scripts/validation/06-security-invariant-check.ts` | Security invariants hold |
+| 6. Claim Drift | `npm run validate:claims` | Docs/claims remain aligned with implementation |
 | 7. E2E | `npm run test:e2e` | Playwright scenarios pass |
-| 8. Performance | `npm run validate:perf` | Response times within SLA |
+| 8. Integration-only Gates | `scripts/validation/05-behavioral-physics-check.ts`, `scripts/validation/08-compliance-artifact-check.sh` | Require configured live API/database URLs |
 
 ### Financial Safety
 
@@ -126,10 +119,11 @@ git push origin v1.2.3
 
 1. Go to GitHub Actions → `deploy.yml` → watch the triggered run.
 2. Stages to monitor:
-   - **Test:** All 499+ tests pass
-   - **Validate:** 8 gates green
-   - **Build:** Docker images built successfully
-   - **Deploy:** Render deploy hooks triggered
+   - **Test:** Workspace test suites pass
+   - **Validate:** configured gates green; integration-only gates report skipped unless their backing services are configured
+   - **Deploy:** Render API/Web deploy actions complete
+   - **Migrate:** database migrations apply successfully
+   - **Smoke:** API/Web smoke checks pass
 
 ### 3. Verify Deployment
 

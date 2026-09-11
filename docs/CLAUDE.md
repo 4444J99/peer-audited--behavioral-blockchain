@@ -203,7 +203,7 @@ Expo-managed React Native app. `src/mobile/screens/`: Dashboard, Login, Register
 
 ### Infrastructure
 
-- **Database**: PostgreSQL 15-alpine, double-entry ledger schema (`src/api/database/schema.sql`, seed: `src/api/database/seed.sql`)
+- **Database**: PostgreSQL 16 on Render, double-entry ledger schema (`src/api/database/schema.sql`, seed: `src/api/database/seed.sql`), and 81 SQL migration files as of 2026-09-11
 - **Queue**: Redis 7-alpine + BullMQ (`FURY_ROUTER_QUEUE`)
 - **Storage**: Cloudflare R2 (zero-egress, signed URLs only)
 - **Payments**: Stripe FBO escrow (hold/capture/cancel)
