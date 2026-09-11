@@ -434,7 +434,7 @@
         865
       ],
       "started": "2026-09-11T11:27:50Z",
-      "completed": "2026-09-11T11:28:48Z",
+      "completed": "2026-09-11T11:33:25Z",
       "reconciled": true,
       "test_passed": true
     }
@@ -14178,7 +14178,7 @@
         "blocked"
       ],
       "action": "UNCLASSIFIED",
-      "state": "PR_CREATED",
+      "state": "PR_MERGED",
       "batch": "bug-865-rail-neutral-escrow",
       "history": [
         {
@@ -14205,11 +14205,16 @@
           "from": "TESTED",
           "to": "PR_CREATED",
           "at": "2026-09-11T11:28:48Z"
+        },
+        {
+          "from": "PR_CREATED",
+          "to": "PR_MERGED",
+          "at": "2026-09-11T11:33:25Z"
         }
       ],
       "evidence": "src/api/src/modules/payments/settlement.worker.ts:24",
       "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/975",
-      "state_updated": "2026-09-11T11:28:48Z",
+      "state_updated": "2026-09-11T11:33:25Z",
       "closed_at": null
     },
     "905": {
