@@ -1,5 +1,21 @@
 # Pattern Log — Triage Session Journal
 
+## blocked-verdicts-2026-09-11 — 2026-09-11 — Blocked handoff governance
+
+**Started:** 2 issues (#866, #966). **Built:** 0. **Tests:** triage
+reconciliation passed; no code path changed.
+
+**Evidence:** #866 remains a real external blocker because the MaxMind
+`source: maxmind` assertion requires a licensed GeoLite2 City `.mmdb` asset; the
+repo's current lazy reader/fallback path is evidence-preserving rather than a
+crash. #966 remains the current weekly blocked-handoff governance tracker; its
+actionable metadata finding was healed by adding `target-date-v1` blocks to
+#315, #316, and #317 without closing or deleting any legal blocker.
+
+**Lesson:** blocker work can still advance without pretending to solve the
+blocker. The correct terminal move is explicit WAITING/TRACKING state plus
+evidence, not closure.
+
 ## bug-865-rail-neutral-escrow — 2026-09-11 — Dependency-free escrow rail
 
 **Started:** 1 issue (#865). **Built:** 1. **Tests:** 147/147 focused API tests
