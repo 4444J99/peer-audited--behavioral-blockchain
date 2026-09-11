@@ -35,7 +35,12 @@ function requireApiBase(): string {
   return apiUrl.slice(0, end);
 }
 
-const API_BASE = requireApiBase();
+let API_BASE: string | null = null;
+function getApiBase(): string {
+  if (API_BASE) return API_BASE;
+  API_BASE = requireApiBase();
+  return API_BASE;
+}
 const STATE_TESTS = process.env.GATE05_STATE_TESTS === "1";
 const SEEDED_USER = STATE_TESTS
   ? {
@@ -56,7 +61,8 @@ async function request<T>(
   options?: RequestInit,
 ): Promise<T> {
   // allow-secret
-  const res = await fetch(`${API_BASE}${path}`, {
+  const base = getApiBase();
+  const res = await fetch(`${base}${path}`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`, // allow-secret
@@ -129,11 +135,61 @@ async function expectReject(
 }
 
 async function runBehavioralPhysicsCheck() {
+  const offlineOnly = process.argv.includes("--offline");
   console.log("\n--- STARTING VALIDATION GATE 05: BEHAVIORAL PHYSICS ---");
+  if (offlineOnly) console.log("[MODE] offline constants-only check");
 
-  // Login or register the seeded test user
+  // Offline constants check — must run regardless of API availability.
+  // This is the only part of Gate 05 with standing proof in PR CI;
+  // the integration part (stake-tier guard) requires a live API and is
+  // NOT VERIFIED when no target is configured (exit 2).
+  let offlinePassed = false;
+  console.log("\n[TEST 2] Behavioral Physics Constants Verification");
+  try {
+    const { LOSS_AVERSION_COEFFICIENT, DISPUTE_GRACE_PERIOD_HOURS } =
+      await import("../../src/shared/libs/behavioral-logic");
+    if (
+      LOSS_AVERSION_COEFFICIENT === 1.955 &&
+      DISPUTE_GRACE_PERIOD_HOURS === 24
+    ) {
+      console.log(
+        `  ✅ Constants match: λ=${LOSS_AVERSION_COEFFICIENT}, Dispute Window=${DISPUTE_GRACE_PERIOD_HOURS}h`,
+      );
+      offlinePassed = true;
+    } else {
+      console.error(
+        `  ❌ Constants mismatch: λ=${LOSS_AVERSION_COEFFICIENT}, Dispute Window=${DISPUTE_GRACE_PERIOD_HOURS}h`,
+      );
+    }
+  } catch (err) {
+    console.error("  ❌ Failed to import behavioral logic constants:", err);
+  }
+
+  if (offlineOnly) {
+    if (offlinePassed) {
+      console.log("\n✅ GATE 05 OFFLINE PASSED: constants verified (integration NOT VERIFIED).");
+      return;
+    }
+    console.error("\n❌ GATE 05 OFFLINE FAILED: constants did not match spec.");
+    process.exit(1);
+  }
+
+  if (!offlinePassed) {
+    console.error("\n❌ GATE 05 FAILED: offline constants mismatch — refusing to run integration tests against drifted builds.");
+    process.exit(1);
+  }
+
+  // Integration path — requires live API. Offline part already verified.
+  try {
+    getApiBase();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`⚠️  GATE 05 NOT VERIFIED: ${msg}`);
+    console.warn("  Offline constants PASSED; integration part requires API_URL / STYX_API_PUBLIC_URL.");
+    process.exit(2);
+  }
   const auth = await loginOrRegister(SEEDED_USER.email, SEEDED_USER.password);
-  console.log(`[AUTH] Authenticated as ${SEEDED_USER.email}`);
+  console.log(`[AUTH] Authenticated as ${SEEDED_USER.email} — API ${getApiBase()}`);
 
   let passed = 0;
   let total = 0;
@@ -163,30 +219,7 @@ async function runBehavioralPhysicsCheck() {
   );
   if (tierResult) passed++;
 
-  // Test 2: Behavioral Physics Constants Verification
-  // Verifies that the internal λ and Dispute Grace Period match the spec
-  console.log("\n[TEST 2] Behavioral Physics Constants Verification");
-  total++;
-  try {
-    const { LOSS_AVERSION_COEFFICIENT, DISPUTE_GRACE_PERIOD_HOURS } =
-      await import("../../src/shared/libs/behavioral-logic");
-    if (
-      LOSS_AVERSION_COEFFICIENT === 1.955 &&
-      DISPUTE_GRACE_PERIOD_HOURS === 24
-    ) {
-      console.log(
-        `  ✅ Constants match: λ=${LOSS_AVERSION_COEFFICIENT}, Dispute Window=${DISPUTE_GRACE_PERIOD_HOURS}h`,
-      );
-      passed++;
-    } else {
-      console.error(
-        `  ❌ Constants mismatch: λ=${LOSS_AVERSION_COEFFICIENT}, Dispute Window=${DISPUTE_GRACE_PERIOD_HOURS}h`,
-      );
-    }
-  } catch (err) {
-    console.error("  ❌ Failed to import behavioral logic constants:", err);
-  }
-
+  // (Offline constants already verified above — not re-counted here.)
   // Tests 3/4 require pre-seeded failure history on the legacy fixed account.
   // Against a fresh probe user they are vacuous AND their successful creations
   // would strand active test contracts on the target — so they are opt-in.
@@ -254,15 +287,18 @@ async function runBehavioralPhysicsCheck() {
       "  ⚠️  May pass if user has < 3 failures or no cool-off. Expected for fresh DBs.",
     );
 
+  // Count the offline constants gate together with integration for the summary.
+  total++; // constants (offline)
+  passed++; // offline already verified — if we reached here it passed
   // Summary — Test 1 (stake-tier limit) is deterministic and state-independent, so it MUST
   // pass. Tests 3 and 4 depend on prior DB state (recent failures) and are advisory only;
   // they no longer let the gate pass for the wrong reason.
   console.log(
-    `\n--- GATE 05 RESULTS: ${passed}/${total} behavioral physics checks enforced (Test 1 deterministic) ---`,
+    `\n--- GATE 05 RESULTS: ${passed}/${total} behavioral physics checks enforced (offline + Test 1 deterministic) ---`,
   );
   if (tierResult) {
     console.log(
-      "✅ GATE 05 PASSED: Deterministic stake-tier limit is enforced.",
+      "✅ GATE 05 PASSED: Offline constants + deterministic stake-tier limit enforced.",
     );
   } else {
     console.error(
@@ -281,8 +317,11 @@ runBehavioralPhysicsCheck().catch((err) => {
     message.includes("ECONNREFUSED");
 
   if (isConnectionRefused) {
+    const base = (() => {
+      try { return getApiBase(); } catch { return "(no API_URL)"; }
+    })();
     console.warn(
-      `⚠️  GATE 05 SKIPPED: API not reachable at ${API_BASE} (no running server in this environment).`,
+      `⚠️  GATE 05 SKIPPED: API not reachable at ${base} (no running server in this environment).`,
     );
     console.warn(
       "❌ GATE 05 NOT VERIFIED: This integration gate requires a live API and should not be counted as PASS.",
