@@ -1,5 +1,23 @@
 # Pattern Log — Triage Session Journal
 
+## bug-865-rail-neutral-escrow — 2026-09-11 — Dependency-free escrow rail
+
+**Started:** 1 issue (#865). **Built:** 1. **Tests:** 147/147 focused API tests
+passed across contract creation/outbox, settlement dispatch, and settlement
+worker suites; API typecheck passed.
+
+**Evidence:** contract creation now returns canonical `escrowHoldId` while
+preserving the deprecated `paymentIntentId` alias, new resolution side effects
+write `ESCROW_*` effect types with `{ escrowHoldId, rail }`, the dispatcher still
+accepts legacy `STRIPE_*`/`paymentIntentId` rows, and settlement workers use the
+configured `ESCROW_PROVIDER` for release/capture instead of injecting a
+Stripe-only provider.
+
+**Lesson:** provider neutrality is a full rail contract, not a naming pass. Entry
+holds, outbox side effects, queued settlement jobs, manual settlement, ledger
+metadata, and legacy replay compatibility all have to move together or the test
+money rail remains Stripe-shaped at settlement time.
+
 ## bug-937-demo-truth — 2026-09-11 — Native demo launch truth path
 
 **Started:** 1 issue (#937). **Built:** 1. **Tests:** `npm run
