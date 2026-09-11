@@ -29,6 +29,7 @@ import { MarketingModule } from "./modules/marketing/marketing.module";
 import { ReferralModule } from "./modules/referrals/referral.module";
 import { SecurityModule } from "./modules/security/security.module";
 import { OnboardingModule } from "./modules/onboarding/onboarding.module";
+import { AgentActionEvidenceModule } from "./modules/agent-action-evidence/agent-action-evidence.module";
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { OnboardingModule } from "./modules/onboarding/onboarding.module";
     ReferralModule,
     SecurityModule,
     OnboardingModule,
+    AgentActionEvidenceModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

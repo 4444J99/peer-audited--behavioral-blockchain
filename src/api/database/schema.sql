@@ -47,6 +47,55 @@ CREATE TRIGGER trg_event_log_immutable
   BEFORE UPDATE OR DELETE ON event_log
   FOR EACH ROW EXECUTE FUNCTION prevent_event_log_mutation();
 
+-- Provider-independent evidence for consequential agent actions. This is an
+-- append-only record boundary; it never grants authority or executes mutations.
+CREATE TABLE agent_action_evidence_events (
+  id UUID PRIMARY KEY,
+  schema_version TEXT NOT NULL DEFAULT 'organvm.execution/v1'
+    CHECK (schema_version = 'organvm.execution/v1'),
+  execution_id TEXT NOT NULL
+    CHECK (char_length(execution_id) BETWEEN 1 AND 200),
+  sequence_index BIGINT NOT NULL
+    CHECK (sequence_index > 0),
+  event_type TEXT NOT NULL CHECK (event_type IN (
+    'PROPOSED',
+    'APPROVAL_RECORDED',
+    'MUTATION_RECORDED',
+    'VERIFICATION_RECORDED',
+    'ROLLBACK_RECORDED',
+    'DISPUTE_OPENED',
+    'PEER_REVIEW_RECORDED'
+  )),
+  producer TEXT NOT NULL
+    CHECK (char_length(producer) BETWEEN 1 AND 100),
+  recorded_by TEXT NOT NULL
+    CHECK (char_length(recorded_by) BETWEEN 1 AND 200),
+  payload JSONB NOT NULL,
+  previous_event_hash CHAR(64) NOT NULL,
+  event_hash CHAR(64) NOT NULL UNIQUE,
+  truth_log_event_id UUID NOT NULL REFERENCES event_log(id) ON DELETE RESTRICT,
+  created_at TIMESTAMPTZ NOT NULL,
+  UNIQUE (execution_id, sequence_index)
+);
+
+CREATE INDEX idx_agent_action_evidence_execution
+  ON agent_action_evidence_events (execution_id, sequence_index);
+CREATE INDEX idx_agent_action_evidence_type_created
+  ON agent_action_evidence_events (event_type, created_at DESC);
+CREATE INDEX idx_agent_action_evidence_recorded_by
+  ON agent_action_evidence_events (recorded_by, created_at DESC);
+
+CREATE OR REPLACE FUNCTION prevent_agent_action_evidence_mutation()
+RETURNS TRIGGER AS $$
+BEGIN
+  RAISE EXCEPTION 'agent_action_evidence_events is immutable: UPDATE and DELETE are prohibited';
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_agent_action_evidence_immutable
+  BEFORE UPDATE OR DELETE ON agent_action_evidence_events
+  FOR EACH ROW EXECUTE FUNCTION prevent_agent_action_evidence_mutation();
+
 -- ============================================================
 -- Domain Tables: Users, Contracts, Proofs, Fury Assignments
 -- ============================================================
