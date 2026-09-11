@@ -69,6 +69,15 @@ describe('B2BController', () => {
     syncUser: jest.fn().mockResolvedValue(undefined),
   } as unknown as CrmService;
 
+  const mockCohorts = {
+    createCohort: jest.fn().mockResolvedValue({ id: 'coh-1', name: 'Test Cohort' }),
+    inviteParticipants: jest.fn().mockResolvedValue({ cohortId: 'coh-1', totalInvited: 2 }),
+    listCohorts: jest.fn().mockResolvedValue([{ id: 'coh-1', name: 'Test Cohort' }]),
+    getCohortDetails: jest.fn().mockResolvedValue({ cohort: { id: 'coh-1' }, stats: {} }),
+    updateCohortConfig: jest.fn().mockResolvedValue({ id: 'coh-1', name: 'Updated' }),
+    closeCohort: jest.fn().mockResolvedValue({ id: 'coh-1', status: 'CLOSED' }),
+  } as any;
+
   beforeEach(() => {
     // Both the webhook-subscription store and the CRM service were injected by
     // separate changes landing together; the argument order here follows the
@@ -82,6 +91,7 @@ describe('B2BController', () => {
       mockAnonymize,
       mockDataLake,
       mockCrm,
+      mockCohorts,
     );
     jest.clearAllMocks();
     (mockPool.query as jest.Mock).mockResolvedValue({
@@ -396,6 +406,45 @@ describe('B2BController', () => {
         controller.syncCrmUser(adminUser, 'ent-001', { email: 'employee@example.com' }),
       ).rejects.toThrow();
       expect(mockCrm.syncUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Cohort Orchestration Endpoints', () => {
+    it('creates cohort and asserts membership', async () => {
+      const res = await controller.createCohort(adminUser, 'ent-001', {
+        name: 'Leadership Program',
+        startsAt: '2026-10-01T00:00:00Z',
+      });
+      expect(res).toEqual({ id: 'coh-1', name: 'Test Cohort' });
+      expect(mockCohorts.createCohort).toHaveBeenCalledWith('ent-001', expect.anything());
+    });
+
+    it('invites cohort participants', async () => {
+      const res = await controller.inviteCohortParticipants(adminUser, 'ent-001', 'coh-1', {
+        emails: ['client@example.com'],
+      });
+      expect(res).toEqual({ cohortId: 'coh-1', totalInvited: 2 });
+      expect(mockCohorts.inviteParticipants).toHaveBeenCalledWith('ent-001', 'coh-1', ['client@example.com']);
+    });
+
+    it('lists cohorts for enterprise', async () => {
+      const res = await controller.listCohorts(adminUser, 'ent-001');
+      expect(res).toEqual([{ id: 'coh-1', name: 'Test Cohort' }]);
+    });
+
+    it('fetches cohort details', async () => {
+      const res = await controller.getCohortDetails(adminUser, 'ent-001', 'coh-1');
+      expect(res.cohort.id).toBe('coh-1');
+    });
+
+    it('updates cohort config', async () => {
+      const res = await controller.updateCohortConfig(adminUser, 'ent-001', 'coh-1', { name: 'Updated' });
+      expect(res.id).toBe('coh-1');
+    });
+
+    it('closes cohort', async () => {
+      const res = await controller.closeCohort(adminUser, 'ent-001', 'coh-1');
+      expect(res.status).toBe('CLOSED');
     });
   });
 });

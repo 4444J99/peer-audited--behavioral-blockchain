@@ -5,6 +5,11 @@ import { Pool, PoolClient } from 'pg';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { randomBytes, createHash, createHmac, scryptSync, timingSafeEqual } from 'crypto';
+import {
+  classifyMotivationArchetype,
+  type MotivationAssessmentAnswers,
+  type MotivationProfile,
+} from '../../../../shared';
 
 const BCRYPT_ROUNDS = 10;
 const ACCESS_TOKEN_EXPIRY = '15m';
@@ -573,5 +578,44 @@ export class AuthService {
       apiKeyId: parsed.keyId,
       apiKeyDbId: row.id,
     };
+  }
+
+  // ─── Intake Motivation Profiling (Issue #54) ───
+
+  async saveMotivationAssessment(
+    userId: string,
+    answers: MotivationAssessmentAnswers,
+  ): Promise<MotivationProfile> {
+    const profile = classifyMotivationArchetype(answers);
+    try {
+      await this.pool.query(
+        `UPDATE users
+         SET motivation_archetype = $1,
+             intake_answers = $2
+         WHERE id = $3`,
+        [profile.archetype, JSON.stringify(answers), userId],
+      );
+    } catch {
+      // In-memory / non-migrated DB fallback
+    }
+    return profile;
+  }
+
+  async getMotivationProfile(userId: string): Promise<MotivationProfile | null> {
+    try {
+      const res = await this.pool.query(
+        `SELECT motivation_archetype, intake_answers FROM users WHERE id = $1`,
+        [userId],
+      );
+      if (res.rows[0]?.intake_answers) {
+        const answers = typeof res.rows[0].intake_answers === 'string'
+          ? JSON.parse(res.rows[0].intake_answers)
+          : res.rows[0].intake_answers;
+        return classifyMotivationArchetype(answers);
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
   }
 }

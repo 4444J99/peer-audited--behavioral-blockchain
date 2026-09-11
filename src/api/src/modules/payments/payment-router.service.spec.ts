@@ -120,4 +120,88 @@ describe('PaymentRouterService', () => {
         .rejects.toThrow();
     });
   });
+
+  // ─── determineGeographicRoute (Issue #85) ───
+
+  describe('determineGeographicRoute', () => {
+    const baseOptions = {
+      amount: 5000,
+      currency: 'usd',
+      userId: 'user-geo-1',
+    };
+
+    it('routes permitted US state (CA) to STRIPE with TIER_1 and standard fee', () => {
+      const route = service.determineGeographicRoute(baseOptions, { country: 'US', state: 'CA' }, 0);
+      expect(route.processor).toBe('STRIPE');
+      expect(route.jurisdictionTier).toBe('FULL_ACCESS');
+      expect(route.refundOnly).toBe(false);
+      expect(route.scaRequired).toBe(false);
+      expect(route.feeStructure.percentageFee).toBe(2.9);
+      expect(route.feeStructure.fixedFeeCents).toBe(30);
+    });
+
+    it('routes restricted US state (NY) to STRIPE with TIER_2 and refund-only enabled', () => {
+      const route = service.determineGeographicRoute(baseOptions, { country: 'US', state: 'NY' }, 0);
+      expect(route.processor).toBe('STRIPE');
+      expect(route.jurisdictionTier).toBe('REFUND_ONLY');
+      expect(route.refundOnly).toBe(true);
+      expect(route.reason).toContain('refund-only');
+    });
+
+    it('blocks payments from hard-blocked US state (WA)', () => {
+      expect(() => {
+        service.determineGeographicRoute(baseOptions, { country: 'US', state: 'WA' }, 0);
+      }).toThrow('TIER_3 Hard Block');
+    });
+
+    it('blocks payments from unlisted / unknown US state (fail-closed default)', () => {
+      expect(() => {
+        service.determineGeographicRoute(baseOptions, { country: 'US', state: 'ZZ' }, 0);
+      }).toThrow('TIER_3 Hard Block');
+    });
+
+    it('routes European jurisdiction (DE) with SCA requirement and EEA fees', () => {
+      const route = service.determineGeographicRoute(
+        { ...baseOptions, currency: 'eur' },
+        { country: 'DE' },
+        0,
+      );
+      expect(route.processor).toBe('STRIPE');
+      expect(route.scaRequired).toBe(true);
+      expect(route.feeStructure.percentageFee).toBe(1.4);
+      expect(route.feeStructure.fixedFeeCents).toBe(25);
+    });
+
+    it('routes high-risk or excessive dispute user to HIGH_RISK_COREPAY', () => {
+      const route = service.determineGeographicRoute(
+        baseOptions,
+        { country: 'US', state: 'CA' },
+        4,
+      );
+      expect(route.processor).toBe('HIGH_RISK_COREPAY');
+      expect(route.fallbackProcessor).toBe('STRIPE');
+      expect(route.feeStructure.percentageFee).toBe(7.5);
+    });
+
+    it('routes stablecoin rail or USDC currency to STABLECOIN_VAULT', () => {
+      const route = service.determineGeographicRoute(
+        { ...baseOptions, currency: 'usdc' },
+        { country: 'US', state: 'CA', preferredRail: 'CRYPTO' },
+        0,
+      );
+      expect(route.processor).toBe('STABLECOIN_VAULT');
+      expect(route.feeStructure.percentageFee).toBe(0.5);
+    });
+
+    it('tracks routing metrics across jurisdictions', () => {
+      service.determineGeographicRoute(baseOptions, { country: 'US', state: 'CA' }, 0);
+      expect(() => {
+        service.determineGeographicRoute(baseOptions, { country: 'US', state: 'WA' }, 0);
+      }).toThrow();
+      const metrics = service.getRoutingMetrics();
+      expect(metrics.totalDecisions).toBe(2);
+      expect(metrics.routedStripe).toBe(1);
+      expect(metrics.blockedJurisdictions).toBe(1);
+    });
+  });
 });

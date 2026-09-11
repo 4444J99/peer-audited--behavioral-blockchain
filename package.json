@@ -83,5 +83,9 @@
   },
   "dependencies": {
     "class-validator": "^0.15.1"
+  },
+  "optionalDependencies": {
+    "@img/sharp-darwin-arm64": "0.33.5",
+    "@unrs/resolver-binding-darwin-arm64": "^1.12.2"
   }
 }
