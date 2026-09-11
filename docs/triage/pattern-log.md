@@ -1,5 +1,21 @@
 # Pattern Log — Triage Session Journal
 
+## bug-937-demo-truth — 2026-09-11 — Native demo launch truth path
+
+**Started:** 1 issue (#937). **Built:** 1. **Tests:** `npm run
+demo:reset:verify` passed on the native PostgreSQL/Redis fallback after the
+repair.
+
+**Evidence:** the native demo reset applied all 81 migrations, seeded 12
+synthetic identities, started the API, built and served `/tour`, and passed the
+live API/browser/ledger/proof/behavioral/coach/enterprise-preview checks. The
+first reproduced failure was API boot before readiness: `@styx/shared/dist` was
+missing when `scripts/dev/run-api.mjs` started the API through `ts-node`.
+
+**Lesson:** demo launch is runtime evidence, not just CI evidence. Any
+ts-node-served workspace that imports a built workspace package must build that
+package before declaring the API bootable.
+
 ## bug-936-cac-ltv — 2026-09-11 — CAC/LTV demo truth repair
 
 **Started:** 1 issue (#936). **Built:** 1. **Tests:** API typecheck, web

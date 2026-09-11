@@ -1,6 +1,24 @@
 import path from "node:path";
-import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { spawn, spawnSync } from "node:child_process";
 import { buildApiEnv, repoRoot } from "./env.mjs";
+
+const sharedEntrypoint = path.join(repoRoot, "src/shared/dist/index.js");
+if (!existsSync(sharedEntrypoint)) {
+  console.log("Building @styx/shared before starting the API ...");
+  const result = spawnSync(
+    "npm",
+    ["run", "build", "--workspace", "@styx/shared"],
+    {
+      cwd: repoRoot,
+      env: process.env,
+      stdio: "inherit",
+    },
+  );
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1);
+  }
+}
 
 const env = buildApiEnv();
 // npm sometimes nests api-only packages (class-validator, @nestjs/platform-express)
@@ -29,7 +47,8 @@ const child = spawn(
 // between has already dropped and recreated. Forward instead of orphaning.
 for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
   process.on(signal, () => {
-    if (child.exitCode === null && child.signalCode === null) child.kill(signal);
+    if (child.exitCode === null && child.signalCode === null)
+      child.kill(signal);
   });
 }
 
