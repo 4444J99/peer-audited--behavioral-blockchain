@@ -192,7 +192,7 @@ Practitioners do **NOT** receive access to your proof photos, EXIF metadata, or 
 ### 5.3 Infrastructure
 
 - Hosted on Render (US-Oregon region)
-- PostgreSQL 15 with automated daily backups (30-day retention)
+- PostgreSQL 16 with automated daily backups (30-day retention)
 - Redis 7 for session management and job queues (ephemeral, not backed up)
 - Cloudflare R2 for proof photo storage (99.999999999% durability)
 

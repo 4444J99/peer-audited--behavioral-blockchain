@@ -37,7 +37,7 @@ This document provides pre-filled answers to standard enterprise security questi
 
 | Question | Answer |
 |----------|--------|
-| Is data encrypted at rest? | Yes. PostgreSQL 15 on Render uses AES-256 encryption at rest (managed by Render's infrastructure). Cloudflare R2 object storage uses AES-256 at rest. |
+| Is data encrypted at rest? | Yes. PostgreSQL 16 on Render uses AES-256 encryption at rest (managed by Render's infrastructure). Cloudflare R2 object storage uses AES-256 at rest. |
 | Is data encrypted in transit? | Yes. All connections use TLS 1.3 minimum. HSTS headers enforced. No plaintext HTTP endpoints. |
 | Are encryption keys managed by the vendor or customer? | Vendor-managed (Render for database, Cloudflare for R2, Stripe for payment data). Key rotation follows vendor schedules. |
 | Is payment data encrypted? | Payment data is processed and stored by Stripe. Styx never receives, stores, or transmits full card numbers. Stripe is PCI DSS Level 1 certified. |
@@ -63,9 +63,9 @@ Full mechanism, with file paths: [`security-whitepaper.md` §4](security-whitepa
 |----------|--------|
 | Where is the application hosted? | Render (Oregon, US-West-2 region). All compute, database, and background workers run on Render. |
 | What cloud provider(s) are used? | Render (compute, PostgreSQL, Redis), Cloudflare (CDN, R2 storage, DNS, DDoS protection), Stripe (payment processing). |
-| Is the infrastructure containerized? | Yes. All services run in Docker containers on Render. Container images are built in CI (GitHub Actions) and deployed via Render's managed platform. |
+| Is the infrastructure containerized? | Local/container builds exist, but the production Render services are deployed as managed source builds, not CI-built container images. |
 | What is the deployment model? | Platform-as-a-Service (Render managed). Styx does not manage bare metal servers, hypervisors, or operating systems. |
-| What database is used? | PostgreSQL 15 (Render managed). Redis 7 (Render managed) for caching, session management, and background job queues. |
+| What database is used? | PostgreSQL 16 (Render managed). Redis 7 (Render managed) for caching, session management, and background job queues. |
 | What CDN/WAF is used? | Cloudflare (CDN, DDoS protection, WAF rules, rate limiting). All public traffic routes through Cloudflare. |
 | Is the infrastructure multi-tenant or single-tenant? | Multi-tenant application layer with logical data isolation. Each practitioner's data is scoped by organization ID. Database queries enforce tenant isolation via row-level filtering. Enterprise single-tenant deployments are not currently available. |
 

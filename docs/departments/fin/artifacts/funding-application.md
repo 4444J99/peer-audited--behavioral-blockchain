@@ -40,9 +40,9 @@ Styx introduces three innovations:
 
 ### Traction (Pre-Launch)
 
-- 499+ automated tests across the full stack
-- 8 validation gates (security, ledger integrity, API readiness, performance)
-- Complete deployment pipeline: Docker → GitHub Actions → Render
+- Automated tests across the full stack, with 297 `*.spec.*` / `*.test.*` files in `src/` and `packages/` as of 2026-09-11
+- CI validation gates for security, ledger integrity, redacted builds, claim drift, and integration-only checks when their backing services are configured
+- Complete deployment pipeline: GitHub Actions → Render source builds
 - Terraform IaC for infrastructure reproducibility
 - Double-entry ledger with continuous reconciliation
 - B2B analytics dashboard with 3 subscription tiers
@@ -191,7 +191,7 @@ These metrics should be cited in applications to demonstrate measurable outcomes
 - TypeScript monorepo (Turborepo) with NestJS 11, Next.js 16, React Native/Expo, Tauri
 - BullMQ for asynchronous Fury routing with configurable priority queues
 - PostgreSQL double-entry ledger with continuous reconciliation
-- 499+ tests, 8 validation gates, Playwright E2E, full CI/CD
+- Workspace tests, validation gates, Playwright E2E, and full CI/CD
 - Terraform IaC, Docker Compose local dev, Render deployment
 
 ### For Mental Health / Clinical Reviewers

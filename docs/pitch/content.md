@@ -173,14 +173,14 @@ Emphasize the dual revenue stream. Consumer platform fees provide transactional 
 
 ## Slide 7: Traction
 
-### 499+ tests. 8 validation gates. 7 CI workflows. Full tech stack built.
+### Automated test suites. CI gates. Full tech stack built.
 
 **Engineering traction:**
 - TypeScript monorepo (Turborepo): NestJS 11 API, Next.js 16 web, React Native/Expo mobile, Tauri desktop
-- 499+ automated tests across unit, integration, and E2E
-- 8 validation gates (schema, dependency, CI, lint, type safety, security, coverage, performance)
-- 7 CI workflows running on every push
-- PostgreSQL 15, Redis 7, Cloudflare R2, Stripe FBO integration complete
+- Automated test suites across unit, integration, and E2E
+- CI validation gates for build, lint, security, claim drift, and integration-only checks when configured
+- GitHub Actions workflows for CI, release, deploy, CodeQL, secret scan, and Ask Styx deploys
+- PostgreSQL 16, Redis 7, Cloudflare R2, Stripe FBO integration complete
 - Double-entry integrity ledger implemented and tested
 
 **Product traction (beta):**

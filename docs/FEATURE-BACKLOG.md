@@ -2,7 +2,7 @@
 
 **Version**: 1.4.0
 **Generated**: 2026-02-28
-**Codebase Baseline**: v0.8.0 (1,107 tests, 6 workspaces)
+**Codebase Baseline**: v0.8.0 (automated test suites across 6+ workspaces; avoid hard-coding test totals because workspace coverage changes frequently)
 **Source Documents Ingested**: 37 markdown files across research, architecture, legal, planning, and brainstorm categories
 
 ---

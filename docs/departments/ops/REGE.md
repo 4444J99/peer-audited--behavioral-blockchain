@@ -21,8 +21,8 @@ Operations owns the reliability and availability of Styx's production systems. I
 
 **Core responsibilities:**
 
-- **Infrastructure management.** Render (Oregon region): API (NestJS 11), Web (Next.js 16), PostgreSQL 15, Redis 7. Cloudflare R2 for proof media. OPS monitors resource utilization, manages plan upgrades at scaling thresholds, and maintains the `render.yaml` blueprint.
-- **Deployment pipeline.** Tag-triggered GitHub Actions workflows (ci.yml, deploy.yml, 8 validation gates, 499+ tests). OPS owns the deploy flow from git tag to live traffic, including rollback procedures and pre-deploy database migration safety.
+- **Infrastructure management.** Render (Oregon region): API (NestJS 11), Web (Next.js 16), PostgreSQL 16, Redis 7. Cloudflare R2 for proof media. OPS monitors resource utilization, manages plan upgrades at scaling thresholds, and maintains the `render.yaml` blueprint.
+- **Deployment pipeline.** Tag-triggered GitHub Actions workflows (CI, deploy, validation gates, CodeQL, and secret scan). OPS owns the deploy flow from git tag to live traffic, including rollback procedures and pre-deploy database migration safety.
 - **Monitoring and alerting.** Three layers: application (Sentry), infrastructure (Render metrics), business (custom dashboards per O3). OPS configures alert thresholds, manages Sentry projects, and maintains the /health endpoint contract.
 - **Incident response.** SEV1-4 classification per O1. OPS is first responder for all incidents, coordinates with ENG for code fixes and FIN for financial incidents (ledger imbalance, escrow drift).
 - **Backup and recovery.** PostgreSQL daily backups (Render managed), R2 proof media (11-nines durability), Redis ephemeral (warm-up on restart). OPS owns RTO/RPO targets, runs quarterly backup drills, and maintains the recovery runbook.
