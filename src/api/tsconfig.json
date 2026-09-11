@@ -18,7 +18,8 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    "ignoreDeprecations": "5.0"
   },
   "include": ["src/**/*.ts", "api/**/*.ts", "../shared/**/*.ts"],
   "exclude": ["node_modules", "dist"]

@@ -214,3 +214,13 @@ export interface RationalizationHistory {
     createdAt: string;
   }>;
 }
+
+// Motivation profiling at intake (Issue #54)
+export {
+  MOTIVATION_ARCHETYPES,
+  type MotivationArchetype,
+  type MotivationAssessmentAnswers,
+  type MotivationProfile,
+  classifyMotivationArchetype,
+  getArchetypeNotificationCopy,
+} from "./libs/motivation-archetype";
