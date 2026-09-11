@@ -5,7 +5,7 @@ vi.mock('../../web/lib/styx-knowledge', () => ({
   STYX_KNOWLEDGE: 'mock-knowledge-base',
 }));
 
-import worker from '../worker/index';
+import worker, { resolveAllowedOrigin } from '../worker/index';
 
 function makeKV(): KVNamespace {
   const store = new Map<string, string>();
@@ -322,4 +322,37 @@ describe('Ask Styx Worker', () => {
 
     expect(res.status).toBe(200);
   });
+
+  describe('CORS origin resolution', () => {
+    it('matches requested origin when present in comma-separated allowed list', () => {
+      const allowed = 'https://organvm-iii-ergon.github.io, https://4444j99.github.io, http://localhost:5173';
+      expect(resolveAllowedOrigin('https://4444j99.github.io', allowed)).toBe('https://4444j99.github.io');
+      expect(resolveAllowedOrigin('https://organvm-iii-ergon.github.io', allowed)).toBe('https://organvm-iii-ergon.github.io');
+      expect(resolveAllowedOrigin('http://localhost:5173', allowed)).toBe('http://localhost:5173');
+    });
+
+    it('falls back to first allowed origin when request origin does not match', () => {
+      const allowed = 'https://organvm-iii-ergon.github.io, https://4444j99.github.io';
+      expect(resolveAllowedOrigin('https://malicious.com', allowed)).toBe('https://organvm-iii-ergon.github.io');
+    });
+
+    it('falls back to request origin or wildcard when no allowed origin is configured', () => {
+      expect(resolveAllowedOrigin('https://example.com', undefined)).toBe('https://example.com');
+      expect(resolveAllowedOrigin(null, undefined)).toBe('*');
+      expect(resolveAllowedOrigin('https://example.com', '*')).toBe('https://example.com');
+    });
+
+    it('reflects matching origin header in response', async () => {
+      const allowed = 'https://organvm-iii-ergon.github.io, https://4444j99.github.io';
+      const req = new Request('https://worker.styx.io/api/chat', {
+        method: 'OPTIONS',
+        headers: {
+          Origin: 'https://4444j99.github.io',
+        },
+      });
+      const res = await worker.fetch(req, makeEnv({ ALLOWED_ORIGIN: allowed }) as any);
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://4444j99.github.io');
+    });
+  });
 });
+
