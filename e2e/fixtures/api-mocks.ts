@@ -93,16 +93,103 @@ export const MOCK_LEADERBOARD = [
 
 export const MOCK_CSRF_TOKEN = 'csrf-e2e-test-token';
 
+export const MOCK_DASHBOARD_PROGRESS = {
+  activeContracts: [],
+  protectedVaultBalanceCents: 0,
+  summary: {
+    totalActiveStakeUsd: 0,
+    longestStreak: 0,
+  },
+};
+
+export const MOCK_STREAK_CHAIN = {
+  days: [],
+  currentStreak: 0,
+  longestStreak: 0,
+  neverMissTwiceActive: false,
+  penaltyMultiplier: 1,
+};
+
+export const MOCK_WALLET_HISTORY = { transactions: [] };
+
+export const MOCK_IDENTITY_OATH_STATE = {
+  oathCategory: 'Biological',
+  oath: null,
+  completed: false,
+  archetypes: [],
+};
+
+export const MOCK_ENDOWED_PROGRESS = {
+  contractId: 'contract-001',
+  realProgress: 0,
+  endowedBoost: 0,
+  displayProgress: 0,
+  currentTier: 'TIER_1',
+  nextTierAt: 100,
+  motivation: '',
+  downscaling: { multiplier: 1, reason: '' },
+};
+
+export const MOCK_ACCOUNTABILITY_STATUS = { partners: [], history: [] };
+
+export const MOCK_RECOVERY_LOCK_STATUS = { activeRequest: null };
+
+export const MOCK_DANGER_ZONE_STATUS = {
+  timezone: 'UTC',
+  inDangerZone: false,
+  contracts: [],
+};
+
+export const MOCK_FURY_QUEUE = { assignments: [] };
+
+export const MOCK_NOTIFICATIONS: unknown[] = [];
+
 /**
  * Set up standard API route mocks for authenticated pages.
  * Call this before navigating to any authenticated route.
+ *
+ * Every endpoint reachable from an authenticated page must be mocked here.
+ * Any route left unmatched falls through to Next's /api/:path* rewrite,
+ * which proxies to the docker-compose-only `styx-api` hostname — a host
+ * that does not resolve in the CI runner, so unmocked calls fail with
+ * `getaddrinfo EAI_AGAIN styx-api` instead of a clean 200/404. That failure
+ * surface is what previously made `e2e_browsers` fail on any PR touching
+ * src/web/ (see PR #952), even though the failing PR's own diff was
+ * unrelated to these endpoints.
  */
 export async function setupAuthenticatedMocks(page: Page) {
+  // Register this catch-all first so it stays lowest-priority: Playwright runs
+  // matching route handlers in reverse registration order, so the specific mocks
+  // below win first. Any authenticated /api/* request that isn't matched by a
+  // more specific mock reaches this handler and fails fast with an actionable
+  // error, instead of falling through to the Next.js rewrite and surfacing as
+  // `getaddrinfo EAI_AGAIN styx-api` in CI. Note: a later handler that calls
+  // route.continue() (rather than route.fallback()) terminates the chain and
+  // sends the request straight to the network, bypassing this catch-all — see
+  // the **/api/contracts* handler below for why it uses route.fallback().
+  await page.route('**/api/**', (route) =>
+    route.fulfill({
+      status: 501,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: `Unmocked API route in e2e test: ${route.request().method()} ${route.request().url()}. Add a specific page.route() mock in setupAuthenticatedMocks() for this endpoint.`,
+      }),
+    }),
+  );
+
   await page.route('**/api/auth/csrf', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ csrfToken: MOCK_CSRF_TOKEN }),
+    }),
+  );
+
+  await page.route('**/api/auth/refresh', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ userId: MOCK_USER.id, token: 'jwt-e2e-refreshed-token' }), // allow-secret: static e2e mock fixture, not a real credential
     }),
   );
 
@@ -122,6 +209,14 @@ export async function setupAuthenticatedMocks(page: Page) {
     }),
   );
 
+  await page.route('**/api/wallet/history*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_WALLET_HISTORY),
+    }),
+  );
+
   await page.route('**/api/contracts*', (route) => {
     if (route.request().method() === 'GET') {
       return route.fulfill({
@@ -130,8 +225,53 @@ export async function setupAuthenticatedMocks(page: Page) {
         body: JSON.stringify(MOCK_CONTRACTS),
       });
     }
-    return route.continue();
+    // route.continue() would send this straight to the network, bypassing the
+    // **/api/** catch-all above (Playwright's route chain only keeps going
+    // through earlier-registered handlers via route.fallback()). Use
+    // route.fallback() so unmocked non-GET contract requests still fail fast
+    // with the catch-all's actionable 501 instead of an EAI_AGAIN network error.
+    return route.fallback();
   });
+
+  await page.route('**/api/contracts/*/accountability/status', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_ACCOUNTABILITY_STATUS),
+    }),
+  );
+
+  await page.route('**/api/behavioral/retention/endowed-progress/*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_ENDOWED_PROGRESS),
+    }),
+  );
+
+  await page.route('**/api/onboarding/identity-oath*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_IDENTITY_OATH_STATE),
+    }),
+  );
+
+  await page.route('**/api/dashboard/progress', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_DASHBOARD_PROGRESS),
+    }),
+  );
+
+  await page.route('**/api/dashboard/streak', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_STREAK_CHAIN),
+    }),
+  );
 
   await page.route('**/api/wallet/transactions*', (route) =>
     route.fulfill({
@@ -154,6 +294,89 @@ export async function setupAuthenticatedMocks(page: Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(MOCK_FURY_STATS),
+    }),
+  );
+
+  await page.route('**/api/fury/queue*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_FURY_QUEUE),
+    }),
+  );
+
+  await page.route('**/api/fury/stream-cookie', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ expiresInSeconds: 3600 }),
+    }),
+  );
+
+  await page.route('**/api/fury/stream-ticket', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ticket: 'e2e-fury-stream-ticket', expiresInSeconds: 60 }),
+    }),
+  );
+
+  await page.route('**/api/contracts/*/recovery/lock-status', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_RECOVERY_LOCK_STATUS),
+    }),
+  );
+
+  await page.route('**/api/behavioral/retention/danger-zone', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_DANGER_ZONE_STATUS),
+    }),
+  );
+
+  // Bare `*` in a glob never crosses `/`, so `**/api/notifications*` would
+  // miss `/notifications/unread-count`. Register the collection route and
+  // the sub-path routes separately.
+  await page.route('**/api/notifications', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_NOTIFICATIONS),
+    }),
+  );
+
+  await page.route('**/api/notifications/unread-count', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ count: 0 }),
+    }),
+  );
+
+  await page.route('**/api/notifications/stream-ticket', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ticket: 'e2e-notifications-stream-ticket', expiresInSeconds: 60 }),
+    }),
+  );
+
+  await page.route('**/api/notifications/stream-cookie', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ expiresInSeconds: 3600 }),
+    }),
+  );
+
+  await page.route('**/api/notifications/*/read', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ status: 'ok' }),
     }),
   );
 }

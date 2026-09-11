@@ -759,6 +759,26 @@ Auth requirements use these labels:
 | `POST` | `/behavioral/swaps` | User | Propose a behavior swap. |
 | `POST` | `/oracles/healthkit/samples` | User | Ingest trusted HealthKit or Health Connect samples for contract verification. |
 
+### Agent Action Evidence
+
+These operator-only routes implement the provider-independent
+`organvm.execution/v1` evidence contract. They record proposals, approvals,
+external executor receipts, verification, rollback, and review. They never
+execute the proposed mutation. See
+[`agent-action-evidence.md`](./agent-action-evidence.md) for the state machine,
+safety boundary, and UCC/Hospes adapter examples.
+
+| Method | Path                                       | Auth     | Purpose                                                                     |
+| ------ | ------------------------------------------ | -------- | --------------------------------------------------------------------------- |
+| `POST` | `/agent-actions/:executionId/proposal`     | Operator | Start an immutable execution record.                                        |
+| `POST` | `/agent-actions/:executionId/approval`     | Operator | Record approval/rejection from the authenticated operator; execute nothing. |
+| `POST` | `/agent-actions/:executionId/mutation`     | Operator | Record a receipt from an external executor.                                 |
+| `POST` | `/agent-actions/:executionId/verification` | Operator | Record postcondition checks.                                                |
+| `POST` | `/agent-actions/:executionId/rollback`     | Operator | Record an external rollback result.                                         |
+| `POST` | `/agent-actions/:executionId/disputes`     | Operator | Open a dispute against the evidence record.                                 |
+| `POST` | `/agent-actions/:executionId/peer-review`  | Operator | Record peer-review findings for an open dispute.                            |
+| `GET`  | `/agent-actions/:executionId`              | Operator | Read events, derived state, and hash-chain integrity.                       |
+
 ### Support, AI, Crisis, And Operator Routes
 
 | Method | Path | Auth | Purpose |

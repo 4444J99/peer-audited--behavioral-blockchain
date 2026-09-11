@@ -393,6 +393,17 @@
       "completed": "2026-08-19T13:31:00Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "agent-action-evidence-2026-08-31",
+      "phase": "applied-ai",
+      "issues": [
+        955
+      ],
+      "started": "2026-08-31T13:48:47Z",
+      "completed": "2026-08-31T13:49:53Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -14230,6 +14241,44 @@
       "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/938",
       "state_updated": "2026-08-19T13:24:52Z",
       "closed_at": "2026-08-19T13:31:00Z"
+    },
+    "955": {
+      "title": "Agent action evidence layer: immutable execution, approval, and review records",
+      "labels": [],
+      "action": "BUILD",
+      "state": "PR_CREATED",
+      "batch": "agent-action-evidence-2026-08-31",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-08-31T13:48:47Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUILD_STARTED",
+          "at": "2026-08-31T13:48:47Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-08-31T13:48:47Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-08-31T13:48:47Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-08-31T14:01:33Z"
+        }
+      ],
+      "evidence": "src/api/src/modules/agent-action-evidence/agent-action-evidence.service.spec.ts",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/956",
+      "state_updated": "2026-08-31T14:01:33Z",
+      "closed_at": null
     }
   }
 }
