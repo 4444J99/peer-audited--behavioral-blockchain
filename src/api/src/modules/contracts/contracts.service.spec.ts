@@ -40,7 +40,9 @@ describe("ContractsService", () => {
     cancelHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
     retrieveHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
     createCustomer: jest.fn().mockResolvedValue("cus_test_1"),
-    transferFunds: jest.fn().mockResolvedValue({ id: "tr_test_1", amountCents: 0 }),
+    transferFunds: jest
+      .fn()
+      .mockResolvedValue({ id: "tr_test_1", amountCents: 0 }),
     resolveDisposition: jest.fn().mockReturnValue("REFUND"),
   } as unknown as EscrowProvider;
 
@@ -385,7 +387,66 @@ describe("ContractsService", () => {
       const result = await service.createContract(validDto);
 
       expect(result.contractId).toBe("new-contract-id");
+      expect(result.escrowHoldId).toBe("pi_test_123");
       expect(result.paymentIntentId).toBe("pi_test_123");
+    });
+
+    it("should create and return a rail-neutral hold id on the ledger escrow rail without a Stripe customer", async () => {
+      const ledgerEscrow = {
+        ...mockStripe,
+        rail: "LEDGER",
+        holdStake: jest.fn().mockResolvedValue({ id: "ledger-hold-1" }),
+        createCustomer: jest.fn().mockResolvedValue("acct-ledger-user-1"),
+      } as unknown as EscrowProvider;
+      const ledgerRailService = new ContractsService(
+        mockPool as unknown as Pool,
+        mockLedger,
+        mockTruthLog,
+        ledgerEscrow,
+        mockRealStripe as any,
+        mockDispute,
+        mockFuryRouter,
+        mockAegis,
+        mockRecovery,
+        mockDynamicPenalty as any,
+        mockAnomaly,
+        undefined,
+        undefined,
+        mockSettlement,
+      );
+      const userWithoutStripe = {
+        ...activeUser,
+        stripe_customer_id: null,
+        account_id: "acct-ledger-user-1",
+      };
+      mockPool.query.mockResolvedValueOnce({ rows: [userWithoutStripe] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Cool-off
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // Downscaling
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: "contract-ledger" }],
+      });
+      mockPool.query.mockResolvedValueOnce({ rows: [] }); // UPDATE contracts
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] });
+
+      const result = await ledgerRailService.createContract(validDto);
+
+      expect(ledgerEscrow.holdStake).toHaveBeenCalledWith(
+        "acct-ledger-user-1",
+        2500,
+        "contract-ledger",
+      );
+      expect(result).toMatchObject({
+        contractId: "contract-ledger",
+        escrowHoldId: "ledger-hold-1",
+        paymentIntentId: "ledger-hold-1",
+      });
+      expect(mockLedger.recordTransaction).not.toHaveBeenCalledWith(
+        "acct-ledger-user-1",
+        expect.anything(),
+        2500,
+        "contract-ledger",
+        expect.objectContaining({ type: "STAKE_HOLD" }),
+      );
     });
 
     it("should record a ledger transaction when user has an account and escrow exists", async () => {
@@ -513,94 +574,94 @@ describe("ContractsService", () => {
       const originalWebUrl = process.env.STYX_WEB_PUBLIC_URL;
       process.env.STYX_WEB_PUBLIC_URL = "https://styx.test";
       try {
-      mockPool.connect = jest.fn();
+        mockPool.connect = jest.fn();
 
-      mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user
-      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // cool-off
-      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // total failures
-      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // activeRecoveryContracts
-      mockPool.query.mockResolvedValueOnce({ rows: [] }); // lastRecoveryContract
-      mockPool.query.mockResolvedValueOnce({ rows: [] }); // lastRecoveryFailure
-      mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] }); // prior contracts
-      mockPool.query.mockResolvedValueOnce({ rows: [] }); // hasContractLedgerSideEffect
-      mockPool.query.mockResolvedValueOnce({ rows: [] }); // hasTruthLogSideEffect
-      mockPool.query.mockResolvedValueOnce({ rows: [] }); // partner lookup
+        mockPool.query.mockResolvedValueOnce({ rows: [activeUser] }); // user
+        mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // cool-off
+        mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // total failures
+        mockPool.query.mockResolvedValueOnce({ rows: [{ count: 0 }] }); // activeRecoveryContracts
+        mockPool.query.mockResolvedValueOnce({ rows: [] }); // lastRecoveryContract
+        mockPool.query.mockResolvedValueOnce({ rows: [] }); // lastRecoveryFailure
+        mockPool.query.mockResolvedValueOnce({ rows: [{ count: 1 }] }); // prior contracts
+        mockPool.query.mockResolvedValueOnce({ rows: [] }); // hasContractLedgerSideEffect
+        mockPool.query.mockResolvedValueOnce({ rows: [] }); // hasTruthLogSideEffect
+        mockPool.query.mockResolvedValueOnce({ rows: [] }); // partner lookup
 
-      const phaseAClient = {
-        query: jest
-          .fn()
-          .mockResolvedValueOnce({ rows: [] }) // BEGIN
-          .mockResolvedValueOnce({ rows: [{ id: "contract-tx-happy" }] }) // INSERT contract
-          .mockResolvedValueOnce({ rows: [] }) // accountability partner SELECT
-          .mockResolvedValueOnce({ rows: [] }) // INSERT accountability_partners
-          .mockResolvedValueOnce({ rows: [] }), // COMMIT
-        release: jest.fn(),
-      };
+        const phaseAClient = {
+          query: jest
+            .fn()
+            .mockResolvedValueOnce({ rows: [] }) // BEGIN
+            .mockResolvedValueOnce({ rows: [{ id: "contract-tx-happy" }] }) // INSERT contract
+            .mockResolvedValueOnce({ rows: [] }) // accountability partner SELECT
+            .mockResolvedValueOnce({ rows: [] }) // INSERT accountability_partners
+            .mockResolvedValueOnce({ rows: [] }), // COMMIT
+          release: jest.fn(),
+        };
 
-      const phaseBClient = {
-        query: jest
-          .fn()
-          .mockResolvedValueOnce({ rows: [] }) // BEGIN
-          .mockResolvedValueOnce({
-            rows: [
-              {
-                id: "contract-tx-happy",
-                status: "PENDING_STAKE",
-                payment_intent_id: null,
-              },
-            ],
-          }) // SELECT FOR UPDATE
-          .mockResolvedValueOnce({ rows: [] }) // finalize UPDATE
-          .mockResolvedValueOnce({ rows: [] }) // bounty INSERT
-          .mockResolvedValueOnce({ rows: [] }), // COMMIT
-        release: jest.fn(),
-      };
+        const phaseBClient = {
+          query: jest
+            .fn()
+            .mockResolvedValueOnce({ rows: [] }) // BEGIN
+            .mockResolvedValueOnce({
+              rows: [
+                {
+                  id: "contract-tx-happy",
+                  status: "PENDING_STAKE",
+                  payment_intent_id: null,
+                },
+              ],
+            }) // SELECT FOR UPDATE
+            .mockResolvedValueOnce({ rows: [] }) // finalize UPDATE
+            .mockResolvedValueOnce({ rows: [] }) // bounty INSERT
+            .mockResolvedValueOnce({ rows: [] }), // COMMIT
+          release: jest.fn(),
+        };
 
-      (mockPool.connect as jest.Mock)
-        .mockResolvedValueOnce(phaseAClient)
-        .mockResolvedValueOnce(phaseBClient);
+        (mockPool.connect as jest.Mock)
+          .mockResolvedValueOnce(phaseAClient)
+          .mockResolvedValueOnce(phaseBClient);
 
-      (mockStripe.holdStake as jest.Mock).mockResolvedValueOnce({
-        id: "pi_tx_happy_1",
-      });
+        (mockStripe.holdStake as jest.Mock).mockResolvedValueOnce({
+          id: "pi_tx_happy_1",
+        });
 
-      const dto: CreateContractInput = {
-        userId: "user-1",
-        oathCategory: OathCategory.NO_CONTACT_BOUNDARY,
-        verificationMethod: VerificationMethod.DAILY_ATTESTATION,
-        stakeAmount: 15,
-        durationDays: 14,
-        recoveryMetadata: {
-          accountabilityPartnerEmail: "friend@example.com",
-          noContactIdentifiers: ["hash_abc"],
-          acknowledgments: {
-            voluntary: true,
-            noMinors: true,
-            noDependents: true,
-            noLegalObligations: true,
+        const dto: CreateContractInput = {
+          userId: "user-1",
+          oathCategory: OathCategory.NO_CONTACT_BOUNDARY,
+          verificationMethod: VerificationMethod.DAILY_ATTESTATION,
+          stakeAmount: 15,
+          durationDays: 14,
+          recoveryMetadata: {
+            accountabilityPartnerEmail: "friend@example.com",
+            noContactIdentifiers: ["hash_abc"],
+            acknowledgments: {
+              voluntary: true,
+              noMinors: true,
+              noDependents: true,
+              noLegalObligations: true,
+            },
           },
-        },
-      };
+        };
 
-      const result = await service.createContract(dto);
+        const result = await service.createContract(dto);
 
-      expect(result.contractId).toBe("contract-tx-happy");
-      expect(result.paymentIntentId).toBe("pi_tx_happy_1");
-      expect(mockStripe.holdStake).toHaveBeenCalledTimes(1);
-      expect(mockStripe.cancelHold).not.toHaveBeenCalled();
+        expect(result.contractId).toBe("contract-tx-happy");
+        expect(result.paymentIntentId).toBe("pi_tx_happy_1");
+        expect(mockStripe.holdStake).toHaveBeenCalledTimes(1);
+        expect(mockStripe.cancelHold).not.toHaveBeenCalled();
 
-      const updateCalls = phaseBClient.query.mock.calls.filter(
-        ([sql]: [string]) =>
-          typeof sql === "string" && sql.includes("SET payment_intent_id"),
-      );
-      expect(updateCalls).toHaveLength(1);
-      const bountyCalls = phaseBClient.query.mock.calls.filter(
-        ([sql]: [string]) =>
-          typeof sql === "string" && sql.includes("INSERT INTO bounties"),
-      );
-      expect(bountyCalls).toHaveLength(1);
-      expect(phaseAClient.release).toHaveBeenCalled();
-      expect(phaseBClient.release).toHaveBeenCalled();
+        const updateCalls = phaseBClient.query.mock.calls.filter(
+          ([sql]: [string]) =>
+            typeof sql === "string" && sql.includes("SET payment_intent_id"),
+        );
+        expect(updateCalls).toHaveLength(1);
+        const bountyCalls = phaseBClient.query.mock.calls.filter(
+          ([sql]: [string]) =>
+            typeof sql === "string" && sql.includes("INSERT INTO bounties"),
+        );
+        expect(bountyCalls).toHaveLength(1);
+        expect(phaseAClient.release).toHaveBeenCalled();
+        expect(phaseBClient.release).toHaveBeenCalled();
       } finally {
         if (originalWebUrl === undefined) {
           delete process.env.STYX_WEB_PUBLIC_URL;
@@ -974,7 +1035,8 @@ describe("ContractsService", () => {
             identity_oath_id: "oath-1",
             identity_archetype_id: "BOUNDARY_KEEPER",
             identity_label: "The Boundary Keeper",
-            identity_pledge_copy: "I am becoming someone who keeps the distance they chose.",
+            identity_pledge_copy:
+              "I am becoming someone who keeps the distance they chose.",
             identity_copy_variant: "DECLARATIVE",
           },
         ],
@@ -1411,6 +1473,7 @@ describe("ContractsService", () => {
         expect.objectContaining({
           contractId: "contract-1",
           outcome: "PASS",
+          escrowHoldId: "pi_test_123",
           amountCents: 5000,
         }),
       );
@@ -1479,9 +1542,9 @@ describe("ContractsService", () => {
               id: "fx-1",
               contract_id: "contract-1",
               outcome: "FAILED",
-              effect_type: "STRIPE_CAPTURE_STAKE",
+              effect_type: "ESCROW_CAPTURE_STAKE",
               dedupe_key: "dedupe-1",
-              payload: { paymentIntentId: "pi_fail_1" },
+              payload: { escrowHoldId: "hold_fail_1", rail: "LEDGER" },
               status: "FAILED",
               attempts: 7,
               next_retry_at: null,
@@ -1497,9 +1560,9 @@ describe("ContractsService", () => {
               id: "fx-1",
               contract_id: "contract-1",
               outcome: "FAILED",
-              effect_type: "STRIPE_CAPTURE_STAKE",
+              effect_type: "ESCROW_CAPTURE_STAKE",
               dedupe_key: "dedupe-1",
-              payload: { paymentIntentId: "pi_fail_1" },
+              payload: { escrowHoldId: "hold_fail_1", rail: "LEDGER" },
               status: "PROCESSING",
               attempts: 8,
               next_retry_at: null,
@@ -1512,7 +1575,7 @@ describe("ContractsService", () => {
         .mockResolvedValueOnce({ rows: [] });
 
       (mockStripe.captureStake as jest.Mock).mockRejectedValueOnce(
-        new Error("stripe outage"),
+        new Error("escrow outage"),
       );
 
       await expect(
@@ -1520,12 +1583,13 @@ describe("ContractsService", () => {
           "contract-1",
           "FAILED",
         ),
-      ).rejects.toThrow("stripe outage");
+      ).rejects.toThrow("escrow outage");
 
       const quarantineUpdateCall = mockPool.query.mock.calls[2];
       expect(quarantineUpdateCall[0]).toContain("SET status = 'QUARANTINED'");
       expect(quarantineUpdateCall[1][0]).toBe("fx-1");
       expect(quarantineUpdateCall[1][2]).toMatch(/Exceeded max retry attempts/);
+      expect(mockStripe.captureStake).toHaveBeenCalledWith("hold_fail_1");
     });
 
     it("should only sweep retry groups that are due and report quarantine totals", async () => {
@@ -1588,6 +1652,52 @@ describe("ContractsService", () => {
         bountyPoolAccountId: null,
       });
     }
+
+    it("should express primary hold settlement as provider-neutral escrow effects", () => {
+      (mockStripe.resolveDisposition as jest.Mock).mockReturnValueOnce(
+        "CAPTURE",
+      );
+      const effects = (service as any).buildContractResolutionSideEffects({
+        contractId: "contract-1",
+        outcome: "FAILED",
+        contractRow: {
+          ...contractRow,
+          stake_amount: 100,
+          payment_intent_id: "hold-primary-1",
+          metadata: { additional_payouts: ["hold-extra-1"] },
+        },
+        userRow: { account_id: "acct-1" },
+        escrowAccountId: null,
+        revenueAccountId: null,
+        bountyPoolAccountId: null,
+        jurisdictionTier: "FULL_ACCESS",
+      });
+
+      expect(effects).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            effectType: "ESCROW_CAPTURE_STAKE",
+            dedupeKey: "contract-resolution:contract-1:FAILED:escrow",
+            payload: {
+              escrowHoldId: "hold-primary-1",
+              rail: "STRIPE",
+            },
+          }),
+          expect.objectContaining({
+            effectType: "ESCROW_CAPTURE_STAKE",
+            dedupeKey:
+              "contract-resolution:contract-1:FAILED:escrow:additional:hold-extra-1",
+            payload: {
+              escrowHoldId: "hold-extra-1",
+              rail: "STRIPE",
+            },
+          }),
+        ]),
+      );
+      expect(effects.some((e: any) => e.effectType.startsWith("STRIPE_"))).toBe(
+        false,
+      );
+    });
 
     it("should enqueue a webhook effect when the contract owner has an enterprise", () => {
       const effect = effectsFor({
@@ -2177,7 +2287,10 @@ describe("ContractsService", () => {
       expect(client.release).toHaveBeenCalled();
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
         "RELAPSE_SELF_REPORTED",
-        expect.objectContaining({ contractId: "contract-r1", userId: "user-1" }),
+        expect.objectContaining({
+          contractId: "contract-r1",
+          userId: "user-1",
+        }),
       );
     });
 

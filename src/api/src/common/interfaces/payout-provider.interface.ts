@@ -1,9 +1,9 @@
-import { JurisdictionTier } from '../../../services/geofencing';
+import { JurisdictionTier } from "../../../services/geofencing";
 
 export enum PayoutStatus {
-  PENDING = 'PENDING',
-  SUCCESS = 'SUCCESS',
-  FAILED = 'FAILED',
+  PENDING = "PENDING",
+  SUCCESS = "SUCCESS",
+  FAILED = "FAILED",
 }
 
 export interface PayoutResult {
@@ -17,12 +17,20 @@ export interface PayoutProvider {
   /**
    * Release funds from escrow back to the user (Pass outcome).
    */
-  releaseFunds(paymentIntentId: string, amountCents: number, metadata?: Record<string, any>): Promise<PayoutResult>;
+  releaseFunds(
+    paymentIntentId: string,
+    amountCents: number,
+    metadata?: Record<string, any>,
+  ): Promise<PayoutResult>;
 
   /**
    * Capture funds from escrow to system revenue (Fail outcome).
    */
-  captureFunds(paymentIntentId: string, amountCents: number, metadata?: Record<string, any>): Promise<PayoutResult>;
+  captureFunds(
+    paymentIntentId: string,
+    amountCents: number,
+    metadata?: Record<string, any>,
+  ): Promise<PayoutResult>;
 
   /**
    * Check the status of a transaction.
@@ -37,7 +45,7 @@ export interface PayoutProvider {
  * SYSTEM_ESCROW, so balances, integrity checks and reconciliation all exercise the
  * same code paths an external rail would — with no outside money attached.
  */
-export type EscrowRail = 'STRIPE' | 'COREPAY' | 'LEDGER';
+export type EscrowRail = "STRIPE" | "COREPAY" | "LEDGER";
 
 /**
  * Rail-neutral view of an authorized stake.
@@ -48,7 +56,7 @@ export type EscrowRail = 'STRIPE' | 'COREPAY' | 'LEDGER';
  * ledger entry id.
  */
 export interface EscrowHold {
-  /** Rail-scoped identifier. Stored in `contracts.payment_intent_id`. */
+  /** Rail-scoped identifier for the authorized stake hold. */
   id: string;
   status: EscrowHoldStatus;
   amountCents: number;
@@ -61,9 +69,9 @@ export interface EscrowHold {
  * `processing` / `requires_action` / `requires_payment_method`). It is deliberately
  * distinct from HELD: only HELD means custody was actually taken.
  */
-export type EscrowHoldStatus = 'PENDING' | 'HELD' | 'CAPTURED' | 'RELEASED';
+export type EscrowHoldStatus = "PENDING" | "HELD" | "CAPTURED" | "RELEASED";
 
-export type StakeDisposition = 'CAPTURE' | 'REFUND';
+export type StakeDisposition = "CAPTURE" | "REFUND";
 
 /**
  * The entry half of escrow: taking custody of a stake.
@@ -111,7 +119,10 @@ export interface EscrowProvider {
   ): Promise<EscrowHold>;
 
   /** Capture a previously authorized hold, in full or (when supported) in part. */
-  captureStake(holdId: string, captureAmountCents?: number): Promise<EscrowHold>;
+  captureStake(
+    holdId: string,
+    captureAmountCents?: number,
+  ): Promise<EscrowHold>;
 
   /** Release the full authorization back to the user. */
   cancelHold(holdId: string): Promise<EscrowHold>;
@@ -127,10 +138,16 @@ export interface EscrowProvider {
 
   /** Jurisdiction disposition policy. Rail-independent; see `resolveStakeDisposition`. */
   resolveDisposition(
-    outcome: 'COMPLETED' | 'FAILED',
+    outcome: "COMPLETED" | "FAILED",
     jurisdictionTier: JurisdictionTier,
   ): StakeDisposition;
 }
 
 /** DI token for the configured entry rail. */
-export const ESCROW_PROVIDER = Symbol('ESCROW_PROVIDER');
+export const ESCROW_PROVIDER = Symbol("ESCROW_PROVIDER");
+
+export function toEscrowHoldId(
+  paymentIntentId: string | null | undefined,
+): string | null {
+  return paymentIntentId ?? null;
+}

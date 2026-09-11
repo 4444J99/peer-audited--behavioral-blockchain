@@ -16,6 +16,7 @@ import { TruthLogService } from "../../../services/ledger/truth-log.service";
 import {
   ESCROW_PROVIDER,
   EscrowProvider,
+  toEscrowHoldId,
 } from "../../common/interfaces/payout-provider.interface";
 import { JurisdictionTier } from "../../../services/geofencing";
 import { StripeFBOService as RealStripeFBOService } from "../payments/stripe-fbo.service";
@@ -31,7 +32,10 @@ import { AegisProtocolService } from "../../../services/health/aegis.service";
 import { RecoveryProtocolService } from "../../../services/health/recovery-protocol.service";
 import { DynamicPenaltyService } from "../../../services/health/dynamic-penalty.service";
 import { AnomalyService } from "../../../services/anomaly/anomaly.service";
-import { resolveWebPublicUrl, testMoneyModeEnabled } from "../../config/runtime";
+import {
+  resolveWebPublicUrl,
+  testMoneyModeEnabled,
+} from "../../config/runtime";
 
 import { NotificationsService } from "../notifications/notifications.service";
 import { CompliancePolicyService } from "../compliance/compliance-policy.service";
@@ -89,6 +93,10 @@ export interface ContractReadRequester {
 }
 
 type ContractResolutionSideEffectType =
+  | "ESCROW_CANCEL_HOLD"
+  | "ESCROW_CAPTURE_STAKE"
+  | "ESCROW_CAPTURE_APPEAL_FEE"
+  | "ESCROW_CANCEL_APPEAL_FEE"
   | "STRIPE_CANCEL_HOLD"
   | "STRIPE_CAPTURE_STAKE"
   | "STRIPE_CAPTURE_APPEAL_FEE"
@@ -130,6 +138,15 @@ type PricingMetadata = {
   platformFeeUsd: number;
   refundableStakeUsd: number;
 };
+
+export interface CreateContractResult {
+  contractId: string;
+  escrowHoldId: string | null;
+  /** @deprecated Use escrowHoldId. Kept for existing clients while DB column migration is deferred. */
+  paymentIntentId: string | null;
+  bountyLink?: string;
+  pricing?: PricingMetadata;
+}
 
 import { toCents, toDollars } from "../../../../shared/libs/money";
 
@@ -369,26 +386,28 @@ export class ContractsService {
     );
 
     // For REFUND disposition on failure, cancel the hold instead of capturing.
-    const stripeEffect =
+    const escrowEffect =
       disposition === "REFUND"
-        ? ("STRIPE_CANCEL_HOLD" as const)
-        : ("STRIPE_CAPTURE_STAKE" as const);
+        ? ("ESCROW_CANCEL_HOLD" as const)
+        : ("ESCROW_CAPTURE_STAKE" as const);
 
-    if (contractRow.payment_intent_id) {
+    const escrowHoldId = toEscrowHoldId(contractRow.payment_intent_id);
+    if (escrowHoldId) {
       effects.push({
         contractId,
         outcome,
-        effectType: stripeEffect,
-        dedupeKey: `${baseKey}:stripe`,
+        effectType: escrowEffect,
+        dedupeKey: `${baseKey}:escrow`,
         payload: {
-          paymentIntentId: contractRow.payment_intent_id,
+          escrowHoldId,
+          rail: this.escrow.rail,
         },
       });
     }
 
-    // Double-down adds extra Stripe holds recorded in metadata.additional_payouts.
+    // Double-down adds extra rail holds recorded in metadata.additional_payouts.
     // These must be captured/cancelled at settlement alongside the primary intent;
-    // otherwise the additional authorizations are orphaned. We emit one Stripe
+    // otherwise the additional authorizations are orphaned. We emit one escrow
     // effect per additional intent so the outbox dispatcher acts on each.
     const additionalIntents = Array.isArray(
       contractRow?.metadata?.additional_payouts,
@@ -410,10 +429,11 @@ export class ContractsService {
       effects.push({
         contractId,
         outcome,
-        effectType: stripeEffect,
-        dedupeKey: `${baseKey}:stripe:additional:${intentId}`,
+        effectType: escrowEffect,
+        dedupeKey: `${baseKey}:escrow:additional:${intentId}`,
         payload: {
-          paymentIntentId: intentId,
+          escrowHoldId: intentId,
+          rail: this.escrow.rail,
         },
       });
     }
@@ -757,26 +777,31 @@ export class ContractsService {
     effect: ContractResolutionSideEffectRow,
   ): Promise<void> {
     const payload = effect.payload || {};
+    const escrowHoldId = payload.escrowHoldId ?? payload.paymentIntentId;
 
     switch (effect.effect_type) {
+      case "ESCROW_CANCEL_HOLD":
       case "STRIPE_CANCEL_HOLD":
-        if (payload.paymentIntentId) {
-          await this.escrow.cancelHold(payload.paymentIntentId);
+        if (escrowHoldId) {
+          await this.escrow.cancelHold(escrowHoldId);
         }
         return;
+      case "ESCROW_CAPTURE_STAKE":
       case "STRIPE_CAPTURE_STAKE":
-        if (payload.paymentIntentId) {
-          await this.escrow.captureStake(payload.paymentIntentId);
+        if (escrowHoldId) {
+          await this.escrow.captureStake(escrowHoldId);
         }
         return;
+      case "ESCROW_CAPTURE_APPEAL_FEE":
       case "STRIPE_CAPTURE_APPEAL_FEE":
-        if (payload.paymentIntentId) {
-          await this.escrow.captureStake(payload.paymentIntentId);
+        if (escrowHoldId) {
+          await this.escrow.captureStake(escrowHoldId);
         }
         return;
+      case "ESCROW_CANCEL_APPEAL_FEE":
       case "STRIPE_CANCEL_APPEAL_FEE":
-        if (payload.paymentIntentId) {
-          await this.escrow.cancelHold(payload.paymentIntentId);
+        if (escrowHoldId) {
+          await this.escrow.cancelHold(escrowHoldId);
         }
         return;
       case "LEDGER_STAKE_RETURN":
@@ -864,23 +889,14 @@ export class ContractsService {
 
   private buildCreateContractResponse(
     contractId: string,
-    paymentIntentId: string | null,
+    escrowHoldId: string | null,
     bountyLinkId: string | null,
     pricing?: PricingMetadata,
-  ): {
-    contractId: string;
-    paymentIntentId: string | null;
-    bountyLink?: string;
-    pricing?: PricingMetadata;
-  } {
-    const response: {
-      contractId: string;
-      paymentIntentId: string | null;
-      bountyLink?: string;
-      pricing?: PricingMetadata;
-    } = {
+  ): CreateContractResult {
+    const response: CreateContractResult = {
       contractId,
-      paymentIntentId,
+      escrowHoldId,
+      paymentIntentId: escrowHoldId,
     };
 
     if (bountyLinkId) {
@@ -1043,7 +1059,7 @@ export class ContractsService {
 
   private async markContractReconcileRequired(
     contractId: string,
-    paymentIntentId: string | null,
+    escrowHoldId: string | null,
     reason: string,
   ): Promise<void> {
     try {
@@ -1052,7 +1068,7 @@ export class ContractsService {
          SET status = 'RECONCILE_REQUIRED',
              payment_intent_id = COALESCE(payment_intent_id, $2)
          WHERE id = $1`,
-        [contractId, paymentIntentId],
+        [contractId, escrowHoldId],
       );
     } catch (err) {
       this.logger.error(
@@ -1162,9 +1178,11 @@ export class ContractsService {
 
     // Referral reward: credit the referrer when the referred user creates their first contract
     if (this.referralService) {
-      this.referralService.rewardOnFirstContract(dto.userId, contractId).catch((err: Error) => {
-        console.error(`Failed to process referral reward: ${err.message}`);
-      });
+      this.referralService
+        .rewardOnFirstContract(dto.userId, contractId)
+        .catch((err: Error) => {
+          console.error(`Failed to process referral reward: ${err.message}`);
+        });
     }
 
     // On the ledger rail the escrow provider's holdStake already posts the
@@ -1285,12 +1303,7 @@ export class ContractsService {
     contractMetadata: Record<string, any>;
     pricingMetadata?: PricingMetadata;
     identityOathId: string | null;
-  }): Promise<{
-    contractId: string;
-    paymentIntentId: string | null;
-    bountyLink?: string;
-    pricing?: PricingMetadata;
-  }> {
+  }): Promise<CreateContractResult> {
     const {
       dto,
       user,
@@ -1368,7 +1381,7 @@ export class ContractsService {
     const customerHandle = await this.resolveEscrowCustomerHandle(user);
 
     // A failed authorization must not leave a half-created PENDING_STAKE row
-    // floating with no payment intent and no record of what happened. Dead-letter
+    // floating with no escrow hold and no record of what happened. Dead-letter
     // it to RECONCILE_REQUIRED so the admin sweep can act on it.
     //
     // Issue #905: $0-escrow on the test-money rail skips the ledger hold entirely —
@@ -1423,11 +1436,14 @@ export class ContractsService {
           `Contract ${contractId} is suspended; cannot finalize activation`,
         );
       }
-      if (existing.status === "PENDING_STAKE" && existing.payment_intent_id === null) {
+      if (
+        existing.status === "PENDING_STAKE" &&
+        existing.payment_intent_id === null
+      ) {
         // We won the race: this is the first (and only) finalizer, so record
-        // our hold as the contract's payment intent and activate.
+        // our rail-scoped hold id and activate.
         await phaseBClient.query(
-           `UPDATE contracts
+          `UPDATE contracts
             SET payment_intent_id = $1,
                 status = 'ACTIVE',
                 started_at = COALESCE(started_at, $3),
@@ -1448,8 +1464,8 @@ export class ContractsService {
           );
         }
       } else {
-        // We lost the race: a concurrent finalizer already recorded a payment
-        // intent and activated this contract. Our hold never became the
+        // We lost the race: a concurrent finalizer already recorded a rail hold
+        // and activated this contract. Our hold never became the
         // recorded one — it is orphaned and must be released. Do that AFTER
         // COMMIT so a cancel failure cannot roll back the winner's activation.
         activationAlreadyApplied = true;
@@ -1529,12 +1545,9 @@ export class ContractsService {
     );
   }
 
-  async createContract(dto: CreateContractInput): Promise<{
-    contractId: string;
-    paymentIntentId: string | null;
-    bountyLink?: string;
-    pricing?: PricingMetadata;
-  }> {
+  async createContract(
+    dto: CreateContractInput,
+  ): Promise<CreateContractResult> {
     // 1. Validate oath category
     const validCategories = Object.values(OathCategory) as string[];
     if (!validCategories.includes(dto.oathCategory)) {
@@ -1816,7 +1829,7 @@ export class ContractsService {
     // Hold stake with real contract ID
     const customerHandle = await this.resolveEscrowCustomerHandle(user);
     // A failed authorization must not leave a half-created PENDING_STAKE row
-    // floating with no payment intent and no record of what happened. Dead-letter
+    // floating with no escrow hold and no record of what happened. Dead-letter
     // it to RECONCILE_REQUIRED so the admin sweep can act on it.
     //
     // Issue #905: $0-escrow on the test-money rail skips the ledger hold entirely.
@@ -1842,7 +1855,7 @@ export class ContractsService {
       }
     }
 
-    // Activate contract with payment intent
+    // Activate contract with the rail-scoped hold id.
     await this.pool.query(
       `UPDATE contracts SET status = 'ACTIVE', payment_intent_id = $1 WHERE id = $2`,
       [paymentIntent?.id ?? null, contractId],
@@ -2357,6 +2370,7 @@ export class ContractsService {
             await this.settlementService.dispatchSettlement({
               contractId,
               outcome: outcome === "COMPLETED" ? "PASS" : "FAIL",
+              escrowHoldId: row.payment_intent_id,
               paymentIntentId: row.payment_intent_id,
               amountCents: stakeAmountCents,
               dispositionMode,
@@ -3456,12 +3470,10 @@ export class ContractsService {
           `Auto-attested contract ${contract.id} via HealthKit sample ${sample.type}`,
         );
       } catch (err) {
-        if (
-          !(
-            err instanceof BadRequestException &&
-            /Already attested today/i.test(err.message)
-          )
-        ) {
+        if (!(
+          err instanceof BadRequestException &&
+          /Already attested today/i.test(err.message)
+        )) {
           this.logger.error(
             `Failed to auto-attest contract ${contract.id}: ${err}`,
           );
@@ -3599,7 +3611,11 @@ export class ContractsService {
         const escrowResult = await db.query(
           `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
         );
-        if (this.escrow.rail !== "LEDGER" && user.account_id && escrowResult.rows.length > 0) {
+        if (
+          this.escrow.rail !== "LEDGER" &&
+          user.account_id &&
+          escrowResult.rows.length > 0
+        ) {
           await this.ledger.recordTransaction(
             user.account_id,
             escrowResult.rows[0].id,
@@ -3630,7 +3646,11 @@ export class ContractsService {
         const escrowResult = await db.query(
           `SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1`,
         );
-        if (this.escrow.rail !== "LEDGER" && user.account_id && escrowResult.rows.length > 0) {
+        if (
+          this.escrow.rail !== "LEDGER" &&
+          user.account_id &&
+          escrowResult.rows.length > 0
+        ) {
           await this.ledger.recordTransaction(
             user.account_id,
             escrowResult.rows[0].id,
@@ -3746,8 +3766,6 @@ export class ContractsService {
     return result.rows[0];
   }
 
-
-
   /**
    * Mid-challenge penalty-free suspension for pregnancy
    */
@@ -3756,7 +3774,7 @@ export class ContractsService {
       `SELECT id, payment_intent_id, metadata FROM contracts
        WHERE user_id = $1 AND status IN ('PENDING_STAKE', 'ACTIVE')
          AND oath_category IN ('WEIGHT_MANAGEMENT', 'CARDIOVASCULAR_STAMINA', 'NUTRITIONAL_TRANSPARENCY', 'SUBSTANCE_ABSTINENCE', 'BEHAVIORAL_DETOX')`,
-      [userId]
+      [userId],
     );
 
     for (const contract of rows) {
@@ -3775,7 +3793,10 @@ export class ContractsService {
           try {
             await this.escrow.cancelHold(intentId);
           } catch (err) {
-            this.logger.error(`Failed to cancel hold for suspended contract ${contract.id}: ${intentId}`, err);
+            this.logger.error(
+              `Failed to cancel hold for suspended contract ${contract.id}: ${intentId}`,
+              err,
+            );
             // Record for reconciliation instead of throwing
             await this.markContractReconcileRequired(
               contract.id,
@@ -3785,15 +3806,15 @@ export class ContractsService {
           }
         }
       }
-      
+
       await this.pool.query(
         `UPDATE contracts SET status = 'SUSPENDED' WHERE id = $1`,
-        [contract.id]
+        [contract.id],
       );
 
       await this.truthLog.appendEvent("CONTRACT_SUSPENDED_PREGNANCY", {
         contractId: contract.id,
-        userId
+        userId,
       });
     }
   }
