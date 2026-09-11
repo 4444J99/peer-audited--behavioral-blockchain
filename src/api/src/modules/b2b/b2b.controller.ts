@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Param,
   Body,
   Query,
@@ -21,6 +22,7 @@ import { MetricsService } from './metrics.service';
 import { AnonymizeService } from './anonymize.service';
 import { DataLakeService } from './datalake.service';
 import { CrmService } from './crm.service';
+import { CohortOrchestrationService, CreateCohortDto, UpdateCohortDto } from './cohort-orchestration.service';
 import { EMPLOYEE_EVENT_TYPES, EmployeeEventType } from './connectors/crm-connector.interface';
 
 @ApiTags('B2B')
@@ -38,6 +40,7 @@ export class B2BController {
     private readonly anonymize: AnonymizeService,
     private readonly dataLake: DataLakeService,
     private readonly crm: CrmService,
+    private readonly cohorts: CohortOrchestrationService,
   ) {}
 
   /**
@@ -260,5 +263,74 @@ export class B2BController {
     });
 
     return { status: 'synced', enterpriseId, email: body.email };
+  }
+
+  // ─── Cohort Orchestration (Issue #48) ───
+
+  @Post(':enterpriseId/cohorts')
+  @ApiOperation({ summary: 'Create a new behavioral contract cohort for clients/employees' })
+  async createCohort(
+    @CurrentUser() user: { id: string },
+    @Param('enterpriseId') enterpriseId: string,
+    @Body() body: CreateCohortDto,
+  ) {
+    await this.assertEnterpriseMembership(user.id, enterpriseId);
+    return this.cohorts.createCohort(enterpriseId, body);
+  }
+
+  @Post(':enterpriseId/cohorts/:cohortId/invite')
+  @ApiOperation({ summary: 'Batch invite participants to an enterprise cohort' })
+  async inviteCohortParticipants(
+    @CurrentUser() user: { id: string },
+    @Param('enterpriseId') enterpriseId: string,
+    @Param('cohortId') cohortId: string,
+    @Body() body: { emails: string[] },
+  ) {
+    await this.assertEnterpriseMembership(user.id, enterpriseId);
+    return this.cohorts.inviteParticipants(enterpriseId, cohortId, body.emails || []);
+  }
+
+  @Get(':enterpriseId/cohorts')
+  @ApiOperation({ summary: 'List all cohorts belonging to this enterprise' })
+  async listCohorts(
+    @CurrentUser() user: { id: string },
+    @Param('enterpriseId') enterpriseId: string,
+  ) {
+    await this.assertEnterpriseMembership(user.id, enterpriseId);
+    return this.cohorts.listCohorts(enterpriseId);
+  }
+
+  @Get(':enterpriseId/cohorts/:cohortId')
+  @ApiOperation({ summary: 'Get detailed compliance and progress metrics for a cohort' })
+  async getCohortDetails(
+    @CurrentUser() user: { id: string },
+    @Param('enterpriseId') enterpriseId: string,
+    @Param('cohortId') cohortId: string,
+  ) {
+    await this.assertEnterpriseMembership(user.id, enterpriseId);
+    return this.cohorts.getCohortDetails(enterpriseId, cohortId);
+  }
+
+  @Patch(':enterpriseId/cohorts/:cohortId')
+  @ApiOperation({ summary: 'Update cohort configuration (pre-start only)' })
+  async updateCohortConfig(
+    @CurrentUser() user: { id: string },
+    @Param('enterpriseId') enterpriseId: string,
+    @Param('cohortId') cohortId: string,
+    @Body() body: UpdateCohortDto,
+  ) {
+    await this.assertEnterpriseMembership(user.id, enterpriseId);
+    return this.cohorts.updateCohortConfig(enterpriseId, cohortId, body);
+  }
+
+  @Post(':enterpriseId/cohorts/:cohortId/close')
+  @ApiOperation({ summary: 'Close enrollment or conclude a cohort' })
+  async closeCohort(
+    @CurrentUser() user: { id: string },
+    @Param('enterpriseId') enterpriseId: string,
+    @Param('cohortId') cohortId: string,
+  ) {
+    await this.assertEnterpriseMembership(user.id, enterpriseId);
+    return this.cohorts.closeCohort(enterpriseId, cohortId);
   }
 }

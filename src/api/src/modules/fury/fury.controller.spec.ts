@@ -25,11 +25,18 @@ describe('FuryController', () => {
     mockR2 = {
       generateViewUrl: jest.fn(async (key: string) => `https://signed.example/${key}`),
     };
+    const mockCounterClaims = {
+      fileCounterClaim: jest.fn().mockResolvedValue({ id: 'ccl-1', status: 'PENDING_JUDGE_REVIEW' }),
+      getAuditorCounterClaimHistory: jest.fn().mockResolvedValue({ auditorId: 'aud-1', totalCounterClaims: 1 }),
+      listPendingCounterClaims: jest.fn().mockResolvedValue([{ id: 'ccl-1' }]),
+      adjudicateCounterClaim: jest.fn().mockResolvedValue({ id: 'ccl-1', status: 'SUBSTANTIATED' }),
+    } as any;
     controller = new FuryController(
       mockPool as unknown as Pool,
       mockFuryWorker,
       mockTruthLog,
-      mockR2 as any
+      mockR2 as any,
+      mockCounterClaims,
     );
     jest.clearAllMocks();
   });
@@ -210,6 +217,36 @@ describe('FuryController', () => {
 
       expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
       expect(mockFuryWorker.checkConsensus).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Counter-Claim Endpoints (Issue #81)', () => {
+    it('files counter-claim against bad-faith auditor', async () => {
+      const res = await controller.fileCounterClaim({ id: 'user-1' }, {
+        claimType: 'HARASSMENT',
+        reason: 'Hostile comments in review notes',
+      });
+      expect(res.id).toBe('ccl-1');
+      expect(res.status).toBe('PENDING_JUDGE_REVIEW');
+    });
+
+    it('retrieves auditor history for judicial review', async () => {
+      const res = await controller.getAuditorHistory('aud-1');
+      expect(res.auditorId).toBe('aud-1');
+      expect(res.totalCounterClaims).toBe(1);
+    });
+
+    it('lists pending counter-claims for judge review', async () => {
+      const res = await controller.listPendingClaims();
+      expect(res).toEqual([{ id: 'ccl-1' }]);
+    });
+
+    it('adjudicates counter-claim', async () => {
+      const res = await controller.adjudicateClaim({ id: 'judge-1' }, 'ccl-1', {
+        decision: 'SUBSTANTIATED',
+        judgeNotes: 'Evidence verified',
+      });
+      expect(res.status).toBe('SUBSTANTIATED');
     });
   });
 });

@@ -9,6 +9,7 @@ import { AnonymizeService } from "./anonymize.service";
 import { DataLakeService } from "./datalake.service";
 import { CrmService } from "./crm.service";
 import { EnterpriseScopeService } from "./enterprise-scope.service";
+import { CohortOrchestrationService } from "./cohort-orchestration.service";
 import { SalesforceConnector } from "./connectors/salesforce.connector";
 import { HubSpotConnector } from "./connectors/hubspot.connector";
 import { RoleGuard } from "../../common/guards/role.guard";
@@ -25,6 +26,7 @@ import { RoleGuard } from "../../common/guards/role.guard";
     DataLakeService,
     CrmService,
     EnterpriseScopeService,
+    CohortOrchestrationService,
     SalesforceConnector,
     HubSpotConnector,
     RoleGuard,
@@ -38,6 +40,7 @@ import { RoleGuard } from "../../common/guards/role.guard";
     DataLakeService,
     CrmService,
     EnterpriseScopeService,
+    CohortOrchestrationService,
   ],
 })
 export class B2BModule {}

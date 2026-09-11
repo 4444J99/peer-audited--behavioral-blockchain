@@ -249,6 +249,27 @@ export class AuthController {
     return this.authService.revokeApiKey(user.id, keyId);
   }
 
+  // ─── Intake Motivation Profiling (Issue #54) ───
+
+  @Post('intake-motivation')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Submit intake motivation questionnaire to classify archetype' })
+  @UseGuards(AuthGuard)
+  async recordMotivationIntake(
+    @CurrentUser() user: { id: string },
+    @Body() answers: any,
+  ) {
+    return this.authService.saveMotivationAssessment(user.id, answers);
+  }
+
+  @Get('intake-motivation')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user motivation profile and tailored copy' })
+  @UseGuards(AuthGuard)
+  async getMotivationProfile(@CurrentUser() user: { id: string }) {
+    return this.authService.getMotivationProfile(user.id);
+  }
+
   private getCookieValue(req: Request, name: string): string | null {
     const rawCookie = req.headers.cookie;
     if (!rawCookie) return null;

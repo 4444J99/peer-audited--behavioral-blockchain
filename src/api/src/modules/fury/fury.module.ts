@@ -15,6 +15,7 @@ import { FuryRouterService } from '../../../services/fury-router/fury-router.ser
 import { ContractsModule } from '../contracts/contracts.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { JudgeService } from './judge.service';
+import { CounterClaimService } from './counter-claim.service';
 import { RoleGuard } from '../../common/guards/role.guard';
 
 @Module({
@@ -33,6 +34,7 @@ import { RoleGuard } from '../../common/guards/role.guard';
     HoneypotService, 
     FuryRouterService,
     JudgeService,
+    CounterClaimService,
     RoleGuard,
   ],
   exports: [
@@ -43,6 +45,7 @@ import { RoleGuard } from '../../common/guards/role.guard';
     CollusionDetectionService,
     R2StorageService,
     JudgeService,
+    CounterClaimService,
   ],
 })
 export class FuryModule {}

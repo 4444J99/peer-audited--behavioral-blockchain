@@ -14,6 +14,8 @@ import { R2StorageService } from '../../../services/storage/r2.service';
 import { SubmitVerdictDto } from './dto';
 import { calculateAccuracy } from '../../../../shared/libs/integrity';
 
+import { CounterClaimService, FileCounterClaimDto, AdjudicateCounterClaimDto } from './counter-claim.service';
+
 @ApiTags('Fury')
 @ApiBearerAuth()
 @Controller('fury')
@@ -30,6 +32,7 @@ export class FuryController {
     private readonly furyWorker: FuryWorker,
     private readonly truthLog: TruthLogService,
     private readonly r2: R2StorageService,
+    private readonly counterClaims: CounterClaimService,
   ) {}
 
   @Get('stats')
@@ -265,5 +268,42 @@ export class FuryController {
       originalMediaHash: row.media_uri ? 'redacted-for-fury-privacy' : null,
       maskedMediaHash: row.masked_media_uri ? 'available-for-fury-review' : null,
     };
+  }
+
+  // ─── Counter-Claim & Auditor Accountability (Issue #81) ───
+
+  @Post('counter-claim')
+  @Roles('FURY', 'ADMIN')
+  @ApiOperation({ summary: 'File a counter-claim against a bad-faith Fury auditor' })
+  async fileCounterClaim(
+    @CurrentUser() user: { id: string },
+    @Body() dto: FileCounterClaimDto,
+  ) {
+    return this.counterClaims.fileCounterClaim(user.id, dto);
+  }
+
+  @Get('auditors/:auditorId/counter-claims')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Inspect an auditor counter-claim history and risk profile' })
+  async getAuditorHistory(@Param('auditorId') auditorId: string) {
+    return this.counterClaims.getAuditorCounterClaimHistory(auditorId);
+  }
+
+  @Get('counter-claims/pending')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'List all pending counter-claims awaiting judicial resolution' })
+  async listPendingClaims() {
+    return this.counterClaims.listPendingCounterClaims();
+  }
+
+  @Post('counter-claims/:claimId/adjudicate')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Judicial decision on an auditor counter-claim' })
+  async adjudicateClaim(
+    @CurrentUser() user: { id: string },
+    @Param('claimId') claimId: string,
+    @Body() dto: AdjudicateCounterClaimDto,
+  ) {
+    return this.counterClaims.adjudicateCounterClaim(claimId, user.id, dto);
   }
 }
