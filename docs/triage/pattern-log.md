@@ -523,3 +523,21 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
 **Went right:** PR #938 landed first, then the ledger recorded the PR_MERGED → CLOSED chain — full PR lifecycle captured with evidence + pr link. Reconcile passed first try.
 
 **Lesson:** An issue fixed, merged, and closed on GitHub is still an UNREAD ledger orphan until the triage batch records the lifecycle. Close the issue AND the ledger in the same maintenance pass.
+
+## s5-product-completion-2026-09-11 — 2026-09-11 — S5 Product Completion Lane Wiring
+
+**Issues:** #82 (Anti-Sybil), #122 (Ask Styx Allowed Origins), #172 (Accountability Partner Mobile UI).
+**Status:** TESTED across all 3 items with passing tests and verified on-disk evidence.
+**Tests:** Passed workspace tests:
+- `src/api`: 93/93 tests (auth + security suites)
+- `src/ask-styx`: 50/50 tests (vitest worker + client suites)
+- `src/mobile`: 325/325 tests (all 33 mobile suites)
+- `src/web`: 37/37 tests (api-client suite)
+
+**Evidence verified on disk:**
+- `src/api/src/modules/auth/auth.service.ts:210` (AntiSybil device fingerprinting wired to registration)
+- `src/ask-styx/worker/wrangler.toml:15` (Multi-origin CORS resilience supporting both active and legacy Pages domains)
+- `src/mobile/screens/DashboardScreen.tsx:190` (Reachable partner invitation card and accept flow)
+
+**Lesson:** In S5 completion work, ensuring that exported services (`AntiSybilService`, mobile `ApiClient` partner methods) have direct consumers prevents orphan features and proves end-to-end connectivity without modifying unrelated infrastructure.
+

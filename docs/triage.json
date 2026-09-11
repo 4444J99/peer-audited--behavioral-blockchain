@@ -449,6 +449,19 @@
       "completed": "2026-09-11T11:45:00Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "s5-product-completion-2026-09-11",
+      "phase": "5",
+      "issues": [
+        82,
+        122,
+        172
+      ],
+      "started": "2026-09-11T12:00:10Z",
+      "completed": "2026-09-11T12:00:20Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -1834,14 +1847,29 @@
     },
     "82": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "s5-product-completion-2026-09-11",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/api/src/modules/auth/auth.service.ts:210",
       "history": [
         {
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:50Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T12:00:14Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-11T12:00:14Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-11T12:00:14Z"
         }
       ],
       "labels": [
@@ -1850,8 +1878,8 @@
         "P2-post-beta"
       ],
       "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:50Z",
+      "state": "TESTED",
+      "state_updated": "2026-09-11T12:00:14Z",
       "title": "feat: Proof-of-Personhood / anti-Sybil layer — multi-account abuse prevention"
     },
     "83": {
@@ -2824,9 +2852,9 @@
     },
     "122": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "s5-product-completion-2026-09-11",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/ask-styx/worker/wrangler.toml:15",
       "history": [
         {
           "from": "UNREAD",
@@ -2837,14 +2865,29 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-01T15:53:56Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T12:00:14Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-11T12:00:14Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-11T12:00:14Z"
         }
       ],
       "labels": [
         "devops"
       ],
       "pr": null,
-      "state": "TRACKING",
-      "state_updated": "2026-06-01T15:53:56Z",
+      "state": "TESTED",
+      "state_updated": "2026-09-11T12:00:14Z",
       "title": "Update wrangler.toml ALLOWED_ORIGIN after confirming GH Pages URL"
     },
     "123": {
@@ -4094,8 +4137,8 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "TESTED",
+      "batch": "s5-product-completion-2026-09-11",
       "history": [
         {
           "from": "UNREAD",
@@ -4106,11 +4149,26 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:16Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T12:00:15Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-11T12:00:15Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-11T12:00:15Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/mobile/screens/DashboardScreen.tsx:190",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:16Z",
+      "state_updated": "2026-09-11T12:00:15Z",
       "closed_at": null
     },
     "173": {

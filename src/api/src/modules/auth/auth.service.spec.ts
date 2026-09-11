@@ -64,6 +64,28 @@ describe('AuthService', () => {
         .toThrow(ConflictException);
     });
 
+    it('should forward deviceFingerprint to antiSybil service if provided', async () => {
+      const mockAntiSybil = {
+        registerDeviceFingerprint: jest.fn().mockResolvedValue(undefined),
+      } as any;
+      const customService = new AuthService(mockPool, undefined, mockAntiSybil);
+
+      (mockClient.query as jest.Mock)
+        .mockResolvedValueOnce(undefined) // BEGIN
+        .mockResolvedValueOnce({ rows: [] }) // check existing
+        .mockResolvedValueOnce({ rows: [{ id: 'account-uuid' }] }) // insert account
+        .mockResolvedValueOnce({ rows: [{ id: 'user-uuid' }] }) // insert user
+        .mockResolvedValueOnce(undefined); // COMMIT
+
+      const fp = { hash: 'hash123', platform: 'ios' as const };
+      await customService.register('fp-test@styx.protocol', 'pass123', {
+        ...validRegisterOpts,
+        deviceFingerprint: fp,
+      });
+
+      expect(mockAntiSybil.registerDeviceFingerprint).toHaveBeenCalledWith('user-uuid', fp);
+    });
+
     it('should hash the password before storing', async () => {
       (mockClient.query as jest.Mock)
         .mockResolvedValueOnce(undefined) // BEGIN

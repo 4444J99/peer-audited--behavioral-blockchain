@@ -26,20 +26,23 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
     todayAttested: boolean;
     daysRemaining: number;
   } | null>(null);
+  const [pendingInvitations, setPendingInvitations] = useState<any[]>([]);
   const [error, setError] = useState('');
   const parsedError = parseSupportTraceMessage(error);
 
   const loadData = useCallback(async () => {
     try {
-      const [me, balanceData, notifs, contractsData] = await Promise.all([
+      const [me, balanceData, notifs, contractsData, invitations] = await Promise.all([
         ApiClient.getMe(),
         ApiClient.getBalance().catch(() => null),
         ApiClient.getNotifications().catch(() => ({ notifications: [] })),
         ApiClient.getContracts().catch(() => []),
+        ApiClient.getPendingInvitations().catch(() => []),
       ]);
       setProfile(me);
       setBalance(balanceData);
       setNotifications(notifs.notifications.slice(0, 5));
+      setPendingInvitations(Array.isArray(invitations) ? invitations : []);
 
       // Find active recovery contract and fetch attestation status
       const activeRecovery = Array.isArray(contractsData)
@@ -78,6 +81,15 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
   const onRefresh = () => {
     setRefreshing(true);
     loadData();
+  };
+
+  const handleAcceptInvitation = async (contractId: string) => {
+    try {
+      await ApiClient.acceptPartnerInvitation(contractId);
+      loadData();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to accept partner invitation');
+    }
   };
 
   const getTierColor = (tier: string) => {
@@ -172,6 +184,31 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
             </Text>
           )}
         </TouchableOpacity>
+      )}
+
+      {/* Partner Invitations */}
+      {pendingInvitations.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Partner Invitations</Text>
+          {pendingInvitations.map((inv: any) => (
+            <View key={inv.id || inv.contract_id} style={styles.partnerCard}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.partnerCardTitle}>
+                  {inv.owner_email ? `From: ${inv.owner_email}` : 'Accountability Partner'}
+                </Text>
+                <Text style={styles.partnerCardSubtitle}>
+                  {inv.oath_category || 'Contract'} · TEST-${inv.stake_amount || '0'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.partnerAcceptButton}
+                onPress={() => handleAcceptInvitation(inv.contract_id || inv.id)}
+              >
+                <Text style={styles.partnerAcceptButtonText}>Accept</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
       )}
 
       {/* Quick Actions */}
@@ -307,5 +344,37 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 8,
     textAlign: 'center',
+  },
+  partnerCard: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#2a2a3e',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  partnerCardTitle: {
+    color: '#e0e0e0',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  partnerCardSubtitle: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  partnerAcceptButton: {
+    backgroundColor: '#ff4444',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  partnerAcceptButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
