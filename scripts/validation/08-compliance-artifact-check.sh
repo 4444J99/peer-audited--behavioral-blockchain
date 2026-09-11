@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# CI release gate: check that compliance artifacts are present, unexpired,
-# and have matching content hashes.
+# CI release gate 08b: Compliance Artifact Check (deploy-gated, needs DATABASE_URL).
+# Disambiguation: Gate 08 is the Fury Crucible simulation (self-contained, PR-enforced);
+# this compliance check is Gate 08b (integration, only blocking in deploy.yml).
+# Check that compliance artifacts are present, unexpired, and have matching hashes.
 #
 # Fails (exit 1) if:
 #   - No active artifact exists for a required type
