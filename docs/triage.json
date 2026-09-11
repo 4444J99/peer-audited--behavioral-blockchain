@@ -412,9 +412,9 @@
         936
       ],
       "started": "2026-09-11T00:34:19Z",
-      "completed": null,
-      "reconciled": false,
-      "test_passed": false
+      "completed": "2026-09-11T00:42:19Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
