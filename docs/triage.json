@@ -415,6 +415,17 @@
       "completed": "2026-09-11T00:42:19Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "bug-937-demo-truth",
+      "phase": "Issue 937 demo launch truth path",
+      "issues": [
+        937
+      ],
+      "started": "2026-09-11T00:59:28Z",
+      "completed": "2026-09-11T00:59:58Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -14329,6 +14340,41 @@
       "evidence": "src/api/src/modules/admin/admin.controller.ts:705",
       "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/973",
       "state_updated": "2026-09-11T00:35:07Z",
+      "closed_at": null
+    },
+    "937": {
+      "title": "Recovery: Demo launch + feature-truth restoration for Styx",
+      "labels": [
+        "bug"
+      ],
+      "action": "UNCLASSIFIED",
+      "state": "TESTED",
+      "batch": "bug-937-demo-truth",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-09-11T00:59:28Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T00:59:29Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-11T00:59:29Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-11T00:59:29Z"
+        }
+      ],
+      "evidence": "scripts/dev/run-api.mjs:1",
+      "pr": null,
+      "state_updated": "2026-09-11T00:59:29Z",
       "closed_at": null
     }
   }
