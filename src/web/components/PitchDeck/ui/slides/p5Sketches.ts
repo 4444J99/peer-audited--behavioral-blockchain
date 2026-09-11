@@ -19,7 +19,7 @@ export const sketchSlide1 = (p: p5) => {
       (loadedFont) => {
         font = loadedFont;
         // p5.js textToPoints returns an array of generic objects with x/y/alpha, we map it.
-        let pts = font.textToPoints('STYX', p.width/2 - 180, p.height/2 + 50, { sampleFactor: 0.15, simplifyThreshold: 0 }) as {x: number, y: number}[];
+        let pts = loadedFont.textToPoints('STYX', p.width/2 - 180, p.height/2 + 50, 120, { sampleFactor: 0.15, simplifyThreshold: 0 }) as {x: number, y: number}[];
         pts.forEach(pt => {
           particles.push({
              x: p.random(p.width), y: p.random(p.height),
