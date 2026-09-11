@@ -30,6 +30,8 @@ api_port="${STYX_DEMO_API_PORT:-4310}"
 web_port="${STYX_DEMO_WEB_PORT:-4311}"
 database_name="${STYX_DEMO_NATIVE_DATABASE:-styx_demo_styxlaunch}"
 redis_port="${STYX_DEMO_NATIVE_REDIS_PORT:-6391}"
+native_state_dir="$repo_root/artifacts"
+native_state_file="$native_state_dir/styx-demo-native.env"
 
 # ── node24 helper ───────────────────────────────────────────────────────────
 
@@ -49,6 +51,11 @@ node24_path() {
   fi
 }
 
+require_node24() {
+  node24 node --version >/dev/null 2>&1 || die "Node 24 LTS is required."
+  [[ "$(node24 node -p 'process.versions.node.split(`.`)[0]')" == "24" ]] || die "Node 24 LTS is required."
+}
+
 # ── Docker detection ────────────────────────────────────────────────────────
 
 detect_backend() {
@@ -57,6 +64,32 @@ detect_backend() {
   else
     backend="native"
   fi
+}
+
+compose_env_value() {
+  local key="$1" value="" override=""
+  [[ -f "$repo_root/.config/docker/compose.defaults.env" ]] \
+    && value="$(grep -E "^${key}=" "$repo_root/.config/docker/compose.defaults.env" | tail -n1 | cut -d= -f2- || true)"
+  if [[ -f "$repo_root/.env" ]]; then
+    override="$(grep -E "^${key}=" "$repo_root/.env" | tail -n1 | cut -d= -f2- || true)"
+    [[ -n "$override" ]] && value="$override"
+  fi
+  if printenv "$key" >/dev/null; then
+    value="${!key}"
+  fi
+  printf '%s' "$value"
+}
+
+compose_project_has_containers() {
+  command -v docker >/dev/null 2>&1 || return 1
+  docker compose version >/dev/null 2>&1 || return 1
+  local compose_file="$repo_root/.config/docker/docker-compose.yml"
+  local defaults_env="$repo_root/.config/docker/compose.defaults.env"
+  local project_name="${STYX_DEMO_COMPOSE_PROJECT:-styx-demo}"
+  [[ -f "$compose_file" && -f "$defaults_env" ]] || return 1
+  local compose_args=(--project-name "$project_name" --env-file "$defaults_env")
+  [[ -f "$repo_root/.env" ]] && compose_args+=(--env-file "$repo_root/.env")
+  [[ -n "$(docker compose "${compose_args[@]}" -f "$compose_file" ps -q 2>/dev/null)" ]]
 }
 
 # ── Dependency checks ───────────────────────────────────────────────────────
@@ -249,6 +282,21 @@ start_redis() {
   ok "Redis started on port ${redis_port} (pid ${redis_pid})."
 }
 
+write_native_state() {
+  mkdir -p "$native_state_dir"
+  printf '%s\n' \
+    'STYX_DEMO_NATIVE=1' \
+    "STYX_DEMO_API_URL=http://127.0.0.1:${api_port}" \
+    "STYX_DEMO_WEB_URL=http://127.0.0.1:${web_port}" \
+    "STYX_DEMO_DATABASE=${database_name}" \
+    "STYX_DEMO_REDIS_PORT=${redis_port}" \
+    "STYX_DEMO_REDIS_MANAGED=${redis_managed}" \
+    "STYX_DEMO_REDIS_PID=${redis_pid}" \
+    "STYX_DEMO_API_PID=${api_pid}" \
+    "STYX_DEMO_WEB_PID=${web_pid}" \
+    "STYX_DEMO_PASSWORD=${STYX_DEMO_PASSWORD}" > "$native_state_file"
+}
+
 # ── Vertical-slice smoke test ───────────────────────────────────────────────
 
 vertical_slice_test() {
@@ -318,7 +366,27 @@ cleanup_failed_launch() {
 
 # ── Main ────────────────────────────────────────────────────────────────────
 
-main() {
+down() {
+  if [[ -r "$native_state_file" ]]; then
+    exec bash "$repo_root/scripts/demo/native.sh" down
+  fi
+  if compose_project_has_containers; then
+    exec bash "$repo_root/scripts/deploy.sh" down
+  fi
+  ok "No canonical demo stack is running."
+}
+
+reset() {
+  if [[ -r "$native_state_file" ]]; then
+    exec bash "$repo_root/scripts/demo/native.sh" reset
+  fi
+  if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    exec bash "$repo_root/scripts/deploy.sh" reset
+  fi
+  exec bash "$repo_root/scripts/demo/native.sh" reset
+}
+
+launch() {
   api_pid=""
   web_pid=""
   redis_managed=0
@@ -339,6 +407,8 @@ main() {
   step "Detect execution backend"
   detect_backend
   if [[ "$backend" == "docker" ]]; then
+    api_port="$(compose_env_value STYX_DOCKER_API_PORT)"; api_port="${api_port:-3000}"
+    web_port="$(compose_env_value STYX_DOCKER_WEB_PORT)"; web_port="${web_port:-3001}"
     ok "Docker Compose detected — using containerised backend."
   else
     ok "No Docker — using native PostgreSQL/Redis fallback."
@@ -353,11 +423,12 @@ main() {
     command -v redis-server >/dev/null 2>&1 || die "redis-server is required for native backend."
     command -v redis-cli >/dev/null 2>&1 || die "redis-cli is required for native backend."
     command -v curl >/dev/null 2>&1 || die "curl is required."
-    node24 node --version >/dev/null 2>&1 || die "Node 24 LTS is required."
+    require_node24
     ok "All native CLI tools present."
   else
     command -v docker >/dev/null 2>&1 || die "docker is required for Docker backend."
     docker compose version >/dev/null 2>&1 || die "Docker Compose V2 is required."
+    require_node24
     ok "Docker toolchain present."
   fi
 
@@ -387,15 +458,11 @@ main() {
     seed_database
     start_redis
   else
-    info "Starting Docker Compose stack ..."
-    compose_file="$repo_root/.config/docker/docker-compose.yml"
-    defaults_env="$repo_root/.config/docker/compose.defaults.env"
-    project_name="${STYX_DEMO_COMPOSE_PROJECT:-styx-demo}"
-    compose_args=(--project-name "$project_name" --env-file "$defaults_env")
-    [[ -f "$repo_root/.env" ]] && compose_args+=(--env-file "$repo_root/.env")
-    docker compose "${compose_args[@]}" -f "$compose_file" up -d --wait 2>/dev/null \
-      || docker compose "${compose_args[@]}" -f "$compose_file" up -d
-    ok "Docker Compose stack started."
+    info "Building, migrating, seeding, and starting Docker Compose stack ..."
+    STYX_DEMO_PASSWORD="$STYX_DEMO_PASSWORD" bash "$repo_root/scripts/deploy.sh" local
+    api_port="$(compose_env_value STYX_DOCKER_API_PORT)"; api_port="${api_port:-3000}"
+    web_port="$(compose_env_value STYX_DOCKER_WEB_PORT)"; web_port="${web_port:-3001}"
+    ok "Docker Compose stack built, seeded, and started."
   fi
 
   # ── Step 7: Verify infrastructure readiness ─────────────────────────────
@@ -412,13 +479,14 @@ main() {
     project_name="${STYX_DEMO_COMPOSE_PROJECT:-styx-demo}"
     compose_args=(--project-name "$project_name" --env-file "$defaults_env")
     [[ -f "$repo_root/.env" ]] && compose_args+=(--env-file "$repo_root/.env")
-    postgres_database="$(grep -E '^POSTGRES_DB=' "$defaults_env" 2>/dev/null | tail -n1 | cut -d= -f2- || echo styx)"
+    postgres_database="$(compose_env_value POSTGRES_DB)"; postgres_database="${postgres_database:-styx}"
+    postgres_user="$(compose_env_value POSTGRES_USER)"; postgres_user="${postgres_user:-styx}"
     docker compose "${compose_args[@]}" -f "$compose_file" exec -T styx-postgres pg_isready >/dev/null 2>&1 \
       || die "PostgreSQL container is not ready."
     ok "PostgreSQL container is ready."
     local db_count
     db_count="$(docker compose "${compose_args[@]}" -f "$compose_file" exec -T styx-postgres \
-      psql -Atq -v ON_ERROR_STOP=1 -U "${POSTGRES_USER:-styx}" -d "$postgres_database" \
+      psql -Atq -v ON_ERROR_STOP=1 -U "$postgres_user" -d "$postgres_database" \
       -c "SELECT count(*) FROM users WHERE email LIKE '%@demo.styx.protocol' OR email IN ('demo@styx.protocol','fury@styx.protocol','admin@styx.protocol');" \
       2>/dev/null || echo 0)"
     if [[ "$db_count" -lt 12 ]]; then
@@ -474,6 +542,7 @@ main() {
     cd "$repo_root"
     wait_for_http "http://127.0.0.1:${web_port}/tour" "Web tour" \
       || die "Web tour failed to start. Check ${web_log}."
+    write_native_state
   else
     info "Web is managed by Docker Compose — waiting for readiness ..."
     wait_for_http "http://127.0.0.1:${web_port}/tour" "Web tour" 90
@@ -576,4 +645,20 @@ DIAGRAM
   fi
 }
 
-main "$@"
+case "${1:-launch}" in
+  launch)
+    shift || true
+    launch "$@"
+    ;;
+  down)
+    shift || true
+    down "$@"
+    ;;
+  reset)
+    shift || true
+    reset "$@"
+    ;;
+  *)
+    die "Unknown command '$1'. Expected launch, down, or reset."
+    ;;
+esac

@@ -441,7 +441,8 @@ describe("ContractsService — Behavioral Physics", () => {
 
     // Issue #905: the early-access $0-escrow ceiling must not block synthetic
     // adults on the test-money rail. With nothing to custody, the provider hold
-    // is skipped while the ledger and CONTRACT_CREATED truth receipts remain.
+    // is skipped; the contract still reaches ACTIVE and records its ledger and
+    // CONTRACT_CREATED truth-log evidence.
     it("should create a $0-escrow no-contact contract end to end (issue #905)", async () => {
       const dto: CreateContractInput = {
         ...recoveryDto,

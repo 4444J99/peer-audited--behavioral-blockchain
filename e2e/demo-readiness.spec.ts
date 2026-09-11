@@ -34,7 +34,7 @@ export { expect };
 /* -------------------------------------------------------------------------- */
 
 const WEB_BASE = process.env.E2E_BASE_URL || 'http://localhost:3001';
-const API_BASE = process.env.E2E_API_URL || 'http://127.0.0.1:4310';
+const API_BASE = process.env.E2E_API_URL;
 
 /** Assert no horizontal scrollbar (document ≤ viewport width + 1px tolerance). */
 async function expectNoHorizontalOverflow(page: Page) {
@@ -147,6 +147,12 @@ for (const vp of VIEWPORTS) {
 
     /* 7. No console errors on public pages (excluding known dev-environment noise) */
     test('no console.error on /, /tour, /circles', async ({ page }) => {
+      // This browser-only CI job starts the web server, not the API stack.
+      // Intercept same-origin API traffic so this assertion measures client
+      // rendering errors instead of expected proxy failures to an absent API.
+      await page.route('**/api/**', (route) =>
+        route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }),
+      );
       const consoleErrors: string[] = [];
       page.on('console', (msg) => {
         if (msg.type() === 'error') {
@@ -228,7 +234,8 @@ for (const vp of VIEWPORTS) {
 
 test.describe('API health', () => {
   test('API /health/ready returns healthy', async ({ request }) => {
-    const response = await request.get(`${API_BASE}/health/ready`);
+    test.skip(!API_BASE, 'E2E_API_URL is required for the API health probe');
+    const response = await request.get(`${API_BASE!}/health/ready`);
     expect(response.ok()).toBeTruthy();
 
     const body = await response.json();
