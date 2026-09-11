@@ -1,5 +1,25 @@
 # Pattern Log — Triage Session Journal
 
+## blocked-legal-vendor-2026-09-11 — 2026-09-11 — Legal and vendor blocker evidence
+
+**Started:** 4 issues (#315, #316, #317, #141). **Built:** 0. **Tests:** triage
+reconciliation passed; no code path changed.
+
+**Evidence:**
+- #315: outside legal counsel retainer ($9k–$25k) is blocked on business execution;
+  counsel submission packet is assembled at `docs/legal/appendices/appendix-e--counsel-submission-checklist.md:1`.
+- #316: FBO escrow custody sign-off is blocked on #315 outside counsel; architecture
+  is complete at `docs/legal/legal--aegis-protocol.md:145`.
+- #317: state jurisdiction matrix sign-off is blocked on #315 outside counsel;
+  survey and geofencing are complete at `docs/legal/legal--50-state-skill-contest-survey.md:1`.
+- #141: Apple Developer Program / TestFlight provisioning is blocked on paid account
+  enrollment ($99/yr); configuration template is at `src/mobile/eas.json:1`.
+
+**Lesson:** Blockers are not stagnant noise or candidates for batch-closing.
+Recording specific on-disk evidence, exact blockers, and actionable unblocking
+criteria allows governance and audit systems to verify readiness truthfully.
+
+
 ## blocked-verdicts-2026-09-11 — 2026-09-11 — Blocked handoff governance
 
 **Started:** 2 issues (#866, #966). **Built:** 0. **Tests:** triage
