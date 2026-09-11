@@ -1,5 +1,30 @@
 # Pattern Log — Triage Session Journal
 
+## agent-action-evidence-2026-08-31 — Applied AI
+
+**Started:** 1 issue (#955). **Built:** 1. **Tests:** 44/44 focused tests
+passed (14 agent-action service/controller tests plus 30 migration-runner tests).
+**Draft PR:** #956.
+
+**Evidence:** `organvm.execution/v1` now has an append-only PostgreSQL event
+store, per-execution hash chain, transactional Styx truth-log anchor, guarded
+operator API, and explicit proposal/approval/mutation/verification/rollback/
+dispute/peer-review transitions. Approval identity is bound to authenticated
+server context, policy denial and missing/rejected approval fail closed, and the
+evidence boundary rejects common credential and signed-URL shapes.
+
+**Known baseline boundary:** default `main` cannot run Jest under its pinned
+TypeScript 7.0.2 and `npm ci` reports lock drift. Focused tests passed with a
+local, no-save TypeScript 6.0.3 override plus the existing `ignoreDeprecations`
+test flag. The repository-wide dependency recovery is tracked separately in
+PR #952; this batch does not modify package manifests or the lockfile.
+
+**Lesson:** an approval receipt is evidence, not execution. Keeping the executor
+outside this module makes the human gate independently verifiable and prevents a
+recording endpoint from becoming an accidental mutation path. Post-commit retries
+return `409`; clients must GET and reconcile the immutable event before deciding
+whether a new execution ID is warranted.
+
 ## batch-000 — 2026-06-01 — Initialization
 
 **Started:** System bootstrap. Created triage.json schema, all scripts, pattern-log.md, AGENTS.md protocol.
