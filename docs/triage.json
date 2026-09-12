@@ -549,7 +549,7 @@
         365
       ],
       "started": "2026-09-12T15:50:38Z",
-      "completed": "2026-09-12T15:55:00Z",
+      "completed": "2026-09-12T15:51:40Z",
       "reconciled": true,
       "test_passed": true
     }
@@ -15229,6 +15229,28 @@
       "evidence": null,
       "pr": null,
       "state_updated": "2026-06-01T15:50:50Z",
+      "closed_at": null
+    },
+    "970": {
+      "title": "Platform Evolution: Split monorepo into public OS core and private proprietary components (secrets/algorithms)",
+      "labels": [
+        "architecture",
+        "owner:release-ops",
+        "security"
+      ],
+      "action": "TRACKING",
+      "state": "TRACKING",
+      "batch": null,
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "TRACKING",
+          "at": "2026-09-12T15:58:00Z"
+        }
+      ],
+      "evidence": null,
+      "pr": null,
+      "state_updated": "2026-09-12T15:58:00Z",
       "closed_at": null
     }
   }
