@@ -9,20 +9,18 @@ Worktrees: one worktree per active working branch. Do not pile unrelated WIP ont
 | Branch | Purpose | Merge into | Green means |
 | --- | --- | --- | --- |
 | `main` | Production-true trunk. Always releasable. | tags / releases | required CI + tests pass; purpose invariants hold |
-| `lane/heal` | Repair rot, tech debt that blocks shipping, broken paths | `main` | fixes apply cleanly, no regressions, tests pass |
-| `lane/expand-product` | Completing the stated product feature coverage | `main` | new features match PRD, no regressions |
-| `lane/expand-external` | Unlocking external vendor/legal dependencies | `main` | dependencies licensed/mocked, CI passes |
+| `lane/verify` | Proof: tests, contracts, CI, reproducibility | `main` | verification suite is stricter or equally true |
+| `lane/heal` | Repair rot, debt that blocks shipping, broken paths | `main` | fixes apply cleanly, no regressions, tests pass |
+| `lane/expand` | Complete already-stated Omega scope | `main` | new coverage is verified, not merely sketched |
 | `lane/evolve` | Architecture/platform changes (post-beta) | `main` | structural tests pass, performance holds |
 
 ## Rules for lanes
 
 - A lane exists only if there is ongoing, recurring work of that kind for the life of the repo.
-- One intention per working branch. Working branches are cut FROM the relevant lane (or from main if no lane is needed), and merge BACK to that lane or to main via PR.
-- Prefer worktrees over extra long-lived clones of the same lane: one worktree per active working branch.
-- Naming for work branches:
-  - `work/<lane>/<short-intent>` or `feat|fix|chore|docs|test/<short-intent>`
-  - never `fix-stuff`, `wip`, `temp`, `asdf`
-- After merge, delete the working branch. Keep the lane.
+- One intention per working branch. Cut FROM the relevant lane or `main`, merge BACK via PR.
+- Naming: `work/<lane>/<short-intent>` or `feat|fix|chore|docs|test/<short-intent>`. Never `temp` or `wip`.
+- Delete working branch after merge.
+- `hotfix/*` from `main` → PR to `main` → back-port.
 - If a lane has no work for a long time, mark it "dormant" here.
 - **What must never live on a lane:** Code that violates the repository's core invariants, hardcoded credentials, or experimental code that lacks an intention track.
 

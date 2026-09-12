@@ -503,6 +503,39 @@
       "completed": "2026-09-12T14:29:51Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "behavioral-psychology-core-2026-09-12",
+      "phase": "Phase Delta",
+      "issues": [
+        111,
+        110,
+        109,
+        102,
+        99,
+        97
+      ],
+      "started": "2026-09-12T14:30:54Z",
+      "completed": null,
+      "reconciled": false,
+      "test_passed": false
+    },
+    {
+      "id": "close-dept-trackers",
+      "phase": "Wave 2 — Consolidate illogical department trackers",
+      "issues": [
+        283,
+        285,
+        286,
+        288,
+        290,
+        291,
+        293
+      ],
+      "started": "2026-09-12T15:26:10Z",
+      "completed": "2026-09-12T15:26:29Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -2358,7 +2391,7 @@
     },
     "97": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "behavioral-psychology-core-2026-09-12",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -2366,6 +2399,11 @@
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:50Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-12T14:30:58Z"
         }
       ],
       "labels": [
@@ -2373,8 +2411,8 @@
         "P2-post-beta"
       ],
       "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:50Z",
+      "state": "BUILD_STARTED",
+      "state_updated": "2026-09-12T14:30:58Z",
       "title": "feat: Temptation bundling engine — Premack's Principle reward gating"
     },
     "98": {
@@ -2400,7 +2438,7 @@
     },
     "99": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "behavioral-psychology-core-2026-09-12",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -2408,6 +2446,11 @@
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:50Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-12T14:30:58Z"
         }
       ],
       "labels": [
@@ -2415,8 +2458,8 @@
         "P2-post-beta"
       ],
       "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:50Z",
+      "state": "BUILD_STARTED",
+      "state_updated": "2026-09-12T14:30:58Z",
       "title": "feat: Gateway Oath tier — Two-Minute Rule with progressive habit shaping ladder"
     },
     "100": {
@@ -2464,7 +2507,7 @@
     },
     "102": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "behavioral-psychology-core-2026-09-12",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -2472,6 +2515,11 @@
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:40Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-12T14:30:58Z"
         }
       ],
       "labels": [
@@ -2480,8 +2528,8 @@
         "recovery"
       ],
       "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:40Z",
+      "state": "BUILD_STARTED",
+      "state_updated": "2026-09-12T14:30:58Z",
       "title": "feat: BBO (Bigger Better Offer) substitution engine — active craving replacement library"
     },
     "103": {
@@ -2613,7 +2661,7 @@
     },
     "109": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "behavioral-psychology-core-2026-09-12",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -2621,6 +2669,11 @@
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:40Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-12T14:30:58Z"
         }
       ],
       "labels": [
@@ -2629,13 +2682,13 @@
         "recovery"
       ],
       "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:40Z",
+      "state": "BUILD_STARTED",
+      "state_updated": "2026-09-12T14:30:58Z",
       "title": "feat: Disenchantment score — reward devaluation tracking over contract lifecycle"
     },
     "110": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "behavioral-psychology-core-2026-09-12",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -2643,6 +2696,11 @@
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:40Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-12T14:30:58Z"
         }
       ],
       "labels": [
@@ -2650,13 +2708,13 @@
         "P2-post-beta"
       ],
       "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:40Z",
+      "state": "BUILD_STARTED",
+      "state_updated": "2026-09-12T14:30:58Z",
       "title": "feat: Habit discontinuity window detector — life transitions as acquisition/re-engagement triggers"
     },
     "111": {
       "action": "FUTURE",
-      "batch": null,
+      "batch": "behavioral-psychology-core-2026-09-12",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -2664,6 +2722,11 @@
           "from": "UNREAD",
           "to": "FUTURE",
           "at": "2026-06-01T15:50:40Z"
+        },
+        {
+          "from": "FUTURE",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-12T14:30:58Z"
         }
       ],
       "labels": [
@@ -2671,8 +2734,8 @@
         "P2-post-beta"
       ],
       "pr": null,
-      "state": "FUTURE",
-      "state_updated": "2026-06-01T15:50:40Z",
+      "state": "BUILD_STARTED",
+      "state_updated": "2026-09-12T14:30:58Z",
       "title": "feat: Implementation intention contract syntax — time + location binding beyond habit stacking"
     },
     "112": {
@@ -7001,7 +7064,7 @@
     },
     "283": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "close-dept-trackers",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -7009,6 +7072,11 @@
           "from": "UNREAD",
           "to": "TRACK",
           "at": "2026-06-01T15:50:43Z"
+        },
+        {
+          "from": "TRACK",
+          "to": "SUPERSEDED",
+          "at": "2026-09-12T15:26:21Z"
         }
       ],
       "labels": [
@@ -7016,8 +7084,8 @@
         "legal"
       ],
       "pr": null,
-      "state": "TRACK",
-      "state_updated": "2026-06-01T15:50:43Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-09-12T15:26:21Z",
       "title": "Legal & Compliance Department — Task Tracker"
     },
     "284": {
@@ -7047,7 +7115,7 @@
     },
     "285": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "close-dept-trackers",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -7055,6 +7123,11 @@
           "from": "UNREAD",
           "to": "TRACK",
           "at": "2026-06-01T15:50:43Z"
+        },
+        {
+          "from": "TRACK",
+          "to": "SUPERSEDED",
+          "at": "2026-09-12T15:26:21Z"
         }
       ],
       "labels": [
@@ -7062,13 +7135,13 @@
         "product"
       ],
       "pr": null,
-      "state": "TRACK",
-      "state_updated": "2026-06-01T15:50:43Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-09-12T15:26:21Z",
       "title": "Product & Design Department — Task Tracker"
     },
     "286": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "close-dept-trackers",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -7076,6 +7149,11 @@
           "from": "UNREAD",
           "to": "TRACK",
           "at": "2026-06-01T15:50:43Z"
+        },
+        {
+          "from": "TRACK",
+          "to": "SUPERSEDED",
+          "at": "2026-09-12T15:26:21Z"
         }
       ],
       "labels": [
@@ -7083,8 +7161,8 @@
         "ops"
       ],
       "pr": null,
-      "state": "TRACK",
-      "state_updated": "2026-06-01T15:50:43Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-09-12T15:26:21Z",
       "title": "Operations & Infrastructure Department — Task Tracker"
     },
     "287": {
@@ -7114,7 +7192,7 @@
     },
     "288": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "close-dept-trackers",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -7122,6 +7200,11 @@
           "from": "UNREAD",
           "to": "TRACK",
           "at": "2026-06-01T15:50:43Z"
+        },
+        {
+          "from": "TRACK",
+          "to": "SUPERSEDED",
+          "at": "2026-09-12T15:26:21Z"
         }
       ],
       "labels": [
@@ -7129,8 +7212,8 @@
         "marketing"
       ],
       "pr": null,
-      "state": "TRACK",
-      "state_updated": "2026-06-01T15:50:43Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-09-12T15:26:21Z",
       "title": "Growth & Marketing Department — Task Tracker"
     },
     "289": {
@@ -7160,7 +7243,7 @@
     },
     "290": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "close-dept-trackers",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -7168,6 +7251,11 @@
           "from": "UNREAD",
           "to": "TRACK",
           "at": "2026-06-01T15:50:43Z"
+        },
+        {
+          "from": "TRACK",
+          "to": "SUPERSEDED",
+          "at": "2026-09-12T15:26:21Z"
         }
       ],
       "labels": [
@@ -7175,13 +7263,13 @@
         "finance"
       ],
       "pr": null,
-      "state": "TRACK",
-      "state_updated": "2026-06-01T15:50:43Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-09-12T15:26:21Z",
       "title": "Finance & Revenue Department — Task Tracker"
     },
     "291": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "close-dept-trackers",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -7189,6 +7277,11 @@
           "from": "UNREAD",
           "to": "TRACK",
           "at": "2026-06-01T15:50:43Z"
+        },
+        {
+          "from": "TRACK",
+          "to": "SUPERSEDED",
+          "at": "2026-09-12T15:26:21Z"
         }
       ],
       "labels": [
@@ -7196,8 +7289,8 @@
         "support"
       ],
       "pr": null,
-      "state": "TRACK",
-      "state_updated": "2026-06-01T15:50:43Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-09-12T15:26:21Z",
       "title": "Customer Success Department — Task Tracker"
     },
     "292": {
@@ -7228,7 +7321,7 @@
     },
     "293": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "close-dept-trackers",
       "closed_at": null,
       "evidence": null,
       "history": [
@@ -7241,6 +7334,11 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-01T15:53:27Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "SUPERSEDED",
+          "at": "2026-09-12T15:26:21Z"
         }
       ],
       "labels": [
@@ -7248,8 +7346,8 @@
         "enterprise"
       ],
       "pr": null,
-      "state": "TRACKING",
-      "state_updated": "2026-06-01T15:53:27Z",
+      "state": "SUPERSEDED",
+      "state_updated": "2026-09-12T15:26:21Z",
       "title": "Enterprise Sales / B2B Department — Task Tracker"
     },
     "294": {

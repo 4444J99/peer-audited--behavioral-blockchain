@@ -19,8 +19,8 @@ revision history used to build and inspect a software project.
 
 Styx is currently a **prototype**, not a publicly verified production service.
 The repository contains implemented API, web, mobile, desktop, synthetic-demo,
-and deployment paths. On 2026-08-31, the public Pages URL returned an HTML shell,
-but its required assets and the documented launch routes returned `404`; no
+and deployment paths. On 2026-09-08, the public Pages URL returned an HTML shell
+for Ask Styx with its core assets loading, but the documented launch routes returned `404`; no
 public API or full web deployment was independently verified. See the
 [evidence record](docs/evidence/README.md) for the exact boundary.
 
@@ -208,7 +208,7 @@ Status below is a dated observation, not a deployment promise. It was checked on
 | Surface | URL or location | Observed status |
 | --- | --- | --- |
 | Source repository | `https://github.com/4444J99/peer-audited--behavioral-blockchain` | Public source and documentation were accessible. |
-| Current GitHub Pages root | `https://4444j99.github.io/peer-audited--behavioral-blockchain/` | Returned `200`, but the HTML identified itself as “Ask Styx” and referenced `/ask-styx/` assets that returned `404`; this is **not a usable demo receipt**. |
+| Current GitHub Pages root | `https://4444j99.github.io/peer-audited--behavioral-blockchain/` | Returned `200`, but the HTML identifies itself as “Ask Styx”. Post-merge on 2026-09-08, root-relative JS/CSS assets returned `200`. |
 | Former organization Pages root | `https://a-organvm.github.io/peer-audited--behavioral-blockchain/` | Returned `404`; the older activation ledger is stale on this point. |
 | Launch and Ask Styx routes | `/launch`, `/ask-styx` | Returned `404` under the current Pages root. |
 | API and full web application | Render blueprints and workflows in the repository | Deployment paths exist in source. No public target was independently verified for this update. |
@@ -235,8 +235,7 @@ curl -sSL https://4444j99.github.io/peer-audited--behavioral-blockchain/ \
 ## curl -sS -o /dev/null -w "%{http_code}\n" <web-url>
 ```
 
-**Observed on 2026-09-08:** the root returned `200`; both referenced assets returned
-`404`. See [`docs/evidence/verification--2026-09-08.md`](docs/evidence/verification--2026-09-08.md). A root-page status alone proves only that an HTML shell responds.
+**Observed post-merge on 2026-09-08:** the root returned `200` and successfully loaded its root-relative JS and CSS bundle bytes, but `favicon.svg`, `/launch`, and `/ask-styx` returned `404`. See [`docs/evidence/verification--2026-09-08.md`](docs/evidence/verification--2026-09-08.md). This establishes served bundle bytes, not a working service.
 
 ### Deploying
 
