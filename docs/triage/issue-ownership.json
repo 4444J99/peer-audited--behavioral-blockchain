@@ -1085,5 +1085,10 @@
     "owningLane": "main",
     "branchPattern": "main",
     "status": "PARENT_GATE"
+  },
+  "lane/evolve-platform": {
+    "issues": [
+      970
+    ]
   }
 }
