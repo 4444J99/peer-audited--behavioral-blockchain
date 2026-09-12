@@ -1,0 +1,16 @@
+{
+  "assertionId": "phase-beta-legal-pack-assembled",
+  "domain": "Legal & External Dependencies",
+  "status": "PASS",
+  "description": "Validates that the Phase Beta Legal & Partner Sign-off Pack has been assembled per the artifact production plan.",
+  "evidence": [
+    {
+      "type": "document",
+      "reference": "docs/legal/phase-beta-legal-pack.md",
+      "description": "Unified document consolidating FBO escrow theory, cross-jurisdictional matrix, Stripe prod readiness, prize indemnity, and TestFlight operations."
+    }
+  ],
+  "associatedIssues": [315, 316, 317, 325, 349, 365],
+  "verificationCommand": "test -f docs/legal/phase-beta-legal-pack.md",
+  "lastVerified": "2026-09-12T12:00:00Z"
+}
