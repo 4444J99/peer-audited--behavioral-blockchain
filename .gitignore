@@ -54,6 +54,10 @@ src/pitch/.turbo/
 !docs/**
 docs/**/.DS_Store
 
+# Static assets for Ask Styx / Pages deployment
+!src/ask-styx/public/
+!src/ask-styx/public/**
+
 # Terraform
 infra/terraform/.terraform/
 infra/terraform/*.tfstate
