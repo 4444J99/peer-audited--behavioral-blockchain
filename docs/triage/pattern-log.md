@@ -580,3 +580,8 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
 ## Batch: close-dept-trackers
 - **Phase**: Wave 2 — Consolidate illogical department trackers
 - **Learnings**: The repo organizes work by phase and branch lanes, not by traditional corporate departments. The 7 department tracker issues were illogical duplication of the Omega Phase epics. They were successfully superseded.
+
+## Batch: behavioral-psychology-core-2026-09-12
+- **Phase**: Phase Delta
+- **Issues**: #111, #110, #109, #102, #99, #97
+- **Learnings**: Behavioral Science Suite implemented and tested in `@styx/shared`. Fixed a Jest CommonJS incompatibility in `motivation-archetype.spec.ts` caused by importing Vitest globals into a Jest environment. All 235 shared tests now pass.

@@ -143,6 +143,7 @@ export interface ReleaseInfoResponse {
 }
 
 export * from "./libs/behavioral-enhancements";
+export * from "./libs/behavioral-science-suite";
 export * from "./libs/integrity";
 
 export interface PushTokenRegistration {
