@@ -490,6 +490,19 @@
       "completed": "2026-09-11T13:07:01Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "finance-growth-systems-2026-09-11",
+      "phase": "Phase Gamma",
+      "issues": [
+        350,
+        351,
+        345
+      ],
+      "started": "2026-09-11T13:10:13Z",
+      "completed": "2026-09-12T14:29:51Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -8484,14 +8497,34 @@
     },
     "345": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "finance-growth-systems-2026-09-11",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/api/src/modules/referrals/referral.service.ts:227",
       "history": [
         {
           "from": "UNREAD",
           "to": "TRACK",
           "at": "2026-06-01T15:50:44Z"
+        },
+        {
+          "from": "TRACK",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T13:10:18Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-12T14:29:31Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-12T14:29:31Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-09-12T14:29:31Z"
         }
       ],
       "labels": [
@@ -8499,8 +8532,8 @@
         "follow-up"
       ],
       "pr": null,
-      "state": "TRACK",
-      "state_updated": "2026-06-01T15:50:44Z",
+      "state": "CLOSED",
+      "state_updated": "2026-09-12T14:29:31Z",
       "title": "Referral loop — waitlist and cohort invite mechanic"
     },
     "346": {
@@ -8594,42 +8627,82 @@
     },
     "350": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "finance-growth-systems-2026-09-11",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/api/src/modules/payments/reconciliation.service.ts:168",
       "history": [
         {
           "from": "UNREAD",
           "to": "TRACK",
           "at": "2026-06-01T15:50:44Z"
+        },
+        {
+          "from": "TRACK",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T13:10:18Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-12T14:29:31Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-12T14:29:31Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-09-12T14:29:31Z"
         }
       ],
       "labels": [
         "finance"
       ],
       "pr": null,
-      "state": "TRACK",
-      "state_updated": "2026-06-01T15:50:44Z",
+      "state": "CLOSED",
+      "state_updated": "2026-09-12T14:29:31Z",
       "title": "Financial reconciliation process — Stripe vs internal records"
     },
     "351": {
       "action": "TRACK",
-      "batch": null,
+      "batch": "finance-growth-systems-2026-09-11",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/api/src/modules/dashboard/unit-economics.service.ts:47",
       "history": [
         {
           "from": "UNREAD",
           "to": "TRACK",
           "at": "2026-06-01T15:50:44Z"
+        },
+        {
+          "from": "TRACK",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-11T13:10:18Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-12T14:29:31Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-12T14:29:31Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-09-12T14:29:31Z"
         }
       ],
       "labels": [
         "finance"
       ],
       "pr": null,
-      "state": "TRACK",
-      "state_updated": "2026-06-01T15:50:44Z",
+      "state": "CLOSED",
+      "state_updated": "2026-09-12T14:29:31Z",
       "title": "CAC/LTV tracking dashboard"
     },
     "352": {

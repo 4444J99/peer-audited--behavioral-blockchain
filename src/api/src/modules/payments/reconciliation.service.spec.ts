@@ -128,4 +128,66 @@ describe('ReconciliationService', () => {
       expect(result.discrepancies.some(d => d.includes('Wrong-direction'))).toBe(true);
     });
   });
+
+  describe('auditRecentSettlements', () => {
+    it('should return HEALTHY status when all audited contracts are balanced', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ contract_id: 'c-clean-1' }, { contract_id: 'c-clean-2' }],
+      });
+
+      // Spy on reconcileContract
+      jest.spyOn(service, 'reconcileContract').mockResolvedValue({
+        contractId: 'c-clean',
+        isBalanced: true,
+        expectedAmountCents: 1000,
+        ledgerTotalCents: 1000,
+        runStatus: 'SUCCESS',
+        discrepancies: [],
+      });
+
+      const audit = await service.auditRecentSettlements({ limit: 10 });
+      expect(audit.totalAudited).toBe(2);
+      expect(audit.balancedCount).toBe(2);
+      expect(audit.discrepancyCount).toBe(0);
+      expect(audit.status).toBe('HEALTHY');
+      expect(audit.discrepancies).toHaveLength(0);
+    });
+
+    it('should return CRITICAL status and report discrepancies when error ratio > 5%', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ contract_id: 'c-bad-1' }],
+      });
+
+      jest.spyOn(service, 'reconcileContract').mockResolvedValue({
+        contractId: 'c-bad-1',
+        isBalanced: false,
+        expectedAmountCents: 5000,
+        ledgerTotalCents: 0,
+        runStatus: 'SUCCESS',
+        discrepancies: ['Ledger imbalance: Expected 5000 withdrew 0'],
+      });
+
+      const audit = await service.auditRecentSettlements({ limit: 5 });
+      expect(audit.totalAudited).toBe(1);
+      expect(audit.balancedCount).toBe(0);
+      expect(audit.discrepancyCount).toBe(1);
+      expect(audit.status).toBe('CRITICAL');
+      expect(audit.discrepancies[0].contractId).toBe('c-bad-1');
+      expect(audit.discrepancies[0].reasons).toContain('Ledger imbalance: Expected 5000 withdrew 0');
+    });
+
+    it('should catch exceptions thrown during individual contract audits and flag as ERROR', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ contract_id: 'c-crash' }],
+      });
+
+      jest.spyOn(service, 'reconcileContract').mockRejectedValue(new Error('DB timeout'));
+
+      const audit = await service.auditRecentSettlements();
+      expect(audit.totalAudited).toBe(1);
+      expect(audit.discrepancyCount).toBe(1);
+      expect(audit.discrepancies[0].runStatus).toBe('ERROR');
+      expect(audit.discrepancies[0].reasons).toContain('DB timeout');
+    });
+  });
 });

@@ -2,6 +2,7 @@ import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
+import { UnitEconomicsService } from './unit-economics.service';
 import { UsersService } from '../users/users.service';
 
 jest.mock('../../../guards/sse-ticket.store', () => ({
@@ -18,6 +19,9 @@ describe('DashboardController', () => {
   let dashboardService: jest.Mocked<
     Pick<DashboardService, 'getProgress' | 'getStreakChain' | 'getMetrics'>
   >;
+  let unitEconomicsService: jest.Mocked<
+    Pick<UnitEconomicsService, 'getUnitEconomicsSummary'>
+  >;
   let usersService: jest.Mocked<Pick<UsersService, 'getLeaderboard'>>;
 
   const user = { id: 'user-001' };
@@ -28,11 +32,15 @@ describe('DashboardController', () => {
       getStreakChain: jest.fn(),
       getMetrics: jest.fn(),
     };
+    unitEconomicsService = {
+      getUnitEconomicsSummary: jest.fn(),
+    };
     usersService = {
       getLeaderboard: jest.fn(),
     };
     controller = new DashboardController(
       dashboardService as unknown as DashboardService,
+      unitEconomicsService as unknown as UnitEconomicsService,
       usersService as unknown as UsersService,
     );
     jest.clearAllMocks();
@@ -67,6 +75,26 @@ describe('DashboardController', () => {
 
       expect(result).toEqual(progress);
       expect(dashboardService.getProgress).toHaveBeenCalledWith('user-001');
+    });
+  });
+
+  describe('getUnitEconomics', () => {
+    it('delegates to unitEconomicsService.getUnitEconomicsSummary', async () => {
+      const summary = {
+        cacByChannel: [],
+        cohorts: [],
+        blendedCacCents: 500,
+        blendedLtvCents: 2500,
+        ltvToCacRatio: 5.0,
+        paybackPeriodMonths: 2.1,
+        monthlyChurnRate: 0.05,
+        netRevenueRetentionPct: 110,
+      };
+      unitEconomicsService.getUnitEconomicsSummary.mockResolvedValue(summary);
+
+      const result = await controller.getUnitEconomics();
+      expect(result).toEqual(summary);
+      expect(unitEconomicsService.getUnitEconomicsSummary).toHaveBeenCalledTimes(1);
     });
   });
 

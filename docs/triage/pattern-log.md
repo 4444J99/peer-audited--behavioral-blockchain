@@ -561,3 +561,18 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
 
 **Lesson:** In S5 completion work, ensuring that exported services (`AntiSybilService`, mobile `ApiClient` partner methods) have direct consumers prevents orphan features and proves end-to-end connectivity without modifying unrelated infrastructure.
 
+## finance-growth-systems-2026-09-11 — 2026-09-12 — Phase Gamma: Finance & Growth Systems
+
+**Issues:** #350 (Financial Reconciliation Loop), #351 (CAC/LTV Unit Economics Engine), #345 (Curated Cohort Referral Mechanic).
+**Status:** CLOSED across all 3 items with verified evidence and passing tests.
+**Tests:** 
+- `src/api`: 90/90 tests passing across payments, dashboard, and referral suites (`npx jest payments.controller.spec.ts reconciliation.service.spec.ts dashboard.controller.spec.ts unit-economics.service.spec.ts referral.controller.spec.ts referral.service.spec.ts migrate.spec.ts`)
+- TypeScript monorepo lint: 12/12 packages passed (`npx turbo run lint`)
+
+**Evidence verified on disk:**
+- `src/api/src/modules/payments/reconciliation.service.ts:168` (Platform-wide batch settlement reconciliation runner `auditRecentSettlements` with discrepancy breakdown, status reporting, and CLI runner `scripts/ops/reconcile-financial-records.ts`)
+- `src/api/src/modules/dashboard/unit-economics.service.ts:47` (Executive CAC/LTV unit economics engine calculating channel CAC, cohort retention/LTV, LTV:CAC ratios, and payback period)
+- `src/api/src/modules/referrals/referral.service.ts:227` (Curated cohort referral loop enforcing 2-invite limit per beta member, waitlist priority attribution, and nomination tracking via migration `073_cohort_nominations.sql` and runbook `docs/ops/ops--beta-cohort-referral-mechanic.md`)
+
+**Lesson:** Financial controls and growth systems are strongest when built on top of immutable ledger structures rather than ad-hoc counters. Tying waitlist channel attribution directly into CAC calculation and double-entry settlements into LTV yields real auditability without external BI dependencies.
+

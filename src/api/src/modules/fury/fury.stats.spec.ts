@@ -21,7 +21,8 @@ describe('FuryController — GET /fury/stats', () => {
       mockPool as unknown as Pool,
       mockFuryWorker,
       mockTruthLog,
-      {} as any
+      {} as any,
+      {} as any,
     );
     jest.clearAllMocks();
   });

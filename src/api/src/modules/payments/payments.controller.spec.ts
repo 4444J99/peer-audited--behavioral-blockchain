@@ -16,6 +16,11 @@ describe('PaymentsController', () => {
   let mockPolicy: { evaluateRequestPolicy: jest.Mock; getJurisdictionPolicy: jest.Mock };
   let mockSettlement: { getSettlementPreview: jest.Mock; getSettlementStatus: jest.Mock; dispatchSettlement: jest.Mock };
   let mockSystemFlags: { get: jest.Mock };
+  let mockReconciliation: {
+    reconcileContract: jest.Mock;
+    generateCustodyReport: jest.Mock;
+    auditRecentSettlements: jest.Mock;
+  };
   let mockStripe: {
     subscriptions: { create: jest.Mock; retrieve: jest.Mock; update: jest.Mock; cancel: jest.Mock };
     customers: { create: jest.Mock; update: jest.Mock };
@@ -49,9 +54,10 @@ describe('PaymentsController', () => {
       paymentMethods: { attach: jest.fn() },
     };
 
-    const mockReconciliation = {
+    mockReconciliation = {
       reconcileContract: jest.fn(),
       generateCustodyReport: jest.fn(),
+      auditRecentSettlements: jest.fn(),
     };
 
     mockSystemFlags = { get: jest.fn().mockResolvedValue(null) };
@@ -363,6 +369,38 @@ describe('PaymentsController', () => {
       const result = await controller.getSettlementStatus('c-1');
       expect(result).toBe(expected);
       expect(mockSettlement.getSettlementStatus).toHaveBeenCalledWith('c-1');
+    });
+  });
+
+  describe('auditRecentSettlements', () => {
+    it('should delegate to reconciliationService.auditRecentSettlements with parsed query options', async () => {
+      const expected = {
+        totalAudited: 1,
+        balancedCount: 1,
+        discrepancyCount: 0,
+        auditedAt: new Date().toISOString(),
+        status: 'HEALTHY',
+        discrepancies: [],
+      };
+      mockReconciliation.auditRecentSettlements.mockResolvedValue(expected);
+
+      const result = await controller.auditRecentSettlements('50', 'true');
+      expect(result).toBe(expected);
+      expect(mockReconciliation.auditRecentSettlements).toHaveBeenCalledWith({
+        limit: 50,
+        onlyDiscrepancies: true,
+      });
+    });
+  });
+
+  describe('reconcile', () => {
+    it('should delegate to reconciliationService.reconcileContract', async () => {
+      const expected = { isBalanced: true };
+      mockReconciliation.reconcileContract.mockResolvedValue(expected);
+
+      const result = await controller.reconcile('c-10');
+      expect(result).toBe(expected);
+      expect(mockReconciliation.reconcileContract).toHaveBeenCalledWith('c-10');
     });
   });
 

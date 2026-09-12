@@ -7,6 +7,7 @@ import { AuthGuard } from '../../../guards/auth.guard';
 import { issueSseTicket } from '../../../guards/sse-ticket.store';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DashboardService } from './dashboard.service';
+import { UnitEconomicsService } from './unit-economics.service';
 import { UsersService } from '../users/users.service';
 
 const LEADERBOARD_STREAM_INTERVAL_MS = 30_000;
@@ -23,6 +24,7 @@ const LEADERBOARD_DEFAULT_LIMIT = 10;
 export class DashboardController {
   constructor(
     private readonly dashboardService: DashboardService,
+    private readonly unitEconomicsService: UnitEconomicsService,
     private readonly usersService: UsersService,
   ) {}
 
@@ -42,6 +44,12 @@ export class DashboardController {
   @ApiOperation({ summary: 'Get platform-wide ledger & payments metrics' })
   async getMetrics() {
     return this.dashboardService.getMetrics();
+  }
+
+  @Get('unit-economics')
+  @ApiOperation({ summary: 'Get CAC, LTV, cohort retention, and unit economics summary' })
+  async getUnitEconomics() {
+    return this.unitEconomicsService.getUnitEconomicsSummary();
   }
 
   @Sse('leaderboard/stream')
