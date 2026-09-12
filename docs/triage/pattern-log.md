@@ -585,3 +585,8 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
 - **Phase**: Phase Delta
 - **Issues**: #111, #110, #109, #102, #99, #97
 - **Learnings**: Behavioral Science Suite implemented and tested in `@styx/shared`. Fixed a Jest CommonJS incompatibility in `motivation-archetype.spec.ts` caused by importing Vitest globals into a Jest environment. All 235 shared tests now pass.
+
+## Batch: legal-beta-pack-2026-09-12
+- **Issues:** 315, 316, 317, 325, 349, 365
+- **Pattern:** Offline Legal Deliverables / External Dependencies
+- **Resolution:** Authored `phase-beta-legal-pack.md` in `docs/legal` assembling the Phase Beta sign-off packet (incorporating FBO Escrow theory, State Geofence matrices, Stripe Real-Money Ops, and TestFlight parameters). Linked evidence via `assertions/phase-beta-legal-pack.assertion-evidence.json` so human reviewers can sign off without stalling the engineering lifecycle. Closed issues as they now track a singular document for sign-off.
