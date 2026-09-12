@@ -516,9 +516,9 @@
         97
       ],
       "started": "2026-09-12T14:30:54Z",
-      "completed": null,
-      "reconciled": false,
-      "test_passed": false
+      "reconciled": true,
+      "test_passed": true,
+      "completed": "2026-09-12T15:41:33Z"
     },
     {
       "id": "close-dept-trackers",
@@ -2393,7 +2393,7 @@
       "action": "FUTURE",
       "batch": "behavioral-psychology-core-2026-09-12",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/shared/libs/behavioral-science-suite.ts:1",
       "history": [
         {
           "from": "UNREAD",
@@ -2404,6 +2404,21 @@
           "from": "FUTURE",
           "to": "BUILD_STARTED",
           "at": "2026-09-12T14:30:58Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-12T15:41:29Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-12T15:41:29Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-09-12T15:41:29Z"
         }
       ],
       "labels": [
@@ -2411,8 +2426,8 @@
         "P2-post-beta"
       ],
       "pr": null,
-      "state": "BUILD_STARTED",
-      "state_updated": "2026-09-12T14:30:58Z",
+      "state": "CLOSED",
+      "state_updated": "2026-09-12T15:41:29Z",
       "title": "feat: Temptation bundling engine — Premack's Principle reward gating"
     },
     "98": {
@@ -2440,7 +2455,7 @@
       "action": "FUTURE",
       "batch": "behavioral-psychology-core-2026-09-12",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/shared/libs/behavioral-science-suite.ts:1",
       "history": [
         {
           "from": "UNREAD",
@@ -2451,6 +2466,21 @@
           "from": "FUTURE",
           "to": "BUILD_STARTED",
           "at": "2026-09-12T14:30:58Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-12T15:41:29Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-12T15:41:29Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-09-12T15:41:29Z"
         }
       ],
       "labels": [
@@ -2458,8 +2488,8 @@
         "P2-post-beta"
       ],
       "pr": null,
-      "state": "BUILD_STARTED",
-      "state_updated": "2026-09-12T14:30:58Z",
+      "state": "CLOSED",
+      "state_updated": "2026-09-12T15:41:29Z",
       "title": "feat: Gateway Oath tier — Two-Minute Rule with progressive habit shaping ladder"
     },
     "100": {
@@ -2509,7 +2539,7 @@
       "action": "FUTURE",
       "batch": "behavioral-psychology-core-2026-09-12",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/shared/libs/behavioral-science-suite.ts:1",
       "history": [
         {
           "from": "UNREAD",
@@ -2520,6 +2550,21 @@
           "from": "FUTURE",
           "to": "BUILD_STARTED",
           "at": "2026-09-12T14:30:58Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-12T15:41:29Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-12T15:41:29Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-09-12T15:41:29Z"
         }
       ],
       "labels": [
@@ -2528,8 +2573,8 @@
         "recovery"
       ],
       "pr": null,
-      "state": "BUILD_STARTED",
-      "state_updated": "2026-09-12T14:30:58Z",
+      "state": "CLOSED",
+      "state_updated": "2026-09-12T15:41:29Z",
       "title": "feat: BBO (Bigger Better Offer) substitution engine — active craving replacement library"
     },
     "103": {
@@ -2663,7 +2708,7 @@
       "action": "FUTURE",
       "batch": "behavioral-psychology-core-2026-09-12",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/shared/libs/behavioral-science-suite.ts:1",
       "history": [
         {
           "from": "UNREAD",
@@ -2674,6 +2719,21 @@
           "from": "FUTURE",
           "to": "BUILD_STARTED",
           "at": "2026-09-12T14:30:58Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-12T15:41:29Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-12T15:41:29Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-09-12T15:41:29Z"
         }
       ],
       "labels": [
@@ -2682,15 +2742,15 @@
         "recovery"
       ],
       "pr": null,
-      "state": "BUILD_STARTED",
-      "state_updated": "2026-09-12T14:30:58Z",
+      "state": "CLOSED",
+      "state_updated": "2026-09-12T15:41:29Z",
       "title": "feat: Disenchantment score — reward devaluation tracking over contract lifecycle"
     },
     "110": {
       "action": "FUTURE",
       "batch": "behavioral-psychology-core-2026-09-12",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/shared/libs/behavioral-science-suite.ts:1",
       "history": [
         {
           "from": "UNREAD",
@@ -2701,6 +2761,21 @@
           "from": "FUTURE",
           "to": "BUILD_STARTED",
           "at": "2026-09-12T14:30:58Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-12T15:41:28Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-12T15:41:29Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-09-12T15:41:29Z"
         }
       ],
       "labels": [
@@ -2708,15 +2783,15 @@
         "P2-post-beta"
       ],
       "pr": null,
-      "state": "BUILD_STARTED",
-      "state_updated": "2026-09-12T14:30:58Z",
+      "state": "CLOSED",
+      "state_updated": "2026-09-12T15:41:29Z",
       "title": "feat: Habit discontinuity window detector — life transitions as acquisition/re-engagement triggers"
     },
     "111": {
       "action": "FUTURE",
       "batch": "behavioral-psychology-core-2026-09-12",
       "closed_at": null,
-      "evidence": null,
+      "evidence": "src/shared/libs/behavioral-science-suite.ts:1",
       "history": [
         {
           "from": "UNREAD",
@@ -2727,6 +2802,21 @@
           "from": "FUTURE",
           "to": "BUILD_STARTED",
           "at": "2026-09-12T14:30:58Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-12T15:41:28Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-12T15:41:28Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "CLOSED",
+          "at": "2026-09-12T15:41:28Z"
         }
       ],
       "labels": [
@@ -2734,8 +2824,8 @@
         "P2-post-beta"
       ],
       "pr": null,
-      "state": "BUILD_STARTED",
-      "state_updated": "2026-09-12T14:30:58Z",
+      "state": "CLOSED",
+      "state_updated": "2026-09-12T15:41:28Z",
       "title": "feat: Implementation intention contract syntax — time + location binding beyond habit stacking"
     },
     "112": {
