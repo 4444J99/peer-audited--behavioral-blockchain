@@ -1,0 +1,1089 @@
+{
+  "49": {
+    "number": 49,
+    "title": "decision: Weekly live sessions — in-app scheduling vs external operational cadence",
+    "labels": [
+      "question",
+      "brainstorm-audit",
+      "P2-post-beta",
+      "recovery"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/49-decision-weekly-live-sess",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "50": {
+    "number": 50,
+    "title": "feat: Pod vs Arena experiment framework (Model A vs Model B cohort comparison)",
+    "labels": [
+      "enhancement",
+      "brainstorm-audit",
+      "P2-post-beta",
+      "b2b"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/50-feat-pod-vs-arena-experim",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "51": {
+    "number": 51,
+    "title": "feat: In-app messaging/chat within pods",
+    "labels": [
+      "enhancement",
+      "brainstorm-audit",
+      "P2-post-beta",
+      "recovery"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/51-feat-in-app-messaging-cha",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "53": {
+    "number": 53,
+    "title": "feat: Redemption / re-entry path after contract failure",
+    "labels": [
+      "enhancement",
+      "brainstorm-audit",
+      "P2-post-beta",
+      "recovery"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/53-feat-redemption-re-entry-",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "55": {
+    "number": 55,
+    "title": "feat: B2B per-seat subscription licensing for organizations",
+    "labels": [
+      "enhancement",
+      "brainstorm-audit",
+      "P2-post-beta",
+      "b2b"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/55-feat-b2b-per-seat-subscri",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "56": {
+    "number": 56,
+    "title": "feat: Progressive badge/achievement system beyond leaderboard tiers",
+    "labels": [
+      "enhancement",
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/56-feat-progressive-badge-ac",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "57": {
+    "number": 57,
+    "title": "decision: Community features / local meetups — in-app or operational?",
+    "labels": [
+      "question",
+      "brainstorm-audit",
+      "P2-post-beta",
+      "recovery"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/57-decision-community-featur",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "64": {
+    "number": 64,
+    "title": "feat: Abandonment typology detection & happy graduation flow",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/64-feat-abandonment-typology",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "65": {
+    "number": 65,
+    "title": "feat: Post-contract exit interviews — structured feedback collection",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/65-feat-post-contract-exit-i",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "67": {
+    "number": 67,
+    "title": "feat: Cross-jurisdictional verification consent matrix — privacy compliance per state/country",
+    "labels": [
+      "security",
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/67-feat-cross-jurisdictional",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "68": {
+    "number": 68,
+    "title": "feat: 'Invite Your Coach' B2B self-onboarding — practitioner-led acquisition channel",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta",
+      "b2b"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/68-feat-invite-your-coach-b2",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "69": {
+    "number": 69,
+    "title": "feat: Practitioner risk intelligence — composite relapse risk score & NLP journal alerts",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta",
+      "b2b"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/69-feat-practitioner-risk-in",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "70": {
+    "number": 70,
+    "title": "feat: Day 21 micro-reward — dopamine danger zone intervention",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta",
+      "recovery"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/70-feat-day-21-micro-reward-",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "71": {
+    "number": 71,
+    "title": "feat: Milestone-triggered shareable resilience reports — social proof for recovery",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/71-feat-milestone-triggered-",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "72": {
+    "number": 72,
+    "title": "feat: Sequential-to-simultaneous habit unlocking engine — multi-behavior progression",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/72-feat-sequential-to-simult",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "73": {
+    "number": 73,
+    "title": "feat: Ecological momentary assessment (EMA) — stress pulse micro-surveys",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/73-feat-ecological-momentary",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "74": {
+    "number": 74,
+    "title": "feat: Stake tapering & incentive fading — gradual transition from extrinsic to intrinsic motivation",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/74-feat-stake-tapering-incen",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "75": {
+    "number": 75,
+    "title": "feat: Goodharting detection bounties — anti-gaming verification for metric manipulation",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/75-feat-goodharting-detectio",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "76": {
+    "number": 76,
+    "title": "feat: Multi-judge adjudication panel — escalated dispute resolution for high-stakes contracts",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/76-feat-multi-judge-adjudica",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "77": {
+    "number": 77,
+    "title": "feat: High-stakes tournament mode — competitive bracket format for group challenges",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/77-feat-high-stakes-tourname",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "78": {
+    "number": 78,
+    "title": "feat: Consumer premium membership tier — subscription model for power users",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/78-feat-consumer-premium-mem",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "79": {
+    "number": 79,
+    "title": "feat: 'Digital Detox' as primary GTM vertical — Screen Time API integration",
+    "labels": [
+      "mobile",
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/79-feat-digital-detox-as-pri",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "80": {
+    "number": 80,
+    "title": "feat: Video call spot-checks — live verification for high-stakes contracts",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/80-feat-video-call-spot-chec",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "83": {
+    "number": 83,
+    "title": "feat: Decentralized dispute resolution (Schelling-point / Kleros-style) — trustless adjudication",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/83-feat-decentralized-disput",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "84": {
+    "number": 84,
+    "title": "feat: 'Inquisitor' RPG mode — gamified progression system for Fury auditors",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/84-feat-inquisitor-rpg-mode-",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "86": {
+    "number": 86,
+    "title": "feat: Recovery Ambassador Program — peer referral network for recovery niche",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta",
+      "recovery"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/86-feat-recovery-ambassador-",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "87": {
+    "number": 87,
+    "title": "feat: Contingency management reward escalation — graduated positive reinforcement schedule",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/87-feat-contingency-manageme",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "94": {
+    "number": 94,
+    "title": "feat: Friction audit & environmental design wizard at contract creation",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/94-feat-friction-audit-envir",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "95": {
+    "number": 95,
+    "title": "feat: Neurologically-timed instant reward system — per-proof micro-rewards & variable bonuses",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/95-feat-neurologically-timed",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "96": {
+    "number": 96,
+    "title": "feat: Automaticity & habit strength visualization (repetition-based, not calendar-based)",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/96-feat-automaticity-habit-s",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "97": {
+    "number": 97,
+    "title": "feat: Temptation bundling engine — Premack's Principle reward gating",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/97-feat-temptation-bundling-",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "99": {
+    "number": 99,
+    "title": "feat: Gateway Oath tier — Two-Minute Rule with progressive habit shaping ladder",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/99-feat-gateway-oath-tier-tw",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "102": {
+    "number": 102,
+    "title": "feat: BBO (Bigger Better Offer) substitution engine — active craving replacement library",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta",
+      "recovery"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/102-feat-bbo-bigger-better-of",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "109": {
+    "number": 109,
+    "title": "feat: Disenchantment score — reward devaluation tracking over contract lifecycle",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta",
+      "recovery"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/109-feat-disenchantment-score",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "110": {
+    "number": 110,
+    "title": "feat: Habit discontinuity window detector — life transitions as acquisition/re-engagement triggers",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/110-feat-habit-discontinuity-",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "111": {
+    "number": 111,
+    "title": "feat: Implementation intention contract syntax — time + location binding beyond habit stacking",
+    "labels": [
+      "brainstorm-audit",
+      "P2-post-beta"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/111-feat-implementation-inten",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "124": {
+    "number": 124,
+    "title": "[Blocked] F-VERIFY-02: HealthKit Native Bridge (iOS)",
+    "labels": [
+      "enhancement",
+      "mobile",
+      "owner:mobile-native"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/124--blocked-f-verify-02-heal",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "125": {
+    "number": 125,
+    "title": "[Blocked] F-VERIFY-03: Google Health Connect Bridge (Android)",
+    "labels": [
+      "enhancement",
+      "mobile",
+      "blocked",
+      "owner:mobile-native"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/125--blocked-f-verify-03-goog",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "126": {
+    "number": 126,
+    "title": "[Blocked] F-VERIFY-04: Fitbit/WHOOP API Integration",
+    "labels": [
+      "enhancement",
+      "api",
+      "b2b",
+      "blocked",
+      "business",
+      "owner:business-development"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/126--blocked-f-verify-04-fitb",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "128": {
+    "number": 128,
+    "title": "[Blocked] F-MOBILE-04: Biometric Lock (Voice/Face)",
+    "labels": [
+      "enhancement",
+      "mobile",
+      "owner:mobile-native"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/128--blocked-f-mobile-04-biom",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "129": {
+    "number": 129,
+    "title": "[Blocked] F-WEB-05: Plaid Link Integration",
+    "labels": [
+      "enhancement",
+      "api",
+      "b2b",
+      "blocked",
+      "business",
+      "owner:business-development"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/129-intent",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "130": {
+    "number": 130,
+    "title": "[Blocked] F-MARKET-03: EVM Smart Contract Escrow",
+    "labels": [
+      "enhancement",
+      "blocked",
+      "blockchain",
+      "owner:cryptography"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/130-intent",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "131": {
+    "number": 131,
+    "title": "[Blocked] F-MARKET-04: ZKP Milestone Verification",
+    "labels": [
+      "enhancement",
+      "blocked",
+      "blockchain",
+      "owner:cryptography"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/131-intent",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "132": {
+    "number": 132,
+    "title": "[Blocked] F-AEGIS-05: KYC / Identity Verification Integration",
+    "labels": [
+      "enhancement",
+      "api",
+      "blocked",
+      "owner:legal-compliance",
+      "legal"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/132--blocked-f-aegis-05-kyc-i",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "133": {
+    "number": 133,
+    "title": "[Blocked] F-INFRA-01: Secure High-Risk Merchant Account for Production Settlement",
+    "labels": [
+      "enhancement",
+      "blocked",
+      "business",
+      "owner:legal-compliance",
+      "owner:business-development",
+      "finance"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/133--blocked-f-infra-01-secur",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "134": {
+    "number": 134,
+    "title": "[Phase Beta/Gamma] Native Mobile Blockers: HealthKit & Secure Camera",
+    "labels": [
+      "mobile",
+      "owner:mobile-native"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/134--phase-beta-gamma-native-",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "136": {
+    "number": 136,
+    "title": "[Blocked] F-LEGAL-05: Skill-Based Contest Whitepaper + Counsel Sign-Off",
+    "labels": [
+      "enhancement",
+      "blocked",
+      "business",
+      "owner:legal-compliance",
+      "legal"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/136--blocked-f-legal-05-skill",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "139": {
+    "number": 139,
+    "title": "[Blocked] F-INFRA-10: \"Styx-Certified\" Hardware Partnership Program",
+    "labels": [
+      "enhancement",
+      "b2b",
+      "blocked",
+      "business",
+      "owner:business-development"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/139-intent",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "140": {
+    "number": 140,
+    "title": "[Blocked] F-B2B-09: Insurance Cross-Pollination Partnership",
+    "labels": [
+      "enhancement",
+      "b2b",
+      "blocked",
+      "business",
+      "owner:business-development"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/140-intent",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "141": {
+    "number": 141,
+    "title": "[Blocked] Beta Ops: App Store Connect + TestFlight Provisioning",
+    "labels": [
+      "enhancement",
+      "mobile",
+      "blocked",
+      "business",
+      "owner:mobile-native",
+      "owner:release-ops",
+      "ops"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/141--blocked-beta-ops-app-sto",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "142": {
+    "number": 142,
+    "title": "[Blocked] F-VERIFY-09: C2PA Content Provenance + TSA Infrastructure",
+    "labels": [
+      "enhancement",
+      "mobile",
+      "blocked",
+      "business",
+      "owner:cryptography"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/142--blocked-f-verify-09-c2pa",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "143": {
+    "number": 143,
+    "title": "[Blocked] F-VERIFY-11: Continuous Mobile App Attestation SDK Procurement",
+    "labels": [
+      "enhancement",
+      "mobile",
+      "business",
+      "owner:mobile-native"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/143--blocked-f-verify-11-cont",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "144": {
+    "number": 144,
+    "title": "[Blocked] F-VERIFY-14: ZK Privacy Layer for Digital Exhaust (Proving Engine)",
+    "labels": [
+      "enhancement",
+      "blocked",
+      "blockchain",
+      "owner:cryptography"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/144-intent",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "146": {
+    "number": 146,
+    "title": "[Blocked] F-LEGAL-09: App Store UGC Moderation Policy + Submission Package",
+    "labels": [
+      "blocked",
+      "owner:legal-compliance",
+      "owner:release-ops",
+      "legal"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/146--blocked-f-legal-09-app-s",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "147": {
+    "number": 147,
+    "title": "[Blocked] F-LEGAL-11: Stablecoin Stakes Regulatory + Banking Pathway",
+    "labels": [
+      "blocked",
+      "owner:legal-compliance",
+      "owner:business-development",
+      "legal"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/147--blocked-f-legal-11-stabl",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "148": {
+    "number": 148,
+    "title": "[Blocked] F-LEGAL-10: Cross-Jurisdictional Consent Matrix Counsel Review",
+    "labels": [
+      "blocked",
+      "owner:legal-compliance",
+      "legal"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/148--blocked-f-legal-10-cross",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "267": {
+    "number": 267,
+    "title": "feat: activate domain-expert agent contexts — epic tracker",
+    "labels": [
+      "artifact-dissection",
+      "agent-context",
+      "dept-tracker"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/267-feat-activate-domain-expe",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "283": {
+    "number": 283,
+    "title": "Legal & Compliance Department — Task Tracker",
+    "labels": [
+      "business",
+      "legal",
+      "dept-tracker"
+    ],
+    "owningLane": "SUPERSEDED",
+    "branchPattern": "N/A",
+    "status": "SUPERSEDED"
+  },
+  "285": {
+    "number": 285,
+    "title": "Product & Design Department — Task Tracker",
+    "labels": [
+      "business",
+      "product",
+      "dept-tracker"
+    ],
+    "owningLane": "SUPERSEDED",
+    "branchPattern": "N/A",
+    "status": "SUPERSEDED"
+  },
+  "286": {
+    "number": 286,
+    "title": "Operations & Infrastructure Department — Task Tracker",
+    "labels": [
+      "business",
+      "ops",
+      "dept-tracker"
+    ],
+    "owningLane": "SUPERSEDED",
+    "branchPattern": "N/A",
+    "status": "SUPERSEDED"
+  },
+  "288": {
+    "number": 288,
+    "title": "Growth & Marketing Department — Task Tracker",
+    "labels": [
+      "business",
+      "marketing",
+      "dept-tracker"
+    ],
+    "owningLane": "SUPERSEDED",
+    "branchPattern": "N/A",
+    "status": "SUPERSEDED"
+  },
+  "290": {
+    "number": 290,
+    "title": "Finance & Revenue Department — Task Tracker",
+    "labels": [
+      "business",
+      "finance",
+      "dept-tracker"
+    ],
+    "owningLane": "SUPERSEDED",
+    "branchPattern": "N/A",
+    "status": "SUPERSEDED"
+  },
+  "291": {
+    "number": 291,
+    "title": "Customer Success Department — Task Tracker",
+    "labels": [
+      "business",
+      "support",
+      "dept-tracker"
+    ],
+    "owningLane": "SUPERSEDED",
+    "branchPattern": "N/A",
+    "status": "SUPERSEDED"
+  },
+  "293": {
+    "number": 293,
+    "title": "Enterprise Sales / B2B Department — Task Tracker",
+    "labels": [
+      "business",
+      "enterprise",
+      "dept-tracker"
+    ],
+    "owningLane": "SUPERSEDED",
+    "branchPattern": "N/A",
+    "status": "SUPERSEDED"
+  },
+  "315": {
+    "number": 315,
+    "title": "Retain outside legal counsel — find and sign retainer",
+    "labels": [
+      "P0-beta-blocker",
+      "blocked",
+      "owner:legal-compliance",
+      "legal"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/315-retain-outside-legal-coun",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "316": {
+    "number": 316,
+    "title": "Custody model sign-off — lawyer reviews FBO escrow structure",
+    "labels": [
+      "P0-beta-blocker",
+      "blocked",
+      "owner:legal-compliance",
+      "legal"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/316-custody-model-sign-off-la",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "317": {
+    "number": 317,
+    "title": "State jurisdiction matrix sign-off — confirm legal US states",
+    "labels": [
+      "P0-beta-blocker",
+      "blocked",
+      "owner:legal-compliance",
+      "legal"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/317-state-jurisdiction-matrix",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "321": {
+    "number": 321,
+    "title": "Reviewer sanctions + appeal rights policy",
+    "labels": [
+      "P2-post-beta",
+      "owner:legal-compliance",
+      "legal"
+    ],
+    "owningLane": "lane/heal",
+    "branchPattern": "work/heal/321-reviewer-sanctions-appeal",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "322": {
+    "number": 322,
+    "title": "Partner authority disclosure review",
+    "labels": [
+      "P2-post-beta",
+      "owner:legal-compliance",
+      "legal"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/322-partner-authority-disclos",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "323": {
+    "number": 323,
+    "title": "SOC 2 Type I audit initiation",
+    "labels": [
+      "P2-post-beta",
+      "owner:legal-compliance",
+      "legal"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/323-soc-2-type-i-audit-initia",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "325": {
+    "number": 325,
+    "title": "Prize indemnity insurance evaluation",
+    "labels": [
+      "P2-post-beta",
+      "owner:legal-compliance",
+      "owner:business-development",
+      "legal"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/325-prize-indemnity-insurance",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "341": {
+    "number": 341,
+    "title": "Audience map — early-user channels + first target lists",
+    "labels": [
+      "P1-beta-enhancer",
+      "marketing",
+      "follow-up"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/341-audience-map-early-user-c",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "343": {
+    "number": 343,
+    "title": "Social operating system — Jessica/Styx channel architecture + 30-day cadence",
+    "labels": [
+      "P1-beta-enhancer",
+      "marketing",
+      "follow-up"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/343-social-operating-system-j",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "346": {
+    "number": 346,
+    "title": "PR strategy for App Store launch — press kit + target list + narrative",
+    "labels": [
+      "P2-post-beta",
+      "marketing",
+      "follow-up"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/346-pr-strategy-for-app-store",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "347": {
+    "number": 347,
+    "title": "Practitioner outreach — one-pager + first 15 outreach + demo loop",
+    "labels": [
+      "P1-beta-enhancer",
+      "owner:business-development",
+      "marketing",
+      "follow-up"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/347-practitioner-outreach-one",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "349": {
+    "number": 349,
+    "title": "Stripe production account setup — real-money switch",
+    "labels": [
+      "P2-post-beta",
+      "finance"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/349-stripe-production-account",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "361": {
+    "number": 361,
+    "title": "Enterprise demo environment — sandboxed Render instance",
+    "labels": [
+      "P2-post-beta",
+      "b2b",
+      "enterprise"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/361-enterprise-demo-environme",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "363": {
+    "number": 363,
+    "title": "First pilot onboarding — 1-3 practitioners",
+    "labels": [
+      "P2-post-beta",
+      "b2b",
+      "owner:business-development",
+      "enterprise"
+    ],
+    "owningLane": "lane/verify",
+    "branchPattern": "work/verify/363-first-pilot-onboarding-1-",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "365": {
+    "number": 365,
+    "title": "Apple Developer Account + TestFlight setup",
+    "labels": [
+      "devops",
+      "P1-beta-enhancer",
+      "owner:release-ops"
+    ],
+    "owningLane": "lane/expand-external",
+    "branchPattern": "work/expand-external/365-apple-developer-account-t",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "369": {
+    "number": 369,
+    "title": "Internal dogfood beta — founders + 5-10 trusted people",
+    "labels": [
+      "enhancement",
+      "P1-beta-enhancer"
+    ],
+    "owningLane": "lane/verify",
+    "branchPattern": "work/verify/369-internal-dogfood-beta-fou",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "371": {
+    "number": 371,
+    "title": "Support channel setup — email + Discord",
+    "labels": [
+      "P2-post-beta",
+      "support"
+    ],
+    "owningLane": "lane/heal",
+    "branchPattern": "work/heal/371-support-channel-setup-ema",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "372": {
+    "number": 372,
+    "title": "TestFlight external beta — 50-100 users",
+    "labels": [
+      "enhancement",
+      "P1-beta-enhancer",
+      "owner:release-ops"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/372-testflight-external-beta-",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "373": {
+    "number": 373,
+    "title": "Seed user recruitment — creator outreach + first cohort admissions",
+    "labels": [
+      "P1-beta-enhancer",
+      "owner:business-development",
+      "marketing",
+      "follow-up"
+    ],
+    "owningLane": "lane/evolve-platform",
+    "branchPattern": "work/evolve-platform/373-intent",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "374": {
+    "number": 374,
+    "title": "Beta feedback synthesis + iteration cycle",
+    "labels": [
+      "P1-beta-enhancer",
+      "product"
+    ],
+    "owningLane": "lane/verify",
+    "branchPattern": "work/verify/374-beta-feedback-synthesis-i",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "376": {
+    "number": 376,
+    "title": "Open beta expansion — 500+ users",
+    "labels": [
+      "P1-beta-enhancer",
+      "marketing"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/376-open-beta-expansion-500-u",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "378": {
+    "number": 378,
+    "title": "App Store launch (public) — general availability",
+    "labels": [
+      "P2-post-beta",
+      "owner:release-ops"
+    ],
+    "owningLane": "lane/expand-product",
+    "branchPattern": "work/expand-product/378-app-store-launch-public-g",
+    "status": "ACTIVE_OR_PARKED"
+  },
+  "555": {
+    "number": 555,
+    "title": "🏛 Phase Beta — Market-safe money enablement (Alpha→Beta gate)",
+    "labels": [
+      "epic"
+    ],
+    "owningLane": "main",
+    "branchPattern": "main",
+    "status": "PARENT_GATE"
+  },
+  "556": {
+    "number": 556,
+    "title": "🏛 Phase Gamma — Proof integrity at scale (Beta→Gamma gate)",
+    "labels": [
+      "epic"
+    ],
+    "owningLane": "main",
+    "branchPattern": "main",
+    "status": "PARENT_GATE"
+  },
+  "557": {
+    "number": 557,
+    "title": "🏛 Phase Delta — Retention + network effects (Gamma→Delta gate)",
+    "labels": [
+      "epic"
+    ],
+    "owningLane": "main",
+    "branchPattern": "main",
+    "status": "PARENT_GATE"
+  },
+  "558": {
+    "number": 558,
+    "title": "🏛 Phase Omega — Enterprise expansion (Delta→Omega gate)",
+    "labels": [
+      "epic"
+    ],
+    "owningLane": "main",
+    "branchPattern": "main",
+    "status": "PARENT_GATE"
+  }
+}

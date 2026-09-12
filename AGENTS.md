@@ -182,3 +182,25 @@ TRACKING → SUPERSEDED
 ```
 
 See `docs/triage/pattern-log.md` for per-batch learnings. See `scripts/triage/` for tooling.
+
+---
+
+## Multi-Agent Operating System & Standing Branch Habitat
+
+All autonomous and remote agents must adhere to the 5-lane branch constitution in `BRANCHES.md` and the full operating procedures in `docs/operations/agent-operations-manual.md`.
+
+### Agent Quick Start
+1. **Query Owning Lane**: Check `docs/triage/issue-ownership.json` to find which standing lane owns your issue.
+2. **Cut Worktree**:
+   ```bash
+   scripts/lanes/cut-worktree.sh <issue-number> [short-intent]
+   ```
+3. **Claim Issue**:
+   ```bash
+   scripts/lanes/claim-issue.sh <issue-number> [agent-id]
+   ```
+4. **Pre-PR Verification**:
+   ```bash
+   bash scripts/lanes/verify-agent-pr.sh
+   ```
+5. **PR & Receipt**: Submit PR targeting the owning standing lane (`lane/verify`, `lane/heal`, `lane/expand-product`, `lane/expand-external`, or `lane/evolve-platform`). Include completed `docs/evidence/templates/live-loop-receipt.md`.
