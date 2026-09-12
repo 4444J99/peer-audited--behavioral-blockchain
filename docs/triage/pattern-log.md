@@ -576,3 +576,7 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
 
 **Lesson:** Financial controls and growth systems are strongest when built on top of immutable ledger structures rather than ad-hoc counters. Tying waitlist channel attribution directly into CAC calculation and double-entry settlements into LTV yields real auditability without external BI dependencies.
 
+
+## Batch: close-dept-trackers
+- **Phase**: Wave 2 — Consolidate illogical department trackers
+- **Learnings**: The repo organizes work by phase and branch lanes, not by traditional corporate departments. The 7 department tracker issues were illogical duplication of the Omega Phase epics. They were successfully superseded.
