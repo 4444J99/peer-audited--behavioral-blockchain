@@ -347,6 +347,24 @@ export class PaymentsController implements OnModuleInit {
     return this.settlementService.getSettlementStatus(contractId);
   }
 
+  @Get("reconcile/batch/audit")
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      "Perform platform-wide batch reconciliation across settled contracts and return discrepancy report",
+  })
+  async auditRecentSettlements(
+    @Query("limit") limit?: string,
+    @Query("onlyDiscrepancies") onlyDiscrepancies?: string,
+  ) {
+    const parsedLimit = Number.parseInt(limit || "100", 10);
+    return this.reconciliationService.auditRecentSettlements({
+      limit: Number.isFinite(parsedLimit) ? parsedLimit : 100,
+      onlyDiscrepancies: onlyDiscrepancies === "true",
+    });
+  }
+
   @Get("reconcile/:contractId")
   @UseGuards(AuthGuard)
   @ApiBearerAuth()

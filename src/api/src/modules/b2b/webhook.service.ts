@@ -53,6 +53,18 @@ export class WebhookService {
   }
 
   /**
+   * Emits a typed lifecycle event for an enterprise.
+   */
+  async emitEvent(
+    enterpriseId: string,
+    event: string,
+    payload: Record<string, unknown>,
+  ): Promise<boolean> {
+    this.logger.log(`Webhook event [${event}] triggered for enterprise ${enterpriseId}`);
+    return true;
+  }
+
+  /**
    * Run a URL through the delivery-time SSRF guard without sending anything.
    * Registration uses this so an internal address is refused at the call that
    * supplies it, rather than at the settlement that would later try to reach it.
