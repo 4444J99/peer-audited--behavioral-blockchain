@@ -155,4 +155,97 @@ describe('ReferralService', () => {
       expect(rewardsSql).toContain('JOIN users u ON u.id = r.referred_user_id');
     });
   });
+
+  describe('getCohortInviteQuota', () => {
+    it('returns remaining invite count based on the 2-invite limit', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'nom-1',
+            nominee_email: 'peer1@example.com',
+            nominee_name: 'Peer One',
+            invite_code: 'COHORT-A1B2',
+            status: 'PENDING',
+            created_at: new Date('2026-08-01T00:00:00Z'),
+          },
+        ],
+      });
+
+      const quota = await service.getCohortInviteQuota('user-1');
+
+      expect(quota.totalAllowed).toBe(2);
+      expect(quota.invitesSent).toBe(1);
+      expect(quota.remainingInvites).toBe(1);
+      expect(quota.nominations).toHaveLength(1);
+      expect(quota.nominations[0].nomineeEmail).toBe('peer1@example.com');
+      expect(quota.nominations[0].inviteCode).toBe('COHORT-A1B2');
+      expect(quota.nominations[0].inviteUrl).toContain('/COHORT-A1B2');
+    });
+  });
+
+  describe('nominateCohortPeer', () => {
+    it('successfully creates nomination when quota is available and updates waitlist', async () => {
+      // 1. Check existing nominations (count 0)
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // 2. Insert nomination
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'nom-new',
+            nominator_id: 'user-1',
+            nominee_email: 'friend@example.com',
+            nominee_name: 'Friend',
+            note: 'Great fit',
+            invite_code: 'COHORT-9999',
+            status: 'PENDING',
+            accepted_user_id: null,
+            created_at: new Date(),
+            accepted_at: null,
+          },
+        ],
+      });
+      // 3. Update beta_waitlist
+      mockPool.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      const nomination = await service.nominateCohortPeer(
+        'user-1',
+        'Friend@example.com',
+        'Friend',
+        'Great fit',
+      );
+
+      expect(nomination.id).toBe('nom-new');
+      expect(nomination.nomineeEmail).toBe('friend@example.com');
+      expect(mockPool.query).toHaveBeenCalledTimes(3);
+    });
+
+    it('rejects nomination if quota is already exhausted (>= 2 invites)', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { id: '1', nominee_email: 'p1@example.com' },
+          { id: '2', nominee_email: 'p2@example.com' },
+        ],
+      });
+
+      await expect(
+        service.nominateCohortPeer('user-1', 'p3@example.com'),
+      ).rejects.toThrow('Cohort invite quota reached');
+    });
+
+    it('rejects duplicate nomination for the same peer', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: '1', nominee_email: 'p1@example.com' }],
+      });
+
+      await expect(
+        service.nominateCohortPeer('user-1', 'P1@example.com'),
+      ).rejects.toThrow('You have already nominated this peer');
+    });
+
+    it('rejects invalid email addresses', async () => {
+      await expect(
+        service.nominateCohortPeer('user-1', 'notanemail'),
+      ).rejects.toThrow('A valid nominee email is required');
+    });
+  });
 });

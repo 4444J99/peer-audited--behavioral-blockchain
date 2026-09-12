@@ -19,6 +19,21 @@ export interface ReconciliationSummary {
   discrepancies: string[];
 }
 
+export interface BatchReconciliationSummary {
+  totalAudited: number;
+  balancedCount: number;
+  discrepancyCount: number;
+  auditedAt: string;
+  status: 'HEALTHY' | 'DEGRADED' | 'CRITICAL';
+  discrepancies: Array<{
+    contractId: string;
+    expectedAmountCents: number;
+    ledgerTotalCents: number;
+    runStatus: string;
+    reasons: string[];
+  }>;
+}
+
 @Injectable()
 export class ReconciliationService {
   private readonly logger = new Logger(ReconciliationService.name);
@@ -146,5 +161,81 @@ export class ReconciliationService {
     `;
     const result = await this.pool.query(query, [startDate, endDate]);
     return result.rows;
+  }
+
+  /**
+   * Runs batch reconciliation across settled contracts and flags discrepancies.
+   */
+  async auditRecentSettlements(options: {
+    limit?: number;
+    onlyDiscrepancies?: boolean;
+  } = {}): Promise<BatchReconciliationSummary> {
+    const limit = Math.min(Math.max(options.limit ?? 50, 1), 500);
+    const contractsQuery = await this.pool.query(
+      `SELECT DISTINCT contract_id
+       FROM settlement_runs
+       ORDER BY contract_id
+       LIMIT $1`,
+      [limit],
+    );
+
+    const auditedAt = new Date().toISOString();
+    const discrepancyList: BatchReconciliationSummary['discrepancies'] = [];
+    let balancedCount = 0;
+
+    for (const row of contractsQuery.rows) {
+      try {
+        const summary = await this.reconcileContract(row.contract_id);
+        if (summary.isBalanced) {
+          balancedCount++;
+        } else {
+          discrepancyList.push({
+            contractId: summary.contractId,
+            expectedAmountCents: summary.expectedAmountCents,
+            ledgerTotalCents: summary.ledgerTotalCents,
+            runStatus: summary.runStatus,
+            reasons: summary.discrepancies,
+          });
+        }
+      } catch (err: any) {
+        discrepancyList.push({
+          contractId: row.contract_id,
+          expectedAmountCents: 0,
+          ledgerTotalCents: 0,
+          runStatus: 'ERROR',
+          reasons: [err.message || 'Audit exception'],
+        });
+      }
+    }
+
+    const totalAudited = contractsQuery.rows.length;
+    const discrepancyCount = discrepancyList.length;
+
+    let status: BatchReconciliationSummary['status'] = 'HEALTHY';
+    if (totalAudited > 0) {
+      const errorRatio = discrepancyCount / totalAudited;
+      if (errorRatio > 0.05) {
+        status = 'CRITICAL';
+      } else if (discrepancyCount > 0) {
+        status = 'DEGRADED';
+      }
+    }
+
+    if (status !== 'HEALTHY') {
+      this.logger.warn(
+        `Batch reconciliation finished with status ${status}: ${discrepancyCount}/${totalAudited} contracts had discrepancies.`,
+      );
+    } else {
+      this.logger.log(`Batch reconciliation finished clean: ${totalAudited} contracts audited, 0 discrepancies.`);
+    }
+
+    return {
+      totalAudited,
+      balancedCount,
+      discrepancyCount,
+      auditedAt,
+      status,
+      discrepancies: discrepancyList,
+    };
   }
 }

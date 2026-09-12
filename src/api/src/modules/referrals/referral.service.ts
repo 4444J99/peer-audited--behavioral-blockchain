@@ -4,6 +4,36 @@ import { randomBytes } from 'crypto';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { REFERRAL_REWARD_AMOUNT, MAX_MONTHLY_REFERRALS } from '../../../../shared/libs/behavioral-logic';
 
+export const BETA_MAX_COHORT_INVITES = 2;
+
+export interface CohortNomination {
+  id: string;
+  nominatorId: string;
+  nomineeEmail: string;
+  nomineeName: string | null;
+  note: string | null;
+  inviteCode: string;
+  status: 'PENDING' | 'ACCEPTED' | 'EXPIRED';
+  acceptedUserId: string | null;
+  createdAt: Date;
+  acceptedAt: Date | null;
+}
+
+export interface CohortInviteQuota {
+  totalAllowed: number;
+  invitesSent: number;
+  remainingInvites: number;
+  nominations: Array<{
+    id: string;
+    nomineeEmail: string;
+    nomineeName: string | null;
+    inviteCode: string;
+    inviteUrl: string;
+    status: string;
+    createdAt: string;
+  }>;
+}
+
 @Injectable()
 export class ReferralService {
   private readonly logger = new Logger(ReferralService.name);
@@ -189,6 +219,111 @@ export class ReferralService {
         rewardPaidAt: r.reward_paid_at ? r.reward_paid_at.toISOString() : null,
         createdAt: r.created_at.toISOString(),
       })),
+    };
+  }
+
+  /**
+   * Retrieves the user's cohort invite quota (capped at 2 invites for curated beta growth).
+   */
+  async getCohortInviteQuota(userId: string): Promise<CohortInviteQuota> {
+    const nominationsResult = await this.pool.query(
+      `SELECT id, nominee_email, nominee_name, invite_code, status, created_at
+       FROM cohort_nominations
+       WHERE nominator_id = $1
+       ORDER BY created_at DESC`,
+      [userId],
+    );
+
+    const baseUrl = process.env.STYX_REFERRAL_BASE_URL || 'https://styx.app/cohort-invite';
+    const invitesSent = nominationsResult.rows.length;
+    const remainingInvites = Math.max(0, BETA_MAX_COHORT_INVITES - invitesSent);
+
+    return {
+      totalAllowed: BETA_MAX_COHORT_INVITES,
+      invitesSent,
+      remainingInvites,
+      nominations: nominationsResult.rows.map((r) => ({
+        id: r.id,
+        nomineeEmail: r.nominee_email,
+        nomineeName: r.nominee_name ?? null,
+        inviteCode: r.invite_code,
+        inviteUrl: `${baseUrl}/${r.invite_code}`,
+        status: r.status,
+        createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+      })),
+    };
+  }
+
+  /**
+   * Nominates an aligned peer for curated beta cohort admission (enforces 2-invite limit).
+   */
+  async nominateCohortPeer(
+    userId: string,
+    nomineeEmail: string,
+    nomineeName?: string,
+    note?: string,
+  ): Promise<CohortNomination> {
+    const trimmedEmail = (nomineeEmail || '').trim().toLowerCase();
+    if (!trimmedEmail || !trimmedEmail.includes('@')) {
+      throw new BadRequestException('A valid nominee email is required');
+    }
+
+    // 1. Enforce quota: maximum 2 invites per user
+    const existing = await this.pool.query(
+      `SELECT id, nominee_email FROM cohort_nominations WHERE nominator_id = $1`,
+      [userId],
+    );
+
+    if (existing.rows.length >= BETA_MAX_COHORT_INVITES) {
+      throw new BadRequestException(
+        `Cohort invite quota reached. Each beta member may nominate at most ${BETA_MAX_COHORT_INVITES} peers.`,
+      );
+    }
+
+    if (existing.rows.some((r) => r.nominee_email.toLowerCase() === trimmedEmail)) {
+      throw new BadRequestException('You have already nominated this peer.');
+    }
+
+    // 2. Generate secure cohort invite code
+    const inviteCode = `COHORT-${randomBytes(4).toString('hex').toUpperCase()}`;
+
+    // 3. Insert nomination
+    const insertResult = await this.pool.query(
+      `INSERT INTO cohort_nominations (
+         nominator_id, nominee_email, nominee_name, note, invite_code, status
+       )
+       VALUES ($1, $2, $3, $4, $5, 'PENDING')
+       RETURNING *`,
+      [userId, trimmedEmail, nomineeName?.trim() || null, note?.trim() || null, inviteCode],
+    );
+
+    const row = insertResult.rows[0];
+
+    // 4. Boost waitlist entry if nominee already joined waitlist
+    await this.pool.query(
+      `UPDATE beta_waitlist
+       SET channel = 'referral',
+           referral_code = $1,
+           intent = COALESCE(intent, 'cohort_nomination')
+       WHERE email_normalized = $2`,
+      [inviteCode, trimmedEmail],
+    );
+
+    this.logger.log(
+      `User ${userId} nominated peer ${trimmedEmail} for cohort admission (code=${inviteCode})`,
+    );
+
+    return {
+      id: row.id,
+      nominatorId: row.nominator_id,
+      nomineeEmail: row.nominee_email,
+      nomineeName: row.nominee_name,
+      note: row.note,
+      inviteCode: row.invite_code,
+      status: row.status,
+      acceptedUserId: row.accepted_user_id,
+      createdAt: row.created_at,
+      acceptedAt: row.accepted_at,
     };
   }
 }
