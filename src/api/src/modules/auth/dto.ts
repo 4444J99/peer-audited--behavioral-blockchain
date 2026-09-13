@@ -11,25 +11,41 @@ import {
   Max,
   MaxLength,
   IsIn,
-  ValidateIf,
   ValidateNested,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
+@ValidatorConstraint({ name: 'exactlyOneDeviceIdentifier', async: false })
+class ExactlyOneDeviceIdentifier implements ValidatorConstraintInterface {
+  validate(_platform: unknown, args: ValidationArguments): boolean {
+    const value = args.object as DeviceFingerprintDto;
+    return [value.hash, value.rawVendorId].filter((item) => item !== undefined).length === 1;
+  }
+
+  defaultMessage(): string {
+    return 'deviceFingerprint requires exactly one of hash or rawVendorId';
+  }
+}
+
 export class DeviceFingerprintDto {
   @ApiProperty({ enum: ['ios', 'android', 'web'] })
   @IsIn(['ios', 'android', 'web'])
+  @Validate(ExactlyOneDeviceIdentifier)
   platform!: 'ios' | 'android' | 'web';
 
   @ApiProperty({ required: false, description: 'SHA-256 device identifier' })
-  @ValidateIf((value: DeviceFingerprintDto) => !value.rawVendorId)
+  @IsOptional()
   @IsString()
   @Matches(/^[0-9a-f]{64}$/i)
   hash?: string;
 
   @ApiProperty({ required: false, description: 'Opaque client device identifier' })
-  @ValidateIf((value: DeviceFingerprintDto) => !value.hash)
+  @IsOptional()
   @IsString()
   @MinLength(16)
   @MaxLength(256)
