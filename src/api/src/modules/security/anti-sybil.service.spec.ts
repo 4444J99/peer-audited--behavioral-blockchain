@@ -34,6 +34,13 @@ describe('AntiSybilService', () => {
   });
 
   describe('registerDeviceFingerprint', () => {
+    it('rejects a missing identifier instead of storing an empty sentinel', async () => {
+      await expect(service.registerDeviceFingerprint('user-1', {
+        platform: 'web',
+      })).rejects.toThrow('requires hash or rawVendorId');
+      expect(pool.query).not.toHaveBeenCalled();
+    });
+
     it('upserts with hashed vendor ID', async () => {
       pool.query.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
