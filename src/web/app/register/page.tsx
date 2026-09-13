@@ -18,6 +18,15 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const deviceIdentifier = () => {
+    const key = 'styx-device-id';
+    const existing = window.localStorage.getItem(key);
+    if (existing) return existing;
+    const created = window.crypto.randomUUID();
+    window.localStorage.setItem(key, created);
+    return created;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -58,7 +67,12 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(email, password, { ageConfirmation: true, termsAccepted: true, dateOfBirth });
+      await register(email, password, {
+        ageConfirmation: true,
+        termsAccepted: true,
+        dateOfBirth,
+        deviceFingerprint: { platform: 'web', rawVendorId: deviceIdentifier() },
+      });
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');

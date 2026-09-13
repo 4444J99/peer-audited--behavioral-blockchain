@@ -25,6 +25,7 @@ interface RegisterOpts {
   ageConfirmation: boolean;
   termsAccepted: boolean;
   dateOfBirth?: string;
+  deviceFingerprint?: { platform: 'web'; rawVendorId: string };
 }
 
 interface AuthContextValue {
