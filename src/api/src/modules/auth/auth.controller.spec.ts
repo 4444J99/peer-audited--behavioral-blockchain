@@ -98,6 +98,18 @@ describe('AuthController', () => {
       });
       expect(await validate(dto)).toEqual([]);
     });
+
+    it('rejects fingerprints with both identifier forms', async () => {
+      const dto = plainToInstance(RegisterDto, {
+        email: 'test@styx.protocol', password: 'Secure-pass123!',
+        ageConfirmation: true, termsAccepted: true,
+        deviceFingerprint: {
+          platform: 'web', rawVendorId: 'device-identifier-1234', hash: 'a'.repeat(64),
+        },
+      });
+      const errors = await validate(dto);
+      expect(errors.some((error) => error.property === 'deviceFingerprint')).toBe(true);
+    });
   });
 
   describe('POST /auth/login', () => {
