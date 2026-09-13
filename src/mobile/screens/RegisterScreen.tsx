@@ -11,6 +11,8 @@ import {
   Alert,
 } from 'react-native';
 import { ApiClient } from '../services/ApiClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Crypto from 'expo-crypto';
 import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../App';
@@ -26,6 +28,15 @@ export function RegisterScreen({ navigation }: Props) {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const deviceIdentifier = async () => {
+    const key = '@styx_device_id';
+    const existing = await AsyncStorage.getItem(key);
+    if (existing) return existing;
+    const created = Crypto.randomUUID();
+    await AsyncStorage.setItem(key, created);
+    return created;
+  };
 
   const handleRegister = async () => {
     if (!email || !password || !dateOfBirth) {
@@ -53,12 +64,14 @@ export function RegisterScreen({ navigation }: Props) {
     setLoading(true);
 
     try {
+      const rawVendorId = await deviceIdentifier();
       await ApiClient.register({
         email,
         password,
         dateOfBirth,
         ageConfirmation: ageConfirmed,
         termsAccepted: termsAccepted,
+        deviceFingerprint: { platform: Platform.OS === 'ios' ? 'ios' : 'android', rawVendorId },
       });
       Alert.alert('Account Created', 'You can now log in.', [
         { text: 'OK', onPress: () => navigation.goBack() },
