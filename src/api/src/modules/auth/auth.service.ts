@@ -199,6 +199,13 @@ export class AuthService {
       );
       const userId = userResult.rows[0].id;
 
+      if (opts.deviceFingerprint) {
+        if (!this.antiSybil) {
+          throw new Error('Anti-Sybil registration is unavailable');
+        }
+        await this.antiSybil.registerDeviceFingerprint(userId, opts.deviceFingerprint, db as Pick<PoolClient, 'query'>);
+      }
+
       if (useTransaction) {
         await db.query('COMMIT');
       }
@@ -209,14 +216,6 @@ export class AuthService {
         this.referralService.attributeReferral(opts.referralCode, userId).catch((err: Error) => {
           console.error(`Failed to attribute referral: ${err.message}`);
         });
-      }
-
-      if (opts.deviceFingerprint && this.antiSybil) {
-        this.antiSybil
-          .registerDeviceFingerprint(userId, opts.deviceFingerprint)
-          .catch((err: Error) => {
-            console.error(`Failed to register device fingerprint: ${err.message}`);
-          });
       }
 
       return { userId, token };
