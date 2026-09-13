@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import { createHash } from 'crypto';
 
 export interface DeviceFingerprint {
@@ -47,12 +47,16 @@ export class AntiSybilService {
   async registerDeviceFingerprint(
     userId: string,
     fingerprint: DeviceFingerprint,
+    queryable: Pick<PoolClient, 'query'> = this.pool,
   ): Promise<void> {
     const hashed = fingerprint.rawVendorId
       ? AntiSybilService.hashFingerprint(fingerprint.rawVendorId)
-      : (fingerprint.hash ?? '');
+      : fingerprint.hash;
+    if (!hashed) {
+      throw new Error('Device fingerprint requires hash or rawVendorId');
+    }
 
-    await this.pool.query(
+    await queryable.query(
       `INSERT INTO sybil_device_fingerprints (user_id, device_hash, platform, created_at)
        VALUES ($1, $2, $3, NOW())
        ON CONFLICT (user_id, device_hash)
