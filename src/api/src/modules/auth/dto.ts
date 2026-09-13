@@ -10,8 +10,31 @@ import {
   Min,
   Max,
   MaxLength,
+  IsIn,
+  ValidateIf,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+
+export class DeviceFingerprintDto {
+  @ApiProperty({ enum: ['ios', 'android', 'web'] })
+  @IsIn(['ios', 'android', 'web'])
+  platform!: 'ios' | 'android' | 'web';
+
+  @ApiProperty({ required: false, description: 'SHA-256 device identifier' })
+  @ValidateIf((value: DeviceFingerprintDto) => !value.rawVendorId)
+  @IsString()
+  @Matches(/^[0-9a-f]{64}$/i)
+  hash?: string;
+
+  @ApiProperty({ required: false, description: 'Opaque client device identifier' })
+  @ValidateIf((value: DeviceFingerprintDto) => !value.hash)
+  @IsString()
+  @MinLength(16)
+  @MaxLength(256)
+  rawVendorId?: string;
+}
 
 export class RegisterDto {
   @ApiProperty({ description: 'User email address', example: 'user@example.com' })
@@ -46,11 +69,9 @@ export class RegisterDto {
 
   @ApiProperty({ description: 'Optional device fingerprint for multi-account fraud prevention', required: false })
   @IsOptional()
-  deviceFingerprint?: {
-    hash?: string;
-    platform: 'ios' | 'android' | 'web';
-    rawVendorId?: string;
-  };
+  @ValidateNested()
+  @Type(() => DeviceFingerprintDto)
+  deviceFingerprint?: DeviceFingerprintDto;
 }
 
 export class LoginDto {

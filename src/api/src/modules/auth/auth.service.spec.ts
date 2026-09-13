@@ -83,7 +83,28 @@ describe('AuthService', () => {
         deviceFingerprint: fp,
       });
 
-      expect(mockAntiSybil.registerDeviceFingerprint).toHaveBeenCalledWith('user-uuid', fp);
+      expect(mockAntiSybil.registerDeviceFingerprint).toHaveBeenCalledWith('user-uuid', fp, mockClient);
+      expect(mockAntiSybil.registerDeviceFingerprint.mock.invocationCallOrder[0])
+        .toBeLessThan((mockClient.query as jest.Mock).mock.invocationCallOrder.at(-1)!);
+    });
+
+    it('rolls back signup when durable device registration fails', async () => {
+      const mockAntiSybil = {
+        registerDeviceFingerprint: jest.fn().mockRejectedValue(new Error('device write failed')),
+      } as any;
+      const customService = new AuthService(mockPool, undefined, mockAntiSybil);
+      (mockClient.query as jest.Mock)
+        .mockResolvedValueOnce(undefined)
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ id: 'account-uuid' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 'user-uuid' }] })
+        .mockResolvedValueOnce(undefined);
+
+      await expect(customService.register('fp-fail@styx.protocol', 'pass123', {
+        ...validRegisterOpts,
+        deviceFingerprint: { hash: 'a'.repeat(64), platform: 'web' },
+      })).rejects.toThrow('device write failed');
+      expect(mockClient.query).toHaveBeenLastCalledWith('ROLLBACK');
     });
 
     it('should hash the password before storing', async () => {
