@@ -32,5 +32,6 @@
     "pre_pr_script": "passed with offline limitations",
     "gate_01": "not exercised: offline",
     "gate_05": "offline constants only"
-  }
+  },
+  "archive_manifest_commit": "01e3e672931538acc6c8575d58a2203e63f369a2"
 }
