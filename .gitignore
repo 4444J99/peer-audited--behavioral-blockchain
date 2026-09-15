@@ -73,6 +73,7 @@ exports/
 output/
 .claude/sessions/
 .claude/worktrees/
+.worktrees/
 
 # E2E test results
 playwright-report/
