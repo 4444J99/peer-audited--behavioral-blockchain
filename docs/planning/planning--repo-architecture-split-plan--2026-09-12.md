@@ -30,4 +30,10 @@ This repository is published on GitHub and represents the verifiable community s
 3. **Submodule / NPM Linking:** Publish the generic types to a public `@styx/types` npm package (or use a submodule) so the private `styx-core` can still seamlessly consume UI updates from `styx-public`.
 4. **License Attachment:** Apply a dual-license strategy. MIT or Apache 2.0 for `styx-public`, and a strict proprietary EULA for `styx-core`.
 
-*(This plan is now officially tracked as Issue #970 and assigned to `lane/evolve-platform`)*
+## Tracking correction (2026-09-15)
+
+The architecture split remains recorded work for `lane/evolve-platform`. The previous
+reference to Issue #970 was incorrect: [#970](https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/970)
+is the unrelated merged PR “docs+fix: address PR #969 post-merge review feedback”.
+A valid split tracking issue has not yet been established by this reconciliation.
+The recorded decision does not establish that repository migration has occurred.

@@ -1,0 +1,36 @@
+{
+  "schema": "styx.planning-preservation.v1",
+  "verified_at": "2026-09-15T17:13:59.222355+00:00",
+  "artifact_id": "pkg-91d8c6e4",
+  "owner_lane": "lane/verify",
+  "status": "remote_restore_verified",
+  "audience": "public sanitized receipt",
+  "private_archive_generation": 3,
+  "package_archive_commit": "f80efe3557d9bdd189a6eae86d773c84260e3821",
+  "receipt_archive_commit": "330387051f158b82c5dee286a6f288217cb6901f",
+  "encrypted_parts": 4,
+  "package_files_verified": 200,
+  "receipt_files_verified": 15,
+  "verification": {
+    "remote_ciphertext_downloaded": true,
+    "all_ciphertext_hashes_match": true,
+    "decryption_passed": true,
+    "exact_package_file_set_matches": true,
+    "all_package_hashes_match": true,
+    "committed_manifest_confirmed": true,
+    "originals_retained": true,
+    "public_additions_privacy_checked": true
+  },
+  "implementation_scope": "Planning artifacts and preservation only; downstream tasks not executed.",
+  "limitations": [
+    "Byte preservation is separate from interpretation quality.",
+    "No product deployment or authenticated beta recovery is claimed."
+  ],
+  "public_checks": {
+    "git_diff_check": "passed",
+    "claim_drift": "passed",
+    "pre_pr_script": "passed with offline limitations",
+    "gate_01": "not exercised: offline",
+    "gate_05": "offline constants only"
+  }
+}
