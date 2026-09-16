@@ -20,3 +20,12 @@ external gate. Merge is permitted only with Anthony's explicit authorization
 for the exact verified head, after the requested `jtenen` review is resolved
 and no requested correction or required check remains outstanding. Head
 movement invalidates this receipt and requires re-review.
+
+**Closeout tooling owners:** [Limen #2671](https://github.com/4444J99/limen/issues/2671)
+owns the stale editable `organvm` runtime without authorizing loss of its local
+commits; [organvm-engine #203](https://github.com/organvm/organvm-engine/issues/203)
+owns relocated `CODEX_HOME` discovery; [organvm-engine #70](https://github.com/organvm/organvm-engine/issues/70)
+owns the bounded plans-discovery hang; and
+[corpvs #352](https://github.com/organvm/organvm-corpvs-testamentvm/issues/352)
+owns the missing prompt-distillation input contract. These are outside this
+capsule's execution scope.
