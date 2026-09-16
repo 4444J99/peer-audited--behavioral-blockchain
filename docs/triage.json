@@ -544,7 +544,7 @@
         990
       ],
       "started": "2026-09-16T19:44:11Z",
-      "completed": "2026-09-16T19:44:22Z",
+      "completed": "2026-09-16T20:05:23Z",
       "reconciled": true,
       "test_passed": true
     }
@@ -15049,7 +15049,7 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TESTED",
+      "state": "PR_CREATED",
       "batch": "verify-login-throttle-2026-09-16",
       "history": [
         {
@@ -15072,11 +15072,16 @@
           "from": "BUILD_DONE",
           "to": "TESTED",
           "at": "2026-09-16T19:44:12Z"
+        },
+        {
+          "from": "TESTED",
+          "to": "PR_CREATED",
+          "at": "2026-09-16T20:05:23Z"
         }
       ],
-      "evidence": "src/api/src/common/guards/app-throttler.guard.spec.ts:105",
-      "pr": null,
-      "state_updated": "2026-09-16T19:44:12Z",
+      "evidence": "src/api/src/common/guards/app-throttler.guard.spec.ts:118",
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/991",
+      "state_updated": "2026-09-16T20:05:23Z",
       "closed_at": null,
       "claimed_by": "codex-root"
     },
