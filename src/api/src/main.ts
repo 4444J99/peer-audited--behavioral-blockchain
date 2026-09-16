@@ -92,7 +92,12 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const port = resolveApiListenPort();
-  await app.listen(port);
+  const listenHost = process.env.STYX_API_BIND_HOST?.trim();
+  if (listenHost) {
+    await app.listen(port, listenHost);
+  } else {
+    await app.listen(port);
+  }
   const boundUrl = await app.getUrl();
   const publicApiUrl = resolveApiPublicUrl(boundUrl) || boundUrl;
   logger.log(`Styx API running on ${publicApiUrl}`, 'Bootstrap');
