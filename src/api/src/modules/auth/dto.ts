@@ -24,7 +24,7 @@ import { ApiProperty } from '@nestjs/swagger';
 class ExactlyOneDeviceIdentifier implements ValidatorConstraintInterface {
   validate(_platform: unknown, args: ValidationArguments): boolean {
     const value = args.object as DeviceFingerprintDto;
-    return [value.hash, value.rawVendorId].filter((item) => item !== undefined).length === 1;
+    return [value.hash, value.rawVendorId].filter((item) => item != null).length === 1;
   }
 
   defaultMessage(): string {
