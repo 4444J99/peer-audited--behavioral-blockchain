@@ -179,6 +179,8 @@ set_demo_env() {
   export CORS_ORIGINS="$STYX_WEB_PUBLIC_URL"
   export STYX_TEST_MONEY_MODE=true
   export STYX_ENV_LABEL=local-native-demo
+  export STYX_DEMO_RUNTIME=native
+  export STYX_API_BIND_HOST=127.0.0.1
   export STYX_PRIVATE_BETA=true
   export STYX_ALLOWLIST_US_ONLY=true
   export STYX_FEATURE_B2B_HR_UI=true
@@ -187,6 +189,7 @@ set_demo_env() {
   export NEXT_PUBLIC_STYX_PRIVATE_BETA=true
   export NEXT_PUBLIC_STYX_TEST_MONEY_MODE=true
   export NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI=true
+  export STYX_DEMO_BYPASS_LOGIN_THROTTLE=true
 }
 
 database_exists() {
@@ -274,7 +277,7 @@ launch() {
   info "Building and starting local web tour on ${web_port} ..."
   NODE_ENV=production node24 npm run build --workspace @styx/web
   cd "$repo_root/src/web"
-  nohup "$node_bin" "$repo_root/node_modules/next/dist/bin/next" start -p "$web_port" >"$web_log" 2>&1 < /dev/null &
+  nohup "$node_bin" "$repo_root/node_modules/next/dist/bin/next" start -H 127.0.0.1 -p "$web_port" >"$web_log" 2>&1 < /dev/null &
   web_pid=$!
   cd "$repo_root"
   wait_for_http "http://127.0.0.1:${web_port}/tour" "Web tour" || die "web tour did not become ready; inspect ${web_log}."
