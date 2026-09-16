@@ -71,7 +71,7 @@ export function RegisterScreen({ navigation }: Props) {
         dateOfBirth,
         ageConfirmation: ageConfirmed,
         termsAccepted: termsAccepted,
-        deviceFingerprint: { platform: Platform.OS === 'ios' ? 'ios' : 'android', rawVendorId },
+        deviceFingerprint: { platform: Platform.OS, rawVendorId },
       });
       Alert.alert('Account Created', 'You can now log in.', [
         { text: 'OK', onPress: () => navigation.goBack() },
