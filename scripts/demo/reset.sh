@@ -12,7 +12,11 @@ if [[ -n "$verify_after_reset" && "$verify_after_reset" != "verify" ]]; then
   exit 1
 fi
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
-  bash scripts/deploy.sh reset
+  STYX_TEST_MONEY_MODE=true \
+    STYX_ENV_LABEL=local-canonical-demo \
+    STYX_DEMO_RUNTIME=compose \
+    STYX_DEMO_BYPASS_LOGIN_THROTTLE=true \
+    bash scripts/deploy.sh reset
   if [[ "$verify_after_reset" == "verify" ]]; then
     exec bash scripts/demo/verify-live-stack.sh
   fi
