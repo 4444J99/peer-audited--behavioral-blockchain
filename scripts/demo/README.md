@@ -49,6 +49,15 @@ demo.
 The verifier is the live API/database/browser/ledger/proof/behavioral receipt
 for the current commit. A missing Docker runtime is a failure, not a green demo.
 
+The standard local launchers explicitly bypass the five-per-minute login
+throttle for their synthetic batch only. The guard accepts that opt-in solely
+for `POST /auth/login` from the loopback-only native runtime or the private
+Compose bridge with a `local`/`local-*` development/demo label. The native API
+and web server, and both Compose host ports, bind to `127.0.0.1` while this
+bypass is active; private-LAN callers cannot use it. All other routes and every
+production request remain throttled. General Compose use defaults the bypass
+off; only the canonical demo launch/reset commands explicitly enable it.
+
 `schema.sql` is a **reference snapshot only** and is deliberately not mounted into
 `/docker-entrypoint-initdb.d/` — an initdb-provisioned database froze at that table
 set and caused the migration runner to baseline-stamp (skip) the rest of the chain.

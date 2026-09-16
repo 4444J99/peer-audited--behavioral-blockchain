@@ -222,6 +222,8 @@ set_demo_env() {
   export CORS_ORIGINS="$STYX_WEB_PUBLIC_URL"
   export STYX_TEST_MONEY_MODE=true
   export STYX_ENV_LABEL=local-canonical-demo
+  export STYX_DEMO_RUNTIME=native
+  export STYX_API_BIND_HOST=127.0.0.1
   export STYX_PRIVATE_BETA=true
   export STYX_ALLOWLIST_US_ONLY=true
   export STYX_FEATURE_B2B_HR_UI=true
@@ -230,6 +232,7 @@ set_demo_env() {
   export NEXT_PUBLIC_STYX_PRIVATE_BETA=true
   export NEXT_PUBLIC_STYX_TEST_MONEY_MODE=true
   export NEXT_PUBLIC_STYX_FEATURE_B2B_HR_UI=true
+  export STYX_DEMO_BYPASS_LOGIN_THROTTLE=true
 }
 
 # ── Native seed & Redis ─────────────────────────────────────────────────────
@@ -381,6 +384,10 @@ reset() {
     exec bash "$repo_root/scripts/demo/native.sh" reset
   fi
   if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    export STYX_TEST_MONEY_MODE=true
+    export STYX_ENV_LABEL=local-canonical-demo
+    export STYX_DEMO_RUNTIME=compose
+    export STYX_DEMO_BYPASS_LOGIN_THROTTLE=true
     exec bash "$repo_root/scripts/deploy.sh" reset
   fi
   exec bash "$repo_root/scripts/demo/native.sh" reset
@@ -459,7 +466,12 @@ launch() {
     start_redis
   else
     info "Building, migrating, seeding, and starting Docker Compose stack ..."
-    STYX_DEMO_PASSWORD="$STYX_DEMO_PASSWORD" bash "$repo_root/scripts/deploy.sh" local
+    STYX_TEST_MONEY_MODE=true \
+      STYX_ENV_LABEL=local-canonical-demo \
+      STYX_DEMO_RUNTIME=compose \
+      STYX_DEMO_BYPASS_LOGIN_THROTTLE=true \
+      STYX_DEMO_PASSWORD="$STYX_DEMO_PASSWORD" \
+      bash "$repo_root/scripts/deploy.sh" local
     api_port="$(compose_env_value STYX_DOCKER_API_PORT)"; api_port="${api_port:-3000}"
     web_port="$(compose_env_value STYX_DOCKER_WEB_PORT)"; web_port="${web_port:-3001}"
     ok "Docker Compose stack built, seeded, and started."
@@ -537,7 +549,7 @@ launch() {
     cd "$repo_root/src/web"
     local node_bin
     node_bin="$(node24_path)"
-    nohup "$node_bin" "$repo_root/node_modules/next/dist/bin/next" start -p "$web_port" >"$web_log" 2>&1 < /dev/null &
+    nohup "$node_bin" "$repo_root/node_modules/next/dist/bin/next" start -H 127.0.0.1 -p "$web_port" >"$web_log" 2>&1 < /dev/null &
     web_pid=$!
     cd "$repo_root"
     wait_for_http "http://127.0.0.1:${web_port}/tour" "Web tour" \
