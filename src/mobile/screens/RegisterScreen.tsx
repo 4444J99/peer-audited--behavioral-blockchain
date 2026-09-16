@@ -32,8 +32,9 @@ export function RegisterScreen({ navigation }: Props) {
 
   const deviceIdentifier = async () => {
     if (Platform.OS === 'android') {
-      if (!Application.androidId) throw new Error('Android device identity unavailable');
-      return Application.androidId;
+      const androidId = Application.getAndroidId();
+      if (!androidId) throw new Error('Android device identity unavailable');
+      return androidId;
     }
     if (Platform.OS === 'ios') {
       const vendorId = await Application.getIosIdForVendorAsync();
