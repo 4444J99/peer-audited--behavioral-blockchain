@@ -536,6 +536,17 @@
       "completed": "2026-09-12T15:26:29Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "verify-login-throttle-2026-09-16",
+      "phase": "verify",
+      "issues": [
+        990
+      ],
+      "started": "2026-09-16T19:44:11Z",
+      "completed": "2026-09-16T19:44:22Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -15028,6 +15039,46 @@
       "pr": null,
       "state_updated": "2026-09-11T11:45:00Z",
       "closed_at": null
+    },
+    "990": {
+      "title": "fix(api): scope local demo login-throttle bypass",
+      "labels": [
+        "bug",
+        "api",
+        "testing",
+        "P1-beta-enhancer"
+      ],
+      "action": "BUILD",
+      "state": "TESTED",
+      "batch": "verify-login-throttle-2026-09-16",
+      "history": [
+        {
+          "from": "UNREAD",
+          "to": "INSPECTED",
+          "at": "2026-09-16T19:44:12Z"
+        },
+        {
+          "from": "INSPECTED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-16T19:44:12Z",
+          "agent": "codex-root"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "BUILD_DONE",
+          "at": "2026-09-16T19:44:12Z"
+        },
+        {
+          "from": "BUILD_DONE",
+          "to": "TESTED",
+          "at": "2026-09-16T19:44:12Z"
+        }
+      ],
+      "evidence": "src/api/src/common/guards/app-throttler.guard.spec.ts:105",
+      "pr": null,
+      "state_updated": "2026-09-16T19:44:12Z",
+      "closed_at": null,
+      "claimed_by": "codex-root"
     },
     "606 602 598 597 596 589 588 587 585 584 582 581 578 572 568 559 444 443 442 441 440 439 438 437 436 426 425 424 423 418 417 416 415 277 276 275 274 271 261 260 259 255 254 253 252 240 239 236 233 224 217 210 206 200 199 198 197 196 195 194 193 186 184 183 180 179 145 ": {
       "title": "Unknown",

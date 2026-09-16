@@ -1085,5 +1085,18 @@
     "owningLane": "main",
     "branchPattern": "main",
     "status": "PARENT_GATE"
+  },
+  "990": {
+    "number": 990,
+    "title": "fix(api): scope local demo login-throttle bypass",
+    "labels": [
+      "bug",
+      "api",
+      "testing",
+      "P1-beta-enhancer"
+    ],
+    "owningLane": "lane/verify",
+    "branchPattern": "work/verify/990-local-demo-login-throttle",
+    "status": "ACTIVE_OR_PARKED"
   }
 }

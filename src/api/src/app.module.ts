@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
-import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { ThrottlerModule } from "@nestjs/throttler";
+import { AppThrottlerGuard } from "./common/guards/app-throttler.guard";
 import { LoggerModule } from "nestjs-pino";
 import { DatabaseModule } from "./database/database.module";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -77,6 +78,6 @@ import { AgentActionEvidenceModule } from "./modules/agent-action-evidence/agent
     OnboardingModule,
     AgentActionEvidenceModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],
 })
 export class AppModule {}
