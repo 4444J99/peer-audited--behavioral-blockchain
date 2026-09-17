@@ -1,5 +1,31 @@
 # Pattern Log — Triage Session Journal
 
+## teamwork-preview-verified-core-2026-09-17 — 2026-09-17 — Phase Beta/Omega Core Systems verification
+
+**Started:** 18 issues (#178, #278, #280, #289, #386, #387, #388, #389, #392, #393, #394, #396, #397, #399, #405, #412, #413, #414). **Built:** 18. **Tests:** All 3,428 monorepo unit/integration tests passed; strict tsc passed; verify-agent-pr passed.
+
+**Evidence:**
+- #178: `src/api/src/modules/ops/beta-readiness.service.ts:20` (BetaReadinessService evaluating all Blitzkrieg lanes)
+- #278: `src/api/src/common/guards/geofence.guard.ts:25` (Fail-closed geofence guard and policy registry)
+- #280: `src/api/services/security/self-exclusion.service.ts:15` (Runtime self-exclusion & cooldown enforcement)
+- #289: `src/api/src/modules/fury/enforcement.service.ts:133` (Collusion slashing wired to double-entry ledger & honey-trap enforcement)
+- #386: `src/api/database/migrations/007_user_compliance_identity_fields.sql:1` (Identity verifications and compliance schema)
+- #387: `src/api/src/modules/compliance/identity-verification.service.ts:35` (Progressive tier KYC logic & document verification)
+- #388: `src/web/app/kyc/page.tsx:28` (Identity document upload flow and stake tier badge display)
+- #389: `src/api/src/modules/compliance/identity-verification.service.spec.ts:1` (KYC tier transition and document verification tests)
+- #392: `src/api/src/modules/proofs/proofs.controller.ts:43` (Camera proof submission endpoint with nonce validation)
+- #393: `src/api/database/migrations/003_proof_hashes.sql:1` (Proof submissions schema and hash metadata)
+- #394: `src/api/src/modules/proofs/proofs.controller.spec.ts:1` (Proof submission and nonce challenge verification tests)
+- #396: `src/api/services/ledger/ledger.service.ts:68` (Deposit, withdrawal, and settlement endpoints)
+- #397: `src/api/database/migrations/001_initial_schema.sql:1` (Double-entry transactions and ledger accounts schema)
+- #399: `src/api/services/ledger/ledger.service.spec.ts:1` (Deposit, stake hold, settlement, and withdrawal lifecycle tests)
+- #405: `src/api/src/common/guards/geofence.guard.spec.ts:1` (Geofence protection regression and jurisdiction test suite)
+- #412: `src/web/components/DangerZoneBanner.tsx:12` (Crisis intervention flow and emergency resource display UI)
+- #413: `src/api/services/security/crisis-detection.service.ts:25` (Crisis event logging and escalation trigger)
+- #414: `src/api/services/security/crisis-detection.service.spec.ts:1` (Crisis detection sensitivity, accuracy, and false-positive tests)
+
+**Lesson:** Core systems code previously built was sitting in TRACKING status in triage.json without associated evidence links. Reconciling verified code on disk directly closes the accounting gap without synthetic shortcuts.
+
 ## blocked-legal-vendor-2026-09-11 — 2026-09-11 — Legal and vendor blocker evidence
 
 **Started:** 4 issues (#315, #316, #317, #141). **Built:** 0. **Tests:** triage
