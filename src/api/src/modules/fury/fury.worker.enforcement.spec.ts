@@ -141,4 +141,25 @@ describe('FuryWorker — honeypot enforcement auto-open', () => {
 
     await expect(bareWorker.checkConsensus('proof-hp-bare')).resolves.toBeUndefined();
   });
+
+  it('promotes the existing honeypot case when recording an automatic slash', async () => {
+    mockPool.query
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 'case-pending' }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    await (worker as any).recordAutomaticPenaltyCase(
+      'fury-1', 'proof-hp-1', 'txn-auto-1', 'acct-fury-1', 500,
+    );
+
+    expect(mockPool.query.mock.calls[1][0]).toMatch(/UPDATE fury_enforcement_cases/);
+    expect(mockPool.query.mock.calls[1][0]).toMatch(/evidence_json->>'proofId' = \$2/);
+    expect(mockPool.query.mock.calls[2]).toEqual([
+      expect.stringContaining('INSERT INTO fury_penalties'),
+      ['case-pending', 500, 'txn-auto-1', 'acct-fury-1'],
+    ]);
+    expect(mockPool.query.mock.calls.some(([sql]) =>
+      String(sql).includes('INSERT INTO fury_enforcement_cases'),
+    )).toBe(false);
+  });
 });

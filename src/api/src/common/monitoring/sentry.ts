@@ -65,10 +65,12 @@ export function captureFinancialAlert(
         scope.setTag('financial_event', event);
         scope.setFingerprint(['financial-incident', event]);
         scope.setContext('financial_details', details);
-        SentryModule.captureMessage(`FINANCIAL INTEGRITY ALERT: ${event}`, 'error');
+        // Do not override the fatal level configured on this scope. Passing an
+        // explicit `error` level here silently downgraded quarantine incidents.
+        SentryModule.captureMessage(`FINANCIAL INTEGRITY ALERT: ${event}`);
       });
     } else {
-      SentryModule.captureMessage(`FINANCIAL INTEGRITY ALERT: ${event}`, 'error');
+      SentryModule.captureMessage(`FINANCIAL INTEGRITY ALERT: ${event}`, 'fatal');
     }
   } catch (err) {
     console.error(`Failed to dispatch Sentry financial alert: ${(err as Error).message}`, details);
@@ -78,4 +80,3 @@ export function captureFinancialAlert(
 export function isSentryAvailable(): boolean {
   return sentryAvailable;
 }
-

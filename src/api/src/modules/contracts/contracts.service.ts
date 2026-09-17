@@ -3907,7 +3907,7 @@ export class ContractsService {
         `UPDATE accountability_partners
          SET status = $1, partner_user_id = $3, accepted_at = CASE WHEN $1 = 'ACTIVE' THEN NOW() ELSE accepted_at END
          WHERE contract_id = $2 AND (partner_user_id = $3 OR partner_email = (SELECT email FROM users WHERE id = $3))
-           AND status IS DISTINCT FROM $1
+           AND status = 'PENDING'
          RETURNING *`,
         [status, contractId, partnerId],
       );
@@ -3918,6 +3918,11 @@ export class ContractsService {
           [contractId, partnerId],
         );
         if (existing.rows[0]?.status === status) return false;
+        if (existing.rows.length > 0) {
+          throw new ConflictException(
+            `Invitation already finalized as ${existing.rows[0].status}`,
+          );
+        }
         throw new NotFoundException("Invitation not found");
       }
       await client.query(

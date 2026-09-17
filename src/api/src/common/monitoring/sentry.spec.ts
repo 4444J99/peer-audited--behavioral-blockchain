@@ -84,8 +84,9 @@ describe('Sentry monitoring', () => {
     sentryModule.initSentry();
     sentryModule.captureFinancialAlert('LEDGER_QUARANTINE_ACTIVATED', { accountId: 'acct-1' });
     expect(sentryModule.isSentryAvailable()).toBe(true);
+    expect(scope.setLevel).toHaveBeenCalledWith('fatal');
     expect(scope.setTag).toHaveBeenCalledWith('financial_event', 'LEDGER_QUARANTINE_ACTIVATED');
-    expect(sdk.captureMessage).toHaveBeenCalledWith('FINANCIAL INTEGRITY ALERT: LEDGER_QUARANTINE_ACTIVATED', 'error');
+    expect(sdk.captureMessage).toHaveBeenCalledWith('FINANCIAL INTEGRITY ALERT: LEDGER_QUARANTINE_ACTIVATED');
     delete process.env.SENTRY_DSN;
     sentryModule.initSentry();
     expect(sentryModule.isSentryAvailable()).toBe(false);

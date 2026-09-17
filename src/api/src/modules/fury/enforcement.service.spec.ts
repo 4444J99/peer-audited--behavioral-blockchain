@@ -55,6 +55,12 @@ describe('EnforcementService', () => {
     it('derives a positive omitted financial amount', async () => {
       expect((await service.confirmCase('case-1','STAKE_SLASH')).amountCents).toBeGreaterThan(0);
     });
+    it('refuses to charge a pending honeypot case a second time', async () => {
+      mockPool.query.mockResolvedValueOnce({rows:[{id:'case-hp-1',case_type:'HONEYPOT_FAILURE'}]});
+      await expect(service.confirmCase('case-hp-1','STAKE_SLASH')).rejects.toThrow(/applied automatically/);
+      expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
+      expect(client.query).toHaveBeenLastCalledWith('ROLLBACK');
+    });
     it.each([0,-1,0.5,NaN,Infinity])('rejects invalid financial amount %s', async amount => {
       await expect(service.confirmCase('case-1','STAKE_SLASH',amount)).rejects.toThrow(/positive/);
       expect(mockLedger.recordTransaction).not.toHaveBeenCalled();

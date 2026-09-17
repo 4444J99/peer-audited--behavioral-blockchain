@@ -23,7 +23,9 @@ This guide walks a dogfood participant through the full Styx behavioral commitme
    ```
 3. Stack running:
    ```bash
-   make docker-up   # Postgres + Redis
+   # Start only the datastores. `make docker-up` starts API and Web too,
+   # which would conflict with the local processes started by `make dev`.
+   docker compose --env-file .env -f .config/docker/docker-compose.yml up -d styx-postgres styx-redis
    npm run dev:migrate
    make dev         # API (port 3000) + Web (port 3001)
    ```

@@ -3023,6 +3023,14 @@ describe("ContractsService", () => {
       expect(mockNotifications.create).not.toHaveBeenCalled();
       expect(notifyClient.query).toHaveBeenLastCalledWith("COMMIT");
     });
+    it("does not let a later opposite response rewrite a finalized invitation", async () => {
+      notifyPool.query.mockResolvedValueOnce({rows:[]}).mockResolvedValueOnce({rows:[{status:"ACTIVE"}]});
+      await expect(notifyService.respondToInvite("c-1","partner-9",false)).rejects.toThrow("Invitation already finalized as ACTIVE");
+      expect(notifyPool.query.mock.calls[0][0]).toContain("status = 'PENDING'");
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(notifyClient.query).toHaveBeenLastCalledWith("ROLLBACK");
+    });
     it("rolls back acceptance on audit failure before sending notifications", async () => {
       notifyPool.query.mockResolvedValueOnce({rows:[{id:"ap-1"}]}).mockResolvedValueOnce({rows:[]});
       (mockTruthLog.appendEvent as jest.Mock).mockRejectedValueOnce(new Error("audit failure"));

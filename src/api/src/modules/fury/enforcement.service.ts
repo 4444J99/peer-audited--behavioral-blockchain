@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
 import { inTransaction } from '../../../services/ledger/transaction';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
@@ -233,10 +233,15 @@ export class EnforcementService {
     await inTransaction(this.pool, async (client) => {
       const claim = await client.query(
         `UPDATE fury_enforcement_cases SET status = 'PENALTY_APPLIED'
-         WHERE id = $1 AND status = 'PENDING_REVIEW' RETURNING id`,
+         WHERE id = $1 AND status = 'PENDING_REVIEW' RETURNING id, case_type`,
         [caseId],
       );
       if (claim.rows.length === 0) throw new NotFoundException('Pending case not found');
+      if (claim.rows[0].case_type === 'HONEYPOT_FAILURE' && FINANCIAL_PENALTY_TYPES.has(penaltyType)) {
+        throw new ConflictException(
+          'Honeypot stake slashes are applied automatically; this case cannot be charged again.',
+        );
+      }
       await this.applyPenaltyWithClient(client, caseId, penaltyType, resolvedAmount);
     });
     return { success: true, caseId, status: 'PENALTY_APPLIED', amountCents: resolvedAmount };
@@ -449,4 +454,3 @@ export class EnforcementService {
     return amountCents;
   }
 }
-

@@ -476,19 +476,52 @@ export class FuryWorker implements OnModuleInit {
       );
       if (existing.rows.length > 0) return;
 
-      const caseResult = await this.pool.query(
-        `INSERT INTO fury_enforcement_cases (reviewer_id, case_type, confidence, status, evidence_json)
-         VALUES ($1, 'HONEYPOT_FAILURE', 1.0, 'PENALTY_APPLIED', $2)
+      // Consensus opens a PENDING_REVIEW case before the automatic ledger
+      // charge. Promote that same case instead of creating a second case that
+      // an admin could independently confirm and charge again.
+      let caseResult = await this.pool.query(
+        `UPDATE fury_enforcement_cases
+         SET status = 'PENALTY_APPLIED',
+             confidence = 1.0,
+             evidence_json = evidence_json || $3::jsonb
+         WHERE id = (
+           SELECT c.id FROM fury_enforcement_cases c
+           WHERE c.reviewer_id = $1
+             AND c.case_type = 'HONEYPOT_FAILURE'
+             AND c.status = 'PENDING_REVIEW'
+             AND c.evidence_json->>'proofId' = $2
+             AND NOT EXISTS (SELECT 1 FROM fury_penalties p WHERE p.case_id = c.id)
+           ORDER BY c.created_at ASC
+           LIMIT 1
+         )
          RETURNING id`,
         [
           furyId,
+          proofId,
           JSON.stringify({
-            proofId,
             reason: 'Automatic honeypot slash applied at consensus',
             automatic: true,
           }),
         ],
       );
+
+      // If case filing failed earlier, retain an appealable record for the
+      // already-posted ledger transaction without fabricating a pending case.
+      if (caseResult.rows.length === 0) {
+        caseResult = await this.pool.query(
+          `INSERT INTO fury_enforcement_cases (reviewer_id, case_type, confidence, status, evidence_json)
+           VALUES ($1, 'HONEYPOT_FAILURE', 1.0, 'PENALTY_APPLIED', $2)
+           RETURNING id`,
+          [
+            furyId,
+            JSON.stringify({
+              proofId,
+              reason: 'Automatic honeypot slash applied at consensus',
+              automatic: true,
+            }),
+          ],
+        );
+      }
 
       await this.pool.query(
         `INSERT INTO fury_penalties
