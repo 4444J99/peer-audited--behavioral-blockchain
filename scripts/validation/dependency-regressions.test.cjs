@@ -7,10 +7,13 @@ const { createRequire } = require('node:module');
 const semver = require('semver');
 
 const mobile = createRequire(path.resolve('src/mobile/package.json'));
-const xcodeRequire = createRequire(mobile.resolve('xcode/package.json'));
+const expo = createRequire(mobile.resolve('expo/package.json'));
+const configPlugins = createRequire(expo.resolve('@expo/config-plugins/package.json'));
+// Resolve through the real consumer, without assuming npm hoists this package.
+const xcodeRequire = createRequire(configPlugins.resolve('xcode/package.json'));
 
-// xcode 3.0.1 uses CommonJS uuid.v4(), not the removed uuid/v4 path.
-// Keep this security override scoped; the API retains its newer UUID version.
+// Xcode uses CommonJS uuid.v4(), not the removed uuid/v4 path. Keep its override
+// scoped; the API retains its independent, newer UUID version.
 test('Xcode tooling resolves a patched CommonJS UUID implementation', () => {
   assert.ok(semver.gte(xcodeRequire('uuid/package.json').version, '11.1.1'));
   const uuid = xcodeRequire('uuid');
@@ -51,7 +54,7 @@ test('patched Xcode UUIDs survive project parse, mutation, and serialization', (
   rootObject = 000000000000000000000002;
 }
 `);
-  const xcode = mobile('xcode');
+  const xcode = configPlugins('xcode');
   const project = xcode.project(file);
   project.parseSync();
   const generated = new Set(Array.from({ length: 128 }, () => project.generateUuid()));
@@ -79,8 +82,8 @@ test('navigation still decodes and round-trips contract deep-link parameters', (
   const state = getStateFromPath('/contracts/abc%20def?note=hello%20world&mode=test', config);
   assert.ok(state);
   assert.equal(state.routes[0].name, 'ContractDetail');
-  assert.deepEqual(state.routes[0].params, { contractId: 'abc def', note: 'hello world', mode: 'test' });
+  assert.deepEqual({ ...state.routes[0].params }, { contractId: 'abc def', note: 'hello world', mode: 'test' });
   const roundTrip = getStateFromPath(getPathFromState(state, config), config);
   assert.equal(roundTrip.routes[0].name, state.routes[0].name);
-  assert.deepEqual(roundTrip.routes[0].params, state.routes[0].params);
+  assert.deepEqual({ ...roundTrip.routes[0].params }, { ...state.routes[0].params });
 });
