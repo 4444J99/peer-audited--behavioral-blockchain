@@ -108,6 +108,7 @@ export function geofenceFailsOpenOnMissingLocation(): boolean {
 export class CompliancePolicyService implements OnModuleInit {
   private readonly logger = new Logger(CompliancePolicyService.name);
 
+
   private static readonly RESTRICTED_REFUND_ONLY_ACTIONS =
     new Set<ComplianceAction>([
       "CREATE_CONTRACT",
@@ -127,6 +128,593 @@ export class CompliancePolicyService implements OnModuleInit {
     private readonly identityVerification?: IdentityVerificationService,
   ) {}
 
+  /**
+   * PRV16: KYC enforcement fails CLOSED in production — it is ON by default and is
+   * only disabled by an explicit KYC_ENFORCEMENT_ENABLED=false. Outside production
+   * it is opt-in (default off) so local/dev/test flows are not blocked. Whenever it
+   * ends up disabled the state is logged LOUDLY so it is a deliberate, visible choice.
+   * Note: the age gate (>=18) is enforced unconditionally regardless of this toggle.
+   */
+  onModuleInit(): void {
+    if (this.isKycEnforcementEnabled()) return;
+
+    const message =
+      "KYC enforcement is DISABLED. Contracts above the TIER_1 ($20) micro-stake " +
+      "threshold can be created WITHOUT identity verification. The unconditional age " +
+      "gate (>=18) still applies.";
+
+    // In production the default is ON, so a disabled state can only mean someone set
+    // KYC_ENFORCEMENT_ENABLED=false explicitly — that is a dangerous, deliberate
+    // compliance decision and must be an error-level signal.
+    if (process.env.NODE_ENV === "production") {
+      this.logger.error(
+        `${message} PRODUCTION has KYC_ENFORCEMENT_ENABLED=false — confirm this is an intentional, compliant decision.`,
+      );
+    } else {
+      this.logger.warn(
+        `${message} (KYC is default-ON in production; set KYC_ENFORCEMENT_ENABLED=true to enforce here.)`,
+      );
+    }
+  }
+
+  async getJurisdictionPolicy(
+    code: string,
+  ): Promise<{ tier: JurisdictionTier; dispositionMode: string } | null> {
+    const result = await this.pool.query(
+      "SELECT tier, disposition_mode FROM jurisdictions WHERE code = $1",
+      [code.toUpperCase()],
+    );
+    if (result.rows.length === 0) return null;
+    return {
+      tier: result.rows[0].tier as JurisdictionTier,
+      dispositionMode: result.rows[0].disposition_mode,
+    };
+  }
+
+  isKycEnforcementEnabled(): boolean {
+    const flag = String(
+      process.env.KYC_ENFORCEMENT_ENABLED ?? "",
+    ).toLowerCase();
+    if (process.env.NODE_ENV === "production") {
+      // Fail closed in production: enforce KYC unless EXPLICITLY disabled.
+      return flag !== "false";
+    }
+    // Non-production: opt-in so dev/test/local flows are not blocked by default.
+    return flag === "true";
+  }
+
+  isAgeEnforcementImplemented(): boolean {
+    return true;
+  }
+
+  /**
+   * Real age gate (>=18). Reads the user's stored date_of_birth (captured at
+   * registration) and computes whole years. Fails CLOSED: if the DOB is missing or
+   * unparseable we treat the user as not age-verified and block the monetized action.
+   */
+  async evaluateAgeRequirement(
+    userId: string,
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    const result = await this.pool.query(
+      "SELECT date_of_birth FROM users WHERE id = $1",
+      [userId],
+    );
+
+    const dobRaw = result.rows[0]?.date_of_birth ?? null;
+    const age = this.computeAgeYears(dobRaw);
+
+    if (age == null) {
+      // Missing / unparseable DOB -> fail closed.
+      return {
+        allowed: false,
+        reason:
+          "Date of birth is required to verify you meet the minimum age requirement.",
+      };
+    }
+
+    if (age < MINIMUM_AGE_YEARS) {
+      return {
+        allowed: false,
+        reason: `You must be at least ${MINIMUM_AGE_YEARS} years old to perform this action.`,
+      };
+    }
+
+    return { allowed: true };
+  }
+
+  private computeAgeYears(dob: unknown): number | null {
+    if (dob == null) return null;
+    const birth = dob instanceof Date ? dob : new Date(String(dob));
+    if (isNaN(birth.getTime())) return null;
+
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    // Subtract a year if this year's birthday has not yet occurred.
+    const beforeBirthday =
+      now.getMonth() < birth.getMonth() ||
+      (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate());
+    if (beforeBirthday) age -= 1;
+    return age;
+  }
+
+  /**
+   * Phase Beta P0-003: KYC tier gating.
+   * TIER_1 ($20 max) is always allowed without KYC.
+   * Above TIER_1, if KYC enforcement is enabled, identity must be verified.
+   */
+  async evaluateKycRequirement(
+    userId: string,
+    stakeAmount: number,
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    if (!this.isKycEnforcementEnabled()) {
+      return { allowed: true };
+    }
+
+    // TIER_1 micro-stakes ($20 max) are always exempt from KYC
+    const TIER_1_MAX = 20;
+    if (stakeAmount <= TIER_1_MAX) {
+      return { allowed: true };
+    }
+
+    // Check user's identity verification status
+    const compliance = this.identityVerification
+      ? await this.identityVerification.getUserComplianceStatus(userId)
+      : null;
+
+    if (!compliance?.isKycVerified) {
+      return {
+        allowed: false,
+        reason: `Identity verification required for stakes above $${TIER_1_MAX}. Complete KYC to continue.`,
+      };
+    }
+
+    return { allowed: true };
+  }
+
+  shouldFailOpenOnMissingLocation(): boolean {
+    return geofenceFailsOpenOnMissingLocation();
+  }
+
+  canCreateContract(input: {
+    tier: JurisdictionTier;
+    state: string | null;
+  }): ComplianceActionDecisionCore {
+    return this.evaluateActionPolicy(
+      "CREATE_CONTRACT",
+      input.tier,
+      input.state,
+    );
+  }
+
+  canSubmitProof(input: {
+    tier: JurisdictionTier;
+    state: string | null;
+  }): ComplianceActionDecisionCore {
+    return this.evaluateActionPolicy("SUBMIT_PROOF", input.tier, input.state);
+  }
+
+  canPurchaseTicket(input: {
+    tier: JurisdictionTier;
+    state: string | null;
+  }): ComplianceActionDecisionCore {
+    return this.evaluateActionPolicy(
+      "PURCHASE_TICKET",
+      input.tier,
+      input.state,
+    );
+  }
+
+  getEligibility(req: Request) {
+    const location = this.resolveStateFromRequest(req);
+    const tier = location.state
+      ? (STATE_TIERS[location.state] ?? JurisdictionTier.TIER_3)
+      : this.shouldFailOpenOnMissingLocation()
+        ? JurisdictionTier.TIER_1
+        : JurisdictionTier.TIER_3;
+
+    const create = this.canCreateContract({ tier, state: location.state });
+    const proof = this.canSubmitProof({ tier, state: location.state });
+    const ticket = this.canPurchaseTicket({ tier, state: location.state });
+
+    const requiredMode: ComplianceMode =
+      tier === JurisdictionTier.TIER_3
+        ? "BLOCKED"
+        : tier === JurisdictionTier.TIER_2
+          ? "REFUND_ONLY"
+          : "FULL_ACCESS";
+
+    return {
+      requiredMode,
+      jurisdiction: {
+        state: location.state,
+        tier,
+        source: location.source,
+        missing: !location.state,
+      },
+      controls: {
+        kycEnforcementEnabled: this.isKycEnforcementEnabled(),
+        ageEnforcementImplemented: this.isAgeEnforcementImplemented(),
+      },
+      actions: {
+        canCreateContract: create.allowed,
+        canSubmitProof: proof.allowed,
+        canPurchaseTicket: ticket.allowed,
+      },
+    };
+  }
+
+  /**
+   * Log a compliance decision to the audit trail.
+   * Fire-and-forget — logging failures must never block the request.
+   */
+  private async logDecision(
+    userId: string | null,
+    action: ComplianceAction,
+    decision: ComplianceDecision,
+  ): Promise<void> {
+    try {
+      await this.pool.query(
+        `INSERT INTO compliance_decisions (user_id, action, jurisdiction_code, tier, allowed, reason_code, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          userId,
+          action,
+          decision.state,
+          decision.tier,
+          decision.allowed,
+          decision.code ?? null,
+          JSON.stringify({
+            stateSource: decision.stateSource,
+            source: decision.source,
+            confidence: decision.confidence,
+            country: decision.country,
+            missingLocation: decision.missingLocation,
+            requiredMode: decision.requiredMode,
+          }),
+        ],
+      );
+    } catch (err) {
+      this.logger.error("Failed to log compliance decision", err);
+    }
+  }
+
+  async evaluateUserComplianceForRequest(
+    req: Request,
+    userId: string,
+  ): Promise<ComplianceActionDecisionCore> {
+    const baseDecision = this.evaluateRequestPolicy(req);
+    if (!baseDecision.allowed) {
+      return {
+        allowed: baseDecision.allowed,
+        code: baseDecision.code,
+        message: baseDecision.message,
+        requiredMode: baseDecision.requiredMode,
+      };
+    }
+
+    if (baseDecision.state) {
+      await this.pool.query(
+        "UPDATE users SET last_known_state = $1 WHERE id = $2",
+        [baseDecision.state, userId],
+      );
+    }
+
+    // Age gate applies to every monetized/real-money action and is enforced
+    // unconditionally (it is a hard legal requirement, independent of the KYC
+    // enforcement toggle). Fails closed when DOB is missing/under-age.
+    if (CompliancePolicyService.KYC_GATED_ACTIONS.has(baseDecision.action)) {
+      const age = await this.evaluateAgeRequirement(userId);
+      if (!age.allowed) {
+        return {
+          allowed: false,
+          code: "AGE_VERIFICATION_REQUIRED",
+          message:
+            age.reason ??
+            "Age verification is required before performing this monetized action.",
+          requiredMode: baseDecision.requiredMode,
+        };
+      }
+    }
+
+    if (
+      !this.isKycEnforcementEnabled() ||
+      !CompliancePolicyService.KYC_GATED_ACTIONS.has(baseDecision.action)
+    ) {
+      return {
+        allowed: true,
+        requiredMode: baseDecision.requiredMode,
+      };
+    }
+
+    const compliance = this.identityVerification
+      ? await this.identityVerification.getUserComplianceStatus(userId)
+      : null;
+
+    if (!compliance?.isKycVerified) {
+      const decision: ComplianceDecision = {
+        ...baseDecision,
+        allowed: false,
+        code: "KYC_REQUIRED",
+        message:
+          "Identity verification is required before performing this monetized action.",
+        requiredMode: baseDecision.requiredMode,
+      };
+      await this.logDecision(userId, baseDecision.action, decision);
+      return {
+        allowed: false,
+        code: "KYC_REQUIRED",
+        message: decision.message,
+        requiredMode: baseDecision.requiredMode,
+      };
+    }
+
+    const allowedDecision: ComplianceDecision = {
+      ...baseDecision,
+      allowed: true,
+      requiredMode: baseDecision.requiredMode,
+    };
+    await this.logDecision(userId, baseDecision.action, allowedDecision);
+    return {
+      allowed: true,
+      requiredMode: baseDecision.requiredMode,
+    };
+  }
+
+  evaluateRequestPolicy(req: Request): ComplianceDecision {
+    const location = this.resolveStateFromRequest(req);
+    const state = location.state;
+    const tier = state
+      ? (STATE_TIERS[state] ?? JurisdictionTier.TIER_3)
+      : this.shouldFailOpenOnMissingLocation()
+        ? JurisdictionTier.TIER_1
+        : JurisdictionTier.TIER_3;
+    const action = this.resolveActionFromRequest(req);
+
+    if (!state && !this.shouldFailOpenOnMissingLocation()) {
+      // The state is unresolved, so this is a blocked request — UNLESS the
+      // chain still resolved a country and it is a permitted one, AND the
+      // action is purely read-only. A US client whose IP resolves to
+      // `{country:'US', region:''}` (common across the bundled GeoLite
+      // ranges, e.g. 8.8.8.8) must not be locked out of their dashboard.
+      // No monetized path can reach this carve-out: READ_ONLY is in neither
+      // RESTRICTED_REFUND_ONLY_ACTIONS nor KYC_GATED_ACTIONS.
+      if (location.country === "US" && action === "READ_ONLY") {
+        return {
+          allowed: true,
+          requiredMode: "FULL_ACCESS",
+          action,
+          tier: JurisdictionTier.TIER_1,
+          state: null,
+          country: location.country,
+          source: location.source,
+          stateSource: "ip-country-only",
+          confidence: location.confidence,
+          missingLocation: true,
+          overrideIgnoredInProduction: location.overrideIgnoredInProduction,
+        };
+      }
+
+      return {
+        allowed: false,
+        code: "JURISDICTION_BLOCKED",
+        message: "Location verification is required to access this endpoint.",
+        requiredMode: "BLOCKED",
+        action,
+        tier,
+        state: null,
+        country: location.country,
+        source: location.source,
+        stateSource: this.deriveStateSource(location),
+        confidence: location.confidence,
+        missingLocation: true,
+        overrideIgnoredInProduction: location.overrideIgnoredInProduction,
+      };
+    }
+
+    const base = this.evaluateActionPolicy(action, tier, state);
+    return {
+      ...base,
+      action,
+      tier,
+      state,
+      country: location.country,
+      source: location.source,
+      stateSource: this.deriveStateSource(location),
+      confidence: location.confidence,
+      missingLocation: !state,
+      overrideIgnoredInProduction: location.overrideIgnoredInProduction,
+    };
+  }
+
+  private deriveStateSource(location: {
+    state: string | null;
+    country: string | null;
+    source: GeoSource;
+  }): GeoStateSource {
+    if (location.state) return location.source;
+    if (location.country) return "ip-country-only";
+    return "none";
+  }
+
+  private evaluateActionPolicy(
+    action: ComplianceAction,
+    tier: JurisdictionTier,
+    state: string | null,
+  ): ComplianceActionDecisionCore {
+    if (tier === JurisdictionTier.TIER_3) {
+      return {
+        allowed: false,
+        code: "JURISDICTION_BLOCKED",
+        message:
+          "Styx Protocol is legally restricted in your jurisdiction. Geofencing enforcement active.",
+        requiredMode: "BLOCKED",
+      };
+    }
+
+    if (
+      tier === JurisdictionTier.TIER_2 &&
+      CompliancePolicyService.RESTRICTED_REFUND_ONLY_ACTIONS.has(action)
+    ) {
+      return {
+        allowed: false,
+        code: "JURISDICTION_REFUND_ONLY_RESTRICTED",
+        message: `This action is unavailable in your jurisdiction while Styx is operating in refund-only mode${state ? ` (${state})` : ""}.`,
+        requiredMode: "REFUND_ONLY",
+      };
+    }
+
+    return {
+      allowed: true,
+      requiredMode:
+        tier === JurisdictionTier.TIER_2 ? "REFUND_ONLY" : "FULL_ACCESS",
+    };
+  }
+
+  /**
+   * Whether request-borne proxy/CDN headers (cf-ipstate, cf-connecting-ip,
+   * x-forwarded-for, x-real-ip) may be trusted. These are only meaningful when the
+   * API actually sits behind a trusted proxy/CF edge that overwrites client-supplied
+   * values. A raw client can forge any of them, so trust is gated behind an explicit
+   * opt-in (default OFF / fail-closed).
+   */
+  private trustProxyHeaders(): boolean {
+    return (
+      String(process.env.TRUST_PROXY_HEADERS || "false")
+        .trim()
+        .toLowerCase() === "true"
+    );
+  }
+
+  private resolveStateFromRequest(req: Request): {
+    state: string | null;
+    country: string | null;
+    source: GeoSource;
+    confidence: number;
+    overrideIgnoredInProduction: boolean;
+  } {
+    const trustProxy = this.trustProxyHeaders();
+
+    // 1. Trusted proxy/CDN geo headers. These are only authoritative when we are
+    //    actually behind a trusted edge (TRUST_PROXY_HEADERS=true); otherwise a
+    //    client could spoof them to bypass a PROHIBITED jurisdiction block.
+    if (trustProxy) {
+      const proxyResolution = this.resolveFromProxyGeoHeaders(req);
+      if (proxyResolution) {
+        return this.toLocation(proxyResolution, false);
+      }
+    }
+
+    // 2. Dev-only explicit override — bypasses geo entirely. Unchanged behavior:
+    //    honored outside production, and flagged (not honored) in production.
+    const override = normalizeStateCode(
+      this.toSingleHeaderValue(req.headers["x-styx-state"]),
+    );
+    const isProduction = process.env.NODE_ENV === "production";
+    if (override && !isProduction) {
+      return {
+        state: override,
+        country: "US",
+        source: "x-styx-state",
+        confidence: 1,
+        overrideIgnoredInProduction: false,
+      };
+    }
+
+    // 3. IP-based chain: MaxMind GeoLite2 City when configured (the fix for the
+    //    *data*), then geoip-lite as the always-present floor. `override` above is
+    //    dev-only; in production its presence is recorded so it is visible that a
+    //    client-supplied override was attempted and ignored.
+    const maxMindResolution = this.resolveFromMaxMind(req, trustProxy);
+    if (maxMindResolution) {
+      return this.toLocation(maxMindResolution, !!override && isProduction);
+    }
+
+    const geoipResolution = this.lookupFromGeoipLite(req, trustProxy);
+    if (geoipResolution) {
+      return this.toLocation(geoipResolution, !!override && isProduction);
+    }
+
+    return {
+      state: null,
+      country: null,
+      source: "none",
+      confidence: 0,
+      overrideIgnoredInProduction: !!override && isProduction,
+    };
+  }
+
+  private toLocation(
+    resolution: GeoResolution,
+    overrideIgnoredInProduction: boolean,
+  ): {
+    state: string | null;
+    country: string | null;
+    source: GeoSource;
+    confidence: number;
+    overrideIgnoredInProduction: boolean;
+  } {
+    return {
+      state: resolution.region,
+      country: resolution.country,
+      source: resolution.source,
+      confidence: resolution.confidence,
+      overrideIgnoredInProduction,
+    };
+  }
+
+  /**
+   * Trusted-edge geo headers, in precedence order: `cf-ipstate` (Cloudflare, a US
+   * state code) then `cloudfront-viewer-country-region` (AWS, `US-CA` or `US`).
+   * The guard already logged the latter as a diagnostic; wire it as a source
+   * rather than deleting the signal.
+   */
+  private resolveFromProxyGeoHeaders(req: Request): GeoResolution | null {
+    const cfIpCountry = this.toSingleHeaderValue(req.headers["cf-ipcountry"]);
+    if (cfIpCountry && cfIpCountry.toUpperCase() !== "US") {
+       return {
+         country: cfIpCountry.toUpperCase(),
+         region: null,
+         source: "cf-ipstate",
+         confidence: 1,
+       };
+    }
+
+    const cfIpState = normalizeStateCode(
+      this.toSingleHeaderValue(req.headers["cf-ipstate"]),
+    );
+    if (cfIpState) {
+      return {
+        country: "US",
+        region: cfIpState,
+        source: "cf-ipstate",
+        confidence: 1,
+      };
+    }
+
+    const cloudfront = this.toSingleHeaderValue(
+      req.headers["cloudfront-viewer-country-region"],
+    );
+    if (!cloudfront) return null;
+    const parts = String(cloudfront)
+      .split("-")
+      .map((part) => part.trim().toUpperCase());
+    const country = parts[0] || null;
+    if (!country) return null;
+    const regionCode = parts.slice(1).join("-") || null;
+    return {
+      country,
+      region:
+        country === "US" && regionCode ? normalizeStateCode(regionCode) : null,
+      source: "cloudfront-viewer-country-region",
+      confidence: 1,
+    };
+  }
+
+  /**
+   * MaxMind GeoLite2 City lookup when `MAXMIND_DB_PATH` is set. The reader is
+   * constructed once (read-only mmdb buffer) and cached; a bad/missing file
+   * degrades to the next link instead of throwing at boot.
+   */
 
 
   private resolveActionFromRequest(req: Request): ComplianceAction {

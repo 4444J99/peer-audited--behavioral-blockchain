@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { api } from "../../services/api-client";
 import { useAuth } from "../../contexts/AuthContext";
-import { getAllowedTiers } from "@styx/types";
 
 interface HistoryEntry {
   event_type: string;
@@ -109,7 +108,7 @@ export default function ProfilePage() {
   }
 
   const score = authUser.integrity_score;
-  const tiers = getAllowedTiers(score);
+  const tiers = authUser.allowed_tiers || ["RESTRICTED_MODE"];
   const topTier = tiers[tiers.length - 1];
 
   const EVENT_LABELS: Record<string, string> = {

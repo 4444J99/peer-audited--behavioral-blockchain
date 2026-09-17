@@ -13,7 +13,6 @@ import {
 import Link from "next/link";
 import { api } from "../../../services/api-client";
 import { useAuth } from "../../../contexts/AuthContext";
-import { getAllowedTiers, getDisplayTier, getTierMaxStake } from "@styx/types";
 import { getRealmBySlug } from "@styx/types";
 import {
   deriveStakeGuidance,
@@ -158,12 +157,12 @@ function NewContractPageContent() {
   const profileFailureCount = getProfileFailureCount(user);
   const effectiveFailureCount = failureCount ?? profileFailureCount;
   const allowedTiers = useMemo(
-    () => getAllowedTiers(integrityScore),
-    [integrityScore],
+    () => user?.allowed_tiers || ["RESTRICTED_MODE"],
+    [user?.allowed_tiers],
   );
   const tierMaxStakeCents = useMemo(
-    () => getTierMaxStake(allowedTiers),
-    [allowedTiers],
+    () => user?.tier_max_stake_cents || 0,
+    [user?.tier_max_stake_cents],
   );
   const tierMaxStakeUsd = Number.isFinite(tierMaxStakeCents)
     ? tierMaxStakeCents / 100
@@ -198,7 +197,7 @@ function NewContractPageContent() {
   // Read-only: the behavioral engine's downscale is shown next to the amount,
   // never applied to it. See lib/stake-guidance.ts for why.
   const stakeGuidance = deriveStakeGuidance(downscaling, selectedStakeUsd);
-  const displayTier = getDisplayTier(integrityScore).replace(/_/g, " ");
+  const displayTier = (user?.tier || "UNKNOWN").replace(/_/g, " ");
   const failureLimitCopy =
     effectiveFailureCount == null
       ? "Server checks failure history again at submit."

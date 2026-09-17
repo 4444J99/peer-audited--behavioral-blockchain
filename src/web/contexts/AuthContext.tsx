@@ -19,6 +19,9 @@ interface User {
   id: string;
   email: string;
   integrity_score: number;
+  tier?: string;
+  allowed_tiers?: string[];
+  tier_max_stake_cents?: number;
   role: string;
   status?: string;
   created_at?: string;
