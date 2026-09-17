@@ -47,33 +47,19 @@ jobs:
           fs.writeFileSync('src/mobile/package.json',JSON.stringify(mobile,null,2)+'\n');
           JS
           set -o pipefail
-          if ! npm update @react-navigation/native @react-navigation/core --package-lock-only --ignore-scripts --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/targeted-update.log"; then
-            # npm 10 can retain the old hoisted peer snapshot during an update.
-            # Discard only those generation inputs, then let npm regenerate real
-            # versions/integrities. Never invent lock metadata or use --force.
-            node <<'JS'
-          const fs=require('fs');
-          const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
-          const removed=[];
-          for(const key of Object.keys(lock.packages)) {
-            if (/(^|\/)node_modules\/@react-navigation\/(core|native)(\/|$)/.test(key)) {
-              removed.push(key); delete lock.packages[key];
-            }
-          }
-          fs.writeFileSync(process.env.RUNNER_TEMP+'/pr994-evidence/regenerated-lock-inputs.json',JSON.stringify(removed,null,2)+'\n');
-          fs.writeFileSync('package-lock.json',JSON.stringify(lock,null,2)+'\n');
-          JS
-            npm install --package-lock-only --ignore-scripts --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/lock-update.log"
-          fi
-          npm dedupe --package-lock-only --ignore-scripts --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/lock-dedupe.log"
+          npm update @react-navigation/native @react-navigation/core --package-lock-only --ignore-scripts --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/targeted-update.log"
           npm ci --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/strict-install.log"
           node -e 'const fs=require("fs");fs.copyFileSync(require.resolve("expo/bundledNativeModules.json"),process.env.RUNNER_TEMP+"/pr994-evidence/expo-bundled.json")'
+      - name: Capture dependency audit before SDK alignment
+        if: always()
+        run: |
+          npm audit --json > "$RUNNER_TEMP/pr994-evidence/candidate-audit.json" || true
+          cp package-lock.json "$RUNNER_TEMP/pr994-evidence/candidate-lock.json"
       - name: Align installed Expo modules with the existing SDK
         run: |
           set -o pipefail
           (cd src/mobile && CI=1 npx expo install --fix --npm) 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/expo-fix.log"
-          npm install --package-lock-only --ignore-scripts --engine-strict --strict-peer-deps
-          npm ci --engine-strict --strict-peer-deps
+          npm ci --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/strict-sdk-install.log"
           node scripts/ci/check-dependency-graph.mjs
       - name: Commit generated dependency graph only to unchanged PR head
         env:
@@ -88,7 +74,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add package.json src/mobile/package.json package-lock.json
           git diff --cached --check
-          git commit -m 'fix(deps): remove remaining advisories and align Expo peer graph'
+          git commit -m 'fix(deps): repair navigation and Expo dependency graph'
           git push origin HEAD:refs/heads/$branch
       - name: Verify committed head without write credentials
         env:
