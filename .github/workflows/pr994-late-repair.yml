@@ -1,0 +1,58 @@
+name: Apply guarded PR 994 late review repairs
+on:
+  push:
+    branches: [work/lane-verify/ci-gate-fixes-2026-09-17]
+    paths: [.github/workflows/pr994-late-repair.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.ref == 'refs/heads/work/lane-verify/ci-gate-fixes-2026-09-17'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Apply checksummed delta only to unchanged source
+        run: |
+          python3 <<'PY'
+          import base64,gzip,hashlib,json,pathlib,subprocess
+          baseline='3553a9f5a35b0859a66b9440aea81d5901ef5f08'
+          subprocess.run(['git','merge-base','--is-ancestor',baseline,'HEAD'],check=True)
+          changed=subprocess.check_output(['git','diff','--name-only',baseline,'HEAD'],text=True).splitlines()
+          assert changed==['.github/workflows/pr994-late-repair.yml'],f'Concurrent changes: {changed}'
+          encoded='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'
+          raw=gzip.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(raw).hexdigest()=='1346aa6a4e180bf3f07714eff8eebd09d735d0078ff26ae53c8150dd1b3d2f56'
+          changes=json.loads(raw)
+          allowed={'src/web/app/register/page.tsx','src/web/services/browser-registration.ts','src/web/services/browser-registration.test.ts','scripts/demo/share.sh','scripts/demo/snapshot.sh','docs/demo/jessica-demo-runbook.md','scripts/tests/pr994-sharing.test.mjs','scripts/ci/verify-pr994.sh'}
+          assert {x['path'] for x in changes}==allowed
+          for entry in changes:
+            p=pathlib.Path(entry['path']); old=p.read_bytes() if p.exists() else b''
+            assert hashlib.sha256(old).hexdigest()==entry['old_sha256'],f'Stale source: {p}'
+          for entry in changes:
+            p=pathlib.Path(entry['path']); lines=p.read_text().splitlines(True) if p.exists() else []
+            for start,end,replacement in reversed(entry['edits']): lines[start:end]=[replacement]
+            p.parent.mkdir(parents=True,exist_ok=True);p.write_text(''.join(lines))
+          subprocess.run(['git','add','--',*sorted(allowed)],check=True)
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          PY
+      - name: Run dependency-free regression checks without write credentials
+        run: node --test scripts/tests/pr994-*.test.mjs
+      - name: Commit only to the unchanged requested branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_HEAD: ${{ github.sha }}
+          BRANCH: work/lane-verify/ci-gate-fixes-2026-09-17
+        run: |
+          gh auth setup-git
+          current="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
+          test "$current" = "$EXPECTED_HEAD" || { echo 'Concurrent head change; refusing push'; exit 1; }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(styx): stop claiming browser device identity and restore safe static LAN sharing'
+          git push origin "HEAD:refs/heads/$BRANCH"
+          echo "Repaired source: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
