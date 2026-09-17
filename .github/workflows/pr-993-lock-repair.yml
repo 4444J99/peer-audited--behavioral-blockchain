@@ -1,7 +1,6 @@
 name: PR 993 lockfile repair
 
 # Temporary, single-PR repair. Remove after the lockfile has been committed.
-# Retry includes the Expo CLI's patch and Jest compatibility corrections.
 on:
   push:
     branches: [dependabot/npm_and_yarn/npm-deps-bf6561acc1]
@@ -41,15 +40,40 @@ jobs:
           PY
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
       - name: Use the repository npm version
         run: npm install --global npm@10.8.2 --ignore-scripts
+      - name: Invalidate only the stale Expo and native peer subgraph
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('package-lock.json')
+          lock = json.loads(p.read_text())
+          packages = lock['packages']
+          def affected(key):
+              if 'node_modules/' not in key:
+                  return False
+              name = key.rsplit('node_modules/', 1)[1]
+              return name in {'expo', 'react-native', 'react-server-dom-webpack'} or name.startswith(('expo-', '@expo/', '@react-native/', 'react-native-', 'metro'))
+          roots = [key for key in packages if affected(key)]
+          removed = [key for key in packages if key in roots or any(key.startswith(root + '/node_modules/') for root in roots)]
+          for key in removed:
+              del packages[key]
+          p.write_text(json.dumps(lock, indent=2) + '\n')
+          print(f'Invalidated {len(removed)} Expo/native lock records; npm will regenerate their versions, URLs and integrity metadata.')
+          print('Unrelated lock records retained; no force or legacy-peer-deps resolution.')
+          PY
       - name: Regenerate the workspace lockfile without lifecycle scripts
+        env:
+          npm_config_engine_strict: 'true'
         run: |
           node --version
           npm --version
           npm install --package-lock-only --ignore-scripts --strict-peer-deps --no-audit --no-fund
       - name: Verify a clean, strict installation
+        env:
+          npm_config_engine_strict: 'true'
         run: npm ci --ignore-scripts --strict-peer-deps --no-audit --no-fund
       - name: Verify the SDK 57 package set
         working-directory: src/mobile
