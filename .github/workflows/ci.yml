@@ -23,7 +23,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [24.x]
+        node-version: [22]
 
     steps:
       - name: Checkout Repository
@@ -282,10 +282,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v7
 
-      - name: Use Node.js 24.x
+      - name: Use Node.js 22
         uses: actions/setup-node@v7
         with:
-          node-version: 24.x
+          node-version: 22
           cache: "npm"
 
       - name: Install Dependencies with repository npm
