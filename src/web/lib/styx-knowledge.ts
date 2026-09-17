@@ -66,6 +66,10 @@ export enum VerificationMethod {
 }
 
 export const MAX_GRACE_DAYS_PER_MONTH = 2;
+/**
+ * DR-005: Onboarding bonus amount in cents ($5.00).
+ * Removed/deferred for the beta cohort; gated by isOnboardingBonusEnabled() at contract activation.
+ */
 export const ONBOARDING_BONUS_AMOUNT = 500; // cents ($5.00)
 
 /**
@@ -204,8 +208,21 @@ export interface OnboardingBonusResult {
 }
 
 /**
+ * DR-005 (Founder Decision of Record):
+ * The $5.00 onboarding bonus is removed for the beta cohort.
+ * Defaults OFF; set STYX_ONBOARDING_BONUS_ENABLED=true to reinstate it.
+ */
+export function isOnboardingBonusEnabled(): boolean {
+  return (
+    typeof process !== "undefined" &&
+    String(process.env?.STYX_ONBOARDING_BONUS_ENABLED).toLowerCase() === "true"
+  );
+}
+
+/**
  * Determines if a user qualifies for the onboarding bonus ($5 credit on first contract).
  * Caller must pass the user's total contract count.
+ * NOTE (DR-005): Deferred for the beta cohort; gated by isOnboardingBonusEnabled().
  */
 export function grantOnboardingBonus(totalContracts: number): OnboardingBonusResult {
   if (totalContracts > 0) {

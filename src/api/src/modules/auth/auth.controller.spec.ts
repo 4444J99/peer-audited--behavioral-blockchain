@@ -309,4 +309,15 @@ describe('AuthController', () => {
       expect(errors.some((e) => e.property === 'expiresInDays')).toBe(true);
     });
   });
+
+  describe('AntiSybilService dependency injection', () => {
+    it('should allow constructing AuthController with AntiSybilService injected', () => {
+      const mockAntiSybil = {
+        registerDeviceFingerprint: jest.fn(),
+        analyzeAccount: jest.fn(),
+      } as any;
+      const injectedController = new AuthController(mockAuthService, mockAntiSybil);
+      expect(injectedController).toBeDefined();
+    });
+  });
 });
