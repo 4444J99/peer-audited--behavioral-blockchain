@@ -10,6 +10,9 @@
     "test": "jest --coverage --forceExit",
     "migrate": "node ../../scripts/dev/run-migrate.mjs"
   },
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1116.0",
     "@aws-sdk/s3-request-presigner": "^3.1116.0",
