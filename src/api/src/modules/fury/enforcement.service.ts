@@ -274,11 +274,54 @@ export class EnforcementService {
     );
 
     const caseData = await this.pool.query(`SELECT reviewer_id FROM fury_enforcement_cases WHERE id = $1`, [caseId]);
+    const reviewerId = caseData.rows[0]?.reviewer_id;
+
+    let ledgerTransactionId: string | null = null;
+    let ledgerDebitAccountId: string | null = null;
+
+    if (FINANCIAL_PENALTY_TYPES.has(penaltyType) && amountCents > 0 && reviewerId) {
+      const userRes = await this.pool.query(
+        `SELECT account_id FROM users WHERE id = $1`,
+        [reviewerId],
+      );
+      ledgerDebitAccountId = userRes?.rows?.[0]?.account_id || null;
+
+      const revenueRes = await this.pool.query(
+        `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE'`,
+      );
+
+      if (ledgerDebitAccountId && revenueRes?.rows?.length > 0) {
+        ledgerTransactionId = await this.ledger.recordTransaction(
+          ledgerDebitAccountId,
+          revenueRes.rows[0].id,
+          amountCents,
+          undefined,
+          {
+            type: 'FURY_STAKE_SLASH',
+            caseId,
+            reviewerId,
+            penaltyType,
+          },
+          undefined,
+          `fury-penalty:${caseId}`,
+        );
+
+        await this.pool.query(
+          `UPDATE fury_penalties
+           SET ledger_transaction_id = $1, ledger_debit_account_id = $2
+           WHERE case_id = $3`,
+          [ledgerTransactionId, ledgerDebitAccountId, caseId],
+        );
+      }
+    }
 
     await this.truthLog.appendEvent('FURY_PENALTY_APPLIED', {
       caseId,
       penaltyType,
-      reviewerId: caseData.rows[0].reviewer_id,
+      reviewerId,
+      amountCents,
+      ledgerTransactionId,
+      ledgerDebitAccountId,
     });
   }
 
