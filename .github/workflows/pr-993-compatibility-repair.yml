@@ -1,0 +1,202 @@
+name: PR 993 compatibility repair
+
+# Temporary single-branch repair; remove after the validated commit is published.
+on:
+  push:
+    branches: [dependabot/npm_and_yarn/npm-deps-bf6561acc1]
+    paths: [.github/workflows/pr-993-compatibility-repair.yml]
+permissions:
+  contents: read
+  pull-requests: read
+concurrency:
+  group: pr-993-compatibility-repair
+  cancel-in-progress: false
+jobs:
+  validate:
+    if: github.repository == '4444J99/peer-audited--behavioral-blockchain'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Guard the open PR and exact input head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/4444J99/peer-audited--behavioral-blockchain/pulls/993 > "$RUNNER_TEMP/pr.json"
+          python3 - <<'PY'
+          import json, os
+          pr = json.load(open(os.environ['RUNNER_TEMP'] + '/pr.json'))
+          assert pr['state'] == 'open'
+          assert pr['head']['repo']['full_name'] == os.environ['GITHUB_REPOSITORY']
+          assert pr['head']['ref'] == 'dependabot/npm_and_yarn/npm-deps-bf6561acc1'
+          assert pr['head']['sha'] == os.environ['GITHUB_SHA'], 'Stale input head'
+          PY
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .node-version
+      - name: Verify published patch versions and apply deterministic source edits
+        run: |
+          mkdir -p "$RUNNER_TEMP/pr993-repair"
+          node --version
+          npm install --global npm@10.8.2 --ignore-scripts
+          for package in @nestjs/common @nestjs/core @nestjs/platform-express @nestjs/testing; do
+            npm view "$package@12.0.3" version engines peerDependencies dependencies --json
+          done
+          npm view postcss@8.5.28 version engines --json
+          npm view multer@2.3.0 version engines --json
+          python3 .github/scripts/pr993-compatibility-repair.py > "$RUNNER_TEMP/pr993-repair/expected-files.txt"
+          cat "$RUNNER_TEMP/pr993-repair/expected-files.txt"
+          npm run validate:runtime
+          npm run test:runtime
+      - name: Regenerate only the stale Nest and security lock subgraphs
+        env:
+          npm_config_engine_strict: 'true'
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('package-lock.json')
+          lock = json.loads(path.read_text())
+          packages = lock['packages']
+          roots = []
+          for key in packages:
+              if 'node_modules/' not in key:
+                  continue
+              name = key.rsplit('node_modules/', 1)[1]
+              if name.startswith('@nestjs/') or name in ['multer', 'postcss']:
+                  roots.append(key)
+          remove = [key for key in packages if key in roots or any(key.startswith(root + '/node_modules/') for root in roots)]
+          for key in remove:
+              del packages[key]
+          path.write_text(json.dumps(lock, indent=2) + '\n')
+          print('Invalidated lock records:', len(remove))
+          PY
+          npm install --package-lock-only --ignore-scripts --strict-peer-deps --no-audit --no-fund
+          npm ci --ignore-scripts --strict-peer-deps --no-audit --no-fund
+      - name: Enforce the existing security threshold and nested graph checks
+        run: |
+          npm audit --audit-level=high
+          npm ls @nestjs/common @nestjs/core @nestjs/platform-express @nestjs/testing multer postcss --all
+          node <<'JS'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { createRequire } = require('node:module');
+          const semver = require('semver');
+          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          const api = createRequire(path.resolve('src/api/package.json'));
+          for (const name of ['@nestjs/common', '@nestjs/core', '@nestjs/platform-express', '@nestjs/testing']) {
+            assert.equal(api(`${name}/package.json`).version, '12.0.3', name);
+          }
+          for (const [key, value] of Object.entries(lock.packages)) {
+            const name = key.split('node_modules/').pop();
+            if (name === 'multer') assert.ok(semver.gte(value.version, '2.3.0'), key);
+            if (name === 'postcss') assert.ok(semver.gte(value.version, '8.5.23'), key);
+          }
+          const harness = createRequire(path.resolve('src/test-harness/package.json'));
+          assert.ok(semver.satisfies(harness('js-yaml/package.json').version, require('./src/test-harness/package.json').dependencies['js-yaml']));
+          console.log('All nested security and harness version assertions passed.');
+          JS
+      - name: Preserve the Expo SDK 57 contract
+        working-directory: src/mobile
+        env:
+          CI: '1'
+        run: npx --no-install expo install --check
+      - name: Verify the repaired mobile runtime and independent harness
+        run: |
+          npm run build --workspace @styx/shared
+          npm run lint --workspace @styx/mobile
+          npm run test --workspace @styx/mobile -- --runInBand
+          npm run lint --workspace @styx/test-harness
+          npm run test --workspace @styx/test-harness
+          git diff --check
+      - name: Save the validated lockfile and full tracked-source context
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/pr993-repair"
+          cp package-lock.json "$RUNNER_TEMP/pr993-repair/package-lock.json"
+          git diff > "$RUNNER_TEMP/pr993-repair/repair.diff"
+          python3 - <<'PY'
+          import os, pathlib, subprocess, tarfile
+          paths = subprocess.check_output(['git','ls-files'], text=True).splitlines()
+          allowed_suffixes = {'.ts','.tsx','.js','.jsx','.mjs','.cjs','.json','.yml','.yaml','.tf','.tfvars','.sh'}
+          dest = pathlib.Path(os.environ['RUNNER_TEMP']) / 'pr993-repair' / 'source.tar'
+          with tarfile.open(dest, 'w') as archive:
+              for file in paths:
+                  p = pathlib.Path(file)
+                  if p.is_file() and (p.suffix in allowed_suffixes or p.name in ['Dockerfile','.node-version','.nvmrc']):
+                      archive.add(p, arcname=file, recursive=False)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: pr-993-compatibility-${{ github.sha }}
+          path: ${{ runner.temp }}/pr993-repair
+          if-no-files-found: error
+          retention-days: 2
+  publish:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: pr-993-compatibility-${{ github.sha }}
+          path: ${{ runner.temp }}/validated-pr993
+      - name: Recompute reviewed edits and publish only the validated lockfile
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/4444J99/peer-audited--behavioral-blockchain/pulls/993 > "$RUNNER_TEMP/pr.json"
+          python3 - <<'PY'
+          import json, os
+          pr = json.load(open(os.environ['RUNNER_TEMP'] + '/pr.json'))
+          assert pr['state'] == 'open'
+          assert pr['head']['repo']['full_name'] == os.environ['GITHUB_REPOSITORY']
+          assert pr['head']['ref'] == 'dependabot/npm_and_yarn/npm-deps-bf6561acc1'
+          assert pr['head']['sha'] == os.environ['GITHUB_SHA'], 'Refusing stale write'
+          PY
+          # This reviewed standard-library-only script is from the input commit,
+          # never from the artifact. No dependency or application code runs here.
+          python3 .github/scripts/pr993-compatibility-repair.py > "$RUNNER_TEMP/expected-files.txt"
+          python3 - <<'PY'
+          import json, os, pathlib, shutil, subprocess, urllib.parse
+          temp = pathlib.Path(os.environ['RUNNER_TEMP'])
+          source = temp / 'validated-pr993' / 'package-lock.json'
+          assert source.is_file() and not source.is_symlink() and source.stat().st_size < 10000000
+          lock = json.loads(source.read_text())
+          assert lock['lockfileVersion'] == 3
+          for manifest in [pathlib.Path('package.json'), *pathlib.Path('src').glob('*/package.json'), *pathlib.Path('packages').glob('*/package.json')]:
+              folder = '' if manifest.parent == pathlib.Path('.') else manifest.parent.as_posix()
+              package = json.loads(manifest.read_text())
+              record = lock['packages'][folder]
+              for field in ['dependencies','devDependencies','optionalDependencies','engines']:
+                  assert record.get(field,{}) == package.get(field,{}), (folder,field)
+          for key, record in lock['packages'].items():
+              resolved = record.get('resolved')
+              if resolved and not record.get('link'):
+                  url = urllib.parse.urlsplit(resolved)
+                  assert url.scheme == 'https' and url.hostname == 'registry.npmjs.org', (key,resolved)
+          shutil.copyfile(source, 'package-lock.json')
+          expected = set((temp / 'expected-files.txt').read_text().splitlines()) | {'package-lock.json'}
+          actual = set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          actual |= set(subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines())
+          assert actual == expected, (actual ^ expected)
+          subprocess.run(['git','add','--',*sorted(expected)],check=True)
+          PY
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(deps): align Node 24 runtimes and patched Nest/Multer/PostCSS dependency graph'
+          git push origin HEAD:refs/heads/dependabot/npm_and_yarn/npm-deps-bf6561acc1
+          printf 'Input head: `%s`\n\nPublished head: `%s`\n' "$GITHUB_SHA" "$(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
