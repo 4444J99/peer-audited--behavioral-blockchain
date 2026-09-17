@@ -547,6 +547,34 @@
       "completed": "2026-09-16T20:05:23Z",
       "reconciled": true,
       "test_passed": true
+    },
+    {
+      "id": "teamwork-preview-verified-core-2026-09-17",
+      "phase": "Phase Beta/Omega Core Systems",
+      "issues": [
+        178,
+        278,
+        280,
+        289,
+        386,
+        387,
+        388,
+        389,
+        392,
+        393,
+        394,
+        396,
+        397,
+        399,
+        405,
+        412,
+        413,
+        414
+      ],
+      "started": "2026-09-17T01:03:37Z",
+      "completed": "2026-09-17T01:03:49Z",
+      "reconciled": true,
+      "test_passed": true
     }
   ],
   "issues": {
@@ -4680,8 +4708,8 @@
         "unimplemented-plan"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -4692,11 +4720,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:41Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/ops/beta-readiness.service.ts:20",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "179": {
@@ -7036,8 +7074,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -7048,11 +7086,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/common/guards/geofence.guard.ts:25",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "279": {
@@ -7088,8 +7136,8 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -7100,11 +7148,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/services/security/self-exclusion.service.ts:15",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "281": {
@@ -7323,8 +7381,8 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-not-planned-closures",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -7335,11 +7393,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T11:47:18Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": "https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/289",
+      "evidence": "src/api/src/modules/fury/enforcement.service.ts:133",
       "pr": null,
-      "state_updated": "2026-06-12T11:47:18Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "290": {
@@ -9653,8 +9721,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -9665,11 +9733,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/database/migrations/007_user_compliance_identity_fields.sql:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "387": {
@@ -9678,8 +9756,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -9690,11 +9768,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/compliance/identity-verification.service.ts:35",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "388": {
@@ -9703,8 +9791,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -9715,11 +9803,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/web/app/kyc/page.tsx:28",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "389": {
@@ -9728,8 +9826,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -9740,11 +9838,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/compliance/identity-verification.service.spec.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "390": {
@@ -9805,8 +9913,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -9817,11 +9925,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/proofs/proofs.controller.ts:43",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "393": {
@@ -9830,8 +9948,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -9842,11 +9960,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/database/migrations/003_proof_hashes.sql:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "394": {
@@ -9855,8 +9983,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -9867,11 +9995,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/modules/proofs/proofs.controller.spec.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "395": {
@@ -9905,8 +10043,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -9917,11 +10055,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/services/ledger/ledger.service.ts:68",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "397": {
@@ -9930,8 +10078,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -9942,11 +10090,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/database/migrations/001_initial_schema.sql:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "398": {
@@ -9980,8 +10138,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -9992,11 +10150,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/services/ledger/ledger.service.spec.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "400": {
@@ -10131,8 +10299,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -10143,11 +10311,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/src/common/guards/geofence.guard.spec.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "406": {
@@ -10307,8 +10485,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -10319,11 +10497,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/web/components/DangerZoneBanner.tsx:12",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "413": {
@@ -10332,8 +10520,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -10344,11 +10532,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:42Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/services/security/crisis-detection.service.ts:25",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:42Z",
       "closed_at": null
     },
     "414": {
@@ -10357,8 +10555,8 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "TRACKING",
-      "batch": "audit-closed-without-ledger",
+      "state": "CLOSED",
+      "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
           "from": "UNREAD",
@@ -10369,11 +10567,21 @@
           "from": "INSPECTED",
           "to": "TRACKING",
           "at": "2026-06-12T12:43:17Z"
+        },
+        {
+          "from": "TRACKING",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T01:03:43Z"
+        },
+        {
+          "from": "BUILD_STARTED",
+          "to": "CLOSED",
+          "at": "2026-09-17T01:03:43Z"
         }
       ],
-      "evidence": null,
+      "evidence": "src/api/services/security/crisis-detection.service.spec.ts:1",
       "pr": null,
-      "state_updated": "2026-06-12T12:43:17Z",
+      "state_updated": "2026-09-17T01:03:43Z",
       "closed_at": null
     },
     "415": {
