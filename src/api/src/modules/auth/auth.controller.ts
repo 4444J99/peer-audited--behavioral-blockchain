@@ -9,7 +9,10 @@ import {
   Delete,
   Param,
   UnauthorizedException,
+  Optional,
+  Inject,
 } from '@nestjs/common';
+import { AntiSybilService } from '../security/anti-sybil.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
@@ -24,7 +27,12 @@ const REFRESH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    @Optional()
+    @Inject(AntiSybilService)
+    private readonly antiSybil?: AntiSybilService,
+  ) {}
 
   private async issueBrowserSessionCookies(res: Response, userId: string, accessToken: string) {
     // CSRF token is bound to (derived from) the access token so the guard can
