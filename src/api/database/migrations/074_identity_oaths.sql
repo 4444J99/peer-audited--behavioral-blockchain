@@ -1,4 +1,4 @@
--- 069: Identity-based oath onboarding (TKT-P1-016).
+-- 074: Identity-based oath onboarding (TKT-P1-016).
 --
 -- Onboarding asks who the user is becoming, not what they will do, and that
 -- declaration is what the contract is bound to. It is stored per user per oath

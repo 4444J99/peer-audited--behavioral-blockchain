@@ -572,7 +572,7 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
 **Evidence verified on disk:**
 - `src/api/src/modules/payments/reconciliation.service.ts:168` (Platform-wide batch settlement reconciliation runner `auditRecentSettlements` with discrepancy breakdown, status reporting, and CLI runner `scripts/ops/reconcile-financial-records.ts`)
 - `src/api/src/modules/dashboard/unit-economics.service.ts:47` (Executive CAC/LTV unit economics engine calculating channel CAC, cohort retention/LTV, LTV:CAC ratios, and payback period)
-- `src/api/src/modules/referrals/referral.service.ts:227` (Curated cohort referral loop enforcing 2-invite limit per beta member, waitlist priority attribution, and nomination tracking via migration `073_cohort_nominations.sql` and runbook `docs/ops/ops--beta-cohort-referral-mechanic.md`)
+- `src/api/src/modules/referrals/referral.service.ts:227` (Curated cohort referral loop enforcing 2-invite limit per beta member, waitlist priority attribution, and nomination tracking via migration `081_cohort_nominations.sql` and runbook `docs/ops/ops--beta-cohort-referral-mechanic.md`)
 
 **Lesson:** Financial controls and growth systems are strongest when built on top of immutable ledger structures rather than ad-hoc counters. Tying waitlist channel attribution directly into CAC calculation and double-entry settlements into LTV yields real auditability without external BI dependencies.
 

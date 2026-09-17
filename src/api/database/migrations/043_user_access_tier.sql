@@ -1,4 +1,4 @@
--- Migration 041: User access tiers for beta contract-creation caps
+-- Migration 043: User access tiers for beta contract-creation caps
 
 DO $$
 BEGIN

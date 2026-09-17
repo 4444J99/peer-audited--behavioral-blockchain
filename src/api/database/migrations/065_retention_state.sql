@@ -1,4 +1,4 @@
--- 061: Circle-4 retention state.
+-- 065: Circle-4 retention state.
 -- 1) users.timezone — danger windows are circadian and must be evaluated on
 --    the user's local clock (LATE_NIGHT at 2am America/New_York is 06-07 UTC).
 -- 2) users.alias / users.oath_categories — read by the accountability-partner

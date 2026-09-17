@@ -47,7 +47,7 @@ active in the wired application, not merely present in the tree.
 |---|---|
 | **TSC mapping** | CC1.1/CC1.4 (integrity & ethical values), plus BSA/AML program obligations |
 | **What the code enforces** | KYC: enforcement is default-ON in production and fails closed (`KYC_ENFORCEMENT_ENABLED` must be explicitly `false` to disable, which logs at error level). Stakes above the TIER_1 $20 micro-stake threshold require verified identity. Age gate (>=18, from stored DOB) is enforced unconditionally and fails closed on missing DOB. AML: watchlist screening with risk levels (CLEAR/FLAGGED/BLOCKED), CTR threshold at $10,000, structuring detection ($3,000+ x3 within 24h), rapid-movement detection (48h window), SAR report drafting. |
-| **Enforcing code** | `src/api/src/modules/compliance/compliance-policy.service.ts` (`evaluateKycRequirement`, `evaluateAgeRequirement`, `onModuleInit` loud-disable logging), `src/api/src/modules/compliance/identity-verification.service.ts`, `src/api/src/modules/compliance/identity-provider.service.ts` (Mock + Stripe Identity adapters), `src/api/src/modules/compliance/aml-screening.service.ts`; tables in `src/api/database/migrations/054_ccpa_aml.sql` and `059_aml_tables.sql` |
+| **Enforcing code** | `src/api/src/modules/compliance/compliance-policy.service.ts` (`evaluateKycRequirement`, `evaluateAgeRequirement`, `onModuleInit` loud-disable logging), `src/api/src/modules/compliance/identity-verification.service.ts`, `src/api/src/modules/compliance/identity-provider.service.ts` (Mock + Stripe Identity adapters), `src/api/src/modules/compliance/aml-screening.service.ts`; tables in `src/api/database/migrations/058_ccpa_aml.sql` and `063_aml_tables.sql` |
 | **Caveat (honest)** | The AML HTTP surface (`src/api/src/modules/compliance/aml.controller.ts`, `/compliance/aml/*`) was unregistered until branch `feat/omega-completion` wired it into `compliance.module.ts`. The production identity provider default is the mock adapter until the Stripe Identity contract is provisioned (human-gated). |
 
 ### C-5. CCPA / GDPR Data Rights
@@ -56,7 +56,7 @@ active in the wired application, not merely present in the tree.
 |---|---|
 | **TSC mapping** | P-series privacy criteria (P4.x data subject rights, P5.x retention/disposal) |
 | **What the code enforces** | CCPA: deletion requests and do-not-sell opt-out with California residency verification, statuses PENDING→COMPLETED/DENIED, all appended to the tamper-evident TruthLog (routes `POST/GET /users/me/ccpa/deletion-request`, `POST /users/me/ccpa/opt-out`). GDPR: erasure pipeline with a daily 04:00 cron sweep processing pending deletions. Analytics exports are anonymized before leaving the trust boundary. |
-| **Enforcing code** | `src/api/src/modules/users/ccpa.service.ts` + routes in `src/api/src/modules/users/users.controller.ts`, `src/api/src/modules/users/gdpr.service.ts` + `src/api/src/modules/users/gdpr.scheduler.ts` (`@Cron('0 4 * * *')`), `src/api/services/security/anonymization.service.ts`, `src/api/src/modules/b2b/anonymize.service.ts`; schema in `054_ccpa_aml.sql` and `014_security_and_gdpr_hardening.sql` |
+| **Enforcing code** | `src/api/src/modules/users/ccpa.service.ts` + routes in `src/api/src/modules/users/users.controller.ts`, `src/api/src/modules/users/gdpr.service.ts` + `src/api/src/modules/users/gdpr.scheduler.ts` (`@Cron('0 4 * * *')`), `src/api/services/security/anonymization.service.ts`, `src/api/src/modules/b2b/anonymize.service.ts`; schema in `058_ccpa_aml.sql` and `014_security_and_gdpr_hardening.sql` |
 | **Added by `feat/omega-completion`** | A general data-retention scheduler (automated purge of expired artifacts per retention policy) extending the GDPR sweep, plus its backing migration (058–062 range). |
 
 ### C-6. Settlement Kill Switch (Refund-Only Override)
@@ -73,7 +73,7 @@ active in the wired application, not merely present in the tree.
 | | |
 |---|---|
 | **TSC mapping** | CC6.8 (unauthorized software), PI1.2 (input integrity) |
-| **What the code enforces** | Server-side verification of iOS App Attest assertions and Android Play Integrity verdicts: per-user registered key lookup (revocable), assertion structural validation, RP-ID/flags checks, monotonic counter replay detection, and TruthLog events on failures (`DEVICE_ATTESTATION_KEY_NOT_FOUND` etc.). Key registry in migration `051_device_attestation_keys.sql`. |
+| **What the code enforces** | Server-side verification of iOS App Attest assertions and Android Play Integrity verdicts: per-user registered key lookup (revocable), assertion structural validation, RP-ID/flags checks, monotonic counter replay detection, and TruthLog events on failures (`DEVICE_ATTESTATION_KEY_NOT_FOUND` etc.). Key registry in migration `055_device_attestation_keys.sql`. |
 | **Enforcing code** | `src/api/services/security/device-attestation.service.ts` (provided via `compliance.module.ts`) |
 | **Caveat (honest)** | The service's own doc-comment states production requires the Apple App Attest root certificate and the Play Integrity verification secret. Full certificate-chain / JWT-signature cryptography is being completed by branch `feat/omega-completion`; provisioning the Apple/Google credentials remains a human-gated operations task. |
 
@@ -81,7 +81,7 @@ active in the wired application, not merely present in the tree.
 
 - **Fraud/collusion analytics:** `src/api/services/security/collusion-detection.service.ts` (voting-pattern union-find clustering), `src/api/src/modules/security/anti-sybil.service.ts` (device fingerprint cross-account detection; module wired by `feat/omega-completion`), `src/api/services/anomaly/` (pHash duplicate detection, EXIF validation)
 - **User safety:** `src/api/services/security/crisis-detection.service.ts` + crisis module; `src/api/services/security/self-exclusion.service.ts`; Aegis health guardrails in `src/api/services/health/`
-- **Escrow custody:** FBO model with production fail-closed key check — `src/api/services/escrow/stripe.service.ts`, `docs/adr/adr--002-fbo-escrow-model.md`, migration `056_fbo_accounts.sql`
+- **Escrow custody:** FBO model with production fail-closed key check — `src/api/services/escrow/stripe.service.ts`, `docs/adr/adr--002-fbo-escrow-model.md`, migration `060_fbo_accounts.sql`
 - **CI security gates:** `scripts/validation/06-security-invariant-check.ts` (no hardcoded secrets/backdoors in production output), CodeQL + security audit in CI (`docs/CLAUDE.md` Infrastructure)
 
 ---

@@ -1,4 +1,4 @@
--- Migration 042: User API keys for authenticated API clients
+-- Migration 044: User API keys for authenticated API clients
 
 CREATE TABLE IF NOT EXISTS api_keys (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
