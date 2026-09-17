@@ -23,10 +23,12 @@ A Practitioner is a licensed professional (therapist, life coach, recovery couns
 - [ ] 20-minute demo call scheduled (use the [Demo Loop Script](#demo-loop-script) below)
 - [ ] For an external pilot, obtain counsel-approved participant documents and the required privacy/compliance approvals (#315–#317). This repository does **not** provide an approved beta NDA; do not describe this prerequisite as completed.
 - [ ] For the **local seeded demo only**, use the existing practitioner persona rather than the nonexistent `/api/admin/users/promote` endpoint:
+
   ```bash
   npm run demo:launch
   npm run demo:credentials
   ```
+
   The seeded `dr.moira@demo.styx.protocol` account has role `PRACTITIONER`; obtain its local demo password from the credentials command and use the `/practitioner` web route. See `scripts/demo/README.md` and `scripts/demo/seed-circles.sql`. Never promote a real user by copying the old curl example; production practitioner provisioning remains an explicit pilot prerequisite owned by #363.
 
 - [ ] Practitioner confirmed they've reviewed `docs/legal/legal--aegis-protocol.md` Sections 1–3
@@ -54,24 +56,30 @@ A Practitioner is a licensed professional (therapist, life coach, recovery couns
 A structured 20-minute walkthrough for the practitioner pre-engagement call:
 
 ### Minutes 0–3: Problem Frame
+
 > "Your client commits to a behavior change in your office. Three days later, accountability fades. There's no third-party verification, no financial skin in the game, and no audit trail for your records."
 
 ### Minutes 3–8: Live Demo — Contract Creation
+
 - Create a sample No-Contact contract on the web app (live, test-money mode)
 - Show the behavioral physics display: loss aversion λ=1.955, dispute window 24h
 - Show the stake configuration — explain why financial stakes work psychologically
 
 ### Minutes 8–13: Live Demo — Proof Submission & Fury Audit
-- Submit a pre-recorded proof video (use the demo seed video in `artifacts/demo-feedback/`)
-- Show the Fury review assignment in The Judge
-- Show a completed audit verdict with the consensus display
+
+- Open the mobile app for the sample contract and exercise its start/stop controls. The current beta creates a clearly labeled `SYNTHETIC_BETA` payload; it does not upload a native or pre-recorded camera video.
+- Submit that payload and wait for the processing screen to report that the proof was queued.
+- Sign in to the web app with a seeded Fury or admin account and open `/fury` to show an assignment in the implemented Fury Workbench.
+- If the submitted proof does not appear in that account's queue, mark assignment propagation **not verified**; do not substitute a filesystem artifact or desktop aggregate.
 
 ### Minutes 13–18: Practitioner Dashboard Walkthrough
+
 - Show the HR dashboard (`/hr` route in the web app)
 - Show the ledger inspector (The Judge desktop)
 - Show the anti-collusion routing panel
 
 ### Minutes 18–20: Pricing & Next Steps
+
 - Current beta: Free for pilot practitioners
 - Future model: $49–$349/mo practitioner seat (from `docs/planning/`)
 - Next step: Resolve the external-pilot prerequisites above before enrolling a real practitioner or client.

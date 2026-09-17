@@ -85,19 +85,20 @@ Open the mobile app in Expo Go (`expo start` from `src/mobile`):
 
 ---
 
-## Step 5 — Fury Review (Desktop — The Judge)
+## Step 5 — Fury Review (Web — Fury Workbench)
 
-Open "The Judge" admin app:
+Run the web app and open the implemented Fury queue:
 
 ```bash
-cd src/desktop && npm run dev
+make dev
+# then open http://localhost:${STYX_WEB_PORT:-3001}/fury
 ```
 
-1. Log in with an admin credential
-2. Navigate to **Pending Reviews**
-3. Find your submitted proof
-4. Watch the Fury peer-audit assignment (2-of-3 quorum)
-5. Review the audit result and any verdict details
+1. Log in with a seeded `FURY` or `ADMIN` credential.
+2. Open `/fury`; this is the implemented Fury Workbench backed by `GET /fury/queue`.
+3. Inspect the assignment's proof ID, masked media, contract, description, and assigned timestamp.
+4. Submit a test verdict only when the dogfood account is authorized to alter that assignment.
+5. If the submitted proof is absent, mark assignment propagation **not verified**. The Judge desktop currently exposes aggregate oversight, not a proof-level review queue.
 
 **What to notice:** Is the admin interface clear for a non-technical practitioner? Does the verdict display make sense?
 
@@ -123,6 +124,7 @@ For the real test-money dogfood contract, wait for its configured duration and n
 After your dogfood session, record your feedback using the [Beta Feedback Template](./feedback-synthesis-template.md).
 
 **Priority questions:**
+
 1. What was the single most confusing moment?
 2. Did the stake amount feel motivating or arbitrary?
 3. Would you trust Styx with a real personal commitment?
