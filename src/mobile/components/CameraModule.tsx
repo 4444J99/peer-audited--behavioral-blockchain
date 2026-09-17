@@ -5,6 +5,15 @@ import { ApiClient } from '../services/ApiClient';
 import type { ProofProcessingStatus } from '../services/ApiClient';
 import { createCameraWatermark, createSyntheticCaptureSession } from '../utils/proof-media';
 
+let CameraViewComponent: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const expoCam = require('expo-camera');
+  CameraViewComponent = expoCam.CameraView || expoCam.Camera;
+} catch {
+  // Fallback to simulated viewfinder when native camera is unavailable
+}
+
 /**
  * The Styx Camera Module.
  * ARCHITECTURE RULE: ZERO TRUST.
@@ -244,8 +253,15 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
         </Text>
       </View>
 
-      {/* Mock Camera Viewfinder */}
+      {/* Camera Viewfinder */}
       <View style={styles.viewfinder}>
+        {CameraViewComponent ? (
+          <CameraViewComponent
+            style={StyleSheet.absoluteFill}
+            facing="back"
+            mode="video"
+          />
+        ) : null}
         {isRecording ? (
           <>
             <View style={styles.recordingIndicator}>

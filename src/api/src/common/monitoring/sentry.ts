@@ -47,6 +47,33 @@ export function captureMessage(message: string, level: 'info' | 'warning' | 'err
   SentryModule.captureMessage(message, level);
 }
 
+export function captureFinancialAlert(
+  event: string,
+  details: Record<string, unknown> = {},
+): void {
+  if (!sentryAvailable || !SentryModule) {
+    console.error(`[CRITICAL FINANCIAL ALERT] ${event}`, details);
+    return;
+  }
+  try {
+    if (typeof SentryModule.withScope === 'function') {
+      SentryModule.withScope((scope: any) => {
+        scope.setLevel('fatal');
+        scope.setTag('financial_incident', 'true');
+        scope.setTag('financial_event', event);
+        scope.setFingerprint(['financial-incident', event]);
+        scope.setContext('financial_details', details);
+        SentryModule.captureMessage(`FINANCIAL INTEGRITY ALERT: ${event}`, 'error');
+      });
+    } else {
+      SentryModule.captureMessage(`FINANCIAL INTEGRITY ALERT: ${event}`, 'error');
+    }
+  } catch (err) {
+    console.error(`Failed to dispatch Sentry financial alert: ${(err as Error).message}`, details);
+  }
+}
+
 export function isSentryAvailable(): boolean {
   return sentryAvailable;
 }
+

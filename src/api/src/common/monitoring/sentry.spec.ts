@@ -56,4 +56,15 @@ describe('Sentry monitoring', () => {
       sentryModule.captureException(new Error('test'), { userId: '123' }),
     ).not.toThrow();
   });
+
+  it('should log error when captureFinancialAlert is called without sentry', () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    sentryModule = require('./sentry');
+    sentryModule.captureFinancialAlert('LEDGER_IMBALANCE', { differenceCents: 500 });
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[CRITICAL FINANCIAL ALERT] LEDGER_IMBALANCE'),
+      expect.objectContaining({ differenceCents: 500 }),
+    );
+    errorSpy.mockRestore();
+  });
 });
