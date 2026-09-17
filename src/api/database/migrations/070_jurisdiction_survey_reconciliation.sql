@@ -1,4 +1,4 @@
--- 066: Reconcile the jurisdictions registry with our own 50-state survey.
+-- 070: Reconcile the jurisdictions registry with our own 50-state survey.
 --
 -- `STATE_TIERS` (src/api/services/geofencing.ts) and this table are dual
 -- sources of truth: request-time guards read the TS map, while

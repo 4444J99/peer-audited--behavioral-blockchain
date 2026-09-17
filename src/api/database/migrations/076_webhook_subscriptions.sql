@@ -1,4 +1,4 @@
--- 069: Persist enterprise webhook registrations.
+-- 076: Persist enterprise webhook registrations.
 --
 -- POST /b2b/webhook/register previously echoed {status:'registered'} and stored
 -- nothing, so no contract-lifecycle code could ever find a URL to notify. This is

@@ -124,6 +124,19 @@ describe('Migration Runner', () => {
       const applied = await getAppliedMigrations(mockPool);
       expect(applied.size).toBe(0);
     });
+
+    it('translates legacy migration names to canonical sequential filenames', async () => {
+      mockQuery.mockResolvedValue({
+        rows: [
+          { name: '041_metered_usage_events.sql' },
+          { name: '042_user_api_keys.sql' },
+        ],
+      });
+      const applied = await getAppliedMigrations(mockPool);
+      expect(applied.has('042_metered_usage_events.sql')).toBe(true);
+      expect(applied.has('044_user_api_keys.sql')).toBe(true);
+      expect(applied.has('041_metered_usage_events.sql')).toBe(false);
+    });
   });
 
   describe('getPendingMigrations', () => {

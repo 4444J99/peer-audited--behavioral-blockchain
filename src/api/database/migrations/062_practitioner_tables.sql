@@ -1,4 +1,4 @@
--- 058: Practitioner intelligence tables (Circle 5)
+-- 062: Practitioner intelligence tables (Circle 5)
 -- Backing tables for PractitionerIntelligenceService, plus columns that the
 -- Circle-5 services (AntiSybilService, PractitionerIntelligenceService) query
 -- but that no earlier migration created.
