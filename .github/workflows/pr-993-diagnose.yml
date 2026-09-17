@@ -1,0 +1,87 @@
+name: PR 993 repair diagnostics
+
+# Temporary read-only diagnostic; removed after repair and verification.
+on:
+  push:
+    branches: [dependabot/npm_and_yarn/npm-deps-bf6561acc1]
+    paths: [.github/workflows/pr-993-diagnose.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+      - name: Capture exact source and runtime inputs
+        run: |
+          mkdir -p "$RUNNER_TEMP/pr993"
+          git rev-parse HEAD
+          git status --porcelain
+          git ls-files 'src/mobile/*' | grep -E '(AGENTS|Notification|BehaviorTracking|tsconfig|jest|package.json)' || true
+          git grep -n -E 'provisional|Application.projectId|application.projectId' -- src/mobile || true
+          git grep -n -E 'node-version:|node-version-file:|node-version: \[|node:22|nodejs22|NODE_VERSION|engines|node-version =|nodejs 22' -- .github/workflows .config/docker src/api/Dockerfile src/web/Dockerfile render.yaml .nvmrc .node-version .tool-versions scripts/agent-operating-model.yaml || true
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          for file in subprocess.check_output(['git', 'ls-files', 'src/mobile', '.github', 'src/api', 'src/test-harness', 'packages'], text=True).splitlines():
+              p = Path(file)
+              if p.name == 'AGENTS.md' or (p.name in ['tsconfig.json','jest.config.js','jest.config.cjs'] and file.startswith('src/mobile/')) or p.name in ['NotificationService.ts','BehaviorTrackingService.ts']:
+                  print('\n--- SOURCE:', file, 'BLOB:', subprocess.check_output(['git','hash-object',file],text=True).strip(), '---')
+                  print(p.read_text())
+          PY
+          git archive --format=tar HEAD package.json package-lock.json .github/workflows .config/docker render.yaml src/mobile src/api/package.json src/api/Dockerfile src/api/tsconfig.json src/api/jest.config.cjs src/web/package.json src/web/Dockerfile src/test-harness packages scripts > "$RUNNER_TEMP/pr993/source.tar"
+      - name: Install repository npm and dependencies
+        env:
+          npm_config_engine_strict: 'true'
+        run: |
+          npm install --global npm@10.8.2 --ignore-scripts
+          node --version
+          npm --version
+          npm ci --ignore-scripts --strict-peer-deps --no-audit --no-fund
+      - name: Inspect compatibility contracts and dependency graph
+        run: |
+          node -p "require('expo/bundledNativeModules.json')['expo-constants']"
+          npm view @nestjs/platform-express@12.0.1 dependencies peerDependencies engines --json
+          npm view @nestjs/testing@12.0.1 dependencies peerDependencies engines --json
+          npm view multer@2.3.0 version engines --json
+          npm view postcss@8.5.26 version engines --json
+          npm ls @nestjs/platform-express @nestjs/testing multer postcss --all > "$RUNNER_TEMP/pr993/dependency-tree.txt" 2>&1 || true
+          cat "$RUNNER_TEMP/pr993/dependency-tree.txt"
+          npm audit --json > "$RUNNER_TEMP/pr993/audit.json" || true
+          node - <<'JS'
+          const fs = require('node:fs');
+          const audit = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/pr993/audit.json', 'utf8'));
+          console.log(JSON.stringify({metadata:audit.metadata,vulnerabilities:audit.vulnerabilities,error:audit.error}, null, 2));
+          JS
+      - name: Compile the real mobile inputs and collect independent workspace results
+        run: |
+          npm run build --workspace @styx/shared
+          set +e
+          npm exec --workspace @styx/mobile -- tsc --noEmit --listFiles > "$RUNNER_TEMP/pr993/mobile-compiler.txt" 2>&1
+          echo "mobile compiler exit=$?"
+          grep -E 'error TS|services/(NotificationService|BehaviorTrackingService)' "$RUNNER_TEMP/pr993/mobile-compiler.txt"
+          npm run test --workspace @styx/mobile -- --runInBand > "$RUNNER_TEMP/pr993/mobile-tests.txt" 2>&1
+          echo "mobile tests exit=$?"
+          tail -100 "$RUNNER_TEMP/pr993/mobile-tests.txt"
+          npm run lint --workspace @styx/test-harness > "$RUNNER_TEMP/pr993/harness-lint.txt" 2>&1
+          echo "harness lint exit=$?"
+          cat "$RUNNER_TEMP/pr993/harness-lint.txt"
+          npm run test --workspace @styx/test-harness > "$RUNNER_TEMP/pr993/harness-tests.txt" 2>&1
+          echo "harness tests exit=$?"
+          tail -60 "$RUNNER_TEMP/pr993/harness-tests.txt"
+          git diff --stat
+          echo 'Diagnostic collection only. This job is not a passing validation receipt.'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: pr-993-source-and-diagnostics-${{ github.sha }}
+          path: ${{ runner.temp }}/pr993
+          if-no-files-found: error
+          retention-days: 2
