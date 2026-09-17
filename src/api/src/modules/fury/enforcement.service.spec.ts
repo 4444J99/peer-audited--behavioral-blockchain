@@ -81,6 +81,45 @@ describe('EnforcementService', () => {
       await expect(service.confirmCase('case-1','STAKE_SLASH',500)).rejects.toThrow('audit unavailable');
       expect(client.query).toHaveBeenLastCalledWith('ROLLBACK');expect(client.release).toHaveBeenCalledTimes(1);
     });
+
+    it('executes a double-entry ledger transaction when applying STAKE_SLASH to an auditor with an account', async () => {
+      // Preserve the target branch's ledger-leg assertions using the current
+      // transaction query order and shared client, not the pre-repair sequence.
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ id: 'case-1', case_type: 'COLLUSION_RING' }] })
+        .mockResolvedValueOnce({ rows: [{ reviewer_id: 'fury-1' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 'penalty-1' }] })
+        .mockResolvedValueOnce({ rows: [{ account_id: 'acct-fury-1' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 'acct-sys-rev' }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      mockLedger.recordTransaction.mockResolvedValueOnce('txn-slash-100');
+
+      const result = await service.confirmCase('case-1', 'STAKE_SLASH', 500);
+
+      expect(result.amountCents).toBe(500);
+      expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
+        'acct-fury-1',
+        'acct-sys-rev',
+        500,
+        undefined,
+        expect.objectContaining({ type: 'FURY_STAKE_SLASH', caseId: 'case-1' }),
+        client,
+        'fury-penalty:case-1',
+      );
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        'FURY_PENALTY_APPLIED',
+        expect.objectContaining({
+          caseId: 'case-1',
+          penaltyType: 'STAKE_SLASH',
+          amountCents: 500,
+          ledgerTransactionId: 'txn-slash-100',
+          ledgerDebitAccountId: 'acct-fury-1',
+        }),
+        client,
+      );
+    });
   });
 
   describe('resolveAppeal', () => {
