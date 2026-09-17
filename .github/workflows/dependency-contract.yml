@@ -6,13 +6,27 @@ on:
     paths:
       - '**/package.json'
       - '**/package-lock.json'
-      - '.github/workflows/dependency-contract.yml'
+      - '.github/workflows/**'
+      - '.node-version'
+      - '.nvmrc'
+      - 'render.yaml'
+      - '**/Dockerfile'
+      - 'src/mobile/**'
+      - 'src/test-harness/**'
+      - 'scripts/validation/runtime-contract*'
   push:
     branches: [main]
     paths:
       - '**/package.json'
       - '**/package-lock.json'
-      - '.github/workflows/dependency-contract.yml'
+      - '.github/workflows/**'
+      - '.node-version'
+      - '.nvmrc'
+      - 'render.yaml'
+      - '**/Dockerfile'
+      - 'src/mobile/**'
+      - 'src/test-harness/**'
+      - 'scripts/validation/runtime-contract*'
 
 permissions:
   contents: read
@@ -32,8 +46,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          # Node 24 satisfies pre-existing API engine requirements; see issue #997.
-          node-version: '24'
+          # Canonical release line for CI and deployment definitions.
+          node-version-file: .node-version
           cache: npm
       - name: Use the repository npm version
         run: |
@@ -43,6 +57,10 @@ jobs:
         env:
           npm_config_engine_strict: 'true'
         run: npm ci --ignore-scripts --strict-peer-deps --no-audit --no-fund
+      - name: Verify runtime contract and regression tests
+        run: |
+          npm run validate:runtime
+          npm run test:runtime
       - name: Check the Expo SDK dependency contract
         working-directory: src/mobile
         env:
@@ -67,7 +85,7 @@ jobs:
             }
           }
           // minVersion/gte are available in both SemVer 6 and 7; subset is not.
-          for (const [dir, floor] of [['', '22.13.0'], ['src/api', '22.12.0'], ['src/mobile', '22.13.0']]) {
+          for (const [dir, floor] of [['', '24.15.0'], ['src/api', '24.15.0'], ['src/mobile', '24.15.0']]) {
             const minimum = semver.minVersion(read(dir).engines.node);
             assert.ok(minimum && semver.gte(minimum, floor), `${dir}: Node floor below ${floor}`);
           }
@@ -94,15 +112,13 @@ jobs:
           JS
       - name: Build the shared workspace
         run: npm run build --workspace @styx/shared
-      - name: Verify mobile types and tests
+      - name: Verify mobile and harness independently
         run: |
-          npm run lint --workspace @styx/mobile
-          npm run test --workspace @styx/mobile -- --runInBand
-      - name: Verify test-harness types and tests
-        run: |
-          npm run lint --workspace @styx/test-harness
-          npm run test --workspace @styx/test-harness
-      - name: Ensure validation did not rewrite the lockfile
-        run: |
-          git diff --exit-code -- package.json package-lock.json src/api/package.json src/mobile/package.json src/test-harness/package.json
-          printf 'Verified head: `%s`\n' "$(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          status=0
+          npm run lint --workspace @styx/mobile || status=1
+          npm run test --workspace @styx/mobile -- --runInBand || status=1
+          npm run lint --workspace @styx/test-harness || status=1
+          npm run test --workspace @styx/test-harness || status=1
+          git diff --exit-code -- package.json package-lock.json src/api/package.json src/mobile/package.json src/test-harness/package.json || status=1
+          printf 'Checked head: `%s`; aggregate validation exit: `%s`\n' "$(git rev-parse HEAD)" "$status" >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"

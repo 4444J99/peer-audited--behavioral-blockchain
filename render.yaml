@@ -14,15 +14,15 @@ services:
     #   maxInstances: 3
     #   targetMemoryPercent: 75
     #   targetCPUCent: 75
-    buildCommand: npm install --include=dev && npx turbo run build --filter=@styx/api
+    buildCommand: npx --yes npm@10.8.2 ci --include=dev --engine-strict --strict-peer-deps && npm run validate:runtime && npx turbo run build --filter=@styx/api
     startCommand: cd src/api && node dist/api/src/main.js
     healthCheckPath: /health
     envVars:
       # Pin the runtime. Without this Render picks its own current default, so
-      # production runs the same supported Node 22 LTS line as CI and the
+      # production runs the same supported Node 24 LTS line as CI and the
       # Dockerfiles. TypeScript 7 is intentionally a separate migration.
       - key: NODE_VERSION
-        value: "22"
+        value: "24"
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
@@ -132,14 +132,14 @@ services:
     #   maxInstances: 3
     #   targetMemoryPercent: 75
     #   targetCPUCent: 75
-    buildCommand: npm install --include=dev && npx turbo run build --filter=@styx/web
+    buildCommand: npx --yes npm@10.8.2 ci --include=dev --engine-strict --strict-peer-deps && npm run validate:runtime && npx turbo run build --filter=@styx/web
     startCommand: cd src/web && npm start -- --port $PORT
     envVars:
       # Pin the runtime. Without this Render picks its own current default, so
-      # production runs the same supported Node 22 LTS line as CI and the
+      # production runs the same supported Node 24 LTS line as CI and the
       # Dockerfiles. TypeScript 7 is intentionally a separate migration.
       - key: NODE_VERSION
-        value: "22"
+        value: "24"
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL

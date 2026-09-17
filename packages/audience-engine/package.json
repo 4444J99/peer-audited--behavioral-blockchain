@@ -1,7 +1,7 @@
 {
   "name": "@styx/audience-engine",
   "version": "0.1.0",
-  "description": "Portable Audience Growth Engine CLI — parameterized 5-parameter engine that generates 30-day content plans for any forward-facing product. Extracted from docs/playbooks/playbook--audience-growth-engine.md.",
+  "description": "Portable Audience Growth Engine CLI \u2014 parameterized 5-parameter engine that generates 30-day content plans for any forward-facing product. Extracted from docs/playbooks/playbook--audience-growth-engine.md.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -37,6 +37,6 @@
   ],
   "license": "MIT",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.15.0 <25"
   }
 }
