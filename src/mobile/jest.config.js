@@ -1,6 +1,9 @@
-const { createDefaultPreset } = require("ts-jest");
+const path = require("node:path");
 
-const tsJestTransformCfg = createDefaultPreset().transform;
+// Hoisted testing-library dependencies must use the mobile React instance,
+// not the newer React/DOM pair belonging to the independent web workspace.
+const reactRoot = path.dirname(require.resolve("react/package.json"));
+const reactDomRoot = path.dirname(require.resolve("react-dom/package.json"));
 
 /** @type {import("jest").Config} **/
 module.exports = {
@@ -15,14 +18,16 @@ module.exports = {
   },
   testPathIgnorePatterns: ["/node_modules/"],
   moduleNameMapper: {
+    "^react$": require.resolve("react"),
+    "^react/(.*)$": `${reactRoot}/$1`,
+    "^react-dom$": require.resolve("react-dom"),
+    "^react-dom/(.*)$": `${reactDomRoot}/$1`,
     "^@react-native-async-storage/async-storage$":
       "<rootDir>/__mocks__/async-storage.ts",
     "^expo-crypto$": "<rootDir>/__mocks__/expo-crypto.ts",
     "^react-native$": "<rootDir>/__mocks__/react-native.ts",
   },
-  // V8 coverage provider: the default "babel" provider instruments via
-  // babel-plugin-istanbul → test-exclude, whose minimatch@3 callable API is
-  // broken by the repo-wide minimatch>=10 override. V8 sidesteps that chain.
+  // Keep native V8 coverage and all existing coverage thresholds enforcing.
   coverageProvider: "v8",
   coverageThreshold: {
     global: {
