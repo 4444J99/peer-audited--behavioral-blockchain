@@ -672,7 +672,7 @@ CREATE TABLE IF NOT EXISTS fitbit_oauth_tokens (
   scope TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);-- Circle-4 retention state (mirrors migrations/061_retention_state.sql)
+);-- Circle-4 retention state (mirrors migrations/065_retention_state.sql)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT DEFAULT 'America/New_York';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS alias TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS oath_categories TEXT[] DEFAULT '{}';

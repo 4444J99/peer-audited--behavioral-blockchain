@@ -49,7 +49,7 @@ moves, which also underpins the legal posture in
   `src/api/src/modules/payments/payments.controller.ts` (Stripe checkout
   `unit_amount: MONTHLY_SUBSCRIPTION_PRICE` at line ~193; subscription status
   surfaced at line ~451). User↔subscription linkage: migration
-  `042_user_subscription_id.sql`.
+  `045_user_subscription_id.sql`.
 - Client-facing price catalog: `src/api/src/modules/pay/pay.service.ts`
   (`monthlySubscriptionCents`).
 - Per-event consumer fees, charged via Stripe PaymentIntent + double-entry ledger +
@@ -97,7 +97,7 @@ build-vs-sell gap in the ladder.
 1. **Event capture** — `src/api/src/modules/payments/metered-usage.service.ts`
    (`recordMeteredUsage`): resolves the user's enterprise, writes an idempotent row to
    `usage_event` (`ON CONFLICT (idempotency_key) DO NOTHING`; table from
-   `041_metered_usage_events.sql`), then forwards to Stripe billing.
+   `042_metered_usage_events.sql`), then forwards to Stripe billing.
 2. **Stripe metered billing** — `src/api/src/modules/b2b/billing.service.ts`:
    `METERED_EVENT_TYPES = ["phash_scan", "gemini_call", "anomaly_detection",
    "proof_accepted"]`; reports via `stripe.billing.meterEvents.create`, resolves the

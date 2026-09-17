@@ -130,7 +130,7 @@ circle and links every surface.
   the migration chain creates. Never provision from `schema.sql` — it is a reference
   snapshot, not the source of truth (see step 1).
 - **Practitioner tables** (`practitioner_client_assignments`, `practitioner_alerts`)
-  come from migration `058_practitioner_tables.sql`. The seed still guards those
+  come from migration `062_practitioner_tables.sql`. The seed still guards those
   inserts behind `to_regclass()` checks so a partial chain seeds cleanly.
 - **Re-running is safe** at any time; existing rows are never modified, only
   missing ones are added (streak dates are relative to `CURRENT_DATE`, so a

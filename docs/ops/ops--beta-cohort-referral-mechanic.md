@@ -108,4 +108,4 @@ To verify referral and nomination functionality:
 cd src/api && npx jest referral.controller.spec.ts referral.service.spec.ts
 ```
 
-For schema validation, table `cohort_nominations` is defined in migration `073_cohort_nominations.sql` and enforced with foreign keys to `users(id)` and unique constraints on `(nominator_id, nominee_email)`.
+For schema validation, table `cohort_nominations` is defined in migration `081_cohort_nominations.sql` and enforced with foreign keys to `users(id)` and unique constraints on `(nominator_id, nominee_email)`.

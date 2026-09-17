@@ -1,4 +1,4 @@
--- Migration 041: Metered usage events (REV-styx-metered-billing)
+-- Migration 042: Metered usage events (REV-styx-metered-billing)
 -- Durable per-user record of billable consumption that drives B2B metered billing.
 
 CREATE TABLE IF NOT EXISTS usage_event (
