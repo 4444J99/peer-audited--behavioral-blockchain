@@ -4,7 +4,9 @@ name: PR 993 compatibility repair
 on:
   push:
     branches: [dependabot/npm_and_yarn/npm-deps-bf6561acc1]
-    paths: [.github/workflows/pr-993-compatibility-repair.yml]
+    paths:
+      - .github/workflows/pr-993-compatibility-repair.yml
+      - .github/scripts/pr993-compatibility-repair.py
 permissions:
   contents: read
   pull-requests: read
@@ -46,7 +48,7 @@ jobs:
             npm view "$package@12.0.3" version engines peerDependencies dependencies --json
           done
           npm view postcss@8.5.28 version engines --json
-          npm view multer@2.3.0 version engines --json
+          npm view multer@2.4.0 version engines --json
           python3 .github/scripts/pr993-compatibility-repair.py > "$RUNNER_TEMP/pr993-repair/expected-files.txt"
           cat "$RUNNER_TEMP/pr993-repair/expected-files.txt"
           npm run validate:runtime
@@ -93,7 +95,7 @@ jobs:
           }
           for (const [key, value] of Object.entries(lock.packages)) {
             const name = key.split('node_modules/').pop();
-            if (name === 'multer') assert.ok(semver.gte(value.version, '2.3.0'), key);
+            if (name === 'multer') assert.ok(semver.gte(value.version, '2.4.0'), key);
             if (name === 'postcss') assert.ok(semver.gte(value.version, '8.5.23'), key);
           }
           const harness = createRequire(path.resolve('src/test-harness/package.json'));
@@ -166,8 +168,8 @@ jobs:
           assert pr['head']['ref'] == 'dependabot/npm_and_yarn/npm-deps-bf6561acc1'
           assert pr['head']['sha'] == os.environ['GITHUB_SHA'], 'Refusing stale write'
           PY
-          # This reviewed standard-library-only script is from the input commit,
-          # never from the artifact. No dependency or application code runs here.
+          # Execute only the reviewed standard-library script from the input
+          # commit, never artifact code or installed application dependencies.
           python3 .github/scripts/pr993-compatibility-repair.py > "$RUNNER_TEMP/expected-files.txt"
           python3 - <<'PY'
           import json, os, pathlib, shutil, subprocess, urllib.parse
