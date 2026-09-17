@@ -16,8 +16,13 @@ for (const path of manifests) {
 }
 const copies = Object.entries(lock.packages).filter(([path]) => /(?:^|\/)node_modules\/react-native$/.test(path));
 assert.equal(copies.length, 1, `Expected one React Native runtime; found ${copies.map(([p,x])=>p+'@'+x.version).join(', ')}`);
-assert.equal(copies[0][1].version, '0.86.0');
+const mobileManifest = JSON.parse(readFileSync('src/mobile/package.json', 'utf8'));
+const rootManifest = JSON.parse(readFileSync('package.json', 'utf8'));
 const mobile = resolve('src/mobile');
+const bundled = JSON.parse(readFileSync(require.resolve('expo/bundledNativeModules.json', {paths:[mobile]}), 'utf8'));
+assert.equal(copies[0][1].version, mobileManifest.dependencies['react-native'], 'Installed React Native differs from application pin');
+assert.equal(copies[0][1].version, rootManifest.overrides['react-native'], 'Root override differs from application runtime');
+assert.equal(copies[0][1].version, bundled['react-native'], 'Runtime differs from the installed Expo SDK');
 const native = realpathSync(require.resolve('react-native/package.json', {paths:[mobile]}));
 const peers = ['expo','expo-camera','expo-application','react-native-screens','react-native-safe-area-context'];
 for (const name of peers) {
