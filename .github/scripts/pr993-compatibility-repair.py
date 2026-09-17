@@ -1,7 +1,7 @@
-"""Temporary deterministic PR 993 repair; standard library only, no commands or credentials.
+"""Temporary deterministic PR 993 repair; standard library only, no credentials.
 
-Run against the fixed input tree in both the validation and publication jobs.
-The publisher recomputes these edits rather than trusting executable artifact content.
+The publisher recomputes these reviewed edits from the input commit instead of
+executing artifact content. Every expected input is checked before replacement.
 """
 import json
 import re
@@ -20,6 +20,9 @@ def write(path, content):
 
 
 def write_json(path, value):
+    # Preserve formatting of manifests that need no semantic change.
+    if Path(path).exists() and json.loads(Path(path).read_text()) == value:
+        return
     write(path, json.dumps(value, indent=2) + '\n')
 
 
@@ -39,7 +42,7 @@ def main():
     for name in ['@nestjs/common', '@nestjs/core', '@nestjs/platform-express', '@nestjs/testing']:
         root['overrides'][name] = NEST_VERSION
     root['overrides']['postcss'] = '8.5.28'
-    root['overrides']['multer'] = '2.3.0'
+    root['overrides']['multer'] = '2.4.0'
     write_json('package.json', root)
 
     for path in sorted([*Path('src').glob('*/package.json'), *Path('packages').glob('*/package.json')]):
@@ -64,14 +67,16 @@ def main():
         if path.name.startswith('pr-993-'):
             continue
         source = path.read_text()
-        source = re.sub(r'(?m)^(\s*)node-version: \[22\]\s*$', r'\1node-version: [24]', source)
-        source = re.sub(r'(?m)^(\s*)node-version: (?:22|24\.x|\x2724\x27)\s*$', r'\1node-version-file: .node-version', source)
+        source = re.sub(r'(?m)^([ \t]*)node-version: \[22\][ \t]*$', r'\1node-version: [24]', source)
+        source = re.sub(r'(?m)^([ \t]*)node-version: (?:22|24\.x|\x2724\x27)[ \t]*$', r'\1node-version-file: .node-version', source)
+        source = source.replace('Use Node.js 22', 'Use Node.js 24')
         if path.name == 'ci.yml':
             marker = 'permissions:\n  contents: read\n'
             assert source.count(marker) == 1
             source = source.replace(marker, marker + '\nenv:\n  npm_config_engine_strict: "true"\n', 1)
             old_install = '          npx --yes "npm@${npm_version}" ci\n'
-            assert source.count(old_install) == 1
+            # Matrix, beta readiness, and browser E2E each install independently.
+            assert source.count(old_install) == 3
             source = source.replace(old_install, '          npm install --global "npm@${npm_version}" --ignore-scripts\n          npm ci --strict-peer-deps\n')
             marker = '      - name: Turbo Cache\n'
             assert source.count(marker) == 1
