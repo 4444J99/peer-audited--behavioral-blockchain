@@ -1,4 +1,4 @@
--- Migration 043: Compliance artifacts for legal whitepaper release gate
+-- Migration 046: Compliance artifacts for legal whitepaper release gate
 --
 -- Stores versioned compliance artifacts (legal whitepapers, counsel opinions)
 -- with hash integrity, counsel signature tracking, and expiration monitoring.

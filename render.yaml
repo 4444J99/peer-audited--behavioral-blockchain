@@ -169,6 +169,8 @@ services:
     ipAllowList: []
 
 databases:
+  # Managed PostgreSQL 16 backing styx-api
+  # Runs the 82-file sequential migration chain (001 through 081 + 037b)
   - name: styx-db
     plan: free
     region: oregon

@@ -1,4 +1,4 @@
--- 047: Rationalization classifier audit trail (F-AEGIS-10)
+-- 051: Rationalization classifier audit trail (F-AEGIS-10)
 -- Logs AI-classified user rationalizations for pattern tracking and Judge review.
 
 CREATE TABLE IF NOT EXISTS rationalization_log (

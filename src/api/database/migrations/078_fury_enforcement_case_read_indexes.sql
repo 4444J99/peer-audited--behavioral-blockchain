@@ -1,4 +1,4 @@
--- 070: Index the enforcement-case access paths the collusion wiring introduced.
+-- 078: Index the enforcement-case access paths the collusion wiring introduced.
 --
 -- Until TKT-P1-008 the only reader of fury_enforcement_cases was a per-reviewer
 -- lookup, which idx_fury_enforcement_cases_reviewer already served. Two new hot
