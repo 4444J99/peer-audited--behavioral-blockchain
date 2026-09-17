@@ -20,16 +20,18 @@ run() {
   printf '%s\t%s\n' "$name" "$code" >> "$EVIDENCE/outcomes.tsv"
   return "$code"
 }
-# Installation is a hard prerequisite; do not test stale dependencies on failure.
-run install npm ci
+run install npm ci --engine-strict --strict-peer-deps
 installed=$?
 run shell-regressions node --test scripts/tests/pr994-*.test.mjs
 if [[ "$installed" -eq 0 ]]; then
   run dependency-graph node scripts/ci/check-dependency-graph.mjs
+  run dependency-compatibility node --test scripts/ci/dependency-compatibility.test.mjs
+  run expo-compatibility bash -c 'cd src/mobile && CI=1 npx expo install --check'
   run shared-build npm run build --workspace=@styx/shared
   shared=$?
   if [[ "$shared" -eq 0 ]]; then
     run api-types npm run lint --workspace=@styx/api
+    run api-build npm run build --workspace=@styx/api
     run mobile-types npm run lint --workspace=@styx/mobile
     run database-atomicity bash -c 'cd src/api && npx jest --config jest.pr994.config.cjs --runInBand'
     run workspace-tests npm run test --workspaces --if-present
@@ -42,8 +44,9 @@ if [[ "$installed" -eq 0 ]]; then
     cp -R src/ask-styx/dist/. "$EVIDENCE/site/ask-styx/"
     run pages-assets node scripts/ci/check-pages-assets.mjs "$EVIDENCE/site"
   fi
-  run dependency-audit npm audit --audit-level=high --json
-  run production-audit npm audit --omit=dev --audit-level=high --json
+  # Every reported severity blocks this acceptance receipt; no exclusions.
+  run dependency-audit npm audit --audit-level=low --json
+  run production-audit npm audit --omit=dev --audit-level=low --json
 fi
 git diff --exit-code > "$EVIDENCE/tracked-diff.log"
 printf 'tracked-source-unchanged\t%s\n' "$?" >> "$EVIDENCE/outcomes.tsv"
@@ -51,7 +54,7 @@ node <<'JS'
 const fs=require('fs'),path=require('path');
 const root=process.env.EVIDENCE;
 const outcomes=Object.fromEntries(fs.readFileSync(path.join(root,'outcomes.tsv'),'utf8').trim().split('\n').map(row=>{const [key,value]=row.split('\t');return [key,Number(value)];}));
-const required=['install','shell-regressions','dependency-graph','shared-build','api-types','mobile-types','database-atomicity','workspace-tests','ask-build','pages-assets','dependency-audit','production-audit','tracked-source-unchanged'];
+const required=['install','shell-regressions','dependency-graph','dependency-compatibility','expo-compatibility','shared-build','api-types','api-build','mobile-types','database-atomicity','workspace-tests','ask-build','pages-assets','dependency-audit','production-audit','tracked-source-unchanged'];
 const passed=required.every(key=>outcomes[key]===0);
 const result={headSha:fs.readFileSync(path.join(root,'head.txt'),'utf8').trim(),checkedAt:new Date().toISOString(),run:process.env.GITHUB_RUN_ID||null,node:process.version,npm:fs.readFileSync(path.join(root,'npm-version.txt'),'utf8').trim(),passed,outcomes,notVerified:['live beta readiness','native camera recording','external practitioner pilot','live Sentry delivery','merge readiness']};
 fs.writeFileSync(path.join(root,'result.json'),JSON.stringify(result,null,2)+'\n');
