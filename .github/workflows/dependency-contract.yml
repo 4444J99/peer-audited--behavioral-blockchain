@@ -7,6 +7,7 @@ on:
       - '**/package.json'
       - '**/package-lock.json'
       - '.github/workflows/**'
+      - '.github/scripts/ci-context*'
       - '.node-version'
       - '.nvmrc'
       - 'render.yaml'
@@ -14,12 +15,14 @@ on:
       - 'src/mobile/**'
       - 'src/test-harness/**'
       - 'scripts/validation/runtime-contract*'
+      - 'scripts/validation/dependency-regressions.test.cjs'
   push:
     branches: [main]
     paths:
       - '**/package.json'
       - '**/package-lock.json'
       - '.github/workflows/**'
+      - '.github/scripts/ci-context*'
       - '.node-version'
       - '.nvmrc'
       - 'render.yaml'
@@ -27,6 +30,7 @@ on:
       - 'src/mobile/**'
       - 'src/test-harness/**'
       - 'scripts/validation/runtime-contract*'
+      - 'scripts/validation/dependency-regressions.test.cjs'
 
 permissions:
   contents: read
@@ -40,13 +44,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          # Canonical release line for CI and deployment definitions.
           node-version-file: .node-version
           cache: npm
       - name: Use the repository npm version
@@ -57,10 +60,15 @@ jobs:
         env:
           npm_config_engine_strict: 'true'
         run: npm ci --ignore-scripts --strict-peer-deps --no-audit --no-fund
-      - name: Verify runtime contract and regression tests
+      - name: Enforce the clean security baseline and consumer regressions
+        run: |
+          npm audit --audit-level=low
+          node --test scripts/validation/dependency-regressions.test.cjs
+      - name: Verify runtime and exact-revision policy regression tests
         run: |
           npm run validate:runtime
           npm run test:runtime
+          node --test .github/scripts/ci-context.test.cjs
       - name: Check the Expo SDK dependency contract
         working-directory: src/mobile
         env:
@@ -84,7 +92,6 @@ jobs:
               assert.deepEqual(record[field] || {}, manifest[field] || {}, `${dir}: ${field} drift`);
             }
           }
-          // minVersion/gte are available in both SemVer 6 and 7; subset is not.
           for (const [dir, floor] of [['', '24.15.0'], ['src/api', '24.15.0'], ['src/mobile', '24.15.0']]) {
             const minimum = semver.minVersion(read(dir).engines.node);
             assert.ok(minimum && semver.gte(minimum, floor), `${dir}: Node floor below ${floor}`);
