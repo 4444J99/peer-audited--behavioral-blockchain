@@ -7,12 +7,14 @@ on:
     paths:
       - .github/workflows/pr-993-api-repair.yml
       - .github/scripts/pr993-api-repair.py
+      - src/api/jest.config.cjs
+      - src/api/**/*.spec.ts
 permissions:
   contents: read
   pull-requests: read
 concurrency:
   group: pr-993-api-repair
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -54,7 +56,7 @@ jobs:
           npm run build --workspace @styx/shared
           npm run lint --workspace @styx/api
           npm run build --workspace @styx/api
-          npm run test --workspace @styx/api -- --runInBand
+          npm run test --workspace @styx/api
           git diff --check
           printf 'Validated source repair against `%s` on `%s`.\n' "$GITHUB_SHA" "$(node --version)" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
