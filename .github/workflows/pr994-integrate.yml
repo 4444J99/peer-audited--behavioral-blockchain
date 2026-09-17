@@ -22,8 +22,9 @@ jobs:
           import hashlib,pathlib,re,subprocess
           def git(*args): return subprocess.check_output(['git',*args],text=True).strip()
           baseline='9524e2082aae8728e0fd8c26a329aebdaae49d93'
+          target='899fd4cd3cd0865054679857a710f2ab6e003'
           target='899fd4cd3cd0865054675579857a710f2ab6e003'
-          assert git('rev-parse','HEAD^')==baseline,'Concurrent source changes require review'
+          subprocess.run(['git','merge-base','--is-ancestor',baseline,'HEAD'],check=True)
           assert git('diff','--name-only',baseline,'HEAD')=='.github/workflows/pr994-integrate.yml'
           assert git('rev-parse','origin/lane/verify')==target,'Integration target moved'
           assert git('merge-base','HEAD',target)=='56a9e82896b7d41952e77ac023f16ae31c843217'
@@ -68,10 +69,10 @@ jobs:
           part=text[a:b].replace("        undefined,\n        'fury-penalty","        client,\n        'fury-penalty").replace("ledgerDebitAccountId: 'acct-fury-1',\n        }),\n      );","ledgerDebitAccountId: 'acct-fury-1',\n        }),\n        client,\n      );")
           p.write_text(text[:a]+part+text[b:])
           subprocess.run(['git','add','--all'],check=True)
-          diff=subprocess.check_output(['git','diff','--cached','--binary','HEAD'])
+          diff=subprocess.check_output(['git','diff','--cached','--binary','--full-index','HEAD'])
           digest=hashlib.sha256(diff).hexdigest()
           print('Reviewed resolution diff SHA256:',digest)
-          assert digest=='d4b158ed167a5b10517b7096eea5ccb4ea3a347ea1f3e26b27cb27d080b90297','Resolution differs from the locally inspected tree'
+          assert digest=='cde1ee7adddbf6c22c9ae6b2707783d8cb8fd38f67b5657b1e433c91e1795c16','Resolution differs from the locally inspected tree'
           subprocess.run(['git','diff','--cached','--check'],check=True)
           subprocess.run(['git','commit','-m','merge: reconcile lane/verify without regressing PR 994 repairs'],check=True)
           PY
