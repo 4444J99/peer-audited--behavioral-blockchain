@@ -3,8 +3,14 @@ import { CorepayPayoutProvider } from './corepay-payout.provider';
 
 describe('CorepayPayoutProvider', () => {
   let provider: CorepayPayoutProvider;
+  let originalKey: string | undefined;
+  let originalUrl: string | undefined;
 
   beforeEach(async () => {
+    originalKey = process.env.COREPAY_API_KEY;
+    originalUrl = process.env.COREPAY_API_URL;
+    delete process.env.COREPAY_API_KEY;
+    delete process.env.COREPAY_API_URL;
     const module: TestingModule = await Test.createTestingModule({
       providers: [CorepayPayoutProvider],
     }).compile();
@@ -13,7 +19,11 @@ describe('CorepayPayoutProvider', () => {
   });
 
   afterEach(() => {
-    delete process.env.COREPAY_API_KEY;
+    jest.restoreAllMocks();
+    if (originalKey === undefined) delete process.env.COREPAY_API_KEY;
+    else process.env.COREPAY_API_KEY = originalKey;
+    if (originalUrl === undefined) delete process.env.COREPAY_API_URL;
+    else process.env.COREPAY_API_URL = originalUrl;
   });
 
   describe('dev fallback (no COREPAY_API_KEY)', () => {
@@ -38,20 +48,26 @@ describe('CorepayPayoutProvider', () => {
   describe('production mode (COREPAY_API_KEY set)', () => {
     beforeEach(() => {
       process.env.COREPAY_API_KEY = 'test_key';
+      // A unit test must simulate transport failure, not depend on DNS or an
+      // external endpoint eventually timing out. The provider still handles
+      // the same rejected fetch promise through its real error path.
+      jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Network unavailable'));
     });
 
     it('releaseFunds returns FAILED when API is unreachable', async () => {
       process.env.COREPAY_API_URL = 'https://nonexistent.corepay.test';
       const result = await provider.releaseFunds('pi_123', 5000);
       expect(result.status).toBe('FAILED');
-      expect(result.error).toBeDefined();
+      expect(result.error).toContain('Network unavailable');
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
     });
 
     it('captureFunds returns FAILED when API is unreachable', async () => {
       process.env.COREPAY_API_URL = 'https://nonexistent.corepay.test';
       const result = await provider.captureFunds('pi_123', 5000);
       expect(result.status).toBe('FAILED');
-      expect(result.error).toBeDefined();
+      expect(result.error).toContain('Network unavailable');
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
     });
   });
 });
