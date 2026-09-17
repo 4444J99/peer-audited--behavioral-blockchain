@@ -585,3 +585,18 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
 - **Phase**: Phase Delta
 - **Issues**: #111, #110, #109, #102, #99, #97
 - **Learnings**: Behavioral Science Suite implemented and tested in `@styx/shared`. Fixed a Jest CommonJS incompatibility in `motivation-archetype.spec.ts` caused by importing Vitest globals into a Jest environment. All 235 shared tests now pass.
+
+## Batch: verify-login-throttle-2026-09-16
+- **Phase**: Verify
+- **Issue**: #990
+- **Status**: TESTED; parent dogfood tracker #369 remains open.
+- **Tests**: 31/31 targeted API tests, API strict typecheck, API/Web build,
+  full API suite (176/176 suites, 2190/2190 tests), Gate 04, and Gate 06 passed.
+  A native reset/verify passed with API and web listeners on loopback; 8 direct
+  plus 8 proxied repeated logins returned HTTP 201, then shutdown removed both
+  listeners. Gate 05 verified offline constants only; no hosted-beta claim was
+  made.
+- **Learning**: Local automation bypasses must be route-scoped and fail closed.
+  Require a dedicated flag, synthetic test-money mode, an explicit local
+  runtime, loopback-bound host services, and a local transport peer. A generic
+  internal service credential must never become global bypass authority.
