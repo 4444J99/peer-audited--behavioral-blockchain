@@ -18,6 +18,7 @@ module.exports = {
     "^@react-native-async-storage/async-storage$":
       "<rootDir>/__mocks__/async-storage.ts",
     "^react-native$": "<rootDir>/__mocks__/react-native.ts",
+    "^expo-camera$": "<rootDir>/__mocks__/expo-camera.tsx",
   },
   // V8 coverage provider: the default "babel" provider instruments via
   // babel-plugin-istanbul → test-exclude, whose minimatch@3 callable API is

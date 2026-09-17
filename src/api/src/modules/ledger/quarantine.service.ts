@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Pool } from 'pg';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { captureFinancialAlert } from '../../common/monitoring/sentry';
 
 /**
  * QuarantineService: Automated Ledger Safeguard
@@ -20,6 +21,12 @@ export class QuarantineService {
 
   async activateQuarantine(accountId: string, reason: string, metadata?: Record<string, any>) {
     this.logger.error(`[PHANTOM_MONEY_PROTECTION] Quarantining account ${accountId}. Reason: ${reason}`);
+
+    captureFinancialAlert('LEDGER_QUARANTINE_ACTIVATED', {
+      accountId,
+      reason,
+      metadata,
+    });
 
     // 1. Lock the user associated with this account
     await this.pool.query(
