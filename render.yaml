@@ -19,10 +19,10 @@ services:
     healthCheckPath: /health
     envVars:
       # Pin the runtime. Without this Render picks its own current default, so
-      # production runs the same supported Node 24 LTS line as CI and the
+      # production runs the same supported Node 22 LTS line as CI and the
       # Dockerfiles. TypeScript 7 is intentionally a separate migration.
       - key: NODE_VERSION
-        value: "24"
+        value: "22"
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
@@ -136,10 +136,10 @@ services:
     startCommand: cd src/web && npm start -- --port $PORT
     envVars:
       # Pin the runtime. Without this Render picks its own current default, so
-      # production runs the same supported Node 24 LTS line as CI and the
+      # production runs the same supported Node 22 LTS line as CI and the
       # Dockerfiles. TypeScript 7 is intentionally a separate migration.
       - key: NODE_VERSION
-        value: "24"
+        value: "22"
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL
