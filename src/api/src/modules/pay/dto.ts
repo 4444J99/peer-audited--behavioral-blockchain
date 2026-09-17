@@ -7,7 +7,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { MeteredEventType } from '../b2b/billing.service';
+import { type MeteredEventType } from '../b2b/billing.service';
 
 export const METERED_EVENT_TYPES: MeteredEventType[] = [
   'phash_scan',

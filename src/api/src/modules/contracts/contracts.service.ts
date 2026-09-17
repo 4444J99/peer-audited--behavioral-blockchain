@@ -15,7 +15,7 @@ import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
 import {
   ESCROW_PROVIDER,
-  EscrowProvider,
+  type EscrowProvider,
   toEscrowHoldId,
 } from "../../common/interfaces/payout-provider.interface";
 import { JurisdictionTier } from "../../../services/geofencing";

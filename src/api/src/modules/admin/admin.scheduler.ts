@@ -4,7 +4,7 @@ import { Pool } from 'pg';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import {
   ESCROW_PROVIDER,
-  EscrowProvider,
+  type EscrowProvider,
 } from '../../common/interfaces/payout-provider.interface';
 
 const RECONCILE_MAX_ATTEMPTS = 5;

@@ -14,7 +14,7 @@ import { R2StorageService } from '../../../services/storage/r2.service';
 import { SubmitVerdictDto } from './dto';
 import { calculateAccuracy } from '../../../../shared/libs/integrity';
 
-import { CounterClaimService, FileCounterClaimDto, AdjudicateCounterClaimDto } from './counter-claim.service';
+import { CounterClaimService, type FileCounterClaimDto, type AdjudicateCounterClaimDto } from './counter-claim.service';
 
 @ApiTags('Fury')
 @ApiBearerAuth()

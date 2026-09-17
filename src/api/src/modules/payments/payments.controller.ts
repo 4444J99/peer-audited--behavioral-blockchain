@@ -5,7 +5,7 @@ import {
   Req,
   Res,
   Logger,
-  RawBodyRequest,
+  type RawBodyRequest,
   OnModuleInit,
   UseGuards,
   Param,
@@ -21,7 +21,7 @@ import {
   ApiBearerAuth,
 } from "@nestjs/swagger";
 import { Pool } from "pg";
-import { Request, Response } from "express";
+import { type Request, type Response } from "express";
 import Stripe from "stripe";
 import { ContractsService } from "../contracts/contracts.service";
 import { NotificationsService } from "../notifications/notifications.service";
