@@ -20,8 +20,11 @@
     "@styx/shared": "*"
   },
   "devDependencies": {
+    "@types/node": "26.5.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "license": "Apache-2.0"
 }
