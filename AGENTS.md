@@ -112,22 +112,38 @@ npm run format                          # Prettier: **/*.{ts,tsx,md}
 
 ### CI Pipeline Order (`.github/workflows/ci.yml`)
 
+The CI uses a **job dependency graph**, not just a linear list. Branch protection targets the `e2e` summary job.
+
+**Blocking jobs** (must pass for merge):
+
+| Job | Node | Depends on | Purpose |
+|---|---|---|---|
+| `build_and_test_matrix` | 22 | — | Test, build, lint, Gates 04–08, load-test syntax |
+| `beta_readiness` | 24.x | `build_and_test_matrix` | Beta readiness contract |
+| `changed-files` | — | — | Checks if web files changed (`src/web/`, `e2e/`, `src/shared/`, `.config/playwright/`) |
+| `e2e_browsers` | 22 | `build_and_test_matrix`, `beta_readiness`, `changed-files` | Playwright chromium+firefox; **web-gated** (skips if no web changes) |
+| `build_and_test` | — | `build_and_test_matrix`, `beta_readiness` | Summary gate; `if: always()` — never SKIPPED |
+| `e2e` | — | `changed-files`, `e2e_browsers` | Summary gate; `if: always()` — never SKIPPED |
+| `terraform_validate` | — | — | Standalone `terraform fmt -check` + `validate` |
+| `deploy.yml` | — | `beta_readiness` | Production deploy; has its own **Gate 08b compliance artifact check** against production DB |
+
+**Within `build_and_test_matrix`** (linear steps):
 1. `npm ci` + `npm audit --audit-level=high`
-2. `turbo run test` — **no** `--coverage --ci`: those are jest-only flags that make the Vitest workspaces (`ask-styx`, `test-harness`, `packages/*`) throw `CACError: Unknown option --ci` and break API suite-loading. Coverage is enforced per-workspace via `jest --coverage` in each workspace's own `test` script. Tests retry up to 3 times for flaky exits.
-3. `npx turbo run build` — build for validation gates
-4. `npx turbo run lint` — strict TypeScript lint
-5. Gate 04: redacted build check (no gambling vocabulary in production build)
+2. `turbo run test` — **no** `--coverage --ci`; retries up to 3 times for flaky exits
+3. `npx turbo run build`
+4. `npx turbo run lint`
+5. Gate 04: redacted build check
 6. Gate 05: behavioral physics check (requires `CI_GATE05_API_URL`; skipped if unset)
-7. Gate 06: security invariant check (no hardcoded secrets)
+7. Gate 06: security invariant check (exit 2 is advisory)
 8. Gate 07: claim drift check (`npm run validate:claims`)
 9. Gate 08: Fury Crucible Simulation (`npx tsx scripts/validation/08-fury-crucible-simulation.ts`)
-10. Gate 08b: Compliance Artifact Check (requires `CI_GATE08_DATABASE_URL`; skipped if unset)
+10. Gate 08b: Compliance Artifact Check (requires `CI_GATE08_DATABASE_URL`; skips if unset)
 11. Load-test syntax check (`node --check` on load-test scripts; execution is deployment-gated)
-12. Beta readiness job (needs build_and_test_matrix; uses Node 24.x)
-13. E2E Playwright matrix (chromium + firefox), gated by `changed-files` and `e2e_browsers` jobs
-14. `e2e` summary job (always runs; passes if no web-affecting changes)
-15. Terraform validate (`infra/terraform/`)
-16. CodeQL (in dedicated `codeql.yml` workflow, not `ci.yml`)
+
+**Key notes**:
+- Coverage is enforced per-workspace via `jest --coverage` in each workspace's own `test` script
+- The `e2e_browsers` job builds `src/web` and runs Playwright with `E2E_BASE_URL: http://127.0.0.1:3001`
+- CodeQL runs in a dedicated `codeql.yml` workflow, not `ci.yml`
 
 ### Deployment
 
@@ -140,6 +156,7 @@ npm run format                          # Prettier: **/*.{ts,tsx,md}
 - `bash scripts/deploy.sh local` — one-command local stack (API + Web + PostgreSQL + Redis via Docker Compose)
 - `bash scripts/deploy.sh render` — production deploy to Render
 - `bash scripts/deploy.sh down` — stop local stack
+- `deploy.yml` runs staging/beta promotion gates (`staging_promotion_gate`, `beta_promotion_gate`), a preflight check, a **Gate 08b compliance artifact check** against the production DB, then `deploy_api`
 
 ### Key Conventions & Gotchas
 
