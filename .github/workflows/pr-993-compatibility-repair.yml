@@ -90,8 +90,23 @@ jobs:
           const semver = require('semver');
           const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
           const api = createRequire(path.resolve('src/api/package.json'));
+          function installedPackage(name) {
+            // Nest's exports map does not expose package.json; follow the real
+            // entrypoint, without loading or executing the package itself.
+            let dir = path.dirname(api.resolve(name));
+            for (;;) {
+              const manifest = path.join(dir, 'package.json');
+              if (fs.existsSync(manifest)) {
+                const pkg = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+                if (pkg.name === name) return pkg;
+              }
+              const parent = path.dirname(dir);
+              assert.notEqual(parent, dir, `No manifest for ${name}`);
+              dir = parent;
+            }
+          }
           for (const name of ['@nestjs/common', '@nestjs/core', '@nestjs/platform-express', '@nestjs/testing']) {
-            assert.equal(api(`${name}/package.json`).version, '12.0.3', name);
+            assert.equal(installedPackage(name).version, '12.0.3', name);
           }
           for (const [key, value] of Object.entries(lock.packages)) {
             const name = key.split('node_modules/').pop();
