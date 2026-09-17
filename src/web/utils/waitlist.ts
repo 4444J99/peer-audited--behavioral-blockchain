@@ -6,21 +6,21 @@
 // web side classification-free avoids duplicating that logic across workspaces.
 
 export const WAITLIST_ATTRIBUTION_KEYS = [
-  'source',
-  'intent',
-  'utm_source',
-  'utm_campaign',
-  'utm_medium',
-  'ref',
+  "source",
+  "intent",
+  "utm_source",
+  "utm_campaign",
+  "utm_medium",
+  "ref",
 ] as const;
 
 export type WaitlistAttributionParams = Partial<
-  Record<(typeof WAITLIST_ATTRIBUTION_KEYS)[number] | 'referrer', string>
+  Record<(typeof WAITLIST_ATTRIBUTION_KEYS)[number] | "referrer", string>
 >;
 
 /** Extract the known attribution params from a URLSearchParams-like object. */
 export function collectAttribution(
-  params: Pick<URLSearchParams, 'get'>,
+  params: Pick<URLSearchParams, "get">,
 ): WaitlistAttributionParams {
   const out: WaitlistAttributionParams = {};
   for (const key of WAITLIST_ATTRIBUTION_KEYS) {

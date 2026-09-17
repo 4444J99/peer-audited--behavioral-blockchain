@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
 
 export interface ChannelCAC {
   channel: string;
@@ -34,12 +34,13 @@ export class UnitEconomicsService {
   private readonly logger = new Logger(UnitEconomicsService.name);
 
   // Baseline allocated acquisition budget in cents for testing / early models
-  private static readonly DEFAULT_CHANNEL_BUDGET_CENTS: Record<string, number> = {
-    creator: 150_000,     // $1,500
-    practitioner: 50_000, // $500
-    organic: 0,
-    direct: 0,
-  };
+  private static readonly DEFAULT_CHANNEL_BUDGET_CENTS: Record<string, number> =
+    {
+      creator: 150_000, // $1,500
+      practitioner: 50_000, // $500
+      organic: 0,
+      direct: 0,
+    };
 
   constructor(private readonly pool: Pool) {}
 
@@ -70,7 +71,9 @@ export class UnitEconomicsService {
        FROM referrals
        WHERE status = 'REWARDED'`,
     );
-    const referralCostCents = Number(referralCostResult.rows[0]?.referral_cost ?? 0);
+    const referralCostCents = Number(
+      referralCostResult.rows[0]?.referral_cost ?? 0,
+    );
 
     const signupsMap = new Map<string, number>();
     for (const r of signupsResult.rows) {
@@ -83,11 +86,11 @@ export class UnitEconomicsService {
     }
 
     const allChannels = new Set([
-      'referral',
-      'creator',
-      'practitioner',
-      'organic',
-      'direct',
+      "referral",
+      "creator",
+      "practitioner",
+      "organic",
+      "direct",
       ...signupsMap.keys(),
       ...activationsMap.keys(),
     ]);
@@ -98,13 +101,15 @@ export class UnitEconomicsService {
       const activations = activationsMap.get(channel) ?? 0;
       let totalCostCents = 0;
 
-      if (channel === 'referral') {
+      if (channel === "referral") {
         totalCostCents = referralCostCents;
       } else {
-        totalCostCents = UnitEconomicsService.DEFAULT_CHANNEL_BUDGET_CENTS[channel] ?? 0;
+        totalCostCents =
+          UnitEconomicsService.DEFAULT_CHANNEL_BUDGET_CENTS[channel] ?? 0;
       }
 
-      const cacCents = activations > 0 ? Math.round(totalCostCents / activations) : 0;
+      const cacCents =
+        activations > 0 ? Math.round(totalCostCents / activations) : 0;
       result.push({
         channel,
         signups,
@@ -152,12 +157,16 @@ export class UnitEconomicsService {
 
     const cohorts: CohortLTV[] = [];
     for (const row of cohortsResult.rows) {
-      const cohortMonth = row.cohort_month || '2026-01';
+      const cohortMonth = row.cohort_month || "2026-01";
       const usersCount = Number(row.users_count);
       const activeUsersCount = Number(row.active_users_count);
-      const retentionRate = usersCount > 0 ? Math.round((activeUsersCount / usersCount) * 1000) / 1000 : 0;
+      const retentionRate =
+        usersCount > 0
+          ? Math.round((activeUsersCount / usersCount) * 1000) / 1000
+          : 0;
       const totalRevenueCents = revenueMap.get(cohortMonth) ?? 0;
-      const ltvCents = usersCount > 0 ? Math.round(totalRevenueCents / usersCount) : 0;
+      const ltvCents =
+        usersCount > 0 ? Math.round(totalRevenueCents / usersCount) : 0;
 
       cohorts.push({
         cohortMonth,
@@ -181,32 +190,62 @@ export class UnitEconomicsService {
       this.getCohortLTV(),
     ]);
 
-    const totalCostCents = cacByChannel.reduce((sum, c) => sum + c.totalCostCents, 0);
-    const totalActivations = cacByChannel.reduce((sum, c) => sum + c.activations, 0);
-    const blendedCacCents = totalActivations > 0 ? Math.round(totalCostCents / totalActivations) : 0;
+    const totalCostCents = cacByChannel.reduce(
+      (sum, c) => sum + c.totalCostCents,
+      0,
+    );
+    const totalActivations = cacByChannel.reduce(
+      (sum, c) => sum + c.activations,
+      0,
+    );
+    const blendedCacCents =
+      totalActivations > 0 ? Math.round(totalCostCents / totalActivations) : 0;
 
-    const totalRevenueCents = cohorts.reduce((sum, c) => sum + c.totalRevenueCents, 0);
+    const totalRevenueCents = cohorts.reduce(
+      (sum, c) => sum + c.totalRevenueCents,
+      0,
+    );
     const totalCohortUsers = cohorts.reduce((sum, c) => sum + c.usersCount, 0);
-    const blendedLtvCents = totalCohortUsers > 0 ? Math.round(totalRevenueCents / totalCohortUsers) : 0;
+    const blendedLtvCents =
+      totalCohortUsers > 0
+        ? Math.round(totalRevenueCents / totalCohortUsers)
+        : 0;
 
-    const ltvToCacRatio = blendedCacCents > 0
-      ? Math.round((blendedLtvCents / blendedCacCents) * 10) / 10
-      : blendedLtvCents > 0 ? 99.9 : 0;
+    const ltvToCacRatio =
+      blendedCacCents > 0
+        ? Math.round((blendedLtvCents / blendedCacCents) * 10) / 10
+        : blendedLtvCents > 0
+          ? 99.9
+          : 0;
 
     // Estimate monthly revenue per user to derive payback period
-    const avgMonthlyRevPerUser = totalCohortUsers > 0
-      ? Math.max(1, Math.round(totalRevenueCents / (totalCohortUsers * Math.max(1, cohorts.length))))
-      : 1;
+    const avgMonthlyRevPerUser =
+      totalCohortUsers > 0
+        ? Math.max(
+            1,
+            Math.round(
+              totalRevenueCents /
+                (totalCohortUsers * Math.max(1, cohorts.length)),
+            ),
+          )
+        : 1;
 
-    const paybackPeriodMonths = blendedCacCents > 0
-      ? Math.round((blendedCacCents / avgMonthlyRevPerUser) * 10) / 10
-      : 0;
+    const paybackPeriodMonths =
+      blendedCacCents > 0
+        ? Math.round((blendedCacCents / avgMonthlyRevPerUser) * 10) / 10
+        : 0;
 
     // Churn rate calculation based on inactive cohort members
-    const totalActiveUsers = cohorts.reduce((sum, c) => sum + c.activeUsersCount, 0);
-    const monthlyChurnRate = totalCohortUsers > 0
-      ? Math.round(((totalCohortUsers - totalActiveUsers) / totalCohortUsers) * 1000) / 1000
-      : 0;
+    const totalActiveUsers = cohorts.reduce(
+      (sum, c) => sum + c.activeUsersCount,
+      0,
+    );
+    const monthlyChurnRate =
+      totalCohortUsers > 0
+        ? Math.round(
+            ((totalCohortUsers - totalActiveUsers) / totalCohortUsers) * 1000,
+          ) / 1000
+        : 0;
 
     const netRevenueRetentionPct = monthlyChurnRate < 0.1 ? 112 : 95;
 

@@ -60,7 +60,11 @@ describe("CrisisNotificationService", () => {
       await expect(
         service.notifySafetyTeam(
           "user-1",
-          { isCrisis: true, severity: "CRITICAL", matchedKeywords: ["suicide"] },
+          {
+            isCrisis: true,
+            severity: "CRITICAL",
+            matchedKeywords: ["suicide"],
+          },
           "SELF_REPORT",
           "suicide",
         ),
@@ -200,7 +204,11 @@ describe("CrisisNotificationService", () => {
       process.env.CRISIS_WEBHOOK_URL = "https://hooks.example.com/crisis";
       global.fetch = jest
         .fn()
-        .mockResolvedValue({ ok: false, status: 500, statusText: "ISE" }) as unknown as typeof fetch;
+        .mockResolvedValue({
+          ok: false,
+          status: 500,
+          statusText: "ISE",
+        }) as unknown as typeof fetch;
 
       mockPool.query.mockResolvedValueOnce({
         rows: [{ id: "notif-5", created_at: "2026-07-23T00:00:00Z" }],
@@ -247,11 +255,7 @@ describe("CrisisNotificationService", () => {
     it("schedules a follow-up with correct delay for HIGH", async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ id: "fu-2" }] });
 
-      const result = await service.scheduleFollowUp(
-        "user-1",
-        "evt-2",
-        "HIGH",
-      );
+      const result = await service.scheduleFollowUp("user-1", "evt-2", "HIGH");
 
       // HIGH = 24 hour delay
       const scheduled = new Date(result.scheduledAt).getTime();

@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { Pool } from 'pg';
-import { ContractsService } from './contracts.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { Pool } from "pg";
+import { ContractsService } from "./contracts.service";
 
 @Injectable()
 export class ContractsScheduler {
@@ -20,11 +20,13 @@ export class ContractsScheduler {
 
     if (expired.rows.length === 0) return;
 
-    this.logger.log(`Found ${expired.rows.length} expired contract(s), resolving as FAILED...`);
+    this.logger.log(
+      `Found ${expired.rows.length} expired contract(s), resolving as FAILED...`,
+    );
 
     for (const row of expired.rows) {
       try {
-        await this.contractsService.resolveContract(row.id, 'FAILED');
+        await this.contractsService.resolveContract(row.id, "FAILED");
         this.logger.log(`Expired contract ${row.id} resolved as FAILED`);
       } catch (err) {
         this.logger.error(
@@ -34,9 +36,10 @@ export class ContractsScheduler {
     }
   }
 
-  @Cron('*/5 * * * *')
+  @Cron("*/5 * * * *")
   async retryFailedContractResolutionSideEffects(): Promise<void> {
-    const summary = await this.contractsService.sweepFailedContractResolutionSideEffects();
+    const summary =
+      await this.contractsService.sweepFailedContractResolutionSideEffects();
 
     if (
       summary.staleResetCount === 0 &&

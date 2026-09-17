@@ -1,16 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 
 export type NotificationType =
-  | 'CHECK_IN_REMINDER'
-  | 'DANGER_ZONE_ALERT'
-  | 'MILESTONE_ACHIEVED'
-  | 'PARTNER_CHECK_IN'
-  | 'STREAK_MILESTONE'
-  | 'WEEKEND_WARNING'
-  | 'MISSED_PROOF'
-  | 'CRISIS_RESOURCE';
+  | "CHECK_IN_REMINDER"
+  | "DANGER_ZONE_ALERT"
+  | "MILESTONE_ACHIEVED"
+  | "PARTNER_CHECK_IN"
+  | "STREAK_MILESTONE"
+  | "WEEKEND_WARNING"
+  | "MISSED_PROOF"
+  | "CRISIS_RESOURCE";
 
-export type NotificationPriority = 'low' | 'normal' | 'high';
+export type NotificationPriority = "low" | "normal" | "high";
 
 export interface NotificationEvent {
   type: NotificationType;
@@ -33,28 +33,28 @@ export class NotificationComposerService {
 
     let result: ComposedNotification;
     switch (event.type) {
-      case 'CHECK_IN_REMINDER':
+      case "CHECK_IN_REMINDER":
         result = this.composeCheckInReminder(metadata);
         break;
-      case 'DANGER_ZONE_ALERT':
+      case "DANGER_ZONE_ALERT":
         result = this.composeDangerZoneAlert(metadata);
         break;
-      case 'MILESTONE_ACHIEVED':
+      case "MILESTONE_ACHIEVED":
         result = this.composeMilestoneAchieved(metadata);
         break;
-      case 'PARTNER_CHECK_IN':
+      case "PARTNER_CHECK_IN":
         result = this.composePartnerCheckIn(metadata);
         break;
-      case 'STREAK_MILESTONE':
+      case "STREAK_MILESTONE":
         result = this.composeStreakMilestone(metadata);
         break;
-      case 'WEEKEND_WARNING':
+      case "WEEKEND_WARNING":
         result = this.composeWeekendWarning();
         break;
-      case 'MISSED_PROOF':
+      case "MISSED_PROOF":
         result = this.composeMissedProof();
         break;
-      case 'CRISIS_RESOURCE':
+      case "CRISIS_RESOURCE":
         result = this.composeCrisisResource();
         break;
       default:
@@ -72,79 +72,89 @@ export class NotificationComposerService {
     };
   }
 
-  composeCheckInReminder(metadata: Record<string, unknown>): ComposedNotification {
+  composeCheckInReminder(
+    metadata: Record<string, unknown>,
+  ): ComposedNotification {
     return {
-      title: 'Daily Check-In',
-      body: 'Time for your daily check-in. Your partner is waiting.',
-      data: { notificationType: 'CHECK_IN_REMINDER' },
-      priority: 'normal',
+      title: "Daily Check-In",
+      body: "Time for your daily check-in. Your partner is waiting.",
+      data: { notificationType: "CHECK_IN_REMINDER" },
+      priority: "normal",
     };
   }
 
-  composeDangerZoneAlert(metadata: Record<string, unknown>): ComposedNotification {
+  composeDangerZoneAlert(
+    metadata: Record<string, unknown>,
+  ): ComposedNotification {
     const day = metadata.day ?? 1;
     return {
-      title: 'Danger Zone',
+      title: "Danger Zone",
       body: `Day ${day}: The first 72 hours are the hardest. You're not alone.`,
-      data: { notificationType: 'DANGER_ZONE_ALERT' },
-      priority: 'high',
+      data: { notificationType: "DANGER_ZONE_ALERT" },
+      priority: "high",
     };
   }
 
-  composeMilestoneAchieved(metadata: Record<string, unknown>): ComposedNotification {
-    const milestone = metadata.milestone ?? 'Achievement';
+  composeMilestoneAchieved(
+    metadata: Record<string, unknown>,
+  ): ComposedNotification {
+    const milestone = metadata.milestone ?? "Achievement";
     return {
-      title: 'Milestone Reached',
+      title: "Milestone Reached",
       body: `${milestone} — you're making real progress. Keep going.`,
-      data: { notificationType: 'MILESTONE_ACHIEVED' },
-      priority: 'normal',
+      data: { notificationType: "MILESTONE_ACHIEVED" },
+      priority: "normal",
     };
   }
 
-  composePartnerCheckIn(metadata: Record<string, unknown>): ComposedNotification {
-    const partnerAlias = metadata.partnerAlias ?? 'Your partner';
+  composePartnerCheckIn(
+    metadata: Record<string, unknown>,
+  ): ComposedNotification {
+    const partnerAlias = metadata.partnerAlias ?? "Your partner";
     return {
-      title: 'Partner Check-In',
+      title: "Partner Check-In",
       body: `${partnerAlias} sent you a check-in`,
-      data: { notificationType: 'PARTNER_CHECK_IN' },
-      priority: 'normal',
+      data: { notificationType: "PARTNER_CHECK_IN" },
+      priority: "normal",
     };
   }
 
-  composeStreakMilestone(metadata: Record<string, unknown>): ComposedNotification {
+  composeStreakMilestone(
+    metadata: Record<string, unknown>,
+  ): ComposedNotification {
     const streak = metadata.streak ?? 1;
     return {
-      title: 'Streak Milestone',
+      title: "Streak Milestone",
       body: `${streak} days strong. You're proving something to yourself.`,
-      data: { notificationType: 'STREAK_MILESTONE' },
-      priority: 'normal',
+      data: { notificationType: "STREAK_MILESTONE" },
+      priority: "normal",
     };
   }
 
   composeWeekendWarning(): ComposedNotification {
     return {
-      title: 'Weekend Ahead',
-      body: 'Weekend ahead. Pre-commit your routine. We\'re here.',
-      data: { notificationType: 'WEEKEND_WARNING' },
-      priority: 'normal',
+      title: "Weekend Ahead",
+      body: "Weekend ahead. Pre-commit your routine. We're here.",
+      data: { notificationType: "WEEKEND_WARNING" },
+      priority: "normal",
     };
   }
 
   composeMissedProof(): ComposedNotification {
     return {
-      title: 'Missed Proof',
-      body: 'You missed your proof window. Get back on track — one slip doesn\'t define you.',
-      data: { notificationType: 'MISSED_PROOF' },
-      priority: 'normal',
+      title: "Missed Proof",
+      body: "You missed your proof window. Get back on track — one slip doesn't define you.",
+      data: { notificationType: "MISSED_PROOF" },
+      priority: "normal",
     };
   }
 
   composeCrisisResource(): ComposedNotification {
     return {
-      title: 'Support Available',
-      body: 'If you\'re in crisis, help is available 24/7. Tap for resources.',
-      data: { notificationType: 'CRISIS_RESOURCE' },
-      priority: 'high',
+      title: "Support Available",
+      body: "If you're in crisis, help is available 24/7. Tap for resources.",
+      data: { notificationType: "CRISIS_RESOURCE" },
+      priority: "high",
     };
   }
 }

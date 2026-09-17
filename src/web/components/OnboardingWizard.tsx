@@ -1,16 +1,29 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
-  ChevronRight, ChevronLeft, Flame, Shield, DollarSign, CreditCard, X, UserCheck,
-} from 'lucide-react';
-import { api } from '../services/api-client';
-import { IDENTITY_ARCHETYPES } from '../../shared/libs/identity-oath';
+  ChevronRight,
+  ChevronLeft,
+  Flame,
+  Shield,
+  DollarSign,
+  CreditCard,
+  X,
+  UserCheck,
+} from "lucide-react";
+import { api } from "../services/api-client";
+import { IDENTITY_ARCHETYPES } from "@styx/types";
 
 const OATH_CATEGORIES = [
-  { id: 'RECOVERY_NOCONTACT', label: 'No Contact', icon: '\u{1F6AB}', description: 'Absolute severance. No texts, calls, or DMs.', color: 'border-red-700 hover:border-red-500' },
+  {
+    id: "RECOVERY_NOCONTACT",
+    label: "No Contact",
+    icon: "\u{1F6AB}",
+    description: "Absolute severance. No texts, calls, or DMs.",
+    color: "border-red-700 hover:border-red-500",
+  },
   // { id: 'RECOVERY_DETOX', label: 'Digital Detox', icon: '\u{1F4F4}', description: 'Strict limits on social media doom-scrolling.', color: 'border-purple-700 hover:border-purple-500' },
   // { id: 'RECOVERY_ENDORPHIN', label: 'Endorphin Recovery', icon: '\u{1F3CB}\u{FE0F}', description: 'Physical exertion to process stress (Gym/Steps).', color: 'border-green-700 hover:border-green-500' },
   // { id: 'RECOVERY_DIVERSION', label: 'Venting Vault', icon: '\u{1F512}', description: 'Send toxic urges here instead of to them.', color: 'border-blue-700 hover:border-blue-500' },
@@ -27,15 +40,18 @@ interface OnboardingWizardProps {
   onSkip: () => void;
 }
 
-export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) {
+export function OnboardingWizard({
+  onComplete,
+  onSkip,
+}: OnboardingWizardProps) {
   const [step, setStep] = useState(0);
-  const [selectedArchetype, setSelectedArchetype] = useState('');
-  const [pledgeCopy, setPledgeCopy] = useState('');
+  const [selectedArchetype, setSelectedArchetype] = useState("");
+  const [pledgeCopy, setPledgeCopy] = useState("");
   const [identitySaving, setIdentitySaving] = useState(false);
   const [identityError, setIdentityError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [stakeAmount, setStakeAmount] = useState(25);
-  const [customStake, setCustomStake] = useState('');
+  const [customStake, setCustomStake] = useState("");
   const router = useRouter();
 
   const totalSteps = 6;
@@ -46,7 +62,8 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
   useEffect(() => {
     let cancelled = false;
 
-    api.getIdentityOath()
+    api
+      .getIdentityOath()
       .then((state) => {
         if (cancelled || !state.oath) return;
         setSelectedArchetype(state.oath.archetypeId);
@@ -61,13 +78,20 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
 
   const canProceed = (): boolean => {
     switch (step) {
-      case 0: return true; // Welcome — always
-      case 1: return selectedArchetype !== '' && !identitySaving; // Must declare an identity
-      case 2: return selectedCategory !== ''; // Must select category
-      case 3: return stakeAmount >= 5 && stakeAmount <= MAX_BETA_STAKE; // Valid stake
-      case 4: return true; // Payment info — always
-      case 5: return true; // Redirect
-      default: return true;
+      case 0:
+        return true; // Welcome — always
+      case 1:
+        return selectedArchetype !== "" && !identitySaving; // Must declare an identity
+      case 2:
+        return selectedCategory !== ""; // Must select category
+      case 3:
+        return stakeAmount >= 5 && stakeAmount <= MAX_BETA_STAKE; // Valid stake
+      case 4:
+        return true; // Payment info — always
+      case 5:
+        return true; // Redirect
+      default:
+        return true;
     }
   };
 
@@ -81,7 +105,9 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
       setPledgeCopy(oath.pledgeCopy);
       return true;
     } catch {
-      setIdentityError('Could not save your identity. Check your connection and try again.');
+      setIdentityError(
+        "Could not save your identity. Check your connection and try again.",
+      );
       return false;
     } finally {
       setIdentitySaving(false);
@@ -98,7 +124,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
       const params = new URLSearchParams({
         category: selectedCategory,
         stake: String(stakeAmount),
-        onboarding: '1',
+        onboarding: "1",
       });
       router.push(`/contracts/new?${params.toString()}`);
       onComplete();
@@ -119,8 +145,8 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
 
   const perceivedLoss = (stakeAmount * LOSS_AVERSION_LAMBDA).toFixed(2);
   const identityLabel =
-    IDENTITY_ARCHETYPES.find((archetype) => archetype.id === selectedArchetype)?.label
-    ?? 'Not declared';
+    IDENTITY_ARCHETYPES.find((archetype) => archetype.id === selectedArchetype)
+      ?.label ?? "Not declared";
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -141,7 +167,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               <div
                 key={i}
                 className={`h-1 flex-1 rounded-full transition-colors ${
-                  i <= step ? 'bg-red-600' : 'bg-neutral-800'
+                  i <= step ? "bg-red-600" : "bg-neutral-800"
                 }`}
               />
             ))}
@@ -161,38 +187,57 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                   <Flame className="text-black" size={32} />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-black tracking-tight">Welcome to Styx</h2>
-                  <p className="text-neutral-400 text-sm">Relationship Recovery Beta</p>
+                  <h2 className="text-3xl font-black tracking-tight">
+                    Welcome to Styx
+                  </h2>
+                  <p className="text-neutral-400 text-sm">
+                    Relationship Recovery Beta
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-4 text-neutral-300">
                 <p>
-                  Styx is a <strong className="text-white">behavioral accountability tool</strong> that
-                  uses financial commitments to help you maintain the No Contact rule.
+                  Styx is a{" "}
+                  <strong className="text-white">
+                    behavioral accountability tool
+                  </strong>{" "}
+                  that uses financial commitments to help you maintain the No
+                  Contact rule.
                 </p>
 
                 <div className="p-4 bg-black rounded-xl border border-neutral-800 space-y-3">
                   <div className="flex items-start gap-3">
-                    <Shield size={18} className="text-red-500 mt-0.5 shrink-0" />
+                    <Shield
+                      size={18}
+                      className="text-red-500 mt-0.5 shrink-0"
+                    />
                     <p className="text-sm">
-                      <strong className="text-white">Emotional Resilience:</strong> By creating a real 
-                      cost for breaking No Contact, we help you overcome the temporary urges that set back 
-                      your long-term recovery.
+                      <strong className="text-white">
+                        Emotional Resilience:
+                      </strong>{" "}
+                      By creating a real cost for breaking No Contact, we help
+                      you overcome the temporary urges that set back your
+                      long-term recovery.
                     </p>
                   </div>
                   <div className="flex items-start gap-3">
                     <Flame size={18} className="text-red-500 mt-0.5 shrink-0" />
                     <p className="text-sm">
-                      <strong className="text-white">Verified Progress:</strong> Your check-ins are 
-                      validated to ensure you are staying on track with your recovery goals.
+                      <strong className="text-white">Verified Progress:</strong>{" "}
+                      Your check-ins are validated to ensure you are staying on
+                      track with your recovery goals.
                     </p>
                   </div>
                   <div className="flex items-start gap-3">
-                    <DollarSign size={18} className="text-red-500 mt-0.5 shrink-0" />
+                    <DollarSign
+                      size={18}
+                      className="text-red-500 mt-0.5 shrink-0"
+                    />
                     <p className="text-sm">
-                      <strong className="text-white">Micro-Stakes:</strong> Commit a small amount ($5 - $20) 
-                      to your goal. Succeed and your capital returns. Fail and the stake is forfeited.
+                      <strong className="text-white">Micro-Stakes:</strong>{" "}
+                      Commit a small amount ($5 - $20) to your goal. Succeed and
+                      your capital returns. Fail and the stake is forfeited.
                     </p>
                   </div>
                 </div>
@@ -204,10 +249,12 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
           {step === 1 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-black tracking-tight">Who Are You Becoming?</h2>
+                <h2 className="text-2xl font-black tracking-tight">
+                  Who Are You Becoming?
+                </h2>
                 <p className="text-neutral-400 text-sm mt-1">
-                  No Contact is not a chore list. Name the person you are becoming —
-                  your contract is bound to that, not to a task.
+                  No Contact is not a chore list. Name the person you are
+                  becoming — your contract is bound to that, not to a task.
                 </p>
               </div>
 
@@ -218,16 +265,22 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                     onClick={() => setSelectedArchetype(archetype.id)}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${
                       selectedArchetype === archetype.id
-                        ? 'border-red-500 bg-red-900/20'
-                        : 'border-neutral-800 bg-black hover:border-neutral-600'
+                        ? "border-red-500 bg-red-900/20"
+                        : "border-neutral-800 bg-black hover:border-neutral-600"
                     }`}
                   >
                     <div className="flex items-center gap-3 mb-1">
                       <UserCheck size={18} className="text-red-500 shrink-0" />
-                      <span className="font-bold text-white">{archetype.label}</span>
+                      <span className="font-bold text-white">
+                        {archetype.label}
+                      </span>
                     </div>
-                    <p className="text-sm text-neutral-300">I am becoming {archetype.becoming}.</p>
-                    <p className="text-xs text-neutral-500 mt-1">{archetype.description}</p>
+                    <p className="text-sm text-neutral-300">
+                      I am becoming {archetype.becoming}.
+                    </p>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      {archetype.description}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -237,8 +290,9 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               )}
 
               <p className="text-xs text-neutral-600">
-                You can change who you are becoming later. The declaration is yours — it is
-                never shown to the person you are going No Contact with.
+                You can change who you are becoming later. The declaration is
+                yours — it is never shown to the person you are going No Contact
+                with.
               </p>
             </div>
           )}
@@ -247,9 +301,12 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-black tracking-tight">Choose Your First Oath</h2>
+                <h2 className="text-2xl font-black tracking-tight">
+                  Choose Your First Oath
+                </h2>
                 <p className="text-neutral-400 text-sm mt-1">
-                  Select the behavioral stream for your first commitment contract.
+                  Select the behavioral stream for your first commitment
+                  contract.
                 </p>
               </div>
 
@@ -260,7 +317,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                     onClick={() => setSelectedCategory(cat.id)}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${
                       selectedCategory === cat.id
-                        ? 'border-red-500 bg-red-900/20'
+                        ? "border-red-500 bg-red-900/20"
                         : `border-neutral-800 bg-black ${cat.color}`
                     }`}
                   >
@@ -268,7 +325,9 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                       <span className="text-2xl">{cat.icon}</span>
                       <span className="font-bold text-white">{cat.label}</span>
                     </div>
-                    <p className="text-xs text-neutral-400">{cat.description}</p>
+                    <p className="text-xs text-neutral-400">
+                      {cat.description}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -279,20 +338,27 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
           {step === 3 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-black tracking-tight">Set Your Stakes</h2>
+                <h2 className="text-2xl font-black tracking-tight">
+                  Set Your Stakes
+                </h2>
                 <p className="text-neutral-400 text-sm mt-1">
-                  How much are you willing to risk? Higher stakes = stronger motivation.
+                  How much are you willing to risk? Higher stakes = stronger
+                  motivation.
                 </p>
               </div>
 
               {/* Loss Aversion Explainer */}
               <div className="p-4 bg-red-900/10 border border-red-900/30 rounded-xl">
                 <p className="text-sm text-neutral-300">
-                  <strong className="text-red-400">Loss Aversion Coefficient: {LOSS_AVERSION_LAMBDA}</strong>
+                  <strong className="text-red-400">
+                    Loss Aversion Coefficient: {LOSS_AVERSION_LAMBDA}
+                  </strong>
                 </p>
                 <p className="text-xs text-neutral-500 mt-1">
-                  A ${stakeAmount} stake will feel like a <strong className="text-white">${perceivedLoss} loss</strong> if
-                  you fail. This psychological multiplier is what makes Styx effective.
+                  A ${stakeAmount} stake will feel like a{" "}
+                  <strong className="text-white">${perceivedLoss} loss</strong>{" "}
+                  if you fail. This psychological multiplier is what makes Styx
+                  effective.
                 </p>
               </div>
 
@@ -301,11 +367,14 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                 {STAKE_PRESETS.map((amount) => (
                   <button
                     key={amount}
-                    onClick={() => { setStakeAmount(amount); setCustomStake(''); }}
+                    onClick={() => {
+                      setStakeAmount(amount);
+                      setCustomStake("");
+                    }}
                     className={`py-3 rounded-xl font-bold text-sm transition-colors ${
                       stakeAmount === amount && !customStake
-                        ? 'bg-red-600 text-white'
-                        : 'bg-black border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600'
+                        ? "bg-red-600 text-white"
+                        : "bg-black border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600"
                     }`}
                   >
                     ${amount}
@@ -319,7 +388,9 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                   Custom Amount ($5 - $20)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-red-500 font-black text-xl">$</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-red-500 font-black text-xl">
+                    $
+                  </span>
                   <input
                     type="number"
                     min="5"
@@ -345,9 +416,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                   }
                 `}</style>
                 <div className="w-full h-3 bg-neutral-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-full transition-all dynamic-stake-width"
-                  />
+                  <div className="h-full bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-full transition-all dynamic-stake-width" />
                 </div>
               </div>
             </div>
@@ -357,9 +426,12 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
           {step === 4 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-black tracking-tight">Connect Payment</h2>
+                <h2 className="text-2xl font-black tracking-tight">
+                  Connect Payment
+                </h2>
                 <p className="text-neutral-400 text-sm mt-1">
-                  Set up your payment method to fund your first behavioral contract.
+                  Set up your payment method to fund your first behavioral
+                  contract.
                 </p>
               </div>
 
@@ -369,7 +441,8 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                   <div>
                     <p className="font-bold">Stripe Escrow</p>
                     <p className="text-xs text-neutral-500">
-                      Funds are held in FBO (For Benefit Of) escrow. Styx never touches your money directly.
+                      Funds are held in FBO (For Benefit Of) escrow. Styx never
+                      touches your money directly.
                     </p>
                   </div>
                 </div>
@@ -377,8 +450,12 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                 <div className="p-4 bg-neutral-900 rounded-xl text-sm text-neutral-400 space-y-2">
                   <p>When you create a contract:</p>
                   <ul className="list-disc list-inside space-y-1 text-xs text-neutral-500">
-                    <li>A Stripe PaymentIntent is created for your stake amount</li>
-                    <li>Funds are held (not captured) until the contract resolves</li>
+                    <li>
+                      A Stripe PaymentIntent is created for your stake amount
+                    </li>
+                    <li>
+                      Funds are held (not captured) until the contract resolves
+                    </li>
                     <li>On success: hold is cancelled, money returns to you</li>
                     <li>On failure: hold is captured and redistributed</li>
                   </ul>
@@ -393,7 +470,8 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               </div>
 
               <p className="text-xs text-neutral-600 text-center">
-                You can also set up payment later. The first contract creation will prompt you.
+                You can also set up payment later. The first contract creation
+                will prompt you.
               </p>
             </div>
           )}
@@ -406,7 +484,9 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               </div>
 
               <div>
-                <h2 className="text-3xl font-black tracking-tight">You Are Ready</h2>
+                <h2 className="text-3xl font-black tracking-tight">
+                  You Are Ready
+                </h2>
                 <p className="text-neutral-400 mt-2">
                   Your first behavioral contract is about to begin.
                 </p>
@@ -417,7 +497,9 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                   <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
                     Your Declaration
                   </p>
-                  <p className="mt-2 text-lg font-bold text-white">{pledgeCopy}</p>
+                  <p className="mt-2 text-lg font-bold text-white">
+                    {pledgeCopy}
+                  </p>
                   <p className="mt-2 text-xs text-neutral-500">
                     Bound to every contract you open in this stream.
                   </p>
@@ -431,15 +513,23 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-neutral-500 text-sm">Oath Stream</span>
-                  <span className="font-bold capitalize">{selectedCategory || 'Not selected'}</span>
+                  <span className="font-bold capitalize">
+                    {selectedCategory || "Not selected"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-neutral-500 text-sm">Stake Amount</span>
-                  <span className="font-black text-red-500">${stakeAmount.toFixed(2)}</span>
+                  <span className="font-black text-red-500">
+                    ${stakeAmount.toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-neutral-500 text-sm">Perceived Loss</span>
-                  <span className="font-bold text-neutral-300">${perceivedLoss}</span>
+                  <span className="text-neutral-500 text-sm">
+                    Perceived Loss
+                  </span>
+                  <span className="font-bold text-neutral-300">
+                    ${perceivedLoss}
+                  </span>
                 </div>
                 {/* No onboarding-bonus row: DR-005 defers the $5.00 grant for
                     the beta cohort, and the client cannot see whether the
@@ -449,10 +539,12 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               </div>
 
               <p className="text-sm text-neutral-500">
-                Clicking below will take you to the contract creation form with your selections pre-filled.
-                {selectedCategory.startsWith('RECOVERY_') && (
+                Clicking below will take you to the contract creation form with
+                your selections pre-filled.
+                {selectedCategory.startsWith("RECOVERY_") && (
                   <span className="block mt-2 text-amber-400">
-                    Recovery contracts use daily attestations. You&apos;ll check in each day to maintain your streak.
+                    Recovery contracts use daily attestations. You&apos;ll check
+                    in each day to maintain your streak.
                   </span>
                 )}
               </p>
@@ -487,10 +579,10 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             className="px-8 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black rounded-xl transition-colors flex items-center gap-2"
           >
             {identitySaving
-              ? 'Saving...'
+              ? "Saving..."
               : step === totalSteps - 1
-                ? 'Create Contract'
-                : 'Continue'}
+                ? "Create Contract"
+                : "Continue"}
             <ChevronRight size={18} />
           </button>
         </div>

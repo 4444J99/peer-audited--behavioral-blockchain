@@ -4,7 +4,12 @@ export interface CrisisDetectionResult {
   isCrisis: boolean;
   severity: "NONE" | "MEDIUM" | "HIGH" | "CRITICAL";
   matchedKeywords: string[];
-  category?: "SUICIDE" | "SELF_HARM" | "EATING_DISORDER" | "SUBSTANCE" | "CRISIS_UNSPECIFIED";
+  category?:
+    | "SUICIDE"
+    | "SELF_HARM"
+    | "EATING_DISORDER"
+    | "SUBSTANCE"
+    | "CRISIS_UNSPECIFIED";
 }
 
 /**
@@ -27,7 +32,10 @@ export class CrisisDetectionService {
   private readonly SEP = /[\s.,!?;:\-'"…]+/;
 
   // ─── CRITICAL: Immediate danger — suicide, self-kill, end-of-life ───────
-  private readonly CRITICAL_PATTERNS: { pattern: RegExp; category: CrisisDetectionResult["category"] }[] = [
+  private readonly CRITICAL_PATTERNS: {
+    pattern: RegExp;
+    category: CrisisDetectionResult["category"];
+  }[] = [
     // Direct self-harm intent
     {
       pattern: new RegExp(
@@ -55,7 +63,10 @@ export class CrisisDetectionService {
   ];
 
   // ─── HIGH: Serious risk — active self-harm, eating disorders, relapse ───
-  private readonly HIGH_PATTERNS: { pattern: RegExp; category: CrisisDetectionResult["category"] }[] = [
+  private readonly HIGH_PATTERNS: {
+    pattern: RegExp;
+    category: CrisisDetectionResult["category"];
+  }[] = [
     // Self-harm
     {
       pattern: new RegExp(
@@ -91,7 +102,10 @@ export class CrisisDetectionService {
   ];
 
   // ─── MEDIUM: Concerning language — worth monitoring, not immediately dangerous ──
-  private readonly MEDIUM_PATTERNS: { pattern: RegExp; category: CrisisDetectionResult["category"] }[] = [
+  private readonly MEDIUM_PATTERNS: {
+    pattern: RegExp;
+    category: CrisisDetectionResult["category"];
+  }[] = [
     // Hopelessness / despair
     {
       pattern: new RegExp(

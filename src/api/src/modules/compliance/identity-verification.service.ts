@@ -4,22 +4,18 @@ import {
   Logger,
   NotFoundException,
   Optional,
-} from '@nestjs/common';
-import { Pool } from 'pg';
+} from "@nestjs/common";
+import { Pool } from "pg";
 import {
   IdentityProviderService,
   IdentityVerificationMode,
   IdentityProviderStatus,
   StartIdentityVerificationResult,
-} from './identity-provider.service';
-import { EmailService } from '../email/email.service';
+} from "./identity-provider.service";
+import { EmailService } from "../email/email.service";
 
 export type VerificationStatus =
-  | 'NOT_STARTED'
-  | 'PENDING'
-  | 'VERIFIED'
-  | 'FAILED'
-  | 'REJECTED';
+  "NOT_STARTED" | "PENDING" | "VERIFIED" | "FAILED" | "REJECTED";
 
 export interface UserComplianceStatus {
   userId: string;
@@ -54,8 +50,8 @@ export class IdentityVerificationService {
     if (result.rows.length === 0) {
       return {
         userId,
-        kycStatus: 'NOT_STARTED',
-        ageVerificationStatus: 'NOT_STARTED',
+        kycStatus: "NOT_STARTED",
+        ageVerificationStatus: "NOT_STARTED",
         identityProvider: null,
         identityVerificationId: null,
         identityVerifiedAt: null,
@@ -66,10 +62,10 @@ export class IdentityVerificationService {
 
     const row = result.rows[0];
     const kycStatus = String(
-      row.kyc_status || 'NOT_STARTED',
+      row.kyc_status || "NOT_STARTED",
     ).toUpperCase() as VerificationStatus;
     const ageVerificationStatus = String(
-      row.age_verification_status || 'NOT_STARTED',
+      row.age_verification_status || "NOT_STARTED",
     ).toUpperCase() as VerificationStatus;
 
     return {
@@ -81,8 +77,8 @@ export class IdentityVerificationService {
       identityVerifiedAt: row.identity_verified_at
         ? new Date(row.identity_verified_at).toISOString()
         : null,
-      isKycVerified: kycStatus === 'VERIFIED',
-      isAgeVerified: ageVerificationStatus === 'VERIFIED',
+      isKycVerified: kycStatus === "VERIFIED",
+      isAgeVerified: ageVerificationStatus === "VERIFIED",
     };
   }
 
@@ -123,7 +119,7 @@ export class IdentityVerificationService {
 
     await this.pool.query(
       `UPDATE users
-       SET ${updates.join(', ')}
+       SET ${updates.join(", ")}
        WHERE id = $1`,
       params,
     );
@@ -156,8 +152,8 @@ export class IdentityVerificationService {
     const shouldSetAge = this.modeIncludesAge(input.mode);
     await this.recordVerificationStatus({
       userId: input.userId,
-      ...(shouldSetKyc ? { kycStatus: 'PENDING' } : {}),
-      ...(shouldSetAge ? { ageVerificationStatus: 'PENDING' } : {}),
+      ...(shouldSetKyc ? { kycStatus: "PENDING" } : {}),
+      ...(shouldSetAge ? { ageVerificationStatus: "PENDING" } : {}),
       identityProvider: session.provider,
       identityVerificationId: session.verificationId,
       verifiedAt: null,
@@ -169,23 +165,23 @@ export class IdentityVerificationService {
   async completeMockVerification(input: {
     userId: string;
     mode: IdentityVerificationMode;
-    status: Exclude<IdentityProviderStatus, 'PENDING'>;
+    status: Exclude<IdentityProviderStatus, "PENDING">;
   }): Promise<UserComplianceStatus> {
     // Mock completion flips a user to VERIFIED with no provider proof. It must be
     // unreachable in production (ties to the provider gate in IdentityProviderService).
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       throw new ForbiddenException(
-        'Mock identity verification is disabled in production',
+        "Mock identity verification is disabled in production",
       );
     }
 
     await this.applyProviderCompletion({
-      provider: 'MOCK',
+      provider: "MOCK",
       verificationId: `mock_manual_${input.userId}`,
       mode: input.mode,
       status: input.status,
       userId: input.userId,
-      raw: { source: 'mock-endpoint' },
+      raw: { source: "mock-endpoint" },
     });
 
     return this.getUserComplianceStatus(input.userId);
@@ -205,11 +201,11 @@ export class IdentityVerificationService {
       );
     } catch {
       // Signature verification / secret configuration failure — reject.
-      return { applied: false, reason: 'invalid_signature' };
+      return { applied: false, reason: "invalid_signature" };
     }
 
     if (!parsed) {
-      return { applied: false, reason: 'unsupported_or_invalid_event' };
+      return { applied: false, reason: "unsupported_or_invalid_event" };
     }
 
     await this.applyProviderCompletion(parsed);
@@ -217,7 +213,7 @@ export class IdentityVerificationService {
   }
 
   async applyProviderCompletion(input: {
-    provider: 'MOCK' | 'STRIPE_IDENTITY';
+    provider: "MOCK" | "STRIPE_IDENTITY";
     verificationId: string;
     mode: IdentityVerificationMode;
     status: IdentityProviderStatus;
@@ -227,9 +223,9 @@ export class IdentityVerificationService {
     const mappedStatus = this.mapProviderStatusToVerificationStatus(
       input.status,
     );
-    const verifiedAt = mappedStatus === 'VERIFIED' ? new Date() : null;
+    const verifiedAt = mappedStatus === "VERIFIED" ? new Date() : null;
     const shouldSendTierUpgrade =
-      mappedStatus === 'VERIFIED' && this.modeIncludesKyc(input.mode);
+      mappedStatus === "VERIFIED" && this.modeIncludesKyc(input.mode);
 
     let targetUserId = input.userId || null;
     if (!targetUserId) {
@@ -281,7 +277,10 @@ export class IdentityVerificationService {
     identityProvider?: string | null;
     identityVerificationId?: string | null;
     verifiedAt?: Date | null;
-  }): Promise<{ email: string | null; previousKycStatus: string | null } | null> {
+  }): Promise<{
+    email: string | null;
+    previousKycStatus: string | null;
+  } | null> {
     const updates: string[] = [];
     const params: any[] = [input.userId];
     let index = 2;
@@ -317,7 +316,7 @@ export class IdentityVerificationService {
          FOR UPDATE
        )
        UPDATE users
-       SET ${updates.join(', ')}
+       SET ${updates.join(", ")}
        FROM target
        WHERE users.id = target.id
        RETURNING users.email, target.kyc_status AS previous_kyc_status`,
@@ -334,22 +333,22 @@ export class IdentityVerificationService {
   private mapProviderStatusToVerificationStatus(
     status: IdentityProviderStatus,
   ): VerificationStatus {
-    if (status === 'VERIFIED') return 'VERIFIED';
-    if (status === 'REJECTED') return 'REJECTED';
-    if (status === 'FAILED') return 'FAILED';
-    return 'PENDING';
+    if (status === "VERIFIED") return "VERIFIED";
+    if (status === "REJECTED") return "REJECTED";
+    if (status === "FAILED") return "FAILED";
+    return "PENDING";
   }
 
   private modeIncludesKyc(mode: IdentityVerificationMode): boolean {
-    return mode === 'KYC_ONLY' || mode === 'KYC_AND_AGE';
+    return mode === "KYC_ONLY" || mode === "KYC_AND_AGE";
   }
 
   private modeIncludesAge(mode: IdentityVerificationMode): boolean {
-    return mode === 'AGE_ONLY' || mode === 'KYC_AND_AGE';
+    return mode === "AGE_ONLY" || mode === "KYC_AND_AGE";
   }
 
   private wasNotVerified(status: string | null | undefined): boolean {
-    return String(status || 'NOT_STARTED').toUpperCase() !== 'VERIFIED';
+    return String(status || "NOT_STARTED").toUpperCase() !== "VERIFIED";
   }
 
   private async sendTierUpgradeOnboarding(
@@ -367,7 +366,7 @@ export class IdentityVerificationService {
       await this.emailService?.sendEarlyAccessOnboarding({
         to: email,
         userId,
-        trigger: 'tier_upgrade',
+        trigger: "tier_upgrade",
       });
     } catch (error) {
       this.logger.warn(

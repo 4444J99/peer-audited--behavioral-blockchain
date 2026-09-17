@@ -7,17 +7,10 @@ import { Pool } from "pg";
 import { TruthLogService } from "../ledger/truth-log.service";
 
 export type ContentType =
-  | "PROOF_MEDIA"
-  | "PROFILE_TEXT"
-  | "CONTRACT_TITLE"
-  | "WHISTLEBLOWER_REPORT";
+  "PROOF_MEDIA" | "PROFILE_TEXT" | "CONTRACT_TITLE" | "WHISTLEBLOWER_REPORT";
 export type FlagSeverity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type FlagStatus =
-  | "PENDING"
-  | "UNDER_REVIEW"
-  | "APPROVED"
-  | "REMOVED"
-  | "ESCALATED";
+  "PENDING" | "UNDER_REVIEW" | "APPROVED" | "REMOVED" | "ESCALATED";
 export type AppealStatus = "PENDING" | "UPHELD" | "OVERTURNED";
 
 export interface ContentFlag {
@@ -218,7 +211,8 @@ export class ModerationService {
    * Returns the moderation queue, filtered by status.
    */
   async getQueue(status?: FlagStatus): Promise<ContentFlag[]> {
-    const severityRank = "CASE severity WHEN 'CRITICAL' THEN 4 WHEN 'HIGH' THEN 3 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 1 ELSE 0 END";
+    const severityRank =
+      "CASE severity WHEN 'CRITICAL' THEN 4 WHEN 'HIGH' THEN 3 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 1 ELSE 0 END";
     if (status) {
       const result = await this.pool.query(
         `SELECT * FROM content_flags WHERE status = $1 ORDER BY ${severityRank} DESC, created_at ASC`,
@@ -306,16 +300,23 @@ export class ModerationService {
         [flag.content_id, userId],
       );
       ownsContent = ownershipResult.rows.length > 0;
-    } else if (flag.content_type === "PROFILE_TEXT" || flag.content_type === "CONTRACT_TITLE" || flag.content_type === "WHISTLEBLOWER_REPORT") {
+    } else if (
+      flag.content_type === "PROFILE_TEXT" ||
+      flag.content_type === "CONTRACT_TITLE" ||
+      flag.content_type === "WHISTLEBLOWER_REPORT"
+    ) {
       // These content types are owned by users directly
       const ownershipResult = await this.pool.query(
         "SELECT 1 FROM users WHERE id = $1",
         [userId],
       );
-      ownsContent = ownershipResult.rows.length > 0 && flag.reporter_id === userId;
+      ownsContent =
+        ownershipResult.rows.length > 0 && flag.reporter_id === userId;
     }
     if (!ownsContent) {
-      throw new ForbiddenException('You can only appeal moderation decisions on your own content');
+      throw new ForbiddenException(
+        "You can only appeal moderation decisions on your own content",
+      );
     }
 
     const result = await this.pool.query(

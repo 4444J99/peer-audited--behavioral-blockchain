@@ -1,5 +1,3 @@
-
-
 ====================
 FILE: /Users/4jp/.claude/plans/portfolio/curious-napping-gosling.md
 ====================
@@ -11,6 +9,7 @@ FILE: /Users/4jp/.claude/plans/portfolio/curious-napping-gosling.md
 The portfolio CI/CD pipeline was blocked for 17 days (Feb 17 – Mar 6, 2026). Unblocking required 10 commits across 4 push-watch-fix cycles, touching 8 files across 5 failure categories. The root cause was not any single bug but a **structural fragility**: 23 independent quality gates with hidden coupling and no mechanism to detect drift until CI failed sequentially.
 
 This plan produces two deliverables:
+
 1. **Generalized SOP** at `meta-organvm/organvm-corpvs-testamentvm/docs/operations/sop--cicd-resilience.md` — project-agnostic, reusable across all ~111 repos
 2. **Portfolio hardening** — structural fixes to prevent this class of failure in this specific project
 
@@ -42,6 +41,7 @@ This plan produces two deliverables:
 #### Part A: Thesis / Antithesis / Synthesis (the "why")
 
 **THESIS — What mature quality systems do well:**
+
 1. Comprehensive gate coverage catches real regressions (not theater)
 2. Monotonic ratchets (date-based, phase-based) create sustainable improvement
 3. Separating generation from validation catches generator bugs
@@ -49,6 +49,7 @@ This plan produces two deliverables:
 5. The "plan all fixes, push once" approach is orders of magnitude faster than serial fix-push-watch
 
 **ANTITHESIS — Structural failure modes common to all quality-gated projects:**
+
 1. **Drift magnets** — Any manually maintained list that mirrors filesystem structure will drift. Law: `P(drift) → 1` as `t → ∞`
 2. **Sequential discovery tax** — N hidden failures cost `N × cycle_time` when found serially, but `~1 × cycle_time` if found in parallel locally. The multiplier is the CI round-trip time.
 3. **CI-only validation gap** — Checks that can only run in CI (browser-dependent, runner-dependent) create an irreducible feedback delay. Minimize the set of CI-only checks.
@@ -57,6 +58,7 @@ This plan produces two deliverables:
 6. **No local pre-flight** — If nothing runs before `git push`, every mistake costs a full CI cycle.
 
 **SYNTHESIS — Universal structural principles:**
+
 1. **Derive, don't duplicate.** Generate lists from filesystem/data at runtime. Never maintain a parallel copy.
 2. **Preflight locally.** Every project should have a single command that runs all locally-reproducible checks.
 3. **Document coupling.** Maintain a human-readable coupling map: "if you change X, also change Y, enforced by Z."
@@ -66,35 +68,41 @@ This plan produces two deliverables:
 #### Part B: The Protocol (the "how")
 
 **Phase 0 — Triage** (5 min, any project)
+
 ```bash
 gh run list --limit 1 --status failure --repo OWNER/REPO
 gh run view RUN_ID --repo OWNER/REPO
 gh run view RUN_ID --repo OWNER/REPO --log-failed | tail -100
 ```
+
 Output: complete list of all failing jobs + error messages. Do NOT fix anything yet.
 
 **Phase 1 — Classify** (10 min)
 Categorize each failure:
-| Category | Pattern | Fix archetype |
-|----------|---------|---------------|
-| Drift | Hardcoded list ≠ filesystem | Make dynamic |
-| Threshold | Score too strict for CI | Relax to env-appropriate value |
-| Formatter | Generated file fails lint | Exclude from formatter |
-| Stale artifact | Old manifest/summary | Regenerate |
-| Missing dep | Tool not installed in CI | Add install step |
-| Code bug | Invalid HTML, broken link | Fix the code |
+
+| Category       | Pattern                     | Fix archetype                  |
+| -------------- | --------------------------- | ------------------------------ |
+| Drift          | Hardcoded list ≠ filesystem | Make dynamic                   |
+| Threshold      | Score too strict for CI     | Relax to env-appropriate value |
+| Formatter      | Generated file fails lint   | Exclude from formatter         |
+| Stale artifact | Old manifest/summary        | Regenerate                     |
+| Missing dep    | Tool not installed in CI    | Add install step               |
+| Code bug       | Invalid HTML, broken link   | Fix the code                   |
 
 **Phase 2 — Reproduce locally** (15 min)
+
 ```bash
 # Project-specific preflight (if it exists):
 npm run preflight        # or quality:local:no-lh, or pytest, etc.
 # Generic fallback:
 <lint> && <typecheck> && <build> && <test>
 ```
+
 Fix all locally-reproducible failures in a single batch.
 
 **Phase 3 — Fix CI-only failures** (varies)
 For browser-dependent / runner-dependent failures:
+
 1. Extract exact values from CI logs (not just "failed")
 2. Distinguish environmental flake from real regression
 3. Fix r
@@ -194,13 +202,14 @@ SCENARIO: Developer adds new persona to personas.json and pushes
 ### Evidence of the Problem
 
 From `scripts/check-runtime-route-manifest.mjs` (lines 75-81):
+
 ```javascript
 if (missingInManifest.size > 0) {
-  console.error('Routes exist in dist but not in manifest:');
+  console.error("Routes exist in dist but not in manifest:");
   // FAILS
 }
 if (notInDist.size > 0) {
-  console.error('Routes in manifest but not in dist:');
+  console.error("Routes in manifest but not in dist:");
   // FAILS
 }
 ```
@@ -213,19 +222,22 @@ The script reads `scripts/runtime-a11y-routes.json` (line 7), which is the commi
 
 **Problem:** The manifest is version-controlled but its contents are derived from uncommitted data dependencies.
 
-**Impact:** 
+**Impact:**
+
 - Data changes invalidate the manifest
 - Manual re-commit of manifest required after data updates
 - CI failures are intermittent (depend on what changed)
 
 ### Issue 2: CI Execution Order Mismatch
 
-**Problem:** 
+**Problem:**
+
 - Build job does NOT regenerate manifest
 - test-a11y job regenerates manifest but doesn't update the committed version
 - test-e2e job validates against the committed version
 
 **Impact:**
+
 - The regeneration in test-a11y is wasted effort
 - Committed manifest is used for validation, making test-a11y regeneration irrelevant
 
@@ -234,8 +246,9 @@ The script reads `scripts/runtime-a11y-routes.json` (line 7), which is the commi
 **Problem:** There's no mechanism to ensure the committed manifest stays in sync with data files before CI runs.
 
 **Impact:**
+
 - Developers can commit data changes without updating the manifest
-- CI discovers 
+- CI discovers
 
 ====================
 FILE: /Users/4jp/.claude/plans/portfolio/2026-03-06-portfolio-audit-and-implementation-strategy.md
@@ -245,7 +258,7 @@ FILE: /Users/4jp/.claude/plans/portfolio/2026-03-06-portfolio-audit-and-implemen
 
 ## Executive Summary
 
-Completed comprehensive audit of the Anthony James Padavano portfolio project at `/Users/4jp/Workspace/4444J99/portfolio/`. The project is an Astro 5 static site deployed to GitHub Pages with sophisticated subsystems including persona-driven resume generation, AI-powered strike intelligence, generative art via p5.js, D3 data visualizations, and a quality ratchet governance framework. 
+Completed comprehensive audit of the Anthony James Padavano portfolio project at `/Users/4jp/Workspace/4444J99/portfolio/`. The project is an Astro 5 static site deployed to GitHub Pages with sophisticated subsystems including persona-driven resume generation, AI-powered strike intelligence, generative art via p5.js, D3 data visualizations, and a quality ratchet governance framework.
 
 **Current Status:** PUBLIC_PROCESS promotion state, CANDIDATE tier, fully functional with 12 identified improvement opportunities across 3 priority levels.
 
@@ -256,6 +269,7 @@ Completed comprehensive audit of the Anthony James Padavano portfolio project at
 ## Project Architecture Summary
 
 ### Technology Stack
+
 - **Static Site Generator:** Astro 5 (Node >= 22)
 - **Deployment:** GitHub Pages at https://4444j99.github.io/portfolio/ with `/portfolio` base path
 - **Frontend:** TypeScript strict mode, Astro components with scoped CSS
@@ -270,9 +284,11 @@ Completed comprehensive audit of the Anthony James Padavano portfolio project at
 ### Core Systems
 
 #### 1. Persona System
+
 **File:** `src/data/personas.json`
 
 Defines 5 career personas (e.g., `ai-systems-engineer`, `systems-architect`) with fields:
+
 - `id` — unique identifier
 - `title` — display name
 - `thesis` — career positioning statement
@@ -284,7 +300,9 @@ Defines 5 career personas (e.g., `ai-systems-engineer`, `systems-architect`) wit
 **Usage:** Resume pages (`/resume/[slug]`), strike targets (`/for/[target]`), AI content generation (scout/strike scripts).
 
 #### 2. Strike Intelligence Engine
+
 **Components:**
+
 - `scripts/scout-agent.mjs` — discovers candidates per persona, writes to `src/data/scout-candidates.json`
 - `scripts/strike-new.mjs` — creates strike target in `src/data/targets.json` + generates OG image at `public/og/strikes/`
 - `scripts/operative-sweep.mjs` — batch-processes `intake/job-descriptions/*.txt` into strike targets
@@ -292,6 +310,7 @@ Defines 5 career personas (e.g., `ai-systems-engineer`, `systems-architect`) wit
 **Dependency:** Requires `gemini` CLI installed. Falls back to `[DRAFT]` templates on failure.
 
 #### 3. Quality Ratchet System
+
 **Files:** `.quality/ratchet-policy.json`, `.quality/security-policy.json`, `scripts/check-bundle-budgets.mjs`
 
 **Phase Model:** W6 (local), W10 (CI) — no phase mismatch allowed.
@@ -301,11 +320,13 @@ Defines 5 career personas (e.g., `ai-systems-engineer`, `systems-architect`) wit
 **Governance:** `quality-governance.test.ts` ensures README.md ratchet values sync with JSON policy files. Any drift fails tests.
 
 #### 4. Omega System
+
 **File:** `src/data/omega.json`
 
 Maturity scorecard tracking system progress across horizons and criteria (met/in_progress/not_started). Renders color-coded progress bars on `src/pages/omega.astro`.
 
 #### 5. Consult Worker (Cloudflare)
+
 **Location:** `workers/consult-api/`
 
 - Endpoint: `POST /api/consult`
@@ -314,12 +335,15 @@ Maturity scorecard tracking system progress across horizons and criteria (met/in
 - Response contract: `{ok, mode: "ai|fallback", analysisHtml, analysisText, requestId, durationMs}`
 
 #### 6. Workspace Packages
+
 - `packages/github-pages-index-core` — GitHub Pages indexing + telemetry
 - `packages/quality-ratchet-kit` — ratchet policy loading, phase resolution, governance validation
 - `packages/sketches` — p5.js sketch registry with typed exports
 
 ### Data Pipeline
+
 `src/data/` contains JSON generated by `npm run generate-data` from `../ingesting-organ-document-structure/`:
+
 - `personas.json` — 5 career personas
 - `targets.json` — strike targets with [DRAFT] placeholder content for some
 - `omega.json` — maturity scorecard
@@ -332,12 +356,15 @@ Maturity scorecard tracking system progress across horizons and criteria (met/in
 ## Identified Weaknesses (12 Total)
 
 ### Priority 0 (Blocking Career Path)
+
 **W1: Resume PDFs Return 404s**
+
 - **Impact:** Blocking career critical path for portfolio visitors
 - **Root Cause:** PDF generation likely failing due to W3 (typo in orchestrate-resume-pdfs.mjs)
 - **Fix:** Complete W3 (typo fix) first, then test PDF generation
 
 **W2: [DRAFT] Placeholder Content in Strike Targets**
+
 - **Impact:** Confuses portfolio visitors; appears unfinished
 - **Files:** `src/data/targets.json` (Palantir, OpenAI targets)
 - **Fix:** Write real, compelling content for at least these 2 targets
@@ -350,9 +377,11 @@ FILE: /Users/4jp/.local/share/gemini/tmp/portfolio/03f32a7a-3f12-4cde-b357-a06f2
 # Plan: Project-Wide Review & Critique (Evaluation-to-Growth)
 
 ## Objective
+
 Perform a comprehensive project-wide review of the `portfolio` project using the `evaluation-to-growth` framework. Address identified weaknesses in the quality pipeline, particularly around PageSpeed Insights (PSI) quota issues and automation of quality artifacts.
 
 ## Key Files & Context
+
 - `package.json`: Main entry point for scripts and dependencies.
 - `README.md`, `GEMINI.md`, `CLAUDE.md`: Project documentation and mandates.
 - `.quality/`: Directory containing all quality policies and metrics.
@@ -363,30 +392,34 @@ Perform a comprehensive project-wide review of the `portfolio` project using the
 ## Implementation Steps
 
 ### 1. Phase 1: Evaluation (Critique & Analysis)
+
 - [ ] **Critique**: Assess the current state of the project.
-    - **Strengths**: Robust quality ratchet, clear organization, excellent documentation, high performance (100 LH).
-    - **Weaknesses**: PSI API quota issues (429 errors), complexity of script ecosystem, some manual sync steps remaining.
+  - **Strengths**: Robust quality ratchet, clear organization, excellent documentation, high performance (100 LH).
+  - **Weaknesses**: PSI API quota issues (429 errors), complexity of script ecosystem, some manual sync steps remaining.
 - [ ] **Logic Check**: Verify consistency between policy JSONs and documentation.
 - [ ] **Logos/Pathos/Ethos**: Evaluate the "professional rigor" signal and strategic impact of the "Operative Handbook".
 
 ### 2. Phase 2: Reinforcement (Synthesis & Refinement)
+
 - [ ] **Refine Lighthouse Cloud**: Update `scripts/lighthouse-cloud.mjs` to handle 429 errors more gracefully, possibly by implementing a retry mechanism with backoff or a clearer "quota exceeded" status that doesn't necessarily fail the entire build if a local fallback is available.
 - [ ] **Consolidate Quality Lifecycle**: Ensure all critical data syncs (`sync:vitals`, `sync:omega`, etc.) are correctly hooked into the build lifecycle to prevent stale data.
 
 ### 3. Phase 3: Risk Analysis (Blind Spots & Shatter Points)
+
 - [ ] **Blind Spot**: Check if `green-run-history.json` is actually working. The quality summary shows it as "skipped".
 - [ ] **Shatter Point**: The PSI API failure (`429`) is a shatter point for the "lighthouse:cloud" command.
 
 ### 4. Phase 4: Growth (Bloom & Evolve)
+
 - [ ] **Bloom**: Propose a "Quality Scoreboard" or more detailed "Green Run" visualization on the `/dashboard` page.
 - [ ] **Evolve**: Produce an updated `docs/evaluation-to-growth-report.md` reflecting the latest state and improvements.
 
 ## Verification & Testing
+
 - [ ] Run `npm run verify:quality` to ensure all quality artifacts are fresh.
 - [ ] Run `npm run typecheck:strict` to verify type-safe quality thresholds.
 - [ ] Manually check `.quality/quality-summary.md` for completeness.
 - [ ] Verify governance sync via `quality-governance.test.ts`.
-
 
 ====================
 FILE: /Users/4jp/.local/share/gemini/tmp/portfolio/plans/market-aligned-resume-system.md
@@ -397,12 +430,14 @@ FILE: /Users/4jp/.local/share/gemini/tmp/portfolio/plans/market-aligned-resume-s
 This plan implements a "Dual Narrative Layering" and "Signal Translation" system for the portfolio, addressing the gap between high-concept polymathic work and role-specific hiring requirements.
 
 ## 1. Core Objectives
+
 - Create dedicated narrative pages for specific job roles (Software Engineer, Product Engineer, Full-Stack).
 - Map existing projects to these roles using "Signal Engineering" (outcomes, impact metrics, tech keywords).
 - Maintain the "Visionary Polymath" identity as a secondary layer for collaborators and deep-dives.
 - Improve ATS and recruiter legibility by providing clear, tailored entry points.
 
 ## 2. Feature Identification
+
 - **Role-Specific Pages:** Distinct URLs for each persona.
 - **Persona Switcher:** UI component to toggle between "Engineering" and "Visionary" views.
 - **Market Data Layer:** Role-specific project descriptions and impact statements.
@@ -411,6 +446,7 @@ This plan implements a "Dual Narrative Layering" and "Signal Translation" system
 ## 3. Implementation Steps
 
 ### Phase 1: Data Modeling
+
 1. **Create `src/data/market-personas.json`**:
    - Define metadata for each role:
      - `slug`: (e.g., `software-engineer`)
@@ -422,6 +458,7 @@ This plan implements a "Dual Narrative Layering" and "Signal Translation" system
    - Map project outcomes to specific roles.
 
 ### Phase 2: Component Development
+
 1. **`src/components/resume/PersonaSwitcher.astro`**:
    - A sticky or header-based navigation to switch between resume views.
 2. **`src/components/resume/MarketResumeItem.astro`**:
@@ -430,6 +467,7 @@ This plan implements a "Dual Narrative Layering" and "Signal Translation" system
    - A reusable template for role-based pages, integrating the header, summary, and filtered projects.
 
 ### Phase 3: Page Implementation
+
 1. **`src/pages/resume/software-engineer.astro`**:
    - Focus: Python, TS, Architecture, Testing.
    - Featured: `Agentic Titan`, `Recursive Engine`, `UCC Scraper`.
@@ -444,21 +482,23 @@ This plan implements a "Dual Narrative Layering" and "Signal Translation" system
    - Add the `PersonaSwitcher` to link to tailored views.
 
 ### Phase 4: Content Authoring (Signal Translation)
+
 - Draft impact statements for each project tailored to the role.
-- *Example (Software Engineer)*: "Built a model-agnostic multi-agent swarm architecture in Python with 1,095+ tests (adversarial, chaos, e2e)."
-- *Example (Product Engineer)*: "Designed a self-organizing system for autonomous task completion across 9 topologies, optimizing for LLM orchestration efficiency."
+- _Example (Software Engineer)_: "Built a model-agnostic multi-agent swarm architecture in Python with 1,095+ tests (adversarial, chaos, e2e)."
+- _Example (Product Engineer)_: "Designed a self-organizing system for autonomous task completion across 9 topologies, optimizing for LLM orchestration efficiency."
 
 ## 4. Verification & Quality Gates
+
 - **Link Check:** Ensure all personas are inter-linked correctly.
 - **SEO/Meta:** Verify page titles and descriptions are optimized for each role.
 - **A11y:** Ensure the switcher is keyboard-accessible.
 - **Mobile:** Check layout on small screens.
 
 ## 5. Prioritization
+
 - **High:** Data layer, Basic role pages, Switcher.
 - **Medium:** Detailed market narratives, SEO optimization.
 - **Low:** Specialized PDF downloads for each persona.
-
 
 ====================
 FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-02-28-evaluation-to-growth.md
@@ -467,9 +507,11 @@ FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-02-28-evaluation
 # Plan: Project-Wide Review & Critique (Evaluation-to-Growth)
 
 ## Objective
+
 Perform a comprehensive project-wide review of the `portfolio` project using the `evaluation-to-growth` framework. Address identified weaknesses in the quality pipeline, particularly around PageSpeed Insights (PSI) quota issues and automation of quality artifacts.
 
 ## Key Files & Context
+
 - `package.json`: Main entry point for scripts and dependencies.
 - `README.md`, `GEMINI.md`, `CLAUDE.md`: Project documentation and mandates.
 - `.quality/`: Directory containing all quality policies and metrics.
@@ -480,30 +522,34 @@ Perform a comprehensive project-wide review of the `portfolio` project using the
 ## Implementation Steps
 
 ### 1. Phase 1: Evaluation (Critique & Analysis)
+
 - [ ] **Critique**: Assess the current state of the project.
-    - **Strengths**: Robust quality ratchet, clear organization, excellent documentation, high performance (100 LH).
-    - **Weaknesses**: PSI API quota issues (429 errors), complexity of script ecosystem, some manual sync steps remaining.
+  - **Strengths**: Robust quality ratchet, clear organization, excellent documentation, high performance (100 LH).
+  - **Weaknesses**: PSI API quota issues (429 errors), complexity of script ecosystem, some manual sync steps remaining.
 - [ ] **Logic Check**: Verify consistency between policy JSONs and documentation.
 - [ ] **Logos/Pathos/Ethos**: Evaluate the "professional rigor" signal and strategic impact of the "Operative Handbook".
 
 ### 2. Phase 2: Reinforcement (Synthesis & Refinement)
+
 - [ ] **Refine Lighthouse Cloud**: Update `scripts/lighthouse-cloud.mjs` to handle 429 errors more gracefully, possibly by implementing a retry mechanism with backoff or a clearer "quota exceeded" status that doesn't necessarily fail the entire build if a local fallback is available.
 - [ ] **Consolidate Quality Lifecycle**: Ensure all critical data syncs (`sync:vitals`, `sync:omega`, etc.) are correctly hooked into the build lifecycle to prevent stale data.
 
 ### 3. Phase 3: Risk Analysis (Blind Spots & Shatter Points)
+
 - [ ] **Blind Spot**: Check if `green-run-history.json` is actually working. The quality summary shows it as "skipped".
 - [ ] **Shatter Point**: The PSI API failure (`429`) is a shatter point for the "lighthouse:cloud" command.
 
 ### 4. Phase 4: Growth (Bloom & Evolve)
+
 - [ ] **Bloom**: Propose a "Quality Scoreboard" or more detailed "Green Run" visualization on the `/dashboard` page.
 - [ ] **Evolve**: Produce an updated `docs/evaluation-to-growth-report.md` reflecting the latest state and improvements.
 
 ## Verification & Testing
+
 - [ ] Run `npm run verify:quality` to ensure all quality artifacts are fresh.
 - [ ] Run `npm run typecheck:strict` to verify type-safe quality thresholds.
 - [ ] Manually check `.quality/quality-summary.md` for completeness.
 - [ ] Verify governance sync via `quality-governance.test.ts`.
-
 
 ====================
 FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-03-05-evaluation-to-growth-plan.md
@@ -512,20 +558,22 @@ FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-03-05-evaluation
 # Implementation Plan - Evaluation to Growth: Test Suite & Skeletons
 
 ## 1. 🔍 Analysis & Context
-*   **Objective:** Conduct a project-wide review using the evaluation-to-growth protocol and implement a plan to give incomplete skeletons/stubs "meat & full-breath" by closing critical test coverage gaps.
-*   **Affected Files:**
-    *   `src/components/sketches/__tests__/sketch-loader.test.ts`
-    *   `src/components/charts/__tests__/chart-loader.test.ts`
-    *   `src/components/academic/__tests__/mermaid-loader.test.ts`
-    *   `src/pages/__tests__/feed.xml.test.ts`
-    *   `src/pages/og/__tests__/slug.png.test.ts`
-    *   `src/utils/__tests__/architecture-data.test.ts`
-*   **Key Dependencies:** Vitest, jsdom, p5.js (mocked), D3.js (mocked).
-*   **Risks/Unknowns:** Mocking dynamic imports (`import('p5')`) and async scheduling (`requestIdleCallback`, `IntersectionObserver`) in jsdom can be tricky. Careful global stubbing is required to avoid test flakiness.
+
+- **Objective:** Conduct a project-wide review using the evaluation-to-growth protocol and implement a plan to give incomplete skeletons/stubs "meat & full-breath" by closing critical test coverage gaps.
+- **Affected Files:**
+  - `src/components/sketches/__tests__/sketch-loader.test.ts`
+  - `src/components/charts/__tests__/chart-loader.test.ts`
+  - `src/components/academic/__tests__/mermaid-loader.test.ts`
+  - `src/pages/__tests__/feed.xml.test.ts`
+  - `src/pages/og/__tests__/slug.png.test.ts`
+  - `src/utils/__tests__/architecture-data.test.ts`
+- **Key Dependencies:** Vitest, jsdom, p5.js (mocked), D3.js (mocked).
+- **Risks/Unknowns:** Mocking dynamic imports (`import('p5')`) and async scheduling (`requestIdleCallback`, `IntersectionObserver`) in jsdom can be tricky. Careful global stubbing is required to avoid test flakiness.
 
 ---
 
 ## 2. 📋 Checklist
+
 - [ ] Step 1: Implement Comprehensive Tests for `sketch-loader.ts` (Target: >80% coverage)
 - [ ] Step 2: Implement Comprehensive Tests for `chart-loader.ts` (Target: >80% coverage)
 - [ ] Step 3: Implement Comprehensive Tests for `mermaid-loader.ts` (Target: >80% coverage)
@@ -537,56 +585,61 @@ FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-03-05-evaluation
 ## 3. 📝 Step-by-Step Implementation Details
 
 ### Step 1: Implement Comprehensive Tests for `sketch-loader.ts`
-*   **Goal:** Replace the current static "stub" tests with robust runtime behavior validation, covering the async import queue, intersection observation, and fallback error handling.
-*   **Action:**
-    *   Modify `src/components/sketches/__tests__/sketch-loader.test.ts`.
-    *   Add mocks for `requestIdleCallback` (executing immediately) and `PerformanceObserver`.
-    *   Write tests to validate `initSketches` triggering `IntersectionObserver` logic.
-    *   Write tests to validate the `initQueue` concurrency limit (`MAX_CONCURRENT = 4`).
-    *   Write tests to cover the `.catch()` block when a sketch module fails to load (validating `showFallback` DOM manipulation).
-    *   Write tests for `pauseSketch` and `resumeSketch` modifying `data-paused` attributes.
-*   **Verification:** `npm run test -- run src/components/sketches/__tests__/sketch-loader.test.ts --coverage` yields >80% statement coverage.
+
+- **Goal:** Replace the current static "stub" tests with robust runtime behavior validation, covering the async import queue, intersection observation, and fallback error handling.
+- **Action:**
+  - Modify `src/components/sketches/__tests__/sketch-loader.test.ts`.
+  - Add mocks for `requestIdleCallback` (executing immediately) and `PerformanceObserver`.
+  - Write tests to validate `initSketches` triggering `IntersectionObserver` logic.
+  - Write tests to validate the `initQueue` concurrency limit (`MAX_CONCURRENT = 4`).
+  - Write tests to cover the `.catch()` block when a sketch module fails to load (validating `showFallback` DOM manipulation).
+  - Write tests for `pauseSketch` and `resumeSketch` modifying `data-paused` attributes.
+- **Verification:** `npm run test -- run src/components/sketches/__tests__/sketch-loader.test.ts --coverage` yields >80% statement coverage.
 
 ### Step 2: Implement Comprehensive Tests for `chart-loader.ts`
-*   **Goal:** Ensure the dynamic import and chart rendering logic is fully tested.
-*   **Action:**
-    *   Modify `src/components/charts/__tests__/chart-loader.test.ts`.
-    *   Simulate intersection events to trigger `loadChart`.
-    *   Mock the dynamic import of chart renderers (e.g., `../bar-chart`, `../line-chart`).
-    *   Test window resize debouncing logic.
-*   **Verification:** `npm run test -- run src/components/charts/__tests__/chart-loader.test.ts --coverage` yields >80% coverage.
+
+- **Goal:** Ensure the dynamic import and chart rendering logic is fully tested.
+- **Action:**
+  - Modify `src/components/charts/__tests__/chart-loader.test.ts`.
+  - Simulate intersection events to trigger `loadChart`.
+  - Mock the dynamic import of chart renderers (e.g., `../bar-chart`, `../line-chart`).
+  - Test window resize debouncing logic.
+- **Verification:** `npm run test -- run src/components/charts/__tests__/chart-loader.test.ts --coverage` yields >80% coverage.
 
 ### Step 3: Implement Comprehensive Tests for `mermaid-loader.ts`
-*   **Goal:** Validate lazy initialization of Mermaid diagrams.
-*   **Action:**
-    *   Modify `src/components/academic/__tests__/mermaid-loader.test.ts`.
-    *   Provide a mock DOM element with `.mermaid` class.
-    *   Simulate the intersection observer callback.
-    *   Mock the dynamic `mermaid` module import and its `run()` function.
-*   **Verification:** `npm run test -- run src/components/academic/__tests__/mermaid-loader.test.ts --coverage` yields >80% coverage.
+
+- **Goal:** Validate lazy initialization of Mermaid diagrams.
+- **Action:**
+  - Modify `src/components/academic/__tests__/mermaid-loader.test.ts`.
+  - Provide a mock DOM element with `.mermaid` class.
+  - Simulate the intersection observer callback.
+  - Mock the dynamic `mermaid` module import and its `run()` function.
+- **Verification:** `npm run test -- run src/components/academic/__tests__/mermaid-loader.test.ts --coverage` yields >80% coverage.
 
 ### Step 4: Patch Edge Case Coverage in Utilities and Pages
-*   **Goal:** Close small missing lines in highly tested files.
-*   **Action:**
-    *   Modify `src/pages/__tests__/feed.xml.test.ts` to include tests for edge cases (e.g. missing metadata or empty collections) triggering branches on lines 21-43.
-    *   Modify `src/pages/og/__tests__/slug.png.test.ts` to cover the fallback branch on line 102.
-    *   Modify `src/utils/__tests__/architecture-data.test.ts` to test lines 52-53 (likely error handling or missing values).
-*   **Verification:** Respective test files achieve 100% statement and branch coverage.
+
+- **Goal:** Close small missing lines in highly tested files.
+- **Action:**
+  - Modify `src/pages/__tests__/feed.xml.test.ts` to include tests for edge cases (e.g. missing metadata or empty collections) triggering branches on lines 21-43.
+  - Modify `src/pages/og/__tests__/slug.png.test.ts` to cover the fallback branch on line 102.
+  - Modify `src/utils/__tests__/architecture-data.test.ts` to test lines 52-53 (likely error handling or missing values).
+- **Verification:** Respective test files achieve 100% statement and branch coverage.
 
 ---
 
 ## 4. 🧪 Testing Strategy
-*   **Unit Tests:** Vitest will be used exclusively. Mock `IntersectionObserver`, `requestIdleCallback`, and dynamic `import()` thoroughly.
-*   **Integration Tests:** The interaction between the loader utilities and DOM nodes will be verified within the jsdom environment.
-*   **Manual Verification:** Run `npm run test:coverage` and verify that `All files` coverage exceeds 75% statement coverage and the previously flagged files are green.
+
+- **Unit Tests:** Vitest will be used exclusively. Mock `IntersectionObserver`, `requestIdleCallback`, and dynamic `import()` thoroughly.
+- **Integration Tests:** The interaction between the loader utilities and DOM nodes will be verified within the jsdom environment.
+- **Manual Verification:** Run `npm run test:coverage` and verify that `All files` coverage exceeds 75% statement coverage and the previously flagged files are green.
 
 ## 5. ✅ Success Criteria
-*   `sketch-loader.ts` coverage > 80%.
-*   `chart-loader.ts` coverage > 80%.
-*   `mermaid-loader.ts` coverage > 80%.
-*   Project-wide coverage is demonstrably improved and passes the CI ratchet policy.
-*   No "stubbed" tests remain for these core visual pipelines; they validate actual DOM/async behavior.
 
+- `sketch-loader.ts` coverage > 80%.
+- `chart-loader.ts` coverage > 80%.
+- `mermaid-loader.ts` coverage > 80%.
+- Project-wide coverage is demonstrably improved and passes the CI ratchet policy.
+- No "stubbed" tests remain for these core visual pipelines; they validate actual DOM/async behavior.
 
 ====================
 FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-03-03-fix-consult-page.md
@@ -595,23 +648,26 @@ FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-03-03-fix-consul
 # Plan: Fix Consult Page Interactivity
 
 ## Objective
+
 Fix the "Consult" page which is reported as broken. The page uses Puter.js for AI-powered capability mapping.
 
 ## Identified Issues
+
 1. **View Transitions Conflict**: The page's script ran at the top level of the component, which in an Astro View Transitions (ClientRouter) environment only runs once when the bundle is loaded. If the user navigates to `/consult` later, the DOM elements (like `#consult-form`) aren't bound because the script already executed (and likely crashed with a `null` reference if the user wasn't on the consult page initially).
 2. **Brittle AI Interaction**: The `puter.ai.chat` call passed the system prompt in the options object, which is less robust than using a messages array.
 3. **Simple Markdown Conversion**: The regex-based markdown-to-HTML conversion was very basic and could produce broken layout for common AI response patterns.
 
 ## Implementation Steps
+
 - [x] **Wrap Initialization**: Use `astro:page-load` to ensure form binding and event listeners are re-attached on every navigation to the consult page.
 - [x] **Harden AI Call**: Update `puter.ai.chat` to use an array of messages (`system` + `user`) for better instruction following.
 - [x] **Improve Markdown Logic**: Refine the regex-based conversion to handle lists (both `*` and `-`) and paragraphs more reliably.
 - [x] **Add Smoke Test**: Create `src/e2e/consult.smoke.spec.ts` to ensure the form remains interactive across navigations.
 
 ## Verification Results
+
 - `npm run typecheck`: Passed.
 - `npx playwright test src/e2e/consult.smoke.spec.ts`: Passed (verified form binding and loading state triggers after navigation).
-
 
 ====================
 FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-03-04-portfolio-refinement.md
@@ -622,6 +678,7 @@ FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-03-04-portfolio-
 This plan details the process for systematically perfecting the styles and user experience of the Anthony James Padavano portfolio, working one page at a time with live visual feedback.
 
 ## Objectives
+
 - **Perfect Styles**: Ensure consistent application of the design system (Fibonacci spacing, glassmorphism, typography).
 - **Optimize UX**: Improve interactions, transitions, and accessibility.
 - **Visual Feedback Loop**: Maintain a side-by-side view of code and rendered output.
@@ -629,11 +686,14 @@ This plan details the process for systematically perfecting the styles and user 
 ## Workflow
 
 ### 1. Environment Setup
+
 - **Dev Server**: Running at `http://localhost:4322/portfolio` (Astro 5).
 - **Feedback Mechanism**: Use `browser_subagent` to capture screenshots and videos for visual review in the chat.
 
 ### 2. Page-by-Page Refinement Cycle
+
 For each page (e.g., Home, Work, About):
+
 1.  **Status Audit**: Run `browser_subagent` to capture current desktop and mobile views.
 2.  **Design Analysis**: Identify areas for improvement (spacing, color contrast, animation timing).
 3.  **Iterative Development**:
@@ -645,18 +705,18 @@ For each page (e.g., Home, Work, About):
 
 ## Refinement Backlog
 
-| Priority | Page | Key Focus Areas |
-| :--- | :--- | :--- |
-| 1 | **Home** | Hero section typography, System Pulse interactivity, Persona toggle smoothness. |
-| 2 | **Work (Gallery)** | Image loading states, filtering logic, project card hover effects. |
-| 3 | **Case Studies** | Data visualizations (D3), reading rhythm, sticky navigation. |
-| 4 | **About** | Integrated system metrics, timeline visuals. |
-| 5 | **Connect** | Interactive forms/links, minimalist aesthetics. |
+| Priority | Page               | Key Focus Areas                                                                 |
+| :------- | :----------------- | :------------------------------------------------------------------------------ |
+| 1        | **Home**           | Hero section typography, System Pulse interactivity, Persona toggle smoothness. |
+| 2        | **Work (Gallery)** | Image loading states, filtering logic, project card hover effects.              |
+| 3        | **Case Studies**   | Data visualizations (D3), reading rhythm, sticky navigation.                    |
+| 4        | **About**          | Integrated system metrics, timeline visuals.                                    |
+| 5        | **Connect**        | Interactive forms/links, minimalist aesthetics.                                 |
 
 ## Next Steps
+
 1.  **Select Target**: Identify which page to start with (suggesting **Home**).
 2.  **Deep Dive**: Analyze the `src/styles/global.css` and the specific page component.
-
 
 ====================
 FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-02-20-market-resume-system.md
@@ -667,12 +727,14 @@ FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-02-20-market-res
 This plan implements a "Dual Narrative Layering" and "Signal Translation" system for the portfolio, addressing the gap between high-concept polymathic work and role-specific hiring requirements.
 
 ## 1. Core Objectives
+
 - Create dedicated narrative pages for specific job roles (Software Engineer, Product Engineer, Full-Stack).
 - Map existing projects to these roles using "Signal Engineering" (outcomes, impact metrics, tech keywords).
 - Maintain the "Visionary Polymath" identity as a secondary layer for collaborators and deep-dives.
 - Improve ATS and recruiter legibility by providing clear, tailored entry points.
 
 ## 2. Feature Identification
+
 - **Role-Specific Pages:** Distinct URLs for each persona.
 - **Persona Switcher:** UI component to toggle between "Engineering" and "Visionary" views.
 - **Market Data Layer:** Role-specific project descriptions and impact statements.
@@ -681,6 +743,7 @@ This plan implements a "Dual Narrative Layering" and "Signal Translation" system
 ## 3. Implementation Steps
 
 ### Phase 1: Data Modeling
+
 1. **Create `src/data/market-personas.json`**:
    - Define metadata for each role:
      - `slug`: (e.g., `software-engineer`)
@@ -692,6 +755,7 @@ This plan implements a "Dual Narrative Layering" and "Signal Translation" system
    - Map project outcomes to specific roles.
 
 ### Phase 2: Component Development
+
 1. **`src/components/resume/PersonaSwitcher.astro`**:
    - A sticky or header-based navigation to switch between resume views.
 2. **`src/components/resume/MarketResumeItem.astro`**:
@@ -700,6 +764,7 @@ This plan implements a "Dual Narrative Layering" and "Signal Translation" system
    - A reusable template for role-based pages, integrating the header, summary, and filtered projects.
 
 ### Phase 3: Page Implementation
+
 1. **`src/pages/resume/software-engineer.astro`**:
    - Focus: Python, TS, Architecture, Testing.
    - Featured: `Agentic Titan`, `Recursive Engine`, `UCC Scraper`.
@@ -714,21 +779,23 @@ This plan implements a "Dual Narrative Layering" and "Signal Translation" system
    - Add the `PersonaSwitcher` to link to tailored views.
 
 ### Phase 4: Content Authoring (Signal Translation)
+
 - Draft impact statements for each project tailored to the role.
-- *Example (Software Engineer)*: "Built a model-agnostic multi-agent swarm architecture in Python with 1,095+ tests (adversarial, chaos, e2e)."
-- *Example (Product Engineer)*: "Designed a self-organizing system for autonomous task completion across 9 topologies, optimizing for LLM orchestration efficiency."
+- _Example (Software Engineer)_: "Built a model-agnostic multi-agent swarm architecture in Python with 1,095+ tests (adversarial, chaos, e2e)."
+- _Example (Product Engineer)_: "Designed a self-organizing system for autonomous task completion across 9 topologies, optimizing for LLM orchestration efficiency."
 
 ## 4. Verification & Quality Gates
+
 - **Link Check:** Ensure all personas are inter-linked correctly.
 - **SEO/Meta:** Verify page titles and descriptions are optimized for each role.
 - **A11y:** Ensure the switcher is keyboard-accessible.
 - **Mobile:** Check layout on small screens.
 
 ## 5. Prioritization
+
 - **High:** Data layer, Basic role pages, Switcher.
 - **Medium:** Detailed market narratives, SEO optimization.
 - **Low:** Specialized PDF downloads for each persona.
-
 
 ====================
 FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-03-04-evaluation-to-growth-plan.md
@@ -737,36 +804,44 @@ FILE: /Users/4jp/Workspace/4444J99/portfolio/.gemini/plans/2026-03-04-evaluation
 # Implementation Plan: Evaluation to Growth (2026-03-04)
 
 ## Goal Description
+
 Implement the recommendations from the recent Evaluation-to-Growth assessment (`docs/evaluation-to-growth-report-v2.md`). The primary goals are to reduce local maintenance overhead by abstracting quality scripts and to make the narrative more accessible to non-technical audiences while retaining its core engineering rigor.
 
 ## Proposed Changes
 
 ### 1. Abstract Quality Scripts into `@4444j99/quality-ratchet-kit`
+
 Many of the standalone Node scripts in the `scripts/` directory should be migrated into the local package `packages/quality-ratchet-kit`.
+
 - **Identify mature scripts:** Audit files such as `scripts/check-quality-deltas.mjs`, `scripts/verify-quality-contracts.mjs`, and `scripts/check-bundle-budgets.mjs`.
 - **Relocate logic:** Move the core logic of these scripts to `packages/quality-ratchet-kit/src/`.
 - **Update package.json:** Update the portfolio's `package.json` to call the CLI binary provided by the `quality-ratchet-kit` package instead of raw Node scripts.
 
 ### 2. Safeguard External API Dependencies (Offline Mode)
+
 The build and quality pipeline relies on external APIs (e.g., PageSpeed Insights for Lighthouse).
+
 - **Implement fallback:** Add a degraded/fallback mechanism in `scripts/lighthouse-cloud.mjs` (or its equivalent in the ratchet kit) to bypass external API checks if a timeout or `429 Too Many Requests` occurs, preventing CI blockade.
 
 ### 3. Accessible Narrative Adjustments
+
 The homepage and operative handbook use esoteric terminology ("Organ V", "Kerygma") that might confuse HR screens.
+
 - **Update `src/pages/index.astro`:** Add brief, plain-English subtitles or tooltips (e.g., `<Tooltip text="The central portfolio repository">Organ V</Tooltip>`) to explain the system architecture immediately to new visitors.
 - **Audit PDF Resumes:** Ensure the PDFs generated in `public/resume/` using `scripts/orchestrate-resume-pdfs.mjs` have proper plain-text extraction (no overlapping text blocks confusing ATS scanners).
 
 ## Verification Plan
 
 ### Automated Tests
+
 - Run `npm run test:quality-ratchet-kit` to ensure migrated scripts still pass their core unit tests.
 - Run `npm run quality:local` to verify the main portfolio pipeline remains completely green after abstracting the scripts and implementing the API backoff logic.
 - Run `npm run test:a11y:runtime` (Playwright) to verify any UI changes made to `src/pages/index.astro` (like tooltips) don't violate accessibility standards.
 
 ### Manual Verification
+
 - Render the `npm run dev` environment locally and visually inspect the new layout/text adjustments on the homepage.
 - Extract text from a generated PDF resume (using a tool like `pdftotext` or simply copy-pasting from Preview) to manually verify that Applicant Tracking Systems (ATS) will read the correct, sequential plain text without weird line breaks.
-
 
 ====================
 FILE: /Users/4jp/Workspace/4444J99/portfolio/.codex/plans/2026-03-04-consult-cloudflare-worker-fix.md
@@ -827,7 +902,6 @@ Error:
 - Update Playwright consult smoke test to verify post-submit recovery and visible output/error state.
 - Keep deterministic fallback active when API env var is not configured, so behavior is resilient in local and production edge cases.
 
-
 ====================
 FILE: /Users/4jp/Workspace/4444J99/portfolio/.claude/plans/2026-02-28-eval-to-growth-review.md
 ====================
@@ -846,32 +920,32 @@ The codebase has strong engineering foundations (284 tests, zero vulnerabilities
 
 ### Strengths
 
-| Dimension | Evidence |
-|-----------|----------|
-| **Testing** | 284 tests / 84 suites, all passing. W10 coverage ratchet (45/32/32/45). |
-| **Security** | Zero vulnerabilities. Date-ratcheted sprint targeting zero by 2026-03-18. |
-| **Deploy Safety** | `workflow_run` gating — quality.yml must pass before deploy.yml fires. |
-| **Accessibility** | Comprehensive ARIA: `role="toolbar"`, `aria-pressed`, `aria-expanded`, `aria-live`, `aria-controls`. AbortController cleanup. `prefers-reduced-motion`. |
-| **Content System** | 20 case studies with academic citations (Cite, References, Figure, MermaidDiagram). 4 personas. Dynamic resume route with data enrichment. |
-| **Architecture** | Clean data-driven design: JSON → Astro pages. 30 typed p5.js sketches. Three workspace packages. View transition persistence. |
-| **Quality Governance** | Ratchet policy JSON + README sync enforcement. Regression guards. CODEOWNERS on policy files. |
+| Dimension              | Evidence                                                                                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Testing**            | 284 tests / 84 suites, all passing. W10 coverage ratchet (45/32/32/45).                                                                                 |
+| **Security**           | Zero vulnerabilities. Date-ratcheted sprint targeting zero by 2026-03-18.                                                                               |
+| **Deploy Safety**      | `workflow_run` gating — quality.yml must pass before deploy.yml fires.                                                                                  |
+| **Accessibility**      | Comprehensive ARIA: `role="toolbar"`, `aria-pressed`, `aria-expanded`, `aria-live`, `aria-controls`. AbortController cleanup. `prefers-reduced-motion`. |
+| **Content System**     | 20 case studies with academic citations (Cite, References, Figure, MermaidDiagram). 4 personas. Dynamic resume route with data enrichment.              |
+| **Architecture**       | Clean data-driven design: JSON → Astro pages. 30 typed p5.js sketches. Three workspace packages. View transition persistence.                           |
+| **Quality Governance** | Ratchet policy JSON + README sync enforcement. Regression guards. CODEOWNERS on policy files.                                                           |
 
 ### Weaknesses (verified)
 
-| ID | Finding | Severity |
-|----|---------|----------|
-| W1 | Resume PDF download links 404 for 2 of 4 personas (slash in title creates directory path) | P0 |
-| W2 | `[DRAFT]` placeholder content on live Palantir and OpenAI strike target pages | P0 |
-| W3 | Typo in `orchestrate-resume-pdfs.mjs:24` — `res` instead of `r` crashes waitForServer | P0 |
-| W4 | Homepage displays zeros: "0 Code Files", "0 Test Files", "0+ Automated Tests" from `vitals.json` | P1 |
-| W5 | Hardcoded "32" generative sketches on homepage — actual count is 30 | P1 |
-| W6 | CI uses `QUALITY_PHASE: W6` but `ratchet-policy.json` defaultPhase is `W10` — local/CI mismatch | P1 |
-| W7 | Human impact metrics hardcoded in `sync-trust-metrics.mjs` with no provenance | P1 |
-| W8 | `SECURITY.md` has placeholder email `[security@ajp.com]` | P2 |
-| W9 | Filter chip state not persisted across page reloads | P2 |
-| W10 | No URL parameter for view selection (can't deep-link to creative view) | P2 |
-| W11 | docs/ directory (4 files) not linked from site navigation | P3 |
-| W12 | No linting configuration (eslint/biome/prettier) | P3 |
+| ID  | Finding                                                                                          | Severity |
+| --- | ------------------------------------------------------------------------------------------------ | -------- |
+| W1  | Resume PDF download links 404 for 2 of 4 personas (slash in title creates directory path)        | P0       |
+| W2  | `[DRAFT]` placeholder content on live Palantir and OpenAI strike target pages                    | P0       |
+| W3  | Typo in `orchestrate-resume-pdfs.mjs:24` — `res` instead of `r` crashes waitForServer            | P0       |
+| W4  | Homepage displays zeros: "0 Code Files", "0 Test Files", "0+ Automated Tests" from `vitals.json` | P1       |
+| W5  | Hardcoded "32" generative sketches on homepage — actual count is 30                              | P1       |
+| W6  | CI uses `QUALITY_PHASE: W6` but `ratchet-policy.json` defaultPhase is `W10` — local/CI mismatch  | P1       |
+| W7  | Human impact metrics hardcoded in `sync-trust-metrics.mjs` with no provenance                    | P1       |
+| W8  | `SECURITY.md` has placeholder email `[security@ajp.com]`                                         | P2       |
+| W9  | Filter chip state not persisted across page reloads                                              | P2       |
+| W10 | No URL parameter for view selection (can't deep-link to creative view)                           | P2       |
+| W11 | docs/ directory (4 files) not linked from site navigation                                        | P3       |
+| W12 | No linting configuration (eslint/biome/prettier)                                                 | P3       |
 
 ---
 
@@ -880,12 +954,15 @@ The codebase has strong engineering foundations (284 tests, zero vulnerabilities
 ### R1. Fix Resume PDF Download Paths [P0]
 
 **Problem:** `src/pages/resume/[slug].astro:77` constructs download href as:
+
 ```
 Anthony_James_Padavano_${persona.pdfName || persona.title.replace(/\s+/g, '_')}.pdf
 ```
+
 For "Systems Architect / Backend Lead" → `..._Systems_Architect_/_Backend_Lead.pdf` — the `/` becomes a path separator → 404.
 
 **Files:**
+
 - `src/data/personas.json` — Add `pdfName` to systems-architect and technical-pm:
   - systems-architect: `"pdfName": "Systems_Architect"`
   - technical-pm: `"pdfName": "Technical_Program_Manager"`
@@ -898,6 +975,7 @@ For "Systems Architect / Backend Lead" → `..._Systems_Architect_/_Backend_Lead
 **Problem:** `src/data/targets.json` lines 14, 28 — Palantir and OpenAI have `[DRAFT]` placeholders on live public pages.
 
 **Files:**
+
 - `src/data/targets.json` — Write real intros for Palantir and OpenAI, matching the quality of existing Anthropic/Vercel entries. Or add build-time validation that fails on `[DRAFT]` content.
 
 **Complexity:** Medium (requires content writing)
@@ -916,6 +994,7 @@ For "Systems Architect / Backend Lead" → `..._Systems_Architect_/_Backend_Lead
 **Problem:** `src/data/vitals.json` has `code_files: 0`, `test_files: 0`, `automated_tests: 0`, `essays: 0`. These display prominently on the homepage stats section and hero subtitle.
 
 **Files:**
+
 - `src/data/vitals.json` — Populate with real values from the generate-data pipeline, or hardcode accurate values until pipeline is fixed
 - `src/data/__tests__/data-integrity.test.ts` — Add assertions that critical vitals are non-zero
 
@@ -932,23 +1011,27 @@ FILE: /Users/4jp/.codex/vendor_imports/skills/skills/.curated/notion-meeting-int
 ## Workflow
 
 ### 1. Search for Context
+
 ```
 Notion:notion-search
 query: "Q4 objectives" + "KPIs" + "quarterly results"
 ```
 
 Found:
+
 - Q4 OKRs and progress
 - Product metrics dashboard
 - Engineering velocity reports
 - Customer feedback summary
 
 ### 2. Fetch & Analyze
+
 ```
 Notion:notion-fetch (5 pages)
 ```
 
 **Key metrics**:
+
 - **Revenue**: $2.4M ARR (96% of Q4 target)
 - **Customer Growth**: 145 new customers (exceeds 120 target)
 - **Churn**: 3.2% (below 5% target)
@@ -956,18 +1039,22 @@ Notion:notion-fetch (5 pages)
 - **Engineering**: 94% uptime (above 95% SLA)
 
 ### 3. Add Codex Research Context
+
 Added context on:
+
 - Industry benchmarks for SaaS metrics
 - Typical Q4 sales patterns
 - Best practices for executive presentations
 
 ### 4. Create Pre-Read (Internal)
+
 ```
 Notion:notion-create-pages
 title: "Q4 Review - Pre-Read (Internal)"
 ```
 
 **Pre-read sections**:
+
 - **Executive Summary**: Strong quarter, missed revenue by 4% but exceeded customer growth
 - **Detailed Metrics**: All KPIs with trend lines
 - **Wins**: Product launches, key customer acquisitions
@@ -975,12 +1062,14 @@ title: "Q4 Review - Pre-Read (Internal)"
 - **Q1 Preview**: Strategic priorities
 
 ### 5. Create Presentation Agenda
+
 ```
 Notion:notion-create-pages
 title: "Q4 Executive Review - Agenda"
 ```
 
 **Agenda** (90 min):
+
 - Q4 Results Overview (15 min)
 - Revenue & Growth Deep Dive (20 min)
 - Product & Engineering Update (20 min)
@@ -989,6 +1078,7 @@ title: "Q4 Executive Review - Agenda"
 - Discussion & Questions (15 min)
 
 ### 6. Link Supporting Docs
+
 Connected to OKRs, metrics dashboards, and Q1 planning docs.
 
 ## Outputs
@@ -998,12 +1088,12 @@ Connected to OKRs, metrics dashboards, and Q1 planning docs.
 **Both in Notion** with links to supporting data
 
 ## Key Success Factors
+
 - Synthesized data from multiple sources (OKRs, metrics, feedback)
 - Added industry context and benchmarks
 - Created honest internal assessment (not just wins)
 - Structured agenda with time allocations
 - Linked to source data for drill-down during Q&A
-
 
 ====================
 FILE: /Users/4jp/.codex/vendor_imports/skills/skills/.curated/notion-meeting-intelligence/examples/sprint-planning.md
@@ -1016,6 +1106,7 @@ FILE: /Users/4jp/.codex/vendor_imports/skills/skills/.curated/notion-meeting-int
 ## Workflow
 
 ### 1. Search for Context
+
 ```
 Notion:notion-search
 query: "sprint planning" + "product backlog"
@@ -1023,23 +1114,27 @@ teamspace_id: "engineering-team"
 ```
 
 Found:
+
 - Last sprint retrospective
 - Product backlog (prioritized)
 - Current sprint progress
 - Team capacity notes
 
 ### 2. Fetch Details
+
 ```
 Notion:notion-fetch (4 pages)
 ```
 
 **Key context**:
+
 - **Last Sprint**: Completed 32/35 story points (91%)
 - **Velocity**: Consistent 30-35 points over last 3 sprints
 - **Team**: 5 engineers, 1 on vacation next sprint (80% capacity)
 - **Top Backlog Items**: User auth improvements, API performance, mobile responsive fixes
 
 ### 3. Query Current Sprint Tasks
+
 ```
 Notion:notion-query-data-sources
 query: "SELECT * FROM tasks WHERE Sprint = 'Sprint 24' AND Status != 'Done'"
@@ -1048,12 +1143,14 @@ query: "SELECT * FROM tasks WHERE Sprint = 'Sprint 24' AND Status != 'Done'"
 3 tasks carrying over (technical debt items)
 
 ### 4. Create Pre-Read (Internal)
+
 ```
 Notion:notion-create-pages
 title: "Sprint 25 Planning - Pre-Read (Internal)"
 ```
 
 **Pre-read included**:
+
 - Sprint 24 summary (velocity, what carried over)
 - Team capacity for Sprint 25
 - Top backlog candidates with story points
@@ -1061,12 +1158,14 @@ title: "Sprint 25 Planning - Pre-Read (Internal)"
 - Risk items (auth changes need QA time)
 
 ### 5. Create Agenda
+
 ```
-Notion:notion-create-pages  
+Notion:notion-create-pages
 title: "Sprint 25 Planning - Agenda"
 ```
 
 **Agenda**:
+
 - Review Sprint 24 completion (5 min)
 - Discuss carryover items (5 min)
 - Review capacity (28 points available)
@@ -1075,6 +1174,7 @@ title: "Sprint 25 Planning - Agenda"
 - Confirm commitments (10 min)
 
 ### 6. Link Documents
+
 Cross-linked pre-read and agenda, referenced last retro and backlog.
 
 ## Output Summary
@@ -1084,12 +1184,12 @@ Cross-linked pre-read and agenda, referenced last retro and backlog.
 **Both saved to Notion** and linked to project pages
 
 ## Key Success Factors
+
 - Gathered sprint history for velocity trends
 - Calculated realistic capacity (account for PTO)
 - Identified carryover items upfront
 - Pre-read gave team context before meeting
 - Agenda kept meeting focused and timeboxed
-
 
 ====================
 FILE: /Users/4jp/.codex/vendor_imports/skills/skills/.curated/notion-meeting-intelligence/reference/sprint-planning-template.md
@@ -1103,6 +1203,7 @@ Use this template for agile sprint planning meetings.
 # Sprint [#] Planning - [Date]
 
 ## Meeting Details
+
 **Date**: [Date]
 **Team**: [Team name]
 **Sprint Duration**: [Dates]
@@ -1114,9 +1215,9 @@ Use this template for agile sprint planning meetings.
 ## Capacity
 
 | Team Member | Availability | Capacity (points) |
-|-------------|--------------|-------------------|
-| [Name] | [%] | [#] |
-| **Total** | | [#] |
+| ----------- | ------------ | ----------------- |
+| [Name]      | [%]          | [#]               |
+| **Total**   |              | [#]               |
 
 ## Backlog Review
 
@@ -1143,9 +1244,11 @@ Use this template for agile sprint planning meetings.
 ## Dependencies & Risks
 
 **Dependencies**:
+
 - [Dependency]
 
 **Risks**:
+
 - [Risk]
 
 ## Definition of Done
@@ -1163,20 +1266,21 @@ Use this template for agile sprint planning meetings.
 - Sprint review on [Date]
 ```
 
-
-
 ====================
 FILE: /Users/4jp/.codex/vendor_imports/skills/skills/.curated/winui-app/references/testing-debugging-and-review-checklists.md
 ====================
 
 ---
+
 title: Testing, Debugging, and Review Checklists
 priority: HIGH
 tags: testing, debugging, review, hot-reload, live-visual-tree, checklists
 sources:
-  - https://learn.microsoft.com/windows/apps/get-started/start-here
-  - https://learn.microsoft.com/windows/apps/get-started/developer-mode-features-and-debugging
-  - https://learn.microsoft.com/windows/apps/performance/winui-perf
+
+- https://learn.microsoft.com/windows/apps/get-started/start-here
+- https://learn.microsoft.com/windows/apps/get-started/developer-mode-features-and-debugging
+- https://learn.microsoft.com/windows/apps/performance/winui-perf
+
 ---
 
 ## What This Reference Is For
@@ -1247,7 +1351,6 @@ Use this file for final review passes, debugging sessions, and "what should I ve
 - Resize behavior, startup, and interactive responsiveness have been checked.
 - If the window can become phone-width, the shell and content have been verified there too.
 
-
 ====================
 FILE: /Users/4jp/.codex/vendor_imports/skills/skills/.curated/notion-research-documentation/examples/trip-planning.md
 ====================
@@ -1259,17 +1362,22 @@ FILE: /Users/4jp/.codex/vendor_imports/skills/skills/.curated/notion-research-do
 ## Workflow
 
 ### 1. Search Existing Notes
+
 ```
 Notion:notion-search
 query: "Japan travel"
 ```
+
 Found: Japan Travel Guide (from friend), Tokyo Restaurants, Kyoto Temple Guide
 
 ### 2. Fetch & Extract Tips
+
 ```
 Notion:notion-fetch (3x)
 ```
+
 **Key info from previous travelers:**
+
 - Best time: March-April (cherry blossoms)
 - Must-see: Tokyo, Kyoto, Osaka
 - Budget: $200-300/day (mid-range)
@@ -1278,7 +1386,9 @@ Notion:notion-fetch (3x)
 - Top restaurants: Sushi Dai, Ichiran Ramen, Tsunahachi Tempura
 
 ### 3. Research & Synthesize
+
 Combined previous traveler insights with:
+
 - Flight options and prices
 - Accommodation types (hotels/ryokans/Airbnb)
 - Transportation (JR Pass essential)
@@ -1286,6 +1396,7 @@ Combined previous traveler insights with:
 - Budget breakdown
 
 ### 4. Create Comprehensive Plan
+
 ```
 Notion:notion-create-pages
 parent: { page_id: "travel-plans-parent-id" }
@@ -1303,31 +1414,37 @@ pages: [{
 # Japan Trip 2026 - March 15-25 (10 Days)
 
 ## Trip Overview
+
 **Dates**: March 15-25, 2026 (Cherry Blossom Season 🌸)
 **Group**: 6 people | **Budget**: $3,000-4,000/person
 
 ## Itinerary Summary
 
 **Days 1-3: Tokyo**
+
 - Arrive, explore Shibuya, Harajuku, Shinjuku
 - Visit Tsukiji Market, Imperial Palace, Sensoji Temple
 - Experience Tokyo nightlife, teamLab Borderless
 
-**Days 4-5: Hakone**  
+**Days 4-5: Hakone**
+
 - Day trip from Tokyo
 - Hot springs, Mt. Fuji views, Lake Ashi cruise
 
 **Days 6-8: Kyoto**
+
 - Bullet train from Tokyo
 - Fushimi Inari, Kinkaku-ji, Arashiyama Bamboo Grove
 - Geisha district (Gion), traditional tea ceremony
 
 **Days 9-10: Osaka + Depart**
+
 - Osaka Castle, Dotonbori food district
 - Nara day trip (deer park, Todai-ji Temple)
 - Return flight from Osaka (KIX)
 
 ## Budget Breakdown (per person)
+
 - **Flights**: $900-1,200 (round-trip)
 - **Accommodations**: $700-1,000 (9 nights)
 - **JR Pass**: $280 (7-day pass)
@@ -1337,6 +1454,7 @@ pages: [{
 **Total**: $2,780-3,680
 
 ## Key Bookings
+
 - **Flights**: Book 3-4 months ahead
 - **Hotels**: Book now (cherry blossom season)
   - Tokyo: Shinjuku area (2 nights) + Asakusa (1 night)
@@ -1346,7 +1464,9 @@ pages: [{
 - **Restaurants**: Reserve 1 week ahead (Sushi Dai, high-end spots)
 
 ## Essential Tips
+
 Source: <mention-page url="...">Japan Travel Guide</mention-page>
+
 - Get pocket WiFi or eSIM on arrival
 - Download: Google Translate, Hyperdia (train routes), Tabelog (restaurants)
 - Cash-heavy country - withdraw at 7-Eleven ATMs
@@ -1355,6 +1475,7 @@ Source: <mention-page url="...">Japan Travel Guide</mention-page>
 - Learn basic phrases: arigatou, sumimasen, itadakimasu
 
 ## Packing List
+
 - Comfortable walking shoes (10k+ steps/day)
 - Light jacket (March 55-65°F)
 - Backpack for day trips
@@ -1362,6 +1483,7 @@ Source: <mention-page url="...">Japan Travel Guide</mention-page>
 - Portable charger
 
 ## Next Steps
+
 - [ ] Book flights (target: <$1,100/person)
 - [ ] Order JR Passes
 - [ ] Book hotels (Tokyo → Kyoto → Osaka)
@@ -1369,18 +1491,19 @@ Source: <mention-page url="...">Japan Travel Guide</mention-page>
 - [ ] Schedule group planning call
 
 ## Sources
+
 - <mention-page url="...">Japan Travel Guide</mention-page> (Sarah's 2024 trip)
 - <mention-page url="...">Tokyo Restaurant Recommendations</mention-page>
 - <mention-page url="...">Kyoto Temple Guide</mention-page>
 ```
 
 ## Key Takeaways
+
 - Leveraged previous traveler notes from Notion
 - Combined personal insights with research
 - Created actionable itinerary with budget breakdown
 - Included practical tips from experienced travelers
 - Set clear next steps for group coordination
-
 
 ====================
 FILE: /Users/4jp/.codex/vendor_imports/skills/skills/.curated/notion-spec-to-implementation/reference/quick-implementation-plan.md
@@ -1394,25 +1517,28 @@ For simpler features or small changes.
 # Implementation: [Feature Name]
 
 ## Spec
+
 <mention-page url="...">Specification</mention-page>
 
 ## Summary
+
 [Quick description]
 
 ## Tasks
+
 - [ ] <mention-page url="...">Task 1</mention-page>
 - [ ] <mention-page url="...">Task 2</mention-page>
 - [ ] <mention-page url="...">Task 3</mention-page>
 
 ## Timeline
+
 Start: [Date]
 Target completion: [Date]
 
 ## Status
+
 [Update as work progresses]
 ```
-
-
 
 ====================
 FILE: /Users/4jp/.codex/vendor_imports/skills/skills/.curated/notion-spec-to-implementation/reference/standard-implementation-plan.md
@@ -1426,24 +1552,29 @@ Use this template for most feature implementations.
 # Implementation Plan: [Feature Name]
 
 ## Overview
+
 [1-2 sentence feature description and business value]
 
 ## Linked Specification
+
 <mention-page url="...">Original Specification</mention-page>
 
 ## Requirements Summary
 
 ### Functional Requirements
+
 - [Requirement 1]
 - [Requirement 2]
 - [Requirement 3]
 
 ### Non-Functional Requirements
+
 - **Performance**: [Targets]
 - **Security**: [Requirements]
 - **Scalability**: [Needs]
 
 ### Acceptance Criteria
+
 - [ ] [Criterion 1]
 - [ ] [Criterion 2]
 - [ ] [Criterion 3]
@@ -1451,23 +1582,28 @@ Use this template for most feature implementations.
 ## Technical Approach
 
 ### Architecture
+
 [High-level architectural decisions]
 
 ### Technology Stack
+
 - Backend: [Technologies]
 - Frontend: [Technologies]
 - Infrastructure: [Technologies]
 
 ### Key Design Decisions
+
 1. **[Decision]**: [Rationale]
 2. **[Decision]**: [Rationale]
 
 ## Implementation Phases
 
 ### Phase 1: Foundation (Week 1)
+
 **Goal**: Set up core infrastructure
 
 **Tasks**:
+
 - [ ] <mention-page url="...">Database schema design</mention-page>
 - [ ] <mention-page url="...">API scaffolding</mention-page>
 - [ ] <mention-page url="...">Authentication setup</mention-page>
@@ -1476,9 +1612,11 @@ Use this template for most feature implementations.
 **Estimated effort**: 3 days
 
 ### Phase 2: Core Features (Week 2-3)
+
 **Goal**: Implement main functionality
 
 **Tasks**:
+
 - [ ] <mention-page url="...">Feature A implementation</mention-page>
 - [ ] <mention-page url="...">Feature B implementation</mention-page>
 
@@ -1486,9 +1624,11 @@ Use this template for most feature implementations.
 **Estimated effort**: 1 week
 
 ### Phase 3: Integration & Polish (Week 4)
+
 **Goal**: Complete integration and refinement
 
 **Tasks**:
+
 - [ ] <mention-page url="...">Frontend integration</mention-page>
 - [ ] <mention-page url="...">Testing & QA</mention-page>
 
@@ -1498,55 +1638,64 @@ Use this template for most feature implementations.
 ## Dependencies
 
 ### External Dependencies
+
 - [Dependency 1]: [Status]
 - [Dependency 2]: [Status]
 
 ### Internal Dependencies
+
 - [Team/component dependency]
 
 ### Blockers
+
 - [Known blocker] or None currently
 
 ## Risks & Mitigation
 
 ### Risk 1: [Description]
+
 - **Probability**: High/Medium/Low
 - **Impact**: High/Medium/Low
 - **Mitigation**: [Strategy]
 
 ### Risk 2: [Description]
+
 - **Probability**: High/Medium/Low
 - **Impact**: High/Medium/Low
 - **Mitigation**: [Strategy]
 
 ## Timeline
 
-| Milestone | Target Date | Status |
-|-----------|-------------|--------|
-| Phase 1 Complete | [Date] | ⏳ Planned |
-| Phase 2 Complete | [Date] | ⏳ Planned |
-| Phase 3 Complete | [Date] | ⏳ Planned |
-| Launch | [Date] | ⏳ Planned |
+| Milestone        | Target Date | Status     |
+| ---------------- | ----------- | ---------- |
+| Phase 1 Complete | [Date]      | ⏳ Planned |
+| Phase 2 Complete | [Date]      | ⏳ Planned |
+| Phase 3 Complete | [Date]      | ⏳ Planned |
+| Launch           | [Date]      | ⏳ Planned |
 
 ## Success Criteria
 
 ### Technical Success
+
 - [ ] All acceptance criteria met
 - [ ] Performance targets achieved
 - [ ] Security requirements satisfied
 - [ ] Test coverage > 80%
 
 ### Business Success
+
 - [ ] [Business metric 1]
 - [ ] [Business metric 2]
 
 ## Resources
 
 ### Documentation
+
 - <mention-page url="...">Design Doc</mention-page>
 - <mention-page url="...">API Spec</mention-page>
 
 ### Related Work
+
 - <mention-page url="...">Related Feature</mention-page>
 
 ## Progress Tracking
@@ -1554,6 +1703,7 @@ Use this template for most feature implementations.
 [This section updated regularly]
 
 ### Phase Status
+
 - Phase 1: ⏳ Not Started
 - Phase 2: ⏳ Not Started
 - Phase 3: ⏳ Not Started
@@ -1561,10 +1711,9 @@ Use this template for most feature implementations.
 **Overall Progress**: 0% complete
 
 ### Latest Update: [Date]
+
 [Brief status update]
 ```
-
-
 
 ====================
 FILE: /Users/4jp/.codex/skills/.system/spreadsheets/references/ranges.md
@@ -1600,7 +1749,6 @@ workbook.recalculate();
 - Single cell: `"B3"`
 - Rectangle: `"A1:C10"`
 - Entire row or column ranges are best used sparingly unless the user explicitly wants them.
-
 
 ====================
 FILE: /Users/4jp/.codex/skills/.system/spreadsheets/references/workbook.md
@@ -1649,7 +1797,10 @@ For worksheet images, prefer a `blob` payload:
 ```js
 const fs = await import("node:fs/promises");
 const bytes = await fs.readFile("artifacts/chart-preview.png");
-const blob = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+const blob = bytes.buffer.slice(
+  bytes.byteOffset,
+  bytes.byteOffset + bytes.byteLength,
+);
 
 sheet.images.add({
   blob,
@@ -1680,16 +1831,16 @@ Merged cells and tall autofit rows can push drawings far below the fold even whe
 
 Prefer saving generated files into `artifacts/` so the user can inspect the workbook directly.
 
-
 ====================
 FILE: /Users/4jp/.codex/skills/.system/spreadsheets/SKILL.md
 ====================
 
 ---
+
 name: spreadsheets
 description: Build, edit, recalculate, import, and export spreadsheet workbooks with the preloaded @oai/artifact-tool JavaScript surface through the artifacts tool.
 metadata:
-  short-description: Use the artifacts tool to create and edit spreadsheets in JavaScript
+short-description: Use the artifacts tool to create and edit spreadsheets in JavaScript
 ---
 
 # Spreadsheets
@@ -1752,7 +1903,6 @@ await xlsxBlob.save("artifacts/revenue-model.xlsx");
 
 - [`references/workbook.md`](./references/workbook.md) for workbook lifecycle and worksheet basics.
 - [`references/ranges.md`](./references/ranges.md) for A1 addressing, values, formulas, and formatting.
-
 
 ====================
 FILE: /Users/4jp/.codex/skills/.system/slides/references/presentation.md
@@ -1890,7 +2040,7 @@ All geometry uses CSS pixels at 96 DPI.
 
 ## Preview
 
-```js
+````js
 const fs = await import("node:fs/promises");
 const preview = await presentati
 
@@ -1917,7 +2067,7 @@ slide.autoLayout([title, subtitle], {
   verticalPadding: 64,
   verticalGap: 12,
 });
-```
+````
 
 Useful enums:
 
@@ -1929,16 +2079,16 @@ Useful enums:
 
 Prefer auto-layout for title stacks, card grids, and footer or header placement instead of hand-adjusting every `left` and `top`.
 
-
 ====================
 FILE: /Users/4jp/.codex/skills/.system/slides/SKILL.md
 ====================
 
 ---
+
 name: slides
 description: Build, edit, render, import, and export presentation decks with the preloaded @oai/artifact-tool JavaScript surface through the artifacts tool.
 metadata:
-  short-description: Use the artifacts tool to create and edit slide decks in JavaScript
+short-description: Use the artifacts tool to create and edit slide decks in JavaScript
 ---
 
 # Slides
@@ -2108,16 +2258,16 @@ Top-level constraints:
   the model context by default, but can still be invoked explicitly via `$skill`.
   Defaults to true.
 
-
 ====================
 FILE: /Users/4jp/.codex/skills/.system/skill-creator/SKILL.md
 ====================
 
 ---
+
 name: skill-creator
 description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations.
 metadata:
-  short-description: Create or update a skill
+short-description: Create or update a skill
 ---
 
 # Skill Creator
@@ -2219,10 +2369,11 @@ FILE: /Users/4jp/.codex/skills/.system/skill-installer/SKILL.md
 ====================
 
 ---
+
 name: skill-installer
 description: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos).
 metadata:
-  short-description: Install curated skills from openai/skills or other repos
+short-description: Install curated skills from openai/skills or other repos
 ---
 
 # Skill Installer
@@ -2230,6 +2381,7 @@ metadata:
 Helps install skills. By default these are from https://github.com/openai/skills/tree/main/skills/.curated, but users can also provide other locations. Experimental skills live in https://github.com/openai/skills/tree/main/skills/.experimental and can be installed the same way.
 
 Use the helper scripts based on the task:
+
 - List skills when the user asks what is available, or if the user uses this skill without specifying what to do. Default listing is `.curated`, but you can pass `--path skills/.experimental` when they ask about experimental skills.
 - Install from the curated list when the user provides a skill name.
 - Install from another repo when the user provides a GitHub repo/path (including private repos).
@@ -2241,11 +2393,12 @@ Install skills with the helper scripts.
 When listing skills, output approximately as follows, depending on the context of the user's request. If they ask about experimental skills, list from `.experimental` instead of `.curated` and label the source accordingly:
 """
 Skills from {repo}:
+
 1. skill-1
 2. skill-2 (already installed)
 3. ...
-Which ones would you like installed?
-"""
+   Which ones would you like installed?
+   """
 
 After installing a skill, tell the user: "Restart Codex to pick up new skills."
 

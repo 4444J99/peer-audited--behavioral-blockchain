@@ -41,26 +41,26 @@
 
 ### 1.2 Logic Check: Internal Consistency
 
-| Constant | Code Value | CLAUDE.md Claim | Status |
-|----------|-----------|-----------------|--------|
-| Loss Aversion λ | 1.955 | 1.955 | MATCH |
-| Grace Days/month | 2 | 2 | MATCH |
-| Onboarding Bonus | $5.00 (500 cents) | $5 | MATCH |
-| BMI Floor | 18.5 | 18.5 | MATCH |
-| Weekly Loss Cap | 2% (0.02) | 2% | MATCH |
-| Downscale Strikes | 3 | 3 | MATCH |
-| Cool-off Days | 7 | 7 | MATCH |
-| Recovery Max Days | 30 | 30 | MATCH |
-| Max No-Contact Targets | 3 | 3 | MATCH |
-| Missed Attestation Threshold | 3 | 3 | MATCH |
-| Base Integrity | 50 | 50 | MATCH |
-| Fraud Penalty | -15 | -15 | MATCH |
-| Strike Penalty | -20 | -20 | MATCH |
-| Completion Bonus | +5 | +5 | MATCH |
-| Auditor Stake | $2.00 (200 cents) | $2.00 | MATCH |
-| Fury Demotion Threshold | < 0.8 after 10 audits | < 0.8 after 10 | MATCH |
-| Dispute Grace Period | 24 hours | (not in CLAUDE.md) | N/A |
-| False Accusation Weight | 3x | (implicit in accuracy formula) | MATCH |
+| Constant                     | Code Value            | CLAUDE.md Claim                | Status |
+| ---------------------------- | --------------------- | ------------------------------ | ------ |
+| Loss Aversion λ              | 1.955                 | 1.955                          | MATCH  |
+| Grace Days/month             | 2                     | 2                              | MATCH  |
+| Onboarding Bonus             | $5.00 (500 cents)     | $5                             | MATCH  |
+| BMI Floor                    | 18.5                  | 18.5                           | MATCH  |
+| Weekly Loss Cap              | 2% (0.02)             | 2%                             | MATCH  |
+| Downscale Strikes            | 3                     | 3                              | MATCH  |
+| Cool-off Days                | 7                     | 7                              | MATCH  |
+| Recovery Max Days            | 30                    | 30                             | MATCH  |
+| Max No-Contact Targets       | 3                     | 3                              | MATCH  |
+| Missed Attestation Threshold | 3                     | 3                              | MATCH  |
+| Base Integrity               | 50                    | 50                             | MATCH  |
+| Fraud Penalty                | -15                   | -15                            | MATCH  |
+| Strike Penalty               | -20                   | -20                            | MATCH  |
+| Completion Bonus             | +5                    | +5                             | MATCH  |
+| Auditor Stake                | $2.00 (200 cents)     | $2.00                          | MATCH  |
+| Fury Demotion Threshold      | < 0.8 after 10 audits | < 0.8 after 10                 | MATCH  |
+| Dispute Grace Period         | 24 hours              | (not in CLAUDE.md)             | N/A    |
+| False Accusation Weight      | 3x                    | (implicit in accuracy formula) | MATCH  |
 
 **Verdict**: Zero contradictions between code and documentation. All behavioral constants are internally consistent.
 
@@ -79,6 +79,7 @@
 ### 1.4 Pathos Review: Emotional Safety
 
 **Recovery Users**: The Recovery stream (No-Contact, Substance Abstinence, Behavioral Detox, Environment Avoidance) handles the most emotionally vulnerable users. Guardrails are appropriate:
+
 - Max 30-day contracts prevent indefinite psychological pressure
 - Max 3 no-contact targets prevent isolation spirals
 - Daily attestation with 3-miss auto-fail provides structure without perfection demands
@@ -158,31 +159,31 @@ The CLAUDE.md accurately describes the dual-layer API, workspace structure, and 
 
 ### 4.2 Evolve: Actionable Improvements
 
-| Priority | Item | Effort | Impact |
-|----------|------|--------|--------|
-| ~~P0~~ | ~~Fix ask-styx `ExportedHandler` type error~~ | ~~5 min~~ | **DONE** — resolved during audit |
-| P1 | Add k6 or artillery load test profile for Fury Router queue throughput | 1-2 days | Validates scalability claims |
-| P1 | Replace ask-styx in-memory rate limiter with Cloudflare KV | 2-4 hours | Effective rate limiting at edge |
-| P2 | Add CSRF protection to API mutation endpoints | 4-8 hours | Security hardening |
-| P2 | Proportional integrity penalties for high-score users | 2-4 hours | Prevents score inflation making penalties meaningless |
-| P2 | Failure notification UX copy review | 1 day | Emotional safety for stake liquidation messages |
-| P3 | Redis sentinel/cluster for HA | 1-2 days | Eliminates single point of failure |
-| P3 | Offline LLM fallback for grill-me/ELI5 | 2-3 days | Reduces external API dependency |
+| Priority | Item                                                                   | Effort    | Impact                                                |
+| -------- | ---------------------------------------------------------------------- | --------- | ----------------------------------------------------- |
+| ~~P0~~   | ~~Fix ask-styx `ExportedHandler` type error~~                          | ~~5 min~~ | **DONE** — resolved during audit                      |
+| P1       | Add k6 or artillery load test profile for Fury Router queue throughput | 1-2 days  | Validates scalability claims                          |
+| P1       | Replace ask-styx in-memory rate limiter with Cloudflare KV             | 2-4 hours | Effective rate limiting at edge                       |
+| P2       | Add CSRF protection to API mutation endpoints                          | 4-8 hours | Security hardening                                    |
+| P2       | Proportional integrity penalties for high-score users                  | 2-4 hours | Prevents score inflation making penalties meaningless |
+| P2       | Failure notification UX copy review                                    | 1 day     | Emotional safety for stake liquidation messages       |
+| P3       | Redis sentinel/cluster for HA                                          | 1-2 days  | Eliminates single point of failure                    |
+| P3       | Offline LLM fallback for grill-me/ELI5                                 | 2-3 days  | Reduces external API dependency                       |
 
 ---
 
 ## Appendix: Test Gap Remediation Summary
 
-| # | File Created | Tests | Status |
-|---|-------------|-------|--------|
-| 1 | `src/api/src/modules/users/gdpr.scheduler.spec.ts` | 3 | PASS |
-| 2 | `src/mobile/components/TavernFeed.spec.tsx` | 7 | PASS |
-| 3 | `src/web/app/hr/page.test.tsx` | (already existed — 5 tests) | PASS |
-| 4 | `src/web/app/pitch/page.test.tsx` | 1 | PASS |
-| 5 | `src/web/app/ask/page.test.tsx` | 2 | PASS |
-| 6 | `src/web/components/PitchDeck/PitchDeck.test.tsx` | 4 | PASS |
-| 7 | `src/ask-styx/tests/App.test.tsx` | 3 | PASS |
-| 8 | `src/ask-styx/tests/worker.test.ts` | 9 | PASS |
+| #   | File Created                                       | Tests                       | Status |
+| --- | -------------------------------------------------- | --------------------------- | ------ |
+| 1   | `src/api/src/modules/users/gdpr.scheduler.spec.ts` | 3                           | PASS   |
+| 2   | `src/mobile/components/TavernFeed.spec.tsx`        | 7                           | PASS   |
+| 3   | `src/web/app/hr/page.test.tsx`                     | (already existed — 5 tests) | PASS   |
+| 4   | `src/web/app/pitch/page.test.tsx`                  | 1                           | PASS   |
+| 5   | `src/web/app/ask/page.test.tsx`                    | 2                           | PASS   |
+| 6   | `src/web/components/PitchDeck/PitchDeck.test.tsx`  | 4                           | PASS   |
+| 7   | `src/ask-styx/tests/App.test.tsx`                  | 3                           | PASS   |
+| 8   | `src/ask-styx/tests/worker.test.ts`                | 9                           | PASS   |
 
 **New tests added**: 29
 **Pre-existing test total**: ~470+
@@ -191,4 +192,4 @@ The CLAUDE.md accurately describes the dual-layer API, workspace structure, and 
 
 ---
 
-*Generated by E2G framework audit. Next scheduled audit: Beta launch milestone.*
+_Generated by E2G framework audit. Next scheduled audit: Beta launch milestone._

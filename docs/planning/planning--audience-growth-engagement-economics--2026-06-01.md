@@ -15,6 +15,7 @@ doesn't blur into the equity partnership.
 ## Scope of work
 
 **In scope (billable):**
+
 - Audience-growth strategy + the reusable system (this engine + templates).
 - Content system: calendar, hook banks, post drafts, story frames, lead-magnet builds.
 - Channel ops: scheduling support, the "Do Not Text Your Ex Tonight" capture tool, email setup.
@@ -22,6 +23,7 @@ doesn't blur into the equity partnership.
 - Metrics tracking and weekly review.
 
 **Out of scope (not billed here):**
+
 - Jessica's on-camera presence / her own posting time (that's her, not billable build time).
 - Styx product engineering (separate from this engagement).
 - Anything covered under the equity partnership (see boundary below).
@@ -30,10 +32,11 @@ doesn't blur into the equity partnership.
 
 `docs/MANIFEST.md` records a **50/50 founder equity split** (Jessica = marketing, partner =
 technical). To avoid double-counting:
-- **Equity contribution** = work that builds *Styx the company* (product, core company growth).
-- **Paid build ($100/hr)** = work that builds *Jessica's personal audience asset*, which she
+
+- **Equity contribution** = work that builds _Styx the company_ (product, core company growth).
+- **Paid build ($100/hr)** = work that builds _Jessica's personal audience asset_, which she
   owns, even though it also benefits Styx as a funnel.
-- When a single deliverable serves both (e.g. a post that grows Jessica *and* drives Styx
+- When a single deliverable serves both (e.g. a post that grows Jessica _and_ drives Styx
   waitlist), default to: **billable if it's primarily growing Jessica's owned asset; equity if
   it's primarily building Styx.** Log the call in the engagement log; review ambiguous ones
   with Jessica weekly.
@@ -42,16 +45,17 @@ technical). To avoid double-counting:
 
 ## Deliverables-per-hour expectation (rough)
 
-| Block | Typical output |
-|-------|----------------|
-| 1 hr | a week of hooks + 2–3 drafted posts, OR an outreach batch (5–8 targets), OR a metrics review |
-| 2–3 hrs | a lead-magnet build, OR a 30-day calendar refresh, OR the capture-tool flow |
+| Block   | Typical output                                                                               |
+| ------- | -------------------------------------------------------------------------------------------- |
+| 1 hr    | a week of hooks + 2–3 drafted posts, OR an outreach batch (5–8 targets), OR a metrics review |
+| 2–3 hrs | a lead-magnet build, OR a 30-day calendar refresh, OR the capture-tool flow                  |
 
 These are planning estimates, not guarantees — log actuals and recalibrate monthly.
 
 ## ROI framing for Jessica
 
 What the spend buys:
+
 1. **The audience asset** — follower + email-list growth she owns outright (standalone value,
    per `planning--audience-as-product-model--2026-06-01.md`).
 2. **Qualified Styx pipeline** — warm, high-intent waitlist + Cohort 1 (value to the company
@@ -68,9 +72,9 @@ cost-per-result is out of line, reallocate (mirrors REGE CRIT:channel-efficiency
 Maintain the running log using `docs/playbooks/templates/template--engagement-log.md`. Produce
 an invoice-ready summary per period (hours, amount, deliverables shipped, results moved).
 
-| Week | Hrs | $ | Deliverables | Net followers | Net email | Waitlist | Notes |
-|------|-----|---|--------------|---------------|-----------|----------|-------|
-| W1 | | | | | | | |
-| W2 | | | | | | | |
-| W3 | | | | | | | |
-| W4 | | | | | | | |
+| Week | Hrs | $   | Deliverables | Net followers | Net email | Waitlist | Notes |
+| ---- | --- | --- | ------------ | ------------- | --------- | -------- | ----- |
+| W1   |     |     |              |               |           |          |       |
+| W2   |     |     |              |               |           |          |       |
+| W3   |     |     |              |               |           |          |       |
+| W4   |     |     |              |               |           |          |       |

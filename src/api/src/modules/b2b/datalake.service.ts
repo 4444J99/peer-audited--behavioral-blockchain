@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
-import { AnonymizeService } from './anonymize.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
+import { AnonymizeService } from "./anonymize.service";
 
 /**
  * Data Lake extraction service for B2B analytics.
@@ -71,10 +71,10 @@ export class DataLakeService {
     const start = Date.parse(startDate);
     const end = Date.parse(endDate);
     if (Number.isNaN(start) || Number.isNaN(end)) {
-      throw new Error('Invalid start/end date');
+      throw new Error("Invalid start/end date");
     }
     if (end < start) {
-      throw new Error('end date must not precede start date');
+      throw new Error("end date must not precede start date");
     }
   }
 
@@ -89,11 +89,12 @@ export class DataLakeService {
   ): Promise<DataLakeSnapshot> {
     this.assertValidDateRange(startDate, endDate);
 
-    const [contractMetrics, behavioralTrends, cohortAnalysis] = await Promise.all([
-      this.extractContractMetrics(enterpriseId, startDate, endDate),
-      this.extractBehavioralTrends(enterpriseId, startDate, endDate),
-      this.extractCohortAnalysis(enterpriseId),
-    ]);
+    const [contractMetrics, behavioralTrends, cohortAnalysis] =
+      await Promise.all([
+        this.extractContractMetrics(enterpriseId, startDate, endDate),
+        this.extractBehavioralTrends(enterpriseId, startDate, endDate),
+        this.extractCohortAnalysis(enterpriseId),
+      ]);
 
     return {
       extractedAt: new Date().toISOString(),
@@ -132,23 +133,26 @@ export class DataLakeService {
       [enterpriseId, startDate, endDate],
     );
 
-    return result.rows
-      // PRV11: suppress any category backed by fewer than MIN_GROUP_SIZE distinct
-      // employees (single-/few-person buckets re-identify the individual).
-      .filter((row) => this.meetsMinGroupSize(row.distinct_employees))
-      .map((row) => {
-        const total = Number(row.total_created);
-        const completed = Number(row.total_completed);
-        return {
-          oathCategory: row.oath_category,
-          totalCreated: total,
-          totalCompleted: completed,
-          totalFailed: Number(row.total_failed),
-          avgStakeAmount: Math.round(Number(row.avg_stake) * 100) / 100,
-          avgDurationDays: Math.round(Number(row.avg_duration)),
-          completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
-        };
-      });
+    return (
+      result.rows
+        // PRV11: suppress any category backed by fewer than MIN_GROUP_SIZE distinct
+        // employees (single-/few-person buckets re-identify the individual).
+        .filter((row) => this.meetsMinGroupSize(row.distinct_employees))
+        .map((row) => {
+          const total = Number(row.total_created);
+          const completed = Number(row.total_completed);
+          return {
+            oathCategory: row.oath_category,
+            totalCreated: total,
+            totalCompleted: completed,
+            totalFailed: Number(row.total_failed),
+            avgStakeAmount: Math.round(Number(row.avg_stake) * 100) / 100,
+            avgDurationDays: Math.round(Number(row.avg_duration)),
+            completionRate:
+              total > 0 ? Math.round((completed / total) * 100) : 0,
+          };
+        })
+    );
   }
 
   /**
@@ -194,22 +198,27 @@ export class DataLakeService {
       [enterpriseId, startDate, endDate],
     );
 
-    return result.rows
-      // PRV11: suppress months backed by fewer than MIN_GROUP_SIZE distinct employees.
-      .filter((row) => this.meetsMinGroupSize(row.distinct_employees))
-      .map((row) => ({
-        month: row.month,
-        newContracts: Number(row.new_contracts),
-        completions: Number(row.completions),
-        failures: Number(row.failures),
-        avgIntegrityDelta: Math.round(Number(row.avg_integrity_delta) * 10) / 10,
-      }));
+    return (
+      result.rows
+        // PRV11: suppress months backed by fewer than MIN_GROUP_SIZE distinct employees.
+        .filter((row) => this.meetsMinGroupSize(row.distinct_employees))
+        .map((row) => ({
+          month: row.month,
+          newContracts: Number(row.new_contracts),
+          completions: Number(row.completions),
+          failures: Number(row.failures),
+          avgIntegrityDelta:
+            Math.round(Number(row.avg_integrity_delta) * 10) / 10,
+        }))
+    );
   }
 
   /**
    * Employee cohort analysis by join month.
    */
-  private async extractCohortAnalysis(enterpriseId: string): Promise<CohortBucket[]> {
+  private async extractCohortAnalysis(
+    enterpriseId: string,
+  ): Promise<CohortBucket[]> {
     const result = await this.pool.query(
       `WITH user_cohorts AS (
          SELECT
@@ -249,24 +258,28 @@ export class DataLakeService {
       [enterpriseId],
     );
 
-    return result.rows
-      // PRV11: suppress join-month cohorts smaller than MIN_GROUP_SIZE (a solo/few
-      // person cohort discloses that individual's integrity/retention).
-      .filter((row) => this.meetsMinGroupSize(row.employee_count))
-      .map((row) => ({
-        cohortMonth: row.cohort_month,
-        employeeCount: Number(row.employee_count),
-        avgIntegrityScore: Number(row.avg_integrity_score),
-        avgCompletionRate: Number(row.avg_completion_rate),
-        retentionRate: Number(row.retention_rate),
-      }));
+    return (
+      result.rows
+        // PRV11: suppress join-month cohorts smaller than MIN_GROUP_SIZE (a solo/few
+        // person cohort discloses that individual's integrity/retention).
+        .filter((row) => this.meetsMinGroupSize(row.employee_count))
+        .map((row) => ({
+          cohortMonth: row.cohort_month,
+          employeeCount: Number(row.employee_count),
+          avgIntegrityScore: Number(row.avg_integrity_score),
+          avgCompletionRate: Number(row.avg_completion_rate),
+          retentionRate: Number(row.retention_rate),
+        }))
+    );
   }
 
   /**
    * Set up PostgreSQL logical replication for real-time CDC.
    * Called once during initial production provisioning.
    */
-  async setupReplicationSlot(slotName: string = 'styx_datalake'): Promise<{ created: boolean }> {
+  async setupReplicationSlot(
+    slotName: string = "styx_datalake",
+  ): Promise<{ created: boolean }> {
     try {
       await this.pool.query(
         `SELECT pg_create_logical_replication_slot($1, 'pgoutput')`,
@@ -275,7 +288,7 @@ export class DataLakeService {
       this.logger.log(`Created replication slot: ${slotName}`);
       return { created: true };
     } catch (error: any) {
-      if (error.code === '42710') {
+      if (error.code === "42710") {
         // Slot already exists
         this.logger.log(`Replication slot already exists: ${slotName}`);
         return { created: false };
@@ -288,13 +301,13 @@ export class DataLakeService {
    * Create a publication for the tables needed by the data lake.
    * Only behavioral data tables — no PII-bearing columns are replicated.
    */
-  async setupPublication(pubName: string = 'styx_analytics'): Promise<void> {
+  async setupPublication(pubName: string = "styx_analytics"): Promise<void> {
     // CREATE PUBLICATION cannot take a bind parameter for the publication name, so
     // the name is interpolated. Restrict it to a strict SQL identifier allowlist
     // (lowercase letters/digits/underscore, must start with a letter) so a caller
     // can never inject DDL even though only the default is used today.
     if (!/^[a-z][a-z0-9_]{0,62}$/.test(pubName)) {
-      throw new Error('Invalid publication name');
+      throw new Error("Invalid publication name");
     }
     await this.pool.query(`
       CREATE PUBLICATION ${pubName} FOR TABLE

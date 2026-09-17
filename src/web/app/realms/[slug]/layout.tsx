@@ -1,7 +1,7 @@
-import React from 'react';
+import React from "react";
 
-import RealmChrome from './RealmChrome';
-import { snapshotRealmParams } from '../../../lib/snapshot-params';
+import RealmChrome from "./RealmChrome";
+import { snapshotRealmParams } from "../../../lib/snapshot-params";
 
 /**
  * A server layout whose only job beyond rendering the chrome is to declare the realm
@@ -17,6 +17,10 @@ export function generateStaticParams() {
   return snapshotRealmParams();
 }
 
-export default function RealmLayout({ children }: { children: React.ReactNode }) {
+export default function RealmLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return <RealmChrome>{children}</RealmChrome>;
 }

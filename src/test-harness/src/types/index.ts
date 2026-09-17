@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const SeedSchema = z.object({
   schema_version: z.string(),
@@ -11,29 +11,41 @@ export const SeedSchema = z.object({
     language: z.string().optional(),
     tags: z.array(z.string()).optional(),
   }),
-  agents: z.array(z.object({
-    name: z.string(),
-    trigger: z.string(),
-    workflow: z.string(),
-    description: z.string().optional(),
-  })).optional(),
-  produces: z.array(z.object({
-    type: z.string(),
-    description: z.string().optional(),
-    consumers: z.array(z.string()).optional(),
-  })).optional(),
-  consumes: z.array(z.object({
-    type: z.string(),
-    source: z.string(),
-    description: z.string().optional(),
-  })).optional(),
+  agents: z
+    .array(
+      z.object({
+        name: z.string(),
+        trigger: z.string(),
+        workflow: z.string(),
+        description: z.string().optional(),
+      }),
+    )
+    .optional(),
+  produces: z
+    .array(
+      z.object({
+        type: z.string(),
+        description: z.string().optional(),
+        consumers: z.array(z.string()).optional(),
+      }),
+    )
+    .optional(),
+  consumes: z
+    .array(
+      z.object({
+        type: z.string(),
+        source: z.string(),
+        description: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
 export type Seed = z.infer<typeof SeedSchema>;
 
 export interface AnalyzerResult {
   check: string;
-  status: 'PASS' | 'FAIL' | 'SKIP';
+  status: "PASS" | "FAIL" | "SKIP";
   message?: string;
 }
 

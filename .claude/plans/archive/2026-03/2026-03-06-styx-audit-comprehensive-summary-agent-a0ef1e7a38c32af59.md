@@ -11,6 +11,7 @@
 ## Completed Work
 
 ### 1. seed.yaml (100% ✓)
+
 - **Location:** `/Users/4jp/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/seed.yaml`
 - **Status:** Successfully retrieved via bash cat
 - **Key Metadata:**
@@ -26,6 +27,7 @@
   - Agents: ci, governance-auditor, governance-intake
 
 ### 2. Research Files (100% ✓)
+
 - **Location:** `docs/research/`
 - **Count:** 41 files
 - **Size:** 1.2MB
@@ -43,6 +45,7 @@
 ## Work In Progress
 
 ### 3. Architecture Files (RETRIEVED, NOT YET EXTRACTED)
+
 - **Location:** `docs/architecture/`
 - **Count:** 8 files expected
 - **Status:** Successfully retrieved to tool results file (156,366 characters)
@@ -59,6 +62,7 @@
   - architecture--aegis-tier-reconciliation.md
 
 ### 4. Git Log (PENDING)
+
 - **Location:** peer-audited--behavioral-blockchain repo root
 - **Scope:** Last 10 commits with oneline format
 - **Status:** Previous attempt failed with "git: not found" error
@@ -68,11 +72,13 @@
 ## Technical Notes
 
 ### Known Issues & Workarounds
+
 1. **read_file tool limitation:** Returns metadata only, not content. Workaround: Use bash cat command (verified working).
 2. **Bash timeout_ms parameter:** Tool doesn't accept timeout_ms. Use standard bash invocation without timeout.
 3. **Git environment:** /bin/sh doesn't have git available. Use `bash -c` wrapper.
 
 ### File Retrieval Method Validation
+
 - **Verified working:** `bash -c 'cd <path> && cat <file>'`
 - **Verified working:** `cd <path> && for file in docs/<dir>/*.md; do echo "===== $(basename "$file") ====="; cat "$file"; echo ""; done`
 - **Failed approach:** read_file tool with offset/length parameters (metadata-only response)
@@ -92,6 +98,7 @@
 ## Audit Summary Structure (TBD)
 
 Will address:
+
 - **Project Identity:** Styx as behavioral market platform
 - **Scope & Delivery:** What was built (NestJS/Next.js/React Native/Tauri)
 - **Research Foundation:** Market analysis, behavioral economics, competitor positioning

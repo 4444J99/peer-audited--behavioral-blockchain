@@ -52,11 +52,13 @@ src/api/
 ## Consequences
 
 **Positive:**
+
 - Domain logic is unit-testable without NestJS testing module
 - Clear separation makes code review easier — reviewers can focus on business logic or transport independently
 - Services are reusable across modules (e.g., `TruthLogService` used by both `ContractsModule` and `AdminModule`)
 
 **Negative:**
+
 - Two directory trees can confuse new contributors who expect a single modules/ tree
 - Some duplication in import paths (controllers must import from `../../../services/`)
 

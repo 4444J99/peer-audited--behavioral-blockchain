@@ -45,26 +45,36 @@ flowchart LR
 ```
 
 ### Step 1: Claim the Issue
+
 Before writing code, claim the target issue in `docs/triage.json`:
+
 ```bash
 scripts/lanes/claim-issue.sh <issue-number> [agent-id]
 ```
+
 This transitions the issue state to `BUILD_STARTED` and records the agent identity to prevent duplicate effort by concurrent agents.
 
 ### Step 2: Cut an Isolated Worktree
+
 Consult the Issue Ownership Directory (`docs/triage/issue-ownership.json`) or let the automation handle it:
+
 ```bash
 scripts/lanes/cut-worktree.sh <issue-number> [short-intent]
 ```
+
 - The script automatically determines the owning lane (`lane/verify`, `lane/heal`, `lane/expand-product`, `lane/expand-external`, or `lane/evolve-platform`).
 - It creates a dedicated git worktree in `.worktrees/work-<lane>-<issue>-<intent>` branched from the owning lane.
 
 ### Step 3: Implement & Test Inside the Worktree
+
 Navigate to your isolated worktree:
+
 ```bash
 cd .worktrees/work-<lane>-<issue>-<intent>
 ```
+
 Run workspace-specific tests during development:
+
 ```bash
 cd src/api && npx jest
 cd src/web && npx jest
@@ -73,11 +83,15 @@ cd src/desktop && npx jest
 ```
 
 ### Step 4: Pre-PR Verification
+
 Before committing or opening a PR, run the universal agent gatekeeper from the repo root or inside the worktree:
+
 ```bash
 bash scripts/lanes/verify-agent-pr.sh
 ```
+
 This executes:
+
 - Branch naming convention check
 - Staged secrets and `.env` sweep
 - Gate 04 (Linguistic Cloaker sweep)
@@ -86,10 +100,12 @@ This executes:
 - TypeScript strict compile (`npx turbo run lint`)
 
 ### Step 5: Live Loop Receipt & PR Submission
+
 Generate your PR description using the **Live Loop Receipt Template**:
 `docs/evidence/templates/live-loop-receipt.md`.
 
 Set the PR **base branch** to the owning standing lane:
+
 - Bugfixes & repairs → Base: `lane/heal`
 - Mobile/Client features & beta rollout → Base: `lane/expand-product`
 - Legal, escrow & external credentials → Base: `lane/expand-external`

@@ -1,12 +1,9 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import {
-  REALM_REGISTRY,
-  type RealmDefinition,
-} from '../../../shared/libs/realm-registry';
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { REALM_REGISTRY, type RealmDefinition } from "@styx/types";
 
 interface RealmStats {
   activeContracts: number;
@@ -28,7 +25,7 @@ export default function RealmsHubPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/realms')
+    fetch("/api/realms")
       .then((res) => res.json())
       .then((data) => {
         setRealms(data);
@@ -86,10 +83,12 @@ export default function RealmsHubPage() {
               key={realm.id}
               href={`/realms/${realm.slug}`}
               className="group relative block rounded-xl border-2 bg-neutral-950 p-6 transition-all hover:scale-[1.02] hover:shadow-lg"
-              style={{
-                borderColor: realm.theme.primary,
-                '--realm-glow': `${realm.theme.primary}33`,
-              } as React.CSSProperties}
+              style={
+                {
+                  borderColor: realm.theme.primary,
+                  "--realm-glow": `${realm.theme.primary}33`,
+                } as React.CSSProperties
+              }
             >
               {/* Color bar */}
               <div
@@ -112,9 +111,12 @@ export default function RealmsHubPage() {
                   <>
                     <span>
                       {realm.stats.activeContracts} active contract
-                      {realm.stats.activeContracts !== 1 ? 's' : ''}
+                      {realm.stats.activeContracts !== 1 ? "s" : ""}
                     </span>
-                    <span className="font-bold" style={{ color: realm.theme.primary }}>
+                    <span
+                      className="font-bold"
+                      style={{ color: realm.theme.primary }}
+                    >
                       ${realm.stats.totalStaked.toLocaleString()} staked
                     </span>
                   </>

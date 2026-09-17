@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Suspense, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { ArrowRight, CheckCircle2, Lock, ShieldCheck } from 'lucide-react';
-import { buildSignupBody, collectAttribution } from '../../utils/waitlist';
+import Link from "next/link";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { ArrowRight, CheckCircle2, Lock, ShieldCheck } from "lucide-react";
+import { buildSignupBody, collectAttribution } from "../../utils/waitlist";
 
-type Status = 'idle' | 'submitting' | 'joined' | 'error';
+type Status = "idle" | "submitting" | "joined" | "error";
 
 function BetaWaitlistForm() {
   const searchParams = useSearchParams();
@@ -15,10 +15,10 @@ function BetaWaitlistForm() {
     [searchParams],
   );
 
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [goal, setGoal] = useState('no-contact');
-  const [status, setStatus] = useState<Status>('idle');
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [goal, setGoal] = useState("no-contact");
+  const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -26,31 +26,35 @@ function BetaWaitlistForm() {
     setError(null);
 
     if (!email.trim()) {
-      setError('Enter the email where we should send your invite.');
+      setError("Enter the email where we should send your invite.");
       return;
     }
 
-    setStatus('submitting');
+    setStatus("submitting");
     try {
       const referrer =
-        typeof document !== 'undefined' ? document.referrer : undefined;
-      const body = buildSignupBody({ email, name, goal }, attribution, referrer);
-      const res = await fetch('/api/beta-waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        typeof document !== "undefined" ? document.referrer : undefined;
+      const body = buildSignupBody(
+        { email, name, goal },
+        attribution,
+        referrer,
+      );
+      const res = await fetch("/api/beta-waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       if (!res.ok) {
         throw new Error(`Signup failed (${res.status})`);
       }
-      setStatus('joined');
+      setStatus("joined");
     } catch {
-      setStatus('error');
-      setError('Something went wrong. Please try again in a moment.');
+      setStatus("error");
+      setError("Something went wrong. Please try again in a moment.");
     }
   };
 
-  if (status === 'joined') {
+  if (status === "joined") {
     return (
       <div className="border border-neutral-800 bg-neutral-900/80 p-8 text-center">
         <CheckCircle2
@@ -59,9 +63,9 @@ function BetaWaitlistForm() {
         />
         <h2 className="text-2xl font-black text-white">You are on the list</h2>
         <p className="mt-4 text-base leading-7 text-neutral-300">
-          Check your inbox for a confirmation link. We admit the iOS private beta
-          in small US-only cohorts, so it may take a little time before your spot
-          opens. Nothing you do here moves real money.
+          Check your inbox for a confirmation link. We admit the iOS private
+          beta in small US-only cohorts, so it may take a little time before
+          your spot opens. Nothing you do here moves real money.
         </p>
         <Link
           href="/do-not-text-your-ex-tonight"
@@ -81,8 +85,8 @@ function BetaWaitlistForm() {
     >
       <h2 className="text-2xl font-black text-white">Join the Private Beta</h2>
       <p className="mt-2 text-sm leading-6 text-neutral-500">
-        One step. Test-money only, iOS only, US allowlist only while we harden the
-        core path.
+        One step. Test-money only, iOS only, US allowlist only while we harden
+        the core path.
       </p>
 
       {error && (
@@ -144,10 +148,10 @@ function BetaWaitlistForm() {
 
       <button
         type="submit"
-        disabled={status === 'submitting'}
+        disabled={status === "submitting"}
         className="mt-7 inline-flex w-full items-center justify-center gap-2 bg-white px-5 py-4 text-sm font-black uppercase tracking-normal text-black transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:bg-neutral-700"
       >
-        {status === 'submitting' ? 'Joining…' : 'Join the Private Beta'}
+        {status === "submitting" ? "Joining…" : "Join the Private Beta"}
         <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </button>
 
@@ -178,9 +182,10 @@ export default function BetaWaitlistPage() {
             Keep the boundary you already chose.
           </h1>
           <p className="mt-6 text-xl font-medium leading-relaxed text-neutral-300">
-            Styx is a private beta for no-contact recovery. Daily accountability and
-            a small test-money commitment help you hold the line on the nights it is
-            hardest — without pretending this phase is more than it is.
+            Styx is a private beta for no-contact recovery. Daily accountability
+            and a small test-money commitment help you hold the line on the
+            nights it is hardest — without pretending this phase is more than it
+            is.
           </p>
           <p className="mt-4 text-sm font-bold uppercase tracking-[0.18em] text-red-400">
             iOS private beta · Test-money pilot · US allowlist
@@ -190,8 +195,9 @@ export default function BetaWaitlistPage() {
             <div>
               <h2 className="text-lg font-black text-white">The hard part</h2>
               <p className="mt-2 text-base leading-7 text-neutral-400">
-                The boundary is easy to set and brutal to keep at 1 a.m. Willpower
-                alone breaks when the urge spikes and no one is watching.
+                The boundary is easy to set and brutal to keep at 1 a.m.
+                Willpower alone breaks when the urge spikes and no one is
+                watching.
               </p>
             </div>
             <div>
@@ -202,24 +208,24 @@ export default function BetaWaitlistPage() {
                     className="mt-1 h-5 w-5 shrink-0 text-red-500"
                     aria-hidden="true"
                   />
-                  Make a daily check-in commitment and put a small test-money stake
-                  behind it.
+                  Make a daily check-in commitment and put a small test-money
+                  stake behind it.
                 </li>
                 <li className="flex items-start gap-3">
                   <ShieldCheck
                     className="mt-1 h-5 w-5 shrink-0 text-red-500"
                     aria-hidden="true"
                   />
-                  Invite one trusted person so the boundary is reinforced by real
-                  accountability.
+                  Invite one trusted person so the boundary is reinforced by
+                  real accountability.
                 </li>
                 <li className="flex items-start gap-3">
                   <ShieldCheck
                     className="mt-1 h-5 w-5 shrink-0 text-red-500"
                     aria-hidden="true"
                   />
-                  Get through the urge with the ten-minute reset tool, then log the
-                  clean day.
+                  Get through the urge with the ten-minute reset tool, then log
+                  the clean day.
                 </li>
               </ul>
             </div>

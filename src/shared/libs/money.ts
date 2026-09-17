@@ -38,22 +38,26 @@ export function toCents(dollars: number): number {
  * negative or fractional, so a sign/units error is surfaced rather than rendered.
  */
 export function toDollars(cents: number): number {
-  assertNonNegativeIntegerCents(cents, 'toDollars');
+  assertNonNegativeIntegerCents(cents, "toDollars");
   return cents / 100;
 }
 
 /** Format cents as a dollar string (e.g., 4999 → "$49.99"). */
 export function formatCents(cents: number): string {
-  assertNonNegativeIntegerCents(cents, 'formatCents');
+  assertNonNegativeIntegerCents(cents, "formatCents");
   return `$${(cents / 100).toFixed(2)}`;
 }
 
 /** Guard that an amount is a non-negative integer number of cents. */
 function assertNonNegativeIntegerCents(cents: number, fn: string): void {
   if (!Number.isInteger(cents)) {
-    throw new Error(`${fn}: expected an integer number of cents, received ${cents}`);
+    throw new Error(
+      `${fn}: expected an integer number of cents, received ${cents}`,
+    );
   }
   if (cents < 0) {
-    throw new Error(`${fn}: expected a non-negative amount of cents, received ${cents}`);
+    throw new Error(
+      `${fn}: expected a non-negative amount of cents, received ${cents}`,
+    );
   }
 }

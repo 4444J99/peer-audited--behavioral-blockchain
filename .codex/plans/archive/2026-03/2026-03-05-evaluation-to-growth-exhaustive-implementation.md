@@ -1,9 +1,11 @@
 # Evaluation-to-Growth Exhaustive Implementation Plan (2026-03-05)
 
 ## Scope
+
 Implement and verify the remediation tasks identified in `docs/doc--evaluation-to-growth-review.md` for repository `peer-audited--behavioral-blockchain`.
 
 ## Execution
+
 1. Baseline current status: tests, lint, security gate, and task-by-task current-state check.
 2. Implement P0 and P1 tasks completely.
 3. Implement all feasible P2 tasks end-to-end with tests.
@@ -12,6 +14,7 @@ Implement and verify the remediation tasks identified in `docs/doc--evaluation-t
 6. Produce a final report mapping each suggestion to: implemented, partially implemented, or blocked with reason.
 
 ## Task List (from review)
+
 1. Fix Gate 06 recursion parameter
 2. Stripe idempotency keys
 3. Linguistic cloaker word boundaries
@@ -32,6 +35,7 @@ Implement and verify the remediation tasks identified in `docs/doc--evaluation-t
 18. Next.js middleware auth guard
 
 ## Notes
+
 - No destructive git operations.
 - Keep changes scoped and test-backed.
 - If full implementation of XL items is impractical in one pass, ship concrete partials with migration-safe scaffolding and explicit completion deltas.

@@ -6,13 +6,13 @@ import {
   Matches,
   Max,
   Min,
-} from 'class-validator';
-import { MeteredEventType } from '../b2b/billing.service';
+} from "class-validator";
+import { MeteredEventType } from "../b2b/billing.service";
 
 export const METERED_EVENT_TYPES: MeteredEventType[] = [
-  'phash_scan',
-  'gemini_call',
-  'anomaly_detection',
+  "phash_scan",
+  "gemini_call",
+  "anomaly_detection",
 ];
 
 export class RecordMeteredUsageDto {

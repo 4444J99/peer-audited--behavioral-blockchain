@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { captureFinancialAlert } from '../../common/monitoring/sentry';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { captureFinancialAlert } from "../../common/monitoring/sentry";
 
 /**
  * QuarantineService: Automated Ledger Safeguard
- * 
+ *
  * If a ledger imbalance or "Phantom Money" is detected, this service
  * immediately locks down the affected accounts to prevent real-world
  * fund leakage.
@@ -19,10 +19,16 @@ export class QuarantineService {
     private readonly truthLog: TruthLogService,
   ) {}
 
-  async activateQuarantine(accountId: string, reason: string, metadata?: Record<string, any>) {
-    this.logger.error(`[PHANTOM_MONEY_PROTECTION] Quarantining account ${accountId}. Reason: ${reason}`);
+  async activateQuarantine(
+    accountId: string,
+    reason: string,
+    metadata?: Record<string, any>,
+  ) {
+    this.logger.error(
+      `[PHANTOM_MONEY_PROTECTION] Quarantining account ${accountId}. Reason: ${reason}`,
+    );
 
-    captureFinancialAlert('LEDGER_QUARANTINE_ACTIVATED', {
+    captureFinancialAlert("LEDGER_QUARANTINE_ACTIVATED", {
       accountId,
       reason,
       metadata,
@@ -31,15 +37,15 @@ export class QuarantineService {
     // 1. Lock the user associated with this account
     await this.pool.query(
       `UPDATE users SET status = 'QUARANTINED' WHERE account_id = $1`,
-      [accountId]
+      [accountId],
     );
 
     // 2. Log to the Immutable TruthLog
-    await this.truthLog.appendEvent('LEDGER_QUARANTINE_ACTIVATED', {
+    await this.truthLog.appendEvent("LEDGER_QUARANTINE_ACTIVATED", {
       accountId,
       reason,
       metadata,
-      severity: 'CRITICAL',
+      severity: "CRITICAL",
     });
 
     // 3. Mark the account itself as restricted using a dedicated status column.
@@ -50,9 +56,11 @@ export class QuarantineService {
     //    accounts.status instead. Requires migration 027 (adds accounts.status).
     await this.pool.query(
       `UPDATE accounts SET status = 'QUARANTINED' WHERE id = $1 AND status IS DISTINCT FROM 'QUARANTINED'`,
-      [accountId]
+      [accountId],
     );
 
-    this.logger.warn(`Account ${accountId} and associated user have been restricted from all financial operations.`);
+    this.logger.warn(
+      `Account ${accountId} and associated user have been restricted from all financial operations.`,
+    );
   }
 }

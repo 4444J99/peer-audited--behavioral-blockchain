@@ -35,7 +35,7 @@ the MVP phase shall be jointly owned by the Founders.
 
 **Equity Split**
 
-Founder 1 (Jessica): **50%\**
+Founder 1 (Jessica): *_50%\*_
 Founder 2: **50%**
 
 This includes but is not limited to:
@@ -97,7 +97,7 @@ Revenue generated during the MVP phase (such as entry fees from
 participants) will be split according to the agreed ownership
 percentages.
 
-Founder 1: **50%\**
+Founder 1: *_50%\*_
 Founder 2: **50%**
 
 Participant **deposits are not revenue** and will be treated as funds

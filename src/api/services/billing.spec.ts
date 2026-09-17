@@ -2,18 +2,22 @@ import {
   isOnboardingBonusEnabled,
   processIAP,
   TICKET_PRICE_BASE,
-} from './billing';
+} from "./billing";
 
-describe('processIAP', () => {
+describe("processIAP", () => {
   let mockPool: { query: jest.Mock };
-  let mockStripe: { rail: string; holdStake: jest.Mock; captureStake: jest.Mock };
+  let mockStripe: {
+    rail: string;
+    holdStake: jest.Mock;
+    captureStake: jest.Mock;
+  };
   let mockLedger: { recordTransaction: jest.Mock };
   let mockTruthLog: { appendEvent: jest.Mock };
 
   beforeEach(() => {
     mockPool = { query: jest.fn() };
     mockStripe = {
-      rail: 'STRIPE',
+      rail: "STRIPE",
       holdStake: jest.fn(),
       captureStake: jest.fn(),
     };
@@ -22,19 +26,22 @@ describe('processIAP', () => {
     jest.clearAllMocks();
   });
 
-  it('should create a payment intent, capture it, record ledger entry, and log to truth log', async () => {
+  it("should create a payment intent, capture it, record ledger entry, and log to truth log", async () => {
     // User lookup
     mockPool.query.mockResolvedValueOnce({
-      rows: [{ stripe_customer_id: 'cus_test', account_id: 'acc-1' }],
+      rows: [{ stripe_customer_id: "cus_test", account_id: "acc-1" }],
     });
 
     // Stripe hold
-    mockStripe.holdStake.mockResolvedValueOnce({ id: 'pi_test_123' });
-    mockStripe.captureStake.mockResolvedValueOnce({ id: 'pi_test_123', status: 'CAPTURED' });
+    mockStripe.holdStake.mockResolvedValueOnce({ id: "pi_test_123" });
+    mockStripe.captureStake.mockResolvedValueOnce({
+      id: "pi_test_123",
+      status: "CAPTURED",
+    });
 
     // Revenue account lookup
     mockPool.query.mockResolvedValueOnce({
-      rows: [{ id: 'acc-revenue' }],
+      rows: [{ id: "acc-revenue" }],
     });
 
     // Ledger record
@@ -48,60 +55,82 @@ describe('processIAP', () => {
       mockStripe as any,
       mockLedger as any,
       mockTruthLog as any,
-      'user-1',
-      'contract-1',
+      "user-1",
+      "contract-1",
     );
 
     expect(result).toEqual({
-      paymentIntentId: 'pi_test_123',
+      paymentIntentId: "pi_test_123",
       amount: TICKET_PRICE_BASE,
     });
 
     // PM19: a stable per-(user, contract) idempotency key threads through hold + ledger.
-    expect(mockStripe.holdStake).toHaveBeenCalledWith('cus_test', TICKET_PRICE_BASE, 'contract-1', 'styx_iap_user-1_contract-1');
-    expect(mockStripe.captureStake).toHaveBeenCalledWith('pi_test_123');
-    expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
-      'acc-1',
-      'acc-revenue',
+    expect(mockStripe.holdStake).toHaveBeenCalledWith(
+      "cus_test",
       TICKET_PRICE_BASE,
-      'contract-1',
-      { type: 'TICKET_PURCHASE', userId: 'user-1' },
-      undefined,
-      'styx_iap_user-1_contract-1',
+      "contract-1",
+      "styx_iap_user-1_contract-1",
     );
-    expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('TICKET_PURCHASED', {
-      userId: 'user-1',
-      contractId: 'contract-1',
+    expect(mockStripe.captureStake).toHaveBeenCalledWith("pi_test_123");
+    expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
+      "acc-1",
+      "acc-revenue",
+      TICKET_PRICE_BASE,
+      "contract-1",
+      { type: "TICKET_PURCHASE", userId: "user-1" },
+      undefined,
+      "styx_iap_user-1_contract-1",
+    );
+    expect(mockTruthLog.appendEvent).toHaveBeenCalledWith("TICKET_PURCHASED", {
+      userId: "user-1",
+      contractId: "contract-1",
       amount: TICKET_PRICE_BASE,
-      paymentIntentId: 'pi_test_123',
+      paymentIntentId: "pi_test_123",
     });
   });
 
-  it('should throw when user is not found', async () => {
+  it("should throw when user is not found", async () => {
     mockPool.query.mockResolvedValueOnce({ rows: [] });
 
     await expect(
-      processIAP(mockPool as any, mockStripe as any, mockLedger as any, mockTruthLog as any, 'no-user', 'c-1'),
-    ).rejects.toThrow('User no-user not found');
+      processIAP(
+        mockPool as any,
+        mockStripe as any,
+        mockLedger as any,
+        mockTruthLog as any,
+        "no-user",
+        "c-1",
+      ),
+    ).rejects.toThrow("User no-user not found");
   });
 
-  it('should throw when user has no stripe customer id', async () => {
+  it("should throw when user has no stripe customer id", async () => {
     mockPool.query.mockResolvedValueOnce({
-      rows: [{ stripe_customer_id: null, account_id: 'acc-1' }],
+      rows: [{ stripe_customer_id: null, account_id: "acc-1" }],
     });
 
     await expect(
-      processIAP(mockPool as any, mockStripe as any, mockLedger as any, mockTruthLog as any, 'user-no-stripe', 'c-1'),
-    ).rejects.toThrow('User has no payment method on file');
+      processIAP(
+        mockPool as any,
+        mockStripe as any,
+        mockLedger as any,
+        mockTruthLog as any,
+        "user-no-stripe",
+        "c-1",
+      ),
+    ).rejects.toThrow("User has no payment method on file");
   });
 
-  it('should still succeed when user has no ledger account (no account_id)', async () => {
+  it("should still succeed when user has no ledger account (no account_id)", async () => {
     mockPool.query.mockResolvedValueOnce({
-      rows: [{ stripe_customer_id: 'cus_test', account_id: null }],
+      rows: [{ stripe_customer_id: "cus_test", account_id: null }],
     });
 
-    mockStripe.holdStake.mockResolvedValueOnce({ id: 'pi_no_acc' });
-    mockStripe.captureStake.mockResolvedValueOnce({ id: 'pi_no_acc', status: 'CAPTURED' });
+    mockStripe.holdStake.mockResolvedValueOnce({ id: "pi_no_acc" });
+    mockStripe.captureStake.mockResolvedValueOnce({
+      id: "pi_no_acc",
+      status: "CAPTURED",
+    });
     mockTruthLog.appendEvent.mockResolvedValueOnce(undefined);
 
     const result = await processIAP(
@@ -109,33 +138,43 @@ describe('processIAP', () => {
       mockStripe as any,
       mockLedger as any,
       mockTruthLog as any,
-      'user-no-acc',
-      'c-2',
+      "user-no-acc",
+      "c-2",
     );
 
-    expect(result.paymentIntentId).toBe('pi_no_acc');
+    expect(result.paymentIntentId).toBe("pi_no_acc");
     // Ledger should NOT have been called since account_id is null
     expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
   });
 
-  it('should NOT record revenue when the capture does not succeed (PM20)', async () => {
+  it("should NOT record revenue when the capture does not succeed (PM20)", async () => {
     mockPool.query.mockResolvedValueOnce({
-      rows: [{ stripe_customer_id: 'cus_test', account_id: 'acc-1' }],
+      rows: [{ stripe_customer_id: "cus_test", account_id: "acc-1" }],
     });
-    mockStripe.holdStake.mockResolvedValueOnce({ id: 'pi_uncaptured' });
+    mockStripe.holdStake.mockResolvedValueOnce({ id: "pi_uncaptured" });
     // Capture returns a non-succeeded status WITHOUT throwing.
-    mockStripe.captureStake.mockResolvedValueOnce({ id: 'pi_uncaptured', status: 'requires_capture' });
+    mockStripe.captureStake.mockResolvedValueOnce({
+      id: "pi_uncaptured",
+      status: "requires_capture",
+    });
 
     await expect(
-      processIAP(mockPool as any, mockStripe as any, mockLedger as any, mockTruthLog as any, 'user-1', 'c-3'),
-    ).rejects.toThrow('did not succeed');
+      processIAP(
+        mockPool as any,
+        mockStripe as any,
+        mockLedger as any,
+        mockTruthLog as any,
+        "user-1",
+        "c-3",
+      ),
+    ).rejects.toThrow("did not succeed");
 
     expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
     expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
   });
 });
 
-describe('isOnboardingBonusEnabled', () => {
+describe("isOnboardingBonusEnabled", () => {
   const original = process.env.STYX_ONBOARDING_BONUS_ENABLED;
 
   afterEach(() => {
@@ -146,19 +185,19 @@ describe('isOnboardingBonusEnabled', () => {
     }
   });
 
-  it('defaults OFF when unset (DR-005 beta cohort)', () => {
+  it("defaults OFF when unset (DR-005 beta cohort)", () => {
     delete process.env.STYX_ONBOARDING_BONUS_ENABLED;
 
     expect(isOnboardingBonusEnabled()).toBe(false);
   });
 
-  it('is reinstated only by an explicit true', () => {
-    process.env.STYX_ONBOARDING_BONUS_ENABLED = 'TRUE';
+  it("is reinstated only by an explicit true", () => {
+    process.env.STYX_ONBOARDING_BONUS_ENABLED = "TRUE";
     expect(isOnboardingBonusEnabled()).toBe(true);
 
     // Anything else stays off: a stray or truthy-looking value must not
     // silently reinstate a grant that moves money.
-    for (const value of ['false', '1', 'yes', '']) {
+    for (const value of ["false", "1", "yes", ""]) {
       process.env.STYX_ONBOARDING_BONUS_ENABLED = value;
       expect(isOnboardingBonusEnabled()).toBe(false);
     }

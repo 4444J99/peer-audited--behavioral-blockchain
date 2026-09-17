@@ -195,7 +195,8 @@ function resolveRedisByPurpose(
   return {
     host: requireOneEnv([hostEnv], `${hostEnv}`),
     port: parsePort(requireOneEnv([portEnv], `${portEnv}`), `${portEnv}`),
-    password: process.env[`${hostEnv.replace(/_HOST$/, "_PASSWORD")}`] || undefined, // allow-secret
+    password:
+      process.env[`${hostEnv.replace(/_HOST$/, "_PASSWORD")}`] || undefined, // allow-secret
   };
 }
 
@@ -204,15 +205,11 @@ export function resolveRedisConnectionConfig(): RedisConnectionConfig | null {
 }
 
 export function resolveBullmqRedisConfig(): RedisConnectionConfig | null {
-  return (
-    resolveRedisByPurpose("bullmq") ?? resolveRedisConnectionConfig()
-  );
+  return resolveRedisByPurpose("bullmq") ?? resolveRedisConnectionConfig();
 }
 
 export function resolveCacheRedisConfig(): RedisConnectionConfig | null {
-  return (
-    resolveRedisByPurpose("cache") ?? resolveRedisConnectionConfig()
-  );
+  return resolveRedisByPurpose("cache") ?? resolveRedisConnectionConfig();
 }
 
 /**

@@ -1,38 +1,44 @@
-import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
-jest.mock('next/link', () => {
-  return function MockLink({ children, href }: { children: React.ReactNode; href: string }) {
+jest.mock("next/link", () => {
+  return function MockLink({
+    children,
+    href,
+  }: {
+    children: React.ReactNode;
+    href: string;
+  }) {
     return <a href={href}>{children}</a>;
   };
 });
 
-import ComplianceArtifactsPage from './page';
+import ComplianceArtifactsPage from "./page";
 
-describe('ComplianceArtifactsPage', () => {
-  it('renders the page title', () => {
+describe("ComplianceArtifactsPage", () => {
+  it("renders the page title", () => {
     const html = renderToStaticMarkup(<ComplianceArtifactsPage />);
-    expect(html).toContain('Compliance Artifact Register');
+    expect(html).toContain("Compliance Artifact Register");
   });
 
-  it('embeds the live artifact table', () => {
+  it("embeds the live artifact table", () => {
     const html = renderToStaticMarkup(<ComplianceArtifactsPage />);
-    expect(html).toContain('skill_contest_whitepaper');
-    expect(html).toContain('SHA-256 content hash');
+    expect(html).toContain("skill_contest_whitepaper");
+    expect(html).toContain("SHA-256 content hash");
   });
 
-  it('states every condition that blocks a release', () => {
+  it("states every condition that blocks a release", () => {
     const html = renderToStaticMarkup(<ComplianceArtifactsPage />);
-    expect(html).toContain('No active version is on record');
-    expect(html).toContain('recorded expiration date has passed');
+    expect(html).toContain("No active version is on record");
+    expect(html).toContain("recorded expiration date has passed");
   });
 
-  it('renders the back link to home', () => {
+  it("renders the back link to home", () => {
     const html = renderToStaticMarkup(<ComplianceArtifactsPage />);
     expect(html).toContain('href="/"');
   });
 
-  it('cross-links the other legal pages', () => {
+  it("cross-links the other legal pages", () => {
     const html = renderToStaticMarkup(<ComplianceArtifactsPage />);
     expect(html).toContain('href="/legal/terms"');
     expect(html).toContain('href="/legal/privacy"');

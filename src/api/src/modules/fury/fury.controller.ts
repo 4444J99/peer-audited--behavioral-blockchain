@@ -1,31 +1,46 @@
-import { Controller, Get, Post, Body, UseGuards, Sse, MessageEvent, Res, Param, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import type { Response } from 'express';
-import { Observable, timer } from 'rxjs';
-import { concatMap, map } from 'rxjs/operators';
-import { Pool } from 'pg';
-import { AuthGuard } from '../../../guards/auth.guard';
-import { RoleGuard, Roles } from '../../common/guards/role.guard';
-import { issueSseTicket } from '../../../guards/sse-ticket.store';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { FuryWorker } from './fury.worker';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { R2StorageService } from '../../../services/storage/r2.service';
-import { SubmitVerdictDto } from './dto';
-import { calculateAccuracy } from '../../../../shared/libs/integrity';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Sse,
+  MessageEvent,
+  Res,
+  Param,
+  BadRequestException,
+} from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import type { Response } from "express";
+import { Observable, timer } from "rxjs";
+import { concatMap, map } from "rxjs/operators";
+import { Pool } from "pg";
+import { AuthGuard } from "../../../guards/auth.guard";
+import { RoleGuard, Roles } from "../../common/guards/role.guard";
+import { issueSseTicket } from "../../../guards/sse-ticket.store";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { FuryWorker } from "./fury.worker";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { R2StorageService } from "../../../services/storage/r2.service";
+import { SubmitVerdictDto } from "./dto";
+import { calculateAccuracy } from "../../../../shared/libs/integrity";
 
-import { CounterClaimService, FileCounterClaimDto, AdjudicateCounterClaimDto } from './counter-claim.service';
+import {
+  CounterClaimService,
+  FileCounterClaimDto,
+  AdjudicateCounterClaimDto,
+} from "./counter-claim.service";
 
-@ApiTags('Fury')
+@ApiTags("Fury")
 @ApiBearerAuth()
-@Controller('fury')
+@Controller("fury")
 @UseGuards(AuthGuard, RoleGuard)
 // Class-level default: Fury-only. Read-only oversight endpoints below override this
 // with @Roles('FURY','ADMIN') so admins/operators retain visibility (LC7) — the
 // previous class-only @Roles('FURY') 403'd ADMIN out of every endpoint, a regression.
 // Verdict casting and personal SSE-subscription endpoints stay FURY-only: an admin is
 // not an assigned auditor and must not vote or hold a fury stream credential.
-@Roles('FURY')
+@Roles("FURY")
 export class FuryController {
   constructor(
     private readonly pool: Pool,
@@ -35,9 +50,11 @@ export class FuryController {
     private readonly counterClaims: CounterClaimService,
   ) {}
 
-  @Get('stats')
-  @Roles('FURY', 'ADMIN') // read-only oversight (LC7)
-  @ApiOperation({ summary: 'Get audit statistics for the current Fury reviewer' })
+  @Get("stats")
+  @Roles("FURY", "ADMIN") // read-only oversight (LC7)
+  @ApiOperation({
+    summary: "Get audit statistics for the current Fury reviewer",
+  })
   async getStats(@CurrentUser() user: { id: string }) {
     // Audit statistics
     const auditStats = await this.pool.query(
@@ -111,9 +128,11 @@ export class FuryController {
     };
   }
 
-  @Get('queue')
-  @Roles('FURY', 'ADMIN') // read-only oversight (LC7)
-  @ApiOperation({ summary: 'Get pending audit assignments for the current Fury reviewer' })
+  @Get("queue")
+  @Roles("FURY", "ADMIN") // read-only oversight (LC7)
+  @ApiOperation({
+    summary: "Get pending audit assignments for the current Fury reviewer",
+  })
   async getAssignments(@CurrentUser() user: { id: string }) {
     const result = await this.pool.query(
       `SELECT fa.id AS assignment_id, fa.proof_id, fa.assigned_at, fa.subject_alias,
@@ -171,48 +190,65 @@ export class FuryController {
     return { assignments };
   }
 
-  @Sse('stream')
-  @Roles('FURY', 'ADMIN') // read-only oversight (LC7)
-  @ApiOperation({ summary: 'Stream pending audit assignments to the current Fury via SSE' })
-  streamAssignments(@CurrentUser() user: { id: string }): Observable<MessageEvent> {
+  @Sse("stream")
+  @Roles("FURY", "ADMIN") // read-only oversight (LC7)
+  @ApiOperation({
+    summary: "Stream pending audit assignments to the current Fury via SSE",
+  })
+  streamAssignments(
+    @CurrentUser() user: { id: string },
+  ): Observable<MessageEvent> {
     // Poll the DB every 5 seconds and push over SSE
     return timer(0, 5000).pipe(
       concatMap(() => this.getAssignments(user)),
-      map((data) => ({ data } as MessageEvent)),
+      map((data) => ({ data }) as MessageEvent),
     );
   }
 
-  @Post('stream-ticket')
-  @ApiOperation({ summary: 'Issue a short-lived ticket for Fury SSE subscription' })
+  @Post("stream-ticket")
+  @ApiOperation({
+    summary: "Issue a short-lived ticket for Fury SSE subscription",
+  })
   issueStreamTicket(@CurrentUser() user: { id: string }) {
-    return issueSseTicket(user.id, 'fury');
+    return issueSseTicket(user.id, "fury");
   }
 
-  @Post('stream-cookie')
-  @ApiOperation({ summary: 'Issue a short-lived HttpOnly cookie for Fury SSE subscription' })
+  @Post("stream-cookie")
+  @ApiOperation({
+    summary: "Issue a short-lived HttpOnly cookie for Fury SSE subscription",
+  })
   issueStreamCookie(
     @CurrentUser() user: { id: string },
     @Res({ passthrough: true }) res: Response,
   ) {
-    const issued = issueSseTicket(user.id, 'fury');
-    res.cookie('styx_fury_sse_ticket', issued.ticket, {
+    const issued = issueSseTicket(user.id, "fury");
+    res.cookie("styx_fury_sse_ticket", issued.ticket, {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/fury/stream',
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/fury/stream",
       maxAge: issued.expiresInSeconds * 1000,
     });
     return { expiresInSeconds: issued.expiresInSeconds };
   }
 
-  @Post('verdict')
-  @ApiOperation({ summary: 'Submit a PASS or FAIL verdict on an assigned proof' })
-  async submitVerdict(@CurrentUser() user: { id: string }, @Body() dto: SubmitVerdictDto) {
-    if (dto.verdict === 'FAIL' && !dto.rejectionCode) {
-      throw new BadRequestException('Rejection code is required when verdict is FAIL');
+  @Post("verdict")
+  @ApiOperation({
+    summary: "Submit a PASS or FAIL verdict on an assigned proof",
+  })
+  async submitVerdict(
+    @CurrentUser() user: { id: string },
+    @Body() dto: SubmitVerdictDto,
+  ) {
+    if (dto.verdict === "FAIL" && !dto.rejectionCode) {
+      throw new BadRequestException(
+        "Rejection code is required when verdict is FAIL",
+      );
     }
-    if (dto.verdict === 'PASS' && dto.rejectionCode) {
-      throw new BadRequestException('Rejection code is only valid when verdict is FAIL');
+    if (dto.verdict === "PASS" && dto.rejectionCode) {
+      throw new BadRequestException(
+        "Rejection code is only valid when verdict is FAIL",
+      );
     }
 
     // Record the verdict. Only a first vote is allowed: `verdict IS NULL` prevents a
@@ -227,11 +263,13 @@ export class FuryController {
     // No row updated → assignment doesn't exist, isn't owned by this Fury, or was
     // already voted on. Don't log a FURY_VERDICT event or re-run consensus.
     if (update.rowCount === 0) {
-      throw new BadRequestException('Verdict could not be recorded (invalid assignment or already voted)');
+      throw new BadRequestException(
+        "Verdict could not be recorded (invalid assignment or already voted)",
+      );
     }
 
     // Log to TruthLog
-    await this.truthLog.appendEvent('FURY_VERDICT', {
+    await this.truthLog.appendEvent("FURY_VERDICT", {
       assignmentId: dto.assignmentId,
       furyUserId: user.id,
       verdict: dto.verdict,
@@ -240,23 +278,28 @@ export class FuryController {
 
     await this.furyWorker.checkConsensus(update.rows[0].proof_id);
 
-    return { status: 'verdict_recorded' };
+    return { status: "verdict_recorded" };
   }
 
-  @Get('review/:assignmentId/mask-audit')
-  @Roles('FURY', 'ADMIN') // read-only oversight (LC7)
-  @ApiOperation({ summary: 'Get identity redaction provenance for a specific assignment' })
-  async getMaskAudit(@Param('assignmentId') assignmentId: string, @CurrentUser() user: { id: string }) {
+  @Get("review/:assignmentId/mask-audit")
+  @Roles("FURY", "ADMIN") // read-only oversight (LC7)
+  @ApiOperation({
+    summary: "Get identity redaction provenance for a specific assignment",
+  })
+  async getMaskAudit(
+    @Param("assignmentId") assignmentId: string,
+    @CurrentUser() user: { id: string },
+  ) {
     const assignment = await this.pool.query(
       `SELECT p.redaction_status, p.redaction_profile, p.media_uri, p.masked_media_uri, fa.subject_alias
        FROM fury_assignments fa
        JOIN proofs p ON fa.proof_id = p.id
        WHERE fa.id = \$1 AND fa.fury_user_id = \$2`,
-      [assignmentId, user.id]
+      [assignmentId, user.id],
     );
-    
+
     if (assignment.rows.length === 0) {
-      throw new Error('Assignment not found');
+      throw new Error("Assignment not found");
     }
 
     const row = assignment.rows[0];
@@ -265,16 +308,20 @@ export class FuryController {
       subjectAlias: row.subject_alias,
       redactionStatus: row.redaction_status,
       redactionProfile: row.redaction_profile,
-      originalMediaHash: row.media_uri ? 'redacted-for-fury-privacy' : null,
-      maskedMediaHash: row.masked_media_uri ? 'available-for-fury-review' : null,
+      originalMediaHash: row.media_uri ? "redacted-for-fury-privacy" : null,
+      maskedMediaHash: row.masked_media_uri
+        ? "available-for-fury-review"
+        : null,
     };
   }
 
   // ─── Counter-Claim & Auditor Accountability (Issue #81) ───
 
-  @Post('counter-claim')
-  @Roles('FURY', 'ADMIN')
-  @ApiOperation({ summary: 'File a counter-claim against a bad-faith Fury auditor' })
+  @Post("counter-claim")
+  @Roles("FURY", "ADMIN")
+  @ApiOperation({
+    summary: "File a counter-claim against a bad-faith Fury auditor",
+  })
   async fileCounterClaim(
     @CurrentUser() user: { id: string },
     @Body() dto: FileCounterClaimDto,
@@ -282,26 +329,30 @@ export class FuryController {
     return this.counterClaims.fileCounterClaim(user.id, dto);
   }
 
-  @Get('auditors/:auditorId/counter-claims')
-  @Roles('ADMIN')
-  @ApiOperation({ summary: 'Inspect an auditor counter-claim history and risk profile' })
-  async getAuditorHistory(@Param('auditorId') auditorId: string) {
+  @Get("auditors/:auditorId/counter-claims")
+  @Roles("ADMIN")
+  @ApiOperation({
+    summary: "Inspect an auditor counter-claim history and risk profile",
+  })
+  async getAuditorHistory(@Param("auditorId") auditorId: string) {
     return this.counterClaims.getAuditorCounterClaimHistory(auditorId);
   }
 
-  @Get('counter-claims/pending')
-  @Roles('ADMIN')
-  @ApiOperation({ summary: 'List all pending counter-claims awaiting judicial resolution' })
+  @Get("counter-claims/pending")
+  @Roles("ADMIN")
+  @ApiOperation({
+    summary: "List all pending counter-claims awaiting judicial resolution",
+  })
   async listPendingClaims() {
     return this.counterClaims.listPendingCounterClaims();
   }
 
-  @Post('counter-claims/:claimId/adjudicate')
-  @Roles('ADMIN')
-  @ApiOperation({ summary: 'Judicial decision on an auditor counter-claim' })
+  @Post("counter-claims/:claimId/adjudicate")
+  @Roles("ADMIN")
+  @ApiOperation({ summary: "Judicial decision on an auditor counter-claim" })
   async adjudicateClaim(
     @CurrentUser() user: { id: string },
-    @Param('claimId') claimId: string,
+    @Param("claimId") claimId: string,
     @Body() dto: AdjudicateCounterClaimDto,
   ) {
     return this.counterClaims.adjudicateCounterClaim(claimId, user.id, dto);

@@ -16,17 +16,17 @@ A structured UX audit template for evaluating Styx's user experience across all 
 
 This audit covers the following surfaces:
 
-| Surface | Platform | Status |
-|---------|----------|--------|
-| Onboarding flow | Web (Next.js 16) | Built |
-| Contract creation | Web + Mobile | Built |
-| Proof submission | Mobile (Expo) + Web | Built (camera placeholder on mobile) |
-| Fury audit workbench | Web | Built |
-| Wallet/escrow visibility | Web + Mobile | Built |
-| Dashboard | Web | Built |
-| Recovery contract UX | Web + Mobile | Built |
-| B2B practitioner dashboard | Web | Partial |
-| Desktop app | Tauri | Stub |
+| Surface                    | Platform            | Status                               |
+| -------------------------- | ------------------- | ------------------------------------ |
+| Onboarding flow            | Web (Next.js 16)    | Built                                |
+| Contract creation          | Web + Mobile        | Built                                |
+| Proof submission           | Mobile (Expo) + Web | Built (camera placeholder on mobile) |
+| Fury audit workbench       | Web                 | Built                                |
+| Wallet/escrow visibility   | Web + Mobile        | Built                                |
+| Dashboard                  | Web                 | Built                                |
+| Recovery contract UX       | Web + Mobile        | Built                                |
+| B2B practitioner dashboard | Web                 | Partial                              |
+| Desktop app                | Tauri               | Stub                                 |
 
 ## 2. Onboarding Flow
 
@@ -53,9 +53,9 @@ This audit covers the following surfaces:
 
 ### 2.3 Findings
 
-| Finding | Severity | Heuristic | Recommendation |
-|---------|----------|-----------|----------------|
-| _To be filled during audit_ | | | |
+| Finding                     | Severity | Heuristic | Recommendation |
+| --------------------------- | -------- | --------- | -------------- |
+| _To be filled during audit_ |          |           |                |
 
 ## 3. Contract Creation
 
@@ -84,9 +84,9 @@ This audit covers the following surfaces:
 
 ### 3.3 Findings
 
-| Finding | Severity | Heuristic | Recommendation |
-|---------|----------|-----------|----------------|
-| _To be filled during audit_ | | | |
+| Finding                     | Severity | Heuristic | Recommendation |
+| --------------------------- | -------- | --------- | -------------- |
+| _To be filled during audit_ |          |           |                |
 
 ## 4. Proof Submission
 
@@ -119,9 +119,9 @@ This audit covers the following surfaces:
 
 ### 4.4 Findings
 
-| Finding | Severity | Heuristic | Recommendation |
-|---------|----------|-----------|----------------|
-| _To be filled during audit_ | | | |
+| Finding                     | Severity | Heuristic | Recommendation |
+| --------------------------- | -------- | --------- | -------------- |
+| _To be filled during audit_ |          |           |                |
 
 ## 5. Fury Audit Workbench
 
@@ -148,9 +148,9 @@ This audit covers the following surfaces:
 
 ### 5.3 Findings
 
-| Finding | Severity | Heuristic | Recommendation |
-|---------|----------|-----------|----------------|
-| _To be filled during audit_ | | | |
+| Finding                     | Severity | Heuristic | Recommendation |
+| --------------------------- | -------- | --------- | -------------- |
+| _To be filled during audit_ |          |           |                |
 
 ## 6. Wallet and Escrow Visibility
 
@@ -166,9 +166,9 @@ This audit covers the following surfaces:
 
 ### 6.2 Findings
 
-| Finding | Severity | Heuristic | Recommendation |
-|---------|----------|-----------|----------------|
-| _To be filled during audit_ | | | |
+| Finding                     | Severity | Heuristic | Recommendation |
+| --------------------------- | -------- | --------- | -------------- |
+| _To be filled during audit_ |          |           |                |
 
 ## 7. Dashboard
 
@@ -183,9 +183,9 @@ This audit covers the following surfaces:
 
 ### 7.2 Findings
 
-| Finding | Severity | Heuristic | Recommendation |
-|---------|----------|-----------|----------------|
-| _To be filled during audit_ | | | |
+| Finding                     | Severity | Heuristic | Recommendation |
+| --------------------------- | -------- | --------- | -------------- |
+| _To be filled during audit_ |          |           |                |
 
 ## 8. Recovery Contract UX
 
@@ -202,24 +202,24 @@ Recovery contracts deal with emotionally sensitive situations (breakups, addicti
 
 ### 8.2 Findings
 
-| Finding | Severity | Heuristic | Recommendation |
-|---------|----------|-----------|----------------|
-| _To be filled during audit_ | | | |
+| Finding                     | Severity | Heuristic | Recommendation |
+| --------------------------- | -------- | --------- | -------------- |
+| _To be filled during audit_ |          |           |                |
 
 ## 9. Heuristic Evaluation (Nielsen's 10)
 
-| # | Heuristic | Score (1-5) | Notes |
-|---|-----------|-------------|-------|
-| 1 | **Visibility of system status** | _/5 | Are contract states, proof status, and escrow balance always visible? |
-| 2 | **Match between system and real world** | _/5 | Does the linguistic cloaker vocabulary feel natural? (Oath, Vault, Fury) |
-| 3 | **User control and freedom** | _/5 | Can users undo or cancel actions? Is contract cancellation (with forfeit) clear? |
-| 4 | **Consistency and standards** | _/5 | Is vocabulary consistent across web, mobile, and notifications? |
-| 5 | **Error prevention** | _/5 | Does Aegis catch dangerous biological oaths before payment? |
-| 6 | **Recognition rather than recall** | _/5 | Are verification criteria visible during proof submission (not just at creation)? |
-| 7 | **Flexibility and efficiency** | _/5 | Can power users (Furies, practitioners) batch actions? |
-| 8 | **Aesthetic and minimalist design** | _/5 | Is financial information presented without visual clutter? |
-| 9 | **Help users recognize/recover from errors** | _/5 | Are Stripe payment failures explained with recovery steps? |
-| 10 | **Help and documentation** | _/5 | Is the FAQ accessible? Are tooltips present for Styx-specific terms? |
+| #   | Heuristic                                    | Score (1-5) | Notes                                                                             |
+| --- | -------------------------------------------- | ----------- | --------------------------------------------------------------------------------- |
+| 1   | **Visibility of system status**              | _/5         | Are contract states, proof status, and escrow balance always visible?             |
+| 2   | **Match between system and real world**      | _/5         | Does the linguistic cloaker vocabulary feel natural? (Oath, Vault, Fury)          |
+| 3   | **User control and freedom**                 | _/5         | Can users undo or cancel actions? Is contract cancellation (with forfeit) clear?  |
+| 4   | **Consistency and standards**                | _/5         | Is vocabulary consistent across web, mobile, and notifications?                   |
+| 5   | **Error prevention**                         | _/5         | Does Aegis catch dangerous biological oaths before payment?                       |
+| 6   | **Recognition rather than recall**           | _/5         | Are verification criteria visible during proof submission (not just at creation)? |
+| 7   | **Flexibility and efficiency**               | _/5         | Can power users (Furies, practitioners) batch actions?                            |
+| 8   | **Aesthetic and minimalist design**          | _/5         | Is financial information presented without visual clutter?                        |
+| 9   | **Help users recognize/recover from errors** | _/5         | Are Stripe payment failures explained with recovery steps?                        |
+| 10  | **Help and documentation**                   | _/5         | Is the FAQ accessible? Are tooltips present for Styx-specific terms?              |
 
 ## 10. Accessibility Checklist (WCAG 2.1 AA)
 
@@ -258,31 +258,31 @@ Recovery contracts deal with emotionally sensitive situations (breakups, addicti
 
 The linguistic cloaker maps internal terminology to user-facing vocabulary to avoid app store rejection for gambling-adjacent language.
 
-| Internal Term | User-Facing Term | Audit Status |
-|---------------|-----------------|-------------|
-| Stake | Vault deposit | [ ] Verified consistent |
-| Bet/wager | Oath/commitment | [ ] Verified consistent |
-| Gamble | Challenge | [ ] Verified consistent |
-| Win/lose | Complete/forfeit | [ ] Verified consistent |
-| Payout | Return | [ ] Verified consistent |
-| House edge | Platform fee | [ ] Verified consistent |
-| Bookie | Fury (auditor) | [ ] Verified consistent |
+| Internal Term | User-Facing Term | Audit Status            |
+| ------------- | ---------------- | ----------------------- |
+| Stake         | Vault deposit    | [ ] Verified consistent |
+| Bet/wager     | Oath/commitment  | [ ] Verified consistent |
+| Gamble        | Challenge        | [ ] Verified consistent |
+| Win/lose      | Complete/forfeit | [ ] Verified consistent |
+| Payout        | Return           | [ ] Verified consistent |
+| House edge    | Platform fee     | [ ] Verified consistent |
+| Bookie        | Fury (auditor)   | [ ] Verified consistent |
 
 **Audit task:** Search all user-facing strings (UI text, notifications, emails, error messages) for uncloaked terminology. Any instance of "stake", "bet", "wager", "gamble", "win", "lose", "payout" in user-facing context is a blocking finding.
 
 ## 12. Audit Summary
 
-| Section | Status | Critical Findings | Recommendations |
-|---------|--------|-------------------|-----------------|
-| Onboarding | _Pending_ | | |
-| Contract creation | _Pending_ | | |
-| Proof submission | _Pending_ | | |
-| Fury workbench | _Pending_ | | |
-| Wallet/escrow | _Pending_ | | |
-| Dashboard | _Pending_ | | |
-| Recovery UX | _Pending_ | | |
-| Heuristic eval | _Pending_ | | |
-| Accessibility | _Pending_ | | |
-| Linguistic cloaker | _Pending_ | | |
+| Section            | Status    | Critical Findings | Recommendations |
+| ------------------ | --------- | ----------------- | --------------- |
+| Onboarding         | _Pending_ |                   |                 |
+| Contract creation  | _Pending_ |                   |                 |
+| Proof submission   | _Pending_ |                   |                 |
+| Fury workbench     | _Pending_ |                   |                 |
+| Wallet/escrow      | _Pending_ |                   |                 |
+| Dashboard          | _Pending_ |                   |                 |
+| Recovery UX        | _Pending_ |                   |                 |
+| Heuristic eval     | _Pending_ |                   |                 |
+| Accessibility      | _Pending_ |                   |                 |
+| Linguistic cloaker | _Pending_ |                   |                 |
 
 **Overall UX readiness for beta:** _Pending audit completion_

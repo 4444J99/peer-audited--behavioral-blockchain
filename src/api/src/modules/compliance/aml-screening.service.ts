@@ -1,9 +1,9 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, Inject, Logger } from "@nestjs/common";
+import { Pool } from "pg";
 
 export interface ScreeningResult {
   userId: string;
-  riskLevel: 'CLEAR' | 'FLAGGED' | 'BLOCKED';
+  riskLevel: "CLEAR" | "FLAGGED" | "BLOCKED";
   matches: WatchlistMatch[];
   screenedAt: Date;
   notes?: string;
@@ -23,13 +23,17 @@ export interface SARReport {
   suspicionType: string;
   description: string;
   filedAt: Date;
-  status: 'DRAFT' | 'FILED';
+  status: "DRAFT" | "FILED";
 }
 
 export interface TransactionPattern {
   userId: string;
-  pattern: 'STRUCTURING' | 'RAPID_MOVEMENT' | 'UNUSUAL_AMOUNT' | 'HIGH_RISK_JURISDICTION';
-  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  pattern:
+    | "STRUCTURING"
+    | "RAPID_MOVEMENT"
+    | "UNUSUAL_AMOUNT"
+    | "HIGH_RISK_JURISDICTION";
+  severity: "LOW" | "MEDIUM" | "HIGH";
   details: string;
 }
 
@@ -43,19 +47,17 @@ const RAPID_MOVEMENT_WINDOW_HOURS = 48;
 export class AmlScreeningService {
   private readonly logger = new Logger(AmlScreeningService.name);
 
-  constructor(
-    @Inject('DATABASE_POOL') private readonly pool: Pool,
-  ) {}
+  constructor(@Inject("DATABASE_POOL") private readonly pool: Pool) {}
 
   async screenUser(userId: string): Promise<ScreeningResult> {
     const blocked = await this.isBlocked(userId);
     if (blocked) {
       const result: ScreeningResult = {
         userId,
-        riskLevel: 'BLOCKED',
+        riskLevel: "BLOCKED",
         matches: [],
         screenedAt: new Date(),
-        notes: 'User is on internal blocklist',
+        notes: "User is on internal blocklist",
       };
       await this.recordScreening(result);
       return result;
@@ -84,27 +86,27 @@ export class AmlScreeningService {
 
     if (structuring) {
       matches.push({
-        listType: 'PATTERN',
+        listType: "PATTERN",
         matchedName: structuring.pattern,
         confidence: 0.85,
-        source: 'INTERNAL_RULES',
+        source: "INTERNAL_RULES",
       });
     }
 
     if (rapidMovement) {
       matches.push({
-        listType: 'PATTERN',
+        listType: "PATTERN",
         matchedName: rapidMovement.pattern,
-        confidence: 0.80,
-        source: 'INTERNAL_RULES',
+        confidence: 0.8,
+        source: "INTERNAL_RULES",
       });
     }
 
-    let riskLevel: ScreeningResult['riskLevel'] = 'CLEAR';
+    let riskLevel: ScreeningResult["riskLevel"] = "CLEAR";
     if (matches.some((m) => m.confidence >= 0.9)) {
-      riskLevel = 'FLAGGED';
+      riskLevel = "FLAGGED";
     } else if (matches.length >= 2) {
-      riskLevel = 'FLAGGED';
+      riskLevel = "FLAGGED";
     }
 
     const result: ScreeningResult = {
@@ -149,8 +151,8 @@ export class AmlScreeningService {
 
     return {
       userId,
-      pattern: 'STRUCTURING',
-      severity: 'HIGH',
+      pattern: "STRUCTURING",
+      severity: "HIGH",
       details:
         `${result.rows.length} transactions totaling $${(totalCents / 100).toFixed(2)} ` +
         `within ${STRUCTURING_WINDOW_HOURS}h, each below $${(STRUCTURING_INDIVIDUAL_THRESHOLD_CENTS / 100).toFixed(2)}`,
@@ -203,8 +205,8 @@ export class AmlScreeningService {
 
     return {
       userId,
-      pattern: 'RAPID_MOVEMENT',
-      severity: maxAmount >= 1000 ? 'HIGH' : 'MEDIUM',
+      pattern: "RAPID_MOVEMENT",
+      severity: maxAmount >= 1000 ? "HIGH" : "MEDIUM",
       details:
         `${rapidCancels.length} large stake(s) created and refunded within ${windowHours}h, ` +
         `max amount $${maxAmount.toFixed(2)}`,
@@ -223,7 +225,15 @@ export class AmlScreeningService {
     await this.pool.query(
       `INSERT INTO sar_reports (id, user_id, transaction_ids, suspicion_type, description, filed_at, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [id, userId, transactionIds, suspicionType, description, filedAt, 'DRAFT'],
+      [
+        id,
+        userId,
+        transactionIds,
+        suspicionType,
+        description,
+        filedAt,
+        "DRAFT",
+      ],
     );
 
     return {
@@ -233,7 +243,7 @@ export class AmlScreeningService {
       suspicionType,
       description,
       filedAt,
-      status: 'DRAFT',
+      status: "DRAFT",
     };
   }
 
@@ -298,7 +308,7 @@ export class AmlScreeningService {
         ],
       );
     } catch (err) {
-      this.logger.error('Failed to record AML screening result', err);
+      this.logger.error("Failed to record AML screening result", err);
     }
   }
 }

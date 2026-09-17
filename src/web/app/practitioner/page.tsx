@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
+import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Activity,
   AlertTriangle,
@@ -12,11 +12,11 @@ import {
   Stethoscope,
   TrendingDown,
   TrendingUp,
-} from 'lucide-react';
+} from "lucide-react";
 
-type RiskLevel = 'GREEN' | 'YELLOW' | 'RED';
-type Trend = 'IMPROVING' | 'STABLE' | 'DECLINING';
-type AlertSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
+type RiskLevel = "GREEN" | "YELLOW" | "RED";
+type Trend = "IMPROVING" | "STABLE" | "DECLINING";
+type AlertSeverity = "LOW" | "MEDIUM" | "HIGH";
 
 interface RiskFactor {
   type: string;
@@ -53,12 +53,12 @@ interface PractitionerClient {
   nextCheckIn: string | null;
 }
 
-const UNAUTHENTICATED = 'UNAUTHENTICATED';
+const UNAUTHENTICATED = "UNAUTHENTICATED";
 
 async function practitionerFetch<T>(path: string): Promise<T> {
   const res = await fetch(`/api${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
   });
   if (res.status === 401) {
     throw new Error(UNAUTHENTICATED);
@@ -67,7 +67,8 @@ async function practitionerFetch<T>(path: string): Promise<T> {
     let message = `API ${res.status}`;
     try {
       const payload = await res.json();
-      const detail = payload?.message || payload?.error?.message || payload?.error;
+      const detail =
+        payload?.message || payload?.error?.message || payload?.error;
       if (detail) message = `API ${res.status}: ${String(detail)}`;
     } catch {
       // non-JSON error body — keep the generic message
@@ -87,32 +88,33 @@ function unwrapList<T>(payload: unknown, key: string): T[] {
 
 function riskBadgeClasses(level: RiskLevel): string {
   switch (level) {
-    case 'RED':
-      return 'border-red-700 bg-red-950/40 text-red-400';
-    case 'YELLOW':
-      return 'border-yellow-700 bg-yellow-950/40 text-yellow-400';
+    case "RED":
+      return "border-red-700 bg-red-950/40 text-red-400";
+    case "YELLOW":
+      return "border-yellow-700 bg-yellow-950/40 text-yellow-400";
     default:
-      return 'border-green-700 bg-green-950/40 text-green-400';
+      return "border-green-700 bg-green-950/40 text-green-400";
   }
 }
 
 function severityClasses(severity: AlertSeverity): string {
   switch (severity) {
-    case 'HIGH':
-      return 'border-red-700 bg-red-950/40 text-red-400';
-    case 'MEDIUM':
-      return 'border-yellow-700 bg-yellow-950/40 text-yellow-400';
+    case "HIGH":
+      return "border-red-700 bg-red-950/40 text-red-400";
+    case "MEDIUM":
+      return "border-yellow-700 bg-yellow-950/40 text-yellow-400";
     default:
-      return 'border-neutral-700 bg-neutral-900 text-neutral-400';
+      return "border-neutral-700 bg-neutral-900 text-neutral-400";
   }
 }
 
-function humanizeToken(token: string): string { // allow-secret
+function humanizeToken(token: string): string {
+  // allow-secret
   return token
     .toLowerCase()
-    .split('_')
+    .split("_")
     .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
-    .join(' ');
+    .join(" ");
 }
 
 function clientLabel(client: PractitionerClient): string {
@@ -121,14 +123,14 @@ function clientLabel(client: PractitionerClient): string {
 }
 
 function TrendIndicator({ trend }: { trend: Trend }) {
-  if (trend === 'IMPROVING') {
+  if (trend === "IMPROVING") {
     return (
       <span className="inline-flex items-center gap-1 text-green-400 text-xs font-bold">
         <TrendingDown size={12} /> Improving
       </span>
     );
   }
-  if (trend === 'DECLINING') {
+  if (trend === "DECLINING") {
     return (
       <span className="inline-flex items-center gap-1 text-red-400 text-xs font-bold">
         <TrendingUp size={12} /> Declining
@@ -153,8 +155,13 @@ export default function PractitionerPage() {
     setLoading(true);
     setError(null);
     try {
-      const dashboardPayload = await practitionerFetch<unknown>('/practitioner/dashboard');
-      const dashboard = unwrapList<PractitionerClient>(dashboardPayload, 'clients');
+      const dashboardPayload = await practitionerFetch<unknown>(
+        "/practitioner/dashboard",
+      );
+      const dashboard = unwrapList<PractitionerClient>(
+        dashboardPayload,
+        "clients",
+      );
       setClients(dashboard);
       // The dashboard embeds each client's recent alerts — flatten for the feed.
       setAlerts(
@@ -167,7 +174,11 @@ export default function PractitionerPage() {
       if (err instanceof Error && err.message === UNAUTHENTICATED) {
         setAuthRequired(true);
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to load practitioner data');
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load practitioner data",
+        );
       }
     } finally {
       setLoading(false);
@@ -187,8 +198,8 @@ export default function PractitionerPage() {
             Practitioner sign-in required
           </h1>
           <p className="text-sm text-neutral-400 leading-6">
-            The practitioner console is restricted to verified clinical accounts with active
-            client assignments.
+            The practitioner console is restricted to verified clinical accounts
+            with active client assignments.
           </p>
           <Link
             href="/login"
@@ -205,20 +216,29 @@ export default function PractitionerPage() {
     return (
       <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
         <Loader2 className="animate-spin mr-3" size={24} />
-        <span className="text-neutral-400 font-bold">Loading Practitioner Console...</span>
+        <span className="text-neutral-400 font-bold">
+          Loading Practitioner Console...
+        </span>
       </div>
     );
   }
 
-  const redCount = clients.filter((c) => c.riskProfile?.riskLevel === 'RED').length;
-  const yellowCount = clients.filter((c) => c.riskProfile?.riskLevel === 'YELLOW').length;
-  const greenCount = clients.filter((c) => c.riskProfile?.riskLevel === 'GREEN').length;
-  const highAlerts = alerts.filter((a) => a.severity === 'HIGH').length;
+  const redCount = clients.filter(
+    (c) => c.riskProfile?.riskLevel === "RED",
+  ).length;
+  const yellowCount = clients.filter(
+    (c) => c.riskProfile?.riskLevel === "YELLOW",
+  ).length;
+  const greenCount = clients.filter(
+    (c) => c.riskProfile?.riskLevel === "GREEN",
+  ).length;
+  const highAlerts = alerts.filter((a) => a.severity === "HIGH").length;
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white p-6 md:p-12 font-sans">
       <div className="mx-auto max-w-4xl px-4 py-3 mb-6 rounded-xl border border-amber-700/40 bg-amber-950/40 text-amber-200 text-xs font-bold uppercase tracking-wider text-center">
-        SYNTHETIC DEMO — This practitioner console shows seeded client data. In production, practitioners see only assigned clients with consent.
+        SYNTHETIC DEMO — This practitioner console shows seeded client data. In
+        production, practitioners see only assigned clients with consent.
       </div>
       <header className="mb-10 border-b border-neutral-800 pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -247,7 +267,9 @@ export default function PractitionerPage() {
       {/* Caseload summary */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         <div className="bg-black border border-neutral-800 p-5 rounded-lg">
-          <h3 className="text-neutral-500 text-xs uppercase mb-2">Assigned Clients</h3>
+          <h3 className="text-neutral-500 text-xs uppercase mb-2">
+            Assigned Clients
+          </h3>
           <p className="text-3xl font-bold text-white">{clients.length}</p>
         </div>
         <div className="bg-black border border-neutral-800 p-5 rounded-lg">
@@ -255,11 +277,15 @@ export default function PractitionerPage() {
           <p className="text-3xl font-bold text-red-500">{redCount}</p>
         </div>
         <div className="bg-black border border-neutral-800 p-5 rounded-lg">
-          <h3 className="text-neutral-500 text-xs uppercase mb-2">Yellow Risk</h3>
+          <h3 className="text-neutral-500 text-xs uppercase mb-2">
+            Yellow Risk
+          </h3>
           <p className="text-3xl font-bold text-yellow-500">{yellowCount}</p>
         </div>
         <div className="bg-black border border-neutral-800 p-5 rounded-lg">
-          <h3 className="text-neutral-500 text-xs uppercase mb-2">High-Severity Alerts</h3>
+          <h3 className="text-neutral-500 text-xs uppercase mb-2">
+            High-Severity Alerts
+          </h3>
           <p className="text-3xl font-bold text-orange-500">{highAlerts}</p>
         </div>
       </section>
@@ -275,15 +301,16 @@ export default function PractitionerPage() {
           </h2>
           {clients.length === 0 ? (
             <div className="border border-neutral-800 rounded-2xl bg-neutral-900 p-8 text-center text-neutral-500 text-sm">
-              No clients assigned. Clients appear here once an active assignment links them to
-              your practitioner account.
+              No clients assigned. Clients appear here once an active assignment
+              links them to your practitioner account.
             </div>
           ) : (
             clients.map((client) => {
               const topFactors = [...(client.riskProfile?.factors ?? [])]
                 .sort(
                   (a, b) =>
-                    Math.min(1, b.value) * b.weight - Math.min(1, a.value) * a.weight,
+                    Math.min(1, b.value) * b.weight -
+                    Math.min(1, a.value) * a.weight,
                 )
                 .slice(0, 3);
               return (
@@ -293,37 +320,49 @@ export default function PractitionerPage() {
                 >
                   <div className="flex items-start justify-between gap-4 mb-4">
                     <div>
-                      <h3 className="font-black text-lg">{clientLabel(client)}</h3>
-                      <TrendIndicator trend={client.riskProfile?.trend ?? 'STABLE'} />
+                      <h3 className="font-black text-lg">
+                        {clientLabel(client)}
+                      </h3>
+                      <TrendIndicator
+                        trend={client.riskProfile?.trend ?? "STABLE"}
+                      />
                     </div>
                     <div className="text-right">
                       <span
-                        className={`inline-block px-3 py-1 rounded-full border text-xs font-bold tracking-wide ${riskBadgeClasses(client.riskProfile?.riskLevel ?? 'GREEN')}`}
+                        className={`inline-block px-3 py-1 rounded-full border text-xs font-bold tracking-wide ${riskBadgeClasses(client.riskProfile?.riskLevel ?? "GREEN")}`}
                       >
-                        {client.riskProfile?.riskLevel ?? 'GREEN'}
+                        {client.riskProfile?.riskLevel ?? "GREEN"}
                       </span>
                       <p className="text-2xl font-bold mt-1">
                         {client.riskProfile?.riskScore ?? 0}
-                        <span className="text-neutral-600 text-sm font-normal">/100</span>
+                        <span className="text-neutral-600 text-sm font-normal">
+                          /100
+                        </span>
                       </p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-3 mb-4 text-center">
                     <div className="bg-black border border-neutral-800 rounded-lg p-3">
-                      <p className="text-neutral-500 text-[10px] uppercase">Adherence</p>
+                      <p className="text-neutral-500 text-[10px] uppercase">
+                        Adherence
+                      </p>
                       <p className="font-bold">{client.adherenceRate}%</p>
                     </div>
                     <div className="bg-black border border-neutral-800 rounded-lg p-3">
-                      <p className="text-neutral-500 text-[10px] uppercase">Streak</p>
+                      <p className="text-neutral-500 text-[10px] uppercase">
+                        Streak
+                      </p>
                       <p className="font-bold">{client.streakDays}d</p>
                     </div>
                     <div className="bg-black border border-neutral-800 rounded-lg p-3">
-                      <p className="text-neutral-500 text-[10px] uppercase">Next Check-in</p>
+                      <p className="text-neutral-500 text-[10px] uppercase">
+                        Next Check-in
+                      </p>
                       <p className="font-bold">
                         {client.nextCheckIn
                           ? new Date(client.nextCheckIn).toLocaleDateString()
-                          : '—'}
+                          : "—"}
                       </p>
                     </div>
                   </div>
@@ -347,7 +386,7 @@ export default function PractitionerPage() {
                   {(client.recentAlerts?.length ?? 0) > 0 ? (
                     <p className="mt-3 text-xs text-orange-400 font-semibold">
                       {client.recentAlerts.length} recent journal alert
-                      {client.recentAlerts.length === 1 ? '' : 's'}
+                      {client.recentAlerts.length === 1 ? "" : "s"}
                     </p>
                   ) : null}
                 </article>
@@ -363,8 +402,8 @@ export default function PractitionerPage() {
           </h2>
           {alerts.length === 0 ? (
             <div className="border border-neutral-800 rounded-2xl bg-neutral-900 p-8 text-center text-neutral-500 text-sm">
-              No open alerts. Journal language analysis posts rationalization, distress, and
-              crisis signals here.
+              No open alerts. Journal language analysis posts rationalization,
+              distress, and crisis signals here.
             </div>
           ) : (
             alerts.map((alert) => (
@@ -385,7 +424,9 @@ export default function PractitionerPage() {
                 <p className="text-sm font-bold text-neutral-300">
                   {humanizeToken(alert.alertType)}
                 </p>
-                <p className="text-xs text-neutral-500 mt-1">&ldquo;{alert.excerpt}&rdquo;</p>
+                <p className="text-xs text-neutral-500 mt-1">
+                  &ldquo;{alert.excerpt}&rdquo;
+                </p>
               </article>
             ))
           )}
@@ -393,8 +434,8 @@ export default function PractitionerPage() {
       </main>
 
       <p className="mt-12 text-xs text-neutral-700 uppercase tracking-widest text-center">
-        Client identities are aliased. Raw journal text never leaves the analysis pipeline —
-        only matched markers surface here.
+        Client identities are aliased. Raw journal text never leaves the
+        analysis pipeline — only matched markers surface here.
       </p>
     </div>
   );

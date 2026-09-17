@@ -1,5 +1,5 @@
-import * as Crypto from 'expo-crypto';
-import { Platform } from 'react-native';
+import * as Crypto from "expo-crypto";
+import { Platform } from "react-native";
 
 /**
  * ZKPrivacyEngine: Local "Digital Exhaust" Processor
@@ -11,13 +11,13 @@ import { Platform } from 'react-native';
 export interface LocalTelephonyLog {
   identifier: string;
   timestamp: Date;
-  method: 'CALL' | 'TEXT' | 'APP_USAGE';
+  method: "CALL" | "TEXT" | "APP_USAGE";
 }
 
 export interface ExhaustLogEntry {
   counterparty: string;
   timestamp: string;
-  channel: 'SMS' | 'CALL' | 'APP' | string;
+  channel: "SMS" | "CALL" | "APP" | string;
 }
 
 type AnyLogEntry = LocalTelephonyLog | ExhaustLogEntry;
@@ -41,14 +41,16 @@ export interface ZKBreachProof {
   proofHash: string;
   timestamp: string;
   maskedIdentifier: string;
-  method: 'CALL' | 'TEXT' | 'APP_USAGE';
+  method: "CALL" | "TEXT" | "APP_USAGE";
   deviceId: string;
   deviceSignature: string;
   attestation: string;
 }
 
 function normalizeIdentifier(raw: string): string {
-  const compact = String(raw || '').replace(/[^\dA-Za-z]/g, '').toLowerCase();
+  const compact = String(raw || "")
+    .replace(/[^\dA-Za-z]/g, "")
+    .toLowerCase();
   if (/^\d+$/.test(compact)) {
     // Phone numbers may include country code. Match by local 10-digit tail.
     return compact.length > 10 ? compact.slice(-10) : compact;
@@ -56,11 +58,11 @@ function normalizeIdentifier(raw: string): string {
   return compact;
 }
 
-function normalizeMethod(value: string): 'CALL' | 'TEXT' | 'APP_USAGE' {
-  const v = String(value || '').toUpperCase();
-  if (v === 'CALL') return 'CALL';
-  if (v === 'TEXT' || v === 'SMS') return 'TEXT';
-  return 'APP_USAGE';
+function normalizeMethod(value: string): "CALL" | "TEXT" | "APP_USAGE" {
+  const v = String(value || "").toUpperCase();
+  if (v === "CALL") return "CALL";
+  if (v === "TEXT" || v === "SMS") return "TEXT";
+  return "APP_USAGE";
 }
 
 function toIsoTimestamp(value: Date | string): string {
@@ -71,10 +73,13 @@ function toIsoTimestamp(value: Date | string): string {
 }
 
 function toLocalTelephonyLog(entry: AnyLogEntry): LocalTelephonyLog {
-  if ('identifier' in entry && 'method' in entry) {
+  if ("identifier" in entry && "method" in entry) {
     return {
       identifier: entry.identifier,
-      timestamp: entry.timestamp instanceof Date ? entry.timestamp : new Date(entry.timestamp),
+      timestamp:
+        entry.timestamp instanceof Date
+          ? entry.timestamp
+          : new Date(entry.timestamp),
       method: entry.method,
     };
   }
@@ -89,11 +94,11 @@ function toLocalTelephonyLog(entry: AnyLogEntry): LocalTelephonyLog {
 export class NoLogProviderError extends Error {
   constructor() {
     super(
-      'No telephony log provider is installed. A no-contact scan cannot be ' +
-        'performed on this device, and MUST NOT be reported as compliant. ' +
-        'Install one with ZKPrivacyEngine.setLogProvider() before scanning.',
+      "No telephony log provider is installed. A no-contact scan cannot be " +
+        "performed on this device, and MUST NOT be reported as compliant. " +
+        "Install one with ZKPrivacyEngine.setLogProvider() before scanning.",
     );
-    this.name = 'NoLogProviderError';
+    this.name = "NoLogProviderError";
   }
 }
 
@@ -134,7 +139,7 @@ export class ZKPrivacyEngine {
     timeWindowEnd: Date,
   ): Promise<ExhaustProof> {
     if (timeWindowStart.getTime() >= timeWindowEnd.getTime()) {
-      throw new Error('timeWindowStart must be earlier than timeWindowEnd');
+      throw new Error("timeWindowStart must be earlier than timeWindowEnd");
     }
 
     const localLogs = await this.queryNativeTelephonyLogs(
@@ -159,15 +164,15 @@ export class ZKPrivacyEngine {
       : timeWindowEnd.toISOString();
     const breachDetected = matchingLogs.length > 0;
 
-    const deviceId = `${Platform.OS}-${String(Platform.Version ?? 'unknown')}`;
+    const deviceId = `${Platform.OS}-${String(Platform.Version ?? "unknown")}`;
     const proofPayload = [
       contractId,
       normalizedTarget,
       timeWindowStart.toISOString(),
       timeWindowEnd.toISOString(),
       latestTimestamp,
-      breachDetected ? 'breach' : 'clean',
-    ].join(':');
+      breachDetected ? "breach" : "clean",
+    ].join(":");
 
     const proofHash = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
@@ -212,7 +217,7 @@ export class ZKPrivacyEngine {
     if (matches.length === 0) return null;
 
     const latest = matches[0];
-    const deviceId = `${Platform.OS}-${String(Platform.Version ?? 'unknown')}`;
+    const deviceId = `${Platform.OS}-${String(Platform.Version ?? "unknown")}`;
     const proofPayload = `${normalizedTarget}:${latest.timestamp.toISOString()}:${deviceId}`;
     const proofHash = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
@@ -235,7 +240,7 @@ export class ZKPrivacyEngine {
   }
 
   private static maskIdentifier(id: string): string {
-    if (id.length <= 4) return '****';
+    if (id.length <= 4) return "****";
     return `${id.substring(0, 2)}...${id.substring(id.length - 2)}`;
   }
 

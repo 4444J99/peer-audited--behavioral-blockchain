@@ -1,18 +1,25 @@
-'use client';
+"use client";
 
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Flame, ArrowLeft, Info, Loader2, ShieldCheck, TriangleAlert } from 'lucide-react';
-import Link from 'next/link';
-import { api } from '../../../services/api-client';
-import { useAuth } from '../../../contexts/AuthContext';
-import { getAllowedTiers, getDisplayTier, getTierMaxStake } from '../../../../shared/libs/integrity';
-import { getRealmBySlug } from '../../../../shared/libs/realm-registry';
+import React, { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Flame,
+  ArrowLeft,
+  Info,
+  Loader2,
+  ShieldCheck,
+  TriangleAlert,
+} from "lucide-react";
+import Link from "next/link";
+import { api } from "../../../services/api-client";
+import { useAuth } from "../../../contexts/AuthContext";
+import { getAllowedTiers, getDisplayTier, getTierMaxStake } from "@styx/types";
+import { getRealmBySlug } from "@styx/types";
 import {
   deriveStakeGuidance,
   findMostRecentActiveContract,
   type DownscalingSignal,
-} from '../../../lib/stake-guidance';
+} from "../../../lib/stake-guidance";
 
 const OATH_CATEGORIES = [
   // { value: 'BIOLOGICAL_WEIGHT', label: 'Weight Management', stream: 'Biological' },
@@ -38,7 +45,11 @@ const OATH_CATEGORIES = [
   // { value: 'SOCIAL_COMMUNITY', label: 'Civic Engagement', stream: 'Character' },
   // { value: 'SOCIAL_CHARITY', label: 'Philanthropic Velocity', stream: 'Character' },
   // { value: 'SOCIAL_CONNECTION', label: 'Family Presence', stream: 'Character' },
-  { value: 'RECOVERY_NOCONTACT', label: 'No-Contact Boundary', stream: 'Recovery' },
+  {
+    value: "RECOVERY_NOCONTACT",
+    label: "No-Contact Boundary",
+    stream: "Recovery",
+  },
   // { value: 'RECOVERY_SUBSTANCE', label: 'Substance Abstinence', stream: 'Recovery' },
   // { value: 'RECOVERY_DETOX', label: 'Behavioral Detox', stream: 'Recovery' },
   // { value: 'RECOVERY_AVOIDANCE', label: 'Environment Avoidance', stream: 'Recovery' },
@@ -49,19 +60,19 @@ const VERIFICATION_METHODS = [
   // { value: 'HEALTHCONNECT', label: 'Health Connect (Android)' },
   // { value: 'SCREENTIME', label: 'Screen Time API' },
   // { value: 'EXTERNAL_API', label: 'Third-Party API' },
-  { value: 'FURY_NETWORK', label: 'Fury Peer Review' },
+  { value: "FURY_NETWORK", label: "Fury Peer Review" },
   // { value: 'TIME_LAPSE_PROOF', label: 'Time-Lapse Proof' },
   // { value: 'GPS', label: 'GPS Geofence' },
   // { value: 'LEDGER', label: 'Financial Ledger' },
-  { value: 'ATTESTATION', label: 'Daily Attestation' },
+  { value: "ATTESTATION", label: "Daily Attestation" },
 ];
 
 const DURATION_OPTIONS = [
-  { value: 7, label: '7 days' },
-  { value: 14, label: '14 days' },
-  { value: 30, label: '30 days' },
-  { value: 60, label: '60 days' },
-  { value: 90, label: '90 days' },
+  { value: 7, label: "7 days" },
+  { value: 14, label: "14 days" },
+  { value: 30, label: "30 days" },
+  { value: 60, label: "60 days" },
+  { value: 90, label: "90 days" },
 ];
 
 const DEFAULT_STAKE_USD = 30;
@@ -83,16 +94,23 @@ function formatMoney(value: number): string {
 }
 
 function getProfileFailureCount(
-  user: { failed_contracts?: number; failedContracts?: number } | null | undefined,
+  user:
+    { failed_contracts?: number; failedContracts?: number } | null | undefined,
 ): number | null {
   const rawCount = user?.failed_contracts ?? user?.failedContracts;
-  return typeof rawCount === 'number' && Number.isFinite(rawCount)
+  return typeof rawCount === "number" && Number.isFinite(rawCount)
     ? Math.max(0, rawCount)
     : null;
 }
 
-function getFailureAdjustedTierMaxStakeUsd(tierMaxStakeUsd: number, failureCount: number | null): number {
-  if (failureCount == null || failureCount < FAILURE_DOWNSCALE_STRIKE_THRESHOLD) {
+function getFailureAdjustedTierMaxStakeUsd(
+  tierMaxStakeUsd: number,
+  failureCount: number | null,
+): number {
+  if (
+    failureCount == null ||
+    failureCount < FAILURE_DOWNSCALE_STRIKE_THRESHOLD
+  ) {
     return tierMaxStakeUsd;
   }
 
@@ -112,42 +130,59 @@ function NewContractPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const realmSlug = searchParams.get('realm');
+  const realmSlug = searchParams.get("realm");
   const realmFilter = realmSlug ? getRealmBySlug(realmSlug) : null;
-  const [oathCategory, setOathCategory] = useState('');
-  const [verificationMethod, setVerificationMethod] = useState('');
+  const [oathCategory, setOathCategory] = useState("");
+  const [verificationMethod, setVerificationMethod] = useState("");
   const [stakeAmount, setStakeAmount] = useState(String(DEFAULT_STAKE_USD));
   const [durationDays, setDurationDays] = useState(30);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [failureCount, setFailureCount] = useState<number | null>(null);
-  const [downscaling, setDownscaling] = useState<DownscalingSignal | null>(null);
+  const [downscaling, setDownscaling] = useState<DownscalingSignal | null>(
+    null,
+  );
   const [identityPledge, setIdentityPledge] = useState<string | null>(null);
 
   // Recovery stream fields
-  const [apEmail, setApEmail] = useState('');
-  const [noContactIds, setNoContactIds] = useState('');
+  const [apEmail, setApEmail] = useState("");
+  const [noContactIds, setNoContactIds] = useState("");
   const [ackVoluntary, setAckVoluntary] = useState(false);
   const [ackNoMinors, setAckNoMinors] = useState(false);
   const [ackNoDependents, setAckNoDependents] = useState(false);
   const [ackNoLegal, setAckNoLegal] = useState(false);
 
-  const isRecovery = oathCategory.startsWith('RECOVERY_');
-  const isNoContact = oathCategory === 'RECOVERY_NOCONTACT';
+  const isRecovery = oathCategory.startsWith("RECOVERY_");
+  const isNoContact = oathCategory === "RECOVERY_NOCONTACT";
   const integrityScore = user?.integrity_score ?? 50;
   const profileFailureCount = getProfileFailureCount(user);
   const effectiveFailureCount = failureCount ?? profileFailureCount;
-  const allowedTiers = useMemo(() => getAllowedTiers(integrityScore), [integrityScore]);
-  const tierMaxStakeCents = useMemo(() => getTierMaxStake(allowedTiers), [allowedTiers]);
+  const allowedTiers = useMemo(
+    () => getAllowedTiers(integrityScore),
+    [integrityScore],
+  );
+  const tierMaxStakeCents = useMemo(
+    () => getTierMaxStake(allowedTiers),
+    [allowedTiers],
+  );
   const tierMaxStakeUsd = Number.isFinite(tierMaxStakeCents)
     ? tierMaxStakeCents / 100
     : AEGIS_MAX_STAKE_USD;
-  const aegisMaxStakeUsd = integrityScore < 40
-    ? Math.min(AEGIS_MAX_STAKE_USD, LOW_INTEGRITY_AEGIS_MAX_USD)
-    : AEGIS_MAX_STAKE_USD;
-  const failureAdjustedTierMaxStakeUsd = getFailureAdjustedTierMaxStakeUsd(tierMaxStakeUsd, effectiveFailureCount);
-  const maxStakeUsd = Math.floor(Math.max(0, Math.min(failureAdjustedTierMaxStakeUsd, aegisMaxStakeUsd)));
-  const selectedStakeUsd = clampStakeAmount(Number.parseFloat(stakeAmount) || 0, maxStakeUsd);
+  const aegisMaxStakeUsd =
+    integrityScore < 40
+      ? Math.min(AEGIS_MAX_STAKE_USD, LOW_INTEGRITY_AEGIS_MAX_USD)
+      : AEGIS_MAX_STAKE_USD;
+  const failureAdjustedTierMaxStakeUsd = getFailureAdjustedTierMaxStakeUsd(
+    tierMaxStakeUsd,
+    effectiveFailureCount,
+  );
+  const maxStakeUsd = Math.floor(
+    Math.max(0, Math.min(failureAdjustedTierMaxStakeUsd, aegisMaxStakeUsd)),
+  );
+  const selectedStakeUsd = clampStakeAmount(
+    Number.parseFloat(stakeAmount) || 0,
+    maxStakeUsd,
+  );
   const usesMvpPlan = selectedStakeUsd === DEFAULT_STAKE_USD;
   // The MVP_39 platform fee is metadata only — `normalizeContractPricing`
   // overrides the stake to $30 and the sole charge is a $30 hold, so no $9 is
@@ -157,17 +192,19 @@ function NewContractPageContent() {
   // for that decision, not deleted).
   const platformFeeUsd = 0;
   const totalEntryUsd = selectedStakeUsd + platformFeeUsd;
-  const requiresKyc = selectedStakeUsd > 0 && requiresCreateContractKyc(selectedStakeUsd);
+  const requiresKyc =
+    selectedStakeUsd > 0 && requiresCreateContractKyc(selectedStakeUsd);
   const canStake = maxStakeUsd >= MIN_STAKE_USD;
   // Read-only: the behavioral engine's downscale is shown next to the amount,
   // never applied to it. See lib/stake-guidance.ts for why.
   const stakeGuidance = deriveStakeGuidance(downscaling, selectedStakeUsd);
-  const displayTier = getDisplayTier(integrityScore).replace(/_/g, ' ');
-  const failureLimitCopy = effectiveFailureCount == null
-    ? 'Server checks failure history again at submit.'
-    : effectiveFailureCount >= FAILURE_DOWNSCALE_STRIKE_THRESHOLD
-      ? `Failure-history cap: ${formatMoney(maxStakeUsd)} after ${effectiveFailureCount} failed contracts.`
-      : 'No failure-history cap applied.';
+  const displayTier = getDisplayTier(integrityScore).replace(/_/g, " ");
+  const failureLimitCopy =
+    effectiveFailureCount == null
+      ? "Server checks failure history again at submit."
+      : effectiveFailureCount >= FAILURE_DOWNSCALE_STRIKE_THRESHOLD
+        ? `Failure-history cap: ${formatMoney(maxStakeUsd)} after ${effectiveFailureCount} failed contracts.`
+        : "No failure-history cap applied.";
 
   useEffect(() => {
     let cancelled = false;
@@ -177,10 +214,13 @@ function NewContractPageContent() {
 
     if (!user) return undefined;
 
-    api.getUserContracts()
+    api
+      .getUserContracts()
       .then((contracts) => {
         if (cancelled) return undefined;
-        const failedContracts = contracts.filter((contract) => contract.status === 'FAILED').length;
+        const failedContracts = contracts.filter(
+          (contract) => contract.status === "FAILED",
+        ).length;
         setFailureCount(failedContracts);
 
         // The endowed-progress downscale is contract-scoped, so guidance for
@@ -188,7 +228,8 @@ function NewContractPageContent() {
         const activeContract = findMostRecentActiveContract(contracts);
         if (!activeContract) return undefined;
 
-        return api.getEndowedProgress(activeContract.id)
+        return api
+          .getEndowedProgress(activeContract.id)
           .then((progress) => {
             if (!cancelled) setDownscaling(progress.downscaling);
           })
@@ -214,7 +255,8 @@ function NewContractPageContent() {
     if (!user) return undefined;
     let cancelled = false;
 
-    api.getIdentityOath()
+    api
+      .getIdentityOath()
       .then((state) => {
         if (!cancelled) setIdentityPledge(state.oath?.pledgeCopy ?? null);
       })
@@ -226,7 +268,10 @@ function NewContractPageContent() {
   }, [user]);
 
   useEffect(() => {
-    const nextStake = clampStakeAmount(Number.parseFloat(stakeAmount) || DEFAULT_STAKE_USD, maxStakeUsd);
+    const nextStake = clampStakeAmount(
+      Number.parseFloat(stakeAmount) || DEFAULT_STAKE_USD,
+      maxStakeUsd,
+    );
     if (String(nextStake) !== stakeAmount) {
       setStakeAmount(String(nextStake));
     }
@@ -237,30 +282,43 @@ function NewContractPageContent() {
     setError(null);
 
     if (!oathCategory || !verificationMethod || !stakeAmount) {
-      setError('All fields are required.');
+      setError("All fields are required.");
       return;
     }
 
     const amount = parseFloat(stakeAmount);
     if (!canStake) {
-      setError('Integrity score is too low to open a financial commitment right now.');
+      setError(
+        "Integrity score is too low to open a financial commitment right now.",
+      );
       return;
     }
     if (isNaN(amount) || amount < MIN_STAKE_USD || amount > maxStakeUsd) {
-      setError(`Stake amount must be between ${formatMoney(MIN_STAKE_USD)} and ${formatMoney(maxStakeUsd)} for your current tier.`);
+      setError(
+        `Stake amount must be between ${formatMoney(MIN_STAKE_USD)} and ${formatMoney(maxStakeUsd)} for your current tier.`,
+      );
       return;
     }
 
     if (isRecovery && !apEmail) {
-      setError('Accountability partner email is required for Recovery contracts.');
+      setError(
+        "Accountability partner email is required for Recovery contracts.",
+      );
       return;
     }
-    if (isRecovery && (!ackVoluntary || !ackNoMinors || !ackNoDependents || !ackNoLegal)) {
-      setError('All safety acknowledgments must be confirmed for Recovery contracts.');
+    if (
+      isRecovery &&
+      (!ackVoluntary || !ackNoMinors || !ackNoDependents || !ackNoLegal)
+    ) {
+      setError(
+        "All safety acknowledgments must be confirmed for Recovery contracts.",
+      );
       return;
     }
 
-    const effectiveDuration = isRecovery ? Math.min(durationDays, 30) : durationDays;
+    const effectiveDuration = isRecovery
+      ? Math.min(durationDays, 30)
+      : durationDays;
 
     setSubmitting(true);
     try {
@@ -269,16 +327,22 @@ function NewContractPageContent() {
         verificationMethod,
         stakeAmount: amount,
         durationDays: effectiveDuration,
-        ...(amount === DEFAULT_STAKE_USD ? { pricing: { plan: 'MVP_39' } } : {}),
+        ...(amount === DEFAULT_STAKE_USD
+          ? { pricing: { plan: "MVP_39" } }
+          : {}),
         ...(realmFilter ? { realmId: realmFilter.id } : {}),
       };
 
       if (isRecovery) {
         payload.recoveryMetadata = {
           accountabilityPartnerEmail: apEmail,
-          noContactIdentifiers: isNoContact && noContactIds.trim()
-            ? noContactIds.split(',').map(s => s.trim()).filter(Boolean)
-            : undefined,
+          noContactIdentifiers:
+            isNoContact && noContactIds.trim()
+              ? noContactIds
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              : undefined,
           acknowledgments: {
             voluntary: ackVoluntary,
             noMinors: ackNoMinors,
@@ -289,9 +353,11 @@ function NewContractPageContent() {
       }
 
       await api.createContract(payload);
-      router.push('/dashboard');
+      router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create contract');
+      setError(
+        err instanceof Error ? err.message : "Failed to create contract",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -299,22 +365,31 @@ function NewContractPageContent() {
 
   // Group categories by stream, optionally filtered by realm
   const filteredCategories = realmFilter
-    ? OATH_CATEGORIES.filter((cat) => cat.value.startsWith(realmFilter.streamPrefix + '_'))
+    ? OATH_CATEGORIES.filter((cat) =>
+        cat.value.startsWith(realmFilter.streamPrefix + "_"),
+      )
     : OATH_CATEGORIES;
 
-  const streams = filteredCategories.reduce((acc, cat) => {
-    if (!acc[cat.stream]) acc[cat.stream] = [];
-    acc[cat.stream].push(cat);
-    return acc;
-  }, {} as Record<string, typeof OATH_CATEGORIES>);
+  const streams = filteredCategories.reduce(
+    (acc, cat) => {
+      if (!acc[cat.stream]) acc[cat.stream] = [];
+      acc[cat.stream].push(cat);
+      return acc;
+    },
+    {} as Record<string, typeof OATH_CATEGORIES>,
+  );
 
   return (
     <div className="min-h-screen bg-black text-white p-6 md:p-12">
       <div className="mx-auto max-w-4xl px-4 py-3 mb-6 rounded-xl border border-amber-700/40 bg-amber-950/40 text-amber-200 text-xs font-bold uppercase tracking-wider text-center">
-        TEST-MONEY MODE — Stakes are recorded in test credits. No real funds are held or transferred.
+        TEST-MONEY MODE — Stakes are recorded in test credits. No real funds are
+        held or transferred.
       </div>
       <header className="flex items-center gap-4 mb-12 border-b border-neutral-800 pb-6">
-        <Link href="/dashboard" className="p-2 bg-neutral-900 rounded-lg border border-neutral-800 hover:bg-neutral-800 transition-colors">
+        <Link
+          href="/dashboard"
+          className="p-2 bg-neutral-900 rounded-lg border border-neutral-800 hover:bg-neutral-800 transition-colors"
+        >
           <ArrowLeft size={20} />
         </Link>
         <div className="flex items-center gap-4">
@@ -322,8 +397,12 @@ function NewContractPageContent() {
             <Flame className="text-black" size={24} />
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight uppercase">New Behavioral Contract</h1>
-            <p className="text-xs text-neutral-500 uppercase tracking-widest">Commit test-money against your recovery goal</p>
+            <h1 className="text-2xl font-black tracking-tight uppercase">
+              New Behavioral Contract
+            </h1>
+            <p className="text-xs text-neutral-500 uppercase tracking-widest">
+              Commit test-money against your recovery goal
+            </p>
           </div>
         </div>
       </header>
@@ -335,7 +414,9 @@ function NewContractPageContent() {
             <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
               Your Declaration
             </p>
-            <p className="mt-2 text-lg font-bold text-white">{identityPledge}</p>
+            <p className="mt-2 text-lg font-bold text-white">
+              {identityPledge}
+            </p>
           </div>
         )}
 
@@ -389,17 +470,25 @@ function NewContractPageContent() {
           <div className="space-y-5 rounded-xl border border-neutral-800 bg-neutral-900 p-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">You could lose</p>
-                <p className="mt-1 text-4xl font-black text-red-500">{formatMoney(selectedStakeUsd)}</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                  You could lose
+                </p>
+                <p className="mt-1 text-4xl font-black text-red-500">
+                  {formatMoney(selectedStakeUsd)}
+                </p>
                 <p className="mt-2 text-sm text-neutral-500">
-                  {displayTier} tier cap: {formatMoney(maxStakeUsd)}. Aegis safety ceiling: {formatMoney(aegisMaxStakeUsd)}.
-                  {' '}
+                  {displayTier} tier cap: {formatMoney(maxStakeUsd)}. Aegis
+                  safety ceiling: {formatMoney(aegisMaxStakeUsd)}.{" "}
                   {failureLimitCopy}
                 </p>
               </div>
               <div className="rounded-lg border border-neutral-800 bg-black px-4 py-3 text-right">
-                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Entry total</p>
-                <p className="text-2xl font-black text-white">{formatMoney(totalEntryUsd)}</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                  Entry total
+                </p>
+                <p className="text-2xl font-black text-white">
+                  {formatMoney(totalEntryUsd)}
+                </p>
               </div>
             </div>
 
@@ -417,18 +506,28 @@ function NewContractPageContent() {
 
             <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr]">
               <div className="rounded-lg border border-neutral-800 bg-black p-3">
-                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Refundable stake</p>
-                <p className="mt-1 text-lg font-black text-white">{formatMoney(selectedStakeUsd)}</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                  Refundable stake
+                </p>
+                <p className="mt-1 text-lg font-black text-white">
+                  {formatMoney(selectedStakeUsd)}
+                </p>
               </div>
               <div className="rounded-lg border border-neutral-800 bg-black p-3">
-                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Platform fee</p>
-                <p className="mt-1 text-lg font-black text-white">{formatMoney(platformFeeUsd)}</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                  Platform fee
+                </p>
+                <p className="mt-1 text-lg font-black text-white">
+                  {formatMoney(platformFeeUsd)}
+                </p>
                 <p className="mt-1 text-xs text-neutral-600">
                   No platform fee during beta
                 </p>
               </div>
               <label className="rounded-lg border border-neutral-800 bg-black p-3">
-                <span className="text-xs font-bold uppercase tracking-widest text-neutral-500">Amount</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                  Amount
+                </span>
                 <span className="mt-1 flex items-center gap-2">
                   <span className="text-red-500 font-black">$</span>
                   <input
@@ -449,14 +548,18 @@ function NewContractPageContent() {
               <div className="flex items-start gap-3 rounded-lg border border-sky-900 bg-sky-950/30 p-3">
                 <Info size={16} className="mt-0.5 shrink-0 text-sky-400" />
                 <div className="text-xs text-sky-200">
-                  <p className="font-bold uppercase tracking-widest text-sky-300">Behavioral guidance</p>
+                  <p className="font-bold uppercase tracking-widest text-sky-300">
+                    Behavioral guidance
+                  </p>
                   <p className="mt-1">
-                    Your active contract is carrying a {stakeGuidance.reductionPercent}% downscale
-                    ({stakeGuidance.reason}). At that factor this stake would be{' '}
+                    Your active contract is carrying a{" "}
+                    {stakeGuidance.reductionPercent}% downscale (
+                    {stakeGuidance.reason}). At that factor this stake would be{" "}
                     {formatMoney(stakeGuidance.suggestedStakeUsd)}.
                   </p>
                   <p className="mt-1 text-sky-400">
-                    Guidance only — you stake {formatMoney(selectedStakeUsd)} unless you change it yourself.
+                    Guidance only — you stake {formatMoney(selectedStakeUsd)}{" "}
+                    unless you change it yourself.
                   </p>
                 </div>
               </div>
@@ -464,15 +567,27 @@ function NewContractPageContent() {
 
             <div className="flex flex-col gap-3 border-t border-neutral-800 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-neutral-500">
-                Loss framing is intentional: choose only an amount you can afford to lose.
+                Loss framing is intentional: choose only an amount you can
+                afford to lose.
               </p>
-              <p className={`inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${requiresKyc ? 'text-amber-400' : 'text-emerald-400'}`}>
-                {requiresKyc ? <TriangleAlert size={14} /> : <ShieldCheck size={14} />}
-                {requiresKyc ? 'KYC required at this amount' : 'No KYC required'}
+              <p
+                className={`inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${requiresKyc ? "text-amber-400" : "text-emerald-400"}`}
+              >
+                {requiresKyc ? (
+                  <TriangleAlert size={14} />
+                ) : (
+                  <ShieldCheck size={14} />
+                )}
+                {requiresKyc
+                  ? "KYC required at this amount"
+                  : "No KYC required"}
               </p>
             </div>
           </div>
-          <p className="text-xs text-neutral-600 mt-2">Test-money only. Backend Aegis checks still enforce final safety limits.</p>
+          <p className="text-xs text-neutral-600 mt-2">
+            Test-money only. Backend Aegis checks still enforce final safety
+            limits.
+          </p>
         </div>
 
         {/* Duration */}
@@ -481,15 +596,17 @@ function NewContractPageContent() {
             Duration
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-            {DURATION_OPTIONS.filter(opt => !isRecovery || opt.value <= 30).map((opt) => (
+            {DURATION_OPTIONS.filter(
+              (opt) => !isRecovery || opt.value <= 30,
+            ).map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => setDurationDays(opt.value)}
                 className={`py-3 rounded-xl font-bold text-sm transition-colors ${
                   durationDays === opt.value
-                    ? 'bg-red-600 text-white'
-                    : 'bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white'
+                    ? "bg-red-600 text-white"
+                    : "bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white"
                 }`}
               >
                 {opt.label}
@@ -501,7 +618,9 @@ function NewContractPageContent() {
         {/* Recovery Stream Fields */}
         {isRecovery && (
           <div className="space-y-6 p-6 bg-neutral-900/50 border border-amber-600/30 rounded-xl">
-            <h3 className="text-sm font-bold text-amber-500 uppercase tracking-widest">Recovery Protocol</h3>
+            <h3 className="text-sm font-bold text-amber-500 uppercase tracking-widest">
+              Recovery Protocol
+            </h3>
 
             <div>
               <label className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2">
@@ -514,7 +633,10 @@ function NewContractPageContent() {
                 placeholder="friend@example.com"
                 className="w-full p-3 bg-neutral-900 border border-neutral-800 rounded-xl text-white focus:border-amber-600 focus:outline-none"
               />
-              <p className="text-xs text-neutral-600 mt-1">Your AP will co-sign daily attestations and can cancel the contract if needed.</p>
+              <p className="text-xs text-neutral-600 mt-1">
+                Your AP will co-sign daily attestations and can cancel the
+                contract if needed.
+              </p>
             </div>
 
             {isNoContact && (
@@ -529,19 +651,47 @@ function NewContractPageContent() {
                   placeholder="Comma-separated identifiers"
                   className="w-full p-3 bg-neutral-900 border border-neutral-800 rounded-xl text-white focus:border-amber-600 focus:outline-none"
                 />
-                <p className="text-xs text-neutral-600 mt-1">Identifiers are hashed client-side. Styx never stores plaintext.</p>
+                <p className="text-xs text-neutral-600 mt-1">
+                  Identifiers are hashed client-side. Styx never stores
+                  plaintext.
+                </p>
               </div>
             )}
 
             <div className="space-y-3">
-              <p className="text-sm font-bold text-neutral-400 uppercase tracking-widest">Safety Acknowledgments *</p>
+              <p className="text-sm font-bold text-neutral-400 uppercase tracking-widest">
+                Safety Acknowledgments *
+              </p>
               {[
-                { id: 'voluntary', label: 'This contract is entirely voluntary', checked: ackVoluntary, set: setAckVoluntary },
-                { id: 'noMinors', label: 'No minors are involved in this contract', checked: ackNoMinors, set: setAckNoMinors },
-                { id: 'noDependents', label: 'No dependents are affected by this commitment', checked: ackNoDependents, set: setAckNoDependents },
-                { id: 'noLegal', label: 'No legal obligations are being violated', checked: ackNoLegal, set: setAckNoLegal },
+                {
+                  id: "voluntary",
+                  label: "This contract is entirely voluntary",
+                  checked: ackVoluntary,
+                  set: setAckVoluntary,
+                },
+                {
+                  id: "noMinors",
+                  label: "No minors are involved in this contract",
+                  checked: ackNoMinors,
+                  set: setAckNoMinors,
+                },
+                {
+                  id: "noDependents",
+                  label: "No dependents are affected by this commitment",
+                  checked: ackNoDependents,
+                  set: setAckNoDependents,
+                },
+                {
+                  id: "noLegal",
+                  label: "No legal obligations are being violated",
+                  checked: ackNoLegal,
+                  set: setAckNoLegal,
+                },
               ].map(({ id, label, checked, set }) => (
-                <label key={id} className="flex items-center gap-3 cursor-pointer">
+                <label
+                  key={id}
+                  className="flex items-center gap-3 cursor-pointer"
+                >
                   <input
                     type="checkbox"
                     checked={checked}
@@ -555,8 +705,9 @@ function NewContractPageContent() {
 
             {isRecovery && (
               <p className="text-xs text-amber-600/70 italic">
-                Recovery contracts are capped at 30 days to ensure ongoing well-being evaluation.
-                Emergency contacts (crisis hotlines, therapists, legal counsel) never count as violations.
+                Recovery contracts are capped at 30 days to ensure ongoing
+                well-being evaluation. Emergency contacts (crisis hotlines,
+                therapists, legal counsel) never count as violations.
               </p>
             )}
           </div>
@@ -587,8 +738,9 @@ function NewContractPageContent() {
         </button>
 
         <p className="text-center text-xs text-neutral-600">
-          By submitting, you authorize Styx to place an FBO hold on the specified amount.
-          Funds are returned upon verified completion or forfeited upon failure.
+          By submitting, you authorize Styx to place an FBO hold on the
+          specified amount. Funds are returned upon verified completion or
+          forfeited upon failure.
         </p>
       </form>
     </div>
@@ -601,7 +753,9 @@ export default function NewContractPage() {
       fallback={
         <div className="min-h-screen bg-black text-white flex items-center justify-center">
           <Loader2 className="animate-spin mr-3" size={24} />
-          <span className="text-neutral-400 font-bold">Loading contract builder...</span>
+          <span className="text-neutral-400 font-bold">
+            Loading contract builder...
+          </span>
         </div>
       }
     >

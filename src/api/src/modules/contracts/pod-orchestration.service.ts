@@ -1,13 +1,19 @@
-import { Injectable, Inject, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
-import { Pool } from 'pg';
-import { evaluatePodBroadcast } from '../../../../shared/libs/behavioral-logic';
+import {
+  Injectable,
+  Inject,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from "@nestjs/common";
+import { Pool } from "pg";
+import { evaluatePodBroadcast } from "../../../../shared/libs/behavioral-logic";
 
 export interface PodMember {
   userId: string;
   alias: string;
   joinedAt: Date;
   contractId: string;
-  status: 'ACTIVE' | 'PAUSED' | 'LEFT';
+  status: "ACTIVE" | "PAUSED" | "LEFT";
 }
 
 export interface PodState {
@@ -21,7 +27,7 @@ export interface PodState {
 
 export interface PodIdentityReveal {
   userId: string;
-  revealLevel: 'ANONYMOUS' | 'FIRST_NAME' | 'FULL_ALIAS';
+  revealLevel: "ANONYMOUS" | "FIRST_NAME" | "FULL_ALIAS";
   alias: string;
 }
 
@@ -32,9 +38,7 @@ const IDENTITY_REVEAL_THRESHOLDS = { FIRST_NAME: 7, FULL_ALIAS: 30 };
 export class PodOrchestrationService {
   private readonly logger = new Logger(PodOrchestrationService.name);
 
-  constructor(
-    @Inject('DATABASE_POOL') private readonly pool: Pool,
-  ) {}
+  constructor(@Inject("DATABASE_POOL") private readonly pool: Pool) {}
 
   async getPodState(podId: string, cohortId: string): Promise<PodState> {
     const { rows } = await this.pool.query(
@@ -54,13 +58,18 @@ export class PodOrchestrationService {
 
     const members: PodMember[] = rows.map((row: any) => ({
       userId: row.user_id,
-      alias: row.display_alias || 'Participant',
+      alias: row.display_alias || "Participant",
       joinedAt: new Date(row.cohort_joined_at || row.created_at),
       contractId: row.contract_id,
-      status: row.status === 'ACTIVE' ? 'ACTIVE' : row.status === 'PENDING_STAKE' ? 'ACTIVE' : 'LEFT',
+      status:
+        row.status === "ACTIVE"
+          ? "ACTIVE"
+          : row.status === "PENDING_STAKE"
+            ? "ACTIVE"
+            : "LEFT",
     }));
 
-    const activeCount = members.filter(m => m.status === 'ACTIVE').length;
+    const activeCount = members.filter((m) => m.status === "ACTIVE").length;
 
     const broadcastResult = await this.pool.query(
       `SELECT COUNT(*)::int AS total
@@ -79,7 +88,10 @@ export class PodOrchestrationService {
     };
   }
 
-  async enforceMaxPodSize(podId: string, cohortId: string): Promise<{ allowed: boolean; currentCount: number; maxMembers: number }> {
+  async enforceMaxPodSize(
+    podId: string,
+    cohortId: string,
+  ): Promise<{ allowed: boolean; currentCount: number; maxMembers: number }> {
     const { rows } = await this.pool.query(
       `SELECT COUNT(DISTINCT user_id)::int AS count
        FROM contracts
@@ -104,12 +116,17 @@ export class PodOrchestrationService {
     contractId: string,
     alias?: string,
   ): Promise<PodMember> {
-    const { allowed, currentCount } = await this.enforceMaxPodSize(podId, cohortId);
+    const { allowed, currentCount } = await this.enforceMaxPodSize(
+      podId,
+      cohortId,
+    );
     if (!allowed) {
-      throw new BadRequestException(`Pod ${podId} is full (max ${MAX_POD_SIZE})`);
+      throw new BadRequestException(
+        `Pod ${podId} is full (max ${MAX_POD_SIZE})`,
+      );
     }
 
-    const displayAlias = alias || 'Participant';
+    const displayAlias = alias || "Participant";
     const now = new Date();
 
     await this.pool.query(
@@ -124,7 +141,12 @@ export class PodOrchestrationService {
          to_jsonb($4::text)
        )
        WHERE id = $1 AND user_id = $2`,
-      [contractId, userId, JSON.stringify({ cohortId, podId, displayAlias }), now.toISOString()],
+      [
+        contractId,
+        userId,
+        JSON.stringify({ cohortId, podId, displayAlias }),
+        now.toISOString(),
+      ],
     );
 
     return {
@@ -132,11 +154,15 @@ export class PodOrchestrationService {
       alias: displayAlias,
       joinedAt: now,
       contractId,
-      status: 'ACTIVE',
+      status: "ACTIVE",
     };
   }
 
-  async removeMemberFromPod(userId: string, podId: string, cohortId: string): Promise<void> {
+  async removeMemberFromPod(
+    userId: string,
+    podId: string,
+    cohortId: string,
+  ): Promise<void> {
     const { rowCount } = await this.pool.query(
       `UPDATE contracts
        SET metadata = metadata - 'cohort'
@@ -169,10 +195,15 @@ export class PodOrchestrationService {
 
     return rows.map((row: any) => ({
       userId: row.user_id,
-      alias: row.display_alias || 'Participant',
+      alias: row.display_alias || "Participant",
       joinedAt: new Date(row.cohort_joined_at || row.created_at),
       contractId: row.contract_id,
-      status: row.status === 'ACTIVE' ? 'ACTIVE' : row.status === 'PENDING_STAKE' ? 'ACTIVE' : 'LEFT',
+      status:
+        row.status === "ACTIVE"
+          ? "ACTIVE"
+          : row.status === "PENDING_STAKE"
+            ? "ACTIVE"
+            : "LEFT",
     }));
   }
 
@@ -180,7 +211,11 @@ export class PodOrchestrationService {
     podId: string,
     cohortId: string,
     failureEvent: { userId: string; type: string },
-  ): Promise<{ broadcast: boolean; dampened: boolean; recipientsNotified: number }> {
+  ): Promise<{
+    broadcast: boolean;
+    dampened: boolean;
+    recipientsNotified: number;
+  }> {
     const { rows: broadcastRows } = await this.pool.query(
       `SELECT COUNT(*)::int AS failure_count,
               MAX(broadcasted_at) AS last_broadcast_at
@@ -204,7 +239,12 @@ export class PodOrchestrationService {
       ? new Date(broadcastRows[0].last_broadcast_at)
       : null;
 
-    const result = evaluatePodBroadcast({ podId, failureCount, memberCount, lastBroadcastAt });
+    const result = evaluatePodBroadcast({
+      podId,
+      failureCount,
+      memberCount,
+      lastBroadcastAt,
+    });
 
     if (!result.dampened) {
       await this.pool.query(
@@ -250,32 +290,34 @@ export class PodOrchestrationService {
       const joinedAt = row.cohort_joined_at
         ? new Date(row.cohort_joined_at)
         : new Date(row.created_at);
-      const daysInPod = Math.floor((now.getTime() - joinedAt.getTime()) / (1000 * 60 * 60 * 24));
-      const displayAlias = row.display_alias || 'Participant';
+      const daysInPod = Math.floor(
+        (now.getTime() - joinedAt.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      const displayAlias = row.display_alias || "Participant";
 
       if (isSelf) {
         return {
           userId: row.user_id,
-          revealLevel: 'FULL_ALIAS' as const,
+          revealLevel: "FULL_ALIAS" as const,
           alias: displayAlias,
         };
       }
 
-      let revealLevel: PodIdentityReveal['revealLevel'];
+      let revealLevel: PodIdentityReveal["revealLevel"];
       if (daysInPod >= IDENTITY_REVEAL_THRESHOLDS.FULL_ALIAS) {
-        revealLevel = 'FULL_ALIAS';
+        revealLevel = "FULL_ALIAS";
       } else if (daysInPod >= IDENTITY_REVEAL_THRESHOLDS.FIRST_NAME) {
-        revealLevel = 'FIRST_NAME';
+        revealLevel = "FIRST_NAME";
       } else {
-        revealLevel = 'ANONYMOUS';
+        revealLevel = "ANONYMOUS";
       }
 
       let alias: string;
-      if (revealLevel === 'ANONYMOUS') {
+      if (revealLevel === "ANONYMOUS") {
         const memberIndex = rows.indexOf(row) + 1;
         alias = `Member ${memberIndex}`;
-      } else if (revealLevel === 'FIRST_NAME') {
-        alias = displayAlias.split(' ')[0] || 'Participant';
+      } else if (revealLevel === "FIRST_NAME") {
+        alias = displayAlias.split(" ")[0] || "Participant";
       } else {
         alias = displayAlias;
       }
@@ -291,7 +333,12 @@ export class PodOrchestrationService {
   async getPodStats(
     podId: string,
     cohortId: string,
-  ): Promise<{ totalMembers: number; activeMembers: number; avgStreakDays: number; totalFailures: number }> {
+  ): Promise<{
+    totalMembers: number;
+    activeMembers: number;
+    avgStreakDays: number;
+    totalFailures: number;
+  }> {
     const { rows: memberRows } = await this.pool.query(
       `SELECT DISTINCT ON (c.user_id)
         c.user_id,
@@ -305,7 +352,7 @@ export class PodOrchestrationService {
 
     const totalMembers = memberRows.length;
     const activeMembers = memberRows.filter(
-      (r: any) => r.status === 'ACTIVE' || r.status === 'PENDING_STAKE',
+      (r: any) => r.status === "ACTIVE" || r.status === "PENDING_STAKE",
     ).length;
 
     const userIds = memberRows.map((r: any) => r.user_id);

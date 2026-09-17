@@ -114,7 +114,7 @@ outside the UIGEA's primary definition of illegal internet gambling.^10^
 The landscape of American sports betting was fundamentally altered in
 May 2018 when the United States Supreme Court struck down the
 Professional and Amateur Sports Protection Act (PASPA) of 1992 in the
-landmark case *Murphy v. NCAA*.^13^ PASPA had previously acted as a
+landmark case _Murphy v. NCAA_.^13^ PASPA had previously acted as a
 federal ban on state-authorized sports gambling, effectively granting a
 monopoly to Nevada.^14^ The Supreme Court\'s ruling declared that PASPA
 violated the anti-commandeering doctrine of the Tenth Amendment, thereby
@@ -240,7 +240,7 @@ The legal resilience of the Dominant Factor Test was recently solidified
 and expanded in the context of interactive fantasy sports (IFS),
 providing a powerful legal proxy for personal performance applications.
 In 2022, the New York Court of Appeals issued a landmark, highly
-anticipated ruling in *White v. Cuomo*, affirming the constitutionality
+anticipated ruling in _White v. Cuomo_, affirming the constitutionality
 of Article 14 of the Racing, Pari-Mutuel Wagering and Breeding Law,
 which authorized and regulated IFS contests in New York.^32^
 
@@ -252,8 +252,8 @@ court emphasized that competitions in which participants have influence
 over the outcome through skill and knowledge do not constitute gambling,
 noting that paying an entry fee for an opportunity to compete for a
 pre-determined prize is not an illegal bet or wager.^32^ Furthermore,
-the Illinois Supreme Court reached a similar conclusion in *Dew-Becker
-v. Wu*, holding that head-to-head daily fantasy sports contests do not
+the Illinois Supreme Court reached a similar conclusion in _Dew-Becker
+v. Wu_, holding that head-to-head daily fantasy sports contests do not
 involve gambling under Illinois law because skill determines the
 victor.^27^
 
@@ -267,39 +267,42 @@ direct control a user has over their own weight loss far exceeds the
 indirect control a fantasy sports player has over the on-field
 performance of a professional athlete.
 
-  -----------------------------------------------------------------------
-  **Legal Test            **Definition and        **Impact on Personal
-  Framework**             Standard of Review**    Performance
-                                                  Applications**
-  ----------------------- ----------------------- -----------------------
-  **Dominant Factor       Skill must outweigh     Highly favorable.
-  Test**                  chance (\>50% skill     Weight loss, habit
-                          determination).         formation, and personal
-                          Examines the            discipline are
-                          overarching cause of    universally recognized
-                          the outcome.            as requiring dominant
-                                                  personal effort and
-                                                  strategy.^2^
+---
 
-  **Material Element      Chance cannot play a    Generally favorable.
-  Test**                  material, significant,  Chance elements (e.g.,
-                          or consequential role   metabolic variance,
-                          in the final            sudden illness) are not
-                          determination.          deemed material
-                                                  compared to the
-                                                  fundamental requirement
-                                                  of diet and
-                                                  exercise.^2^
+**Legal Test **Definition and **Impact on Personal
+Framework** Standard of Review** Performance
+Applications**
 
-  **Any Chance Test**     The presence of any     High risk. Operators
-                          chance, regardless of   frequently exclude
-                          how slight, renders the residents of these
-                          game an illegal         states or utilize
-                          lottery.                Alternative Methods of
-                                                  Entry (AMOE) to bypass
-                                                  consideration
-                                                  requirements.^3^
-  -----------------------------------------------------------------------
+---
+
+**Dominant Factor Skill must outweigh Highly favorable.
+Test** chance (\>50% skill Weight loss, habit
+determination). formation, and personal
+Examines the discipline are
+overarching cause of universally recognized
+the outcome. as requiring dominant
+personal effort and
+strategy.^2^
+
+**Material Element Chance cannot play a Generally favorable.
+Test** material, significant, Chance elements (e.g.,
+or consequential role metabolic variance,
+in the final sudden illness) are not
+determination. deemed material
+compared to the
+fundamental requirement
+of diet and
+exercise.^2^
+
+**Any Chance Test** The presence of any High risk. Operators
+chance, regardless of frequently exclude
+how slight, renders the residents of these
+game an illegal states or utilize
+lottery. Alternative Methods of
+Entry (AMOE) to bypass
+consideration
+requirements.^3^
+-----------------------------------------------------------------------
 
 ## Corporate Structuring and Operational Legality of Deposit Contracts
 
@@ -330,8 +333,8 @@ caloric intake, exercise regimen, or daily habits, the element of chance
 is eradicated from the contractual agreement.^28^ HealthyWage explicitly
 notes in its legal disclosures and public-facing communications that its
 business model is derived directly from randomized clinical trials
-published in leading medical journals, such as the *Journal of the
-American Medical Association* (JAMA).^23^ These peer-reviewed studies
+published in leading medical journals, such as the _Journal of the
+American Medical Association_ (JAMA).^23^ These peer-reviewed studies
 utilized financial incentives and deposit contracts to enhance weight
 loss success, proving their efficacy as medical and psychological
 tools.^23^ By aligning the platform\'s mechanics with evidence-based
@@ -601,8 +604,8 @@ the endorser.^67^
 More importantly, the FTC expressly prohibits advertising extreme
 outliers as typical consumer results. If a marketing advertisement
 features a highly successful user who won \$5,000 and lost 50 pounds,
-the platform must clearly and conspicuously disclose the *generally
-expected results* for the average user in similar circumstances.^68^
+the platform must clearly and conspicuously disclose the _generally
+expected results_ for the average user in similar circumstances.^68^
 Simply stating \"results not typical\" is no longer legally sufficient;
 the advertisement must affirmatively state the expected baseline, such
 as \"The average participant loses 10 pounds and wins \$40\".^68^
@@ -618,42 +621,45 @@ week.^70^ Engaging in deceptive advertising regarding the efficacy or
 financial returns of the application will result in FTC penalty offenses
 and forced consumer refunds.^52^
 
-  -----------------------------------------------------------------------
-  **Regulatory Domain**   **Implementation        **Legal Purpose and
-                          Requirement**           Mitigation Goal**
-  ----------------------- ----------------------- -----------------------
-  **Consumer Health**     Strict 18+ age limit;   Prevents exploitation
-                          Minimum 18.5 BMI floor; of minors; defends
-                          Pregnancy suspensions.  against claims of
-                                                  facilitating eating
-                                                  disorders; aligns with
-                                                  state laws on
-                                                  supplement
-                                                  restrictions.^31^
+---
 
-  **Pace of Goal**        Max weight loss of \~2% Deters dangerous crash
-                          per week; hard          dieting, dehydration,
-                          disqualification caps   and starvation,
-                          (e.g., 12% in 4 weeks). protecting the platform
-                                                  from personal injury
-                                                  liability.^54^
+**Regulatory Domain** **Implementation **Legal Purpose and
+Requirement** Mitigation Goal**
 
-  **Fraud Prevention**    Two-photo verification, Protects the integrity
-                          time-stamped \"weigh-in of the prize pool,
-                          words\", continuous     ensures fair execution
-                          video audits.           of the deposit
-                                                  contract, and prevents
-                                                  consumer-on-consumer
-                                                  fraud.^54^
+---
 
-  **FTC Compliance**      Clear disclosure of     Avoids federal
-                          \"typical results\" and enforcement actions for
-                          financial connections   deceptive advertising
-                          in all user             under 16 CFR Part 255
-                          testimonials.           and bypasses \"Gut
-                                                  Check\" claim
-                                                  violations.^66^
-  -----------------------------------------------------------------------
+**Consumer Health** Strict 18+ age limit; Prevents exploitation
+Minimum 18.5 BMI floor; of minors; defends
+Pregnancy suspensions. against claims of
+facilitating eating
+disorders; aligns with
+state laws on
+supplement
+restrictions.^31^
+
+**Pace of Goal** Max weight loss of \~2% Deters dangerous crash
+per week; hard dieting, dehydration,
+disqualification caps and starvation,
+(e.g., 12% in 4 weeks). protecting the platform
+from personal injury
+liability.^54^
+
+**Fraud Prevention** Two-photo verification, Protects the integrity
+time-stamped \"weigh-in of the prize pool,
+words\", continuous ensures fair execution
+video audits. of the deposit
+contract, and prevents
+consumer-on-consumer
+fraud.^54^
+
+**FTC Compliance** Clear disclosure of Avoids federal
+\"typical results\" and enforcement actions for
+financial connections deceptive advertising
+in all user under 16 CFR Part 255
+testimonials. and bypasses \"Gut
+Check\" claim
+violations.^66^
+-----------------------------------------------------------------------
 
 ## The Legal Metamorphosis: Applying the Mechanic to Sales Targets
 
@@ -725,7 +731,7 @@ structure, rather than a speculative market funded by retail
 participants.
 
 1.  **Eliminating the Peer-to-Peer Market:** If users are betting
-    *against* each other\'s sales targets, or if non-participants can
+    _against_ each other\'s sales targets, or if non-participants can
     wager on whether a specific salesperson will hit their quota, the
     platform is unquestionably functioning as an illegal prediction
     market or binary options exchange.^72^ The presence of speculators
@@ -734,7 +740,7 @@ participants.
 
 2.  **Commercial Risk and Hedging:** Financial derivatives exist
     fundamentally to allow commercial entities to hedge risk.^79^ If a
-    salesperson bets their own money that they *will* hit their target,
+    salesperson bets their own money that they _will_ hit their target,
     they are amplifying their economic exposure, not hedging it.
     However, if the platform resembles a standard corporate performance
     bond---where an employee risks a portion of their own capital to
@@ -1154,17 +1160,17 @@ deceptive advertising, and unregistered commodities trading.
 
 ### Cases
 
-- *Dew-Becker v. Wu*, 2020 IL 124472 (Ill. 2020)
-- *Murphy v. NCAA*, 584 U.S. 453 (2018)
-- *White v. Cuomo*, 38 N.Y.3d 311 (2022)
+- _Dew-Becker v. Wu_, 2020 IL 124472 (Ill. 2020)
+- _Murphy v. NCAA_, 584 U.S. 453 (2018)
+- _White v. Cuomo_, 38 N.Y.3d 311 (2022)
 
 ### Statutes and Regulations
 
-- 7 U.S.C. § 1 *et seq.* (Commodity Exchange Act)
+- 7 U.S.C. § 1 _et seq._ (Commodity Exchange Act)
 - 15 U.S.C. § 45 (FTC Act — unfair or deceptive practices)
 - 16 C.F.R. pt. 255 (FTC Endorsement Guides)
 - 17 C.F.R. § 40.11 (CFTC event contract review procedures)
 - 31 U.S.C. §§ 5311-5330 (Bank Secrecy Act)
 - 31 U.S.C. §§ 5361-5367 (Unlawful Internet Gambling Enforcement Act of 2006)
 - 31 U.S.C. § 5362(1)(E)(ix) (UIGEA — skill-based contest exclusion)
-- 820 Ill. Comp. Stat. 40/1 *et seq.* (Illinois Sports Wagering Act)
+- 820 Ill. Comp. Stat. 40/1 _et seq._ (Illinois Sports Wagering Act)

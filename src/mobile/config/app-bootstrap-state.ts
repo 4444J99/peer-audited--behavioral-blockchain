@@ -1,6 +1,6 @@
-import type { StyxFeatureFlags } from '@styx/shared/index';
+import type { StyxFeatureFlags } from "@styx/types";
 
-export type MobileBootstrapGate = 'ready' | 'maintenance' | 'update_required';
+export type MobileBootstrapGate = "ready" | "maintenance" | "update_required";
 
 export interface MobileAppBootstrapViewState {
   gate: MobileBootstrapGate;
@@ -30,7 +30,7 @@ export function resolveMobileAppBootstrapViewState(input: {
 
   if (featureFlags.maintenanceMode) {
     return {
-      gate: 'maintenance',
+      gate: "maintenance",
       betaBannerText,
       featureFlags,
       showNoContactScopeNotice: featureFlags.phase1NoContactOnly,
@@ -41,7 +41,7 @@ export function resolveMobileAppBootstrapViewState(input: {
 
   if (belowMinimumSupportedVersion) {
     return {
-      gate: 'update_required',
+      gate: "update_required",
       betaBannerText,
       featureFlags,
       showNoContactScopeNotice: featureFlags.phase1NoContactOnly,
@@ -51,7 +51,7 @@ export function resolveMobileAppBootstrapViewState(input: {
   }
 
   return {
-    gate: 'ready',
+    gate: "ready",
     betaBannerText,
     featureFlags,
     showNoContactScopeNotice: featureFlags.phase1NoContactOnly,

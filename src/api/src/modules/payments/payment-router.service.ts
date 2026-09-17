@@ -14,9 +14,7 @@ import { STATE_TIERS, JurisdictionTier } from "../../../services/geofencing";
 type StripeClient = InstanceType<typeof Stripe>;
 
 export type PaymentProcessor =
-  | "STRIPE"
-  | "HIGH_RISK_COREPAY"
-  | "STABLECOIN_VAULT";
+  "STRIPE" | "HIGH_RISK_COREPAY" | "STABLECOIN_VAULT";
 
 export interface PaymentIntentOptions {
   amount: number;
@@ -59,9 +57,34 @@ export interface GeographicRoutingMetrics {
 }
 
 const EU_SCA_COUNTRIES = new Set([
-  "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR",
-  "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO",
-  "SE", "SI", "SK", "GB"
+  "AT",
+  "BE",
+  "BG",
+  "CY",
+  "CZ",
+  "DE",
+  "DK",
+  "EE",
+  "ES",
+  "FI",
+  "FR",
+  "GR",
+  "HR",
+  "HU",
+  "IE",
+  "IT",
+  "LT",
+  "LU",
+  "LV",
+  "MT",
+  "NL",
+  "PL",
+  "PT",
+  "RO",
+  "SE",
+  "SI",
+  "SK",
+  "GB",
 ]);
 
 @Injectable()
@@ -114,7 +137,9 @@ export class PaymentRouterService {
         tier = STATE_TIERS[state];
       } else {
         // Unknown or unclassified US state fails closed to TIER_3 per Aegis CG-06 / SH7
-        tier = state ? STATE_TIERS[state] || JurisdictionTier.TIER_3 : JurisdictionTier.TIER_1;
+        tier = state
+          ? STATE_TIERS[state] || JurisdictionTier.TIER_3
+          : JurisdictionTier.TIER_1;
       }
 
       if (tier === JurisdictionTier.TIER_3) {
@@ -263,22 +288,29 @@ export class PaymentRouterService {
       }
 
       if (!this.stripe) {
-        throw new ServiceUnavailableException("Stripe processor not configured for production");
+        throw new ServiceUnavailableException(
+          "Stripe processor not configured for production",
+        );
       }
 
-      const intent = await this.stripe.paymentIntents.create({
-        amount: options.amount,
-        currency: options.currency,
-        metadata: {
-          ...options.metadata,
-          userId: options.userId,
+      const intent = await this.stripe.paymentIntents.create(
+        {
+          amount: options.amount,
+          currency: options.currency,
+          metadata: {
+            ...options.metadata,
+            userId: options.userId,
+          },
         },
-      }, {
-        idempotencyKey: `pi-${options.userId}-${options.amount}-${options.currency}`,
-      });
+        {
+          idempotencyKey: `pi-${options.userId}-${options.amount}-${options.currency}`,
+        },
+      );
 
       if (!intent.client_secret) {
-        throw new ServiceUnavailableException("Failed to retrieve client secret from Stripe");
+        throw new ServiceUnavailableException(
+          "Failed to retrieve client secret from Stripe",
+        );
       }
 
       return {
@@ -289,12 +321,16 @@ export class PaymentRouterService {
       if (mockFallbackAllowed) {
         return { clientSecret: `tok_corepay_mock_${Date.now()}`, processor };
       }
-      throw new ServiceUnavailableException("Corepay processor not configured for production");
+      throw new ServiceUnavailableException(
+        "Corepay processor not configured for production",
+      );
     } else {
       if (mockFallbackAllowed) {
         return { clientSecret: `vault_usdc_mock_${Date.now()}`, processor };
       }
-      throw new ServiceUnavailableException("Stablecoin vault processor not configured for production");
+      throw new ServiceUnavailableException(
+        "Stablecoin vault processor not configured for production",
+      );
     }
   }
 }

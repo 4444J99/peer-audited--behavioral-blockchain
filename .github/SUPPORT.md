@@ -2,11 +2,11 @@
 
 ## Getting Help
 
-| Channel | Use for |
-|---------|---------|
-| [GitHub Issues](../../issues) | Bug reports and feature requests |
-| [Discussions](../../discussions) | Questions, ideas, and general conversation |
-| `CLAUDE.md` / `GEMINI.md` | AI-assisted development context for contributors |
+| Channel                          | Use for                                          |
+| -------------------------------- | ------------------------------------------------ |
+| [GitHub Issues](../../issues)    | Bug reports and feature requests                 |
+| [Discussions](../../discussions) | Questions, ideas, and general conversation       |
+| `CLAUDE.md` / `GEMINI.md`        | AI-assisted development context for contributors |
 
 ## Before Opening an Issue
 

@@ -3,7 +3,7 @@
 ## Supported Versions
 
 | Version | Supported          |
-|---------|--------------------|
+| ------- | ------------------ |
 | 0.4.x   | :white_check_mark: |
 | 0.3.x   | :x:                |
 | 0.2.x   | :x:                |
@@ -34,6 +34,7 @@ If you discover a security vulnerability in Styx, please report it responsibly.
 ### Scope
 
 The following are in scope:
+
 - Authentication and authorization bypasses
 - Financial logic errors (ledger, escrow, stakes)
 - Data exposure or leakage
@@ -41,6 +42,7 @@ The following are in scope:
 - Cryptographic weaknesses in the hash-chained audit log
 
 The following are out of scope:
+
 - Denial of service attacks
 - Social engineering
 - Issues in third-party dependencies (report upstream)
@@ -49,6 +51,7 @@ The following are out of scope:
 ### Safe Harbor
 
 We will not pursue legal action against researchers who:
+
 - Make a good faith effort to avoid privacy violations, data destruction, or service disruption
 - Only interact with accounts they own or with explicit permission
 - Report vulnerabilities promptly and do not publicly disclose before resolution
@@ -68,13 +71,13 @@ Styx implements the following security controls:
 
 ## Data Retention Policy
 
-| Data Type | Retention Period | Disposition |
-|-----------|-----------------|-------------|
-| `event_log` (hash chain) | **Indefinite** | Append-only; critical for audit integrity. Archival to cold storage after 2 years. |
-| `proofs` (media URIs) | **1 year** after contract completion | R2 objects deleted; metadata row retained with `media_uri = '[REDACTED]'`. |
-| `notifications` | **90 days** after read | Soft-deleted, then purged in batch. |
-| `fury_assignments` | **1 year** after verdict | Retained for dispute resolution window, then anonymized. |
-| `stripe_events` | **7 years** | Financial regulatory compliance (IRS record-keeping). |
-| User PII (email, hashes) | **Account lifetime + 30 days** | Deleted upon account deletion request per CCPA/GDPR. |
+| Data Type                | Retention Period                     | Disposition                                                                        |
+| ------------------------ | ------------------------------------ | ---------------------------------------------------------------------------------- |
+| `event_log` (hash chain) | **Indefinite**                       | Append-only; critical for audit integrity. Archival to cold storage after 2 years. |
+| `proofs` (media URIs)    | **1 year** after contract completion | R2 objects deleted; metadata row retained with `media_uri = '[REDACTED]'`.         |
+| `notifications`          | **90 days** after read               | Soft-deleted, then purged in batch.                                                |
+| `fury_assignments`       | **1 year** after verdict             | Retained for dispute resolution window, then anonymized.                           |
+| `stripe_events`          | **7 years**                          | Financial regulatory compliance (IRS record-keeping).                              |
+| User PII (email, hashes) | **Account lifetime + 30 days**       | Deleted upon account deletion request per CCPA/GDPR.                               |
 
 > **Note**: The hash-chained `event_log` cannot be truncated without breaking chain integrity. Archival involves moving rows to a separate `event_log_archive` table while preserving the chain's terminal hash for verification.

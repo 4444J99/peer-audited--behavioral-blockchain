@@ -1,6 +1,6 @@
-import { useNavigation } from './hooks/useNavigation';
-import { slides } from './data/slides';
-import { SlideSection } from './components/SlideSection';
+import { useNavigation } from "./hooks/useNavigation";
+import { slides } from "./data/slides";
+import { SlideSection } from "./components/SlideSection";
 
 export default function App() {
   const { currentSlide, goTo } = useNavigation();
@@ -12,7 +12,7 @@ export default function App() {
         {slides.map((s, i) => (
           <button
             key={s.id}
-            className={`nav-dot ${i === currentSlide ? 'active' : ''}`}
+            className={`nav-dot ${i === currentSlide ? "active" : ""}`}
             onClick={() => goTo(i)}
             title={s.title}
             aria-label={`Go to ${s.title}`}
@@ -23,7 +23,12 @@ export default function App() {
       {/* Sections — natural scroll */}
       <main>
         {slides.map((slide, i) => (
-          <SlideSection key={slide.id} slide={slide} index={i} isActive={i === currentSlide} />
+          <SlideSection
+            key={slide.id}
+            slide={slide}
+            index={i}
+            isActive={i === currentSlide}
+          />
         ))}
       </main>
     </>

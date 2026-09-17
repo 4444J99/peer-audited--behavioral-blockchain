@@ -32,14 +32,14 @@ The only prerequisite is **Docker** with Compose v2 (`docker compose version`).
 
 ## Targets
 
-| Command | What it does |
-|---------|--------------|
+| Command                         | What it does                                                                              |
+| ------------------------------- | ----------------------------------------------------------------------------------------- |
 | `bash scripts/deploy.sh local`  | Builds images and starts the full stack via Docker Compose, then waits for health checks. |
-| `bash scripts/deploy.sh render` | Triggers a production deploy on Render (mirrors `.github/workflows/deploy.yml`). |
-| `bash scripts/deploy.sh build`  | Builds the API + Web Docker images only (no run). |
-| `bash scripts/deploy.sh down`   | Stops and removes the local stack. |
-| `bash scripts/deploy.sh logs`   | Tails logs from the running local stack. |
-| `bash scripts/deploy.sh help`   | Prints usage. |
+| `bash scripts/deploy.sh render` | Triggers a production deploy on Render (mirrors `.github/workflows/deploy.yml`).          |
+| `bash scripts/deploy.sh build`  | Builds the API + Web Docker images only (no run).                                         |
+| `bash scripts/deploy.sh down`   | Stops and removes the local stack.                                                        |
+| `bash scripts/deploy.sh logs`   | Tails logs from the running local stack.                                                  |
+| `bash scripts/deploy.sh help`   | Prints usage.                                                                             |
 
 ## How local config works
 
@@ -92,9 +92,9 @@ Docker host.
 
 ## Troubleshooting
 
-| Symptom | Fix |
-|---------|-----|
-| `docker compose v2 is required` | Install / upgrade Docker Desktop or the `docker-compose-plugin`. |
-| API container restarts on boot | A required secret is empty. Check `bash scripts/deploy.sh logs`; set the value in `.env`. |
-| Web can't reach the API | The browser-facing API URL is `STYX_DOCKER_API_INTERNAL_URL` (default `http://localhost:3000`). Override in `.env` if you changed the API port. |
-| Port already in use | Set `STYX_DOCKER_API_PORT` / `STYX_DOCKER_WEB_PORT` in `.env`. |
+| Symptom                         | Fix                                                                                                                                             |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docker compose v2 is required` | Install / upgrade Docker Desktop or the `docker-compose-plugin`.                                                                                |
+| API container restarts on boot  | A required secret is empty. Check `bash scripts/deploy.sh logs`; set the value in `.env`.                                                       |
+| Web can't reach the API         | The browser-facing API URL is `STYX_DOCKER_API_INTERNAL_URL` (default `http://localhost:3000`). Override in `.env` if you changed the API port. |
+| Port already in use             | Set `STYX_DOCKER_API_PORT` / `STYX_DOCKER_WEB_PORT` in `.env`.                                                                                  |

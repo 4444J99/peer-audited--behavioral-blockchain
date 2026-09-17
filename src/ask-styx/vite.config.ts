@@ -1,14 +1,14 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
   // deploy-ask-styx.yml publishes this bundle at the repository project Pages root.
-  base: '/peer-audited--behavioral-blockchain/',
+  base: "/peer-audited--behavioral-blockchain/",
   test: {
-    environment: 'jsdom',
+    environment: "jsdom",
     globals: true,
-    setupFiles: './tests/setup.ts',
+    setupFiles: "./tests/setup.ts",
     // Inline @testing-library/jest-dom so vitest 4 can resolve
     // its subpath `vitest` import correctly when running from a
     // workspace where the jest-dom package is hoisted to the
@@ -17,7 +17,7 @@ export default defineConfig({
     //    @testing-library/jest-dom/dist/vitest.mjs"
     server: {
       deps: {
-        inline: ['@testing-library/jest-dom'],
+        inline: ["@testing-library/jest-dom"],
       },
     },
   },

@@ -18,15 +18,15 @@ What distinguishes Styx from all four competitors is the explicit, formal link b
 
 ### 5.1.2 The Tier System as Graduated Exposure
 
-Rather than permitting arbitrary stake amounts, Styx implements a five-tier system that gates maximum stake exposure to the user's demonstrated behavioral history, as formalized in the integrity score function *IS*(*u*) (Definition D3, Section 3.3). The tier thresholds --- RESTRICTED_MODE (*IS* < 20, max stake $0), TIER_1_MICRO_STAKES (*IS* < 50, max $20), TIER_2_STANDARD (*IS* < 100, max $100), TIER_3_HIGH_ROLLER (*IS* < 500, max $1,000), and TIER_4_WHALE_VAULTS (*IS* $\geq$ 500, unlimited) --- serve two purposes simultaneously.
+Rather than permitting arbitrary stake amounts, Styx implements a five-tier system that gates maximum stake exposure to the user's demonstrated behavioral history, as formalized in the integrity score function _IS_(_u_) (Definition D3, Section 3.3). The tier thresholds --- RESTRICTED_MODE (_IS_ < 20, max stake $0), TIER_1_MICRO_STAKES (*IS* < 50, max $20), TIER_2_STANDARD (_IS_ < 100, max $100), TIER_3_HIGH_ROLLER (*IS* < 500, max $1,000), and TIER_4_WHALE_VAULTS (_IS_ $\geq$ 500, unlimited) --- serve two purposes simultaneously.
 
 First, the tier system functions as a behavioral ramp, consistent with the transtheoretical model of behavior change (Prochaska & DiClemente, 1983; Prochaska & Velicer, 1997). New users begin at TIER_1_MICRO_STAKES with a maximum exposure of $20 --- sufficient, when amplified by $\lambda = 1.955$, to produce a perceived loss magnitude of approximately $39.10. This is large enough to create meaningful deterrence for small behavioral commitments (a week of gym attendance, three days without contacting an ex-partner) without exposing a novice user to catastrophic financial risk. As the user accumulates completed contracts and their integrity score rises, they gain access to progressively higher stake ceilings, mirroring the "successive approximation" principle in contingency management (Stitzer & Petry, 2018).
 
-Second, the tier system implements a form of risk management that addresses the concern raised by Gneezy and Rustichini (2000) regarding the potentially counterproductive effects of small financial incentives. Their seminal finding --- that introducing a small fine for late daycare pickups actually increased tardiness by transforming a social obligation into a market transaction --- implies that stakes must be large enough to avoid the "crowding-out zone" where financial incentives are too small to deter but large enough to displace intrinsic motivation. The Styx tier system addresses this by ensuring that even the minimum functional stake ($20 at TIER_1) produces a perceived loss ($\sim$39) that exceeds the threshold at which financial penalties become salient deterrents. This is further reinforced by the $5 onboarding bonus (*B*$_{onboard}$), which uses the endowment effect (Thaler, 1999) to establish an initial reference point that the user is psychologically unwilling to abandon.
+Second, the tier system implements a form of risk management that addresses the concern raised by Gneezy and Rustichini (2000) regarding the potentially counterproductive effects of small financial incentives. Their seminal finding --- that introducing a small fine for late daycare pickups actually increased tardiness by transforming a social obligation into a market transaction --- implies that stakes must be large enough to avoid the "crowding-out zone" where financial incentives are too small to deter but large enough to displace intrinsic motivation. The Styx tier system addresses this by ensuring that even the minimum functional stake ($20 at TIER_1) produces a perceived loss ($\sim$39) that exceeds the threshold at which financial penalties become salient deterrents. This is further reinforced by the $5 onboarding bonus (_B_$_{onboard}$), which uses the endowment effect (Thaler, 1999) to establish an initial reference point that the user is psychologically unwilling to abandon.
 
 ### 5.1.3 Friction Reducers and Temporal Safeguards
 
-The operationalization of loss aversion requires not only calibrated penalties but also carefully designed temporal safeguards to prevent the system from becoming either too rigid or too permissive. Styx implements three friction-reduction mechanisms: grace days (2 per month, *g*$_{max}$), a cool-off period (7 days, $\tau_{cool}$), and the onboarding bonus.
+The operationalization of loss aversion requires not only calibrated penalties but also carefully designed temporal safeguards to prevent the system from becoming either too rigid or too permissive. Styx implements three friction-reduction mechanisms: grace days (2 per month, _g_$_{max}$), a cool-off period (7 days, $\tau_{cool}$), and the onboarding bonus.
 
 Grace days address a well-documented challenge in habit formation research: the asymmetry between the difficulty of perfect compliance and the motivational collapse that follows a single failure. Lally et al. (2010) found that missing a single day of habit practice does not significantly affect long-term habit formation, but the psychological impact of "breaking the streak" can trigger a cascade of abandonment --- what Marlatt and Donovan (2005) termed the "abstinence violation effect" in addiction research. By permitting two grace days per month without penalty, Styx decouples occasional lapses from perceived failure, maintaining the user's engagement without undermining the credibility of the stake.
 
@@ -168,18 +168,18 @@ The HVCS model does not claim to supersede these established frameworks. Rather,
 
 Theorem T5 (Section 4.5) establishes the Aegis Safety Protocol as a conjunction of six predicates that must hold for any contract to be accepted by the system:
 
-- *P*$_1$: $\sigma \leq \bar{\sigma}$ --- Absolute stake cap ($\bar{\sigma} = \$500$)
-- *P*$_2$: $\delta \geq \underline{\delta}$ --- Minimum duration ($\underline{\delta} = 7$ days)
-- *P*$_3$: $\kappa < \bar{\kappa} \lor \sigma \leq 5000$ --- Failure downscaling after 3 consecutive failures
-- *P*$_4$: $IS(u) \geq 40 \lor \sigma \leq 10000$ --- Integrity-based stake cap
-- *P*$_5$: $BMI(u) \geq \underline{BMI}$ --- Health floor ($\underline{BMI} = 18.5$)
-- *P*$_6$: $v_w \leq \bar{v}_w$ --- Velocity cap ($\bar{v}_w = 2\%$ weekly body weight loss)
+- _P_$_1$: $\sigma \leq \bar{\sigma}$ --- Absolute stake cap ($\bar{\sigma} = \$500$)
+- _P_$_2$: $\delta \geq \underline{\delta}$ --- Minimum duration ($\underline{\delta} = 7$ days)
+- _P_$_3$: $\kappa < \bar{\kappa} \lor \sigma \leq 5000$ --- Failure downscaling after 3 consecutive failures
+- _P_$_4$: $IS(u) \geq 40 \lor \sigma \leq 10000$ --- Integrity-based stake cap
+- _P_$_5$: $BMI(u) \geq \underline{BMI}$ --- Health floor ($\underline{BMI} = 18.5$)
+- _P_$_6$: $v_w \leq \bar{v}_w$ --- Velocity cap ($\bar{v}_w = 2\%$ weekly body weight loss)
 
-The conjunctive structure of the safety predicate set is critical: a contract is accepted if and only if all six predicates hold simultaneously. This "defense in depth" approach ensures that no single predicate failure can expose a user to harm. For example, a user with a high integrity score (*P*$_4$ satisfied) but a BMI of 17.5 (*P*$_5$ violated) would be rejected; a user with a healthy BMI but three consecutive failures (*P*$_3$ triggered) would be restricted to micro-stakes.
+The conjunctive structure of the safety predicate set is critical: a contract is accepted if and only if all six predicates hold simultaneously. This "defense in depth" approach ensures that no single predicate failure can expose a user to harm. For example, a user with a high integrity score (_P_$_4$ satisfied) but a BMI of 17.5 (_P_$_5$ violated) would be rejected; a user with a healthy BMI but three consecutive failures (_P_$_3$ triggered) would be restricted to micro-stakes.
 
-Predicate *P*$_1$ addresses what O'Donoghue and Rabin (1999) identified as the risk of "over-commitment" in naive agents who overestimate their future willpower. By capping absolute stake exposure at $500, the system bounds the maximum financial harm from a single contract failure, regardless of the user's confidence or integrity score. This cap was calibrated against two benchmarks: the median weekly disposable income in the target demographic and the maximum deposit amounts permitted by existing commitment device platforms (DietBet caps at approximately $500 per Transformer round; HealthyWage permits up to $1,000 per HealthyWager challenge).
+Predicate _P_$_1$ addresses what O'Donoghue and Rabin (1999) identified as the risk of "over-commitment" in naive agents who overestimate their future willpower. By capping absolute stake exposure at $500, the system bounds the maximum financial harm from a single contract failure, regardless of the user's confidence or integrity score. This cap was calibrated against two benchmarks: the median weekly disposable income in the target demographic and the maximum deposit amounts permitted by existing commitment device platforms (DietBet caps at approximately $500 per Transformer round; HealthyWage permits up to $1,000 per HealthyWager challenge).
 
-Predicate *P*$_5$ --- the BMI floor of 18.5 --- directly addresses the iatrogenic risk identified by Baumeister et al. (2007) in their "strength model" of self-control: that demanding excessive self-regulation from individuals already in a depleted state can produce paradoxical harm. A BMI below 18.5 is classified as underweight by the World Health Organization and is associated with increased mortality risk, immune dysfunction, and eating disorders. Permitting a financially-staked weight loss contract for such an individual would create a perverse incentive to lose additional weight, directly contradicting the therapeutic purpose of the platform. The velocity cap *P*$_6$ provides a complementary temporal constraint, preventing unsafe rates of weight loss even for users whose starting BMI is within the healthy range.
+Predicate _P_$_5$ --- the BMI floor of 18.5 --- directly addresses the iatrogenic risk identified by Baumeister et al. (2007) in their "strength model" of self-control: that demanding excessive self-regulation from individuals already in a depleted state can produce paradoxical harm. A BMI below 18.5 is classified as underweight by the World Health Organization and is associated with increased mortality risk, immune dysfunction, and eating disorders. Permitting a financially-staked weight loss contract for such an individual would create a perverse incentive to lose additional weight, directly contradicting the therapeutic purpose of the platform. The velocity cap _P_$_6$ provides a complementary temporal constraint, preventing unsafe rates of weight loss even for users whose starting BMI is within the healthy range.
 
 ### 5.4.2 The T8 Anti-Isolation Predicates
 
@@ -188,7 +188,7 @@ Theorem T8 (Section 4.8) extends the Aegis Protocol to the Recovery oath categor
 1. Target cap: $|targets(c)| \leq \bar{n}_{NC} = 3$ (maximum no-contact targets)
 2. Duration cap: $duration(c) \leq \bar{\delta}_R = 30$ days (maximum recovery contract duration)
 3. Accountability partner: $AP(c) \neq \emptyset$ (mandatory external oversight)
-4. Voluntariness acknowledgment: all four elements of *Ack*(*c*) must be affirmed
+4. Voluntariness acknowledgment: all four elements of _Ack_(_c_) must be affirmed
 5. Missed attestation limit: $\chi_{miss} < \bar{\chi}_{miss} = 3$ (auto-fail after 3 missed daily attestations)
 
 These predicates were designed with explicit reference to the clinical literature on post-breakup recovery and relapse prevention.
@@ -223,7 +223,7 @@ A philosophical tension runs through the Aegis Protocol: between user autonomy (
 
 The Aegis Protocol resolves this tension through a principle that might be termed "calibrated paternalism": the system does not prohibit risky contracts outright but constrains the parameter space within which users can operate. A user can create a no-contact contract, but only with at most 3 targets, for at most 30 days, with a mandatory accountability partner, and after affirming all four voluntariness acknowledgments. These constraints reduce the risk of iatrogenic harm without eliminating user agency --- a design philosophy consistent with Thaler and Sunstein's (2008) "libertarian paternalism" framework and with the broader commitment device literature that recognizes the value of voluntarily constraining one's future choices (Bryan et al., 2010).
 
-The design also responds to the concern raised by Halpern et al. (2019) that financial incentives for health behavior can create perverse incentives if not carefully bounded. By ensuring that stakes are always proportional to the user's demonstrated behavioral capacity (via the integrity-based cap *P*$_4$), the system prevents the scenario in which a novice user stakes a large sum, fails, suffers financial harm, and abandons the platform --- precisely the outcome that maximizes iatrogenic risk and minimizes therapeutic benefit.
+The design also responds to the concern raised by Halpern et al. (2019) that financial incentives for health behavior can create perverse incentives if not carefully bounded. By ensuring that stakes are always proportional to the user's demonstrated behavioral capacity (via the integrity-based cap _P_$_4$), the system prevents the scenario in which a novice user stakes a large sum, fails, suffers financial harm, and abandons the platform --- precisely the outcome that maximizes iatrogenic risk and minimizes therapeutic benefit.
 
 ---
 
@@ -281,9 +281,9 @@ This linguistic strategy is not merely cosmetic. App Store review processes (App
 
 The Aegis Protocol (Theorem T5) serves a dual purpose: it protects users from iatrogenic harm and it addresses Federal Trade Commission (FTC) consumer protection requirements. Specifically:
 
-- The BMI floor (*P*$_5$) and velocity cap (*P*$_6$) demonstrate that the platform does not incentivize unsafe weight loss practices, addressing the FTC's "Gut Check" guidelines for weight loss advertising claims (FTC, 2023).
-- The stake cap (*P*$_1$) and failure downscaling (*P*$_3$) demonstrate that the platform bounds maximum consumer financial exposure, addressing the FTC's concerns about deceptive practices in financial incentive programs.
-- The integrity-based cap (*P*$_4$) demonstrates that financial exposure is proportional to the user's demonstrated behavioral capacity, addressing the FTC's guidance on responsible advertising of expected results.
+- The BMI floor (_P_$_5$) and velocity cap (_P_$_6$) demonstrate that the platform does not incentivize unsafe weight loss practices, addressing the FTC's "Gut Check" guidelines for weight loss advertising claims (FTC, 2023).
+- The stake cap (_P_$_1$) and failure downscaling (_P_$_3$) demonstrate that the platform bounds maximum consumer financial exposure, addressing the FTC's concerns about deceptive practices in financial incentive programs.
+- The integrity-based cap (_P_$_4$) demonstrates that financial exposure is proportional to the user's demonstrated behavioral capacity, addressing the FTC's guidance on responsible advertising of expected results.
 
 These safety invariants, being formally proven rather than merely policy-stated, provide a level of regulatory defensibility that exceeds the informal "best practices" of competitor platforms. If challenged by a regulatory authority, Styx can point to mathematical proofs that its safety constraints are logically consistent, computationally enforceable, and provably sufficient to prevent the specific harms (excessive financial loss, unsafe health practices, exploitative contract terms) that regulators are most likely to scrutinize.
 
@@ -345,7 +345,7 @@ The most important next step is the design and execution of a randomized control
 - **Follow-up:** 90 days post-contract completion, measuring behavioral maintenance in the absence of financial stakes.
 - **IRB approval:** required, with specific attention to the ethical implications of financial stakes in behavioral interventions and the informed consent process for recovery-category contracts.
 
-The trial should be pre-registered and powered to detect a medium effect size (Cohen's *d* = 0.5) at 80% power with $\alpha = 0.05$, consistent with the effect sizes reported in the contingency management literature (Stitzer & Petry, 2018; Volpp et al., 2009).
+The trial should be pre-registered and powered to detect a medium effect size (Cohen's _d_ = 0.5) at 80% power with $\alpha = 0.05$, consistent with the effect sizes reported in the contingency management literature (Stitzer & Petry, 2018; Volpp et al., 2009).
 
 ### 5.7.2 On-Chain Migration
 

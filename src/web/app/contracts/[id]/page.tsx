@@ -1,27 +1,78 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
-  ArrowLeft, Clock, CheckCircle, XCircle, Loader2, AlertTriangle,
-  Send, Calendar, Shield, FileText, UserPlus,
-} from 'lucide-react';
-import { api } from '../../../services/api-client';
-import type { AccountabilityStatus, IdentityOathSummary } from '../../../services/api-client';
-import { useAuth } from '../../../contexts/AuthContext';
-import RecoveryLockCountdown from '../../../components/RecoveryLockCountdown';
-import DangerZoneBanner from '../../../components/DangerZoneBanner';
+  ArrowLeft,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  AlertTriangle,
+  Send,
+  Calendar,
+  Shield,
+  FileText,
+  UserPlus,
+} from "lucide-react";
+import { api } from "../../../services/api-client";
+import type {
+  AccountabilityStatus,
+  IdentityOathSummary,
+} from "../../../services/api-client";
+import { useAuth } from "../../../contexts/AuthContext";
+import RecoveryLockCountdown from "../../../components/RecoveryLockCountdown";
+import DangerZoneBanner from "../../../components/DangerZoneBanner";
 
-type ContractStatus = 'ACTIVE' | 'COMPLETED' | 'FAILED' | 'PENDING_REVIEW' | 'PAYMENT_FAILED' | 'DISPUTED';
+type ContractStatus =
+  | "ACTIVE"
+  | "COMPLETED"
+  | "FAILED"
+  | "PENDING_REVIEW"
+  | "PAYMENT_FAILED"
+  | "DISPUTED";
 
-const STATUS_CONFIG: Record<string, { icon: typeof Clock; bg: string; color: string; label: string }> = {
-  ACTIVE: { icon: Clock, bg: 'bg-blue-500/20 border-blue-500/40', color: 'text-blue-400', label: 'Active' },
-  COMPLETED: { icon: CheckCircle, bg: 'bg-green-500/20 border-green-500/40', color: 'text-green-400', label: 'Completed' },
-  FAILED: { icon: XCircle, bg: 'bg-red-500/20 border-red-500/40', color: 'text-red-400', label: 'Failed' },
-  PENDING_REVIEW: { icon: Clock, bg: 'bg-yellow-500/20 border-yellow-500/40', color: 'text-yellow-400', label: 'Pending Review' },
-  PAYMENT_FAILED: { icon: AlertTriangle, bg: 'bg-orange-500/20 border-orange-500/40', color: 'text-orange-400', label: 'Payment Failed' },
-  DISPUTED: { icon: Shield, bg: 'bg-purple-500/20 border-purple-500/40', color: 'text-purple-400', label: 'Disputed' },
+const STATUS_CONFIG: Record<
+  string,
+  { icon: typeof Clock; bg: string; color: string; label: string }
+> = {
+  ACTIVE: {
+    icon: Clock,
+    bg: "bg-blue-500/20 border-blue-500/40",
+    color: "text-blue-400",
+    label: "Active",
+  },
+  COMPLETED: {
+    icon: CheckCircle,
+    bg: "bg-green-500/20 border-green-500/40",
+    color: "text-green-400",
+    label: "Completed",
+  },
+  FAILED: {
+    icon: XCircle,
+    bg: "bg-red-500/20 border-red-500/40",
+    color: "text-red-400",
+    label: "Failed",
+  },
+  PENDING_REVIEW: {
+    icon: Clock,
+    bg: "bg-yellow-500/20 border-yellow-500/40",
+    color: "text-yellow-400",
+    label: "Pending Review",
+  },
+  PAYMENT_FAILED: {
+    icon: AlertTriangle,
+    bg: "bg-orange-500/20 border-orange-500/40",
+    color: "text-orange-400",
+    label: "Payment Failed",
+  },
+  DISPUTED: {
+    icon: Shield,
+    bg: "bg-purple-500/20 border-purple-500/40",
+    color: "text-purple-400",
+    label: "Disputed",
+  },
 };
 
 interface ContractData {
@@ -62,7 +113,7 @@ export default function ContractDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Proof submission
-  const [mediaUri, setMediaUri] = useState('');
+  const [mediaUri, setMediaUri] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState<string | null>(null);
 
@@ -75,8 +126,9 @@ export default function ContractDetailPage() {
   const [disputeResult, setDisputeResult] = useState<string | null>(null);
 
   // Accountability partner (owner side)
-  const [partnerStatus, setPartnerStatus] = useState<AccountabilityStatus | null>(null);
-  const [partnerEmail, setPartnerEmail] = useState('');
+  const [partnerStatus, setPartnerStatus] =
+    useState<AccountabilityStatus | null>(null);
+  const [partnerEmail, setPartnerEmail] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteResult, setInviteResult] = useState<string | null>(null);
 
@@ -86,12 +138,16 @@ export default function ContractDetailPage() {
       try {
         const contractData = await api.getContract(contractId);
         setContract(contractData as any);
-        setProofs(contractData.proofs as any || []);
+        setProofs((contractData.proofs as any) || []);
         // A contract with no partners is the normal case, not an error — the
         // roster stays null and the panel renders its invite form.
-        setPartnerStatus(await api.getAccountabilityStatus(contractId).catch(() => null));
+        setPartnerStatus(
+          await api.getAccountabilityStatus(contractId).catch(() => null),
+        );
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load contract');
+        setError(
+          err instanceof Error ? err.message : "Failed to load contract",
+        );
       } finally {
         setLoading(false);
       }
@@ -108,12 +164,18 @@ export default function ContractDetailPage() {
       if (result.rejected) {
         setSubmitResult(`Auto-rejected: ${result.reason}`);
       } else {
-        setSubmitResult(`Proof submitted (ID: ${result.proofId}). Routed to Fury network.`);
-        setMediaUri('');
-        setContract((prev) => prev ? { ...prev, status: 'PENDING_REVIEW' as ContractStatus } : prev);
+        setSubmitResult(
+          `Proof submitted (ID: ${result.proofId}). Routed to Fury network.`,
+        );
+        setMediaUri("");
+        setContract((prev) =>
+          prev ? { ...prev, status: "PENDING_REVIEW" as ContractStatus } : prev,
+        );
       }
     } catch (err) {
-      setSubmitResult(err instanceof Error ? err.message : 'Failed to submit proof');
+      setSubmitResult(
+        err instanceof Error ? err.message : "Failed to submit proof",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -124,10 +186,18 @@ export default function ContractDetailPage() {
     setGraceResult(null);
     try {
       const result = await api.useGraceDay(contractId);
-      setGraceResult(`Deadline extended to ${new Date(result.newDeadline).toLocaleDateString()}`);
-      setContract((prev) => prev ? { ...prev, endsAt: new Date(result.newDeadline).toISOString() } : prev);
+      setGraceResult(
+        `Deadline extended to ${new Date(result.newDeadline).toLocaleDateString()}`,
+      );
+      setContract((prev) =>
+        prev
+          ? { ...prev, endsAt: new Date(result.newDeadline).toISOString() }
+          : prev,
+      );
     } catch (err) {
-      setGraceResult(err instanceof Error ? err.message : 'Failed to use grace day');
+      setGraceResult(
+        err instanceof Error ? err.message : "Failed to use grace day",
+      );
     } finally {
       setGraceLoading(false);
     }
@@ -144,7 +214,9 @@ export default function ContractDetailPage() {
           : `Appeal filed (${result.appealStatus}). No fee was charged.`,
       );
     } catch (err) {
-      setDisputeResult(err instanceof Error ? err.message : 'Failed to file dispute');
+      setDisputeResult(
+        err instanceof Error ? err.message : "Failed to file dispute",
+      );
     } finally {
       setDisputeLoading(false);
     }
@@ -156,11 +228,19 @@ export default function ContractDetailPage() {
     setInviteResult(null);
     try {
       await api.invitePartner(contractId, partnerEmail.trim());
-      setPartnerEmail('');
-      setInviteResult('Invitation sent. They accept it from their partner page.');
-      setPartnerStatus(await api.getAccountabilityStatus(contractId).catch(() => partnerStatus));
+      setPartnerEmail("");
+      setInviteResult(
+        "Invitation sent. They accept it from their partner page.",
+      );
+      setPartnerStatus(
+        await api
+          .getAccountabilityStatus(contractId)
+          .catch(() => partnerStatus),
+      );
     } catch (err) {
-      setInviteResult(err instanceof Error ? err.message : 'Failed to invite partner');
+      setInviteResult(
+        err instanceof Error ? err.message : "Failed to invite partner",
+      );
     } finally {
       setInviteLoading(false);
     }
@@ -180,8 +260,15 @@ export default function ContractDetailPage() {
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center space-y-4">
           <AlertTriangle className="mx-auto text-red-500" size={48} />
-          <p className="text-red-400 font-bold">{error || 'Contract not found'}</p>
-          <Link href="/dashboard" className="text-neutral-400 hover:text-white underline">Back to Dashboard</Link>
+          <p className="text-red-400 font-bold">
+            {error || "Contract not found"}
+          </p>
+          <Link
+            href="/dashboard"
+            className="text-neutral-400 hover:text-white underline"
+          >
+            Back to Dashboard
+          </Link>
         </div>
       </div>
     );
@@ -196,27 +283,38 @@ export default function ContractDetailPage() {
   const totalMs = endsAt.getTime() - startedAt.getTime();
   const elapsedMs = Math.min(now.getTime() - startedAt.getTime(), totalMs);
   const progressPct = totalMs > 0 ? Math.round((elapsedMs / totalMs) * 100) : 0;
-  const daysRemaining = Math.max(0, Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-  const isRecovery = contract.oath_category.startsWith('RECOVERY_');
+  const daysRemaining = Math.max(
+    0,
+    Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
+  );
+  const isRecovery = contract.oath_category.startsWith("RECOVERY_");
 
   return (
     <div className="min-h-screen bg-black text-white font-sans p-6 md:p-12 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/dashboard" className="text-neutral-400 hover:text-white transition-colors">
+        <Link
+          href="/dashboard"
+          className="text-neutral-400 hover:text-white transition-colors"
+        >
           <ArrowLeft size={24} />
         </Link>
         <div className="flex-1">
           <h1 className="text-2xl font-black tracking-tight uppercase">
-            {contract.oath_category.replace(/_/g, ' ')}
+            {contract.oath_category.replace(/_/g, " ")}
           </h1>
           <p className="text-neutral-500 text-sm mt-1">
-            {contract.verification_method.replace(/_/g, ' ')} &bull; Contract {contract.id.slice(0, 8)}
+            {contract.verification_method.replace(/_/g, " ")} &bull; Contract{" "}
+            {contract.id.slice(0, 8)}
           </p>
         </div>
-        <div className={`px-4 py-2 rounded-full border ${statusCfg.bg} flex items-center gap-2`}>
+        <div
+          className={`px-4 py-2 rounded-full border ${statusCfg.bg} flex items-center gap-2`}
+        >
           <StatusIcon size={16} className={statusCfg.color} />
-          <span className={`font-bold text-sm ${statusCfg.color}`}>{statusCfg.label}</span>
+          <span className={`font-bold text-sm ${statusCfg.color}`}>
+            {statusCfg.label}
+          </span>
         </div>
       </div>
 
@@ -234,25 +332,29 @@ export default function ContractDetailPage() {
       )}
 
       {/* Danger windows — the API only evaluates them for ACTIVE contracts. */}
-      {contract.status === 'ACTIVE' && (
+      {contract.status === "ACTIVE" && (
         <div className="mb-6">
           <DangerZoneBanner contractId={contract.id} />
         </div>
       )}
 
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Stake & Timeline */}
         <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-6">
           <div>
-            <h2 className="text-neutral-500 font-bold tracking-widest text-xs mb-2">STAKE AMOUNT</h2>
+            <h2 className="text-neutral-500 font-bold tracking-widest text-xs mb-2">
+              STAKE AMOUNT
+            </h2>
             <p className="text-4xl font-black">
-              <span className="text-red-500">$</span>{stakeAmount.toFixed(2)}
+              <span className="text-red-500">$</span>
+              {stakeAmount.toFixed(2)}
             </p>
           </div>
 
           <div>
-            <h2 className="text-neutral-500 font-bold tracking-widest text-xs mb-3">TIMELINE</h2>
+            <h2 className="text-neutral-500 font-bold tracking-widest text-xs mb-3">
+              TIMELINE
+            </h2>
             <div className="flex justify-between text-xs text-neutral-500 mb-2">
               <span>{startedAt.toLocaleDateString()}</span>
               <span>{endsAt.toLocaleDateString()}</span>
@@ -260,16 +362,19 @@ export default function ContractDetailPage() {
             <div className="w-full h-2 bg-neutral-800 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${
-                  contract.status === 'COMPLETED' ? 'bg-green-500' :
-                  contract.status === 'FAILED' ? 'bg-red-500' : 'bg-yellow-500'
+                  contract.status === "COMPLETED"
+                    ? "bg-green-500"
+                    : contract.status === "FAILED"
+                      ? "bg-red-500"
+                      : "bg-yellow-500"
                 }`}
                 style={{ width: `${Math.min(progressPct, 100)}%` }}
               />
             </div>
-            {contract.status === 'ACTIVE' && (
+            {contract.status === "ACTIVE" && (
               <p className="text-neutral-400 text-sm mt-2">
                 <Clock size={14} className="inline mr-1" />
-                {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} remaining
+                {daysRemaining} day{daysRemaining !== 1 ? "s" : ""} remaining
               </p>
             )}
           </div>
@@ -281,7 +386,9 @@ export default function ContractDetailPage() {
             </div>
             <div>
               <span className="text-neutral-500">Created</span>
-              <p className="font-bold">{new Date(contract.created_at).toLocaleDateString()}</p>
+              <p className="font-bold">
+                {new Date(contract.created_at).toLocaleDateString()}
+              </p>
             </div>
           </div>
         </div>
@@ -289,20 +396,24 @@ export default function ContractDetailPage() {
         {/* Actions */}
         <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-6">
           {/* Status banners */}
-          {contract.status === 'COMPLETED' && (
+          {contract.status === "COMPLETED" && (
             <div className="p-4 bg-green-900/20 border border-green-800 rounded-xl">
               <CheckCircle className="text-green-400 mb-2" size={24} />
               <p className="font-bold text-green-400">Contract Fulfilled</p>
-              <p className="text-neutral-400 text-sm mt-1">${stakeAmount.toFixed(2)} returned to your wallet.</p>
+              <p className="text-neutral-400 text-sm mt-1">
+                ${stakeAmount.toFixed(2)} returned to your wallet.
+              </p>
             </div>
           )}
 
-          {contract.status === 'FAILED' && (
+          {contract.status === "FAILED" && (
             <div className="p-4 bg-red-900/20 border border-red-800 rounded-xl space-y-3">
               <div>
                 <XCircle className="text-red-400 mb-2" size={24} />
                 <p className="font-bold text-red-400">Contract Failed</p>
-                <p className="text-neutral-400 text-sm mt-1">${stakeAmount.toFixed(2)} has been captured.</p>
+                <p className="text-neutral-400 text-sm mt-1">
+                  ${stakeAmount.toFixed(2)} has been captured.
+                </p>
               </div>
               <button
                 onClick={handleDispute}
@@ -313,7 +424,11 @@ export default function ContractDetailPage() {
                     STYX_APPEAL_FEE_ENABLED escape hatch is on, so a hardcoded
                     "Free" would lie the moment it is. The result text below
                     reports what actually happened. */}
-                {disputeLoading ? <Loader2 className="animate-spin" size={16} /> : <FileText size={16} />}
+                {disputeLoading ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : (
+                  <FileText size={16} />
+                )}
                 File Dispute
               </button>
               {disputeResult && (
@@ -322,28 +437,33 @@ export default function ContractDetailPage() {
             </div>
           )}
 
-          {contract.status === 'PENDING_REVIEW' && (
+          {contract.status === "PENDING_REVIEW" && (
             <div className="p-4 bg-blue-900/20 border border-blue-800 rounded-xl">
               <Shield className="text-blue-400 mb-2" size={24} />
               <p className="font-bold text-blue-400">Awaiting Fury Verdict</p>
-              <p className="text-neutral-400 text-sm mt-1">Your proof is being reviewed by the Fury network.</p>
+              <p className="text-neutral-400 text-sm mt-1">
+                Your proof is being reviewed by the Fury network.
+              </p>
             </div>
           )}
 
           {/* Daily Attestation — Recovery stream only */}
-          {contract.status === 'ACTIVE' && contract.oath_category.startsWith('RECOVERY_') && (
-            <Link
-              href={`/contracts/${contract.id}/attest`}
-              className="block w-full py-4 bg-amber-600 hover:bg-amber-700 text-black font-black rounded-xl transition-colors text-center text-lg"
-            >
-              Daily Check-In
-            </Link>
-          )}
+          {contract.status === "ACTIVE" &&
+            contract.oath_category.startsWith("RECOVERY_") && (
+              <Link
+                href={`/contracts/${contract.id}/attest`}
+                className="block w-full py-4 bg-amber-600 hover:bg-amber-700 text-black font-black rounded-xl transition-colors text-center text-lg"
+              >
+                Daily Check-In
+              </Link>
+            )}
 
           {/* Proof Submission — only when ACTIVE */}
-          {contract.status === 'ACTIVE' && (
+          {contract.status === "ACTIVE" && (
             <div className="space-y-3">
-              <h3 className="font-bold text-sm uppercase tracking-widest text-neutral-500">Submit Proof</h3>
+              <h3 className="font-bold text-sm uppercase tracking-widest text-neutral-500">
+                Submit Proof
+              </h3>
               <input
                 type="text"
                 value={mediaUri}
@@ -356,7 +476,11 @@ export default function ContractDetailPage() {
                 disabled={submitting || !mediaUri.trim()}
                 className="w-full py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
               >
-                {submitting ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
+                {submitting ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : (
+                  <Send size={16} />
+                )}
                 Submit Proof
               </button>
               {submitResult && (
@@ -369,7 +493,11 @@ export default function ContractDetailPage() {
                 disabled={graceLoading}
                 className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
               >
-                {graceLoading ? <Loader2 className="animate-spin" size={16} /> : <Calendar size={16} />}
+                {graceLoading ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : (
+                  <Calendar size={16} />
+                )}
                 Use Grace Day (+24h)
               </button>
               {graceResult && (
@@ -385,7 +513,7 @@ export default function ContractDetailPage() {
         <div className="mt-8">
           <RecoveryLockCountdown
             contractId={contract.id}
-            canRequestBreak={contract.status === 'ACTIVE'}
+            canRequestBreak={contract.status === "ACTIVE"}
           />
         </div>
       )}
@@ -393,22 +521,36 @@ export default function ContractDetailPage() {
       {/* Proof History */}
       {proofs.length > 0 && (
         <div className="mt-8 p-6 bg-neutral-900 border border-neutral-800 rounded-2xl">
-          <h2 className="font-bold text-sm uppercase tracking-widest text-neutral-500 mb-4">Proof History</h2>
+          <h2 className="font-bold text-sm uppercase tracking-widest text-neutral-500 mb-4">
+            Proof History
+          </h2>
           <div className="space-y-3">
             {proofs.map((proof) => (
-              <div key={proof.id} className="flex items-center justify-between p-3 bg-black rounded-xl border border-neutral-800">
+              <div
+                key={proof.id}
+                className="flex items-center justify-between p-3 bg-black rounded-xl border border-neutral-800"
+              >
                 <div>
-                  <p className="font-bold text-sm">{proof.id.slice(0, 12)}...</p>
+                  <p className="font-bold text-sm">
+                    {proof.id.slice(0, 12)}...
+                  </p>
                   <p className="text-xs text-neutral-500">
-                    {proof.timestamp ? new Date(proof.timestamp).toLocaleString() : 'Pending'}
+                    {proof.timestamp
+                      ? new Date(proof.timestamp).toLocaleString()
+                      : "Pending"}
                   </p>
                 </div>
-                <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                  proof.status === 'VERIFIED' ? 'bg-green-900/30 text-green-400' :
-                  proof.status === 'REJECTED' ? 'bg-red-900/30 text-red-400' :
-                  proof.status === 'AUTO_REJECTED' ? 'bg-orange-900/30 text-orange-400' :
-                  'bg-blue-900/30 text-blue-400'
-                }`}>
+                <span
+                  className={`text-xs font-bold px-3 py-1 rounded-full ${
+                    proof.status === "VERIFIED"
+                      ? "bg-green-900/30 text-green-400"
+                      : proof.status === "REJECTED"
+                        ? "bg-red-900/30 text-red-400"
+                        : proof.status === "AUTO_REJECTED"
+                          ? "bg-orange-900/30 text-orange-400"
+                          : "bg-blue-900/30 text-blue-400"
+                  }`}
+                >
                   {proof.status}
                 </span>
               </div>
@@ -431,11 +573,15 @@ export default function ContractDetailPage() {
                 className="flex items-center justify-between p-3 bg-black rounded-xl border border-neutral-800"
               >
                 <p className="font-bold text-sm break-all">{partner.email}</p>
-                <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                  partner.status === 'ACTIVE' ? 'bg-green-900/30 text-green-400' :
-                  partner.status === 'PENDING' ? 'bg-blue-900/30 text-blue-400' :
-                  'bg-red-900/30 text-red-400'
-                }`}>
+                <span
+                  className={`text-xs font-bold px-3 py-1 rounded-full ${
+                    partner.status === "ACTIVE"
+                      ? "bg-green-900/30 text-green-400"
+                      : partner.status === "PENDING"
+                        ? "bg-blue-900/30 text-blue-400"
+                        : "bg-red-900/30 text-red-400"
+                  }`}
+                >
                   {partner.status}
                 </span>
               </div>
@@ -443,7 +589,8 @@ export default function ContractDetailPage() {
           </div>
         ) : (
           <p className="text-sm text-neutral-500">
-            No partner on this contract. A partner co-signs your daily attestations.
+            No partner on this contract. A partner co-signs your daily
+            attestations.
           </p>
         )}
 
@@ -460,23 +607,35 @@ export default function ContractDetailPage() {
             disabled={inviteLoading || !partnerEmail.trim()}
             className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
           >
-            {inviteLoading ? <Loader2 className="animate-spin" size={16} /> : <UserPlus size={16} />}
+            {inviteLoading ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : (
+              <UserPlus size={16} />
+            )}
             Invite Partner
           </button>
-          {inviteResult && <p className="text-sm text-neutral-400">{inviteResult}</p>}
+          {inviteResult && (
+            <p className="text-sm text-neutral-400">{inviteResult}</p>
+          )}
         </div>
 
         {partnerStatus && partnerStatus.history.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-xs uppercase tracking-widest text-neutral-500">Partner Ledger</h3>
+            <h3 className="text-xs uppercase tracking-widest text-neutral-500">
+              Partner Ledger
+            </h3>
             {partnerStatus.history.map((event) => (
               <div
                 key={event.id}
                 className="flex items-center justify-between p-3 bg-black rounded-xl border border-neutral-800"
               >
-                <span className="text-sm font-bold">{event.event_type.replace(/_/g, ' ')}</span>
+                <span className="text-sm font-bold">
+                  {event.event_type.replace(/_/g, " ")}
+                </span>
                 <span className="text-xs text-neutral-500">
-                  {event.created_at ? new Date(event.created_at).toLocaleString() : ''}
+                  {event.created_at
+                    ? new Date(event.created_at).toLocaleString()
+                    : ""}
                 </span>
               </div>
             ))}

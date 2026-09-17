@@ -1,4 +1,4 @@
-import p5 from 'p5';
+import p5 from "p5";
 
 export const escrowGravity = (p: p5) => {
   const stakes: { x: number; y: number; r: number; isBonus: boolean }[] = [];
@@ -34,7 +34,12 @@ export const escrowGravity = (p: p5) => {
         s.x += (s.x - cx) * 0.04;
         s.y += (s.y - cy) * 0.04;
         p.fill(163, 230, 53, 200);
-        if (s.x < -20 || s.x > p.width + 20 || s.y < -20 || s.y > p.height + 20) {
+        if (
+          s.x < -20 ||
+          s.x > p.width + 20 ||
+          s.y < -20 ||
+          s.y > p.height + 20
+        ) {
           s.x = cx + p.random(-10, 10);
           s.y = cy + p.random(-10, 10);
         }

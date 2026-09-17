@@ -16,27 +16,29 @@
 Best for: Exploratory research, understanding motivations, pain point discovery.
 
 **Structure:**
-| Phase | Duration | Content |
-|-------|----------|---------|
-| Warm-up | 3 min | Consent reminder, context, "tell me about yourself" |
-| Context | 5 min | Current behavior / habits around the problem space |
+
+| Phase      | Duration  | Content                                                         |
+| ---------- | --------- | --------------------------------------------------------------- |
+| Warm-up    | 3 min     | Consent reminder, context, "tell me about yourself"             |
+| Context    | 5 min     | Current behavior / habits around the problem space              |
 | Experience | 10-15 min | Walk through their actual experience with Styx (or a prototype) |
-| Reflection | 5-10 min | What worked, what didn't, what surprised them |
-| Close | 2 min | "Anything else?", thank you, incentive delivery |
+| Reflection | 5-10 min  | What worked, what didn't, what surprised them                   |
+| Close      | 2 min     | "Anything else?", thank you, incentive delivery                 |
 
 ### Usability Test (20-30 min)
 
 Best for: Evaluative research on a specific flow.
 
 **Structure:**
-| Phase | Duration | Content |
-|-------|----------|---------|
-| Warm-up | 2 min | Consent, context |
-| Task 1 | 5 min | "Please create a new contract" — observe, do not guide |
-| Task 2 | 5 min | "Submit your daily proof" — observe |
-| Task 3 | 5 min | "Check your earnings" — observe |
-| Debrief | 5-8 min | SUS questionnaire, open feedback |
-| Close | 2 min | Thank you, incentive |
+
+| Phase   | Duration | Content                                                |
+| ------- | -------- | ------------------------------------------------------ |
+| Warm-up | 2 min    | Consent, context                                       |
+| Task 1  | 5 min    | "Please create a new contract" — observe, do not guide |
+| Task 2  | 5 min    | "Submit your daily proof" — observe                    |
+| Task 3  | 5 min    | "Check your earnings" — observe                        |
+| Debrief | 5-8 min  | SUS questionnaire, open feedback                       |
+| Close   | 2 min    | Thank you, incentive                                   |
 
 ### Survey (quantitative)
 

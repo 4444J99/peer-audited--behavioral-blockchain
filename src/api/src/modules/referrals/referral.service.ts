@@ -1,8 +1,16 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { Pool } from 'pg';
-import { randomBytes } from 'crypto';
-import { LedgerService } from '../../../services/ledger/ledger.service';
-import { REFERRAL_REWARD_AMOUNT, MAX_MONTHLY_REFERRALS } from '../../../../shared/libs/behavioral-logic';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { Pool } from "pg";
+import { randomBytes } from "crypto";
+import { LedgerService } from "../../../services/ledger/ledger.service";
+import {
+  REFERRAL_REWARD_AMOUNT,
+  MAX_MONTHLY_REFERRALS,
+} from "../../../../shared/libs/behavioral-logic";
 
 export const BETA_MAX_COHORT_INVITES = 2;
 
@@ -13,7 +21,7 @@ export interface CohortNomination {
   nomineeName: string | null;
   note: string | null;
   inviteCode: string;
-  status: 'PENDING' | 'ACCEPTED' | 'EXPIRED';
+  status: "PENDING" | "ACCEPTED" | "EXPIRED";
   acceptedUserId: string | null;
   createdAt: Date;
   acceptedAt: Date | null;
@@ -44,7 +52,7 @@ export class ReferralService {
   ) {}
 
   private generateCode(): string {
-    return randomBytes(4).toString('hex').toUpperCase();
+    return randomBytes(4).toString("hex").toUpperCase();
   }
 
   async getOrCreateCode(userId: string): Promise<string> {
@@ -53,7 +61,7 @@ export class ReferralService {
       [userId],
     );
     if (existing.rows.length === 0) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
     if (existing.rows[0].referral_code) {
       return existing.rows[0].referral_code;
@@ -71,21 +79,25 @@ export class ReferralService {
       attempts++;
     } while (attempts < 5);
 
-    await this.pool.query(
-      `UPDATE users SET referral_code = $1 WHERE id = $2`,
-      [code, userId],
-    );
+    await this.pool.query(`UPDATE users SET referral_code = $1 WHERE id = $2`, [
+      code,
+      userId,
+    ]);
 
     return code;
   }
 
   async getCode(userId: string): Promise<{ code: string; url: string }> {
     const code = await this.getOrCreateCode(userId);
-    const baseUrl = process.env.STYX_REFERRAL_BASE_URL || 'https://styx.app/join';
+    const baseUrl =
+      process.env.STYX_REFERRAL_BASE_URL || "https://styx.app/join";
     return { code, url: `${baseUrl}/${code}` };
   }
 
-  async attributeReferral(referralCode: string, newUserId: string): Promise<void> {
+  async attributeReferral(
+    referralCode: string,
+    newUserId: string,
+  ): Promise<void> {
     const referrer = await this.pool.query(
       `SELECT id FROM users WHERE referral_code = $1`,
       [referralCode],
@@ -107,10 +119,15 @@ export class ReferralService {
       [referrerId, newUserId, referralCode, REFERRAL_REWARD_AMOUNT],
     );
 
-    this.logger.log(`Attributed referral: user ${newUserId} referred by ${referrerId}`);
+    this.logger.log(
+      `Attributed referral: user ${newUserId} referred by ${referrerId}`,
+    );
   }
 
-  async rewardOnFirstContract(referredUserId: string, contractId: string): Promise<void> {
+  async rewardOnFirstContract(
+    referredUserId: string,
+    contractId: string,
+  ): Promise<void> {
     const referral = await this.pool.query(
       `SELECT id, referrer_id, status, reward_amount_cents
        FROM referrals
@@ -121,7 +138,11 @@ export class ReferralService {
 
     if (referral.rows.length === 0) return;
 
-    const { id: referralId, referrer_id: referrerId, reward_amount_cents: amount } = referral.rows[0];
+    const {
+      id: referralId,
+      referrer_id: referrerId,
+      reward_amount_cents: amount,
+    } = referral.rows[0];
 
     const monthlyCount = await this.pool.query(
       `SELECT COUNT(*)::int AS count
@@ -132,7 +153,9 @@ export class ReferralService {
     );
 
     if (monthlyCount.rows[0].count >= MAX_MONTHLY_REFERRALS) {
-      this.logger.warn(`Referrer ${referrerId} hit monthly cap (${MAX_MONTHLY_REFERRALS}) — deferring reward`);
+      this.logger.warn(
+        `Referrer ${referrerId} hit monthly cap (${MAX_MONTHLY_REFERRALS}) — deferring reward`,
+      );
       return;
     }
 
@@ -141,7 +164,9 @@ export class ReferralService {
       [referrerId],
     );
     if (!refAccount.rows[0]?.account_id) {
-      this.logger.warn(`Referrer ${referrerId} has no account_id — cannot pay reward`);
+      this.logger.warn(
+        `Referrer ${referrerId} has no account_id — cannot pay reward`,
+      );
       return;
     }
 
@@ -149,7 +174,9 @@ export class ReferralService {
       `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
     );
     if (revenueAccount.rows.length === 0) {
-      this.logger.error('SYSTEM_REVENUE account not found — cannot pay referral reward');
+      this.logger.error(
+        "SYSTEM_REVENUE account not found — cannot pay referral reward",
+      );
       return;
     }
 
@@ -158,7 +185,7 @@ export class ReferralService {
       refAccount.rows[0].account_id,
       amount,
       contractId,
-      { type: 'REFERRAL_REWARD', referralId },
+      { type: "REFERRAL_REWARD", referralId },
     );
 
     await this.pool.query(
@@ -168,7 +195,9 @@ export class ReferralService {
       [referralId],
     );
 
-    this.logger.log(`Referral reward paid: $${(amount / 100).toFixed(2)} to ${referrerId} for referral ${referralId}`);
+    this.logger.log(
+      `Referral reward paid: $${(amount / 100).toFixed(2)} to ${referrerId} for referral ${referralId}`,
+    );
   }
 
   async getStats(userId: string): Promise<{
@@ -234,7 +263,8 @@ export class ReferralService {
       [userId],
     );
 
-    const baseUrl = process.env.STYX_REFERRAL_BASE_URL || 'https://styx.app/cohort-invite';
+    const baseUrl =
+      process.env.STYX_REFERRAL_BASE_URL || "https://styx.app/cohort-invite";
     const invitesSent = nominationsResult.rows.length;
     const remainingInvites = Math.max(0, BETA_MAX_COHORT_INVITES - invitesSent);
 
@@ -249,7 +279,10 @@ export class ReferralService {
         inviteCode: r.invite_code,
         inviteUrl: `${baseUrl}/${r.invite_code}`,
         status: r.status,
-        createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+        createdAt:
+          r.created_at instanceof Date
+            ? r.created_at.toISOString()
+            : String(r.created_at),
       })),
     };
   }
@@ -263,9 +296,9 @@ export class ReferralService {
     nomineeName?: string,
     note?: string,
   ): Promise<CohortNomination> {
-    const trimmedEmail = (nomineeEmail || '').trim().toLowerCase();
-    if (!trimmedEmail || !trimmedEmail.includes('@')) {
-      throw new BadRequestException('A valid nominee email is required');
+    const trimmedEmail = (nomineeEmail || "").trim().toLowerCase();
+    if (!trimmedEmail || !trimmedEmail.includes("@")) {
+      throw new BadRequestException("A valid nominee email is required");
     }
 
     // 1. Enforce quota: maximum 2 invites per user
@@ -280,12 +313,14 @@ export class ReferralService {
       );
     }
 
-    if (existing.rows.some((r) => r.nominee_email.toLowerCase() === trimmedEmail)) {
-      throw new BadRequestException('You have already nominated this peer.');
+    if (
+      existing.rows.some((r) => r.nominee_email.toLowerCase() === trimmedEmail)
+    ) {
+      throw new BadRequestException("You have already nominated this peer.");
     }
 
     // 2. Generate secure cohort invite code
-    const inviteCode = `COHORT-${randomBytes(4).toString('hex').toUpperCase()}`;
+    const inviteCode = `COHORT-${randomBytes(4).toString("hex").toUpperCase()}`;
 
     // 3. Insert nomination
     const insertResult = await this.pool.query(
@@ -294,7 +329,13 @@ export class ReferralService {
        )
        VALUES ($1, $2, $3, $4, $5, 'PENDING')
        RETURNING *`,
-      [userId, trimmedEmail, nomineeName?.trim() || null, note?.trim() || null, inviteCode],
+      [
+        userId,
+        trimmedEmail,
+        nomineeName?.trim() || null,
+        note?.trim() || null,
+        inviteCode,
+      ],
     );
 
     const row = insertResult.rows[0];

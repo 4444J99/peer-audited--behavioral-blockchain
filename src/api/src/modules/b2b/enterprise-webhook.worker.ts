@@ -1,14 +1,14 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Job, Worker } from 'bullmq';
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { Job, Worker } from "bullmq";
 import {
   ENTERPRISE_WEBHOOK_QUEUE_NAME,
   getRedisConnectionConfig,
-} from '../../../config/queue.config';
+} from "../../../config/queue.config";
 import {
   EnterpriseWebhookJob,
   WebhookSubscriptionService,
-} from './webhook-subscription.service';
-import { WebhookService } from './webhook.service';
+} from "./webhook-subscription.service";
+import { WebhookService } from "./webhook.service";
 
 @Injectable()
 export class EnterpriseWebhookWorker implements OnModuleInit {
@@ -27,11 +27,13 @@ export class EnterpriseWebhookWorker implements OnModuleInit {
       { connection: getRedisConnectionConfig(), concurrency: 4 },
     );
 
-    this.worker.on('failed', (job, err) => {
-      this.logger.error(`Enterprise webhook job ${job?.id} failed: ${err.message}`);
+    this.worker.on("failed", (job, err) => {
+      this.logger.error(
+        `Enterprise webhook job ${job?.id} failed: ${err.message}`,
+      );
     });
 
-    this.logger.log('Enterprise webhook worker initialized');
+    this.logger.log("Enterprise webhook worker initialized");
   }
 
   private async process(job: Job<EnterpriseWebhookJob>): Promise<void> {
@@ -60,7 +62,9 @@ export class EnterpriseWebhookWorker implements OnModuleInit {
     if (!delivered) {
       // Surface as a job failure so BullMQ's own retry/backoff owns the next
       // attempt; the subscription row already records that this one missed.
-      throw new Error(`Enterprise webhook delivery failed for subscription ${subscriptionId}`);
+      throw new Error(
+        `Enterprise webhook delivery failed for subscription ${subscriptionId}`,
+      );
     }
   }
 }

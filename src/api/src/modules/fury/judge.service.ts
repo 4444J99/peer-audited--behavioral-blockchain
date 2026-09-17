@@ -1,13 +1,13 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { Pool } from 'pg';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { ContractsService } from '../contracts/contracts.service';
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { Pool } from "pg";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { ContractsService } from "../contracts/contracts.service";
 
 export interface DisputeResolution {
   disputeId?: string;
   contractId?: string;
   proofId?: string;
-  verdict: 'PASS' | 'FAIL';
+  verdict: "PASS" | "FAIL";
   reason: string;
   judgeId: string;
 }
@@ -27,7 +27,9 @@ export class JudgeService {
    * Provides manual override for split Fury decisions or escalated disputes.
    */
   async resolveDispute(res: DisputeResolution): Promise<void> {
-    this.logger.log(`Judge ${res.judgeId} resolving dispute for contract ${res.contractId} as ${res.verdict}`);
+    this.logger.log(
+      `Judge ${res.judgeId} resolving dispute for contract ${res.contractId} as ${res.verdict}`,
+    );
 
     // The TruthLog append and contract resolution run on their own connections and
     // CANNOT be rolled back by this method's local transaction. To avoid leaving an
@@ -39,18 +41,21 @@ export class JudgeService {
       // resolution/judge_id column. A dispute row only exists because an appeal was filed
       // against a rejection, so a PASS verdict overturns that rejection and a FAIL upholds it,
       // matching the vocabulary DisputeService and the admin queue already read.
-      const appealStatus = res.verdict === 'PASS' ? 'RESOLVED_OVERTURNED' : 'RESOLVED_UPHELD';
+      const appealStatus =
+        res.verdict === "PASS" ? "RESOLVED_OVERTURNED" : "RESOLVED_UPHELD";
       const client = await this.pool.connect();
       try {
-        await client.query('BEGIN');
+        await client.query("BEGIN");
         await client.query(
           `UPDATE disputes SET appeal_status = $1, judge_notes = $2, resolved_at = NOW(), judge_user_id = $3 WHERE id = $4`,
-          [appealStatus, res.reason, res.judgeId, res.disputeId]
+          [appealStatus, res.reason, res.judgeId, res.disputeId],
         );
-        await client.query('COMMIT');
+        await client.query("COMMIT");
       } catch (e) {
-        await client.query('ROLLBACK');
-        this.logger.error(`Judicial resolution failed: ${e instanceof Error ? e.message : e}`);
+        await client.query("ROLLBACK");
+        this.logger.error(
+          `Judicial resolution failed: ${e instanceof Error ? e.message : e}`,
+        );
         throw e;
       } finally {
         client.release();
@@ -59,7 +64,7 @@ export class JudgeService {
 
     // External side-effects — only reached once the local dispute update has committed.
     // 1. Log the judicial decision.
-    await this.truthLog.appendEvent('JUDICIAL_OVERRIDE', {
+    await this.truthLog.appendEvent("JUDICIAL_OVERRIDE", {
       ...res,
       timestamp: new Date().toISOString(),
     });
@@ -67,7 +72,7 @@ export class JudgeService {
     // 2. Resolve the contract via the standard service (triggers SettlementService flow).
     await this.contractsService.resolveContract(
       res.contractId!,
-      res.verdict === 'PASS' ? 'COMPLETED' : 'FAILED'
+      res.verdict === "PASS" ? "COMPLETED" : "FAILED",
     );
   }
 
@@ -88,7 +93,7 @@ export class JudgeService {
            AND (SELECT COUNT(*) FROM fury_assignments WHERE proof_id = p.id AND verdict IS NOT NULL) >= 3
          )
        )
-      `
+      `,
     );
 
     // A dispute points at a proof, not a contract — the contract is reached through
@@ -99,7 +104,7 @@ export class JudgeService {
        FROM disputes d
        JOIN proofs p ON d.proof_id = p.id
        JOIN contracts c ON p.contract_id = c.id
-       WHERE d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'PENDING_REVIEW', 'IN_REVIEW')`
+       WHERE d.appeal_status IN ('FEE_AUTHORIZED_PENDING_REVIEW', 'PENDING_REVIEW', 'IN_REVIEW')`,
     );
 
     return {

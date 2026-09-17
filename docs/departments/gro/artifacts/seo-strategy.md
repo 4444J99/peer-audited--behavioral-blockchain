@@ -18,45 +18,45 @@ Styx operates at the intersection of three search verticals: accountability/habi
 
 ### Primary Keywords (High Intent)
 
-| Keyword | Monthly Volume (est.) | Difficulty | Priority | Landing Page |
-|---------|----------------------|------------|----------|-------------|
-| commitment contract app | 1,200 | Medium | P0 | /how-it-works |
-| accountability partner app | 2,400 | High | P0 | / (homepage) |
-| habit accountability money | 800 | Low | P0 | /how-it-works |
-| behavioral economics app | 600 | Medium | P1 | /science |
-| peer accountability app | 900 | Medium | P0 | /fury-network |
-| no-contact app | 3,200 | Medium | P0 | /recovery |
-| breakup recovery app | 5,400 | High | P1 | /recovery |
-| accountability contract | 1,800 | Medium | P0 | /how-it-works |
-| goal accountability app | 1,600 | High | P1 | / (homepage) |
+| Keyword                    | Monthly Volume (est.) | Difficulty | Priority | Landing Page  |
+| -------------------------- | --------------------- | ---------- | -------- | ------------- |
+| commitment contract app    | 1,200                 | Medium     | P0       | /how-it-works |
+| accountability partner app | 2,400                 | High       | P0       | / (homepage)  |
+| habit accountability money | 800                   | Low        | P0       | /how-it-works |
+| behavioral economics app   | 600                   | Medium     | P1       | /science      |
+| peer accountability app    | 900                   | Medium     | P0       | /fury-network |
+| no-contact app             | 3,200                 | Medium     | P0       | /recovery     |
+| breakup recovery app       | 5,400                 | High       | P1       | /recovery     |
+| accountability contract    | 1,800                 | Medium     | P0       | /how-it-works |
+| goal accountability app    | 1,600                 | High       | P1       | / (homepage)  |
 
 ### Long-Tail Keywords (Low Competition, High Conversion)
 
-| Keyword | Est. Volume | Conversion Intent |
-|---------|-------------|-------------------|
-| apps that charge you for not working out | 400 | Very High |
-| put money on the line for goals | 300 | Very High |
-| peer-reviewed habit tracking | 200 | High |
-| financial stakes for habits | 150 | Very High |
-| lose money if you break no contact | 250 | Very High |
-| accountability app with real money | 350 | Very High |
-| bet money on yourself app | 500 | Very High |
-| therapist accountability tools | 200 | High (B2B) |
-| coach client accountability platform | 150 | High (B2B) |
-| commitment device app | 300 | High |
-| anti-relapse technology | 180 | High |
-| behavioral contract platform | 100 | Very High |
+| Keyword                                  | Est. Volume | Conversion Intent |
+| ---------------------------------------- | ----------- | ----------------- |
+| apps that charge you for not working out | 400         | Very High         |
+| put money on the line for goals          | 300         | Very High         |
+| peer-reviewed habit tracking             | 200         | High              |
+| financial stakes for habits              | 150         | Very High         |
+| lose money if you break no contact       | 250         | Very High         |
+| accountability app with real money       | 350         | Very High         |
+| bet money on yourself app                | 500         | Very High         |
+| therapist accountability tools           | 200         | High (B2B)        |
+| coach client accountability platform     | 150         | High (B2B)        |
+| commitment device app                    | 300         | High              |
+| anti-relapse technology                  | 180         | High              |
+| behavioral contract platform             | 100         | Very High         |
 
 ### B2B Keywords
 
-| Keyword | Est. Volume | Target |
-|---------|-------------|--------|
-| client accountability tools for therapists | 150 | B2B landing page |
-| coaching platform with client tracking | 200 | B2B landing page |
-| therapist tools for habit compliance | 100 | B2B landing page |
-| addiction recovery technology platform | 250 | B2B landing page |
-| client outcome tracking software | 300 | B2B landing page |
-| behavioral health accountability tool | 120 | B2B landing page |
+| Keyword                                    | Est. Volume | Target           |
+| ------------------------------------------ | ----------- | ---------------- |
+| client accountability tools for therapists | 150         | B2B landing page |
+| coaching platform with client tracking     | 200         | B2B landing page |
+| therapist tools for habit compliance       | 100         | B2B landing page |
+| addiction recovery technology platform     | 250         | B2B landing page |
+| client outcome tracking software           | 300         | B2B landing page |
+| behavioral health accountability tool      | 120         | B2B landing page |
 
 ## Technical SEO
 
@@ -72,22 +72,22 @@ Styx web is built on Next.js 16. Technical SEO leverages the framework's capabil
 
 Implement JSON-LD on every page:
 
-| Page Type | Schema Type | Key Properties |
-|-----------|------------|----------------|
-| Homepage | `SoftwareApplication` | name, applicationCategory ("FinanceApplication"), operatingSystem, offers |
-| Pricing | `Product` + `Offer` | name, price ($9/$49/$199/$999), priceCurrency (USD) |
-| Blog posts | `Article` + `Person` | headline, author, datePublished, dateModified |
-| FAQ | `FAQPage` + `Question` | question, acceptedAnswer |
-| How It Works | `HowTo` + `HowToStep` | name, step (Oath → Stake → Proof → Audit → Outcome) |
-| Recovery | `WebPage` + `BreadcrumbList` | breadcrumb trail |
+| Page Type    | Schema Type                  | Key Properties                                                            |
+| ------------ | ---------------------------- | ------------------------------------------------------------------------- |
+| Homepage     | `SoftwareApplication`        | name, applicationCategory ("FinanceApplication"), operatingSystem, offers |
+| Pricing      | `Product` + `Offer`          | name, price ($9/$49/$199/$999), priceCurrency (USD)                       |
+| Blog posts   | `Article` + `Person`         | headline, author, datePublished, dateModified                             |
+| FAQ          | `FAQPage` + `Question`       | question, acceptedAnswer                                                  |
+| How It Works | `HowTo` + `HowToStep`        | name, step (Oath → Stake → Proof → Audit → Outcome)                       |
+| Recovery     | `WebPage` + `BreadcrumbList` | breadcrumb trail                                                          |
 
 ### Core Web Vitals Targets
 
-| Metric | Target | Strategy |
-|--------|--------|----------|
-| LCP | < 1.5s | SSG for marketing pages, optimized hero images, Cloudflare CDN |
-| INP | < 100ms | Minimal client-side JS on marketing pages, lazy-load interactive components |
-| CLS | < 0.05 | Fixed-dimension images, font-display: swap, no layout-shifting ads |
+| Metric | Target  | Strategy                                                                    |
+| ------ | ------- | --------------------------------------------------------------------------- |
+| LCP    | < 1.5s  | SSG for marketing pages, optimized hero images, Cloudflare CDN              |
+| INP    | < 100ms | Minimal client-side JS on marketing pages, lazy-load interactive components |
+| CLS    | < 0.05  | Fixed-dimension images, font-display: swap, no layout-shifting ads          |
 
 ### Technical Checklist
 
@@ -106,10 +106,12 @@ Implement JSON-LD on every page:
 ### Cluster 1: Behavioral Science Hub (`/science/`)
 
 **Pillar page:** "The Science of Financial Accountability" (3000+ words)
+
 - Links to: loss aversion explainer, prospect theory applied, commitment devices history, peer effects research
 - Target keywords: behavioral economics app, loss aversion app, commitment device, λ=1.955
 
 **Supporting content (blog posts):**
+
 - "Why 92% of Resolutions Fail — And What Behavioral Economics Says About It"
 - "The Science of Loss Aversion: Why Losing $20 Hurts More"
 - "Prospect Theory Applied: How Financial Stakes Change Behavior"
@@ -120,10 +122,12 @@ Implement JSON-LD on every page:
 ### Cluster 2: Recovery & Wellness Hub (`/recovery/`)
 
 **Pillar page:** "The Complete Guide to Accountability-Based Recovery" (3000+ words)
+
 - Links to: no-contact guide, breakup recovery strategies, recovery contract types, Aegis protocol
 - Target keywords: no-contact app, breakup recovery app, accountability recovery, anti-relapse technology
 
 **Supporting content:**
+
 - "The No-Contact Contract: How Financial Stakes Help People Stay Away"
 - "Beyond Willpower: 7 Evidence-Based Strategies for Breakup Recovery"
 - "What Is the Aegis Protocol? Health Guardrails in Accountability Tech"
@@ -134,10 +138,12 @@ Implement JSON-LD on every page:
 ### Cluster 3: B2B Accountability Hub (`/enterprise/`)
 
 **Pillar page:** "The Practitioner's Guide to Accountability Technology" (3000+ words)
+
 - Links to: case studies, pricing, integration guides, security overview
 - Target keywords: therapist accountability tools, coaching platform, client outcome tracking
 
 **Supporting content:**
+
 - "Why Your Therapist Should Prescribe Styx"
 - "Case Study: How One Coach Improved Client Follow-Through by 40%"
 - "Setting Up Your Practice Dashboard: A Step-by-Step Guide"
@@ -148,21 +154,25 @@ Implement JSON-LD on every page:
 ## Competitor Keyword Gaps
 
 ### Beeminder
+
 - Focuses on "quantified self", "self-tracking", "Beeminder alternative"
 - **Gap:** No content targeting "peer accountability" or "external verification" — Styx owns this space
 - **Opportunity:** "Why self-reporting fails" content directly challenges Beeminder's model
 
 ### StickK
+
 - Focuses on "commitment contracts", "goal setting", "charity donations"
 - **Gap:** No content about financial escrow (StickK donates to anti-charity) — Styx owns "get your money back"
 - **Opportunity:** "Why your money should come back to you" content positions Styx's escrow model
 
 ### Habitica
+
 - Focuses on "gamified habits", "RPG habit tracker", "habit game"
 - **Gap:** No content about real money or real consequences — Styx owns the "serious accountability" space
 - **Opportunity:** "When gamification isn't enough" content captures users who've outgrown game mechanics
 
 ### Unclaimed Territory (Styx Only)
+
 - "Peer audit" + "behavioral blockchain" — no competitor targets this
 - "Financial escrow for habits" — entirely novel search intent
 - "Fury network" / "accountability auditor" — branded terms with no competition
@@ -172,35 +182,36 @@ Implement JSON-LD on every page:
 
 ### Tier 1: High-Authority (DA 50+)
 
-| Source Type | Approach | Target Links |
-|------------|----------|-------------|
-| Behavioral science journals | Guest articles on applied behavioral economics | 2-3 per quarter |
-| Psychology publications (Psychology Today, Verywell Mind) | Expert quotes, contributor articles | 1-2 per quarter |
-| Tech blogs (TechCrunch, The Verge) | Launch coverage, founder interview | 1-2 at launch |
-| Fintech publications (Finextra, The Financial Brand) | Novel escrow model coverage | 1-2 per quarter |
+| Source Type                                               | Approach                                       | Target Links    |
+| --------------------------------------------------------- | ---------------------------------------------- | --------------- |
+| Behavioral science journals                               | Guest articles on applied behavioral economics | 2-3 per quarter |
+| Psychology publications (Psychology Today, Verywell Mind) | Expert quotes, contributor articles            | 1-2 per quarter |
+| Tech blogs (TechCrunch, The Verge)                        | Launch coverage, founder interview             | 1-2 at launch   |
+| Fintech publications (Finextra, The Financial Brand)      | Novel escrow model coverage                    | 1-2 per quarter |
 
 ### Tier 2: Industry-Specific (DA 30-50)
 
-| Source Type | Approach | Target Links |
-|------------|----------|-------------|
-| Therapy directories (Psychology Today, GoodTherapy) | Practitioner profile + tool listing | Ongoing |
-| Coach directories (ICF, CCE) | Tool recommendation, partnership listing | Ongoing |
-| Wellness blogs (Healthline contributors, MindBodyGreen) | Guest posts on accountability science | 2-3 per quarter |
-| Recovery resources (SMART Recovery, In The Rooms) | Resource listing, guest content | 1-2 per quarter |
+| Source Type                                             | Approach                                 | Target Links    |
+| ------------------------------------------------------- | ---------------------------------------- | --------------- |
+| Therapy directories (Psychology Today, GoodTherapy)     | Practitioner profile + tool listing      | Ongoing         |
+| Coach directories (ICF, CCE)                            | Tool recommendation, partnership listing | Ongoing         |
+| Wellness blogs (Healthline contributors, MindBodyGreen) | Guest posts on accountability science    | 2-3 per quarter |
+| Recovery resources (SMART Recovery, In The Rooms)       | Resource listing, guest content          | 1-2 per quarter |
 
 ### Tier 3: Community & Earned
 
-| Source Type | Approach | Target Links |
-|------------|----------|-------------|
-| Reddit (r/getdisciplined, r/DecidingToBeBetter) | Genuine participation, AMA | Ongoing |
-| Quora | Answer accountability/habit questions | 2-3 answers per week |
-| Product Hunt | Launch day campaign | 1 (at launch) |
-| Indie Hackers | Build-in-public posts | Monthly |
-| Hacker News | Launch post, technical deep dives | 1-2 total |
+| Source Type                                     | Approach                              | Target Links         |
+| ----------------------------------------------- | ------------------------------------- | -------------------- |
+| Reddit (r/getdisciplined, r/DecidingToBeBetter) | Genuine participation, AMA            | Ongoing              |
+| Quora                                           | Answer accountability/habit questions | 2-3 answers per week |
+| Product Hunt                                    | Launch day campaign                   | 1 (at launch)        |
+| Indie Hackers                                   | Build-in-public posts                 | Monthly              |
+| Hacker News                                     | Launch post, technical deep dives     | 1-2 total            |
 
 ## Local SEO (Future)
 
 Not applicable for initial US-wide launch. When Styx expands to support practitioner directories by city, implement:
+
 - Google Business Profiles for practitioner partners
 - City-specific landing pages (/therapists/new-york, /coaches/los-angeles)
 - Local schema markup with practitioner locations
@@ -209,17 +220,17 @@ Not applicable for initial US-wide launch. When Styx expands to support practiti
 
 ### Monthly SEO Report
 
-| Metric | Tool | Target (Month 6) |
-|--------|------|-------------------|
-| Organic sessions | Cloudflare Analytics | 5,000/month |
-| Keyword rankings (top 10) | Search Console | 15 keywords |
-| Keyword rankings (top 50) | Search Console | 50 keywords |
-| Referring domains | Search Console | 30 |
-| Blog post impressions | Search Console | 50,000/month |
-| Blog → sign-up conversion | Custom event tracking | 3% |
-| Core Web Vitals pass rate | Search Console | 100% |
-| Indexed pages | Search Console | 50+ |
-| Average position (target keywords) | Search Console | < 25 |
+| Metric                             | Tool                  | Target (Month 6) |
+| ---------------------------------- | --------------------- | ---------------- |
+| Organic sessions                   | Cloudflare Analytics  | 5,000/month      |
+| Keyword rankings (top 10)          | Search Console        | 15 keywords      |
+| Keyword rankings (top 50)          | Search Console        | 50 keywords      |
+| Referring domains                  | Search Console        | 30               |
+| Blog post impressions              | Search Console        | 50,000/month     |
+| Blog → sign-up conversion          | Custom event tracking | 3%               |
+| Core Web Vitals pass rate          | Search Console        | 100%             |
+| Indexed pages                      | Search Console        | 50+              |
+| Average position (target keywords) | Search Console        | < 25             |
 
 ### Quarterly Review
 

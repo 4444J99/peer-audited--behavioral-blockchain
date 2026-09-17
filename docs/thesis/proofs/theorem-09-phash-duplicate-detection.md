@@ -11,13 +11,13 @@
 
 The **duplicate detection system** operates on perceptual hashes:
 
-- *pH*: Media → {0,1}⁶⁴ (perceptual hash function producing 64-bit values)
-- *d*H(*x*, *y*): Hamming distance between hashes *x* and *y*
+- _pH_: Media → {0,1}⁶⁴ (perceptual hash function producing 64-bit values)
+- *d*H(_x_, _y_): Hamming distance between hashes _x_ and _y_
 - *θ*H = 5: Hamming distance threshold for duplicate classification
 
 **Decision rule:**
 
-> duplicate(*p*₁, *p*₂) ⟺ *d*H(*pH*(*p*₁), *pH*(*p*₂)) < *θ*H
+> duplicate(*p*₁, *p*₂) ⟺ *d*H(_pH_(*p*₁), _pH_(*p*₂)) < *θ*H
 
 A proof *p*₂ is flagged as a duplicate of existing proof *p*₁ if and only if their perceptual hashes differ in fewer than *θ*H = 5 bit positions.
 
@@ -27,7 +27,7 @@ A proof *p*₂ is flagged as a duplicate of existing proof *p*₁ if and only if
 
 **Theorem T9 (pHash Duplicate Detection Soundness).** The Styx duplicate detection system with 64-bit perceptual hashes and Hamming threshold *θ*H = 5 satisfies:
 
-**(a) Completeness (True Duplicate Detection):** If *p*₁ and *p*₂ are perceptually identical (or near-identical with minor compression/resize artifacts), then *d*H(*pH*(*p*₁), *pH*(*p*₂)) < *θ*H with high probability.
+**(a) Completeness (True Duplicate Detection):** If *p*₁ and *p*₂ are perceptually identical (or near-identical with minor compression/resize artifacts), then *d*H(_pH_(*p*₁), _pH_(*p*₂)) < *θ*H with high probability.
 
 **(b) Soundness (False Positive Bound):** The probability that two independently random 64-bit hashes are falsely flagged as duplicates is:
 
@@ -43,17 +43,19 @@ A proof *p*₂ is flagged as a duplicate of existing proof *p*₁ if and only if
 
 **Perceptual hash locality property:** A well-designed perceptual hash function satisfies the locality-sensitive hashing (LSH) property: perceptually similar inputs map to nearby hash values.
 
-Formally, for a perceptual hash *pH* with quality parameter *q*:
+Formally, for a perceptual hash _pH_ with quality parameter _q_:
 
-> If perceptual_similarity(*p*₁, *p*₂) > 1 − *q*, then *d*H(*pH*(*p*₁), *pH*(*p*₂)) < *q* · 64
+> If perceptual_similarity(*p*₁, *p*₂) > 1 − _q_, then *d*H(_pH_(*p*₁), _pH_(*p*₂)) < _q_ · 64
 
 For a typical pHash implementation (Zauner, 2010):
+
 - Identical images (any format): *d*H = 0
 - Same image resized/recompressed: *d*H ≤ 3
 - Same image with minor edits (crop, brightness): *d*H ≤ 8
 - Completely different images: *d*H ≈ 32 (expected for independent hashes)
 
 With *θ*H = 5, the system correctly identifies:
+
 - Exact duplicates (*d*H = 0): always detected ✓
 - Format conversions (*d*H ≤ 3): always detected ✓
 - Minor quality variations (*d*H ≤ 4): detected ✓
@@ -65,7 +67,7 @@ With *θ*H = 5, the system correctly identifies:
 
 **Assumption:** For two independently produced media items with no perceptual similarity, their 64-bit perceptual hashes are approximately uniformly distributed (each bit independently 0 or 1 with equal probability).
 
-Under this assumption, *d*H(*pH*(*p*₁), *pH*(*p*₂)) follows a binomial distribution:
+Under this assumption, *d*H(_pH_(*p*₁), _pH_(*p*₂)) follows a binomial distribution:
 
 > *d*H ~ Binomial(64, 0.5)
 
@@ -75,13 +77,13 @@ The false positive rate (probability of flagging unrelated media as duplicates) 
 
 Computing each term:
 
-| *k* | C(64, *k*) | Contribution |
-|-----|-----------|--------------|
-| 0 | 1 | 5.42 × 10⁻²⁰ |
-| 1 | 64 | 3.47 × 10⁻¹⁸ |
-| 2 | 2,016 | 1.09 × 10⁻¹⁶ |
-| 3 | 41,664 | 2.26 × 10⁻¹⁵ |
-| 4 | 635,376 | 3.45 × 10⁻¹⁴ |
+| _k_ | C(64, _k_) | Contribution |
+| --- | ---------- | ------------ |
+| 0   | 1          | 5.42 × 10⁻²⁰ |
+| 1   | 64         | 3.47 × 10⁻¹⁸ |
+| 2   | 2,016      | 1.09 × 10⁻¹⁶ |
+| 3   | 41,664     | 2.26 × 10⁻¹⁵ |
+| 4   | 635,376    | 3.45 × 10⁻¹⁴ |
 
 Summing:
 
@@ -102,7 +104,7 @@ This is approximately 1 in 27 trillion comparisons — effectively zero for any 
 
 The false positive rate as a function of *θ*H is:
 
-> FPR(*θ*H) = Σ_{k=0}^{*θ*_H - 1} C(64, k) / 2⁶⁴
+> FPR(*θ*H) = Σ_{k=0}^{_θ__H - 1} C(64, k) / 2⁶⁴
 
 This is the CDF of Binomial(64, 0.5) evaluated at *θ*H − 1, which is monotonically increasing in *θ*H.
 
@@ -114,12 +116,12 @@ which is monotonically decreasing in *θ*H.
 
 **Trade-off table:**
 
-| *θ*H | FPR (false alarm) | FNR (missed duplicate) | Styx Suitability |
-|------|-------------------|----------------------|------------------|
-| 3 | ~10⁻¹⁷ | Misses format conversions | Too strict |
-| 5 | ~10⁻¹⁴ | Catches most duplicates | **Optimal** |
-| 8 | ~10⁻¹⁰ | Catches edited copies | Acceptable |
-| 10 | ~10⁻⁸ | May flag unrelated media | Too permissive |
+| *θ*H | FPR (false alarm) | FNR (missed duplicate)    | Styx Suitability |
+| ---- | ----------------- | ------------------------- | ---------------- |
+| 3    | ~10⁻¹⁷            | Misses format conversions | Too strict       |
+| 5    | ~10⁻¹⁴            | Catches most duplicates   | **Optimal**      |
+| 8    | ~10⁻¹⁰            | Catches edited copies     | Acceptable       |
+| 10   | ~10⁻⁸             | May flag unrelated media  | Too permissive   |
 
 *θ*H = 5 is the Pareto-optimal choice for Styx: it catches exact and near-exact duplicates (the primary fraud vector — resubmitting old proofs) while maintaining an astronomically low false positive rate. ✓ ∎
 
@@ -162,21 +164,21 @@ Media Upload → computePHash(media) → checkDuplicate(hash)
                             └─ No:  STORE hash, continue to EXIF check
 ```
 
-**Scalability concern:** The current implementation does a linear scan of all stored hashes (O(*n*) comparisons). For large-scale deployment, this should be replaced with a VP-tree or locality-sensitive hashing index for sub-linear duplicate search.
+**Scalability concern:** The current implementation does a linear scan of all stored hashes (O(_n_) comparisons). For large-scale deployment, this should be replaced with a VP-tree or locality-sensitive hashing index for sub-linear duplicate search.
 
 ---
 
 ## Code-to-Proof Mapping
 
-| Proof Element | Code Location | Line(s) |
-|--------------|---------------|---------|
-| Hamming threshold constant | `anomaly.service.ts:PHASH_HAMMING_THRESHOLD` | L5 |
-| pHash computation | `anomaly.service.ts:computePHash()` | L83–89 |
-| Hamming distance | `anomaly.service.ts:hammingDistance()` | L94–104 |
-| Duplicate check (Redis) | `anomaly.service.ts:checkDuplicateRedis()` | L113–132 |
-| Duplicate check (memory) | `anomaly.service.ts:checkDuplicateMemory()` | L135–145 |
-| Threshold comparison | `anomaly.service.ts:checkDuplicateRedis()` | L125 |
-| EXIF validation | `anomaly.service.ts:checkExifTimestamp()` | L167–206 |
+| Proof Element              | Code Location                                | Line(s)  |
+| -------------------------- | -------------------------------------------- | -------- |
+| Hamming threshold constant | `anomaly.service.ts:PHASH_HAMMING_THRESHOLD` | L5       |
+| pHash computation          | `anomaly.service.ts:computePHash()`          | L83–89   |
+| Hamming distance           | `anomaly.service.ts:hammingDistance()`       | L94–104  |
+| Duplicate check (Redis)    | `anomaly.service.ts:checkDuplicateRedis()`   | L113–132 |
+| Duplicate check (memory)   | `anomaly.service.ts:checkDuplicateMemory()`  | L135–145 |
+| Threshold comparison       | `anomaly.service.ts:checkDuplicateRedis()`   | L125     |
+| EXIF validation            | `anomaly.service.ts:checkExifTimestamp()`    | L167–206 |
 
 ---
 
@@ -188,4 +190,4 @@ Media Upload → computePHash(media) → checkDuplicate(hash)
 
 3. **Hash collision for different media:** While FPR is astronomically low, perceptual hash collisions for genuinely different but visually similar images (e.g., two photos of the same gym taken from slightly different angles) could occur. The system should treat "duplicate detected" as a flag for Fury review, not automatic rejection, in borderline cases.
 
-4. **Linear scan scalability:** O(*n*) comparison against all stored hashes becomes impractical at scale. Production deployment should use approximate nearest neighbor search (e.g., VP-tree, HNSW) for O(log *n*) lookups.
+4. **Linear scan scalability:** O(_n_) comparison against all stored hashes becomes impractical at scale. Production deployment should use approximate nearest neighbor search (e.g., VP-tree, HNSW) for O(log _n_) lookups.

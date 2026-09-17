@@ -1,16 +1,34 @@
-import { Body, Controller, Get, Param, Post, RawBodyRequest, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Request, Response } from 'express';
-import { CurrentUser, Public } from '../../common/decorators/current-user.decorator';
-import { AuthGuard } from '../../../guards/auth.guard';
-import { RoleGuard, Roles } from '../../common/guards/role.guard';
-import { ComplianceArtifactService } from './compliance-artifact.service';
-import { CompliancePolicyService } from './compliance-policy.service';
-import { IdentityVerificationService } from './identity-verification.service';
-import { MedicalExemptionService } from './medical-exemption.service';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  RawBodyRequest,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
+import {
+  ApiBearerAuth,
+  ApiExcludeEndpoint,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
+import { Request, Response } from "express";
+import {
+  CurrentUser,
+  Public,
+} from "../../common/decorators/current-user.decorator";
+import { AuthGuard } from "../../../guards/auth.guard";
+import { RoleGuard, Roles } from "../../common/guards/role.guard";
+import { ComplianceArtifactService } from "./compliance-artifact.service";
+import { CompliancePolicyService } from "./compliance-policy.service";
+import { IdentityVerificationService } from "./identity-verification.service";
+import { MedicalExemptionService } from "./medical-exemption.service";
 
-@ApiTags('Compliance')
-@Controller('compliance')
+@ApiTags("Compliance")
+@Controller("compliance")
 export class ComplianceController {
   constructor(
     private readonly compliancePolicy: CompliancePolicyService,
@@ -19,22 +37,28 @@ export class ComplianceController {
     private readonly complianceArtifact: ComplianceArtifactService,
   ) {}
 
-  @Get('eligibility')
+  @Get("eligibility")
   @Public()
-  @ApiOperation({ summary: 'Return jurisdiction + compliance eligibility decisions for the current request context' })
+  @ApiOperation({
+    summary:
+      "Return jurisdiction + compliance eligibility decisions for the current request context",
+  })
   eligibility(@Req() req: Request) {
     return this.compliancePolicy.getEligibility(req);
   }
 
-  @Post('identity/webhooks/stripe')
+  @Post("identity/webhooks/stripe")
   @Public()
   @ApiExcludeEndpoint()
-  @ApiOperation({ summary: 'Receive Stripe Identity webhook events (verification status sync)' })
+  @ApiOperation({
+    summary:
+      "Receive Stripe Identity webhook events (verification status sync)",
+  })
   async stripeIdentityWebhook(
     @Req() req: RawBodyRequest<Request>,
     @Res() res: Response,
   ) {
-    const signature = req.headers['stripe-signature'];
+    const signature = req.headers["stripe-signature"];
     const result = await this.identityVerification.completeFromStripeWebhook({
       rawBody: req.rawBody,
       signature: Array.isArray(signature) ? signature[0] : signature,
@@ -42,20 +66,24 @@ export class ComplianceController {
 
     // Reject forged / unverifiable events with a 400 so the sender does not treat
     // them as accepted.
-    if (!result.applied && result.reason === 'invalid_signature') {
-      return res.status(400).json({ error: 'Invalid signature' });
+    if (!result.applied && result.reason === "invalid_signature") {
+      return res.status(400).json({ error: "Invalid signature" });
     }
 
     return res.json(result);
   }
 
-  @Post('medical-exemption/request')
+  @Post("medical-exemption/request")
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Request a compassionate audit for a contract due to medical emergency' })
+  @ApiOperation({
+    summary:
+      "Request a compassionate audit for a contract due to medical emergency",
+  })
   async requestMedicalExemption(
     @CurrentUser() user: any,
-    @Body() body: { contractId: string; reason: string; documentationUri?: string }
+    @Body()
+    body: { contractId: string; reason: string; documentationUri?: string },
   ) {
     return this.medicalExemption.requestExemption({
       ...body,
@@ -63,34 +91,39 @@ export class ComplianceController {
     });
   }
 
-  @Post('medical-exemption/approve')
+  @Post("medical-exemption/approve")
   @UseGuards(AuthGuard, RoleGuard)
-  @Roles('ADMIN')
+  @Roles("ADMIN")
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Approve a medical exemption request (Admin only)' })
+  @ApiOperation({ summary: "Approve a medical exemption request (Admin only)" })
   async approveMedicalExemption(
     @CurrentUser() user: any,
-    @Body() body: { contractId: string }
+    @Body() body: { contractId: string },
   ) {
     return this.medicalExemption.approveExemption(body.contractId, user.id);
   }
 
-  @Get('artifacts')
+  @Get("artifacts")
   @Public()
-  @ApiOperation({ summary: 'List all active compliance artifacts with status' })
+  @ApiOperation({ summary: "List all active compliance artifacts with status" })
   async listActiveArtifacts() {
     return this.complianceArtifact.getAllActiveArtifacts();
   }
 
-  @Get('artifacts/:type')
+  @Get("artifacts/:type")
   @Public()
-  @ApiOperation({ summary: 'Get the currently active compliance artifact for a given type' })
-  async getActiveArtifact(
-    @Param('type') type: string,
-  ) {
+  @ApiOperation({
+    summary: "Get the currently active compliance artifact for a given type",
+  })
+  async getActiveArtifact(@Param("type") type: string) {
     const artifact = await this.complianceArtifact.getActiveArtifact(type);
     if (!artifact) {
-      return { artifactType: type, version: null, isActive: false, jurisdictions: [] };
+      return {
+        artifactType: type,
+        version: null,
+        isActive: false,
+        jurisdictions: [],
+      };
     }
     return artifact;
   }

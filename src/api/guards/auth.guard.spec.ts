@@ -1,8 +1,11 @@
-import { AuthGuard } from './auth.guard';
-import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import * as jwt from 'jsonwebtoken';
-import { deriveApiKeyVerifier, deriveCsrfToken } from '../src/modules/auth/auth.service';
-import { issueSseTicket } from './sse-ticket.store';
+import { AuthGuard } from "./auth.guard";
+import { ExecutionContext, UnauthorizedException } from "@nestjs/common";
+import * as jwt from "jsonwebtoken";
+import {
+  deriveApiKeyVerifier,
+  deriveCsrfToken,
+} from "../src/modules/auth/auth.service";
+import { issueSseTicket } from "./sse-ticket.store";
 
 // Tokens must be signed with the same secret the guard verifies against. The
 // guard resolves it via getJwtSecret() which reads process.env.JWT_SECRET
@@ -17,7 +20,7 @@ function createMockContext(input?: {
   originalUrl?: string;
 }): ExecutionContext {
   const request: any = {
-    method: input?.method || 'GET',
+    method: input?.method || "GET",
     originalUrl: input?.originalUrl,
     headers: {
       authorization: input?.authHeader,
@@ -35,7 +38,7 @@ function createMockContext(input?: {
   } as unknown as ExecutionContext;
 }
 
-describe('AuthGuard', () => {
+describe("AuthGuard", () => {
   let guard: AuthGuard;
   const mockPool = {
     query: jest.fn(),
@@ -46,32 +49,37 @@ describe('AuthGuard', () => {
     mockPool.query.mockReset();
   });
 
-  it('should reject requests with no Authorization header', () => {
+  it("should reject requests with no Authorization header", () => {
     const context = createMockContext();
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
-  it('should reject requests with empty Bearer token', () => {
-    const context = createMockContext({ authHeader: 'Bearer ' });
+  it("should reject requests with empty Bearer token", () => {
+    const context = createMockContext({ authHeader: "Bearer " });
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
-  it('should reject requests with invalid token', () => {
-    const context = createMockContext({ authHeader: 'Bearer invalid-garbage-token' });
+  it("should reject requests with invalid token", () => {
+    const context = createMockContext({
+      authHeader: "Bearer invalid-garbage-token",
+    });
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
-  it('should NOT accept any hardcoded dev mock token', () => {
+  it("should NOT accept any hardcoded dev mock token", () => {
     // Verify that the old dev mock token is rejected (security regression test)
-    const context = createMockContext({ authHeader: 'Bearer dev-mock-jwt-token-alpha-omega' }); // allow-secret
+    const context = createMockContext({
+      authHeader: "Bearer dev-mock-jwt-token-alpha-omega",
+    }); // allow-secret
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
-  it('should accept a valid JWT and attach user from payload', () => {
-    const token = jwt.sign( // allow-secret
-      { sub: 'user-uuid-123', email: 'alice@styx.protocol' },
+  it("should accept a valid JWT and attach user from payload", () => {
+    const token = jwt.sign(
+      // allow-secret
+      { sub: "user-uuid-123", email: "alice@styx.protocol" },
       JWT_SECRET,
-      { expiresIn: '1h' },
+      { expiresIn: "1h" },
     );
 
     const context = createMockContext({ authHeader: `Bearer ${token}` });
@@ -80,38 +88,40 @@ describe('AuthGuard', () => {
     expect(result).toBe(true);
 
     const request = context.switchToHttp().getRequest() as any;
-    expect(request.user.id).toBe('user-uuid-123');
-    expect(request.user.email).toBe('alice@styx.protocol');
+    expect(request.user.id).toBe("user-uuid-123");
+    expect(request.user.email).toBe("alice@styx.protocol");
   });
 
-  it('should reject an expired JWT', () => {
-    const token = jwt.sign( // allow-secret
-      { sub: 'user-uuid-123', email: 'alice@styx.protocol' },
+  it("should reject an expired JWT", () => {
+    const token = jwt.sign(
+      // allow-secret
+      { sub: "user-uuid-123", email: "alice@styx.protocol" },
       JWT_SECRET,
-      { expiresIn: '-1s' }, // already expired
+      { expiresIn: "-1s" }, // already expired
     );
 
     const context = createMockContext({ authHeader: `Bearer ${token}` });
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
-  it('should reject a JWT signed with wrong secret', () => {
-    const token = jwt.sign( // allow-secret
-      { sub: 'user-uuid-123', email: 'alice@styx.protocol' },
-      'wrong-secret-key',
-      { expiresIn: '1h' },
+  it("should reject a JWT signed with wrong secret", () => {
+    const token = jwt.sign(
+      // allow-secret
+      { sub: "user-uuid-123", email: "alice@styx.protocol" },
+      "wrong-secret-key",
+      { expiresIn: "1h" },
     );
 
     const context = createMockContext({ authHeader: `Bearer ${token}` });
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
-  it('should reject non-Bearer auth schemes', () => {
-    const context = createMockContext({ authHeader: 'Basic dXNlcjpwYXNz' });
+  it("should reject non-Bearer auth schemes", () => {
+    const context = createMockContext({ authHeader: "Basic dXNlcjpwYXNz" });
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
-  it('should throw if JWT_SECRET is not set (in any environment)', () => {
+  it("should throw if JWT_SECRET is not set (in any environment)", () => {
     const originalSecret = process.env.JWT_SECRET;
 
     // getJwtSecret() now enforces the secret in ALL environments, not just
@@ -119,59 +129,64 @@ describe('AuthGuard', () => {
     delete process.env.JWT_SECRET;
 
     try {
-      const token = jwt.sign( // allow-secret
-        { sub: 'user-uuid-123', email: 'alice@styx.protocol' },
-        'any-secret',
-        { expiresIn: '1h' },
+      const token = jwt.sign(
+        // allow-secret
+        { sub: "user-uuid-123", email: "alice@styx.protocol" },
+        "any-secret",
+        { expiresIn: "1h" },
       );
       const context = createMockContext({ authHeader: `Bearer ${token}` });
 
       // getJwtSecret() should throw because JWT_SECRET is missing
-      expect(() => guard.canActivate(context)).toThrow('JWT_SECRET must be set');
+      expect(() => guard.canActivate(context)).toThrow(
+        "JWT_SECRET must be set",
+      );
     } finally {
       // Always restore so subsequent tests in this file keep a valid secret.
       if (originalSecret !== undefined) process.env.JWT_SECRET = originalSecret;
     }
   });
 
-  it('should accept cookie-based JWT on safe requests', () => {
+  it("should accept cookie-based JWT on safe requests", () => {
     const token = jwt.sign(
-      { sub: 'cookie-user-1', email: 'cookie@styx.protocol' },
+      { sub: "cookie-user-1", email: "cookie@styx.protocol" },
       JWT_SECRET,
-      { expiresIn: '1h' },
+      { expiresIn: "1h" },
     );
 
     const context = createMockContext({
       cookie: `styx_auth_token=${encodeURIComponent(token)}`,
-      method: 'GET',
+      method: "GET",
     });
 
     expect(guard.canActivate(context)).toBe(true);
     const request = context.switchToHttp().getRequest() as any;
-    expect(request.user.id).toBe('cookie-user-1');
-    expect(request.authSource).toBe('cookie');
+    expect(request.user.id).toBe("cookie-user-1");
+    expect(request.authSource).toBe("cookie");
   });
 
-  it('should reject mutating cookie-authenticated requests without CSRF token', () => {
+  it("should reject mutating cookie-authenticated requests without CSRF token", () => {
     const token = jwt.sign(
-      { sub: 'cookie-user-2', email: 'cookie2@styx.protocol' },
+      { sub: "cookie-user-2", email: "cookie2@styx.protocol" },
       JWT_SECRET,
-      { expiresIn: '1h' },
+      { expiresIn: "1h" },
     );
 
     const context = createMockContext({
       cookie: `styx_auth_token=${encodeURIComponent(token)}; styx_csrf_token=abc123`,
-      method: 'POST',
+      method: "POST",
     });
 
-    expect(() => guard.canActivate(context)).toThrow('Missing or invalid CSRF token');
+    expect(() => guard.canActivate(context)).toThrow(
+      "Missing or invalid CSRF token",
+    );
   });
 
-  it('should allow mutating cookie-authenticated requests with matching CSRF token', () => {
+  it("should allow mutating cookie-authenticated requests with matching CSRF token", () => {
     const token = jwt.sign(
-      { sub: 'cookie-user-3', email: 'cookie3@styx.protocol' },
+      { sub: "cookie-user-3", email: "cookie3@styx.protocol" },
       JWT_SECRET,
-      { expiresIn: '1h' },
+      { expiresIn: "1h" },
     );
 
     // The CSRF token is now bound to the session: the x-csrf-token header must
@@ -180,68 +195,72 @@ describe('AuthGuard', () => {
 
     const context = createMockContext({
       cookie: `styx_auth_token=${encodeURIComponent(token)}`,
-      method: 'PATCH',
-      extraHeaders: { 'x-csrf-token': csrf },
+      method: "PATCH",
+      extraHeaders: { "x-csrf-token": csrf },
     });
 
     expect(guard.canActivate(context)).toBe(true);
   });
 
-  it('should accept x-api-key and attach the authenticated user', async () => {
-    const keyId = 'a'.repeat(24);
-    const secret = 'secret_WITH-underscore'; // allow-secret
+  it("should accept x-api-key and attach the authenticated user", async () => {
+    const keyId = "a".repeat(24);
+    const secret = "secret_WITH-underscore"; // allow-secret
     const apiKey = `styx_live_${keyId}_${secret}`; // allow-secret
     const apiKeyGuard = new AuthGuard(undefined, mockPool as any);
 
     mockPool.query
       .mockResolvedValueOnce({
-        rows: [{
-          id: 'api-key-db-id',
-          user_id: 'user-api-1',
-          key_hash: deriveApiKeyVerifier(secret),
-          expires_at: new Date(Date.now() + 60_000).toISOString(),
-          revoked_at: null,
-          email: 'api@styx.protocol',
-          role: 'USER',
-          status: 'ACTIVE',
-        }],
+        rows: [
+          {
+            id: "api-key-db-id",
+            user_id: "user-api-1",
+            key_hash: deriveApiKeyVerifier(secret),
+            expires_at: new Date(Date.now() + 60_000).toISOString(),
+            revoked_at: null,
+            email: "api@styx.protocol",
+            role: "USER",
+            status: "ACTIVE",
+          },
+        ],
       })
       .mockResolvedValueOnce(undefined);
 
     const context = createMockContext({
-      extraHeaders: { 'x-api-key': apiKey },
+      extraHeaders: { "x-api-key": apiKey },
     });
 
     await expect(apiKeyGuard.canActivate(context)).resolves.toBe(true);
 
     const request = context.switchToHttp().getRequest() as any;
-    expect(request.user.id).toBe('user-api-1');
-    expect(request.user.email).toBe('api@styx.protocol');
+    expect(request.user.id).toBe("user-api-1");
+    expect(request.user.email).toBe("api@styx.protocol");
     expect(request.user.apiKeyId).toBe(keyId);
-    expect(request.authSource).toBe('api_key');
+    expect(request.authSource).toBe("api_key");
     expect(mockPool.query).toHaveBeenLastCalledWith(
-      expect.stringContaining('UPDATE api_keys SET last_used_at = NOW()'),
-      ['api-key-db-id'],
+      expect.stringContaining("UPDATE api_keys SET last_used_at = NOW()"),
+      ["api-key-db-id"],
     );
   });
 
-  it('should accept Authorization: ApiKey as an API-key credential', async () => {
-    const keyId = 'b'.repeat(24);
-    const secret = 'api-key-secret'; // allow-secret
+  it("should accept Authorization: ApiKey as an API-key credential", async () => {
+    const keyId = "b".repeat(24);
+    const secret = "api-key-secret"; // allow-secret
     const apiKeyGuard = new AuthGuard(undefined, mockPool as any);
 
     mockPool.query
       .mockResolvedValueOnce({
-        rows: [{
-          id: 'api-key-db-id-2',
-          user_id: 'user-api-2',
-          key_hash: deriveApiKeyVerifier(secret),
-          expires_at: new Date(Date.now() + 60_000).toISOString(),
-          revoked_at: null,
-          email: 'api2@styx.protocol',
-          role: 'ADMIN',
-          status: 'ACTIVE',
-        }],
+        rows: [
+          {
+            id: "api-key-db-id-2",
+            user_id: "user-api-2",
+            key_hash: deriveApiKeyVerifier(secret),
+            expires_at: new Date(Date.now() + 60_000).toISOString(),
+            revoked_at: null,
+            email: "api2@styx.protocol",
+            role: "ADMIN",
+            status: "ACTIVE",
+          },
+        ],
       })
       .mockResolvedValueOnce(undefined);
 
@@ -251,108 +270,114 @@ describe('AuthGuard', () => {
 
     await expect(apiKeyGuard.canActivate(context)).resolves.toBe(true);
     const request = context.switchToHttp().getRequest() as any;
-    expect(request.user.role).toBe('ADMIN');
-    expect(request.authSource).toBe('api_key');
+    expect(request.user.role).toBe("ADMIN");
+    expect(request.authSource).toBe("api_key");
   });
 
-  it('should reject revoked API keys', async () => {
-    const keyId = 'c'.repeat(24);
-    const secret = 'revoked-secret'; // allow-secret
+  it("should reject revoked API keys", async () => {
+    const keyId = "c".repeat(24);
+    const secret = "revoked-secret"; // allow-secret
     const apiKeyGuard = new AuthGuard(undefined, mockPool as any);
 
     mockPool.query.mockResolvedValueOnce({
-      rows: [{
-        id: 'api-key-db-id-3',
-        user_id: 'user-api-3',
+      rows: [
+        {
+          id: "api-key-db-id-3",
+          user_id: "user-api-3",
           key_hash: deriveApiKeyVerifier(secret),
-        expires_at: new Date(Date.now() + 60_000).toISOString(),
-        revoked_at: new Date().toISOString(),
-        email: 'api3@styx.protocol',
-        role: 'USER',
-        status: 'ACTIVE',
-      }],
+          expires_at: new Date(Date.now() + 60_000).toISOString(),
+          revoked_at: new Date().toISOString(),
+          email: "api3@styx.protocol",
+          role: "USER",
+          status: "ACTIVE",
+        },
+      ],
     });
 
     const context = createMockContext({
-      extraHeaders: { 'x-api-key': `styx_live_${keyId}_${secret}` },
+      extraHeaders: { "x-api-key": `styx_live_${keyId}_${secret}` },
     });
 
-    await expect(apiKeyGuard.canActivate(context)).rejects.toThrow('API key has been revoked');
+    await expect(apiKeyGuard.canActivate(context)).rejects.toThrow(
+      "API key has been revoked",
+    );
     expect(mockPool.query).toHaveBeenCalledTimes(1);
   });
 
-  it('should prefer an explicit API key over a session cookie', async () => {
-    const keyId = 'd'.repeat(24);
-    const secret = 'explicit-key-secret'; // allow-secret
+  it("should prefer an explicit API key over a session cookie", async () => {
+    const keyId = "d".repeat(24);
+    const secret = "explicit-key-secret"; // allow-secret
     const cookieToken = jwt.sign(
-      { sub: 'cookie-user', email: 'cookie@styx.protocol' },
+      { sub: "cookie-user", email: "cookie@styx.protocol" },
       JWT_SECRET,
-      { expiresIn: '1h' },
+      { expiresIn: "1h" },
     );
     const apiKeyGuard = new AuthGuard(undefined, mockPool as any);
 
     mockPool.query
       .mockResolvedValueOnce({
-        rows: [{
-          id: 'api-key-db-id-4',
-          user_id: 'user-api-4',
-          key_hash: deriveApiKeyVerifier(secret),
-          expires_at: new Date(Date.now() + 60_000).toISOString(),
-          revoked_at: null,
-          email: 'api4@styx.protocol',
-          role: 'USER',
-          status: 'ACTIVE',
-        }],
+        rows: [
+          {
+            id: "api-key-db-id-4",
+            user_id: "user-api-4",
+            key_hash: deriveApiKeyVerifier(secret),
+            expires_at: new Date(Date.now() + 60_000).toISOString(),
+            revoked_at: null,
+            email: "api4@styx.protocol",
+            role: "USER",
+            status: "ACTIVE",
+          },
+        ],
       })
       .mockResolvedValueOnce(undefined);
 
     const context = createMockContext({
       cookie: `styx_auth_token=${encodeURIComponent(cookieToken)}`,
-      extraHeaders: { 'x-api-key': `styx_live_${keyId}_${secret}` },
+      extraHeaders: { "x-api-key": `styx_live_${keyId}_${secret}` },
     });
 
     await expect(apiKeyGuard.canActivate(context)).resolves.toBe(true);
 
     const request = context.switchToHttp().getRequest() as any;
-    expect(request.user.id).toBe('user-api-4');
-    expect(request.authSource).toBe('api_key');
+    expect(request.user.id).toBe("user-api-4");
+    expect(request.authSource).toBe("api_key");
   });
 
-  describe('SSE stream tickets', () => {
-    it('accepts a leaderboard ticket cookie on the leaderboard stream', () => {
-      const { ticket } = issueSseTicket('leaderboard-user', 'leaderboard');
+  describe("SSE stream tickets", () => {
+    it("accepts a leaderboard ticket cookie on the leaderboard stream", () => {
+      const { ticket } = issueSseTicket("leaderboard-user", "leaderboard");
 
       const context = createMockContext({
-        originalUrl: '/dashboard/leaderboard/stream?limit=10&period=weekly',
+        originalUrl: "/dashboard/leaderboard/stream?limit=10&period=weekly",
         cookie: `styx_leaderboard_sse_ticket=${ticket}`,
       });
 
       expect(guard.canActivate(context)).toBe(true);
 
       const request = context.switchToHttp().getRequest() as any;
-      expect(request.user.id).toBe('leaderboard-user');
+      expect(request.user.id).toBe("leaderboard-user");
       // AU9: a ticket principal never carries privilege.
-      expect(request.user.role).toBe('USER');
+      expect(request.user.role).toBe("USER");
     });
 
-    it('rejects a notifications ticket presented on the leaderboard stream', () => {
-      const { ticket } = issueSseTicket('cross-scope-user', 'notifications');
+    it("rejects a notifications ticket presented on the leaderboard stream", () => {
+      const { ticket } = issueSseTicket("cross-scope-user", "notifications");
 
       const context = createMockContext({
-        originalUrl: '/dashboard/leaderboard/stream',
+        originalUrl: "/dashboard/leaderboard/stream",
         cookie: `styx_leaderboard_sse_ticket=${ticket}`,
       });
 
       expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
     });
 
-    it('does not treat the leaderboard cookie as valid on the fury stream', () => {
-      const { ticket } = issueSseTicket('fury-target', 'leaderboard');
+    it("does not treat the leaderboard cookie as valid on the fury stream", () => {
+      const { ticket } = issueSseTicket("fury-target", "leaderboard");
 
       // The fury stream looks up its OWN cookie name, so a leaderboard cookie is
       // simply absent there — it must not be picked up by a fallthrough.
       const context = createMockContext({
-        originalUrl: '/fury/stream',
+        originalUrl: "/fury/stream",
         cookie: `styx_leaderboard_sse_ticket=${ticket}`,
       });
 

@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import sharp from 'sharp';
+import { Injectable } from "@nestjs/common";
+import sharp from "sharp";
 
 /**
  * Perceptual hash (pHash) service for video frame deduplication.
@@ -38,21 +38,23 @@ export class PHashService {
    */
   async computeFrameHash(frameBuffer: Buffer): Promise<string> {
     const { data } = await sharp(frameBuffer)
-      .resize(this.HASH_WIDTH, this.HASH_SIZE, { fit: 'fill' })
+      .resize(this.HASH_WIDTH, this.HASH_SIZE, { fit: "fill" })
       .grayscale()
       .raw()
       .toBuffer({ resolveWithObject: true });
 
-    let bits = '';
+    let bits = "";
     for (let row = 0; row < this.HASH_SIZE; row++) {
       const rowStart = row * this.HASH_WIDTH;
       for (let col = 0; col < this.HASH_SIZE; col++) {
         const left = data[rowStart + col];
         const right = data[rowStart + col + 1];
-        bits += left > right ? '1' : '0';
+        bits += left > right ? "1" : "0";
       }
     }
-    return BigInt('0b' + bits).toString(16).padStart(16, '0');
+    return BigInt("0b" + bits)
+      .toString(16)
+      .padStart(16, "0");
   }
 
   /**
@@ -63,13 +65,15 @@ export class PHashService {
    * BigInt throw on partially-valid input, makes the failure explicit.
    */
   private assertValidHash(hash: string): void {
-    if (typeof hash !== 'string' || !/^[0-9a-fA-F]+$/.test(hash)) {
-      throw new Error('Malformed pHash: expected a non-empty hex string');
+    if (typeof hash !== "string" || !/^[0-9a-fA-F]+$/.test(hash)) {
+      throw new Error("Malformed pHash: expected a non-empty hex string");
     }
     // Average-hash over an 8x8 grid is 64 bits = 16 hex chars. Reject anything that
     // is not exactly that length so a truncated/over-long hash cannot be compared.
     if (hash.length !== this.HASH_SIZE * 2) {
-      throw new Error(`Malformed pHash: expected ${this.HASH_SIZE * 2} hex chars, got ${hash.length}`);
+      throw new Error(
+        `Malformed pHash: expected ${this.HASH_SIZE * 2} hex chars, got ${hash.length}`,
+      );
     }
   }
 
@@ -80,8 +84,8 @@ export class PHashService {
   hammingDistance(hash1: string, hash2: string): number {
     this.assertValidHash(hash1);
     this.assertValidHash(hash2);
-    const a = BigInt('0x' + hash1);
-    const b = BigInt('0x' + hash2);
+    const a = BigInt("0x" + hash1);
+    const b = BigInt("0x" + hash2);
     let xor = a ^ b;
     let dist = 0;
     while (xor > 0n) {
@@ -117,6 +121,8 @@ export class PHashService {
    * Extract perceptual hashes for an array of video frame buffers.
    */
   async extractFrameHashes(videoFrames: Buffer[]): Promise<string[]> {
-    return Promise.all(videoFrames.map((frame) => this.computeFrameHash(frame)));
+    return Promise.all(
+      videoFrames.map((frame) => this.computeFrameHash(frame)),
+    );
   }
 }

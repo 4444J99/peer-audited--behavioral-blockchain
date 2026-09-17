@@ -40,12 +40,12 @@ Internal completeness (1,107 tests, GRADUATED governance, beta-ready status) is 
 
 20 agents ran in parallel. Each analyzed one specific failure mode.
 
-| Metric | Value |
-|--------|-------|
-| Failure Modes | 20 |
-| Deep Dives | 20 |
-| Synthesis | 1 |
-| Checklist Items | 5 |
+| Metric          | Value |
+| --------------- | ----- |
+| Failure Modes   | 20    |
+| Deep Dives      | 20    |
+| Synthesis       | 1     |
+| Checklist Items | 5     |
 
 ### 1. The Plan Becomes the Artifact
 
@@ -57,7 +57,7 @@ On March 10, 2026, the builder dispatched four agents to produce a "30-Day GTM S
 
 **Underlying Assumption**
 
-Producing a plan *about* doing something is causally adjacent to doing it — that planning infrastructure compounds into execution rather than substituting for it.
+Producing a plan _about_ doing something is causally adjacent to doing it — that planning infrastructure compounds into execution rather than substituting for it.
 
 **Early Warning Signs**
 
@@ -73,7 +73,7 @@ On Day 3, the builder created a new `@styx/audit-engine` package and copied `Con
 
 **Underlying Assumption**
 
-The audit engine was a *module* that could be copied, when it was actually an *emergent property* of the entire system.
+The audit engine was a _module_ that could be copied, when it was actually an _emergent property_ of the entire system.
 
 **Early Warning Signs**
 
@@ -121,7 +121,7 @@ In week 3, the builder identified a mid-sized daily fantasy sports platform as t
 
 **Underlying Assumption**
 
-The cloaker was a surface-level branding concern that could be explained away in conversation, rather than a structural feature that determines what the product *is* to anyone who encounters it.
+The cloaker was a surface-level branding concern that could be explained away in conversation, rather than a structural feature that determines what the product _is_ to anyone who encounters it.
 
 **Early Warning Signs**
 
@@ -149,7 +149,7 @@ The "explain it without saying ORGANVM" test: if you cannot describe what a file
 
 **The Failure Story**
 
-Day 1 through Day 14 looked productive. The builder extracted the audit engine, wrote a landing page, and drafted a cold outreach template. But "drafted" was the ceiling. The first 20 emails went to LinkedIn connections whose titles included "CTO" or "Head of Product" — people who worked at companies that had nothing to do with financial audit infrastructure. Three replied politely. None had a use case. By Day 30, every attempt to identify a target buyer required research the builder didn't want to do. Who actually needs peer-audited behavioral verification? The answer kept being "I'm not sure, but maybe..." — which meant more research, more list-building, more friction. Meanwhile, the codebase was still there, still compelling, still *easier to improve than to sell*. The builder added two more test suites, refactored the shared module, and felt productive. No one had paid. No one outside the ORGANVM ecosystem had even looked at it.
+Day 1 through Day 14 looked productive. The builder extracted the audit engine, wrote a landing page, and drafted a cold outreach template. But "drafted" was the ceiling. The first 20 emails went to LinkedIn connections whose titles included "CTO" or "Head of Product" — people who worked at companies that had nothing to do with financial audit infrastructure. Three replied politely. None had a use case. By Day 30, every attempt to identify a target buyer required research the builder didn't want to do. Who actually needs peer-audited behavioral verification? The answer kept being "I'm not sure, but maybe..." — which meant more research, more list-building, more friction. Meanwhile, the codebase was still there, still compelling, still _easier to improve than to sell_. The builder added two more test suites, refactored the shared module, and felt productive. No one had paid. No one outside the ORGANVM ecosystem had even looked at it.
 
 **Underlying Assumption**
 
@@ -165,7 +165,7 @@ Outreach batch size shrinks or stops — the gap between "I'll send 20 emails to
 
 **The Failure Story**
 
-The builder opened the 30-day GTM strike plan on Day 1, read through the customer discovery scripts, and decided to "prepare the demo first." The plan said Day 1-3 was outbound — 20 targeted messages to potential buyers. Instead, the builder spent those three days fixing a race condition in the test harness that no external user would ever see. On Day 4, they drafted five outreach messages, showed them to Claude, rewrote them twice, and sent none of them because "the pitch deck needs the behavioral physics section updated first." By Day 12, the pattern had fully reasserted itself: every external-facing action triggered an internal-facing deflection. "I can't reach out until the API docs are cleaner." "The mobile build is broken on Expo 54." "Let me add one more validation gate before someone sees this." On Day 30, the builder wrote a retrospective about what went wrong and saved it to `docs/planning/`. Zero external contacts. Zero payments. The plan file was marked complete in the issue tracker because the *document* was finished.
+The builder opened the 30-day GTM strike plan on Day 1, read through the customer discovery scripts, and decided to "prepare the demo first." The plan said Day 1-3 was outbound — 20 targeted messages to potential buyers. Instead, the builder spent those three days fixing a race condition in the test harness that no external user would ever see. On Day 4, they drafted five outreach messages, showed them to Claude, rewrote them twice, and sent none of them because "the pitch deck needs the behavioral physics section updated first." By Day 12, the pattern had fully reasserted itself: every external-facing action triggered an internal-facing deflection. "I can't reach out until the API docs are cleaner." "The mobile build is broken on Expo 54." "Let me add one more validation gate before someone sees this." On Day 30, the builder wrote a retrospective about what went wrong and saved it to `docs/planning/`. Zero external contacts. Zero payments. The plan file was marked complete in the issue tracker because the _document_ was finished.
 
 **Underlying Assumption**
 
@@ -213,7 +213,7 @@ First external user opens a GitHub issue within 7 days of signup. The issue refe
 
 **The Failure Story**
 
-On March 14, the builder sent a LinkedIn message to a compliance officer at a mid-size fintech: "I can audit your ledger for behavioral vulnerabilities." The reply came two days later: "What does that include? How long? What's the cost?" The builder spent three days drafting a response — and realized they had no answer to any of the three questions. They'd never scoped a custom audit. They didn't know how many hours it would take, what artifacts they'd deliver, or what a fair price was. They sent back a vague paragraph about "comprehensive analysis" and "customized recommendations." The compliance officer never replied. Over the next six weeks, this pattern repeated four times. Each inquiry exposed the same void: the builder could describe the *concept* of a behavioral audit fluently — the Möbius strip of self-validation, the peer-audited mechanics, the double-entry integrity checks — but could not translate it into a line item. "I'll send you a proposal" became the stall tactic, and the proposal never came because there was no template, no rate card, no definition of done.
+On March 14, the builder sent a LinkedIn message to a compliance officer at a mid-size fintech: "I can audit your ledger for behavioral vulnerabilities." The reply came two days later: "What does that include? How long? What's the cost?" The builder spent three days drafting a response — and realized they had no answer to any of the three questions. They'd never scoped a custom audit. They didn't know how many hours it would take, what artifacts they'd deliver, or what a fair price was. They sent back a vague paragraph about "comprehensive analysis" and "customized recommendations." The compliance officer never replied. Over the next six weeks, this pattern repeated four times. Each inquiry exposed the same void: the builder could describe the _concept_ of a behavioral audit fluently — the Möbius strip of self-validation, the peer-audited mechanics, the double-entry integrity checks — but could not translate it into a line item. "I'll send you a proposal" became the stall tactic, and the proposal never came because there was no template, no rate card, no definition of done.
 
 **Underlying Assumption**
 
@@ -293,11 +293,11 @@ Every prospect conversation includes the question "who else uses this?" — and 
 
 **The Failure Story**
 
-In July 2026, the builder extracted `src/shared/behavioral-physics/` — the `LossAversionEngine` and `VolatilityEngine` — into a standalone npm package called `@styx/behavioral-core`. They built a landing page, wrote a README citing the loss aversion coefficient (λ = 2.0, hardcoded in `behavioral-logic.ts:98`), and sent it to three fintech founders they found on LinkedIn. The first reply came from a payments startup CTO: "Your penalty multiplier math is just Kahneman-Tversky with a time-decay wrapper. We already model this in our risk engine." The second didn't reply. The third asked for a demo — the builder showed them the Fury consensus resolver and the honeypot detection engine, but the prospect said, "I need to see this work on *my* data, not your test harness." The builder had no integration layer, no SDK for external systems, no way to ingest someone else's transaction stream. The behavioral physics lived inside a monorepo that assumed its own ledger, its own contracts, its own wallet module. Stripping it out left a library of formulas with no input surface. By September, the builder had spent six weeks building a demo integration — a CSV uploader that ran behavioral analysis on exported Stripe data. They showed it to a marketplace operator. The operator said: "This tells me my users are loss-averse. I already know that. What does it *do*?" The builder had no answer.
+In July 2026, the builder extracted `src/shared/behavioral-physics/` — the `LossAversionEngine` and `VolatilityEngine` — into a standalone npm package called `@styx/behavioral-core`. They built a landing page, wrote a README citing the loss aversion coefficient (λ = 2.0, hardcoded in `behavioral-logic.ts:98`), and sent it to three fintech founders they found on LinkedIn. The first reply came from a payments startup CTO: "Your penalty multiplier math is just Kahneman-Tversky with a time-decay wrapper. We already model this in our risk engine." The second didn't reply. The third asked for a demo — the builder showed them the Fury consensus resolver and the honeypot detection engine, but the prospect said, "I need to see this work on _my_ data, not your test harness." The builder had no integration layer, no SDK for external systems, no way to ingest someone else's transaction stream. The behavioral physics lived inside a monorepo that assumed its own ledger, its own contracts, its own wallet module. Stripping it out left a library of formulas with no input surface. By September, the builder had spent six weeks building a demo integration — a CSV uploader that ran behavioral analysis on exported Stripe data. They showed it to a marketplace operator. The operator said: "This tells me my users are loss-averse. I already know that. What does it _do_?" The builder had no answer.
 
 **Underlying Assumption**
 
-Behavioral economics *formulas* — loss aversion coefficients, volatility multipliers, integrity scores — constitute a product, rather than raw material that only becomes valuable when embedded in someone else's decision loop.
+Behavioral economics _formulas_ — loss aversion coefficients, volatility multipliers, integrity scores — constitute a product, rather than raw material that only becomes valuable when embedded in someone else's decision loop.
 
 **Early Warning Signs**
 
@@ -325,7 +325,7 @@ Extracting code from a monorepo is a file-copy operation, not an infrastructure 
 
 **The Failure Story**
 
-On day 4, the builder identified the double-entry ledger validation module as the smallest sellable artifact — 300 lines of TypeScript, zero dependencies on the rest of the monorepo. They opened `src/shared/ledger/` and started carving out the extraction branch. Then they ran the full test suite out of habit: 1,107 tests, all green. The GRADUATED badge in the README felt like a verdict. This system was *complete*. What they were doing — ripping out one module, stripping the behavioral economics layer, wrapping it in a Stripe checkout — wasn't building a product. It was defacing one. By day 11, the extraction branch had three commits and then stalled. The builder kept returning to the main codebase instead, refactoring the Fury router's error messages, adding integration tests for escrow flows, updating the pitch deck's p5.js visualization. Each task felt legitimate — "improving the system" — while the extraction felt like amputation. On day 19, they told themselves the ledger module wasn't "ready to stand alone" and needed the shared constants package. Then the shared constants needed the types. Then the types needed the behavioral physics engine. The GRADUATED system swallowed the extraction attempt whole, because a graduated system has no edges — everything connects to everything else, and pulling one thread unravels the tapestry. On day 30, the builder had 1,112 tests passing and zero external contacts. The extraction branch was never merged. It was never deleted either.
+On day 4, the builder identified the double-entry ledger validation module as the smallest sellable artifact — 300 lines of TypeScript, zero dependencies on the rest of the monorepo. They opened `src/shared/ledger/` and started carving out the extraction branch. Then they ran the full test suite out of habit: 1,107 tests, all green. The GRADUATED badge in the README felt like a verdict. This system was _complete_. What they were doing — ripping out one module, stripping the behavioral economics layer, wrapping it in a Stripe checkout — wasn't building a product. It was defacing one. By day 11, the extraction branch had three commits and then stalled. The builder kept returning to the main codebase instead, refactoring the Fury router's error messages, adding integration tests for escrow flows, updating the pitch deck's p5.js visualization. Each task felt legitimate — "improving the system" — while the extraction felt like amputation. On day 19, they told themselves the ledger module wasn't "ready to stand alone" and needed the shared constants package. Then the shared constants needed the types. Then the types needed the behavioral physics engine. The GRADUATED system swallowed the extraction attempt whole, because a graduated system has no edges — everything connects to everything else, and pulling one thread unravels the tapestry. On day 30, the builder had 1,112 tests passing and zero external contacts. The extraction branch was never merged. It was never deleted either.
 
 **Underlying Assumption**
 
@@ -341,11 +341,11 @@ Extraction work is always deferred behind "one more improvement" to the main cod
 
 **The Failure Story**
 
-A compliance officer at a mid-size fintech says yes. She wants the audit engine extracted as a standalone module — path B, the B2B SaaS play. She asks for a $2,000 pilot license. The builder spends three days not writing the invoice but writing a **case study template** about "what this validation means for the behavioral blockchain thesis." The prospect's interest gets reframed as evidence that the *theory* is sound, not that a *product* exists to buy. When she follows up asking for a contract, the builder sends her a link to the pitch deck (`src/pitch`) and a draft of a "testimonial framework" instead of a Stripe payment link. The conversation becomes a collaboration on "how to structure the pilot" — which means another 47 open issues get created in the repo, another plan file lands in `.claude/plans/`, another AI agent session produces a "go-to-market validation report." The 519 open issues become 566. The March 2026 GTM plan that was never executed now has a v2 that also won't be executed. Six weeks later, the prospect has moved to a different vendor. The builder has a beautifully formatted case study draft, a testimonial template, and a "lessons learned" document stored in the knowledge base. The ledger balance is unchanged. The Möbius strip completes its loop: external interest was converted into internal completeness, and the system declares itself validated.
+A compliance officer at a mid-size fintech says yes. She wants the audit engine extracted as a standalone module — path B, the B2B SaaS play. She asks for a $2,000 pilot license. The builder spends three days not writing the invoice but writing a **case study template** about "what this validation means for the behavioral blockchain thesis." The prospect's interest gets reframed as evidence that the _theory_ is sound, not that a _product_ exists to buy. When she follows up asking for a contract, the builder sends her a link to the pitch deck (`src/pitch`) and a draft of a "testimonial framework" instead of a Stripe payment link. The conversation becomes a collaboration on "how to structure the pilot" — which means another 47 open issues get created in the repo, another plan file lands in `.claude/plans/`, another AI agent session produces a "go-to-market validation report." The 519 open issues become 566. The March 2026 GTM plan that was never executed now has a v2 that also won't be executed. Six weeks later, the prospect has moved to a different vendor. The builder has a beautifully formatted case study draft, a testimonial template, and a "lessons learned" document stored in the knowledge base. The ledger balance is unchanged. The Möbius strip completes its loop: external interest was converted into internal completeness, and the system declares itself validated.
 
 **Underlying Assumption**
 
-Producing documentation *about* a transaction is equivalent to completing the transaction.
+Producing documentation _about_ a transaction is equivalent to completing the transaction.
 
 **Early Warning Signs**
 
@@ -369,6 +369,6 @@ Three consecutive days spent on extraction architecture without a single named p
 
 ---
 
-*Premortem generated 2026-05-17T14:47:46Z*
-*Subject: Extract the smallest sellable artifact from Styx and get external payment within 30 days*
-*20 failure modes analyzed · 20 deep-dive agents · 1 synthesis*
+_Premortem generated 2026-05-17T14:47:46Z_
+_Subject: Extract the smallest sellable artifact from Styx and get external payment within 30 days_
+_20 failure modes analyzed · 20 deep-dive agents · 1 synthesis_

@@ -10,8 +10,14 @@ describe("RetentionController", () => {
   let controller: RetentionController;
   let pool: { query: jest.Mock };
   let dashboard: { getDashboardSummary: jest.Mock };
-  let endowed: { getProgressState: jest.Mock; applyDynamicDownscaling: jest.Mock };
-  let danger: { evaluateDangerWindows: jest.Mock; getProtectionRecommendations: jest.Mock };
+  let endowed: {
+    getProgressState: jest.Mock;
+    applyDynamicDownscaling: jest.Mock;
+  };
+  let danger: {
+    evaluateDangerWindows: jest.Mock;
+    getProtectionRecommendations: jest.Mock;
+  };
   let partners: {
     requestPartnerMatch: jest.Mock;
     scheduleCheckIn: jest.Mock;
@@ -27,8 +33,14 @@ describe("RetentionController", () => {
   beforeEach(() => {
     pool = { query: jest.fn() };
     dashboard = { getDashboardSummary: jest.fn() };
-    endowed = { getProgressState: jest.fn(), applyDynamicDownscaling: jest.fn() };
-    danger = { evaluateDangerWindows: jest.fn(), getProtectionRecommendations: jest.fn() };
+    endowed = {
+      getProgressState: jest.fn(),
+      applyDynamicDownscaling: jest.fn(),
+    };
+    danger = {
+      evaluateDangerWindows: jest.fn(),
+      getProtectionRecommendations: jest.fn(),
+    };
     partners = {
       requestPartnerMatch: jest.fn(),
       scheduleCheckIn: jest.fn(),
@@ -58,14 +70,17 @@ describe("RetentionController", () => {
       const result = await controller.getProgressDashboard(req, "c-1");
 
       expect(result).toEqual(summary);
-      expect(dashboard.getDashboardSummary).toHaveBeenCalledWith("user-001", "c-1");
+      expect(dashboard.getDashboardSummary).toHaveBeenCalledWith(
+        "user-001",
+        "c-1",
+      );
     });
 
     it("throws NotFoundException for a missing contract", async () => {
       pool.query.mockResolvedValueOnce({ rows: [] });
-      await expect(controller.getProgressDashboard(req, "c-missing")).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        controller.getProgressDashboard(req, "c-missing"),
+      ).rejects.toThrow(NotFoundException);
       expect(dashboard.getDashboardSummary).not.toHaveBeenCalled();
     });
 
@@ -98,14 +113,19 @@ describe("RetentionController", () => {
       const result = await controller.getEndowedProgress(req, "c-1");
 
       expect(result.currentTier).toBe("Momentum");
-      expect(result.downscaling).toEqual({ multiplier: 0.9, reason: "1 prior violation(s)" });
+      expect(result.downscaling).toEqual({
+        multiplier: 0.9,
+        reason: "1 prior violation(s)",
+      });
       expect(endowed.getProgressState).toHaveBeenCalledWith("c-1");
       expect(endowed.applyDynamicDownscaling).toHaveBeenCalledWith("c-1");
     });
 
     it("enforces ownership before computing state", async () => {
       pool.query.mockResolvedValueOnce({ rows: [{ user_id: "someone-else" }] });
-      await expect(controller.getEndowedProgress(req, "c-1")).rejects.toThrow(ForbiddenException);
+      await expect(controller.getEndowedProgress(req, "c-1")).rejects.toThrow(
+        ForbiddenException,
+      );
       expect(endowed.getProgressState).not.toHaveBeenCalled();
     });
   });
@@ -116,10 +136,14 @@ describe("RetentionController", () => {
         .mockResolvedValueOnce({ rows: [{ id: "c-1" }, { id: "c-2" }] })
         .mockResolvedValueOnce({ rows: [{ timezone: "America/Chicago" }] });
       danger.evaluateDangerWindows
-        .mockResolvedValueOnce([{ type: "DAY_3", severity: "HIGH", message: "m" }])
+        .mockResolvedValueOnce([
+          { type: "DAY_3", severity: "HIGH", message: "m" },
+        ])
         .mockResolvedValueOnce([]);
       danger.getProtectionRecommendations
-        .mockResolvedValueOnce([{ type: "DAY_3", action: "a", description: "d" }])
+        .mockResolvedValueOnce([
+          { type: "DAY_3", action: "a", description: "d" },
+        ])
         .mockResolvedValueOnce([]);
 
       const result = await controller.getDangerZoneStatus(req);
@@ -134,8 +158,14 @@ describe("RetentionController", () => {
         recommendations: [{ type: "DAY_3", action: "a", description: "d" }],
       });
       expect(result.contracts[1].inDangerZone).toBe(false);
-      expect(danger.evaluateDangerWindows).toHaveBeenCalledWith("c-1", "America/Chicago");
-      expect(danger.evaluateDangerWindows).toHaveBeenCalledWith("c-2", "America/Chicago");
+      expect(danger.evaluateDangerWindows).toHaveBeenCalledWith(
+        "c-1",
+        "America/Chicago",
+      );
+      expect(danger.evaluateDangerWindows).toHaveBeenCalledWith(
+        "c-2",
+        "America/Chicago",
+      );
     });
 
     it("returns an empty status when the user has no active contracts", async () => {
@@ -162,69 +192,89 @@ describe("RetentionController", () => {
       };
       partners.requestPartnerMatch.mockResolvedValueOnce(match);
 
-      const result = await controller.invitePartner(req, { categories: ["SUBSTANCE_USE"] });
+      const result = await controller.invitePartner(req, {
+        categories: ["SUBSTANCE_USE"],
+      });
 
       expect(result).toEqual(match);
-      expect(partners.requestPartnerMatch).toHaveBeenCalledWith("user-001", ["SUBSTANCE_USE"]);
+      expect(partners.requestPartnerMatch).toHaveBeenCalledWith("user-001", [
+        "SUBSTANCE_USE",
+      ]);
     });
 
-    it.each([
-      [undefined],
-      [[]],
-      ["SUBSTANCE_USE"],
-      [[42]],
-      [["  "]],
-    ])("rejects invalid categories payload %p", async (categories) => {
-      await expect(controller.invitePartner(req, { categories } as any)).rejects.toThrow(
-        BadRequestException,
-      );
-      expect(partners.requestPartnerMatch).not.toHaveBeenCalled();
-    });
+    it.each([[undefined], [[]], ["SUBSTANCE_USE"], [[42]], [["  "]]])(
+      "rejects invalid categories payload %p",
+      async (categories) => {
+        await expect(
+          controller.invitePartner(req, { categories } as any),
+        ).rejects.toThrow(BadRequestException);
+        expect(partners.requestPartnerMatch).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe("acceptPartnership", () => {
     it("schedules the first check-in with the accepting user as partner", async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ user_id: "user-owner", status: "ACTIVE" }] });
+      pool.query.mockResolvedValueOnce({
+        rows: [{ user_id: "user-owner", status: "ACTIVE" }],
+      });
       const checkIn = { id: "chk-1", contractId: "c-1", partnerId: "user-001" };
       partners.scheduleCheckIn.mockResolvedValueOnce(checkIn);
 
-      const result = await controller.acceptPartnership(req, { contractId: "c-1" });
+      const result = await controller.acceptPartnership(req, {
+        contractId: "c-1",
+      });
 
       expect(result).toEqual(checkIn);
-      expect(partners.scheduleCheckIn).toHaveBeenCalledWith("c-1", "user-001", "SCHEDULED");
+      expect(partners.scheduleCheckIn).toHaveBeenCalledWith(
+        "c-1",
+        "user-001",
+        "SCHEDULED",
+      );
     });
 
     it("rejects a missing contractId", async () => {
-      await expect(controller.acceptPartnership(req, {})).rejects.toThrow(BadRequestException);
+      await expect(controller.acceptPartnership(req, {})).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it("throws NotFoundException for an unknown contract", async () => {
       pool.query.mockResolvedValueOnce({ rows: [] });
-      await expect(controller.acceptPartnership(req, { contractId: "c-x" })).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        controller.acceptPartnership(req, { contractId: "c-x" }),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it("rejects partnering on your own contract", async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ user_id: "user-001", status: "ACTIVE" }] });
-      await expect(controller.acceptPartnership(req, { contractId: "c-own" })).rejects.toThrow(
-        BadRequestException,
-      );
+      pool.query.mockResolvedValueOnce({
+        rows: [{ user_id: "user-001", status: "ACTIVE" }],
+      });
+      await expect(
+        controller.acceptPartnership(req, { contractId: "c-own" }),
+      ).rejects.toThrow(BadRequestException);
       expect(partners.scheduleCheckIn).not.toHaveBeenCalled();
     });
 
     it("rejects non-active contracts", async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ user_id: "user-owner", status: "COMPLETED" }] });
-      await expect(controller.acceptPartnership(req, { contractId: "c-done" })).rejects.toThrow(
-        BadRequestException,
-      );
+      pool.query.mockResolvedValueOnce({
+        rows: [{ user_id: "user-owner", status: "COMPLETED" }],
+      });
+      await expect(
+        controller.acceptPartnership(req, { contractId: "c-done" }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
   describe("listPartners", () => {
     it("returns the caller's active partnerships", async () => {
       const partnerships = [
-        { partnerId: "p1", alias: "buddy", sharedCategories: [], mutualInterestScore: 1 },
+        {
+          partnerId: "p1",
+          alias: "buddy",
+          sharedCategories: [],
+          mutualInterestScore: 1,
+        },
       ];
       partners.getActivePartnerships.mockResolvedValueOnce(partnerships);
 
@@ -237,7 +287,9 @@ describe("RetentionController", () => {
 
   describe("getCheckInHistory", () => {
     it("returns history for the contract owner with the default limit", async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ owner_id: "user-001", is_partner: false }] });
+      pool.query.mockResolvedValueOnce({
+        rows: [{ owner_id: "user-001", is_partner: false }],
+      });
       partners.getCheckInHistory.mockResolvedValueOnce([{ id: "chk-1" }]);
 
       const result = await controller.getCheckInHistory(req, "c-1", undefined);
@@ -247,7 +299,9 @@ describe("RetentionController", () => {
     });
 
     it("allows the partner of record to read history with a custom limit", async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ owner_id: "user-999", is_partner: true }] });
+      pool.query.mockResolvedValueOnce({
+        rows: [{ owner_id: "user-999", is_partner: true }],
+      });
       partners.getCheckInHistory.mockResolvedValueOnce([]);
 
       await controller.getCheckInHistory(req, "c-1", "5");
@@ -256,25 +310,32 @@ describe("RetentionController", () => {
     });
 
     it("rejects non-participants", async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ owner_id: "user-999", is_partner: false }] });
-      await expect(controller.getCheckInHistory(req, "c-1", undefined)).rejects.toThrow(
-        ForbiddenException,
-      );
+      pool.query.mockResolvedValueOnce({
+        rows: [{ owner_id: "user-999", is_partner: false }],
+      });
+      await expect(
+        controller.getCheckInHistory(req, "c-1", undefined),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it("throws NotFoundException for an unknown contract", async () => {
       pool.query.mockResolvedValueOnce({ rows: [] });
-      await expect(controller.getCheckInHistory(req, "c-x", undefined)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        controller.getCheckInHistory(req, "c-x", undefined),
+      ).rejects.toThrow(NotFoundException);
     });
 
-    it.each([["0"], ["101"], ["abc"]])("rejects invalid limit %p", async (limit) => {
-      pool.query.mockResolvedValueOnce({ rows: [{ owner_id: "user-001", is_partner: false }] });
-      await expect(controller.getCheckInHistory(req, "c-1", limit)).rejects.toThrow(
-        BadRequestException,
-      );
-    });
+    it.each([["0"], ["101"], ["abc"]])(
+      "rejects invalid limit %p",
+      async (limit) => {
+        pool.query.mockResolvedValueOnce({
+          rows: [{ owner_id: "user-001", is_partner: false }],
+        });
+        await expect(
+          controller.getCheckInHistory(req, "c-1", limit),
+        ).rejects.toThrow(BadRequestException);
+      },
+    );
   });
 
   describe("completeCheckIn", () => {
@@ -287,7 +348,12 @@ describe("RetentionController", () => {
 
     it("completes the check-in and notifies the counterpart", async () => {
       pool.query.mockResolvedValueOnce({ rows: [membershipRow] });
-      const completed = { id: "chk-1", contractId: "c-1", partnerId: "user-partner", status: "COMPLETED" };
+      const completed = {
+        id: "chk-1",
+        contractId: "c-1",
+        partnerId: "user-partner",
+        status: "COMPLETED",
+      };
       partners.completeCheckIn.mockResolvedValueOnce(completed);
 
       const result = await controller.completeCheckIn(req, {
@@ -296,7 +362,10 @@ describe("RetentionController", () => {
       });
 
       expect(result).toEqual(completed);
-      expect(partners.completeCheckIn).toHaveBeenCalledWith("chk-1", "All good");
+      expect(partners.completeCheckIn).toHaveBeenCalledWith(
+        "chk-1",
+        "All good",
+      );
       // Owner completed → the partner receives the composed PARTNER_CHECK_IN.
       expect(notifications.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -317,7 +386,10 @@ describe("RetentionController", () => {
         status: "COMPLETED",
       });
 
-      await controller.completeCheckIn(partnerReq, { checkInId: "chk-1", message: "hi" });
+      await controller.completeCheckIn(partnerReq, {
+        checkInId: "chk-1",
+        message: "hi",
+      });
 
       expect(notifications.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -347,10 +419,15 @@ describe("RetentionController", () => {
 
     it("rejects callers who are neither owner nor partner", async () => {
       pool.query.mockResolvedValueOnce({
-        rows: [{ ...membershipRow, owner_id: "user-888", partner_id: "user-999" }],
+        rows: [
+          { ...membershipRow, owner_id: "user-888", partner_id: "user-999" },
+        ],
       });
       await expect(
-        controller.completeCheckIn(req, { checkInId: "chk-1", message: "nope" }),
+        controller.completeCheckIn(req, {
+          checkInId: "chk-1",
+          message: "nope",
+        }),
       ).rejects.toThrow(ForbiddenException);
       expect(partners.completeCheckIn).not.toHaveBeenCalled();
     });
@@ -367,9 +444,9 @@ describe("RetentionController", () => {
       [{ checkInId: "chk-1" }],
       [{ checkInId: "chk-1", message: "   " }],
     ])("rejects invalid payload %p", async (body) => {
-      await expect(controller.completeCheckIn(req, body as any)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        controller.completeCheckIn(req, body as any),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

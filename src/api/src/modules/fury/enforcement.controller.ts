@@ -1,51 +1,79 @@
-import { Controller, Post, Get, Param, Query, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '../../../guards/auth.guard';
-import { RoleGuard, Roles } from '../../common/guards/role.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { EnforcementService } from './enforcement.service';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+} from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { AuthGuard } from "../../../guards/auth.guard";
+import { RoleGuard, Roles } from "../../common/guards/role.guard";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { EnforcementService } from "./enforcement.service";
 
-@ApiTags('Fury')
+@ApiTags("Fury")
 @ApiBearerAuth()
-@Controller('fury/enforcement')
+@Controller("fury/enforcement")
 @UseGuards(AuthGuard, RoleGuard)
 export class EnforcementController {
   constructor(private readonly enforcementService: EnforcementService) {}
 
-  @Get('cases')
-  @Roles('ADMIN')
-  @ApiOperation({ summary: 'List enforcement cases with their penalty state (Admin only)' })
+  @Get("cases")
+  @Roles("ADMIN")
+  @ApiOperation({
+    summary: "List enforcement cases with their penalty state (Admin only)",
+  })
   async listCases(
-    @Query('status') status?: string,
-    @Query('caseType') caseType?: string,
-    @Query('limit') limit?: string,
+    @Query("status") status?: string,
+    @Query("caseType") caseType?: string,
+    @Query("limit") limit?: string,
   ) {
-    return this.enforcementService.listCases({ status, caseType, limit: Number(limit) });
+    return this.enforcementService.listCases({
+      status,
+      caseType,
+      limit: Number(limit),
+    });
   }
 
-  @Get('rings')
-  @Roles('ADMIN')
-  @ApiOperation({ summary: 'List detected collusion rings, grouped from their member cases (Admin only)' })
-  async listRings(@Query('sinceHours') sinceHours?: string, @Query('limit') limit?: string) {
+  @Get("rings")
+  @Roles("ADMIN")
+  @ApiOperation({
+    summary:
+      "List detected collusion rings, grouped from their member cases (Admin only)",
+  })
+  async listRings(
+    @Query("sinceHours") sinceHours?: string,
+    @Query("limit") limit?: string,
+  ) {
     return this.enforcementService.listCollusionRings({
       sinceHours: Number(sinceHours),
       limit: Number(limit),
     });
   }
 
-  @Post('evaluate')
-  @Roles('ADMIN')
-  @ApiOperation({ summary: 'Evaluate collusion incidents from review events (Admin only)' })
+  @Post("evaluate")
+  @Roles("ADMIN")
+  @ApiOperation({
+    summary: "Evaluate collusion incidents from review events (Admin only)",
+  })
   async evaluate(@Body() dto: { proofId: string; flaggedFuries: string[] }) {
-    await this.enforcementService.evaluateCollusion(dto.proofId, dto.flaggedFuries);
+    await this.enforcementService.evaluateCollusion(
+      dto.proofId,
+      dto.flaggedFuries,
+    );
     return { success: true };
   }
 
-  @Post('confirm/:caseId')
-  @Roles('ADMIN')
-  @ApiOperation({ summary: 'Confirm a pending enforcement case and apply penalty (Admin only)' })
+  @Post("confirm/:caseId")
+  @Roles("ADMIN")
+  @ApiOperation({
+    summary:
+      "Confirm a pending enforcement case and apply penalty (Admin only)",
+  })
   async confirm(
-    @Param('caseId') caseId: string,
+    @Param("caseId") caseId: string,
     @Body() dto: { penaltyType?: string; amountCents?: number },
   ) {
     // `dto.amountCents || 0` silently turned a missing or malformed amount into a
@@ -53,28 +81,35 @@ export class EnforcementController {
     // service derives the default from the auditor stake rather than guessing 0.
     return this.enforcementService.confirmCase(
       caseId,
-      dto.penaltyType || 'REP_BURN',
+      dto.penaltyType || "REP_BURN",
       dto.amountCents,
     );
   }
 
-  @Post('appeals/:caseId')
-  @ApiOperation({ summary: 'Appeal an enforcement penalty' })
+  @Post("appeals/:caseId")
+  @ApiOperation({ summary: "Appeal an enforcement penalty" })
   async appeal(
-    @Param('caseId') caseId: string,
+    @Param("caseId") caseId: string,
     @CurrentUser() user: { id: string },
-    @Body() dto: { reason: string }
+    @Body() dto: { reason: string },
   ) {
     return this.enforcementService.appealCase(caseId, user.id, dto.reason);
   }
 
-  @Post('appeals/:caseId/resolve')
-  @Roles('ADMIN')
-  @ApiOperation({ summary: 'Resolve an appeal — approve (uphold penalty) or reverse (overturn)' })
+  @Post("appeals/:caseId/resolve")
+  @Roles("ADMIN")
+  @ApiOperation({
+    summary:
+      "Resolve an appeal — approve (uphold penalty) or reverse (overturn)",
+  })
   async resolveAppeal(
-    @Param('caseId') caseId: string,
-    @Body() dto: { outcome: 'UPHELD' | 'REVERSED'; reason?: string },
+    @Param("caseId") caseId: string,
+    @Body() dto: { outcome: "UPHELD" | "REVERSED"; reason?: string },
   ) {
-    return this.enforcementService.resolveAppeal(caseId, dto.outcome, dto.reason);
+    return this.enforcementService.resolveAppeal(
+      caseId,
+      dto.outcome,
+      dto.reason,
+    );
   }
 }

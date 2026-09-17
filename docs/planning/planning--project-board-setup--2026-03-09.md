@@ -65,27 +65,27 @@ They are historical orchestration metadata, not launch-management controls.
 
 ## Keep And Show In Active Views
 
-| Field | Use |
-|---|---|
-| `Title` | issue name |
-| `Status` | actual work state |
-| `Priority` | urgency |
-| `Milestone` | launch gate or phase |
-| `Sprint` | current sprint grouping for active execution |
-| `Target Date` | specific commitment date |
-| `Department` | business function or product function |
-| `Assignees` | named accountable person |
-| `Labels` | technical/function tags |
-| `Parent issue` | epic linkage |
-| `Sub-issues progress` | epic progress |
+| Field                 | Use                                          |
+| --------------------- | -------------------------------------------- |
+| `Title`               | issue name                                   |
+| `Status`              | actual work state                            |
+| `Priority`            | urgency                                      |
+| `Milestone`           | launch gate or phase                         |
+| `Sprint`              | current sprint grouping for active execution |
+| `Target Date`         | specific commitment date                     |
+| `Department`          | business function or product function        |
+| `Assignees`           | named accountable person                     |
+| `Labels`              | technical/function tags                      |
+| `Parent issue`        | epic linkage                                 |
+| `Sub-issues progress` | epic progress                                |
 
 ## Keep But Hide In Most Views
 
-| Field | Why hide |
-|---|---|
-| `Repository` | useful only if multiple repos feed the project |
-| `Linked pull requests` | useful in engineering view only |
-| `Reviewers` | useful in engineering review view only |
+| Field                  | Why hide                                       |
+| ---------------------- | ---------------------------------------------- |
+| `Repository`           | useful only if multiple repos feed the project |
+| `Linked pull requests` | useful in engineering view only                |
+| `Reviewers`            | useful in engineering review view only         |
 
 ## Rename Or Replace
 
@@ -365,14 +365,14 @@ This is where the current `A-Plans`, `B-Sessions`, `C-Cache`, and similar legacy
 
 If you want the fastest possible cleanup in the browser, repurpose the six existing views first:
 
-| Current view | Recommended rename | Notes |
-|---|---|---|
+| Current view   | Recommended rename          | Notes                                                           |
+| -------------- | --------------------------- | --------------------------------------------------------------- |
 | `kitchen-sink` | `01 Exec / Partner Command` | keep as table; narrow visible columns to founder/partner fields |
-| `sprint_board` | `02 Beta Gate` | keep as board; filter to Beta-only items |
-| `backlog` | `04 Engineering Delivery` | use as the default engineering queue |
-| `by_epic` | `05 Epics / Program Map` | keep as table; focus on epics and parent/sub-issue progress |
-| `needs_triage` | `07 Metadata Cleanup` | use for missing metadata and unlabeled items |
-| `roadmap` | `06 Later Pipeline` | use as long-range date view for later-phase work |
+| `sprint_board` | `02 Beta Gate`              | keep as board; filter to Beta-only items                        |
+| `backlog`      | `04 Engineering Delivery`   | use as the default engineering queue                            |
+| `by_epic`      | `05 Epics / Program Map`    | keep as table; focus on epics and parent/sub-issue progress     |
+| `needs_triage` | `07 Metadata Cleanup`       | use for missing metadata and unlabeled items                    |
+| `roadmap`      | `06 Later Pipeline`         | use as long-range date view for later-phase work                |
 
 Then add two new views manually if you want the full model:
 

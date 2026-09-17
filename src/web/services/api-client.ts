@@ -6,7 +6,7 @@ import type {
   ReferralStats,
   ReferralReward,
   StyxErrorEnvelope,
-} from "@styx/shared/index";
+} from "@styx/types";
 import { getApiBase } from "./runtime-config";
 import { isSnapshotMode, snapshotRespond } from "./snapshot";
 
@@ -208,7 +208,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     } catch {
       isRefreshing = false;
       const parsed = await parseErrorEnvelope(res);
-      throw new ApiError(parsed.message, res.status, parsed.code, parsed.traceId);
+      throw new ApiError(
+        parsed.message,
+        res.status,
+        parsed.code,
+        parsed.traceId,
+      );
     }
   }
 
@@ -1097,8 +1102,7 @@ export const api = {
     }),
 
   // Referrals
-  getReferralCode: () =>
-    request<ReferralCodeResponse>("/referrals/code"),
+  getReferralCode: () => request<ReferralCodeResponse>("/referrals/code"),
 
   getReferralStats: () =>
     request<{
@@ -1119,13 +1123,17 @@ export const api = {
     ),
 
   // Goal gradient
-  getDashboardProgress: () =>
-    request<DashboardProgress>("/dashboard/progress"),
+  getDashboardProgress: () => request<DashboardProgress>("/dashboard/progress"),
 
   // Streak Chain
   getStreakChain: () =>
     request<{
-      days: Array<{ date: string; attested: boolean; graceUsed: boolean; chainBroken: boolean }>;
+      days: Array<{
+        date: string;
+        attested: boolean;
+        graceUsed: boolean;
+        chainBroken: boolean;
+      }>;
       currentStreak: number;
       longestStreak: number;
       neverMissTwiceActive: boolean;

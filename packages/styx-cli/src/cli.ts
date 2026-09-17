@@ -54,7 +54,9 @@ function findDefaultConfig(): string {
     require.resolve("@styx/audience-engine/package.json"),
   );
   try {
-    return pkgRequire.resolve("@styx/audience-engine/templates/styx-instance.yaml");
+    return pkgRequire.resolve(
+      "@styx/audience-engine/templates/styx-instance.yaml",
+    );
   } catch {
     throw new Error(
       "Could not find templates/styx-instance.yaml in @styx/audience-engine. Pass --config <path>.",
@@ -174,9 +176,12 @@ async function main(): Promise<number> {
     const followers = Number(args.followers);
     const email = Number(args.email);
     const opens = args.opens !== undefined ? Number(args.opens) : undefined;
-    const waitlist = args.waitlist !== undefined ? Number(args.waitlist) : undefined;
+    const waitlist =
+      args.waitlist !== undefined ? Number(args.waitlist) : undefined;
     if (!Number.isFinite(followers) || !Number.isFinite(email)) {
-      console.error(`✗ Invalid metric value: --followers and --email must be numbers`);
+      console.error(
+        `✗ Invalid metric value: --followers and --email must be numbers`,
+      );
       return 2;
     }
     if (opens !== undefined && !Number.isFinite(opens)) {

@@ -1,8 +1,19 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { usePathname } from 'next/navigation';
-import { api, setAuthToken, setCsrfToken, readCsrfCookie } from '../services/api-client';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+import { usePathname } from "next/navigation";
+import {
+  api,
+  setAuthToken,
+  setCsrfToken,
+  readCsrfCookie,
+} from "../services/api-client";
 
 interface User {
   id: string;
@@ -25,28 +36,39 @@ interface RegisterOpts {
   ageConfirmation: boolean;
   termsAccepted: boolean;
   dateOfBirth?: string;
-  deviceFingerprint?: { platform: 'web'; rawVendorId: string };
+  deviceFingerprint?: { platform: "web"; rawVendorId: string };
 }
 
 interface AuthContextValue {
   user: User | null;
   token: string | null; // allow-secret
   login: (email: string, password: string) => Promise<void>; // allow-secret
-  register: (email: string, password: string, opts: RegisterOpts) => Promise<void>; // allow-secret
+  register: (
+    email: string,
+    password: string,
+    opts: RegisterOpts,
+  ) => Promise<void>; // allow-secret
   logout: () => Promise<void>;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const PUBLIC_SESSION_OPTIONAL_PREFIXES = ['/legal', '/login', '/register', '/whistleblower'];
+const PUBLIC_SESSION_OPTIONAL_PREFIXES = [
+  "/legal",
+  "/login",
+  "/register",
+  "/whistleblower",
+];
 
 function isPublicSessionOptionalPath(pathname: string | null): boolean {
-  if (!pathname || pathname === '/') {
+  if (!pathname || pathname === "/") {
     return true;
   }
 
-  return PUBLIC_SESSION_OPTIONAL_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  return PUBLIC_SESSION_OPTIONAL_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -66,7 +88,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     setIsLoading(true);
 
-    api.getMe()
+    api
+      .getMe()
       .then(async (me) => {
         if (cancelled) return;
         setUser(me);
@@ -90,8 +113,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         if (cancelled) return;
-        setAuthToken('');
-        setCsrfToken('');
+        setAuthToken("");
+        setCsrfToken("");
         setToken(null);
         setUser(null);
       })
@@ -106,7 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [hydrateSession]);
 
-  const login = useCallback(async (email: string, password: string) => { // allow-secret
+  const login = useCallback(async (email: string, password: string) => {
+    // allow-secret
     const result = await api.login(email, password);
     // Keep bearer token in memory only as a compatibility fallback; cookie auth is primary.
     setAuthToken(result.token);
@@ -121,19 +145,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me);
   }, []);
 
-  const register = useCallback(async (email: string, password: string, opts: RegisterOpts) => { // allow-secret
-    const result = await api.register(email, password, opts);
-    setAuthToken(result.token);
-    setToken(result.token);
-    try {
-      const csrf = await api.getCsrf();
-      setCsrfToken(csrf.csrfToken);
-    } catch {
-      // Registration response also sets CSRF cookie; continue if refresh endpoint fails.
-    }
-    const me = await api.getMe();
-    setUser(me);
-  }, []);
+  const register = useCallback(
+    async (email: string, password: string, opts: RegisterOpts) => {
+      // allow-secret
+      const result = await api.register(email, password, opts);
+      setAuthToken(result.token);
+      setToken(result.token);
+      try {
+        const csrf = await api.getCsrf();
+        setCsrfToken(csrf.csrfToken);
+      } catch {
+        // Registration response also sets CSRF cookie; continue if refresh endpoint fails.
+      }
+      const me = await api.getMe();
+      setUser(me);
+    },
+    [],
+  );
 
   const logout = useCallback(async () => {
     try {
@@ -141,14 +169,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Clearing local state should not depend on server response.
     }
-    setAuthToken('');
-    setCsrfToken('');
+    setAuthToken("");
+    setCsrfToken("");
     setToken(null);
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
+    <AuthContext.Provider
+      value={{ user, token, login, register, logout, isLoading }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -156,6 +186,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within <AuthProvider>');
+  if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
   return ctx;
 }

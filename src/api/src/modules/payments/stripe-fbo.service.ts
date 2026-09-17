@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import Stripe from 'stripe';
-import { buildSettlementQuote, distributeBountyPool } from './settlement-quote';
+import { Injectable, Logger } from "@nestjs/common";
+import Stripe from "stripe";
+import { buildSettlementQuote, distributeBountyPool } from "./settlement-quote";
 
 type StripeClient = InstanceType<typeof Stripe>;
 
@@ -8,7 +8,7 @@ type StripeClient = InstanceType<typeof Stripe>;
  * @deprecated Use SettlementModule and SettlementWorker for contract resolution.
  * The canonical truth for payout math is now in settlement-quote.ts, and this
  * legacy service must mirror that logic until it is fully removed.
- * 
+ *
  * Stripe FBO (For Benefit Of) Escrow Service
  */
 @Injectable()
@@ -18,8 +18,8 @@ export class StripeFBOService {
 
   constructor() {
     // In production, this uses a high-risk merchant account API key
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
-      apiVersion: '2026-08-26.dahlia', // Matched to project stripe dependency
+    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_mock", {
+      apiVersion: "2026-08-26.dahlia", // Matched to project stripe dependency
     });
   }
 
@@ -28,26 +28,32 @@ export class StripeFBOService {
    * Uses "capture_method: manual" to authorize without taking funds immediately
    * if supported by the risk profile, or captures to FBO immediately.
    */
-  async lockStakeInEscrow(userId: string, amountCents: number, contractId: string): Promise<string> {
-    this.logger.log(`Locking $${amountCents / 100} in FBO Escrow for contract ${contractId}`);
+  async lockStakeInEscrow(
+    userId: string,
+    amountCents: number,
+    contractId: string,
+  ): Promise<string> {
+    this.logger.log(
+      `Locking $${amountCents / 100} in FBO Escrow for contract ${contractId}`,
+    );
 
     // Create a PaymentIntent that routes to the platform's connected FBO account.
     const paymentIntent = await this.stripe.paymentIntents.create(
       {
         amount: amountCents,
-        currency: 'usd',
+        currency: "usd",
         // In a true FBO architecture with Connect, we'd specify transfer_data:
         // transfer_data: { destination: 'acct_fbo_id' },
         metadata: {
           userId,
           contractId,
-          purpose: 'BEHAVIORAL_STAKE_ESCROW'
+          purpose: "BEHAVIORAL_STAKE_ESCROW",
         },
         // PM3: use a MANUAL hold to match the FBO manual-capture model used everywhere else
         // (escrow/stripe.service.ts). Funds are authorized now and only captured on a FAIL
         // resolution; on a PASS the hold is released. Immediate `automatic` capture conflicted
         // with that model and pre-collected funds that may need to be released untouched.
-        capture_method: 'manual',
+        capture_method: "manual",
       },
       // PM3: a contract-scoped idempotency key. A BullMQ/Stripe retry of the same stake-lock must
       // not create a second PaymentIntent and double-charge the user.
@@ -58,19 +64,21 @@ export class StripeFBOService {
   }
 
   /**
-   * Resolves a contract. 
+   * Resolves a contract.
    * If PASS: Refunds the stake to the user.
    * If FAIL: Uses the canonical provisional failed-capture split from settlement-quote.ts.
    */
   async resolveEscrow(
     paymentIntentId: string,
-    outcome: 'PASS' | 'FAIL',
+    outcome: "PASS" | "FAIL",
     furies: string[] = [],
     contractStakeCents?: number,
   ): Promise<boolean> {
-    this.logger.log(`Resolving Escrow for PI: ${paymentIntentId}. Outcome: ${outcome}`);
+    this.logger.log(
+      `Resolving Escrow for PI: ${paymentIntentId}. Outcome: ${outcome}`,
+    );
 
-    if (outcome === 'PASS') {
+    if (outcome === "PASS") {
       // User succeeded. Release the manual hold back to the user.
       // PM3: with the FBO manual-capture model, a successful resolution RELEASES the
       // never-captured authorization (cancel), which returns the held funds to the customer.
@@ -78,7 +86,7 @@ export class StripeFBOService {
       // by cancelling it.)
       await this.stripe.paymentIntents.cancel(
         paymentIntentId,
-        { cancellation_reason: 'requested_by_customer' },
+        { cancellation_reason: "requested_by_customer" },
         // Idempotency: a BullMQ/Stripe retry of the same resolution must not error/replay.
         { idempotencyKey: `styx_release_${paymentIntentId}` },
       );
@@ -92,7 +100,7 @@ export class StripeFBOService {
 
       // PM2: never split a non-USD intent as if it were USD cents. Fail closed on a currency
       // mismatch rather than capturing/transferring against an amount in a different currency.
-      if (intent.currency && intent.currency.toLowerCase() !== 'usd') {
+      if (intent.currency && intent.currency.toLowerCase() !== "usd") {
         throw new Error(
           `resolveEscrow: refusing to slash PaymentIntent ${paymentIntentId} in currency ` +
             `'${intent.currency}' (only 'usd' is supported).`,
@@ -118,7 +126,9 @@ export class StripeFBOService {
         // Include the amount so a re-capture at a corrected amount is its own idempotent op.
         { idempotencyKey: `styx_capture_${paymentIntentId}_${totalAmount}` },
       );
-      this.logger.log(`Platform captured $${platformFee / 100} fee (slashed stake $${totalAmount / 100}).`);
+      this.logger.log(
+        `Platform captured $${platformFee / 100} fee (slashed stake $${totalAmount / 100}).`,
+      );
 
       // Transfer bounties to Fury connected accounts. Under DR-002 the pool is 0, so every
       // share is 0 and the loop issues no transfers.
@@ -131,17 +141,19 @@ export class StripeFBOService {
           await this.stripe.transfers.create(
             {
               amount: bountyAmount,
-              currency: 'usd',
+              currency: "usd",
               destination: furyId,
               metadata: {
                 paymentIntentId,
-                purpose: 'FURY_BOUNTY',
+                purpose: "FURY_BOUNTY",
               },
             },
             // Idempotency: keyed per (paymentIntent, fury) so a retry cannot double-pay a fury.
             { idempotencyKey: `styx_bounty_${paymentIntentId}_${furyId}` },
           );
-          this.logger.log(`Transferred $${bountyAmount / 100} bounty to Fury ${furyId}`);
+          this.logger.log(
+            `Transferred $${bountyAmount / 100} bounty to Fury ${furyId}`,
+          );
         }
       }
 

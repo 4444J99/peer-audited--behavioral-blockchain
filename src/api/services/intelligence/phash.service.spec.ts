@@ -1,10 +1,10 @@
-import { PHashService } from './phash.service';
+import { PHashService } from "./phash.service";
 
 // Mock sharp. dHash resizes to (HASH_SIZE+1) x HASH_SIZE = 9 x 8 = 72 grayscale
 // pixels. We build a 9-wide x 8-tall buffer where the left half of every row is
 // bright (200) and the right half dark (50), so the horizontal gradient is stable
 // and the computed dHash is deterministic across the test run.
-jest.mock('sharp', () => {
+jest.mock("sharp", () => {
   const WIDTH = 9;
   const HEIGHT = 8;
   const data = Buffer.from(
@@ -24,61 +24,73 @@ jest.mock('sharp', () => {
   }));
 });
 
-describe('PHashService', () => {
+describe("PHashService", () => {
   let service: PHashService;
 
   beforeEach(() => {
     service = new PHashService();
   });
 
-  describe('computeFrameHash', () => {
-    it('should return a 16-char hex string', async () => {
-      const hash = await service.computeFrameHash(Buffer.from('test'));
+  describe("computeFrameHash", () => {
+    it("should return a 16-char hex string", async () => {
+      const hash = await service.computeFrameHash(Buffer.from("test"));
       expect(hash).toMatch(/^[0-9a-f]{16}$/);
     });
   });
 
-  describe('hammingDistance', () => {
-    it('should return 0 for identical hashes', () => {
-      expect(service.hammingDistance('ffffffff00000000', 'ffffffff00000000')).toBe(0);
+  describe("hammingDistance", () => {
+    it("should return 0 for identical hashes", () => {
+      expect(
+        service.hammingDistance("ffffffff00000000", "ffffffff00000000"),
+      ).toBe(0);
     });
 
-    it('should return correct distance for different hashes', () => {
+    it("should return correct distance for different hashes", () => {
       // One bit different
-      expect(service.hammingDistance('0000000000000000', '0000000000000001')).toBe(1);
+      expect(
+        service.hammingDistance("0000000000000000", "0000000000000001"),
+      ).toBe(1);
     });
 
-    it('should be symmetric', () => {
-      const d1 = service.hammingDistance('aaaa000000000000', 'bbbb000000000000');
-      const d2 = service.hammingDistance('bbbb000000000000', 'aaaa000000000000');
+    it("should be symmetric", () => {
+      const d1 = service.hammingDistance(
+        "aaaa000000000000",
+        "bbbb000000000000",
+      );
+      const d2 = service.hammingDistance(
+        "bbbb000000000000",
+        "aaaa000000000000",
+      );
       expect(d1).toBe(d2);
     });
   });
 
-  describe('isDuplicate', () => {
-    it('should detect duplicate frames', async () => {
-      const hash = await service.computeFrameHash(Buffer.from('test'));
-      const result = await service.isDuplicate(Buffer.from('test'), [hash]);
+  describe("isDuplicate", () => {
+    it("should detect duplicate frames", async () => {
+      const hash = await service.computeFrameHash(Buffer.from("test"));
+      const result = await service.isDuplicate(Buffer.from("test"), [hash]);
       expect(result.duplicate).toBe(true);
       expect(result.closestDistance).toBe(0);
     });
 
-    it('should not flag unique frames', async () => {
+    it("should not flag unique frames", async () => {
       // All f's is very different from the mock's output
-      const result = await service.isDuplicate(Buffer.from('test'), ['ffffffffffffffff']);
+      const result = await service.isDuplicate(Buffer.from("test"), [
+        "ffffffffffffffff",
+      ]);
       expect(result.duplicate).toBe(false);
     });
 
-    it('should return Infinity closestDistance for empty existing hashes', async () => {
-      const result = await service.isDuplicate(Buffer.from('test'), []);
+    it("should return Infinity closestDistance for empty existing hashes", async () => {
+      const result = await service.isDuplicate(Buffer.from("test"), []);
       expect(result.duplicate).toBe(false);
       expect(result.closestDistance).toBe(Infinity);
     });
   });
 
-  describe('extractFrameHashes', () => {
-    it('should return hashes for all frames', async () => {
-      const frames = [Buffer.from('a'), Buffer.from('b'), Buffer.from('c')];
+  describe("extractFrameHashes", () => {
+    it("should return hashes for all frames", async () => {
+      const frames = [Buffer.from("a"), Buffer.from("b"), Buffer.from("c")];
       const hashes = await service.extractFrameHashes(frames);
       expect(hashes).toHaveLength(3);
       hashes.forEach((hash) => {

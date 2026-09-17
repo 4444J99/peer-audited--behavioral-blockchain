@@ -1,6 +1,8 @@
 ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
 
----\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+---
+
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
 
 The document is a brainstorm transcript for a behavioral change
 application. The core concept is a 30-day performance contract utilizing
@@ -259,8 +261,7 @@ Madison\'s parents or myself. It all amounted to something. Anyway, it
 doesn\'t matter. I know how to. It does. It does. But what would
 incentivize you? Like, let\'s say let\'s say you had, let\'s say this
 was for addiction. And you put 100, let\'s say you put a \$10 line. You
-know you\'re not getting that back. And then you had to put in another
-100. Just to participate over a 21 day period. I guess what I\'m
+know you\'re not getting that back. And then you had to put in another 100. Just to participate over a 21 day period. I guess what I\'m
 thinking of, if it\'s something, like, when you\'re spending more money
 on drugs than you would with the buyings, does it matter? I was just
 thinking, I realized, like, what would incentivize me? Frankly, is,

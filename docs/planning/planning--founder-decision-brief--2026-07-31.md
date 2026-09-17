@@ -13,7 +13,7 @@ waiting on you. A reply changes what ships; silence keeps the default.
 That format is deliberate. On 2026-03-09 a briefing went out with five open
 questions, you answered all five on 2026-03-10 in doc comments, and nothing
 carried the answers back. For four and a half months the code held a constant
-labelled *"pending Jessica decision"* for a call you had already made. Two things
+labelled _"pending Jessica decision"_ for a call you had already made. Two things
 caused that: answers landed on a surface the repo couldn't see, **and** the code
 was parked in a waiting state instead of shipping something.
 
@@ -47,9 +47,9 @@ $14.99/mo subscription, and a $5 appeal fee. **No decision of record covers any 
 them.** Until today the app told users "Entry total $39" and the terms of service
 asserted a non-refundable $9 fee — for money that is never charged. I removed the
 false numbers; I did not pick real ones.
-› *Default:* beta is free, all pricing constants collapse to one disabled source,
+› _Default:_ beta is free, all pricing constants collapse to one disabled source,
 the number gets decided before any real-money charge.
-› *Cost to change later:* **low now, high after launch** — repricing on live users
+› _Cost to change later:_ **low now, high after launch** — repricing on live users
 is a different conversation than pricing before them.
 › **Joint decision under DR-007.**
 
@@ -58,50 +58,50 @@ are legal and have not moved in 144 days. The counsel packet is already written 
 appendices A–E exist on disk. What is missing is a retainer. #315 has sat because
 "retain outside counsel" is a category, not an action, and because engaging one is
 a "significant financial commitment," which DR-007 makes joint.
-› *Default:* I send 5–8 referral requests Monday and bring you the shortlist.
-› *Ask:* a cap I can proceed under without coming back. This single line converts
+› _Default:_ I send 5–8 referral requests Monday and bring you the shortlist.
+› _Ask:_ a cap I can proceed under without coming back. This single line converts
 the oldest blocker on the board into a Monday task.
 
 **Q-3 · Strike threshold — 2 or 3?** Your self-reporting sketch implies one
 warning then forfeiture on the **second** miss. Code forfeits on the **third**.
-› *Default:* **stays 3.** Tightening the condition under which someone loses their
+› _Default:_ **stays 3.** Tightening the condition under which someone loses their
 deposit is not a change I will make on the strength of an example.
-› *Note:* the constant is shared by missed check-ins **and** self-reported relapse.
+› _Note:_ the constant is shared by missed check-ins **and** self-reported relapse.
 Moving it to 2 also tightens relapse forfeiture, which nobody has proposed — so
 "yes, 2" likely means splitting it into two constants.
 
 **Q-4 · Check-in deadline, in whose time?** You asked "time needs to be clear
 11:59PM?" Right now the cron runs on **server** time, not the participant's.
-› *Default:* server midnight, which is fine for a single-timezone cohort and
+› _Default:_ server midnight, which is fine for a single-timezone cohort and
 breaks the moment one participant is in another.
-› *Recommend:* participant-local 11:59 PM before the first cohort spans zones.
+› _Recommend:_ participant-local 11:59 PM before the first cohort spans zones.
 
 **Q-5 · What do pod members see on a miss?** Your sketch says the warning should
 be "visible to pod members." Today it is a private notification to the user only.
 Pod-visible miss state does not exist and is the largest unbuilt item on the list.
-› *Default:* stays private until decided.
-› *Ask:* miss **count** only, or the fact of a miss with any context? This is a
+› _Default:_ stays private until decided.
+› _Ask:_ miss **count** only, or the fact of a miss with any context? This is a
 breakup-recovery cohort — "River missed a check-in" reads differently here than in
 a fitness pod.
 
 **Q-6 · Endowed progress at $0.** DR-005 removes the $5 onboarding bonus. The
 progress mechanic it feeds is a display effect — it grants no money — so removing
 the money leaves the mechanic intact but unfunded.
-› *Default:* keep the mechanic, remove the money.
-› *Ask:* confirm, so DR-005 can ship without half-wiring a behavioral feature.
+› _Default:_ keep the mechanic, remove the money.
+› _Ask:_ confirm, so DR-005 can ship without half-wiring a behavioral feature.
 
 **Q-7 · Apple account holder.** #141 has been blocked 144 days and is the only
 hard gate on distributing a Phase 1 iOS build. Its literal ask: who owns the
 Apple Developer account, who controls App Store Connect, who uploads.
-› *Default:* individual enrolment under me (1–3 days), transferred to the Host LLC
+› _Default:_ individual enrolment under me (1–3 days), transferred to the Host LLC
 at NewCo. Organisation enrolment needs a D-U-N-S number and is slower.
 
 **Q-8 · Merchant account timing (your DR-008 item).** Underwriters ask for the
 legal opinion, so applying before counsel wastes the application.
-› *Default:* after counsel, not now. Deliberately parked, not forgotten.
+› _Default:_ after counsel, not now. Deliberately parked, not forgotten.
 
 **Q-9 · User terms (your DR-008 item).** Open 143 days.
-› *Default:* counsel drafts, you review. This converts it from something you owe
+› _Default:_ counsel drafts, you review. This converts it from something you owe
 into something downstream of Q-2 — which is the correct shape and takes it off
 your plate.
 
@@ -109,12 +109,12 @@ your plate.
 **fitness-first** go-to-market with enterprise second; DR-001 decided no-contact →
 fitness → B2B, no-contact first. It also still sells the $5 onboarding bonus
 (removed by DR-005) and a 15%/85% platform-Fury split (superseded by DR-002).
-› *Default:* unchanged. The deck is the artifact most likely to reach an outsider,
+› _Default:_ unchanged. The deck is the artifact most likely to reach an outsider,
 so I am not editing the strategy in it unilaterally.
 › **Joint decision under DR-007.**
 
 **Q-11 · Product name review (DR-008, joint).** Open since March.
-› *Default:* five minutes today, or we drop it permanently.
+› _Default:_ five minutes today, or we drop it permanently.
 
 ---
 

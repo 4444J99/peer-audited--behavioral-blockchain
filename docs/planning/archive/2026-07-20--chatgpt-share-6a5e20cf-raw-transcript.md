@@ -1,7 +1,7 @@
 # Raw Transcript — ChatGPT Shared Brainstorm Session (6a5e20cf-c938-83ea-94ad-e67ecf72c5a3)
 
 **Ingested:** 2026-07-20  
-**Source URL:** https://chatgpt.com/share/6a5e20cf-c938-83ea-94ad-e67ecf72c5a3  
+**Source URL:** https://chatgpt.com/share/6a5e20cf-c938-83ea-94ad-e67ecf72c5a3
 
 ---
 

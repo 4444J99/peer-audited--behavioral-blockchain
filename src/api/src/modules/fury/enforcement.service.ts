@@ -1,11 +1,16 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { Pool } from 'pg';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { LedgerService } from '../../../services/ledger/ledger.service';
-import { AUDITOR_STAKE_AMOUNT } from '../../../../shared/libs/integrity';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { Pool } from "pg";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { LedgerService } from "../../../services/ledger/ledger.service";
+import { AUDITOR_STAKE_AMOUNT } from "../../../../shared/libs/integrity";
 
 /** Penalty types that move money, and therefore need a real amount and a reversible ledger leg. */
-const FINANCIAL_PENALTY_TYPES = new Set(['STAKE_SLASH']);
+const FINANCIAL_PENALTY_TYPES = new Set(["STAKE_SLASH"]);
 
 const DEFAULT_READ_LIMIT = 50;
 const MAX_READ_LIMIT = 200;
@@ -77,7 +82,10 @@ export class EnforcementService {
     private readonly ledger: LedgerService,
   ) {}
 
-  async evaluateCollusion(proofId: string, flaggedFuries: string[]): Promise<void> {
+  async evaluateCollusion(
+    proofId: string,
+    flaggedFuries: string[],
+  ): Promise<void> {
     if (!flaggedFuries || flaggedFuries.length === 0) return;
 
     for (const furyId of flaggedFuries) {
@@ -103,9 +111,12 @@ export class EnforcementService {
          RETURNING id`,
         [
           furyId,
-          JSON.stringify({ proofId, reason: 'Verdict disagreed with honeypot expected result' }),
+          JSON.stringify({
+            proofId,
+            reason: "Verdict disagreed with honeypot expected result",
+          }),
           proofId,
-        ]
+        ],
       );
 
       if (caseResult.rows.length === 0) {
@@ -115,11 +126,11 @@ export class EnforcementService {
 
       const caseId = caseResult.rows[0].id;
 
-      await this.truthLog.appendEvent('FURY_ENFORCEMENT_CASE_OPENED', {
+      await this.truthLog.appendEvent("FURY_ENFORCEMENT_CASE_OPENED", {
         caseId,
         reviewerId: furyId,
         proofId,
-        caseType: 'HONEYPOT_FAILURE',
+        caseType: "HONEYPOT_FAILURE",
       });
     }
   }
@@ -217,13 +228,17 @@ export class EnforcementService {
    * Confirms a pending enforcement case after review and applies the penalty.
    * Penalties are never auto-applied before this confirmation step.
    */
-  async confirmCase(caseId: string, penaltyType: string = 'REP_BURN', amountCents?: number) {
+  async confirmCase(
+    caseId: string,
+    penaltyType: string = "REP_BURN",
+    amountCents?: number,
+  ) {
     // A STAKE_SLASH with no amount used to become a silent $0 penalty — the case
     // read as punished while nothing was taken. Derive from the auditor stake
     // when the caller omits it, and refuse a non-positive explicit amount.
     const resolvedAmount = FINANCIAL_PENALTY_TYPES.has(penaltyType)
-      ? amountCents ?? AUDITOR_STAKE_AMOUNT
-      : amountCents ?? 0;
+      ? (amountCents ?? AUDITOR_STAKE_AMOUNT)
+      : (amountCents ?? 0);
     if (FINANCIAL_PENALTY_TYPES.has(penaltyType) && resolvedAmount <= 0) {
       throw new BadRequestException(
         `${penaltyType} is a financial penalty and requires a positive amountCents.`,
@@ -236,18 +251,27 @@ export class EnforcementService {
       `UPDATE fury_enforcement_cases SET status = 'PENALTY_APPLIED'
        WHERE id = $1 AND status = 'PENDING_REVIEW'
        RETURNING id`,
-      [caseId]
+      [caseId],
     );
 
     if (claim.rows.length === 0) {
-      throw new NotFoundException('Pending case not found');
+      throw new NotFoundException("Pending case not found");
     }
 
     await this.applyPenalty(caseId, penaltyType, resolvedAmount);
-    return { success: true, caseId, status: 'PENALTY_APPLIED', amountCents: resolvedAmount };
+    return {
+      success: true,
+      caseId,
+      status: "PENALTY_APPLIED",
+      amountCents: resolvedAmount,
+    };
   }
 
-  async applyPenalty(caseId: string, penaltyType: string, amountCents: number = 0) {
+  async applyPenalty(
+    caseId: string,
+    penaltyType: string,
+    amountCents: number = 0,
+  ) {
     // LC9: applyPenalty is public and was previously unconditional, so a direct or
     // legacy caller invoking it on an already-applied case inserted a DUPLICATE
     // penalty (and double-logged FURY_PENALTY_APPLIED). There is no UNIQUE
@@ -260,7 +284,7 @@ export class EnforcementService {
        SELECT $1, $2, $3
        WHERE NOT EXISTS (SELECT 1 FROM fury_penalties WHERE case_id = $1)
        RETURNING id`,
-      [caseId, penaltyType, amountCents]
+      [caseId, penaltyType, amountCents],
     );
 
     if (inserted.rows.length === 0) {
@@ -270,16 +294,23 @@ export class EnforcementService {
 
     await this.pool.query(
       `UPDATE fury_enforcement_cases SET status = 'PENALTY_APPLIED' WHERE id = $1`,
-      [caseId]
+      [caseId],
     );
 
-    const caseData = await this.pool.query(`SELECT reviewer_id FROM fury_enforcement_cases WHERE id = $1`, [caseId]);
+    const caseData = await this.pool.query(
+      `SELECT reviewer_id FROM fury_enforcement_cases WHERE id = $1`,
+      [caseId],
+    );
     const reviewerId = caseData.rows[0]?.reviewer_id;
 
     let ledgerTransactionId: string | null = null;
     let ledgerDebitAccountId: string | null = null;
 
-    if (FINANCIAL_PENALTY_TYPES.has(penaltyType) && amountCents > 0 && reviewerId) {
+    if (
+      FINANCIAL_PENALTY_TYPES.has(penaltyType) &&
+      amountCents > 0 &&
+      reviewerId
+    ) {
       const userRes = await this.pool.query(
         `SELECT account_id FROM users WHERE id = $1`,
         [reviewerId],
@@ -297,7 +328,7 @@ export class EnforcementService {
           amountCents,
           undefined,
           {
-            type: 'FURY_STAKE_SLASH',
+            type: "FURY_STAKE_SLASH",
             caseId,
             reviewerId,
             penaltyType,
@@ -315,7 +346,7 @@ export class EnforcementService {
       }
     }
 
-    await this.truthLog.appendEvent('FURY_PENALTY_APPLIED', {
+    await this.truthLog.appendEvent("FURY_PENALTY_APPLIED", {
       caseId,
       penaltyType,
       reviewerId,
@@ -328,34 +359,38 @@ export class EnforcementService {
   async appealCase(caseId: string, reviewerId: string, reason: string) {
     const caseResult = await this.pool.query(
       `SELECT id FROM fury_enforcement_cases WHERE id = $1 AND reviewer_id = $2`,
-      [caseId, reviewerId]
+      [caseId, reviewerId],
     );
 
     if (caseResult.rows.length === 0) {
-      throw new NotFoundException('Case not found');
+      throw new NotFoundException("Case not found");
     }
 
     await this.pool.query(
       `UPDATE fury_enforcement_cases SET status = 'APPEALED', evidence_json = evidence_json || jsonb_build_object('appeal_reason', $2::text) WHERE id = $1`,
-      [caseId, reason]
+      [caseId, reason],
     );
 
-    await this.truthLog.appendEvent('FURY_PENALTY_APPEALED', {
+    await this.truthLog.appendEvent("FURY_PENALTY_APPEALED", {
       caseId,
       reviewerId,
       reason,
     });
 
-    return { success: true, caseId, status: 'APPEALED' };
+    return { success: true, caseId, status: "APPEALED" };
   }
 
   /**
    * Resolves an appeal: UPHELD (penalty stands) or REVERSED (penalty overturned).
    * Admin-only. Idempotent — resolving an already-resolved appeal is a no-op.
    */
-  async resolveAppeal(caseId: string, outcome: 'UPHELD' | 'REVERSED', reason?: string) {
-    if (outcome !== 'UPHELD' && outcome !== 'REVERSED') {
-      throw new BadRequestException('Outcome must be UPHELD or REVERSED');
+  async resolveAppeal(
+    caseId: string,
+    outcome: "UPHELD" | "REVERSED",
+    reason?: string,
+  ) {
+    if (outcome !== "UPHELD" && outcome !== "REVERSED") {
+      throw new BadRequestException("Outcome must be UPHELD or REVERSED");
     }
 
     const claim = await this.pool.query(
@@ -372,17 +407,19 @@ export class EnforcementService {
     );
 
     if (claim.rows.length === 0) {
-      throw new NotFoundException('Appealed case not found or already resolved');
+      throw new NotFoundException(
+        "Appealed case not found or already resolved",
+      );
     }
 
     const { reviewer_id: reviewerId } = claim.rows[0];
 
     let refundedCents = 0;
-    if (outcome === 'REVERSED') {
+    if (outcome === "REVERSED") {
       refundedCents = await this.reversePenalty(caseId, reviewerId);
     }
 
-    await this.truthLog.appendEvent('FURY_APPEAL_RESOLVED', {
+    await this.truthLog.appendEvent("FURY_APPEAL_RESOLVED", {
       caseId,
       reviewerId,
       outcome,
@@ -403,7 +440,10 @@ export class EnforcementService {
    * makes this idempotent — re-resolving an already-reversed case refunds nothing
    * a second time.
    */
-  private async reversePenalty(caseId: string, reviewerId: string): Promise<number> {
+  private async reversePenalty(
+    caseId: string,
+    reviewerId: string,
+  ): Promise<number> {
     const penalty = await this.pool.query(
       `SELECT id, amount_cents, ledger_transaction_id, ledger_debit_account_id, reversal_transaction_id
        FROM fury_penalties
@@ -420,7 +460,11 @@ export class EnforcementService {
     }
 
     const amountCents = Number(row.amount_cents ?? 0);
-    if (!row.ledger_transaction_id || !row.ledger_debit_account_id || amountCents <= 0) {
+    if (
+      !row.ledger_transaction_id ||
+      !row.ledger_debit_account_id ||
+      amountCents <= 0
+    ) {
       // A penalty with no financial leg (REP_BURN, or a legacy row predating the
       // ledger link in migration 069). Mark it reversed; there is no money to move.
       await this.pool.query(
@@ -435,7 +479,7 @@ export class EnforcementService {
     );
     if (revenue.rows.length === 0) {
       throw new BadRequestException(
-        'Cannot reverse a financial penalty: SYSTEM_REVENUE account is missing.',
+        "Cannot reverse a financial penalty: SYSTEM_REVENUE account is missing.",
       );
     }
 
@@ -446,7 +490,7 @@ export class EnforcementService {
       amountCents,
       undefined,
       {
-        type: 'FURY_PENALTY_REVERSAL',
+        type: "FURY_PENALTY_REVERSAL",
         caseId,
         reviewerId,
         reversesTransactionId: row.ledger_transaction_id,
@@ -462,7 +506,7 @@ export class EnforcementService {
       [row.id, reversalId],
     );
 
-    await this.truthLog.appendEvent('FURY_PENALTY_REVERSED', {
+    await this.truthLog.appendEvent("FURY_PENALTY_REVERSED", {
       caseId,
       reviewerId,
       amountCents,
@@ -473,4 +517,3 @@ export class EnforcementService {
     return amountCents;
   }
 }
-

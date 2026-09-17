@@ -73,63 +73,65 @@ docs/
 
 ### Research files (10 renames)
 
-| Old Name | New Name |
-|----------|----------|
-| `App Verification_ Tech, Privacy, Law.md` | `research--app-verification-tech-privacy-law.md` |
-| `B2B Expansion From Heartbreak Niche.md` | `research--b2b-expansion-heartbreak-niche.md` |
-| `Behavior Change App Design.md` | `research--behavior-change-app-design.md` |
-| `Bounty_Shame Protocol Safety & Legality.md` | `research--bounty-shame-protocol-safety-legality.md` |
-| `Breakup Psychology And Loss Aversion.md` | `research--breakup-psychology-loss-aversion.md` |
-| `Digital Exhaust No Contact Contracts.md` | `research--digital-exhaust-no-contact-contracts.md` |
-| `Gamified-Behavior-Change-App-Design.md` | `research--gamified-behavior-change-app-design.md` |
+| Old Name                                      | New Name                                             |
+| --------------------------------------------- | ---------------------------------------------------- |
+| `App Verification_ Tech, Privacy, Law.md`     | `research--app-verification-tech-privacy-law.md`     |
+| `B2B Expansion From Heartbreak Niche.md`      | `research--b2b-expansion-heartbreak-niche.md`        |
+| `Behavior Change App Design.md`               | `research--behavior-change-app-design.md`            |
+| `Bounty_Shame Protocol Safety & Legality.md`  | `research--bounty-shame-protocol-safety-legality.md` |
+| `Breakup Psychology And Loss Aversion.md`     | `research--breakup-psychology-loss-aversion.md`      |
+| `Digital Exhaust No Contact Contracts.md`     | `research--digital-exhaust-no-contact-contracts.md`  |
+| `Gamified-Behavior-Change-App-Design.md`      | `research--gamified-behavior-change-app-design.md`   |
 | `Prediction Markets_ Regulation & Finance.md` | `research--prediction-markets-regulation-finance.md` |
-| `Smart Contracts for Behavioral Wagers.md` | `research--smart-contracts-behavioral-wagers.md` |
-| `Styx_ Commitment Device Market Analysis.md` | `research--commitment-device-market-analysis.md` |
+| `Smart Contracts for Behavioral Wagers.md`    | `research--smart-contracts-behavioral-wagers.md`     |
+| `Styx_ Commitment Device Market Analysis.md`  | `research--commitment-device-market-analysis.md`     |
 
 ### Reference library (directory + 6 files)
 
-| Old | New |
-|-----|-----|
-| `outisde-sources/` | `reference-library/` |
-| `pressfield_the-war-of-art.txt` | `pressfield--the-war-of-art.txt` |
-| `The War of Art (HowEntrepreneur.com) By   Steven Pressfield.epub` | `pressfield--the-war-of-art.epub` |
-| `Atomic Habits_djvu.txt` | `clear--atomic-habits.txt` |
-| `dokumen.pub_good-habits-bad-habits-...epub` | `wood--good-habits-bad-habits.epub` |
-| `dokumen.pub_the-craving-mind-...pdf` | `brewer--the-craving-mind.pdf` |
-| `dokumen.pub_tiny-habits-...azw3` | `fogg--tiny-habits.azw3` |
+| Old                                                                | New                                 |
+| ------------------------------------------------------------------ | ----------------------------------- |
+| `outisde-sources/`                                                 | `reference-library/`                |
+| `pressfield_the-war-of-art.txt`                                    | `pressfield--the-war-of-art.txt`    |
+| `The War of Art (HowEntrepreneur.com) By   Steven Pressfield.epub` | `pressfield--the-war-of-art.epub`   |
+| `Atomic Habits_djvu.txt`                                           | `clear--atomic-habits.txt`          |
+| `dokumen.pub_good-habits-bad-habits-...epub`                       | `wood--good-habits-bad-habits.epub` |
+| `dokumen.pub_the-craving-mind-...pdf`                              | `brewer--the-craving-mind.pdf`      |
+| `dokumen.pub_tiny-habits-...azw3`                                  | `fogg--tiny-habits.azw3`            |
 
 ### Architecture (2 renames)
 
-| Old | New |
-|-----|-----|
+| Old                        | New                                      |
+| -------------------------- | ---------------------------------------- |
 | `technical-feasibility.md` | `architecture--technical-feasibility.md` |
-| `there+back-again.md` | `architecture--alpha-to-omega-plan.md` |
+| `there+back-again.md`      | `architecture--alpha-to-omega-plan.md`   |
 
 ### Legal (1 rename)
 
-| Old | New |
-|-----|-----|
+| Old             | New                        |
+| --------------- | -------------------------- |
 | `compliance.md` | `legal--aegis-protocol.md` |
 
 ### Planning (5 moves, 0 renames)
 
-| Old Location | New Location |
-|--------------|-------------|
-| `docs/roadmap.md` | `docs/planning/roadmap.md` |
-| `docs/roadmap--ai-workstreams.md` | `docs/planning/roadmap--ai-workstreams.md` |
+| Old Location                        | New Location                                 |
+| ----------------------------------- | -------------------------------------------- |
+| `docs/roadmap.md`                   | `docs/planning/roadmap.md`                   |
+| `docs/roadmap--ai-workstreams.md`   | `docs/planning/roadmap--ai-workstreams.md`   |
 | `docs/phase1-private-beta-scope.md` | `docs/planning/phase1-private-beta-scope.md` |
-| `docs/ship-baseline-report.md` | `docs/planning/ship-baseline-report.md` |
-| `docs/implementation-status.md` | `docs/planning/implementation-status.md` |
+| `docs/ship-baseline-report.md`      | `docs/planning/ship-baseline-report.md`      |
+| `docs/implementation-status.md`     | `docs/planning/implementation-status.md`     |
 
 ## Files Requiring Cross-Reference Updates
 
 ### 1. `docs/FEATURE-BACKLOG.md`
+
 - ~120 source references use old filenames (e.g., `Breakup Psychology And Loss Aversion.md` → `research--breakup-psychology-loss-aversion.md`)
 - References to `compliance.md` → `legal--aegis-protocol.md`
 - References to `roadmap.md`, `phase1-private-beta-scope.md`, `implementation-status.md` (filenames stay the same, just moved)
 - References to `there+back-again.md` → `architecture--alpha-to-omega-plan.md`
 
 ### 2. `docs/MANIFEST.md`
+
 - All `docs/research/...` file paths need updating for renamed files
 - All `docs/legal/compliance.md` → `docs/legal/legal--aegis-protocol.md`
 - Architecture path updates
@@ -137,17 +139,21 @@ docs/
 - Reference library paths: `docs/research/outisde-sources/...` → `docs/research/reference-library/...`
 
 ### 3. `scripts/validation/07-claim-drift-check.js`
+
 - Line 7: `docs/implementation-status.md` → `docs/planning/implementation-status.md`
 
 ### 4. `CLAUDE.md` (project root)
+
 - References to doc file locations if any exist
 
 ### 5. Other docs that cross-reference each other
+
 - `docs/legal/compliance.md` (internal references)
 - `docs/legal/legal--compliance-guardrails.md` (may reference other legal docs)
 - Research docs that reference each other
 
 ### 6. Cleanup
+
 - Delete `docs/.DS_Store` and `docs/research/.DS_Store`
 
 ## Implementation Steps

@@ -1,4 +1,4 @@
-import p5 from 'p5';
+import p5 from "p5";
 
 export const retentionCurve = (p: p5) => {
   let points: { x: number; y: number }[] = [];
@@ -23,11 +23,11 @@ export const retentionCurve = (p: p5) => {
     p.noStroke();
     p.textSize(11);
     p.textAlign(p.RIGHT, p.CENTER);
-    p.text('100%', margin - 8, margin);
-    p.text('0%', margin - 8, p.height - margin);
+    p.text("100%", margin - 8, margin);
+    p.text("0%", margin - 8, p.height - margin);
     p.textAlign(p.CENTER, p.TOP);
-    p.text('Day 1', margin, p.height - margin + 8);
-    p.text('Day 30', p.width - margin, p.height - margin + 8);
+    p.text("Day 1", margin, p.height - margin + 8);
+    p.text("Day 30", p.width - margin, p.height - margin + 8);
 
     // Animate curve
     if (t < chartW) {

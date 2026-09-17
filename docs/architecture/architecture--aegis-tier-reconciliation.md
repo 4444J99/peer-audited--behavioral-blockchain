@@ -11,15 +11,15 @@ These systems interact as layered gates: a contract must pass **both** to be cre
 
 ## Tier System (Integrity Score)
 
-| Tier | Score Range | Max Stake (cents) |
-|------|-------------|-------------------|
-| RESTRICTED_MODE | < 20 | 0 (no contracts) |
-| TIER_1_MICRO_STAKES | 20–49 | 2,000 |
-| TIER_2_STANDARD | 50–99 | 10,000 |
-| TIER_3_HIGH_ROLLER | 100–499 | 100,000 |
-| TIER_4_WHALE_VAULTS | >= 500 | Unlimited* |
+| Tier                | Score Range | Max Stake (cents) |
+| ------------------- | ----------- | ----------------- |
+| RESTRICTED_MODE     | < 20        | 0 (no contracts)  |
+| TIER_1_MICRO_STAKES | 20–49       | 2,000             |
+| TIER_2_STANDARD     | 50–99       | 10,000            |
+| TIER_3_HIGH_ROLLER  | 100–499     | 100,000           |
+| TIER_4_WHALE_VAULTS | >= 500      | Unlimited*        |
 
-*\*"Unlimited" is subject to the Aegis ceiling — see below.*
+_\*"Unlimited" is subject to the Aegis ceiling — see below._
 
 ## Aegis Protocol
 

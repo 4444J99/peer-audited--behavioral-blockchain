@@ -32,7 +32,8 @@ export interface FileCounterClaimDto {
 }
 
 export interface AdjudicateCounterClaimDto {
-  decision: "SUBSTANTIATED" | "DISMISSED_FRIVOLOUS" | "DISMISSED_INSUFFICIENT_EVIDENCE";
+  decision:
+    "SUBSTANTIATED" | "DISMISSED_FRIVOLOUS" | "DISMISSED_INSUFFICIENT_EVIDENCE";
   judgeNotes: string;
   slashStakeAmountCents?: number;
   integrityPenalty?: number;
@@ -89,7 +90,9 @@ export class CounterClaimService {
     dto: FileCounterClaimDto,
   ): Promise<CounterClaimRecord> {
     if (!dto.reason || dto.reason.trim().length < 10) {
-      throw new BadRequestException("Counter-claim requires a substantive reason (min 10 characters)");
+      throw new BadRequestException(
+        "Counter-claim requires a substantive reason (min 10 characters)",
+      );
     }
 
     if (!dto.claimType) {
@@ -108,7 +111,9 @@ export class CounterClaimService {
         c.status === "PENDING_JUDGE_REVIEW",
     );
     if (existing) {
-      throw new ConflictException("A pending counter-claim is already active for this verdict");
+      throw new ConflictException(
+        "A pending counter-claim is already active for this verdict",
+      );
     }
 
     const claimId = `ccl_${randomUUID()}`;
@@ -186,7 +191,9 @@ export class CounterClaimService {
     }
 
     if (record.status !== "PENDING_JUDGE_REVIEW") {
-      throw new ConflictException(`Counter-claim ${claimId} already adjudicated as ${record.status}`);
+      throw new ConflictException(
+        `Counter-claim ${claimId} already adjudicated as ${record.status}`,
+      );
     }
 
     const now = new Date().toISOString();
@@ -200,7 +207,13 @@ export class CounterClaimService {
         `UPDATE fury_counter_claims
          SET status = $1, judge_user_id = $2, judge_notes = $3, resolved_at = $4
          WHERE id = $5`,
-        [record.status, record.judgeUserId, record.judgeNotes, record.resolvedAt, claimId],
+        [
+          record.status,
+          record.judgeUserId,
+          record.judgeNotes,
+          record.resolvedAt,
+          claimId,
+        ],
       );
     } catch {
       // Fallback
@@ -240,13 +253,16 @@ export class CounterClaimService {
         `Counter-claim ${claimId} dismissed as frivolous by judge ${judgeUserId}. Filing fee forfeited.`,
       );
 
-      await this.truthLog.appendEvent("FURY_COUNTER_CLAIM_DISMISSED_FRIVOLOUS", {
-        claimId,
-        claimantUserId: record.claimantUserId,
-        forfeitedFeeCents: record.filingFeeCents,
-        judgeUserId,
-        timestamp: now,
-      });
+      await this.truthLog.appendEvent(
+        "FURY_COUNTER_CLAIM_DISMISSED_FRIVOLOUS",
+        {
+          claimId,
+          claimantUserId: record.claimantUserId,
+          forfeitedFeeCents: record.filingFeeCents,
+          judgeUserId,
+          timestamp: now,
+        },
+      );
     }
 
     return record;
@@ -255,14 +271,22 @@ export class CounterClaimService {
   /**
    * Returns auditor's counter-claim history for internal Judge oversight.
    */
-  async getAuditorCounterClaimHistory(auditorId: string): Promise<AuditorCounterClaimSummary> {
+  async getAuditorCounterClaimHistory(
+    auditorId: string,
+  ): Promise<AuditorCounterClaimSummary> {
     const allClaims = Array.from(this.claims.values()).filter(
       (c) => c.targetAuditorId === auditorId,
     );
 
-    const substantiated = allClaims.filter((c) => c.status === "SUBSTANTIATED").length;
-    const pending = allClaims.filter((c) => c.status === "PENDING_JUDGE_REVIEW").length;
-    const frivolous = allClaims.filter((c) => c.status === "DISMISSED_FRIVOLOUS").length;
+    const substantiated = allClaims.filter(
+      (c) => c.status === "SUBSTANTIATED",
+    ).length;
+    const pending = allClaims.filter(
+      (c) => c.status === "PENDING_JUDGE_REVIEW",
+    ).length;
+    const frivolous = allClaims.filter(
+      (c) => c.status === "DISMISSED_FRIVOLOUS",
+    ).length;
 
     const totalAdverse = substantiated + pending;
     const automaticInvestigationTriggered =

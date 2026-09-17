@@ -11,29 +11,29 @@
  * does not change how the product behaves when served by a real API.
  */
 
-const SNAPSHOT = process.env.NEXT_PUBLIC_STYX_SNAPSHOT === 'true';
+const SNAPSHOT = process.env.NEXT_PUBLIC_STYX_SNAPSHOT === "true";
 
 /** Seeded contracts, including the two on River's dashboard. */
 export const SNAPSHOT_CONTRACT_IDS = [
-  'c0000000-0000-0000-0000-000000000001',
-  'c0000000-0000-0000-0000-000000000002',
-  'c0000000-0000-0000-0000-000000000003',
-  'c0000000-0000-0000-0000-000000000004',
-  'c1000000-0000-0000-0000-000000000001',
-  'c1000000-0000-0000-0000-000000000002',
-  'c1000000-0000-0000-0000-000000000003',
-  'c1000000-0000-0000-0000-000000000004',
+  "c0000000-0000-0000-0000-000000000001",
+  "c0000000-0000-0000-0000-000000000002",
+  "c0000000-0000-0000-0000-000000000003",
+  "c0000000-0000-0000-0000-000000000004",
+  "c1000000-0000-0000-0000-000000000001",
+  "c1000000-0000-0000-0000-000000000002",
+  "c1000000-0000-0000-0000-000000000003",
+  "c1000000-0000-0000-0000-000000000004",
 ];
 
 /** The seeded realms, each with its own evidence rules and auditor expertise. */
 export const SNAPSHOT_REALM_SLUGS = [
-  'biological-hardware',
-  'character-social',
-  'cognitive-device',
-  'creative-process',
-  'environmental-visual',
-  'professional-api',
-  'recovery-abstinence',
+  "biological-hardware",
+  "character-social",
+  "cognitive-device",
+  "creative-process",
+  "environmental-visual",
+  "professional-api",
+  "recovery-abstinence",
 ];
 
 export function snapshotContractParams(): Array<{ id: string }> {

@@ -1,10 +1,16 @@
-import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { Pool } from 'pg';
-import { TruthLogService } from '../ledger/truth-log.service';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
+import { Pool } from "pg";
+import { TruthLogService } from "../ledger/truth-log.service";
 
 export enum FitbitReadinessState {
-  READY = 'READY',
-  NOT_READY = 'NOT_READY',
+  READY = "READY",
+  NOT_READY = "NOT_READY",
 }
 
 export enum FitbitDataProvenance {
@@ -12,9 +18,9 @@ export enum FitbitDataProvenance {
    * Data fetched server-side from Fitbit's API after a signature-verified
    * subscription notification. The ONLY provenance that may credit attestations.
    */
-  VERIFIED_WEBHOOK = 'VERIFIED_WEBHOOK',
+  VERIFIED_WEBHOOK = "VERIFIED_WEBHOOK",
   /** User-typed data. Journal-only — can never credit attestation state. */
-  MANUAL = 'MANUAL',
+  MANUAL = "MANUAL",
 }
 
 export interface FitbitWebhookPayload {
@@ -71,11 +77,16 @@ export class FitbitService {
    * is treated as a spoof attempt and rejected before touching contract state.
    */
   async processReadinessState(payload: FitbitWebhookPayload): Promise<{
-    status: 'recorded' | 'ignored';
+    status: "recorded" | "ignored";
     state: FitbitReadinessState;
     attestationApplied: boolean;
   }> {
-    await this.assertVerifiedProvenance(payload.provenance, payload.contractId, payload.userId, payload.source);
+    await this.assertVerifiedProvenance(
+      payload.provenance,
+      payload.contractId,
+      payload.userId,
+      payload.source,
+    );
 
     const contract = await this.pool.query(
       `SELECT id, user_id, oath_category, status
@@ -89,31 +100,33 @@ export class FitbitService {
 
     const c = contract.rows[0];
     if (c.user_id !== payload.userId) {
-      throw new ForbiddenException('You do not own this contract');
+      throw new ForbiddenException("You do not own this contract");
     }
 
-    if (c.status !== 'ACTIVE') {
-      throw new BadRequestException('Contract is not active');
+    if (c.status !== "ACTIVE") {
+      throw new BadRequestException("Contract is not active");
     }
 
-    if (!String(c.oath_category || '').startsWith('RECOVERY_')) {
+    if (!String(c.oath_category || "").startsWith("RECOVERY_")) {
       throw new BadRequestException(
-        'Fitbit readiness ingestion is only available for Recovery stream contracts',
+        "Fitbit readiness ingestion is only available for Recovery stream contracts",
       );
     }
 
-    const state = String(payload.state || '').toUpperCase() as FitbitReadinessState;
+    const state = String(
+      payload.state || "",
+    ).toUpperCase() as FitbitReadinessState;
     if (state !== FitbitReadinessState.READY) {
-      await this.truthLog.appendEvent('FITBIT_STATE_IGNORED', {
+      await this.truthLog.appendEvent("FITBIT_STATE_IGNORED", {
         contractId: payload.contractId,
         userId: payload.userId,
         state,
         provenance: payload.provenance,
-        source: payload.source || 'fitbit-webhook',
+        source: payload.source || "fitbit-webhook",
         recordedAt: payload.recordedAt || new Date().toISOString(),
       });
       return {
-        status: 'ignored',
+        status: "ignored",
         state,
         attestationApplied: false,
       };
@@ -143,7 +156,7 @@ export class FitbitService {
       }
     }
 
-    await this.truthLog.appendEvent('FITBIT_READINESS_RECEIVED', {
+    await this.truthLog.appendEvent("FITBIT_READINESS_RECEIVED", {
       contractId: payload.contractId,
       userId: payload.userId,
       state,
@@ -152,13 +165,13 @@ export class FitbitService {
       sleepScore: payload.sleepScore,
       restingHeartRate: payload.restingHeartRate,
       hrv: payload.hrv,
-      source: payload.source || 'fitbit-webhook',
+      source: payload.source || "fitbit-webhook",
       recordedAt: payload.recordedAt || new Date().toISOString(),
       attestationApplied,
     });
 
     return {
-      status: 'recorded',
+      status: "recorded",
       state,
       attestationApplied,
     };
@@ -168,8 +181,15 @@ export class FitbitService {
    * Process Fitbit sleep data fetched server-side after a verified notification.
    * Validates sleep data plausibility and records it for contract advancement.
    */
-  async processSleepData(payload: FitbitSleepPayload): Promise<{ accepted: boolean; reason?: string }> {
-    await this.assertVerifiedProvenance(payload.provenance, payload.contractId, payload.userId, payload.source);
+  async processSleepData(
+    payload: FitbitSleepPayload,
+  ): Promise<{ accepted: boolean; reason?: string }> {
+    await this.assertVerifiedProvenance(
+      payload.provenance,
+      payload.contractId,
+      payload.userId,
+      payload.source,
+    );
 
     const contract = await this.pool.query(
       `SELECT id, user_id, oath_category, status
@@ -183,26 +203,38 @@ export class FitbitService {
 
     const c = contract.rows[0];
     if (c.user_id !== payload.userId) {
-      throw new ForbiddenException('You do not own this contract');
+      throw new ForbiddenException("You do not own this contract");
     }
 
-    if (c.status !== 'ACTIVE') {
-      return { accepted: false, reason: 'Contract is not active' };
+    if (c.status !== "ACTIVE") {
+      return { accepted: false, reason: "Contract is not active" };
     }
 
     // Plausibility: sleep between 0 and 24 hours
     if (payload.sleepMinutes < 0 || payload.sleepMinutes > 24 * 60) {
-      return { accepted: false, reason: 'Sleep duration out of plausible range' };
+      return {
+        accepted: false,
+        reason: "Sleep duration out of plausible range",
+      };
     }
 
     // Deep + REM should not exceed total sleep
-    if (payload.deepSleepMinutes !== undefined && payload.remSleepMinutes !== undefined) {
-      if (payload.deepSleepMinutes + payload.remSleepMinutes > payload.sleepMinutes) {
-        return { accepted: false, reason: 'Deep + REM sleep exceeds total sleep' };
+    if (
+      payload.deepSleepMinutes !== undefined &&
+      payload.remSleepMinutes !== undefined
+    ) {
+      if (
+        payload.deepSleepMinutes + payload.remSleepMinutes >
+        payload.sleepMinutes
+      ) {
+        return {
+          accepted: false,
+          reason: "Deep + REM sleep exceeds total sleep",
+        };
       }
     }
 
-    await this.truthLog.appendEvent('FITBIT_SLEEP_RECEIVED', {
+    await this.truthLog.appendEvent("FITBIT_SLEEP_RECEIVED", {
       contractId: payload.contractId,
       userId: payload.userId,
       provenance: payload.provenance,
@@ -210,7 +242,7 @@ export class FitbitService {
       sleepDate: payload.sleepDate,
       deepSleepMinutes: payload.deepSleepMinutes,
       remSleepMinutes: payload.remSleepMinutes,
-      source: payload.source || 'fitbit-webhook',
+      source: payload.source || "fitbit-webhook",
     });
 
     return { accepted: true };
@@ -222,7 +254,7 @@ export class FitbitService {
    * caller can escalate a manual entry into hardware-oracle state.
    */
   async recordManualEntry(payload: FitbitManualEntryPayload): Promise<{
-    status: 'recorded';
+    status: "recorded";
     provenance: FitbitDataProvenance.MANUAL;
     attestationApplied: false;
   }> {
@@ -236,10 +268,10 @@ export class FitbitService {
     }
 
     if (contract.rows[0].user_id !== payload.userId) {
-      throw new ForbiddenException('You do not own this contract');
+      throw new ForbiddenException("You do not own this contract");
     }
 
-    await this.truthLog.appendEvent('FITBIT_MANUAL_ENTRY_RECORDED', {
+    await this.truthLog.appendEvent("FITBIT_MANUAL_ENTRY_RECORDED", {
       contractId: payload.contractId,
       userId: payload.userId,
       provenance: FitbitDataProvenance.MANUAL,
@@ -254,7 +286,7 @@ export class FitbitService {
     });
 
     return {
-      status: 'recorded',
+      status: "recorded",
       provenance: FitbitDataProvenance.MANUAL,
       attestationApplied: false,
     };
@@ -272,22 +304,24 @@ export class FitbitService {
       this.logger.warn(
         `Rejected Fitbit ingestion with unverified provenance '${provenance}' for contract ${contractId}`,
       );
-      await this.truthLog.appendEvent('FITBIT_UNVERIFIED_CREDIT_ATTEMPT', {
+      await this.truthLog.appendEvent("FITBIT_UNVERIFIED_CREDIT_ATTEMPT", {
         contractId,
         userId,
-        provenance: provenance ?? 'UNKNOWN',
-        source: source || 'unknown',
+        provenance: provenance ?? "UNKNOWN",
+        source: source || "unknown",
         recordedAt: new Date().toISOString(),
       });
       throw new ForbiddenException(
-        'Fitbit ingestion requires verified webhook provenance; self-reported data never credits attestations',
+        "Fitbit ingestion requires verified webhook provenance; self-reported data never credits attestations",
       );
     }
   }
 
   private validateHeartRate(bpm: number): void {
     if (bpm < 20 || bpm > 250) {
-      this.logger.warn(`Fitbit resting heart rate ${bpm} bpm outside plausible range [20, 250]`);
+      this.logger.warn(
+        `Fitbit resting heart rate ${bpm} bpm outside plausible range [20, 250]`,
+      );
     }
   }
 
@@ -304,7 +338,10 @@ export class FitbitService {
    * row carries a `source` provenance tag so a hardware-oracle credit is
    * distinguishable from a self-reported one (Gate 02).
    */
-  private async submitAttestation(contractId: string, userId: string): Promise<void> {
+  private async submitAttestation(
+    contractId: string,
+    userId: string,
+  ): Promise<void> {
     const existing = await this.pool.query(
       `SELECT id, status FROM attestations
        WHERE contract_id = $1 AND user_id = $2 AND attestation_date = CURRENT_DATE
@@ -316,9 +353,9 @@ export class FitbitService {
     // relapse — is terminal. A wearable signal never overwrites it.
     if (
       existing.rows.length > 0 &&
-      ['ATTESTED', 'COSIGNED', 'RELAPSED'].includes(existing.rows[0].status)
+      ["ATTESTED", "COSIGNED", "RELAPSED"].includes(existing.rows[0].status)
     ) {
-      throw new BadRequestException('Already attested today');
+      throw new BadRequestException("Already attested today");
     }
 
     await this.pool.query(

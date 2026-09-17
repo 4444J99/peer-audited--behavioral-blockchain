@@ -633,10 +633,7 @@ export class CompliancePolicyService implements OnModuleInit {
     //    client-supplied override was attempted and ignored.
     const maxMindResolution = this.resolveFromMaxMind(req, trustProxy);
     if (maxMindResolution) {
-      return this.toLocation(
-        maxMindResolution,
-        !!override && isProduction,
-      );
+      return this.toLocation(maxMindResolution, !!override && isProduction);
     }
 
     const geoipResolution = this.lookupFromGeoipLite(req, trustProxy);
@@ -704,9 +701,7 @@ export class CompliancePolicyService implements OnModuleInit {
     return {
       country,
       region:
-        country === "US" && regionCode
-          ? normalizeStateCode(regionCode)
-          : null,
+        country === "US" && regionCode ? normalizeStateCode(regionCode) : null,
       source: "cloudfront-viewer-country-region",
       confidence: 1,
     };
@@ -726,9 +721,7 @@ export class CompliancePolicyService implements OnModuleInit {
 
     try {
       if (!this.maxMindReader) {
-        this.maxMindReader = new Reader<CityResponse>(
-          readFileSync(dbPath),
-        );
+        this.maxMindReader = new Reader<CityResponse>(readFileSync(dbPath));
       }
       const ip = this.extractClientIp(req, trustProxy);
       if (!ip) return null;
@@ -739,7 +732,7 @@ export class CompliancePolicyService implements OnModuleInit {
       const country = record.country?.iso_code ?? null;
       if (!country) return null;
       const region =
-        country === "US" ? record.subdivisions?.[0]?.iso_code ?? null : null;
+        country === "US" ? (record.subdivisions?.[0]?.iso_code ?? null) : null;
 
       return {
         country,

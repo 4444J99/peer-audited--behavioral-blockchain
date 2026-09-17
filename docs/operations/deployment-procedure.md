@@ -18,13 +18,13 @@ Styx deploys to Render (Oregon region) via tag-triggered GitHub Actions workflow
 
 ### Deployment Targets
 
-| Service | Render Service | Port | Type |
-|---------|---------------|------|------|
-| styx-api | `styx-api` | 3000 | Web Service (NestJS 11) |
-| styx-web | `styx-web` | 3001 | Web Service (Next.js 16) |
-| styx-db | `styx-db` | 5432 | Managed PostgreSQL 16 |
-| styx-redis-bullmq | `styx-redis-bullmq` | 6379 | Managed Redis 7 (BullMQ queues) |
-| styx-redis-cache | `styx-redis-cache` | 6379 | Managed Redis 7 (Cache / SSE / Anomaly) |
+| Service           | Render Service      | Port | Type                                    |
+| ----------------- | ------------------- | ---- | --------------------------------------- |
+| styx-api          | `styx-api`          | 3000 | Web Service (NestJS 11)                 |
+| styx-web          | `styx-web`          | 3001 | Web Service (Next.js 16)                |
+| styx-db           | `styx-db`           | 5432 | Managed PostgreSQL 16                   |
+| styx-redis-bullmq | `styx-redis-bullmq` | 6379 | Managed Redis 7 (BullMQ queues)         |
+| styx-redis-cache  | `styx-redis-cache`  | 6379 | Managed Redis 7 (Cache / SSE / Anomaly) |
 
 ### Deploy Flow
 
@@ -50,16 +50,16 @@ Developer
 
 ## GitHub Actions Workflows
 
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `ci.yml` | Push to main, PRs | Tests, lint, type-check |
-| `deploy.yml` | Tag `v*` | Full deploy pipeline |
-| `beta-promotion.yml` | Manual dispatch | Promote to beta environment |
-| `staging-promotion.yml` | Manual dispatch | Promote to staging |
-| `secret-scan.yml` | Push, PR, weekly | Secret pattern detection |
-| `codeql.yml` | Push, PR, weekly | CodeQL static analysis |
-| `release.yml` | Release/tag workflow | Release artifact workflow |
-| `deploy-ask-styx.yml` | Ask Styx changes | Ask Styx Pages/worker deployment |
+| Workflow                | Trigger              | Purpose                          |
+| ----------------------- | -------------------- | -------------------------------- |
+| `ci.yml`                | Push to main, PRs    | Tests, lint, type-check          |
+| `deploy.yml`            | Tag `v*`             | Full deploy pipeline             |
+| `beta-promotion.yml`    | Manual dispatch      | Promote to beta environment      |
+| `staging-promotion.yml` | Manual dispatch      | Promote to staging               |
+| `secret-scan.yml`       | Push, PR, weekly     | Secret pattern detection         |
+| `codeql.yml`            | Push, PR, weekly     | CodeQL static analysis           |
+| `release.yml`           | Release/tag workflow | Release artifact workflow        |
+| `deploy-ask-styx.yml`   | Ask Styx changes     | Ask Styx Pages/worker deployment |
 
 ## Pre-Deploy Checklist
 
@@ -75,16 +75,16 @@ Complete every item before creating a release tag:
 
 CI runs the blocking build/test/lint path and the validation gates in `.github/workflows/ci.yml`. Local gate commands:
 
-| Gate | Command | What It Checks |
-|------|---------|---------------|
-| 1. Unit Tests | `npm run test` | Workspace test suites pass |
-| 2. Lint | `npm run lint` | No lint errors |
-| 3. Build | `npm run build` | Workspaces build successfully |
-| 4. Redacted Build | `bash scripts/validation/04-redacted-build-check.sh` | Production build does not leak forbidden vocabulary |
-| 5. Security Invariant | `npx tsx scripts/validation/06-security-invariant-check.ts` | Security invariants hold |
-| 6. Claim Drift | `npm run validate:claims` | Docs/claims remain aligned with implementation |
-| 7. E2E | `npm run test:e2e` | Playwright scenarios pass |
-| 8. Integration-only Gates | `scripts/validation/05-behavioral-physics-check.ts`, `scripts/validation/08-compliance-artifact-check.sh` | Require configured live API/database URLs |
+| Gate                      | Command                                                                                                   | What It Checks                                      |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 1. Unit Tests             | `npm run test`                                                                                            | Workspace test suites pass                          |
+| 2. Lint                   | `npm run lint`                                                                                            | No lint errors                                      |
+| 3. Build                  | `npm run build`                                                                                           | Workspaces build successfully                       |
+| 4. Redacted Build         | `bash scripts/validation/04-redacted-build-check.sh`                                                      | Production build does not leak forbidden vocabulary |
+| 5. Security Invariant     | `npx tsx scripts/validation/06-security-invariant-check.ts`                                               | Security invariants hold                            |
+| 6. Claim Drift            | `npm run validate:claims`                                                                                 | Docs/claims remain aligned with implementation      |
+| 7. E2E                    | `npm run test:e2e`                                                                                        | Playwright scenarios pass                           |
+| 8. Integration-only Gates | `scripts/validation/05-behavioral-physics-check.ts`, `scripts/validation/08-compliance-artifact-check.sh` | Require configured live API/database URLs           |
 
 ### Financial Safety
 
@@ -146,13 +146,13 @@ bash scripts/smoke/beta-readiness.sh
 
 ### 4. Post-Deploy Smoke Tests
 
-| Check | Command/URL | Expected |
-|-------|------------|----------|
-| API health | `GET /health` | 200 + JSON with service statuses |
-| Web root | `GET /` | 200 + HTML |
-| Ledger reconciliation | `GET /api/admin/reconcile` | `{ balanced: true }` |
-| Fury queue | `GET /api/admin/fury/status` | Queue depth reported, workers active |
-| Stripe connectivity | `GET /api/admin/stripe/status` | Connected, webhook secret valid |
+| Check                 | Command/URL                    | Expected                             |
+| --------------------- | ------------------------------ | ------------------------------------ |
+| API health            | `GET /health`                  | 200 + JSON with service statuses     |
+| Web root              | `GET /`                        | 200 + HTML                           |
+| Ledger reconciliation | `GET /api/admin/reconcile`     | `{ balanced: true }`                 |
+| Fury queue            | `GET /api/admin/fury/status`   | Queue depth reported, workers active |
+| Stripe connectivity   | `GET /api/admin/stripe/status` | Connected, webhook secret valid      |
 
 ## Database Migrations
 
@@ -192,13 +192,13 @@ npm run migrate:revert -- --to <migration-name>
 
 The `render.yaml` defines the infrastructure:
 
-| Service | Plan | Region | Auto-Deploy |
-|---------|------|--------|-------------|
-| styx-api | Starter ($7/mo) | Oregon | From `main` branch |
-| styx-web | Starter ($7/mo) | Oregon | From `main` branch |
-| styx-db | Free | Oregon | Managed PostgreSQL 16 |
-| styx-redis-bullmq | Starter | Oregon | Managed Redis 7 |
-| styx-redis-cache | Starter | Oregon | Managed Redis 7 |
+| Service           | Plan            | Region | Auto-Deploy           |
+| ----------------- | --------------- | ------ | --------------------- |
+| styx-api          | Starter ($7/mo) | Oregon | From `main` branch    |
+| styx-web          | Starter ($7/mo) | Oregon | From `main` branch    |
+| styx-db           | Free            | Oregon | Managed PostgreSQL 16 |
+| styx-redis-bullmq | Starter         | Oregon | Managed Redis 7       |
+| styx-redis-cache  | Starter         | Oregon | Managed Redis 7       |
 
 ### Key Configuration
 
@@ -246,32 +246,32 @@ If a migration introduced a bug:
 
 ### Required Secrets (Render Dashboard)
 
-| Variable | Service | Description |
-|----------|---------|-------------|
-| `DATABASE_URL` | API | PostgreSQL connection string (Render provides automatically) |
-| `REDIS_URL` | API | Redis connection string (Render provides automatically) |
-| `STRIPE_SECRET_KEY` | API | Stripe API secret key |
-| `STRIPE_WEBHOOK_SECRET` | API | Stripe webhook signing secret |
-| `STRIPE_PUBLISHABLE_KEY` | Web | Stripe publishable key (client-safe) |
-| `R2_ACCESS_KEY_ID` | API | Cloudflare R2 access key |
-| `R2_SECRET_ACCESS_KEY` | API | Cloudflare R2 secret key |
-| `R2_BUCKET_NAME` | API | R2 bucket name for proof storage |
-| `R2_ENDPOINT` | API | R2 S3-compatible endpoint URL |
-| `SENTRY_DSN` | API, Web | Sentry error tracking DSN |
-| `JWT_SECRET` | API | JWT signing secret (min 256-bit) |
-| `SESSION_SECRET` | Web | Session cookie secret |
-| `NODE_ENV` | API, Web | `production` |
+| Variable                 | Service  | Description                                                  |
+| ------------------------ | -------- | ------------------------------------------------------------ |
+| `DATABASE_URL`           | API      | PostgreSQL connection string (Render provides automatically) |
+| `REDIS_URL`              | API      | Redis connection string (Render provides automatically)      |
+| `STRIPE_SECRET_KEY`      | API      | Stripe API secret key                                        |
+| `STRIPE_WEBHOOK_SECRET`  | API      | Stripe webhook signing secret                                |
+| `STRIPE_PUBLISHABLE_KEY` | Web      | Stripe publishable key (client-safe)                         |
+| `R2_ACCESS_KEY_ID`       | API      | Cloudflare R2 access key                                     |
+| `R2_SECRET_ACCESS_KEY`   | API      | Cloudflare R2 secret key                                     |
+| `R2_BUCKET_NAME`         | API      | R2 bucket name for proof storage                             |
+| `R2_ENDPOINT`            | API      | R2 S3-compatible endpoint URL                                |
+| `SENTRY_DSN`             | API, Web | Sentry error tracking DSN                                    |
+| `JWT_SECRET`             | API      | JWT signing secret (min 256-bit)                             |
+| `SESSION_SECRET`         | Web      | Session cookie secret                                        |
+| `NODE_ENV`               | API, Web | `production`                                                 |
 
 ### Non-Secret Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | 3000 (API), 3001 (Web) | Service port |
-| `LOG_LEVEL` | `info` | Pino log level |
-| `FURY_QUEUE_CONCURRENCY` | 5 | BullMQ worker concurrency |
-| `FURY_AUDIT_TIMEOUT_MS` | 172800000 | 48 hours (audit window) |
-| `LEDGER_RECONCILE_ON_WRITE` | `true` | Check balance on every ledger write |
-| `GEOFENCE_ENABLED` | `false` | Geographic restriction toggle |
+| Variable                    | Default                | Description                         |
+| --------------------------- | ---------------------- | ----------------------------------- |
+| `PORT`                      | 3000 (API), 3001 (Web) | Service port                        |
+| `LOG_LEVEL`                 | `info`                 | Pino log level                      |
+| `FURY_QUEUE_CONCURRENCY`    | 5                      | BullMQ worker concurrency           |
+| `FURY_AUDIT_TIMEOUT_MS`     | 172800000              | 48 hours (audit window)             |
+| `LEDGER_RECONCILE_ON_WRITE` | `true`                 | Check balance on every ledger write |
+| `GEOFENCE_ENABLED`          | `false`                | Geographic restriction toggle       |
 
 ## Environments
 
@@ -308,19 +308,19 @@ Docker Compose services: `styx-api`, `styx-web`, `styx-postgres` (5432), `styx-r
 
 ## Deploy Cadence
 
-| Type | Frequency | Process |
-|------|-----------|---------|
-| Hotfix (SEV1/2) | As needed | Branch from tag, fix, new patch tag (v1.2.4) |
-| Patch release | Weekly | Batch small fixes, create patch tag |
-| Minor release | Bi-weekly | New features, create minor tag (v1.3.0) |
-| Major release | Monthly+ | Breaking changes, migration required, create major tag (v2.0.0) |
+| Type            | Frequency | Process                                                         |
+| --------------- | --------- | --------------------------------------------------------------- |
+| Hotfix (SEV1/2) | As needed | Branch from tag, fix, new patch tag (v1.2.4)                    |
+| Patch release   | Weekly    | Batch small fixes, create patch tag                             |
+| Minor release   | Bi-weekly | New features, create minor tag (v1.3.0)                         |
+| Major release   | Monthly+  | Breaking changes, migration required, create major tag (v2.0.0) |
 
 ## Troubleshooting
 
-| Symptom | Likely Cause | Fix |
-|---------|-------------|-----|
-| Deploy stuck at "Building" | OOM during build | Reduce build parallelism, or upgrade Render plan |
-| Health check fails post-deploy | Missing env var or bad migration | Check Render logs, verify env vars |
-| 502 after deploy | App crashed on start | Check Sentry, Render logs for startup error |
-| Slow first request | Render starter plan cold start | Expected behavior — first request after sleep takes 10-30s |
-| Database connection refused | Connection string changed | Verify `DATABASE_URL` in Render dashboard |
+| Symptom                        | Likely Cause                     | Fix                                                        |
+| ------------------------------ | -------------------------------- | ---------------------------------------------------------- |
+| Deploy stuck at "Building"     | OOM during build                 | Reduce build parallelism, or upgrade Render plan           |
+| Health check fails post-deploy | Missing env var or bad migration | Check Render logs, verify env vars                         |
+| 502 after deploy               | App crashed on start             | Check Sentry, Render logs for startup error                |
+| Slow first request             | Render starter plan cold start   | Expected behavior — first request after sleep takes 10-30s |
+| Database connection refused    | Connection string changed        | Verify `DATABASE_URL` in Render dashboard                  |

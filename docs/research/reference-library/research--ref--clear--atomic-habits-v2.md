@@ -15110,8 +15110,7 @@ CHAPTER 4
 The psychologist Gary Klein: \| originally heard about this story from
 Daniel
 
-Kahneman, but it was confirmed by Gary Klein in an email on March 30,
-2017.
+Kahneman, but it was confirmed by Gary Klein in an email on March 30, 2017.
 
 Klein also covers the story in his own book, which uses slightly
 different
@@ -16761,8 +16760,7 @@ Work (Boston: Little, Brown, 2016).
 He always stopped journaling before it seemed like a hassle: Greg
 McKeown,
 
-Essentialism: The Disciplined Pursuit of Less (New York: Crown, 2014),
-78.
+Essentialism: The Disciplined Pursuit of Less (New York: Crown, 2014), 78.
 
 habit shaping: Gail B. Peterson, "A Day of Great Illumination: B. F.
 Skinner's
@@ -16950,8 +16948,7 @@ https://www.britannica.com/biography/William-Wrigley
 Toothpaste had a similar trajectory: Charles Duhigg, The Power of Habit:
 Why We
 
-Do What We Do in Life and Business (New York: Random House, 2014), chap.
-2.
+Do What We Do in Life and Business (New York: Random House, 2014), chap. 2.
 
 he started avoiding her: Sparkly_alpaca, "What Are the Coolest
 Psychology
@@ -17339,8 +17336,7 @@ Historic
 
 https://www.nhtsa.gov/press-releases/seat-belt-use-us-reaches-historic-90-percent.
 
-Bryan Harris: Bryan Harris, email conversation with author, October 24,
-2017.
+Bryan Harris: Bryan Harris, email conversation with author, October 24, 2017.
 
 She does the "song a day" challenge: Courtney Shea, "Comedian Margaret
 
@@ -17503,8 +17499,7 @@ http://www.nytimes.com/1986/12/02/science/major-personality-study-finds
 
 -that-traits-are-mostly-inherited.html?pagewanted=all.
 
-Robert Plomin: Robert Plomin, phone call with the author, August 9,
-2016.
+Robert Plomin: Robert Plomin, phone call with the author, August 9, 2016.
 
 more likely to become introverts: Jerome Kagan et al., "Reactivity in
 Infants: A

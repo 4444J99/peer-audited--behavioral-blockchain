@@ -1,5 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { CrmConnector, EmployeeEvent, CrmUser } from './crm-connector.interface';
+import { Injectable } from "@nestjs/common";
+import {
+  CrmConnector,
+  EmployeeEvent,
+  CrmUser,
+} from "./crm-connector.interface";
 
 /**
  * Salesforce CRM connector for B2B enterprise integrations.
@@ -13,9 +17,9 @@ export class SalesforceConnector implements CrmConnector {
   private accessToken: string | null = null;
 
   constructor() {
-    this.baseUrl = process.env.SALESFORCE_BASE_URL || '';
-    this.clientId = process.env.SALESFORCE_CLIENT_ID || '';
-    this.clientSecret = process.env.SALESFORCE_CLIENT_SECRET || '';
+    this.baseUrl = process.env.SALESFORCE_BASE_URL || "";
+    this.clientId = process.env.SALESFORCE_CLIENT_ID || "";
+    this.clientSecret = process.env.SALESFORCE_CLIENT_SECRET || "";
   }
 
   private async authenticate(forceRefresh = false): Promise<string> {
@@ -24,13 +28,13 @@ export class SalesforceConnector implements CrmConnector {
     // discards the stale token and mints a fresh one.
     if (forceRefresh) this.accessToken = null;
     if (this.accessToken) return this.accessToken;
-    if (!this.baseUrl) throw new Error('Salesforce not configured');
+    if (!this.baseUrl) throw new Error("Salesforce not configured");
 
     const res = await fetch(`${this.baseUrl}/services/oauth2/token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        grant_type: 'client_credentials',
+        grant_type: "client_credentials",
         client_id: this.clientId,
         client_secret: this.clientSecret,
       }),
@@ -69,9 +73,9 @@ export class SalesforceConnector implements CrmConnector {
     const res = await this.fetchWithReauth((token) => ({
       url: `${this.baseUrl}/services/data/v59.0/sobjects/Styx_Event__c`,
       init: {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -92,14 +96,17 @@ export class SalesforceConnector implements CrmConnector {
    * alter the query (SOQL injection).
    */
   private escapeSoqlLiteral(value: string): string {
-    return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
   }
 
   async syncUserList(enterpriseId: string): Promise<CrmUser[]> {
     // enterpriseId is a UUID-style identifier in our system; reject anything that
     // is not, then escape defensively before building the SOQL literal.
-    if (typeof enterpriseId !== 'string' || !/^[A-Za-z0-9-]{1,64}$/.test(enterpriseId)) {
-      throw new Error('Invalid enterpriseId');
+    if (
+      typeof enterpriseId !== "string" ||
+      !/^[A-Za-z0-9-]{1,64}$/.test(enterpriseId)
+    ) {
+      throw new Error("Invalid enterpriseId");
     }
 
     const safeEnterpriseId = this.escapeSoqlLiteral(enterpriseId);

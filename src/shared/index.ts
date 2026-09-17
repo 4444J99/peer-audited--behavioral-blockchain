@@ -20,11 +20,7 @@ export interface StyxErrorEnvelope {
 }
 
 export type StyxClientPlatform =
-  | "ios"
-  | "android"
-  | "web"
-  | "desktop"
-  | "unknown";
+  "ios" | "android" | "web" | "desktop" | "unknown";
 
 // Realm types
 export {
@@ -148,7 +144,7 @@ export * from "./libs/integrity";
 
 export interface PushTokenRegistration {
   token: string;
-  platform: 'ios' | 'android' | 'web' | 'unknown';
+  platform: "ios" | "android" | "web" | "unknown";
   deviceIdentifier?: string;
 }
 
@@ -191,9 +187,7 @@ export interface ReferralReward {
 }
 
 export type RationalizationCategory =
-  | 'GENUINE_EMERGENCY'
-  | 'LEGITIMATE_BUT_NOT_BLOCKING'
-  | 'PURE_RATIONALIZATION';
+  "GENUINE_EMERGENCY" | "LEGITIMATE_BUT_NOT_BLOCKING" | "PURE_RATIONALIZATION";
 
 export interface RationalizationResult {
   category: RationalizationCategory;

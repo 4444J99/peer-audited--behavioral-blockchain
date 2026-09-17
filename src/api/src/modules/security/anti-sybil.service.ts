@@ -1,17 +1,17 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Pool, PoolClient } from 'pg';
-import { createHash } from 'crypto';
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Pool, PoolClient } from "pg";
+import { createHash } from "crypto";
 
 export interface DeviceFingerprint {
   hash?: string;
-  platform: 'ios' | 'android' | 'web';
+  platform: "ios" | "android" | "web";
   rawVendorId?: string;
 }
 
 export interface SybilSignal {
   id: string;
   userId: string;
-  signalType: 'SHARED_DEVICE' | 'SHARED_IP' | 'SHARED_PAYMENT' | 'SHARED_PHONE';
+  signalType: "SHARED_DEVICE" | "SHARED_IP" | "SHARED_PAYMENT" | "SHARED_PHONE";
   relatedUserId: string;
   confidence: number;
   detectedAt: Date;
@@ -21,11 +21,11 @@ export interface SybilVerdict {
   userId: string;
   riskScore: number;
   signals: SybilSignal[];
-  enforcementAction: 'NONE' | 'WARNING' | 'ACCOUNT_MERGE' | 'BAN';
+  enforcementAction: "NONE" | "WARNING" | "ACCOUNT_MERGE" | "BAN";
   duplicateCount: number;
 }
 
-const SIGNAL_CONFIDENCE: Record<SybilSignal['signalType'], number> = {
+const SIGNAL_CONFIDENCE: Record<SybilSignal["signalType"], number> = {
   SHARED_DEVICE: 30,
   SHARED_IP: 15,
   SHARED_PAYMENT: 40,
@@ -36,24 +36,22 @@ const SIGNAL_CONFIDENCE: Record<SybilSignal['signalType'], number> = {
 export class AntiSybilService {
   private readonly logger = new Logger(AntiSybilService.name);
 
-  constructor(
-    @Inject('DATABASE_POOL') private readonly pool: Pool,
-  ) {}
+  constructor(@Inject("DATABASE_POOL") private readonly pool: Pool) {}
 
   static hashFingerprint(raw: string): string {
-    return createHash('sha256').update(raw).digest('hex');
+    return createHash("sha256").update(raw).digest("hex");
   }
 
   async registerDeviceFingerprint(
     userId: string,
     fingerprint: DeviceFingerprint,
-    queryable: Pick<PoolClient, 'query'> = this.pool,
+    queryable: Pick<PoolClient, "query"> = this.pool,
   ): Promise<void> {
     const hashed = fingerprint.rawVendorId
       ? AntiSybilService.hashFingerprint(fingerprint.rawVendorId)
       : fingerprint.hash;
     if (!hashed) {
-      throw new Error('Device fingerprint requires hash or rawVendorId');
+      throw new Error("Device fingerprint requires hash or rawVendorId");
     }
 
     await queryable.query(
@@ -111,9 +109,9 @@ export class AntiSybilService {
       for (const relatedId of shared) {
         if (relatedId !== userId) {
           signals.push({
-            id: '',
+            id: "",
             userId,
-            signalType: 'SHARED_DEVICE',
+            signalType: "SHARED_DEVICE",
             relatedUserId: relatedId,
             confidence: SIGNAL_CONFIDENCE.SHARED_DEVICE,
             detectedAt: new Date(),
@@ -125,9 +123,9 @@ export class AntiSybilService {
     const paymentMatches = await this.detectSharedPayment(userId);
     for (const relatedId of paymentMatches) {
       signals.push({
-        id: '',
+        id: "",
         userId,
-        signalType: 'SHARED_PAYMENT',
+        signalType: "SHARED_PAYMENT",
         relatedUserId: relatedId,
         confidence: SIGNAL_CONFIDENCE.SHARED_PAYMENT,
         detectedAt: new Date(),
@@ -146,9 +144,9 @@ export class AntiSybilService {
       const ipMatches = await this.detectSharedIP(userId, ip);
       for (const relatedId of ipMatches) {
         signals.push({
-          id: '',
+          id: "",
           userId,
-          signalType: 'SHARED_IP',
+          signalType: "SHARED_IP",
           relatedUserId: relatedId,
           confidence: SIGNAL_CONFIDENCE.SHARED_IP,
           detectedAt: new Date(),
@@ -161,10 +159,10 @@ export class AntiSybilService {
       signals.reduce((sum, s) => sum + s.confidence, 0),
     );
 
-    let enforcementAction: SybilVerdict['enforcementAction'] = 'NONE';
-    if (riskScore >= 61) enforcementAction = 'BAN';
-    else if (riskScore >= 31) enforcementAction = 'ACCOUNT_MERGE';
-    else if (riskScore >= 1) enforcementAction = 'WARNING';
+    let enforcementAction: SybilVerdict["enforcementAction"] = "NONE";
+    if (riskScore >= 61) enforcementAction = "BAN";
+    else if (riskScore >= 31) enforcementAction = "ACCOUNT_MERGE";
+    else if (riskScore >= 1) enforcementAction = "WARNING";
 
     const uniqueDuplicates = new Set(signals.map((s) => s.relatedUserId));
 
@@ -197,13 +195,18 @@ export class AntiSybilService {
   }
 
   async recordSignal(
-    signal: Omit<SybilSignal, 'id' | 'detectedAt'>,
+    signal: Omit<SybilSignal, "id" | "detectedAt">,
   ): Promise<SybilSignal> {
     const result = await this.pool.query(
       `INSERT INTO sybil_signals (user_id, signal_type, related_user_id, confidence)
        VALUES ($1, $2, $3, $4)
        RETURNING id, detected_at`,
-      [signal.userId, signal.signalType, signal.relatedUserId, signal.confidence],
+      [
+        signal.userId,
+        signal.signalType,
+        signal.relatedUserId,
+        signal.confidence,
+      ],
     );
 
     return {
@@ -220,7 +223,7 @@ export class AntiSybilService {
   ): Promise<{ accepted: boolean; message: string }> {
     const lowerReason = reason.toLowerCase();
     const isFamilyReason =
-      lowerReason.includes('family') || lowerReason.includes('household');
+      lowerReason.includes("family") || lowerReason.includes("household");
 
     if (isFamilyReason) {
       const phones = await this.pool.query(
@@ -239,7 +242,8 @@ export class AntiSybilService {
         );
         return {
           accepted: true,
-          message: 'Appeal accepted: shared family device with separate phone numbers.',
+          message:
+            "Appeal accepted: shared family device with separate phone numbers.",
         };
       }
     }
@@ -249,7 +253,7 @@ export class AntiSybilService {
     );
     return {
       accepted: false,
-      message: 'Appeal flagged for manual review by the trust & safety team.',
+      message: "Appeal flagged for manual review by the trust & safety team.",
     };
   }
 }

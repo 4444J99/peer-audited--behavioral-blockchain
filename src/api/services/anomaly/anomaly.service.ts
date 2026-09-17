@@ -1,14 +1,14 @@
-import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
-import sharp from 'sharp';
-import Redis from 'ioredis';
-import { createHash } from 'crypto';
+import { Injectable, Logger, Inject, Optional } from "@nestjs/common";
+import sharp from "sharp";
+import Redis from "ioredis";
+import { createHash } from "crypto";
 
 const PHASH_HAMMING_THRESHOLD = 5;
 const EXIF_DISCREPANCY_HOURS = 1;
 const ANALYSIS_TIMEOUT_MS = 10_000;
 const HASH_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
 
-export const ANOMALY_REDIS_CLIENT = 'ANOMALY_REDIS_CLIENT';
+export const ANOMALY_REDIS_CLIENT = "ANOMALY_REDIS_CLIENT";
 
 export interface AnomalyResult {
   rejected: boolean;
@@ -21,7 +21,10 @@ export class AnomalyService {
   private readonly logger = new Logger(AnomalyService.name);
 
   // Fallback in-memory store when Redis is unavailable
-  private readonly memoryStore = new Map<string, { hash: string; userId: string; mediaUri: string; id: number }[]>();
+  private readonly memoryStore = new Map<
+    string,
+    { hash: string; userId: string; mediaUri: string; id: number }[]
+  >();
   private nextId = 0;
 
   constructor(
@@ -31,13 +34,23 @@ export class AnomalyService {
   /**
    * Analyze media for anomalies (duplicates, edits, timestamp discrepancies).
    */
-  async analyze(mediaInput: Buffer | string, userId: string, mediaUri?: string): Promise<AnomalyResult> {
-    const resolvedMediaUri = typeof mediaInput === 'string' ? mediaInput : (mediaUri ?? 'buffer://unknown');
+  async analyze(
+    mediaInput: Buffer | string,
+    userId: string,
+    mediaUri?: string,
+  ): Promise<AnomalyResult> {
+    const resolvedMediaUri =
+      typeof mediaInput === "string"
+        ? mediaInput
+        : (mediaUri ?? "buffer://unknown");
     const flags: string[] = [];
 
     let timeoutId: ReturnType<typeof setTimeout>;
     const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(() => reject(new Error('Analysis timeout')), ANALYSIS_TIMEOUT_MS);
+      timeoutId = setTimeout(
+        () => reject(new Error("Analysis timeout")),
+        ANALYSIS_TIMEOUT_MS,
+      );
     });
 
     try {
@@ -50,11 +63,13 @@ export class AnomalyService {
     } catch (err) {
       // Fail CLOSED: this is a real-money fraud screen. A timeout (or any analysis
       // failure) must not auto-accept media. Reject and surface for manual review.
-      this.logger.warn(`Anomaly analysis failed for ${resolvedMediaUri}, failing closed for manual review`);
+      this.logger.warn(
+        `Anomaly analysis failed for ${resolvedMediaUri}, failing closed for manual review`,
+      );
       return {
         rejected: true,
-        reason: 'Anomaly analysis could not complete; held for manual review',
-        flags: ['ANALYSIS_TIMEOUT', 'MANUAL_REVIEW_REQUIRED'],
+        reason: "Anomaly analysis could not complete; held for manual review",
+        flags: ["ANALYSIS_TIMEOUT", "MANUAL_REVIEW_REQUIRED"],
       };
     } finally {
       clearTimeout(timeoutId!);
@@ -81,7 +96,7 @@ export class AnomalyService {
    * perceptual duplicates; use proof_hashes for that.
    */
   computePHash(mediaUri: string): string {
-    return createHash('sha256').update(mediaUri).digest('hex');
+    return createHash("sha256").update(mediaUri).digest("hex");
   }
 
   /**
@@ -92,13 +107,18 @@ export class AnomalyService {
    * exact-match check rather than a spurious near-duplicate heuristic.
    */
   hammingDistance(hash1: string, hash2: string): number {
-    if (typeof hash1 !== 'string' || typeof hash2 !== 'string') {
+    if (typeof hash1 !== "string" || typeof hash2 !== "string") {
       return Number.MAX_SAFE_INTEGER;
     }
     return hash1 === hash2 ? 0 : Number.MAX_SAFE_INTEGER;
   }
 
-  private async runAnalysis(mediaInput: Buffer | string, userId: string, mediaUri: string, flags: string[]): Promise<AnomalyResult> {
+  private async runAnalysis(
+    mediaInput: Buffer | string,
+    userId: string,
+    mediaUri: string,
+    flags: string[],
+  ): Promise<AnomalyResult> {
     // Perceptual-duplicate detection is performed authoritatively at upload time by
     // PHashService against the actual frame bytes (see computePHash docstring); this
     // screen focuses on EXIF / metadata integrity. The dead URI-pHash machinery was
@@ -107,19 +127,19 @@ export class AnomalyService {
     // 1. EXIF Software Check (Edit Detection)
     const softwareFlag = await this.checkExifSoftware(mediaInput);
     if (softwareFlag) {
-      flags.push('SOFTWARE_MANIPULATION_DETECTED');
+      flags.push("SOFTWARE_MANIPULATION_DETECTED");
     }
 
     // 2. EXIF Timestamp Discrepancy
     const timestampFlag = await this.checkExifTimestamp(mediaInput);
     if (timestampFlag) {
-      flags.push('EXIF_TIMESTAMP_DISCREPANCY');
+      flags.push("EXIF_TIMESTAMP_DISCREPANCY");
     }
 
     // 3. Missing Native Metadata
     const metadata = await sharp(mediaInput).metadata();
     if (!metadata.exif && !metadata.iptc && !metadata.xmp) {
-      flags.push('STRIPPED_METADATA');
+      flags.push("STRIPPED_METADATA");
     }
 
     // PRV14: this is a real-money fraud screen. Previously these flags were appended
@@ -127,15 +147,15 @@ export class AnomalyService {
     // auto-accepted. Any integrity flag must now REJECT the media (held for manual
     // review / resubmission) rather than silently pass.
     const REJECTING_FLAGS = [
-      'SOFTWARE_MANIPULATION_DETECTED',
-      'EXIF_TIMESTAMP_DISCREPANCY',
-      'STRIPPED_METADATA',
+      "SOFTWARE_MANIPULATION_DETECTED",
+      "EXIF_TIMESTAMP_DISCREPANCY",
+      "STRIPPED_METADATA",
     ];
     const triggered = flags.filter((f) => REJECTING_FLAGS.includes(f));
     if (triggered.length > 0) {
       return {
         rejected: true,
-        reason: `Media failed integrity screening: ${triggered.join(', ')}`,
+        reason: `Media failed integrity screening: ${triggered.join(", ")}`,
         flags,
       };
     }
@@ -148,9 +168,16 @@ export class AnomalyService {
       const metadata = await sharp(mediaInput).metadata();
       if (!metadata.exif) return false;
 
-      const exifString = metadata.exif.toString('utf-8').toLowerCase();
-      const bannedSoftware = ['photoshop', 'adobe', 'lightroom', 'gimp', 'canva', 'figma'];
-      
+      const exifString = metadata.exif.toString("utf-8").toLowerCase();
+      const bannedSoftware = [
+        "photoshop",
+        "adobe",
+        "lightroom",
+        "gimp",
+        "canva",
+        "figma",
+      ];
+
       for (const software of bannedSoftware) {
         if (exifString.includes(software)) {
           this.logger.warn(`Banned software detected in EXIF: ${software}`);
@@ -169,20 +196,27 @@ export class AnomalyService {
       if (!metadata.exif) return false;
 
       // Search for DateTimeOriginal pattern: YYYY:MM:DD HH:MM:SS
-      const exifString = metadata.exif.toString('binary');
-      const match = exifString.match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
+      const exifString = metadata.exif.toString("binary");
+      const match = exifString.match(
+        /(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/,
+      );
       if (!match) return false;
 
       const [, year, month, day, hour, minute, second] = match;
-      const exifDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`);
-      
+      const exifDate = new Date(
+        `${year}-${month}-${day}T${hour}:${minute}:${second}`,
+      );
+
       if (isNaN(exifDate.getTime())) return false;
 
       const now = new Date();
-      const diffHours = Math.abs(now.getTime() - exifDate.getTime()) / (1000 * 60 * 60);
+      const diffHours =
+        Math.abs(now.getTime() - exifDate.getTime()) / (1000 * 60 * 60);
 
       if (diffHours > EXIF_DISCREPANCY_HOURS) {
-        this.logger.warn(`EXIF timestamp discrepancy: ${diffHours.toFixed(1)}h`);
+        this.logger.warn(
+          `EXIF timestamp discrepancy: ${diffHours.toFixed(1)}h`,
+        );
         return true;
       }
       return false;

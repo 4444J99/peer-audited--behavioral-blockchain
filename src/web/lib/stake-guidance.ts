@@ -45,7 +45,7 @@ export interface ContractSummary {
 export function findMostRecentActiveContract<T extends ContractSummary>(
   contracts: T[],
 ): T | null {
-  const active = contracts.filter((contract) => contract.status === 'ACTIVE');
+  const active = contracts.filter((contract) => contract.status === "ACTIVE");
   if (active.length === 0) return null;
 
   return active.reduce((latest, contract) =>

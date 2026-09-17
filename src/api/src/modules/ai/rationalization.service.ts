@@ -1,7 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
-import { callGemini } from '../../../services/intelligence/GeminiClient';
-import type { RationalizationCategory, RationalizationResult, RationalizationHistory } from '../../../../shared/index';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
+import { callGemini } from "../../../services/intelligence/GeminiClient";
+import type {
+  RationalizationCategory,
+  RationalizationResult,
+  RationalizationHistory,
+} from "../../../../shared/index";
 
 const GEMINI_SYSTEM_PROMPT = `You are a compassionate but honest behavioral coach analyzing user rationalizations for a commitment accountability platform.
 
@@ -21,7 +25,7 @@ Return JSON: {
 
 const RESPONSES: Record<RationalizationCategory, (text: string) => string> = {
   GENUINE_EMERGENCY: () =>
-    'That sounds really difficult. Take care of what matters right now — your contracts will be here when you\'re ready. We\'re waiving any penalties for this period.',
+    "That sounds really difficult. Take care of what matters right now — your contracts will be here when you're ready. We're waiving any penalties for this period.",
 
   LEGITIMATE_BUT_NOT_BLOCKING: (text) => {
     if (text.length > 100) text = text.slice(0, 100);
@@ -41,7 +45,8 @@ export class RationalizationService {
   async classify(
     userId: string,
     text: string,
-    contextType: 'GRACE_DAY' | 'EXTENSION_REQUEST' | 'DISPUTE_NARRATIVE' | 'PROOF_FAILURE',
+    contextType:
+      "GRACE_DAY" | "EXTENSION_REQUEST" | "DISPUTE_NARRATIVE" | "PROOF_FAILURE",
     contextId?: string,
   ): Promise<RationalizationResult> {
     const pastPattern = await this.getPastPattern(userId);
@@ -62,23 +67,34 @@ Classify this statement.`;
       const raw = await callGemini(prompt, true);
       const parsed = JSON.parse(raw);
 
-      if (!['GENUINE_EMERGENCY', 'LEGITIMATE_BUT_NOT_BLOCKING', 'PURE_RATIONALIZATION'].includes(parsed.category)) {
+      if (
+        ![
+          "GENUINE_EMERGENCY",
+          "LEGITIMATE_BUT_NOT_BLOCKING",
+          "PURE_RATIONALIZATION",
+        ].includes(parsed.category)
+      ) {
         throw new Error(`Unexpected category: ${parsed.category}`);
       }
 
       category = parsed.category;
       confidence = Math.min(1, Math.max(0, Number(parsed.confidence) || 0.5));
-      reasoning = parsed.reasoning || '';
+      reasoning = parsed.reasoning || "";
     } catch (err: any) {
-      this.logger.warn(`Gemini classification failed, falling back: ${err.message}`);
-      category = 'LEGITIMATE_BUT_NOT_BLOCKING';
+      this.logger.warn(
+        `Gemini classification failed, falling back: ${err.message}`,
+      );
+      category = "LEGITIMATE_BUT_NOT_BLOCKING";
       confidence = 0.5;
-      reasoning = 'Fallback — AI unavailable';
+      reasoning = "Fallback — AI unavailable";
     }
 
     // Escalate response for repeat rationalizers
     let response: string;
-    if (category === 'PURE_RATIONALIZATION' && pastPattern.pureRationalization >= 3) {
+    if (
+      category === "PURE_RATIONALIZATION" &&
+      pastPattern.pureRationalization >= 3
+    ) {
       response =
         `You've used similar reasoning ${pastPattern.pureRationalization} times before. ` +
         `Pressfield wrote: "The rationalizations that Resistance presents to us are insidious because a lot of them are TRUE." ` +
@@ -91,10 +107,20 @@ Classify this statement.`;
     await this.pool.query(
       `INSERT INTO rationalization_log (user_id, context_type, context_id, raw_text, classification, confidence, ai_response)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [userId, contextType, contextId ?? null, text, category, confidence, response],
+      [
+        userId,
+        contextType,
+        contextId ?? null,
+        text,
+        category,
+        confidence,
+        response,
+      ],
     );
 
-    this.logger.log(`[Rationalization] User ${userId} → ${category} (${contextType})`);
+    this.logger.log(
+      `[Rationalization] User ${userId} → ${category} (${contextType})`,
+    );
 
     return { category, confidence, reasoning, response };
   }
@@ -115,7 +141,14 @@ Classify this statement.`;
        WHERE user_id = $1`,
       [userId],
     );
-    return result.rows[0] || { totalLogs: 0, genuineEmergency: 0, legitimateButNotBlocking: 0, pureRationalization: 0 };
+    return (
+      result.rows[0] || {
+        totalLogs: 0,
+        genuineEmergency: 0,
+        legitimateButNotBlocking: 0,
+        pureRationalization: 0,
+      }
+    );
   }
 
   async getHistory(userId: string): Promise<RationalizationHistory> {

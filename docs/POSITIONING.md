@@ -19,7 +19,7 @@ There are two high-ticket buyers for this capability, served by the same proof.
 ### A. The B2B / Enterprise Buyer (Deploy / License)
 
 - **Who:** Heads of Total Rewards / Benefits, VPs of People, corporate-wellness platform owners, and insurers running incentive programs.
-- **Why they pay:** They need an *enforcement engine with a privacy firewall*. Styx's B2B tier ("Sponsored Pots — Company Pays, Employee Plays") lets the employer fund the pot while the employer **never** sees individual weight, steps, or sleep — only aggregate success and engagement, gated behind k-anonymity (minimum 5 users per group). It ships CRM connectors (Salesforce, HubSpot) and HRIS connectors (Workday, BambooHR), roster sync with pre-funded invite links, per-active-user invoicing, and webhook-driven contract freezing on termination.
+- **Why they pay:** They need an _enforcement engine with a privacy firewall_. Styx's B2B tier ("Sponsored Pots — Company Pays, Employee Plays") lets the employer fund the pot while the employer **never** sees individual weight, steps, or sleep — only aggregate success and engagement, gated behind k-anonymity (minimum 5 users per group). It ships CRM connectors (Salesforce, HubSpot) and HRIS connectors (Workday, BambooHR), roster sync with pre-funded invite links, per-active-user invoicing, and webhook-driven contract freezing on termination.
 - **The Signal:** They want a white-labeled instance, an API license, or a managed deployment plugged into their existing HRIS/CRM stack.
 
 ### B. The Talent Buyer (Hire / Acquire)
@@ -33,14 +33,14 @@ There are two high-ticket buyers for this capability, served by the same proof.
 We do not negotiate and we do not do "Fiverr-style" gigs. The engagement starts serious; the price is implicit in the production weight of the artifact.
 
 - **Regulated-money architecture:** A double-entry ledger where every transaction is a balanced debit/credit pair (no phantom money), Stripe FBO escrow, a SHA-256 hash-chained audit log for tamper-evident history, KYC/age verification, and geofenced jurisdiction tiers.
-- **A trust engine, not a toy:** The Fury Router runs anonymous peer review through a BullMQ queue with honeypot injection to QA reviewer accuracy, a consensus engine to aggregate verdicts, and a bounty economy that pays correct verdicts and penalizes false accusations. The entire value proposition is that money movement is *provably* correct.
+- **A trust engine, not a toy:** The Fury Router runs anonymous peer review through a BullMQ queue with honeypot injection to QA reviewer accuracy, a consensus engine to aggregate verdicts, and a bounty economy that pays correct verdicts and penalizes false accusations. The entire value proposition is that money movement is _provably_ correct.
 - **A privacy firewall enterprises can't cheaply build:** Aggregate-only analytics, k-anonymity enforcement, and a hard `403` on any attempt to read individual data with a B2B admin token.
 - **Verification rigor:** automated test suites, dedicated validation gates (phantom-money check, oracle spoof check, full-loop, claim-drift), CodeQL, an E2E matrix, and Terraform IaC.
 - **Scarcity:** Engineers who can bridge behavioral economics, escrowed payments, anti-fraud consensus, and multi-platform delivery — under strict compliance — are rare.
 
 ## 4. The Engagement-Depth Ladder (The "Ascent")
 
-When an inbound lead arrives from the README CTA, they are routed up this ladder by need and budget capability. Anchors are *internal depth markers only* — never quoted as a public price list.
+When an inbound lead arrives from the README CTA, they are routed up this ladder by need and budget capability. Anchors are _internal depth markers only_ — never quoted as a public price list.
 
 **Level 1 — Tactical Consult / Architecture Audit (Paid Discovery).**
 Review the prospect's accountability, escrow, or ledger stack against the Styx blueprint and deliver an integration roadmap. Paid upfront; filters out tire-kickers immediately.

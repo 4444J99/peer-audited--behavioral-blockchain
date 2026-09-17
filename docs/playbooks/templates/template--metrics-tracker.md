@@ -6,6 +6,7 @@ Set a target for each KPI; flag against the host organism's health bands.
 ## KPI definitions (pick 6–10)
 
 ### Audience-asset KPIs
+
 - **Followers** — total + weekly net add (the headline asset number).
 - **Reach / impressions** — weekly.
 - **Engagement rate** — interactions / reach.
@@ -14,6 +15,7 @@ Set a target for each KPI; flag against the host organism's health bands.
 - **Audience revenue** — from low-ticket / community / sponsorship rungs.
 
 ### Product-funnel KPIs
+
 - **Waitlist signups** — total + by source (Host / Product / partner).
 - **Waitlist → admit** — admitted / signups.
 - **Cohort activation** — activated / admitted.
@@ -22,12 +24,12 @@ Set a target for each KPI; flag against the host organism's health bands.
 
 ## Weekly log
 
-| Week | Followers (net) | Reach | Eng% | Email (net) | LM conv% | Aud. rev | Waitlist (src) | →Admit | Activation | D7 | D30 | Partners | Band |
-|------|-----------------|-------|------|-------------|----------|----------|----------------|--------|------------|----|----|----------|------|
-| W1 | | | | | | | | | | | | | |
-| W2 | | | | | | | | | | | | | |
-| W3 | | | | | | | | | | | | | |
-| W4 | | | | | | | | | | | | | |
+| Week | Followers (net) | Reach | Eng% | Email (net) | LM conv% | Aud. rev | Waitlist (src) | →Admit | Activation | D7  | D30 | Partners | Band |
+| ---- | --------------- | ----- | ---- | ----------- | -------- | -------- | -------------- | ------ | ---------- | --- | --- | -------- | ---- |
+| W1   |                 |       |      |             |          |          |                |        |            |     |     |          |      |
+| W2   |                 |       |      |             |          |          |                |        |            |     |     |          |      |
+| W3   |                 |       |      |             |          |          |                |        |            |     |     |          |      |
+| W4   |                 |       |      |             |          |          |                |        |            |     |     |          |      |
 
 ## Targets & bands
 

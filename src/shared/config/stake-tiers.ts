@@ -14,9 +14,9 @@
  */
 
 export enum StakeTier {
-  TIER_1 = 'TIER_1_MICRO', // No KYC required
-  TIER_2 = 'TIER_2_STANDARD', // KYC required
-  TIER_3 = 'TIER_3_PREMIUM', // Enhanced Due Diligence (Future)
+  TIER_1 = "TIER_1_MICRO", // No KYC required
+  TIER_2 = "TIER_2_STANDARD", // KYC required
+  TIER_3 = "TIER_3_PREMIUM", // Enhanced Due Diligence (Future)
 }
 
 export interface TierConfig {
@@ -58,7 +58,7 @@ export const STAKE_TIERS: TierConfig[] = [
  * finite amount, so the function always resolves a tier.
  */
 export function getRequiredTier(amountCents: number): TierConfig {
-  const tier = STAKE_TIERS.find(t => amountCents < t.maxAmountCents);
+  const tier = STAKE_TIERS.find((t) => amountCents < t.maxAmountCents);
   return tier || STAKE_TIERS[STAKE_TIERS.length - 1];
 }
 

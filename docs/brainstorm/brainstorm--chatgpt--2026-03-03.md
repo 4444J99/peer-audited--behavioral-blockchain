@@ -530,15 +530,18 @@ Monthly license
 
 # **The Two B2B Strategies Compared**
 
-  ----------------------------------------------------------------------
-  **Strategy**   **Description**                **Risk**   **Speed**
-  -------------- ------------------------------ ---------- -------------
-  B2B2C          Start with consumers and       Low        Moderate
-                 collect proof                             
+---
 
-  Direct B2B     Run program through            Higher     Faster
-  pilot          professionals                             validation
-  ----------------------------------------------------------------------
+**Strategy** **Description** **Risk** **Speed**
+
+---
+
+B2B2C Start with consumers and Low Moderate
+collect proof
+
+Direct B2B Run program through Higher Faster
+pilot professionals validation
+----------------------------------------------------------------------
 
 # **What Most Successful Products Do**
 
@@ -631,18 +634,21 @@ Key findings across studies:
 
 Typical deposit ranges in behavioral experiments:
 
-  ----------------------------------------
-  **Behavior Program**      **Deposit
-                            Range**
-  ------------------------- --------------
-  Weight loss contracts     \$50--\$200
+---
 
-  Gym attendance            \$30--\$150
-  experiments               
+**Behavior Program** **Deposit
+Range**
 
-  Smoking cessation         \$100--\$250
-  commitments               
-  ----------------------------------------
+---
+
+Weight loss contracts \$50--\$200
+
+Gym attendance \$30--\$150
+experiments
+
+Smoking cessation \$100--\$250
+commitments
+----------------------------------------
 
 The pattern:\
 Deposits work best when they are **painful enough to matter but
@@ -671,16 +677,19 @@ content**.
 
 Typical ranges:
 
-  ---------------------------------------
-  **Program Type**       **Price**
-  ---------------------- ----------------
-  Casual cohort course   \$50--\$200
+---
 
-  Premium cohort         \$300--\$2000
+**Program Type** **Price**
 
-  Professional training  \$2000--\$5000
-  cohort                 
-  ---------------------------------------
+---
+
+Casual cohort course \$50--\$200
+
+Premium cohort \$300--\$2000
+
+Professional training \$2000--\$5000
+cohort
+---------------------------------------
 
 Your product sits somewhere between:
 
@@ -698,18 +707,21 @@ But remember: you also have the **deposit mechanic**.
 
 Community businesses generally follow this model:
 
-  -----------------------------
-  **Product     **Typical
-  Level**       Price**
-  ------------- ---------------
-  Entry         \$20--\$75
-  challenge     
+---
 
-  Cohort        \$75--\$300
-  program       
+**Product **Typical
+Level** Price**
 
-  Premium group \$300--\$1000
-  -----------------------------
+---
+
+Entry \$20--\$75
+challenge
+
+Cohort \$75--\$300
+program
+
+Premium group \$300--\$1000
+-----------------------------
 
 The reason is psychological:
 
@@ -721,18 +733,21 @@ Higher commitment price → stronger engagement
 Companies that sell behavioral change programs to employers often
 charge:
 
-  ----------------------------------
-  **Model**           **Typical
-                      Price**
-  ------------------- --------------
-  Per employee per    \$10--\$40
-  month               
+---
 
-  Per program         \$100--\$500
+**Model** **Typical
+Price**
 
-  Enterprise license  \$50k+
-                      annually
-  ----------------------------------
+---
+
+Per employee per \$10--\$40
+month
+
+Per program \$100--\$500
+
+Enterprise license \$50k+
+annually
+----------------------------------
 
 Your system would likely fit into:
 
@@ -775,13 +790,13 @@ the psychology**.
 
 Three principles from research:
 
-1.  **Loss aversion\**
+1.  *_Loss aversion\*_
     People work harder to avoid losing money.
 
-2.  **Public accountability\**
+2.  *_Public accountability\*_
     Visibility increases follow-through.
 
-3.  **Immediate consequence\**
+3.  *_Immediate consequence\*_
     Delayed penalties weaken behavioral effect.
 
 Your system hits all three.

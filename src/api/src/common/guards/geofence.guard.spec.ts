@@ -1,13 +1,13 @@
-jest.mock('geoip-lite', () => ({ lookup: jest.fn() }));
+jest.mock("geoip-lite", () => ({ lookup: jest.fn() }));
 
-import { ForbiddenException } from '@nestjs/common';
-import { GeofenceGuard } from './geofence.guard';
-import { CompliancePolicyService } from '../../modules/compliance/compliance-policy.service';
-import * as geoip from 'geoip-lite';
+import { ForbiddenException } from "@nestjs/common";
+import { GeofenceGuard } from "./geofence.guard";
+import { CompliancePolicyService } from "../../modules/compliance/compliance-policy.service";
+import * as geoip from "geoip-lite";
 
 const mockLookup = geoip.lookup as jest.Mock;
 
-describe('GeofenceGuard', () => {
+describe("GeofenceGuard", () => {
   let guard: GeofenceGuard;
   let compliancePolicy: CompliancePolicyService;
   const envSnapshot = { ...process.env };
@@ -29,9 +29,9 @@ describe('GeofenceGuard', () => {
 
   function createContext(req: Partial<RequestLike>) {
     const request = {
-      method: 'GET',
-      url: '/contracts',
-      originalUrl: '/contracts',
+      method: "GET",
+      url: "/contracts",
+      originalUrl: "/contracts",
       headers: {},
       ...req,
     };
@@ -43,74 +43,74 @@ describe('GeofenceGuard', () => {
     } as any;
   }
 
-  it('should block TIER_3 jurisdictions with machine-readable code', () => {
+  it("should block TIER_3 jurisdictions with machine-readable code", () => {
     // cf-ipstate is only trusted when the API sits behind a trusted proxy/CF edge.
-    process.env.TRUST_PROXY_HEADERS = 'true';
+    process.env.TRUST_PROXY_HEADERS = "true";
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
 
     const context = createContext({
-      headers: { 'cf-ipstate': 'WA' },
-      originalUrl: '/contracts',
-      method: 'GET',
+      headers: { "cf-ipstate": "WA" },
+      originalUrl: "/contracts",
+      method: "GET",
     });
 
     try {
       guard.canActivate(context);
-      fail('Expected guard to throw');
+      fail("Expected guard to throw");
     } catch (err) {
       expect(err).toBeInstanceOf(ForbiddenException);
       const response = (err as ForbiddenException).getResponse() as any;
-      expect(response.code).toBe('JURISDICTION_BLOCKED');
-      expect(response.jurisdiction.state).toBe('WA');
+      expect(response.code).toBe("JURISDICTION_BLOCKED");
+      expect(response.jurisdiction.state).toBe("WA");
     }
   });
 
-  it('should block TIER_2 stake-creating actions in refund-only mode', () => {
-    process.env.TRUST_PROXY_HEADERS = 'true';
+  it("should block TIER_2 stake-creating actions in refund-only mode", () => {
+    process.env.TRUST_PROXY_HEADERS = "true";
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
 
     const context = createContext({
-      headers: { 'cf-ipstate': 'NY' },
-      originalUrl: '/contracts',
-      method: 'POST',
+      headers: { "cf-ipstate": "NY" },
+      originalUrl: "/contracts",
+      method: "POST",
     });
 
     try {
       guard.canActivate(context);
-      fail('Expected guard to throw');
+      fail("Expected guard to throw");
     } catch (err) {
       const response = (err as ForbiddenException).getResponse() as any;
-      expect(response.code).toBe('JURISDICTION_REFUND_ONLY_RESTRICTED');
-      expect(response.requiredMode).toBe('REFUND_ONLY');
-      expect(response.jurisdiction.tier).toBe('REFUND_ONLY');
+      expect(response.code).toBe("JURISDICTION_REFUND_ONLY_RESTRICTED");
+      expect(response.requiredMode).toBe("REFUND_ONLY");
+      expect(response.jurisdiction.tier).toBe("REFUND_ONLY");
     }
   });
 
-  it('should allow TIER_1 requests with valid state', () => {
-    process.env.TRUST_PROXY_HEADERS = 'true';
+  it("should allow TIER_1 requests with valid state", () => {
+    process.env.TRUST_PROXY_HEADERS = "true";
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
 
     const context = createContext({
-      headers: { 'cf-ipstate': 'CA' },
-      originalUrl: '/contracts',
-      method: 'GET',
+      headers: { "cf-ipstate": "CA" },
+      originalUrl: "/contracts",
+      method: "GET",
     });
 
     expect(guard.canActivate(context)).toBe(true);
   });
 
-  it('should allow TIER_2 safe read/proof actions', () => {
-    process.env.TRUST_PROXY_HEADERS = 'true';
+  it("should allow TIER_2 safe read/proof actions", () => {
+    process.env.TRUST_PROXY_HEADERS = "true";
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
 
     const context = createContext({
-      headers: { 'cf-ipstate': 'NY' },
-      originalUrl: '/contracts/abc/proofs',
-      method: 'GET',
+      headers: { "cf-ipstate": "NY" },
+      originalUrl: "/contracts/abc/proofs",
+      method: "GET",
     });
 
     expect(guard.canActivate(context)).toBe(true);
@@ -118,63 +118,69 @@ describe('GeofenceGuard', () => {
 
   // Phase Beta P0-004: Fail-closed geofencing
 
-  it('should block when no geo headers and fail-closed (default)', () => {
-    const warnSpy = jest.spyOn((guard as any).logger, 'warn').mockImplementation(() => undefined);
+  it("should block when no geo headers and fail-closed (default)", () => {
+    const warnSpy = jest
+      .spyOn((guard as any).logger, "warn")
+      .mockImplementation(() => undefined);
 
     const context = createContext({
       headers: {},
-      originalUrl: '/contracts',
-      method: 'GET',
+      originalUrl: "/contracts",
+      method: "GET",
     });
 
     expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
     expect(warnSpy).toHaveBeenCalled();
   });
 
-  it('should return 403 with JURISDICTION_BLOCKED code on fail-closed', () => {
-    jest.spyOn((guard as any).logger, 'warn').mockImplementation(() => undefined);
+  it("should return 403 with JURISDICTION_BLOCKED code on fail-closed", () => {
+    jest
+      .spyOn((guard as any).logger, "warn")
+      .mockImplementation(() => undefined);
 
     const context = createContext({
       headers: {},
-      originalUrl: '/contracts',
-      method: 'POST',
+      originalUrl: "/contracts",
+      method: "POST",
     });
 
     try {
       guard.canActivate(context);
-      fail('Expected guard to throw');
+      fail("Expected guard to throw");
     } catch (err) {
       expect(err).toBeInstanceOf(ForbiddenException);
       const response = (err as ForbiddenException).getResponse() as any;
-      expect(response.code).toBe('JURISDICTION_BLOCKED');
-      expect(response.message).toContain('Location verification');
+      expect(response.code).toBe("JURISDICTION_BLOCKED");
+      expect(response.message).toContain("Location verification");
     }
   });
 
-  it('should allow when fail-open is explicitly enabled and no headers', () => {
-    process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'true';
+  it("should allow when fail-open is explicitly enabled and no headers", () => {
+    process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = "true";
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
 
     const context = createContext({
       headers: {},
-      originalUrl: '/contracts',
-      method: 'GET',
+      originalUrl: "/contracts",
+      method: "GET",
     });
 
     expect(guard.canActivate(context)).toBe(true);
   });
 
-  it('should ignore x-styx-state override in production', () => {
-    process.env.NODE_ENV = 'production';
+  it("should ignore x-styx-state override in production", () => {
+    process.env.NODE_ENV = "production";
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
-    const warnSpy = jest.spyOn((guard as any).logger, 'warn').mockImplementation(() => undefined);
+    const warnSpy = jest
+      .spyOn((guard as any).logger, "warn")
+      .mockImplementation(() => undefined);
 
     const context = createContext({
-      headers: { 'x-styx-state': 'WA' },
-      originalUrl: '/contracts',
-      method: 'GET',
+      headers: { "x-styx-state": "WA" },
+      originalUrl: "/contracts",
+      method: "GET",
     });
 
     // The x-styx-state override is ignored in production, so no trusted geo signal
@@ -184,64 +190,66 @@ describe('GeofenceGuard', () => {
     expect(warnSpy).toHaveBeenCalled();
   });
 
-  it('should block in production by default when location is missing', () => {
-    process.env.NODE_ENV = 'production';
+  it("should block in production by default when location is missing", () => {
+    process.env.NODE_ENV = "production";
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
-    jest.spyOn((guard as any).logger, 'warn').mockImplementation(() => undefined);
+    jest
+      .spyOn((guard as any).logger, "warn")
+      .mockImplementation(() => undefined);
 
     const context = createContext({
       headers: {},
-      originalUrl: '/contracts',
-      method: 'GET',
+      originalUrl: "/contracts",
+      method: "GET",
     });
 
     // Production must not be more permissive than dev: a missing geo signal fails CLOSED.
     expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
   });
 
-  it('should allow in production when missing-location policy is explicitly allow', () => {
-    process.env.NODE_ENV = 'production';
-    process.env.GEO_MISSING_HEADER_ACTION = 'allow';
+  it("should allow in production when missing-location policy is explicitly allow", () => {
+    process.env.NODE_ENV = "production";
+    process.env.GEO_MISSING_HEADER_ACTION = "allow";
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
 
     const context = createContext({
       headers: {},
-      originalUrl: '/contracts',
-      method: 'GET',
+      originalUrl: "/contracts",
+      method: "GET",
     });
 
     expect(guard.canActivate(context)).toBe(true);
   });
 
-  it('should allow when request IP resolves to a permitted state', () => {
+  it("should allow when request IP resolves to a permitted state", () => {
     // Forwarded IP headers are only consulted when behind a trusted proxy.
-    process.env.TRUST_PROXY_HEADERS = 'true';
+    process.env.TRUST_PROXY_HEADERS = "true";
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
 
-    mockLookup.mockReturnValue({ country: 'US', region: 'CA' });
+    mockLookup.mockReturnValue({ country: "US", region: "CA" });
 
     const context = createContext({
-      headers: { 'x-forwarded-for': '8.8.8.8' },
-      originalUrl: '/contracts',
-      method: 'GET',
+      headers: { "x-forwarded-for": "8.8.8.8" },
+      originalUrl: "/contracts",
+      method: "GET",
     });
 
     expect(guard.canActivate(context)).toBe(true);
   });
 
-  it('should allow x-styx-state override in non-production when fail-open enabled', () => {
-    process.env.NODE_ENV = 'development';
-    process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = 'true';
+  it("should allow x-styx-state override in non-production when fail-open enabled", () => {
+    process.env.NODE_ENV = "development";
+    process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS = "true";
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
 
     const context = createContext({
-      headers: { 'x-styx-state': 'CA' },
-      originalUrl: '/contracts',
-      method: 'GET',
+      headers: { "x-styx-state": "CA" },
+      originalUrl: "/contracts",
+      method: "GET",
     });
 
     expect(guard.canActivate(context)).toBe(true);

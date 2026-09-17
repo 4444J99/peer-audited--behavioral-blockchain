@@ -1,7 +1,7 @@
-import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
-jest.mock('next/link', () => {
+jest.mock("next/link", () => {
   return function MockLink({
     children,
     href,
@@ -19,20 +19,20 @@ jest.mock('next/link', () => {
   };
 });
 
-import CirclesPage from './page';
+import CirclesPage from "./page";
 
-describe('Concentric Circles demo index page', () => {
+describe("Concentric Circles demo index page", () => {
   const render = () => renderToStaticMarkup(<CirclesPage />);
 
-  it('presents all five circles in wedge-to-enterprise order', () => {
+  it("presents all five circles in wedge-to-enterprise order", () => {
     const html = render();
 
     const names = [
-      'Circle Alpha — The Wedge',
-      'Circle Beta — The Loop',
-      'Circle Gamma — Proof Integrity',
-      'Circle Delta — Retention',
-      'Circle Omega — The Enterprise',
+      "Circle Alpha — The Wedge",
+      "Circle Beta — The Loop",
+      "Circle Gamma — Proof Integrity",
+      "Circle Delta — Retention",
+      "Circle Omega — The Enterprise",
     ];
     let lastIndex = -1;
     for (const name of names) {
@@ -42,20 +42,20 @@ describe('Concentric Circles demo index page', () => {
     }
   });
 
-  it('links every live demo surface exactly once', () => {
+  it("links every live demo surface exactly once", () => {
     const html = render();
 
     const hrefs = [
-      '/',
-      '/beta',
-      '/contracts/new',
-      '/fury',
-      '/kyc',
-      '/practitioner',
-      '/hr',
-      '/admin/jurisdictions',
-      '/realms',
-      '/tavern',
+      "/",
+      "/beta",
+      "/contracts/new",
+      "/fury",
+      "/kyc",
+      "/practitioner",
+      "/hr",
+      "/admin/jurisdictions",
+      "/realms",
+      "/tavern",
     ];
     for (const href of hrefs) {
       // Plain substring counting — building a RegExp from the path would need
@@ -65,25 +65,25 @@ describe('Concentric Circles demo index page', () => {
     }
   });
 
-  it('gives each surface a one-line what-to-look-at description', () => {
+  it("gives each surface a one-line what-to-look-at description", () => {
     const html = render();
 
     // One guidance line per surface (10 surfaces total).
     expect(html.match(/What to look at:/g)?.length).toBe(10);
-    expect(html).toContain('masked subject aliases');
-    expect(html).toContain('compliance gate');
-    expect(html).toContain('Anonymized workforce metrics');
+    expect(html).toContain("masked subject aliases");
+    expect(html).toContain("compliance gate");
+    expect(html).toContain("Anonymized workforce metrics");
   });
 
-  it('renders the page title and framing narrative', () => {
+  it("renders the page title and framing narrative", () => {
     const html = render();
 
-    expect(html).toContain('The Concentric Circles');
-    expect(html).toContain('no-contact recovery');
-    expect(html).toContain('scripts/demo/README.md');
+    expect(html).toContain("The Concentric Circles");
+    expect(html).toContain("no-contact recovery");
+    expect(html).toContain("scripts/demo/README.md");
   });
 
-  it('is a public page with no client-side data dependencies', () => {
+  it("is a public page with no client-side data dependencies", () => {
     // renderToStaticMarkup succeeds without any fetch/auth mocks — the page
     // must stay statically renderable so it can serve as the public demo map.
     expect(() => render()).not.toThrow();

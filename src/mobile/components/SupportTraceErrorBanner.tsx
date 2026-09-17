@@ -1,6 +1,6 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { parseSupportTraceMessage } from '../utils/support-trace';
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { parseSupportTraceMessage } from "../utils/support-trace";
 
 type Props = {
   value: string | null | undefined;
@@ -15,7 +15,7 @@ export function SupportTraceErrorBanner({
   messageStyle,
   traceStyle,
   containerStyle,
-  traceLabel = 'Support trace ID',
+  traceLabel = "Support trace ID",
 }: Props) {
   if (!value) {
     return null;
@@ -37,11 +37,11 @@ export function SupportTraceErrorBanner({
 
 const styles = StyleSheet.create({
   traceText: {
-    color: '#888',
+    color: "#888",
     fontSize: 11,
     marginTop: -8,
     marginBottom: 12,
-    textAlign: 'left',
+    textAlign: "left",
   },
 });
 

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Eye } from 'lucide-react';
-import { AuditorWellnessPanel } from '../../../components/AuditorWellnessPanel';
+import React from "react";
+import { Eye } from "lucide-react";
+import { AuditorWellnessPanel } from "../../../components/AuditorWellnessPanel";
 
 export default function AuditorWellnessPage() {
   return (
@@ -13,7 +13,8 @@ export default function AuditorWellnessPage() {
       </div>
       <p className="text-sm text-gray-400">
         Monitor fatigue, bias risk, and review quality for peer auditors.
-        Regular wellness checks prevent empathy fatigue and ensure fair verdicts.
+        Regular wellness checks prevent empathy fatigue and ensure fair
+        verdicts.
       </p>
       <AuditorWellnessPanel />
     </div>

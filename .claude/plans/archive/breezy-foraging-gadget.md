@@ -16,21 +16,24 @@ pnpm init
 ```
 
 Create `pnpm-workspace.yaml`:
+
 ```yaml
 packages:
-  - 'packages/*'
-  - 'apps/*'
-  - 'contracts'
+  - "packages/*"
+  - "apps/*"
+  - "contracts"
 ```
 
 ### Step 2: Configure Turborepo
 
 Install and configure:
+
 ```bash
 pnpm add -D turbo
 ```
 
 Create `turbo.json`:
+
 ```json
 {
   "$schema": "https://turbo.build/schema.json",
@@ -75,6 +78,7 @@ meta-source--ledger-output/
 ### Step 4: Create @meta-source/core Package
 
 `packages/core/package.json`:
+
 ```json
 {
   "name": "@meta-source/core",
@@ -89,6 +93,7 @@ meta-source--ledger-output/
 ```
 
 Core types from specs:
+
 - `PersonalIdentity` (Phase 1)
 - `NumerologyProfile` (Phase 1)
 - `CipherState`, `ICipher` (Phase 2)
@@ -99,6 +104,7 @@ Core types from specs:
 ### Step 5: Create @meta-source/utils Package
 
 Shared utilities:
+
 - `math.ts` - PHI constant, digitSum, reduce
 - `color.ts` - hue conversions, palette generation
 - `validation.ts` - input validators
@@ -107,6 +113,7 @@ Shared utilities:
 ### Step 6: Create @meta-source/config Package
 
 Shared configurations:
+
 - `tsconfig.base.json`
 - `eslint.config.js`
 - `prettier.config.js`
@@ -114,6 +121,7 @@ Shared configurations:
 ### Step 7: Update Existing Apps
 
 Modify `apps/identity-playground` and `apps/cipher-rendering`:
+
 - Update imports to use `@meta-source/core`
 - Update imports to use `@meta-source/utils`
 - Add workspace dependency references
@@ -121,6 +129,7 @@ Modify `apps/identity-playground` and `apps/cipher-rendering`:
 ### Step 8: Configure CI/CD
 
 Create `.github/workflows/ci.yml`:
+
 ```yaml
 name: CI
 on: [push, pull_request]
@@ -139,21 +148,21 @@ jobs:
 
 ## Files to Create/Modify
 
-| File | Action |
-|------|--------|
-| `pnpm-workspace.yaml` | CREATE |
-| `turbo.json` | CREATE |
-| `package.json` (root) | UPDATE - add turbo, workspaces |
-| `tsconfig.json` (root) | UPDATE - project references |
-| `packages/core/package.json` | CREATE |
-| `packages/core/tsconfig.json` | CREATE |
-| `packages/core/src/index.ts` | CREATE |
-| `packages/core/src/types/*.ts` | CREATE |
-| `packages/utils/package.json` | CREATE |
-| `packages/utils/src/*.ts` | CREATE |
-| `packages/config/*` | CREATE |
-| `.github/workflows/ci.yml` | CREATE |
-| `apps/*/package.json` | UPDATE - workspace deps |
+| File                           | Action                         |
+| ------------------------------ | ------------------------------ |
+| `pnpm-workspace.yaml`          | CREATE                         |
+| `turbo.json`                   | CREATE                         |
+| `package.json` (root)          | UPDATE - add turbo, workspaces |
+| `tsconfig.json` (root)         | UPDATE - project references    |
+| `packages/core/package.json`   | CREATE                         |
+| `packages/core/tsconfig.json`  | CREATE                         |
+| `packages/core/src/index.ts`   | CREATE                         |
+| `packages/core/src/types/*.ts` | CREATE                         |
+| `packages/utils/package.json`  | CREATE                         |
+| `packages/utils/src/*.ts`      | CREATE                         |
+| `packages/config/*`            | CREATE                         |
+| `.github/workflows/ci.yml`     | CREATE                         |
+| `apps/*/package.json`          | UPDATE - workspace deps        |
 
 ---
 

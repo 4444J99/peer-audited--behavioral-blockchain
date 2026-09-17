@@ -1,14 +1,14 @@
-import { Platform } from 'react-native';
-import { ApiClient } from './ApiClient';
+import { Platform } from "react-native";
+import { ApiClient } from "./ApiClient";
 
 /**
  * Lazy-load expo-notifications so the service compiles even if the
  * package is not installed (e.g. in CI / test environments).
  */
-let Notifications: typeof import('expo-notifications') | null = null;
+let Notifications: typeof import("expo-notifications") | null = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  Notifications = require('expo-notifications');
+  Notifications = require("expo-notifications");
 } catch {
   // expo-notifications not installed — local scheduling will no-op
 }
@@ -20,15 +20,15 @@ export class NotificationService {
    */
   static async requestPermissions(): Promise<boolean> {
     if (!Notifications) {
-      console.warn('NotificationService: expo-notifications not available');
+      console.warn("NotificationService: expo-notifications not available");
       return false;
     }
 
     const { status: existing } = await Notifications.getPermissionsAsync();
-    if (existing === 'granted') return true;
+    if (existing === "granted") return true;
 
     const { status } = await Notifications.requestPermissionsAsync();
-    return status === 'granted';
+    return status === "granted";
   }
 
   /**
@@ -39,12 +39,12 @@ export class NotificationService {
     if (!Notifications) return;
 
     // Android requires an explicit notification channel
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('styx-default', {
-        name: 'Styx Alerts',
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("styx-default", {
+        name: "Styx Alerts",
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#ff4444',
+        lightColor: "#ff4444",
       });
     }
 
@@ -65,15 +65,17 @@ export class NotificationService {
    */
   static async scheduleGraceDayReminder(userId: string): Promise<void> {
     if (!Notifications) {
-      console.warn('NotificationService: expo-notifications not available — skipping grace day reminder');
+      console.warn(
+        "NotificationService: expo-notifications not available — skipping grace day reminder",
+      );
       return;
     }
 
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'Grace Day Expiring',
-        body: 'Your grace day is about to expire. Submit proof to avoid a strike.',
-        data: { type: 'grace_day_reminder', userId },
+        title: "Grace Day Expiring",
+        body: "Your grace day is about to expire. Submit proof to avoid a strike.",
+        data: { type: "grace_day_reminder", userId },
         sound: true,
       },
       trigger: {
@@ -91,9 +93,9 @@ export class NotificationService {
 
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'Daily Check-In Due',
-        body: 'You haven\'t completed today\'s attestation yet. Keep your streak alive.',
-        data: { type: 'attestation_reminder', contractId },
+        title: "Daily Check-In Due",
+        body: "You haven't completed today's attestation yet. Keep your streak alive.",
+        data: { type: "attestation_reminder", contractId },
         sound: true,
       },
       trigger: {
@@ -106,14 +108,17 @@ export class NotificationService {
   /**
    * Schedule a local notification warning about an approaching contract deadline.
    */
-  static async scheduleDeadlineWarning(contractId: string, hoursRemaining: number): Promise<void> {
+  static async scheduleDeadlineWarning(
+    contractId: string,
+    hoursRemaining: number,
+  ): Promise<void> {
     if (!Notifications) return;
 
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'Contract Deadline Approaching',
+        title: "Contract Deadline Approaching",
         body: `Your contract ends in ${hoursRemaining} hours. Submit final proof now.`,
-        data: { type: 'deadline_warning', contractId },
+        data: { type: "deadline_warning", contractId },
         sound: true,
       },
       trigger: {
@@ -126,11 +131,15 @@ export class NotificationService {
   /**
    * Register the device's Expo push token with the API for remote push routing.
    */
-  static async registerDeviceToken(token: string): Promise<void> { // allow-secret
+  static async registerDeviceToken(token: string): Promise<void> {
+    // allow-secret
     try {
       await ApiClient.registerPushToken(token);
     } catch (err) {
-      console.error('NotificationService: Failed to register device token', err);
+      console.error(
+        "NotificationService: Failed to register device token",
+        err,
+      );
     }
   }
 
@@ -165,7 +174,7 @@ export class NotificationService {
       const data = await ApiClient.getNotifications();
       return data.notifications;
     } catch (err) {
-      console.error('NotificationService: Failed to fetch notifications', err);
+      console.error("NotificationService: Failed to fetch notifications", err);
       return [];
     }
   }

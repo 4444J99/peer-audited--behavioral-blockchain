@@ -10,17 +10,18 @@ authoritative: false
 # Pillar 1: User Psychology \& Behavior
 
 The Objective: To understand the exact scientific mechanisms of why people change behavior when money and ego are involved, specifically focusing on "Loss Aversion."
+
 > "Act as a behavioral economist specializing in gamification and habit-building. I am developing an app where users place a financial 'buy-in' on their own goals (fitness, productivity) and lose the money if they fail.
 > Please provide a comprehensive analysis of the following:
->  * How does the concept of 'Loss Aversion' (the idea that the pain of losing is psychologically twice as powerful as the pleasure of gaining) apply to habit formation?
->  * What is the 'Endowed Progress Effect' and how can I use it to keep users from churning?
->  * Provide a breakdown of extrinsic vs. intrinsic motivation in this context. At what point does financial penalty cause a user to abandon an app due to 'progress anxiety' rather than motivating them?
->  * Cite real-world psychological studies or papers that support these mechanisms."
 >
+> - How does the concept of 'Loss Aversion' (the idea that the pain of losing is psychologically twice as powerful as the pleasure of gaining) apply to habit formation?
+> - What is the 'Endowed Progress Effect' and how can I use it to keep users from churning?
+> - Provide a breakdown of extrinsic vs. intrinsic motivation in this context. At what point does financial penalty cause a user to abandon an app due to 'progress anxiety' rather than motivating them?
+> - Cite real-world psychological studies or papers that support these mechanisms."
 
 Loss aversion and endowed progress are exactly the levers you want to pull—but they are sharp tools. They can drive behavior change very effectively, but overused they create anxiety, avoidance, and churn. Below is a synthesis of what is known from behavioral economics, self-determination theory, and habit-formation trials, plus concrete design implications for your app.
 
-***
+---
 
 ## 1. How loss aversion applies to habit formation
 
@@ -52,25 +53,25 @@ In physical-activity and chronic-disease settings, many trials now use **loss-fr
 
 **Mechanistically for your app:**
 
-- Users encode the *buy-in* not as “money spent on a product” but as **money they own that is now at risk**. Each failure day is experienced as a fresh realization of that loss.
-- The reference point becomes “I should keep all of *my* stake,” and each missed workout or unproductive day is a step below that reference point, which feels like a painful deviation.
-- Small, repeated potential losses (e.g., “you lose \$2 if you miss today”) harness ongoing vigilance and can be more motivating than a single lump-sum penalty at the end, because the pain is salient *every day*.
+- Users encode the _buy-in_ not as “money spent on a product” but as **money they own that is now at risk**. Each failure day is experienced as a fresh realization of that loss.
+- The reference point becomes “I should keep all of _my_ stake,” and each missed workout or unproductive day is a step below that reference point, which feels like a painful deviation.
+- Small, repeated potential losses (e.g., “you lose \$2 if you miss today”) harness ongoing vigilance and can be more motivating than a single lump-sum penalty at the end, because the pain is salient _every day_.
 
 This is exactly why loss-based designs are so behaviorally powerful in early habit formation.
 
-***
+---
 
 ## 2. The Endowed Progress Effect and reducing churn
 
 ### 2.1. What the Endowed Progress Effect is
 
-The “Endowed Progress Effect” describes how giving people *artificial* head start toward a goal (e.g., extra stamps on a loyalty card) significantly increases their completion rates and speeds up progress.[^1_13]
+The “Endowed Progress Effect” describes how giving people _artificial_ head start toward a goal (e.g., extra stamps on a loyalty card) significantly increases their completion rates and speeds up progress.[^1_13]
 
 It builds on the classic **goal-gradient hypothesis**: as people perceive themselves to be closer to a goal, they increase effort—purchases occur more rapidly, actions bunch near the finish line, and “almost there” is a uniquely motivating state.[^1_14][^1_15]
 
 Nunes \& Drèze’s experiments on loyalty cards show that when you:
 
-- Keep the *objective* distance to the goal constant, but
+- Keep the _objective_ distance to the goal constant, but
 - Reframe the task such that users see some progress already credited,
 
 completion rates and persistence increase substantially.[^1_13]
@@ -82,11 +83,11 @@ You can use endowed progress to both increase early engagement and soften the st
 **a) Start with a visible head start**
 
 - On sign-up, pre-credit users with some progress:
-    - “You’re already 20% of the way to your 30-day streak because you completed onboarding and set a goal.”
+  - “You’re already 20% of the way to your 30-day streak because you completed onboarding and set a goal.”
 - For financial framing, you can **lock in a portion of their stake as already “protected”** when they complete initial tasks:
-    - “You’ve already secured \$10 of your \$50 stake by setting your plan and logging your first week.”
+  - “You’ve already secured \$10 of your \$50 stake by setting your plan and logging your first week.”
 
-This leverages loss aversion in a softer way: users now fear losing *their endowed progress* and “protected” money, not just the full stake.
+This leverages loss aversion in a softer way: users now fear losing _their endowed progress_ and “protected” money, not just the full stake.
 
 **b) Use progress bars and milestones that compress the early distance**
 
@@ -98,12 +99,12 @@ This leverages loss aversion in a softer way: users now fear losing *their endow
 When someone has slipped:
 
 - Immediately after a lapse, instead of only saying “you lost \$X,” emphasize remaining endowed progress:
-    - “You’ve still preserved 70% of your stake and completed 9 of 12 planned sessions; you’re closer than you think to locking in this month.”
+  - “You’ve still preserved 70% of your stake and completed 9 of 12 planned sessions; you’re closer than you think to locking in this month.”
 - For returning users, consider **crediting extra buffer progress** (“We’re counting your earlier streak toward this new challenge”) to offset feelings of being “too far behind.”
 
 This reduces the subjective distance to the goal and counters the “I’ve blown it, might as well quit” dynamic.
 
-***
+---
 
 ## 3. Extrinsic vs intrinsic motivation in this context
 
@@ -116,11 +117,11 @@ Self-determination theory (SDT) distinguishes:
 
 The classic meta-analysis by Deci, Koestner \& Ryan reviewed >100 experiments and found that:
 
-- **Tangible, expected, contingent rewards** often *reduce* intrinsic motivation for interesting tasks—especially when perceived as controlling.[^1_19][^1_20]
-- Verbal praise and informational feedback that support competence/autonomy can *increase* intrinsic motivation.
+- **Tangible, expected, contingent rewards** often _reduce_ intrinsic motivation for interesting tasks—especially when perceived as controlling.[^1_19][^1_20]
+- Verbal praise and informational feedback that support competence/autonomy can _increase_ intrinsic motivation.
 - For “boring” or low-intrinsic-value tasks, extrinsic rewards can increase engagement without much undermining effect.[^1_20]
 
-Subsequent work nuances this: rewards are most damaging when they are experienced as **controlling** and when people *already* enjoy the activity; they are less problematic or even helpful when they feel **supportive** and when the task is not intrinsically rewarding yet.[^1_21][^1_22]
+Subsequent work nuances this: rewards are most damaging when they are experienced as **controlling** and when people _already_ enjoy the activity; they are less problematic or even helpful when they feel **supportive** and when the task is not intrinsically rewarding yet.[^1_21][^1_22]
 
 In gamification, effects on intrinsic motivation depend heavily on whether design supports autonomy, competence, and relatedness vs. being purely transactional.[^1_23][^1_24]
 
@@ -128,7 +129,7 @@ In gamification, effects on intrinsic motivation depend heavily on whether desig
 
 In your app:
 
-- Early in a habit (e.g., exercise for someone who currently dislikes it), the behavior is *not* yet intrinsically rewarding. Here, **financial stakes can serve as “training wheels”** to get behavior above activation energy.[^1_25][^1_26]
+- Early in a habit (e.g., exercise for someone who currently dislikes it), the behavior is _not_ yet intrinsically rewarding. Here, **financial stakes can serve as “training wheels”** to get behavior above activation energy.[^1_25][^1_26]
 - Over time, if users start to experience competence (improvement, energy, mood) and identity benefits (“I’m the kind of person who trains”), intrinsic motivation can grow.
 
 However, persistent high-pressure penalties can:
@@ -137,31 +138,27 @@ However, persistent high-pressure penalties can:
 - Focus attention on **avoiding loss** rather than on gaining health, mastery, or identity benefits.
 - Interact with negative affect from the activity itself (exercise discomfort, cognitive fatigue) to produce an overall aversive experience, which predicts dropout.[^1_27][^1_28]
 
-There is also emerging work on **reference-based motivation** showing that motivation rises with expected value *relative to a reference point*; when the reference point is too ambitious or the probability of success falls, optimal effort can *decrease*—people rationally (and emotionally) disengage from “hopeless” goals.[^1_29]
+There is also emerging work on **reference-based motivation** showing that motivation rises with expected value _relative to a reference point_; when the reference point is too ambitious or the probability of success falls, optimal effort can _decrease_—people rationally (and emotionally) disengage from “hopeless” goals.[^1_29]
 
 So your design needs dynamic calibration: high enough stakes to be felt, but not so large or rigid that users feel controlled or doomed.
 
-***
+---
 
 ## 4. When penalties flip from motivating to “progress anxiety” and abandonment
 
-There is no universal numeric threshold (e.g., “2% of income”), but research points to several *patterns* where financial/ loss-based designs backfire.
+There is no universal numeric threshold (e.g., “2% of income”), but research points to several _patterns_ where financial/ loss-based designs backfire.
 
 ### 4.1. Evidence of backfire or limits
 
 1. **Low uptake and acceptability of deposit contracts**
-    - In many deposit-contract trials, only a minority of eligible people choose to put their own money at risk (e.g., 11% in the CARES smoking trial), even though the product is beneficial.[^1_6]
-    - In an internet-based nationwide smoking cessation program that required a \$50 deposit, participants rated the deposit component as the *least* acceptable part of the intervention, even though incentives improved short-term abstinence.[^1_30]
-    - A smartphone app trial that compared self-funded deposit contracts versus equivalent externally-funded rewards found that deposit contracts were **not more effective** than rewards and had markedly lower uptake; unexpectedly, **loss framing (emphasizing what was lost) performed worse than gain framing** in that sample.[^1_31]
+   - In many deposit-contract trials, only a minority of eligible people choose to put their own money at risk (e.g., 11% in the CARES smoking trial), even though the product is beneficial.[^1_6]
+   - In an internet-based nationwide smoking cessation program that required a \$50 deposit, participants rated the deposit component as the _least_ acceptable part of the intervention, even though incentives improved short-term abstinence.[^1_30]
+   - A smartphone app trial that compared self-funded deposit contracts versus equivalent externally-funded rewards found that deposit contracts were **not more effective** than rewards and had markedly lower uptake; unexpectedly, **loss framing (emphasizing what was lost) performed worse than gain framing** in that sample.[^1_31]
 
-This suggests that while loss aversion is powerful among those who opt in, aggressive penalty framing can deter sign-ups and create negative user sentiment.
-2. **Anxiety and negative affect from loss-framed messages**
-Loss-framed health communications (emphasizing the risks of not exercising) can increase anxiety—e.g., in one study on lifelong exercise intentions, high-risk, loss-framed messages about aging risks simultaneously promoted intentions and **increased aging-related anxiety**, a paradox the authors highlight. Analogously, strong loss framing around fitness/productivity may inflate “progress anxiety” without proportionate behavioral gains.[^1_32]
-3. **Affective experience and exercise adherence**
-Reviews of the “exercise–affect–adherence” pathway show that when exercise consistently feels aversive, people drop out, regardless of knowing its benefits. If your app adds *monetary fear* on top of *bodily discomfort* and *time cost*, the net affective state can become so negative that users disengage entirely.[^1_33][^1_27]
-4. **Dropout in real-world fitness settings**
-Longitudinal work tracking new fitness-club members shows high drop-out in the first year, with key barriers including lack of time, low enjoyment, and feeling that one is not progressing. If your app’s penalties repeatedly highlight “you’re failing,” they may amplify precisely those feelings that drive dropout.[^1_34][^1_28]
-5. **Long-term incentive withdrawal and behavior**
+This suggests that while loss aversion is powerful among those who opt in, aggressive penalty framing can deter sign-ups and create negative user sentiment. 2. **Anxiety and negative affect from loss-framed messages**
+Loss-framed health communications (emphasizing the risks of not exercising) can increase anxiety—e.g., in one study on lifelong exercise intentions, high-risk, loss-framed messages about aging risks simultaneously promoted intentions and **increased aging-related anxiety**, a paradox the authors highlight. Analogously, strong loss framing around fitness/productivity may inflate “progress anxiety” without proportionate behavioral gains.[^1_32] 3. **Affective experience and exercise adherence**
+Reviews of the “exercise–affect–adherence” pathway show that when exercise consistently feels aversive, people drop out, regardless of knowing its benefits. If your app adds _monetary fear_ on top of _bodily discomfort_ and _time cost_, the net affective state can become so negative that users disengage entirely.[^1_33][^1_27] 4. **Dropout in real-world fitness settings**
+Longitudinal work tracking new fitness-club members shows high drop-out in the first year, with key barriers including lack of time, low enjoyment, and feeling that one is not progressing. If your app’s penalties repeatedly highlight “you’re failing,” they may amplify precisely those feelings that drive dropout.[^1_34][^1_28] 5. **Long-term incentive withdrawal and behavior**
 A large natural experiment on a national financial-incentive program for physical activity found that after more than a year of incentives, **scaling back** rewards led to only modest declines in activity, suggesting that once habits form, heavy ongoing incentives are not necessary. This supports a design where financial stakes **taper down** as intrinsic and identity-based motivation grows.[^1_35]
 
 ### 4.2. Translating this into a “progress anxiety” curve
@@ -187,7 +184,7 @@ Empirically, deposit-contract studies plus the app trial above suggest that:
 
 Your product should assume there is a **sweet spot**: enough at stake to hurt a little and grab attention, but not enough to trigger defensive avoidance or resignation when users slip.
 
-***
+---
 
 ## 5. Concrete design principles for your app
 
@@ -199,40 +196,37 @@ Below is a synthesis of all the above into practical recommendations.
 - **Cap maximum daily/weekly loss**: Instead of “you lose your whole \$100 if you fail,” use something like “you lose up to \$3 per missed day, but can never lose more than \$15 per week.” This keeps the loss salient but bounded.
 - **Offer “charity” or prosocial loss options**: Some evidence suggests small donation-based incentives can motivate activity and feel more meaningful/less punitive (e.g., \$1/day to charity for meeting goals). Allow users to choose whether lost funds go to charity, a disliked cause, or simply back to your platform; this adds an ego and moral dimension without increasing pressure unboundedly.[^1_38]
 
-
 ### 5.2. Implement Endowed Progress + goal-gradient mechanics
 
 - **Seed early progress**:
-    - Treat sign-up actions as completing the first steps toward their goal.
-    - Consider auto-crediting the first week upon consistent on-boarding to give a strong sense of “already started.”[^1_15][^1_13]
+  - Treat sign-up actions as completing the first steps toward their goal.
+  - Consider auto-crediting the first week upon consistent on-boarding to give a strong sense of “already started.”[^1_15][^1_13]
 - **Chunk long goals into shorter “seasons”**:
-    - Use 4–8 week cycles; both stickK data and habit literature suggest 6–8-week windows are tractable and predictive of longer-term success.[^1_10][^1_25]
-    - At the end of each season, roll forward endowed progress (e.g., better starting multipliers, badges, or lower required stake next season).
+  - Use 4–8 week cycles; both stickK data and habit literature suggest 6–8-week windows are tractable and predictive of longer-term success.[^1_10][^1_25]
+  - At the end of each season, roll forward endowed progress (e.g., better starting multipliers, badges, or lower required stake next season).
 - **Visualize proximity to meaningful goals**:
-    - Multiple nested progress bars: daily goal, weekly streak, and seasonal “cash-secured” goal.
-    - Emphasize “distance remaining” shrinking as they advance—goal-gradient effect in UI.
-
+  - Multiple nested progress bars: daily goal, weekly streak, and seasonal “cash-secured” goal.
+  - Emphasize “distance remaining” shrinking as they advance—goal-gradient effect in UI.
 
 ### 5.3. Use loss aversion strategically, not constantly
 
 - **Virtual account framing over real-time charges**:
-    - Put the user’s stake into an in-app “vault” or “pot.” Each failure *reduces* that pot, but avoid immediate external charges (e.g., per-miss debits to their bank). This delivers the subjective experience of loss without constant financial friction.
+  - Put the user’s stake into an in-app “vault” or “pot.” Each failure _reduces_ that pot, but avoid immediate external charges (e.g., per-miss debits to their bank). This delivers the subjective experience of loss without constant financial friction.
 - **Partial protection and “save-points”**:
-    - Periodically lock in part of their pot as irrevocably safe when they hit milestones (“You’ve now permanently secured \$20 of your \$50”). This taps loss aversion *toward* protecting the saved portion and decreases catastrophic “all-or-nothing” anxiety.
+  - Periodically lock in part of their pot as irrevocably safe when they hit milestones (“You’ve now permanently secured \$20 of your \$50”). This taps loss aversion _toward_ protecting the saved portion and decreases catastrophic “all-or-nothing” anxiety.
 - **Grace days and forgiveness mechanisms**:
-    - Allow a limited number of “skip tokens” or “safety nets” per month that prevent loss when redeemed. Research on adaptive goal setting and incentives suggests flexible systems can sustain behavior better than rigid ones.[^1_39][^1_40]
-
+  - Allow a limited number of “skip tokens” or “safety nets” per month that prevent loss when redeemed. Research on adaptive goal setting and incentives suggests flexible systems can sustain behavior better than rigid ones.[^1_39][^1_40]
 
 ### 5.4. Protect and cultivate intrinsic and identity-based motivation
 
 - **Shift emphasis over time from money to mastery and identity**:
-    - Early: highlight money at risk and concrete goals.
-    - Later: highlight fitness improvements, consistency streaks, and identity (“you’ve worked out 3x/week for 10 weeks; that’s what athletes do”).[^1_16][^1_27]
+  - Early: highlight money at risk and concrete goals.
+  - Later: highlight fitness improvements, consistency streaks, and identity (“you’ve worked out 3x/week for 10 weeks; that’s what athletes do”).[^1_16][^1_27]
 - **Autonomy support features**:
-    - Allow users to adjust goals and stakes for the next “season” based on experience.
-    - Offer multiple goal types (performance, process, identity) to match values, consistent with SDT’s focus on autonomy and internalization.[^1_17][^1_20]
+  - Allow users to adjust goals and stakes for the next “season” based on experience.
+  - Offer multiple goal types (performance, process, identity) to match values, consistent with SDT’s focus on autonomy and internalization.[^1_17][^1_20]
 - **Non-monetary gamification**:
-    - Use badges, levels, social recognition, and narrative framing that celebrate competence and effort, not just financial outcomes.[^1_24][^1_23]
+  - Use badges, levels, social recognition, and narrative framing that celebrate competence and effort, not just financial outcomes.[^1_24][^1_23]
 
 This reduces overreliance on extrinsic punishment and aligns with evidence that informational, non-controlling feedback bolsters intrinsic motivation.[^1_22][^1_20]
 
@@ -241,17 +235,16 @@ This reduces overreliance on extrinsic punishment and aligns with evidence that 
 Build features that detect and respond to anxiety markers:
 
 - **Detect risk states**:
-    - Repeated misses early in a season.
-    - Large proportion of stake already lost.
-    - Reduced app opens / logging.
+  - Repeated misses early in a season.
+  - Large proportion of stake already lost.
+  - Reduced app opens / logging.
 - **Respond by:**
-    - **Reframing progress**: emphasize what remains and what is salvageable: “You’ve lost \$12, but \$38 is still protected, and a strong next week can lock in another \$10.”
-    - **Offering adaptive “downshifts”**: allow users to lower their stake or adjust their goal difficulty for the *next* period without shame. In goal theory, flexible goal adjustment can prevent complete disengagement when goals become unrealistic.[^1_41][^1_29]
-    - **Introducing non-monetary wins**: e.g., a “resilience badge” for returning after a lapse, or focusing them on a shorter sub-goal to restore self-efficacy.
+  - **Reframing progress**: emphasize what remains and what is salvageable: “You’ve lost \$12, but \$38 is still protected, and a strong next week can lock in another \$10.”
+  - **Offering adaptive “downshifts”**: allow users to lower their stake or adjust their goal difficulty for the _next_ period without shame. In goal theory, flexible goal adjustment can prevent complete disengagement when goals become unrealistic.[^1_41][^1_29]
+  - **Introducing non-monetary wins**: e.g., a “resilience badge” for returning after a lapse, or focusing them on a shorter sub-goal to restore self-efficacy.
 - **Track subjective experience**:
-    - Short in-app pulse questions (“How stressed do you feel about your current commitment?”).
-    - If stress is high, prompt them to adjust goals or stakes before they silently churn.
-
+  - Short in-app pulse questions (“How stressed do you feel about your current commitment?”).
+  - If stress is high, prompt them to adjust goals or stakes before they silently churn.
 
 ### 5.6. Ego and social stakes
 
@@ -266,7 +259,7 @@ Design implications:
 - Consider “public” versus “private” modes, with clear consent; public commitments tap into ego and identity beyond pure financial calculus.
 - Use cooperative or team structures (shared pots, group streaks) to harness social motivation alongside loss aversion.
 
-***
+---
 
 ## 6. Pulling it together
 
@@ -279,7 +272,7 @@ Conceptually:
 
 Design your app to:
 
-1. Use *self-chosen*, bounded financial stakes with loss-framed elements,
+1. Use _self-chosen_, bounded financial stakes with loss-framed elements,
 2. Layer in endowed progress and short goal cycles to keep distance-to-goal small,
 3. Gradually shift the motivational spotlight from **not losing money** to **being the kind of person who does this habit**,
 4. Detect and respond to early signs of anxiety and disengagement with adaptive, autonomy-supportive adjustments.
@@ -527,14 +520,13 @@ If you like, the next step can be to sketch concrete product flows (onboarding, 
 
 [^1_119]: https://www.emerald.com/insight/content/doi/10.1108/EJM-10-2019-0781/full/pdf?title=loyal-customers-tipping-points-of-spending-for-services-a-reciprocity-perspective
 
-
 ---
 
 # sketch concrete product flows (onboarding, daily check-in, loss/feedback screens) that embody these principles while minimizing dropout risk.
 
 Based on the behavioral economics principles and evidence we've covered, here are concrete product flows designed to maximize motivation while minimizing dropout risk:
 
-***
+---
 
 # Product Flow Design: Loss-Aversion-Based Habit App
 
@@ -560,7 +552,7 @@ backed by your own money."
 
 **Design principle:** Immediately proclaim value; avoid multi-screen tutorials that cause drop-off.[^2_4][^2_1]
 
-***
+---
 
 ### Screen 2: Goal Selection (Personalization)
 
@@ -584,7 +576,7 @@ backed by your own money."
 
 **Design principle:** Ask **one question** to personalize the experience; branching paths increase relevance and retention. This single choice determines the rest of onboarding.[^2_5][^2_6]
 
-***
+---
 
 ### Screen 3: Specific Goal Setup (Low-friction commitment)
 
@@ -611,7 +603,7 @@ Duration: 4 weeks
 
 **Design principle:** Pre-populate with sensible defaults; let users edit rather than build from scratch (reduces cognitive load and increases completion).[^2_9][^2_5]
 
-***
+---
 
 ### Screen 4: Stake Selection (User-Chosen, Bounded)
 
@@ -648,7 +640,7 @@ Your stake, your choice.
 
 **Design principle:** User-chosen stakes improve acceptability and commitment while reducing resentment. Bounded maximums prevent catastrophic anxiety.[^2_10][^2_11][^2_12]
 
-***
+---
 
 ### Screen 5: Loss Structure (Transparency + Control)
 
@@ -678,7 +670,7 @@ use them to protect your vault when life happens.
 - **Weekly cap** prevents runaway catastrophic loss
 - **Grace days** = autonomy and flexibility = lower dropout.[^2_15][^2_16]
 
-***
+---
 
 ### Screen 6: Charity/Anti-Charity Option (Ego stake)
 
@@ -701,7 +693,7 @@ use them to protect your vault when life happens.
 
 **Design principle:** Prosocial or "anti-charity" options add moral/ego stakes beyond money, increasing commitment without increasing financial pressure.[^2_17][^2_7]
 
-***
+---
 
 ### Screen 7: Endowed Progress Activation ⭐
 
@@ -725,14 +717,14 @@ Complete Week 1 to lock another $10.
 [Start Day 1]
 ```
 
-**Design principle:** **Endowed progress effect** in action—give artificial advancement to increase completion rates and effort. Users now fear losing *their progress*, not just the stake.[^2_18][^2_19]
+**Design principle:** **Endowed progress effect** in action—give artificial advancement to increase completion rates and effort. Users now fear losing _their progress_, not just the stake.[^2_18][^2_19]
 
 **Behind the scenes:**
 
 - This is pure framing—they haven't "earned" anything yet, but perceiving progress boosts motivation
 - Lock visualization (padlock icon on portion of vault) makes it tangible
 
-***
+---
 
 ## Flow 2: Daily Check-In Experience
 
@@ -766,7 +758,7 @@ Active vault: $40
 - **Protected vs Active**: Reframe vault as "what you've saved" vs "what's at risk" (loss aversion + endowed progress)
 - One-tap logging (minimize friction)
 
-***
+---
 
 ### Screen 2: Success Logging (Immediate Positive Feedback)
 
@@ -798,7 +790,7 @@ One more session locks another $5.
 - Use percentage completion prominently
 - Small vault increments create frequent "wins"
 
-***
+---
 
 ### Screen 3: Miss Day (Loss-Framed but Not Catastrophic)
 
@@ -835,7 +827,7 @@ and avoid the $10 weekly penalty.
 - Offer **path to recovery** (reduces resignation/disengagement)[^2_20]
 - Yellow warning, not red alarm (calibrated emotional tone)
 
-***
+---
 
 ### Screen 4: Grace Day Redemption (Autonomy \& Control)
 
@@ -867,7 +859,7 @@ Tomorrow is a fresh start.
 - Limited quantity (2/month) maintains stakes
 - Normalizing language ("life happens") reduces shame
 
-***
+---
 
 ## Flow 3: Weekly Milestone \& Endgame
 
@@ -912,7 +904,7 @@ Week 4: ⚪ $10 available
 - **Nested progress bars** (weekly + seasonal) maintain goal-gradient effect across scales
 - **Badge/achievement** adds non-monetary reward layer
 
-***
+---
 
 ### Screen 2: End of Season (Full Success)
 
@@ -952,7 +944,7 @@ Season 2 perks:
 - **Offer stake adjustment** (autonomy + adaptive difficulty)[^2_15]
 - Make "continuing" feel like natural next step, not starting over
 
-***
+---
 
 ## Flow 4: Risk Detection \& Intervention
 
@@ -999,7 +991,7 @@ How's the challenge level feeling?
 - **Non-judgmental framing** (avoid shame which drives churn)
 - **Offer adjustment** (autonomy-supportive response to low perceived success probability)[^2_20]
 
-***
+---
 
 ### Screen 2: Adaptive Goal Adjustment (Prevents Total Disengagement)
 
@@ -1035,7 +1027,7 @@ Sustainable progress > burnout.
 - **Maintain some stake** (don't eliminate all pressure)
 - Reference-based motivation: lowering goal increases perceived success probability → effort rebounds[^2_20]
 
-***
+---
 
 ### Screen 3: "You're Closer Than You Think" (Reframe After Slip)
 
@@ -1072,7 +1064,7 @@ You're closer than it feels.
 - **Concrete path forward** (increases perceived control)
 - Invoked during "danger zone" when effort might collapse
 
-***
+---
 
 ## Flow 5: Social \& Ego Amplification (Optional Layer)
 
@@ -1107,7 +1099,7 @@ are 30% more likely to complete their goals.
 - **Opt-in only** (autonomy-supportive)[^2_21]
 - **Don't show vault amount** (reduces embarrassment/comparison)
 
-***
+---
 
 ### Screen 2: Team Challenge (Cooperative, Not Competitive)
 
@@ -1138,7 +1130,7 @@ You're rooting for each other.
 - Lowers individual pressure (team dilutes personal failure)
 - Adds social motivation layer without pure ego threat
 
-***
+---
 
 ## Flow 6: Feedback \& Progress Anxiety Monitoring
 
@@ -1180,58 +1172,57 @@ meeting this week's goal?
 - Correlate with completion rates
 - Flag users with 2+ "stressed" responses for proactive outreach or auto-adjustment offer
 
-***
+---
 
 ## Key Design Patterns Summary
 
-| Flow Element | Behavioral Mechanism | Dropout Prevention |
-| :-- | :-- | :-- |
-| **Endowed progress at start** | Artificial advancement (20% pre-credited) | Increases completion rates[^2_18]; users protect "earned" progress |
-| **User-chosen stakes** | Autonomy, bounded loss | Improves acceptability vs imposed amounts[^2_11]; caps anxiety |
-| **Weekly vault locking** | Goal-gradient + loss aversion | Frequent wins; incremental "saves" feel achievable |
-| **Grace days** | Autonomy, forgiveness | Prevents "blown it" resignation; flexible commitment[^2_15] |
-| **Adaptive goal adjustment** | Reference-based motivation | When success feels unlikely, lowering goal restores effort[^2_20] |
-| **"Remaining vault" framing** | Endowed progress protection | Emphasizes what's saved, not just what's lost |
-| **Weekly cap on losses** | Bounded risk | Prevents catastrophic loss spiral |
-| **Identity messaging at milestones** | Intrinsic motivation cultivation | Shifts from "avoiding loss" to "I'm this kind of person"[^2_23] |
-| **Stress pulse checks** | Progress anxiety detection | Intervene before silent churn |
-| **Roll-forward progress to Season 2** | Continuity, endowment | Feels like continuing, not restarting |
+| Flow Element                          | Behavioral Mechanism                      | Dropout Prevention                                                 |
+| :------------------------------------ | :---------------------------------------- | :----------------------------------------------------------------- |
+| **Endowed progress at start**         | Artificial advancement (20% pre-credited) | Increases completion rates[^2_18]; users protect "earned" progress |
+| **User-chosen stakes**                | Autonomy, bounded loss                    | Improves acceptability vs imposed amounts[^2_11]; caps anxiety     |
+| **Weekly vault locking**              | Goal-gradient + loss aversion             | Frequent wins; incremental "saves" feel achievable                 |
+| **Grace days**                        | Autonomy, forgiveness                     | Prevents "blown it" resignation; flexible commitment[^2_15]        |
+| **Adaptive goal adjustment**          | Reference-based motivation                | When success feels unlikely, lowering goal restores effort[^2_20]  |
+| **"Remaining vault" framing**         | Endowed progress protection               | Emphasizes what's saved, not just what's lost                      |
+| **Weekly cap on losses**              | Bounded risk                              | Prevents catastrophic loss spiral                                  |
+| **Identity messaging at milestones**  | Intrinsic motivation cultivation          | Shifts from "avoiding loss" to "I'm this kind of person"[^2_23]    |
+| **Stress pulse checks**               | Progress anxiety detection                | Intervene before silent churn                                      |
+| **Roll-forward progress to Season 2** | Continuity, endowment                     | Feels like continuing, not restarting                              |
 
-
-***
+---
 
 ## Why This Works (Theory → Practice)
 
 1. **Loss aversion is harnessed but calibrated:**
-    - Stakes are real but user-chosen and bounded
-    - Losses are incremental (\$2/day) not catastrophic
-    - Weekly caps prevent runaway anxiety[^2_12][^2_13]
+   - Stakes are real but user-chosen and bounded
+   - Losses are incremental (\$2/day) not catastrophic
+   - Weekly caps prevent runaway anxiety[^2_12][^2_13]
 2. **Endowed progress is layered at multiple scales:**
-    - 20% at sign-up (artificial head start)
-    - Weekly vault locks (incremental saves)
-    - Season 2 bonus (roll-forward)
-    - All tap the "closer than you started" effect[^2_19][^2_18]
+   - 20% at sign-up (artificial head start)
+   - Weekly vault locks (incremental saves)
+   - Season 2 bonus (roll-forward)
+   - All tap the "closer than you started" effect[^2_19][^2_18]
 3. **Autonomy is preserved:**
-    - User picks goal, stake, duration, grace day usage
-    - Can adjust mid-season if too hard
-    - Opt-in social features
-    - Aligns with SDT: autonomy-supportive design sustains intrinsic motivation[^2_24][^2_21]
+   - User picks goal, stake, duration, grace day usage
+   - Can adjust mid-season if too hard
+   - Opt-in social features
+   - Aligns with SDT: autonomy-supportive design sustains intrinsic motivation[^2_24][^2_21]
 4. **Goal-gradient is maintained:**
-    - Multiple nested progress bars (daily, weekly, seasonal)
-    - Proximity to next "lock" always visible
-    - "You're 60% there" messaging throughout[^2_19]
+   - Multiple nested progress bars (daily, weekly, seasonal)
+   - Proximity to next "lock" always visible
+   - "You're 60% there" messaging throughout[^2_19]
 5. **Progress anxiety is monitored and managed:**
-    - Stress pulse checks
-    - Adaptive interventions when risk detected
-    - Reframing ("you're closer than you think")
-    - Early adjustment prevents total disengagement[^2_25][^2_20]
+   - Stress pulse checks
+   - Adaptive interventions when risk detected
+   - Reframing ("you're closer than you think")
+   - Early adjustment prevents total disengagement[^2_25][^2_20]
 6. **Shift from extrinsic to intrinsic over time:**
-    - Early: money and vault dominate
-    - Mid: milestones and identity messaging increase
-    - Late: "You're someone who does this" > "Don't lose money"
-    - Aligns with evidence that financial incentives are scaffolding, not permanent structure[^2_29][^2_23]
+   - Early: money and vault dominate
+   - Mid: milestones and identity messaging increase
+   - Late: "You're someone who does this" > "Don't lose money"
+   - Aligns with evidence that financial incentives are scaffolding, not permanent structure[^2_29][^2_23]
 
-***
+---
 
 ## Next Steps
 
@@ -1240,14 +1231,14 @@ This flow design is ready for prototyping. You can:
 1. **Build low-fidelity mockups** of each screen
 2. **User-test the onboarding flow** with target users (pay attention to stake selection and anxiety at commitment point)
 3. **A/B test variations**:
-    - Different endowed progress amounts (15% vs 25%)
-    - Different loss structures (\$2/day vs \$10/week lump)
-    - Grace day quantity (1 vs 3 per month)
+   - Different endowed progress amounts (15% vs 25%)
+   - Different loss structures (\$2/day vs \$10/week lump)
+   - Grace day quantity (1 vs 3 per month)
 4. **Instrument analytics** to track:
-    - Completion rate by onboarding screen
-    - Correlation between stake size and completion
-    - Stress ratings → dropout
-    - Grace day usage patterns
+   - Completion rate by onboarding screen
+   - Correlation between stake size and completion
+   - Stress ratings → dropout
+   - Grace day usage patterns
 
 Would you like me to design specific UI mockups for any of these screens, or detail the backend logic for adaptive interventions?
 <span style="display:none">[^2_30][^2_31][^2_32][^2_33][^2_34][^2_35][^2_36][^2_37][^2_38][^2_39][^2_40][^2_41][^2_42][^2_43][^2_44][^2_45][^2_46][^2_47][^2_48][^2_49][^2_50][^2_51][^2_52][^2_53][^2_54]</span>
@@ -1361,4 +1352,3 @@ Would you like me to design specific UI mockups for any of these screens, or det
 [^2_53]: https://www.docebo.com/learning-network/blog/onboarding-gamification/
 
 [^2_54]: https://www.ungrammary.com/post/ux-behavioral-economics-how-design-shapes-decision-making
-

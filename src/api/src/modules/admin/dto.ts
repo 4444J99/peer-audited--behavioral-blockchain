@@ -1,4 +1,10 @@
-import { IsString, IsEnum, IsOptional, IsNotEmpty, IsUUID } from "class-validator";
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsNotEmpty,
+  IsUUID,
+} from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class BanUserDto {
@@ -53,7 +59,10 @@ export class UpdateJurisdictionDto {
 }
 
 export class AdminReviewContentDto {
-  @ApiProperty({ description: "Review decision", enum: ["APPROVED", "REMOVED"] })
+  @ApiProperty({
+    description: "Review decision",
+    enum: ["APPROVED", "REMOVED"],
+  })
   @IsEnum(["APPROVED", "REMOVED"])
   decision!: "APPROVED" | "REMOVED";
 
@@ -64,7 +73,10 @@ export class AdminReviewContentDto {
 }
 
 export class AdminResolveAppealDto {
-  @ApiProperty({ description: "Appeal resolution", enum: ["UPHELD", "OVERTURNED"] })
+  @ApiProperty({
+    description: "Appeal resolution",
+    enum: ["UPHELD", "OVERTURNED"],
+  })
   @IsEnum(["UPHELD", "OVERTURNED"])
   resolution!: "UPHELD" | "OVERTURNED";
 

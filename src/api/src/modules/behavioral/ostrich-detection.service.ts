@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
 
 const INACTIVITY_DAYS_WARNING = 3;
 const INACTIVITY_DAYS_CRITICAL = 7;
@@ -10,7 +10,7 @@ interface AtRiskUser {
   activeContracts: number;
   daysSinceLastActive: number;
   consecutiveMissedProofs: number;
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  riskLevel: "LOW" | "MEDIUM" | "HIGH";
 }
 
 @Injectable()
@@ -45,13 +45,19 @@ export class OstrichDetectionService {
       const daysSince = row.days_since_last_active;
       const missedProofs = row.consecutive_missed_proofs;
 
-      let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
-      if (daysSince >= INACTIVITY_DAYS_CRITICAL || missedProofs >= CONSECUTIVE_MISSED_PROOF_THRESHOLD * 2) {
-        riskLevel = 'HIGH';
-      } else if (daysSince >= INACTIVITY_DAYS_WARNING || missedProofs >= CONSECUTIVE_MISSED_PROOF_THRESHOLD) {
-        riskLevel = 'MEDIUM';
+      let riskLevel: "LOW" | "MEDIUM" | "HIGH";
+      if (
+        daysSince >= INACTIVITY_DAYS_CRITICAL ||
+        missedProofs >= CONSECUTIVE_MISSED_PROOF_THRESHOLD * 2
+      ) {
+        riskLevel = "HIGH";
+      } else if (
+        daysSince >= INACTIVITY_DAYS_WARNING ||
+        missedProofs >= CONSECUTIVE_MISSED_PROOF_THRESHOLD
+      ) {
+        riskLevel = "MEDIUM";
       } else {
-        riskLevel = 'LOW';
+        riskLevel = "LOW";
       }
 
       return {

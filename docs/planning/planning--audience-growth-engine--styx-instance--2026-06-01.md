@@ -14,7 +14,7 @@ links** the canonical Styx detail rather than restating it:
 
 Jessica has grown her following ~18k → ~20k and is paying the technical partner $100/hr to
 keep building it. The opportunity is to make that spend do double duty: grow Jessica's
-**standalone audience asset** *and* feed Styx's no-contact-recovery beta. This instance turns
+**standalone audience asset** _and_ feed Styx's no-contact-recovery beta. This instance turns
 that intent into an executable system and produces the concrete assets to run it (calendar,
 asset pack, outreach, metrics, engagement log).
 
@@ -34,7 +34,7 @@ asset pack, outreach, metrics, engagement log).
   owns a narrative arc inside the niche, not just "promotes the app."
 - **P2 Wedge:** No-contact breakup recovery (the live urge moment: late-night texting, ex
   social-media checking, emotional backsliding).
-- **P3 Product:** Styx iOS private beta (test-money pilot, US allowlist) — *and*, per the
+- **P3 Product:** Styx iOS private beta (test-money pilot, US allowlist) — _and_, per the
   audience-as-product model, Jessica's following itself.
 - **P4 Owned Asset:** Waitlist + email list + qualified beta roster + referral list.
 - **P5 Proof Loop:** No-contact milestone cards (7 / 14 / 30 days) — shareable proof that
@@ -68,10 +68,10 @@ asset pack, outreach, metrics, engagement log).
   contact", "why willpower fails after a breakup", "stop texting my ex"). Capture page + the
   "Do Not Text Your Ex Tonight" emergency tool at
   `/do-not-text-your-ex-tonight?source=styx-demand-capture&intent=no-contact-urge`.
-  *(See market-attack-plan Level 1.)*
+  _(See market-attack-plan Level 1.)_
 - **L2 Borrowed Audience:** breakup-recovery / attachment-style / sober-curious / therapy
   creators on TikTok, IG, YouTube, Substack, podcasts. Outreach via
-  `planning--jessica-content-asset-pack--2026-06-01.md` §4. *(market-attack-plan Level 2.)*
+  `planning--jessica-content-asset-pack--2026-06-01.md` §4. _(market-attack-plan Level 2.)_
 - **L3 Intermediary Distribution:** therapists & breakup coaches as accountability
   infrastructure for their clients (ties to the B2B ICP at `docs/departments/b2b/artifacts/icp.md`).
 - **L4 Community Loop:** milestone share cards (P5) + curated cohort invites + controlled
@@ -86,7 +86,7 @@ asset pack, outreach, metrics, engagement log).
 
 Detailed in `planning--audience-as-product-model--2026-06-01.md`. Summary ladder for Jessica:
 free follow → email subscriber (via the no-contact guide lead magnet) → low-ticket recovery
-resource → cohort/community → selective sponsorship. The Styx beta sits *beside* the low-ticket
+resource → cohort/community → selective sponsorship. The Styx beta sits _beside_ the low-ticket
 rung as the flagship CTA, never replacing the free value.
 
 ## F. Engagement Economics (Playbook §6)
@@ -124,10 +124,10 @@ never exploit relapse for engagement-bait, never promise relationship/health out
 
 ## Derived assets (this instance's outputs)
 
-| Asset | File |
-|-------|------|
-| 30-day content calendar | `planning--jessica-30-day-content-calendar--2026-06-01.md` |
-| Content asset pack (concrete copy) | `planning--jessica-content-asset-pack--2026-06-01.md` |
-| Audience-as-product model | `planning--audience-as-product-model--2026-06-01.md` |
-| Engagement economics ($100/hr) | `planning--audience-growth-engagement-economics--2026-06-01.md` |
-| Metrics tracker | `planning--jessica-metrics-tracker--2026-06-01.md` |
+| Asset                              | File                                                            |
+| ---------------------------------- | --------------------------------------------------------------- |
+| 30-day content calendar            | `planning--jessica-30-day-content-calendar--2026-06-01.md`      |
+| Content asset pack (concrete copy) | `planning--jessica-content-asset-pack--2026-06-01.md`           |
+| Audience-as-product model          | `planning--audience-as-product-model--2026-06-01.md`            |
+| Engagement economics ($100/hr)     | `planning--audience-growth-engagement-economics--2026-06-01.md` |
+| Metrics tracker                    | `planning--jessica-metrics-tracker--2026-06-01.md`              |

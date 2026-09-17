@@ -19,6 +19,7 @@ People fail at behavior change because the consequences of failure are abstract 
 The core psychological insight: humans are loss-averse. Kahneman and Tversky's prospect theory demonstrates that losses loom approximately twice as large as equivalent gains (lambda = 1.955). Yet no existing product fully exploits this asymmetry with real financial stakes, decentralized verification, and domain-specific safety protocols.
 
 Existing commitment device apps (stickK, Beeminder, Forfeit) suffer from:
+
 - **Self-reporting fraud.** Users verify their own compliance. The fox guards the henhouse.
 - **No real consequences.** Donations to charity on failure feel virtuous, not punishing.
 - **No safety guardrails.** A user can set a weight-loss goal that incentivizes anorexia.
@@ -31,6 +32,7 @@ See `docs/research/research--commitment-device-market-analysis.md` and `docs/res
 Styx is a peer-audited behavioral market that uses loss aversion to enforce habit follow-through via financial stakes.
 
 **How it works:**
+
 1. **Oath creation.** A user creates a behavioral contract (an "Oath") specifying the habit, verification criteria, duration, and financial stake ($39 standard contract).
 2. **Vault funding.** The stake is deposited into an FBO (For Benefit Of) escrow account via Stripe. The money is real and at risk.
 3. **Proof submission.** At each verification window, the user submits proof of compliance (photo, check-in, or sensor data).
@@ -39,6 +41,7 @@ Styx is a peer-audited behavioral market that uses loss aversion to enforce habi
 6. **Integrity scoring.** A persistent reputation score (base 50 + completions - penalties) determines stake limits, Fury eligibility, and platform trust tier.
 
 **Key differentiators:**
+
 - Real money at risk (not charity donations)
 - Decentralized peer audit (not self-reporting)
 - Domain-specific safety (Aegis protocol for health, Recovery protocol for breakups)
@@ -133,17 +136,17 @@ See `docs/planning/user-personas.md` for detailed persona profiles.
 
 ## 5. Success Metrics
 
-| Metric | Beta Target (3 months) | Launch Target (12 months) |
-|--------|----------------------|--------------------------|
-| Contract completion rate | > 60% | > 65% |
-| Fury audit accuracy | > 90% | > 95% |
-| User retention (30-day) | > 40% | > 50% |
-| User retention (90-day) | > 20% | > 30% |
-| MRR | $1,000 | $10,000 |
-| B2B practitioner subscribers | 5 | 50 |
-| Fury auditor pool | 20 | 200 |
-| Ledger discrepancy incidents | 0 | 0 |
-| Aegis safety violations | 0 | 0 |
+| Metric                       | Beta Target (3 months) | Launch Target (12 months) |
+| ---------------------------- | ---------------------- | ------------------------- |
+| Contract completion rate     | > 60%                  | > 65%                     |
+| Fury audit accuracy          | > 90%                  | > 95%                     |
+| User retention (30-day)      | > 40%                  | > 50%                     |
+| User retention (90-day)      | > 20%                  | > 30%                     |
+| MRR                          | $1,000                 | $10,000                   |
+| B2B practitioner subscribers | 5                      | 50                        |
+| Fury auditor pool            | 20                     | 200                       |
+| Ledger discrepancy incidents | 0                      | 0                         |
+| Aegis safety violations      | 0                      | 0                         |
 
 ## 6. Non-Goals
 
@@ -162,14 +165,14 @@ See `docs/planning/user-personas.md` for detailed persona profiles.
 
 ## 8. Phases
 
-| Phase | Timeline | Scope |
-|-------|----------|-------|
-| Genesis | Complete | Architecture, research, legal analysis, competitor teardown |
-| Foundation | Complete | Core implementation, CI/CD, test suite, 8 validation gates |
-| Hardening | Current | Load testing, security audit, legal review, UX audit |
-| Private Beta | Q2 2026 | 50-100 users, breakup recovery focus, manual Fury network |
-| Public Beta | Q3 2026 | Open registration, automated Fury matching, B2B soft launch |
-| Launch | Q4 2026 | Full B2B, mobile apps, marketing push |
+| Phase        | Timeline | Scope                                                       |
+| ------------ | -------- | ----------------------------------------------------------- |
+| Genesis      | Complete | Architecture, research, legal analysis, competitor teardown |
+| Foundation   | Complete | Core implementation, CI/CD, test suite, 8 validation gates  |
+| Hardening    | Current  | Load testing, security audit, legal review, UX audit        |
+| Private Beta | Q2 2026  | 50-100 users, breakup recovery focus, manual Fury network   |
+| Public Beta  | Q3 2026  | Open registration, automated Fury matching, B2B soft launch |
+| Launch       | Q4 2026  | Full B2B, mobile apps, marketing push                       |
 
 ## 9. Open Questions
 

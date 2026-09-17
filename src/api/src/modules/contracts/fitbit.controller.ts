@@ -1,12 +1,25 @@
-import { Controller, Post, Delete, Body, Param, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsNumber, MaxLength } from 'class-validator';
-import { AuthGuard } from '../../../guards/auth.guard';
-import { GeofenceGuard } from '../../common/guards/geofence.guard';
-import { BannedUserGuard } from '../../guards/banned-user.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { FitbitService } from '../../../services/health/fitbit.service';
-import { FitbitSyncService } from '../../../services/health/fitbit-sync.service';
+import {
+  Controller,
+  Post,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+} from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsNumber,
+  MaxLength,
+} from "class-validator";
+import { AuthGuard } from "../../../guards/auth.guard";
+import { GeofenceGuard } from "../../common/guards/geofence.guard";
+import { BannedUserGuard } from "../../guards/banned-user.guard";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { FitbitService } from "../../../services/health/fitbit.service";
+import { FitbitSyncService } from "../../../services/health/fitbit-sync.service";
 
 export class ConnectFitbitDto {
   @IsString()
@@ -54,9 +67,9 @@ export class ManualFitbitEntryDto {
  * (FitbitWebhookController). The MANUAL route below is journal-only and can
  * never credit attestations.
  */
-@ApiTags('Contracts')
+@ApiTags("Contracts")
 @ApiBearerAuth()
-@Controller('contracts')
+@Controller("contracts")
 @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)
 export class FitbitController {
   constructor(
@@ -64,9 +77,10 @@ export class FitbitController {
     private readonly fitbitSync: FitbitSyncService,
   ) {}
 
-  @Post('fitbit/connect')
+  @Post("fitbit/connect")
   @ApiOperation({
-    summary: 'Link a Fitbit account via OAuth2 authorization code (enables verified webhook ingestion)',
+    summary:
+      "Link a Fitbit account via OAuth2 authorization code (enables verified webhook ingestion)",
   })
   async connectFitbit(
     @CurrentUser() user: { id: string },
@@ -75,18 +89,21 @@ export class FitbitController {
     return this.fitbitSync.connectUser(user.id, dto.code, dto.redirectUri);
   }
 
-  @Delete('fitbit/connect')
-  @ApiOperation({ summary: 'Unlink the Fitbit account and stop webhook ingestion' })
+  @Delete("fitbit/connect")
+  @ApiOperation({
+    summary: "Unlink the Fitbit account and stop webhook ingestion",
+  })
   async disconnectFitbit(@CurrentUser() user: { id: string }) {
     return this.fitbitSync.disconnectUser(user.id);
   }
 
-  @Post(':id/fitbit/manual')
+  @Post(":id/fitbit/manual")
   @ApiOperation({
-    summary: 'Record a MANUAL self-reported wellness entry (journal only — NEVER credits attestations)',
+    summary:
+      "Record a MANUAL self-reported wellness entry (journal only — NEVER credits attestations)",
   })
   async submitManualEntry(
-    @Param('id') contractId: string,
+    @Param("id") contractId: string,
     @CurrentUser() user: { id: string },
     @Body() dto: ManualFitbitEntryDto,
   ) {

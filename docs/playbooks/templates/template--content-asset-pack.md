@@ -29,6 +29,7 @@ Hooks are the first line. Group by angle.
 ## 4. Outreach Scripts (DMs)
 
 See `template--creator-outreach.md` for the multi-touch version. Short DM starter:
+
 > [genuine specific compliment about their work] — [one sentence on the shared audience] —
 > [low-friction ask: "open to a quick idea?"]
 

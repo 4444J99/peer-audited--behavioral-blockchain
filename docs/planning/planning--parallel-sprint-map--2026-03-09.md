@@ -12,13 +12,13 @@ This document groups the active launch work into short sprints with multiple par
 
 ## Sprint Stack
 
-| Sprint | Dates | Objective |
-|---|---|---|
-| `S1 - Beta Core Assault` | 2026-03-09 to 2026-03-20 | lock money rails, KYC rails, jurisdiction rails, and native/app-store blockers into explicit execution lanes |
-| `S2 - Beta Gate Lock` | 2026-03-23 to 2026-04-03 | convert core work into readiness gates, safety controls, dogfood ops, and launch-admin surfaces |
-| `S3 - External Beta Prep` | 2026-04-06 to 2026-04-17 | harden onboarding, recovery UX, proof UX, and trust-network interfaces for broader testing |
-| `S4 - Gamma Shadow Queue` | 2026-04-20 to 2026-05-01 | queue the next-wave Gamma blockers so May starts with no ambiguity |
-| `Later` | after 2026-05-01 | everything not needed for the immediate Beta/Gamma push |
+| Sprint                    | Dates                    | Objective                                                                                                    |
+| ------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `S1 - Beta Core Assault`  | 2026-03-09 to 2026-03-20 | lock money rails, KYC rails, jurisdiction rails, and native/app-store blockers into explicit execution lanes |
+| `S2 - Beta Gate Lock`     | 2026-03-23 to 2026-04-03 | convert core work into readiness gates, safety controls, dogfood ops, and launch-admin surfaces              |
+| `S3 - External Beta Prep` | 2026-04-06 to 2026-04-17 | harden onboarding, recovery UX, proof UX, and trust-network interfaces for broader testing                   |
+| `S4 - Gamma Shadow Queue` | 2026-04-20 to 2026-05-01 | queue the next-wave Gamma blockers so May starts with no ambiguity                                           |
+| `Later`                   | after 2026-05-01         | everything not needed for the immediate Beta/Gamma push                                                      |
 
 ## S1 - Beta Core Assault
 

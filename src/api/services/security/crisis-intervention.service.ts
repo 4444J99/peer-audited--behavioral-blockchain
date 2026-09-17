@@ -1,7 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Pool } from "pg";
 import { CrisisDetectionResult } from "./crisis-detection.service";
-import { CrisisNotificationService, CrisisNotification } from "./crisis-notification.service";
+import {
+  CrisisNotificationService,
+  CrisisNotification,
+} from "./crisis-notification.service";
 
 /**
  * CrisisInterventionService

@@ -1,17 +1,21 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import { getRealmBySlug, REALM_REGISTRY } from '../../../../shared/libs/realm-registry';
+import React from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { getRealmBySlug, REALM_REGISTRY } from "@styx/types";
 
 /**
  * The realm chrome, unchanged. It was moved out of layout.tsx so that file can be a
  * server component and carry generateStaticParams, which `output: export` requires for
  * this dynamic segment and which a 'use client' module cannot export.
  */
-export default function RealmChrome({ children }: { children: React.ReactNode }) {
+export default function RealmChrome({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const params = useParams();
   const slug = params.slug as string;
   const realm = getRealmBySlug(slug);
@@ -27,13 +31,18 @@ export default function RealmChrome({ children }: { children: React.ReactNode })
   return (
     <div
       className="min-h-screen bg-black text-white"
-      style={{
-        '--realm-primary': realm.theme.primary,
-        '--realm-accent': realm.theme.accent,
-      } as React.CSSProperties}
+      style={
+        {
+          "--realm-primary": realm.theme.primary,
+          "--realm-accent": realm.theme.accent,
+        } as React.CSSProperties
+      }
     >
       {/* Realm header */}
-      <header className="border-b px-6 py-4 flex items-center gap-4" style={{ borderColor: `${realm.theme.primary}40` }}>
+      <header
+        className="border-b px-6 py-4 flex items-center gap-4"
+        style={{ borderColor: `${realm.theme.primary}40` }}
+      >
         <Link
           href="/realms"
           className="p-2 bg-neutral-900 rounded-lg border border-neutral-800 hover:bg-neutral-800 transition-colors"
@@ -42,7 +51,10 @@ export default function RealmChrome({ children }: { children: React.ReactNode })
         </Link>
 
         <div className="flex-1">
-          <h1 className="text-lg font-black uppercase tracking-tight" style={{ color: realm.theme.primary }}>
+          <h1
+            className="text-lg font-black uppercase tracking-tight"
+            style={{ color: realm.theme.primary }}
+          >
             {realm.displayName}
           </h1>
           <p className="text-xs text-neutral-500 uppercase tracking-widest">

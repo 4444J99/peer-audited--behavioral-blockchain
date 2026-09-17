@@ -149,7 +149,7 @@ Factor Test\" to determine whether an activity constitutes gambling.^24^
 Under the Dominant Factor Test, a game is considered a contest of skill
 if skill accounts for more than fifty percent of the outcome,
 predominating over chance.^24^ This framework was famously litigated in
-*United States v. DiCristina*, where a federal district court in New
+_United States v. DiCristina_, where a federal district court in New
 York initially ruled that poker was predominated by skill and therefore
 did not constitute illegal gambling under the Illegal Gambling Business
 Act (IGBA), though this was later reversed on different grounds.^24^
@@ -166,7 +166,7 @@ the boundaries of chance and skill.
 For a milestone wagering system, the design must ensure that the user\'s
 effort is the sole determining factor of success. If a smart contract
 relies on an external oracle for verification (e.g., pulling weather
-data to determine if a user *could* run outside), it inadvertently
+data to determine if a user _could_ run outside), it inadvertently
 introduces a \"future contingent event not under \[the user\'s\]
 control,\" thereby jeopardizing the contract\'s legal standing under NY
 Penal Law § 225.00.^15^ Therefore, the milestone parameters must be
@@ -237,7 +237,7 @@ simply confiscates and burns the funds upon failure, a court could
 theoretically view this as an unenforceable penalty. This is because no
 counterparty---neither the protocol nor other users---suffered actual,
 quantifiable financial damages as a result of the user failing to
-exercise or lose weight.^21^ In cases like *LeRoy v. Sayers*, New York
+exercise or lose weight.^21^ In cases like _LeRoy v. Sayers_, New York
 courts have nullified forfeiture provisions when they fail to account
 for actual harm or circumstances.^21^
 
@@ -347,24 +347,27 @@ accountability apps like StickK and Beeminder.^1^
   users, requiring participants to possess extremely high intrinsic
   motivation to engage with the protocol.^45^
 
-  -----------------------------------------------------------------------
-  **Architectural         **Redistribution        **Capital Destruction /
-  Feature**               Model**                 Anti-Charity Model**
-  ----------------------- ----------------------- -----------------------
-  **Primary Psychological Loss aversion +         Extreme loss aversion +
-  Motivator**             Positive financial gain Ideological distress
+  ***
 
-  **Sybil Attack          High (Economic          Low (No financial gain
-  Vulnerability**         incentive to exploit    for malicious
-                          failure pools)          attackers)
+  **Architectural **Redistribution **Capital Destruction /
+  Feature** Model** Anti-Charity Model**
 
-  **Regulatory Risk       Moderate (Resembles     Low (Functions as a
-  Profile**               pooled, pari-mutuel     unilateral, individual
-                          betting)                forfeiture)
+  ***
 
-  **User Acquisition &    High (Profit potential  Moderate (Requires high
-  Retention**             attracts broader user   intrinsic motivation to
-                          base)                   lock funds)
+  **Primary Psychological Loss aversion + Extreme loss aversion +
+  Motivator** Positive financial gain Ideological distress
+
+  **Sybil Attack High (Economic Low (No financial gain
+  Vulnerability** incentive to exploit for malicious
+  failure pools) attackers)
+
+  **Regulatory Risk Moderate (Resembles Low (Functions as a
+  Profile** pooled, pari-mutuel unilateral, individual
+  betting) forfeiture)
+
+  **User Acquisition & High (Profit potential Moderate (Requires high
+  Retention** attracts broader user intrinsic motivation to
+  base) lock funds)
   -----------------------------------------------------------------------
 
 ## Part III: EVM Smart Contract Architecture for Time-Locked Escrows
@@ -503,7 +506,7 @@ as the Withdrawal Pattern).^49^
     storage---specifically, a mapping(address =\> uint256) that
     attributes a specific balance to each winner.
 
-3.  The protocol does *not* automatically send the funds.
+3.  The protocol does _not_ automatically send the funds.
 
 4.  Instead, each successful participant must individually initiate a
     transaction by calling a withdraw() function to claim their specific
@@ -549,7 +552,7 @@ architecture must adhere strictly to the **Checks-Effects-Interactions
 3.  **Interactions:** Only after the state is securely updated, execute
     external calls or transfer tokens (token.transfer(\...)).
 
-By updating the internal state *before* interacting with external,
+By updating the internal state _before_ interacting with external,
 potentially untrusted addresses, the contract neutralizes attackers
 attempting to re-enter the function, as subsequent checks will identify
 that the user\'s balance has already been zeroed out.^54^
@@ -649,8 +652,8 @@ miles in a single month:
     automatically compiled into a complex cryptographic circuit.^86^
 
 3.  The proving engine generates a mathematically sound cryptographic
-    proof attesting exclusively to a binary statement: *\"User X has
-    exceeded 50 miles.\"*
+    proof attesting exclusively to a binary statement: _\"User X has
+    exceeded 50 miles.\"_
 
 4.  This highly compact proof---entirely devoid of GPS coordinates,
     specific heart rate logs, or identifying timestamps---is submitted

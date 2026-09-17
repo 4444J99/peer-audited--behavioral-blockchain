@@ -1,4 +1,4 @@
-import p5 from 'p5';
+import p5 from "p5";
 
 export const marketPipeline = (p: p5) => {
   const users: { x: number; y: number }[] = [];

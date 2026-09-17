@@ -236,10 +236,14 @@ export class ContractsController {
         triggers: dto.triggers,
       });
     }
-    return this.contractsService.recordSelfReportedRelapse(contractId, user.id, {
-      urgeLevel: dto.urgeLevel,
-      triggers: dto.triggers,
-    });
+    return this.contractsService.recordSelfReportedRelapse(
+      contractId,
+      user.id,
+      {
+        urgeLevel: dto.urgeLevel,
+        triggers: dto.triggers,
+      },
+    );
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, BannedUserGuard)

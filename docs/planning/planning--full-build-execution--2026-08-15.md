@@ -29,14 +29,14 @@ fury enforcement all exist and are largely unrecorded).
 
 ## Phase state, code-first (2026-08-15)
 
-| Phase | Verdict | Evidence anchor |
-|---|---|---|
-| Zero (Thesis) | COMPLETE | roadmap's own evidence section |
-| Alpha (Core trust) | COMPLETE | matrix 100%; 3,000+ green tests; live beta serves it |
+| Phase                   | Verdict                                                                | Evidence anchor                                                                                                                                                                                                                                                   |
+| ----------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Zero (Thesis)           | COMPLETE                                                               | roadmap's own evidence section                                                                                                                                                                                                                                    |
+| Alpha (Core trust)      | COMPLETE                                                               | matrix 100%; 3,000+ green tests; live beta serves it                                                                                                                                                                                                              |
 | Beta (Money enablement) | **Engineering-complete; activation human-gated; test-money beta LIVE** | escrow port + 3 rails + `STYX_TEST_MONEY_MODE` interlock (#868); geofence SH7 fail-closed + provenance chain; KYC runtime default-ON in prod (`compliance-policy.service.ts:140-162`); disposition kill-switch DB-persisted; beta 47/47-route verified 2026-08-15 |
-| Gamma (Proof integrity) | Backend largely built; 6 buildable gaps below | fury router/consensus/honeypots/demotion + `video-processing.*` + App Attest chain validation in code |
-| Delta (Retention) | Backend ahead of registries; 5 buildable gaps below | partner lifecycle endpoints live; `ExpoPushProvider` posts to exp.host; partner-facing mobile UX absent |
-| Omega (Enterprise) | Matrix says implemented, "not re-verified" — verification wave below | B2B connectors/billing/SSO/HR dashboard rows |
+| Gamma (Proof integrity) | Backend largely built; 6 buildable gaps below                          | fury router/consensus/honeypots/demotion + `video-processing.*` + App Attest chain validation in code                                                                                                                                                             |
+| Delta (Retention)       | Backend ahead of registries; 5 buildable gaps below                    | partner lifecycle endpoints live; `ExpoPushProvider` posts to exp.host; partner-facing mobile UX absent                                                                                                                                                           |
+| Omega (Enterprise)      | Matrix says implemented, "not re-verified" — verification wave below   | B2B connectors/billing/SSO/HR dashboard rows                                                                                                                                                                                                                      |
 
 The three P0-beta-blocker issues that remain open (#315 counsel retainer, #316 custody
 sign-off, #317 jurisdiction matrix sign-off) are **all legal atoms** — zero engineering P0s
@@ -53,7 +53,7 @@ code counts when it is written, tested, AND wired into a reachable surface.
 ## The finding that reshaped this program
 
 A code-first probe of every remaining item (2026-08-15) returned **22 features that are
-complete, tested, registered — and reachable by nobody**. Not missing work: *unwired* work.
+complete, tested, registered — and reachable by nobody**. Not missing work: _unwired_ work.
 The estate's status registries counted them as shipped because the files exist. Two were
 live defects:
 
@@ -69,6 +69,7 @@ written, tested, AND wired into a reachable surface.** Every wave below now ends
 grep for callers, not for files.
 
 ### Wave 0 — Readiness truth ✅
+
 - [x] Regenerate `beta-readiness` against the live beta (was stale "incomplete")
 - [x] Gate 05 self-consistency fix — PR #902 (invariant over guard-identity; fresh probe
       user; state tests opt-in). Verified exit 0 against the live beta.
@@ -79,6 +80,7 @@ grep for callers, not for files.
       decision was filed rather than shipped by an unattended agent session)
 
 ### Wave 1 — Registry truth pass (one PR) + estate hygiene ✅ (#906, #907)
+
 - Reconcile the six registries to code truth with evidence links per row: ticket pack gains
   a status column; triage ticket states annotated; matrix/backlog/implementation-status rows
   corrected (KYC, geofence, push, weekend multiplier, cross-lobby, video pipeline)
@@ -93,8 +95,9 @@ grep for callers, not for files.
   judged against the root `overrides` block after the waves land
 
 ### Wave 2 — Beta residuals ✅ — every issue closed (#908–#912)
+
 The whistleblower fix turned out to be a route directory literally named `%5BlinkId%5D`
-(percent-encoded brackets), so Next served it as a *static* segment and every concrete id
+(percent-encoded brackets), so Next served it as a _static_ segment and every concrete id
 404'd — verified live before and after: 404 → 200.
 
 - #867 jurisdiction notice unreachable (the repo's only `bug`-labeled issue): typed
@@ -110,24 +113,24 @@ The whistleblower fix turned out to be a route directory literally named `%5Blin
 Executed as one pass: a code-first probe of all 17 remaining items, then twelve
 build agents in isolated worktrees, each delivering a verified PR. What landed:
 
-| PR | What it fixed |
-|---|---|
+| PR   | What it fixed                                                                                                                                                                                                                         |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | #914 | **Fury reviewers were served RAW media** — dispatcher had zero callers; queue tested `'COMPLETED'` while production writes `'MASKED'` and fell through to the original; its test could not fail (R2 mock was `{}`). Now fails closed. |
-| #920 | **A won appeal never refunded** — REVERSED deleted a row while the ledger had taken the stake. Slash is now an appealable case carrying its ledger leg; reversal posts a compensating entry (migration 069). |
-| #913 | Responsible-use controls got a surface a user can reach (enforcement was always live). |
-| #915 | Recovery timelock + danger-zone client surface (five endpoints, zero callers). |
-| #916 | Push *delivery receipts* — "delivered" was a send-time ticket. |
-| #917 | Proof processing-state UI against the already-live endpoint. |
-| #918 | Release gate 08 wired into CI — a correct gate no workflow invoked. |
-| #919 | Leaderboard consumes the live SSE stream; `/dashboard/progress` consumed. |
-| #921 | DR-005 onboarding bonus behind a flag, mirroring DR-004's pattern. |
-| #922 | Partner protocol made reachable — and found `GET /contracts/invitations` shadowed by `@Get(":id")`. |
-| #924 | Identity-based oath bound to the contract. |
-| #925 | Collusion engine scheduled and routed into cases (it ran nowhere). |
-| #926 | CrmService given an HTTP surface; mobile SSO deep link wired; dead billing duplicate removed. |
-| #927 | security.txt, CSP headers, webhook subscriptions persisted. |
-| #928 | The four missing legal drafts + security whitepaper. |
-| #929 | Capture provenance — the database now records whether a camera produced a proof. |
+| #920 | **A won appeal never refunded** — REVERSED deleted a row while the ledger had taken the stake. Slash is now an appealable case carrying its ledger leg; reversal posts a compensating entry (migration 069).                          |
+| #913 | Responsible-use controls got a surface a user can reach (enforcement was always live).                                                                                                                                                |
+| #915 | Recovery timelock + danger-zone client surface (five endpoints, zero callers).                                                                                                                                                        |
+| #916 | Push _delivery receipts_ — "delivered" was a send-time ticket.                                                                                                                                                                        |
+| #917 | Proof processing-state UI against the already-live endpoint.                                                                                                                                                                          |
+| #918 | Release gate 08 wired into CI — a correct gate no workflow invoked.                                                                                                                                                                   |
+| #919 | Leaderboard consumes the live SSE stream; `/dashboard/progress` consumed.                                                                                                                                                             |
+| #921 | DR-005 onboarding bonus behind a flag, mirroring DR-004's pattern.                                                                                                                                                                    |
+| #922 | Partner protocol made reachable — and found `GET /contracts/invitations` shadowed by `@Get(":id")`.                                                                                                                                   |
+| #924 | Identity-based oath bound to the contract.                                                                                                                                                                                            |
+| #925 | Collusion engine scheduled and routed into cases (it ran nowhere).                                                                                                                                                                    |
+| #926 | CrmService given an HTTP surface; mobile SSO deep link wired; dead billing duplicate removed.                                                                                                                                         |
+| #927 | security.txt, CSP headers, webhook subscriptions persisted.                                                                                                                                                                           |
+| #928 | The four missing legal drafts + security whitepaper.                                                                                                                                                                                  |
+| #929 | Capture provenance — the database now records whether a camera produced a proof.                                                                                                                                                      |
 
 Two agent PRs added routes without guided-tour entries and CI caught both, which
 is the registry gate working exactly as designed.
@@ -135,6 +138,7 @@ is the registry gate working exactly as designed.
 <details><summary>Original wave plans (superseded by the table above)</summary>
 
 ### Wave 3 — Gamma: proof integrity
+
 - TKT-P1-009 responsible-use RUNTIME controls (self-exclusion registry, cooling-off
   enforcement, re-entry validation) — only static disclosure pages exist today
 - TKT-P1-014 identity redaction in reviewer surfaces (probe first: `redact` hits exist in
@@ -147,6 +151,7 @@ is the registry gate working exactly as designed.
   path as labeled fallback — code buildable now; device verification rides Q-7 (#141)
 
 ### Wave 4 — Delta: retention
+
 - TKT-P1-017 partner-facing UX end-to-end (mobile screens for invite/accept/cosign/veto —
   the server half is done; this is the matrix's own Finding #4)
 - TKT-P1-005 24h timelock + danger-zone friction (unbuilt; Aegis harm-caps are a different
@@ -162,6 +167,7 @@ is the registry gate working exactly as designed.
   question — do not build it
 
 ### Wave 5 — Omega: enterprise + release gate
+
 - Verify-wave over the matrix's IMPLEMENTED Omega rows (connectors, billing, SSO, HR
   dashboard, anonymization, corporate score) — "not re-verified in this worksheet"
 - TKT-P1-019 buildable half: the automated release gate tied to the legal artifact trail
@@ -177,6 +183,7 @@ is the registry gate working exactly as designed.
   deployment/rollback/backup runbooks with rehearsal receipts
 
 ### Wave 6 — Program closeout
+
 - Checklist truth stamps with evidence links; registries re-checked for contradictions
 - `no-dangling` predicate: every issue in the near-term engineering slice closed or carrying
   its irreducible-atom label; every wave PR merged; readiness green; docs true
@@ -216,19 +223,19 @@ Concretely, before marking anything IMPLEMENTED here or there:
 
 ## Human/vendor atom index (filed owners — cited once, never re-surfaced)
 
-| Atom | Registry owner |
-|---|---|
-| Founder agreement signature (root gate: entity, IP assignment, joint decisions) | DR-007 in `planning--founder-decisions-of-record.md` |
-| Counsel retainer + every sign-off it unlocks | #315/#316/#317, #136, #146, #148 |
-| Apple Developer account (TestFlight, APNs, Sign-in-with-Apple) | #141 + Q-7 default (individual enrolment) |
-| High-risk merchant application (deliberately sequenced AFTER counsel) | #133 + Q-8 |
-| Stripe `sk_test_` key for rail verification | #865 |
-| MaxMind GeoLite2 licence asset | #866 |
-| Prize-indemnity / E&O insurance procurement | #137 |
-| SOC 2 / pentest vendor engagements | real-money + enterprise checklists |
-| Dogfood-cohort scope amendment (web-first, the "zero users" unblock) | founder brief 2026-07-31, proposal 1 |
-| Jessica walkthrough of the shipped demo | DR-009 |
-| CI-lane `RENDER_API_KEY` re-paste (beta needs nothing; restores `gh workflow run` lane) | organvm/limen#2403 |
+| Atom                                                                                    | Registry owner                                       |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Founder agreement signature (root gate: entity, IP assignment, joint decisions)         | DR-007 in `planning--founder-decisions-of-record.md` |
+| Counsel retainer + every sign-off it unlocks                                            | #315/#316/#317, #136, #146, #148                     |
+| Apple Developer account (TestFlight, APNs, Sign-in-with-Apple)                          | #141 + Q-7 default (individual enrolment)            |
+| High-risk merchant application (deliberately sequenced AFTER counsel)                   | #133 + Q-8                                           |
+| Stripe `sk_test_` key for rail verification                                             | #865                                                 |
+| MaxMind GeoLite2 licence asset                                                          | #866                                                 |
+| Prize-indemnity / E&O insurance procurement                                             | #137                                                 |
+| SOC 2 / pentest vendor engagements                                                      | real-money + enterprise checklists                   |
+| Dogfood-cohort scope amendment (web-first, the "zero users" unblock)                    | founder brief 2026-07-31, proposal 1                 |
+| Jessica walkthrough of the shipped demo                                                 | DR-009                                               |
+| CI-lane `RENDER_API_KEY` re-paste (beta needs nothing; restores `gh workflow run` lane) | organvm/limen#2403                                   |
 
 ## Program done-predicate
 

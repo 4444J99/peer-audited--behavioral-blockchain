@@ -208,7 +208,8 @@ export class BetaWaitlistService {
       total += count;
       byChannel[r.channel] = (byChannel[r.channel] ?? 0) + count;
       byStatus[r.status] = (byStatus[r.status] ?? 0) + count;
-      if (r.status === "confirmed" || r.status === "admitted") confirmed += count;
+      if (r.status === "confirmed" || r.status === "admitted")
+        confirmed += count;
     }
 
     return {

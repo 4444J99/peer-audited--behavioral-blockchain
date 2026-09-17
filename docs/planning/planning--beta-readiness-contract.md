@@ -47,17 +47,17 @@ Control flags:
 
 ## Gate Matrix
 
-| Gate                   | Required | Command                                             | Owner           | Notes                                        |
-| ---------------------- | -------- | --------------------------------------------------- | --------------- | -------------------------------------------- |
+| Gate                   | Required | Command                                             | Owner           | Notes                                                                                                        |
+| ---------------------- | -------- | --------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------ |
 | `build_check`          | Yes      | (in `scripts/smoke/beta-readiness.sh`)              | Platform        | Local build/lint preflight; ran in every recorded artifact but was missing from this matrix until 2026-08-15 |
-| `api_ready`            | Yes      | `scripts/smoke/check-api-ready.sh`                  | API / Platform  | Polls `/health/ready` until ready or timeout |
-| `api_release_meta`     | Yes      | `scripts/smoke/check-api-release.sh`                | API / Platform  | Validates `/meta/release` contract           |
-| `web_availability`     | No       | `scripts/smoke/check-web.sh`                        | Web / Platform  | Optional if `*_WEB_URL` is configured        |
-| `critical_endpoints`   | Yes      | `scripts/smoke/check-endpoints.sh`                  | API / Web       | Validates health, auth guards, legal routes  |
-| `ledger_invariant`     | Yes      | `scripts/validation/01-phantom-money-check.ts`      | API             | Verifies no phantom-money behavior           |
-| `behavioral_constants` | No       | `scripts/validation/05-behavioral-physics-check.ts` | API / Shared    | Exit code `2` is recorded as `skipped`       |
-| `security_invariants`  | Yes      | `scripts/validation/06-security-invariant-check.ts` | Platform        | Compiled-output secret/backdoor sweep        |
-| `claim_drift`          | Yes      | `scripts/validation/07-claim-drift-check.js`        | Platform / Docs | Ensures docs path references remain valid    |
+| `api_ready`            | Yes      | `scripts/smoke/check-api-ready.sh`                  | API / Platform  | Polls `/health/ready` until ready or timeout                                                                 |
+| `api_release_meta`     | Yes      | `scripts/smoke/check-api-release.sh`                | API / Platform  | Validates `/meta/release` contract                                                                           |
+| `web_availability`     | No       | `scripts/smoke/check-web.sh`                        | Web / Platform  | Optional if `*_WEB_URL` is configured                                                                        |
+| `critical_endpoints`   | Yes      | `scripts/smoke/check-endpoints.sh`                  | API / Web       | Validates health, auth guards, legal routes                                                                  |
+| `ledger_invariant`     | Yes      | `scripts/validation/01-phantom-money-check.ts`      | API             | Verifies no phantom-money behavior                                                                           |
+| `behavioral_constants` | No       | `scripts/validation/05-behavioral-physics-check.ts` | API / Shared    | Exit code `2` is recorded as `skipped`                                                                       |
+| `security_invariants`  | Yes      | `scripts/validation/06-security-invariant-check.ts` | Platform        | Compiled-output secret/backdoor sweep                                                                        |
+| `claim_drift`          | Yes      | `scripts/validation/07-claim-drift-check.js`        | Platform / Docs | Ensures docs path references remain valid                                                                    |
 
 ## Status Semantics
 

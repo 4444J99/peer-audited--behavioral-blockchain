@@ -254,16 +254,20 @@ async function runTheFullLoop() {
  * dashboard). Only runs when the LIVE API reports the test-money rail, so
  * real-money environments are never exercised with a $0 stake.
  */
-async function runZeroEscrowNoContactSlice(userAuth: { // allow-secret
+async function runZeroEscrowNoContactSlice(userAuth: {
+  // allow-secret
   userId: string;
   token: string; // allow-secret
 }) {
-  console.log("\n--- ISSUE #905 SLICE: $0-ESCROW NO-CONTACT (TEST-MONEY RAIL) ---");
+  console.log(
+    "\n--- ISSUE #905 SLICE: $0-ESCROW NO-CONTACT (TEST-MONEY RAIL) ---",
+  );
 
   let testMoneyMode = false;
   try {
     const bootstrap = await fetch(`${API_BASE}/mobile/bootstrap`).then(
-      (res) => res.json() as Promise<{ environment?: { testMoneyMode?: boolean } }>,
+      (res) =>
+        res.json() as Promise<{ environment?: { testMoneyMode?: boolean } }>,
     );
     testMoneyMode = bootstrap?.environment?.testMoneyMode === true;
   } catch (err) {
@@ -277,7 +281,9 @@ async function runZeroEscrowNoContactSlice(userAuth: { // allow-secret
     console.log("[905] SKIPPED: live API is not on the test-money rail.");
     return;
   }
-  console.log("[905] Live API reports test-money rail — exercising $0-escrow loop.");
+  console.log(
+    "[905] Live API reports test-money rail — exercising $0-escrow loop.",
+  );
 
   const contract = await request<{ contractId: string }>(
     "/contracts",
@@ -429,7 +435,9 @@ async function runZeroEscrowNoContactSlice(userAuth: { // allow-secret
   }
   console.log("[905] Contract visible on the dashboard list.");
 
-  console.log("✅ ISSUE #905 SLICE PASSED: $0-escrow no-contact loop completed.");
+  console.log(
+    "✅ ISSUE #905 SLICE PASSED: $0-escrow no-contact loop completed.",
+  );
 }
 
 runTheFullLoop().catch((err) => {

@@ -17,14 +17,14 @@ Keeps the hourly engagement honest and makes ROI legible to the payer.
 ## Time log
 
 | Date | Hrs | Deliverable produced | Channel | Outcome / metric moved | Billable? |
-|------|-----|----------------------|---------|------------------------|-----------|
-| | | | | | |
+| ---- | --- | -------------------- | ------- | ---------------------- | --------- |
+|      |     |                      |         |                        |           |
 
 ## Weekly rollup
 
-| Week | Hrs | $ | Deliverables | Net followers | Net email | Waitlist | Notes |
-|------|-----|---|--------------|---------------|-----------|----------|-------|
-| W1 | | | | | | | |
+| Week | Hrs | $   | Deliverables | Net followers | Net email | Waitlist | Notes |
+| ---- | --- | --- | ------------ | ------------- | --------- | -------- | ----- |
+| W1   |     |     |              |               |           |          |       |
 
 ## Invoice-ready summary (per period)
 

@@ -1,12 +1,20 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { EscrowConnect } from '../../components/EscrowConnect';
-import { Wallet as WalletIcon, Lock, ArrowRightCircle, Loader2, AlertTriangle, LogOut, History } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { api } from '../../services/api-client';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useEffect, useState } from "react";
+import { EscrowConnect } from "../../components/EscrowConnect";
+import {
+  Wallet as WalletIcon,
+  Lock,
+  ArrowRightCircle,
+  Loader2,
+  AlertTriangle,
+  LogOut,
+  History,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { api } from "../../services/api-client";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface Contract {
   id: string;
@@ -34,24 +42,29 @@ interface Transaction {
 }
 
 const TX_TYPE_LABELS: Record<string, { label: string; color: string }> = {
-  FURY_BOUNTY: { label: 'Fury Bounty Earned', color: 'text-lime-400' },
-  FURY_PENALTY: { label: 'Fury Penalty', color: 'text-red-500' },
-  STAKE_HOLD: { label: 'Stake Held', color: 'text-yellow-500' },
-  STAKE_RELEASE: { label: 'Stake Released', color: 'text-green-400' },
-  STAKE_BURN: { label: 'Stake Burned', color: 'text-red-500' },
-  ONBOARDING_BONUS: { label: 'Onboarding Bonus', color: 'text-lime-400' },
-  APPEAL_FEE: { label: 'Appeal Fee', color: 'text-orange-400' },
+  FURY_BOUNTY: { label: "Fury Bounty Earned", color: "text-lime-400" },
+  FURY_PENALTY: { label: "Fury Penalty", color: "text-red-500" },
+  STAKE_HOLD: { label: "Stake Held", color: "text-yellow-500" },
+  STAKE_RELEASE: { label: "Stake Released", color: "text-green-400" },
+  STAKE_BURN: { label: "Stake Burned", color: "text-red-500" },
+  ONBOARDING_BONUS: { label: "Onboarding Bonus", color: "text-lime-400" },
+  APPEAL_FEE: { label: "Appeal Fee", color: "text-orange-400" },
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'text-red-500',
-  COMPLETED: 'text-green-500',
-  FAILED: 'text-orange-500',
-  PENDING_STAKE: 'text-yellow-500',
+  ACTIVE: "text-red-500",
+  COMPLETED: "text-green-500",
+  FAILED: "text-orange-500",
+  PENDING_STAKE: "text-yellow-500",
 };
 
 function getTxLabel(type: string): { label: string; color: string } {
-  return TX_TYPE_LABELS[type] || { label: type || 'Transaction', color: 'text-neutral-400' };
+  return (
+    TX_TYPE_LABELS[type] || {
+      label: type || "Transaction",
+      color: "text-neutral-400",
+    }
+  );
 }
 
 export default function WalletDashboard() {
@@ -76,7 +89,9 @@ export default function WalletDashboard() {
         setBalance(balanceData);
         setTransactions(historyData.transactions);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load contracts');
+        setError(
+          err instanceof Error ? err.message : "Failed to load contracts",
+        );
       } finally {
         setLoading(false);
       }
@@ -86,23 +101,29 @@ export default function WalletDashboard() {
 
   const handleLogout = () => {
     logout();
-    router.push('/login');
+    router.push("/login");
   };
 
   return (
     <div className="min-h-screen bg-black text-white p-6 md:p-12">
       <div className="mx-auto max-w-4xl px-4 py-3 mb-6 rounded-xl border border-amber-700/40 bg-amber-950/40 text-amber-200 text-xs font-bold uppercase tracking-wider text-center">
-        TEST-MONEY LEDGER — Balances and transactions are synthetic. This demonstrates the accountability flow without real financial instruments.
+        TEST-MONEY LEDGER — Balances and transactions are synthetic. This
+        demonstrates the accountability flow without real financial instruments.
       </div>
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12 border-b border-neutral-800 pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-lime-500 rounded-full flex items-center justify-center">
             <WalletIcon className="text-black" />
           </div>
-          <h1 className="text-2xl font-black tracking-tight uppercase">Commitment Wallet</h1>
+          <h1 className="text-2xl font-black tracking-tight uppercase">
+            Commitment Wallet
+          </h1>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-sm font-bold text-neutral-400 hover:text-white transition-colors">
+          <Link
+            href="/dashboard"
+            className="text-sm font-bold text-neutral-400 hover:text-white transition-colors"
+          >
             RETURN TO DASHBOARD &rarr;
           </Link>
           <button
@@ -116,25 +137,44 @@ export default function WalletDashboard() {
 
       {/* Balance Summary */}
       <div className="max-w-5xl mx-auto mb-6 p-4 bg-amber-950/30 border border-amber-900/50 rounded-xl text-amber-200 text-xs font-bold uppercase tracking-widest text-center">
-        Test-Money Pilot Active: No actual capital is being transferred in this phase.
+        Test-Money Pilot Active: No actual capital is being transferred in this
+        phase.
       </div>
       {balance && (
         <div className="max-w-5xl mx-auto mb-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="px-5 py-4 bg-neutral-900 border border-neutral-800 rounded-xl">
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Ledger Balance (TEST)</p>
-            <p className="font-black text-2xl text-lime-400">TEST-${balance.ledger_balance.toFixed(2)}</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Ledger Balance (TEST)
+            </p>
+            <p className="font-black text-2xl text-lime-400">
+              TEST-${balance.ledger_balance.toFixed(2)}
+            </p>
           </div>
           <div className="px-5 py-4 bg-neutral-900 border border-neutral-800 rounded-xl">
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Integrity Score</p>
-            <p className="font-black text-2xl text-white">{balance.integrity_score}</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Integrity Score
+            </p>
+            <p className="font-black text-2xl text-white">
+              {balance.integrity_score}
+            </p>
           </div>
           <div className="px-5 py-4 bg-neutral-900 border border-neutral-800 rounded-xl">
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Tiers Allowed</p>
-            <p className="font-bold text-sm text-neutral-300 mt-1">{balance.allowed_tiers.join(', ')}</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Tiers Allowed
+            </p>
+            <p className="font-bold text-sm text-neutral-300 mt-1">
+              {balance.allowed_tiers.join(", ")}
+            </p>
           </div>
           <div className="px-5 py-4 bg-neutral-900 border border-neutral-800 rounded-xl">
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Account Status</p>
-            <p className={`font-black text-lg ${balance.status === 'ACTIVE' ? 'text-lime-400' : 'text-red-500'}`}>{balance.status}</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Account Status
+            </p>
+            <p
+              className={`font-black text-lg ${balance.status === "ACTIVE" ? "text-lime-400" : "text-red-500"}`}
+            >
+              {balance.status}
+            </p>
           </div>
         </div>
       )}
@@ -143,11 +183,15 @@ export default function WalletDashboard() {
         {/* Connection Flow */}
         <div className="space-y-8">
           <div>
-            <h2 className="text-3xl font-black mb-4 tracking-tighter">Your Recovery Commitment</h2>
+            <h2 className="text-3xl font-black mb-4 tracking-tighter">
+              Your Recovery Commitment
+            </h2>
             <p className="text-neutral-400 mb-8 leading-relaxed">
-              Styx helps you commit to your recovery goals. In this beta, you are using test-money to simulate the psychological 
-              impact of a stake. Fulfill your contract to return your commitment to your wallet. Break the contract, and the 
-              simulated stake is forfeited to the audit pool.
+              Styx helps you commit to your recovery goals. In this beta, you
+              are using test-money to simulate the psychological impact of a
+              stake. Fulfill your contract to return your commitment to your
+              wallet. Break the contract, and the simulated stake is forfeited
+              to the audit pool.
             </p>
           </div>
 
@@ -160,44 +204,68 @@ export default function WalletDashboard() {
             <Lock size={120} />
           </div>
 
-          <h3 className="text-lime-500 font-bold mb-8">Active Escrow Contracts</h3>
+          <h3 className="text-lime-500 font-bold mb-8">
+            Active Escrow Contracts
+          </h3>
 
           <div className="space-y-6 relative z-10">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="animate-spin mr-3 text-neutral-500" size={24} />
-                <span className="text-neutral-400 font-bold">Loading contracts...</span>
+                <Loader2
+                  className="animate-spin mr-3 text-neutral-500"
+                  size={24}
+                />
+                <span className="text-neutral-400 font-bold">
+                  Loading contracts...
+                </span>
               </div>
             ) : error ? (
               <div className="text-center py-8">
-                <AlertTriangle className="mx-auto text-red-500 mb-3" size={32} />
+                <AlertTriangle
+                  className="mx-auto text-red-500 mb-3"
+                  size={32}
+                />
                 <p className="text-red-400 text-sm">{error}</p>
               </div>
             ) : contracts.length === 0 ? (
-              <p className="text-neutral-500 text-center py-8">Your recovery journey starts here. Create your first contract.</p>
+              <p className="text-neutral-500 text-center py-8">
+                Your recovery journey starts here. Create your first contract.
+              </p>
             ) : (
               contracts.map((contract) => (
-                <div key={contract.id} className="p-4 bg-black border border-neutral-800 rounded-2xl flex justify-between items-center">
+                <div
+                  key={contract.id}
+                  className="p-4 bg-black border border-neutral-800 rounded-2xl flex justify-between items-center"
+                >
                   <div>
-                    <p className="font-black text-lg">{contract.oath_category.replace(/_/g, ' ')}</p>
+                    <p className="font-black text-lg">
+                      {contract.oath_category.replace(/_/g, " ")}
+                    </p>
                     <p className="text-sm text-neutral-500">
                       {contract.ends_at
                         ? `Expires: ${new Date(contract.ends_at).toLocaleDateString()}`
-                        : 'No expiry set'}
+                        : "No expiry set"}
                     </p>
-                    <p className={`text-xs font-bold mt-1 ${STATUS_COLORS[contract.status] ?? 'text-neutral-400'}`}>
+                    <p
+                      className={`text-xs font-bold mt-1 ${STATUS_COLORS[contract.status] ?? "text-neutral-400"}`}
+                    >
                       {contract.status}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="font-medium text-neutral-400">Pledged</p>
-                    <p className="font-black text-2xl text-red-500">TEST-${Number(contract.stake_amount).toFixed(2)}</p>
+                    <p className="font-black text-2xl text-red-500">
+                      TEST-${Number(contract.stake_amount).toFixed(2)}
+                    </p>
                   </div>
                 </div>
               ))
             )}
 
-            <Link href="/contracts/new" className="w-full mt-4 py-4 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-xl transition-colors flex justify-center items-center gap-2">
+            <Link
+              href="/contracts/new"
+              className="w-full mt-4 py-4 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-xl transition-colors flex justify-center items-center gap-2"
+            >
               <ArrowRightCircle />
               AUTHORIZE NEW DEPOSIT
             </Link>
@@ -209,23 +277,35 @@ export default function WalletDashboard() {
       {transactions.length > 0 && (
         <div className="max-w-5xl mx-auto mt-12">
           <h3 className="text-lg font-black uppercase tracking-tight mb-4 flex items-center gap-2">
-            <History size={18} className="text-neutral-500" /> Transaction History
+            <History size={18} className="text-neutral-500" /> Transaction
+            History
           </h3>
           <div className="bg-neutral-900 border border-neutral-800 rounded-2xl divide-y divide-neutral-800">
             {transactions.map((tx) => {
               const { label, color } = getTxLabel(tx.type);
               return (
-                <div key={tx.id} className="px-6 py-4 flex justify-between items-center">
+                <div
+                  key={tx.id}
+                  className="px-6 py-4 flex justify-between items-center"
+                >
                   <div>
                     <p className={`font-bold text-sm ${color}`}>{label}</p>
                     <p className="text-xs text-neutral-600 mt-1">
                       {tx.description}
-                      {tx.id && <span className="ml-2 text-neutral-700">ID: {tx.id.slice(0, 8)}...</span>}
+                      {tx.id && (
+                        <span className="ml-2 text-neutral-700">
+                          ID: {tx.id.slice(0, 8)}...
+                        </span>
+                      )}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-black text-white">TEST-${Number(tx.amount).toFixed(2)}</p>
-                    <p className="text-xs text-neutral-600">{new Date(tx.timestamp).toLocaleDateString()}</p>
+                    <p className="font-black text-white">
+                      TEST-${Number(tx.amount).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-neutral-600">
+                      {new Date(tx.timestamp).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
               );

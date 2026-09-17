@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { useEffect } from "react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 
 export default function Error({
   error,
@@ -11,7 +11,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('[Styx] Unhandled error:', error);
+    console.error("[Styx] Unhandled error:", error);
   }, [error]);
 
   return (
@@ -21,12 +21,17 @@ export default function Error({
           <AlertTriangle className="text-red-500" size={40} />
         </div>
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Something Went Wrong</h1>
+          <h1 className="text-2xl font-black tracking-tight">
+            Something Went Wrong
+          </h1>
           <p className="text-neutral-500 mt-2 text-sm">
-            {error.message || 'An unexpected error occurred. The Truth Log has been notified.'}
+            {error.message ||
+              "An unexpected error occurred. The Truth Log has been notified."}
           </p>
           {error.digest && (
-            <p className="text-neutral-600 text-xs mt-1 font-mono">Error ID: {error.digest}</p>
+            <p className="text-neutral-600 text-xs mt-1 font-mono">
+              Error ID: {error.digest}
+            </p>
           )}
         </div>
         <button

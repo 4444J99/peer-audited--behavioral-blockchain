@@ -1,6 +1,7 @@
 # Session Close-Out — 2026-05-17
 
 ## Outputs
+
 - 14 files created (exports/ + plans + evaluation + handoff)
 - 1 file modified (AGENTS.md)
 - 1 plan authored: `2026-05-17-styx-extensive-upgrades-expansions.md`
@@ -8,6 +9,7 @@
 - 1 handoff document created: `.conductor/active-handoff.md`
 
 ## Closure marks
+
 - **IN-PROGRESS plans:** `2026-05-17-styx-extensive-upgrades-expansions.md` — 6-phase upgrade plan awaiting Phase 0 execution (IRF propagation, external index sync)
 - **EXECUTED plans:** none
 - **ABANDONED plans:** none
@@ -17,6 +19,7 @@
 **Subject:** "Why is Styx beta-ready but not making money?"
 
 **Artifacts produced:**
+
 - Expansive Inquiry (7 lenses) → `expansive-inquiry--styx-revenue-gap/`
 - Premortem (20 failure modes) → `premortem-report-20260517-144746.html` + transcript
 - 6-phase upgrade plan → `.opencode/plans/`
@@ -25,12 +28,14 @@
 - Ecosystem gap analysis → `docs/evaluation/`
 
 **Key findings:**
+
 - System is "complete at governance, not market" — viable revenue path is B2B SaaS extraction of audit framework
 - Core topology: Möbius strip of self-validation (internal certification substitutes for external payment)
 - Revised plan: 20 cold messages → calls → extract minimum → invoice (4 weeks)
 - Pre-launch checklist: plan-to-action ratio < 3:1, name 10 real people, "explain without ORGANVM" test
 
 **Pending:**
+
 - IRF update (`INST-INDEX-RERUM-FACIENDARUM.md`) — add new items, move completed
 - External index propagation (seed.yaml, inquiry-log.yaml, concordance)
 - Phase 1 execution: extract `@styx/audit-engine` as standalone package

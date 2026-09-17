@@ -1,7 +1,8 @@
-import type { MobileBootstrapResponse, StyxFeatureFlags } from '@styx/shared/index';
+import type { MobileBootstrapResponse, StyxFeatureFlags } from "@styx/types";
 
-const LOCAL_VERSION = process.env.EXPO_PUBLIC_STYX_MOBILE_VERSION || '0.0.0-dev';
-const LOCAL_BUILD = process.env.EXPO_PUBLIC_STYX_MOBILE_BUILD || 'dev';
+const LOCAL_VERSION =
+  process.env.EXPO_PUBLIC_STYX_MOBILE_VERSION || "0.0.0-dev";
+const LOCAL_BUILD = process.env.EXPO_PUBLIC_STYX_MOBILE_BUILD || "dev";
 
 const DEFAULT_FEATURE_FLAGS: StyxFeatureFlags = {
   phase1MobilePrimary: true,
@@ -23,7 +24,9 @@ export function getLocalMobileBuild(): string {
   return LOCAL_BUILD;
 }
 
-export function setMobileBootstrapConfig(config: MobileBootstrapResponse | null): void {
+export function setMobileBootstrapConfig(
+  config: MobileBootstrapResponse | null,
+): void {
   mobileBootstrap = config;
 }
 
@@ -40,7 +43,9 @@ function parseNumericParts(input: string): number[] {
   if (!matches) {
     return [];
   }
-  return matches.map((part) => Number.parseInt(part, 10)).filter((n) => Number.isFinite(n));
+  return matches
+    .map((part) => Number.parseInt(part, 10))
+    .filter((n) => Number.isFinite(n));
 }
 
 function compareVersionLike(a: string, b: string): number {
@@ -56,7 +61,9 @@ function compareVersionLike(a: string, b: string): number {
   return 0;
 }
 
-export function isBelowMinimumSupportedVersion(config: MobileBootstrapResponse | null): boolean {
+export function isBelowMinimumSupportedVersion(
+  config: MobileBootstrapResponse | null,
+): boolean {
   if (!config) {
     return false;
   }
@@ -67,12 +74,17 @@ export function isBelowMinimumSupportedVersion(config: MobileBootstrapResponse |
     return Number.parseInt(localBuild, 10) < Number.parseInt(minBuild, 10);
   }
 
-  return compareVersionLike(getLocalMobileVersion(), config.mobile.minSupportedVersion) < 0;
+  return (
+    compareVersionLike(
+      getLocalMobileVersion(),
+      config.mobile.minSupportedVersion,
+    ) < 0
+  );
 }
 
 export function getMobileBetaBannerText(): string {
   return (
     mobileBootstrap?.labels.betaBanner ||
-    'Private beta • test-money pilot • US allowlist'
+    "Private beta • test-money pilot • US allowlist"
   );
 }

@@ -6,6 +6,7 @@
 ---
 
 ### LIVE LOOP RECEIPT
+
 - **Date**: `YYYY-MM-DDTHH:MM:SSZ`
 - **Environment**: `[local-synthetic | render-staging | render-prod | cloudflare-pages]`
 - **Head SHA**: `[commit-sha]`
@@ -15,6 +16,7 @@
 - **Surfaces Exercised**: `[API | Web | Mobile | Desktop | Ask Styx]`
 
 #### Verification Invariants
+
 - [ ] **Contract Lifecycle**: `[Created -> Held -> Proof Submitted -> Fury Consensused -> Captured/Cancelled]`
 - [ ] **Ledger Balance Integrity (Gate 01)**: Balanced debits and credits; zero phantom funds (`scripts/validation/01-phantom-money-check.ts`).
 - [ ] **Linguistic Cloaker (Gate 04)**: Production build contains zero prohibited gambling terminology (`scripts/validation/04-redacted-build-check.sh`).
@@ -22,13 +24,15 @@
 - [ ] **Claim Drift (Gate 07)**: Documentation and project records reflect observed reality (`scripts/validation/07-claim-drift-check.js`).
 
 #### Telemetry & HTTP Observation
+
 - **URL & Status Codes**:
   - `Root URL`: `HTTP [code]`
   - `Assets (JS/CSS)`: `HTTP [code]`
   - `Health Endpoint (/health)`: `HTTP [code]`
 - **Readiness Artifact**: `[path/to/artifact.json or N/A]`
 - **Fail-Closed Cases Tested**: `[e.g., Missing geo-headers rejected with 403; bad proof rejected with honeypot strike]`
-- **User Count Band**: `[≤10 dogfood | 50–100 beta | 500+ open beta | 0 (CI only)]` *(Strictly no PII)*
+- **User Count Band**: `[≤10 dogfood | 50–100 beta | 500+ open beta | 0 (CI only)]` _(Strictly no PII)_
 
 ---
-*Signed by Autonomous Agent / Engineer: `[Agent ID / Name]`*
+
+_Signed by Autonomous Agent / Engineer: `[Agent ID / Name]`_

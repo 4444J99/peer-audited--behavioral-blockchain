@@ -2,13 +2,29 @@ import { Controller, Post, Body, Param, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { AuthGuard } from "../../../guards/auth.guard";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { ModerationService, ContentType } from "../../../services/security/moderation.service";
+import {
+  ModerationService,
+  ContentType,
+} from "../../../services/security/moderation.service";
 import { IsString, IsEnum, IsOptional } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class FlagContentDto {
-  @ApiProperty({ description: "Type of content", enum: ["PROOF_MEDIA", "PROFILE_TEXT", "CONTRACT_TITLE", "WHISTLEBLOWER_REPORT"] })
-  @IsEnum(["PROOF_MEDIA", "PROFILE_TEXT", "CONTRACT_TITLE", "WHISTLEBLOWER_REPORT"])
+  @ApiProperty({
+    description: "Type of content",
+    enum: [
+      "PROOF_MEDIA",
+      "PROFILE_TEXT",
+      "CONTRACT_TITLE",
+      "WHISTLEBLOWER_REPORT",
+    ],
+  })
+  @IsEnum([
+    "PROOF_MEDIA",
+    "PROFILE_TEXT",
+    "CONTRACT_TITLE",
+    "WHISTLEBLOWER_REPORT",
+  ])
   contentType!: ContentType;
 
   @ApiProperty({ description: "ID of the content" })
@@ -48,7 +64,7 @@ export class UserModerationController {
       body.contentType,
       body.contentId,
       body.reason,
-      { reporterId: user.id, details: body.details }
+      { reporterId: user.id, details: body.details },
     );
   }
 

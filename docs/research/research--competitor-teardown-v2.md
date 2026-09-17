@@ -151,29 +151,32 @@ disappearance of legacy features like performance graphs, and the
 administrative burden of managing a virtual inventory that no longer
 provides behavioral motivation.^9^
 
-  -----------------------------------------------------------------------
-  **Habitica              **Psychological         **Systemic
-  Vulnerability Matrix**  Impact**                Consequence**
-  ----------------------- ----------------------- -----------------------
-  **Zero-Friction Self    Destroys Scarcity       Hyper-inflation of the
-  Reporting**             (CD6); Enables Loss     virtual economy;
-                          Avoidance (CD8)         complete collapse of
-                          cheating.               intrinsic behavioral
-                                                  motivation.
+---
 
-  **Open-Source           Frustration with slow   High churn rate among
-  Reliance**              development and         power users migrating
-                          unresolved legacy bugs. to premium,
-                                                  professionally
-                                                  maintained
-                                                  alternatives.
+**Habitica **Psychological **Systemic
+Vulnerability Matrix** Impact** Consequence**
 
-  **Feature Sprawl & UI   Cognitive overload; the Users abandon the RPG
-  Clutter**               app becomes a chore     elements entirely,
-                          itself.                 rendering the core
-                                                  differentiation
-                                                  strategy useless.
-  -----------------------------------------------------------------------
+---
+
+**Zero-Friction Self Destroys Scarcity Hyper-inflation of the
+Reporting** (CD6); Enables Loss virtual economy;
+Avoidance (CD8) complete collapse of
+cheating. intrinsic behavioral
+motivation.
+
+**Open-Source Frustration with slow High churn rate among
+Reliance** development and power users migrating
+unresolved legacy bugs. to premium,
+professionally
+maintained
+alternatives.
+
+**Feature Sprawl & UI Cognitive overload; the Users abandon the RPG
+Clutter** app becomes a chore elements entirely,
+itself. rendering the core
+differentiation
+strategy useless.
+-----------------------------------------------------------------------
 
 ## The Punitive Financial Commitment Model: Beeminder
 
@@ -181,7 +184,7 @@ Whereas Habitica relies entirely on positive reinforcement and virtual
 progression, Beeminder utilizes the harsh behavioral economics principle
 of loss aversion. It operates on the academic premise that humans will
 go to extreme lengths to avoid losing tangible assets, providing a
-brute-force mathematical solution to *akrasia*---the state of acting
+brute-force mathematical solution to _akrasia_---the state of acting
 against one\'s better judgment or procrastinating despite knowing the
 negative consequences.^11^
 
@@ -237,7 +240,7 @@ Beeminder's vulnerabilities are deeply embedded in its uncompromising
 philosophy, its architectural execution, and its highly technical
 aesthetic. Firstly, the platform is notoriously intimidating and deeply
 confusing for the average consumer.^11^ The reliance on complex
-mathematical concepts, dense academic jargon (such as *akrasia*,
+mathematical concepts, dense academic jargon (such as _akrasia_,
 retroratchets, and data nerdery), and an austere, highly technical user
 interface creates a massive barrier to entry.^11^ New users frequently
 complain that the graphs appear sterile and that the documentation is
@@ -252,7 +255,7 @@ within its community as the \"Weasel\" loophole.^19^ Because automated
 API tracking can fail---wearable device batteries die, software
 integrations break---and legitimate human emergencies occur, Beeminder
 must allow users to contest a derailment charge by claiming the failure
-was due to external factors rather than genuine *akrasia*.^19^ This
+was due to external factors rather than genuine _akrasia_.^19^ This
 creates a massive structural vulnerability and an unscalable support
 burden. Users can simply reply to the automated derailment email, lie
 about a sudden illness or a broken phone, and have their charges
@@ -384,30 +387,33 @@ participants to retrieve their buy-in money without consequence, further
 diluting the potential prize pool for the honest winners and destroying
 the fundamental premise of the commitment contract.^27^
 
-  -----------------------------------------------------------------------
-  **WayBetter Platform    **Method of             **Impact on Platform
-  Flaws**                 Exploitation**          Economics**
-  ----------------------- ----------------------- -----------------------
-  **StepBet Algorithm     Intentional inactivity  Forces honest users to
-  Gaming**                prior to syncing data   compete against players
-                          to lower thresholds.    expending zero effort.
+---
 
-  **Hardware Spoofing**   Use of mechanical phone Invalidates the premise
-                          swings, fans, and       of the game, driving
-                          manual entry exploits.  away legitimate fitness
-                                                  enthusiasts.
+**WayBetter Platform **Method of **Impact on Platform
+Flaws** Exploitation** Economics**
 
-  **DietBet Weight        Water loading for       Creates severe
-  Manipulation**          initial weigh-ins;      liability risks and
-                          dangerous fasting for   negates the
-                          final weigh-ins.        health-focused
-                                                  marketing narrative.
+---
 
-  **High Commission       The house takes up to   Results in zero-dollar
-  Structure**             25% of the gross pot    payouts for winners,
-                          prior to distribution.  crushing long-term user
-                                                  retention metrics.
-  -----------------------------------------------------------------------
+**StepBet Algorithm Intentional inactivity Forces honest users to
+Gaming** prior to syncing data compete against players
+to lower thresholds. expending zero effort.
+
+**Hardware Spoofing** Use of mechanical phone Invalidates the premise
+swings, fans, and of the game, driving
+manual entry exploits. away legitimate fitness
+enthusiasts.
+
+**DietBet Weight Water loading for Creates severe
+Manipulation** initial weigh-ins; liability risks and
+dangerous fasting for negates the
+final weigh-ins. health-focused
+marketing narrative.
+
+**High Commission The house takes up to Results in zero-dollar
+Structure** 25% of the gross pot payouts for winners,
+prior to distribution. crushing long-term user
+retention metrics.
+-----------------------------------------------------------------------
 
 ## The House-Backed Wager Model: HealthyWage
 
@@ -578,7 +584,7 @@ user motivation and retention.^24^
 **The Rat Bounty Implementation:**
 
 A new application can restructure the pooled-competition model by
-ensuring the platform takes *zero* commission from the prize pot,
+ensuring the platform takes _zero_ commission from the prize pot,
 operating instead on a transparent, flat-fee subscription model. To
 maintain the absolute integrity of the pool without hiring internal
 referees, the application introduces a decentralized \"Audit Market.\"

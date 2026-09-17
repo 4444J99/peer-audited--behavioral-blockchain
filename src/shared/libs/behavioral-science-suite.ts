@@ -93,7 +93,9 @@ export function verifyProofTimestampAgainstIntention(
   declaredTime: string,
   toleranceMinutes = 30,
 ): { valid: boolean; deltaMinutes: number } {
-  const [targetH, targetM] = declaredTime.split(":").map((v) => parseInt(v, 10));
+  const [targetH, targetM] = declaredTime
+    .split(":")
+    .map((v) => parseInt(v, 10));
   const proofH = proofDate.getHours();
   const proofM = proofDate.getMinutes();
 
@@ -183,7 +185,9 @@ export function detectDiscontinuityWindow(
   now: Date = new Date(),
 ): DiscontinuityWindow {
   const startedAt = new Date(transitionDate);
-  const expiresAt = new Date(startedAt.getTime() + DISCONTINUITY_WINDOW_DAYS * 86400000);
+  const expiresAt = new Date(
+    startedAt.getTime() + DISCONTINUITY_WINDOW_DAYS * 86400000,
+  );
   const msRemaining = expiresAt.getTime() - now.getTime();
   const daysRemaining = Math.max(0, Math.ceil(msRemaining / 86400000));
   const isActive = now >= startedAt && daysRemaining > 0;
@@ -255,14 +259,20 @@ export function calculateDisenchantmentTrajectory(
   const currentRating = sorted[sorted.length - 1].rewardRating;
 
   const drop = initialRating - currentRating;
-  const devaluationPct = initialRating > 0 ? Math.round((drop / initialRating) * 100) : 0;
+  const devaluationPct =
+    initialRating > 0 ? Math.round((drop / initialRating) * 100) : 0;
 
-  const daysSpan = Math.max(1, sorted[sorted.length - 1].dayIndex - sorted[0].dayIndex);
+  const daysSpan = Math.max(
+    1,
+    sorted[sorted.length - 1].dayIndex - sorted[0].dayIndex,
+  );
   const velocityPerDay = Math.round((drop / daysSpan) * 100) / 100;
 
-  const isTherapeuticMilestone = currentRating <= DISENCHANTMENT_MILESTONE_THRESHOLD && initialRating > 5;
+  const isTherapeuticMilestone =
+    currentRating <= DISENCHANTMENT_MILESTONE_THRESHOLD && initialRating > 5;
 
-  let guidanceMessage = "Reward value remains stable. Pay close mindfulness attention to physical sensations.";
+  let guidanceMessage =
+    "Reward value remains stable. Pay close mindfulness attention to physical sensations.";
   if (isTherapeuticMilestone) {
     guidanceMessage = `Therapeutic milestone reached: craving devaluation has fallen to ${currentRating}/10. The brain recognizes the hollow reward.`;
   } else if (devaluationPct > 25) {
@@ -294,28 +304,32 @@ export const CANONICAL_BBO_CATALOG: CravingSubstitution[] = [
   {
     trigger: "Evening stress or isolation",
     habitToReplace: "Doomscrolling social media",
-    betterOfferBehavior: "10-minute cold shower followed by bilateral binaural audio",
+    betterOfferBehavior:
+      "10-minute cold shower followed by bilateral binaural audio",
     perceivedSatisfactionScore: 8.5,
     latencyFrictionSec: 30,
   },
   {
     trigger: "Post-breakup urge to text ex",
     habitToReplace: "Reaching for phone / texting ex",
-    betterOfferBehavior: "Open Styx emergency voice memo and record unvarnished 2-minute reality audit",
+    betterOfferBehavior:
+      "Open Styx emergency voice memo and record unvarnished 2-minute reality audit",
     perceivedSatisfactionScore: 9.0,
     latencyFrictionSec: 10,
   },
   {
     trigger: "Mid-afternoon energy crash",
     habitToReplace: "Sugary snack or processed carb binge",
-    betterOfferBehavior: "500ml ice water + 15 air squats + 3-minute breathwork",
+    betterOfferBehavior:
+      "500ml ice water + 15 air squats + 3-minute breathwork",
     perceivedSatisfactionScore: 7.8,
     latencyFrictionSec: 45,
   },
   {
     trigger: "Pre-sleep anxiety",
     habitToReplace: "Streaming TV late in bed",
-    betterOfferBehavior: "Weighted blanket + 10-minute non-sleep deep rest (NSDR)",
+    betterOfferBehavior:
+      "Weighted blanket + 10-minute non-sleep deep rest (NSDR)",
     perceivedSatisfactionScore: 8.8,
     latencyFrictionSec: 60,
   },
@@ -383,7 +397,8 @@ export function evaluateGatewayLadder(
         consecutiveRequired,
         readyForEscalation,
         nextStage,
-        stageDescription: "Stage 1: Two-Minute Gateway (Show up and execute for <= 2 minutes).",
+        stageDescription:
+          "Stage 1: Two-Minute Gateway (Show up and execute for <= 2 minutes).",
       };
 
     case GatewayLadderStage.HABITUATION:
@@ -395,7 +410,8 @@ export function evaluateGatewayLadder(
         consecutiveRequired,
         readyForEscalation,
         nextStage,
-        stageDescription: "Stage 2: Habituation (Scale duration to 10-15 minutes).",
+        stageDescription:
+          "Stage 2: Habituation (Scale duration to 10-15 minutes).",
       };
 
     case GatewayLadderStage.FULL_OATH:
@@ -406,7 +422,8 @@ export function evaluateGatewayLadder(
         consecutiveRequired,
         readyForEscalation: false,
         nextStage: null,
-        stageDescription: "Stage 3: Full Behavioral Oath (Standard high-stakes commitment).",
+        stageDescription:
+          "Stage 3: Full Behavioral Oath (Standard high-stakes commitment).",
       };
   }
 }

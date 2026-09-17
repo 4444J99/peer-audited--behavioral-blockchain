@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /**
  * Offline caching layer for low-connectivity scenarios.
@@ -6,8 +6,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * when connectivity is restored.
  */
 
-const CACHE_PREFIX = '@styx_cache:';
-const QUEUE_KEY = '@styx_mutation_queue';
+const CACHE_PREFIX = "@styx_cache:";
+const QUEUE_KEY = "@styx_mutation_queue";
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 interface CacheEntry<T> {
@@ -28,7 +28,11 @@ export class OfflineCache {
   /**
    * Store an API response in local cache.
    */
-  static async set<T>(key: string, data: T, ttlMs: number = CACHE_TTL_MS): Promise<void> {
+  static async set<T>(
+    key: string,
+    data: T,
+    ttlMs: number = CACHE_TTL_MS,
+  ): Promise<void> {
     const entry: CacheEntry<T> = { data, cachedAt: Date.now(), ttlMs };
     await AsyncStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(entry));
   }
@@ -36,7 +40,9 @@ export class OfflineCache {
   /**
    * Retrieve a cached API response. Returns null if expired or missing.
    */
-  static async get<T>(key: string): Promise<{ data: T; stale: boolean } | null> {
+  static async get<T>(
+    key: string,
+  ): Promise<{ data: T; stale: boolean } | null> {
     const raw = await AsyncStorage.getItem(`${CACHE_PREFIX}${key}`);
     if (!raw) return null;
 
@@ -123,7 +129,7 @@ export class OfflineCache {
       try {
         const response = await fetchFn(mutation.path, {
           method: mutation.method,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
           body: mutation.body,
         });
 

@@ -1,4 +1,4 @@
-import p5 from 'p5';
+import p5 from "p5";
 
 export const competitiveGrid = (p: p5) => {
   // 2D positioning chart: x = Verification Rigor, y = Financial Stakes
@@ -14,15 +14,22 @@ export const competitiveGrid = (p: p5) => {
   }
 
   const competitors: Competitor[] = [
-    { name: 'Habitica', x: 0.1, y: 0.05, r: 18, color: [251, 146, 60] },
-    { name: 'Stickk', x: 0.15, y: 0.4, r: 16, color: [251, 146, 60] },
-    { name: 'Beeminder', x: 0.2, y: 0.35, r: 14, color: [251, 146, 60] },
-    { name: 'HealthyWage', x: 0.25, y: 0.55, r: 16, color: [56, 189, 248] },
-    { name: 'DietBet', x: 0.2, y: 0.45, r: 15, color: [56, 189, 248] },
-    { name: 'Virgin Pulse', x: 0.35, y: 0.1, r: 22, color: [192, 132, 252] },
-    { name: 'Limeade', x: 0.3, y: 0.08, r: 18, color: [192, 132, 252] },
-    { name: 'Wellable', x: 0.28, y: 0.12, r: 14, color: [192, 132, 252] },
-    { name: 'STYX', x: 0.85, y: 0.82, r: 28, color: [163, 230, 53], isStyx: true },
+    { name: "Habitica", x: 0.1, y: 0.05, r: 18, color: [251, 146, 60] },
+    { name: "Stickk", x: 0.15, y: 0.4, r: 16, color: [251, 146, 60] },
+    { name: "Beeminder", x: 0.2, y: 0.35, r: 14, color: [251, 146, 60] },
+    { name: "HealthyWage", x: 0.25, y: 0.55, r: 16, color: [56, 189, 248] },
+    { name: "DietBet", x: 0.2, y: 0.45, r: 15, color: [56, 189, 248] },
+    { name: "Virgin Pulse", x: 0.35, y: 0.1, r: 22, color: [192, 132, 252] },
+    { name: "Limeade", x: 0.3, y: 0.08, r: 18, color: [192, 132, 252] },
+    { name: "Wellable", x: 0.28, y: 0.12, r: 14, color: [192, 132, 252] },
+    {
+      name: "STYX",
+      x: 0.85,
+      y: 0.82,
+      r: 28,
+      color: [163, 230, 53],
+      isStyx: true,
+    },
   ];
 
   let progress = 0;
@@ -30,7 +37,7 @@ export const competitiveGrid = (p: p5) => {
 
   p.setup = () => {
     p.createCanvas(p.windowWidth, p.windowHeight);
-    p.textFont('monospace');
+    p.textFont("monospace");
   };
 
   p.draw = () => {
@@ -76,21 +83,21 @@ export const competitiveGrid = (p: p5) => {
     p.fill(100, 116, 139);
     p.textSize(11);
     p.textAlign(p.CENTER, p.TOP);
-    p.text('Verification Rigor →', (chartL + chartR) / 2, chartB + 10);
+    p.text("Verification Rigor →", (chartL + chartR) / 2, chartB + 10);
 
     p.push();
     p.translate(chartL - 30, (chartT + chartB) / 2);
     p.rotate(-p.HALF_PI);
     p.textAlign(p.CENTER, p.BOTTOM);
-    p.text('Financial Stakes →', 0, 0);
+    p.text("Financial Stakes →", 0, 0);
     p.pop();
 
     // Quadrant labels
     p.fill(100, 116, 139, 60);
     p.textSize(10);
     p.textAlign(p.CENTER, p.CENTER);
-    p.text('Self-Report + Free', chartL + chartW * 0.25, chartB - 20);
-    p.text('Verified + Staked', chartL + chartW * 0.75, chartT + 20);
+    p.text("Self-Report + Free", chartL + chartW * 0.25, chartB - 20);
+    p.text("Verified + Staked", chartL + chartW * 0.75, chartT + 20);
 
     // Competitor bubbles
     hoveredIdx = -1;
@@ -99,7 +106,10 @@ export const competitiveGrid = (p: p5) => {
 
     for (let i = 0; i < competitors.length; i++) {
       const c = competitors[i];
-      const eased = Math.min(1, Math.max(0, progress * (competitors.length + 2) - i * 0.5));
+      const eased = Math.min(
+        1,
+        Math.max(0, progress * (competitors.length + 2) - i * 0.5),
+      );
       if (eased <= 0) continue;
 
       const cx = chartL + c.x * chartW;
@@ -127,7 +137,12 @@ export const competitiveGrid = (p: p5) => {
 
       // Label
       const labelAlpha = hoveredIdx === i ? 255 : c.isStyx ? 220 : 120;
-      p.fill(c.isStyx ? 163 : 200, c.isStyx ? 230 : 200, c.isStyx ? 53 : 200, labelAlpha * eased);
+      p.fill(
+        c.isStyx ? 163 : 200,
+        c.isStyx ? 230 : 200,
+        c.isStyx ? 53 : 200,
+        labelAlpha * eased,
+      );
       p.textSize(c.isStyx ? 13 : 10);
       p.textAlign(p.CENTER, p.CENTER);
       p.text(c.name, cx, cy - r - 10);
@@ -137,10 +152,10 @@ export const competitiveGrid = (p: p5) => {
     const legendY = chartT + 10;
     const legendX = chartR - 160;
     const categories: [string, [number, number, number]][] = [
-      ['Habit Apps', [251, 146, 60]],
-      ['Health Betting', [56, 189, 248]],
-      ['Corp Wellness', [192, 132, 252]],
-      ['Styx', [163, 230, 53]],
+      ["Habit Apps", [251, 146, 60]],
+      ["Health Betting", [56, 189, 248]],
+      ["Corp Wellness", [192, 132, 252]],
+      ["Styx", [163, 230, 53]],
     ];
 
     p.textSize(9);

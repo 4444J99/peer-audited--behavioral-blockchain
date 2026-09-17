@@ -118,4 +118,3 @@ Reply with five short lines:
 3. appeal fee: `keep $5` or `change to $X`
 4. onboarding bonus: `keep $5` or `change to $X`
 5. beta user-facing payout language: `generic only` or `show percentages`
-

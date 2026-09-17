@@ -19,15 +19,16 @@ always in a releasable state. We deliberately avoid long-lived `develop`/
 gates + tags), not branch-based — a long-lived `develop` would just be a second
 trunk that drifts.
 
-| Branch | Purpose | Lifetime | Protected |
-|--------|---------|----------|-----------|
-| `main` | Releasable trunk; only source of deploys | Permanent | **Yes** |
-| `feat/<slug>` | New feature | Short (hours–days) | No |
-| `fix/<slug>` | Bug fix | Short | No |
-| `docs/<slug>`, `chore/<slug>`, `refactor/<slug>`, `perf/<slug>` | Maintenance | Short | No |
-| `claude/<slug>` | Automated-agent branches | Short | No |
+| Branch                                                          | Purpose                                  | Lifetime           | Protected |
+| --------------------------------------------------------------- | ---------------------------------------- | ------------------ | --------- |
+| `main`                                                          | Releasable trunk; only source of deploys | Permanent          | **Yes**   |
+| `feat/<slug>`                                                   | New feature                              | Short (hours–days) | No        |
+| `fix/<slug>`                                                    | Bug fix                                  | Short              | No        |
+| `docs/<slug>`, `chore/<slug>`, `refactor/<slug>`, `perf/<slug>` | Maintenance                              | Short              | No        |
+| `claude/<slug>`                                                 | Automated-agent branches                 | Short              | No        |
 
 Rules:
+
 - Branch off the latest `main`; keep branches **short-lived** (rebase or merge
   `main` in frequently to avoid drift).
 - One logical change per branch/PR. Split large work into stacked PRs.
@@ -57,6 +58,7 @@ All commits follow [Conventional Commits](https://www.conventionalcommits.org/):
    required, and review threads do not block the merge — see §4 for why.
 
 ### Merge queue
+
 Not enabled. `ci.yml` still handles the `merge_group` event, so turning the
 queue on is a settings change with no code work. Enable it when concurrent
 contributors start landing conflicting work; with a single committer it adds
@@ -97,13 +99,13 @@ has one committer:
   only pays for itself under concurrent conflicting work.
 
 Restore them when a second regular committer arrives. The protection that
-actually matters for a solo repo is *required status checks*, which is the one
+actually matters for a solo repo is _required status checks_, which is the one
 piece that was missing.
 
 ### One protection layer, not two
 
-GitHub has **two independent** systems — classic *branch protection* and
-*rulesets* — and enforces the **union** of both. Classic protection is invisible
+GitHub has **two independent** systems — classic _branch protection_ and
+_rulesets_ — and enforces the **union** of both. Classic protection is invisible
 from the Rulesets UI, so a rule relaxed in the ruleset can stay in force with no
 visible cause.
 
@@ -159,6 +161,7 @@ never on a raw push to `main`.
    (enforced in `preflight`).
 
 ### Database migrations
+
 Migrations run in the `migrate` job **after** the API deploys, against the
 production `DATABASE_URL`. Write migrations to be **forward-only and
 backward-compatible** with the previously-deployed code (expand/contract
@@ -169,7 +172,7 @@ tolerate, since deploy and migrate are not perfectly simultaneous.
 ## 7. Rollback
 
 Current `smoke_test` does a **best-effort redeploy** on health-check failure —
-this is *not* a deterministic rollback. Target state (tracked as follow-up):
+this is _not_ a deterministic rollback. Target state (tracked as follow-up):
 
 - **API/Web:** roll back to the previous **known-good Render deploy id** (Render
   "rollback to deploy") rather than re-deploying the same bad commit; or
@@ -184,7 +187,7 @@ this is *not* a deterministic rollback. Target state (tracked as follow-up):
 
 There is no separate hotfix branch line. A production incident is fixed the same
 way as any change — `fix/<slug>` → PR → required CI → squash-merge → patch tag —
-just expedited. Because `main` is always releasable, the trunk *is* the hotfix
+just expedited. Because `main` is always releasable, the trunk _is_ the hotfix
 base.
 
 ## 9. Why these choices

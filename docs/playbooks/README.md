@@ -14,15 +14,15 @@ up the same machine by filling in a worksheet.
 
 ## Contents
 
-| File | What it is |
-|------|------------|
-| `playbook--audience-growth-engine.md` | The engine. Five parameters, the ladder, the dual-channel pattern, the 5-level attack, the audience-as-product module, the engagement-economics model. |
-| `templates/template--instantiation-worksheet.md` | The blank fill-in form that turns the engine into a live plan for a new venture. |
-| `templates/template--content-calendar.md` | N-week calendar grid (channel × week × pillar × CTA). |
-| `templates/template--content-asset-pack.md` | Hook bank, post skeletons, story frames, outreach scripts, lead-magnet outline, week-1 publish-ready slots. |
-| `templates/template--creator-outreach.md` | Multi-touch borrowed-audience outreach with personalization variables. |
-| `templates/template--metrics-tracker.md` | Funnel + audience-asset KPI table, weekly rows. |
-| `templates/template--engagement-log.md` | Hourly time + deliverable + outcome log for a paid audience-build engagement. |
+| File                                             | What it is                                                                                                                                             |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `playbook--audience-growth-engine.md`            | The engine. Five parameters, the ladder, the dual-channel pattern, the 5-level attack, the audience-as-product module, the engagement-economics model. |
+| `templates/template--instantiation-worksheet.md` | The blank fill-in form that turns the engine into a live plan for a new venture.                                                                       |
+| `templates/template--content-calendar.md`        | N-week calendar grid (channel × week × pillar × CTA).                                                                                                  |
+| `templates/template--content-asset-pack.md`      | Hook bank, post skeletons, story frames, outreach scripts, lead-magnet outline, week-1 publish-ready slots.                                            |
+| `templates/template--creator-outreach.md`        | Multi-touch borrowed-audience outreach with personalization variables.                                                                                 |
+| `templates/template--metrics-tracker.md`         | Funnel + audience-asset KPI table, weekly rows.                                                                                                        |
+| `templates/template--engagement-log.md`          | Hourly time + deliverable + outcome log for a paid audience-build engagement.                                                                          |
 
 ## How to use it
 

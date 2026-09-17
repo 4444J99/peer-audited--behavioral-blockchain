@@ -1,12 +1,12 @@
-import p5 from 'p5';
+import p5 from "p5";
 
 export const techNetwork = (p: p5) => {
   const nodes = [
-    { label: 'PostgreSQL' },
-    { label: 'BullMQ' },
-    { label: 'Cloudflare R2' },
-    { label: 'HealthKit' },
-    { label: 'Stripe FBO' },
+    { label: "PostgreSQL" },
+    { label: "BullMQ" },
+    { label: "Cloudflare R2" },
+    { label: "HealthKit" },
+    { label: "Stripe FBO" },
   ];
 
   const getPositions = () => {

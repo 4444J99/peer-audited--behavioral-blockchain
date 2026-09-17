@@ -40,15 +40,15 @@ So the practical answer is:
 
 ## Parallel Bug Workstreams
 
-| Lane | Scope | Why it matters | Blocks current beta? | Owner | Primary evidence |
-|---|---|---|---|---|---|
-| `B1` Mobile journey sweep | iOS beta core path from login to attestation | Main tester path must not crash or misread backend shapes | `Yes` | Mobile engineering | passing targeted mobile suite + manual journey record |
-| `B2` API contract sweep | contract DTOs, bootstrap, auth guards, critical endpoints | mobile/web both depend on correct API truth | `Yes` | API engineering | passing targeted API suite + readiness gates |
-| `B3` Web surface sweep | landing page, dashboard, legal/support entry points | avoid broken beta messaging and bad tester routing | `Yes` for public-facing web, `No` for internal-only pages | Web engineering | passing web tests + build |
-| `B4` Financial invariant sweep | stake units, settlement math, ledger consistency | money bugs are catastrophic even in test-money mode | `Yes` for correctness, though policy choice can remain provisional | API/finance engineering | settlement/ledger tests + invariant scripts |
-| `B5` Release readiness sweep | smoke scripts, environment targets, deploy proof | beta should not ship on assumptions | `Yes` | Platform / release owner | `beta-readiness-summary.json` pass against real targets |
-| `B6` UX copy and claim-drift sweep | labels, legal routes, beta wording, App Review-sensitive copy | prevents rejection, confusion, and misleading testers | `Yes` if drift affects public/tester-facing surfaces | Product + web/mobile | claim-drift pass + copy review diff |
-| `B7` Manual exploratory sweep | real device checks, empty states, auth/session, reporting path | catches the defects tests miss | `Yes` | Founder / QA / trusted beta operators | written defect log with reproduction steps |
+| Lane                               | Scope                                                          | Why it matters                                            | Blocks current beta?                                               | Owner                                 | Primary evidence                                        |
+| ---------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------- | ------------------------------------------------------- |
+| `B1` Mobile journey sweep          | iOS beta core path from login to attestation                   | Main tester path must not crash or misread backend shapes | `Yes`                                                              | Mobile engineering                    | passing targeted mobile suite + manual journey record   |
+| `B2` API contract sweep            | contract DTOs, bootstrap, auth guards, critical endpoints      | mobile/web both depend on correct API truth               | `Yes`                                                              | API engineering                       | passing targeted API suite + readiness gates            |
+| `B3` Web surface sweep             | landing page, dashboard, legal/support entry points            | avoid broken beta messaging and bad tester routing        | `Yes` for public-facing web, `No` for internal-only pages          | Web engineering                       | passing web tests + build                               |
+| `B4` Financial invariant sweep     | stake units, settlement math, ledger consistency               | money bugs are catastrophic even in test-money mode       | `Yes` for correctness, though policy choice can remain provisional | API/finance engineering               | settlement/ledger tests + invariant scripts             |
+| `B5` Release readiness sweep       | smoke scripts, environment targets, deploy proof               | beta should not ship on assumptions                       | `Yes`                                                              | Platform / release owner              | `beta-readiness-summary.json` pass against real targets |
+| `B6` UX copy and claim-drift sweep | labels, legal routes, beta wording, App Review-sensitive copy  | prevents rejection, confusion, and misleading testers     | `Yes` if drift affects public/tester-facing surfaces               | Product + web/mobile                  | claim-drift pass + copy review diff                     |
+| `B7` Manual exploratory sweep      | real device checks, empty states, auth/session, reporting path | catches the defects tests miss                            | `Yes`                                                              | Founder / QA / trusted beta operators | written defect log with reproduction steps              |
 
 ## Lane Details
 

@@ -71,6 +71,7 @@ Styx is currently available only to Users located in the United States. This res
 ### 3.3 Identity Verification
 
 The Company reserves the right to require identity verification (KYC) at any time, including but not limited to:
+
 - Account registration
 - Vault deposits exceeding $100
 - Fury auditor application
@@ -82,6 +83,7 @@ The Company reserves the right to require identity verification (KYC) at any tim
 ### 4.1 Creation and Funding
 
 When you create an Oath, you agree to:
+
 - Deposit the specified amount into the Vault via Stripe
 - Pay the non-refundable Platform Fee at the time of Oath creation
 - Comply with the verification criteria you specified
@@ -93,11 +95,11 @@ When you create an Oath, you agree to:
 Deposit amounts are limited by your Integrity Score tier:
 
 | Integrity Score | Maximum Deposit per Oath |
-|-----------------|-------------------------|
-| 0-40 | $50 |
-| 41-60 | $100 |
-| 61-80 | $200 |
-| 81-100 | $500 |
+| --------------- | ------------------------ |
+| 0-40            | $50                      |
+| 41-60           | $100                     |
+| 61-80           | $200                     |
+| 81-100          | $500                     |
 
 The Company reserves the right to adjust these limits at any time.
 
@@ -118,11 +120,13 @@ You may cancel an active Oath at any time. Cancellation forfeits your Vault depo
 ### 4.6 Oath Categories and Special Protocols
 
 **Biological Oaths** are subject to the Aegis Protocol. The Platform will reject any biological Oath that:
+
 - Targets a BMI below 18.5
 - Implies a weight loss rate exceeding 2% of body weight per week
 - Otherwise violates health safety thresholds as determined by the Company
 
 **Recovery Oaths** (no-contact contracts) are subject to the Recovery Protocol:
+
 - Maximum duration: 30 days
 - Maximum no-contact targets: 3 per Oath
 - Mandatory cooldown period between consecutive Recovery Oaths
@@ -135,6 +139,7 @@ See `docs/legal/legal--aegis-protocol.md` for Aegis Protocol details.
 ### 5.1 Application and Approval
 
 Fury status is granted at the Company's sole discretion. Minimum requirements include:
+
 - Integrity Score of 60 or higher
 - Completed identity verification
 - Agreement to the Fury Code of Conduct
@@ -146,6 +151,7 @@ Furies deposit $2.00 per audit assignment. This deposit is returned upon casting
 ### 5.3 Audit Standards
 
 Furies must:
+
 - Review proof submissions within 24 hours of assignment
 - Base votes solely on the evidence presented (photo, metadata, supporting documentation)
 - Recuse themselves from audits where they have a personal relationship with the User
@@ -168,12 +174,12 @@ All payments are processed through Stripe. By using Styx, you also agree to Stri
 
 ### 6.3 Fees
 
-| Fee Type | Amount | Refundable |
-|----------|--------|------------|
-| Platform Fee (standard Oath) | $9.00 | No |
-| Oath Deposit (standard) | $30.00 (held in escrow) | Yes (on successful completion) |
-| Fury Auditor Deposit | $2.00 per audit | Yes (on quorum-aligned vote) |
-| Withdrawal Fee | $0.00 | N/A |
+| Fee Type                     | Amount                  | Refundable                     |
+| ---------------------------- | ----------------------- | ------------------------------ |
+| Platform Fee (standard Oath) | $9.00                   | No                             |
+| Oath Deposit (standard)      | $30.00 (held in escrow) | Yes (on successful completion) |
+| Fury Auditor Deposit         | $2.00 per audit         | Yes (on quorum-aligned vote)   |
+| Withdrawal Fee               | $0.00                   | N/A                            |
 
 ### 6.4 Taxes
 
@@ -182,6 +188,7 @@ Users are responsible for any tax obligations arising from Fury bounty income or
 ## 7. Prohibited Conduct
 
 You agree not to:
+
 - Create Oaths with the intent to defraud (e.g., creating easily-passable Oaths to farm Integrity Score)
 - Submit fraudulent proof (fabricated photos, manipulated metadata)
 - Collude with Furies to influence audit outcomes
@@ -209,6 +216,7 @@ These Terms are governed by the laws of the State of Oregon, without regard to c
 ## 9. Data and Privacy
 
 User data is collected, stored, and processed in accordance with our Privacy Policy (see `docs/legal/privacy-policy.md`). Key data categories include:
+
 - Account information (PII)
 - Financial data (processed by Stripe)
 - Behavioral data (Oath history, proof submissions)
@@ -217,6 +225,7 @@ User data is collected, stored, and processed in accordance with our Privacy Pol
 ## 10. Limitation of Liability
 
 THE PLATFORM IS PROVIDED "AS IS." TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE COMPANY SHALL NOT BE LIABLE FOR:
+
 - Emotional distress arising from Oath failure or deposit forfeit
 - Health consequences of behavioral commitments (even within Aegis Protocol limits)
 - Fury audit decisions that the User considers unfair
@@ -232,6 +241,7 @@ The Company reserves the right to modify these Terms at any time. Users will be 
 ## 12. Termination
 
 The Company may suspend or terminate your account for violation of these Terms. Upon termination:
+
 - Active Oaths are cancelled with deposit forfeit
 - Available wallet balance is returned within 30 days
 - Fury status is revoked

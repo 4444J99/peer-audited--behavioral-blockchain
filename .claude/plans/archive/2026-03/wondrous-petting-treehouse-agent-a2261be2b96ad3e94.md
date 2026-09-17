@@ -7,11 +7,13 @@
 ## Search Strategy
 
 ### Phase 1: Comment-Based Markers (grep patterns)
+
 - `TODO`, `FIXME`, `HACK`, `XXX`, `PLACEHOLDER`, `STUB`, `WIP`, `NOT_IMPLEMENTED`, `SKELETON`
 - Files: `*.ts`, `*.tsx`, `*.js`, `*.jsx`
 - All workspaces
 
 ### Phase 2: Function/Method Stubs (grep patterns)
+
 - `throw new Error('not implemented')`
 - `throw new Error('TODO')`
 - `return undefined` (paired with async/function context)
@@ -22,6 +24,7 @@
 - Files: `*.ts`, `*.tsx`, `*.js`
 
 ### Phase 3: Component/UI Placeholders (grep patterns)
+
 - `Coming soon`
 - `TODO:`
 - `Placeholder`
@@ -30,6 +33,7 @@
 - Files: `*.tsx`, `*.jsx`
 
 ### Phase 4: Hardcoded Mock Data (grep patterns)
+
 - Mock data patterns (e.g., `const mockData = `, `const fakeData = `)
 - `// TODO: replace with real API`
 - `// MOCK:`, `// STUB:`, `// TEST:`
@@ -37,10 +41,12 @@
 - Files: `*.ts`, `*.tsx`, `*.js`
 
 ### Phase 5: Filename-Based Detection
+
 - Files with `stub`, `placeholder`, `mock`, `test`, `dummy` in filename
 - Exclude `node_modules/`, `.next/`, `dist/`
 
 ### Phase 6: Specific Directory Scans
+
 - `src/api/services/` — stub service methods
 - `src/api/src/modules/` — incomplete controllers
 - `src/mobile/screens/` — placeholder screens
@@ -48,6 +54,7 @@
 - `src/web/` — incomplete UI components
 
 ## Workspaces to Search
+
 1. `src/api` — NestJS backend
 2. `src/web` — Next.js frontend
 3. `src/mobile` — Expo React Native
@@ -56,6 +63,7 @@
 6. `src/pitch` — Interactive pitch deck (Vite)
 
 ## Output Format for Each Finding
+
 ```
 **File**: <absolute_path>
 **Line**: <line_number>
@@ -65,6 +73,7 @@
 ```
 
 ## Execution Steps
+
 1. Glob all `.ts`, `.tsx`, `.js`, `.jsx` files in each workspace (exclude node_modules)
 2. Grep for Phase 1–4 patterns in each workspace
 3. Collect filenames matching Phase 5 patterns
@@ -72,6 +81,7 @@
 5. Compile consolidated report organized by workspace and type
 
 ## Expected Deliverables
+
 - Organized list of all stubs/placeholders by workspace
 - Cross-reference of related incomplete implementations
 - Prioritization: critical gaps vs. minor TODOs

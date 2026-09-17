@@ -167,7 +167,9 @@ async function runBehavioralPhysicsCheck() {
 
   if (offlineOnly) {
     if (offlinePassed) {
-      console.log("\n✅ GATE 05 OFFLINE PASSED: constants verified (integration NOT VERIFIED).");
+      console.log(
+        "\n✅ GATE 05 OFFLINE PASSED: constants verified (integration NOT VERIFIED).",
+      );
       return;
     }
     console.error("\n❌ GATE 05 OFFLINE FAILED: constants did not match spec.");
@@ -175,7 +177,9 @@ async function runBehavioralPhysicsCheck() {
   }
 
   if (!offlinePassed) {
-    console.error("\n❌ GATE 05 FAILED: offline constants mismatch — refusing to run integration tests against drifted builds.");
+    console.error(
+      "\n❌ GATE 05 FAILED: offline constants mismatch — refusing to run integration tests against drifted builds.",
+    );
     process.exit(1);
   }
 
@@ -185,11 +189,15 @@ async function runBehavioralPhysicsCheck() {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn(`⚠️  GATE 05 NOT VERIFIED: ${msg}`);
-    console.warn("  Offline constants PASSED; integration part requires API_URL / STYX_API_PUBLIC_URL.");
+    console.warn(
+      "  Offline constants PASSED; integration part requires API_URL / STYX_API_PUBLIC_URL.",
+    );
     process.exit(2);
   }
   const auth = await loginOrRegister(SEEDED_USER.email, SEEDED_USER.password);
-  console.log(`[AUTH] Authenticated as ${SEEDED_USER.email} — API ${getApiBase()}`);
+  console.log(
+    `[AUTH] Authenticated as ${SEEDED_USER.email} — API ${getApiBase()}`,
+  );
 
   let passed = 0;
   let total = 0;
@@ -240,17 +248,17 @@ async function runBehavioralPhysicsCheck() {
       console.log("\n[TEST 3] Cool-off period enforcement");
       total++;
       return expectReject(
-    "Cool-off after recent failure",
-    () =>
-      request("/contracts", auth.token, {
-        method: "POST",
-        body: JSON.stringify({
-          oathCategory: "CREATIVE_WRITING",
-          verificationMethod: "FURY_NETWORK",
-          stakeAmount: 10,
-          durationDays: 7,
-        }),
-      }),
+        "Cool-off after recent failure",
+        () =>
+          request("/contracts", auth.token, {
+            method: "POST",
+            body: JSON.stringify({
+              oathCategory: "CREATIVE_WRITING",
+              verificationMethod: "FURY_NETWORK",
+              stakeAmount: 10,
+              durationDays: 7,
+            }),
+          }),
         /cool-off|Cool-off/i,
       );
     })());
@@ -267,17 +275,17 @@ async function runBehavioralPhysicsCheck() {
       console.log("\n[TEST 4] Dynamic downscaling");
       total++;
       return expectReject(
-    "Dynamic downscaling after failures",
-    () =>
-      request("/contracts", auth.token, {
-        method: "POST",
-        body: JSON.stringify({
-          oathCategory: "CREATIVE_WRITING",
-          verificationMethod: "FURY_NETWORK",
-          stakeAmount: 99, // near max for TIER_2 — rejected if user has 3+ failures
-          durationDays: 7,
-        }),
-      }),
+        "Dynamic downscaling after failures",
+        () =>
+          request("/contracts", auth.token, {
+            method: "POST",
+            body: JSON.stringify({
+              oathCategory: "CREATIVE_WRITING",
+              verificationMethod: "FURY_NETWORK",
+              stakeAmount: 99, // near max for TIER_2 — rejected if user has 3+ failures
+              durationDays: 7,
+            }),
+          }),
         /downscaling/i,
       );
     })());
@@ -318,7 +326,11 @@ runBehavioralPhysicsCheck().catch((err) => {
 
   if (isConnectionRefused) {
     const base = (() => {
-      try { return getApiBase(); } catch { return "(no API_URL)"; }
+      try {
+        return getApiBase();
+      } catch {
+        return "(no API_URL)";
+      }
     })();
     console.warn(
       `⚠️  GATE 05 SKIPPED: API not reachable at ${base} (no running server in this environment).`,

@@ -37,13 +37,12 @@ function isRateLimited(ip: string): boolean {
 
 export async function POST(request: NextRequest) {
   const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "unknown";
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
   if (isRateLimited(ip)) {
     return NextResponse.json(
       { error: "Rate limit exceeded. Try again in a minute." },
-      { status: 429 }
+      { status: 429 },
     );
   }
 
@@ -51,27 +50,27 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON body" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   const messages = body.messages;
   if (!Array.isArray(messages) || messages.length === 0) {
     return NextResponse.json(
       { error: "messages array is required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     // Graceful degradation: return static knowledge base response
-    const fallbackText = "AI assist is currently running in offline knowledge-base mode.\n\n" + STYX_KNOWLEDGE.slice(0, 1200) + "...";
+    const fallbackText =
+      "AI assist is currently running in offline knowledge-base mode.\n\n" +
+      STYX_KNOWLEDGE.slice(0, 1200) +
+      "...";
     return NextResponse.json({
       content: fallbackText,
-      mode: "static_fallback"
+      mode: "static_fallback",
     });
   }
 
@@ -103,18 +102,23 @@ export async function POST(request: NextRequest) {
             const delta = chunk.choices[0]?.delta?.content;
             if (delta) {
               controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ content: delta })}\n\n`)
+                encoder.encode(
+                  `data: ${JSON.stringify({ content: delta })}\n\n`,
+                ),
               );
             }
           }
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
         } catch (err) {
-          const fallbackText = "AI assist stream interrupted. Operating in static knowledge mode.\n\n" + STYX_KNOWLEDGE.slice(0, 1000) + "...";
+          const fallbackText =
+            "AI assist stream interrupted. Operating in static knowledge mode.\n\n" +
+            STYX_KNOWLEDGE.slice(0, 1000) +
+            "...";
           controller.enqueue(
             encoder.encode(
-              `data: ${JSON.stringify({ content: fallbackText })}\n\n`
-            )
+              `data: ${JSON.stringify({ content: fallbackText })}\n\n`,
+            ),
           );
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
@@ -130,10 +134,13 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (err) {
-    const fallbackText = "AI assist is currently operating in offline knowledge mode.\n\n" + STYX_KNOWLEDGE.slice(0, 1200) + "...";
+    const fallbackText =
+      "AI assist is currently operating in offline knowledge mode.\n\n" +
+      STYX_KNOWLEDGE.slice(0, 1200) +
+      "...";
     return NextResponse.json({
       content: fallbackText,
-      mode: "static_fallback"
+      mode: "static_fallback",
     });
   }
 }

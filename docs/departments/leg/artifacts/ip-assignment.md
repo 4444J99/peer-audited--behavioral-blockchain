@@ -25,6 +25,7 @@ All intellectual property created for Styx -- including source code, algorithms,
 ### 1.2 Founder Assignment
 
 The founding developer(s) assign all pre-existing IP created for Styx prior to entity formation to the ORGANVM entity upon incorporation. This includes:
+
 - All source code in the `peer-audited--behavioral-blockchain` repository
 - All documentation in `docs/`
 - All design assets, wireframes, and mockups
@@ -40,6 +41,7 @@ A formal IP assignment agreement (see `docs/legal/legal--founder-agreement-draft
 ### 1.3 Contributor License Agreement (CLA)
 
 All external contributors must sign a Contributor License Agreement before any pull request is merged. The CLA grants:
+
 - A perpetual, worldwide, non-exclusive, royalty-free license to the ORGANVM entity for all contributed code
 - The right to relicense contributed code under any terms
 - Confirmation that the contributor has the legal right to make the contribution
@@ -58,37 +60,37 @@ Styx is built on open-source foundations. All dependencies are audited for licen
 
 ### 2.1 Runtime Dependencies (Production)
 
-| Package | License | Category | Compatibility |
-|---------|---------|----------|---------------|
-| **NestJS** (framework) | MIT | Backend | Compatible -- permissive |
-| **Next.js** (framework) | MIT | Frontend | Compatible -- permissive |
-| **React** | MIT | Frontend | Compatible -- permissive |
-| **React Native** | MIT | Mobile | Compatible -- permissive |
-| **Expo** | MIT | Mobile | Compatible -- permissive |
-| **Tauri** | MIT / Apache-2.0 | Desktop | Compatible -- permissive (dual-license) |
-| **Prisma** | Apache-2.0 | ORM | Compatible -- permissive |
-| **Stripe SDK** (@stripe/stripe-js, stripe-node) | Apache-2.0 | Payments | Compatible -- permissive |
-| **BullMQ** | MIT | Job queue | Compatible -- permissive |
-| **ioredis** | MIT | Redis client | Compatible -- permissive |
-| **Zod** | MIT | Validation | Compatible -- permissive |
-| **Passport.js** | MIT | Authentication | Compatible -- permissive |
-| **jsonwebtoken** | MIT | JWT | Compatible -- permissive |
-| **bcrypt** | MIT | Password hashing | Compatible -- permissive |
-| **Playwright** | Apache-2.0 | E2E testing | Compatible -- permissive (dev only) |
-| **Jest** | MIT | Unit testing | Compatible -- permissive (dev only) |
-| **TypeScript** | Apache-2.0 | Language | Compatible -- permissive (dev only) |
-| **Turborepo** | MIT | Build | Compatible -- permissive (dev only) |
-| **ESLint** | MIT | Linting | Compatible -- permissive (dev only) |
+| Package                                         | License          | Category         | Compatibility                           |
+| ----------------------------------------------- | ---------------- | ---------------- | --------------------------------------- |
+| **NestJS** (framework)                          | MIT              | Backend          | Compatible -- permissive                |
+| **Next.js** (framework)                         | MIT              | Frontend         | Compatible -- permissive                |
+| **React**                                       | MIT              | Frontend         | Compatible -- permissive                |
+| **React Native**                                | MIT              | Mobile           | Compatible -- permissive                |
+| **Expo**                                        | MIT              | Mobile           | Compatible -- permissive                |
+| **Tauri**                                       | MIT / Apache-2.0 | Desktop          | Compatible -- permissive (dual-license) |
+| **Prisma**                                      | Apache-2.0       | ORM              | Compatible -- permissive                |
+| **Stripe SDK** (@stripe/stripe-js, stripe-node) | Apache-2.0       | Payments         | Compatible -- permissive                |
+| **BullMQ**                                      | MIT              | Job queue        | Compatible -- permissive                |
+| **ioredis**                                     | MIT              | Redis client     | Compatible -- permissive                |
+| **Zod**                                         | MIT              | Validation       | Compatible -- permissive                |
+| **Passport.js**                                 | MIT              | Authentication   | Compatible -- permissive                |
+| **jsonwebtoken**                                | MIT              | JWT              | Compatible -- permissive                |
+| **bcrypt**                                      | MIT              | Password hashing | Compatible -- permissive                |
+| **Playwright**                                  | Apache-2.0       | E2E testing      | Compatible -- permissive (dev only)     |
+| **Jest**                                        | MIT              | Unit testing     | Compatible -- permissive (dev only)     |
+| **TypeScript**                                  | Apache-2.0       | Language         | Compatible -- permissive (dev only)     |
+| **Turborepo**                                   | MIT              | Build            | Compatible -- permissive (dev only)     |
+| **ESLint**                                      | MIT              | Linting          | Compatible -- permissive (dev only)     |
 
 ### 2.2 License Risk Assessment
 
-| License Type | Risk Level | Count | Notes |
-|-------------|------------|-------|-------|
-| MIT | None | ~85% of deps | No obligations beyond attribution |
-| Apache-2.0 | Very Low | ~12% of deps | Requires NOTICE file preservation, patent grant included |
-| BSD-2-Clause | None | ~2% of deps | Similar to MIT |
-| ISC | None | ~1% of deps | Functionally identical to MIT |
-| GPL / LGPL / AGPL | **High** | 0 | **No GPL-family dependencies in Styx.** This is enforced. |
+| License Type      | Risk Level | Count        | Notes                                                     |
+| ----------------- | ---------- | ------------ | --------------------------------------------------------- |
+| MIT               | None       | ~85% of deps | No obligations beyond attribution                         |
+| Apache-2.0        | Very Low   | ~12% of deps | Requires NOTICE file preservation, patent grant included  |
+| BSD-2-Clause      | None       | ~2% of deps  | Similar to MIT                                            |
+| ISC               | None       | ~1% of deps  | Functionally identical to MIT                             |
+| GPL / LGPL / AGPL | **High**   | 0            | **No GPL-family dependencies in Styx.** This is enforced. |
 
 ### 2.3 License Compliance Actions
 
@@ -110,15 +112,16 @@ The following elements of Styx are classified as trade secrets and must be prote
 
 ### 3.1 Algorithms
 
-| Trade Secret | Description | Protection Measures |
-|-------------|-------------|---------------------|
-| **Fury Consensus Algorithm** | The specific implementation of auditor selection, conflict-of-interest detection, quorum formation, and reputation weighting. The general concept (peer audit) is public; the implementation details are proprietary. | Source code in private repository. Not discussed in public documentation beyond high-level description. |
-| **Integrity Scoring Formula** | The exact formula for score calculation, including weights for completions, failures, audit participation, and potential decay curves. The existence of the score is public; the formula is proprietary. | Implemented in `@styx/shared` with no public documentation of exact weights. |
-| **Aegis Protocol Thresholds** | While the BMI floor (18.5) and velocity cap (2%) are disclosed for user transparency, the full set of safety heuristics (including unreleased ones for future oath categories) is proprietary. | Safety-critical thresholds are user-facing. Internal heuristics are in private config. |
+| Trade Secret                  | Description                                                                                                                                                                                                           | Protection Measures                                                                                     |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Fury Consensus Algorithm**  | The specific implementation of auditor selection, conflict-of-interest detection, quorum formation, and reputation weighting. The general concept (peer audit) is public; the implementation details are proprietary. | Source code in private repository. Not discussed in public documentation beyond high-level description. |
+| **Integrity Scoring Formula** | The exact formula for score calculation, including weights for completions, failures, audit participation, and potential decay curves. The existence of the score is public; the formula is proprietary.              | Implemented in `@styx/shared` with no public documentation of exact weights.                            |
+| **Aegis Protocol Thresholds** | While the BMI floor (18.5) and velocity cap (2%) are disclosed for user transparency, the full set of safety heuristics (including unreleased ones for future oath categories) is proprietary.                        | Safety-critical thresholds are user-facing. Internal heuristics are in private config.                  |
 
 ### 3.2 Behavioral Physics Constants
 
 The application of specific behavioral economics constants to product mechanics:
+
 - Lambda (1.955) loss aversion coefficient applied to stake presentation
 - Contract duration optimization curves
 - Verification frequency impact on completion rates
@@ -145,30 +148,30 @@ These constants are derived from published academic research but their specific 
 
 ### 4.1 Primary Marks
 
-| Mark | Type | Status | Class |
-|------|------|--------|-------|
-| **STYX** | Word mark | To be filed | Class 36 (Financial), Class 42 (Software) |
-| **The Blockchain of Truth** | Tagline | To be filed | Class 36, Class 42 |
-| **Fury** (in context of peer audit) | Word mark | To be filed | Class 36 |
-| Styx logo (design TBD) | Design mark | Planned | Class 36, Class 42 |
+| Mark                                | Type        | Status      | Class                                     |
+| ----------------------------------- | ----------- | ----------- | ----------------------------------------- |
+| **STYX**                            | Word mark   | To be filed | Class 36 (Financial), Class 42 (Software) |
+| **The Blockchain of Truth**         | Tagline     | To be filed | Class 36, Class 42                        |
+| **Fury** (in context of peer audit) | Word mark   | To be filed | Class 36                                  |
+| Styx logo (design TBD)              | Design mark | Planned     | Class 36, Class 42                        |
 
 ### 4.2 Trademark Risks
 
-| Risk | Assessment | Mitigation |
-|------|------------|------------|
-| "Styx" conflicts with existing marks | Medium -- "Styx" is a common mythological reference used across industries | Narrow to financial/software classes. Search USPTO TESS before filing. |
-| "Fury" is generic | High -- "fury" is a common English word | File as "Fury" specifically in context of peer audit/verification services. Consider "Styx Fury" as a composite mark. |
+| Risk                                      | Assessment                                                                        | Mitigation                                                                                                                                                                         |
+| ----------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Styx" conflicts with existing marks      | Medium -- "Styx" is a common mythological reference used across industries        | Narrow to financial/software classes. Search USPTO TESS before filing.                                                                                                             |
+| "Fury" is generic                         | High -- "fury" is a common English word                                           | File as "Fury" specifically in context of peer audit/verification services. Consider "Styx Fury" as a composite mark.                                                              |
 | "Blockchain" in tagline may be misleading | Medium -- Styx does not use blockchain technology (it uses a double-entry ledger) | "Blockchain of Truth" is metaphorical. Consider "Ledger of Truth" as alternative if challenged. Evaluate whether metaphorical use creates consumer confusion or regulatory issues. |
 
 ### 4.3 Domain and Social Media
 
-| Asset | Status | Notes |
-|-------|--------|-------|
-| styx.app | To be acquired | Check availability and pricing |
-| styx.io | To be evaluated | Alternative if .app unavailable |
-| @styx on Twitter/X | To be evaluated | Likely taken; consider @styx_app or @usestyx |
-| @styx on Instagram | To be evaluated | |
-| r/styx | Conflict (band subreddit) | Use r/styxapp or r/styxplatform |
+| Asset              | Status                    | Notes                                        |
+| ------------------ | ------------------------- | -------------------------------------------- |
+| styx.app           | To be acquired            | Check availability and pricing               |
+| styx.io            | To be evaluated           | Alternative if .app unavailable              |
+| @styx on Twitter/X | To be evaluated           | Likely taken; consider @styx_app or @usestyx |
+| @styx on Instagram | To be evaluated           |                                              |
+| r/styx             | Conflict (band subreddit) | Use r/styxapp or r/styxplatform              |
 
 ### 4.4 Filing Timeline
 
@@ -179,16 +182,16 @@ These constants are derived from published academic research but their specific 
 
 ## 5. IP Inventory Summary
 
-| Category | Count | Status |
-|----------|-------|--------|
-| Source code (proprietary) | ~50,000 LOC (TypeScript) | Private repo, entity-owned (pending formation) |
-| Algorithms (trade secret) | 3 core algorithms | Protected, not publicly documented |
-| Open-source dependencies | ~200 packages | All MIT/Apache-2.0 compatible |
-| Trademarks (planned) | 3 word marks + 1 design mark | Pre-filing |
-| Patents | 0 | Not currently pursuing; evaluate post-launch |
-| Domain names | 0 acquired | To be acquired pre-beta |
-| Design assets | ~20 files | Entity-owned (pending formation) |
-| Documentation (proprietary) | ~100 files | Private repo, entity-owned (pending formation) |
+| Category                    | Count                        | Status                                         |
+| --------------------------- | ---------------------------- | ---------------------------------------------- |
+| Source code (proprietary)   | ~50,000 LOC (TypeScript)     | Private repo, entity-owned (pending formation) |
+| Algorithms (trade secret)   | 3 core algorithms            | Protected, not publicly documented             |
+| Open-source dependencies    | ~200 packages                | All MIT/Apache-2.0 compatible                  |
+| Trademarks (planned)        | 3 word marks + 1 design mark | Pre-filing                                     |
+| Patents                     | 0                            | Not currently pursuing; evaluate post-launch   |
+| Domain names                | 0 acquired                   | To be acquired pre-beta                        |
+| Design assets               | ~20 files                    | Entity-owned (pending formation)               |
+| Documentation (proprietary) | ~100 files                   | Private repo, entity-owned (pending formation) |
 
 ## 6. Patent Considerations
 
@@ -203,18 +206,18 @@ The Fury consensus algorithm and integrity scoring system may be patentable as n
 
 ## 7. Action Items
 
-| Action | Priority | Owner | Deadline |
-|--------|----------|-------|----------|
-| Form ORGANVM entity | P0 | Founder | Pre-beta |
-| Execute founder IP assignment | P0 | Legal Counsel | At entity formation |
-| File STYX trademark (intent-to-use) | P1 | Legal Counsel | Pre-beta |
-| Set up CLA bot on GitHub | P1 | Engineering | Before public repo |
-| Implement license-checker in CI | P1 | Engineering | Before public repo |
-| Create NOTICE file for Apache-2.0 deps | P2 | Engineering | Pre-beta |
-| Acquire styx.app domain | P1 | Operations | Pre-beta |
-| Evaluate AI tool training data opt-out | P2 | Legal + Engineering | Pre-beta |
-| USPTO TESS search for STYX/FURY | P1 | Legal Counsel | Immediate |
-| Draft NDA template for contractors | P1 | Legal Counsel | Pre-beta |
+| Action                                 | Priority | Owner               | Deadline            |
+| -------------------------------------- | -------- | ------------------- | ------------------- |
+| Form ORGANVM entity                    | P0       | Founder             | Pre-beta            |
+| Execute founder IP assignment          | P0       | Legal Counsel       | At entity formation |
+| File STYX trademark (intent-to-use)    | P1       | Legal Counsel       | Pre-beta            |
+| Set up CLA bot on GitHub               | P1       | Engineering         | Before public repo  |
+| Implement license-checker in CI        | P1       | Engineering         | Before public repo  |
+| Create NOTICE file for Apache-2.0 deps | P2       | Engineering         | Pre-beta            |
+| Acquire styx.app domain                | P1       | Operations          | Pre-beta            |
+| Evaluate AI tool training data opt-out | P2       | Legal + Engineering | Pre-beta            |
+| USPTO TESS search for STYX/FURY        | P1       | Legal Counsel       | Immediate           |
+| Draft NDA template for contractors     | P1       | Legal Counsel       | Pre-beta            |
 
 ---
 

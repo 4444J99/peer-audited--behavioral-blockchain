@@ -21,7 +21,10 @@ describe("PractitionerController", () => {
   const req = { id: "req-correlation-id", user: { id: "prac-001" } };
 
   const grantAssignment = () =>
-    pool.query.mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 });
+    pool.query.mockResolvedValueOnce({
+      rows: [{ "?column?": 1 }],
+      rowCount: 1,
+    });
   const denyAssignment = () =>
     pool.query.mockResolvedValueOnce({ rows: [], rowCount: 0 });
 
@@ -34,19 +37,29 @@ describe("PractitionerController", () => {
   describe("dashboard", () => {
     it("returns the dashboard scoped to the requesting practitioner", async () => {
       const dashboards = [{ clientId: "client-1", clientAlias: "Kestrel" }];
-      (mockIntelligence.getPractitionerDashboard as jest.Mock).mockResolvedValue(dashboards);
+      (
+        mockIntelligence.getPractitionerDashboard as jest.Mock
+      ).mockResolvedValue(dashboards);
 
       const result = await controller.dashboard(req);
       expect(result).toEqual(dashboards);
-      expect(mockIntelligence.getPractitionerDashboard).toHaveBeenCalledWith("prac-001");
+      expect(mockIntelligence.getPractitionerDashboard).toHaveBeenCalledWith(
+        "prac-001",
+      );
     });
   });
 
   describe("riskProfile", () => {
     it("returns the risk profile for an assigned client", async () => {
       grantAssignment();
-      const profile = { userId: "client-1", riskScore: 42, riskLevel: "YELLOW" };
-      (mockIntelligence.getClientRiskProfile as jest.Mock).mockResolvedValue(profile);
+      const profile = {
+        userId: "client-1",
+        riskScore: 42,
+        riskLevel: "YELLOW",
+      };
+      (mockIntelligence.getClientRiskProfile as jest.Mock).mockResolvedValue(
+        profile,
+      );
 
       const result = await controller.riskProfile(req, "client-1");
       expect(result).toEqual(profile);
@@ -58,7 +71,10 @@ describe("PractitionerController", () => {
 
     it("rejects an unassigned client for a non-admin practitioner", async () => {
       denyAssignment();
-      pool.query.mockResolvedValueOnce({ rows: [{ role: "PRACTITIONER" }], rowCount: 1 });
+      pool.query.mockResolvedValueOnce({
+        rows: [{ role: "PRACTITIONER" }],
+        rowCount: 1,
+      });
 
       await expect(controller.riskProfile(req, "client-x")).rejects.toThrow(
         ForbiddenException,
@@ -68,7 +84,10 @@ describe("PractitionerController", () => {
 
     it("allows an ADMIN (verified against the DB) to view any client", async () => {
       denyAssignment();
-      pool.query.mockResolvedValueOnce({ rows: [{ role: "ADMIN" }], rowCount: 1 });
+      pool.query.mockResolvedValueOnce({
+        rows: [{ role: "ADMIN" }],
+        rowCount: 1,
+      });
       (mockIntelligence.getClientRiskProfile as jest.Mock).mockResolvedValue({
         userId: "client-x",
       });
@@ -93,15 +112,24 @@ describe("PractitionerController", () => {
 
       grantAssignment();
       await controller.riskTrend(req, "client-1", "500");
-      expect(mockIntelligence.getRiskTrend).toHaveBeenLastCalledWith("client-1", 90);
+      expect(mockIntelligence.getRiskTrend).toHaveBeenLastCalledWith(
+        "client-1",
+        90,
+      );
 
       grantAssignment();
       await controller.riskTrend(req, "client-1", "not-a-number");
-      expect(mockIntelligence.getRiskTrend).toHaveBeenLastCalledWith("client-1", 30);
+      expect(mockIntelligence.getRiskTrend).toHaveBeenLastCalledWith(
+        "client-1",
+        30,
+      );
 
       grantAssignment();
       const result = await controller.riskTrend(req, "client-1", "14");
-      expect(mockIntelligence.getRiskTrend).toHaveBeenLastCalledWith("client-1", 14);
+      expect(mockIntelligence.getRiskTrend).toHaveBeenLastCalledWith(
+        "client-1",
+        14,
+      );
       expect(result).toEqual({ clientId: "client-1", days: 14, trend: [] });
     });
   });
@@ -176,8 +204,12 @@ describe("PractitionerController", () => {
           createdAt: new Date(),
         },
       ];
-      (mockIntelligence.analyzeJournalEntry as jest.Mock).mockResolvedValue(alerts);
-      (mockIntelligence.sendPractitionerAlert as jest.Mock).mockResolvedValue(undefined);
+      (mockIntelligence.analyzeJournalEntry as jest.Mock).mockResolvedValue(
+        alerts,
+      );
+      (mockIntelligence.sendPractitionerAlert as jest.Mock).mockResolvedValue(
+        undefined,
+      );
 
       const result = await controller.scanJournalEntry(req, "client-1", {
         entryText: "I hit a breaking point, but just this once I can slip",
@@ -219,8 +251,13 @@ describe("PractitionerController", () => {
   describe("adherence", () => {
     it("resolves the active contract and returns the adherence rate", async () => {
       grantAssignment();
-      pool.query.mockResolvedValueOnce({ rows: [{ id: "contract-7" }], rowCount: 1 });
-      (mockIntelligence.calculateAdherenceRate as jest.Mock).mockResolvedValue(85);
+      pool.query.mockResolvedValueOnce({
+        rows: [{ id: "contract-7" }],
+        rowCount: 1,
+      });
+      (mockIntelligence.calculateAdherenceRate as jest.Mock).mockResolvedValue(
+        85,
+      );
 
       const result = await controller.adherence(req, "client-1");
       expect(mockIntelligence.calculateAdherenceRate).toHaveBeenCalledWith(
@@ -237,11 +274,20 @@ describe("PractitionerController", () => {
     it("returns a null contract when the client has no active contract", async () => {
       grantAssignment();
       pool.query.mockResolvedValueOnce({ rows: [], rowCount: 0 });
-      (mockIntelligence.calculateAdherenceRate as jest.Mock).mockResolvedValue(0);
+      (mockIntelligence.calculateAdherenceRate as jest.Mock).mockResolvedValue(
+        0,
+      );
 
       const result = await controller.adherence(req, "client-1");
-      expect(mockIntelligence.calculateAdherenceRate).toHaveBeenCalledWith("client-1", "");
-      expect(result).toEqual({ clientId: "client-1", contractId: null, adherenceRate: 0 });
+      expect(mockIntelligence.calculateAdherenceRate).toHaveBeenCalledWith(
+        "client-1",
+        "",
+      );
+      expect(result).toEqual({
+        clientId: "client-1",
+        contractId: null,
+        adherenceRate: 0,
+      });
     });
   });
 

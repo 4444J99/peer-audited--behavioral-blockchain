@@ -1,8 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Queue } from 'bullmq';
-import { Pool } from 'pg';
-import { randomBytes } from 'crypto';
-import { VIDEO_PROCESSING_QUEUE_NAME, getDefaultQueueOptions } from '../../../config/queue.config';
+import { Injectable, Logger } from "@nestjs/common";
+import { Queue } from "bullmq";
+import { Pool } from "pg";
+import { randomBytes } from "crypto";
+import {
+  VIDEO_PROCESSING_QUEUE_NAME,
+  getDefaultQueueOptions,
+} from "../../../config/queue.config";
 
 @Injectable()
 export class VideoProcessingService {
@@ -10,11 +13,14 @@ export class VideoProcessingService {
   private queue: Queue;
 
   constructor(private readonly pool: Pool) {
-    this.queue = new Queue(VIDEO_PROCESSING_QUEUE_NAME, getDefaultQueueOptions());
+    this.queue = new Queue(
+      VIDEO_PROCESSING_QUEUE_NAME,
+      getDefaultQueueOptions(),
+    );
   }
 
   async dispatchForProcessing(proofId: string): Promise<void> {
-    const challengeToken = randomBytes(32).toString('hex');
+    const challengeToken = randomBytes(32).toString("hex");
 
     const result = await this.pool.query(
       `UPDATE proofs
@@ -28,11 +34,13 @@ export class VideoProcessingService {
     );
 
     if (result.rows.length === 0) {
-      this.logger.warn(`Proof ${proofId} not eligible for processing — already processing or no media`);
+      this.logger.warn(
+        `Proof ${proofId} not eligible for processing — already processing or no media`,
+      );
       return;
     }
 
-    await this.queue.add('process-video', {
+    await this.queue.add("process-video", {
       proofId,
       challengeToken,
       userId: result.rows[0].user_id,

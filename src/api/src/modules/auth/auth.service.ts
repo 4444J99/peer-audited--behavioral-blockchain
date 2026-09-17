@@ -1,30 +1,46 @@
-import { Injectable, ConflictException, UnauthorizedException, BadRequestException, Optional, Inject } from '@nestjs/common';
-import { ReferralService } from '../referrals/referral.service';
-import { AntiSybilService, DeviceFingerprint } from '../security/anti-sybil.service';
-import { Pool, PoolClient } from 'pg';
-import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
-import { randomBytes, createHash, createHmac, scryptSync, timingSafeEqual } from 'crypto';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+  BadRequestException,
+  Optional,
+  Inject,
+} from "@nestjs/common";
+import { ReferralService } from "../referrals/referral.service";
+import {
+  AntiSybilService,
+  DeviceFingerprint,
+} from "../security/anti-sybil.service";
+import { Pool, PoolClient } from "pg";
+import * as bcrypt from "bcryptjs";
+import * as jwt from "jsonwebtoken";
+import {
+  randomBytes,
+  createHash,
+  createHmac,
+  scryptSync,
+  timingSafeEqual,
+} from "crypto";
 import {
   classifyMotivationArchetype,
   type MotivationAssessmentAnswers,
   type MotivationProfile,
-} from '../../../../shared';
+} from "../../../../shared";
 
 const BCRYPT_ROUNDS = 10;
-const ACCESS_TOKEN_EXPIRY = '15m';
+const ACCESS_TOKEN_EXPIRY = "15m";
 const TOKEN_EXPIRY = ACCESS_TOKEN_EXPIRY; // alias for backward compat
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 const MAX_FAILED_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
 const DEFAULT_API_KEY_EXPIRY_DAYS = 90;
 const MAX_API_KEY_EXPIRY_DAYS = 365;
-const API_KEY_PREFIX = 'styx_live';
+const API_KEY_PREFIX = "styx_live";
 
 export function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET; // allow-secret
   if (!secret) {
-    throw new Error('JWT_SECRET must be set');
+    throw new Error("JWT_SECRET must be set");
   }
   return secret;
 }
@@ -32,7 +48,7 @@ export function getJwtSecret(): string {
 export function getApiKeyPepper(): string {
   const pepper = process.env.STYX_API_KEY_PEPPER; // allow-secret
   if (!pepper) {
-    throw new Error('STYX_API_KEY_PEPPER must be set');
+    throw new Error("STYX_API_KEY_PEPPER must be set");
   }
   return pepper;
 }
@@ -42,7 +58,8 @@ export function getApiKeyPepper(): string {
 // Exported so a unit test can assert it is a valid bcrypt hash that no password
 // matches (AU6): a malformed hash makes bcrypt.compare return/throw immediately,
 // re-introducing the timing oracle this dummy compare exists to remove.
-export const DUMMY_BCRYPT_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8DvHwz6T2x2vR5y6jHkn3vF3dWk3Iq'; // allow-secret
+export const DUMMY_BCRYPT_HASH =
+  "$2a$10$CwTycUXWue0Thq9StjUM0uJ8DvHwz6T2x2vR5y6jHkn3vF3dWk3Iq"; // allow-secret
 
 /**
  * Derives a CSRF token bound to a given session access token. Because the token
@@ -51,7 +68,9 @@ export const DUMMY_BCRYPT_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8DvHwz6T2x2vR5y6
  * weakness where any attacker-set cookie value would satisfy the check.
  */
 export function deriveCsrfToken(sessionToken: string): string {
-  return createHmac('sha256', getJwtSecret()).update(sessionToken).digest('hex');
+  return createHmac("sha256", getJwtSecret())
+    .update(sessionToken)
+    .digest("hex");
 }
 
 export interface AuthPayload {
@@ -90,10 +109,13 @@ export interface ApiKeySummary {
   expiresAt: Date | null;
   lastUsedAt: Date | null;
   revokedAt: Date | null;
-  status: 'active' | 'expired' | 'revoked';
+  status: "active" | "expired" | "revoked";
 }
 
-export function parseApiKey(apiKey: string): { keyId: string; secret: string } | null { // allow-secret
+export function parseApiKey(
+  apiKey: string,
+): { keyId: string; secret: string } | null {
+  // allow-secret
   const match = /^styx_live_([a-f0-9]{24})_([A-Za-z0-9_-]+)$/.exec(apiKey);
   if (!match) {
     return null;
@@ -102,17 +124,18 @@ export function parseApiKey(apiKey: string): { keyId: string; secret: string } |
   return { keyId: match[1], secret: match[2] }; // allow-secret
 }
 
-export function deriveApiKeyVerifier(secret: string): string { // allow-secret
+export function deriveApiKeyVerifier(secret: string): string {
+  // allow-secret
   return scryptSync(secret, getApiKeyPepper(), 64, {
     N: 16_384,
     r: 8,
     p: 1,
-  }).toString('hex');
+  }).toString("hex");
 }
 
 function compareHashes(left: string, right: string): boolean {
-  const leftBuf = Buffer.from(left, 'hex');
-  const rightBuf = Buffer.from(right, 'hex');
+  const leftBuf = Buffer.from(left, "hex");
+  const rightBuf = Buffer.from(right, "hex");
   if (leftBuf.length !== rightBuf.length) {
     return false;
   }
@@ -141,43 +164,61 @@ export class AuthService {
       referralCode?: string;
       deviceFingerprint?: DeviceFingerprint;
     },
-  ): Promise<{ userId: string; token: string }> { // allow-secret
-    const maybeConnect = (this.pool as unknown as { connect?: () => Promise<PoolClient> }).connect;
-    const client = typeof maybeConnect === 'function' ? await maybeConnect.call(this.pool) : null;
-    const db: { query: PoolClient['query'] } = (client ?? this.pool) as any;
+  ): Promise<{ userId: string; token: string }> {
+    // allow-secret
+    const maybeConnect = (
+      this.pool as unknown as { connect?: () => Promise<PoolClient> }
+    ).connect;
+    const client =
+      typeof maybeConnect === "function"
+        ? await maybeConnect.call(this.pool)
+        : null;
+    const db: { query: PoolClient["query"] } = (client ?? this.pool) as any;
     const useTransaction = !!client;
 
     try {
       if (useTransaction) {
-        await db.query('BEGIN');
+        await db.query("BEGIN");
       }
 
       // Enforce age gate and terms acceptance
       if (!opts?.ageConfirmation) {
-        throw new BadRequestException('You must confirm you are 18 years or older');
+        throw new BadRequestException(
+          "You must confirm you are 18 years or older",
+        );
       }
       if (!opts?.termsAccepted) {
-        throw new BadRequestException('You must accept the Terms of Service and Privacy Policy');
+        throw new BadRequestException(
+          "You must accept the Terms of Service and Privacy Policy",
+        );
       }
       if (!opts?.dateOfBirth) {
-        throw new BadRequestException('Date of birth is required');
+        throw new BadRequestException("Date of birth is required");
       }
-      
+
       const dob = new Date(opts.dateOfBirth);
       if (isNaN(dob.getTime())) {
-        throw new BadRequestException('Invalid date of birth format');
+        throw new BadRequestException("Invalid date of birth format");
       }
       const now = new Date();
-      const age = now.getFullYear() - dob.getFullYear() -
-        (now < new Date(now.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
+      const age =
+        now.getFullYear() -
+        dob.getFullYear() -
+        (now < new Date(now.getFullYear(), dob.getMonth(), dob.getDate())
+          ? 1
+          : 0);
       if (age < 18) {
-        throw new BadRequestException('You must be at least 18 years old to use Styx');
+        throw new BadRequestException(
+          "You must be at least 18 years old to use Styx",
+        );
       }
 
       // Check for existing user
-      const existing = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+      const existing = await db.query("SELECT id FROM users WHERE email = $1", [
+        email,
+      ]);
       if (existing.rows.length > 0) {
-        throw new ConflictException('Email already registered');
+        throw new ConflictException("Email already registered");
       }
 
       const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
@@ -185,7 +226,7 @@ export class AuthService {
       // Create ledger account for the user
       const accountResult = await db.query(
         `INSERT INTO accounts (name, type) VALUES ($1, 'ASSET') RETURNING id`,
-        [`USER_${email.split('@')[0]}_${Date.now()}`],
+        [`USER_${email.split("@")[0]}_${Date.now()}`],
       );
       const accountId = accountResult.rows[0].id;
 
@@ -201,28 +242,34 @@ export class AuthService {
 
       if (opts.deviceFingerprint) {
         if (!this.antiSybil) {
-          throw new Error('Anti-Sybil registration is unavailable');
+          throw new Error("Anti-Sybil registration is unavailable");
         }
-        await this.antiSybil.registerDeviceFingerprint(userId, opts.deviceFingerprint, db as Pick<PoolClient, 'query'>);
+        await this.antiSybil.registerDeviceFingerprint(
+          userId,
+          opts.deviceFingerprint,
+          db as Pick<PoolClient, "query">,
+        );
       }
 
       if (useTransaction) {
-        await db.query('COMMIT');
+        await db.query("COMMIT");
       }
 
       const token = this.signToken(userId, email); // allow-secret
 
       if (opts.referralCode && this.referralService) {
-        this.referralService.attributeReferral(opts.referralCode, userId).catch((err: Error) => {
-          console.error(`Failed to attribute referral: ${err.message}`);
-        });
+        this.referralService
+          .attributeReferral(opts.referralCode, userId)
+          .catch((err: Error) => {
+            console.error(`Failed to attribute referral: ${err.message}`);
+          });
       }
 
       return { userId, token };
     } catch (err) {
       if (useTransaction) {
         try {
-          await db.query('ROLLBACK');
+          await db.query("ROLLBACK");
         } catch {
           // Preserve the original error.
         }
@@ -233,9 +280,13 @@ export class AuthService {
     }
   }
 
-  async login(email: string, password: string): Promise<{ userId: string; token: string; integrity: number }> { // allow-secret
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ userId: string; token: string; integrity: number }> {
+    // allow-secret
     const result = await this.pool.query(
-      'SELECT id, email, password_hash, status, integrity_score, role, failed_login_attempts, locked_until FROM users WHERE email = $1',
+      "SELECT id, email, password_hash, status, integrity_score, role, failed_login_attempts, locked_until FROM users WHERE email = $1",
       [email],
     );
 
@@ -243,22 +294,27 @@ export class AuthService {
       // Always run a bcrypt compare against a dummy hash so the response time
       // does not reveal whether the email is registered (user enumeration).
       await bcrypt.compare(password, DUMMY_BCRYPT_HASH);
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException("Invalid email or password");
     }
 
     const user = result.rows[0];
 
     // Check account lockout
     if (user.locked_until && new Date(user.locked_until) > new Date()) {
-      throw new UnauthorizedException('Account temporarily locked. Try again later.');
+      throw new UnauthorizedException(
+        "Account temporarily locked. Try again later.",
+      );
     }
 
     // Always perform a bcrypt compare (against a dummy hash if none is set) to
     // keep timing uniform across the missing-hash and wrong-password branches.
-    const valid = await bcrypt.compare(password, user.password_hash || DUMMY_BCRYPT_HASH);
+    const valid = await bcrypt.compare(
+      password,
+      user.password_hash || DUMMY_BCRYPT_HASH,
+    );
 
     if (!user.password_hash) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException("Invalid email or password");
     }
 
     // AU2: validate the password (and run the failed-attempt UPDATE) BEFORE the
@@ -281,14 +337,14 @@ export class AuthService {
          WHERE id = $1`,
         [user.id, MAX_FAILED_LOGIN_ATTEMPTS],
       );
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException("Invalid email or password");
     }
 
     // Password is correct: now enforce the account-status gate. A non-ACTIVE
     // account is still blocked, but only after the same bcrypt + UPDATE work path
     // as a wrong-password active account, so the timing does not differ.
-    if (String(user.status || '').toUpperCase() !== 'ACTIVE') {
-      throw new UnauthorizedException('Invalid email or password');
+    if (String(user.status || "").toUpperCase() !== "ACTIVE") {
+      throw new UnauthorizedException("Invalid email or password");
     }
 
     // Successful login — reset lockout counters and track activity
@@ -302,10 +358,17 @@ export class AuthService {
   }
 
   private signToken(userId: string, email: string, role?: string): string {
-    return jwt.sign({ sub: userId, email, role: role || 'USER' }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY });
+    return jwt.sign(
+      { sub: userId, email, role: role || "USER" },
+      getJwtSecret(),
+      { expiresIn: TOKEN_EXPIRY },
+    );
   }
 
-  async exchangeEnterpriseToken(enterpriseToken: string): Promise<{ userId: string; token: string }> { // allow-secret
+  async exchangeEnterpriseToken(
+    enterpriseToken: string,
+  ): Promise<{ userId: string; token: string }> {
+    // allow-secret
     // Verify the enterprise SSO assertion. The assertion is minted by the external
     // corporate IdP/portal and delivered to the app via the styx://enterprise/ deep
     // link (see mobile/services/EnterpriseSSO.ts), then POSTed to /auth/enterprise.
@@ -323,39 +386,46 @@ export class AuthService {
     // (which anyone able to sign a session JWT could exploit to forge assertions).
     const enterpriseSecret = process.env.ENTERPRISE_SSO_SECRET; // allow-secret
     if (!enterpriseSecret) {
-      throw new UnauthorizedException('Enterprise SSO is not configured');
+      throw new UnauthorizedException("Enterprise SSO is not configured");
     }
     let payload: AuthPayload;
     try {
-      payload = jwt.verify(enterpriseToken, enterpriseSecret, { algorithms: ['HS256'] }) as AuthPayload;
+      payload = jwt.verify(enterpriseToken, enterpriseSecret, {
+        algorithms: ["HS256"],
+      }) as AuthPayload;
     } catch (err) {
       if (err instanceof UnauthorizedException) {
         throw err;
       }
-      throw new UnauthorizedException('Invalid enterprise token');
+      throw new UnauthorizedException("Invalid enterprise token");
     }
 
     // Look up the user by enterprise association
     const result = await this.pool.query(
-      'SELECT id, email, enterprise_id, status, role FROM users WHERE id = $1 AND enterprise_id IS NOT NULL',
+      "SELECT id, email, enterprise_id, status, role FROM users WHERE id = $1 AND enterprise_id IS NOT NULL",
       [payload.sub],
     );
 
     if (result.rows.length === 0) {
-      throw new UnauthorizedException('No enterprise user found for this token');
+      throw new UnauthorizedException(
+        "No enterprise user found for this token",
+      );
     }
 
     const user = result.rows[0];
-    if (user.status !== 'ACTIVE') {
-      throw new UnauthorizedException('Enterprise user account is not active');
+    if (user.status !== "ACTIVE") {
+      throw new UnauthorizedException("Enterprise user account is not active");
     }
 
     const token = this.signToken(user.id, user.email, user.role); // allow-secret
     return { userId: user.id, token };
   }
 
-  verifyToken(token: string): AuthPayload { // allow-secret
-    return jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as AuthPayload;
+  verifyToken(token: string): AuthPayload {
+    // allow-secret
+    return jwt.verify(token, getJwtSecret(), {
+      algorithms: ["HS256"],
+    }) as AuthPayload;
   }
 
   /**
@@ -364,15 +434,21 @@ export class AuthService {
    * revoke their (longer-lived) refresh tokens. The signature is still enforced, so
    * an attacker cannot pass an arbitrary token to revoke another user's sessions.
    */
-  verifyTokenIgnoringExpiry(token: string): AuthPayload { // allow-secret
-    return jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'], ignoreExpiration: true }) as AuthPayload;
+  verifyTokenIgnoringExpiry(token: string): AuthPayload {
+    // allow-secret
+    return jwt.verify(token, getJwtSecret(), {
+      algorithms: ["HS256"],
+      ignoreExpiration: true,
+    }) as AuthPayload;
   }
 
   /** Generate a refresh token, store its hash in DB, return the raw token. */
   async generateRefreshToken(userId: string): Promise<string> {
-    const rawToken = randomBytes(32).toString('hex'); // allow-secret
-    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
-    const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+    const rawToken = randomBytes(32).toString("hex"); // allow-secret
+    const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+    const expiresAt = new Date(
+      Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+    );
 
     await this.pool.query(
       `INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`,
@@ -383,8 +459,11 @@ export class AuthService {
   }
 
   /** Validate a refresh token, rotate it (revoke old, issue new), and return a new access + refresh token pair. */
-  async refreshAccessToken(refreshToken: string): Promise<{ userId: string; token: string; refreshToken: string }> { // allow-secret
-    const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
+  async refreshAccessToken(
+    refreshToken: string,
+  ): Promise<{ userId: string; token: string; refreshToken: string }> {
+    // allow-secret
+    const tokenHash = createHash("sha256").update(refreshToken).digest("hex");
 
     const result = await this.pool.query(
       `SELECT rt.id, rt.user_id, rt.expires_at, rt.revoked, u.email, u.status, u.role
@@ -395,21 +474,21 @@ export class AuthService {
     );
 
     if (result.rows.length === 0) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException("Invalid refresh token");
     }
 
     const row = result.rows[0];
 
     if (row.revoked) {
-      throw new UnauthorizedException('Refresh token has been revoked');
+      throw new UnauthorizedException("Refresh token has been revoked");
     }
 
     if (new Date(row.expires_at) < new Date()) {
-      throw new UnauthorizedException('Refresh token has expired');
+      throw new UnauthorizedException("Refresh token has expired");
     }
 
-    if (String(row.status || '').toUpperCase() !== 'ACTIVE') {
-      throw new UnauthorizedException('User account is not active');
+    if (String(row.status || "").toUpperCase() !== "ACTIVE") {
+      throw new UnauthorizedException("User account is not active");
     }
 
     // Revoke the old refresh token (rotation)
@@ -422,7 +501,11 @@ export class AuthService {
     const accessToken = this.signToken(row.user_id, row.email, row.role); // allow-secret
     const newRefreshToken = await this.generateRefreshToken(row.user_id); // allow-secret
 
-    return { userId: row.user_id, token: accessToken, refreshToken: newRefreshToken };
+    return {
+      userId: row.user_id,
+      token: accessToken,
+      refreshToken: newRefreshToken,
+    };
   }
 
   /** Revoke all refresh tokens for a user (used on logout and password change). */
@@ -448,13 +531,15 @@ export class AuthService {
       );
     }
 
-    const keyId = randomBytes(12).toString('hex');
-    const secret = randomBytes(32).toString('base64url'); // allow-secret
+    const keyId = randomBytes(12).toString("hex");
+    const secret = randomBytes(32).toString("base64url"); // allow-secret
     const apiKey = `${API_KEY_PREFIX}_${keyId}_${secret}`; // allow-secret
     const keyHash = deriveApiKeyVerifier(secret); // allow-secret
-    const name = opts.name?.trim() || 'API key';
+    const name = opts.name?.trim() || "API key";
     const prefix = `${API_KEY_PREFIX}_${keyId}`;
-    const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + expiresInDays * 24 * 60 * 60 * 1000,
+    );
 
     const result = await this.pool.query(
       `INSERT INTO api_keys (user_id, key_id, key_hash, name, prefix, expires_at)
@@ -466,7 +551,7 @@ export class AuthService {
     );
 
     if (result.rows.length === 0) {
-      throw new UnauthorizedException('User account is not active');
+      throw new UnauthorizedException("User account is not active");
     }
 
     const row = result.rows[0];
@@ -493,11 +578,11 @@ export class AuthService {
     return result.rows.map((row) => {
       const revoked = !!row.revoked_at;
       const expired = !!row.expires_at && new Date(row.expires_at) < new Date();
-      const status: ApiKeySummary['status'] = revoked
-        ? 'revoked'
+      const status: ApiKeySummary["status"] = revoked
+        ? "revoked"
         : expired
-          ? 'expired'
-          : 'active';
+          ? "expired"
+          : "active";
       return {
         id: row.id,
         keyId: row.key_id,
@@ -512,7 +597,10 @@ export class AuthService {
     });
   }
 
-  async revokeApiKey(userId: string, keyId: string): Promise<{ revoked: boolean }> {
+  async revokeApiKey(
+    userId: string,
+    keyId: string,
+  ): Promise<{ revoked: boolean }> {
     const result = await this.pool.query(
       `UPDATE api_keys
        SET revoked_at = COALESCE(revoked_at, NOW())
@@ -522,16 +610,17 @@ export class AuthService {
     );
 
     if (result.rows.length === 0) {
-      throw new UnauthorizedException('API key not found');
+      throw new UnauthorizedException("API key not found");
     }
 
     return { revoked: true };
   }
 
-  async verifyApiKey(apiKey: string): Promise<ApiKeyAuthPayload> { // allow-secret
+  async verifyApiKey(apiKey: string): Promise<ApiKeyAuthPayload> {
+    // allow-secret
     const parsed = parseApiKey(apiKey);
     if (!parsed) {
-      throw new UnauthorizedException('Invalid API key');
+      throw new UnauthorizedException("Invalid API key");
     }
 
     const keyHash = deriveApiKeyVerifier(parsed.secret); // allow-secret
@@ -545,24 +634,24 @@ export class AuthService {
     );
 
     if (result.rows.length === 0) {
-      throw new UnauthorizedException('Invalid API key');
+      throw new UnauthorizedException("Invalid API key");
     }
 
     const row = result.rows[0];
     if (!compareHashes(row.key_hash, keyHash)) {
-      throw new UnauthorizedException('Invalid API key');
+      throw new UnauthorizedException("Invalid API key");
     }
 
     if (row.revoked_at) {
-      throw new UnauthorizedException('API key has been revoked');
+      throw new UnauthorizedException("API key has been revoked");
     }
 
     if (row.expires_at && new Date(row.expires_at) < new Date()) {
-      throw new UnauthorizedException('API key has expired');
+      throw new UnauthorizedException("API key has expired");
     }
 
-    if (String(row.status || '').toUpperCase() !== 'ACTIVE') {
-      throw new UnauthorizedException('User account is not active');
+    if (String(row.status || "").toUpperCase() !== "ACTIVE") {
+      throw new UnauthorizedException("User account is not active");
     }
 
     await this.pool.query(
@@ -573,7 +662,7 @@ export class AuthService {
     return {
       sub: row.user_id,
       email: row.email,
-      role: row.role || 'USER',
+      role: row.role || "USER",
       apiKeyId: parsed.keyId,
       apiKeyDbId: row.id,
     };
@@ -600,16 +689,19 @@ export class AuthService {
     return profile;
   }
 
-  async getMotivationProfile(userId: string): Promise<MotivationProfile | null> {
+  async getMotivationProfile(
+    userId: string,
+  ): Promise<MotivationProfile | null> {
     try {
       const res = await this.pool.query(
         `SELECT motivation_archetype, intake_answers FROM users WHERE id = $1`,
         [userId],
       );
       if (res.rows[0]?.intake_answers) {
-        const answers = typeof res.rows[0].intake_answers === 'string'
-          ? JSON.parse(res.rows[0].intake_answers)
-          : res.rows[0].intake_answers;
+        const answers =
+          typeof res.rows[0].intake_answers === "string"
+            ? JSON.parse(res.rows[0].intake_answers)
+            : res.rows[0].intake_answers;
         return classifyMotivationArchetype(answers);
       }
     } catch {

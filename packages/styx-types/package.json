@@ -1,0 +1,27 @@
+{
+  "name": "@styx/types",
+  "version": "0.1.0",
+  "description": "Public type contracts and UI helpers for the Styx behavioral market. Safe for open-source distribution — contains no proprietary behavioral physics formulas or enforcement constants.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@styx/shared": "*"
+  },
+  "devDependencies": {
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
+  },
+  "files": ["dist"],
+  "license": "Apache-2.0"
+}

@@ -49,14 +49,14 @@ Styx introduces three innovations:
 
 ### Technical Differentiation
 
-| Feature | Styx | Beeminder | StickK | Habit Apps |
-|---------|------|-----------|--------|-----------|
-| Verification method | Peer audit network | Self-report | Single referee | None / self-report |
-| Financial integrity | Double-entry ledger | Simple balance | Charity escrow | N/A |
-| Auditor incentives | Stake + bounty + penalty | N/A | N/A | N/A |
-| B2B clinical channel | Yes (3 tiers) | No | No | Limited |
-| Hardware oracle path | Planned (wearables) | Partial (integrations) | No | Partial |
-| Loss aversion model | Calibrated (λ=1.955) | Pledge escalation | Fixed | None |
+| Feature              | Styx                     | Beeminder              | StickK         | Habit Apps         |
+| -------------------- | ------------------------ | ---------------------- | -------------- | ------------------ |
+| Verification method  | Peer audit network       | Self-report            | Single referee | None / self-report |
+| Financial integrity  | Double-entry ledger      | Simple balance         | Charity escrow | N/A                |
+| Auditor incentives   | Stake + bounty + penalty | N/A                    | N/A            | N/A                |
+| B2B clinical channel | Yes (3 tiers)            | No                     | No             | Limited            |
+| Hardware oracle path | Planned (wearables)      | Partial (integrations) | No             | Partial            |
+| Loss aversion model  | Calibrated (λ=1.955)     | Pledge escalation      | Fixed          | None               |
 
 ## Applicable Funding Programs
 
@@ -118,31 +118,31 @@ Styx introduces three innovations:
 
 ## Budget Template: $50,000 Grant (6 months)
 
-| Category | Amount | % | Description |
-|----------|--------|---|-------------|
-| **Infrastructure** | $3,000 | 6% | Render upgrades, R2 storage, monitoring tools |
-| **Development** | $15,000 | 30% | AI-assisted development tools, contractor for mobile app |
-| **User Research** | $8,000 | 16% | Behavioral economics study with 100+ participants |
-| **Clinical Partnerships** | $5,000 | 10% | Therapist/coach onboarding, B2B pilot with 5 practices |
-| **Marketing** | $7,000 | 14% | Content marketing, behavioral science conference attendance |
-| **Legal** | $5,000 | 10% | Terms of service, privacy policy, escrow compliance review |
-| **Testing / QA** | $3,000 | 6% | Penetration testing, load testing, security audit |
-| **Contingency** | $4,000 | 8% | Unexpected costs, scope adjustments |
-| **TOTAL** | **$50,000** | **100%** | |
+| Category                  | Amount      | %        | Description                                                 |
+| ------------------------- | ----------- | -------- | ----------------------------------------------------------- |
+| **Infrastructure**        | $3,000      | 6%       | Render upgrades, R2 storage, monitoring tools               |
+| **Development**           | $15,000     | 30%      | AI-assisted development tools, contractor for mobile app    |
+| **User Research**         | $8,000      | 16%      | Behavioral economics study with 100+ participants           |
+| **Clinical Partnerships** | $5,000      | 10%      | Therapist/coach onboarding, B2B pilot with 5 practices      |
+| **Marketing**             | $7,000      | 14%      | Content marketing, behavioral science conference attendance |
+| **Legal**                 | $5,000      | 10%      | Terms of service, privacy policy, escrow compliance review  |
+| **Testing / QA**          | $3,000      | 6%       | Penetration testing, load testing, security audit           |
+| **Contingency**           | $4,000      | 8%       | Unexpected costs, scope adjustments                         |
+| **TOTAL**                 | **$50,000** | **100%** |                                                             |
 
 ## Budget Template: $150,000 Grant (12 months)
 
-| Category | Amount | % | Description |
-|----------|--------|---|-------------|
-| **Infrastructure** | $8,000 | 5% | Production-grade Render, CDN, monitoring stack |
-| **Personnel** | $50,000 | 33% | Part-time contractor (frontend), part-time support hire |
-| **Development** | $25,000 | 17% | AI tools, hardware oracle integrations (Apple Health, Fitbit) |
-| **User Research** | $20,000 | 13% | Controlled study: Styx vs self-report, 500+ participants, IRB |
-| **Clinical Partnerships** | $12,000 | 8% | B2B pilot expansion to 20 practices, clinical advisory board |
-| **Marketing** | $15,000 | 10% | Paid acquisition testing, conference talks, case studies |
-| **Legal / Compliance** | $10,000 | 7% | Money transmitter analysis, state-by-state compliance review |
-| **Contingency** | $10,000 | 7% | |
-| **TOTAL** | **$150,000** | **100%** | |
+| Category                  | Amount       | %        | Description                                                   |
+| ------------------------- | ------------ | -------- | ------------------------------------------------------------- |
+| **Infrastructure**        | $8,000       | 5%       | Production-grade Render, CDN, monitoring stack                |
+| **Personnel**             | $50,000      | 33%      | Part-time contractor (frontend), part-time support hire       |
+| **Development**           | $25,000      | 17%      | AI tools, hardware oracle integrations (Apple Health, Fitbit) |
+| **User Research**         | $20,000      | 13%      | Controlled study: Styx vs self-report, 500+ participants, IRB |
+| **Clinical Partnerships** | $12,000      | 8%       | B2B pilot expansion to 20 practices, clinical advisory board  |
+| **Marketing**             | $15,000      | 10%      | Paid acquisition testing, conference talks, case studies      |
+| **Legal / Compliance**    | $10,000      | 7%       | Money transmitter analysis, state-by-state compliance review  |
+| **Contingency**           | $10,000      | 7%       |                                                               |
+| **TOTAL**                 | **$150,000** | **100%** |                                                               |
 
 ## Impact Metrics
 
@@ -150,32 +150,32 @@ These metrics should be cited in applications to demonstrate measurable outcomes
 
 ### Primary Metrics
 
-| Metric | Target (6 mo) | Target (12 mo) | Measurement |
-|--------|---------------|----------------|-------------|
-| Contracts completed | 500 | 5,000 | Ledger records |
-| Completion rate | 60%+ | 65%+ | Completed / total contracts |
-| Unique users | 200 | 2,000 | Account registrations |
-| B2B practitioners | 5 | 20 | Subscription records |
-| Fury audit accuracy | 90%+ | 92%+ | Correct audits / total audits |
+| Metric              | Target (6 mo) | Target (12 mo) | Measurement                   |
+| ------------------- | ------------- | -------------- | ----------------------------- |
+| Contracts completed | 500           | 5,000          | Ledger records                |
+| Completion rate     | 60%+          | 65%+           | Completed / total contracts   |
+| Unique users        | 200           | 2,000          | Account registrations         |
+| B2B practitioners   | 5             | 20             | Subscription records          |
+| Fury audit accuracy | 90%+          | 92%+           | Correct audits / total audits |
 
 ### Secondary Metrics
 
-| Metric | Target (12 mo) | Measurement |
-|--------|----------------|-------------|
-| Recovery Protocol enrollments | 50 | Contracts with recovery category |
-| Therapist-referred contracts | 200 | Contracts created via B2B portal |
-| Repeat contract rate | 40%+ | Users with 2+ contracts |
-| Average stake amount | $35-$50 | Ledger records |
-| Ledger integrity incidents | 0 | Reconciliation alerts |
+| Metric                        | Target (12 mo) | Measurement                      |
+| ----------------------------- | -------------- | -------------------------------- |
+| Recovery Protocol enrollments | 50             | Contracts with recovery category |
+| Therapist-referred contracts  | 200            | Contracts created via B2B portal |
+| Repeat contract rate          | 40%+           | Users with 2+ contracts          |
+| Average stake amount          | $35-$50        | Ledger records                   |
+| Ledger integrity incidents    | 0              | Reconciliation alerts            |
 
 ### Research Metrics (for academic-oriented grants)
 
-| Metric | Description |
-|--------|-------------|
-| λ validation | Measured loss aversion coefficient vs theoretical 1.955 |
-| Completion rate by stake size | Dose-response curve for financial commitment |
-| Fury accuracy by experience | Auditor learning curve |
-| Self-report vs Fury-verified discrepancy | Quantifies gaming reduction |
+| Metric                                   | Description                                             |
+| ---------------------------------------- | ------------------------------------------------------- |
+| λ validation                             | Measured loss aversion coefficient vs theoretical 1.955 |
+| Completion rate by stake size            | Dose-response curve for financial commitment            |
+| Fury accuracy by experience              | Auditor learning curve                                  |
+| Self-report vs Fury-verified discrepancy | Quantifies gaming reduction                             |
 
 ## Styx-Specific Pitch Points by Audience
 

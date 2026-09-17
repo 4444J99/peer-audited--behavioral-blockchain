@@ -7,7 +7,10 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
  * keys are stripped before they reach the service.
  */
 export class JoinBetaWaitlistDto {
-  @ApiProperty({ description: "Prospect email address", example: "you@example.com" })
+  @ApiProperty({
+    description: "Prospect email address",
+    example: "you@example.com",
+  })
   @IsEmail()
   email!: string;
 
@@ -26,13 +29,17 @@ export class JoinBetaWaitlistDto {
   @MaxLength(280)
   goal?: string;
 
-  @ApiPropertyOptional({ description: "Target platform (Phase 1 wedge is iOS)" })
+  @ApiPropertyOptional({
+    description: "Target platform (Phase 1 wedge is iOS)",
+  })
   @IsOptional()
   @IsString()
   @MaxLength(40)
   platform?: string;
 
-  @ApiPropertyOptional({ description: "Raw source token from the CTA/campaign" })
+  @ApiPropertyOptional({
+    description: "Raw source token from the CTA/campaign",
+  })
   @IsOptional()
   @IsString()
   @MaxLength(120)
@@ -74,7 +81,9 @@ export class JoinBetaWaitlistDto {
   @MaxLength(120)
   ref?: string;
 
-  @ApiPropertyOptional({ description: "Explicit channel override (rarely needed)" })
+  @ApiPropertyOptional({
+    description: "Explicit channel override (rarely needed)",
+  })
   @IsOptional()
   @IsString()
   @MaxLength(40)

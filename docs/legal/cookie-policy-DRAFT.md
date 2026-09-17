@@ -22,7 +22,7 @@ _Effective date: [TBD -- prior to beta launch]_
 > reviewed it and until the enumeration below has been re-derived against the shipping build.
 
 Named by the phase gate at `docs/checklists/phase-gate-public-process.md` §2 → Legal Documents:
-*"Cookie Policy and consent banner implemented (CCPA compliance for US users)."* This document is
+_"Cookie Policy and consent banner implemented (CCPA compliance for US users)."_ This document is
 the policy half. **The consent banner is not implemented** — see §6.
 
 **Why this is a separate document.** `docs/legal/privacy-policy.md` contains no cookie section — the
@@ -48,11 +48,11 @@ mechanisms:
 The web application sets exactly **three** cookies. All three are strictly necessary to operate an
 authenticated session. **There are none other.**
 
-| Name | Purpose | Readable by scripts | Lifetime |
-|---|---|---|---|
-| `styx_auth_token` | Your session access token. Identifies you to the API on each request. | No (`httpOnly`) | 15 minutes |
-| `styx_refresh_token` | Renews your session without making you log in again. | No (`httpOnly`) | 7 days |
-| `styx_csrf_token` | Cross-site request forgery protection. The application reads it and echoes it back on write requests so we can confirm the request came from our own pages. | **Yes** — deliberately | 15 minutes |
+| Name                 | Purpose                                                                                                                                                     | Readable by scripts    | Lifetime   |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ---------- |
+| `styx_auth_token`    | Your session access token. Identifies you to the API on each request.                                                                                       | No (`httpOnly`)        | 15 minutes |
+| `styx_refresh_token` | Renews your session without making you log in again.                                                                                                        | No (`httpOnly`)        | 7 days     |
+| `styx_csrf_token`    | Cross-site request forgery protection. The application reads it and echoes it back on write requests so we can confirm the request came from our own pages. | **Yes** — deliberately | 15 minutes |
 
 All three are set with the `Secure` attribute in production (transmitted only over HTTPS) and
 `SameSite=Lax` (not sent on cross-site requests from other websites).
@@ -84,15 +84,15 @@ offer, because there is nothing to opt out of.
 The web application stores the following in your browser's local storage. These values stay on your
 device.
 
-| Key | Purpose | Category |
-|---|---|---|
-| `styx_email_notifs`, `styx_push_notifs` | Your notification preferences as shown in Settings | Preference |
-| `styx_cloak_enabled` | Whether the privacy cloak display mode is on | Preference |
-| `styx-chat-messages` | Your in-app assistant conversation, so it survives a page reload | Functional |
-| `styx.snapshot.persona` | Which surface persona the demo view is showing | Functional |
-| `styx.guidedTour.audience`, `styx.guidedTour.open` | Guided-tour state, so the tour does not restart on every page | Functional |
-| `styx.guidedTour.sessionId`, `styx.guidedTour.name` | A random per-session identifier for guided-tour feedback | Functional |
-| `styx.guidedTour.telemetry` | Set to `off` to disable guided-tour telemetry | **Opt-out control** |
+| Key                                                 | Purpose                                                          | Category            |
+| --------------------------------------------------- | ---------------------------------------------------------------- | ------------------- |
+| `styx_email_notifs`, `styx_push_notifs`             | Your notification preferences as shown in Settings               | Preference          |
+| `styx_cloak_enabled`                                | Whether the privacy cloak display mode is on                     | Preference          |
+| `styx-chat-messages`                                | Your in-app assistant conversation, so it survives a page reload | Functional          |
+| `styx.snapshot.persona`                             | Which surface persona the demo view is showing                   | Functional          |
+| `styx.guidedTour.audience`, `styx.guidedTour.open`  | Guided-tour state, so the tour does not restart on every page    | Functional          |
+| `styx.guidedTour.sessionId`, `styx.guidedTour.name` | A random per-session identifier for guided-tour feedback         | Functional          |
+| `styx.guidedTour.telemetry`                         | Set to `off` to disable guided-tour telemetry                    | **Opt-out control** |
 
 Clearing your browser's site data removes all of these. Doing so logs you out and resets these
 preferences; it does not delete anything from your account.
@@ -113,10 +113,10 @@ preferences; it does not delete anything from your account.
 
 > **INTERNAL NOTE — remove before publication, but do not remove the underlying gap.**
 >
-> The phase gate names *"Cookie Policy and consent banner implemented"*. **No consent banner exists
+> The phase gate names _"Cookie Policy and consent banner implemented"_. **No consent banner exists
 > in the web application** — a search of `src/web` finds no consent component of any kind.
 >
-> The substantive question for counsel is whether one is required *given the enumeration above*.
+> The substantive question for counsel is whether one is required _given the enumeration above_.
 > Strictly-necessary cookies do not require opt-in consent under CCPA/CPRA, and there are no
 > advertising, analytics, or third-party cookies to consent to. On the facts as implemented today,
 > the honest position is that a banner may be unnecessary and a **link to this policy in the site
@@ -143,12 +143,12 @@ canonical contact block once it is finalized].
 
 ## Drafting Notes (internal — remove before publication)
 
-| Item | Status |
-|---|---|
-| Outside counsel retained | **No** — issue #315 |
-| Consent banner implemented | **No** — §6 |
-| Footer link to this policy | **Not present** |
-| Published at `styx.app/cookies` | **No** |
+| Item                                          | Status                                                                                                                                             |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Outside counsel retained                      | **No** — issue #315                                                                                                                                |
+| Consent banner implemented                    | **No** — §6                                                                                                                                        |
+| Footer link to this policy                    | **Not present**                                                                                                                                    |
+| Published at `styx.app/cookies`               | **No**                                                                                                                                             |
 | Enumeration re-derived against shipping build | **Required before publication** — the tables in §2 and §4 are exhaustive as of 2026-08-15 and go stale the moment a cookie or storage key is added |
 
 **Source of every entry in this draft:**

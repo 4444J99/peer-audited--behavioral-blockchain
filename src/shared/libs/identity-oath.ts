@@ -62,7 +62,8 @@ export const IDENTITY_ARCHETYPES: readonly IdentityArchetype[] = [
   {
     id: "REBUILDER",
     label: "The Rebuilder",
-    becoming: "someone who is building the next chapter instead of re-reading the last one",
+    becoming:
+      "someone who is building the next chapter instead of re-reading the last one",
     description:
       "Your attention goes into the life in front of you, and the days accumulate into something of your own.",
   },
@@ -79,7 +80,8 @@ export function getIdentityArchetype(
   archetypeId: string,
 ): IdentityArchetype | null {
   return (
-    IDENTITY_ARCHETYPES.find((archetype) => archetype.id === archetypeId) ?? null
+    IDENTITY_ARCHETYPES.find((archetype) => archetype.id === archetypeId) ??
+    null
   );
 }
 
@@ -108,7 +110,8 @@ export function assignCopyVariant(
   userId: string,
   archetypeId: string,
 ): IdentityCopyVariant {
-  const bucket = fnv1a32(`${userId}:${archetypeId}`) % IDENTITY_COPY_VARIANTS.length;
+  const bucket =
+    fnv1a32(`${userId}:${archetypeId}`) % IDENTITY_COPY_VARIANTS.length;
   return IDENTITY_COPY_VARIANTS[bucket];
 }
 

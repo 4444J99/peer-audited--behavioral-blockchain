@@ -24,14 +24,14 @@ hypothesis:
 
 ### Hypothesis Components
 
-| Component | Definition | Example |
-|-----------|------------|---------|
-| Independent variable | What you change | Oath format (checkbox vs. typed) |
-| Dependent variable | What you measure | 7-day contract completion rate |
-| Target segment | Who is affected | New consumer users |
-| Effect size | How much change | +5pp completion rate |
-| Mechanism | Why it works | Self-signaling / cognitive commitment |
-| Risk | What could backfire | Increased onboarding friction → drop-off |
+| Component            | Definition          | Example                                  |
+| -------------------- | ------------------- | ---------------------------------------- |
+| Independent variable | What you change     | Oath format (checkbox vs. typed)         |
+| Dependent variable   | What you measure    | 7-day contract completion rate           |
+| Target segment       | Who is affected     | New consumer users                       |
+| Effect size          | How much change     | +5pp completion rate                     |
+| Mechanism            | Why it works        | Self-signaling / cognitive commitment    |
+| Risk                 | What could backfire | Increased onboarding friction → drop-off |
 
 ---
 
@@ -42,8 +42,12 @@ hypothesis:
 Styx uses consistent hashing for deterministic user-variant assignment:
 
 ```typescript
-function assignVariant(userId: string, experimentKey: string, variants: string[]): string {
-  const hash = createHash('sha256')
+function assignVariant(
+  userId: string,
+  experimentKey: string,
+  variants: string[],
+): string {
+  const hash = createHash("sha256")
     .update(`${experimentKey}:${userId}`)
     .digest();
   const index = hash.readUInt32BE(0) % variants.length;
@@ -67,17 +71,18 @@ def min_sample_size(effect_size: float, alpha=0.05, power=0.80) -> int:
 ```
 
 | Effect size (pp) | Users per variant |
-|-----------------|-------------------|
-| 1 pp            | ~15,700           |
-| 2 pp            | ~3,900            |
-| 5 pp            | ~630              |
-| 10 pp           | ~160              |
+| ---------------- | ----------------- |
+| 1 pp             | ~15,700           |
+| 2 pp             | ~3,900            |
+| 5 pp             | ~630              |
+| 10 pp            | ~160              |
 
 ### Duration Rules
 
 Minimum duration = `max(required_sample_days, 7 calendar days)` to capture day-of-week effects.
 
 Stop the experiment when either:
+
 - Minimum sample size AND minimum duration are both reached, OR
 - 4 weeks have passed (cap), OR
 - A guardrail metric triggers a halt (see §4)
@@ -131,12 +136,12 @@ The mobile client uses this map to render the correct variant without additional
 
 ### Significance Thresholds
 
-| Measure | Threshold | When |
-|---------|-----------|------|
-| Statistical significance | p < 0.05 | Declare a winner |
-| Practical significance | effect > 1 pp or > 5% relative | Minimum viable effect |
-| Bayesian probability | P(variant > control) > 0.95 | Sequential analysis |
-| FDR correction | Benjamini-Hochberg | When testing >5 secondary metrics |
+| Measure                  | Threshold                      | When                              |
+| ------------------------ | ------------------------------ | --------------------------------- |
+| Statistical significance | p < 0.05                       | Declare a winner                  |
+| Practical significance   | effect > 1 pp or > 5% relative | Minimum viable effect             |
+| Bayesian probability     | P(variant > control) > 0.95    | Sequential analysis               |
+| FDR correction           | Benjamini-Hochberg             | When testing >5 secondary metrics |
 
 ### Stopping Rules
 
@@ -171,13 +176,13 @@ NOT significant & NOT practically significant:
 
 Every experiment must define guardrail metrics before launch. If any guardrail moves beyond its threshold, the experiment is halted immediately.
 
-| Guardrail | Threshold | Action |
-|-----------|-----------|--------|
-| Error rate | > 2× baseline for 24h | Halt and roll back |
-| Support tickets | > 3× baseline | Halt and investigate |
-| Session duration (p50) | < 0.5× baseline | Halt — UX regression |
-| Refund / dispute rate | > 2× baseline | Halt until reviewed |
-| Account deletion rate | > 1.5× baseline | Halt immediately |
+| Guardrail              | Threshold             | Action               |
+| ---------------------- | --------------------- | -------------------- |
+| Error rate             | > 2× baseline for 24h | Halt and roll back   |
+| Support tickets        | > 3× baseline         | Halt and investigate |
+| Session duration (p50) | < 0.5× baseline       | Halt — UX regression |
+| Refund / dispute rate  | > 2× baseline         | Halt until reviewed  |
+| Account deletion rate  | > 1.5× baseline       | Halt immediately     |
 
 ### Rollback Protocol
 
@@ -206,6 +211,7 @@ DRAFT → REVIEW → LAUNCH → RUNNING → ANALYZING → CLOSED
 ### Checklist for Each Phase
 
 **DRAFT:**
+
 - [ ] Hypothesis written and reviewed
 - [ ] Primary metric defined and instrumented
 - [ ] Sample size calculated
@@ -213,27 +219,32 @@ DRAFT → REVIEW → LAUNCH → RUNNING → ANALYZING → CLOSED
 - [ ] Experiment duration set
 
 **REVIEW:**
+
 - [ ] Engineering review: implementation correct
 - [ ] Product review: hypothesis worth testing
 - [ ] Safety review: guardrails adequate
 - [ ] Pre-registration on experiment log
 
 **LAUNCH:**
+
 - [ ] Variant code deployed
 - [ ] Experiment flag activated
 - [ ] Monitoring dashboard live
 
 **RUNNING:**
+
 - [ ] Guardrail check daily
 - [ ] Log exposure counts
 
 **ANALYZING:**
+
 - [ ] Primary analysis run
 - [ ] Secondary analyses run
 - [ ] Practical significance assessed
 - [ ] Decision made
 
 **CLOSED:**
+
 - [ ] Winner shipped or null result documented
 - [ ] Experiment archived in experiment log
 
@@ -283,7 +294,10 @@ Add experiment flags to the bootstrap response in `src/api/src/modules/beta/beta
 ```typescript
 function assignExperiments(userId: string): Record<string, string> {
   return {
-    'onboarding-oath': assignVariant(userId, 'onboarding-oath', ['checkbox', 'typed']),
+    "onboarding-oath": assignVariant(userId, "onboarding-oath", [
+      "checkbox",
+      "typed",
+    ]),
   };
 }
 ```

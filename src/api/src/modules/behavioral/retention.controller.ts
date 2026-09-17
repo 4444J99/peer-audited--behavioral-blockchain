@@ -15,8 +15,16 @@ import {
 } from "@nestjs/common";
 import { Pool } from "pg";
 import { AuthGuard } from "../../../guards/auth.guard";
-import { DangerZoneService, DEFAULT_TIMEZONE, DangerWindow, ProtectionRecommendation } from "./danger-zone.service";
-import { AccountabilityPartnerService, CheckIn } from "./accountability-partner.service";
+import {
+  DangerZoneService,
+  DEFAULT_TIMEZONE,
+  DangerWindow,
+  ProtectionRecommendation,
+} from "./danger-zone.service";
+import {
+  AccountabilityPartnerService,
+  CheckIn,
+} from "./accountability-partner.service";
 import { ProgressDashboardService } from "./progress-dashboard.service";
 import { EndowedProgressService } from "./endowed-progress.service";
 import { NotificationComposerService } from "../notifications/notification-composer.service";
@@ -58,14 +66,20 @@ export class RetentionController {
   ) {}
 
   @Get("progress-dashboard/:contractId")
-  async getProgressDashboard(@Req() req: any, @Param("contractId") contractId: string) {
+  async getProgressDashboard(
+    @Req() req: any,
+    @Param("contractId") contractId: string,
+  ) {
     const userId = resolveUserId(req);
     await this.assertContractOwnership(contractId, userId);
     return this.progressDashboard.getDashboardSummary(userId, contractId);
   }
 
   @Get("endowed-progress/:contractId")
-  async getEndowedProgress(@Req() req: any, @Param("contractId") contractId: string) {
+  async getEndowedProgress(
+    @Req() req: any,
+    @Param("contractId") contractId: string,
+  ) {
     const userId = resolveUserId(req);
     await this.assertContractOwnership(contractId, userId);
     const [state, downscaling] = await Promise.all([
@@ -88,8 +102,12 @@ export class RetentionController {
 
     const contracts: ContractDangerStatus[] = [];
     for (const row of contractsResult.rows) {
-      const windows = await this.dangerZone.evaluateDangerWindows(row.id, timezone);
-      const recommendations = await this.dangerZone.getProtectionRecommendations(windows);
+      const windows = await this.dangerZone.evaluateDangerWindows(
+        row.id,
+        timezone,
+      );
+      const recommendations =
+        await this.dangerZone.getProtectionRecommendations(windows);
       contracts.push({
         contractId: row.id,
         inDangerZone: windows.length > 0,
@@ -114,13 +132,18 @@ export class RetentionController {
       categories.length === 0 ||
       !categories.every((c) => typeof c === "string" && c.trim().length > 0)
     ) {
-      throw new BadRequestException("categories must be a non-empty array of oath category strings");
+      throw new BadRequestException(
+        "categories must be a non-empty array of oath category strings",
+      );
     }
     return this.partners.requestPartnerMatch(userId, categories as string[]);
   }
 
   @Post("partners/accept")
-  async acceptPartnership(@Req() req: any, @Body() body: { contractId?: string }) {
+  async acceptPartnership(
+    @Req() req: any,
+    @Body() body: { contractId?: string },
+  ) {
     const userId = resolveUserId(req);
     const contractId = body?.contractId;
     if (typeof contractId !== "string" || contractId.length === 0) {
@@ -135,10 +158,14 @@ export class RetentionController {
       throw new NotFoundException(`Contract ${contractId} not found`);
     }
     if (rows[0].user_id === userId) {
-      throw new BadRequestException("You cannot be the accountability partner on your own contract");
+      throw new BadRequestException(
+        "You cannot be the accountability partner on your own contract",
+      );
     }
     if (rows[0].status !== "ACTIVE") {
-      throw new BadRequestException("Partnerships can only be accepted on active contracts");
+      throw new BadRequestException(
+        "Partnerships can only be accepted on active contracts",
+      );
     }
 
     // Accepting a partnership schedules its first check-in with the accepting
@@ -162,13 +189,18 @@ export class RetentionController {
 
     const parsed = limit === undefined ? 20 : parseInt(limit, 10);
     if (!Number.isInteger(parsed) || parsed < 1 || parsed > 100) {
-      throw new BadRequestException("limit must be an integer between 1 and 100");
+      throw new BadRequestException(
+        "limit must be an integer between 1 and 100",
+      );
     }
     return this.partners.getCheckInHistory(contractId, parsed);
   }
 
   @Post("partners/check-in")
-  async completeCheckIn(@Req() req: any, @Body() body: { checkInId?: string; message?: string }) {
+  async completeCheckIn(
+    @Req() req: any,
+    @Body() body: { checkInId?: string; message?: string },
+  ) {
     const userId = resolveUserId(req);
     if (typeof body?.checkInId !== "string" || body.checkInId.length === 0) {
       throw new BadRequestException("checkInId is required");
@@ -179,15 +211,23 @@ export class RetentionController {
 
     const membership = await this.getCheckInMembership(body.checkInId);
     if (membership.ownerId !== userId && membership.partnerId !== userId) {
-      throw new ForbiddenException("You are not a participant in this check-in");
+      throw new ForbiddenException(
+        "You are not a participant in this check-in",
+      );
     }
 
-    const checkIn = await this.partners.completeCheckIn(body.checkInId, body.message.trim());
+    const checkIn = await this.partners.completeCheckIn(
+      body.checkInId,
+      body.message.trim(),
+    );
     await this.notifyCounterpart(userId, membership, checkIn);
     return checkIn;
   }
 
-  private async assertContractOwnership(contractId: string, userId: string): Promise<void> {
+  private async assertContractOwnership(
+    contractId: string,
+    userId: string,
+  ): Promise<void> {
     const { rows } = await this.pool.query(
       `SELECT user_id FROM contracts WHERE id = $1`,
       [contractId],
@@ -200,7 +240,10 @@ export class RetentionController {
     }
   }
 
-  private async assertContractMembership(contractId: string, userId: string): Promise<void> {
+  private async assertContractMembership(
+    contractId: string,
+    userId: string,
+  ): Promise<void> {
     const { rows } = await this.pool.query(
       `SELECT c.user_id AS owner_id,
               EXISTS (
@@ -215,11 +258,15 @@ export class RetentionController {
       throw new NotFoundException(`Contract ${contractId} not found`);
     }
     if (rows[0].owner_id !== userId && !rows[0].is_partner) {
-      throw new ForbiddenException("You are not a participant on this contract");
+      throw new ForbiddenException(
+        "You are not a participant on this contract",
+      );
     }
   }
 
-  private async getCheckInMembership(checkInId: string): Promise<CheckInMembership> {
+  private async getCheckInMembership(
+    checkInId: string,
+  ): Promise<CheckInMembership> {
     const { rows } = await this.pool.query(
       `SELECT pc.partner_id, c.user_id AS owner_id,
               uo.alias AS owner_alias, up.alias AS partner_alias
@@ -254,12 +301,16 @@ export class RetentionController {
     membership: CheckInMembership,
     checkIn: CheckIn,
   ): Promise<void> {
-    const counterpartId = completerId === membership.ownerId ? membership.partnerId : membership.ownerId;
+    const counterpartId =
+      completerId === membership.ownerId
+        ? membership.partnerId
+        : membership.ownerId;
     if (!counterpartId) return;
 
     const completerAlias =
-      (completerId === membership.ownerId ? membership.ownerAlias : membership.partnerAlias) ??
-      `user-${completerId.slice(0, 8)}`;
+      (completerId === membership.ownerId
+        ? membership.ownerAlias
+        : membership.partnerAlias) ?? `user-${completerId.slice(0, 8)}`;
     const composed = this.composer.compose({
       type: "PARTNER_CHECK_IN",
       userId: counterpartId,
@@ -273,7 +324,11 @@ export class RetentionController {
         type: "PARTNER_CHECK_IN",
         title: composed.title,
         body: composed.body,
-        metadata: { ...composed.data, checkInId: checkIn.id, priority: composed.priority },
+        metadata: {
+          ...composed.data,
+          checkInId: checkIn.id,
+          priority: composed.priority,
+        },
       });
     } catch (err) {
       // Delivery is best-effort — completing the check-in must not fail on notify.

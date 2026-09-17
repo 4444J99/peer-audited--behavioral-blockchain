@@ -23,6 +23,7 @@ This checklist defines the requirements for promoting Styx from PUBLIC_PROCESS t
 ## 1. Engineering Quality
 
 ### Validation Gates
+
 - [ ] Gate 01 (Schema Validation) — All data contracts pass JSON Schema validation
 - [ ] Gate 02 (Seed Contract) — `seed.yaml` validates against `seed-v1.schema.json`, all edges declared
 - [ ] Gate 03 (Dependency Graph) — No illegal cross-organ back-edges, unidirectional flow verified
@@ -33,6 +34,7 @@ This checklist defines the requirements for promoting Styx from PUBLIC_PROCESS t
 - [ ] Gate 08 (Security Audit) — Dependabot alerts resolved, CodeQL clean, no critical/high findings
 
 ### Test Coverage
+
 - [ ] Unit test coverage ≥ 70% lines across all packages (NestJS API, Next.js web, shared libs)
 - [ ] Integration test suite covering all API endpoints with real database
 - [ ] Fury audit flow tested end-to-end (contract creation → proof submission → audit → verdict → payout)
@@ -41,6 +43,7 @@ This checklist defines the requirements for promoting Styx from PUBLIC_PROCESS t
 - [ ] Recovery protocol tests verify no-contact tracking edge cases (emergency contact, unsolicited messages)
 
 ### End-to-End Testing
+
 - [ ] Playwright E2E suite green on Chrome (latest)
 - [ ] Playwright E2E suite green on Firefox (latest)
 - [ ] Playwright E2E suite green on Safari (latest)
@@ -49,6 +52,7 @@ This checklist defines the requirements for promoting Styx from PUBLIC_PROCESS t
 - [ ] Beta readiness suite passing (`scripts/smoke/beta-readiness.sh`)
 
 ### Performance
+
 - [ ] Load test completed: API p99 < 2 seconds at 1,000 concurrent users
 - [ ] Database query analysis: no N+1 queries, all critical paths indexed
 - [ ] Proof submission upload: p99 < 5 seconds for 10MB image
@@ -60,6 +64,7 @@ This checklist defines the requirements for promoting Styx from PUBLIC_PROCESS t
 ## 2. Financial & Legal
 
 ### Stripe Production
+
 - [ ] Stripe production mode activated (real money transactions enabled)
 - [ ] FBO (For Benefit Of) escrow account configured and verified by Stripe
 - [ ] High-risk merchant underwriting approved by Stripe (escrow + behavioral contracts)
@@ -69,6 +74,7 @@ This checklist defines the requirements for promoting Styx from PUBLIC_PROCESS t
 - [ ] Failure flow tested: failed contract → stake forfeited, distributed correctly
 
 ### KYC/AML
+
 - [ ] KYC identity verification enabled for stakes above $100 (via Stripe Identity)
 - [ ] AML screening enabled for high-value transactions
 - [ ] Age verification: 18+ requirement enforced at account creation
@@ -93,6 +99,7 @@ open-questions section naming what only counsel can close.
 ## 3. Infrastructure & Operations
 
 ### Monitoring & Alerting
+
 - [ ] Sentry error tracking configured for all services (API, web, mobile, worker)
 - [ ] Uptime monitoring configured (< 5 minute detection for P1 outages)
 - [ ] Database connection pool monitoring with alerting at 80% capacity
@@ -101,6 +108,7 @@ open-questions section naming what only counsel can close.
 - [ ] Fury audit queue monitoring: alert if unassigned audits > 50 or average wait > 4 hours
 
 ### Deployment
+
 - [ ] Deployment procedure documented (step-by-step runbook)
 - [ ] Rollback procedure documented and tested (< 5 minute rollback to previous version)
 - [ ] Zero-downtime deployment verified (blue-green or rolling update)
@@ -108,12 +116,14 @@ open-questions section naming what only counsel can close.
 - [ ] Environment variable management documented (Render dashboard, no secrets in code)
 
 ### Backup & Recovery
+
 - [ ] Database backup schedule verified (daily automatic via Render)
 - [ ] Database recovery procedure tested (restore from backup to staging environment)
 - [ ] Point-in-time recovery tested (recover to specific timestamp within 7-day window)
 - [ ] R2 storage backup strategy documented (proof submission files)
 
 ### Security
+
 - [ ] Security audit completed by independent third party (no critical/high findings open)
 - [ ] Penetration test completed (no critical/high findings open)
 - [ ] All Dependabot alerts resolved (zero open critical/high advisories)
@@ -128,6 +138,7 @@ open-questions section naming what only counsel can close.
 ## 4. Product Readiness
 
 ### App Store Submission
+
 - [ ] Linguistic Cloaker validated: all user-facing copy passes Apple App Review Guidelines
 - [ ] Linguistic Cloaker validated: all user-facing copy passes Google Play Developer Program Policies
 - [ ] iOS build signing configured (Apple Developer Program)
@@ -137,6 +148,7 @@ open-questions section naming what only counsel can close.
 - [ ] Privacy nutrition label completed (App Store) / Data safety section completed (Play Store)
 
 ### B2B Readiness
+
 - [ ] B2B practitioner onboarding flow tested with ≥ 3 real practitioners
 - [ ] Practitioner dashboard analytics verified with real client data
 - [ ] Custom contract template creation tested by practitioners
@@ -146,6 +158,7 @@ open-questions section naming what only counsel can close.
 - [ ] Enterprise tier ($999+/mo) billing tested (custom invoicing if needed)
 
 ### Customer Support
+
 - [ ] FAQ/help center published at styx.app/help (30+ articles)
 - [ ] In-app support widget configured (email fallback during beta, live chat at launch)
 - [ ] Support response time SLA established (< 4 hours during beta)
@@ -158,6 +171,7 @@ open-questions section naming what only counsel can close.
 ## 5. Business Metrics Validation
 
 ### Beta Data Requirements
+
 - [ ] Minimum 100 completed contracts with real users (test money or real money)
 - [ ] Contract completion rate ≥ 55% across all categories
 - [ ] Fury audit accuracy ≥ 85% (agreement rate on appeal panel reviews)
@@ -166,6 +180,7 @@ open-questions section naming what only counsel can close.
 - [ ] Proof submission latency: average < 12 hours from window open to submission
 
 ### Financial Projections
+
 - [ ] Financial projections document validated against beta data
 - [ ] Unit economics verified: platform fee ($9/contract) covers per-contract infrastructure costs
 - [ ] Practitioner LTV/CAC ratio > 3:1 for Solo tier
@@ -176,6 +191,7 @@ open-questions section naming what only counsel can close.
 ## 6. ORGANVM System Integration
 
 ### Omega Scorecard
+
 - [ ] Omega criterion #1 (Soak Test): 30-day soak test passing
 - [ ] Omega criterion #3 (CI Health): All CI workflows green for 14+ consecutive days
 - [ ] Omega criterion #5 (Registry): Entry in registry-v2.json is complete and accurate
@@ -186,6 +202,7 @@ open-questions section naming what only counsel can close.
 - [ ] Omega criterion #17 (Context Sync): CLAUDE.md auto-synced with latest organ map
 
 ### Registry Update
+
 - [ ] `registry-v2.json` entry for `peer-audited--behavioral-blockchain` updated:
   - `promotion_status`: `GRADUATED`
   - `implementation_status`: `ACTIVE`

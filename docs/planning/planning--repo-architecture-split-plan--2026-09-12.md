@@ -1,7 +1,9 @@
 # Architectural Split Plan: Public Face & Private Engine
 
 ## Mission
+
 Styx contains two fundamentally different asset classes:
+
 1. **The Public Face:** The community hub, documentation, open-source adapters, standard SDKs, and transparent rules of engagement.
 2. **The Private Engine ("Secret Sauce"):** The `behavioral-physics` constants, exact prompt injections, anti-sybil honeypot coordinates, LLM evaluation pipelines, and custody routing logic.
 
@@ -10,14 +12,18 @@ To preserve the intellectual property and prevent adversarial gaming of the peer
 ## Target Architecture
 
 ### 1. `styx-core` (Private / Proprietary)
+
 This repo remains strictly private and contains the critical path execution logic:
+
 - `src/api` (NestJS router, Escrow custody, Stripe live keys)
 - `src/shared/behavioral-physics` (The exact mathematical constants and motivation archetype formulas)
 - `src/ask-styx` (The Cloudflare Worker proxy containing the actual LLM prompts and system instructions)
 - `.github/workflows/ci-gates.yml` (The internal gates like Phantom Money Check, Linguistic Cloaker, etc.)
 
 ### 2. `styx-public` (Open Source / Public Face)
+
 This repository is published on GitHub and represents the verifiable community surface:
+
 - `src/web` (The Next.js dashboard UI, open for community contributions)
 - `src/mobile` (The React Native shell, so users can verify device permissions and UI handling)
 - `docs/` (The Logos documentation, Telos, Pragma, and API specs)

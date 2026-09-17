@@ -27,56 +27,56 @@ Daily work involves CI health monitoring, error triage via Sentry, PR review, an
 
 ### Daily
 
-| ID | Activity | Output |
-|----|----------|--------|
-| D1 | Review CI pipeline status across all workspaces (API, Web, Mobile, Desktop, Shared) | CI dashboard green/red report |
-| D2 | Triage Sentry error alerts; classify as P0 (data-loss/money), P1 (user-blocking), P2 (cosmetic) | Sentry issue assignments with severity labels |
-| D3 | Review open PR queue; enforce dual-layer services/modules architecture (ADR-001) | PR approvals or change-request comments |
-| D4 | Monitor BullMQ queue depths (Fury routing, proof processing, honeypot injection) | Queue health metrics logged |
-| D5 | Check Render deployment status and rollback readiness | Deployment log entry |
+| ID  | Activity                                                                                        | Output                                        |
+| --- | ----------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| D1  | Review CI pipeline status across all workspaces (API, Web, Mobile, Desktop, Shared)             | CI dashboard green/red report                 |
+| D2  | Triage Sentry error alerts; classify as P0 (data-loss/money), P1 (user-blocking), P2 (cosmetic) | Sentry issue assignments with severity labels |
+| D3  | Review open PR queue; enforce dual-layer services/modules architecture (ADR-001)                | PR approvals or change-request comments       |
+| D4  | Monitor BullMQ queue depths (Fury routing, proof processing, honeypot injection)                | Queue health metrics logged                   |
+| D5  | Check Render deployment status and rollback readiness                                           | Deployment log entry                          |
 
 ### Weekly
 
-| ID | Activity | Output |
-|----|----------|--------|
-| W1 | Dependency audit: scan for CVEs in npm lockfile, flag Stripe SDK drift | `npm audit` report + upgrade tickets |
-| W2 | Review test coverage delta; flag any module dropping below 80% line coverage | Coverage trend report |
-| W3 | Review blocked-handoff burndown for engineering-owned items | Updated handoff index entries |
-| W4 | BullMQ dead-letter queue review; replay or discard stuck jobs | DLQ reconciliation log |
-| W5 | Database migration dry-run against staging (PostgreSQL schema drift check) | Migration compatibility report |
+| ID  | Activity                                                                     | Output                               |
+| --- | ---------------------------------------------------------------------------- | ------------------------------------ |
+| W1  | Dependency audit: scan for CVEs in npm lockfile, flag Stripe SDK drift       | `npm audit` report + upgrade tickets |
+| W2  | Review test coverage delta; flag any module dropping below 80% line coverage | Coverage trend report                |
+| W3  | Review blocked-handoff burndown for engineering-owned items                  | Updated handoff index entries        |
+| W4  | BullMQ dead-letter queue review; replay or discard stuck jobs                | DLQ reconciliation log               |
+| W5  | Database migration dry-run against staging (PostgreSQL schema drift check)   | Migration compatibility report       |
 
 ### Monthly
 
-| ID | Activity | Output |
-|----|----------|--------|
-| M1 | Load test execution: simulate 200 concurrent contract-creation + proof-upload flows | `artifacts/load-test-report.md` updated |
-| M2 | Test coverage analysis: identify untested critical paths (escrow, Fury routing, ledger invariants) | Coverage gap tickets created |
-| M3 | Infrastructure cost reconciliation: Render + R2 + Stripe fees vs. budget | Cost report with anomaly flags |
-| M4 | Security invariant sweep: run `06-security-invariant-check.ts` against compiled output | Security audit artifact updated |
-| M5 | Review and update API specification against actual endpoints | `api--spec.md` diff report |
+| ID  | Activity                                                                                           | Output                                  |
+| --- | -------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| M1  | Load test execution: simulate 200 concurrent contract-creation + proof-upload flows                | `artifacts/load-test-report.md` updated |
+| M2  | Test coverage analysis: identify untested critical paths (escrow, Fury routing, ledger invariants) | Coverage gap tickets created            |
+| M3  | Infrastructure cost reconciliation: Render + R2 + Stripe fees vs. budget                           | Cost report with anomaly flags          |
+| M4  | Security invariant sweep: run `06-security-invariant-check.ts` against compiled output             | Security audit artifact updated         |
+| M5  | Review and update API specification against actual endpoints                                       | `api--spec.md` diff report              |
 
 ### Quarterly
 
-| ID | Activity | Output |
-|----|----------|--------|
-| Q1 | Architecture review: evaluate ADR compliance, identify structural drift from dual-layer pattern | ADR compliance report; new ADRs if needed |
-| Q2 | Tech debt assessment: categorize, estimate, and prioritize accumulated shortcuts | Tech debt register with effort estimates |
-| Q3 | Disaster recovery drill: simulate database restore, R2 bucket recovery, Stripe webhook replay | DR drill report with recovery-time measurements |
-| Q4 | Performance baseline reset: establish new p50/p95/p99 latency targets for critical endpoints | Performance baseline document |
+| ID  | Activity                                                                                        | Output                                          |
+| --- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Q1  | Architecture review: evaluate ADR compliance, identify structural drift from dual-layer pattern | ADR compliance report; new ADRs if needed       |
+| Q2  | Tech debt assessment: categorize, estimate, and prioritize accumulated shortcuts                | Tech debt register with effort estimates        |
+| Q3  | Disaster recovery drill: simulate database restore, R2 bucket recovery, Stripe webhook replay   | DR drill report with recovery-time measurements |
+| Q4  | Performance baseline reset: establish new p50/p95/p99 latency targets for critical endpoints    | Performance baseline document                   |
 
 ## 3. Artifacts Registry
 
-| ID | Name | Path | Phase | Staleness (days) | Last Updated | Status |
-|----|------|------|-------|-------------------|--------------|--------|
-| E1 | CI Pipeline Config | `.github/workflows/ci.yml` | BUILD | 30 | — | active |
-| E2 | API Specification | `docs/api/api--spec.md` | BUILD | 14 | — | active |
-| E3 | Architecture Decision Records | `docs/adr/` | BUILD | 90 | — | active |
-| E4 | Test Strategy | `docs/departments/eng/artifacts/test-strategy.md` | SHAPE | 30 | — | dormant |
-| E5 | Load Test Report | `docs/departments/eng/artifacts/load-test-report.md` | PROVE | 30 | — | dormant |
-| E6 | Beta Readiness Contract | `docs/planning/planning--beta-readiness-contract.md` | PROVE | 14 | — | active |
-| E7 | Security Invariant Report | `docs/departments/eng/artifacts/security-invariant-report.md` | PROVE | 30 | — | dormant |
-| E8 | Infrastructure Cost Ledger | `docs/departments/eng/artifacts/infra-cost-ledger.md` | BUILD | 30 | — | dormant |
-| E9 | Dependency Audit Log | `docs/departments/eng/artifacts/dependency-audit-log.md` | BUILD | 7 | — | dormant |
+| ID  | Name                          | Path                                                          | Phase | Staleness (days) | Last Updated | Status  |
+| --- | ----------------------------- | ------------------------------------------------------------- | ----- | ---------------- | ------------ | ------- |
+| E1  | CI Pipeline Config            | `.github/workflows/ci.yml`                                    | BUILD | 30               | —            | active  |
+| E2  | API Specification             | `docs/api/api--spec.md`                                       | BUILD | 14               | —            | active  |
+| E3  | Architecture Decision Records | `docs/adr/`                                                   | BUILD | 90               | —            | active  |
+| E4  | Test Strategy                 | `docs/departments/eng/artifacts/test-strategy.md`             | SHAPE | 30               | —            | dormant |
+| E5  | Load Test Report              | `docs/departments/eng/artifacts/load-test-report.md`          | PROVE | 30               | —            | dormant |
+| E6  | Beta Readiness Contract       | `docs/planning/planning--beta-readiness-contract.md`          | PROVE | 14               | —            | active  |
+| E7  | Security Invariant Report     | `docs/departments/eng/artifacts/security-invariant-report.md` | PROVE | 30               | —            | dormant |
+| E8  | Infrastructure Cost Ledger    | `docs/departments/eng/artifacts/infra-cost-ledger.md`         | BUILD | 30               | —            | dormant |
+| E9  | Dependency Audit Log          | `docs/departments/eng/artifacts/dependency-audit-log.md`      | BUILD | 7                | —            | dormant |
 
 ## 4. Generative Prompts (GEN:)
 
@@ -194,13 +194,13 @@ Daily work involves CI health monitoring, error triage via Sentry, PR review, an
 
 ## 10. Growth Backlog
 
-| ID | Item | Notes |
-|----|------|-------|
-| E4 | Test strategy document | Deferred until beta gate suite is fully wired; will formalize coverage targets per module |
-| E5 | Load test report | Deferred until staging environment stable with realistic data volume |
-| E7 | Security invariant report | Currently generated by `06-security-invariant-check.ts`; needs dedicated artifact with trend tracking |
-| E8 | Infrastructure cost ledger | Track Render + R2 + Stripe fees monthly; establish burn-rate projections |
-| E9 | Dependency audit log | Formalize from ad-hoc `npm audit` runs into dated, cumulative log |
-| E10 | Observability dashboard | Grafana or Render metrics dashboard for p50/p95/p99 latency, error rates, queue depths |
-| E11 | Chaos engineering playbook | Controlled failure injection for database, R2, Stripe webhook scenarios |
-| E12 | Mobile release pipeline | TestFlight/Play Store beta distribution automation for React Native app |
+| ID  | Item                       | Notes                                                                                                 |
+| --- | -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| E4  | Test strategy document     | Deferred until beta gate suite is fully wired; will formalize coverage targets per module             |
+| E5  | Load test report           | Deferred until staging environment stable with realistic data volume                                  |
+| E7  | Security invariant report  | Currently generated by `06-security-invariant-check.ts`; needs dedicated artifact with trend tracking |
+| E8  | Infrastructure cost ledger | Track Render + R2 + Stripe fees monthly; establish burn-rate projections                              |
+| E9  | Dependency audit log       | Formalize from ad-hoc `npm audit` runs into dated, cumulative log                                     |
+| E10 | Observability dashboard    | Grafana or Render metrics dashboard for p50/p95/p99 latency, error rates, queue depths                |
+| E11 | Chaos engineering playbook | Controlled failure injection for database, R2, Stripe webhook scenarios                               |
+| E12 | Mobile release pipeline    | TestFlight/Play Store beta distribution automation for React Native app                               |

@@ -9,9 +9,7 @@
 
 /** P1: The Host persona. Three valid archetypes per Playbook §1. */
 export type HostArchetype =
-  | "personal_creator"
-  | "branded_expert"
-  | "founder_operator";
+  "personal_creator" | "branded_expert" | "founder_operator";
 
 /** P2: The single narrow entry niche (one sentence). */
 export interface Wedge {

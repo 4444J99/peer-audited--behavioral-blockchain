@@ -24,9 +24,9 @@
 - Premium cohort \$300--\$2000
 - Cohort \$75--\$300
 - Premium group \$300--\$1000
-- * **The Hook:** "Send this link to a friend. If they lock in a $30 commitment contract, we will instantly seed their account with a $5 Onboarding Bonus, and send you $5 out of our House revenue."
-- * **App Store Developer Fees:** $99/year (Apple) + $25 one-time fee (Google).
-- * **What you pay for:** The privilege of putting your app on users' phones. Apple charges a $99 yearly developer fee, and Google charges a $25 one-time fee.
+- - **The Hook:** "Send this link to a friend. If they lock in a $30 commitment contract, we will instantly seed their account with a $5 Onboarding Bonus, and send you $5 out of our House revenue."
+- - **App Store Developer Fees:** $99/year (Apple) + $25 one-time fee (Google).
+- - **What you pay for:** The privilege of putting your app on users' phones. Apple charges a $99 yearly developer fee, and Google charges a $25 one-time fee.
 - - Pricing: A proposed \"clean model\" of a \$39 total entry (\$9
 - non-refundable fee + \$30 refundable performance deposit). The deposit
 - Model 1 is\... Everyone puts in a \$9 flat, like, whatever the flat fee
@@ -40,4 +40,3 @@
 - | **Enterprise** | Large Clinics / Digital Health | Custom ($999+) | Full API access, white-labeling, comprehensive behavioral data export, advanced HIPAA compliance protocols.13 | Unlimited (Per Provider) |
 - \$10, then \$30, \$90, \$270, and potentially into the thousands of
 - surge from \$23.56 billion in 2024 to \$303.59 billion by 2035 at a
-

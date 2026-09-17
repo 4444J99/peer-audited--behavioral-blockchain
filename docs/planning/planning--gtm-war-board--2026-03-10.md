@@ -17,15 +17,15 @@ Do not expand into generic habit marketing, real-money positioning, or broad pla
 
 ## War Board
 
-| Owner | This Week | Next Deliverable | Blocker | Proof Required |
-|---|---|---|---|---|
-| `H:FO / GTM Commander` | lock wedge, approve copy, join highest-value calls, enforce scope discipline | final public wedge approval and weekly lane status review | positioning drift, weak evidence from lanes, founder indecision | one approved positioning source, one weekly lane status snapshot, one channel decision memo |
-| `GRO` | finalize homepage messaging, publish search-capture content, collect objections, refine message | homepage copy set + first content batch + objection memo | unclear CTA, messaging drift, lack of audience feedback loop | live page copy, live articles, objection memo, revised messaging pass |
-| `H:BD / Jessica` | build creator list, send creator outreach, shape first cohort, define community operating rule | first creator wave sent + first cohort admissions + beta community rule | no creator list, weak outreach framing, unqualified admissions | creator target list, sent outreach log, admitted-cohort list, written community rule |
-| `B2B` | build practitioner target list, send first outreach batch, run early demos, capture fit signals | first practitioner wave + practitioner one-pager + early fit memo | no prospect list, weak one-pager, low response quality | prospect tracker, sent outreach log, one-pager asset, demo notes, fit memo |
-| `ENG-WEB` | ship no-contact landing page, beta explainer page, emergency page/tool, waitlist funnel | live landing page + live beta page + live emergency page | no final copy, missing form spec, analytics gaps | live routes, waitlist form, source-tracking fields, screenshot or deploy proof |
-| `ENG-OPS` | implement source tracking, qualification tags, referral flow, waitlist instrumentation | tracked waitlist + source attribution + referral step | missing analytics model, unclear field ownership, no funnel spec | field map, analytics/tracking proof, referral flow proof |
-| `DES` | support page design, emergency asset design, practitioner asset polish, milestone share assets | page-ready visuals + practitioner one-pager visuals + milestone cards | copy churn, unclear page structure, low asset priority | exported assets, design-ready components, milestone card set |
+| Owner                  | This Week                                                                                       | Next Deliverable                                                        | Blocker                                                          | Proof Required                                                                              |
+| ---------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `H:FO / GTM Commander` | lock wedge, approve copy, join highest-value calls, enforce scope discipline                    | final public wedge approval and weekly lane status review               | positioning drift, weak evidence from lanes, founder indecision  | one approved positioning source, one weekly lane status snapshot, one channel decision memo |
+| `GRO`                  | finalize homepage messaging, publish search-capture content, collect objections, refine message | homepage copy set + first content batch + objection memo                | unclear CTA, messaging drift, lack of audience feedback loop     | live page copy, live articles, objection memo, revised messaging pass                       |
+| `H:BD / Jessica`       | build creator list, send creator outreach, shape first cohort, define community operating rule  | first creator wave sent + first cohort admissions + beta community rule | no creator list, weak outreach framing, unqualified admissions   | creator target list, sent outreach log, admitted-cohort list, written community rule        |
+| `B2B`                  | build practitioner target list, send first outreach batch, run early demos, capture fit signals | first practitioner wave + practitioner one-pager + early fit memo       | no prospect list, weak one-pager, low response quality           | prospect tracker, sent outreach log, one-pager asset, demo notes, fit memo                  |
+| `ENG-WEB`              | ship no-contact landing page, beta explainer page, emergency page/tool, waitlist funnel         | live landing page + live beta page + live emergency page                | no final copy, missing form spec, analytics gaps                 | live routes, waitlist form, source-tracking fields, screenshot or deploy proof              |
+| `ENG-OPS`              | implement source tracking, qualification tags, referral flow, waitlist instrumentation          | tracked waitlist + source attribution + referral step                   | missing analytics model, unclear field ownership, no funnel spec | field map, analytics/tracking proof, referral flow proof                                    |
+| `DES`                  | support page design, emergency asset design, practitioner asset polish, milestone share assets  | page-ready visuals + practitioner one-pager visuals + milestone cards   | copy churn, unclear page structure, low asset priority           | exported assets, design-ready components, milestone card set                                |
 
 ## Current Week Priority Order
 
@@ -99,4 +99,3 @@ Every lane should always be able to answer five things:
 - what I ship next
 - what is blocking me
 - what proof shows the work is real
-

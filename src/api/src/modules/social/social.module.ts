@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { DatabaseModule } from '../../database/database.module';
-import { SocialController } from './social.controller';
-import { SocialLayerService } from './social-layer.service';
+import { Module } from "@nestjs/common";
+import { DatabaseModule } from "../../database/database.module";
+import { SocialController } from "./social.controller";
+import { SocialLayerService } from "./social-layer.service";
 
 @Module({
   imports: [DatabaseModule],

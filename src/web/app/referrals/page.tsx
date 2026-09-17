@@ -1,15 +1,24 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { Gift, Users, DollarSign, Clock, Copy, Check, Share2, Loader2 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { api } from '../../services/api-client';
-import type { ReferralReward } from '@styx/shared/index';
+import React, { useEffect, useState } from "react";
+import {
+  Gift,
+  Users,
+  DollarSign,
+  Clock,
+  Copy,
+  Check,
+  Share2,
+  Loader2,
+} from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import { api } from "../../services/api-client";
+import type { ReferralReward } from "@styx/types";
 
 export default function ReferralsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const [code, setCode] = useState<string | null>(null);
-  const [shareUrl, setShareUrl] = useState<string>('');
+  const [shareUrl, setShareUrl] = useState<string>("");
   const [stats, setStats] = useState<{
     totalReferrals: number;
     rewardedReferrals: number;
@@ -23,18 +32,18 @@ export default function ReferralsPage() {
   useEffect(() => {
     if (authLoading || !user) return;
 
-    Promise.all([
-      api.getReferralCode(),
-      api.getReferralStats(),
-    ]).then(([codeData, statsData]) => {
-      setCode(codeData.code);
-      setShareUrl(codeData.url);
-      setStats(statsData);
-    }).catch(() => {
-      // Referral endpoint may 404 if not onboarded yet
-    }).finally(() => {
-      setLoading(false);
-    });
+    Promise.all([api.getReferralCode(), api.getReferralStats()])
+      .then(([codeData, statsData]) => {
+        setCode(codeData.code);
+        setShareUrl(codeData.url);
+        setStats(statsData);
+      })
+      .catch(() => {
+        // Referral endpoint may 404 if not onboarded yet
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [user, authLoading]);
 
   const handleCopy = async () => {
@@ -57,7 +66,9 @@ export default function ReferralsPage() {
     );
   }
 
-  const earningsDollars = stats ? (stats.totalRewardCents / 100).toFixed(2) : '0.00';
+  const earningsDollars = stats
+    ? (stats.totalRewardCents / 100).toFixed(2)
+    : "0.00";
 
   return (
     <div className="min-h-screen bg-black text-white p-6 md:p-12 font-sans">
@@ -66,7 +77,8 @@ export default function ReferralsPage() {
           <Gift size={28} /> Referral Program
         </h1>
         <p className="text-neutral-400 mt-2 max-w-xl">
-          Invite friends to Styx. You both get $5 when they complete their first contract.
+          Invite friends to Styx. You both get $5 when they complete their first
+          contract.
         </p>
       </header>
 
@@ -87,13 +99,19 @@ export default function ReferralsPage() {
                   className="text-neutral-400 hover:text-white transition-colors"
                   title="Copy referral link"
                 >
-                  {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+                  {copied ? (
+                    <Check size={18} className="text-green-500" />
+                  ) : (
+                    <Copy size={18} />
+                  )}
                 </button>
               </div>
               <p className="text-xs text-neutral-500 break-all">{shareUrl}</p>
             </>
           ) : (
-            <p className="text-neutral-500 text-sm">Generate your code by visiting this page.</p>
+            <p className="text-neutral-500 text-sm">
+              Generate your code by visiting this page.
+            </p>
           )}
         </section>
 
@@ -101,7 +119,9 @@ export default function ReferralsPage() {
           <h2 className="text-sm uppercase tracking-widest text-neutral-500 mb-4 flex items-center gap-2">
             <DollarSign size={14} /> Your Earnings
           </h2>
-          <p className="text-3xl font-black text-green-500">${earningsDollars}</p>
+          <p className="text-3xl font-black text-green-500">
+            ${earningsDollars}
+          </p>
           <p className="text-xs text-neutral-500 mt-1">earned from referrals</p>
         </section>
       </div>
@@ -111,24 +131,32 @@ export default function ReferralsPage() {
           <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 text-center">
             <Users size={20} className="mx-auto mb-2 text-neutral-400" />
             <p className="text-2xl font-black">{stats.totalReferrals}</p>
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Total</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Total
+            </p>
           </div>
           <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 text-center">
             <Check size={20} className="mx-auto mb-2 text-green-500" />
             <p className="text-2xl font-black">{stats.rewardedReferrals}</p>
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Rewarded</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Rewarded
+            </p>
           </div>
           <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 text-center">
             <Clock size={20} className="mx-auto mb-2 text-yellow-500" />
             <p className="text-2xl font-black">{stats.pendingReferrals}</p>
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Pending</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Pending
+            </p>
           </div>
         </div>
       )}
 
       {stats && stats.rewards.length > 0 && (
         <section className="mt-10 max-w-3xl">
-          <h2 className="text-sm uppercase tracking-widest text-neutral-500 mb-4">Reward History</h2>
+          <h2 className="text-sm uppercase tracking-widest text-neutral-500 mb-4">
+            Reward History
+          </h2>
           <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
@@ -142,11 +170,17 @@ export default function ReferralsPage() {
               <tbody>
                 {stats.rewards.map((r) => (
                   <tr key={r.id} className="border-b border-neutral-800/50">
-                    <td className="p-3 text-neutral-300">{r.referredUserEmail}</td>
+                    <td className="p-3 text-neutral-300">
+                      {r.referredUserEmail}
+                    </td>
                     <td className="p-3">
-                      <span className={`text-xs font-bold uppercase ${
-                        r.status === 'REWARDED' ? 'text-green-500' : 'text-yellow-500'
-                      }`}>
+                      <span
+                        className={`text-xs font-bold uppercase ${
+                          r.status === "REWARDED"
+                            ? "text-green-500"
+                            : "text-yellow-500"
+                        }`}
+                      >
                         {r.status}
                       </span>
                     </td>
@@ -154,7 +188,9 @@ export default function ReferralsPage() {
                       ${(r.rewardAmountCents / 100).toFixed(2)}
                     </td>
                     <td className="p-3 text-right text-neutral-500">
-                      {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—'}
+                      {r.createdAt
+                        ? new Date(r.createdAt).toLocaleDateString()
+                        : "—"}
                     </td>
                   </tr>
                 ))}

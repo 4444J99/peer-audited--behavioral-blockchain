@@ -1,7 +1,7 @@
-import { EscrowProvider } from '../src/common/interfaces/payout-provider.interface';
-import { LedgerService } from './ledger/ledger.service';
-import { TruthLogService } from './ledger/truth-log.service';
-import { Pool } from 'pg';
+import { EscrowProvider } from "../src/common/interfaces/payout-provider.interface";
+import { LedgerService } from "./ledger/ledger.service";
+import { TruthLogService } from "./ledger/truth-log.service";
+import { Pool } from "pg";
 
 export const MONTHLY_SUBSCRIPTION_PRICE = 1499; // cents ($14.99)
 export const TICKET_PRICE_BASE = 499; // cents ($4.99)
@@ -32,7 +32,7 @@ export const APPEAL_FEE_AMOUNT = 500; // cents ($5.00)
  * Defaults OFF per DR-004; set STYX_APPEAL_FEE_ENABLED=true to reinstate it.
  */
 export function isAppealFeeEnabled(): boolean {
-  return String(process.env.STYX_APPEAL_FEE_ENABLED).toLowerCase() === 'true';
+  return String(process.env.STYX_APPEAL_FEE_ENABLED).toLowerCase() === "true";
 }
 
 /**
@@ -61,7 +61,7 @@ export function isAppealFeeEnabled(): boolean {
  */
 export function isOnboardingBonusEnabled(): boolean {
   return (
-    String(process.env.STYX_ONBOARDING_BONUS_ENABLED).toLowerCase() === 'true'
+    String(process.env.STYX_ONBOARDING_BONUS_ENABLED).toLowerCase() === "true"
   );
 }
 
@@ -85,7 +85,7 @@ export async function processIAP(
 ): Promise<IAPResult> {
   // Get the user's rail-scoped customer handle
   const userResult = await pool.query(
-    'SELECT email, stripe_customer_id, account_id FROM users WHERE id = $1',
+    "SELECT email, stripe_customer_id, account_id FROM users WHERE id = $1",
     [userId],
   );
   if (userResult.rows.length === 0) {
@@ -97,13 +97,13 @@ export async function processIAP(
   // The handle is rail-scoped: the ledger rail holds from the user's ledger
   // account (provisioned on demand), the Stripe rail from the customer handle.
   let customerHandle: string;
-  if (escrow.rail === 'LEDGER') {
+  if (escrow.rail === "LEDGER") {
     customerHandle = account_id
       ? account_id
       : await escrow.createCustomer(userId, email);
   } else {
     if (!stripe_customer_id) {
-      throw new Error('User has no payment method on file');
+      throw new Error("User has no payment method on file");
     }
     customerHandle = stripe_customer_id;
   }
@@ -127,7 +127,7 @@ export async function processIAP(
   // a non-CAPTURED status WITHOUT throwing, we must NOT write a TICKET_PURCHASE ledger entry /
   // TruthLog event for money that was never collected.
   const captured = await escrow.captureStake(hold.id);
-  if (captured.status !== 'CAPTURED') {
+  if (captured.status !== "CAPTURED") {
     throw new Error(
       `IAP capture for contract ${contractId} did not succeed (status: ${captured.status}); ` +
         `revenue not recorded.`,
@@ -137,7 +137,7 @@ export async function processIAP(
   // Record in ledger: user → revenue
   // On the ledger rail the hold+capture postings already moved the funds
   // user → SYSTEM_ESCROW → SYSTEM_REVENUE; this entry is the Stripe-rail mirror.
-  if (account_id && escrow.rail !== 'LEDGER') {
+  if (account_id && escrow.rail !== "LEDGER") {
     const revenueResult = await pool.query(
       `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
     );
@@ -147,7 +147,7 @@ export async function processIAP(
         revenueResult.rows[0].id,
         TICKET_PRICE_BASE,
         contractId,
-        { type: 'TICKET_PURCHASE', userId },
+        { type: "TICKET_PURCHASE", userId },
         undefined,
         // PM19: DB-enforced single-posting for the ticket revenue entry, so even a retry that
         // reaches the ledger (e.g. after the rail call was already idempotent) cannot double-post.
@@ -157,7 +157,7 @@ export async function processIAP(
   }
 
   // Log to TruthLog
-  await truthLog.appendEvent('TICKET_PURCHASED', {
+  await truthLog.appendEvent("TICKET_PURCHASED", {
     userId,
     contractId,
     amount: TICKET_PRICE_BASE,

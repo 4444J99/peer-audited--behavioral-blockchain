@@ -23,8 +23,8 @@ _Effective date: [TBD -- not executable in its current state]_
 > would create obligations the Platform cannot currently satisfy.
 
 Named by the enterprise gate at `docs/checklists/enterprise-sales-readiness.md`:
-*"HIPAA BAA ready to sign — for healthcare enterprise customers. Verify: BAA template reviewed by
-counsel."* That verification has **not** occurred.
+_"HIPAA BAA ready to sign — for healthcare enterprise customers. Verify: BAA template reviewed by
+counsel."_ That verification has **not** occurred.
 
 Companion documents: `docs/legal/dpa-template.md` (the general data processing agreement — for
 customers who are **not** covered entities, that document, not this one, is the right instrument),
@@ -47,17 +47,17 @@ compliant, and it must never be presented as one.
 
 ### 0.1 Prerequisites that are NOT met today
 
-| Prerequisite | Status |
-|---|---|
-| Counsel review of this template | **Not done** — issue #315 |
+| Prerequisite                                                               | Status                                                                           |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Counsel review of this template                                            | **Not done** — issue #315                                                        |
 | Legal opinion on whether B2B use creates a business associate relationship | **Not obtained** — named as mitigation item (5) in `regulatory-risk-register.md` |
-| Multi-factor authentication on practitioner accounts | **Not implemented** |
-| Encryption-key custody separate from the hosting vendor | **Not implemented** — keys are vendor-managed (Render, Cloudflare, Stripe) |
-| Sub-processor BAAs (Render, Cloudflare) | **Not executed** |
-| SOC 2 Type II | **Not started** |
-| Independent penetration test | **Not performed** |
-| Breach-notification runbook exercised | **Not exercised** |
-| A "PHI" data classification distinct from general behavioral data | **Does not exist** in the schema |
+| Multi-factor authentication on practitioner accounts                       | **Not implemented**                                                              |
+| Encryption-key custody separate from the hosting vendor                    | **Not implemented** — keys are vendor-managed (Render, Cloudflare, Stripe)       |
+| Sub-processor BAAs (Render, Cloudflare)                                    | **Not executed**                                                                 |
+| SOC 2 Type II                                                              | **Not started**                                                                  |
+| Independent penetration test                                               | **Not performed**                                                                |
+| Breach-notification runbook exercised                                      | **Not exercised**                                                                |
+| A "PHI" data classification distinct from general behavioral data          | **Does not exist** in the schema                                                 |
 
 The last row is the load-bearing one. **The Platform has no mechanism to segregate, label, or apply
 different handling to protected health information.** Behavioral and health-adjacent data (weight,
@@ -117,15 +117,15 @@ BAA provides.
 The safeguards **as implemented today** are described in `docs/enterprise/security-whitepaper.md`
 and summarized here without embellishment:
 
-| Safeguard | As implemented |
-|---|---|
-| Encryption at rest | AES-256, vendor-managed (Render PostgreSQL, Cloudflare R2) |
+| Safeguard             | As implemented                                                                                              |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Encryption at rest    | AES-256, vendor-managed (Render PostgreSQL, Cloudflare R2)                                                  |
 | Encryption in transit | TLS via Cloudflare and Render; security headers (including HSTS) applied by `helmet()` at the API bootstrap |
-| Access control | Role-based; role and ban status re-read from the database on every request, not from the session token |
-| Audit logging | Hash-chained, append-only event log with a database-level immutability trigger; verified daily |
-| Media privacy | Redacted derivative only; the serving path fails closed to no URL when no redacted asset exists |
-| Integrity | Double-entry ledger with posting-time invariants and database-enforced idempotency |
-| Workforce | **Sole founder.** No separation of duties, no security team, no security-awareness training program |
+| Access control        | Role-based; role and ban status re-read from the database on every request, not from the session token      |
+| Audit logging         | Hash-chained, append-only event log with a database-level immutability trigger; verified daily              |
+| Media privacy         | Redacted derivative only; the serving path fails closed to no URL when no redacted asset exists             |
+| Integrity             | Double-entry ledger with posting-time invariants and database-enforced idempotency                          |
+| Workforce             | **Sole founder.** No separation of duties, no security team, no security-awareness training program         |
 
 The final row is a material limitation and is stated rather than omitted.
 

@@ -3,16 +3,16 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
-} from '@nestjs/common';
-import { Pool } from 'pg';
+} from "@nestjs/common";
+import { Pool } from "pg";
 
 /**
  * BannedUserGuard: Prevents banned users from accessing protected endpoints.
- * 
+ *
  * Applied to contract creation and other mutation endpoints to ensure
  * users permanently exiled by ModerationService cannot create new contracts
  * or interact with the platform.
- * 
+ *
  * Usage in controller:
  *   @UseGuards(AuthGuard, BannedUserGuard)
  *   @Post()
@@ -30,21 +30,21 @@ export class BannedUserGuard implements CanActivate {
     // request without an authenticated user must be denied rather than allowed.
     // AuthGuard runs first and always populates request.user.id.
     if (!userId) {
-      throw new ForbiddenException('Authentication required');
+      throw new ForbiddenException("Authentication required");
     }
 
     const result = await this.pool.query(
-      'SELECT status FROM users WHERE id = $1',
+      "SELECT status FROM users WHERE id = $1",
       [userId],
     );
 
     if (result.rows.length === 0) {
-      throw new ForbiddenException('User account not found.');
+      throw new ForbiddenException("User account not found.");
     }
 
-    if (result.rows[0].status === 'BANNED') {
+    if (result.rows[0].status === "BANNED") {
       throw new ForbiddenException(
-        'Your account has been permanently suspended. Contact support for details.',
+        "Your account has been permanently suspended. Contact support for details.",
       );
     }
 

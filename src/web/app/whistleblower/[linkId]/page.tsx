@@ -1,16 +1,25 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useParams } from 'next/navigation';
-import { Shield, Send, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
+import React, { useState } from "react";
+import { useParams } from "next/navigation";
+import {
+  Shield,
+  Send,
+  Loader2,
+  CheckCircle,
+  AlertTriangle,
+} from "lucide-react";
 
 export default function WhistleblowerPage() {
   const params = useParams();
   const linkId = params.linkId as string;
 
-  const [mediaUri, setMediaUri] = useState('');
+  const [mediaUri, setMediaUri] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [result, setResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,9 +30,9 @@ export default function WhistleblowerPage() {
 
     try {
       const response = await fetch(`/api/contracts/bounty/${linkId}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ mediaUri }),
       });
@@ -33,19 +42,20 @@ export default function WhistleblowerPage() {
       if (response.ok) {
         setResult({
           success: true,
-          message: 'Evidence submitted successfully. The Fury network will audit your submission.',
+          message:
+            "Evidence submitted successfully. The Fury network will audit your submission.",
         });
-        setMediaUri('');
+        setMediaUri("");
       } else {
         setResult({
           success: false,
-          message: data.message || 'Failed to submit evidence.',
+          message: data.message || "Failed to submit evidence.",
         });
       }
     } catch (err) {
       setResult({
         success: false,
-        message: 'Network error. Please try again.',
+        message: "Network error. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -59,8 +69,12 @@ export default function WhistleblowerPage() {
           <div className="w-16 h-16 bg-red-600 rounded-full mb-4 flex items-center justify-center shadow-[0_0_30px_rgba(220,38,38,0.3)]">
             <Shield size={32} className="text-black" />
           </div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase mb-2">STYX</h1>
-          <p className="text-red-500 font-bold tracking-widest text-xs uppercase">Ex-Bounty Intake</p>
+          <h1 className="text-3xl font-black tracking-tighter uppercase mb-2">
+            STYX
+          </h1>
+          <p className="text-red-500 font-bold tracking-widest text-xs uppercase">
+            Ex-Bounty Intake
+          </p>
         </div>
 
         {result?.success ? (
@@ -68,8 +82,9 @@ export default function WhistleblowerPage() {
             <CheckCircle className="text-green-500 mx-auto" size={64} />
             <h2 className="text-xl font-bold">Evidence Received</h2>
             <p className="text-neutral-400 text-sm leading-relaxed">
-              Your submission has been securely logged and routed to the Fury network for verification.
-              If the breach is confirmed, the contract funds will be redistributed.
+              Your submission has been securely logged and routed to the Fury
+              network for verification. If the breach is confirmed, the contract
+              funds will be redistributed.
             </p>
             <button
               onClick={() => setResult(null)}
@@ -93,7 +108,8 @@ export default function WhistleblowerPage() {
                 required
               />
               <p className="text-[10px] text-neutral-600 italic mt-2 px-1">
-                Submit a link to a communication screenshot, call log, or video proof of a "No Contact" breach.
+                Submit a link to a communication screenshot, call log, or video
+                proof of a "No Contact" breach.
               </p>
             </div>
 
@@ -109,12 +125,18 @@ export default function WhistleblowerPage() {
               disabled={loading || !mediaUri.trim()}
               className="w-full py-5 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:hover:bg-red-600 text-white font-black rounded-2xl transition-all shadow-lg flex items-center justify-center gap-3 uppercase tracking-tighter"
             >
-              {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
-              {loading ? 'Processing...' : 'Submit Evidence'}
+              {loading ? (
+                <Loader2 className="animate-spin" size={20} />
+              ) : (
+                <Send size={20} />
+              )}
+              {loading ? "Processing..." : "Submit Evidence"}
             </button>
 
             <p className="text-[11px] text-neutral-500 text-center px-4 leading-relaxed">
-              By submitting evidence, you verify that this information is truthful. Malicious or fraudulent submissions may be flagged by the Fury network.
+              By submitting evidence, you verify that this information is
+              truthful. Malicious or fraudulent submissions may be flagged by
+              the Fury network.
             </p>
           </form>
         )}

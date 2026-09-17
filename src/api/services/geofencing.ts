@@ -12,9 +12,9 @@
  * TIER_3: Hard-blocked (Any chance states).
  */
 export enum JurisdictionTier {
-    TIER_1 = 'FULL_ACCESS',
-    TIER_2 = 'REFUND_ONLY',
-    TIER_3 = 'HARD_BLOCK'
+  TIER_1 = "FULL_ACCESS",
+  TIER_2 = "REFUND_ONLY",
+  TIER_3 = "HARD_BLOCK",
 }
 
 /**
@@ -30,74 +30,74 @@ export enum JurisdictionTier {
  * unclassified-jurisdiction activity).
  */
 export const STATE_TIERS: Record<string, JurisdictionTier> = {
-    // TIER_3: Hard-blocked — strict anti-gambling / "any chance" states
-    'WA': JurisdictionTier.TIER_3,  // Washington — strictest anti-online-gambling
-    'AR': JurisdictionTier.TIER_3,  // Arkansas
-    'HI': JurisdictionTier.TIER_3,  // Hawaii — no gambling allowed
-    'UT': JurisdictionTier.TIER_3,  // Utah — constitutional gambling ban
-    'ID': JurisdictionTier.TIER_3,  // Idaho
-    'SC': JurisdictionTier.TIER_3,  // South Carolina
+  // TIER_3: Hard-blocked — strict anti-gambling / "any chance" states
+  WA: JurisdictionTier.TIER_3, // Washington — strictest anti-online-gambling
+  AR: JurisdictionTier.TIER_3, // Arkansas
+  HI: JurisdictionTier.TIER_3, // Hawaii — no gambling allowed
+  UT: JurisdictionTier.TIER_3, // Utah — constitutional gambling ban
+  ID: JurisdictionTier.TIER_3, // Idaho
+  SC: JurisdictionTier.TIER_3, // South Carolina
 
-    // Reconciled 2026-07-31 to match our own 50-state survey, which recommends
-    // BLOCK for all four while the code was more permissive. NV and SD were
-    // TIER_1 (FULL_ACCESS + CAPTURE) — i.e. we would have captured a forfeited
-    // deposit in two states whose own research says licensure is required.
-    // AZ and MT were TIER_2 (refund-only). These four rows are now ALIGNED in
-    // docs/legal/state-jurisdiction-matrix-DRAFT.md (code tier matches the
-    // survey recommendation); they were its top sign-off blockers before this.
-    //
-    // Tightening needs no counsel; relaxing does. Counsel sign-off is issue
-    // #317 — until it lands, the survey is the most authoritative source we
-    // have and the code should not be looser than it.
-    'NV': JurisdictionTier.TIER_3,  // Nevada — full gaming licensure required; GCB enforces
-    'SD': JurisdictionTier.TIER_3,  // South Dakota — broadest "in part upon chance" language
-    'AZ': JurisdictionTier.TIER_3,  // Arizona — any-chance history + DFS licensing
-    'MT': JurisdictionTier.TIER_3,  // Montana — AG guidance, no safe harbor
+  // Reconciled 2026-07-31 to match our own 50-state survey, which recommends
+  // BLOCK for all four while the code was more permissive. NV and SD were
+  // TIER_1 (FULL_ACCESS + CAPTURE) — i.e. we would have captured a forfeited
+  // deposit in two states whose own research says licensure is required.
+  // AZ and MT were TIER_2 (refund-only). These four rows are now ALIGNED in
+  // docs/legal/state-jurisdiction-matrix-DRAFT.md (code tier matches the
+  // survey recommendation); they were its top sign-off blockers before this.
+  //
+  // Tightening needs no counsel; relaxing does. Counsel sign-off is issue
+  // #317 — until it lands, the survey is the most authoritative source we
+  // have and the code should not be looser than it.
+  NV: JurisdictionTier.TIER_3, // Nevada — full gaming licensure required; GCB enforces
+  SD: JurisdictionTier.TIER_3, // South Dakota — broadest "in part upon chance" language
+  AZ: JurisdictionTier.TIER_3, // Arizona — any-chance history + DFS licensing
+  MT: JurisdictionTier.TIER_3, // Montana — AG guidance, no safe harbor
 
-    // TIER_2: Restricted — requires licenses or bonding, refund-only mode
-    'NY': JurisdictionTier.TIER_2,  // New York — requires bonding for large prizes
-    'CT': JurisdictionTier.TIER_2,  // Connecticut — regulated
-    'IA': JurisdictionTier.TIER_2,  // Iowa — regulated
-    'LA': JurisdictionTier.TIER_2,  // Louisiana — parish-level regulation
-    'ME': JurisdictionTier.TIER_2,  // Maine — skill game licensing
-    'TN': JurisdictionTier.TIER_2,  // Tennessee — regulated DFS
-    'VA': JurisdictionTier.TIER_2,  // Virginia — regulated
-    'IN': JurisdictionTier.TIER_2,  // Indiana — regulated
-    'PA': JurisdictionTier.TIER_2,  // Pennsylvania — regulated + tax
+  // TIER_2: Restricted — requires licenses or bonding, refund-only mode
+  NY: JurisdictionTier.TIER_2, // New York — requires bonding for large prizes
+  CT: JurisdictionTier.TIER_2, // Connecticut — regulated
+  IA: JurisdictionTier.TIER_2, // Iowa — regulated
+  LA: JurisdictionTier.TIER_2, // Louisiana — parish-level regulation
+  ME: JurisdictionTier.TIER_2, // Maine — skill game licensing
+  TN: JurisdictionTier.TIER_2, // Tennessee — regulated DFS
+  VA: JurisdictionTier.TIER_2, // Virginia — regulated
+  IN: JurisdictionTier.TIER_2, // Indiana — regulated
+  PA: JurisdictionTier.TIER_2, // Pennsylvania — regulated + tax
 
-    // TIER_1: Full access — predominance doctrine / permissive (default)
-    'CA': JurisdictionTier.TIER_1,
-    'TX': JurisdictionTier.TIER_1,
-    'FL': JurisdictionTier.TIER_1,
-    'IL': JurisdictionTier.TIER_1,
-    'OH': JurisdictionTier.TIER_1,
-    'GA': JurisdictionTier.TIER_1,
-    'NC': JurisdictionTier.TIER_1,
-    'MI': JurisdictionTier.TIER_1,
-    'NJ': JurisdictionTier.TIER_1,
-    'MA': JurisdictionTier.TIER_1,
-    'WI': JurisdictionTier.TIER_1,
-    'MN': JurisdictionTier.TIER_1,
-    'CO': JurisdictionTier.TIER_1,
-    'AL': JurisdictionTier.TIER_1,
-    'MD': JurisdictionTier.TIER_1,
-    'MO': JurisdictionTier.TIER_1,
-    'OK': JurisdictionTier.TIER_1,
-    'OR': JurisdictionTier.TIER_1,
-    'KY': JurisdictionTier.TIER_1,
-    'KS': JurisdictionTier.TIER_1,
-    'NE': JurisdictionTier.TIER_1,
-    'MS': JurisdictionTier.TIER_1,
-    'NM': JurisdictionTier.TIER_1,
-    'WV': JurisdictionTier.TIER_1,
-    'NH': JurisdictionTier.TIER_1,
-    'ND': JurisdictionTier.TIER_1,
-    'DE': JurisdictionTier.TIER_1,
-    'RI': JurisdictionTier.TIER_1,
-    'VT': JurisdictionTier.TIER_1,
-    'WY': JurisdictionTier.TIER_1,
-    'AK': JurisdictionTier.TIER_1,
-    'DC': JurisdictionTier.TIER_1,
+  // TIER_1: Full access — predominance doctrine / permissive (default)
+  CA: JurisdictionTier.TIER_1,
+  TX: JurisdictionTier.TIER_1,
+  FL: JurisdictionTier.TIER_1,
+  IL: JurisdictionTier.TIER_1,
+  OH: JurisdictionTier.TIER_1,
+  GA: JurisdictionTier.TIER_1,
+  NC: JurisdictionTier.TIER_1,
+  MI: JurisdictionTier.TIER_1,
+  NJ: JurisdictionTier.TIER_1,
+  MA: JurisdictionTier.TIER_1,
+  WI: JurisdictionTier.TIER_1,
+  MN: JurisdictionTier.TIER_1,
+  CO: JurisdictionTier.TIER_1,
+  AL: JurisdictionTier.TIER_1,
+  MD: JurisdictionTier.TIER_1,
+  MO: JurisdictionTier.TIER_1,
+  OK: JurisdictionTier.TIER_1,
+  OR: JurisdictionTier.TIER_1,
+  KY: JurisdictionTier.TIER_1,
+  KS: JurisdictionTier.TIER_1,
+  NE: JurisdictionTier.TIER_1,
+  MS: JurisdictionTier.TIER_1,
+  NM: JurisdictionTier.TIER_1,
+  WV: JurisdictionTier.TIER_1,
+  NH: JurisdictionTier.TIER_1,
+  ND: JurisdictionTier.TIER_1,
+  DE: JurisdictionTier.TIER_1,
+  RI: JurisdictionTier.TIER_1,
+  VT: JurisdictionTier.TIER_1,
+  WY: JurisdictionTier.TIER_1,
+  AK: JurisdictionTier.TIER_1,
+  DC: JurisdictionTier.TIER_1,
 };
 
 /**
@@ -106,19 +106,22 @@ export const STATE_TIERS: Record<string, JurisdictionTier> = {
  * Phase Beta P0-004: Harden jurisdiction policy to prevent unauthorized cross-border activity.
  * IP-to-geo resolution is the caller's responsibility (see GeofenceService).
  */
-export function classifyJurisdiction(geo: { country: string; region: string } | null): { tier: JurisdictionTier; state: string | null } {
-    // Unknown or non-US locations are hard-blocked by default
-    if (!geo || geo.country !== 'US') return { tier: JurisdictionTier.TIER_3, state: null };
+export function classifyJurisdiction(
+  geo: { country: string; region: string } | null,
+): { tier: JurisdictionTier; state: string | null } {
+  // Unknown or non-US locations are hard-blocked by default
+  if (!geo || geo.country !== "US")
+    return { tier: JurisdictionTier.TIER_3, state: null };
 
-    // Normalize the state code (trim + uppercase) so values like " ut " or "ca"
-    // resolve to the correct tier instead of silently missing the lookup.
-    const state = normalizeStateCode(geo.region);
-    if (!state) return { tier: JurisdictionTier.TIER_3, state: null };
+  // Normalize the state code (trim + uppercase) so values like " ut " or "ca"
+  // resolve to the correct tier instead of silently missing the lookup.
+  const state = normalizeStateCode(geo.region);
+  if (!state) return { tier: JurisdictionTier.TIER_3, state: null };
 
-    // Unknown US states (e.g. military bases, territories) are hard-blocked by default
-    const tier = STATE_TIERS[state] ?? JurisdictionTier.TIER_3;
+  // Unknown US states (e.g. military bases, territories) are hard-blocked by default
+  const tier = STATE_TIERS[state] ?? JurisdictionTier.TIER_3;
 
-    return { tier, state };
+  return { tier, state };
 }
 
 /**
@@ -127,17 +130,57 @@ export function classifyJurisdiction(geo: { country: string; region: string } | 
  * tier instead of failing closed and hard-blocking a legitimate TIER_1 user.
  */
 const STATE_NAME_TO_CODE: Record<string, string> = {
-    ALABAMA: 'AL', ALASKA: 'AK', ARIZONA: 'AZ', ARKANSAS: 'AR', CALIFORNIA: 'CA',
-    COLORADO: 'CO', CONNECTICUT: 'CT', DELAWARE: 'DE', FLORIDA: 'FL', GEORGIA: 'GA',
-    HAWAII: 'HI', IDAHO: 'ID', ILLINOIS: 'IL', INDIANA: 'IN', IOWA: 'IA',
-    KANSAS: 'KS', KENTUCKY: 'KY', LOUISIANA: 'LA', MAINE: 'ME', MARYLAND: 'MD',
-    MASSACHUSETTS: 'MA', MICHIGAN: 'MI', MINNESOTA: 'MN', MISSISSIPPI: 'MS', MISSOURI: 'MO',
-    MONTANA: 'MT', NEBRASKA: 'NE', NEVADA: 'NV', 'NEW HAMPSHIRE': 'NH', 'NEW JERSEY': 'NJ',
-    'NEW MEXICO': 'NM', 'NEW YORK': 'NY', 'NORTH CAROLINA': 'NC', 'NORTH DAKOTA': 'ND', OHIO: 'OH',
-    OKLAHOMA: 'OK', OREGON: 'OR', PENNSYLVANIA: 'PA', 'RHODE ISLAND': 'RI', 'SOUTH CAROLINA': 'SC',
-    'SOUTH DAKOTA': 'SD', TENNESSEE: 'TN', TEXAS: 'TX', UTAH: 'UT', VERMONT: 'VT',
-    VIRGINIA: 'VA', WASHINGTON: 'WA', 'WEST VIRGINIA': 'WV', WISCONSIN: 'WI', WYOMING: 'WY',
-    'DISTRICT OF COLUMBIA': 'DC',
+  ALABAMA: "AL",
+  ALASKA: "AK",
+  ARIZONA: "AZ",
+  ARKANSAS: "AR",
+  CALIFORNIA: "CA",
+  COLORADO: "CO",
+  CONNECTICUT: "CT",
+  DELAWARE: "DE",
+  FLORIDA: "FL",
+  GEORGIA: "GA",
+  HAWAII: "HI",
+  IDAHO: "ID",
+  ILLINOIS: "IL",
+  INDIANA: "IN",
+  IOWA: "IA",
+  KANSAS: "KS",
+  KENTUCKY: "KY",
+  LOUISIANA: "LA",
+  MAINE: "ME",
+  MARYLAND: "MD",
+  MASSACHUSETTS: "MA",
+  MICHIGAN: "MI",
+  MINNESOTA: "MN",
+  MISSISSIPPI: "MS",
+  MISSOURI: "MO",
+  MONTANA: "MT",
+  NEBRASKA: "NE",
+  NEVADA: "NV",
+  "NEW HAMPSHIRE": "NH",
+  "NEW JERSEY": "NJ",
+  "NEW MEXICO": "NM",
+  "NEW YORK": "NY",
+  "NORTH CAROLINA": "NC",
+  "NORTH DAKOTA": "ND",
+  OHIO: "OH",
+  OKLAHOMA: "OK",
+  OREGON: "OR",
+  PENNSYLVANIA: "PA",
+  "RHODE ISLAND": "RI",
+  "SOUTH CAROLINA": "SC",
+  "SOUTH DAKOTA": "SD",
+  TENNESSEE: "TN",
+  TEXAS: "TX",
+  UTAH: "UT",
+  VERMONT: "VT",
+  VIRGINIA: "VA",
+  WASHINGTON: "WA",
+  "WEST VIRGINIA": "WV",
+  WISCONSIN: "WI",
+  WYOMING: "WY",
+  "DISTRICT OF COLUMBIA": "DC",
 };
 
 /**
@@ -150,15 +193,17 @@ const STATE_NAME_TO_CODE: Record<string, string> = {
  * arbitrary non-empty strings: a 2-letter check plus the name map keeps honest
  * TIER_1 users working when a provider returns names, without weakening fail-closed.
  */
-export function normalizeStateCode(code: string | null | undefined): string | null {
-    if (code == null) return null;
-    const normalized = String(code).trim().toUpperCase();
-    if (normalized.length === 0) return null;
-    // Exact 2-letter code (A–Z only).
-    if (/^[A-Z]{2}$/.test(normalized)) return normalized;
-    // Full state name → code.
-    if (Object.prototype.hasOwnProperty.call(STATE_NAME_TO_CODE, normalized)) {
-        return STATE_NAME_TO_CODE[normalized];
-    }
-    return null;
+export function normalizeStateCode(
+  code: string | null | undefined,
+): string | null {
+  if (code == null) return null;
+  const normalized = String(code).trim().toUpperCase();
+  if (normalized.length === 0) return null;
+  // Exact 2-letter code (A–Z only).
+  if (/^[A-Z]{2}$/.test(normalized)) return normalized;
+  // Full state name → code.
+  if (Object.prototype.hasOwnProperty.call(STATE_NAME_TO_CODE, normalized)) {
+    return STATE_NAME_TO_CODE[normalized];
+  }
+  return null;
 }

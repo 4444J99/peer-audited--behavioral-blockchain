@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from "next/link";
 
 export function SiteFooter() {
   return (
@@ -12,27 +12,47 @@ export function SiteFooter() {
         </div>
 
         <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-          <Link href="/help" className="hover:text-neutral-300 transition-colors">
+          <Link
+            href="/help"
+            className="hover:text-neutral-300 transition-colors"
+          >
             Help & FAQ
           </Link>
-          <Link href="/legal/terms" className="hover:text-neutral-300 transition-colors">
+          <Link
+            href="/legal/terms"
+            className="hover:text-neutral-300 transition-colors"
+          >
             Terms of Service
           </Link>
-          <Link href="/legal/privacy" className="hover:text-neutral-300 transition-colors">
+          <Link
+            href="/legal/privacy"
+            className="hover:text-neutral-300 transition-colors"
+          >
             Privacy Policy
           </Link>
-          <Link href="/legal/rules" className="hover:text-neutral-300 transition-colors">
+          <Link
+            href="/legal/rules"
+            className="hover:text-neutral-300 transition-colors"
+          >
             Contest Rules
           </Link>
-          <Link href="/legal/responsible-use" className="hover:text-neutral-300 transition-colors">
+          <Link
+            href="/legal/responsible-use"
+            className="hover:text-neutral-300 transition-colors"
+          >
             Responsible Use
           </Link>
-          <Link href="/legal/compliance-artifacts" className="hover:text-neutral-300 transition-colors">
+          <Link
+            href="/legal/compliance-artifacts"
+            className="hover:text-neutral-300 transition-colors"
+          >
             Compliance Artifacts
           </Link>
         </nav>
 
-        <span className="text-neutral-600">&copy; {new Date().getFullYear()} Styx Protocol</span>
+        <span className="text-neutral-600">
+          &copy; {new Date().getFullYear()} Styx Protocol
+        </span>
       </div>
     </footer>
   );

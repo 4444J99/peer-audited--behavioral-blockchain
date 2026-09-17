@@ -9,15 +9,18 @@
 > `docs/planning/planning--full-build-execution--2026-08-15.md`.
 
 ## Scope
+
 This pack converts unresolved research and partial controls into executable implementation tickets.
 
 Input anchors:
+
 - `docs/FEATURE-BACKLOG.md`
 - `docs/planning/planning--implementation-status.md`
 - `docs/planning/planning--drift-check--2026-03-04.md`
 - `docs/planning/planning--unity-contention-register--2026-03-04.md`
 
 ## Unity Lock-Ins (Non-Negotiable)
+
 - MVP remains iOS-first and No-Contact recovery-first.
 - Skill-based framing must remain explicit; no chance-based outcome mechanics in Phase 1.
 - Jurisdiction controls, age gating, and responsible-use controls remain release gates.
@@ -25,6 +28,7 @@ Input anchors:
 - Verification must trend toward hardware-backed trust, with fallback telemetry while native bridges are staged.
 
 ## Contention Decisions (Chosen Paths)
+
 - Contention: Stripe-only vs high-risk processor routing.
   Decision: implement a payment-router abstraction with Stripe-first plus failover stubs; no hard provider lock.
 - Contention: digital-exhaust-only vs native wearable bridge.
@@ -37,6 +41,7 @@ Input anchors:
 ## Prioritized Execution Queue
 
 ### TKT-P0-001 — Real-Money FBO Settlement Activation
+
 - Source items: `F-CORE-04`, `F-AEGIS-02`, legal guardrails docs.
 - Why now: beta blocker for actual money movement.
 - API diff:
@@ -63,6 +68,7 @@ Input anchors:
   - Ledger invariant checks under partial failure.
 
 ### TKT-P0-002 — Native iOS Camera Proof Capture (Gallery Disabled)
+
 - Source items: `F-MOBILE-01`, verification architecture docs.
 - Why now: beta blocker for proof integrity.
 - API diff:
@@ -84,6 +90,7 @@ Input anchors:
   - Nonce replay rejection tests.
 
 ### TKT-P0-003 — KYC Runtime Enforcement + Progressive Stake Tiers
+
 - Source items: `F-AEGIS-05`, implementation-status “Planned” row.
 - Why now: required for real-money scaling and fraud/AML posture.
 - API diff:
@@ -106,6 +113,7 @@ Input anchors:
   - Provider error and retry flows.
 
 ### TKT-P0-004 — Geofence Fail-Closed Hardening + Policy Registry
+
 - Source items: `F-AEGIS-02` (partial), legal geofencing mandates.
 - Why now: direct regulatory exposure if bypassed.
 - API diff:
@@ -124,6 +132,7 @@ Input anchors:
   - Route-by-route geofence guard regression pack.
 
 ### TKT-P1-005 — Recovery Danger-Zone Lockdowns + 24h Timelock
+
 - Source items: `F-AEGIS-04` (partial), `F-CORE-11` (not started).
 - Why now: directly linked to No-Contact adherence outcomes.
 - API diff:
@@ -145,6 +154,7 @@ Input anchors:
   - Day 3/21 lock-window policy tests.
 
 ### TKT-P1-006 — Remote Push Pipeline (APNs/FCM) + Policy Matrix
+
 - Source items: `F-MOBILE-03` (partial), behavioral reminders.
 - Why now: reminders are core for attestation compliance.
 - API diff:
@@ -164,6 +174,7 @@ Input anchors:
   - Provider mock tests + invalid token demotion.
 
 ### TKT-P1-007 — Native HealthKit Bridge + Server Metadata Filter
+
 - Source items: `F-VERIFY-02`, `F-VERIFY-05`, `F-VERIFY-16`.
 - Why now: close the verification trust gap for health data.
 - API diff:
@@ -182,6 +193,7 @@ Input anchors:
   - Ingest contract tests for accepted vs rejected samples.
 
 ### TKT-P1-008 — Cross-Lobby Anti-Collusion Routing
+
 - Source items: `F-FURY-03`.
 - Why now: prevents review capture and credibility loss.
 - API diff:
@@ -200,6 +212,7 @@ Input anchors:
   - Queue assignment simulation with exclusion saturation.
 
 ### TKT-P1-009 — Self-Exclusion + Responsible-Use Runtime Controls
+
 - Source items: `F-AEGIS-06`.
 - Why now: legal optics and user safety controls are currently document-only.
 - API diff:
@@ -218,6 +231,7 @@ Input anchors:
   - Guard tests for exclusion enforcement across endpoints.
 
 ### TKT-P1-010 — Endowed Progress + Downscale UX Completion
+
 - Source items: `F-UX-02` (partial), `F-UX-03` (partial), `F-UX-06` (stub).
 - Why now: direct retention and completion impact in first 14 days.
 - API diff:
@@ -238,6 +252,7 @@ Input anchors:
 ## Deeper Unresolved Ticket Tranche (Wave B)
 
 ### TKT-P0-011 — Forfeit Disposition Policy Engine + Refund-Only Kill Switch
+
 - Source items: `F-LEGAL-04`, `F-LEGAL-03`, pricing redistribution contention (`Option 1/2/3`) in `brainstorm--chatgpt--2026-03-03.md`.
 - Why now: unresolved payout-disposition logic is a legal blocker once real-money settlement is live.
 - API diff:
@@ -261,6 +276,7 @@ Input anchors:
   - Jurisdiction override audit and rollback tests.
 
 ### TKT-P1-012 — Weekend Multiplier Policy Engine (Recovery Stream)
+
 - Source items: `F-CORE-10`, recovery behavior research on weekend relapse concentration.
 - Why now: high-risk window is documented but not enforced in runtime policy.
 - API diff:
@@ -280,6 +296,7 @@ Input anchors:
   - Penalty parity tests between preview and settlement.
 
 ### TKT-P1-013 — Video Proof Processing Pipeline Completion
+
 - Source items: `F-VERIFY-07` (partial), verification architecture pipeline.
 - Why now: upload lifecycle exists, but transcode/metadata/processing states are incomplete.
 - API diff:
@@ -301,6 +318,7 @@ Input anchors:
   - Pipeline failure and retry path tests.
 
 ### TKT-P1-014 — Fury Audit Masks (Identity Redaction) Runtime
+
 - Source items: `F-FURY-04`.
 - Why now: anti-bias and privacy controls are required before scaling reviewer pool.
 - API diff:
@@ -321,6 +339,7 @@ Input anchors:
   - Assignment payload contract tests for alias-only identity.
 
 ### TKT-P1-015 — Collusion Slashing + Honey-Trap Enforcement
+
 - Source items: `F-FURY-09`, existing honeypot and anti-collusion signals.
 - Why now: exclusion routing alone is insufficient without economic penalties.
 - API diff:
@@ -341,6 +360,7 @@ Input anchors:
   - False-positive appeal rollback tests.
 
 ### TKT-P1-016 — Identity-Based Oath Onboarding Flow
+
 - Source items: `F-UX-01`.
 - Why now: identity framing is unresolved despite strong behavioral evidence and beta importance.
 - API diff:
@@ -360,6 +380,7 @@ Input anchors:
   - Copy variant assignment determinism tests.
 
 ### TKT-P1-017 — Accountability Partner Protocol Completion
+
 - Source items: `F-SOCIAL-01` (partial), recovery partner/veto requirements.
 - Why now: partner concept exists in schema but consent/veto lifecycle is incomplete.
 - API diff:
@@ -381,6 +402,7 @@ Input anchors:
   - Permission tests for partner-limited actions.
 
 ### TKT-P1-018 — Goal-Gradient Dashboard + Live Leaderboard Completion
+
 - Source items: `F-UX-05` (stub), `F-WEB-04` (partial), open retention visualization gaps.
 - Why now: retention loop depends on clear progress telemetry and low-latency social proof.
 - API diff:
@@ -402,6 +424,7 @@ Input anchors:
   - Snapshot payload contract tests.
 
 ### TKT-P1-019 — Skill-Contest Whitepaper + Release Gate
+
 - Source items: `F-LEGAL-05`, `legal--performance-wagering.md`.
 - Why now: legal defense remains document-only and disconnected from release controls.
 - API diff:
@@ -421,6 +444,7 @@ Input anchors:
   - Artifact hash mismatch rejection tests.
 
 ## Coverage Delta (Second-Pass Deep Unresolved)
+
 - `F-CORE-10` -> `TKT-P1-012`
 - `F-VERIFY-07` -> `TKT-P1-013`
 - `F-FURY-04` -> `TKT-P1-014`
@@ -432,6 +456,7 @@ Input anchors:
 - `F-LEGAL-05` -> `TKT-P1-019`
 
 ## Full P0/P1 Unresolved Coverage Map
+
 - `F-CORE-04` -> `TKT-P0-001`
 - `F-CORE-10` -> `TKT-P1-012`
 - `F-CORE-11` -> `TKT-P1-005`
@@ -458,6 +483,7 @@ Input anchors:
 - `F-LEGAL-05` -> `TKT-P1-019`
 
 ## Sequencing Recommendation
+
 1. `TKT-P0-001` -> `TKT-P0-003` -> `TKT-P0-004`
 2. `TKT-P0-002` in parallel with `TKT-P1-006`
 3. `TKT-P0-011` after settlement/geofence are live to finalize jurisdiction payout modes
@@ -469,6 +495,7 @@ Input anchors:
 9. `TKT-P1-019` as a release-gate prerequisite before public monetary rollout
 
 ## Definition of Done for This Pack
+
 - Each ticket has explicit API/schema/UI diff direction.
 - Each ticket has legal/compliance gating criteria.
 - Tickets are independently plannable and estimable by lane.

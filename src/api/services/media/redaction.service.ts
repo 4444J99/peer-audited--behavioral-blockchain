@@ -89,13 +89,23 @@ export class RedactionService {
         await execFileAsync(
           "ffmpeg",
           [
-            "-y", "-i", inputPath,
-            "-i", maskPath,
+            "-y",
+            "-i",
+            inputPath,
+            "-i",
+            maskPath,
             "-filter_complex",
             "[1:v]split[fg][bg];[bg]boxblur=20:5[blurred];[fg][blurred]overlay=0:0",
-            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
-            "-c:a", "copy",
-            "-movflags", "+faststart",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "fast",
+            "-crf",
+            "23",
+            "-c:a",
+            "copy",
+            "-movflags",
+            "+faststart",
             outputPath,
           ],
           { timeout: 180_000 },
@@ -110,18 +120,30 @@ export class RedactionService {
         };
       }
     } catch (err) {
-      this.logger.warn(`Face detection failed, falling back to full-frame blur: ${err}`);
+      this.logger.warn(
+        `Face detection failed, falling back to full-frame blur: ${err}`,
+      );
     }
 
     // Fallback: full-frame gaussian blur (conservative — always redacts)
     await execFileAsync(
       "ffmpeg",
       [
-        "-y", "-i", inputPath,
-        "-vf", "boxblur=25:5",
-        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
-        "-c:a", "copy",
-        "-movflags", "+faststart",
+        "-y",
+        "-i",
+        inputPath,
+        "-vf",
+        "boxblur=25:5",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "23",
+        "-c:a",
+        "copy",
+        "-movflags",
+        "+faststart",
         outputPath,
       ],
       { timeout: 180_000 },
@@ -152,9 +174,13 @@ export class RedactionService {
       await execFileAsync(
         "ffmpeg",
         [
-          "-y", "-i", inputPath,
-          "-vf", "face=download=0:scale=1:show=1",
-          "-f", "null",
+          "-y",
+          "-i",
+          inputPath,
+          "-vf",
+          "face=download=0:scale=1:show=1",
+          "-f",
+          "null",
           "-",
         ],
         { timeout: 60_000 },
@@ -183,10 +209,15 @@ export class RedactionService {
     await execFileAsync(
       "ffmpeg",
       [
-        "-y", "-i", inputPath,
-        "-af", "asetrate=44100*2^(3/12),atempo=0.7937",
-        "-c:v", "copy",
-        "-movflags", "+faststart",
+        "-y",
+        "-i",
+        inputPath,
+        "-af",
+        "asetrate=44100*2^(3/12),atempo=0.7937",
+        "-c:v",
+        "copy",
+        "-movflags",
+        "+faststart",
         outputPath,
       ],
       { timeout: 180_000 },

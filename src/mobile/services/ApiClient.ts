@@ -1,5 +1,5 @@
-import { API_BASE } from '../config/api';
-import type { MobileBootstrapResponse, ReleaseInfoResponse } from '@styx/shared/index';
+import { API_BASE } from "../config/api";
+import type { MobileBootstrapResponse, ReleaseInfoResponse } from "@styx/types";
 
 let authToken: string | null = null;
 
@@ -22,8 +22,9 @@ export interface ProofProcessingStatus {
   jobs: ProofProcessingJob[];
 }
 
-const MOBILE_APP_VERSION = process.env.EXPO_PUBLIC_STYX_MOBILE_VERSION || '0.0.0-dev';
-const MOBILE_APP_BUILD = process.env.EXPO_PUBLIC_STYX_MOBILE_BUILD || 'dev';
+const MOBILE_APP_VERSION =
+  process.env.EXPO_PUBLIC_STYX_MOBILE_VERSION || "0.0.0-dev";
+const MOBILE_APP_BUILD = process.env.EXPO_PUBLIC_STYX_MOBILE_BUILD || "dev";
 
 export function setAuthToken(token: string | null) {
   authToken = token;
@@ -35,8 +36,8 @@ export function getAuthToken(): string | null {
 
 function getRequestId(res: Response): string | null {
   return (
-    res.headers?.get?.('x-styx-request-id') ||
-    res.headers?.get?.('x-request-id') ||
+    res.headers?.get?.("x-styx-request-id") ||
+    res.headers?.get?.("x-request-id") ||
     null
   );
 }
@@ -44,8 +45,8 @@ function getRequestId(res: Response): string | null {
 async function parseErrorMessage(res: Response): Promise<string> {
   let message = `API ${res.status}`;
   try {
-    const contentType = res.headers?.get?.('content-type') || '';
-    if (contentType.includes('application/json')) {
+    const contentType = res.headers?.get?.("content-type") || "";
+    if (contentType.includes("application/json")) {
       const payload = await res.json();
       const envelopeMessage =
         payload?.message ||
@@ -53,9 +54,7 @@ async function parseErrorMessage(res: Response): Promise<string> {
         payload?.error_description ||
         payload?.error;
       const errorCode =
-        payload?.error_code ||
-        payload?.code ||
-        payload?.error?.code;
+        payload?.error_code || payload?.code || payload?.error?.code;
       if (envelopeMessage) {
         message = `API ${res.status}: ${String(envelopeMessage)}`;
       }
@@ -69,7 +68,7 @@ async function parseErrorMessage(res: Response): Promise<string> {
       }
     }
   } catch {
-    const fallbackText = await res.text().catch(() => '');
+    const fallbackText = await res.text().catch(() => "");
     if (fallbackText) {
       message = `API ${res.status}: ${fallbackText}`;
     }
@@ -84,10 +83,10 @@ async function parseErrorMessage(res: Response): Promise<string> {
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers = {
-    'Content-Type': 'application/json',
-    'x-styx-platform': 'ios',
-    'x-styx-app-version': MOBILE_APP_VERSION,
-    'x-styx-build': MOBILE_APP_BUILD,
+    "Content-Type": "application/json",
+    "x-styx-platform": "ios",
+    "x-styx-app-version": MOBILE_APP_VERSION,
+    "x-styx-build": MOBILE_APP_BUILD,
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...((options?.headers as Record<string, string> | undefined) || {}),
   };
@@ -101,8 +100,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   if (res.status === 204) {
     return undefined as T;
   }
-  const contentType = res.headers?.get?.('content-type') || '';
-  if (contentType.includes('application/json') || contentType === '') {
+  const contentType = res.headers?.get?.("content-type") || "";
+  if (contentType.includes("application/json") || contentType === "") {
     return res.json();
   }
   return (await res.text()) as T;
@@ -110,21 +109,30 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const ApiClient = {
   getMobileBootstrap: () =>
-    request<MobileBootstrapResponse>('/mobile/bootstrap'),
+    request<MobileBootstrapResponse>("/mobile/bootstrap"),
 
-  getReleaseInfo: () =>
-    request<ReleaseInfoResponse>('/meta/release'),
+  getReleaseInfo: () => request<ReleaseInfoResponse>("/meta/release"),
 
   // Auth
   login: (email: string, password: string) =>
-    request<{ userId: string; token: string; integrity: number }>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    }),
+    request<{ userId: string; token: string; integrity: number }>(
+      "/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      },
+    ),
 
-  register: (data: { email: string; password: string; ageConfirmation: boolean; termsAccepted: boolean; dateOfBirth: string; deviceFingerprint: { platform: 'ios' | 'android'; rawVendorId: string } }) =>
-    request<{ userId: string; token: string }>('/auth/register', {
-      method: 'POST',
+  register: (data: {
+    email: string;
+    password: string;
+    ageConfirmation: boolean;
+    termsAccepted: boolean;
+    dateOfBirth: string;
+    deviceFingerprint: { platform: "ios" | "android"; rawVendorId: string };
+  }) =>
+    request<{ userId: string; token: string }>("/auth/register", {
+      method: "POST",
       body: JSON.stringify(data),
     }),
 
@@ -137,19 +145,21 @@ export const ApiClient = {
       tier: string;
       contract_count: number;
       total_staked: number;
-    }>('/users/me'),
-getContracts: () =>
-  request<Array<{
-    id: string;
-    oath_category: string;
-    description: string;
-    stake_amount: number;
-    status: string;
-    started_at: string;
-    ends_at: string;
-    proof_count: number;
-    grace_days_used: number;
-  }>>('/contracts'),
+    }>("/users/me"),
+  getContracts: () =>
+    request<
+      Array<{
+        id: string;
+        oath_category: string;
+        description: string;
+        stake_amount: number;
+        status: string;
+        started_at: string;
+        ends_at: string;
+        proof_count: number;
+        grace_days_used: number;
+      }>
+    >("/contracts"),
 
   getContract: (id: string) =>
     request<{
@@ -162,7 +172,12 @@ getContracts: () =>
       ends_at: string;
       metadata: any;
       proof_count: number;
-      proofs: Array<{ id: string; timestamp: string; status: string; media_url?: string }>;
+      proofs: Array<{
+        id: string;
+        timestamp: string;
+        status: string;
+        media_url?: string;
+      }>;
       grace_days_used: number;
       grace_days_max: number;
     }>(`/contracts/${id}`),
@@ -184,14 +199,19 @@ getContracts: () =>
       };
     };
   }) =>
-    request<{ contractId: string; bountyLink?: string }>('/contracts', {
-      method: 'POST',
+    request<{ contractId: string; bountyLink?: string }>("/contracts", {
+      method: "POST",
       body: JSON.stringify(data),
     }),
 
   submitProof: (contractId: string, data: { mediaUri: string }) =>
-    request<{ proofId: string; jobId: string; rejected?: boolean; reason?: string }>(`/contracts/${contractId}/proof`, {
-      method: 'POST',
+    request<{
+      proofId: string;
+      jobId: string;
+      rejected?: boolean;
+      reason?: string;
+    }>(`/contracts/${contractId}/proof`, {
+      method: "POST",
       body: JSON.stringify(data),
     }),
 
@@ -199,13 +219,16 @@ getContracts: () =>
     request<ProofProcessingStatus>(`/proofs/${proofId}/processing-status`),
 
   useGraceDay: (contractId: string) =>
-    request<{ success: boolean; graceDaysRemaining: number }>(`/contracts/${contractId}/grace-day`, {
-      method: 'POST',
-    }),
+    request<{ success: boolean; graceDaysRemaining: number }>(
+      `/contracts/${contractId}/grace-day`,
+      {
+        method: "POST",
+      },
+    ),
 
   fileDispute: (contractId: string, reason: string) =>
     request<{ disputeId: string }>(`/contracts/${contractId}/dispute`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ reason }),
     }),
 
@@ -220,11 +243,11 @@ getContracts: () =>
         category: string;
         submittedAt: string;
       }>;
-    }>('/fury/queue'),
+    }>("/fury/queue"),
 
-  submitVerdict: (assignmentId: string, verdict: 'VERIFY' | 'BURN') =>
-    request<{ success: boolean; bounty?: number }>('/fury/verdict', {
-      method: 'POST',
+  submitVerdict: (assignmentId: string, verdict: "VERIFY" | "BURN") =>
+    request<{ success: boolean; bounty?: number }>("/fury/verdict", {
+      method: "POST",
       body: JSON.stringify({ assignmentId, verdict }),
     }),
 
@@ -240,7 +263,7 @@ getContracts: () =>
       netEarnings: number;
       honeypotsCaught: number;
       honeypotsFailedOn: number;
-    }>('/fury/stats'),
+    }>("/fury/stats"),
 
   // Wallet
   getBalance: () =>
@@ -251,41 +274,62 @@ getContracts: () =>
       allowed_tiers: string[];
       ledger_balance: number;
       status: string;
-    }>('/wallet/balance'),
+    }>("/wallet/balance"),
 
   getWalletHistory: (limit?: number) =>
-    request<{ transactions: Array<{ id: string; type: string; amount: number; timestamp: string; description: string }> }>(
-      `/wallet/history${limit ? `?limit=${limit}` : ''}`,
-    ),
+    request<{
+      transactions: Array<{
+        id: string;
+        type: string;
+        amount: number;
+        timestamp: string;
+        description: string;
+      }>;
+    }>(`/wallet/history${limit ? `?limit=${limit}` : ""}`),
 
   // Feed / Leaderboard
   getLeaderboard: () =>
-    request<{ leaders: Array<{ rank: number; anonymousId: string; integrity: number; completedContracts: number }> }>(
-      '/feed/leaderboard',
-    ),
+    request<{
+      leaders: Array<{
+        rank: number;
+        anonymousId: string;
+        integrity: number;
+        completedContracts: number;
+      }>;
+    }>("/feed/leaderboard"),
 
   // Notifications
   getNotifications: () =>
-    request<{ notifications: Array<{ id: string; type: string; message: string; read: boolean; createdAt: string }> }>(
-      '/notifications',
-    ),
+    request<{
+      notifications: Array<{
+        id: string;
+        type: string;
+        message: string;
+        read: boolean;
+        createdAt: string;
+      }>;
+    }>("/notifications"),
 
   // Settings
-  changePassword: (currentPassword: string, newPassword: string) => // allow-secret
-    request<{ status: string }>('/users/me/password', {
-      method: 'PATCH',
+  changePassword: (currentPassword: string, newPassword: string) =>
+    // allow-secret
+    request<{ status: string }>("/users/me/password", {
+      method: "PATCH",
       body: JSON.stringify({ currentPassword, newPassword }),
     }),
 
-  updateSettings: (settings: { emailNotifications?: boolean; pushNotifications?: boolean }) =>
-    request<{ status: string }>('/users/me/settings', {
-      method: 'PATCH',
+  updateSettings: (settings: {
+    emailNotifications?: boolean;
+    pushNotifications?: boolean;
+  }) =>
+    request<{ status: string }>("/users/me/settings", {
+      method: "PATCH",
       body: JSON.stringify(settings),
     }),
 
   deleteAccount: () =>
-    request<{ status: string }>('/users/me', {
-      method: 'DELETE',
+    request<{ status: string }>("/users/me", {
+      method: "DELETE",
     }),
 
   // Attestations (Recovery stream)
@@ -302,52 +346,53 @@ getContracts: () =>
 
   submitAttestation: (contractId: string) =>
     request<{ status: string }>(`/contracts/${contractId}/attestation`, {
-      method: 'POST',
+      method: "POST",
     }),
 
   // Push notifications
-  registerPushToken: (pushToken: string) => // allow-secret
-    request<{ status: string }>('/users/me/push-token', {
-      method: 'PUT',
+  registerPushToken: (pushToken: string) =>
+    // allow-secret
+    request<{ status: string }>("/users/me/push-token", {
+      method: "PUT",
       body: JSON.stringify({ token: pushToken }), // allow-secret
     }),
 
   // Enterprise SSO
-  exchangeEnterpriseToken: (enterpriseToken: string) => // allow-secret
-    request<{ userId: string; token: string }>('/auth/enterprise', {
-      method: 'POST',
+  exchangeEnterpriseToken: (enterpriseToken: string) =>
+    // allow-secret
+    request<{ userId: string; token: string }>("/auth/enterprise", {
+      method: "POST",
       body: JSON.stringify({ enterpriseToken }), // allow-secret
     }),
 
   // Accountability Partner
-  getPendingInvitations: () =>
-    request<any[]>('/contracts/invitations'),
+  getPendingInvitations: () => request<any[]>("/contracts/invitations"),
 
   acceptPartnerInvitation: (contractId: string) =>
     request<{ status: string }>(`/contracts/${contractId}/partner/accept`, {
-      method: 'POST',
+      method: "POST",
     }),
 
   cosignAttestation: (contractId: string) =>
     request<{ status: string }>(`/contracts/${contractId}/attestation/cosign`, {
-      method: 'POST',
+      method: "POST",
     }),
 
   // Self-Exclusion
   setSelfExclusion: (durationDays: number) =>
-    request<{ status: string; expiresAt: string }>('/users/me/self-exclusion', {
-      method: 'POST',
+    request<{ status: string; expiresAt: string }>("/users/me/self-exclusion", {
+      method: "POST",
       body: JSON.stringify({ durationDays }),
     }),
 
   // Security / Anti-Sybil
   registerDeviceFingerprint: (fingerprint: {
     hash?: string;
-    platform: 'ios' | 'android' | 'web';
+    platform: "ios" | "android" | "web";
     rawVendorId?: string;
   }) =>
-    request<{ registered: boolean }>('/security/device-fingerprint', {
-      method: 'POST',
+    request<{ registered: boolean }>("/security/device-fingerprint", {
+      method: "POST",
       body: JSON.stringify(fingerprint),
     }),
 };

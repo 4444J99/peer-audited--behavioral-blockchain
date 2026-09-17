@@ -11,42 +11,42 @@
 
 ### Status Breakdown
 
-| Status | Count | Description |
-|--------|-------|-------------|
-| IMPLEMENTED | 23 | Working code with tests |
-| PARTIAL | 12 | Code exists but incomplete or conditional |
-| STUB | 1 | Files/endpoints exist but placeholder logic |
-| NOT_STARTED | 44 | Described in docs, no code |
-| **Total** | **78** | |
+| Status      | Count  | Description                                 |
+| ----------- | ------ | ------------------------------------------- |
+| IMPLEMENTED | 23     | Working code with tests                     |
+| PARTIAL     | 12     | Code exists but incomplete or conditional   |
+| STUB        | 1      | Files/endpoints exist but placeholder logic |
+| NOT_STARTED | 44     | Described in docs, no code                  |
+| **Total**   | **78** |                                             |
 
 ### P0: Beta Blockers (Must-Build for Phase 1 Private Beta)
 
-| ID | Feature | Status | Blocker Reason |
-|----|---------|--------|----------------|
-| F-MOBILE-01 | Native iOS Camera Module | STUB | Cannot verify proofs without native capture |
-| F-CORE-04 | Real-Money Stripe FBO Settlement | PARTIAL | Test-money only; need FBO routing for beta |
-| F-AEGIS-03 | Age Gate (18+ Runtime) | IMPLEMENTED | Legal requirement for financial stakes |
-| F-VERIFY-06 | Attestation Daily Flow (No-Contact) | IMPLEMENTED | Primary Phase 1 journey depends on this |
-| F-WEB-01 | HttpOnly Cookie Auth Migration | IMPLEMENTED | Security requirement before public beta |
-| F-LEGAL-01 | Contest Official Rules Engine | IMPLEMENTED | Every contest needs official rules per law |
+| ID          | Feature                             | Status      | Blocker Reason                              |
+| ----------- | ----------------------------------- | ----------- | ------------------------------------------- |
+| F-MOBILE-01 | Native iOS Camera Module            | STUB        | Cannot verify proofs without native capture |
+| F-CORE-04   | Real-Money Stripe FBO Settlement    | PARTIAL     | Test-money only; need FBO routing for beta  |
+| F-AEGIS-03  | Age Gate (18+ Runtime)              | IMPLEMENTED | Legal requirement for financial stakes      |
+| F-VERIFY-06 | Attestation Daily Flow (No-Contact) | IMPLEMENTED | Primary Phase 1 journey depends on this     |
+| F-WEB-01    | HttpOnly Cookie Auth Migration      | IMPLEMENTED | Security requirement before public beta     |
+| F-LEGAL-01  | Contest Official Rules Engine       | IMPLEMENTED | Every contest needs official rules per law  |
 
 ### P1: Beta Enhancers (Should-Build for Phase 1)
 
-| ID | Feature | Status |
-|----|---------|--------|
-| F-VERIFY-02 | HealthKit Native Bridge (iOS) | NOT_STARTED |
-| F-UX-01 | Identity-Based Onboarding | NOT_STARTED |
-| F-UX-03 | Dynamic Downscale Intervention | PARTIAL |
-| F-FURY-03 | Cross-Lobby Auditing | NOT_STARTED |
-| F-AEGIS-04 | Recovery Protocol Guardrails | PARTIAL |
-| F-MOBILE-03 | Push Notifications | PARTIAL |
-| F-SOCIAL-07 | Pod-Based Cohorts (Max 5) | NOT_STARTED | New for March 6 Launch |
-| F-SOCIAL-08 | Pod-Level Visibility (Active/Out) | NOT_STARTED | Real-time failure broadcast within pod |
-| F-SOCIAL-09 | Anonymous Peer Disclosure (First Name) | NOT_STARTED | Pod-only identity for accountability |
-| F-FIN-05 | $39 Entry Model ($9 Fee + $30 Stake) | NOT_STARTED | Standardized MVP pricing |
-| F-VERIFY-17 | Binary Daily Check-in (Self-Report) | NOT_STARTED | Initial verification fallback for MVP |
-| F-VERIFY-15 | Whoop SCORED State Webhooks | NOT_STARTED | Part of Blockchain of Truth v2 |
-| F-VERIFY-16 | HealthKit Metadata WasUserEntered | NOT_STARTED | Part of Blockchain of Truth v2 |
+| ID          | Feature                                | Status      |
+| ----------- | -------------------------------------- | ----------- |
+| F-VERIFY-02 | HealthKit Native Bridge (iOS)          | NOT_STARTED |
+| F-UX-01     | Identity-Based Onboarding              | NOT_STARTED |
+| F-UX-03     | Dynamic Downscale Intervention         | PARTIAL     |
+| F-FURY-03   | Cross-Lobby Auditing                   | NOT_STARTED |
+| F-AEGIS-04  | Recovery Protocol Guardrails           | PARTIAL     |
+| F-MOBILE-03 | Push Notifications                     | PARTIAL     |
+| F-SOCIAL-07 | Pod-Based Cohorts (Max 5)              | NOT_STARTED | New for March 6 Launch                 |
+| F-SOCIAL-08 | Pod-Level Visibility (Active/Out)      | NOT_STARTED | Real-time failure broadcast within pod |
+| F-SOCIAL-09 | Anonymous Peer Disclosure (First Name) | NOT_STARTED | Pod-only identity for accountability   |
+| F-FIN-05    | $39 Entry Model ($9 Fee + $30 Stake)   | NOT_STARTED | Standardized MVP pricing               |
+| F-VERIFY-17 | Binary Daily Check-in (Self-Report)    | NOT_STARTED | Initial verification fallback for MVP  |
+| F-VERIFY-15 | Whoop SCORED State Webhooks            | NOT_STARTED | Part of Blockchain of Truth v2         |
+| F-VERIFY-16 | HealthKit Metadata WasUserEntered      | NOT_STARTED | Part of Blockchain of Truth v2         |
 
 ### P2: Post-Beta (Phase 2+)
 
@@ -1323,45 +1323,45 @@ Advanced features requiring external dependencies or significant R&D: EVM smart 
 
 ## Part II: Source Document → Feature Cross-Reference
 
-| Document | Feature IDs |
-|----------|-------------|
-| `research--behavioral-economics.md` | F-CORE-05, F-CORE-10, F-CORE-13, F-UX-02, F-UX-03, F-UX-06, F-AEGIS-09 |
-| `research--psychology-behavior.md` | F-CORE-08, F-UX-05, F-UX-06, F-UX-07, F-SOCIAL-01 |
-| `research--habit-application.md` | F-VERIFY-02, F-VERIFY-04, F-VERIFY-07, F-WEB-05, F-FURY-01 |
-| `research--competitor-teardown.md` | F-FURY-01, F-FURY-02, F-CORE-03, F-SOCIAL-05, F-SOCIAL-06, F-CORE-14, F-MARKET-05 |
-| `research--differentiation-competitor.md` | F-CORE-03, F-VERIFY-01, F-AEGIS-05, F-CORE-14 |
-| `research--behavioral-physics-manifesto.md` | F-CORE-05 (design philosophy — 7 design rules) |
-| `research--behavioral-engineering-masters.md` | F-CORE-09, F-CORE-10, F-UX-01, F-UX-04, F-UX-08, F-AEGIS-08 |
-| `research--market-analysis.md` | F-B2B-04, F-B2B-07, F-CORE-15, F-SOCIAL-05 |
-| `research--breakup-psychology-loss-aversion.md` | F-CORE-10, F-CORE-11, F-AEGIS-04, F-SOCIAL-01 |
-| `research--app-verification-tech-privacy-law.md` | F-VERIFY-08, F-VERIFY-09, F-VERIFY-10, F-VERIFY-11, F-VERIFY-13 |
-| `research--b2b-expansion-heartbreak-niche.md` | F-B2B-04, F-B2B-05, F-B2B-08 |
-| `research--behavior-change-app-design.md` | F-CORE-15, F-UX-09 |
-| `research--bounty-shame-protocol-safety-legality.md` | F-MARKET-04, F-FURY-04 |
-| `research--digital-exhaust-no-contact-contracts.md` | F-VERIFY-12 |
-| `research--gamified-behavior-change-app-design.md` | F-VERIFY-13, F-MARKET-01, F-MARKET-02, F-CORE-12 |
-| `research--prediction-markets-regulation-finance.md` | F-MARKET-01, F-INFRA-09, F-LEGAL-05 |
-| `research--smart-contracts-behavioral-wagers.md` | F-MARKET-03, F-MARKET-04, F-CORE-13 |
-| `research--commitment-device-market-analysis.md` | F-VERIFY-11, F-UX-11 |
-| `research--evaluation-to-growth--behavioral-physics.md` | F-FURY-04, F-MARKET-06 |
-| `research--evaluation-to-growth--strategic-review.md` | F-FURY-03, F-FURY-07, F-FURY-08, F-AEGIS-07, F-LEGAL-04, F-B2B-09, F-INFRA-10 |
-| `architecture--feasibility-stack.md` | F-VERIFY-02, F-VERIFY-07, F-FURY-01, F-INFRA-03, F-WEB-05 |
-| `architecture--truth-blockchain.md` | F-CORE-02, F-VERIFY-01, F-INFRA-03 |
-| `architecture--technical-feasibility.md` | F-CORE-01, F-VERIFY-07, F-FURY-01 |
-| `architecture--alpha-to-omega-plan.md` | F-INFRA-02, F-INFRA-04, F-INFRA-05, F-B2B-06 |
-| `legal--aegis-protocol.md` | F-AEGIS-01, F-CORE-04, F-AEGIS-03 |
-| `legal--compliance-guardrails.md` | F-AEGIS-02, F-AEGIS-05, F-AEGIS-06, F-LEGAL-01, F-LEGAL-03, F-CORE-12 |
-| `legal--gatekeeper-compliance.md` | F-INFRA-01, F-UX-10, F-LEGAL-06 |
-| `legal--performance-wagering.md` | F-CORE-04, F-LEGAL-05, F-LEGAL-08 |
-| `planning--roadmap.md` | F-CORE-01 through F-CORE-07, F-FURY-01 through F-FURY-06, F-AEGIS-01, F-AEGIS-02, F-B2B-01 through F-B2B-03 |
-| `planning--roadmap--ai-workstreams.md` | F-WEB-02, F-WEB-03, F-WEB-04, F-DESKTOP-01 through F-DESKTOP-05 |
-| `planning--phase1-private-beta-scope.md` | F-VERIFY-06, F-AEGIS-04, F-MOBILE-01 |
-| `planning--ship-baseline-report.md` | F-INFRA-02 |
-| `planning--implementation-status.md` | F-AEGIS-02, F-AEGIS-03, F-AEGIS-05, F-WEB-01 |
-| `brainstorm--motivation-validation.md` | F-CORE-13, F-UX-02, F-LEGAL-08 |
-| `adr/001-dual-layer-services-modules.md` | (Architecture — dual-layer services/modules pattern) |
-| `api/spec.md` | F-CORE-06, F-CORE-07, F-FURY-02, F-SOCIAL-04, F-MOBILE-06 |
-| `MANIFEST.md` | (Documentation catalog — no features) |
+| Document                                                | Feature IDs                                                                                                 |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `research--behavioral-economics.md`                     | F-CORE-05, F-CORE-10, F-CORE-13, F-UX-02, F-UX-03, F-UX-06, F-AEGIS-09                                      |
+| `research--psychology-behavior.md`                      | F-CORE-08, F-UX-05, F-UX-06, F-UX-07, F-SOCIAL-01                                                           |
+| `research--habit-application.md`                        | F-VERIFY-02, F-VERIFY-04, F-VERIFY-07, F-WEB-05, F-FURY-01                                                  |
+| `research--competitor-teardown.md`                      | F-FURY-01, F-FURY-02, F-CORE-03, F-SOCIAL-05, F-SOCIAL-06, F-CORE-14, F-MARKET-05                           |
+| `research--differentiation-competitor.md`               | F-CORE-03, F-VERIFY-01, F-AEGIS-05, F-CORE-14                                                               |
+| `research--behavioral-physics-manifesto.md`             | F-CORE-05 (design philosophy — 7 design rules)                                                              |
+| `research--behavioral-engineering-masters.md`           | F-CORE-09, F-CORE-10, F-UX-01, F-UX-04, F-UX-08, F-AEGIS-08                                                 |
+| `research--market-analysis.md`                          | F-B2B-04, F-B2B-07, F-CORE-15, F-SOCIAL-05                                                                  |
+| `research--breakup-psychology-loss-aversion.md`         | F-CORE-10, F-CORE-11, F-AEGIS-04, F-SOCIAL-01                                                               |
+| `research--app-verification-tech-privacy-law.md`        | F-VERIFY-08, F-VERIFY-09, F-VERIFY-10, F-VERIFY-11, F-VERIFY-13                                             |
+| `research--b2b-expansion-heartbreak-niche.md`           | F-B2B-04, F-B2B-05, F-B2B-08                                                                                |
+| `research--behavior-change-app-design.md`               | F-CORE-15, F-UX-09                                                                                          |
+| `research--bounty-shame-protocol-safety-legality.md`    | F-MARKET-04, F-FURY-04                                                                                      |
+| `research--digital-exhaust-no-contact-contracts.md`     | F-VERIFY-12                                                                                                 |
+| `research--gamified-behavior-change-app-design.md`      | F-VERIFY-13, F-MARKET-01, F-MARKET-02, F-CORE-12                                                            |
+| `research--prediction-markets-regulation-finance.md`    | F-MARKET-01, F-INFRA-09, F-LEGAL-05                                                                         |
+| `research--smart-contracts-behavioral-wagers.md`        | F-MARKET-03, F-MARKET-04, F-CORE-13                                                                         |
+| `research--commitment-device-market-analysis.md`        | F-VERIFY-11, F-UX-11                                                                                        |
+| `research--evaluation-to-growth--behavioral-physics.md` | F-FURY-04, F-MARKET-06                                                                                      |
+| `research--evaluation-to-growth--strategic-review.md`   | F-FURY-03, F-FURY-07, F-FURY-08, F-AEGIS-07, F-LEGAL-04, F-B2B-09, F-INFRA-10                               |
+| `architecture--feasibility-stack.md`                    | F-VERIFY-02, F-VERIFY-07, F-FURY-01, F-INFRA-03, F-WEB-05                                                   |
+| `architecture--truth-blockchain.md`                     | F-CORE-02, F-VERIFY-01, F-INFRA-03                                                                          |
+| `architecture--technical-feasibility.md`                | F-CORE-01, F-VERIFY-07, F-FURY-01                                                                           |
+| `architecture--alpha-to-omega-plan.md`                  | F-INFRA-02, F-INFRA-04, F-INFRA-05, F-B2B-06                                                                |
+| `legal--aegis-protocol.md`                              | F-AEGIS-01, F-CORE-04, F-AEGIS-03                                                                           |
+| `legal--compliance-guardrails.md`                       | F-AEGIS-02, F-AEGIS-05, F-AEGIS-06, F-LEGAL-01, F-LEGAL-03, F-CORE-12                                       |
+| `legal--gatekeeper-compliance.md`                       | F-INFRA-01, F-UX-10, F-LEGAL-06                                                                             |
+| `legal--performance-wagering.md`                        | F-CORE-04, F-LEGAL-05, F-LEGAL-08                                                                           |
+| `planning--roadmap.md`                                  | F-CORE-01 through F-CORE-07, F-FURY-01 through F-FURY-06, F-AEGIS-01, F-AEGIS-02, F-B2B-01 through F-B2B-03 |
+| `planning--roadmap--ai-workstreams.md`                  | F-WEB-02, F-WEB-03, F-WEB-04, F-DESKTOP-01 through F-DESKTOP-05                                             |
+| `planning--phase1-private-beta-scope.md`                | F-VERIFY-06, F-AEGIS-04, F-MOBILE-01                                                                        |
+| `planning--ship-baseline-report.md`                     | F-INFRA-02                                                                                                  |
+| `planning--implementation-status.md`                    | F-AEGIS-02, F-AEGIS-03, F-AEGIS-05, F-WEB-01                                                                |
+| `brainstorm--motivation-validation.md`                  | F-CORE-13, F-UX-02, F-LEGAL-08                                                                              |
+| `adr/001-dual-layer-services-modules.md`                | (Architecture — dual-layer services/modules pattern)                                                        |
+| `api/spec.md`                                           | F-CORE-06, F-CORE-07, F-FURY-02, F-SOCIAL-04, F-MOBILE-06                                                   |
+| `MANIFEST.md`                                           | (Documentation catalog — no features)                                                                       |
 
 ---
 
@@ -1371,32 +1371,32 @@ Based on `planning--phase1-private-beta-scope.md`: iOS TestFlight, No-Contact re
 
 ### P0 Go/No-Go Items
 
-| # | Requirement | Feature ID | Status | Go? |
-|---|-------------|-----------|--------|-----|
-| 1 | Double-entry ledger prevents phantom money | F-CORE-01 | IMPLEMENTED | YES |
-| 2 | Hash-chained audit trail | F-CORE-02 | IMPLEMENTED | YES |
-| 3 | Integrity score algorithm | F-CORE-03 | IMPLEMENTED | YES |
-| 4 | Behavioral logic (7 oath categories) | F-CORE-05 | IMPLEMENTED | YES |
-| 5 | Contract lifecycle state machine | F-CORE-07 | IMPLEMENTED | YES |
-| 6 | Linguistic cloaker (no gambling terms) | F-UX-10 | IMPLEMENTED | YES |
-| 7 | Terminology sanitization CI gate | F-LEGAL-06 | IMPLEMENTED | YES |
-| 8 | Fury Router (peer audit distribution) | F-FURY-01 | IMPLEMENTED | YES |
-| 9 | Fury accuracy + demotion | F-FURY-02 | IMPLEMENTED | YES |
-| 10 | Consensus engine | F-FURY-06 | IMPLEMENTED | YES |
-| 11 | Honeypot injection | F-FURY-05 | IMPLEMENTED | YES |
-| 12 | pHash duplicate detection | F-VERIFY-01 | IMPLEMENTED | YES |
-| 13 | R2 zero-egress storage | F-INFRA-03 | IMPLEMENTED | YES |
-| 14 | Whistleblower bounty (anonymous links) | F-SOCIAL-02 | IMPLEMENTED | YES |
-| 15 | CI/CD pipeline | F-INFRA-02 | IMPLEMENTED | YES |
-| 16 | Aegis Protocol (BMI/velocity) | F-AEGIS-01 | IMPLEMENTED | YES |
-| 17 | Stripe FBO escrow (real-money settlement) | F-CORE-04 | PARTIAL | **NO** — test-money only |
-| 18 | Geofencing by jurisdiction | F-AEGIS-02 | PARTIAL | **PARTIAL** — code exists, behavior incomplete |
-| 19 | Native iOS camera module | F-MOBILE-01 | STUB | **NO** — placeholder only |
-| 20 | Daily attestation flow (No-Contact) | F-VERIFY-06 | IMPLEMENTED | **YES** — API + web + mobile attestation screens |
-| 21 | Age gate (18+ runtime) | F-AEGIS-03 | IMPLEMENTED | **YES** — auth service + migration 008 + web/mobile UI |
-| 22 | HttpOnly cookie auth | F-WEB-01 | IMPLEMENTED | **YES** — cookie-based auth implemented |
-| 23 | Contest official rules | F-LEGAL-01 | IMPLEMENTED | **YES** — `/legal/rules` page |
-| 24 | Responsible use disclosures | F-LEGAL-02 | IMPLEMENTED | **YES** — `/legal/responsible-use` page |
+| #   | Requirement                                | Feature ID  | Status      | Go?                                                    |
+| --- | ------------------------------------------ | ----------- | ----------- | ------------------------------------------------------ |
+| 1   | Double-entry ledger prevents phantom money | F-CORE-01   | IMPLEMENTED | YES                                                    |
+| 2   | Hash-chained audit trail                   | F-CORE-02   | IMPLEMENTED | YES                                                    |
+| 3   | Integrity score algorithm                  | F-CORE-03   | IMPLEMENTED | YES                                                    |
+| 4   | Behavioral logic (7 oath categories)       | F-CORE-05   | IMPLEMENTED | YES                                                    |
+| 5   | Contract lifecycle state machine           | F-CORE-07   | IMPLEMENTED | YES                                                    |
+| 6   | Linguistic cloaker (no gambling terms)     | F-UX-10     | IMPLEMENTED | YES                                                    |
+| 7   | Terminology sanitization CI gate           | F-LEGAL-06  | IMPLEMENTED | YES                                                    |
+| 8   | Fury Router (peer audit distribution)      | F-FURY-01   | IMPLEMENTED | YES                                                    |
+| 9   | Fury accuracy + demotion                   | F-FURY-02   | IMPLEMENTED | YES                                                    |
+| 10  | Consensus engine                           | F-FURY-06   | IMPLEMENTED | YES                                                    |
+| 11  | Honeypot injection                         | F-FURY-05   | IMPLEMENTED | YES                                                    |
+| 12  | pHash duplicate detection                  | F-VERIFY-01 | IMPLEMENTED | YES                                                    |
+| 13  | R2 zero-egress storage                     | F-INFRA-03  | IMPLEMENTED | YES                                                    |
+| 14  | Whistleblower bounty (anonymous links)     | F-SOCIAL-02 | IMPLEMENTED | YES                                                    |
+| 15  | CI/CD pipeline                             | F-INFRA-02  | IMPLEMENTED | YES                                                    |
+| 16  | Aegis Protocol (BMI/velocity)              | F-AEGIS-01  | IMPLEMENTED | YES                                                    |
+| 17  | Stripe FBO escrow (real-money settlement)  | F-CORE-04   | PARTIAL     | **NO** — test-money only                               |
+| 18  | Geofencing by jurisdiction                 | F-AEGIS-02  | PARTIAL     | **PARTIAL** — code exists, behavior incomplete         |
+| 19  | Native iOS camera module                   | F-MOBILE-01 | STUB        | **NO** — placeholder only                              |
+| 20  | Daily attestation flow (No-Contact)        | F-VERIFY-06 | IMPLEMENTED | **YES** — API + web + mobile attestation screens       |
+| 21  | Age gate (18+ runtime)                     | F-AEGIS-03  | IMPLEMENTED | **YES** — auth service + migration 008 + web/mobile UI |
+| 22  | HttpOnly cookie auth                       | F-WEB-01    | IMPLEMENTED | **YES** — cookie-based auth implemented                |
+| 23  | Contest official rules                     | F-LEGAL-01  | IMPLEMENTED | **YES** — `/legal/rules` page                          |
+| 24  | Responsible use disclosures                | F-LEGAL-02  | IMPLEMENTED | **YES** — `/legal/responsible-use` page                |
 
 ### Phase 1 Readiness Score
 
@@ -1416,6 +1416,7 @@ Based on `planning--phase1-private-beta-scope.md`: iOS TestFlight, No-Contact re
 ### Phase 1 Scope Reminder
 
 Per `planning--phase1-private-beta-scope.md`:
+
 - Primary surface: iOS (TestFlight)
 - Primary journey: No-Contact recovery only
 - Money mode: **Test-money pilot** (no real settlement)
@@ -1427,4 +1428,4 @@ Per `planning--phase1-private-beta-scope.md`:
 
 ---
 
-*Generated by Claude Code from 37 source documents + codebase analysis. All features cite at least one source document. Implementation status verified against `docs/planning/planning--implementation-status.md` and direct codebase inspection.*
+_Generated by Claude Code from 37 source documents + codebase analysis. All features cite at least one source document. Implementation status verified against `docs/planning/planning--implementation-status.md` and direct codebase inspection._

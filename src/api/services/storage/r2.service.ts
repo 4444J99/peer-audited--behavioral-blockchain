@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Injectable } from "@nestjs/common";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
  * Cloudflare R2 storage service for proof media (video, images).
@@ -12,13 +16,15 @@ export class R2StorageService {
   private readonly bucket: string;
 
   constructor() {
-    this.bucket = process.env.R2_BUCKET || 'styx-proofs';
+    this.bucket = process.env.R2_BUCKET || "styx-proofs";
     this.s3Client = new S3Client({
-      region: 'auto',
-      endpoint: process.env.R2_ENDPOINT || `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      region: "auto",
+      endpoint:
+        process.env.R2_ENDPOINT ||
+        `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
       credentials: {
-        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY || '',
-        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_KEY || '',
+        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY || "",
+        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_KEY || "",
       },
     });
   }
@@ -27,15 +33,20 @@ export class R2StorageService {
    * Generate a pre-signed upload URL for proof media.
    * URL expires in 5 minutes. Returns both the URL and the storage key.
    */
-  async generateUploadUrl(proofId: string, contentType: string): Promise<{ uploadUrl: string; key: string }> {
-    const ext = contentType.split('/')[1] || 'bin';
+  async generateUploadUrl(
+    proofId: string,
+    contentType: string,
+  ): Promise<{ uploadUrl: string; key: string }> {
+    const ext = contentType.split("/")[1] || "bin";
     const key = `proofs/${proofId}/${Date.now()}.${ext}`;
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: key,
       ContentType: contentType,
     });
-    const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 300 });
+    const uploadUrl = await getSignedUrl(this.s3Client, command, {
+      expiresIn: 300,
+    });
     return { uploadUrl, key };
   }
 
@@ -55,7 +66,11 @@ export class R2StorageService {
    * Upload a buffer directly to R2.
    * Used by TranscodingService to store processed video and thumbnails.
    */
-  async uploadBuffer(buffer: Buffer, key: string, contentType: string): Promise<string> {
+  async uploadBuffer(
+    buffer: Buffer,
+    key: string,
+    contentType: string,
+  ): Promise<string> {
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: key,

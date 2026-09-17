@@ -1,9 +1,9 @@
-import { Pool } from 'pg';
-import * as fs from 'fs';
-import * as path from 'path';
-import { resolveDatabaseUrl } from '../../src/config/runtime';
+import { Pool } from "pg";
+import * as fs from "fs";
+import * as path from "path";
+import { resolveDatabaseUrl } from "../../src/config/runtime";
 
-const MIGRATIONS_TABLE = 'schema_migrations';
+const MIGRATIONS_TABLE = "schema_migrations";
 const MIGRATIONS_DIR = path.join(__dirname);
 const MIGRATION_NAME_RE = /^(\d+)([A-Za-z]*)(?:_|$)/;
 
@@ -11,7 +11,7 @@ const MIGRATION_NAME_RE = /^(\d+)([A-Za-z]*)(?:_|$)/;
 // consolidated schema.sql init script. Its presence means the database has
 // already been provisioned by *some* path (an initdb-mounted schema.sql or a
 // prior migration run), even when schema_migrations is still empty.
-const SCHEMA_SENTINEL_TABLE = 'accounts';
+const SCHEMA_SENTINEL_TABLE = "accounts";
 
 export async function ensureMigrationsTable(pool: Pool): Promise<void> {
   await pool.query(`
@@ -29,46 +29,49 @@ export async function ensureMigrationsTable(pool: Pool): Promise<void> {
  * migrations under legacy duplicate prefixes before they were sequentialized.
  */
 export const MIGRATION_LEGACY_ALIASES: Readonly<Record<string, string>> = {
-  '041_metered_usage_events.sql': '042_metered_usage_events.sql',
-  '041_user_access_tier.sql': '043_user_access_tier.sql',
-  '042_user_api_keys.sql': '044_user_api_keys.sql',
-  '042_user_subscription_id.sql': '045_user_subscription_id.sql',
-  '043_compliance_artifacts.sql': '046_compliance_artifacts.sql',
-  '043_fury_rejection_code.sql': '047_fury_rejection_code.sql',
-  '044_push_notifications.sql': '048_push_notifications.sql',
-  '045_referral_tracking.sql': '049_referral_tracking.sql',
-  '046_ostrich_effect_detection.sql': '050_ostrich_effect_detection.sql',
-  '047_rationalization_classifier.sql': '051_rationalization_classifier.sql',
-  '048_behavioral_enrichment_tables.sql': '052_behavioral_enrichment_tables.sql',
-  '049_behavioral_omega_features.sql': '053_behavioral_omega_features.sql',
-  '050_behavioral_omega_tables.sql': '054_behavioral_omega_tables.sql',
-  '051_device_attestation_keys.sql': '055_device_attestation_keys.sql',
-  '052_partner_checkins.sql': '056_partner_checkins.sql',
-  '053_anti_sybil.sql': '057_anti_sybil.sql',
-  '054_ccpa_aml.sql': '058_ccpa_aml.sql',
-  '055_deco_commitments.sql': '059_deco_commitments.sql',
-  '056_fbo_accounts.sql': '060_fbo_accounts.sql',
-  '057_pod_broadcast_log_cohort.sql': '061_pod_broadcast_log_cohort.sql',
-  '058_practitioner_tables.sql': '062_practitioner_tables.sql',
-  '059_aml_tables.sql': '063_aml_tables.sql',
-  '060_system_flags.sql': '064_system_flags.sql',
-  '061_retention_state.sql': '065_retention_state.sql',
-  '062_fitbit_oauth_tokens.sql': '066_fitbit_oauth_tokens.sql',
-  '063_schema_chain_reconciliation.sql': '067_schema_chain_reconciliation.sql',
-  '064_schema_drift_columns.sql': '068_schema_drift_columns.sql',
-  '065_deco_commitment_privacy.sql': '069_deco_commitment_privacy.sql',
-  '066_jurisdiction_survey_reconciliation.sql': '070_jurisdiction_survey_reconciliation.sql',
-  '067_system_accounts.sql': '071_system_accounts.sql',
-  '068_contract_reconcile_attempts.sql': '072_contract_reconcile_attempts.sql',
-  '069_fury_penalty_ledger_link.sql': '073_fury_penalty_ledger_link.sql',
-  '069_identity_oaths.sql': '074_identity_oaths.sql',
-  '069_push_delivery_receipts.sql': '075_push_delivery_receipts.sql',
-  '069_webhook_subscriptions.sql': '076_webhook_subscriptions.sql',
-  '070_capture_provenance.sql': '077_capture_provenance.sql',
-  '070_fury_enforcement_case_read_indexes.sql': '078_fury_enforcement_case_read_indexes.sql',
-  '071_test_money_stake_floor.sql': '079_test_money_stake_floor.sql',
-  '072_agent_action_evidence.sql': '080_agent_action_evidence.sql',
-  '073_cohort_nominations.sql': '081_cohort_nominations.sql',
+  "041_metered_usage_events.sql": "042_metered_usage_events.sql",
+  "041_user_access_tier.sql": "043_user_access_tier.sql",
+  "042_user_api_keys.sql": "044_user_api_keys.sql",
+  "042_user_subscription_id.sql": "045_user_subscription_id.sql",
+  "043_compliance_artifacts.sql": "046_compliance_artifacts.sql",
+  "043_fury_rejection_code.sql": "047_fury_rejection_code.sql",
+  "044_push_notifications.sql": "048_push_notifications.sql",
+  "045_referral_tracking.sql": "049_referral_tracking.sql",
+  "046_ostrich_effect_detection.sql": "050_ostrich_effect_detection.sql",
+  "047_rationalization_classifier.sql": "051_rationalization_classifier.sql",
+  "048_behavioral_enrichment_tables.sql":
+    "052_behavioral_enrichment_tables.sql",
+  "049_behavioral_omega_features.sql": "053_behavioral_omega_features.sql",
+  "050_behavioral_omega_tables.sql": "054_behavioral_omega_tables.sql",
+  "051_device_attestation_keys.sql": "055_device_attestation_keys.sql",
+  "052_partner_checkins.sql": "056_partner_checkins.sql",
+  "053_anti_sybil.sql": "057_anti_sybil.sql",
+  "054_ccpa_aml.sql": "058_ccpa_aml.sql",
+  "055_deco_commitments.sql": "059_deco_commitments.sql",
+  "056_fbo_accounts.sql": "060_fbo_accounts.sql",
+  "057_pod_broadcast_log_cohort.sql": "061_pod_broadcast_log_cohort.sql",
+  "058_practitioner_tables.sql": "062_practitioner_tables.sql",
+  "059_aml_tables.sql": "063_aml_tables.sql",
+  "060_system_flags.sql": "064_system_flags.sql",
+  "061_retention_state.sql": "065_retention_state.sql",
+  "062_fitbit_oauth_tokens.sql": "066_fitbit_oauth_tokens.sql",
+  "063_schema_chain_reconciliation.sql": "067_schema_chain_reconciliation.sql",
+  "064_schema_drift_columns.sql": "068_schema_drift_columns.sql",
+  "065_deco_commitment_privacy.sql": "069_deco_commitment_privacy.sql",
+  "066_jurisdiction_survey_reconciliation.sql":
+    "070_jurisdiction_survey_reconciliation.sql",
+  "067_system_accounts.sql": "071_system_accounts.sql",
+  "068_contract_reconcile_attempts.sql": "072_contract_reconcile_attempts.sql",
+  "069_fury_penalty_ledger_link.sql": "073_fury_penalty_ledger_link.sql",
+  "069_identity_oaths.sql": "074_identity_oaths.sql",
+  "069_push_delivery_receipts.sql": "075_push_delivery_receipts.sql",
+  "069_webhook_subscriptions.sql": "076_webhook_subscriptions.sql",
+  "070_capture_provenance.sql": "077_capture_provenance.sql",
+  "070_fury_enforcement_case_read_indexes.sql":
+    "078_fury_enforcement_case_read_indexes.sql",
+  "071_test_money_stake_floor.sql": "079_test_money_stake_floor.sql",
+  "072_agent_action_evidence.sql": "080_agent_action_evidence.sql",
+  "073_cohort_nominations.sql": "081_cohort_nominations.sql",
 };
 
 /**
@@ -98,12 +101,14 @@ export function compareMigrationFiles(left: string, right: string): number {
 export function listMigrationFiles(): string[] {
   return fs
     .readdirSync(MIGRATIONS_DIR)
-    .filter((f: string) => f.endsWith('.sql'))
+    .filter((f: string) => f.endsWith(".sql"))
     .sort(compareMigrationFiles);
 }
 
 export async function getAppliedMigrations(pool: Pool): Promise<Set<string>> {
-  const result = await pool.query(`SELECT name FROM ${MIGRATIONS_TABLE} ORDER BY id`);
+  const result = await pool.query(
+    `SELECT name FROM ${MIGRATIONS_TABLE} ORDER BY id`,
+  );
   const applied = new Set<string>();
   for (const row of result.rows) {
     const canonical = MIGRATION_LEGACY_ALIASES[row.name] || row.name;
@@ -119,7 +124,9 @@ export async function getPendingMigrations(pool: Pool): Promise<string[]> {
   const fileSet = new Set(files);
   for (const a of applied) {
     if (!fileSet.has(a)) {
-      throw new Error(`Schema drift detected: Applied migration ${a} is missing from the filesystem.`);
+      throw new Error(
+        `Schema drift detected: Applied migration ${a} is missing from the filesystem.`,
+      );
     }
   }
 
@@ -129,7 +136,9 @@ export async function getPendingMigrations(pool: Pool): Promise<string[]> {
   // Applied migrations must be one contiguous prefix.  The old latest-name
   // comparison could pass an applied migration after a gap when sibling names
   // or future non-padded numbers were introduced, silently changing ordering.
-  const appliedAfterGap = files.find((file, index) => index > firstPendingIndex && applied.has(file));
+  const appliedAfterGap = files.find(
+    (file, index) => index > firstPendingIndex && applied.has(file),
+  );
   if (appliedAfterGap) {
     const firstPending = files[firstPendingIndex];
     throw new Error(
@@ -180,14 +189,19 @@ export function extractCreatedTables(sql: string): string[] {
  * True when every named table exists in the public schema. Vacuously true for
  * an empty list (no information_schema round-trip).
  */
-export async function allTablesExist(pool: Pool, tables: string[]): Promise<boolean> {
+export async function allTablesExist(
+  pool: Pool,
+  tables: string[],
+): Promise<boolean> {
   if (tables.length === 0) return true;
   const result = await pool.query(
     `SELECT table_name FROM information_schema.tables
      WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
     [tables],
   );
-  const found = new Set(result.rows.map((r: { table_name: string }) => r.table_name));
+  const found = new Set(
+    result.rows.map((r: { table_name: string }) => r.table_name),
+  );
   return tables.every((t) => found.has(t));
 }
 
@@ -212,11 +226,13 @@ export async function allTablesExist(pool: Pool, tables: string[]): Promise<bool
  * Idempotent via ON CONFLICT, so a partially-stamped baseline is safe to
  * re-run.
  */
-export async function baselineFromExistingSchema(pool: Pool): Promise<string[]> {
+export async function baselineFromExistingSchema(
+  pool: Pool,
+): Promise<string[]> {
   const files = listMigrationFiles();
   const stamped: string[] = [];
   for (const file of files) {
-    const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf-8');
+    const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf-8");
     const tables = extractCreatedTables(sql);
     if (!(await allTablesExist(pool, tables))) {
       break;
@@ -256,7 +272,7 @@ export async function repairBaselineDrift(pool: Pool): Promise<string[]> {
   const repaired: string[] = [];
   for (const file of listMigrationFiles()) {
     if (!appliedSet.has(file)) continue;
-    const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf-8');
+    const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf-8");
     if (extractCreatedTables(sql).length > 0) continue;
     await pool.query(sql);
     repaired.push(file);
@@ -285,7 +301,7 @@ export async function runMigrations(pool: Pool): Promise<string[]> {
   const pending = await getPendingMigrations(pool);
 
   if (pending.length === 0) {
-    console.log('No pending migrations.');
+    console.log("No pending migrations.");
     await repairBaselineDrift(pool);
     return [];
   }
@@ -293,21 +309,20 @@ export async function runMigrations(pool: Pool): Promise<string[]> {
   const applied: string[] = [];
   for (const file of pending) {
     const filePath = path.join(MIGRATIONS_DIR, file);
-    const sql = fs.readFileSync(filePath, 'utf-8');
+    const sql = fs.readFileSync(filePath, "utf-8");
 
     const client = await pool.connect();
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
       await client.query(sql);
-      await client.query(
-        `INSERT INTO ${MIGRATIONS_TABLE} (name) VALUES ($1)`,
-        [file],
-      );
-      await client.query('COMMIT');
+      await client.query(`INSERT INTO ${MIGRATIONS_TABLE} (name) VALUES ($1)`, [
+        file,
+      ]);
+      await client.query("COMMIT");
       console.log(`Applied: ${file}`);
       applied.push(file);
     } catch (err) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       console.error(`Failed to apply ${file}:`, err);
       throw err;
     } finally {
@@ -321,7 +336,8 @@ export async function runMigrations(pool: Pool): Promise<string[]> {
 
 // CLI entry point — run directly with `tsx database/migrations/migrate.ts`
 if (require.main === module) {
-  const connectionString = process.env.MIGRATION_DATABASE_URL || resolveDatabaseUrl();
+  const connectionString =
+    process.env.MIGRATION_DATABASE_URL || resolveDatabaseUrl();
   const pool = new Pool({ connectionString });
 
   runMigrations(pool)
@@ -330,7 +346,7 @@ if (require.main === module) {
       process.exit(0);
     })
     .catch((err) => {
-      console.error('Migration failed:', err);
+      console.error("Migration failed:", err);
       process.exit(1);
     });
 }

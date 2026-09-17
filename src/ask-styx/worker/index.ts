@@ -1,5 +1,5 @@
 /// <reference types="@cloudflare/workers-types" />
-import { STYX_KNOWLEDGE } from '../../web/lib/styx-knowledge';
+import { STYX_KNOWLEDGE } from "../../web/lib/styx-knowledge";
 
 interface Env {
   GROQ_API_KEY: string;
@@ -22,7 +22,6 @@ GUIDELINES:
 KNOWLEDGE BASE:
 ${STYX_KNOWLEDGE}`;
 
-
 // Input-validation bounds for the chat request. These cap untrusted client
 // payloads so a single request cannot exhaust the LLM token budget, drive up
 // cost, or smuggle in an alternate system prompt.
@@ -32,9 +31,13 @@ const MAX_TOTAL_CONTENT_CHARS = 24_000;
 // Only client-supplied turns are accepted. The trusted `system` prompt is
 // injected server-side; accepting a client `system` message would let a caller
 // override the assistant's guardrails (prompt injection).
-const ALLOWED_ROLES = new Set(['user', 'assistant']);
+const ALLOWED_ROLES = new Set(["user", "assistant"]);
 
-const REQUIRED_ENV_KEYS: Array<keyof Env> = ['GROQ_API_KEY', 'LLM_BASE_URL', 'LLM_MODEL'];
+const REQUIRED_ENV_KEYS: Array<keyof Env> = [
+  "GROQ_API_KEY",
+  "LLM_BASE_URL",
+  "LLM_MODEL",
+];
 
 type ChatMessage = { role: string; content: string };
 
@@ -44,7 +47,7 @@ type ChatMessage = { role: string; content: string };
  * never throw and never break request handling.
  */
 function logEvent(
-  level: 'info' | 'warn' | 'error',
+  level: "info" | "warn" | "error",
   event: string,
   fields: Record<string, unknown> = {},
 ): void {
@@ -52,7 +55,7 @@ function logEvent(
     console.log(
       JSON.stringify({
         ts: new Date().toISOString(),
-        service: 'ask-styx-worker',
+        service: "ask-styx-worker",
         level,
         event,
         ...fields,
@@ -69,16 +72,16 @@ function newRequestId(): string {
   } catch {
     // crypto is always present in the Workers runtime; the guard keeps the
     // worker resilient under non-standard test harnesses.
-    return 'req-unknown';
+    return "req-unknown";
   }
 }
 
 function corsHeaders(origin: string, requestId: string) {
   return {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'x-request-id': requestId,
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "x-request-id": requestId,
   };
 }
 
@@ -86,14 +89,14 @@ export function resolveAllowedOrigin(
   requestOrigin: string | null,
   configuredOrigin: string | undefined,
 ): string {
-  if (!configuredOrigin || configuredOrigin === '*') {
-    return requestOrigin || '*';
+  if (!configuredOrigin || configuredOrigin === "*") {
+    return requestOrigin || "*";
   }
-  const allowedList = configuredOrigin.split(',').map((s) => s.trim());
+  const allowedList = configuredOrigin.split(",").map((s) => s.trim());
   if (requestOrigin && allowedList.includes(requestOrigin)) {
     return requestOrigin;
   }
-  return allowedList[0] || '*';
+  return allowedList[0] || "*";
 }
 
 function jsonError(
@@ -102,12 +105,14 @@ function jsonError(
   headers: Record<string, string>,
   requestId: string,
 ): Response {
-  return Response.json({ error: message, request_id: requestId }, { status, headers });
+  return Response.json(
+    { error: message, request_id: requestId },
+    { status, headers },
+  );
 }
 
 type ValidationResult =
-  | { ok: true; messages: ChatMessage[] }
-  | { ok: false; error: string };
+  { ok: true; messages: ChatMessage[] } | { ok: false; error: string };
 
 /**
  * Validate and normalize untrusted chat messages. Rejects oversized payloads,
@@ -116,10 +121,13 @@ type ValidationResult =
  */
 function validateMessages(raw: unknown): ValidationResult {
   if (!Array.isArray(raw) || raw.length === 0) {
-    return { ok: false, error: 'messages array is required' };
+    return { ok: false, error: "messages array is required" };
   }
   if (raw.length > MAX_MESSAGES) {
-    return { ok: false, error: `messages array exceeds the maximum of ${MAX_MESSAGES}` };
+    return {
+      ok: false,
+      error: `messages array exceeds the maximum of ${MAX_MESSAGES}`,
+    };
   }
 
   const sanitized: ChatMessage[] = [];
@@ -127,23 +135,29 @@ function validateMessages(raw: unknown): ValidationResult {
 
   for (let i = 0; i < raw.length; i++) {
     const entry = raw[i];
-    if (!entry || typeof entry !== 'object') {
+    if (!entry || typeof entry !== "object") {
       return { ok: false, error: `message at index ${i} must be an object` };
     }
     const { role, content } = entry as Record<string, unknown>;
 
-    if (typeof role !== 'string' || !ALLOWED_ROLES.has(role)) {
+    if (typeof role !== "string" || !ALLOWED_ROLES.has(role)) {
       return {
         ok: false,
-        error: `message at index ${i} has an invalid role (expected one of: ${[...ALLOWED_ROLES].join(', ')})`,
+        error: `message at index ${i} has an invalid role (expected one of: ${[...ALLOWED_ROLES].join(", ")})`,
       };
     }
-    if (typeof content !== 'string') {
-      return { ok: false, error: `message at index ${i} content must be a string` };
+    if (typeof content !== "string") {
+      return {
+        ok: false,
+        error: `message at index ${i} content must be a string`,
+      };
     }
     const trimmed = content.trim();
     if (trimmed.length === 0) {
-      return { ok: false, error: `message at index ${i} content must not be empty` };
+      return {
+        ok: false,
+        error: `message at index ${i} content must not be empty`,
+      };
     }
     if (content.length > MAX_CONTENT_CHARS) {
       return {
@@ -173,7 +187,8 @@ export class RateLimiterDO {
   constructor(state: DurableObjectState, _env: Env) {
     this.state = state;
     this.state.blockConcurrencyWhile(async () => {
-      this.timestamps = await this.state.storage.get<number[]>('timestamps') || [];
+      this.timestamps =
+        (await this.state.storage.get<number[]>("timestamps")) || [];
     });
   }
 
@@ -182,20 +197,25 @@ export class RateLimiterDO {
     const RATE_LIMIT_MAX = 30;
     const now = Date.now();
 
-    this.timestamps = this.timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+    this.timestamps = this.timestamps.filter(
+      (t) => now - t < RATE_LIMIT_WINDOW_MS,
+    );
 
     if (this.timestamps.length >= RATE_LIMIT_MAX) {
-      this.state.storage.put('timestamps', this.timestamps);
+      this.state.storage.put("timestamps", this.timestamps);
       return new Response("true");
     }
-    
+
     this.timestamps.push(now);
-    this.state.storage.put('timestamps', this.timestamps);
+    this.state.storage.put("timestamps", this.timestamps);
     return new Response("false");
   }
 }
 
-async function isRateLimited(ip: string, rateLimiter: DurableObjectNamespace): Promise<boolean> {
+async function isRateLimited(
+  ip: string,
+  rateLimiter: DurableObjectNamespace,
+): Promise<boolean> {
   const id = rateLimiter.idFromName(ip);
   const obj = rateLimiter.get(id);
   const response = await obj.fetch(new Request("http://do/"));
@@ -205,62 +225,77 @@ async function isRateLimited(ip: string, rateLimiter: DurableObjectNamespace): P
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const requestId = newRequestId();
-    const requestOrigin = request.headers.get('origin');
+    const requestOrigin = request.headers.get("origin");
     const origin = resolveAllowedOrigin(requestOrigin, env.ALLOWED_ORIGIN);
     const headers = corsHeaders(origin, requestId);
 
     try {
-      if (request.method === 'OPTIONS') {
+      if (request.method === "OPTIONS") {
         return new Response(null, { status: 204, headers });
       }
 
-      if (request.method !== 'POST') {
-        return jsonError('Method not allowed', 405, headers, requestId);
+      if (request.method !== "POST") {
+        return jsonError("Method not allowed", 405, headers, requestId);
       }
 
       // Fail fast (and loudly) on misconfiguration rather than leaking a raw
       // upstream/runtime error to the client.
       const missingEnv = REQUIRED_ENV_KEYS.filter((key) => !env[key]);
       if (missingEnv.length > 0) {
-        logEvent('error', 'config_missing', { requestId, missing: missingEnv });
-        return jsonError('Service is not configured', 500, headers, requestId);
+        logEvent("error", "config_missing", { requestId, missing: missingEnv });
+        return jsonError("Service is not configured", 500, headers, requestId);
       }
 
-      const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+      const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
 
       let limited = false;
       try {
         limited = await isRateLimited(ip, env.RATE_LIMITER);
       } catch (err) {
         // Fail open on DO outages so chat stays available, but record it.
-        logEvent('error', 'rate_limit_check_failed', {
+        logEvent("error", "rate_limit_check_failed", {
           requestId,
           error: err instanceof Error ? err.message : String(err),
         });
       }
       if (limited) {
-        logEvent('warn', 'rate_limited', { requestId });
-        return jsonError('Rate limit exceeded. Try again in a minute.', 429, headers, requestId);
+        logEvent("warn", "rate_limited", { requestId });
+        return jsonError(
+          "Rate limit exceeded. Try again in a minute.",
+          429,
+          headers,
+          requestId,
+        );
       }
 
       let body: unknown;
       try {
         body = await request.json();
       } catch {
-        return jsonError('Invalid JSON body', 400, headers, requestId);
+        return jsonError("Invalid JSON body", 400, headers, requestId);
       }
 
-      if (!body || typeof body !== 'object') {
-        return jsonError('Request body must be a JSON object', 400, headers, requestId);
+      if (!body || typeof body !== "object") {
+        return jsonError(
+          "Request body must be a JSON object",
+          400,
+          headers,
+          requestId,
+        );
       }
 
-      const validation = validateMessages((body as { messages?: unknown }).messages);
+      const validation = validateMessages(
+        (body as { messages?: unknown }).messages,
+      );
       if (!validation.ok) {
-        logEvent('warn', 'invalid_request', { requestId, reason: validation.error });
+        logEvent("warn", "invalid_request", {
+          requestId,
+          reason: validation.error,
+        });
         return jsonError(validation.error, 400, headers, requestId);
       }
 
-      logEvent('info', 'chat_request', {
+      logEvent("info", "chat_request", {
         requestId,
         messageCount: validation.messages.length,
       });
@@ -269,15 +304,15 @@ export default {
       let llmResponse: Response;
       try {
         llmResponse = await fetch(apiUrl, {
-          method: 'POST',
+          method: "POST",
           headers: {
             Authorization: `Bearer ${env.GROQ_API_KEY}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             model: env.LLM_MODEL,
             messages: [
-              { role: 'system', content: SYSTEM_PROMPT },
+              { role: "system", content: SYSTEM_PROMPT },
               ...validation.messages,
             ],
             stream: true,
@@ -286,24 +321,42 @@ export default {
           }),
         });
       } catch (err) {
-        logEvent('error', 'llm_fetch_failed', {
+        logEvent("error", "llm_fetch_failed", {
           requestId,
           error: err instanceof Error ? err.message : String(err),
         });
-        return jsonError('Upstream LLM request failed', 502, headers, requestId);
+        return jsonError(
+          "Upstream LLM request failed",
+          502,
+          headers,
+          requestId,
+        );
       }
 
       if (!llmResponse.ok) {
         // Drain the body so the connection can be reused; never surface the
         // upstream error text (it may contain provider internals).
         await llmResponse.text().catch(() => undefined);
-        logEvent('error', 'llm_error_status', { requestId, status: llmResponse.status });
-        return jsonError(`LLM API error (${llmResponse.status})`, 502, headers, requestId);
+        logEvent("error", "llm_error_status", {
+          requestId,
+          status: llmResponse.status,
+        });
+        return jsonError(
+          `LLM API error (${llmResponse.status})`,
+          502,
+          headers,
+          requestId,
+        );
       }
 
       if (!llmResponse.body) {
-        logEvent('error', 'llm_empty_body', { requestId });
-        return jsonError('Upstream LLM returned an empty response', 502, headers, requestId);
+        logEvent("error", "llm_empty_body", { requestId });
+        return jsonError(
+          "Upstream LLM returned an empty response",
+          502,
+          headers,
+          requestId,
+        );
       }
 
       const { readable, writable } = new TransformStream();
@@ -314,7 +367,7 @@ export default {
       (async () => {
         const reader = upstreamBody.getReader();
         const decoder = new TextDecoder();
-        let buffer = '';
+        let buffer = "";
 
         try {
           while (true) {
@@ -322,14 +375,14 @@ export default {
             if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() ?? '';
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? "";
 
             for (const line of lines) {
-              if (!line.startsWith('data: ')) continue;
+              if (!line.startsWith("data: ")) continue;
               const data = line.slice(6);
-              if (data === '[DONE]') {
-                await writer.write(encoder.encode('data: [DONE]\n\n'));
+              if (data === "[DONE]") {
+                await writer.write(encoder.encode("data: [DONE]\n\n"));
                 continue;
               }
               try {
@@ -337,7 +390,9 @@ export default {
                 const delta = parsed.choices?.[0]?.delta?.content;
                 if (delta) {
                   await writer.write(
-                    encoder.encode(`data: ${JSON.stringify({ content: delta })}\n\n`),
+                    encoder.encode(
+                      `data: ${JSON.stringify({ content: delta })}\n\n`,
+                    ),
                   );
                 }
               } catch {
@@ -345,15 +400,19 @@ export default {
               }
             }
           }
-          await writer.write(encoder.encode('data: [DONE]\n\n'));
+          await writer.write(encoder.encode("data: [DONE]\n\n"));
         } catch (err) {
-          logEvent('error', 'stream_failed', {
+          logEvent("error", "stream_failed", {
             requestId,
             error: err instanceof Error ? err.message : String(err),
           });
           // Do not echo internal error details to the client stream.
           await writer
-            .write(encoder.encode(`data: ${JSON.stringify({ error: 'Stream interrupted' })}\n\n`))
+            .write(
+              encoder.encode(
+                `data: ${JSON.stringify({ error: "Stream interrupted" })}\n\n`,
+              ),
+            )
             .catch(() => undefined);
         } finally {
           await writer.close().catch(() => undefined);
@@ -363,19 +422,19 @@ export default {
       return new Response(readable, {
         headers: {
           ...headers,
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
         },
       });
     } catch (err) {
       // Last-resort guard: any unexpected throw becomes a structured 500
       // instead of an opaque runtime error with a leaked stack trace.
-      logEvent('error', 'unhandled_exception', {
+      logEvent("error", "unhandled_exception", {
         requestId,
         error: err instanceof Error ? err.message : String(err),
       });
-      return jsonError('Internal server error', 500, headers, requestId);
+      return jsonError("Internal server error", 500, headers, requestId);
     }
   },
 } satisfies ExportedHandler<Env>;

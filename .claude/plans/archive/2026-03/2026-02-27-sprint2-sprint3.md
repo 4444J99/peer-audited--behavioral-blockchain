@@ -5,6 +5,7 @@
 Sprint 1 closed the compliance/platform hardening gap (age gate, attestation API, ToS/Privacy, Sentry, error states). We're now at ~65% overall, ~70-75% for Phase 1 scope.
 
 **What remains between here and 200-person Phase 1 private beta:**
+
 - Mobile has no attestation screen (the primary daily journey)
 - Mobile registration doesn't enforce age gate / terms acceptance
 - Seed data has no recovery contracts (testers start with empty/wrong demo data)
@@ -21,11 +22,17 @@ This sprint targets **the highest-leverage work that directly advances the Phase
 ## Sprint 2 Tasks (Ordered by Impact) — ALL COMPLETE
 
 ### Task 1: Mobile Attestation Screen + API Client Wiring — DONE
+
 ### Task 2: Mobile Registration — Age Gate + Terms Acceptance — DONE
+
 ### Task 3: Seed Data — Recovery Contracts + Attestations — DONE
+
 ### Task 4: Attestation Endpoint Tests — DONE (12 new tests, 581 total)
+
 ### Task 5: Update Implementation Status + Feature Backlog — DONE
+
 ### Task 6: Mobile Dashboard — Attestation Status Card — DONE
+
 ### Task 7: E2E Test — Attestation Flow — DONE (5 new tests)
 
 ---
@@ -39,6 +46,7 @@ Sprint 2 delivered mobile attestation, registration parity, seed data, test cove
 **Exhaustive audit findings (what's left between here and 200-person beta):**
 
 ### Already solid (no work needed):
+
 - Feed controller: 19 tests, comprehensive coverage
 - Attestation scheduler: 5 tests, batch error resilience covered
 - Smoke scripts: production-quality with retries and timeouts
@@ -58,9 +66,11 @@ Sprint 2 delivered mobile attestation, registration parity, seed data, test cove
 ## Sprint 3 Tasks (Ordered by Impact)
 
 ### Task 1: Contracts Controller Spec
+
 **Why**: The contracts module handles ALL contract operations — creation, detail, proof submission, grace days, attestation, and scheduled tasks. 8 endpoints, zero controller-level tests. The service layer (contracts.service.spec.ts) has 62 tests, but controller guards (AuthGuard, GeofenceGuard, BannedUserGuard), decorators (@Throttle), and request routing are untested.
 
 **Files to create/modify:**
+
 - `src/api/src/modules/contracts/contracts.controller.spec.ts` — **NEW** — Test all 8 controller endpoints:
   - `POST /contracts` — create contract (validates guards, DTO, calls service)
   - `GET /contracts` — list contracts (validates auth, calls service with userId)
@@ -72,13 +82,16 @@ Sprint 2 delivered mobile attestation, registration parity, seed data, test cove
   - `POST /contracts/scheduler/daily` — daily scheduler (validates cron guard or admin)
 
 **Pattern to follow:**
+
 - `src/api/src/modules/auth/auth.controller.spec.ts` for NestJS controller test structure
 - Mock the `ContractsService` entirely, test that the controller calls the right methods with the right arguments
 
 ### Task 2: Mobile Screen Tests — Attestation + Registration
+
 **Why**: Two new screens (AttestationScreen) and major modifications (RegisterScreen with age gate + terms) shipped in Sprint 2 with zero test coverage. Mobile is the primary beta surface.
 
 **Files to create/modify:**
+
 - `src/mobile/screens/AttestationScreen.spec.tsx` — **NEW** — Test:
   - Renders loading state
   - Displays streak, days remaining, grace days from mocked API
@@ -97,9 +110,11 @@ Sprint 2 delivered mobile attestation, registration parity, seed data, test cove
   - Validation error shown when terms not accepted
 
 ### Task 3: Render Blueprint (render.yaml)
+
 **Why**: Render is the deployment target (see deploy.yml, staging-promotion.yml, beta-promotion.yml). Without a `render.yaml` Blueprint, every new environment (staging, beta, production) requires manual service creation in the Render dashboard. This is the gap between "CI pushes code" and "infra exists to receive it."
 
 **Files to create:**
+
 - `render.yaml` — Render Blueprint declaring:
   - Web service: `@styx/api` (Node, port 3000, health check `/health`)
   - Web service: `@styx/web` (Node, port 3001, static build)
@@ -109,18 +124,22 @@ Sprint 2 delivered mobile attestation, registration parity, seed data, test cove
   - Auto-deploy from `main` branch
 
 ### Task 4: Leaderboard Period Filter
+
 **Why**: The Leaderboard component (`src/web/components/Leaderboard.tsx:46`) has a visible TODO for period filtering. Beta testers on the Fury page will see a static leaderboard with no time-range controls. Small feature, high visibility.
 
 **Files to modify:**
+
 - `src/web/components/Leaderboard.tsx` — Implement period filter:
   - Add filter UI (day / week / month / all-time tabs)
   - Pass period parameter to API call
   - Update leaderboard display on filter change
 
 ### Task 5: DashboardScreen Tests
+
 **Why**: DashboardScreen is the first screen every beta tester sees. Sprint 2 added attestation status card, streak display, and navigation — all untested. The existing DashboardScreen has no spec file.
 
 **Files to create:**
+
 - `src/mobile/screens/DashboardScreen.spec.tsx` — **NEW** — Test:
   - Renders loading state
   - Displays integrity score from mocked profile
@@ -137,6 +156,7 @@ Sprint 2 delivered mobile attestation, registration parity, seed data, test cove
 ## Verification
 
 After implementation, run in sequence:
+
 ```bash
 # 1. API unit tests (must stay at 581+ passing)
 cd src/api && npx jest --no-coverage
@@ -162,6 +182,7 @@ AFTER:   ALPHA █████████████████████�
 ```
 
 This sprint delivers:
+
 - **Controller-level test coverage** for the entire contracts module (the product core)
 - **Mobile screen test coverage** for the two most critical beta screens
 - **Declarative infrastructure** (render.yaml) so staging/beta deploys are one-click

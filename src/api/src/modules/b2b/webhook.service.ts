@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { createHmac, timingSafeEqual } from 'crypto';
-import { lookup } from 'dns/promises';
-import { isIP } from 'net';
-import * as https from 'node:https';
-import * as http from 'node:http';
+import { Injectable, Logger } from "@nestjs/common";
+import { createHmac, timingSafeEqual } from "crypto";
+import { lookup } from "dns/promises";
+import { isIP } from "net";
+import * as https from "node:https";
+import * as http from "node:http";
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
@@ -14,7 +14,7 @@ const MAX_TIMESTAMP_SKEW_SECONDS = 5 * 60;
 function requireWebhookSecret(): string {
   const secret = process.env.STYX_WEBHOOK_SECRET; // allow-secret
   if (!secret) {
-    throw new Error('STYX_WEBHOOK_SECRET must be set');
+    throw new Error("STYX_WEBHOOK_SECRET must be set");
   }
   return secret;
 }
@@ -60,7 +60,9 @@ export class WebhookService {
     event: string,
     payload: Record<string, unknown>,
   ): Promise<boolean> {
-    this.logger.log(`Webhook event [${event}] triggered for enterprise ${enterpriseId}`);
+    this.logger.log(
+      `Webhook event [${event}] triggered for enterprise ${enterpriseId}`,
+    );
     return true;
   }
 
@@ -92,9 +94,9 @@ export class WebhookService {
       try {
         const response = await this.sendWebhook(parsed, {
           headers: {
-            'Content-Type': 'application/json',
-            'X-Styx-Signature': signature,
-            'X-Styx-Timestamp': timestamp,
+            "Content-Type": "application/json",
+            "X-Styx-Signature": signature,
+            "X-Styx-Timestamp": timestamp,
           },
           body,
           pinnedAddress,
@@ -104,11 +106,19 @@ export class WebhookService {
           this.logger.log(
             `Webhook delivered to [${url}] on attempt ${attempt} (${response.status})`,
           );
-          return { success: true, attempts: attempt, statusCode: response.status };
+          return {
+            success: true,
+            attempts: attempt,
+            statusCode: response.status,
+          };
         }
 
         // Non-retryable client errors (4xx except 429)
-        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+        if (
+          response.status >= 400 &&
+          response.status < 500 &&
+          response.status !== 429
+        ) {
           return {
             success: false,
             attempts: attempt,
@@ -135,7 +145,11 @@ export class WebhookService {
       }
     }
 
-    return { success: false, attempts: MAX_RETRIES, error: 'Max retries exhausted' };
+    return {
+      success: false,
+      attempts: MAX_RETRIES,
+      error: "Max retries exhausted",
+    };
   }
 
   /**
@@ -143,7 +157,9 @@ export class WebhookService {
    */
   sign(timestamp: string, body: string): string {
     const message = `${timestamp}.${body}`;
-    return createHmac('sha256', this.webhookSecret).update(message).digest('hex');
+    return createHmac("sha256", this.webhookSecret)
+      .update(message)
+      .digest("hex");
   }
 
   /**
@@ -183,41 +199,51 @@ export class WebhookService {
     try {
       parsed = new URL(rawUrl);
     } catch {
-      throw new Error('Invalid webhook URL');
+      throw new Error("Invalid webhook URL");
     }
 
-    if (!['https:', 'http:'].includes(parsed.protocol)) {
-      throw new Error('Webhook URL protocol must be http or https');
+    if (!["https:", "http:"].includes(parsed.protocol)) {
+      throw new Error("Webhook URL protocol must be http or https");
     }
 
     if (parsed.username || parsed.password) {
-      throw new Error('Webhook URL must not include credentials');
+      throw new Error("Webhook URL must not include credentials");
     }
 
     // URL.hostname strips brackets from IPv6 literals; lowercase for matching.
-    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
 
     // PRV7: reject hostnames that are non-dotted / obfuscated IPv4 literals
     // (decimal e.g. 2130706433, octal e.g. 0177.0.0.1, hex e.g. 0x7f000001) and
     // IPv4-mapped IPv6 (::ffff:127.0.0.1). isIP only recognises canonical forms,
     // so anything that "looks numeric" but is not a canonical IP is suspicious.
     if (this.looksLikeObfuscatedIp(host)) {
-      throw new Error('Webhook URL host is an unsupported numeric/obfuscated address');
+      throw new Error(
+        "Webhook URL host is an unsupported numeric/obfuscated address",
+      );
     }
 
     // If the host is already a literal IP, validate it directly.
     const literalKind = isIP(host);
     if (literalKind !== 0) {
       if (this.isBlockedIp(host)) {
-        throw new Error('Webhook URL must not target loopback, private, or link-local addresses');
+        throw new Error(
+          "Webhook URL must not target loopback, private, or link-local addresses",
+        );
       }
       // Already a literal IP — pin to it directly.
       return { parsed, pinnedAddress: host };
     }
 
     // Obvious local names short-circuit before DNS.
-    if (host === 'localhost' || host.endsWith('.local') || host.endsWith('.localhost')) {
-      throw new Error('Webhook URL must not target localhost or private network addresses');
+    if (
+      host === "localhost" ||
+      host.endsWith(".local") ||
+      host.endsWith(".localhost")
+    ) {
+      throw new Error(
+        "Webhook URL must not target localhost or private network addresses",
+      );
     }
 
     // PRV7: resolve the hostname and block if ANY resolved address is private /
@@ -228,16 +254,18 @@ export class WebhookService {
     try {
       resolved = await this.resolveHost(host);
     } catch {
-      throw new Error('Webhook URL host could not be resolved');
+      throw new Error("Webhook URL host could not be resolved");
     }
 
     if (resolved.length === 0) {
-      throw new Error('Webhook URL host did not resolve to any address');
+      throw new Error("Webhook URL host did not resolve to any address");
     }
 
     for (const { address } of resolved) {
       if (this.isBlockedIp(address)) {
-        throw new Error('Webhook URL resolves to a loopback, private, or link-local address');
+        throw new Error(
+          "Webhook URL resolves to a loopback, private, or link-local address",
+        );
       }
     }
 
@@ -261,15 +289,23 @@ export class WebhookService {
    */
   protected sendWebhook(
     parsed: URL,
-    opts: { headers: Record<string, string>; body: string; pinnedAddress: string },
+    opts: {
+      headers: Record<string, string>;
+      body: string;
+      pinnedAddress: string;
+    },
   ): Promise<{ ok: boolean; status: number }> {
-    const transport = parsed.protocol === 'https:' ? https : http;
+    const transport = parsed.protocol === "https:" ? https : http;
     const family = isIP(opts.pinnedAddress) || 4;
 
     const pinnedLookup = (
       _hostname: string,
       options: any,
-      callback: (err: NodeJS.ErrnoException | null, address: any, family?: number) => void,
+      callback: (
+        err: NodeJS.ErrnoException | null,
+        address: any,
+        family?: number,
+      ) => void,
     ): void => {
       if (options && options.all) {
         callback(null, [{ address: opts.pinnedAddress, family }]);
@@ -282,10 +318,10 @@ export class WebhookService {
       const req = transport.request(
         parsed,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
             ...opts.headers,
-            'Content-Length': Buffer.byteLength(opts.body).toString(),
+            "Content-Length": Buffer.byteLength(opts.body).toString(),
           },
           lookup: pinnedLookup as any,
           timeout: 10_000,
@@ -296,8 +332,10 @@ export class WebhookService {
           resolve({ ok: status >= 200 && status < 300, status });
         },
       );
-      req.on('timeout', () => req.destroy(new Error('Webhook request timed out')));
-      req.on('error', (err) => reject(err));
+      req.on("timeout", () =>
+        req.destroy(new Error("Webhook request timed out")),
+      );
+      req.on("error", (err) => reject(err));
       req.write(opts.body);
       req.end();
     });
@@ -326,8 +364,11 @@ export class WebhookService {
     // Dotted form where every part is numeric but contains an octal-style leading
     // zero (0177.0.0.1) or has fewer/odd parts that are all-numeric and not a
     // canonical IPv4 (isIP already returned 0 above).
-    const parts = host.split('.');
-    if (parts.length > 0 && parts.every((p) => /^\d+$/.test(p) && p.length > 0)) {
+    const parts = host.split(".");
+    if (
+      parts.length > 0 &&
+      parts.every((p) => /^\d+$/.test(p) && p.length > 0)
+    ) {
       return true; // all-numeric dotted but not a canonical IPv4 => obfuscated
     }
     return false;
@@ -341,16 +382,23 @@ export class WebhookService {
     if (kind === 6) {
       const lower = ip.toLowerCase();
       // Unspecified / loopback.
-      if (lower === '::' || lower === '::1') return true;
+      if (lower === "::" || lower === "::1") return true;
       // Unique-local (fc00::/7) and link-local (fe80::/10).
-      if (/^f[cd][0-9a-f]*:/.test(lower) || lower.startsWith('fe8') || lower.startsWith('fe9') ||
-          lower.startsWith('fea') || lower.startsWith('feb')) {
+      if (
+        /^f[cd][0-9a-f]*:/.test(lower) ||
+        lower.startsWith("fe8") ||
+        lower.startsWith("fe9") ||
+        lower.startsWith("fea") ||
+        lower.startsWith("feb")
+      ) {
         return true;
       }
       // IPv4-mapped (::ffff:a.b.c.d) — validate the embedded IPv4. Anchored at the
       // start so a legitimate public address that merely ENDS in ":ffff:x:y" is not
       // misclassified as mapped.
-      const mappedDotted = lower.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
+      const mappedDotted = lower.match(
+        /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/,
+      );
       if (mappedDotted) {
         return this.isBlockedIpv4(mappedDotted[1]);
       }

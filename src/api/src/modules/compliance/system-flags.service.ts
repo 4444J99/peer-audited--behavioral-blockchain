@@ -1,9 +1,9 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
 import {
   JurisdictionDispositionMapper,
   REFUND_ONLY_FLAG_KEY,
-} from './jurisdiction-disposition.mapper';
+} from "./jurisdiction-disposition.mapper";
 
 interface CacheEntry {
   value: unknown;
@@ -29,7 +29,7 @@ export class SystemFlagsService {
   private readonly logger = new Logger(SystemFlagsService.name);
   private readonly cache = new Map<string, CacheEntry>();
 
-  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
+  constructor(@Inject("DATABASE_POOL") private readonly pool: Pool) {}
 
   async get<T>(key: string): Promise<T | null> {
     const cached = this.cache.get(key);
@@ -38,15 +38,20 @@ export class SystemFlagsService {
     }
 
     const result = await this.pool.query(
-      'SELECT value FROM system_flags WHERE key = $1',
+      "SELECT value FROM system_flags WHERE key = $1",
       [key],
     );
-    const value: T | null = result.rows.length > 0 ? result.rows[0].value : null;
+    const value: T | null =
+      result.rows.length > 0 ? result.rows[0].value : null;
     this.cache.set(key, { value, expiresAt: Date.now() + FLAG_CACHE_TTL_MS });
     return value;
   }
 
-  async set(key: string, value: unknown, updatedBy?: string | null): Promise<void> {
+  async set(
+    key: string,
+    value: unknown,
+    updatedBy?: string | null,
+  ): Promise<void> {
     await this.pool.query(
       `INSERT INTO system_flags (key, value, updated_at, updated_by)
        VALUES ($1, $2, NOW(), $3)
@@ -66,7 +71,10 @@ export class SystemFlagsService {
     return JurisdictionDispositionMapper.refreshFromStore(this);
   }
 
-  async setRefundOnlyMode(enabled: boolean, updatedBy?: string | null): Promise<void> {
+  async setRefundOnlyMode(
+    enabled: boolean,
+    updatedBy?: string | null,
+  ): Promise<void> {
     await this.set(REFUND_ONLY_FLAG_KEY, enabled, updatedBy);
     JurisdictionDispositionMapper.setRefundOnlyMode(enabled);
   }

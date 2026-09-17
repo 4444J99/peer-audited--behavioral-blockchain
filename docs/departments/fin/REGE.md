@@ -33,50 +33,50 @@ Finance owns the monetary truth of Styx. In a pre-revenue SaaS that holds user m
 
 ### Daily
 
-| ID | Activity | Description |
-|----|----------|-------------|
-| D1 | Stripe reconciliation | Compare `ledger_entries` debits/credits against Stripe dashboard balances. Flag any divergence > $0.01. |
-| D2 | Escrow balance check | Verify total active escrow holds in the `escrow_records` table match Stripe's FBO balance. |
-| D3 | Fury bounty pool check | Verify unallocated bounty pool balance is sufficient for pending audits (>= queue depth x $1.50). |
-| D4 | Revenue event ingestion | Confirm all `payment_intent.succeeded` and `invoice.paid` webhooks were processed and ledgered. |
+| ID  | Activity                | Description                                                                                             |
+| --- | ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| D1  | Stripe reconciliation   | Compare `ledger_entries` debits/credits against Stripe dashboard balances. Flag any divergence > $0.01. |
+| D2  | Escrow balance check    | Verify total active escrow holds in the `escrow_records` table match Stripe's FBO balance.              |
+| D3  | Fury bounty pool check  | Verify unallocated bounty pool balance is sufficient for pending audits (>= queue depth x $1.50).       |
+| D4  | Revenue event ingestion | Confirm all `payment_intent.succeeded` and `invoice.paid` webhooks were processed and ledgered.         |
 
 ### Weekly
 
-| ID | Activity | Description |
-|----|----------|-------------|
-| W1 | Burn rate review | Compare actual infrastructure + service costs against the tracking template in F5 (runway-tracker.md). |
-| W2 | Cash position update | Update cash balance, net burn, and remaining runway months. |
-| W3 | Fury payout audit | Spot-check 10 random auditor payouts: verify bounty amount matches audit outcome (correct/false accusation). |
-| W4 | B2B subscription health | Check for failed subscription payments, upcoming renewals, and tier changes. |
+| ID  | Activity                | Description                                                                                                  |
+| --- | ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| W1  | Burn rate review        | Compare actual infrastructure + service costs against the tracking template in F5 (runway-tracker.md).       |
+| W2  | Cash position update    | Update cash balance, net burn, and remaining runway months.                                                  |
+| W3  | Fury payout audit       | Spot-check 10 random auditor payouts: verify bounty amount matches audit outcome (correct/false accusation). |
+| W4  | B2B subscription health | Check for failed subscription payments, upcoming renewals, and tier changes.                                 |
 
 ### Monthly
 
-| ID | Activity | Description |
-|----|----------|-------------|
-| M1 | Monthly close | Record actuals (revenue, costs, net) and compare against F3 projections. Write variance notes for any line item >15% off. |
-| M2 | Runway tracker update | Fill the monthly row in F5's tracking template. Recalculate runway under current burn. |
-| M3 | Unit economics refresh | Recalculate blended contribution margin from actual completion rates, Stripe fees, and Fury costs. Update F1 if >5% drift. |
-| M4 | Fury payout integrity report | Full reconciliation of all bounty payouts, penalty deductions, and pool balance for the month. |
+| ID  | Activity                     | Description                                                                                                                |
+| --- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| M1  | Monthly close                | Record actuals (revenue, costs, net) and compare against F3 projections. Write variance notes for any line item >15% off.  |
+| M2  | Runway tracker update        | Fill the monthly row in F5's tracking template. Recalculate runway under current burn.                                     |
+| M3  | Unit economics refresh       | Recalculate blended contribution margin from actual completion rates, Stripe fees, and Fury costs. Update F1 if >5% drift. |
+| M4  | Fury payout integrity report | Full reconciliation of all bounty payouts, penalty deductions, and pool balance for the month.                             |
 
 ### Quarterly
 
-| ID | Activity | Description |
-|----|----------|-------------|
-| Q1 | Scenario modeling | Re-run conservative/base/optimistic projections from F3 with actual growth data. Adjust assumptions. |
-| Q2 | Pricing tier analysis | Review B2B tier mix, utilization rates, and price sensitivity signals. Recommend adjustments if data warrants. |
-| Q3 | Funding pipeline review | Assess grant/accelerator deadlines, update F6 templates with latest metrics. |
-| Q4 | Infrastructure cost forecast | Project next quarter's cost step-functions based on user growth trajectory. |
+| ID  | Activity                     | Description                                                                                                    |
+| --- | ---------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Q1  | Scenario modeling            | Re-run conservative/base/optimistic projections from F3 with actual growth data. Adjust assumptions.           |
+| Q2  | Pricing tier analysis        | Review B2B tier mix, utilization rates, and price sensitivity signals. Recommend adjustments if data warrants. |
+| Q3  | Funding pipeline review      | Assess grant/accelerator deadlines, update F6 templates with latest metrics.                                   |
+| Q4  | Infrastructure cost forecast | Project next quarter's cost step-functions based on user growth trajectory.                                    |
 
 ## 3. Artifacts Registry
 
-| ID | Name | Path | Phase | Staleness (days) | Last Updated | Status |
-|----|------|------|-------|-------------------|--------------|--------|
-| F1 | Unit Economics | `artifacts/unit-economics.md` | genesis | 30 | 2026-03-08 | Active |
-| F2 | Pricing Strategy | `artifacts/pricing-strategy.md` | foundation | 30 | 2026-03-08 | Active |
-| F3 | Financial Projections | `artifacts/financial-projections.md` | foundation | 30 | 2026-03-08 | Active |
-| F4 | Revenue Reconciliation | `artifacts/revenue-reconciliation.md` | — | — | — | Dormant (deferred) |
-| F5 | Runway Tracker | `artifacts/runway-tracker.md` | foundation | 30 | 2026-03-08 | Active |
-| F6 | Funding Application | `artifacts/funding-application.md` | genesis | 30 | 2026-03-08 | Active |
+| ID  | Name                   | Path                                  | Phase      | Staleness (days) | Last Updated | Status             |
+| --- | ---------------------- | ------------------------------------- | ---------- | ---------------- | ------------ | ------------------ |
+| F1  | Unit Economics         | `artifacts/unit-economics.md`         | genesis    | 30               | 2026-03-08   | Active             |
+| F2  | Pricing Strategy       | `artifacts/pricing-strategy.md`       | foundation | 30               | 2026-03-08   | Active             |
+| F3  | Financial Projections  | `artifacts/financial-projections.md`  | foundation | 30               | 2026-03-08   | Active             |
+| F4  | Revenue Reconciliation | `artifacts/revenue-reconciliation.md` | —          | —                | —            | Dormant (deferred) |
+| F5  | Runway Tracker         | `artifacts/runway-tracker.md`         | foundation | 30               | 2026-03-08   | Active             |
+| F6  | Funding Application    | `artifacts/funding-application.md`    | genesis    | 30               | 2026-03-08   | Active             |
 
 **Phase definitions:** genesis = initial draft, needs real data; foundation = structured and validated against model assumptions; hardening = tested against actuals, revision-triggered.
 
@@ -183,23 +183,23 @@ Finance owns the monetary truth of Styx. In a pre-revenue SaaS that holds user m
 
 ### Emits
 
-| Signal | Consumers | Trigger |
-|--------|-----------|---------|
-| `signal:pricing-change` | GRO, B2B, CXS | When Q2 pricing analysis recommends a tier adjustment and founder approves |
-| `signal:runway-alarm` | PULSE (all departments) | When runway drops below 6 months (CRIT:runway-alarm) |
-| `signal:revenue-milestone` | GRO, PRD | When MRR crosses a milestone ($1K, $10K, $50K, $100K) for the first time |
-| `signal:projection-rebase` | PRD, GRO | When F3 projections are rebased due to sustained drift |
-| `signal:escrow-frozen` | OPS, ENG, CXS | When HEAL:escrow-divergence-correction freezes ledger operations |
+| Signal                     | Consumers               | Trigger                                                                    |
+| -------------------------- | ----------------------- | -------------------------------------------------------------------------- |
+| `signal:pricing-change`    | GRO, B2B, CXS           | When Q2 pricing analysis recommends a tier adjustment and founder approves |
+| `signal:runway-alarm`      | PULSE (all departments) | When runway drops below 6 months (CRIT:runway-alarm)                       |
+| `signal:revenue-milestone` | GRO, PRD                | When MRR crosses a milestone ($1K, $10K, $50K, $100K) for the first time   |
+| `signal:projection-rebase` | PRD, GRO                | When F3 projections are rebased due to sustained drift                     |
+| `signal:escrow-frozen`     | OPS, ENG, CXS           | When HEAL:escrow-divergence-correction freezes ledger operations           |
 
 ### Consumes
 
-| Signal | Source | Action |
-|--------|--------|--------|
-| `signal:new-subscription` | B2B | Update B2B MRR tracker, adjust tier mix ratios |
-| `signal:subscription-cancelled` | B2B | Update churn calculations, recalculate LTV:CAC |
-| `signal:deploy-complete` | OPS | Check if the deploy changed infrastructure tier (Render plan upgrade), update cost tracking |
-| `signal:incident-resolved` | OPS | If incident involved financial data, run CRIT:escrow-integrity immediately |
-| `signal:user-milestone` | GRO | Cross-reference user count against infrastructure scaling triggers in F5 |
+| Signal                          | Source | Action                                                                                      |
+| ------------------------------- | ------ | ------------------------------------------------------------------------------------------- |
+| `signal:new-subscription`       | B2B    | Update B2B MRR tracker, adjust tier mix ratios                                              |
+| `signal:subscription-cancelled` | B2B    | Update churn calculations, recalculate LTV:CAC                                              |
+| `signal:deploy-complete`        | OPS    | Check if the deploy changed infrastructure tier (Render plan upgrade), update cost tracking |
+| `signal:incident-resolved`      | OPS    | If incident involved financial data, run CRIT:escrow-integrity immediately                  |
+| `signal:user-milestone`         | GRO    | Cross-reference user count against infrastructure scaling triggers in F5                    |
 
 ## 8. Human Checkpoints
 
@@ -240,11 +240,11 @@ Finance owns the monetary truth of Styx. In a pre-revenue SaaS that holds user m
 
 ### Deferred Artifacts
 
-| ID | Name | Description | Activation Trigger |
-|----|------|-------------|--------------------|
-| F4 | Revenue Reconciliation | Automated monthly reconciliation report: Stripe payouts vs ledger vs bank account. | First month with >$1,000 total revenue |
-| F7 | Tax Compliance Brief | State sales tax nexus analysis, 1099 obligations for Fury auditors (if applicable), entity structure optimization. | First $10K cumulative revenue or first B2B Enterprise customer |
-| F8 | Investor Reporting Template | Monthly/quarterly investor update template with standardized metrics (MRR, burn, runway, user growth, completion rate). | First external funding received |
+| ID  | Name                        | Description                                                                                                             | Activation Trigger                                             |
+| --- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| F4  | Revenue Reconciliation      | Automated monthly reconciliation report: Stripe payouts vs ledger vs bank account.                                      | First month with >$1,000 total revenue                         |
+| F7  | Tax Compliance Brief        | State sales tax nexus analysis, 1099 obligations for Fury auditors (if applicable), entity structure optimization.      | First $10K cumulative revenue or first B2B Enterprise customer |
+| F8  | Investor Reporting Template | Monthly/quarterly investor update template with standardized metrics (MRR, burn, runway, user growth, completion rate). | First external funding received                                |
 
 ### Future Capabilities
 

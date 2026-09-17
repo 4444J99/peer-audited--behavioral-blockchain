@@ -1,6 +1,14 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, Platform } from 'react-native';
-import { API_BASE } from '../config/api';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  RefreshControl,
+  Platform,
+} from "react-native";
+import { API_BASE } from "../config/api";
 
 interface FeedEvent {
   id: string;
@@ -10,14 +18,14 @@ interface FeedEvent {
 }
 
 const EVENT_ICONS: Record<string, string> = {
-  PROOF_VERIFIED: '✅',
-  CONTRACT_COMPLETED: '🏆',
-  CONTRACT_FAILED: '💀',
-  FURY_BOUNTY_PAID: '💰',
-  APPEAL_INITIATED: '⚖️',
-  DISPUTE_RESOLVED: '🔨',
-  HONEYPOT_CAUGHT: '🎯',
-  STREAK_MILESTONE: '🔥',
+  PROOF_VERIFIED: "✅",
+  CONTRACT_COMPLETED: "🏆",
+  CONTRACT_FAILED: "💀",
+  FURY_BOUNTY_PAID: "💰",
+  APPEAL_INITIATED: "⚖️",
+  DISPUTE_RESOLVED: "🔨",
+  HONEYPOT_CAUGHT: "🎯",
+  STREAK_MILESTONE: "🔥",
 };
 
 export default function TavernFeed() {
@@ -53,7 +61,7 @@ export default function TavernFeed() {
         try {
           const data = JSON.parse(event.data);
           if (data.events && data.events.length > 0) {
-            setEvents(prev => {
+            setEvents((prev) => {
               const newEvents = [...data.events, ...prev];
               // Keep max 50 events to prevent memory bloat
               return newEvents.slice(0, 50);
@@ -90,7 +98,7 @@ export default function TavernFeed() {
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return 'just now';
+    if (diffMins < 1) return "just now";
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
     return date.toLocaleDateString();
@@ -110,7 +118,12 @@ export default function TavernFeed() {
       {/* Header */}
       <View style={styles.headerRow}>
         <Text style={styles.header}>⚔️ The Tavern</Text>
-        <View style={[styles.statusDot, connected ? styles.statusConnected : styles.statusDisconnected]} />
+        <View
+          style={[
+            styles.statusDot,
+            connected ? styles.statusConnected : styles.statusDisconnected,
+          ]}
+        />
       </View>
       <Text style={styles.subheader}>Live Activity Feed</Text>
 
@@ -118,7 +131,13 @@ export default function TavernFeed() {
       <FlatList
         data={events}
         keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ef4444" />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#ef4444"
+          />
+        }
         ListEmptyComponent={
           <Text style={styles.emptyText}>No events yet. The arena awaits.</Text>
         }
@@ -126,14 +145,18 @@ export default function TavernFeed() {
           <View style={styles.feedCard}>
             <View style={styles.iconContainer}>
               <Text style={styles.eventIcon}>
-                {EVENT_ICONS[item.type] || '📢'}
+                {EVENT_ICONS[item.type] || "📢"}
               </Text>
             </View>
             <View style={styles.entryDetails}>
               <Text style={styles.eventText}>{item.message}</Text>
               <View style={styles.metaRow}>
-                <Text style={styles.typeTag}>{item.type.replace(/_/g, ' ')}</Text>
-                <Text style={styles.timeText}>{formatTime(item.timestamp)}</Text>
+                <Text style={styles.typeTag}>
+                  {item.type.replace(/_/g, " ")}
+                </Text>
+                <Text style={styles.timeText}>
+                  {formatTime(item.timestamp)}
+                </Text>
               </View>
             </View>
           </View>
@@ -146,18 +169,18 @@ export default function TavernFeed() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     padding: 20,
   },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   header: {
     fontSize: 24,
-    fontWeight: '900',
-    color: '#fff',
+    fontWeight: "900",
+    color: "#fff",
     letterSpacing: 1,
   },
   statusDot: {
@@ -166,41 +189,41 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statusConnected: {
-    backgroundColor: '#22c55e',
+    backgroundColor: "#22c55e",
   },
   statusDisconnected: {
-    backgroundColor: '#666',
+    backgroundColor: "#666",
   },
   subheader: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
     marginBottom: 20,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 3,
   },
   emptyText: {
-    color: '#555',
-    textAlign: 'center',
+    color: "#555",
+    textAlign: "center",
     marginTop: 40,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   feedCard: {
-    backgroundColor: '#111',
+    backgroundColor: "#111",
     padding: 14,
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: "#222",
     marginBottom: 8,
     borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
   },
   iconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1a1a1a',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#1a1a1a",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   eventIcon: {
@@ -210,31 +233,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   eventText: {
-    color: '#ddd',
+    color: "#ddd",
     fontSize: 13,
     lineHeight: 20,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 6,
     gap: 8,
   },
   typeTag: {
-    color: '#ef4444',
+    color: "#ef4444",
     fontSize: 9,
-    fontWeight: '800',
-    textTransform: 'uppercase',
+    fontWeight: "800",
+    textTransform: "uppercase",
     letterSpacing: 1,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   timeText: {
-    color: '#555',
+    color: "#555",
     fontSize: 11,
   },
 });

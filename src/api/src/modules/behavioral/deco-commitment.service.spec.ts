@@ -16,7 +16,11 @@ describe("DecoCommitmentService", () => {
     service = module.get<DecoCommitmentService>(DecoCommitmentService);
   });
 
-  const sampleRequest = { url: "https://example.com/account", selector: "#status", expectedValue: "active" };
+  const sampleRequest = {
+    url: "https://example.com/account",
+    selector: "#status",
+    expectedValue: "active",
+  };
 
   it("createCommitment returns a commitment hash and persists it", async () => {
     const result = await service.createCommitment(sampleRequest, "user-1");
@@ -53,10 +57,15 @@ describe("DecoCommitmentService", () => {
   it("verifyCommitment recomputes the hash and confirms a matching claim", async () => {
     const created = await service.createCommitment(sampleRequest);
     mockPool.query.mockResolvedValueOnce({
-      rows: [{ committed_at: created.timestamp, created_at: new Date("2026-07-23") }],
+      rows: [
+        { committed_at: created.timestamp, created_at: new Date("2026-07-23") },
+      ],
     });
 
-    const result = await service.verifyCommitment(created.commitmentHash, sampleRequest);
+    const result = await service.verifyCommitment(
+      created.commitmentHash,
+      sampleRequest,
+    );
 
     expect(result.exists).toBe(true);
     expect(result.matches).toBe(true);
@@ -66,7 +75,9 @@ describe("DecoCommitmentService", () => {
   it("rejects a claim that was altered after the commitment", async () => {
     const created = await service.createCommitment(sampleRequest);
     mockPool.query.mockResolvedValueOnce({
-      rows: [{ committed_at: created.timestamp, created_at: new Date("2026-07-23") }],
+      rows: [
+        { committed_at: created.timestamp, created_at: new Date("2026-07-23") },
+      ],
     });
 
     const result = await service.verifyCommitment(created.commitmentHash, {
@@ -81,7 +92,12 @@ describe("DecoCommitmentService", () => {
 
   it("reports existence without a verdict when no claim is supplied", async () => {
     mockPool.query.mockResolvedValueOnce({
-      rows: [{ committed_at: "2026-07-23T12:00:00.000Z", created_at: new Date("2026-07-23") }],
+      rows: [
+        {
+          committed_at: "2026-07-23T12:00:00.000Z",
+          created_at: new Date("2026-07-23"),
+        },
+      ],
     });
     const result = await service.verifyCommitment("abc123");
     expect(result.exists).toBe(true);

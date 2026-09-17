@@ -1,12 +1,14 @@
-import { Injectable, Optional, Inject } from '@nestjs/common';
-import { Pool, PoolClient } from 'pg';
-import { QuarantineService } from '../../src/modules/ledger/quarantine.service';
+import { Injectable, Optional, Inject } from "@nestjs/common";
+import { Pool, PoolClient } from "pg";
+import { QuarantineService } from "../../src/modules/ledger/quarantine.service";
 
 @Injectable()
 export class LedgerService {
   constructor(
     private readonly pool: Pool,
-    @Optional() @Inject(QuarantineService) private readonly quarantine?: QuarantineService,
+    @Optional()
+    @Inject(QuarantineService)
+    private readonly quarantine?: QuarantineService,
   ) {}
 
   /**
@@ -30,19 +32,19 @@ export class LedgerService {
     idempotencyKey?: string,
   ): Promise<string> {
     if (amount <= 0) {
-      throw new Error('Transaction amount must be strictly positive.');
+      throw new Error("Transaction amount must be strictly positive.");
     }
     if (!Number.isInteger(amount)) {
-      throw new Error('Transaction amount must be an integer (cents).');
+      throw new Error("Transaction amount must be an integer (cents).");
     }
     if (debitAccountId === creditAccountId) {
-      throw new Error('Debit and credit accounts must be different.');
+      throw new Error("Debit and credit accounts must be different.");
     }
 
-    const dbClient: PoolClient = client || await this.pool.connect();
+    const dbClient: PoolClient = client || (await this.pool.connect());
 
     try {
-      if (!client) await dbClient.query('BEGIN');
+      if (!client) await dbClient.query("BEGIN");
 
       // 1. Insert the entry record. When an idempotency key is supplied, let the DB enforce
       //    single-posting via the partial UNIQUE index (migration 030): a duplicate INSERT is
@@ -72,11 +74,11 @@ export class LedgerService {
           // Lost the race / true retry: a row with this key already exists. Return its id so
           // the caller observes idempotent success rather than a phantom second posting.
           const existing = await dbClient.query(
-            'SELECT id FROM entries WHERE idempotency_key = $1',
+            "SELECT id FROM entries WHERE idempotency_key = $1",
             [idempotencyKey],
           );
           entryId = existing.rows[0].id;
-          if (!client) await dbClient.query('COMMIT');
+          if (!client) await dbClient.query("COMMIT");
           return entryId;
         }
       } else {
@@ -96,16 +98,20 @@ export class LedgerService {
       }
 
       // Ensure zero money printing manually at application layer (Phantom Money Test safeguard)
-      if (process.env.STYX_ENFORCE_HARD_INTEGRITY === 'true') {
+      if (process.env.STYX_ENFORCE_HARD_INTEGRITY === "true") {
         const integrity = await this.verifyLedgerIntegrity(dbClient);
         if (!integrity.balanced) {
           if (this.quarantine) {
-            await this.quarantine.activateQuarantine(debitAccountId, 'PHANTOM_MONEY_DETECTED_IN_TX', {
-              amount,
-              creditAccountId,
-              contractId,
-              integrityResults: integrity,
-            });
+            await this.quarantine.activateQuarantine(
+              debitAccountId,
+              "PHANTOM_MONEY_DETECTED_IN_TX",
+              {
+                amount,
+                creditAccountId,
+                contractId,
+                integrityResults: integrity,
+              },
+            );
           }
           // LC8: totalDebits/totalCredits are identical by construction (each row contributes
           // its amount to both sides), so reporting "X vs Y" was always equal and useless during
@@ -120,10 +126,10 @@ export class LedgerService {
         }
       }
 
-      if (!client) await dbClient.query('COMMIT');
+      if (!client) await dbClient.query("COMMIT");
       return entryId;
     } catch (e) {
-      if (!client) await dbClient.query('ROLLBACK');
+      if (!client) await dbClient.query("ROLLBACK");
       throw e;
     } finally {
       if (!client) dbClient.release();
@@ -152,14 +158,16 @@ export class LedgerService {
    * Returns all ledger entries associated with a specific contract,
    * ordered chronologically. Used for contract settlement audit trails.
    */
-  async getContractLedger(contractId: string): Promise<Array<{
-    id: string;
-    debitAccountId: string;
-    creditAccountId: string;
-    amount: number;
-    metadata: Record<string, any> | null;
-    createdAt: Date;
-  }>> {
+  async getContractLedger(contractId: string): Promise<
+    Array<{
+      id: string;
+      debitAccountId: string;
+      creditAccountId: string;
+      amount: number;
+      metadata: Record<string, any> | null;
+      createdAt: Date;
+    }>
+  > {
     const result = await this.pool.query(
       `SELECT id, debit_account_id, credit_account_id, amount, metadata, created_at
        FROM entries
@@ -202,7 +210,16 @@ export class LedgerService {
    * remain the aggregate SUMs over `entries` (one for the debit side, one for the
    * credit side) and are kept purely for reporting / audit-trail context.
    */
-  async verifyLedgerIntegrity(client?: PoolClient | Pool): Promise<{ balanced: boolean; totalDebits: number; totalCredits: number; nonPositiveCount: number; selfEntryCount: number; orphanedCount: number }> {
+  async verifyLedgerIntegrity(
+    client?: PoolClient | Pool,
+  ): Promise<{
+    balanced: boolean;
+    totalDebits: number;
+    totalCredits: number;
+    nonPositiveCount: number;
+    selfEntryCount: number;
+    orphanedCount: number;
+  }> {
     const db = client || this.pool;
 
     // Reporting totals only. By construction these are equal (each row contributes
@@ -214,8 +231,14 @@ export class LedgerService {
         COALESCE(SUM(amount), 0) AS total_credits
       FROM entries`,
     );
-    const totalDebits = Number.parseInt(String(conservation.rows[0].total_debits), 10);
-    const totalCredits = Number.parseInt(String(conservation.rows[0].total_credits), 10);
+    const totalDebits = Number.parseInt(
+      String(conservation.rows[0].total_debits),
+      10,
+    );
+    const totalCredits = Number.parseInt(
+      String(conservation.rows[0].total_credits),
+      10,
+    );
 
     // Real, falsifiable structural invariants. A single query counts every kind of
     // violation; a healthy ledger returns all zeros.
@@ -230,11 +253,18 @@ export class LedgerService {
     );
 
     const row = integrity.rows[0] || {};
-    const nonPositiveCount = Number.parseInt(String(row.non_positive_count ?? 0), 10);
-    const selfEntryCount = Number.parseInt(String(row.self_entry_count ?? 0), 10);
+    const nonPositiveCount = Number.parseInt(
+      String(row.non_positive_count ?? 0),
+      10,
+    );
+    const selfEntryCount = Number.parseInt(
+      String(row.self_entry_count ?? 0),
+      10,
+    );
     const orphanedCount = Number.parseInt(String(row.orphaned_count ?? 0), 10);
 
-    const balanced = nonPositiveCount === 0 && selfEntryCount === 0 && orphanedCount === 0;
+    const balanced =
+      nonPositiveCount === 0 && selfEntryCount === 0 && orphanedCount === 0;
 
     return {
       balanced,

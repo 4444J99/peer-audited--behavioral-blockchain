@@ -1,14 +1,18 @@
 // Mock @nestjs/schedule before importing the scheduler — the package is not installed
-jest.mock('@nestjs/schedule', () => ({
-  Cron: () => () => {},
-  CronExpression: { EVERY_HOUR: '0 * * * *' },
-}), { virtual: true });
+jest.mock(
+  "@nestjs/schedule",
+  () => ({
+    Cron: () => () => {},
+    CronExpression: { EVERY_HOUR: "0 * * * *" },
+  }),
+  { virtual: true },
+);
 
-import { ContractsScheduler } from './contracts.scheduler';
-import { ContractsService } from './contracts.service';
-import { Pool } from 'pg';
+import { ContractsScheduler } from "./contracts.scheduler";
+import { ContractsService } from "./contracts.service";
+import { Pool } from "pg";
 
-describe('ContractsScheduler', () => {
+describe("ContractsScheduler", () => {
   let scheduler: ContractsScheduler;
   let mockPool: { query: jest.Mock };
 
@@ -33,21 +37,30 @@ describe('ContractsScheduler', () => {
     jest.clearAllMocks();
   });
 
-  describe('handleExpiredContracts', () => {
-    it('should call resolveContract(FAILED) for each expired contract', async () => {
+  describe("handleExpiredContracts", () => {
+    it("should call resolveContract(FAILED) for each expired contract", async () => {
       mockPool.query.mockResolvedValueOnce({
-        rows: [{ id: 'expired-1' }, { id: 'expired-2' }, { id: 'expired-3' }],
+        rows: [{ id: "expired-1" }, { id: "expired-2" }, { id: "expired-3" }],
       });
 
       await scheduler.handleExpiredContracts();
 
       expect(mockContractsService.resolveContract).toHaveBeenCalledTimes(3);
-      expect(mockContractsService.resolveContract).toHaveBeenCalledWith('expired-1', 'FAILED');
-      expect(mockContractsService.resolveContract).toHaveBeenCalledWith('expired-2', 'FAILED');
-      expect(mockContractsService.resolveContract).toHaveBeenCalledWith('expired-3', 'FAILED');
+      expect(mockContractsService.resolveContract).toHaveBeenCalledWith(
+        "expired-1",
+        "FAILED",
+      );
+      expect(mockContractsService.resolveContract).toHaveBeenCalledWith(
+        "expired-2",
+        "FAILED",
+      );
+      expect(mockContractsService.resolveContract).toHaveBeenCalledWith(
+        "expired-3",
+        "FAILED",
+      );
     });
 
-    it('should skip when no expired contracts exist', async () => {
+    it("should skip when no expired contracts exist", async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       await scheduler.handleExpiredContracts();
@@ -55,27 +68,36 @@ describe('ContractsScheduler', () => {
       expect(mockContractsService.resolveContract).not.toHaveBeenCalled();
     });
 
-    it('should continue processing remaining contracts if one resolution fails', async () => {
+    it("should continue processing remaining contracts if one resolution fails", async () => {
       mockPool.query.mockResolvedValueOnce({
-        rows: [{ id: 'ok-1' }, { id: 'fail-1' }, { id: 'ok-2' }],
+        rows: [{ id: "ok-1" }, { id: "fail-1" }, { id: "ok-2" }],
       });
 
       (mockContractsService.resolveContract as jest.Mock)
         .mockResolvedValueOnce(undefined) // ok-1 succeeds
-        .mockRejectedValueOnce(new Error('DB connection lost')) // fail-1 throws
+        .mockRejectedValueOnce(new Error("DB connection lost")) // fail-1 throws
         .mockResolvedValueOnce(undefined); // ok-2 succeeds
 
       await scheduler.handleExpiredContracts();
 
       expect(mockContractsService.resolveContract).toHaveBeenCalledTimes(3);
-      expect(mockContractsService.resolveContract).toHaveBeenCalledWith('ok-1', 'FAILED');
-      expect(mockContractsService.resolveContract).toHaveBeenCalledWith('fail-1', 'FAILED');
-      expect(mockContractsService.resolveContract).toHaveBeenCalledWith('ok-2', 'FAILED');
+      expect(mockContractsService.resolveContract).toHaveBeenCalledWith(
+        "ok-1",
+        "FAILED",
+      );
+      expect(mockContractsService.resolveContract).toHaveBeenCalledWith(
+        "fail-1",
+        "FAILED",
+      );
+      expect(mockContractsService.resolveContract).toHaveBeenCalledWith(
+        "ok-2",
+        "FAILED",
+      );
     });
   });
 
-  describe('retryFailedContractResolutionSideEffects', () => {
-    it('should trigger the contract resolution outbox sweep', async () => {
+  describe("retryFailedContractResolutionSideEffects", () => {
+    it("should trigger the contract resolution outbox sweep", async () => {
       await scheduler.retryFailedContractResolutionSideEffects();
 
       expect(
@@ -83,18 +105,22 @@ describe('ContractsScheduler', () => {
       ).toHaveBeenCalledTimes(1);
     });
 
-    it('should tolerate sweep results with failures and not throw', async () => {
-      ((mockContractsService as any).sweepFailedContractResolutionSideEffects as jest.Mock)
-        .mockResolvedValueOnce({
-          staleResetCount: 1,
-          staleQuarantinedCount: 1,
-          groupsFound: 2,
-          groupsRetried: 1,
-          groupsFailed: 1,
-          quarantinedTotalCount: 3,
-        });
+    it("should tolerate sweep results with failures and not throw", async () => {
+      (
+        (mockContractsService as any)
+          .sweepFailedContractResolutionSideEffects as jest.Mock
+      ).mockResolvedValueOnce({
+        staleResetCount: 1,
+        staleQuarantinedCount: 1,
+        groupsFound: 2,
+        groupsRetried: 1,
+        groupsFailed: 1,
+        quarantinedTotalCount: 3,
+      });
 
-      await expect(scheduler.retryFailedContractResolutionSideEffects()).resolves.toBeUndefined();
+      await expect(
+        scheduler.retryFailedContractResolutionSideEffects(),
+      ).resolves.toBeUndefined();
     });
   });
 });

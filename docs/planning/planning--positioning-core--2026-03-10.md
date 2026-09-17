@@ -143,4 +143,3 @@ It is not:
 ## Approval Note
 
 Per growth governance, any change to the positioning statement, tagline, or core messaging framework requires human approval from product leadership before broad rollout.
-

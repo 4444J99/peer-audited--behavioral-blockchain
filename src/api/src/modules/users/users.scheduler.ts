@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { Pool } from 'pg';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { Pool } from "pg";
 
 @Injectable()
 export class UsersScheduler {
@@ -20,6 +20,8 @@ export class UsersScheduler {
       AND status = 'ACTIVE'
     `);
 
-    this.logger.log(`Monthly integrity decay applied to ${result.rowCount} inactive user(s)`);
+    this.logger.log(
+      `Monthly integrity decay applied to ${result.rowCount} inactive user(s)`,
+    );
   }
 }

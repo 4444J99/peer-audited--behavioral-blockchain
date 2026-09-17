@@ -51,6 +51,7 @@ Hi {first_name},
 Following up on my earlier note. I wanted to share some data from our beta practitioners that might be relevant to your work:
 
 **Beta results (n=87 contracts, 12 practitioners):**
+
 - 62% overall contract completion rate
 - Recovery Oaths (no-contact): 68% completion rate
 - Biological Oaths (exercise/nutrition): 58% completion rate
@@ -210,6 +211,7 @@ Great speaking with you today. As discussed, here's your next step:
 **Your 30-day free trial is active.** Log in at styx.app/dashboard with the email you used to sign up.
 
 Quick start checklist:
+
 1. Complete your practice profile (2 min)
 2. Create your first contract template (5 min)
 3. Invite your first client (1 min)
@@ -274,6 +276,7 @@ I asked {referrer_name} what they'd say to a colleague considering Styx. Here's 
 > "{referrer_quote — e.g., 'I was skeptical about the financial stakes angle, but my clients take their homework seriously now. The data in the dashboard gives me something concrete to discuss in sessions.'}"
 
 A few other things practitioners in {specialization} have told us:
+
 - "It's like having an accountability partner for every client, running 24/7"
 - "The Fury audit means I don't have to be the bad guy about compliance"
 - "My clients' completion rates jumped from ~30% to over 60% in the first month"
@@ -314,18 +317,18 @@ All the best,
 
 ## Email Performance Benchmarks
 
-| Sequence | Email | Open Rate Target | Reply Rate Target | Conversion Target |
-|----------|-------|-----------------|-------------------|-------------------|
-| Cold | Touch 1 (Intro) | 35% | 5% | — |
-| Cold | Touch 2 (Data) | 30% | 4% | — |
-| Cold | Touch 4 (Question) | 28% | 6% | — |
-| Cold | Touch 5 (Breakup) | 25% | 3% | 2% demo |
-| Cold | **Full sequence** | — | — | **8% demo booked** |
-| Warm | Email 1 (Thanks) | 70% | 20% | — |
-| Warm | Email 2 (Reminder) | 60% | 15% | — |
-| Warm | Email 3 (Follow-up) | 55% | 10% | 40% trial activated |
-| Referral | Email 1 (Intro) | 55% | 15% | — |
-| Referral | **Full sequence** | — | — | **25% demo/trial** |
+| Sequence | Email               | Open Rate Target | Reply Rate Target | Conversion Target   |
+| -------- | ------------------- | ---------------- | ----------------- | ------------------- |
+| Cold     | Touch 1 (Intro)     | 35%              | 5%                | —                   |
+| Cold     | Touch 2 (Data)      | 30%              | 4%                | —                   |
+| Cold     | Touch 4 (Question)  | 28%              | 6%                | —                   |
+| Cold     | Touch 5 (Breakup)   | 25%              | 3%                | 2% demo             |
+| Cold     | **Full sequence**   | —                | —                 | **8% demo booked**  |
+| Warm     | Email 1 (Thanks)    | 70%              | 20%               | —                   |
+| Warm     | Email 2 (Reminder)  | 60%              | 15%               | —                   |
+| Warm     | Email 3 (Follow-up) | 55%              | 10%               | 40% trial activated |
+| Referral | Email 1 (Intro)     | 55%              | 15%               | —                   |
+| Referral | **Full sequence**   | —                | —                 | **25% demo/trial**  |
 
 ## Sending Guidelines
 

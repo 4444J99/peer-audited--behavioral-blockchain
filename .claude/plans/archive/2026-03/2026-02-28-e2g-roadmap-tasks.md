@@ -9,30 +9,37 @@ The completed E2G review (`docs/evaluation-to-growth-review.md`) identified 18 p
 ## Phase Alpha: Security Hardening (Tasks 1–6)
 
 ### Task 1: Fix Gate 06 `collectFiles` recursive call
+
 **File**: `scripts/validation/06-security-invariant-check.ts:59`
 **Change**: Add missing `extensions` parameter to recursive call.
+
 ```
 - files.push(...collectFiles(full));
 + files.push(...collectFiles(full, extensions));
 ```
+
 **Test**: Existing test + manual: `npx tsx scripts/validation/06-security-invariant-check.ts` after `make build`.
 
 ---
 
 ### Task 2: Add Stripe idempotency keys
+
 **File**: `src/api/services/escrow/stripe.service.ts`
 **Change**: Add `idempotencyKey` to `paymentIntents.create`, `capture`, and `cancel`.
+
 - `holdStake`: generate key from `contractId` → `styx_hold_${contractId}`
 - `captureStake`: key from `paymentIntentId` → `styx_capture_${paymentIntentId}`
 - `cancelHold`: key from `paymentIntentId` → `styx_cancel_${paymentIntentId}`
 - Pass via Stripe's `requestOptions` second argument: `{ idempotencyKey }`
-**Test**: Update `stripe.service.spec.ts` to verify idempotency keys are passed.
+  **Test**: Update `stripe.service.spec.ts` to verify idempotency keys are passed.
 
 ---
 
 ### Task 3: Fix linguistic cloaker word boundaries
+
 **File**: `src/web/utils/linguistic-cloak.ts:12-20`
 **Change**: Add `\b` word boundary anchors to all regex patterns:
+
 ```ts
 [`\\bsta${b(107)}e\\b`, 'gi', 'vault'],
 [`\\b${b(98)}e${b(116)}\\b`, 'gi', 'commitment'],
@@ -42,27 +49,32 @@ The completed E2G review (`docs/evaluation-to-growth-review.md`) identified 18 p
 [`\\bno.?contact\\b`, 'gi', 'personal boundary'],
 [`\\brelapse\\b`, 'gi', 'setback'],
 ```
+
 **Test**: Update `src/web/utils/linguistic-cloak.test.ts` — add cases for "between", "better", "mistake", "stakeholder" confirming they are NOT transformed.
 
 ---
 
 ### Task 4: Validate dateOfBirth format
+
 **File**: `src/api/src/modules/auth/auth.service.ts:50-57`
 **Change**: Before `new Date(opts.dateOfBirth)`, validate the string is a valid date:
+
 ```ts
 if (opts?.dateOfBirth) {
   const dob = new Date(opts.dateOfBirth);
   if (isNaN(dob.getTime())) {
-    throw new BadRequestException('Invalid date of birth format');
+    throw new BadRequestException("Invalid date of birth format");
   }
   // ... existing age calculation
 }
 ```
+
 **Test**: Add case to `auth.service.spec.ts` — register with `dateOfBirth: '2020-99-99'` should throw `BadRequestException`.
 
 ---
 
 ### Task 5: Make `signToken` private
+
 **File**: `src/api/src/modules/auth/auth.service.ts:134`
 **Change**: `signToken` → `private signToken`
 **Test**: Compile check (`npx turbo run lint`). No external callers exist (confirmed via grep).
@@ -70,14 +82,17 @@ if (opts?.dateOfBirth) {
 ---
 
 ### Task 6: Add missing ledger indexes
+
 **File**: `src/api/database/schema.sql`
 **Change**: Add after existing index definitions:
+
 ```sql
 CREATE INDEX idx_entries_debit_account_id ON entries(debit_account_id);
 CREATE INDEX idx_entries_credit_account_id ON entries(credit_account_id);
 CREATE INDEX idx_entries_contract_id ON entries(contract_id);
 CREATE INDEX idx_users_enterprise_id ON users(enterprise_id);
 ```
+
 **Test**: `make test` — schema is used by init scripts, not migration runner. Tests should pass unchanged.
 
 ---
@@ -85,11 +100,14 @@ CREATE INDEX idx_users_enterprise_id ON users(enterprise_id);
 ## Phase Beta: Integrity Assurance (Tasks 7–8, 10–12, 14)
 
 ### Task 7: Schedule daily `verifyChain()` + admin endpoint
+
 **Files**:
+
 - `src/api/src/modules/admin/admin.controller.ts` — add GET endpoint
 - New file: `src/api/src/modules/admin/admin.scheduler.ts` — daily cron job
 
 **Admin endpoint** (add to existing AdminController):
+
 ```ts
 @Get('integrity/chain')
 @ApiOperation({ summary: 'Verify event_log hash chain integrity' })
@@ -97,26 +115,33 @@ async verifyChain() {
   return this.truthLog.verifyChain();
 }
 ```
+
 The `TruthLogService` is already injected into AdminModule providers (confirmed: `admin.module.ts:19`). Need to inject it into AdminController constructor.
 
 **Scheduler** (new file, follow `contracts.scheduler.ts` pattern):
+
 ```ts
 @Injectable()
 export class AdminScheduler {
   private readonly logger = new Logger(AdminScheduler.name);
   constructor(private readonly truthLog: TruthLogService) {}
 
-  @Cron('0 3 * * *') // 3 AM daily
+  @Cron("0 3 * * *") // 3 AM daily
   async verifyHashChain(): Promise<void> {
     const result = await this.truthLog.verifyChain();
     if (!result.valid) {
-      this.logger.error(`HASH CHAIN CORRUPTION: ${result.corrupted.length} corrupted entries`);
+      this.logger.error(
+        `HASH CHAIN CORRUPTION: ${result.corrupted.length} corrupted entries`,
+      );
     } else {
-      this.logger.log(`Hash chain verified: ${result.checked} events, all valid`);
+      this.logger.log(
+        `Hash chain verified: ${result.checked} events, all valid`,
+      );
     }
   }
 }
 ```
+
 - Register `AdminScheduler` in `admin.module.ts` providers
 - Add `ScheduleModule.forRoot()` to admin module imports
 
@@ -125,8 +150,10 @@ export class AdminScheduler {
 ---
 
 ### Task 8: Add immutability trigger on event_log
+
 **File**: `src/api/database/schema.sql`
 **Change**: Add trigger after event_log table definition:
+
 ```sql
 CREATE OR REPLACE FUNCTION prevent_event_log_mutation()
 RETURNS TRIGGER AS $$
@@ -139,13 +166,16 @@ CREATE TRIGGER trg_event_log_immutable
   BEFORE UPDATE OR DELETE ON event_log
   FOR EACH ROW EXECUTE FUNCTION prevent_event_log_mutation();
 ```
+
 **Test**: `make test` — existing tests don't update/delete event_log rows.
 
 ---
 
 ### Task 10: Fix useFuryStore token check for cookie auth
+
 **File**: `src/web/store/useFuryStore.ts:33-40`
 **Change**: Remove the `getAuthToken()` gate entirely. Cookie auth is primary; the `api.getFuryAssignments()` call sends credentials via cookies. If the user is not authenticated, the API will return 401 and the catch block handles it.
+
 ```ts
 connectStream: async () => {
   get().disconnectStream();
@@ -155,14 +185,17 @@ connectStream: async () => {
   ...
 }
 ```
+
 Also remove the `getAuthToken` import if no longer needed.
 **Test**: Update `src/web/store/__tests__/useFuryStore.test.ts` — remove/update the "no token" test case.
 
 ---
 
 ### Task 11: Migrate useFuryStore to SSE-with-polling-fallback
+
 **File**: `src/web/store/useFuryStore.ts`
 **Change**: Rewrite `connectStream` to match `NotificationPanel.tsx` pattern:
+
 1. Try `api.issueFuryStreamCookie()` → open `EventSource` to `/fury/stream`
 2. On `onopen`: clear poll timer
 3. On `onmessage`: parse assignment, merge into state
@@ -171,6 +204,7 @@ Also remove the `getAuthToken` import if no longer needed.
 6. Remove `pollTimer` from the `FuryState` interface
 
 **Interface changes**:
+
 ```ts
 interface FuryState {
   assignments: Assignment[];
@@ -184,6 +218,7 @@ interface FuryState {
 ```
 
 **Closure refs** (above `create` call):
+
 ```ts
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let eventSource: EventSource | null = null;
@@ -196,23 +231,28 @@ let stopped = false;
 ---
 
 ### Task 12: Implement account lockout after N failed login attempts
+
 **Files**:
+
 - `src/api/database/schema.sql` — add columns to `users` table
 - `src/api/src/modules/auth/auth.service.ts` — add lockout logic
 
 **Schema change** (ALTER TABLE since it comes after CREATE TABLE):
+
 ```sql
 ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;
 ```
 
 **Auth service changes** (in `login` method):
+
 1. After fetching user, check `locked_until`: if `locked_until > NOW()`, throw `UnauthorizedException('Account temporarily locked. Try again later.')`
 2. On password mismatch: increment `failed_login_attempts`. If >= 5, set `locked_until = NOW() + INTERVAL '15 minutes'`
 3. On successful login: reset `failed_login_attempts = 0, locked_until = NULL`
 4. Keep the error message generic to prevent enumeration
 
 **Test**: Add tests to `auth.service.spec.ts`:
+
 - 5 failed attempts → account locked for 15 min
 - Locked account rejects even correct password
 - Successful login after lockout expires
@@ -221,6 +261,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;
 ---
 
 ### Task 14: Move poll timer out of Zustand state
+
 **File**: `src/web/store/useFuryStore.ts`
 **Note**: This is subsumed by Task 11 (SSE migration) which already moves timer refs to closure variables. No separate action needed.
 
@@ -229,7 +270,9 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;
 ## Phase Gamma: Financial Precision (Tasks 9, 13, 15, 16)
 
 ### Task 9: Full JWT refresh token flow
+
 **Files**:
+
 - `src/api/src/modules/auth/auth.service.ts` — add refresh token generation + verification
 - `src/api/src/modules/auth/auth.controller.ts` — add refresh endpoint + update cookie logic
 - `src/api/guards/auth.guard.ts` — extract cookie for access token (no change needed — already reads `styx_auth_token`)
@@ -238,6 +281,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;
 - `src/web/contexts/AuthContext.tsx` — add silent refresh on 401
 
 **Schema** — new table:
+
 ```sql
 CREATE TABLE refresh_tokens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -252,6 +296,7 @@ CREATE INDEX idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
 ```
 
 **Auth service changes**:
+
 - `TOKEN_EXPIRY` → `'15m'` (access token, down from 24h)
 - New `REFRESH_TOKEN_EXPIRY_DAYS = 7`
 - New `generateRefreshToken(userId)`: generate `randomBytes(32).toString('hex')`, hash with SHA-256, store hash in DB, return raw token
@@ -259,29 +304,46 @@ CREATE INDEX idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
 - New `revokeRefreshTokensForUser(userId)`: revoke all (used on logout, password change)
 
 **Auth controller changes**:
+
 - `issueBrowserSessionCookies`: set access token cookie (15min maxAge) + refresh token cookie (7d maxAge, HttpOnly, path `/auth/refresh`)
 - New `@Post('refresh')` endpoint: reads refresh token from cookie, calls `refreshAccessToken`, sets new cookies
 - `logout`: also call `revokeRefreshTokensForUser`
 - `clearBrowserSessionCookies`: also clear `styx_refresh_token`
 
 **Cookie details**:
+
 ```ts
 // Access token — 15 min
-res.cookie('styx_auth_token', accessToken, { httpOnly: true, secure, sameSite: 'lax', path: '/', maxAge: 15 * 60 * 1000 });
+res.cookie("styx_auth_token", accessToken, {
+  httpOnly: true,
+  secure,
+  sameSite: "lax",
+  path: "/",
+  maxAge: 15 * 60 * 1000,
+});
 // Refresh token — 7 days, restricted path
-res.cookie('styx_refresh_token', refreshToken, { httpOnly: true, secure, sameSite: 'lax', path: '/auth/refresh', maxAge: 7 * 24 * 60 * 60 * 1000 });
+res.cookie("styx_refresh_token", refreshToken, {
+  httpOnly: true,
+  secure,
+  sameSite: "lax",
+  path: "/auth/refresh",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
 ```
 
 **Web api-client changes**:
+
 - Add `refreshToken: () => request<{ userId: string; token: string }>('/auth/refresh', { method: 'POST' })`
 - In `request()` function: if response is 401 and path is not `/auth/refresh`, attempt one refresh call. If refresh succeeds, retry original request. If refresh fails, throw.
 
 **AuthContext changes**:
+
 - Remove in-memory `token` state (cookie-based auth is now exclusive)
 - `login`/`register`: no longer call `setAuthToken()` — cookies handle everything
 - Add `refreshSession` callback that calls `api.refreshToken()` (used by api-client retry)
 
 **Test**: Extensive new tests:
+
 - `auth.service.spec.ts`: refresh token generation, rotation, expiry, revocation
 - `auth.controller.spec.ts`: refresh endpoint, cookie issuance
 - `api-client.test.ts`: 401 → auto-refresh → retry
@@ -290,8 +352,10 @@ res.cookie('styx_refresh_token', refreshToken, { httpOnly: true, secure, sameSit
 ---
 
 ### Task 13: Implement BMI floor and weight velocity cap in Aegis
+
 **File**: `src/api/services/health/aegis.service.ts`
 **Change**: Add a new method `validateHealthMetrics` (called by contracts controller for BIOLOGICAL oaths):
+
 ```ts
 validateHealthMetrics(healthMetrics?: {
   currentWeightLbs: number;
@@ -325,6 +389,7 @@ validateHealthMetrics(healthMetrics?: {
   return true;
 }
 ```
+
 Also: wire into contracts controller — when `oathCategory` starts with `BIOLOGICAL`, call `validateHealthMetrics` with the DTO's `healthMetrics` field.
 
 **Test**: New tests in `aegis.service.spec.ts` — BMI below 18.5 rejected, velocity above 2%/week rejected, normal values pass.
@@ -332,7 +397,9 @@ Also: wire into contracts controller — when `oathCategory` starts with `BIOLOG
 ---
 
 ### Task 15: Migrate ledger amounts to integer cents
+
 **Files** (extensive — touches the full financial pipeline):
+
 - `src/api/services/ledger/ledger.service.ts` — amount parameter becomes integer cents
 - `src/api/services/escrow/stripe.service.ts` — already converts to cents, remove `Math.round(amountDollars * 100)` patterns
 - `src/api/services/billing.ts` — update pricing constants to cents
@@ -345,6 +412,7 @@ Also: wire into contracts controller — when `oathCategory` starts with `BIOLOG
 **Schema**: The `entries.amount` and `contracts.stake_amount` columns are already `DECIMAL(19,4)`. No schema change needed — we just stop storing fractional dollars and store integer cents instead. The application layer enforces integer input.
 
 **Strategy**:
+
 1. Add a `toCents(dollars: number): number` and `toDollars(cents: number): number` utility in `src/shared/libs/money.ts`
 2. Update `LedgerService.recordTransaction` to validate `Number.isInteger(amount)` (amount is now in cents)
 3. Update all callers to pass cents
@@ -356,14 +424,18 @@ Also: wire into contracts controller — when `oathCategory` starts with `BIOLOG
 ---
 
 ### Task 16: Add explicit algorithm to jwt.verify()
+
 **Files**:
+
 - `src/api/guards/auth.guard.ts:49`
 - `src/api/src/modules/auth/auth.service.ts:142,167`
 
 **Change**: Add `{ algorithms: ['HS256'] }` as third/options argument:
+
 ```ts
-jwt.verify(token, secret, { algorithms: ['HS256'] }) as AuthPayload;
+jwt.verify(token, secret, { algorithms: ["HS256"] }) as AuthPayload;
 ```
+
 **Test**: Existing auth tests should pass. Add one test: token signed with RS256 should be rejected.
 
 ---
@@ -371,7 +443,9 @@ jwt.verify(token, secret, { algorithms: ['HS256'] }) as AuthPayload;
 ## Phase Delta: Compliance & Scale (Tasks 17–18 + documentation)
 
 ### Task 17: GDPR data export and right-to-erasure
+
 **Files**:
+
 - New: `src/api/src/modules/users/gdpr.service.ts`
 - `src/api/src/modules/users/users.controller.ts` — add export endpoint
 - `src/api/src/modules/users/users.service.ts` — enhance `requestDeletion`
@@ -379,20 +453,40 @@ jwt.verify(token, secret, { algorithms: ['HS256'] }) as AuthPayload;
 - New: `src/api/src/modules/users/gdpr.scheduler.ts` — process pending deletions
 
 **Data export** (`GET /users/me/data-export`):
+
 ```ts
 @Injectable()
 export class GdprService {
   constructor(private readonly pool: Pool) {}
 
   async exportUserData(userId: string): Promise<Record<string, unknown>> {
-    const [user, contracts, proofs, entries, notifications, attestations] = await Promise.all([
-      this.pool.query('SELECT id, email, integrity_score, role, status, created_at FROM users WHERE id = $1', [userId]),
-      this.pool.query('SELECT id, oath_category, verification_method, stake_amount, status, duration_days, started_at, ends_at, created_at FROM contracts WHERE user_id = $1', [userId]),
-      this.pool.query('SELECT id, contract_id, status, submitted_at FROM proofs WHERE user_id = $1', [userId]),
-      this.pool.query(`SELECT e.* FROM entries e JOIN accounts a ON (e.debit_account_id = a.id OR e.credit_account_id = a.id) JOIN users u ON u.account_id = a.id WHERE u.id = $1`, [userId]),
-      this.pool.query('SELECT id, type, title, body, created_at FROM notifications WHERE user_id = $1', [userId]),
-      this.pool.query('SELECT a.* FROM attestations a JOIN contracts c ON a.contract_id = c.id WHERE c.user_id = $1', [userId]),
-    ]);
+    const [user, contracts, proofs, entries, notifications, attestations] =
+      await Promise.all([
+        this.pool.query(
+          "SELECT id, email, integrity_score, role, status, created_at FROM users WHERE id = $1",
+          [userId],
+        ),
+        this.pool.query(
+          "SELECT id, oath_category, verification_method, stake_amount, status, duration_days, started_at, ends_at, created_at FROM contracts WHERE user_id = $1",
+          [userId],
+        ),
+        this.pool.query(
+          "SELECT id, contract_id, status, submitted_at FROM proofs WHERE user_id = $1",
+          [userId],
+        ),
+        this.pool.query(
+          `SELECT e.* FROM entries e JOIN accounts a ON (e.debit_account_id = a.id OR e.credit_account_id = a.id) JOIN users u ON u.account_id = a.id WHERE u.id = $1`,
+          [userId],
+        ),
+        this.pool.query(
+          "SELECT id, type, title, body, created_at FROM notifications WHERE user_id = $1",
+          [userId],
+        ),
+        this.pool.query(
+          "SELECT a.* FROM attestations a JOIN contracts c ON a.contract_id = c.id WHERE c.user_id = $1",
+          [userId],
+        ),
+      ]);
     return {
       exportedAt: new Date().toISOString(),
       user: user.rows[0] || null,
@@ -407,6 +501,7 @@ export class GdprService {
 ```
 
 **Right-to-erasure** (enhance existing `requestDeletion` + new scheduler):
+
 - Current: Sets `status = 'PENDING_DELETION'` — correct first step
 - Add scheduler (`@Cron('0 4 * * *')`) that processes `PENDING_DELETION` users after 30-day cooling period:
   1. Anonymize user: set `email = 'deleted-{uuid}@anonymized.styx'`, `password_hash = NULL`
@@ -421,33 +516,48 @@ export class GdprService {
 ---
 
 ### Task 18: Extract web auth-check into Next.js middleware
+
 **File**: New `src/web/middleware.ts` (Next.js convention — must be at web workspace root)
 
 **Change**: Create a Next.js middleware that checks for the `styx_auth_token` cookie on protected routes and redirects to `/login` if missing:
-```ts
-import { NextRequest, NextResponse } from 'next/server';
 
-const PROTECTED_PATHS = ['/dashboard', '/fury', '/wallet', '/settings', '/profile', '/admin', '/contracts', '/hr', '/tavern'];
-const PUBLIC_PATHS = ['/', '/login', '/register', '/pitch'];
+```ts
+import { NextRequest, NextResponse } from "next/server";
+
+const PROTECTED_PATHS = [
+  "/dashboard",
+  "/fury",
+  "/wallet",
+  "/settings",
+  "/profile",
+  "/admin",
+  "/contracts",
+  "/hr",
+  "/tavern",
+];
+const PUBLIC_PATHS = ["/", "/login", "/register", "/pitch"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isProtected = PROTECTED_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));
+  const isProtected = PROTECTED_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(p + "/"),
+  );
   if (!isProtected) return NextResponse.next();
 
-  const token = request.cookies.get('styx_auth_token');
+  const token = request.cookies.get("styx_auth_token");
   if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL("/login", request.url));
   }
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api).*)'],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api).*)"],
 };
 ```
 
 Then **remove** the duplicated `router.push('/login')` auth checks from these pages:
+
 - `src/web/app/wallet/page.tsx`
 - `src/web/app/dashboard/page.tsx`
 - `src/web/app/admin/page.tsx`
@@ -463,9 +573,11 @@ Each page's `useEffect` auth-check block can be removed since the middleware han
 ---
 
 ### Documentation: Aegis/tier system interaction
+
 **File**: `docs/architecture/aegis-tier-reconciliation.md` (new)
+
 - Document that Aegis is the final safety gate, overriding tier-based maximums
-- TIER_4 "unlimited" is unlimited *subject to Aegis ceiling* ($500)
+- TIER_4 "unlimited" is unlimited _subject to Aegis ceiling_ ($500)
 - Recovery Protocol is a separate parallel gate for RECOVERY_ oath categories
 
 ---
@@ -495,11 +607,13 @@ Tasks have dependencies. Execute in this order:
 ## Verification
 
 After each phase:
+
 - `make test` — all 1,318+ tests pass (will grow with new tests)
 - `npx turbo run lint` — TypeScript strict mode passes
 - `npx tsx scripts/validation/06-security-invariant-check.ts` — Gate 06 passes (after Task 1 fix + build)
 
 After all phases:
+
 - Manual smoke test: login → create contract → submit proof → fury audit → wallet check
 - Verify refresh token cycle: wait 15min, confirm silent refresh
 - Verify `GET /admin/integrity/chain` returns `{ valid: true }`

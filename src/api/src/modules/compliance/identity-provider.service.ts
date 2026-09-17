@@ -1,13 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
-import Stripe from 'stripe';
-import { randomUUID } from 'crypto';
-import { resolveWebPublicUrl } from '../../config/runtime';
+import { Injectable, Logger } from "@nestjs/common";
+import Stripe from "stripe";
+import { randomUUID } from "crypto";
+import { resolveWebPublicUrl } from "../../config/runtime";
 
 type StripeClient = InstanceType<typeof Stripe>;
-type StripeEvent = ReturnType<StripeClient['webhooks']['constructEvent']>;
+type StripeEvent = ReturnType<StripeClient["webhooks"]["constructEvent"]>;
 
-export type IdentityVerificationMode = 'KYC_ONLY' | 'AGE_ONLY' | 'KYC_AND_AGE';
-export type IdentityProviderStatus = 'PENDING' | 'VERIFIED' | 'FAILED' | 'REJECTED';
+export type IdentityVerificationMode = "KYC_ONLY" | "AGE_ONLY" | "KYC_AND_AGE";
+export type IdentityProviderStatus =
+  "PENDING" | "VERIFIED" | "FAILED" | "REJECTED";
 
 export interface StartIdentityVerificationInput {
   userId: string;
@@ -18,7 +19,7 @@ export interface StartIdentityVerificationInput {
 }
 
 export interface StartIdentityVerificationResult {
-  provider: 'MOCK' | 'STRIPE_IDENTITY';
+  provider: "MOCK" | "STRIPE_IDENTITY";
   verificationId: string;
   status: IdentityProviderStatus;
   clientSecret?: string | null;
@@ -26,7 +27,7 @@ export interface StartIdentityVerificationResult {
 }
 
 export interface IdentityProviderCompletionResult {
-  provider: 'MOCK' | 'STRIPE_IDENTITY';
+  provider: "MOCK" | "STRIPE_IDENTITY";
   verificationId: string;
   mode: IdentityVerificationMode;
   status: IdentityProviderStatus;
@@ -35,19 +36,23 @@ export interface IdentityProviderCompletionResult {
 }
 
 interface IdentityProviderAdapter {
-  providerName: 'MOCK' | 'STRIPE_IDENTITY';
-  start(input: StartIdentityVerificationInput): Promise<StartIdentityVerificationResult>;
+  providerName: "MOCK" | "STRIPE_IDENTITY";
+  start(
+    input: StartIdentityVerificationInput,
+  ): Promise<StartIdentityVerificationResult>;
 }
 
 @Injectable()
 export class MockIdentityProviderAdapter implements IdentityProviderAdapter {
-  providerName: 'MOCK' = 'MOCK';
+  providerName: "MOCK" = "MOCK";
 
-  async start(input: StartIdentityVerificationInput): Promise<StartIdentityVerificationResult> {
+  async start(
+    input: StartIdentityVerificationInput,
+  ): Promise<StartIdentityVerificationResult> {
     return {
-      provider: 'MOCK',
-      verificationId: `ivs_mock_${randomUUID().replace(/-/g, '').slice(0, 16)}`,
-      status: 'PENDING',
+      provider: "MOCK",
+      verificationId: `ivs_mock_${randomUUID().replace(/-/g, "").slice(0, 16)}`,
+      status: "PENDING",
       hostedUrl: `${resolveWebPublicUrl(input.returnUrl)}/settings?mockIdentity=1`,
       clientSecret: null,
     };
@@ -56,28 +61,33 @@ export class MockIdentityProviderAdapter implements IdentityProviderAdapter {
 
 @Injectable()
 export class StripeIdentityProviderAdapter implements IdentityProviderAdapter {
-  providerName: 'STRIPE_IDENTITY' = 'STRIPE_IDENTITY';
+  providerName: "STRIPE_IDENTITY" = "STRIPE_IDENTITY";
   private readonly logger = new Logger(StripeIdentityProviderAdapter.name);
   private readonly stripe: StripeClient;
 
   constructor() {
-    const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
+    const apiKey = process.env.STRIPE_SECRET_KEY || "sk_test_mock_key"; // allow-secret
     // PRV13: in production a mock/placeholder API key must hard-fail. A config where
     // the webhook secret is real but the API key is the mock default yields
     // inconsistent verification and silent KYC failure. Fail closed at construction.
-    if (process.env.NODE_ENV === 'production' && apiKey === 'sk_test_mock_key') {
-      throw new Error('STRIPE_SECRET_KEY must be a real key in production (mock key is not allowed)');
+    if (
+      process.env.NODE_ENV === "production" &&
+      apiKey === "sk_test_mock_key"
+    ) {
+      throw new Error(
+        "STRIPE_SECRET_KEY must be a real key in production (mock key is not allowed)",
+      );
     }
-    this.stripe = new Stripe(apiKey, { apiVersion: '2026-08-26.dahlia' });
+    this.stripe = new Stripe(apiKey, { apiVersion: "2026-08-26.dahlia" });
   }
 
   get isAvailable(): boolean {
     const key = process.env.STRIPE_SECRET_KEY;
-    return !!key && key !== 'sk_test_mock_key';
+    return !!key && key !== "sk_test_mock_key";
   }
 
   private get webhookSecret(): string {
-    return process.env.STRIPE_IDENTITY_WEBHOOK_SECRET || ''; // allow-secret
+    return process.env.STRIPE_IDENTITY_WEBHOOK_SECRET || ""; // allow-secret
   }
 
   /**
@@ -86,27 +96,38 @@ export class StripeIdentityProviderAdapter implements IdentityProviderAdapter {
    * webhook secret is unconfigured, the signature header is missing, or verification
    * fails — callers must NOT process unverified payloads.
    */
-  constructVerifiedEvent(rawBody: Buffer | string | undefined, signature: string | undefined): StripeEvent {
+  constructVerifiedEvent(
+    rawBody: Buffer | string | undefined,
+    signature: string | undefined,
+  ): StripeEvent {
     if (!this.webhookSecret) {
-      throw new Error('Stripe Identity webhook secret is not configured');
+      throw new Error("Stripe Identity webhook secret is not configured");
     }
     if (!signature) {
-      throw new Error('Missing Stripe-Signature header');
+      throw new Error("Missing Stripe-Signature header");
     }
     if (rawBody == null) {
-      throw new Error('Missing raw request body for signature verification');
+      throw new Error("Missing raw request body for signature verification");
     }
-    return this.stripe.webhooks.constructEvent(rawBody, signature, this.webhookSecret);
+    return this.stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
+      this.webhookSecret,
+    );
   }
 
-  async start(input: StartIdentityVerificationInput): Promise<StartIdentityVerificationResult> {
+  async start(
+    input: StartIdentityVerificationInput,
+  ): Promise<StartIdentityVerificationResult> {
     if (!this.isAvailable) {
-      this.logger.warn('Stripe Identity adapter requested without a real STRIPE_SECRET_KEY; use mock provider or configure Stripe.');
-      throw new Error('Stripe Identity provider is not configured');
+      this.logger.warn(
+        "Stripe Identity adapter requested without a real STRIPE_SECRET_KEY; use mock provider or configure Stripe.",
+      );
+      throw new Error("Stripe Identity provider is not configured");
     }
 
     const session = await this.stripe.identity.verificationSessions.create({
-      type: 'document',
+      type: "document",
       metadata: {
         styxUserId: input.userId,
         verificationMode: input.mode,
@@ -122,9 +143,9 @@ export class StripeIdentityProviderAdapter implements IdentityProviderAdapter {
     } as any);
 
     return {
-      provider: 'STRIPE_IDENTITY',
+      provider: "STRIPE_IDENTITY",
       verificationId: session.id,
-      status: 'PENDING',
+      status: "PENDING",
       clientSecret: (session as any).client_secret ?? null,
       hostedUrl: (session as any).url ?? null,
     };
@@ -139,22 +160,29 @@ export class StripeIdentityProviderAdapter implements IdentityProviderAdapter {
    * unverified client field.
    */
   parseWebhookEvent(body: any): IdentityProviderCompletionResult | null {
-    const eventType = String(body?.type || '');
+    const eventType = String(body?.type || "");
     const object = body?.data?.object;
-    if (!object?.id || !eventType.startsWith('identity.verification_session.')) {
+    if (
+      !object?.id ||
+      !eventType.startsWith("identity.verification_session.")
+    ) {
       return null;
     }
 
-    const mode = (String(object?.metadata?.verificationMode || 'KYC_AND_AGE').toUpperCase() as IdentityVerificationMode);
-    const userId = object?.metadata?.styxUserId ? String(object.metadata.styxUserId) : null;
+    const mode = String(
+      object?.metadata?.verificationMode || "KYC_AND_AGE",
+    ).toUpperCase() as IdentityVerificationMode;
+    const userId = object?.metadata?.styxUserId
+      ? String(object.metadata.styxUserId)
+      : null;
 
-    let status: IdentityProviderStatus = 'PENDING';
-    if (eventType.endsWith('.verified')) status = 'VERIFIED';
-    if (eventType.endsWith('.requires_input')) status = 'FAILED';
-    if (eventType.endsWith('.canceled')) status = 'REJECTED';
+    let status: IdentityProviderStatus = "PENDING";
+    if (eventType.endsWith(".verified")) status = "VERIFIED";
+    if (eventType.endsWith(".requires_input")) status = "FAILED";
+    if (eventType.endsWith(".canceled")) status = "REJECTED";
 
     return {
-      provider: 'STRIPE_IDENTITY',
+      provider: "STRIPE_IDENTITY",
       verificationId: String(object.id),
       mode,
       status,
@@ -174,37 +202,45 @@ export class IdentityProviderService {
   ) {}
 
   private get isProduction(): boolean {
-    return process.env.NODE_ENV === 'production';
+    return process.env.NODE_ENV === "production";
   }
 
-  private get configuredProvider(): 'MOCK' | 'STRIPE_IDENTITY' {
-    const raw = String(process.env.STYX_IDENTITY_PROVIDER || '').toUpperCase();
-    if (raw === 'STRIPE' || raw === 'STRIPE_IDENTITY') return 'STRIPE_IDENTITY';
-    if (raw === 'MOCK') return 'MOCK';
+  private get configuredProvider(): "MOCK" | "STRIPE_IDENTITY" {
+    const raw = String(process.env.STYX_IDENTITY_PROVIDER || "").toUpperCase();
+    if (raw === "STRIPE" || raw === "STRIPE_IDENTITY") return "STRIPE_IDENTITY";
+    if (raw === "MOCK") return "MOCK";
     // No explicit selection: production MUST use the real provider; only dev/test
     // may fall back to the mock adapter.
-    return this.isProduction ? 'STRIPE_IDENTITY' : 'MOCK';
+    return this.isProduction ? "STRIPE_IDENTITY" : "MOCK";
   }
 
-  async startVerification(input: StartIdentityVerificationInput): Promise<StartIdentityVerificationResult> {
+  async startVerification(
+    input: StartIdentityVerificationInput,
+  ): Promise<StartIdentityVerificationResult> {
     // In production the mock provider must never be usable — it flips users to
     // VERIFIED with no real proof of identity/age.
-    if (this.isProduction && this.configuredProvider === 'MOCK') {
-      throw new Error('Mock identity provider is disabled in production; configure STYX_IDENTITY_PROVIDER=STRIPE');
+    if (this.isProduction && this.configuredProvider === "MOCK") {
+      throw new Error(
+        "Mock identity provider is disabled in production; configure STYX_IDENTITY_PROVIDER=STRIPE",
+      );
     }
 
-    if (this.configuredProvider === 'STRIPE_IDENTITY') {
+    if (this.configuredProvider === "STRIPE_IDENTITY") {
       try {
         return await this.stripeAdapter.start(input);
       } catch (err) {
         // Never silently downgrade to the mock provider in production: a Stripe
         // outage/misconfiguration must surface rather than grant unverified access.
         if (this.isProduction) {
-          this.logger.error(`Stripe Identity verification failed in production: ${(err as Error)?.message}`);
+          this.logger.error(
+            `Stripe Identity verification failed in production: ${(err as Error)?.message}`,
+          );
           throw err;
         }
         // Dev/test only: fall through to mock for local continuity.
-        this.logger.warn(`Stripe Identity unavailable; falling back to mock provider (non-production): ${(err as Error)?.message}`);
+        this.logger.warn(
+          `Stripe Identity unavailable; falling back to mock provider (non-production): ${(err as Error)?.message}`,
+        );
       }
     }
 
@@ -231,9 +267,11 @@ export class IdentityProviderService {
    * verifyAndParseStripeWebhook, which validates the Stripe-Signature first.
    * @deprecated Use verifyAndParseStripeWebhook. Retained only as a tripwire.
    */
-  parseStripeIdentityWebhook(_body: any): IdentityProviderCompletionResult | null {
+  parseStripeIdentityWebhook(
+    _body: any,
+  ): IdentityProviderCompletionResult | null {
     throw new Error(
-      'parseStripeIdentityWebhook is disabled (PRV12): unverified Stripe Identity payloads must not be parsed. Use verifyAndParseStripeWebhook.',
+      "parseStripeIdentityWebhook is disabled (PRV12): unverified Stripe Identity payloads must not be parsed. Use verifyAndParseStripeWebhook.",
     );
   }
 }

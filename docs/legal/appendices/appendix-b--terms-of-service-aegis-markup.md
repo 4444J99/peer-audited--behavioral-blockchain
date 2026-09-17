@@ -13,17 +13,17 @@ This appendix annotates the current Terms of Service draft with the guardrails i
 
 ## Clause Mapping Table
 
-| ToS clause | Clause function | Aegis / Recovery source | Why it matters |
-| --- | --- | --- | --- |
-| `§ 2.1 Styx Is Not Gambling` | Declares deposit-contract framing and user-control theory | Aegis § 2.1-2.2; skill-based whitepaper §§ 1-2 | Preserves the core skill-over-chance positioning |
-| `§ 3.1 Age Requirement` | 18+ eligibility promise | Aegis § 3.1 | Supports contract-capacity and youth-protection arguments |
-| `§ 3.2 Geographic Restriction` | US-only access + anti-circumvention rule | Aegis § 2.3, § 6; blocklist appendix | Supports any-chance and jurisdiction-risk mitigation |
-| `§ 3.3 Identity Verification` | Reserves KYC rights and threshold gating | Real-money brief § 5 | Aligns the ToS with staged financial onboarding |
-| `§ 4.5 Settlement` | Defines success, failure, and dispute outcomes | Aegis § 4.2-4.3 | Makes the money path deterministic and reviewable |
-| `§ 4.6 Biological / Recovery protocols` | Encodes BMI, velocity, and no-contact safeguards | Aegis § 3.2-3.4; Recovery Protocol | Moves health and anti-isolation controls into contract language |
-| `§ 6.1 Escrow Structure` | States FBO segregation and non-commingling | Aegis § 4.1-4.3; Appendix A | Reinforces zero-custody and processor-facing consistency |
-| `§ 7 Prohibited Conduct` | Bars fraud, collusion, circumvention, and health-dangerous use | Aegis § 3, § 5 | Gives an enforcement hook for the operational guardrails |
-| `§ 10 Limitation of Liability` | Allocates residual health and platform risk | Aegis risk-register links | Does not replace safety controls, but narrows exposure |
+| ToS clause                              | Clause function                                                | Aegis / Recovery source                        | Why it matters                                                  |
+| --------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------- |
+| `§ 2.1 Styx Is Not Gambling`            | Declares deposit-contract framing and user-control theory      | Aegis § 2.1-2.2; skill-based whitepaper §§ 1-2 | Preserves the core skill-over-chance positioning                |
+| `§ 3.1 Age Requirement`                 | 18+ eligibility promise                                        | Aegis § 3.1                                    | Supports contract-capacity and youth-protection arguments       |
+| `§ 3.2 Geographic Restriction`          | US-only access + anti-circumvention rule                       | Aegis § 2.3, § 6; blocklist appendix           | Supports any-chance and jurisdiction-risk mitigation            |
+| `§ 3.3 Identity Verification`           | Reserves KYC rights and threshold gating                       | Real-money brief § 5                           | Aligns the ToS with staged financial onboarding                 |
+| `§ 4.5 Settlement`                      | Defines success, failure, and dispute outcomes                 | Aegis § 4.2-4.3                                | Makes the money path deterministic and reviewable               |
+| `§ 4.6 Biological / Recovery protocols` | Encodes BMI, velocity, and no-contact safeguards               | Aegis § 3.2-3.4; Recovery Protocol             | Moves health and anti-isolation controls into contract language |
+| `§ 6.1 Escrow Structure`                | States FBO segregation and non-commingling                     | Aegis § 4.1-4.3; Appendix A                    | Reinforces zero-custody and processor-facing consistency        |
+| `§ 7 Prohibited Conduct`                | Bars fraud, collusion, circumvention, and health-dangerous use | Aegis § 3, § 5                                 | Gives an enforcement hook for the operational guardrails        |
+| `§ 10 Limitation of Liability`          | Allocates residual health and platform risk                    | Aegis risk-register links                      | Does not replace safety controls, but narrows exposure          |
 
 ## Counsel Review Targets
 

@@ -1,5 +1,5 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, Inject } from "@nestjs/common";
+import { Pool } from "pg";
 
 export interface RiskFactor {
   type: string;
@@ -11,18 +11,22 @@ export interface RiskFactor {
 export interface ClientRiskProfile {
   userId: string;
   riskScore: number;
-  riskLevel: 'GREEN' | 'YELLOW' | 'RED';
+  riskLevel: "GREEN" | "YELLOW" | "RED";
   factors: RiskFactor[];
-  trend: 'IMPROVING' | 'STABLE' | 'DECLINING';
+  trend: "IMPROVING" | "STABLE" | "DECLINING";
   lastUpdated: Date;
 }
 
 export interface JournalAlert {
   id: string;
   userId: string;
-  alertType: 'RATIONALIZATION' | 'DISTRESS_ESCALATION' | 'TRIGGER_MENTION' | 'CRISIS_LANGUAGE';
+  alertType:
+    | "RATIONALIZATION"
+    | "DISTRESS_ESCALATION"
+    | "TRIGGER_MENTION"
+    | "CRISIS_LANGUAGE";
   excerpt: string;
-  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  severity: "LOW" | "MEDIUM" | "HIGH";
   createdAt: Date;
 }
 
@@ -37,97 +41,104 @@ export interface PractitionerDashboard {
 }
 
 const RATIONALIZATION_MARKERS = [
-  'just one more time',
-  'i can handle it',
-  'only a little',
-  'deserve a break',
-  'everyone does it',
-  'not that bad',
-  'starting tomorrow',
-  'one last time',
-  'just this once',
+  "just one more time",
+  "i can handle it",
+  "only a little",
+  "deserve a break",
+  "everyone does it",
+  "not that bad",
+  "starting tomorrow",
+  "one last time",
+  "just this once",
 ];
 
 const DISTRESS_MARKERS = [
-  'cant take it',
-  'breaking point',
-  'give up',
-  'no point',
-  'cant do this',
-  'falling apart',
-  'hopeless',
-  'overwhelmed',
+  "cant take it",
+  "breaking point",
+  "give up",
+  "no point",
+  "cant do this",
+  "falling apart",
+  "hopeless",
+  "overwhelmed",
 ];
 
 const CRISIS_MARKERS = [
-  'want to die',
-  'kill myself',
-  'end it all',
-  'no reason to live',
-  'self harm',
-  'hurting myself',
-  'suicide',
-  'overdose',
+  "want to die",
+  "kill myself",
+  "end it all",
+  "no reason to live",
+  "self harm",
+  "hurting myself",
+  "suicide",
+  "overdose",
 ];
 
 const RISK_WEIGHTS = {
   ATTESTATION_CONSISTENCY: 0.25,
   TIME_OF_DAY: 0.15,
-  GRACE_DAY_BURN: 0.20,
+  GRACE_DAY_BURN: 0.2,
   ENGAGEMENT_TRAJECTORY: 0.15,
-  WEEKEND_COMPLIANCE: 0.10,
+  WEEKEND_COMPLIANCE: 0.1,
   PREVIOUS_VIOLATIONS: 0.15,
 };
 
 @Injectable()
 export class PractitionerIntelligenceService {
-  constructor(@Inject('DATABASE_POOL') private pool: Pool) {}
+  constructor(@Inject("DATABASE_POOL") private pool: Pool) {}
 
   async getClientRiskProfile(userId: string): Promise<ClientRiskProfile> {
-    const [missedCheckIns, lateNightActivity, graceBurnRate, engagementDecline, weekendDelta, violations, trendData] =
-      await Promise.all([
-        this.getMissedCheckIns(userId),
-        this.getLateNightActivityRatio(userId),
-        this.getGraceDayBurnRate(userId),
-        this.getEngagementDecline(userId),
-        this.getWeekendComplianceDelta(userId),
-        this.getPreviousViolations(userId),
-        this.getRiskTrend(userId, 14),
-      ]);
+    const [
+      missedCheckIns,
+      lateNightActivity,
+      graceBurnRate,
+      engagementDecline,
+      weekendDelta,
+      violations,
+      trendData,
+    ] = await Promise.all([
+      this.getMissedCheckIns(userId),
+      this.getLateNightActivityRatio(userId),
+      this.getGraceDayBurnRate(userId),
+      this.getEngagementDecline(userId),
+      this.getWeekendComplianceDelta(userId),
+      this.getPreviousViolations(userId),
+      this.getRiskTrend(userId, 14),
+    ]);
 
     const factors: RiskFactor[] = [
       {
-        type: 'ATTESTATION_CONSISTENCY',
+        type: "ATTESTATION_CONSISTENCY",
         weight: RISK_WEIGHTS.ATTESTATION_CONSISTENCY,
         value: missedCheckIns,
         description: `${missedCheckIns} missed check-ins in the last 14 days`,
       },
       {
-        type: 'TIME_OF_DAY',
+        type: "TIME_OF_DAY",
         weight: RISK_WEIGHTS.TIME_OF_DAY,
         value: lateNightActivity,
         description: `${Math.round(lateNightActivity * 100)}% of activity between midnight and 4am`,
       },
       {
-        type: 'GRACE_DAY_BURN',
+        type: "GRACE_DAY_BURN",
         weight: RISK_WEIGHTS.GRACE_DAY_BURN,
         value: graceBurnRate,
         description: `${Math.round(graceBurnRate * 100)}% of grace days consumed`,
       },
       {
-        type: 'ENGAGEMENT_TRAJECTORY',
+        type: "ENGAGEMENT_TRAJECTORY",
         weight: RISK_WEIGHTS.ENGAGEMENT_TRAJECTORY,
         value: engagementDecline,
         description: `${Math.round(engagementDecline * 100)}% decline in app opens`,
       },
       {
-        type: 'WEEKEND_COMPLIANCE',
+        type: "WEEKEND_COMPLIANCE",
         weight: RISK_WEIGHTS.WEEKEND_COMPLIANCE,
         value: weekendDelta,
         description: `${Math.round(weekendDelta * 100)}% lower compliance on weekends`,
       },
       {
-        type: 'PREVIOUS_VIOLATIONS',
+        type: "PREVIOUS_VIOLATIONS",
         weight: RISK_WEIGHTS.PREVIOUS_VIOLATIONS,
         value: violations,
         description: `${violations} previous contract violations`,
@@ -144,9 +155,9 @@ export class PractitionerIntelligenceService {
       ),
     );
 
-    let riskLevel: 'GREEN' | 'YELLOW' | 'RED' = 'GREEN';
-    if (riskScore >= 61) riskLevel = 'RED';
-    else if (riskScore >= 31) riskLevel = 'YELLOW';
+    let riskLevel: "GREEN" | "YELLOW" | "RED" = "GREEN";
+    if (riskScore >= 61) riskLevel = "RED";
+    else if (riskScore >= 31) riskLevel = "YELLOW";
 
     const trend = this.deriveTrend(trendData);
 
@@ -160,7 +171,10 @@ export class PractitionerIntelligenceService {
     };
   }
 
-  async analyzeJournalEntry(userId: string, entryText: string): Promise<JournalAlert[]> {
+  async analyzeJournalEntry(
+    userId: string,
+    entryText: string,
+  ): Promise<JournalAlert[]> {
     const lower = entryText.toLowerCase();
     const alerts: JournalAlert[] = [];
     const now = new Date();
@@ -170,9 +184,9 @@ export class PractitionerIntelligenceService {
         alerts.push({
           id: `ral-${userId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           userId,
-          alertType: 'RATIONALIZATION',
+          alertType: "RATIONALIZATION",
           excerpt: marker,
-          severity: 'MEDIUM',
+          severity: "MEDIUM",
           createdAt: now,
         });
         break;
@@ -184,9 +198,9 @@ export class PractitionerIntelligenceService {
         alerts.push({
           id: `dis-${userId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           userId,
-          alertType: 'DISTRESS_ESCALATION',
+          alertType: "DISTRESS_ESCALATION",
           excerpt: marker,
-          severity: 'HIGH',
+          severity: "HIGH",
           createdAt: now,
         });
         break;
@@ -198,9 +212,9 @@ export class PractitionerIntelligenceService {
         alerts.push({
           id: `crs-${userId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           userId,
-          alertType: 'CRISIS_LANGUAGE',
+          alertType: "CRISIS_LANGUAGE",
           excerpt: marker,
-          severity: 'HIGH',
+          severity: "HIGH",
           createdAt: now,
         });
         break;
@@ -210,7 +224,9 @@ export class PractitionerIntelligenceService {
     return alerts;
   }
 
-  async getPractitionerDashboard(practitionerId: string): Promise<PractitionerDashboard[]> {
+  async getPractitionerDashboard(
+    practitionerId: string,
+  ): Promise<PractitionerDashboard[]> {
     const assignments = await this.pool.query(
       `SELECT pca.client_id, u.alias
        FROM practitioner_client_assignments pca
@@ -223,12 +239,16 @@ export class PractitionerIntelligenceService {
 
     for (const row of assignments.rows) {
       const clientId = row.client_id;
-      const [riskProfile, alerts, adherenceRate, streakDays] = await Promise.all([
-        this.getClientRiskProfile(clientId),
-        this.getClientRecentAlerts(clientId),
-        this.calculateAdherenceRate(clientId, await this.getActiveContractId(clientId)),
-        this.getStreakDays(clientId),
-      ]);
+      const [riskProfile, alerts, adherenceRate, streakDays] =
+        await Promise.all([
+          this.getClientRiskProfile(clientId),
+          this.getClientRecentAlerts(clientId),
+          this.calculateAdherenceRate(
+            clientId,
+            await this.getActiveContractId(clientId),
+          ),
+          this.getStreakDays(clientId),
+        ]);
 
       const nextCheckIn = await this.getNextCheckIn(clientId);
 
@@ -246,7 +266,10 @@ export class PractitionerIntelligenceService {
     return dashboards;
   }
 
-  async getRiskTrend(userId: string, days: number = 30): Promise<{ date: string; score: number }[]> {
+  async getRiskTrend(
+    userId: string,
+    days: number = 30,
+  ): Promise<{ date: string; score: number }[]> {
     const result = await this.pool.query(
       `SELECT
          DATE(a.attestation_date) AS day,
@@ -262,20 +285,37 @@ export class PractitionerIntelligenceService {
     );
 
     return result.rows.map((row) => ({
-      date: typeof row.day === 'string' ? row.day : new Date(row.day).toISOString().split('T')[0],
-      score: Math.round((1 - parseFloat(row.compliance_rate ?? '1')) * 100),
+      date:
+        typeof row.day === "string"
+          ? row.day
+          : new Date(row.day).toISOString().split("T")[0],
+      score: Math.round((1 - parseFloat(row.compliance_rate ?? "1")) * 100),
     }));
   }
 
-  async sendPractitionerAlert(practitionerId: string, clientId: string, alert: JournalAlert): Promise<void> {
+  async sendPractitionerAlert(
+    practitionerId: string,
+    clientId: string,
+    alert: JournalAlert,
+  ): Promise<void> {
     await this.pool.query(
       `INSERT INTO practitioner_alerts (practitioner_id, client_id, alert_type, excerpt, severity, created_at)
        VALUES ($1, $2, $3, $4, $5, $6)`,
-      [practitionerId, clientId, alert.alertType, alert.excerpt, alert.severity, alert.createdAt],
+      [
+        practitionerId,
+        clientId,
+        alert.alertType,
+        alert.excerpt,
+        alert.severity,
+        alert.createdAt,
+      ],
     );
   }
 
-  async calculateAdherenceRate(userId: string, contractId: string): Promise<number> {
+  async calculateAdherenceRate(
+    userId: string,
+    contractId: string,
+  ): Promise<number> {
     if (!contractId) return 0;
 
     const result = await this.pool.query(
@@ -316,7 +356,7 @@ export class PractitionerIntelligenceService {
          AND created_at >= NOW() - INTERVAL '14 days'`,
       [userId],
     );
-    return parseFloat(result.rows[0]?.ratio ?? '0');
+    return parseFloat(result.rows[0]?.ratio ?? "0");
   }
 
   private async getGraceDayBurnRate(userId: string): Promise<number> {
@@ -373,7 +413,7 @@ export class PractitionerIntelligenceService {
          AND a.status IN ('ATTESTED', 'COSIGNED')`,
       [userId],
     );
-    const ratio = parseFloat(result.rows[0]?.ratio ?? '1');
+    const ratio = parseFloat(result.rows[0]?.ratio ?? "1");
     return Math.max(0, 1 - ratio);
   }
 
@@ -387,15 +427,17 @@ export class PractitionerIntelligenceService {
     return result.rows[0]?.violations ?? 0;
   }
 
-  private deriveTrend(data: { date: string; score: number }[]): 'IMPROVING' | 'STABLE' | 'DECLINING' {
-    if (data.length < 2) return 'STABLE';
+  private deriveTrend(
+    data: { date: string; score: number }[],
+  ): "IMPROVING" | "STABLE" | "DECLINING" {
+    if (data.length < 2) return "STABLE";
     const recent = data.slice(-7);
     const older = data.slice(0, Math.min(7, data.length));
     const recentAvg = recent.reduce((s, d) => s + d.score, 0) / recent.length;
     const olderAvg = older.reduce((s, d) => s + d.score, 0) / older.length;
-    if (recentAvg < olderAvg - 3) return 'IMPROVING';
-    if (recentAvg > olderAvg + 3) return 'DECLINING';
-    return 'STABLE';
+    if (recentAvg < olderAvg - 3) return "IMPROVING";
+    if (recentAvg > olderAvg + 3) return "DECLINING";
+    return "STABLE";
   }
 
   private async getClientRecentAlerts(userId: string): Promise<JournalAlert[]> {
@@ -422,7 +464,7 @@ export class PractitionerIntelligenceService {
       `SELECT id FROM contracts WHERE user_id = $1 AND status = 'ACTIVE' LIMIT 1`,
       [userId],
     );
-    return result.rows[0]?.id ?? '';
+    return result.rows[0]?.id ?? "";
   }
 
   private async getStreakDays(userId: string): Promise<number> {
@@ -450,6 +492,8 @@ export class PractitionerIntelligenceService {
        LIMIT 1`,
       [userId],
     );
-    return result.rows[0]?.next_check ? new Date(result.rows[0].next_check) : null;
+    return result.rows[0]?.next_check
+      ? new Date(result.rows[0].next_check)
+      : null;
   }
 }

@@ -10,28 +10,28 @@ Rationale: captures onboarding success, sustained engagement, and successful com
 
 ## Primary Metrics (Beta Exit Criteria)
 
-| Metric | Target | Measurement | Data Source |
-|--------|--------|-------------|-------------|
-| 7-day contract completion rate | ≥ 50% | % of contracts reaching term within 7 days | `contracts` table, `status = completed`, `duration <= 7d` |
-| 7-day retention (D7) | ≥ 40% | % of new users who still have ≥1 active contract 7 days after registration | Event log: first registration → active contract at D7 |
-| 28-day retention (D28) | ≥ 20% | % of new users who still have ≥1 active contract 28 days after registration | Event log |
-| NPS (Day 14 survey) | ≥ 30 | "How likely are you to recommend Styx to a friend?" (0-10), sent 14 days after first contract | Survey system (migration 034) |
-| Onboarding completion rate | ≥ 70% | % of registered users who create their first contract within 24h | Event log: registration → first contract creation |
-| Proof submission rate | ≥ 80% | % of required daily proofs that are submitted on time | `attestations` table |
-| Stake recovery rate | ≥ 60% | % of forfeited stakes that are re-staked within 7 days | Ledger events |
-| Support ticket rate | < 5% | % of active users submitting ≥1 support ticket per week | Support system |
+| Metric                         | Target | Measurement                                                                                   | Data Source                                               |
+| ------------------------------ | ------ | --------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 7-day contract completion rate | ≥ 50%  | % of contracts reaching term within 7 days                                                    | `contracts` table, `status = completed`, `duration <= 7d` |
+| 7-day retention (D7)           | ≥ 40%  | % of new users who still have ≥1 active contract 7 days after registration                    | Event log: first registration → active contract at D7     |
+| 28-day retention (D28)         | ≥ 20%  | % of new users who still have ≥1 active contract 28 days after registration                   | Event log                                                 |
+| NPS (Day 14 survey)            | ≥ 30   | "How likely are you to recommend Styx to a friend?" (0-10), sent 14 days after first contract | Survey system (migration 034)                             |
+| Onboarding completion rate     | ≥ 70%  | % of registered users who create their first contract within 24h                              | Event log: registration → first contract creation         |
+| Proof submission rate          | ≥ 80%  | % of required daily proofs that are submitted on time                                         | `attestations` table                                      |
+| Stake recovery rate            | ≥ 60%  | % of forfeited stakes that are re-staked within 7 days                                        | Ledger events                                             |
+| Support ticket rate            | < 5%   | % of active users submitting ≥1 support ticket per week                                       | Support system                                            |
 
 ---
 
 ## Guardrail Metrics (Floor, Not Target)
 
-| Metric | Floor | Action if Breached |
-|--------|-------|-------------------|
-| Daily active users (DAU) | > 50% of cohort | Investigate engagement drop within 24h |
-| Error rate (p95 API latency) | < 2s | Escalate to engineering immediately |
-| Refund / dispute rate | < 2% of stakes | Pause real-money flow if exceeded |
-| Account deletion rate | < 5% per month | Review churn triggers |
-| Negative NPS comments | < 20% of all comments | Flag for product review |
+| Metric                       | Floor                 | Action if Breached                     |
+| ---------------------------- | --------------------- | -------------------------------------- |
+| Daily active users (DAU)     | > 50% of cohort       | Investigate engagement drop within 24h |
+| Error rate (p95 API latency) | < 2s                  | Escalate to engineering immediately    |
+| Refund / dispute rate        | < 2% of stakes        | Pause real-money flow if exceeded      |
+| Account deletion rate        | < 5% per month        | Review churn triggers                  |
+| Negative NPS comments        | < 20% of all comments | Flag for product review                |
 
 ---
 

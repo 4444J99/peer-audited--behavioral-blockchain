@@ -2,7 +2,7 @@
 
 - **Date:** 2026-05-26
 - **Branch reviewed:** `claude/issue-discovery-reporting-PWWb9` (1 commit ahead of `main`)
-- **Commit under review:** `95bc00f` — *fix: security & correctness hardening across Styx backend (#605)* (108 files, +3917/−1244)
+- **Commit under review:** `95bc00f` — _fix: security & correctness hardening across Styx backend (#605)_ (108 files, +3917/−1244)
 - **Scope:** the changed files in the hardening commit, plus pre-existing issues in those files.
 
 ## Remediation status (2026-05-26)
@@ -13,6 +13,7 @@ this report). Verification: `tsc --noEmit` clean across `src/api` and the change
 with co-located specs updated for every behavior change.
 
 Highlights of the fixes:
+
 - **Money idempotency:** Stripe idempotency keys added to `transferFunds`,
   `processIAP`, `recordUsage`, capture/lock; ledger gains a DB-enforced
   `idempotency_key` (migration `030`) with `ON CONFLICT DO NOTHING`; settlement
@@ -33,6 +34,7 @@ Highlights of the fixes:
   strands terminally-resolved contracts.
 
 **Policy decisions (confirmed by product/compliance, now implemented):**
+
 - **PRV16** — KYC enforcement **fails closed in production**: ON by default,
   disabled only by an explicit `KYC_ENFORCEMENT_ENABLED=false` (which logs an
   error at startup). Opt-in (default off) outside production so local/dev/test
@@ -68,7 +70,7 @@ signature verification now present (`rawBody: true` confirmed in `main.ts`), moc
 identity-provider production bypass closed, B2B SOQL injection fixed, geofence
 fail-open → fail-closed, anomaly timeout fail-open → fail-closed, removal of
 hardcoded dev secret fallbacks (now throw if unset), `toCents` finite-input check,
-duplicate CodeQL config removed from `ci.yml`. The most dangerous *remaining* issues
+duplicate CodeQL config removed from `ci.yml`. The most dangerous _remaining_ issues
 are in money-movement idempotency, the proof/honeypot anti-fraud pipeline, GDPR
 erasure completeness, and a few access-control gaps — detailed below.
 
@@ -76,26 +78,26 @@ erasure completeness, and a few access-control gaps — detailed below.
 
 ## Severity index (Critical/High first)
 
-| ID | Sev | Conf | File | Title |
-|----|-----|------|------|-------|
-| PM7 | High | High | escrow/stripe.service.ts:137 | `transferFunds` has no idempotency key → double-payout |
-| PM19 | High | High | services/billing.ts:47 | `processIAP` no idempotency → double-charge on retry |
-| PM10 | High | Med | payments.controller.ts:199 | `payment_intent.succeeded` funds contract without verifying paid amount/currency |
-| PM1 | High | High | stripe-fbo.service.ts:69 | `resolveEscrow` FAIL path never captures platform fee |
-| PM4 | High | Med | settlement.worker.ts:175 | finalize ledger idempotency is TOCTOU, no DB unique constraint → double-post |
-| PM6 | High | Med | settlement.worker.ts:126 | stale-PROCESSING reclaim can run concurrent Stripe settlement |
-| AU1 | High | High | wallet.controller.ts:12 / oracles.controller.ts:67 | Banned users with live JWT can read wallet & feed contract-advancing health samples |
-| AU3 | High | High | auth.service.ts:216 | Enterprise-SSO fallback verifies assertions with shared `JWT_SECRET` |
-| AU4 | High | Med | .env.example:7 | Weak example `JWT_SECRET=supersecret` → token forgery if copied |
-| PRV1 | High | High | zk-exhaust.verifier.ts:81 | ZK proof unbound to claim, no nonce/expiry → replayable, proves nothing |
-| PRV3 | High | High | gdpr.service.ts:129 | GDPR erasure leaves DOB/Stripe ID/compliance_metadata/partner_email un-scrubbed |
-| PRV6 | High | High | b2b.controller.ts:103 | `webhook/test` lacks tenant check → SSRF probing surface |
-| PRV7 | High | Med | b2b/webhook.service.ts:63 | SSRF guard bypassable via DNS rebinding / redirects / non-dotted IPs |
-| PRV8 | High | High | security/anonymization.service.ts:34 | Unsalted SHA-256 email "anonymization" is reversible/correlatable |
-| SH1 | High | High | proofs.controller.ts:99 | pHash dedup scoped to same contract → cross-contract media reuse |
-| SH2 | High | High | proofs.service.ts:208 | `isHoneypot` exposed to assigned Fury auditors defeats cheat detection |
-| LC1 | Med | High | contracts.service.ts:2251 | `getAttestationStatus` reports stale grace days, ignores month rollover |
-| LC2 | Med | High | contracts.service.ts:1947 | Grace-day cap weakened from per-user to per-contract (2×N abuse) |
+| ID   | Sev  | Conf | File                                               | Title                                                                               |
+| ---- | ---- | ---- | -------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| PM7  | High | High | escrow/stripe.service.ts:137                       | `transferFunds` has no idempotency key → double-payout                              |
+| PM19 | High | High | services/billing.ts:47                             | `processIAP` no idempotency → double-charge on retry                                |
+| PM10 | High | Med  | payments.controller.ts:199                         | `payment_intent.succeeded` funds contract without verifying paid amount/currency    |
+| PM1  | High | High | stripe-fbo.service.ts:69                           | `resolveEscrow` FAIL path never captures platform fee                               |
+| PM4  | High | Med  | settlement.worker.ts:175                           | finalize ledger idempotency is TOCTOU, no DB unique constraint → double-post        |
+| PM6  | High | Med  | settlement.worker.ts:126                           | stale-PROCESSING reclaim can run concurrent Stripe settlement                       |
+| AU1  | High | High | wallet.controller.ts:12 / oracles.controller.ts:67 | Banned users with live JWT can read wallet & feed contract-advancing health samples |
+| AU3  | High | High | auth.service.ts:216                                | Enterprise-SSO fallback verifies assertions with shared `JWT_SECRET`                |
+| AU4  | High | Med  | .env.example:7                                     | Weak example `JWT_SECRET=supersecret` → token forgery if copied                     |
+| PRV1 | High | High | zk-exhaust.verifier.ts:81                          | ZK proof unbound to claim, no nonce/expiry → replayable, proves nothing             |
+| PRV3 | High | High | gdpr.service.ts:129                                | GDPR erasure leaves DOB/Stripe ID/compliance_metadata/partner_email un-scrubbed     |
+| PRV6 | High | High | b2b.controller.ts:103                              | `webhook/test` lacks tenant check → SSRF probing surface                            |
+| PRV7 | High | Med  | b2b/webhook.service.ts:63                          | SSRF guard bypassable via DNS rebinding / redirects / non-dotted IPs                |
+| PRV8 | High | High | security/anonymization.service.ts:34               | Unsalted SHA-256 email "anonymization" is reversible/correlatable                   |
+| SH1  | High | High | proofs.controller.ts:99                            | pHash dedup scoped to same contract → cross-contract media reuse                    |
+| SH2  | High | High | proofs.service.ts:208                              | `isHoneypot` exposed to assigned Fury auditors defeats cheat detection              |
+| LC1  | Med  | High | contracts.service.ts:2251                          | `getAttestationStatus` reports stale grace days, ignores month rollover             |
+| LC2  | Med  | High | contracts.service.ts:1947                          | Grace-day cap weakened from per-user to per-contract (2×N abuse)                    |
 
 Medium/Low findings follow per-domain. (89 findings total.)
 

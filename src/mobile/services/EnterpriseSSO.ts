@@ -1,8 +1,12 @@
-import { Linking } from 'react-native';
-import { ApiClient, setAuthToken } from './ApiClient';
-import { isEnterpriseSSOLink } from '../config/linking';
+import { Linking } from "react-native";
+import { ApiClient, setAuthToken } from "./ApiClient";
+import { isEnterpriseSSOLink } from "../config/linking";
 
-type SSOCallback = (result: { success: boolean; userId?: string; error?: string }) => void;
+type SSOCallback = (result: {
+  success: boolean;
+  userId?: string;
+  error?: string;
+}) => void;
 
 let onAuthComplete: SSOCallback | null = null;
 
@@ -11,12 +15,14 @@ export class EnterpriseSSO {
    * Intercepts "styx://enterprise/" deep links to fluidly route corporate employees
    * from internal portals directly into a pre-funded Styx vault.
    */
-  static async initializeDeepLinkListener(callback?: SSOCallback): Promise<void> {
+  static async initializeDeepLinkListener(
+    callback?: SSOCallback,
+  ): Promise<void> {
     if (callback) {
       onAuthComplete = callback;
     }
 
-    Linking.addEventListener('url', this.handleDeepLink);
+    Linking.addEventListener("url", this.handleDeepLink);
 
     // Check if the app was opened from a cold start via a link
     const initialUrl = await Linking.getInitialURL();
@@ -33,10 +39,10 @@ export class EnterpriseSSO {
       return;
     }
 
-    const token = url.split('token=')[1]; // allow-secret
+    const token = url.split("token=")[1]; // allow-secret
     if (!token) {
-      console.warn('EnterpriseSSO: Deep link missing token parameter');
-      onAuthComplete?.({ success: false, error: 'Missing enterprise token' });
+      console.warn("EnterpriseSSO: Deep link missing token parameter");
+      onAuthComplete?.({ success: false, error: "Missing enterprise token" });
       return;
     }
 

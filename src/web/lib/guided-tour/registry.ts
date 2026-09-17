@@ -96,7 +96,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Start here",
     persona: "none",
     label: "working",
-    summary: "The public landing page — how Styx explains itself to someone arriving cold.",
+    summary:
+      "The public landing page — how Styx explains itself to someone arriving cold.",
     detail:
       "This is the marketing surface, not the product. It is included in the tour so you can see the promise a visitor is given before comparing it against what the signed-in routes actually do.",
   },
@@ -106,7 +107,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Start here",
     persona: "none",
     label: "working",
-    summary: "The pitch narrative in slide form: the problem, the wedge, and the business model.",
+    summary:
+      "The pitch narrative in slide form: the problem, the wedge, and the business model.",
     detail:
       "Historical figures and market claims on this surface are projections unless separately sourced. Treat it as the story, and the signed-in routes as the evidence.",
   },
@@ -116,7 +118,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Start here",
     persona: "none",
     label: "beta",
-    summary: "A map of the synthetic demo data — every seeded scenario, and a link to the surface that shows it.",
+    summary:
+      "A map of the synthetic demo data — every seeded scenario, and a link to the surface that shows it.",
     detail:
       "The seed builds five concentric circles: waitlist prospects, active contracts with day-accurate streaks, three auditors mid-review, a five-member accountability pod, and one enterprise. This page is the shortest route to any of them.",
   },
@@ -126,7 +129,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Start here",
     persona: "none",
     label: "future",
-    summary: "A question box for stakeholders — ask how Styx works and get a plain answer.",
+    summary:
+      "A question box for stakeholders — ask how Styx works and get a plain answer.",
     detail:
       "Backed by a separate Cloudflare Worker. In this local demo the worker URL is not configured, so treat this route as a direction rather than a working feature.",
   },
@@ -136,8 +140,10 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Start here",
     persona: "none",
     label: "working",
-    summary: "Plain-language answers to the questions people actually ask before committing money.",
-    detail: "Useful as a proxy for support load: everything here is a question the product has not yet made obvious.",
+    summary:
+      "Plain-language answers to the questions people actually ask before committing money.",
+    detail:
+      "Useful as a proxy for support load: everything here is a question the product has not yet made obvious.",
   },
   {
     path: "/login",
@@ -155,7 +161,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Start here",
     persona: "none",
     label: "working",
-    summary: "Sign-up, including the age confirmation and terms acceptance a money product needs.",
+    summary:
+      "Sign-up, including the age confirmation and terms acceptance a money product needs.",
     detail:
       "Registration captures age confirmation, terms acceptance and an optional referral code. These are consent artifacts, not form fields — they are what makes a later stake defensible.",
   },
@@ -176,7 +183,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "none",
     label: "beta",
     summary: "The confirmation step after joining the waitlist.",
-    detail: "Confirms intent and assigns a cohort. The seeded cohort in this demo is cohort-2026-08.",
+    detail:
+      "Confirms intent and assigns a cohort. The seeded cohort in this demo is cohort-2026-08.",
   },
 
   // ── Make a promise ────────────────────────────────────────────────────────
@@ -214,7 +222,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Make a promise",
     persona: "river",
     label: "working",
-    summary: "Where someone defines what they are promising, how much they are staking, and how it will be checked.",
+    summary:
+      "Where someone defines what they are promising, how much they are staking, and how it will be checked.",
     detail:
       "The three decisions that make a commitment enforceable: the behaviour, the amount at risk, and what counts as evidence. Get the evidence rule wrong and the whole record is worthless.",
   },
@@ -224,7 +233,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Make a promise",
     persona: "river",
     label: "working",
-    summary: "The full history of a single promise — every check-in, every stake movement.",
+    summary:
+      "The full history of a single promise — every check-in, every stake movement.",
     detail:
       "Shows the double-entry ledger behind the contract: the hold when it opened, returns on kept days, forfeits on missed ones.",
   },
@@ -255,7 +265,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "river",
     label: "working",
     summary: "The different life areas someone can commit in.",
-    detail: "Realms carry their own evidence rules and their own auditor expertise, which is what makes review credible.",
+    detail:
+      "Realms carry their own evidence rules and their own auditor expertise, which is what makes review credible.",
   },
   {
     path: "/realms/[slug]",
@@ -264,7 +275,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "river",
     label: "working",
     summary: "One category in depth, with the commitments people make in it.",
-    detail: "Auditors are matched to realms by recorded expertise rather than at random.",
+    detail:
+      "Auditors are matched to realms by recorded expertise rather than at random.",
   },
   {
     path: "/realms/[slug]/contracts/new",
@@ -273,7 +285,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "river",
     label: "working",
     summary: "Starting a promise pre-shaped by its category.",
-    detail: "Pre-fills the evidence rule appropriate to the realm, which is the main defence against unverifiable promises.",
+    detail:
+      "Pre-fills the evidence rule appropriate to the realm, which is the main defence against unverifiable promises.",
   },
   {
     path: "/tavern",
@@ -281,8 +294,10 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Make a promise",
     persona: "river",
     label: "working",
-    summary: "Where people going through the same thing can see they are not alone.",
-    detail: "Retention in this category comes from company, not features. This is the surface that tests that claim.",
+    summary:
+      "Where people going through the same thing can see they are not alone.",
+    detail:
+      "Retention in this category comes from company, not features. This is the surface that tests that claim.",
   },
   {
     path: "/referrals",
@@ -291,7 +306,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "river",
     label: "working",
     summary: "How an existing user invites the next one.",
-    detail: "Referral is the cheapest of the four seeded acquisition channels and the one with the best retention.",
+    detail:
+      "Referral is the cheapest of the four seeded acquisition channels and the one with the best retention.",
   },
   {
     path: "/profile",
@@ -300,7 +316,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "river",
     label: "working",
     summary: "Who the account belongs to, and what the record says about them.",
-    detail: "The public-facing half of a person's record, distinct from the private truth log.",
+    detail:
+      "The public-facing half of a person's record, distinct from the private truth log.",
   },
   {
     path: "/settings",
@@ -309,7 +326,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "river",
     label: "working",
     summary: "Notification, privacy and account controls.",
-    detail: "Includes the controls that matter most in a behaviour product: what gets sent, when, and to whom.",
+    detail:
+      "Includes the controls that matter most in a behaviour product: what gets sent, when, and to whom.",
   },
   {
     path: "/kyc",
@@ -317,7 +335,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Make a promise",
     persona: "sage",
     label: "beta",
-    summary: "Confirming a real person is behind an account before money moves.",
+    summary:
+      "Confirming a real person is behind an account before money moves.",
     detail:
       "The seed deliberately spreads accounts across VERIFIED, PENDING and NOT_STARTED so you can see all three states. Sage is mid-verification.",
   },
@@ -337,8 +356,10 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Make a promise",
     persona: "none",
     label: "working",
-    summary: "The mechanism explained for someone who has never heard of a commitment contract.",
-    detail: "Loss aversion is the engine: people work substantially harder to avoid losing money than to gain it.",
+    summary:
+      "The mechanism explained for someone who has never heard of a commitment contract.",
+    detail:
+      "Loss aversion is the engine: people work substantially harder to avoid losing money than to gain it.",
   },
   {
     path: "/recovery/breakup-no-contact-guide",
@@ -346,7 +367,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Make a promise",
     persona: "none",
     label: "working",
-    summary: "Practical help for the specific promise most people arrive wanting to make.",
+    summary:
+      "Practical help for the specific promise most people arrive wanting to make.",
     detail: "Doubles as the organic acquisition surface for the wedge.",
   },
   {
@@ -356,7 +378,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "none",
     label: "working",
     summary: "The relationship-focused entry point.",
-    detail: "One of four seeded acquisition channels; organic search is the cheapest.",
+    detail:
+      "One of four seeded acquisition channels; organic search is the cheapest.",
   },
   {
     path: "/recovery/couples-recovery-tools",
@@ -365,7 +388,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "none",
     label: "working",
     summary: "Commitments made by two people rather than one.",
-    detail: "Extends the single-person contract to a mutual one, which changes who can attest.",
+    detail:
+      "Extends the single-person contract to a mutual one, which changes who can attest.",
   },
 
   // ── Prove it ──────────────────────────────────────────────────────────────
@@ -393,7 +417,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Prove it",
     persona: "none",
     label: "working",
-    summary: "A private link that lets a third party report that a promise was broken.",
+    summary:
+      "A private link that lets a third party report that a promise was broken.",
     detail:
       "The uncomfortable but necessary case: self-report is not the only evidence path. The link is scoped and does not expose the reporter.",
   },
@@ -403,7 +428,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Prove it",
     persona: "river",
     label: "working",
-    summary: "The set of tools that measure whether someone is actually changing, rather than just paying.",
+    summary:
+      "The set of tools that measure whether someone is actually changing, rather than just paying.",
     detail:
       "Staking money is the mechanism; these are the measurements. Without them the product is a wager, and the difference matters to every audience in the room.",
   },
@@ -414,7 +440,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "river",
     label: "working",
     summary: "A baseline read on habits before any promise is made.",
-    detail: "Without a baseline there is no way to claim improvement later. This is the measurement the outcome claims rest on.",
+    detail:
+      "Without a baseline there is no way to claim improvement later. This is the measurement the outcome claims rest on.",
   },
   {
     path: "/behavioral/habit-strength",
@@ -423,7 +450,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "river",
     label: "working",
     summary: "How established a behaviour has actually become.",
-    detail: "Streak length alone is a weak signal; this weights consistency and recovery after a miss.",
+    detail:
+      "Streak length alone is a weak signal; this weights consistency and recovery after a miss.",
   },
   {
     path: "/behavioral/friction-audit",
@@ -432,7 +460,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "river",
     label: "working",
     summary: "Finding the moments where someone is most likely to break.",
-    detail: "Targets intervention at the point of failure rather than spreading it evenly.",
+    detail:
+      "Targets intervention at the point of failure rather than spreading it evenly.",
   },
   {
     path: "/behavioral/reentry",
@@ -451,7 +480,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "river",
     label: "working",
     summary: "Teaching the method rather than only enforcing it.",
-    detail: "Education lowers support load and raises the quality of the promises people make.",
+    detail:
+      "Education lowers support load and raises the quality of the promises people make.",
   },
   {
     path: "/behavioral/gateway-oath",
@@ -460,7 +490,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "river",
     label: "working",
     summary: "The explicit commitment someone makes on entry.",
-    detail: "A deliberate friction point: stating the promise plainly improves follow-through before any money is involved.",
+    detail:
+      "A deliberate friction point: stating the promise plainly improves follow-through before any money is involved.",
   },
   {
     path: "/behavioral/auditor-wellness",
@@ -480,7 +511,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Hold the line",
     persona: "none",
     label: "working",
-    summary: "The limits the product puts on itself — what it will refuse to let someone stake or promise.",
+    summary:
+      "The limits the product puts on itself — what it will refuse to let someone stake or promise.",
     detail:
       "The single most important page for a regulator or a cautious investor. A product that takes money against behaviour has to be able to say no.",
   },
@@ -541,7 +573,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "hr",
     label: "future",
     summary: "The internal view for whoever runs the platform.",
-    detail: "Not a customer-facing surface. Shown so the operational cost of running the product is visible rather than assumed.",
+    detail:
+      "Not a customer-facing surface. Shown so the operational cost of running the product is visible rather than assumed.",
   },
   {
     path: "/admin/collusion",
@@ -549,7 +582,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "The employer",
     persona: "hr",
     label: "future",
-    summary: "Where an operator reviews reviewers who appear to be voting together, and acts on it.",
+    summary:
+      "Where an operator reviews reviewers who appear to be voting together, and acts on it.",
     detail:
       "The ring-detection engine analysed nothing for months — it was written, tested, registered, and called by no scheduler. It now runs on a cadence and opens enforcement cases automatically; this screen is where a human confirms or overturns what it found.",
   },
@@ -569,7 +603,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "The employer",
     persona: "hr",
     label: "future",
-    summary: "Which places the product can legally operate in, and which are blocked.",
+    summary:
+      "Which places the product can legally operate in, and which are blocked.",
     detail:
       "Staking money on outcomes is regulated differently everywhere. Blocked jurisdictions fail closed. In the local demo the geofence runs in a permissive demo posture, so this shows the control, not a verified legal position.",
   },
@@ -582,7 +617,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "none",
     label: "working",
     summary: "The agreement someone accepts before staking anything.",
-    detail: "Acceptance is captured at registration and is part of what makes a forfeit defensible.",
+    detail:
+      "Acceptance is captured at registration and is part of what makes a forfeit defensible.",
   },
   {
     path: "/legal/privacy",
@@ -590,8 +626,10 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Trust and limits",
     persona: "none",
     label: "working",
-    summary: "What is collected, what is shared, and what never leaves the account.",
-    detail: "Read alongside the employer view: the privacy promise is what makes that view sellable.",
+    summary:
+      "What is collected, what is shared, and what never leaves the account.",
+    detail:
+      "Read alongside the employer view: the privacy promise is what makes that view sellable.",
   },
   {
     path: "/legal/responsible-use",
@@ -600,7 +638,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     persona: "none",
     label: "working",
     summary: "Who this product is not for, stated by the product itself.",
-    detail: "A behaviour-and-money product without this page is not credible. Pair it with /guardrails.",
+    detail:
+      "A behaviour-and-money product without this page is not credible. Pair it with /guardrails.",
   },
   {
     path: "/legal/rules",
@@ -617,7 +656,8 @@ export const TOUR_ROUTES: TourRoute[] = [
     chapter: "Trust and limits",
     persona: "none",
     label: "working",
-    summary: "The compliance documents this build ships, and the hash CI checks them against.",
+    summary:
+      "The compliance documents this build ships, and the hash CI checks them against.",
     detail:
       "The release gate hashes this artifact set on every run, so what is published here and what CI enforces cannot drift apart silently.",
   },
@@ -634,9 +674,12 @@ export const TOUR_ROUTES: TourRoute[] = [
   },
 ];
 
-export const TOUR_BY_PATH = new Map(TOUR_ROUTES.map((route) => [route.path, route]));
+export const TOUR_BY_PATH = new Map(
+  TOUR_ROUTES.map((route) => [route.path, route]),
+);
 
-const splitSegments = (value: string): string[] => value.split("/").filter(Boolean);
+const splitSegments = (value: string): string[] =>
+  value.split("/").filter(Boolean);
 
 /**
  * Matches a live pathname to a registry entry, including dynamic segments.
@@ -654,7 +697,9 @@ export function matchTourRoute(pathname: string): TourRoute | undefined {
   // does not appear on the hosted build -- silently, since a missing panel looks like
   // a route that was never added rather than a lookup miss.
   const normalised =
-    pathname.length > 1 && pathname.endsWith('/') ? pathname.replace(/\/+$/, '') : pathname;
+    pathname.length > 1 && pathname.endsWith("/")
+      ? pathname.replace(/\/+$/, "")
+      : pathname;
 
   const direct = TOUR_BY_PATH.get(normalised);
   if (direct) return direct;
@@ -666,7 +711,8 @@ export function matchTourRoute(pathname: string): TourRoute | undefined {
     if (expected.length !== actual.length) return false;
     return expected.every(
       (segment, index) =>
-        (segment.startsWith("[") && segment.endsWith("]")) || segment === actual[index],
+        (segment.startsWith("[") && segment.endsWith("]")) ||
+        segment === actual[index],
     );
   });
 }

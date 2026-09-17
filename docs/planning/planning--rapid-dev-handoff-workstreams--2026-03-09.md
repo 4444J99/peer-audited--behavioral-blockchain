@@ -14,13 +14,13 @@ If a task crosses multiple lanes, it needs to be split before handoff.
 
 ## Lane Summary
 
-| Lane | Purpose | Can start now? | Depends on Jessica? |
-|---|---|---|---|
-| `WS1 Mobile Core Path` | make the iOS beta journey actually work | yes | no |
-| `WS2 Beta Surface Cuts` | hide non-beta surfaces fast | yes | no |
-| `WS3 Proof Capture Boundary` | stop synthetic proof capture from shipping as truth | yes | no |
-| `WS4 Financial Truth` | normalize units and unify payout math | partial | **yes** for payout policy |
-| `WS5 Release Ops And Policy` | close Apple / moderation / beta-readiness evidence gaps | yes | **yes** |
+| Lane                         | Purpose                                                 | Can start now? | Depends on Jessica?       |
+| ---------------------------- | ------------------------------------------------------- | -------------- | ------------------------- |
+| `WS1 Mobile Core Path`       | make the iOS beta journey actually work                 | yes            | no                        |
+| `WS2 Beta Surface Cuts`      | hide non-beta surfaces fast                             | yes            | no                        |
+| `WS3 Proof Capture Boundary` | stop synthetic proof capture from shipping as truth     | yes            | no                        |
+| `WS4 Financial Truth`        | normalize units and unify payout math                   | partial        | **yes** for payout policy |
+| `WS5 Release Ops And Policy` | close Apple / moderation / beta-readiness evidence gaps | yes            | **yes**                   |
 
 ## WS1 Mobile Core Path
 

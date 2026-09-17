@@ -8,25 +8,31 @@
  */
 
 export const GEMINI_MODEL_VERSION = "gemini-2.5-flash-preview-09-2025";
-export const SYSTEM_INSTRUCTION = "You are an elite Y-Combinator level startup advisor.";
+export const SYSTEM_INSTRUCTION =
+  "You are an elite Y-Combinator level startup advisor.";
 
 /**
  * Call the Gemini generative AI API with an optional JSON response mode.
  * Requires GEMINI_API_KEY to be set in environment.
  */
-export async function callGemini(prompt: string, isJson: boolean = false): Promise<string> {
+export async function callGemini(
+  prompt: string,
+  isJson: boolean = false,
+): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
+  if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_VERSION}:generateContent`,
     {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
         system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: isJson ? { responseMimeType: 'application/json' } : {},
+        generationConfig: isJson
+          ? { responseMimeType: "application/json" }
+          : {},
       }),
     },
   );
@@ -43,7 +49,9 @@ export async function callGemini(prompt: string, isJson: boolean = false): Promi
  * Generate 3 tough VC "Grill Me" questions based on a pitch slide's content.
  * Returns a parsed array of question strings.
  */
-export async function generateVCQuestions(slideContent: string): Promise<string[]> {
+export async function generateVCQuestions(
+  slideContent: string,
+): Promise<string[]> {
   const raw = await callGemini(
     `Given this startup pitch slide content, generate 3 tough VC "Grill Me" questions. Return a JSON array of strings.\n\n${slideContent}`,
     true,
@@ -71,11 +79,11 @@ export async function screenGoalEthics(
   goalDescription: string,
   oathCategory?: string,
 ): Promise<{ ethical: boolean; reason?: string }> {
-  const isRecovery = oathCategory?.startsWith('RECOVERY_');
+  const isRecovery = oathCategory?.startsWith("RECOVERY_");
 
   const recoveryClause = isRecovery
-    ? ' Additionally, because this is a recovery/no-contact contract, also reject goals that involve: coercive control over another person, isolation from support networks (therapists, sponsors, family), stalking or surveillance behavior, preventing contact with emergency services, or any pattern that suggests the user is being coerced into this contract by a third party.'
-    : '';
+    ? " Additionally, because this is a recovery/no-contact contract, also reject goals that involve: coercive control over another person, isolation from support networks (therapists, sponsors, family), stalking or surveillance behavior, preventing contact with emergency services, or any pattern that suggests the user is being coerced into this contract by a third party."
+    : "";
 
   const raw = await callGemini(
     `You are a content safety reviewer for a behavioral accountability platform. Evaluate whether this user goal is ethical and safe. Reject goals that involve: self-harm, eating disorders, harming others, illegal activity, discrimination, or dangerous challenges.${recoveryClause} Return JSON: { "ethical": boolean, "reason": "brief explanation if rejected" }\n\nGoal: "${goalDescription}"`,

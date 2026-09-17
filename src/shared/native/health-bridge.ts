@@ -1,14 +1,14 @@
 /**
  * NativeHealthBridge
- * 
+ *
  * Formalizes the interface between the Styx platform and native mobile health oracles.
  * This bridge ensures that biometric data (HealthKit/Google Fit) is ingested
  * with rigorous metadata validation to prevent manual-entry fraud.
  */
 
 export enum HealthOracle {
-  APPLE_HEALTHKIT = 'HEALTHKIT',
-  GOOGLE_FIT = 'HEALTHCONNECT',
+  APPLE_HEALTHKIT = "HEALTHKIT",
+  GOOGLE_FIT = "HEALTHCONNECT",
 }
 
 export interface HealthSample {
@@ -38,8 +38,8 @@ export class NativeHealthBridge {
    * risk note in the controller. (residual)
    */
   private static readonly TRUSTED_SOURCE_BUNDLES = new Set<string>([
-    'com.apple.health.watchos', // Apple Watch native sensors
-    'com.google.android.apps.healthdata', // Health Connect hardware aggregator
+    "com.apple.health.watchos", // Apple Watch native sensors
+    "com.google.android.apps.healthdata", // Health Connect hardware aggregator
   ]);
 
   /**
@@ -56,9 +56,9 @@ export class NativeHealthBridge {
    * on third-party vendor roots, since that would re-open the spoofing surface.
    */
   private static readonly TRUSTED_SOURCE_BUNDLE_PREFIXES: readonly string[] = [
-    'com.apple.health', // HealthKit family (incl. per-device com.apple.health.<id>)
-    'com.google.android.apps.healthdata', // Health Connect family
-    'com.google.android.apps.fitness', // Google Fit aggregator family
+    "com.apple.health", // HealthKit family (incl. per-device com.apple.health.<id>)
+    "com.google.android.apps.healthdata", // Health Connect family
+    "com.google.android.apps.fitness", // Google Fit aggregator family
   ];
 
   /**
@@ -67,7 +67,10 @@ export class NativeHealthBridge {
    * cheaply reject values that are physiologically impossible. These are generous
    * outer bounds — they catch fabricated/garbage numbers, not subtle spoofs.
    */
-  private static readonly VALUE_BOUNDS: Record<string, { min: number; max: number }> = {
+  private static readonly VALUE_BOUNDS: Record<
+    string,
+    { min: number; max: number }
+  > = {
     HEART_RATE: { min: 20, max: 250 }, // bpm
     STEPS: { min: 0, max: 200_000 }, // steps in a sampling window
     DISTANCE: { min: 0, max: 500_000 }, // meters
@@ -81,7 +84,8 @@ export class NativeHealthBridge {
       return true;
     }
     return NativeHealthBridge.TRUSTED_SOURCE_BUNDLE_PREFIXES.some(
-      (prefix) => sourceBundleId === prefix || sourceBundleId.startsWith(prefix + '.'),
+      (prefix) =>
+        sourceBundleId === prefix || sourceBundleId.startsWith(prefix + "."),
     );
   }
 
@@ -99,31 +103,44 @@ export class NativeHealthBridge {
    * server-side; until that exists, treat a passing sample as "plausibly hardware"
    * rather than "proven hardware".
    */
-  public static validateSample(sample: HealthSample): { valid: boolean; reason?: string } {
+  public static validateSample(sample: HealthSample): {
+    valid: boolean;
+    reason?: string;
+  } {
     // 1. Required metadata must be present (reject if missing).
     if (!sample.metadata) {
-      return { valid: false, reason: 'Missing sample metadata.' };
+      return { valid: false, reason: "Missing sample metadata." };
     }
     // SH4: require an EXPLICIT non-user-entered assertion from a trusted source.
     // `wasUserEntered` must be present and strictly false (not merely falsy/absent).
     if (sample.metadata.wasUserEntered !== false) {
-      return { valid: false, reason: 'Missing or non-false metadata field: wasUserEntered.' };
+      return {
+        valid: false,
+        reason: "Missing or non-false metadata field: wasUserEntered.",
+      };
     }
-    const sourceBundleId = String(sample.metadata.sourceBundleId || '').trim();
+    const sourceBundleId = String(sample.metadata.sourceBundleId || "").trim();
     if (!sourceBundleId) {
-      return { valid: false, reason: 'Missing required metadata field: sourceBundleId.' };
+      return {
+        valid: false,
+        reason: "Missing required metadata field: sourceBundleId.",
+      };
     }
 
     // 2. Trusted first-party hardware source family (fail closed for unknown sources).
     if (!NativeHealthBridge.isTrustedBundle(sourceBundleId)) {
-      return { valid: false, reason: 'Samples must originate from a verified hardware device/app.' };
+      return {
+        valid: false,
+        reason: "Samples must originate from a verified hardware device/app.",
+      };
     }
 
     // 3. SH4: cheap server-side plausibility check — reject obviously-impossible values.
-    if (typeof sample.value !== 'number' || !Number.isFinite(sample.value)) {
-      return { valid: false, reason: 'Sample value must be a finite number.' };
+    if (typeof sample.value !== "number" || !Number.isFinite(sample.value)) {
+      return { valid: false, reason: "Sample value must be a finite number." };
     }
-    const bounds = NativeHealthBridge.VALUE_BOUNDS[String(sample.type).toUpperCase()];
+    const bounds =
+      NativeHealthBridge.VALUE_BOUNDS[String(sample.type).toUpperCase()];
     if (bounds && (sample.value < bounds.min || sample.value > bounds.max)) {
       return {
         valid: false,

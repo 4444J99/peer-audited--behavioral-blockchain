@@ -42,6 +42,7 @@ Verdicts collected → consensus algorithm
 ```
 
 **Implementation**:
+
 - Routing: `src/api/services/fury-router/fury-router.service.ts`
 - Queue config: `src/api/config/queue.config.ts` (queue name: `FURY_ROUTER_QUEUE`)
 - Module wiring: `src/api/src/modules/fury/`
@@ -63,6 +64,7 @@ Verdicts collected → consensus algorithm
 ## Consequences
 
 **Positive:**
+
 - Anonymity prevents social pressure or collusion between auditors
 - 3-auditor minimum provides statistical confidence in verdicts
 - Financial stakes (auditor deposits) align incentives with honest review
@@ -70,6 +72,7 @@ Verdicts collected → consensus algorithm
 - Asynchronous routing decouples proof submission from audit assignment
 
 **Negative:**
+
 - 3-auditor requirement means the platform needs a minimum auditor pool to function (cold-start problem)
 - Auditor dropout mid-review requires re-routing (adds latency)
 - $2.00 stake may be too low to attract serious auditors at scale, or too high for casual participants

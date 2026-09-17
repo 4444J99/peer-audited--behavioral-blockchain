@@ -1,9 +1,9 @@
 /**
  * Settlement Quote Logic
- * 
+ *
  * CANONICAL TRUTH: This is the single source of truth for payout arithmetic.
  * All settlement paths (worker, preview, audit) MUST use this logic.
- * 
+ *
  * POLICY (DR-002, decided 2026-03-10 — docs/planning/planning--founder-decisions-of-record.md):
  * - Success/Refund: 100% to User
  * - Capture: 100% to Platform (Revenue), 0% to Fury Pool (Bounty)
@@ -14,7 +14,7 @@ export interface SettlementQuote {
   platformFeeCents: number;
   bountyPoolCents: number;
   userRefundCents: number;
-  actualAction: 'RELEASE' | 'CAPTURE';
+  actualAction: "RELEASE" | "CAPTURE";
 }
 
 // DR-002: forfeited deposits go entirely to the platform — not redistributed to
@@ -32,14 +32,14 @@ export const FAILED_CAPTURE_BOUNTY_POOL_RATE = 0;
 
 export function buildSettlementQuote(
   amountCents: number,
-  outcome: 'PASS' | 'FAIL',
-  dispositionMode?: 'CAPTURE' | 'REFUND',
+  outcome: "PASS" | "FAIL",
+  dispositionMode?: "CAPTURE" | "REFUND",
 ): SettlementQuote {
   if (!Number.isInteger(amountCents) || amountCents < 0) {
-    throw new Error('Settlement amounts must be non-negative integer cents.');
+    throw new Error("Settlement amounts must be non-negative integer cents.");
   }
 
-  const shouldRelease = outcome === 'PASS' || dispositionMode === 'REFUND';
+  const shouldRelease = outcome === "PASS" || dispositionMode === "REFUND";
 
   if (shouldRelease) {
     return {
@@ -47,17 +47,19 @@ export function buildSettlementQuote(
       platformFeeCents: 0,
       bountyPoolCents: 0,
       userRefundCents: amountCents,
-      actualAction: 'RELEASE',
+      actualAction: "RELEASE",
     };
   }
 
-  const bountyPoolCents = Math.round(amountCents * FAILED_CAPTURE_BOUNTY_POOL_RATE);
+  const bountyPoolCents = Math.round(
+    amountCents * FAILED_CAPTURE_BOUNTY_POOL_RATE,
+  );
   return {
     totalCents: amountCents,
     platformFeeCents: amountCents - bountyPoolCents,
     bountyPoolCents,
     userRefundCents: 0,
-    actualAction: 'CAPTURE',
+    actualAction: "CAPTURE",
   };
 }
 
@@ -71,16 +73,22 @@ export function buildSettlementQuote(
  * tested directly — so the distribution stays correct and covered while the rate is
  * zero, ready for the day a community pool is reintroduced.
  */
-export function distributeBountyPool(poolCents: number, furyCount: number): number[] {
+export function distributeBountyPool(
+  poolCents: number,
+  furyCount: number,
+): number[] {
   if (!Number.isInteger(poolCents) || poolCents < 0) {
-    throw new Error('Settlement amounts must be non-negative integer cents.');
+    throw new Error("Settlement amounts must be non-negative integer cents.");
   }
   if (!Number.isInteger(furyCount) || furyCount < 0) {
-    throw new Error('Fury count must be a non-negative integer.');
+    throw new Error("Fury count must be a non-negative integer.");
   }
   if (furyCount === 0) return [];
 
   const base = Math.floor(poolCents / furyCount);
   const remainder = poolCents - base * furyCount;
-  return Array.from({ length: furyCount }, (_, i) => base + (i < remainder ? 1 : 0));
+  return Array.from(
+    { length: furyCount },
+    (_, i) => base + (i < remainder ? 1 : 0),
+  );
 }

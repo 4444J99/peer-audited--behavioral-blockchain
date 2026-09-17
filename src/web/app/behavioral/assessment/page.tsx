@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { ClipboardList } from 'lucide-react';
-import { IntakeAssessment } from '../../../components/IntakeAssessment';
+import React from "react";
+import { ClipboardList } from "lucide-react";
+import { IntakeAssessment } from "../../../components/IntakeAssessment";
 
 export default function AssessmentPage() {
   return (
@@ -12,8 +12,8 @@ export default function AssessmentPage() {
         <h1 className="text-xl font-bold">Intake Assessment</h1>
       </div>
       <p className="text-sm text-gray-400">
-        Answer 8 quick questions to discover your behavioral profile and archetype.
-        This helps us personalize your habit-building experience.
+        Answer 8 quick questions to discover your behavioral profile and
+        archetype. This helps us personalize your habit-building experience.
       </p>
       <IntakeAssessment />
     </div>

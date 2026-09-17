@@ -2,12 +2,12 @@
 
 This index is evidence, not a pricing or outcome statement. It deliberately excludes personal data, source prompts, credentials, and private agent content.
 
-| Evidence class | Publicly inspectable reference | What it supports |
-| --- | --- | --- |
-| Merged implementation | `505dcfc`, `e0bfb84`, `afbf4dd`, `fb582b4` on the `main` ancestry | The repository has prior work on reachable demo surfaces, synthetic seeding, verification remediation, and the test-money ledger rail. |
-| Current launch package | This branch, based on `4036c1f76b265561034577de267c3ace2c5bc171` | Node 24 alignment, stricter false-green behavior, deterministic demo tooling, Tour, and truth-labeled materials. |
-| CI / predicate receipts | Recorded in the pull request for this branch | Exact-head pass/fail evidence belongs with the change, not in a prose assertion. |
-| Recoverable agent session | Encrypted private custody receipt; no source diff | The recovered stress session ran for **2h42m13s** and recorded 705,494 input, 5,199 output, 2,604 reasoning, and 3,201,792 cache-read tokens: **3,915,089 token events**. Reported provider cost: **$0**. It made no source changes. |
+| Evidence class            | Publicly inspectable reference                                    | What it supports                                                                                                                                                                                                                     |
+| ------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Merged implementation     | `505dcfc`, `e0bfb84`, `afbf4dd`, `fb582b4` on the `main` ancestry | The repository has prior work on reachable demo surfaces, synthetic seeding, verification remediation, and the test-money ledger rail.                                                                                               |
+| Current launch package    | This branch, based on `4036c1f76b265561034577de267c3ace2c5bc171`  | Node 24 alignment, stricter false-green behavior, deterministic demo tooling, Tour, and truth-labeled materials.                                                                                                                     |
+| CI / predicate receipts   | Recorded in the pull request for this branch                      | Exact-head pass/fail evidence belongs with the change, not in a prose assertion.                                                                                                                                                     |
+| Recoverable agent session | Encrypted private custody receipt; no source diff                 | The recovered stress session ran for **2h42m13s** and recorded 705,494 input, 5,199 output, 2,604 reasoning, and 3,201,792 cache-read tokens: **3,915,089 token events**. Reported provider cost: **$0**. It made no source changes. |
 
 ## Recovered stress-session conclusion
 

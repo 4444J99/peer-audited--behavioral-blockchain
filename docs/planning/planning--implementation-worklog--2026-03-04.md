@@ -63,4 +63,3 @@
 - Full coverage: F-LEGAL-03 -> TKT-P0-004,TKT-P0-011
 - Full coverage: F-LEGAL-04 -> TKT-P0-011
 - Full coverage: F-LEGAL-05 -> TKT-P1-019
-

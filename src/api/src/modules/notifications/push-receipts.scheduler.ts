@@ -1,8 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
-import { PushTokensService, PendingReceiptDelivery } from './push-tokens.service';
-import { ExpoPushProvider } from './expo-push.provider';
-import { PushReceipt } from './push-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
+import {
+  PushTokensService,
+  PendingReceiptDelivery,
+} from "./push-tokens.service";
+import { ExpoPushProvider } from "./expo-push.provider";
+import { PushReceipt } from "./push-provider.interface";
 
 const RECEIPT_BATCH_LIMIT = 500;
 
@@ -16,7 +19,7 @@ const RECEIPT_MIN_AGE_SECONDS = 300;
 const RECEIPT_MAX_ATTEMPTS = 24;
 
 /** The one receipt error that means the device will never accept a push again. */
-const DEVICE_GONE_CODE = 'DeviceNotRegistered';
+const DEVICE_GONE_CODE = "DeviceNotRegistered";
 
 /**
  * Phase two of push delivery.
@@ -36,7 +39,7 @@ export class PushReceiptsScheduler {
     private readonly provider: ExpoPushProvider,
   ) {}
 
-  @Cron('0 */5 * * * *')
+  @Cron("0 */5 * * * *")
   async collectPushReceipts(): Promise<void> {
     let pending: PendingReceiptDelivery[];
     try {
@@ -85,8 +88,8 @@ export class PushReceiptsScheduler {
           continue;
         }
 
-        if (receipt.status === 'OK') {
-          await this.pushTokens.recordReceiptOutcome(delivery.id, 'OK', 'SENT');
+        if (receipt.status === "OK") {
+          await this.pushTokens.recordReceiptOutcome(delivery.id, "OK", "SENT");
           confirmed++;
           continue;
         }
@@ -94,8 +97,8 @@ export class PushReceiptsScheduler {
         const deviceGone = receipt.errorCode === DEVICE_GONE_CODE;
         await this.pushTokens.recordReceiptOutcome(
           delivery.id,
-          'ERROR',
-          deviceGone ? 'UNREGISTERED' : 'FAILED',
+          "ERROR",
+          deviceGone ? "UNREGISTERED" : "FAILED",
           receipt.errorCode,
           receipt.errorMessage,
         );

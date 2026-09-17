@@ -35,9 +35,9 @@ Subject: `Private Styx test-money demo — boundaries and next step`
 
 ## 30-day audience plan
 
-| Window | Action | Guardrail |
-| --- | --- | --- |
-| Days 1–7 | Privately show the Tour to a small set of independent executive/life coaches. | Use only synthetic data and the truth-labeled script. |
-| Days 8–14 | Hold discovery conversations and capture the minimum useful accountability signal. | Do not offer pricing or a public signup. |
-| Days 15–21 | Consolidate objections into the pilot consent/support requirements. | No claim that an external beta is open. |
-| Days 22–30 | Rehearse the safe pilot offer only if the external-beta gate receipt is green. | Keep enterprise interest as later-stage research, not a sold deployment. |
+| Window     | Action                                                                             | Guardrail                                                                |
+| ---------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Days 1–7   | Privately show the Tour to a small set of independent executive/life coaches.      | Use only synthetic data and the truth-labeled script.                    |
+| Days 8–14  | Hold discovery conversations and capture the minimum useful accountability signal. | Do not offer pricing or a public signup.                                 |
+| Days 15–21 | Consolidate objections into the pilot consent/support requirements.                | No claim that an external beta is open.                                  |
+| Days 22–30 | Rehearse the safe pilot offer only if the external-beta gate receipt is green.     | Keep enterprise interest as later-stage research, not a sold deployment. |

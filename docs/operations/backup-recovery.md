@@ -20,37 +20,37 @@ Styx stores three categories of data: critical financial records (ledger, escrow
 
 Data whose loss or corruption would cause financial harm or legal liability.
 
-| Table/Store | Description | Volume (est.) | Backup Priority |
-|-------------|------------|---------------|----------------|
-| `ledger_entries` | Double-entry debit/credit records | 10 rows per contract lifecycle | Highest |
-| `escrow_records` | Stripe escrow holds, captures, refunds | 2-4 rows per contract | Highest |
-| `users` | Account records, auth credentials, PII | 1 row per user | Highest |
-| `stripe_webhook_events` | Raw webhook payloads for replay | 3-5 per contract | High |
-| `reconciliation_snapshots` | Point-in-time balance assertions | 1 per reconciliation cycle | High |
+| Table/Store                | Description                            | Volume (est.)                  | Backup Priority |
+| -------------------------- | -------------------------------------- | ------------------------------ | --------------- |
+| `ledger_entries`           | Double-entry debit/credit records      | 10 rows per contract lifecycle | Highest         |
+| `escrow_records`           | Stripe escrow holds, captures, refunds | 2-4 rows per contract          | Highest         |
+| `users`                    | Account records, auth credentials, PII | 1 row per user                 | Highest         |
+| `stripe_webhook_events`    | Raw webhook payloads for replay        | 3-5 per contract               | High            |
+| `reconciliation_snapshots` | Point-in-time balance assertions       | 1 per reconciliation cycle     | High            |
 
 ### Tier 2: Important (Operational Continuity)
 
 Data whose loss would degrade service but not cause financial harm.
 
-| Table/Store | Description | Volume (est.) | Backup Priority |
-|-------------|------------|---------------|----------------|
-| `contracts` | Behavioral contract definitions | 1 per contract | High |
-| `proofs` | Proof submission metadata (media in R2) | 1-3 per contract | High |
-| `audit_records` | Fury audit decisions and evidence | 1-2 per contract | High |
-| `auditor_profiles` | Fury auditor reputation, accuracy | 1 per auditor | Medium |
-| `practitioner_accounts` | B2B subscription and client data | 1 per practitioner | High |
-| `analytics_events` | Business metrics raw events | High volume | Medium |
+| Table/Store             | Description                             | Volume (est.)      | Backup Priority |
+| ----------------------- | --------------------------------------- | ------------------ | --------------- |
+| `contracts`             | Behavioral contract definitions         | 1 per contract     | High            |
+| `proofs`                | Proof submission metadata (media in R2) | 1-3 per contract   | High            |
+| `audit_records`         | Fury audit decisions and evidence       | 1-2 per contract   | High            |
+| `auditor_profiles`      | Fury auditor reputation, accuracy       | 1 per auditor      | Medium          |
+| `practitioner_accounts` | B2B subscription and client data        | 1 per practitioner | High            |
+| `analytics_events`      | Business metrics raw events             | High volume        | Medium          |
 
 ### Tier 3: Replaceable (Cache/Ephemeral)
 
 Data that can be regenerated or is inherently temporary.
 
-| Store | Description | Recovery Method |
-|-------|------------|----------------|
-| Redis cache | Session data, API response cache | Warm-up from database on restart |
-| BullMQ job data | Fury queue state | Re-enqueue pending audits from `contracts` table |
-| CDN cache | Static asset cache | Rebuild on deploy |
-| Temporary upload files | In-progress proof uploads | User re-uploads |
+| Store                  | Description                      | Recovery Method                                  |
+| ---------------------- | -------------------------------- | ------------------------------------------------ |
+| Redis cache            | Session data, API response cache | Warm-up from database on restart                 |
+| BullMQ job data        | Fury queue state                 | Re-enqueue pending audits from `contracts` table |
+| CDN cache              | Static asset cache               | Rebuild on deploy                                |
+| Temporary upload files | In-progress proof uploads        | User re-uploads                                  |
 
 ## PostgreSQL Backup Strategy
 
@@ -58,13 +58,13 @@ Data that can be regenerated or is inherently temporary.
 
 Render's managed PostgreSQL provides automatic backups:
 
-| Feature | Starter Plan | Standard Plan | Pro Plan |
-|---------|-------------|---------------|----------|
-| Automatic backups | Daily | Daily | Continuous (WAL archiving) |
-| Retention | 7 days | 14 days | 30 days |
-| Point-in-time recovery | No | No | Yes (to any second) |
-| Manual snapshots | No | Yes | Yes |
-| Cross-region replica | No | No | Add-on |
+| Feature                | Starter Plan | Standard Plan | Pro Plan                   |
+| ---------------------- | ------------ | ------------- | -------------------------- |
+| Automatic backups      | Daily        | Daily         | Continuous (WAL archiving) |
+| Retention              | 7 days       | 14 days       | 30 days                    |
+| Point-in-time recovery | No           | No            | Yes (to any second)        |
+| Manual snapshots       | No           | Yes           | Yes                        |
+| Cross-region replica   | No           | No            | Add-on                     |
 
 **Current (Starter Plan):** Daily backups with 7-day retention. Backups occur at a Render-determined time (typically low-traffic hours).
 
@@ -130,6 +130,7 @@ dropdb styx_verify
 ### Current Approach
 
 Proof media files (images, videos uploaded by contract participants) are stored in Cloudflare R2. R2 provides:
+
 - 99.999999999% (11 nines) durability
 - No replication needed — R2 durability is comparable to S3
 
@@ -229,33 +230,33 @@ WHERE status = 'auditing'
 
 After any restore, these checks are mandatory:
 
-| Check | Command | Expected Result |
-|-------|---------|----------------|
-| Ledger balance | `SELECT SUM(CASE WHEN type='debit' THEN amount ELSE -amount END) FROM ledger_entries` | Exactly $0.00 |
-| Escrow vs Stripe | Compare `escrow_records` with Stripe dashboard | All active escrows match |
-| User count | `SELECT COUNT(*) FROM users` | Matches pre-incident count |
-| Contract states | `SELECT status, COUNT(*) FROM contracts GROUP BY status` | No unexpected states |
-| Orphaned proofs | R2 objects without `proofs` table entry | Should be zero |
-| Foreign key integrity | `SELECT conname FROM pg_constraint WHERE contype='f'` + validate | No violations |
+| Check                 | Command                                                                               | Expected Result            |
+| --------------------- | ------------------------------------------------------------------------------------- | -------------------------- |
+| Ledger balance        | `SELECT SUM(CASE WHEN type='debit' THEN amount ELSE -amount END) FROM ledger_entries` | Exactly $0.00              |
+| Escrow vs Stripe      | Compare `escrow_records` with Stripe dashboard                                        | All active escrows match   |
+| User count            | `SELECT COUNT(*) FROM users`                                                          | Matches pre-incident count |
+| Contract states       | `SELECT status, COUNT(*) FROM contracts GROUP BY status`                              | No unexpected states       |
+| Orphaned proofs       | R2 objects without `proofs` table entry                                               | Should be zero             |
+| Foreign key integrity | `SELECT conname FROM pg_constraint WHERE contype='f'` + validate                      | No violations              |
 
 **Ledger reconciliation is the most critical check.** If `total_debits != total_credits` after restore, the restore is incomplete and financial operations must remain frozen until resolved.
 
 ## RTO/RPO Targets
 
-| Tier | RPO (max data loss) | RTO (max downtime) | Current Capability |
-|------|--------------------|--------------------|-------------------|
-| Tier 1 (Financial) | 1 hour | 1 hour | Daily backup (24h RPO) — upgrade to Standard for improvement |
-| Tier 2 (Operational) | 4 hours | 2 hours | Daily backup (24h RPO) |
-| Tier 3 (Ephemeral) | N/A | 15 minutes | Redis restart |
+| Tier                 | RPO (max data loss) | RTO (max downtime) | Current Capability                                           |
+| -------------------- | ------------------- | ------------------ | ------------------------------------------------------------ |
+| Tier 1 (Financial)   | 1 hour              | 1 hour             | Daily backup (24h RPO) — upgrade to Standard for improvement |
+| Tier 2 (Operational) | 4 hours             | 2 hours            | Daily backup (24h RPO)                                       |
+| Tier 3 (Ephemeral)   | N/A                 | 15 minutes         | Redis restart                                                |
 
 **Gap Analysis:**
 
-| Target | Current | Gap | Fix |
-|--------|---------|-----|-----|
-| Tier 1 RPO: 1 hour | 24 hours (daily backup) | 23 hours | Upgrade to Render Pro (continuous WAL) |
-| Tier 1 RTO: 1 hour | ~30 min (Render restore) | None | Met |
-| Tier 2 RPO: 4 hours | 24 hours | 20 hours | Upgrade to Render Standard + manual pre-deploy snapshots |
-| Tier 2 RTO: 2 hours | ~30 min | None | Met |
+| Target              | Current                  | Gap      | Fix                                                      |
+| ------------------- | ------------------------ | -------- | -------------------------------------------------------- |
+| Tier 1 RPO: 1 hour  | 24 hours (daily backup)  | 23 hours | Upgrade to Render Pro (continuous WAL)                   |
+| Tier 1 RTO: 1 hour  | ~30 min (Render restore) | None     | Met                                                      |
+| Tier 2 RPO: 4 hours | 24 hours                 | 20 hours | Upgrade to Render Standard + manual pre-deploy snapshots |
+| Tier 2 RTO: 2 hours | ~30 min                  | None     | Met                                                      |
 
 Priority: upgrade PostgreSQL to Render Standard ($50/mo) when approaching 500 users. This reduces RPO to ~12 hours (more frequent backups + manual snapshots).
 
@@ -302,11 +303,13 @@ Store exports in a location independent of Render: local encrypted storage, a se
 Perform this drill every 3 months to verify backup integrity and practice the recovery procedure.
 
 **Pre-Drill:**
+
 - [ ] Schedule 1-hour maintenance window (or use staging environment)
 - [ ] Notify any active B2B practitioners
 - [ ] Document current database state (row counts, ledger balance)
 
 **Drill Steps:**
+
 1. [ ] Take a manual backup of current database
 2. [ ] Restore the most recent automatic backup to a temporary database
 3. [ ] Run post-restore verification checklist (all items above)
@@ -335,12 +338,12 @@ Perform this drill every 3 months to verify backup integrity and practice the re
 
 ## Backup Cost
 
-| Component | Current Cost | At Scale |
-|-----------|-------------|----------|
-| Render PostgreSQL backup | Included in plan | Included in plan |
-| Manual backup storage (R2) | ~$0.015/GB/mo | $0.50-$5.00/mo |
-| Backup verification compute | $0 (local) | $0 (local) |
-| Drill time (founder hours) | 1 hour/quarter | 1 hour/quarter |
-| **Total** | **< $1/mo** | **< $10/mo** |
+| Component                   | Current Cost     | At Scale         |
+| --------------------------- | ---------------- | ---------------- |
+| Render PostgreSQL backup    | Included in plan | Included in plan |
+| Manual backup storage (R2)  | ~$0.015/GB/mo    | $0.50-$5.00/mo   |
+| Backup verification compute | $0 (local)       | $0 (local)       |
+| Drill time (founder hours)  | 1 hour/quarter   | 1 hour/quarter   |
+| **Total**                   | **< $1/mo**      | **< $10/mo**     |
 
 Backup is one of the cheapest insurance policies in the system. There is no justification for skipping it.

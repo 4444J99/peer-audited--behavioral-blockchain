@@ -1,4 +1,5 @@
 # Styx Architecture Deep Dive Plan
+
 **Date**: 2026-03-06  
 **Agent**: Architectural Exploration  
 **Session ID**: ab75bbd2a354611ca  
@@ -13,7 +14,7 @@ Conduct exhaustive exploration of `peer-audited--behavioral-blockchain` (Styx) m
 ### Explicit Requirements (14 numbered items)
 
 1. List ALL files in `src/api/services/` recursively with first 50 lines read for each
-2. List ALL files in `src/api/src/modules/` recursively  
+2. List ALL files in `src/api/src/modules/` recursively
 3. Read `src/shared/libs/` and list all shared libraries with export signatures
 4. Map `src/web/app/` directory structure and all routes/pages
 5. List all screens in `src/mobile/screens/`
@@ -32,9 +33,11 @@ Conduct exhaustive exploration of `peer-audited--behavioral-blockchain` (Styx) m
 ## Execution Plan
 
 ### Phase 1: Service Layer Deep Dive (40+ files)
+
 **Goal**: Understand implementation completeness of domain services
 
 **Tasks**:
+
 - [ ] Read first 50 lines of each service in `src/api/services/`:
   - [ ] `ledger/` (3 files: ledger.service.ts, truth-log.service.ts, and spec)
   - [ ] `fury-router/` (3 files: router.service.ts, worker.ts, spec)
@@ -52,9 +55,11 @@ Conduct exhaustive exploration of `peer-audited--behavioral-blockchain` (Styx) m
 ---
 
 ### Phase 2: NestJS Module Layer Deep Dive (100+ files)
+
 **Goal**: Understand HTTP endpoint wiring and controller completeness
 
 **Tasks**:
+
 - [ ] For each module in `src/api/src/modules/`, examine:
   - [ ] controller.ts (route handlers, @Get/@Post/@Put/@Delete decorators)
   - [ ] module.ts (DI wiring, imported services)
@@ -69,9 +74,11 @@ Conduct exhaustive exploration of `peer-audited--behavioral-blockchain` (Styx) m
 ---
 
 ### Phase 3: Shared Libraries Inventory
+
 **Goal**: Document all shared exports and type definitions
 
 **Tasks**:
+
 - [ ] Read `src/shared/libs/behavioral-logic.ts` (export signatures + 7 oath categories)
 - [ ] Read `src/shared/libs/integrity.ts` (Integrity Score, tier enums)
 - [ ] Read `src/shared/libs/money.ts` (Currency utilities)
@@ -82,9 +89,11 @@ Conduct exhaustive exploration of `peer-audited--behavioral-blockchain` (Styx) m
 ---
 
 ### Phase 4: Frontend Inventory
+
 **Goal**: Map Next.js routes and component structure
 
 **Tasks**:
+
 - [ ] List all files in `src/web/app/` (routes, layouts, api handlers)
 - [ ] List all files in `src/web/utils/` (helpers, linguistic-cloak.ts, etc.)
 - [ ] List all files in `src/web/stores/` (Zustand stores)
@@ -95,9 +104,11 @@ Conduct exhaustive exploration of `peer-audited--behavioral-blockchain` (Styx) m
 ---
 
 ### Phase 5: Mobile Inventory
+
 **Goal**: Document screens and services
 
 **Tasks**:
+
 - [ ] List all files in `src/mobile/screens/`
 - [ ] List all files in `src/mobile/services/` (ApiClient, SessionService, OfflineCache, etc.)
 - [ ] Identify placeholder vs implemented screens
@@ -107,9 +118,11 @@ Conduct exhaustive exploration of `peer-audited--behavioral-blockchain` (Styx) m
 ---
 
 ### Phase 6: Desktop Inventory
+
 **Goal**: Document Tauri panels
 
 **Tasks**:
+
 - [ ] List all files in `src/desktop/src/panels/`
 
 **Output**: Panels inventory
@@ -117,9 +130,11 @@ Conduct exhaustive exploration of `peer-audited--behavioral-blockchain` (Styx) m
 ---
 
 ### Phase 7: Database Schema & Seed
+
 **Goal**: Understand data model and initialization
 
 **Tasks**:
+
 - [ ] Read `src/api/database/schema.sql` → extract all table definitions
 - [ ] Read `src/api/database/seed.sql` → document seed data structure
 
@@ -128,11 +143,13 @@ Conduct exhaustive exploration of `peer-audited--behavioral-blockchain` (Styx) m
 ---
 
 ### Phase 8: Completeness Matrix
+
 **Goal**: Synthesize findings into implementation percentage matrix
 
 **Features to rate**: auth, contracts, fury, wallet, compliance, escrow, health, intelligence, security, oracles, b2b, ai, admin, notifications, payments, proofs, ledger, feed, beta
 
 **Scoring scale**:
+
 - **0-25%**: Architectural shell only; no real implementation
 - **25-50%**: Core domain services exist; many endpoints stub/mock data
 - **50-75%**: Most endpoints wired; some services have real logic; E2E tests exist
@@ -145,17 +162,20 @@ Conduct exhaustive exploration of `peer-audited--behavioral-blockchain` (Styx) m
 ## Execution Strategy
 
 **Tools to use**:
+
 - `Glob` for rapid file discovery (patterns like `src/api/services/**/*.ts`)
 - `Read` for first-50-line excerpts (using `offset` + `limit` to minimize token cost)
 - `Bash` for parallel `wc -l` on all service files (to identify large vs small stubs)
 - `Grep` for method detection (e.g., grep `constructor|async` to identify real vs stub)
 
 **Parallel execution**:
+
 - All 40+ service files can be read in parallel (Phase 1)
 - All module controllers can be scanned in parallel (Phase 2)
 - All directory inventories can be done in parallel (Phases 4-6)
 
 **Token optimization**:
+
 - Read only first 50 lines of services (catches constructors + core exports)
 - Use grep to identify method bodies vs empty stubs (avoid reading full 100-line files)
 - Use bash `wc -l` to rank services by complexity (smallest files = likely stubs)
@@ -213,12 +233,12 @@ Conduct exhaustive exploration of `peer-audited--behavioral-blockchain` (Styx) m
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|------|-----------|
-| Token overflow on large files | Use `offset` + `limit` in Read tool; prioritize first 50 lines |
-| Slow parallel execution | Batch reads into 5-10 parallel calls max per phase |
-| Incomplete/inconsistent data | Cross-check with grep for method definitions; use bash wc to validate |
-| Git state contamination | All reads only; zero writes except to plan file |
+| Risk                          | Mitigation                                                            |
+| ----------------------------- | --------------------------------------------------------------------- |
+| Token overflow on large files | Use `offset` + `limit` in Read tool; prioritize first 50 lines        |
+| Slow parallel execution       | Batch reads into 5-10 parallel calls max per phase                    |
+| Incomplete/inconsistent data  | Cross-check with grep for method definitions; use bash wc to validate |
+| Git state contamination       | All reads only; zero writes except to plan file                       |
 
 ---
 

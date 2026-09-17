@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Inject } from '@nestjs/common';
-import { Pool } from 'pg';
-import { randomUUID } from 'crypto';
+import { Injectable, Logger } from "@nestjs/common";
+import { Inject } from "@nestjs/common";
+import { Pool } from "pg";
+import { randomUUID } from "crypto";
 
 export interface PartnerMatch {
   partnerId: string;
@@ -14,24 +14,25 @@ export interface CheckIn {
   id: string;
   contractId: string;
   partnerId: string;
-  type: 'SCHEDULED' | 'EMERGENCY' | 'STREAK_MILESTONE';
-  status: 'PENDING' | 'COMPLETED' | 'MISSED' | 'ESCALATED';
+  type: "SCHEDULED" | "EMERGENCY" | "STREAK_MILESTONE";
+  status: "PENDING" | "COMPLETED" | "MISSED" | "ESCALATED";
   scheduledAt: Date;
   completedAt?: Date;
   message?: string;
 }
 
-export type EscalationLevel = 'NOTIFY' | 'STAKE_WARNING' | 'CRISIS_TEAM';
+export type EscalationLevel = "NOTIFY" | "STAKE_WARNING" | "CRISIS_TEAM";
 
 @Injectable()
 export class AccountabilityPartnerService {
   private readonly logger = new Logger(AccountabilityPartnerService.name);
 
-  constructor(
-    @Inject('DATABASE_POOL') private readonly pool: Pool,
-  ) {}
+  constructor(@Inject("DATABASE_POOL") private readonly pool: Pool) {}
 
-  async requestPartnerMatch(userId: string, categories: string[]): Promise<PartnerMatch> {
+  async requestPartnerMatch(
+    userId: string,
+    categories: string[],
+  ): Promise<PartnerMatch> {
     // text[] has no built-in '&' intersection operator, so the shared-category
     // count is computed via UNNEST/INTERSECT to stay portable on stock Postgres.
     const { rows } = await this.pool.query(
@@ -73,7 +74,7 @@ export class AccountabilityPartnerService {
   async scheduleCheckIn(
     contractId: string,
     partnerId: string,
-    type: CheckIn['type'],
+    type: CheckIn["type"],
   ): Promise<CheckIn> {
     const id = randomUUID();
     const { rows } = await this.pool.query(
@@ -157,13 +158,13 @@ export class AccountabilityPartnerService {
     let message: string;
 
     if (consecutiveMisses >= 3) {
-      level = 'CRISIS_TEAM';
+      level = "CRISIS_TEAM";
       message = `Safety team alerted: ${consecutiveMisses} consecutive missed check-ins for contract ${contractId}`;
     } else if (consecutiveMisses === 2) {
-      level = 'STAKE_WARNING';
+      level = "STAKE_WARNING";
       message = `Stake warning issued: partner ${partnerId} missed 2 consecutive check-ins on contract ${contractId}`;
     } else {
-      level = 'NOTIFY';
+      level = "NOTIFY";
       message = `Soft reminder sent to partner ${partnerId} for missed check-in on contract ${contractId}`;
     }
 

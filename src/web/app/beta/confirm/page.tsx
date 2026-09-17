@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import Link from "next/link";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { CheckCircle2, XCircle } from "lucide-react";
 
-type Status = 'confirming' | 'confirmed' | 'error';
+type Status = "confirming" | "confirmed" | "error";
 
 function ConfirmInner() {
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
-  const [status, setStatus] = useState<Status>('confirming');
+  const token = searchParams.get("token");
+  const [status, setStatus] = useState<Status>("confirming");
 
   useEffect(() => {
     let cancelled = false;
     if (!token) {
-      setStatus('error');
+      setStatus("error");
       return;
     }
     (async () => {
@@ -23,9 +23,9 @@ function ConfirmInner() {
         const res = await fetch(
           `/api/beta-waitlist/confirm?token=${encodeURIComponent(token)}`,
         );
-        if (!cancelled) setStatus(res.ok ? 'confirmed' : 'error');
+        if (!cancelled) setStatus(res.ok ? "confirmed" : "error");
       } catch {
-        if (!cancelled) setStatus('error');
+        if (!cancelled) setStatus("error");
       }
     })();
     return () => {
@@ -33,7 +33,7 @@ function ConfirmInner() {
     };
   }, [token]);
 
-  if (status === 'confirmed') {
+  if (status === "confirmed") {
     return (
       <div className="text-center">
         <CheckCircle2
@@ -51,7 +51,7 @@ function ConfirmInner() {
     );
   }
 
-  if (status === 'error') {
+  if (status === "error") {
     return (
       <div className="text-center">
         <XCircle
@@ -62,8 +62,8 @@ function ConfirmInner() {
           Link not recognized
         </h1>
         <p className="mt-4 text-base leading-7 text-neutral-400">
-          This confirmation link is missing or no longer valid. You can rejoin the
-          waitlist and we will send a fresh link.
+          This confirmation link is missing or no longer valid. You can rejoin
+          the waitlist and we will send a fresh link.
         </p>
         <Link
           href="/beta"

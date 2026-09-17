@@ -1,6 +1,6 @@
-import { test as base, Page } from '@playwright/test';
-import { setupAuthenticatedMocks, MOCK_USER } from './api-mocks';
-import { seedAuthCookie } from './auth-cookie';
+import { test as base, Page } from "@playwright/test";
+import { setupAuthenticatedMocks, MOCK_USER } from "./api-mocks";
+import { seedAuthCookie } from "./auth-cookie";
 
 /**
  * Extended test fixture providing an authenticated page.
@@ -9,25 +9,25 @@ import { seedAuthCookie } from './auth-cookie';
 export const test = base.extend<{ authenticatedPage: Page }>({
   authenticatedPage: async ({ page }, use) => {
     // Mock login endpoint
-    await page.route('**/api/auth/login', (route) =>
+    await page.route("**/api/auth/login", (route) =>
       route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify({
           user: MOCK_USER,
-          token: 'jwt-e2e-test-token',
+          token: "jwt-e2e-test-token",
         }),
       }),
     );
 
     // Mock register endpoint
-    await page.route('**/api/auth/register', (route) =>
+    await page.route("**/api/auth/register", (route) =>
       route.fulfill({
         status: 201,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify({
           user: MOCK_USER,
-          token: 'jwt-e2e-test-token',
+          token: "jwt-e2e-test-token",
         }),
       }),
     );
@@ -46,4 +46,4 @@ export const test = base.extend<{ authenticatedPage: Page }>({
   },
 });
 
-export { expect } from '@playwright/test';
+export { expect } from "@playwright/test";

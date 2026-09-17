@@ -112,7 +112,9 @@ async function apiFetch(path: string, init: RequestInit = {}) {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...(needsCsrf && csrf ? { "x-csrf-token": decodeURIComponent(csrf) } : {}),
+      ...(needsCsrf && csrf
+        ? { "x-csrf-token": decodeURIComponent(csrf) }
+        : {}),
       ...init.headers,
     },
   });
@@ -123,10 +125,10 @@ async function apiFetch(path: string, init: RequestInit = {}) {
 
 The API uses role-aware JWTs:
 
-| Role | Typical access |
-|------|----------------|
-| `USER` | Standard contract, wallet, proof, notification, and profile endpoints. |
-| `FURY` | Peer-auditor queue, verdicts, and audit stream endpoints. |
+| Role    | Typical access                                                                                             |
+| ------- | ---------------------------------------------------------------------------------------------------------- |
+| `USER`  | Standard contract, wallet, proof, notification, and profile endpoints.                                     |
+| `FURY`  | Peer-auditor queue, verdicts, and audit stream endpoints.                                                  |
 | `ADMIN` | Enterprise-admin B2B endpoints when the user belongs to that enterprise, plus platform operator endpoints. |
 
 Several monetized actions are also guarded by jurisdiction, account status, age,
@@ -158,15 +160,15 @@ Most application errors use this envelope:
 
 Common status codes:
 
-| Status | Meaning |
-|--------|---------|
-| `400` | Invalid input, invalid state transition, or failed proof integrity screening. |
-| `401` | Missing, invalid, or expired authentication. |
-| `403` | CSRF failure, role failure, account-status restriction, compliance block, or enterprise-scope mismatch. |
-| `404` | Resource not found or not visible to the authenticated user. |
-| `409` | Conflict such as duplicate proof media or duplicate survey submission. |
-| `429` | Rate limit exceeded. |
-| `503` | Dependency or provider unavailable. |
+| Status | Meaning                                                                                                 |
+| ------ | ------------------------------------------------------------------------------------------------------- |
+| `400`  | Invalid input, invalid state transition, or failed proof integrity screening.                           |
+| `401`  | Missing, invalid, or expired authentication.                                                            |
+| `403`  | CSRF failure, role failure, account-status restriction, compliance block, or enterprise-scope mismatch. |
+| `404`  | Resource not found or not visible to the authenticated user.                                            |
+| `409`  | Conflict such as duplicate proof media or duplicate survey submission.                                  |
+| `429`  | Rate limit exceeded.                                                                                    |
+| `503`  | Dependency or provider unavailable.                                                                     |
 
 ## End-To-End Contract Workflow
 
@@ -595,169 +597,169 @@ Auth requirements use these labels:
 
 ### Health, Bootstrap, Public Metadata
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `GET` | `/health/live` | Public | Liveness check. |
-| `GET` | `/health/ready` | Public | Readiness plus database and Redis checks. Returns `503` when dependencies are degraded. |
-| `GET` | `/health` | Public | Combined health response. |
-| `GET` | `/mobile/bootstrap` | Public | Mobile environment, feature flags, labels, and release metadata. |
-| `GET` | `/meta/release` | Public | API version, environment, build SHA, feature flags, timestamp. |
-| `GET` | `/compliance/eligibility` | Public | Jurisdiction and compliance decision for the current request context. |
+| Method | Path                      | Auth   | Purpose                                                                                 |
+| ------ | ------------------------- | ------ | --------------------------------------------------------------------------------------- |
+| `GET`  | `/health/live`            | Public | Liveness check.                                                                         |
+| `GET`  | `/health/ready`           | Public | Readiness plus database and Redis checks. Returns `503` when dependencies are degraded. |
+| `GET`  | `/health`                 | Public | Combined health response.                                                               |
+| `GET`  | `/mobile/bootstrap`       | Public | Mobile environment, feature flags, labels, and release metadata.                        |
+| `GET`  | `/meta/release`           | Public | API version, environment, build SHA, feature flags, timestamp.                          |
+| `GET`  | `/compliance/eligibility` | Public | Jurisdiction and compliance decision for the current request context.                   |
 
 ### Auth
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `POST` | `/auth/register` | Public | Create a user, enforce age and terms acceptance, return access token, set browser cookies. Rate limit: 5/min. |
-| `POST` | `/auth/login` | Public | Authenticate and return access token, set browser cookies. Rate limit: 5/min. |
-| `POST` | `/auth/enterprise` | Public | Exchange a dedicated enterprise SSO assertion for a Styx session. Rate limit: 5/min. |
-| `POST` | `/auth/refresh` | Browser cookie | Rotate access and refresh cookies. Rate limit: 5/min. |
-| `POST` | `/auth/logout` | Browser cookie | Clear cookies and revoke refresh tokens when possible. Rate limit: 5/min. |
-| `GET` | `/auth/csrf` | Browser cookie | Reissue the session-bound CSRF token. Rate limit: 5/min. |
+| Method | Path               | Auth           | Purpose                                                                                                       |
+| ------ | ------------------ | -------------- | ------------------------------------------------------------------------------------------------------------- |
+| `POST` | `/auth/register`   | Public         | Create a user, enforce age and terms acceptance, return access token, set browser cookies. Rate limit: 5/min. |
+| `POST` | `/auth/login`      | Public         | Authenticate and return access token, set browser cookies. Rate limit: 5/min.                                 |
+| `POST` | `/auth/enterprise` | Public         | Exchange a dedicated enterprise SSO assertion for a Styx session. Rate limit: 5/min.                          |
+| `POST` | `/auth/refresh`    | Browser cookie | Rotate access and refresh cookies. Rate limit: 5/min.                                                         |
+| `POST` | `/auth/logout`     | Browser cookie | Clear cookies and revoke refresh tokens when possible. Rate limit: 5/min.                                     |
+| `GET`  | `/auth/csrf`       | Browser cookie | Reissue the session-bound CSRF token. Rate limit: 5/min.                                                      |
 
 ### Users And Compliance
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `GET` | `/users/me` | User | Current profile, integrity score, role, status, and compliance summary. |
-| `GET` | `/users/me/compliance` | User | KYC and age-verification status. |
-| `POST` | `/users/me/compliance/identity/start` | User | Start identity verification. Body: `mode`, `returnUrl`, `refreshUrl`. |
-| `POST` | `/users/me/compliance/identity/mock-complete` | User, non-production only | Complete mock verification in local/dev/test. Disabled in production. |
-| `GET` | `/users/me/history` | User | Contract and integrity history. |
-| `PATCH` | `/users/me/password` | User | Change password. Body: `currentPassword`, `newPassword`. |
-| `PATCH` | `/users/me/settings` | User | Update notification preferences. |
-| `GET` | `/users/me/data-export` | User | GDPR-style user data export. Rate limit: 3/min. |
-| `DELETE` | `/users/me` | User | Request account deletion. |
-| `POST` | `/users/me/self-exclusion` | User | Activate self-exclusion for `durationDays`. |
-| `POST` | `/users/me/pregnancy-exclusion` | User | Toggle pregnancy exclusion for penalty-bearing contracts. |
-| `GET` | `/users/leaderboard` | Public | Public integrity leaderboard. Query: `limit`, `period`. Rate limit: 30/min. |
-| `GET` | `/users/:id` | User | Authenticated lookup of another user's public profile. Rate limit: 30/min. |
+| Method   | Path                                          | Auth                      | Purpose                                                                     |
+| -------- | --------------------------------------------- | ------------------------- | --------------------------------------------------------------------------- |
+| `GET`    | `/users/me`                                   | User                      | Current profile, integrity score, role, status, and compliance summary.     |
+| `GET`    | `/users/me/compliance`                        | User                      | KYC and age-verification status.                                            |
+| `POST`   | `/users/me/compliance/identity/start`         | User                      | Start identity verification. Body: `mode`, `returnUrl`, `refreshUrl`.       |
+| `POST`   | `/users/me/compliance/identity/mock-complete` | User, non-production only | Complete mock verification in local/dev/test. Disabled in production.       |
+| `GET`    | `/users/me/history`                           | User                      | Contract and integrity history.                                             |
+| `PATCH`  | `/users/me/password`                          | User                      | Change password. Body: `currentPassword`, `newPassword`.                    |
+| `PATCH`  | `/users/me/settings`                          | User                      | Update notification preferences.                                            |
+| `GET`    | `/users/me/data-export`                       | User                      | GDPR-style user data export. Rate limit: 3/min.                             |
+| `DELETE` | `/users/me`                                   | User                      | Request account deletion.                                                   |
+| `POST`   | `/users/me/self-exclusion`                    | User                      | Activate self-exclusion for `durationDays`.                                 |
+| `POST`   | `/users/me/pregnancy-exclusion`               | User                      | Toggle pregnancy exclusion for penalty-bearing contracts.                   |
+| `GET`    | `/users/leaderboard`                          | Public                    | Public integrity leaderboard. Query: `limit`, `period`. Rate limit: 30/min. |
+| `GET`    | `/users/:id`                                  | User                      | Authenticated lookup of another user's public profile. Rate limit: 30/min.  |
 
 ### Contracts
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `GET` | `/contracts` | User | List the authenticated user's contracts. |
-| `POST` | `/contracts` | User | Create a behavioral contract and funding intent. |
-| `GET` | `/contracts/:id` | User | Get one visible contract. |
-| `GET` | `/contracts/:id/proofs` | User | List proof submissions for a contract. |
-| `POST` | `/contracts/:id/proof` | User | Submit a legacy proof by `mediaUri`. Rate limit: 10/min. |
-| `POST` | `/contracts/:id/grace-day` | User | Use a grace day. |
-| `POST` | `/contracts/:id/dispute` | User | File a dispute against a verdict. |
-| `POST` | `/contracts/:id/ticket` | User | Purchase a single-contract ticket. |
-| `GET` | `/contracts/:id/attestation` | User | Get recovery attestation status. |
-| `POST` | `/contracts/:id/attestation` | User | Submit daily attestation with optional emotional tracking. Rate limit: 5/min. |
-| `POST` | `/contracts/:id/whoop/scored` | User | Submit Whoop `SCORED` or `UNSCORED` state. Rate limit: 20/min. |
-| `GET` | `/contracts/invitations` | User | List pending accountability-partner invitations. |
-| `POST` | `/contracts/:id/partner/accept` | User | Accept an accountability-partner invitation. |
-| `POST` | `/contracts/:id/attestation/cosign` | User | Co-sign an attestation as an accountability partner. |
-| `POST` | `/contracts/:id/double-down` | User | Increase an active contract commitment. Body: `amount`. |
-| `POST` | `/contracts/:id/medical-exemption` | User | Request a compassionate medical exemption. |
-| `POST` | `/contracts/bounty/:linkId` | Public link | Submit evidence through a whistleblower bounty link. Rate limit: 5/min. |
-| `GET` | `/contracts/:id/recovery/lock-status` | User | Get recovery-break timelock state. |
-| `POST` | `/contracts/:id/recovery/break-request` | User | Queue a 24 hour timelocked intentional break. |
-| `POST` | `/contracts/:id/recovery/break-cancel` | User | Cancel a pending recovery break. |
-| `GET` | `/contracts/:id/recovery/penalty-preview` | User | Preview recovery penalty amount. |
-| `POST` | `/contracts/:id/accountability/invite` | User | Invite an accountability partner. |
-| `POST` | `/contracts/:id/accountability/respond` | User | Accept or decline an accountability invitation. |
-| `POST` | `/contracts/:id/recovery/veto-break` | User | Veto a pending recovery break as partner. |
-| `GET` | `/contracts/:id/accountability/status` | User | Get accountability-partner status and history. |
-| `POST` | `/contracts/:id/survey` | User | Submit `BASELINE` or `FINAL` survey responses. |
-| `GET` | `/contracts/:id/survey` | User | Get survey responses for a contract. |
-| `GET` | `/contracts/cohorts/:cohortId/snapshot` | User | Get cohort roster and pod snapshot. |
-| `POST` | `/contracts/cohorts/:cohortId/waitlist` | User | Join or update waitlist entry. |
-| `GET` | `/contracts/cohorts/:cohortId/waitlist/position` | User | Get current user's waitlist position. |
-| `GET` | `/contracts/cohorts/:cohortId/waitlist` | User | Get a cohort waitlist. |
+| Method | Path                                             | Auth        | Purpose                                                                       |
+| ------ | ------------------------------------------------ | ----------- | ----------------------------------------------------------------------------- |
+| `GET`  | `/contracts`                                     | User        | List the authenticated user's contracts.                                      |
+| `POST` | `/contracts`                                     | User        | Create a behavioral contract and funding intent.                              |
+| `GET`  | `/contracts/:id`                                 | User        | Get one visible contract.                                                     |
+| `GET`  | `/contracts/:id/proofs`                          | User        | List proof submissions for a contract.                                        |
+| `POST` | `/contracts/:id/proof`                           | User        | Submit a legacy proof by `mediaUri`. Rate limit: 10/min.                      |
+| `POST` | `/contracts/:id/grace-day`                       | User        | Use a grace day.                                                              |
+| `POST` | `/contracts/:id/dispute`                         | User        | File a dispute against a verdict.                                             |
+| `POST` | `/contracts/:id/ticket`                          | User        | Purchase a single-contract ticket.                                            |
+| `GET`  | `/contracts/:id/attestation`                     | User        | Get recovery attestation status.                                              |
+| `POST` | `/contracts/:id/attestation`                     | User        | Submit daily attestation with optional emotional tracking. Rate limit: 5/min. |
+| `POST` | `/contracts/:id/whoop/scored`                    | User        | Submit Whoop `SCORED` or `UNSCORED` state. Rate limit: 20/min.                |
+| `GET`  | `/contracts/invitations`                         | User        | List pending accountability-partner invitations.                              |
+| `POST` | `/contracts/:id/partner/accept`                  | User        | Accept an accountability-partner invitation.                                  |
+| `POST` | `/contracts/:id/attestation/cosign`              | User        | Co-sign an attestation as an accountability partner.                          |
+| `POST` | `/contracts/:id/double-down`                     | User        | Increase an active contract commitment. Body: `amount`.                       |
+| `POST` | `/contracts/:id/medical-exemption`               | User        | Request a compassionate medical exemption.                                    |
+| `POST` | `/contracts/bounty/:linkId`                      | Public link | Submit evidence through a whistleblower bounty link. Rate limit: 5/min.       |
+| `GET`  | `/contracts/:id/recovery/lock-status`            | User        | Get recovery-break timelock state.                                            |
+| `POST` | `/contracts/:id/recovery/break-request`          | User        | Queue a 24 hour timelocked intentional break.                                 |
+| `POST` | `/contracts/:id/recovery/break-cancel`           | User        | Cancel a pending recovery break.                                              |
+| `GET`  | `/contracts/:id/recovery/penalty-preview`        | User        | Preview recovery penalty amount.                                              |
+| `POST` | `/contracts/:id/accountability/invite`           | User        | Invite an accountability partner.                                             |
+| `POST` | `/contracts/:id/accountability/respond`          | User        | Accept or decline an accountability invitation.                               |
+| `POST` | `/contracts/:id/recovery/veto-break`             | User        | Veto a pending recovery break as partner.                                     |
+| `GET`  | `/contracts/:id/accountability/status`           | User        | Get accountability-partner status and history.                                |
+| `POST` | `/contracts/:id/survey`                          | User        | Submit `BASELINE` or `FINAL` survey responses.                                |
+| `GET`  | `/contracts/:id/survey`                          | User        | Get survey responses for a contract.                                          |
+| `GET`  | `/contracts/cohorts/:cohortId/snapshot`          | User        | Get cohort roster and pod snapshot.                                           |
+| `POST` | `/contracts/cohorts/:cohortId/waitlist`          | User        | Join or update waitlist entry.                                                |
+| `GET`  | `/contracts/cohorts/:cohortId/waitlist/position` | User        | Get current user's waitlist position.                                         |
+| `GET`  | `/contracts/cohorts/:cohortId/waitlist`          | User        | Get a cohort waitlist.                                                        |
 
 ### Proof Media
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `POST` | `/proofs/upload-url` | User | Create a pending proof and return pre-signed upload URL. Rate limit: 10/min. |
-| `POST` | `/proofs/:id/confirm-upload` | User | Confirm media upload, run integrity checks, route to peer audit. |
-| `GET` | `/proofs/:id` | User | Get proof details and signed view URL when visible. |
-| `GET` | `/proofs/:id/processing-status` | User | Read video/redaction processing status. |
+| Method | Path                              | Auth     | Purpose                                                                         |
+| ------ | --------------------------------- | -------- | ------------------------------------------------------------------------------- |
+| `POST` | `/proofs/upload-url`              | User     | Create a pending proof and return pre-signed upload URL. Rate limit: 10/min.    |
+| `POST` | `/proofs/:id/confirm-upload`      | User     | Confirm media upload, run integrity checks, route to peer audit.                |
+| `GET`  | `/proofs/:id`                     | User     | Get proof details and signed view URL when visible.                             |
+| `GET`  | `/proofs/:id/processing-status`   | User     | Read video/redaction processing status.                                         |
 | `POST` | `/proofs/:id/processing-complete` | Operator | Internal service callback. Requires `x-internal-token` and `x-proof-challenge`. |
 
 ### Peer Audit
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `GET` | `/fury/queue` | FURY or ADMIN | Get pending audit assignments. |
-| `GET` | `/fury/stats` | FURY or ADMIN | Get audit counts, accuracy, bounties, penalties, and honeypot performance. Monetary values are cents. |
-| `POST` | `/fury/verdict` | FURY | Submit `PASS` or `FAIL` for an assigned proof. |
-| `GET` | `/fury/review/:assignmentId/mask-audit` | FURY or ADMIN | Get redaction provenance for an assignment. |
-| `POST` | `/fury/stream-ticket` | FURY | Issue short-lived SSE ticket. |
-| `POST` | `/fury/stream-cookie` | FURY | Issue short-lived HttpOnly SSE cookie. |
-| `GET` | `/fury/stream` | FURY stream ticket or cookie | SSE stream for assignment updates. |
-| `POST` | `/fury/enforcement/appeals/:caseId` | User | Appeal an enforcement penalty. |
-| `POST` | `/fury/enforcement/evaluate` | Operator | Evaluate collusion incidents and apply enforcement. |
+| Method | Path                                    | Auth                         | Purpose                                                                                               |
+| ------ | --------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `GET`  | `/fury/queue`                           | FURY or ADMIN                | Get pending audit assignments.                                                                        |
+| `GET`  | `/fury/stats`                           | FURY or ADMIN                | Get audit counts, accuracy, bounties, penalties, and honeypot performance. Monetary values are cents. |
+| `POST` | `/fury/verdict`                         | FURY                         | Submit `PASS` or `FAIL` for an assigned proof.                                                        |
+| `GET`  | `/fury/review/:assignmentId/mask-audit` | FURY or ADMIN                | Get redaction provenance for an assignment.                                                           |
+| `POST` | `/fury/stream-ticket`                   | FURY                         | Issue short-lived SSE ticket.                                                                         |
+| `POST` | `/fury/stream-cookie`                   | FURY                         | Issue short-lived HttpOnly SSE cookie.                                                                |
+| `GET`  | `/fury/stream`                          | FURY stream ticket or cookie | SSE stream for assignment updates.                                                                    |
+| `POST` | `/fury/enforcement/appeals/:caseId`     | User                         | Appeal an enforcement penalty.                                                                        |
+| `POST` | `/fury/enforcement/evaluate`            | Operator                     | Evaluate collusion incidents and apply enforcement.                                                   |
 
 ### Wallet And Ledger
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `GET` | `/wallet/balance` | User | Balance, integrity score, allowed tiers, account status. Balance is USD. |
-| `GET` | `/wallet/history` | User | Ledger transaction history. Query: `limit` from 1 to 100, default 50. Amounts are signed USD. |
+| Method | Path              | Auth | Purpose                                                                                       |
+| ------ | ----------------- | ---- | --------------------------------------------------------------------------------------------- |
+| `GET`  | `/wallet/balance` | User | Balance, integrity score, allowed tiers, account status. Balance is USD.                      |
+| `GET`  | `/wallet/history` | User | Ledger transaction history. Query: `limit` from 1 to 100, default 50. Amounts are signed USD. |
 
 ### Payments And Settlement
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `GET` | `/payments/disposition-policy/effective` | User | Effective payout disposition policy for the current jurisdiction. |
-| `GET` | `/payments/settlement/:contractId/preview` | User | Settlement quote for a resolved contract. |
-| `GET` | `/payments/settlement/:contractId/status` | User | Settlement runs and ledger entries for a contract. |
-| `GET` | `/payments/reconcile/:contractId` | User | Verify ledger and real-money rail balance for a contract. |
-| `GET` | `/payments/custody-report` | User | Custody review report. Query: `start`, `end`. Access should be limited by deployment policy. |
-| `POST` | `/payments/settlement/:contractId/execute` | Operator | Manually dispatch settlement. |
-| `POST` | `/payments/webhook` | Stripe | Stripe payment and dispute webhook receiver. Configure this in Stripe, do not call it from customer clients. |
+| Method | Path                                       | Auth     | Purpose                                                                                                      |
+| ------ | ------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------ |
+| `GET`  | `/payments/disposition-policy/effective`   | User     | Effective payout disposition policy for the current jurisdiction.                                            |
+| `GET`  | `/payments/settlement/:contractId/preview` | User     | Settlement quote for a resolved contract.                                                                    |
+| `GET`  | `/payments/settlement/:contractId/status`  | User     | Settlement runs and ledger entries for a contract.                                                           |
+| `GET`  | `/payments/reconcile/:contractId`          | User     | Verify ledger and real-money rail balance for a contract.                                                    |
+| `GET`  | `/payments/custody-report`                 | User     | Custody review report. Query: `start`, `end`. Access should be limited by deployment policy.                 |
+| `POST` | `/payments/settlement/:contractId/execute` | Operator | Manually dispatch settlement.                                                                                |
+| `POST` | `/payments/webhook`                        | Stripe   | Stripe payment and dispute webhook receiver. Configure this in Stripe, do not call it from customer clients. |
 
 ### Enterprise
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `GET` | `/b2b/metrics/:enterpriseId` | Enterprise Admin | Enterprise completion and integrity metrics. |
-| `GET` | `/b2b/billing/:enterpriseId` | Enterprise Admin | Read-only billing summary. |
-| `POST` | `/b2b/webhook/register` | Enterprise Admin | Register (or reactivate) a webhook subscription. |
-| `GET` | `/b2b/webhook/subscriptions/:enterpriseId` | Enterprise Admin | List active webhook subscriptions. |
-| `POST` | `/b2b/webhook/test` | Enterprise Admin | Send signed test webhook event. |
-| `GET` | `/b2b/export/hr/:enterpriseId` | Enterprise Admin | Pseudonymized HR export with small-cohort suppression. |
-| `GET` | `/b2b/datalake/:enterpriseId` | Enterprise Admin | Time-bounded analytics snapshot. Query: `start`, `end`. |
-| `GET` | `/b2b/crm/integrity/:enterpriseId` | Enterprise Admin | Aggregate corporate integrity score. |
-| `POST` | `/b2b/crm/events/:enterpriseId` | Enterprise Admin | Push an employee behavioral event to the configured CRM connectors. |
-| `POST` | `/b2b/crm/interactions/:enterpriseId` | Enterprise Admin | Log a CRM interaction against an employee email. |
-| `POST` | `/b2b/crm/sync/:enterpriseId` | Enterprise Admin | Sync an enterprise employee into the configured CRM. |
+| Method | Path                                       | Auth             | Purpose                                                             |
+| ------ | ------------------------------------------ | ---------------- | ------------------------------------------------------------------- |
+| `GET`  | `/b2b/metrics/:enterpriseId`               | Enterprise Admin | Enterprise completion and integrity metrics.                        |
+| `GET`  | `/b2b/billing/:enterpriseId`               | Enterprise Admin | Read-only billing summary.                                          |
+| `POST` | `/b2b/webhook/register`                    | Enterprise Admin | Register (or reactivate) a webhook subscription.                    |
+| `GET`  | `/b2b/webhook/subscriptions/:enterpriseId` | Enterprise Admin | List active webhook subscriptions.                                  |
+| `POST` | `/b2b/webhook/test`                        | Enterprise Admin | Send signed test webhook event.                                     |
+| `GET`  | `/b2b/export/hr/:enterpriseId`             | Enterprise Admin | Pseudonymized HR export with small-cohort suppression.              |
+| `GET`  | `/b2b/datalake/:enterpriseId`              | Enterprise Admin | Time-bounded analytics snapshot. Query: `start`, `end`.             |
+| `GET`  | `/b2b/crm/integrity/:enterpriseId`         | Enterprise Admin | Aggregate corporate integrity score.                                |
+| `POST` | `/b2b/crm/events/:enterpriseId`            | Enterprise Admin | Push an employee behavioral event to the configured CRM connectors. |
+| `POST` | `/b2b/crm/interactions/:enterpriseId`      | Enterprise Admin | Log a CRM interaction against an employee email.                    |
+| `POST` | `/b2b/crm/sync/:enterpriseId`              | Enterprise Admin | Sync an enterprise employee into the configured CRM.                |
 
 ### Notifications And Public Feed
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `GET` | `/notifications` | User | List current user's notifications. |
-| `GET` | `/notifications/unread-count` | User | Unread count. |
-| `POST` | `/notifications/:id/read` | User | Mark one notification read. |
-| `POST` | `/notifications/stream-ticket` | User | Issue short-lived SSE ticket. |
-| `POST` | `/notifications/stream-cookie` | User | Issue short-lived HttpOnly SSE cookie. |
-| `GET` | `/notifications/stream` | User stream ticket or cookie | SSE stream for notifications. |
-| `GET` | `/feed` | Public | Anonymized public event feed. Query: `limit`. |
-| `GET` | `/feed/stream` | Public | SSE stream of anonymized public events. |
+| Method | Path                           | Auth                         | Purpose                                       |
+| ------ | ------------------------------ | ---------------------------- | --------------------------------------------- |
+| `GET`  | `/notifications`               | User                         | List current user's notifications.            |
+| `GET`  | `/notifications/unread-count`  | User                         | Unread count.                                 |
+| `POST` | `/notifications/:id/read`      | User                         | Mark one notification read.                   |
+| `POST` | `/notifications/stream-ticket` | User                         | Issue short-lived SSE ticket.                 |
+| `POST` | `/notifications/stream-cookie` | User                         | Issue short-lived HttpOnly SSE cookie.        |
+| `GET`  | `/notifications/stream`        | User stream ticket or cookie | SSE stream for notifications.                 |
+| `GET`  | `/feed`                        | Public                       | Anonymized public event feed. Query: `limit`. |
+| `GET`  | `/feed/stream`                 | Public                       | SSE stream of anonymized public events.       |
 
 ### Realms, Social, Behavioral, Oracles
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `GET` | `/realms` | Public | List behavioral realms with aggregate stats. |
-| `GET` | `/realms/:slug` | Public | Realm detail. |
-| `GET` | `/realms/:slug/contracts` | User | Current user's contracts in a realm. |
-| `GET` | `/social/profile/me` | User | Current user's pseudonymous social profile. |
-| `GET` | `/social/profile/:userId` | Public | Pseudonymous social profile. |
-| `GET` | `/social/leaderboard` | Public | Tavern Board integrity leaderboard. |
-| `GET` | `/behavioral/commitment-devices/catalog` | Public | Available commitment devices. |
-| `POST` | `/behavioral/commitment-devices/:deviceId/subscribe` | User | Subscribe to a commitment device. |
-| `DELETE` | `/behavioral/commitment-devices/:deviceId/subscribe` | User | Cancel a commitment-device subscription. |
-| `GET` | `/behavioral/crab-bucket/risk` | User | Analyze current user's self-sabotage risk. |
-| `GET` | `/behavioral/habituation/:contractId` | User | Detect habituation signals for a contract. |
-| `POST` | `/behavioral/swaps` | User | Propose a behavior swap. |
-| `POST` | `/oracles/healthkit/samples` | User | Ingest trusted HealthKit or Health Connect samples for contract verification. |
+| Method   | Path                                                 | Auth   | Purpose                                                                       |
+| -------- | ---------------------------------------------------- | ------ | ----------------------------------------------------------------------------- |
+| `GET`    | `/realms`                                            | Public | List behavioral realms with aggregate stats.                                  |
+| `GET`    | `/realms/:slug`                                      | Public | Realm detail.                                                                 |
+| `GET`    | `/realms/:slug/contracts`                            | User   | Current user's contracts in a realm.                                          |
+| `GET`    | `/social/profile/me`                                 | User   | Current user's pseudonymous social profile.                                   |
+| `GET`    | `/social/profile/:userId`                            | Public | Pseudonymous social profile.                                                  |
+| `GET`    | `/social/leaderboard`                                | Public | Tavern Board integrity leaderboard.                                           |
+| `GET`    | `/behavioral/commitment-devices/catalog`             | Public | Available commitment devices.                                                 |
+| `POST`   | `/behavioral/commitment-devices/:deviceId/subscribe` | User   | Subscribe to a commitment device.                                             |
+| `DELETE` | `/behavioral/commitment-devices/:deviceId/subscribe` | User   | Cancel a commitment-device subscription.                                      |
+| `GET`    | `/behavioral/crab-bucket/risk`                       | User   | Analyze current user's self-sabotage risk.                                    |
+| `GET`    | `/behavioral/habituation/:contractId`                | User   | Detect habituation signals for a contract.                                    |
+| `POST`   | `/behavioral/swaps`                                  | User   | Propose a behavior swap.                                                      |
+| `POST`   | `/oracles/healthkit/samples`                         | User   | Ingest trusted HealthKit or Health Connect samples for contract verification. |
 
 ### Agent Action Evidence
 
@@ -781,26 +783,26 @@ safety boundary, and UCC/Hospes adapter examples.
 
 ### Support, AI, Crisis, And Operator Routes
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `POST` | `/ai/grill-me` | User | Generate challenge questions from provided text. |
-| `POST` | `/ai/eli5` | User | Simplify provided text. |
-| `POST` | `/crisis/escalate` | User | Self-report crisis escalation and receive intervention resources. |
-| `POST` | `/compliance/medical-exemption/request` | User | Request a medical exemption by contract ID. |
-| `POST` | `/compliance/medical-exemption/approve` | Operator | Approve medical exemption. |
-| `POST` | `/compliance/identity/webhooks/stripe` | Stripe | Stripe Identity webhook receiver. |
-| `GET/POST/PATCH` | `/admin/*` | Operator | Platform operations: crisis events, jurisdictions, kill switch, disputes, users, reconciliation, anomaly scan, stats, honeypots, bans, and manual resolution. |
+| Method           | Path                                    | Auth     | Purpose                                                                                                                                                       |
+| ---------------- | --------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST`           | `/ai/grill-me`                          | User     | Generate challenge questions from provided text.                                                                                                              |
+| `POST`           | `/ai/eli5`                              | User     | Simplify provided text.                                                                                                                                       |
+| `POST`           | `/crisis/escalate`                      | User     | Self-report crisis escalation and receive intervention resources.                                                                                             |
+| `POST`           | `/compliance/medical-exemption/request` | User     | Request a medical exemption by contract ID.                                                                                                                   |
+| `POST`           | `/compliance/medical-exemption/approve` | Operator | Approve medical exemption.                                                                                                                                    |
+| `POST`           | `/compliance/identity/webhooks/stripe`  | Stripe   | Stripe Identity webhook receiver.                                                                                                                             |
+| `GET/POST/PATCH` | `/admin/*`                              | Operator | Platform operations: crisis events, jurisdictions, kill switch, disputes, users, reconciliation, anomaly scan, stats, honeypots, bans, and manual resolution. |
 
 ## Webhook And Provider Endpoints
 
 These endpoints are public at the network layer because external providers call
 them, but they require provider signatures or internal shared tokens:
 
-| Path | Caller | Protection |
-|------|--------|------------|
-| `/payments/webhook` | Stripe Payments | `Stripe-Signature` verified with `STRIPE_WEBHOOK_SECRET`. Duplicate event IDs are ignored. |
-| `/compliance/identity/webhooks/stripe` | Stripe Identity | `Stripe-Signature` verified by the identity provider service. |
-| `/proofs/:id/processing-complete` | Internal media processor | `x-internal-token` plus per-proof `x-proof-challenge`. |
+| Path                                   | Caller                   | Protection                                                                                 |
+| -------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------ |
+| `/payments/webhook`                    | Stripe Payments          | `Stripe-Signature` verified with `STRIPE_WEBHOOK_SECRET`. Duplicate event IDs are ignored. |
+| `/compliance/identity/webhooks/stripe` | Stripe Identity          | `Stripe-Signature` verified by the identity provider service.                              |
+| `/proofs/:id/processing-complete`      | Internal media processor | `x-internal-token` plus per-proof `x-proof-challenge`.                                     |
 
 Do not call these endpoints from browser, mobile, or customer server clients.
 

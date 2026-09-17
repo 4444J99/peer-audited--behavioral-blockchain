@@ -1,4 +1,4 @@
-import p5 from 'p5';
+import p5 from "p5";
 
 export const teamGears = (p: p5) => {
   const drawGear = (

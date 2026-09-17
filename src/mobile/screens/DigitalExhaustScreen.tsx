@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,14 +7,14 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-} from 'react-native';
-import { ZKPrivacyEngine, ExhaustProof } from '../services/ZKPrivacyEngine';
-import { ApiClient } from '../services/ApiClient';
-import { createZkProofMediaUri } from '../utils/proof-media';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { ContractsStackParamList } from '../App';
+} from "react-native";
+import { ZKPrivacyEngine, ExhaustProof } from "../services/ZKPrivacyEngine";
+import { ApiClient } from "../services/ApiClient";
+import { createZkProofMediaUri } from "../utils/proof-media";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { ContractsStackParamList } from "../App";
 
-type Props = NativeStackScreenProps<ContractsStackParamList, 'DigitalExhaust'>;
+type Props = NativeStackScreenProps<ContractsStackParamList, "DigitalExhaust">;
 
 export default function DigitalExhaustScreen({ route, navigation }: Props) {
   const { contractId, targetPhoneNumber } = route.params;
@@ -38,11 +38,11 @@ export default function DigitalExhaustScreen({ route, navigation }: Props) {
         contractId,
         targetPhoneNumber,
         start,
-        end
+        end,
       );
       setProof(localProof);
     } catch (err: any) {
-      Alert.alert('Scan Failed', err.message);
+      Alert.alert("Scan Failed", err.message);
     } finally {
       setScanning(false);
     }
@@ -61,14 +61,14 @@ export default function DigitalExhaustScreen({ route, navigation }: Props) {
       const result = await ApiClient.submitProof(contractId, { mediaUri });
 
       Alert.alert(
-        'Verification Complete',
+        "Verification Complete",
         proof.breachDetected
           ? `A breach was detected. Proof ${result.proofId} has been routed for review.`
           : `Compliance verified. Proof ${result.proofId} has been routed while preserving private logs.`,
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
+        [{ text: "OK", onPress: () => navigation.goBack() }],
       );
     } catch (err: any) {
-      Alert.alert('Submission Failed', err.message);
+      Alert.alert("Submission Failed", err.message);
     } finally {
       setSubmitting(false);
     }
@@ -78,44 +78,61 @@ export default function DigitalExhaustScreen({ route, navigation }: Props) {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Digital Exhaust Scan</Text>
-        <Text style={styles.subtitle}>Privacy-First Automatic Verification</Text>
+        <Text style={styles.subtitle}>
+          Privacy-First Automatic Verification
+        </Text>
       </View>
 
       <View style={styles.privacyCard}>
         <Text style={styles.privacyIcon}>🔒</Text>
         <Text style={styles.privacyTitle}>Zero-Knowledge Scan</Text>
         <Text style={styles.privacyText}>
-          Styx will scan your local SMS and Call logs for interactions with your restricted targets.
+          Styx will scan your local SMS and Call logs for interactions with your
+          restricted targets.
           {"\n\n"}
-          <Text style={styles.bold}>Your private data never leaves this device.</Text> Only a cryptographic proof of compliance is sent to our servers.
+          <Text style={styles.bold}>
+            Your private data never leaves this device.
+          </Text>{" "}
+          Only a cryptographic proof of compliance is sent to our servers.
         </Text>
       </View>
 
       {!canScan ? (
         <View style={styles.unavailableCard}>
-          <Text style={styles.unavailableTitle}>Scan Unavailable On This Device</Text>
+          <Text style={styles.unavailableTitle}>
+            Scan Unavailable On This Device
+          </Text>
           <Text style={styles.unavailableText}>
-            This build has no telephony log source, so a no-contact scan cannot be
-            performed here and will not be reported either way. Use your daily
-            check-in to attest compliance instead.
+            This build has no telephony log source, so a no-contact scan cannot
+            be performed here and will not be reported either way. Use your
+            daily check-in to attest compliance instead.
           </Text>
         </View>
       ) : scanning ? (
         <View style={styles.scanState}>
           <ActivityIndicator size="large" color="#ef4444" />
           <Text style={styles.scanText}>Analyzing local telephony logs...</Text>
-          <Text style={styles.scanSubtext}>Generating SHA-256 binary proof</Text>
+          <Text style={styles.scanSubtext}>
+            Generating SHA-256 binary proof
+          </Text>
         </View>
       ) : proof ? (
         <View style={styles.resultCard}>
-          <Text style={[styles.resultTitle, proof.breachDetected ? styles.errorText : styles.successText]}>
-            {proof.breachDetected ? 'Breach Detected' : 'No Contact Maintained'}
+          <Text
+            style={[
+              styles.resultTitle,
+              proof.breachDetected ? styles.errorText : styles.successText,
+            ]}
+          >
+            {proof.breachDetected ? "Breach Detected" : "No Contact Maintained"}
           </Text>
           <Text style={styles.hashLabel}>Cryptographic Proof Hash:</Text>
-          <Text style={styles.hashValue}>{proof.proofHash.substring(0, 32)}...</Text>
-          
-          <TouchableOpacity 
-            style={styles.submitButton} 
+          <Text style={styles.hashValue}>
+            {proof.proofHash.substring(0, 32)}...
+          </Text>
+
+          <TouchableOpacity
+            style={styles.submitButton}
             onPress={submitProof}
             disabled={submitting}
           >
@@ -132,8 +149,8 @@ export default function DigitalExhaustScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity 
-        style={styles.cancelButton} 
+      <TouchableOpacity
+        style={styles.cancelButton}
         onPress={() => navigation.goBack()}
         disabled={scanning || submitting}
       >
@@ -144,74 +161,117 @@ export default function DigitalExhaustScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a0f', padding: 20 },
-  header: { marginTop: 40, marginBottom: 30, alignItems: 'center' },
-  title: { color: '#fff', fontSize: 24, fontWeight: '900', letterSpacing: 1 },
-  subtitle: { color: '#888', fontSize: 12, textTransform: 'uppercase', marginTop: 4, letterSpacing: 2 },
-  
+  container: { flex: 1, backgroundColor: "#0a0a0f", padding: 20 },
+  header: { marginTop: 40, marginBottom: 30, alignItems: "center" },
+  title: { color: "#fff", fontSize: 24, fontWeight: "900", letterSpacing: 1 },
+  subtitle: {
+    color: "#888",
+    fontSize: 12,
+    textTransform: "uppercase",
+    marginTop: 4,
+    letterSpacing: 2,
+  },
+
   privacyCard: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
     borderRadius: 16,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#2a2a3e',
+    borderColor: "#2a2a3e",
     marginBottom: 30,
   },
-  privacyIcon: { fontSize: 32, marginBottom: 16, textAlign: 'center' },
-  privacyTitle: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 12, textAlign: 'center' },
-  privacyText: { color: '#aaa', fontSize: 14, lineHeight: 20, textAlign: 'center' },
-  bold: { color: '#fff', fontWeight: 'bold' },
+  privacyIcon: { fontSize: 32, marginBottom: 16, textAlign: "center" },
+  privacyTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  privacyText: {
+    color: "#aaa",
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+  },
+  bold: { color: "#fff", fontWeight: "bold" },
 
   unavailableCard: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
     borderRadius: 16,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#3a3a4e',
-    alignItems: 'center',
+    borderColor: "#3a3a4e",
+    alignItems: "center",
   },
-  unavailableTitle: { color: '#f59e0b', fontSize: 16, fontWeight: '900', marginBottom: 12, textAlign: 'center' },
-  unavailableText: { color: '#aaa', fontSize: 14, lineHeight: 20, textAlign: 'center' },
+  unavailableTitle: {
+    color: "#f59e0b",
+    fontSize: 16,
+    fontWeight: "900",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  unavailableText: {
+    color: "#aaa",
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+  },
 
-  scanState: { alignItems: 'center', padding: 40 },
-  scanText: { color: '#fff', fontSize: 16, fontWeight: '600', marginTop: 20 },
-  scanSubtext: { color: '#666', fontSize: 12, marginTop: 8 },
+  scanState: { alignItems: "center", padding: 40 },
+  scanText: { color: "#fff", fontSize: 16, fontWeight: "600", marginTop: 20 },
+  scanSubtext: { color: "#666", fontSize: 12, marginTop: 8 },
 
   resultCard: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
     borderRadius: 16,
     padding: 24,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#2a2a3e',
+    borderColor: "#2a2a3e",
   },
-  resultTitle: { fontSize: 20, fontWeight: '900', marginBottom: 20 },
-  successText: { color: '#22c55e' },
-  errorText: { color: '#ef4444' },
-  hashLabel: { color: '#666', fontSize: 11, textTransform: 'uppercase', marginBottom: 4 },
-  hashValue: { color: '#444', fontSize: 10, fontFamily: 'monospace', marginBottom: 30 },
+  resultTitle: { fontSize: 20, fontWeight: "900", marginBottom: 20 },
+  successText: { color: "#22c55e" },
+  errorText: { color: "#ef4444" },
+  hashLabel: {
+    color: "#666",
+    fontSize: 11,
+    textTransform: "uppercase",
+    marginBottom: 4,
+  },
+  hashValue: {
+    color: "#444",
+    fontSize: 10,
+    fontFamily: "monospace",
+    marginBottom: 30,
+  },
 
   scanButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: "#ef4444",
     borderRadius: 12,
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  scanButtonText: { color: '#fff', fontSize: 16, fontWeight: '900', letterSpacing: 1 },
+  scanButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
 
   submitButton: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 40,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  submitButtonText: { color: '#000', fontSize: 14, fontWeight: '900' },
+  submitButtonText: { color: "#000", fontSize: 14, fontWeight: "900" },
 
   cancelButton: {
     marginTop: 20,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  cancelButtonText: { color: '#666', fontSize: 14 },
+  cancelButtonText: { color: "#666", fontSize: 14 },
 });

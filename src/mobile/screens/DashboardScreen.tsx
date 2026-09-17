@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,9 +6,9 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-} from 'react-native';
-import { ApiClient } from '../services/ApiClient';
-import { parseSupportTraceMessage } from '../utils/support-trace';
+} from "react-native";
+import { ApiClient } from "../services/ApiClient";
+import { parseSupportTraceMessage } from "../utils/support-trace";
 
 interface DashboardScreenProps {
   navigation: any;
@@ -27,18 +27,19 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
     daysRemaining: number;
   } | null>(null);
   const [pendingInvitations, setPendingInvitations] = useState<any[]>([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const parsedError = parseSupportTraceMessage(error);
 
   const loadData = useCallback(async () => {
     try {
-      const [me, balanceData, notifs, contractsData, invitations] = await Promise.all([
-        ApiClient.getMe(),
-        ApiClient.getBalance().catch(() => null),
-        ApiClient.getNotifications().catch(() => ({ notifications: [] })),
-        ApiClient.getContracts().catch(() => []),
-        ApiClient.getPendingInvitations().catch(() => []),
-      ]);
+      const [me, balanceData, notifs, contractsData, invitations] =
+        await Promise.all([
+          ApiClient.getMe(),
+          ApiClient.getBalance().catch(() => null),
+          ApiClient.getNotifications().catch(() => ({ notifications: [] })),
+          ApiClient.getContracts().catch(() => []),
+          ApiClient.getPendingInvitations().catch(() => []),
+        ]);
       setProfile(me);
       setBalance(balanceData);
       setNotifications(notifs.notifications.slice(0, 5));
@@ -46,12 +47,18 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
 
       // Find active recovery contract and fetch attestation status
       const activeRecovery = Array.isArray(contractsData)
-        ? contractsData.find((c: any) => c.status === 'ACTIVE' && String(c.oath_category || '').startsWith('RECOVERY_'))
+        ? contractsData.find(
+            (c: any) =>
+              c.status === "ACTIVE" &&
+              String(c.oath_category || "").startsWith("RECOVERY_"),
+          )
         : null;
 
       if (activeRecovery) {
         try {
-          const attStatus = await ApiClient.getAttestationStatus(activeRecovery.id);
+          const attStatus = await ApiClient.getAttestationStatus(
+            activeRecovery.id,
+          );
           setAttestationInfo({
             contractId: activeRecovery.id,
             streakDays: attStatus.streak_days,
@@ -65,7 +72,7 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
         setAttestationInfo(null);
       }
 
-      setError('');
+      setError("");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -88,17 +95,22 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
       await ApiClient.acceptPartnerInvitation(contractId);
       loadData();
     } catch (err: any) {
-      setError(err?.message || 'Failed to accept partner invitation');
+      setError(err?.message || "Failed to accept partner invitation");
     }
   };
 
   const getTierColor = (tier: string) => {
     switch (tier) {
-      case 'WHALE': return '#ffd700';
-      case 'HIGH_ROLLER': return '#9b59b6';
-      case 'STANDARD': return '#3498db';
-      case 'MICRO': return '#2ecc71';
-      default: return '#e74c3c';
+      case "WHALE":
+        return "#ffd700";
+      case "HIGH_ROLLER":
+        return "#9b59b6";
+      case "STANDARD":
+        return "#3498db";
+      case "MICRO":
+        return "#2ecc71";
+      default:
+        return "#e74c3c";
     }
   };
 
@@ -113,13 +125,21 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ff4444" />}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#ff4444"
+        />
+      }
     >
       {error ? (
         <>
           <Text style={styles.error}>{parsedError.message}</Text>
           {parsedError.traceId ? (
-            <Text style={styles.errorTrace}>Support trace ID: {parsedError.traceId}</Text>
+            <Text style={styles.errorTrace}>
+              Support trace ID: {parsedError.traceId}
+            </Text>
           ) : null}
         </>
       ) : null}
@@ -128,8 +148,13 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
       <View style={styles.scoreCard}>
         <Text style={styles.scoreLabel}>INTEGRITY SCORE</Text>
         <Text style={styles.scoreValue}>{profile?.integrity_score ?? 0}</Text>
-        <View style={[styles.tierBadge, { backgroundColor: getTierColor(profile?.tier || '') }]}>
-          <Text style={styles.tierText}>{profile?.tier || 'UNKNOWN'}</Text>
+        <View
+          style={[
+            styles.tierBadge,
+            { backgroundColor: getTierColor(profile?.tier || "") },
+          ]}
+        >
+          <Text style={styles.tierText}>{profile?.tier || "UNKNOWN"}</Text>
         </View>
       </View>
 
@@ -140,11 +165,15 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
           <Text style={styles.statLabel}>Active Oaths</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>TEST-${profile?.total_staked?.toFixed(2) ?? '0.00'}</Text>
+          <Text style={styles.statValue}>
+            TEST-${profile?.total_staked?.toFixed(2) ?? "0.00"}
+          </Text>
           <Text style={styles.statLabel}>Total Staked</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={[styles.statValue, { color: '#84cc16' }]}>TEST-${balance?.ledger_balance?.toFixed(2) ?? '0.00'}</Text>
+          <Text style={[styles.statValue, { color: "#84cc16" }]}>
+            TEST-${balance?.ledger_balance?.toFixed(2) ?? "0.00"}
+          </Text>
           <Text style={styles.statLabel}>Balance</Text>
         </View>
       </View>
@@ -154,22 +183,26 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
         <TouchableOpacity
           style={styles.attestCard}
           onPress={() =>
-            navigation.navigate('Contracts', {
-              screen: 'Attestation',
+            navigation.navigate("Contracts", {
+              screen: "Attestation",
               params: { contractId: attestationInfo.contractId },
             } as any)
           }
         >
           <View style={styles.attestCardHeader}>
-            <Text style={styles.attestCardIcon}>{attestationInfo.todayAttested ? '✓' : '🛡'}</Text>
+            <Text style={styles.attestCardIcon}>
+              {attestationInfo.todayAttested ? "✓" : "🛡"}
+            </Text>
             <View style={{ flex: 1 }}>
               <Text style={styles.attestCardTitle}>
-                {attestationInfo.todayAttested ? 'Checked In Today' : 'Daily Check-In'}
+                {attestationInfo.todayAttested
+                  ? "Checked In Today"
+                  : "Daily Check-In"}
               </Text>
               <Text style={styles.attestCardSubtitle}>
                 {attestationInfo.todayAttested
                   ? `${attestationInfo.streakDays}-day streak · ${attestationInfo.daysRemaining} days left`
-                  : 'Tap to submit your daily attestation'}
+                  : "Tap to submit your daily attestation"}
               </Text>
             </View>
             {!attestationInfo.todayAttested && (
@@ -194,15 +227,20 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
             <View key={inv.id || inv.contract_id} style={styles.partnerCard}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.partnerCardTitle}>
-                  {inv.owner_email ? `From: ${inv.owner_email}` : 'Accountability Partner'}
+                  {inv.owner_email
+                    ? `From: ${inv.owner_email}`
+                    : "Accountability Partner"}
                 </Text>
                 <Text style={styles.partnerCardSubtitle}>
-                  {inv.oath_category || 'Contract'} · TEST-${inv.stake_amount || '0'}
+                  {inv.oath_category || "Contract"} · TEST-$
+                  {inv.stake_amount || "0"}
                 </Text>
               </View>
               <TouchableOpacity
                 style={styles.partnerAcceptButton}
-                onPress={() => handleAcceptInvitation(inv.contract_id || inv.id)}
+                onPress={() =>
+                  handleAcceptInvitation(inv.contract_id || inv.id)
+                }
               >
                 <Text style={styles.partnerAcceptButtonText}>Accept</Text>
               </TouchableOpacity>
@@ -217,23 +255,27 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
         <View style={styles.actionsRow}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => navigation.navigate('Contracts', { screen: 'CreateContract' } as any)}
+            onPress={() =>
+              navigation.navigate("Contracts", {
+                screen: "CreateContract",
+              } as any)
+            }
           >
-            <Text style={styles.actionIcon}>{'📜'}</Text>
+            <Text style={styles.actionIcon}>{"📜"}</Text>
             <Text style={styles.actionLabel}>New Oath</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => navigation.navigate('Wallet')}
+            onPress={() => navigation.navigate("Wallet")}
           >
-            <Text style={styles.actionIcon}>{'💰'}</Text>
+            <Text style={styles.actionIcon}>{"💰"}</Text>
             <Text style={styles.actionLabel}>Wallet</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => navigation.navigate('Profile')}
+            onPress={() => navigation.navigate("Profile")}
           >
-            <Text style={styles.actionIcon}>{'👤'}</Text>
+            <Text style={styles.actionIcon}>{"👤"}</Text>
             <Text style={styles.actionLabel}>Profile</Text>
           </TouchableOpacity>
         </View>
@@ -260,121 +302,163 @@ export function DashboardScreen({ navigation }: DashboardScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a0f', padding: 16 },
-  centerContainer: { flex: 1, backgroundColor: '#0a0a0f', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#888', fontSize: 16 },
-  error: { color: '#ff6666', backgroundColor: '#ff444420', padding: 10, borderRadius: 8, marginBottom: 12 },
-  errorTrace: { color: '#888', fontSize: 11, marginTop: -8, marginBottom: 12, paddingHorizontal: 4 },
+  container: { flex: 1, backgroundColor: "#0a0a0f", padding: 16 },
+  centerContainer: {
+    flex: 1,
+    backgroundColor: "#0a0a0f",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: { color: "#888", fontSize: 16 },
+  error: {
+    color: "#ff6666",
+    backgroundColor: "#ff444420",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  errorTrace: {
+    color: "#888",
+    fontSize: 11,
+    marginTop: -8,
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
   scoreCard: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
     borderRadius: 16,
     padding: 24,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#2a2a3e',
+    borderColor: "#2a2a3e",
   },
-  scoreLabel: { color: '#888', fontSize: 12, letterSpacing: 2, marginBottom: 8 },
-  scoreValue: { color: '#ff4444', fontSize: 64, fontWeight: '800' },
-  tierBadge: { paddingHorizontal: 16, paddingVertical: 4, borderRadius: 12, marginTop: 8 },
-  tierText: { color: '#fff', fontSize: 12, fontWeight: '700', letterSpacing: 1 },
-  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  scoreLabel: {
+    color: "#888",
+    fontSize: 12,
+    letterSpacing: 2,
+    marginBottom: 8,
+  },
+  scoreValue: { color: "#ff4444", fontSize: 64, fontWeight: "800" },
+  tierBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  tierText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+  statsRow: { flexDirection: "row", gap: 12, marginBottom: 16 },
   statCard: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#2a2a3e',
+    borderColor: "#2a2a3e",
   },
-  statValue: { color: '#e0e0e0', fontSize: 24, fontWeight: '700' },
-  statLabel: { color: '#888', fontSize: 12, marginTop: 4 },
+  statValue: { color: "#e0e0e0", fontSize: 24, fontWeight: "700" },
+  statLabel: { color: "#888", fontSize: 12, marginTop: 4 },
   section: { marginBottom: 24 },
-  sectionTitle: { color: '#e0e0e0', fontSize: 16, fontWeight: '600', marginBottom: 12 },
-  actionsRow: { flexDirection: 'row', gap: 12 },
+  sectionTitle: {
+    color: "#e0e0e0",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  actionsRow: { flexDirection: "row", gap: 12 },
   actionButton: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#2a2a3e',
+    borderColor: "#2a2a3e",
   },
   actionIcon: { fontSize: 28, marginBottom: 8 },
-  actionLabel: { color: '#e0e0e0', fontSize: 13, fontWeight: '500' },
-  emptyText: { color: '#666', fontSize: 14, textAlign: 'center', paddingVertical: 16 },
+  actionLabel: { color: "#e0e0e0", fontSize: 13, fontWeight: "500" },
+  emptyText: {
+    color: "#666",
+    fontSize: 14,
+    textAlign: "center",
+    paddingVertical: 16,
+  },
   notifItem: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#2a2a3e',
+    borderColor: "#2a2a3e",
   },
-  notifMessage: { color: '#e0e0e0', fontSize: 14 },
-  notifTime: { color: '#666', fontSize: 11, marginTop: 4 },
+  notifMessage: { color: "#e0e0e0", fontSize: 14 },
+  notifTime: { color: "#666", fontSize: 11, marginTop: 4 },
   attestCard: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#f59e0b30',
+    borderColor: "#f59e0b30",
   },
   attestCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   attestCardIcon: { fontSize: 28 },
-  attestCardTitle: { color: '#e0e0e0', fontSize: 15, fontWeight: '700' },
-  attestCardSubtitle: { color: '#888', fontSize: 12, marginTop: 2 },
+  attestCardTitle: { color: "#e0e0e0", fontSize: 15, fontWeight: "700" },
+  attestCardSubtitle: { color: "#888", fontSize: 12, marginTop: 2 },
   attestBadge: {
-    backgroundColor: '#f59e0b',
+    backgroundColor: "#f59e0b",
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  attestBadgeText: { color: '#000', fontSize: 11, fontWeight: '800' },
+  attestBadgeText: { color: "#000", fontSize: 11, fontWeight: "800" },
   attestStreakHint: {
-    color: '#f59e0b',
+    color: "#f59e0b",
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
     marginTop: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   partnerCard: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#2a2a3e',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    borderColor: "#2a2a3e",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   partnerCardTitle: {
-    color: '#e0e0e0',
+    color: "#e0e0e0",
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   partnerCardSubtitle: {
-    color: '#888',
+    color: "#888",
     fontSize: 12,
     marginTop: 2,
   },
   partnerAcceptButton: {
-    backgroundColor: '#ff4444',
+    backgroundColor: "#ff4444",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
   },
   partnerAcceptButtonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

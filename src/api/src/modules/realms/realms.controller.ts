@@ -1,21 +1,27 @@
-import { Controller, Get, Param, UseGuards, NotFoundException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Pool } from 'pg';
-import { AuthGuard } from '../../../guards/auth.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import {
+  Controller,
+  Get,
+  Param,
+  UseGuards,
+  NotFoundException,
+} from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { Pool } from "pg";
+import { AuthGuard } from "../../../guards/auth.guard";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import {
   REALM_REGISTRY,
   getRealmBySlug,
   RealmDefinition,
-} from '../../../../shared/libs/realm-registry';
+} from "../../../../shared/libs/realm-registry";
 
-@ApiTags('Realms')
-@Controller('realms')
+@ApiTags("Realms")
+@Controller("realms")
 export class RealmsController {
   constructor(private readonly pool: Pool) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all behavioral realms' })
+  @ApiOperation({ summary: "List all behavioral realms" })
   async listRealms() {
     // Realm definitions are compile-time constants; enrich with DB aggregate stats
     const statsResult = await this.pool.query(`
@@ -25,7 +31,10 @@ export class RealmsController {
       GROUP BY realm_id
     `);
 
-    const statsMap = new Map<string, { activeContracts: number; totalStaked: number }>();
+    const statsMap = new Map<
+      string,
+      { activeContracts: number; totalStaked: number }
+    >();
     for (const row of statsResult.rows) {
       statsMap.set(row.realm_id, {
         activeContracts: Number(row.active_contracts),
@@ -44,9 +53,9 @@ export class RealmsController {
     }));
   }
 
-  @Get(':slug')
-  @ApiOperation({ summary: 'Get realm detail by slug' })
-  async getRealmBySlug(@Param('slug') slug: string) {
+  @Get(":slug")
+  @ApiOperation({ summary: "Get realm detail by slug" })
+  async getRealmBySlug(@Param("slug") slug: string) {
     const realm = getRealmBySlug(slug);
     if (!realm) {
       throw new NotFoundException(`Realm not found: ${slug}`);
@@ -71,10 +80,12 @@ export class RealmsController {
 
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @Get(':slug/contracts')
-  @ApiOperation({ summary: "Get authenticated user's contracts within a realm" })
+  @Get(":slug/contracts")
+  @ApiOperation({
+    summary: "Get authenticated user's contracts within a realm",
+  })
   async getRealmContracts(
-    @Param('slug') slug: string,
+    @Param("slug") slug: string,
     @CurrentUser() user: { id: string },
   ) {
     const realm = getRealmBySlug(slug);

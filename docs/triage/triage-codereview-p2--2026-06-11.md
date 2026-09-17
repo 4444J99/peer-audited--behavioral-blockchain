@@ -103,7 +103,7 @@ matches the suggestion exactly. No change needed.
 
 **Reason:** Rendering ngrok config from a script would require a
 template engine in the bootstrap path. The current literal-placeholder
-form is the *correct* shape for ngrok's own envsubst; users are
+form is the _correct_ shape for ngrok's own envsubst; users are
 expected to export the variables before running ngrok. Templating
 adds a dependency and a build step for a config file that's only
 used in dev. Out of scope for env-hardening PR.
@@ -116,7 +116,7 @@ used in dev. Out of scope for env-hardening PR.
 
 **Status: REJECT**
 
-**Reason:** Gate 09 by design is a *database sync* check — it
+**Reason:** Gate 09 by design is a _database sync_ check — it
 intrinsically requires a database. Asking it to run without
 `DATABASE_URL` is asking it to be a different gate. If a no-DB
 variant is needed, it should be a separate `10-static-realm-check`
@@ -161,7 +161,7 @@ The current throw is correct.
 **Reason:** The bug is real — `resolveWebPublicUrl()` is called inside
 the response build, after `createContractTwoPhase` has already committed
 the contract + payment intent. The minimal fix is to move the URL
-resolution to *before* the side effects, which requires surgery in
+resolution to _before_ the side effects, which requires surgery in
 `createContractTwoPhase` (line 1145-1334). That surgery is too large
 to land atomically in a P2 triage PR — it changes the partial-state
 recovery contract of the function and warrants its own dedicated

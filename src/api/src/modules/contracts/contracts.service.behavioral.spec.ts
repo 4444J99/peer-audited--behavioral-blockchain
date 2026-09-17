@@ -35,7 +35,9 @@ describe("ContractsService — Behavioral Physics", () => {
     cancelHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
     retrieveHold: jest.fn().mockResolvedValue({ id: "pi_test_123" }),
     createCustomer: jest.fn().mockResolvedValue("cus_test_1"),
-    transferFunds: jest.fn().mockResolvedValue({ id: "tr_test_1", amountCents: 0 }),
+    transferFunds: jest
+      .fn()
+      .mockResolvedValue({ id: "tr_test_1", amountCents: 0 }),
   } as unknown as EscrowProvider;
   const mockRealStripe = { resolveEscrow: jest.fn().mockResolvedValue(true) };
   const mockFuryRouter = {

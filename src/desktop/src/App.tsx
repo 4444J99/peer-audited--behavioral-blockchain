@@ -1,23 +1,36 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, Activity, Database, Gavel, Fingerprint } from 'lucide-react';
-import './App.css';
-import { LoginScreen } from './components/LoginScreen';
-import LedgerInspector from './components/LedgerInspector';
-import MacroReview from './components/MacroReview';
-import ExilePanel from './components/ExilePanel';
-import B2BOrchestration from './components/B2BOrchestration';
-import HashCollider from './components/HashCollider';
-import { api, clearToken, getApiBase, getToken } from './services/api';
-import type { ReleaseInfoResponse } from '@styx/shared/index';
+import React, { useState, useEffect, useCallback } from "react";
+import { Shield, Activity, Database, Gavel, Fingerprint } from "lucide-react";
+import "./App.css";
+import { LoginScreen } from "./components/LoginScreen";
+import LedgerInspector from "./components/LedgerInspector";
+import MacroReview from "./components/MacroReview";
+import ExilePanel from "./components/ExilePanel";
+import B2BOrchestration from "./components/B2BOrchestration";
+import HashCollider from "./components/HashCollider";
+import { api, clearToken, getApiBase, getToken } from "./services/api";
+import type { ReleaseInfoResponse } from "@styx/types";
 
 const DESKTOP_ENV_LABEL =
-  (typeof process !== 'undefined' ? process.env.STYX_ENV_LABEL : undefined) || 'local';
+  (typeof process !== "undefined" ? process.env.STYX_ENV_LABEL : undefined) ||
+  "local";
 const DESKTOP_PRIVATE_BETA =
-  String((typeof process !== 'undefined' ? process.env.STYX_PRIVATE_BETA : undefined) || 'true').toLowerCase() === 'true';
+  String(
+    (typeof process !== "undefined"
+      ? process.env.STYX_PRIVATE_BETA
+      : undefined) || "true",
+  ).toLowerCase() === "true";
 const DESKTOP_TEST_MONEY =
-  String((typeof process !== 'undefined' ? process.env.STYX_TEST_MONEY_MODE : undefined) || 'true').toLowerCase() === 'true';
+  String(
+    (typeof process !== "undefined"
+      ? process.env.STYX_TEST_MONEY_MODE
+      : undefined) || "true",
+  ).toLowerCase() === "true";
 const DESKTOP_B2B_ENABLED =
-  String((typeof process !== 'undefined' ? process.env.STYX_FEATURE_B2B_HR_UI : undefined) || 'false').toLowerCase() === 'true';
+  String(
+    (typeof process !== "undefined"
+      ? process.env.STYX_FEATURE_B2B_HR_UI
+      : undefined) || "false",
+  ).toLowerCase() === "true";
 
 interface Notification {
   id: number;
@@ -25,14 +38,17 @@ interface Notification {
   timestamp: Date;
 }
 
-function ToastOverlay({ notifications, onDismiss }: { notifications: Notification[]; onDismiss: (id: number) => void }) {
+function ToastOverlay({
+  notifications,
+  onDismiss,
+}: {
+  notifications: Notification[];
+  onDismiss: (id: number) => void;
+}) {
   return (
     <div className="toast-overlay">
       {notifications.map((n) => (
-        <div
-          key={n.id}
-          className="toast-item"
-        >
+        <div key={n.id} className="toast-item">
           <div>
             <div className="system-event-title">SYSTEM EVENT</div>
             <div>{n.message}</div>
@@ -40,10 +56,7 @@ function ToastOverlay({ notifications, onDismiss }: { notifications: Notificatio
               {n.timestamp.toLocaleTimeString()}
             </div>
           </div>
-          <button
-            onClick={() => onDismiss(n.id)}
-            className="dismiss-button"
-          >
+          <button onClick={() => onDismiss(n.id)} className="dismiss-button">
             x
           </button>
         </div>
@@ -54,9 +67,13 @@ function ToastOverlay({ notifications, onDismiss }: { notifications: Notificatio
 
 export default function App() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'MACRO_QUEUE' | 'TRUTH_LOG' | 'HASH_COLLIDER' | 'EXILE' | 'B2B'>('MACRO_QUEUE');
+  const [activeTab, setActiveTab] = useState<
+    "MACRO_QUEUE" | "TRUTH_LOG" | "HASH_COLLIDER" | "EXILE" | "B2B"
+  >("MACRO_QUEUE");
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [releaseInfo, setReleaseInfo] = useState<ReleaseInfoResponse | null>(null);
+  const [releaseInfo, setReleaseInfo] = useState<ReleaseInfoResponse | null>(
+    null,
+  );
 
   // SSE connection for real-time updates
   useEffect(() => {
@@ -135,7 +152,8 @@ export default function App() {
     }
 
     let mounted = true;
-    api.getReleaseInfo()
+    api
+      .getReleaseInfo()
       .then((info) => {
         if (mounted) {
           setReleaseInfo(info);
@@ -153,8 +171,8 @@ export default function App() {
   }, [userId]);
 
   useEffect(() => {
-    if (!DESKTOP_B2B_ENABLED && activeTab === 'B2B') {
-      setActiveTab('MACRO_QUEUE');
+    if (!DESKTOP_B2B_ENABLED && activeTab === "B2B") {
+      setActiveTab("MACRO_QUEUE");
     }
   }, [activeTab]);
 
@@ -180,7 +198,10 @@ export default function App() {
   return (
     <div className="app-container">
       {/* Toast Notifications */}
-      <ToastOverlay notifications={notifications} onDismiss={dismissNotification} />
+      <ToastOverlay
+        notifications={notifications}
+        onDismiss={dismissNotification}
+      />
 
       {/* Header */}
       <header className="app-header">
@@ -197,37 +218,41 @@ export default function App() {
           {DESKTOP_PRIVATE_BETA ? (
             <div
               style={{
-                border: '1px solid #4a2a16',
-                background: '#20150d',
-                color: '#ffb26b',
+                border: "1px solid #4a2a16",
+                background: "#20150d",
+                color: "#ffb26b",
                 borderRadius: 6,
-                padding: '6px 10px',
+                padding: "6px 10px",
                 fontSize: 11,
                 fontWeight: 700,
                 marginRight: 10,
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
               }}
             >
-              {DESKTOP_TEST_MONEY ? 'Private beta • test-money' : 'Private beta'} • {DESKTOP_ENV_LABEL}
+              {DESKTOP_TEST_MONEY
+                ? "Private beta • test-money"
+                : "Private beta"}{" "}
+              • {DESKTOP_ENV_LABEL}
             </div>
           ) : null}
           <div className="level-5-badge">
-            {React.createElement(Shield as any, { size: 14 })} LEVEL 5 CLEARANCE ACTIVE
+            {React.createElement(Shield as any, { size: 14 })} LEVEL 5 CLEARANCE
+            ACTIVE
           </div>
           <div
             className="internal-warning-pulse"
             style={{
               marginLeft: 10,
-              backgroundColor: '#7f1d1d',
-              color: '#fee2e2',
-              border: '2px solid #ef4444',
-              padding: '6px 12px',
+              backgroundColor: "#7f1d1d",
+              color: "#fee2e2",
+              border: "2px solid #ef4444",
+              padding: "6px 12px",
               borderRadius: 4,
               fontSize: 11,
               fontWeight: 900,
-              letterSpacing: '0.15em',
-              boxShadow: '0 0 15px rgba(239, 68, 68, 0.4)'
+              letterSpacing: "0.15em",
+              boxShadow: "0 0 15px rgba(239, 68, 68, 0.4)",
             }}
           >
             RESTRICTED: INTERNAL USE ONLY
@@ -236,13 +261,16 @@ export default function App() {
             <div
               style={{
                 marginLeft: 10,
-                color: '#9ca3af',
+                color: "#9ca3af",
                 fontSize: 11,
-                fontFamily: 'monospace',
+                fontFamily: "monospace",
               }}
               title={`flags:${releaseInfo.featureFlagSnapshotHash}`}
             >
-              {releaseInfo.environment.label} · {releaseInfo.build.sha ? releaseInfo.build.sha.slice(0, 8) : 'no-sha'}
+              {releaseInfo.environment.label} ·{" "}
+              {releaseInfo.build.sha
+                ? releaseInfo.build.sha.slice(0, 8)
+                : "no-sha"}
             </div>
           ) : null}
           <button
@@ -262,41 +290,45 @@ export default function App() {
         {/* Sidebar */}
         <nav className="sidebar-nav">
           <button
-            onClick={() => setActiveTab('MACRO_QUEUE')}
-            className={`nav-button ${activeTab === 'MACRO_QUEUE' ? 'active' : ''}`}
+            onClick={() => setActiveTab("MACRO_QUEUE")}
+            className={`nav-button ${activeTab === "MACRO_QUEUE" ? "active" : ""}`}
           >
-            {React.createElement(Activity as any, { size: 16 })} Dashboard / Queue
+            {React.createElement(Activity as any, { size: 16 })} Dashboard /
+            Queue
           </button>
 
           <button
-            onClick={() => setActiveTab('TRUTH_LOG')}
-            className={`nav-button ${activeTab === 'TRUTH_LOG' ? 'active' : ''}`}
+            onClick={() => setActiveTab("TRUTH_LOG")}
+            className={`nav-button ${activeTab === "TRUTH_LOG" ? "active" : ""}`}
           >
-            {React.createElement(Database as any, { size: 16 })} Truth Log Inspector
+            {React.createElement(Database as any, { size: 16 })} Truth Log
+            Inspector
           </button>
 
           <button
-            onClick={() => setActiveTab('HASH_COLLIDER')}
-            className={`nav-button ${activeTab === 'HASH_COLLIDER' ? 'active' : ''}`}
+            onClick={() => setActiveTab("HASH_COLLIDER")}
+            className={`nav-button ${activeTab === "HASH_COLLIDER" ? "active" : ""}`}
           >
-            {React.createElement(Fingerprint as any, { size: 16 })} Hash Collider
+            {React.createElement(Fingerprint as any, { size: 16 })} Hash
+            Collider
           </button>
 
           <div className="nav-divider"></div>
 
           <button
-            onClick={() => setActiveTab('EXILE')}
-            className={`nav-button exile-tab ${activeTab === 'EXILE' ? 'active' : ''}`}
+            onClick={() => setActiveTab("EXILE")}
+            className={`nav-button exile-tab ${activeTab === "EXILE" ? "active" : ""}`}
           >
-            {React.createElement(Shield as any, { size: 16 })} Ban / Exile Entity
+            {React.createElement(Shield as any, { size: 16 })} Ban / Exile
+            Entity
           </button>
 
           <div className="nav-divider"></div>
 
           {DESKTOP_B2B_ENABLED ? (
             <button
-              onClick={() => setActiveTab('B2B')}
-              className={`nav-button ${activeTab === 'B2B' ? 'active' : ''}`}
+              onClick={() => setActiveTab("B2B")}
+              className={`nav-button ${activeTab === "B2B" ? "active" : ""}`}
             >
               Enterprise B2B Keys
             </button>
@@ -304,10 +336,10 @@ export default function App() {
             <div
               style={{
                 marginTop: 8,
-                padding: '10px 12px',
-                color: '#6b7280',
+                padding: "10px 12px",
+                color: "#6b7280",
                 fontSize: 11,
-                border: '1px dashed rgba(107,114,128,0.35)',
+                border: "1px dashed rgba(107,114,128,0.35)",
                 borderRadius: 6,
               }}
             >
@@ -318,11 +350,11 @@ export default function App() {
 
         {/* Main Content Pane */}
         <main>
-          {activeTab === 'MACRO_QUEUE' && <MacroReview />}
-          {activeTab === 'TRUTH_LOG' && <LedgerInspector />}
-          {activeTab === 'HASH_COLLIDER' && <HashCollider />}
-          {activeTab === 'EXILE' && <ExilePanel />}
-          {activeTab === 'B2B' && DESKTOP_B2B_ENABLED && <B2BOrchestration />}
+          {activeTab === "MACRO_QUEUE" && <MacroReview />}
+          {activeTab === "TRUTH_LOG" && <LedgerInspector />}
+          {activeTab === "HASH_COLLIDER" && <HashCollider />}
+          {activeTab === "EXILE" && <ExilePanel />}
+          {activeTab === "B2B" && DESKTOP_B2B_ENABLED && <B2BOrchestration />}
         </main>
       </div>
     </div>

@@ -1,29 +1,47 @@
-import { Controller, Post, Get, Param, Body, Headers, UseGuards, BadRequestException, ConflictException, ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
-import { timingSafeEqual, randomBytes } from 'crypto';
-import { Pool } from 'pg';
-import { AuthGuard } from '../../../guards/auth.guard';
-import { BannedUserGuard } from '../../guards/banned-user.guard';
-import { GeofenceGuard } from '../../common/guards/geofence.guard';
-import { ComplianceAccessGuard } from '../../common/guards/compliance-access.guard';
-import { CurrentUser, Public } from '../../common/decorators/current-user.decorator';
-import { R2StorageService } from '../../../services/storage/r2.service';
-import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { PHashService } from '../../../services/intelligence/phash.service';
-import { AnomalyService } from '../../../services/anomaly/anomaly.service';
-import { RequestUploadUrlDto, ConfirmUploadDto } from './dto';
-import { ProofsService } from './proofs.service';
-import { getEffectiveVerificationTier, validateProofMedia } from '../../../../shared/config/verification-tiers';
-import { CrisisDetectionService } from '../../../services/security/crisis-detection.service';
-import { CrisisInterventionService } from '../../../services/security/crisis-intervention.service';
-import { VideoProcessingService } from './video-processing.service';
-import { Logger } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  Headers,
+  UseGuards,
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { Throttle } from "@nestjs/throttler";
+import { timingSafeEqual, randomBytes } from "crypto";
+import { Pool } from "pg";
+import { AuthGuard } from "../../../guards/auth.guard";
+import { BannedUserGuard } from "../../guards/banned-user.guard";
+import { GeofenceGuard } from "../../common/guards/geofence.guard";
+import { ComplianceAccessGuard } from "../../common/guards/compliance-access.guard";
+import {
+  CurrentUser,
+  Public,
+} from "../../common/decorators/current-user.decorator";
+import { R2StorageService } from "../../../services/storage/r2.service";
+import { FuryRouterService } from "../../../services/fury-router/fury-router.service";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { PHashService } from "../../../services/intelligence/phash.service";
+import { AnomalyService } from "../../../services/anomaly/anomaly.service";
+import { RequestUploadUrlDto, ConfirmUploadDto } from "./dto";
+import { ProofsService } from "./proofs.service";
+import {
+  getEffectiveVerificationTier,
+  validateProofMedia,
+} from "../../../../shared/config/verification-tiers";
+import { CrisisDetectionService } from "../../../services/security/crisis-detection.service";
+import { CrisisInterventionService } from "../../../services/security/crisis-intervention.service";
+import { VideoProcessingService } from "./video-processing.service";
+import { Logger } from "@nestjs/common";
 
-@ApiTags('Proofs')
+@ApiTags("Proofs")
 @ApiBearerAuth()
-@Controller('proofs')
+@Controller("proofs")
 export class ProofsController {
   private readonly logger = new Logger(ProofsController.name);
 
@@ -41,19 +59,24 @@ export class ProofsController {
   ) {}
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
-  @Post('upload-url')
-  @ApiOperation({ summary: 'Request a pre-signed R2 upload URL for proof media' })
+  @Post("upload-url")
+  @ApiOperation({
+    summary: "Request a pre-signed R2 upload URL for proof media",
+  })
   @Throttle({ default: { ttl: 60000, limit: 10 } })
   async requestUploadUrl(
     @CurrentUser() user: { id: string },
     @Body() dto: RequestUploadUrlDto,
   ) {
-    const contractAccess = await this.proofsService.getProofUploadContractAccess(dto.contractId, {
-      userId: user.id,
-    });
+    const contractAccess =
+      await this.proofsService.getProofUploadContractAccess(dto.contractId, {
+        userId: user.id,
+      });
 
-    if (contractAccess.status !== 'ACTIVE') {
-      throw new BadRequestException('Proof submission is only allowed for active contracts');
+    if (contractAccess.status !== "ACTIVE") {
+      throw new BadRequestException(
+        "Proof submission is only allowed for active contracts",
+      );
     }
 
     const stakeAmountCents = Math.round(contractAccess.stakeAmount * 100);
@@ -61,10 +84,10 @@ export class ProofsController {
       stakeAmountCents,
       contractAccess.integrityScore,
       contractAccess.strikes,
-      false
+      false,
     );
 
-    const hasVideo = dto.contentType.startsWith('video/');
+    const hasVideo = dto.contentType.startsWith("video/");
     const validationError = validateProofMedia(tier, hasVideo);
     if (validationError) {
       throw new BadRequestException(validationError);
@@ -74,13 +97,21 @@ export class ProofsController {
       `INSERT INTO proofs (contract_id, user_id, status, content_type, description, submitted_at)
        VALUES ($1, $2, 'PENDING_UPLOAD', $3, $4, NOW())
        RETURNING id`,
-      [dto.contractId, contractAccess.ownerUserId, dto.contentType, dto.description || null],
+      [
+        dto.contractId,
+        contractAccess.ownerUserId,
+        dto.contentType,
+        dto.description || null,
+      ],
     );
 
     const proofId = proofResult.rows[0].id;
-    const { uploadUrl, key } = await this.r2.generateUploadUrl(proofId, dto.contentType);
+    const { uploadUrl, key } = await this.r2.generateUploadUrl(
+      proofId,
+      dto.contentType,
+    );
 
-    await this.truthLog.appendEvent('PROOF_UPLOAD_REQUESTED', {
+    await this.truthLog.appendEvent("PROOF_UPLOAD_REQUESTED", {
       proofId,
       contractId: dto.contractId,
       userId: contractAccess.ownerUserId,
@@ -92,8 +123,10 @@ export class ProofsController {
     // early and trigger intervention before the proof enters review.
     if (dto.description) {
       try {
-        const crisisResult = this.crisisDetection.analyzeContent(dto.description);
-        if (crisisResult.isCrisis && crisisResult.severity !== 'NONE') {
+        const crisisResult = this.crisisDetection.analyzeContent(
+          dto.description,
+        );
+        if (crisisResult.isCrisis && crisisResult.severity !== "NONE") {
           this.logger.warn(
             `Proactive crisis detection in proof description: user=${contractAccess.ownerUserId} severity=${crisisResult.severity}`,
           );
@@ -103,7 +136,7 @@ export class ProofsController {
               contractAccess.ownerUserId,
               dto.description,
               crisisResult,
-              'PROOF_DESCRIPTION',
+              "PROOF_DESCRIPTION",
             )
             .catch((err) =>
               this.logger.error(`Proactive crisis notification failed: ${err}`),
@@ -119,36 +152,49 @@ export class ProofsController {
     // stamped it into the watermark — but a value the client both mints and
     // presents proves nothing. Only a nonce the SERVER issued and can compare
     // against turns "this claims to be a live capture" into a checkable claim.
-    const captureNonce = randomBytes(16).toString('hex');
+    const captureNonce = randomBytes(16).toString("hex");
     await this.pool.query(
       `UPDATE proofs SET capture_nonce = $1 WHERE id = $2`,
       [captureNonce, proofId],
     );
 
-    return { proofId, uploadUrl, storageKey: key, expiresInSeconds: 300, captureNonce };
+    return {
+      proofId,
+      uploadUrl,
+      storageKey: key,
+      expiresInSeconds: 300,
+      captureNonce,
+    };
   }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
-  @Post(':id/confirm-upload')
-  @ApiOperation({ summary: 'Confirm that proof media has been uploaded to R2' })
+  @Post(":id/confirm-upload")
+  @ApiOperation({ summary: "Confirm that proof media has been uploaded to R2" })
   async confirmUpload(
-    @Param('id') proofId: string,
+    @Param("id") proofId: string,
     @CurrentUser() user: { id: string },
     @Body() dto: ConfirmUploadDto,
   ) {
-    const proofAccess = await this.proofsService.getProofUploadConfirmationAccess(proofId, {
-      userId: user.id,
-    });
+    const proofAccess =
+      await this.proofsService.getProofUploadConfirmationAccess(proofId, {
+        userId: user.id,
+      });
 
-    if (proofAccess.status !== 'PENDING_UPLOAD') {
-      throw new BadRequestException(`Proof is in state '${proofAccess.status}', expected 'PENDING_UPLOAD'`);
+    if (proofAccess.status !== "PENDING_UPLOAD") {
+      throw new BadRequestException(
+        `Proof is in state '${proofAccess.status}', expected 'PENDING_UPLOAD'`,
+      );
     }
 
     // TKT-P0-002: Native Camera Proof Integrity
     const mediaBuffer = await this.r2.downloadFile(dto.storageKey);
-    
+
     // 1. Anomaly & Sensory Integrity Check
-    const anomalyResult = await this.anomaly.analyze(mediaBuffer, user.id, dto.storageKey);
+    const anomalyResult = await this.anomaly.analyze(
+      mediaBuffer,
+      user.id,
+      dto.storageKey,
+    );
     const combinedFlags = [...(anomalyResult.flags || [])];
 
     // 1a. Honor the anomaly screen's verdict. When the sensory-integrity check
@@ -160,31 +206,31 @@ export class ProofsController {
     if (anomalyResult.rejected) {
       const client = await this.pool.connect();
       try {
-        await client.query('BEGIN');
+        await client.query("BEGIN");
         await client.query(
           "UPDATE proofs SET status = 'MANUAL_REVIEW', media_uri = $1, anomaly_flags = $3 WHERE id = $2",
           [dto.storageKey, proofId, JSON.stringify(combinedFlags)],
         );
         await this.truthLog.appendEvent(
-          'PROOF_ANOMALY_REJECTED',
+          "PROOF_ANOMALY_REJECTED",
           {
             proofId,
             contractId: proofAccess.contractId,
             userId: proofAccess.ownerUserId,
             flags: combinedFlags,
-            status: 'MANUAL_REVIEW',
+            status: "MANUAL_REVIEW",
           },
           client,
         );
-        await client.query('COMMIT');
+        await client.query("COMMIT");
       } catch (txErr) {
-        await client.query('ROLLBACK');
+        await client.query("ROLLBACK");
         throw txErr;
       } finally {
         client.release();
       }
       throw new BadRequestException(
-        'Proof media failed integrity screening and has been held for manual review.',
+        "Proof media failed integrity screening and has been held for manual review.",
       );
     }
 
@@ -206,14 +252,17 @@ export class ProofsController {
         [proofAccess.ownerUserId, proofId],
       );
       const hashStrings = existingHashes.rows.map((r: any) => r.phash);
-      const { duplicate } = await this.phash.isDuplicate(mediaBuffer, hashStrings);
+      const { duplicate } = await this.phash.isDuplicate(
+        mediaBuffer,
+        hashStrings,
+      );
 
       if (duplicate) {
         isDuplicate = true;
-        combinedFlags.push('PHASH_DUPLICATE');
+        combinedFlags.push("PHASH_DUPLICATE");
       } else {
         await this.pool.query(
-          'INSERT INTO proof_hashes (proof_id, phash) VALUES ($1, $2) ON CONFLICT (proof_id) DO NOTHING',
+          "INSERT INTO proof_hashes (proof_id, phash) VALUES ($1, $2) ON CONFLICT (proof_id) DO NOTHING",
           [proofId, frameHash],
         );
       }
@@ -222,12 +271,17 @@ export class ProofsController {
       // or unparseable media), we must NOT silently accept the proof — that would
       // let an attacker bypass dedup by submitting media that breaks hashing.
       pHashFailed = true;
-      combinedFlags.push('PHASH_PROCESSING_ERROR');
+      combinedFlags.push("PHASH_PROCESSING_ERROR");
     }
 
     if (isDuplicate) {
-      await this.pool.query("UPDATE proofs SET status = 'REJECTED' WHERE id = $1", [proofId]);
-      throw new ConflictException('Duplicate proof detected. Submission rejected.');
+      await this.pool.query(
+        "UPDATE proofs SET status = 'REJECTED' WHERE id = $1",
+        [proofId],
+      );
+      throw new ConflictException(
+        "Duplicate proof detected. Submission rejected.",
+      );
     }
 
     if (pHashFailed) {
@@ -240,31 +294,31 @@ export class ProofsController {
       // event commit (or roll back) atomically.
       const client = await this.pool.connect();
       try {
-        await client.query('BEGIN');
+        await client.query("BEGIN");
         await client.query(
           "UPDATE proofs SET status = 'MANUAL_REVIEW', media_uri = $1, anomaly_flags = $3 WHERE id = $2",
           [dto.storageKey, proofId, JSON.stringify(combinedFlags)],
         );
         await this.truthLog.appendEvent(
-          'PROOF_DEDUP_FAILED',
+          "PROOF_DEDUP_FAILED",
           {
             proofId,
             contractId: proofAccess.contractId,
             userId: proofAccess.ownerUserId,
             flags: combinedFlags,
-            status: 'MANUAL_REVIEW',
+            status: "MANUAL_REVIEW",
           },
           client,
         );
-        await client.query('COMMIT');
+        await client.query("COMMIT");
       } catch (txErr) {
-        await client.query('ROLLBACK');
+        await client.query("ROLLBACK");
         throw txErr;
       } finally {
         client.release();
       }
       throw new BadRequestException(
-        'Proof media could not be processed for duplicate detection. Submission held for manual review.',
+        "Proof media could not be processed for duplicate detection. Submission held for manual review.",
       );
     }
 
@@ -286,16 +340,16 @@ export class ProofsController {
       timingSafeEqual(Buffer.from(dto.captureNonce), Buffer.from(issuedNonce));
 
     const captureSource = dto.captureSource ?? null;
-    const captureVerified = captureSource === 'NATIVE_CAMERA' && nonceMatches;
+    const captureVerified = captureSource === "NATIVE_CAMERA" && nonceMatches;
 
-    if (captureSource === 'SYNTHETIC_BETA') {
+    if (captureSource === "SYNTHETIC_BETA") {
       // The disclosed Phase-1 path. Flagged, not rejected — but never silent.
-      combinedFlags.push('SYNTHETIC_CAPTURE');
+      combinedFlags.push("SYNTHETIC_CAPTURE");
     } else if (captureSource === null) {
-      combinedFlags.push('CAPTURE_SOURCE_UNKNOWN');
+      combinedFlags.push("CAPTURE_SOURCE_UNKNOWN");
     } else if (!nonceMatches) {
       // Claims a live capture but cannot echo the nonce it was issued.
-      combinedFlags.push('CAPTURE_NONCE_MISMATCH');
+      combinedFlags.push("CAPTURE_NONCE_MISMATCH");
     }
 
     // 3. Finalize Proof with Anomaly Metadata.
@@ -334,64 +388,82 @@ export class ProofsController {
       );
     });
 
-    const jobId = await this.furyRouter.routeProof(proofId, proofAccess.ownerUserId);
+    const jobId = await this.furyRouter.routeProof(
+      proofId,
+      proofAccess.ownerUserId,
+    );
 
-    await this.truthLog.appendEvent('PROOF_UPLOAD_CONFIRMED', {
+    await this.truthLog.appendEvent("PROOF_UPLOAD_CONFIRMED", {
       proofId,
       contractId: proofAccess.contractId,
       userId: proofAccess.ownerUserId,
       anomalyFlags: combinedFlags,
     });
 
-    return { proofId, status: 'PENDING_REVIEW', furyRouteJobId: jobId, flags: combinedFlags };
+    return {
+      proofId,
+      status: "PENDING_REVIEW",
+      furyRouteJobId: jobId,
+      flags: combinedFlags,
+    };
   }
 
   @UseGuards(AuthGuard)
-  @Get(':id')
-  @ApiOperation({ summary: 'Get proof details with a signed view URL (for Fury auditors)' })
+  @Get(":id")
+  @ApiOperation({
+    summary: "Get proof details with a signed view URL (for Fury auditors)",
+  })
   async getProofDetail(
-    @Param('id') proofId: string,
+    @Param("id") proofId: string,
     @CurrentUser() user: { id: string },
   ) {
     return this.proofsService.getProofDetail(proofId, { userId: user.id });
   }
 
   @UseGuards(AuthGuard)
-  @Get(':id/processing-status')
-  @ApiOperation({ summary: 'Get video processing pipeline status' })
+  @Get(":id/processing-status")
+  @ApiOperation({ summary: "Get video processing pipeline status" })
   async getProcessingStatus(
-    @Param('id') proofId: string,
+    @Param("id") proofId: string,
     @CurrentUser() user: { id: string },
   ) {
-    const proofAccess = await this.proofsService.getProofUploadConfirmationAccess(proofId, {
-      userId: user.id,
-    });
+    const proofAccess =
+      await this.proofsService.getProofUploadConfirmationAccess(proofId, {
+        userId: user.id,
+      });
 
     const jobs = await this.pool.query(
-      'SELECT stage, status, error, updated_at FROM proof_processing_jobs WHERE proof_id = $1 ORDER BY created_at DESC',
-      [proofId]
+      "SELECT stage, status, error, updated_at FROM proof_processing_jobs WHERE proof_id = $1 ORDER BY created_at DESC",
+      [proofId],
     );
 
     const proofInfo = await this.pool.query(
-      'SELECT processing_status FROM proofs WHERE id = $1',
-      [proofId]
+      "SELECT processing_status FROM proofs WHERE id = $1",
+      [proofId],
     );
 
     return {
       proofId,
-      overallStatus: proofInfo.rows[0]?.processing_status || 'NOT_STARTED',
+      overallStatus: proofInfo.rows[0]?.processing_status || "NOT_STARTED",
       jobs: jobs.rows,
     };
   }
 
   @Public()
-  @Post(':id/processing-complete')
-  @ApiOperation({ summary: 'Internal callback for video processing completion' })
+  @Post(":id/processing-complete")
+  @ApiOperation({
+    summary: "Internal callback for video processing completion",
+  })
   async processingComplete(
-    @Param('id') proofId: string,
-    @Headers('x-internal-token') internalToken: string | undefined,
-    @Headers('x-proof-challenge') proofChallenge: string | undefined,
-    @Body() dto: { status: 'COMPLETED' | 'FAILED', error?: string, maskedMediaUri?: string },
+    @Param("id") proofId: string,
+    @Headers("x-internal-token") internalToken: string | undefined,
+    @Headers("x-proof-challenge") proofChallenge: string | undefined,
+    @Body()
+    dto: {
+      status: "COMPLETED" | "FAILED";
+      error?: string;
+      maskedMediaUri?: string;
+    },
   ) {
     // Service-to-service only: this callback marks proofs COMPLETED and must NOT be
     // reachable by arbitrary end users (IDOR). It is no longer behind the user
@@ -413,25 +485,29 @@ export class ProofsController {
     // 'PROCESSING') at dispatch time. This callback fails closed if that has not
     // happened, so a proof can never be finalized without a matching dispatch.
     const proofResult = await this.pool.query(
-      'SELECT user_id, challenge_token, processing_status FROM proofs WHERE id = $1',
+      "SELECT user_id, challenge_token, processing_status FROM proofs WHERE id = $1",
       [proofId],
     );
     if (proofResult.rows.length === 0) {
-      throw new BadRequestException('Unknown proof for processing callback');
+      throw new BadRequestException("Unknown proof for processing callback");
     }
-    const { challenge_token: expectedChallenge, processing_status: currentProcessingStatus } =
-      proofResult.rows[0];
+    const {
+      challenge_token: expectedChallenge,
+      processing_status: currentProcessingStatus,
+    } = proofResult.rows[0];
 
     // The proof must have an issued challenge token and be in-flight; otherwise this
     // callback has no business mutating it (prevents re-driving an already-finalized
     // or never-dispatched proof).
     if (!expectedChallenge) {
-      throw new ForbiddenException('Proof is not awaiting a processing callback');
+      throw new ForbiddenException(
+        "Proof is not awaiting a processing callback",
+      );
     }
     if (
-      currentProcessingStatus !== 'IN_PROGRESS' &&
-      currentProcessingStatus !== 'PENDING' &&
-      currentProcessingStatus !== 'PROCESSING'
+      currentProcessingStatus !== "IN_PROGRESS" &&
+      currentProcessingStatus !== "PENDING" &&
+      currentProcessingStatus !== "PROCESSING"
     ) {
       throw new ConflictException(
         `Proof processing is not in-flight (status '${currentProcessingStatus}')`,
@@ -448,7 +524,7 @@ export class ProofsController {
            redaction_status = CASE WHEN $2 IS NOT NULL THEN 'MASKED' ELSE redaction_status END,
            challenge_token = NULL
        WHERE id = $3`,
-      [dto.status, dto.maskedMediaUri || null, proofId]
+      [dto.status, dto.maskedMediaUri || null, proofId],
     );
 
     return { success: true };
@@ -462,16 +538,21 @@ export class ProofsController {
   private assertInternalCaller(presentedToken: string | undefined): void {
     const expected = process.env.INTERNAL_SERVICE_TOKEN;
     if (!expected) {
-      throw new ServiceUnavailableException('Internal callback endpoint is not configured');
+      throw new ServiceUnavailableException(
+        "Internal callback endpoint is not configured",
+      );
     }
     if (!presentedToken) {
-      throw new ForbiddenException('Missing internal service token');
+      throw new ForbiddenException("Missing internal service token");
     }
 
     const presentedBuf = Buffer.from(presentedToken);
     const expectedBuf = Buffer.from(expected);
-    if (presentedBuf.length !== expectedBuf.length || !timingSafeEqual(presentedBuf, expectedBuf)) {
-      throw new ForbiddenException('Invalid internal service token');
+    if (
+      presentedBuf.length !== expectedBuf.length ||
+      !timingSafeEqual(presentedBuf, expectedBuf)
+    ) {
+      throw new ForbiddenException("Invalid internal service token");
     }
   }
 
@@ -481,14 +562,20 @@ export class ProofsController {
    * an internal callback to a single specific proofId so a leaked global service
    * token cannot be used to finalize or plant masked media on arbitrary proofs.
    */
-  private assertProofChallenge(presented: string | undefined, expected: string): void {
+  private assertProofChallenge(
+    presented: string | undefined,
+    expected: string,
+  ): void {
     if (!presented) {
-      throw new ForbiddenException('Missing per-proof challenge token');
+      throw new ForbiddenException("Missing per-proof challenge token");
     }
     const presentedBuf = Buffer.from(presented);
     const expectedBuf = Buffer.from(expected);
-    if (presentedBuf.length !== expectedBuf.length || !timingSafeEqual(presentedBuf, expectedBuf)) {
-      throw new ForbiddenException('Invalid per-proof challenge token');
+    if (
+      presentedBuf.length !== expectedBuf.length ||
+      !timingSafeEqual(presentedBuf, expectedBuf)
+    ) {
+      throw new ForbiddenException("Invalid per-proof challenge token");
     }
   }
 }

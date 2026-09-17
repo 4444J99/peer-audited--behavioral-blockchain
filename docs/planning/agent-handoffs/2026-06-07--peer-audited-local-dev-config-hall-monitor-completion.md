@@ -15,18 +15,18 @@
 - [x] **CI Fix**: Modified `scripts/dev/env.mjs` to relax strict environment validation when `NODE_ENV === "test"`. This allowed integration tests (which run migrations using `run-migrate.mjs`) to pass in CI.
 - [x] **Logos Scaffolding**: Created `docs/logos/` directory with 5 tetradic documentation files: `telos.md`, `pragma.md`, `praxis.md`, `receptio.md`, and `alchemical-io.md`.
 - [x] **Index Updates**:
-    - Updated `GEMINI.md` and `docs/GEMINI.md` to mark Logos Documentation Layer as **ACTIVE** and **ALIGNED**.
-    - Updated `seed.yaml` with `last_validated: "2026-06-07"`.
+  - Updated `GEMINI.md` and `docs/GEMINI.md` to mark Logos Documentation Layer as **ACTIVE** and **ALIGNED**.
+  - Updated `seed.yaml` with `last_validated: "2026-06-07"`.
 - [x] **Persistence**: Pushed all changes to origin and enabled GitHub auto-merge.
 - [x] **Hall-Monitor Audit**: Verified all changes against "Minimal Root" and "add-only" mandates. Logged completion in the universal IRF.
 
 ## Key Decisions
 
-| Decision | Rationale |
-|----------|-----------|
+| Decision                              | Rationale                                                                                                                                                                                 |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Relaxed env validation in `test` mode | The hardening work introduced mandatory variables that blocked integration tests in CI. Providing defaults for `test` mode maintains production security while enabling development flow. |
-| Scaffolded Logos layer | Addressed a documented "Symmetry VACUUM" to satisfy the hall-monitor requirement of eliminating N/A gaps. |
-| Enabled auto-merge | CI is stable and the work is verified. Auto-merge ensures the "physical manifestation" (code) merges into `main` without further manual intervention. |
+| Scaffolded Logos layer                | Addressed a documented "Symmetry VACUUM" to satisfy the hall-monitor requirement of eliminating N/A gaps.                                                                                 |
+| Enabled auto-merge                    | CI is stable and the work is verified. Auto-merge ensures the "physical manifestation" (code) merges into `main` without further manual intervention.                                     |
 
 ## Critical Context
 

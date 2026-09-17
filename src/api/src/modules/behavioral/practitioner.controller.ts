@@ -25,7 +25,12 @@ function resolveUserId(req: any): string {
   return req?.user?.id ?? req?.userId;
 }
 
-function clampInt(raw: string | undefined, fallback: number, min: number, max: number): number {
+function clampInt(
+  raw: string | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
   const parsed = parseInt(raw ?? "", 10);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.min(max, Math.max(min, parsed));
@@ -107,9 +112,16 @@ export class PractitionerController {
     const practitionerId = resolveUserId(req);
     await this.assertClientAccess(practitionerId, clientId);
 
-    const alerts = await this.intelligence.analyzeJournalEntry(clientId, body.entryText);
+    const alerts = await this.intelligence.analyzeJournalEntry(
+      clientId,
+      body.entryText,
+    );
     for (const alert of alerts) {
-      await this.intelligence.sendPractitionerAlert(practitionerId, clientId, alert);
+      await this.intelligence.sendPractitionerAlert(
+        practitionerId,
+        clientId,
+        alert,
+      );
     }
     return { clientId, alerts, persisted: alerts.length };
   }
@@ -122,14 +134,20 @@ export class PractitionerController {
       [clientId],
     );
     const contractId: string = contract.rows[0]?.id ?? "";
-    const adherenceRate = await this.intelligence.calculateAdherenceRate(clientId, contractId);
+    const adherenceRate = await this.intelligence.calculateAdherenceRate(
+      clientId,
+      contractId,
+    );
     return { clientId, contractId: contractId || null, adherenceRate };
   }
 
   // Practitioners may only see clients assigned to them; ADMINs may see any
   // client. The admin check reads the CURRENT role from the DB (same
   // fail-closed posture as RoleGuard) rather than trusting the JWT claim.
-  private async assertClientAccess(practitionerId: string, clientId: string): Promise<void> {
+  private async assertClientAccess(
+    practitionerId: string,
+    clientId: string,
+  ): Promise<void> {
     const assignment = await this.pool.query(
       `SELECT 1 FROM practitioner_client_assignments
        WHERE practitioner_id = $1 AND client_id = $2 AND active = true`,
@@ -137,10 +155,9 @@ export class PractitionerController {
     );
     if (assignment.rows.length > 0) return;
 
-    const role = await this.pool.query(
-      `SELECT role FROM users WHERE id = $1`,
-      [practitionerId],
-    );
+    const role = await this.pool.query(`SELECT role FROM users WHERE id = $1`, [
+      practitionerId,
+    ]);
     if (String(role.rows[0]?.role || "").toUpperCase() === "ADMIN") return;
 
     throw new ForbiddenException("Client is not assigned to this practitioner");

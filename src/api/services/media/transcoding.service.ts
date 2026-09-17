@@ -38,7 +38,10 @@ export class TranscodingService {
    * Transcodes a video buffer to H.264/AAC MP4 and generates a thumbnail.
    * Input must be a valid video file buffer.
    */
-  async transcode(inputBuffer: Buffer, sourceContentType: string): Promise<TranscodeResult> {
+  async transcode(
+    inputBuffer: Buffer,
+    sourceContentType: string,
+  ): Promise<TranscodeResult> {
     const tmpDir = await mkdtemp(join(tmpdir(), "styx-transcode-"));
     const ext = this.getExtension(sourceContentType);
     const inputPath = join(tmpDir, `input.${ext}`);
@@ -58,23 +61,51 @@ export class TranscodingService {
       // -c:a aac: AAC audio codec
       // -b:a 128k: audio bitrate
       // -movflags +faststart: enable streaming before full download
-      await execFileAsync("ffmpeg", [
-        "-y", "-i", inputPath,
-        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
-        "-c:a", "aac", "-b:a", "128k",
-        "-movflags", "+faststart",
-        "-max_muxing_queue_size", "1024",
-        outputPath,
-      ], { timeout: 120_000 });
+      await execFileAsync(
+        "ffmpeg",
+        [
+          "-y",
+          "-i",
+          inputPath,
+          "-c:v",
+          "libx264",
+          "-preset",
+          "fast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-b:a",
+          "128k",
+          "-movflags",
+          "+faststart",
+          "-max_muxing_queue_size",
+          "1024",
+          outputPath,
+        ],
+        { timeout: 120_000 },
+      );
 
       // 3. Generate thumbnail at midpoint
       const seekTime = Math.max(0, metadata.duration / 2);
-      await execFileAsync("ffmpeg", [
-        "-y", "-ss", String(seekTime), "-i", inputPath,
-        "-vframes", "1", "-vf", "scale=640:-1",
-        "-q:v", "2",
-        thumbnailPath,
-      ], { timeout: 30_000 });
+      await execFileAsync(
+        "ffmpeg",
+        [
+          "-y",
+          "-ss",
+          String(seekTime),
+          "-i",
+          inputPath,
+          "-vframes",
+          "1",
+          "-vf",
+          "scale=640:-1",
+          "-q:v",
+          "2",
+          thumbnailPath,
+        ],
+        { timeout: 30_000 },
+      );
 
       const [transcodedBuffer, thumbnailBuffer] = await Promise.all([
         readFile(outputPath),
@@ -91,13 +122,19 @@ export class TranscodingService {
    * Extracts video metadata using ffprobe.
    */
   async extractMetadata(filePath: string): Promise<VideoMetadata> {
-    const { stdout } = await execFileAsync("ffprobe", [
-      "-v", "quiet",
-      "-print_format", "json",
-      "-show_format",
-      "-show_streams",
-      filePath,
-    ], { timeout: 10_000 });
+    const { stdout } = await execFileAsync(
+      "ffprobe",
+      [
+        "-v",
+        "quiet",
+        "-print_format",
+        "json",
+        "-show_format",
+        "-show_streams",
+        filePath,
+      ],
+      { timeout: 10_000 },
+    );
 
     const probe = JSON.parse(stdout);
     const videoStream = probe.streams?.find(
@@ -119,19 +156,29 @@ export class TranscodingService {
    * Validates that a buffer contains a decodable video.
    * Returns true if FFmpeg can read the input without errors.
    */
-  async validateVideo(inputBuffer: Buffer, contentType: string): Promise<boolean> {
+  async validateVideo(
+    inputBuffer: Buffer,
+    contentType: string,
+  ): Promise<boolean> {
     const tmpDir = await mkdtemp(join(tmpdir(), "styx-validate-"));
     const ext = this.getExtension(contentType);
     const inputPath = join(tmpDir, `input.${ext}`);
 
     try {
       await writeFile(inputPath, inputBuffer);
-      await execFileAsync("ffprobe", [
-        "-v", "error",
-        "-show_entries", "format=format_name",
-        "-of", "csv=p=0",
-        inputPath,
-      ], { timeout: 10_000 });
+      await execFileAsync(
+        "ffprobe",
+        [
+          "-v",
+          "error",
+          "-show_entries",
+          "format=format_name",
+          "-of",
+          "csv=p=0",
+          inputPath,
+        ],
+        { timeout: 10_000 },
+      );
       return true;
     } catch {
       return false;

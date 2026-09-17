@@ -1,9 +1,9 @@
-import { FuryController } from './fury.controller';
-import { FuryWorker } from './fury.worker';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { Pool } from 'pg';
-import { FuryViolationCode } from '../../../../shared/fury-logic/violation-codes';
-describe('FuryController', () => {
+import { FuryController } from "./fury.controller";
+import { FuryWorker } from "./fury.worker";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { Pool } from "pg";
+import { FuryViolationCode } from "../../../../shared/fury-logic/violation-codes";
+describe("FuryController", () => {
   let controller: FuryController;
   let mockPool: { query: jest.Mock };
   // The R2 mock used to be `{}` — generateViewUrl always threw, every viewUrl
@@ -17,19 +17,27 @@ describe('FuryController', () => {
   } as unknown as FuryWorker;
 
   const mockTruthLog = {
-    appendEvent: jest.fn().mockResolvedValue('log-id'),
+    appendEvent: jest.fn().mockResolvedValue("log-id"),
   } as unknown as TruthLogService;
 
   beforeEach(() => {
     mockPool = { query: jest.fn() };
     mockR2 = {
-      generateViewUrl: jest.fn(async (key: string) => `https://signed.example/${key}`),
+      generateViewUrl: jest.fn(
+        async (key: string) => `https://signed.example/${key}`,
+      ),
     };
     const mockCounterClaims = {
-      fileCounterClaim: jest.fn().mockResolvedValue({ id: 'ccl-1', status: 'PENDING_JUDGE_REVIEW' }),
-      getAuditorCounterClaimHistory: jest.fn().mockResolvedValue({ auditorId: 'aud-1', totalCounterClaims: 1 }),
-      listPendingCounterClaims: jest.fn().mockResolvedValue([{ id: 'ccl-1' }]),
-      adjudicateCounterClaim: jest.fn().mockResolvedValue({ id: 'ccl-1', status: 'SUBSTANTIATED' }),
+      fileCounterClaim: jest
+        .fn()
+        .mockResolvedValue({ id: "ccl-1", status: "PENDING_JUDGE_REVIEW" }),
+      getAuditorCounterClaimHistory: jest
+        .fn()
+        .mockResolvedValue({ auditorId: "aud-1", totalCounterClaims: 1 }),
+      listPendingCounterClaims: jest.fn().mockResolvedValue([{ id: "ccl-1" }]),
+      adjudicateCounterClaim: jest
+        .fn()
+        .mockResolvedValue({ id: "ccl-1", status: "SUBSTANTIATED" }),
     } as any;
     controller = new FuryController(
       mockPool as unknown as Pool,
@@ -41,26 +49,36 @@ describe('FuryController', () => {
     jest.clearAllMocks();
   });
 
-  describe('getAssignments', () => {
-    it('should return pending assignments for a Fury user', async () => {
+  describe("getAssignments", () => {
+    it("should return pending assignments for a Fury user", async () => {
       const assignments = [
-        { assignment_id: 'a-1', proof_id: 'p-1', media_uri: 'https://r2.styx.app/video.mp4', oath_category: 'RECOVERY_NOCONTACT' },
-        { assignment_id: 'a-2', proof_id: 'p-2', media_uri: 'https://r2.styx.app/video2.mp4', oath_category: 'BIOLOGICAL_WEIGHT' },
+        {
+          assignment_id: "a-1",
+          proof_id: "p-1",
+          media_uri: "https://r2.styx.app/video.mp4",
+          oath_category: "RECOVERY_NOCONTACT",
+        },
+        {
+          assignment_id: "a-2",
+          proof_id: "p-2",
+          media_uri: "https://r2.styx.app/video2.mp4",
+          oath_category: "BIOLOGICAL_WEIGHT",
+        },
       ];
       mockPool.query.mockResolvedValueOnce({ rows: assignments });
 
-      const result = await controller.getAssignments({ id: 'fury-user-1' });
+      const result = await controller.getAssignments({ id: "fury-user-1" });
 
       expect(result).toEqual({
         assignments: [
           {
-            id: 'a-1',
-            assignmentId: 'a-1',
-            proofId: 'p-1',
+            id: "a-1",
+            assignmentId: "a-1",
+            proofId: "p-1",
             assignedAt: undefined,
             contractId: undefined,
             submittedAt: undefined,
-            category: 'RECOVERY_NOCONTACT',
+            category: "RECOVERY_NOCONTACT",
             contentType: undefined,
             description: undefined,
             redactionStatus: undefined,
@@ -68,13 +86,13 @@ describe('FuryController', () => {
             subjectAlias: undefined,
           },
           {
-            id: 'a-2',
-            assignmentId: 'a-2',
-            proofId: 'p-2',
+            id: "a-2",
+            assignmentId: "a-2",
+            proofId: "p-2",
             assignedAt: undefined,
             contractId: undefined,
             submittedAt: undefined,
-            category: 'BIOLOGICAL_WEIGHT',
+            category: "BIOLOGICAL_WEIGHT",
             contentType: undefined,
             description: undefined,
             redactionStatus: undefined,
@@ -84,21 +102,21 @@ describe('FuryController', () => {
         ],
       });
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('fury_user_id = $1'),
-        ['fury-user-1'],
+        expect.stringContaining("fury_user_id = $1"),
+        ["fury-user-1"],
       );
 
       // The queue projects every proofs column it maps into the response; each
       // must exist on the real `proofs` table or the audit queue 500s at runtime.
       const [sql] = mockPool.query.mock.calls[0] as [string];
       for (const column of [
-        'p.media_uri',
-        'p.masked_media_uri',
-        'p.redaction_status',
-        'p.content_type',
-        'p.contract_id',
-        'p.submitted_at',
-        'p.description',
+        "p.media_uri",
+        "p.masked_media_uri",
+        "p.redaction_status",
+        "p.content_type",
+        "p.contract_id",
+        "p.submitted_at",
+        "p.description",
       ]) {
         expect(sql).toContain(column);
       }
@@ -110,108 +128,129 @@ describe('FuryController', () => {
     // dev-only worker fallback writes 'COMPLETED'. The old code compared against
     // 'COMPLETED' only and fell through to media_uri, so the production path
     // leaked the unredacted original to peer reviewers.
-    it.each(['MASKED', 'COMPLETED', 'NOT_APPLICABLE', null])(
-      'signs the MASKED asset and never the raw one (redaction_status=%s)',
+    it.each(["MASKED", "COMPLETED", "NOT_APPLICABLE", null])(
+      "signs the MASKED asset and never the raw one (redaction_status=%s)",
       async (redactionStatus) => {
         mockPool.query.mockResolvedValueOnce({
           rows: [
             {
-              assignment_id: 'a-1',
-              proof_id: 'p-1',
-              media_uri: 'raw/original.mp4',
-              masked_media_uri: 'masked/redacted.mp4',
+              assignment_id: "a-1",
+              proof_id: "p-1",
+              media_uri: "raw/original.mp4",
+              masked_media_uri: "masked/redacted.mp4",
               redaction_status: redactionStatus,
-              oath_category: 'RECOVERY_NOCONTACT',
+              oath_category: "RECOVERY_NOCONTACT",
             },
           ],
         });
 
-        const result = await controller.getAssignments({ id: 'fury-user-1' });
+        const result = await controller.getAssignments({ id: "fury-user-1" });
 
-        expect(result.assignments[0].viewUrl).toBe('https://signed.example/masked/redacted.mp4');
-        expect(mockR2.generateViewUrl).toHaveBeenCalledWith('masked/redacted.mp4');
-        expect(mockR2.generateViewUrl).not.toHaveBeenCalledWith('raw/original.mp4');
+        expect(result.assignments[0].viewUrl).toBe(
+          "https://signed.example/masked/redacted.mp4",
+        );
+        expect(mockR2.generateViewUrl).toHaveBeenCalledWith(
+          "masked/redacted.mp4",
+        );
+        expect(mockR2.generateViewUrl).not.toHaveBeenCalledWith(
+          "raw/original.mp4",
+        );
       },
     );
 
-    it('fails CLOSED — no masked asset means no url, never the raw original', async () => {
+    it("fails CLOSED — no masked asset means no url, never the raw original", async () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [
           {
-            assignment_id: 'a-1',
-            proof_id: 'p-1',
-            media_uri: 'raw/original.mp4',
+            assignment_id: "a-1",
+            proof_id: "p-1",
+            media_uri: "raw/original.mp4",
             masked_media_uri: null,
             // Even a status claiming redaction finished cannot conjure an asset.
-            redaction_status: 'COMPLETED',
-            oath_category: 'RECOVERY_NOCONTACT',
+            redaction_status: "COMPLETED",
+            oath_category: "RECOVERY_NOCONTACT",
           },
         ],
       });
 
-      const result = await controller.getAssignments({ id: 'fury-user-1' });
+      const result = await controller.getAssignments({ id: "fury-user-1" });
 
       expect(result.assignments[0].viewUrl).toBeNull();
       expect(mockR2.generateViewUrl).not.toHaveBeenCalled();
     });
 
-    it('should return empty assignments when Fury has no pending reviews', async () => {
+    it("should return empty assignments when Fury has no pending reviews", async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
-      const result = await controller.getAssignments({ id: 'fury-idle' });
+      const result = await controller.getAssignments({ id: "fury-idle" });
 
       expect(result).toEqual({ assignments: [] });
     });
   });
 
-  describe('submitVerdict', () => {
-    it('should record the verdict, log to TruthLog, and check consensus', async () => {
+  describe("submitVerdict", () => {
+    it("should record the verdict, log to TruthLog, and check consensus", async () => {
       // UPDATE fury_assignments ... RETURNING proof_id (one row updated)
-      mockPool.query.mockResolvedValueOnce({ rowCount: 1, rows: [{ proof_id: 'proof-1' }] });
+      mockPool.query.mockResolvedValueOnce({
+        rowCount: 1,
+        rows: [{ proof_id: "proof-1" }],
+      });
 
       const result = await controller.submitVerdict(
-        { id: 'fury-1' },
-        { assignmentId: 'assign-1', verdict: 'PASS' },
+        { id: "fury-1" },
+        { assignmentId: "assign-1", verdict: "PASS" },
       );
 
-      expect(result).toEqual({ status: 'verdict_recorded' });
+      expect(result).toEqual({ status: "verdict_recorded" });
 
       // Verify UPDATE was called with user ID from @CurrentUser and the no-revote guard
       const updateCall = mockPool.query.mock.calls[0];
       expect(updateCall[0]).toMatch(/UPDATE fury_assignments SET verdict/);
       expect(updateCall[0]).toMatch(/verdict IS NULL/);
-      expect(updateCall[1]).toEqual(['PASS', null, 'assign-1', 'fury-1']);
+      expect(updateCall[1]).toEqual(["PASS", null, "assign-1", "fury-1"]);
 
       // Verify TruthLog
-      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('FURY_VERDICT', {
-        assignmentId: 'assign-1',
-        furyUserId: 'fury-1',
-        verdict: 'PASS',
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith("FURY_VERDICT", {
+        assignmentId: "assign-1",
+        furyUserId: "fury-1",
+        verdict: "PASS",
       });
 
       // Verify consensus check
-      expect(mockFuryWorker.checkConsensus).toHaveBeenCalledWith('proof-1');
+      expect(mockFuryWorker.checkConsensus).toHaveBeenCalledWith("proof-1");
     });
 
-    it('should handle FAIL verdict', async () => {
-      mockPool.query.mockResolvedValueOnce({ rowCount: 1, rows: [{ proof_id: 'proof-2' }] });
+    it("should handle FAIL verdict", async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rowCount: 1,
+        rows: [{ proof_id: "proof-2" }],
+      });
 
       await controller.submitVerdict(
-        { id: 'fury-2' },
-        { assignmentId: 'assign-2', verdict: 'FAIL', rejectionCode: FuryViolationCode.MEDIA_TAMPERED },
+        { id: "fury-2" },
+        {
+          assignmentId: "assign-2",
+          verdict: "FAIL",
+          rejectionCode: FuryViolationCode.MEDIA_TAMPERED,
+        },
       );
 
       const updateCall = mockPool.query.mock.calls[0];
-      expect(updateCall[1]).toEqual(['FAIL', FuryViolationCode.MEDIA_TAMPERED, 'assign-2', 'fury-2']);
+      expect(updateCall[1]).toEqual([
+        "FAIL",
+        FuryViolationCode.MEDIA_TAMPERED,
+        "assign-2",
+        "fury-2",
+      ]);
     });
 
-    it('should reject and not check consensus when no row is updated (invalid assignment or re-vote)', async () => {
+    it("should reject and not check consensus when no row is updated (invalid assignment or re-vote)", async () => {
       mockPool.query.mockResolvedValueOnce({ rowCount: 0, rows: [] }); // UPDATE affected nothing
 
       await expect(
         controller.submitVerdict(
-          { id: 'fury-1' },
-          { assignmentId: 'assign-ghost', verdict: 'PASS' },
+          { id: "fury-1" },
+          { assignmentId: "assign-ghost", verdict: "PASS" },
         ),
       ).rejects.toThrow();
 
@@ -220,33 +259,36 @@ describe('FuryController', () => {
     });
   });
 
-  describe('Counter-Claim Endpoints (Issue #81)', () => {
-    it('files counter-claim against bad-faith auditor', async () => {
-      const res = await controller.fileCounterClaim({ id: 'user-1' }, {
-        claimType: 'HARASSMENT',
-        reason: 'Hostile comments in review notes',
-      });
-      expect(res.id).toBe('ccl-1');
-      expect(res.status).toBe('PENDING_JUDGE_REVIEW');
+  describe("Counter-Claim Endpoints (Issue #81)", () => {
+    it("files counter-claim against bad-faith auditor", async () => {
+      const res = await controller.fileCounterClaim(
+        { id: "user-1" },
+        {
+          claimType: "HARASSMENT",
+          reason: "Hostile comments in review notes",
+        },
+      );
+      expect(res.id).toBe("ccl-1");
+      expect(res.status).toBe("PENDING_JUDGE_REVIEW");
     });
 
-    it('retrieves auditor history for judicial review', async () => {
-      const res = await controller.getAuditorHistory('aud-1');
-      expect(res.auditorId).toBe('aud-1');
+    it("retrieves auditor history for judicial review", async () => {
+      const res = await controller.getAuditorHistory("aud-1");
+      expect(res.auditorId).toBe("aud-1");
       expect(res.totalCounterClaims).toBe(1);
     });
 
-    it('lists pending counter-claims for judge review', async () => {
+    it("lists pending counter-claims for judge review", async () => {
       const res = await controller.listPendingClaims();
-      expect(res).toEqual([{ id: 'ccl-1' }]);
+      expect(res).toEqual([{ id: "ccl-1" }]);
     });
 
-    it('adjudicates counter-claim', async () => {
-      const res = await controller.adjudicateClaim({ id: 'judge-1' }, 'ccl-1', {
-        decision: 'SUBSTANTIATED',
-        judgeNotes: 'Evidence verified',
+    it("adjudicates counter-claim", async () => {
+      const res = await controller.adjudicateClaim({ id: "judge-1" }, "ccl-1", {
+        decision: "SUBSTANTIATED",
+        judgeNotes: "Evidence verified",
       });
-      expect(res.status).toBe('SUBSTANTIATED');
+      expect(res.status).toBe("SUBSTANTIATED");
     });
   });
 });

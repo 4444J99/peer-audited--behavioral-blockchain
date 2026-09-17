@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { api, getAuthToken, LeaderboardEntry } from '../services/api-client';
-import './Leaderboard.css';
+import React, { useCallback, useEffect, useState } from "react";
+import { api, getAuthToken, LeaderboardEntry } from "../services/api-client";
+import "./Leaderboard.css";
 
-type Period = 'weekly' | 'monthly' | 'alltime';
+type Period = "weekly" | "monthly" | "alltime";
 
 const BOARD_SIZE = 10;
 // Matches the server's SSE tick, so the fallback path is no staler than the stream.
@@ -21,29 +21,61 @@ interface TierInfo {
 }
 
 const TIERS: TierInfo[] = [
-  { name: 'DIAMOND', color: '#b9f2ff', bgColor: 'rgba(185, 242, 255, 0.1)', icon: '💎', minScore: 90, tierClass: 'diamond' },
-  { name: 'GOLD', color: '#ffd700', bgColor: 'rgba(255, 215, 0, 0.1)', icon: '🥇', minScore: 75, tierClass: 'gold' },
-  { name: 'SILVER', color: '#c0c0c0', bgColor: 'rgba(192, 192, 192, 0.1)', icon: '🥈', minScore: 50, tierClass: 'silver' },
-  { name: 'BRONZE', color: '#cd7f32', bgColor: 'rgba(205, 127, 50, 0.1)', icon: '🥉', minScore: 0, tierClass: 'bronze' },
+  {
+    name: "DIAMOND",
+    color: "#b9f2ff",
+    bgColor: "rgba(185, 242, 255, 0.1)",
+    icon: "💎",
+    minScore: 90,
+    tierClass: "diamond",
+  },
+  {
+    name: "GOLD",
+    color: "#ffd700",
+    bgColor: "rgba(255, 215, 0, 0.1)",
+    icon: "🥇",
+    minScore: 75,
+    tierClass: "gold",
+  },
+  {
+    name: "SILVER",
+    color: "#c0c0c0",
+    bgColor: "rgba(192, 192, 192, 0.1)",
+    icon: "🥈",
+    minScore: 50,
+    tierClass: "silver",
+  },
+  {
+    name: "BRONZE",
+    color: "#cd7f32",
+    bgColor: "rgba(205, 127, 50, 0.1)",
+    icon: "🥉",
+    minScore: 0,
+    tierClass: "bronze",
+  },
 ];
 
 function getTier(score: number): TierInfo {
-  return TIERS.find(t => score >= t.minScore) || TIERS[TIERS.length - 1];
+  return TIERS.find((t) => score >= t.minScore) || TIERS[TIERS.length - 1];
 }
 
 function getRankBadge(index: number): string {
   switch (index) {
-    case 0: return '👑';
-    case 1: return '⚔️';
-    case 2: return '🛡️';
-    default: return `#${index + 1}`;
+    case 0:
+      return "👑";
+    case 1:
+      return "⚔️";
+    case 2:
+      return "🛡️";
+    default:
+      return `#${index + 1}`;
   }
 }
 
 export default function Leaderboard() {
   const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<Period>('alltime');
+  const [period, setPeriod] = useState<Period>("alltime");
   const [furyOfWeek, setFuryOfWeek] = useState<LeaderboardEntry | null>(null);
 
   const applyBoard = useCallback((data: LeaderboardEntry[]) => {
@@ -57,8 +89,8 @@ export default function Leaderboard() {
 
     // Route through the Next.js /api rewrite so the SSE request is same-origin
     // and carries the HttpOnly stream ticket cookie.
-    const API_BASE = '/api';
-    const apiPeriod = period === 'alltime' ? undefined : period;
+    const API_BASE = "/api";
+    const apiPeriod = period === "alltime" ? undefined : period;
     let eventSource: EventSource | null = null;
     let pollInterval: ReturnType<typeof setInterval> | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -103,7 +135,7 @@ export default function Leaderboard() {
       // The stream is guarded; an anonymous viewer and any runtime without
       // EventSource (SSR, older embedded webviews) stay on the polling path.
       const token = getAuthToken(); // allow-secret
-      if (!token || typeof EventSource === 'undefined') {
+      if (!token || typeof EventSource === "undefined") {
         startPolling();
         return;
       }
@@ -113,7 +145,7 @@ export default function Leaderboard() {
         if (stopped) return;
 
         const params = new URLSearchParams({ limit: String(BOARD_SIZE) });
-        if (apiPeriod) params.set('period', apiPeriod);
+        if (apiPeriod) params.set("period", apiPeriod);
 
         const source = new EventSource(
           `${API_BASE}/dashboard/leaderboard/stream?${params.toString()}`,
@@ -169,17 +201,17 @@ export default function Leaderboard() {
           ⚔️ Tavern Board
         </h2>
         <div className="flex gap-1">
-          {(['weekly', 'monthly', 'alltime'] as Period[]).map(p => (
+          {(["weekly", "monthly", "alltime"] as Period[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
               className={`px-3 py-1 text-xs uppercase tracking-widest rounded transition-all ${
                 period === p
-                  ? 'bg-red-500/20 text-red-400 border border-red-500/50'
-                  : 'text-gray-500 hover:text-gray-300 border border-transparent'
+                  ? "bg-red-500/20 text-red-400 border border-red-500/50"
+                  : "text-gray-500 hover:text-gray-300 border border-transparent"
               }`}
             >
-              {p === 'alltime' ? 'All Time' : p}
+              {p === "alltime" ? "All Time" : p}
             </button>
           ))}
         </div>
@@ -188,18 +220,25 @@ export default function Leaderboard() {
       {/* Fury of the Week Spotlight */}
       {furyOfWeek && (
         <div className="mb-6 p-4 rounded-lg border border-yellow-600/30 bg-gradient-to-r from-yellow-900/10 to-transparent relative overflow-hidden">
-          <div className="absolute top-0 right-0 text-6xl opacity-10 -mr-2 -mt-2">👑</div>
+          <div className="absolute top-0 right-0 text-6xl opacity-10 -mr-2 -mt-2">
+            👑
+          </div>
           <div className="text-xs text-yellow-600 uppercase tracking-[0.3em] mb-1">
             Fury of the Week
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-3xl">{getTier(furyOfWeek.integrity_score).icon}</span>
+            <span className="text-3xl">
+              {getTier(furyOfWeek.integrity_score).icon}
+            </span>
             <div>
               <div className="font-black text-lg text-white">
-                {furyOfWeek.email.split('@')[0]}
+                {furyOfWeek.email.split("@")[0]}
               </div>
-              <div className={`text-sm tier-${getTier(furyOfWeek.integrity_score).tierClass}-text`}>
-                {getTier(furyOfWeek.integrity_score).name} · {furyOfWeek.integrity_score} IS
+              <div
+                className={`text-sm tier-${getTier(furyOfWeek.integrity_score).tierClass}-text`}
+              >
+                {getTier(furyOfWeek.integrity_score).name} ·{" "}
+                {furyOfWeek.integrity_score} IS
               </div>
             </div>
           </div>
@@ -212,7 +251,9 @@ export default function Leaderboard() {
           <div className="w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : leaders.length === 0 ? (
-        <p className="text-neutral-500 text-center py-8">No warriors yet. Be the first.</p>
+        <p className="text-neutral-500 text-center py-8">
+          No warriors yet. Be the first.
+        </p>
       ) : (
         <ul className="space-y-2">
           {leaders.map((leader, index) => {
@@ -231,7 +272,7 @@ export default function Leaderboard() {
                   {/* Tier Icon + Name */}
                   <div>
                     <div className="font-mono font-bold">
-                      {leader.email.split('@')[0]}
+                      {leader.email.split("@")[0]}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span
@@ -240,7 +281,8 @@ export default function Leaderboard() {
                         {tier.icon} {tier.name}
                       </span>
                       <span className="text-[10px] text-gray-600">
-                        Joined {new Date(leader.created_at).toLocaleDateString()}
+                        Joined{" "}
+                        {new Date(leader.created_at).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
@@ -248,7 +290,9 @@ export default function Leaderboard() {
 
                 {/* Score */}
                 <div className="text-right">
-                  <div className={`font-black text-lg tier-${tier.tierClass}-text`}>
+                  <div
+                    className={`font-black text-lg tier-${tier.tierClass}-text`}
+                  >
                     {leader.integrity_score}
                   </div>
                   <div className="text-[10px] text-gray-600 uppercase tracking-widest">

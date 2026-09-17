@@ -1,7 +1,10 @@
 import { randomUUID } from "crypto";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Pool } from "pg";
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import {
+  PostgreSqlContainer,
+  StartedPostgreSqlContainer,
+} from "@testcontainers/postgresql";
 import { execSync } from "child_process";
 import { describeWithContainerRuntime } from "../../../test/container-runtime";
 import { FuryRouterWorker } from "../../../services/fury-router/fury-router.worker";
@@ -23,10 +26,7 @@ describeWithContainerRuntime("FuryRouting (Integration)", () => {
     });
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        FuryRouterWorker,
-        { provide: Pool, useValue: pool },
-      ],
+      providers: [FuryRouterWorker, { provide: Pool, useValue: pool }],
     }).compile();
 
     worker = module.get<FuryRouterWorker>(FuryRouterWorker);
@@ -67,9 +67,18 @@ describeWithContainerRuntime("FuryRouting (Integration)", () => {
     );
   }
 
-  async function executeProcessJob(proofId: string, submitterId: string, requiredReviewers = 3) {
+  async function executeProcessJob(
+    proofId: string,
+    submitterId: string,
+    requiredReviewers = 3,
+  ) {
     const mockJob: any = {
-      data: { proofId, submitterUserId: submitterId, requiredReviewers, dispatchedAt: new Date().toISOString() },
+      data: {
+        proofId,
+        submitterUserId: submitterId,
+        requiredReviewers,
+        dispatchedAt: new Date().toISOString(),
+      },
       attemptsMade: 0,
       opts: { attempts: 3 },
     };
@@ -100,7 +109,9 @@ describeWithContainerRuntime("FuryRouting (Integration)", () => {
       expect(fid).not.toBe(submitterId);
     }
 
-    const proof = await pool.query("SELECT status FROM proofs WHERE id = $1", [proofId]);
+    const proof = await pool.query("SELECT status FROM proofs WHERE id = $1", [
+      proofId,
+    ]);
     expect(proof.rows[0].status).toBe("UNDER_REVIEW");
   });
 
@@ -155,7 +166,9 @@ describeWithContainerRuntime("FuryRouting (Integration)", () => {
       executeProcessJob(proofId, submitterId, 2),
     ).resolves.toBeUndefined();
 
-    const proof = await pool.query("SELECT status FROM proofs WHERE id = $1", [proofId]);
+    const proof = await pool.query("SELECT status FROM proofs WHERE id = $1", [
+      proofId,
+    ]);
     expect(proof.rows[0].status).toBe("MANUAL_REVIEW");
   });
 
@@ -165,7 +178,11 @@ describeWithContainerRuntime("FuryRouting (Integration)", () => {
     const differentStateFury = randomUUID();
     const proofId = randomUUID();
 
-    await seedFury(submitterId, { role: "USER", integrity_score: 0, last_known_state: "CA" });
+    await seedFury(submitterId, {
+      role: "USER",
+      integrity_score: 0,
+      last_known_state: "CA",
+    });
     await seedFury(sameStateFury, { last_known_state: "CA" });
     await seedFury(differentStateFury, { last_known_state: "NY" });
     await seedProof(proofId, submitterId);

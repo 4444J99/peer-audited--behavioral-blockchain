@@ -10,14 +10,14 @@
 
 This document synthesizes the complete business, legal, operational, and technical readiness across all 11 monorepo packages.
 
-| Category | Status | Primary Artifacts | Risk Level |
-|---|---|---|---|
-| **1. Strategic & LegalMoat** | ✅ Complete | `docs/legal/legal--consultation-personal-goals.md`, `docs/legal/legal--gatekeeper-compliance.md` | LOW |
-| **2. Market & Research** | ✅ Complete | `docs/research/competitor-deep-dives/`, `docs/planning/planning--research-ticket-pack--2026-07-20.md` | LOW |
-| **3. Infrastructure & Ops** | ✅ Complete | `render.yaml`, `docker-compose.yml`, `terraform/`, `.github/workflows/ci.yml` | LOW |
-| **4. Growth & Retention** | ✅ Complete | `behavioral-logic.ts`, `recovery-status.calculator.ts`, `OnboardingWizard.tsx` | LOW |
-| **5. Marketing & Pitch** | ✅ Complete | `@styx/pitch`, `docs/marketing/beta-safety-trust-summary.md` | LOW |
-| **6. Business Model & Billing**| ✅ Complete | `stripe.service.ts`, `stripe-payout.provider.ts`, `reconciliation.service.ts` | LOW |
+| Category                        | Status      | Primary Artifacts                                                                                     | Risk Level |
+| ------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- | ---------- |
+| **1. Strategic & LegalMoat**    | ✅ Complete | `docs/legal/legal--consultation-personal-goals.md`, `docs/legal/legal--gatekeeper-compliance.md`      | LOW        |
+| **2. Market & Research**        | ✅ Complete | `docs/research/competitor-deep-dives/`, `docs/planning/planning--research-ticket-pack--2026-07-20.md` | LOW        |
+| **3. Infrastructure & Ops**     | ✅ Complete | `render.yaml`, `docker-compose.yml`, `terraform/`, `.github/workflows/ci.yml`                         | LOW        |
+| **4. Growth & Retention**       | ✅ Complete | `behavioral-logic.ts`, `recovery-status.calculator.ts`, `OnboardingWizard.tsx`                        | LOW        |
+| **5. Marketing & Pitch**        | ✅ Complete | `@styx/pitch`, `docs/marketing/beta-safety-trust-summary.md`                                          | LOW        |
+| **6. Business Model & Billing** | ✅ Complete | `stripe.service.ts`, `stripe-payout.provider.ts`, `reconciliation.service.ts`                         | LOW        |
 
 ---
 

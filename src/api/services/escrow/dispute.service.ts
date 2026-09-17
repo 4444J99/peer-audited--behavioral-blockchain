@@ -1,13 +1,20 @@
-import { Injectable, HttpException, HttpStatus, NotFoundException, Logger, Inject } from '@nestjs/common';
-import { Pool, PoolClient } from 'pg';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+  Logger,
+  Inject,
+} from "@nestjs/common";
+import { Pool, PoolClient } from "pg";
 import {
   ESCROW_PROVIDER,
   EscrowHold,
   EscrowProvider,
-} from '../../src/common/interfaces/payout-provider.interface';
-import { TruthLogService } from '../ledger/truth-log.service';
-import { LedgerService } from '../ledger/ledger.service';
-import { APPEAL_FEE_AMOUNT, isAppealFeeEnabled } from '../billing';
+} from "../../src/common/interfaces/payout-provider.interface";
+import { TruthLogService } from "../ledger/truth-log.service";
+import { LedgerService } from "../ledger/ledger.service";
+import { APPEAL_FEE_AMOUNT, isAppealFeeEnabled } from "../billing";
 
 interface DisputeDetail {
   id: string;
@@ -63,11 +70,13 @@ export class DisputeService {
   private async enqueueDisputeStripeSideEffect(input: {
     contractId: string;
     disputeId: string;
-    outcome: 'UPHELD' | 'OVERTURNED';
+    outcome: "UPHELD" | "OVERTURNED";
     paymentIntentId: string;
   }): Promise<void> {
     const effectType =
-      input.outcome === 'UPHELD' ? 'STRIPE_CAPTURE_APPEAL_FEE' : 'STRIPE_CANCEL_APPEAL_FEE';
+      input.outcome === "UPHELD"
+        ? "STRIPE_CAPTURE_APPEAL_FEE"
+        : "STRIPE_CANCEL_APPEAL_FEE";
     const dedupeKey = `dispute-resolution:${input.disputeId}:${input.outcome}:stripe`;
 
     await this.pool.query(
@@ -110,7 +119,9 @@ export class DisputeService {
     // compensate — every fee-shaped step below is skipped rather than run with a
     // zero amount, which Stripe would reject outright.
     const feeEnabled = isAppealFeeEnabled();
-    const appealStatus = feeEnabled ? 'FEE_AUTHORIZED_PENDING_REVIEW' : 'PENDING_REVIEW';
+    const appealStatus = feeEnabled
+      ? "FEE_AUTHORIZED_PENDING_REVIEW"
+      : "PENDING_REVIEW";
 
     // An appeal that already exists keeps the financial terms it was accepted
     // under. Without this, flipping the fee policy and re-calling the endpoint
@@ -133,7 +144,7 @@ export class DisputeService {
     if (feeEnabled) {
       if (!customerId) {
         throw new HttpException(
-          'Appeal Rejected: a payment method is required while the appeal fee is enabled.',
+          "Appeal Rejected: a payment method is required while the appeal fee is enabled.",
           HttpStatus.PAYMENT_REQUIRED,
         );
       }
@@ -159,16 +170,21 @@ export class DisputeService {
       }
     }
 
-    const maybeConnect = (this.pool as unknown as { connect?: () => Promise<PoolClient> }).connect;
-    const client = typeof maybeConnect === 'function' ? await maybeConnect.call(this.pool) : null;
-    const db: { query: PoolClient['query'] } = (client ?? this.pool) as any;
+    const maybeConnect = (
+      this.pool as unknown as { connect?: () => Promise<PoolClient> }
+    ).connect;
+    const client =
+      typeof maybeConnect === "function"
+        ? await maybeConnect.call(this.pool)
+        : null;
+    const db: { query: PoolClient["query"] } = (client ?? this.pool) as any;
     const useTransaction = !!client;
 
     let persistenceError: unknown = null;
 
     try {
       if (useTransaction) {
-        await db.query('BEGIN');
+        await db.query("BEGIN");
       }
 
       await db.query(
@@ -180,19 +196,18 @@ export class DisputeService {
         [proofId, userId, holdResult?.id ?? null, appealStatus],
       );
 
-      await db.query(
-        `UPDATE proofs SET status = 'DISPUTED' WHERE id = $1`,
-        [proofId],
-      );
+      await db.query(`UPDATE proofs SET status = 'DISPUTED' WHERE id = $1`, [
+        proofId,
+      ]);
 
       if (useTransaction) {
-        await db.query('COMMIT');
+        await db.query("COMMIT");
       }
     } catch (error) {
       persistenceError = error;
       if (useTransaction) {
         try {
-          await db.query('ROLLBACK');
+          await db.query("ROLLBACK");
         } catch {
           // Preserve original error.
         }
@@ -218,16 +233,18 @@ export class DisputeService {
       }
 
       this.logger.error(
-        `Appeal persistence failed${holdResult ? ' after fee authorization' : ''} for proof ${proofId}: ${
-          persistenceError instanceof Error ? persistenceError.message : persistenceError
+        `Appeal persistence failed${holdResult ? " after fee authorization" : ""} for proof ${proofId}: ${
+          persistenceError instanceof Error
+            ? persistenceError.message
+            : persistenceError
         }`,
       );
       throw new HttpException(
         {
-          code: 'APPEAL_PERSISTENCE_FAILED',
+          code: "APPEAL_PERSISTENCE_FAILED",
           message: holdResult
-            ? 'Appeal fee authorized, but dispute persistence failed. Compensation attempted.'
-            : 'Dispute persistence failed. No appeal fee was charged.',
+            ? "Appeal fee authorized, but dispute persistence failed. Compensation attempted."
+            : "Dispute persistence failed. No appeal fee was charged.",
           reconciliationRequired: !!holdResult,
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -235,7 +252,7 @@ export class DisputeService {
     }
 
     try {
-      await this.truthLog.appendEvent('APPEAL_INITIATED', {
+      await this.truthLog.appendEvent("APPEAL_INITIATED", {
         proofId,
         userId,
         amount: holdResult ? APPEAL_FEE_AMOUNT : 0,
@@ -265,10 +282,10 @@ export class DisputeService {
       }
       throw new HttpException(
         {
-          code: 'APPEAL_RECONCILIATION_REQUIRED',
+          code: "APPEAL_RECONCILIATION_REQUIRED",
           message: holdResult
-            ? 'Appeal was persisted, but audit logging failed after fee authorization.'
-            : 'Appeal was persisted, but audit logging failed.',
+            ? "Appeal was persisted, but audit logging failed after fee authorization."
+            : "Appeal was persisted, but audit logging failed.",
           reconciliationRequired: true,
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -320,7 +337,7 @@ export class DisputeService {
     );
 
     if (dispute.rows.length === 0) {
-      throw new NotFoundException('Dispute not found');
+      throw new NotFoundException("Dispute not found");
     }
 
     const row = dispute.rows[0];
@@ -361,19 +378,22 @@ export class DisputeService {
   async resolveDispute(
     disputeId: string,
     judgeUserId: string,
-    outcome: 'UPHELD' | 'OVERTURNED' | 'ESCALATED',
+    outcome: "UPHELD" | "OVERTURNED" | "ESCALATED",
     judgeNotes: string,
   ): Promise<{ status: string }> {
     const client = await this.pool.connect();
-    let queuedStripeSideEffect:
-      | { contractId: string; disputeId: string; outcome: 'UPHELD' | 'OVERTURNED'; paymentIntentId: string }
-      | null = null;
+    let queuedStripeSideEffect: {
+      contractId: string;
+      disputeId: string;
+      outcome: "UPHELD" | "OVERTURNED";
+      paymentIntentId: string;
+    } | null = null;
     let proofIdForEvent: string | null = null;
     let userIdForEvent: string | null = null;
     let contractIdForEvent: string | null = null;
 
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
 
       // Get dispute details (incl. the appellant's ledger account so an UPHELD fee capture can
       // be recorded in the double-entry ledger — PM22).
@@ -388,10 +408,16 @@ export class DisputeService {
       );
 
       if (dispute.rows.length === 0) {
-        throw new NotFoundException('Dispute not found or already resolved');
+        throw new NotFoundException("Dispute not found or already resolved");
       }
 
-      const { proof_id, user_id, payment_intent_id, contract_id, user_account_id } = dispute.rows[0];
+      const {
+        proof_id,
+        user_id,
+        payment_intent_id,
+        contract_id,
+        user_account_id,
+      } = dispute.rows[0];
       proofIdForEvent = proof_id;
       userIdForEvent = user_id;
       contractIdForEvent = contract_id;
@@ -401,27 +427,27 @@ export class DisputeService {
       let proofStatus: string;
 
       switch (outcome) {
-        case 'UPHELD':
-          appealStatus = 'RESOLVED_UPHELD';
-          proofStatus = 'REJECTED'; // Original rejection stands
+        case "UPHELD":
+          appealStatus = "RESOLVED_UPHELD";
+          proofStatus = "REJECTED"; // Original rejection stands
           if (payment_intent_id && contract_id) {
             queuedStripeSideEffect = {
               contractId: contract_id,
               disputeId,
-              outcome: 'UPHELD',
+              outcome: "UPHELD",
               paymentIntentId: payment_intent_id,
             };
           }
           break;
 
-        case 'OVERTURNED':
-          appealStatus = 'RESOLVED_OVERTURNED';
-          proofStatus = 'VERIFIED'; // Override to verified
+        case "OVERTURNED":
+          appealStatus = "RESOLVED_OVERTURNED";
+          proofStatus = "VERIFIED"; // Override to verified
           if (payment_intent_id && contract_id) {
             queuedStripeSideEffect = {
               contractId: contract_id,
               disputeId,
-              outcome: 'OVERTURNED',
+              outcome: "OVERTURNED",
               paymentIntentId: payment_intent_id,
             };
           }
@@ -437,9 +463,9 @@ export class DisputeService {
           );
           break;
 
-        case 'ESCALATED':
-          appealStatus = 'ESCALATED';
-          proofStatus = 'DISPUTED'; // Stays disputed
+        case "ESCALATED":
+          appealStatus = "ESCALATED";
+          proofStatus = "DISPUTED"; // Stays disputed
           break;
       }
 
@@ -452,10 +478,10 @@ export class DisputeService {
       );
 
       // Update proof status
-      await client.query(
-        `UPDATE proofs SET status = $1 WHERE id = $2`,
-        [proofStatus, proof_id],
-      );
+      await client.query(`UPDATE proofs SET status = $1 WHERE id = $2`, [
+        proofStatus,
+        proof_id,
+      ]);
 
       if (queuedStripeSideEffect) {
         await client.query(
@@ -466,9 +492,9 @@ export class DisputeService {
           [
             queuedStripeSideEffect.contractId,
             `DISPUTE_${queuedStripeSideEffect.outcome}`,
-            queuedStripeSideEffect.outcome === 'UPHELD'
-              ? 'STRIPE_CAPTURE_APPEAL_FEE'
-              : 'STRIPE_CANCEL_APPEAL_FEE',
+            queuedStripeSideEffect.outcome === "UPHELD"
+              ? "STRIPE_CAPTURE_APPEAL_FEE"
+              : "STRIPE_CANCEL_APPEAL_FEE",
             `dispute-resolution:${disputeId}:${queuedStripeSideEffect.outcome}:stripe`,
             JSON.stringify({
               paymentIntentId: queuedStripeSideEffect.paymentIntentId,
@@ -485,7 +511,7 @@ export class DisputeService {
         // recorded in the double-entry ledger, so revenue was invisible to reconciliation and the
         // ledger understated platform balances. Record the fee here, transactionally with the
         // resolution, with a deterministic idempotency key so a re-resolution cannot double-post.
-        if (queuedStripeSideEffect.outcome === 'UPHELD' && user_account_id) {
+        if (queuedStripeSideEffect.outcome === "UPHELD" && user_account_id) {
           const revenue = await client.query(
             `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
           );
@@ -496,7 +522,7 @@ export class DisputeService {
               APPEAL_FEE_AMOUNT,
               contract_id,
               {
-                type: 'APPEAL_FEE_CAPTURED',
+                type: "APPEAL_FEE_CAPTURED",
                 disputeId,
                 proofId: proof_id,
                 userId: user_id,
@@ -513,9 +539,9 @@ export class DisputeService {
         }
       }
 
-      await client.query('COMMIT');
+      await client.query("COMMIT");
     } catch (err) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       if (err instanceof NotFoundException) throw err;
       this.logger.error(`Dispute resolution failed: ${(err as Error).message}`);
       throw err;
@@ -523,7 +549,7 @@ export class DisputeService {
       client.release();
     }
 
-    await this.truthLog.appendEvent('DISPUTE_RESOLVED', {
+    await this.truthLog.appendEvent("DISPUTE_RESOLVED", {
       disputeId,
       proofId: proofIdForEvent,
       userId: userIdForEvent,
@@ -534,15 +560,17 @@ export class DisputeService {
       paymentSideEffectQueued: !!queuedStripeSideEffect,
     });
 
-    this.logger.log(`Dispute ${disputeId} resolved: ${outcome} by judge ${judgeUserId}`);
+    this.logger.log(
+      `Dispute ${disputeId} resolved: ${outcome} by judge ${judgeUserId}`,
+    );
 
     return {
       status:
-        outcome === 'UPHELD'
-          ? 'RESOLVED_UPHELD'
-          : outcome === 'OVERTURNED'
-            ? 'RESOLVED_OVERTURNED'
-            : 'ESCALATED',
+        outcome === "UPHELD"
+          ? "RESOLVED_UPHELD"
+          : outcome === "OVERTURNED"
+            ? "RESOLVED_OVERTURNED"
+            : "ESCALATED",
     };
   }
 
@@ -578,14 +606,14 @@ export class DisputeService {
     return {
       dispute: detail,
       timeline: events.rows.map((row: any) => ({
-        type: 'EVENT',
+        type: "EVENT",
         id: row.id,
         eventType: row.event_type,
         timestamp: row.created_at,
         data: row.payload,
       })),
       ledger: entries.rows.map((row: any) => ({
-        type: 'LEDGER',
+        type: "LEDGER",
         id: row.id,
         amount: row.amount,
         debit: row.debit_account,

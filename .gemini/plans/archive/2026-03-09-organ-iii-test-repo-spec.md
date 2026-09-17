@@ -1,40 +1,50 @@
 # Plan: Organ III Test Repo Functional Spec
+
 # Date: 2026-03-09
+
 # Workstream: 3 (Requirement Specification)
 
 ## 1. Project Identity: `ergon-test-harness`
+
 The `ergon-test-harness` is a centralized **Validation & Simulation Suite** for the ORGAN-III (Commerce) ecosystem. It ensures that all SaaS products and utilities within the organ are commercially viable, architecturally compliant, and aesthetically aligned with the ecosystem's "Ergon" standards.
 
 ## 2. Problem Statement
+
 Organ III contains over 26 repositories with varying technology stacks. Ensuring that every project:
+
 1.  Follows the `seed.yaml` automation contract.
 2.  Adheres to the "Ergon Style" UI guidelines.
 3.  Implements core behavioral and financial guardrails (like the Aegis Protocol).
-...is currently a manual and error-prone process.
+    ...is currently a manual and error-prone process.
 
 ## 3. Functional Requirements
 
 ### 3.1. Seed Contract Validator
-*   **Input**: Any repository path within Organ III.
-*   **Action**: Parses `seed.yaml` and validates against the ecosystem schema.
-*   **Verification**: Pings declared consumers/sources to ensure "edges" are functional.
+
+- **Input**: Any repository path within Organ III.
+- **Action**: Parses `seed.yaml` and validates against the ecosystem schema.
+- **Verification**: Pings declared consumers/sources to ensure "edges" are functional.
 
 ### 3.2. Aesthetic Compliance Auditor
-*   **Engine**: Playwright / Headless Chromium.
-*   **Check**: Scans UI for color palette compliance (#001F3F Navy, #333333 Charcoal, #FFFFFF White).
-*   **Check**: Verifies "Zero Fluff" scannable business headers and typography.
+
+- **Engine**: Playwright / Headless Chromium.
+- **Check**: Scans UI for color palette compliance (#001F3F Navy, #333333 Charcoal, #FFFFFF White).
+- **Check**: Verifies "Zero Fluff" scannable business headers and typography.
 
 ### 3.3. Behavioral & Economic Simulations
-*   **Target**: Behavioral market contracts (e.g., Styx).
-*   **Engine**: Monte Carlo simulations of Loss Aversion.
-*   **Fury Stress Test**: Simulates collusion between whistleblowers and auditors to test "Shatter Point" resilience.
+
+- **Target**: Behavioral market contracts (e.g., Styx).
+- **Engine**: Monte Carlo simulations of Loss Aversion.
+- **Fury Stress Test**: Simulates collusion between whistleblowers and auditors to test "Shatter Point" resilience.
 
 ### 3.4. Aegis Protocol Gatekeeper
-*   **Verification**: Ensures age-gate (18+) and mandatory legal acknowledgments are present in the artifact's entry flow.
+
+- **Verification**: Ensures age-gate (18+) and mandatory legal acknowledgments are present in the artifact's entry flow.
 
 ## 4. Initial Framework Drafts
 
 ### 4.1. `seed.yaml` Framework
+
 ```yaml
 # seed.yaml — Automation Contract for organvm-iii-ergon/ergon-test-harness
 schema_version: "1.0"
@@ -69,26 +79,31 @@ consumes:
 ```
 
 ### 4.2. `README.md` Framework
+
 ```markdown
 # Ergon Test Harness (ORGAN-III)
 
 The definitive quality gate for the Commerce Organ.
 
 ## Overview
+
 This repository provides automated validation for all ORGAN-III (Ergon) products. It ensures that every SaaS tool and utility is ready for commercial deployment.
 
 ## Key Suites
+
 - **Contract**: `seed.yaml` schema and edge validation.
 - **Aesthetic**: UI audit against the Ergon Style Guide.
 - **Economic**: Behavioral simulation and loss-aversion testing.
 - **Legal**: Aegis Protocol verification.
 
 ## Getting Started
+
 `make install`
 `npm run audit --repo=../peer-audited--behavioral-blockchain`
 ```
 
 ## 5. Success Criteria
-*   Functional Spec approved.
-*   Framework files drafted.
-*   Ready to transition to **SHAPE** for architectural mapping.
+
+- Functional Spec approved.
+- Framework files drafted.
+- Ready to transition to **SHAPE** for architectural mapping.
