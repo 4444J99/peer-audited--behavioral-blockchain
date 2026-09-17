@@ -1,0 +1,143 @@
+name: PR 993 lockfile repair
+
+# Temporary, single-PR repair. Remove after the lockfile has been committed.
+on:
+  push:
+    branches: [dependabot/npm_and_yarn/npm-deps-bf6561acc1]
+    paths: [.github/workflows/pr-993-lock-repair.yml]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: pr-993-lock-repair
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    if: github.repository == '4444J99/peer-audited--behavioral-blockchain'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify the current PR head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/4444J99/peer-audited--behavioral-blockchain/pulls/993 > "$RUNNER_TEMP/pr.json"
+          python3 - <<'PY'
+          import json, os
+          with open(os.environ['RUNNER_TEMP'] + '/pr.json') as f:
+              pr = json.load(f)
+          assert pr['state'] == 'open'
+          assert pr['head']['repo']['full_name'] == os.environ['GITHUB_REPOSITORY']
+          assert pr['head']['ref'] == 'dependabot/npm_and_yarn/npm-deps-bf6561acc1'
+          assert pr['head']['sha'] == os.environ['GITHUB_SHA'], 'PR head moved; do not repair a stale commit'
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Use the repository npm version
+        run: npm install --global npm@10.8.2 --ignore-scripts
+      - name: Regenerate the workspace lockfile without lifecycle scripts
+        run: |
+          node --version
+          npm --version
+          npm install --package-lock-only --ignore-scripts --strict-peer-deps --no-audit --no-fund
+      - name: Verify a clean, strict installation
+        run: npm ci --ignore-scripts --strict-peer-deps --no-audit --no-fund
+      - name: Verify the SDK 57 package set
+        working-directory: src/mobile
+        env:
+          CI: '1'
+        run: npx --no-install expo install --check
+      - name: Verify workspace metadata and test-harness js-yaml resolution
+        run: |
+          node <<'JS'
+          const fs = require('node:fs');
+          const assert = require('node:assert/strict');
+          const { createRequire } = require('node:module');
+          const path = require('node:path');
+          const semver = require('semver');
+          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          for (const dir of ['', 'src/api', 'src/mobile', 'src/test-harness']) {
+            const manifest = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'));
+            const record = lock.packages[dir];
+            assert.ok(record, `Missing workspace lock record: ${dir}`);
+            for (const field of ['dependencies', 'devDependencies', 'optionalDependencies', 'engines']) {
+              assert.deepEqual(record[field] || {}, manifest[field] || {}, `${dir}: ${field} metadata drift`);
+            }
+          }
+          const harnessRequire = createRequire(path.resolve('src/test-harness/package.json'));
+          const yamlVersion = harnessRequire('js-yaml/package.json').version;
+          const range = require('./src/test-harness/package.json').dependencies['js-yaml'];
+          assert.ok(semver.satisfies(yamlVersion, range), `js-yaml ${yamlVersion} does not satisfy ${range}`);
+          const mobileRequire = createRequire(path.resolve('src/mobile/package.json'));
+          assert.equal(mobileRequire('react/package.json').version, '19.2.3');
+          assert.ok(semver.satisfies(mobileRequire('react-native/package.json').version, '0.86.x'));
+          for (const name of ['expo', 'expo-notifications', 'expo-application', 'expo-constants']) {
+            assert.equal(semver.major(mobileRequire(`${name}/package.json`).version), 57, `${name}: SDK mismatch`);
+          }
+          console.log(JSON.stringify({ inputHead: process.env.GITHUB_SHA, node: process.version, yamlVersion, range }, null, 2));
+          JS
+      - name: Save only the generated lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-993-lockfile-${{ github.sha }}
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: regenerate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+      - uses: actions/download-artifact@v4
+        with:
+          name: pr-993-lockfile-${{ github.sha }}
+          path: ${{ runner.temp }}/pr-993-lockfile
+      - name: Validate the artifact and commit only the lockfile
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          current="$(gh api repos/4444J99/peer-audited--behavioral-blockchain/pulls/993 --jq '.head.sha')"
+          test "$current" = "$GITHUB_SHA" || { echo 'PR head moved; refusing stale write'; exit 1; }
+          python3 - <<'PY'
+          import json, os, pathlib, shutil
+          source = pathlib.Path(os.environ['RUNNER_TEMP']) / 'pr-993-lockfile' / 'package-lock.json'
+          assert source.is_file() and not source.is_symlink()
+          assert source.stat().st_size < 10000000
+          lock = json.loads(source.read_text())
+          assert lock['lockfileVersion'] == 3
+          for folder in ['', 'src/api', 'src/mobile', 'src/test-harness']:
+              manifest = json.loads((pathlib.Path(folder) / 'package.json').read_text())
+              record = lock['packages'][folder]
+              for field in ['dependencies', 'devDependencies', 'optionalDependencies', 'engines']:
+                  assert record.get(field, {}) == manifest.get(field, {}), (folder, field)
+          shutil.copyfile(source, 'package-lock.json')
+          PY
+          git diff --check
+          if git diff --quiet -- package-lock.json; then
+            echo "Lockfile is already synchronized at $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- package-lock.json
+          test "$(git diff --cached --name-only)" = 'package-lock.json'
+          git commit -m 'fix(deps): regenerate Expo 57 and test-harness workspace lockfile'
+          git push origin HEAD:refs/heads/dependabot/npm_and_yarn/npm-deps-bf6561acc1
+          printf 'Input head: `%s`\n\nCommitted head: `%s`\n' "$GITHUB_SHA" "$(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
