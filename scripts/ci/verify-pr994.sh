@@ -23,7 +23,7 @@ run() {
 # Installation is a hard prerequisite; do not test stale dependencies on failure.
 run install npm ci
 installed=$?
-run shell-regressions node --test scripts/tests/pr994-regressions.test.mjs
+run shell-regressions node --test scripts/tests/pr994-*.test.mjs
 if [[ "$installed" -eq 0 ]]; then
   run dependency-graph node scripts/ci/check-dependency-graph.mjs
   run shared-build npm run build --workspace=@styx/shared

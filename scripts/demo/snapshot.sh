@@ -72,12 +72,17 @@ build() {
 
 serve() {
   [ -f "$out_dir/index.html" ] || die "nothing built. Run: npm run snapshot:build"
-  info "Serving the snapshot on http://127.0.0.1:4315 (Ctrl-C to stop) ..."
-  # NOT `serve -s`. SPA mode rewrites every unmatched path to index.html, so each
-  # route returns the landing page with a 200 while the client router still shows the
-  # right URL -- a local preview that looks fine and tests nothing. This export has a
-  # real HTML file per route, which is also how Cloudflare Pages serves it.
-  node24 npx --yes serve "$out_dir" -l 4315
+  local bind_host="127.0.0.1" port="${STYX_DEMO_SHARE_PORT:-4315}"
+  case "${STYX_SNAPSHOT_LAN:-false}" in
+    true) bind_host="0.0.0.0" ;;
+    false) ;;
+    *) die "STYX_SNAPSHOT_LAN must be true or false" ;;
+  esac
+  [[ "$port" =~ ^[0-9]{1,5}$ ]] && (( 10#$port > 0 && 10#$port < 65536 )) || die "invalid snapshot port"
+  info "Serving only the static export on ${bind_host}:${port} (Ctrl-C to stop) ..."
+  # Explicit opt-in exposes static fixtures, never the loopback demo/API.
+  # No SPA rewrite: each route must resolve its own exported HTML.
+  node24 npx --yes serve@14.2.6 "$out_dir" -l "tcp://${bind_host}:${port}"
 }
 
 # Sweeps every registry route on the built export and fails if any of them still
@@ -95,7 +100,7 @@ verify() {
   trap cleanup EXIT
 
   info "Serving the export on 127.0.0.1:${port} for verification ..."
-  node24 npx --yes serve "$out_dir" -l "$port" >/dev/null 2>&1 &
+  node24 npx --yes serve@14.2.6 "$out_dir" -l "tcp://127.0.0.1:${port}" >/dev/null 2>&1 &
   verify_pid=$!
 
   # -q --http1.1: an --http2 line in the operator's curlrc makes this request an h2c
