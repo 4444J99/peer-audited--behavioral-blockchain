@@ -1,4 +1,3 @@
-jest.mock("geoip-lite", () => ({ lookup: jest.fn() }));
 
 import {
   CompliancePolicyService,
@@ -11,9 +10,7 @@ import {
 } from "./identity-verification.service";
 import { JurisdictionTier } from "../../../services/geofencing";
 import { Request } from "express";
-import * as geoip from "geoip-lite";
 
-const mockLookup = geoip.lookup as jest.Mock;
 
 describe("CompliancePolicyService", () => {
   let service: CompliancePolicyService;
@@ -45,8 +42,7 @@ describe("CompliancePolicyService", () => {
       mockIdentityVerification as unknown as IdentityVerificationService,
     );
     jest.clearAllMocks();
-    mockLookup.mockReset();
-    delete process.env.GEO_MISSING_HEADER_ACTION;
+        delete process.env.GEO_MISSING_HEADER_ACTION;
     delete process.env.KYC_ENFORCEMENT_ENABLED;
     delete process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
     delete process.env.NODE_ENV;
@@ -506,8 +502,7 @@ describe("CompliancePolicyService", () => {
     });
 
     it("should resolve state from request IP when location headers are missing", () => {
-      mockLookup.mockReturnValue({ country: "US", region: "CA" });
-      const req = makeRequest({
+            const req = makeRequest({
         method: "GET",
         originalUrl: "/contracts",
         headers: { "x-forwarded-for": "8.8.8.8" },
@@ -520,8 +515,7 @@ describe("CompliancePolicyService", () => {
     });
 
     it("should admit a US country-only resolution for read-only actions", () => {
-      mockLookup.mockReturnValue({ country: "US", region: "" });
-      const req = makeRequest({
+            const req = makeRequest({
         method: "GET",
         originalUrl: "/contracts",
         headers: { "x-forwarded-for": "8.8.8.8" },
@@ -536,8 +530,7 @@ describe("CompliancePolicyService", () => {
     });
 
     it("should still block a US country-only resolution for monetized actions", () => {
-      mockLookup.mockReturnValue({ country: "US", region: "" });
-      const req = makeRequest({
+            const req = makeRequest({
         method: "POST",
         originalUrl: "/contracts",
         headers: { "x-forwarded-for": "8.8.8.8" },
@@ -575,8 +568,7 @@ describe("CompliancePolicyService", () => {
 
     it("should use IP lookup in production even when x-styx-state override is ignored", () => {
       process.env.NODE_ENV = "production";
-      mockLookup.mockReturnValue({ country: "US", region: "NY" });
-      const req = makeRequest({
+            const req = makeRequest({
         method: "GET",
         originalUrl: "/contracts",
         headers: {

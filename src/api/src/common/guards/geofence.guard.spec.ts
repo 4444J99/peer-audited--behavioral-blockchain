@@ -1,11 +1,8 @@
-jest.mock("geoip-lite", () => ({ lookup: jest.fn() }));
 
 import { ForbiddenException } from "@nestjs/common";
 import { GeofenceGuard } from "./geofence.guard";
 import { CompliancePolicyService } from "../../modules/compliance/compliance-policy.service";
-import * as geoip from "geoip-lite";
 
-const mockLookup = geoip.lookup as jest.Mock;
 
 describe("GeofenceGuard", () => {
   let guard: GeofenceGuard;
@@ -14,8 +11,7 @@ describe("GeofenceGuard", () => {
 
   beforeEach(() => {
     process.env = { ...envSnapshot };
-    mockLookup.mockReset();
-    delete process.env.GEO_MISSING_HEADER_ACTION;
+        delete process.env.GEO_MISSING_HEADER_ACTION;
     delete process.env.GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS;
     delete process.env.TRUST_PROXY_HEADERS;
     delete process.env.NODE_ENV;
@@ -229,8 +225,7 @@ describe("GeofenceGuard", () => {
     compliancePolicy = new CompliancePolicyService({ query: jest.fn() } as any);
     guard = new GeofenceGuard(compliancePolicy);
 
-    mockLookup.mockReturnValue({ country: "US", region: "CA" });
-
+    
     const context = createContext({
       headers: { "x-forwarded-for": "8.8.8.8" },
       originalUrl: "/contracts",
