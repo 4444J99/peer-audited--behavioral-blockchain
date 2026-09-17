@@ -1,6 +1,7 @@
 name: PR 993 lockfile repair
 
 # Temporary, single-PR repair. Remove after the lockfile has been committed.
+# Retry includes the Expo CLI's patch and Jest compatibility corrections.
 on:
   push:
     branches: [dependabot/npm_and_yarn/npm-deps-bf6561acc1]
@@ -79,8 +80,13 @@ jobs:
           const mobileRequire = createRequire(path.resolve('src/mobile/package.json'));
           assert.equal(mobileRequire('react/package.json').version, '19.2.3');
           assert.ok(semver.satisfies(mobileRequire('react-native/package.json').version, '0.86.x'));
-          for (const name of ['expo', 'expo-notifications', 'expo-application', 'expo-constants']) {
+          for (const name of ['expo', 'expo-notifications', 'expo-application']) {
             assert.equal(semver.major(mobileRequire(`${name}/package.json`).version), 57, `${name}: SDK mismatch`);
+          }
+          const expoRequire = createRequire(mobileRequire.resolve('expo/package.json'));
+          const notificationsRequire = createRequire(mobileRequire.resolve('expo-notifications/package.json'));
+          for (const resolveFrom of [expoRequire, notificationsRequire]) {
+            assert.equal(semver.major(resolveFrom('expo-constants/package.json').version), 57);
           }
           console.log(JSON.stringify({ inputHead: process.env.GITHUB_SHA, node: process.version, yamlVersion, range }, null, 2));
           JS
