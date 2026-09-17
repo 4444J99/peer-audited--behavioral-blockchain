@@ -1,4 +1,4 @@
--- 069: Two-phase push delivery — tickets on send, receipts afterwards.
+-- 075: Two-phase push delivery — tickets on send, receipts afterwards.
 --
 -- Expo's push API is two-phase and 044 only recorded the first half. A 200 from
 -- /push/send returns a *ticket*, which means "accepted for delivery", not

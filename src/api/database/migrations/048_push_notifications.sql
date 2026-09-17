@@ -1,4 +1,4 @@
--- 044: Push notification infrastructure
+-- 048: Push notification infrastructure
 -- Adds push_tokens table for device registration and push_deliveries for audit.
 
 CREATE TABLE IF NOT EXISTS push_tokens (

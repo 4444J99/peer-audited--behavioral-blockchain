@@ -1,4 +1,4 @@
--- 046: Ostrich effect detection (F-AEGIS-09)
+-- 050: Ostrich effect detection (F-AEGIS-09)
 -- Tracks user activity to detect avoidance patterns and trigger interventions.
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ;

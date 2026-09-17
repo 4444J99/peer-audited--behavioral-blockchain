@@ -22,8 +22,9 @@ Styx deploys to Render (Oregon region) via tag-triggered GitHub Actions workflow
 |---------|---------------|------|------|
 | styx-api | `styx-api` | 3000 | Web Service (NestJS 11) |
 | styx-web | `styx-web` | 3001 | Web Service (Next.js 16) |
-| styx-postgres | `styx-postgres` | 5432 | Managed PostgreSQL 15 |
-| styx-redis | `styx-redis` | 6379 | Managed Redis 7 |
+| styx-db | `styx-db` | 5432 | Managed PostgreSQL 16 |
+| styx-redis-bullmq | `styx-redis-bullmq` | 6379 | Managed Redis 7 (BullMQ queues) |
+| styx-redis-cache | `styx-redis-cache` | 6379 | Managed Redis 7 (Cache / SSE / Anomaly) |
 
 ### Deploy Flow
 
@@ -36,7 +37,7 @@ Developer
     │
     └── GitHub Actions (deploy.yml)
             │
-            ├── Run full test suite (499+ tests)
+            ├── Run full test suite (3,500+ tests)
             ├── Run 8 validation gates
             ├── Build Docker images
             ├── Push to Render via deploy hook
@@ -66,7 +67,7 @@ Complete every item before creating a release tag:
 
 ### Code Quality
 
-- [ ] All tests pass: `npm run test` across all packages
+- [ ] All tests pass: `npm run test` across all packages (~3,500+ unit and integration tests)
 - [ ] Lint clean: `npm run lint` (ESLint + Prettier)
 - [ ] Type-check clean: `npm run typecheck` (TypeScript strict mode)
 - [ ] No `console.log` in production code (use pino structured logging)
@@ -161,6 +162,8 @@ bash scripts/smoke/beta-readiness.sh
 
 ## Database Migrations
 
+The repository maintains an ordered, sequential chain of 82 SQL migrations (`001` through `081`, plus the historical `037b` amendment). Migration ordinals are strictly unique and sequential to ensure deterministic lexical and numeric sorting with zero schema drift.
+
 ### Running Migrations
 
 ```bash
@@ -168,8 +171,9 @@ bash scripts/smoke/beta-readiness.sh
 cd src/api
 npm run migrate
 
-# Production (via Render shell or pre-deploy command)
-# Render's pre-deploy command in render.yaml handles this automatically
+# Production (automated via GitHub Actions deploy.yml)
+# The `migrate` workflow job executes `cd src/api && npm run migrate`
+# after `deploy_api` succeeds and before smoke tests execute.
 ```
 
 ### Migration Safety Rules
@@ -198,18 +202,19 @@ The `render.yaml` defines the infrastructure:
 |---------|------|--------|-------------|
 | styx-api | Starter ($7/mo) | Oregon | From `main` branch |
 | styx-web | Starter ($7/mo) | Oregon | From `main` branch |
-| styx-postgres | Starter ($7/mo) | Oregon | Managed |
-| styx-redis | Free | Oregon | Managed |
+| styx-db | Free | Oregon | Managed PostgreSQL 16 |
+| styx-redis-bullmq | Starter | Oregon | Managed Redis 7 |
+| styx-redis-cache | Starter | Oregon | Managed Redis 7 |
 
 ### Key Configuration
 
 - **Health check path (API):** `/health`
 - **Health check path (Web):** `/`
-- **Build command (API):** `npm install && npm run build`
-- **Start command (API):** `node dist/main.js`
-- **Build command (Web):** `npm install && npm run build`
-- **Start command (Web):** `npm start`
-- **Pre-deploy command:** `npm run migrate` (runs before new version receives traffic)
+- **Build command (API):** `npm install --include=dev && npx turbo run build --filter=@styx/api`
+- **Start command (API):** `cd src/api && node dist/api/src/main.js`
+- **Build command (Web):** `npm install --include=dev && npx turbo run build --filter=@styx/web`
+- **Start command (Web):** `cd src/web && npm start -- --port $PORT`
+- **Migration execution:** `cd src/api && npm run migrate` (runs via CI `deploy.yml` migrate job after API deploy, before smoke tests)
 
 ## Rollback Procedure
 

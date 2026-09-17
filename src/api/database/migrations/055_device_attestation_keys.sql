@@ -1,4 +1,4 @@
--- 051_device_attestation_keys.sql
+-- 055_device_attestation_keys.sql
 -- Device attestation key registry for App Attest (iOS) and Play Integrity (Android).
 
 CREATE TABLE IF NOT EXISTS device_attestation_keys (

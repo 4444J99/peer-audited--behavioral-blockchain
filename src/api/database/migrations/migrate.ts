@@ -24,12 +24,60 @@ export async function ensureMigrationsTable(pool: Pool): Promise<void> {
 }
 
 /**
+ * Maps historical migration filenames to their canonical sequential filenames.
+ * This preserves backwards compatibility for databases that already applied
+ * migrations under legacy duplicate prefixes before they were sequentialized.
+ */
+export const MIGRATION_LEGACY_ALIASES: Readonly<Record<string, string>> = {
+  '041_metered_usage_events.sql': '042_metered_usage_events.sql',
+  '041_user_access_tier.sql': '043_user_access_tier.sql',
+  '042_user_api_keys.sql': '044_user_api_keys.sql',
+  '042_user_subscription_id.sql': '045_user_subscription_id.sql',
+  '043_compliance_artifacts.sql': '046_compliance_artifacts.sql',
+  '043_fury_rejection_code.sql': '047_fury_rejection_code.sql',
+  '044_push_notifications.sql': '048_push_notifications.sql',
+  '045_referral_tracking.sql': '049_referral_tracking.sql',
+  '046_ostrich_effect_detection.sql': '050_ostrich_effect_detection.sql',
+  '047_rationalization_classifier.sql': '051_rationalization_classifier.sql',
+  '048_behavioral_enrichment_tables.sql': '052_behavioral_enrichment_tables.sql',
+  '049_behavioral_omega_features.sql': '053_behavioral_omega_features.sql',
+  '050_behavioral_omega_tables.sql': '054_behavioral_omega_tables.sql',
+  '051_device_attestation_keys.sql': '055_device_attestation_keys.sql',
+  '052_partner_checkins.sql': '056_partner_checkins.sql',
+  '053_anti_sybil.sql': '057_anti_sybil.sql',
+  '054_ccpa_aml.sql': '058_ccpa_aml.sql',
+  '055_deco_commitments.sql': '059_deco_commitments.sql',
+  '056_fbo_accounts.sql': '060_fbo_accounts.sql',
+  '057_pod_broadcast_log_cohort.sql': '061_pod_broadcast_log_cohort.sql',
+  '058_practitioner_tables.sql': '062_practitioner_tables.sql',
+  '059_aml_tables.sql': '063_aml_tables.sql',
+  '060_system_flags.sql': '064_system_flags.sql',
+  '061_retention_state.sql': '065_retention_state.sql',
+  '062_fitbit_oauth_tokens.sql': '066_fitbit_oauth_tokens.sql',
+  '063_schema_chain_reconciliation.sql': '067_schema_chain_reconciliation.sql',
+  '064_schema_drift_columns.sql': '068_schema_drift_columns.sql',
+  '065_deco_commitment_privacy.sql': '069_deco_commitment_privacy.sql',
+  '066_jurisdiction_survey_reconciliation.sql': '070_jurisdiction_survey_reconciliation.sql',
+  '067_system_accounts.sql': '071_system_accounts.sql',
+  '068_contract_reconcile_attempts.sql': '072_contract_reconcile_attempts.sql',
+  '069_fury_penalty_ledger_link.sql': '073_fury_penalty_ledger_link.sql',
+  '069_identity_oaths.sql': '074_identity_oaths.sql',
+  '069_push_delivery_receipts.sql': '075_push_delivery_receipts.sql',
+  '069_webhook_subscriptions.sql': '076_webhook_subscriptions.sql',
+  '070_capture_provenance.sql': '077_capture_provenance.sql',
+  '070_fury_enforcement_case_read_indexes.sql': '078_fury_enforcement_case_read_indexes.sql',
+  '071_test_money_stake_floor.sql': '079_test_money_stake_floor.sql',
+  '072_agent_action_evidence.sql': '080_agent_action_evidence.sql',
+  '073_cohort_nominations.sql': '081_cohort_nominations.sql',
+};
+
+/**
  * Sort migration names by their numeric sequence before the descriptive stem.
  *
- * The repository already contains sibling migrations (for example 041_* and
- * 043_*), plus the historical 037b_* amendment.  Plain string sorting happens
- * to work for today's zero-padded names, but it is not the contract: a future
- * 100_* migration or an unpadded repair must still be ordered predictably.
+ * Migration ordinals are strictly unique and sequential (with the historical
+ * 037b_* amendment retaining its letter suffix). Plain string sorting matches
+ * for zero-padded names, but numeric comparison guarantees a future 100_*
+ * migration or an unpadded repair is ordered predictably.
  */
 export function compareMigrationFiles(left: string, right: string): number {
   const leftMatch = left.match(MIGRATION_NAME_RE);
@@ -56,7 +104,12 @@ export function listMigrationFiles(): string[] {
 
 export async function getAppliedMigrations(pool: Pool): Promise<Set<string>> {
   const result = await pool.query(`SELECT name FROM ${MIGRATIONS_TABLE} ORDER BY id`);
-  return new Set(result.rows.map((r: { name: string }) => r.name));
+  const applied = new Set<string>();
+  for (const row of result.rows) {
+    const canonical = MIGRATION_LEGACY_ALIASES[row.name] || row.name;
+    applied.add(canonical);
+  }
+  return applied;
 }
 
 export async function getPendingMigrations(pool: Pool): Promise<string[]> {
