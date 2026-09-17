@@ -1,0 +1,115 @@
+name: PR 994 SDK lock acceptance
+on:
+  push:
+    branches: [work/lane-verify/ci-gate-fixes-2026-09-17]
+    paths: [.github/workflows/pr994-sdk-lock.yml]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pr994_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Restore the checksummed generated candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/pr994-evidence" "$RUNNER_TEMP/candidate"
+          gh api repos/${{ github.repository }}/actions/artifacts/10519701788/zip > "$RUNNER_TEMP/candidate.zip"
+          unzip -q "$RUNNER_TEMP/candidate.zip" -d "$RUNNER_TEMP/candidate"
+          echo "463fb4e87d593cb3ee90b58270bb7b727d4fe6f199288d56b2402e86c603c6e3  $RUNNER_TEMP/candidate/candidate.diff" | sha256sum -c -
+          git apply --check "$RUNNER_TEMP/candidate/candidate.diff"
+          git apply "$RUNNER_TEMP/candidate/candidate.diff"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --global npm@10.8.2
+      - name: Regenerate the whole affected SDK subgraph, not incompatible old peer fragments
+        run: |
+          node <<'JS'
+          const fs=require('fs');
+          const root=JSON.parse(fs.readFileSync('package.json','utf8'));
+          Object.assign(root.devDependencies,{expo:'57.0.23','react-native':'0.86.3'});
+          Object.assign(root.overrides,{expo:'57.0.23','react-native':'0.86.3','@types/react-dom':'19.2.4',xcode:{uuid:'11.1.1'},'@react-navigation/native':'7.4.1','@react-navigation/core':'7.22.1'});
+          const mobile=JSON.parse(fs.readFileSync('src/mobile/package.json','utf8'));
+          Object.assign(mobile.devDependencies,{'@react-native/metro-config':'0.86.3','jest-environment-jsdom':'29.7.0'});
+          fs.writeFileSync('package.json',JSON.stringify(root,null,2)+'\n');
+          fs.writeFileSync('src/mobile/package.json',JSON.stringify(mobile,null,2)+'\n');
+          const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+          const removed=[];
+          for(const key of Object.keys(lock.packages)) {
+            if(key.startsWith('src/mobile/node_modules/') || /(^|\/)node_modules\/(expo[^/]*|@expo\/[^/]+|react-native[^/]*|@react-native\/[^/]+|@react-native-async-storage\/[^/]+|@react-navigation\/[^/]+|metro[^/]*|babel-preset-expo|xcode)(\/|$)/.test(key)) {
+              removed.push(key);delete lock.packages[key];
+            }
+          }
+          fs.writeFileSync(process.env.RUNNER_TEMP+'/pr994-evidence/regenerated-inputs.json',JSON.stringify(removed,null,2)+'\n');
+          fs.writeFileSync('package-lock.json',JSON.stringify(lock,null,2)+'\n');
+          JS
+          set -o pipefail
+          npm install --package-lock-only --ignore-scripts --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/generation.log"
+          npm ci --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/strict-install.log"
+      - name: Require installed graph and SDK agreement
+        run: |
+          set -o pipefail
+          node scripts/ci/check-dependency-graph.mjs 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/graph.log"
+          (cd src/mobile && CI=1 npx expo install --check) 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/expo.log"
+      - name: Commit only accepted source to the unchanged PR head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          branch=work/lane-verify/ci-gate-fixes-2026-09-17
+          test "$(git ls-remote origin refs/heads/$branch | cut -f1)" = "$EXPECTED_HEAD"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json src/mobile/package.json package-lock.json
+          git diff --cached --check
+          git commit -m 'fix(deps): regenerate the SDK-compatible peer graph and patched Xcode UUID'
+          git push origin HEAD:refs/heads/$branch
+      - name: Verify committed head
+        env:
+          PR994_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/pr994_test
+        run: bash scripts/ci/verify-pr994.sh
+      - name: Collect verification or failed-generation evidence
+        if: always()
+        run: |
+          out="$RUNNER_TEMP/pr994-evidence"
+          set +e
+          if test -x node_modules/.bin/turbo; then
+            timeout 600 npx turbo run test > "$out/canonical-tests.log" 2>&1; echo "$?" > "$out/canonical-tests-exit.txt"
+            timeout 300 npx turbo run build > "$out/canonical-build.log" 2>&1; echo "$?" > "$out/canonical-build-exit.txt"
+            timeout 180 npx turbo run lint > "$out/canonical-lint.log" 2>&1; echo "$?" > "$out/canonical-lint-exit.txt"
+          fi
+          npm audit --json > "$out/audit.json"
+          git rev-parse HEAD > "$out/head.txt"
+          git diff --binary --full-index > "$out/candidate.diff"
+          cp package-lock.json "$out/candidate-lock.json"
+          git archive --format=tar.gz HEAD > "$out/source.tar.gz"
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr994-sdk-${{ github.run_id }}
+          path: ${{ runner.temp }}/pr994-evidence/
+          retention-days: 14
