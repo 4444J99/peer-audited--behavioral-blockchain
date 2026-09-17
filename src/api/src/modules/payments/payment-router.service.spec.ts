@@ -2,14 +2,28 @@ import { PaymentRouterService, PaymentProcessor } from './payment-router.service
 
 describe('PaymentRouterService', () => {
   let service: PaymentRouterService;
+  let originalNodeEnv: string | undefined;
+  let originalStripeKey: string | undefined;
 
   beforeEach(() => {
+    originalNodeEnv = process.env.NODE_ENV;
+    originalStripeKey = process.env.STRIPE_SECRET_KEY;
+    // Configuration is captured by the constructor. Remove the fixture key
+    // before constructing the service so missing-key tests never contact Stripe.
+    delete process.env.STRIPE_SECRET_KEY;
     const mockStripe = { releaseFunds: jest.fn().mockResolvedValue({ status: 'COMPLETED', externalRef: 'pi_mock_1' }) };
     const mockCorepay = { releaseFunds: jest.fn().mockResolvedValue({ status: 'COMPLETED', externalRef: 'tok_mock_1' }) };
     service = new PaymentRouterService(
       mockStripe as any,
       mockCorepay as any,
     );
+  });
+
+  afterEach(() => {
+    if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = originalNodeEnv;
+    if (originalStripeKey === undefined) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = originalStripeKey;
   });
 
   // ─── determineProcessor ───
@@ -66,15 +80,6 @@ describe('PaymentRouterService', () => {
       userId: 'user-2',
     };
 
-    const savedEnv = process.env.NODE_ENV;
-    afterEach(() => {
-      if (savedEnv === undefined) {
-        delete process.env.NODE_ENV;
-      } else {
-        process.env.NODE_ENV = savedEnv;
-      }
-    });
-
     it('should create a Stripe payment intent with mock client secret in development', async () => {
       process.env.NODE_ENV = 'development';
       const result = await service.createPaymentIntent(baseOptions, 'STRIPE');
@@ -99,19 +104,19 @@ describe('PaymentRouterService', () => {
       process.env.NODE_ENV = 'production';
       delete process.env.STRIPE_SECRET_KEY;
       await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
-        .rejects.toThrow();
+        .rejects.toThrow('Stripe processor not configured for production');
     });
 
     it('should throw ServiceUnavailableException in staging', async () => {
       process.env.NODE_ENV = 'staging';
       await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
-        .rejects.toThrow();
+        .rejects.toThrow('Stripe processor not configured for production');
     });
 
     it('should fail closed when NODE_ENV is unset', async () => {
       delete process.env.NODE_ENV;
       await expect(service.createPaymentIntent(baseOptions, 'STRIPE'))
-        .rejects.toThrow();
+        .rejects.toThrow('Stripe processor not configured for production');
     });
 
     it('should throw for COREPAY in production', async () => {

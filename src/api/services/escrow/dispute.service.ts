@@ -3,7 +3,7 @@ import { Pool, PoolClient } from 'pg';
 import {
   ESCROW_PROVIDER,
   EscrowHold,
-  EscrowProvider,
+  type EscrowProvider,
 } from '../../src/common/interfaces/payout-provider.interface';
 import { TruthLogService } from '../ledger/truth-log.service';
 import { LedgerService } from '../ledger/ledger.service';

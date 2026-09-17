@@ -6,7 +6,7 @@ import { readFirstEnv, normalizeBaseUrl } from "../../config/runtime";
 import { JoinBetaWaitlistDto } from "./dto";
 import {
   BETA_WAITLIST_NOTIFIER,
-  BetaWaitlistNotifier,
+  type BetaWaitlistNotifier,
 } from "./beta-waitlist.notifier";
 
 export interface BetaWaitlistEntry {
