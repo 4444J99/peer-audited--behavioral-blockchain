@@ -52,9 +52,9 @@ jobs:
         env:
           npm_config_engine_strict: 'true'
         run: |
-          # npm owns the complete graph. Never remove individual lock records:
-          # a package-lock-only install can otherwise leave missing children.
-          npm update @react-navigation/native @react-navigation/core xcode --package-lock-only --ignore-scripts --strict-peer-deps --no-audit --no-fund
+          # Refresh the override target itself as well as its consumers. npm
+          # owns the graph; do not fabricate or remove individual lock records.
+          npm update @react-navigation/native @react-navigation/core xcode uuid --package-lock-only --ignore-scripts --strict-peer-deps --no-audit --no-fund
           npm ci --ignore-scripts --strict-peer-deps --no-audit --no-fund
           npm ls @react-navigation/native @react-navigation/core xcode uuid --all
       - name: Enforce a clean audit and real tooling regression tests
