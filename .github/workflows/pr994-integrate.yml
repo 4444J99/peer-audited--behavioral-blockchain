@@ -1,0 +1,146 @@
+name: PR 994 guarded integration
+on:
+  push:
+    branches: [work/lane-verify/ci-gate-fixes-2026-09-17]
+    paths: [.github/workflows/pr994-integrate.yml]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Reproduce and verify the reviewed three-way resolution
+        run: |
+          mkdir -p "$RUNNER_TEMP/pr994-integration"
+          python3 <<'PY'
+          import hashlib,pathlib,re,subprocess
+          def git(*args): return subprocess.check_output(['git',*args],text=True).strip()
+          baseline='9524e2082aae8728e0fd8c26a329aebdaae49d93'
+          target='899fd4cd3cd0865054675579857a710f2ab6e003'
+          assert git('rev-parse','HEAD^')==baseline,'Concurrent source changes require review'
+          assert git('diff','--name-only',baseline,'HEAD')=='.github/workflows/pr994-integrate.yml'
+          assert git('rev-parse','origin/lane/verify')==target,'Integration target moved'
+          assert git('merge-base','HEAD',target)=='56a9e82896b7d41952e77ac023f16ae31c843217'
+          subprocess.run(['git','config','user.name','github-actions[bot]'],check=True)
+          subprocess.run(['git','config','user.email','41898282+github-actions[bot]@users.noreply.github.com'],check=True)
+          result=subprocess.run(['git','merge','--no-commit','--no-ff',target],capture_output=True,text=True)
+          print(result.stdout,result.stderr)
+          conflicts=git('diff','--name-only','--diff-filter=U').splitlines()
+          expected={'.config/docker/Dockerfile','.github/workflows/beta-promotion.yml','.github/workflows/branch-protection.yml','.github/workflows/ci.yml','.github/workflows/deploy-ask-styx.yml','.github/workflows/deploy.yml','.github/workflows/release.yml','.github/workflows/staging-promotion.yml','docs/triage.json','docs/triage/pattern-log.md','package-lock.json','package.json','src/api/Dockerfile','src/api/src/common/monitoring/sentry.spec.ts','src/api/src/common/monitoring/sentry.ts','src/api/src/modules/auth/dto.ts','src/api/src/modules/contracts/contracts.service.spec.ts','src/api/src/modules/contracts/contracts.service.ts','src/api/src/modules/fury/enforcement.service.ts','src/api/src/modules/ledger/quarantine.service.ts','src/mobile/screens/RegisterScreen.tsx','src/mobile/services/ApiClient.ts','src/web/Dockerfile','src/web/app/register/page.tsx'}
+          assert result.returncode==1 and set(conflicts)==expected,'Unexpected merge conflict set'
+          # Each conflicting hunk was reviewed against the exact ancestor/base/head
+          # snapshots. Keep the subsequent fixes while retaining nonconflicting work.
+          for name in conflicts:
+            p=pathlib.Path(name);text=p.read_text()
+            text,count=re.subn(r'^<<<<<<< HEAD\n(.*?)^=======\n.*?^>>>>>>> [^\n]+\n',lambda m:m.group(1),text,flags=re.M|re.S)
+            assert count and not re.search(r'^(<<<<<<<|=======|>>>>>>>)',text,re.M),name
+            p.write_text(text)
+          # These auto-merges reintroduced specifically reviewed regressions:
+          # Node 22, duplicate post-transaction logging, mutable identity, or a
+          # permissionless native preview in an explicitly synthetic capture path.
+          restore=['.github/workflows/deploy-ask-styx.yml','render.yaml','src/api/src/common/monitoring/sentry.ts','src/api/src/modules/contracts/contracts.service.ts','src/mobile/components/CameraModule.tsx','src/mobile/screens/RegisterScreen.tsx','src/web/app/register/page.tsx']
+          for name in restore:
+            pathlib.Path(name).write_bytes(subprocess.check_output(['git','show','HEAD:'+name]))
+          p=pathlib.Path('src/api/src/modules/fury/enforcement.service.spec.ts');text=p.read_text()
+          a=text.index("it('executes a double-entry");start=text.index('      mockPool.query\n',a);end=text.index('      mockLedger.recordTransaction',start)
+          replacement="""      // Preserve the target branch's ledger-leg assertions using the current
+                // transaction query order and shared client, not the pre-repair sequence.
+                mockPool.query
+                  .mockResolvedValueOnce({ rows: [{ id: 'case-1', case_type: 'COLLUSION_RING' }] })
+                  .mockResolvedValueOnce({ rows: [{ reviewer_id: 'fury-1' }] })
+                  .mockResolvedValueOnce({ rows: [{ id: 'penalty-1' }] })
+                  .mockResolvedValueOnce({ rows: [{ account_id: 'acct-fury-1' }] })
+                  .mockResolvedValueOnce({ rows: [{ id: 'acct-sys-rev' }] })
+                  .mockResolvedValueOnce({ rows: [] })
+                  .mockResolvedValueOnce({ rows: [] });
+
+          """
+          replacement=replacement.splitlines(True)
+          replacement=''.join([replacement[0]]+[line[10:] if line.startswith('          ') else line for line in replacement[1:]])
+          text=text[:start]+replacement+text[end:]
+          a=text.index("it('executes a double-entry");b=text.index("  describe('resolveAppeal'",a)
+          part=text[a:b].replace("        undefined,\n        'fury-penalty","        client,\n        'fury-penalty").replace("ledgerDebitAccountId: 'acct-fury-1',\n        }),\n      );","ledgerDebitAccountId: 'acct-fury-1',\n        }),\n        client,\n      );")
+          p.write_text(text[:a]+part+text[b:])
+          subprocess.run(['git','add','--all'],check=True)
+          diff=subprocess.check_output(['git','diff','--cached','--binary','HEAD'])
+          digest=hashlib.sha256(diff).hexdigest()
+          print('Reviewed resolution diff SHA256:',digest)
+          assert digest=='d4b158ed167a5b10517b7096eea5ccb4ea3a347ea1f3e26b27cb27d080b90297','Resolution differs from the locally inspected tree'
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          subprocess.run(['git','commit','-m','merge: reconcile lane/verify without regressing PR 994 repairs'],check=True)
+          PY
+      - name: Fast-forward only the unchanged PR branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          branch=work/lane-verify/ci-gate-fixes-2026-09-17
+          test "$(git ls-remote origin refs/heads/$branch | cut -f1)" = "$EXPECTED_HEAD"
+          git push origin HEAD:refs/heads/$branch
+          git rev-parse HEAD > "$RUNNER_TEMP/pr994-integration/merged-head.txt"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --global npm@10.8.2
+      - name: Apply compatible dependency floors and scoped Xcode fix
+        run: |
+          node <<'JS'
+          const fs=require('fs');
+          const root=JSON.parse(fs.readFileSync('package.json','utf8'));
+          root.overrides.xcode={uuid:'11.1.1'};
+          fs.writeFileSync('package.json',JSON.stringify(root,null,2)+'\n');
+          const mobile=JSON.parse(fs.readFileSync('src/mobile/package.json','utf8'));
+          mobile.dependencies['@react-navigation/native']='^7.4.1';
+          fs.writeFileSync('src/mobile/package.json',JSON.stringify(mobile,null,2)+'\n');
+          JS
+          set -o pipefail
+          npm install --package-lock-only --ignore-scripts --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-integration/lock-update.log"
+          npm dedupe --package-lock-only --ignore-scripts --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-integration/lock-dedupe.log"
+          npm ci --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-integration/strict-install.log"
+      - name: Record all-severity audits and Expo acceptance
+        run: |
+          out="$RUNNER_TEMP/pr994-integration"
+          set +e
+          npm audit --json > "$out/audit.json"; echo "$?" > "$out/audit-exit.txt"
+          npm audit --omit=dev --json > "$out/production-audit.json"; echo "$?" > "$out/production-audit-exit.txt"
+          (cd src/mobile && CI=1 npx expo install --check) > "$out/expo-check.log" 2>&1; echo "$?" > "$out/expo-check-exit.txt"
+          node scripts/ci/check-dependency-graph.mjs > "$out/graph.log" 2>&1; echo "$?" > "$out/graph-exit.txt"
+          npm run build --workspace=@styx/shared > "$out/shared-build.log" 2>&1
+          npm run lint --workspace=@styx/api > "$out/api-types.log" 2>&1; echo "$?" > "$out/api-types-exit.txt"
+          npm run build --workspace=@styx/api > "$out/api-build.log" 2>&1; echo "$?" > "$out/api-build-exit.txt"
+          exit 0
+      - name: Persist generated dependency candidates only to the same branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          branch=work/lane-verify/ci-gate-fixes-2026-09-17
+          test "$(git ls-remote origin refs/heads/$branch | cut -f1)" = "$(git rev-parse HEAD)"
+          git add package.json src/mobile/package.json package-lock.json
+          git diff --cached --check
+          git commit -m 'fix(deps): upgrade navigation and scope patched UUID to Xcode'
+          git push origin HEAD:refs/heads/$branch
+      - name: Retain actual source and diagnostics
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/pr994-integration"
+          git rev-parse HEAD > "$RUNNER_TEMP/pr994-integration/head.txt"
+          git status --porcelain > "$RUNNER_TEMP/pr994-integration/status.txt"
+          git diff --binary > "$RUNNER_TEMP/pr994-integration/uncommitted.diff"
+          git diff --cached --binary > "$RUNNER_TEMP/pr994-integration/staged.diff"
+          git archive --format=tar.gz HEAD > "$RUNNER_TEMP/pr994-integration/source.tar.gz"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr994-integrated-${{ github.run_id }}
+          path: ${{ runner.temp }}/pr994-integration/
+          retention-days: 14
