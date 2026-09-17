@@ -2986,6 +2986,31 @@ describe("ContractsService", () => {
       );
     });
 
+    it("accepts invitation via respondToInvite and logs truth event", async () => {
+      notifyPool.query
+        .mockResolvedValueOnce({ rows: [{ id: "ap-1" }] }) // UPDATE RETURNING
+        .mockResolvedValueOnce({ rows: [] }) // INSERT event
+        .mockResolvedValueOnce({ rows: [{ user_id: "owner-1" }] }); // owner lookup
+
+      const res = await notifyService.respondToInvite("c-1", "partner-9", true);
+
+      expect(res).toEqual({ success: true, status: "ACTIVE" });
+      expect(notifyPool.query).toHaveBeenCalledWith(
+        expect.stringContaining("partner_email = (SELECT email FROM users WHERE id = $3)"),
+        ["ACTIVE", "c-1", "partner-9"],
+      );
+      expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
+        "PARTNER_INVITATION_ACCEPTED",
+        { contractId: "c-1", partnerUserId: "partner-9" },
+      );
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "owner-1",
+          type: "PARTNER_INVITATION_ACCEPTED",
+        }),
+      );
+    });
+
     it("notifies the owner when the invitation is accepted", async () => {
       notifyPool.query
         .mockResolvedValueOnce({ rows: [{ id: "ap-1" }] }) // UPDATE RETURNING

@@ -4,6 +4,7 @@ import {
   validateOathMapping,
   useGraceDay,
   grantOnboardingBonus,
+  isOnboardingBonusEnabled,
   checkPregnancyExclusion,
   validateRecoveryGuardrails,
   MAX_GRACE_DAYS_PER_MONTH,
@@ -132,6 +133,26 @@ describe("behavioral-logic", () => {
       expect(result.granted).toBe(false);
       expect(result.amount).toBe(0);
       expect(result.reason).toMatch(/prior contracts/);
+    });
+
+    it("evaluates isOnboardingBonusEnabled according to DR-005 flag", () => {
+      const orig = process.env.STYX_ONBOARDING_BONUS_ENABLED;
+      try {
+        delete process.env.STYX_ONBOARDING_BONUS_ENABLED;
+        expect(isOnboardingBonusEnabled()).toBe(false);
+
+        process.env.STYX_ONBOARDING_BONUS_ENABLED = "true";
+        expect(isOnboardingBonusEnabled()).toBe(true);
+
+        process.env.STYX_ONBOARDING_BONUS_ENABLED = "false";
+        expect(isOnboardingBonusEnabled()).toBe(false);
+      } finally {
+        if (orig !== undefined) {
+          process.env.STYX_ONBOARDING_BONUS_ENABLED = orig;
+        } else {
+          delete process.env.STYX_ONBOARDING_BONUS_ENABLED;
+        }
+      }
     });
   });
 

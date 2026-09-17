@@ -204,4 +204,40 @@ describe('OnboardingWizard', () => {
 
     expect(await screen.findByText('Who Are You Becoming?')).toBeDefined();
   });
+
+  it('does not display $5 onboarding bonus in summary step per DR-005', async () => {
+    getIdentityOath.mockResolvedValue({
+      oath: null,
+      archetypes: IDENTITY_ARCHETYPES,
+    });
+    render(<OnboardingWizard {...defaultProps} />);
+    await waitFor(() => expect(getIdentityOath).toHaveBeenCalled());
+
+    // Step 0: Welcome -> Step 1: Archetype
+    fireEvent.click(screen.getByText('Continue'));
+    await screen.findByText('Who Are You Becoming?');
+
+    // Pick archetype -> Step 2: Oath
+    fireEvent.click(screen.getByText(archetype.label));
+    fireEvent.click(screen.getByText('Continue'));
+    await screen.findByText('Choose Your First Oath');
+
+    // Pick oath category -> Step 3: Set Your Stakes
+    fireEvent.click(screen.getByText('No Contact'));
+    fireEvent.click(screen.getByText('Continue'));
+    await screen.findByText('Set Your Stakes');
+
+    // Select valid stake preset ($10) -> Step 4: Connect Payment
+    fireEvent.click(screen.getByText('$10'));
+    fireEvent.click(screen.getByText('Continue'));
+    await screen.findByText('Connect Payment');
+
+    // Step 4: Connect Payment -> Step 5: You Are Ready
+    fireEvent.click(screen.getByText('Continue'));
+    await screen.findByText('You Are Ready');
+
+    // Verify no onboarding bonus row is displayed (DR-005)
+    expect(screen.queryByText(/onboarding bonus/i)).toBeNull();
+    expect(screen.queryByText('+$5.00')).toBeNull();
+  });
 });
