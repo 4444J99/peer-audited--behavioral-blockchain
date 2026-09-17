@@ -1,4 +1,4 @@
--- 062_fitbit_oauth_tokens.sql
+-- 066_fitbit_oauth_tokens.sql
 -- Per-user Fitbit OAuth2 grants for verified webhook ingestion (Gate 02).
 -- Subscription notifications carry only user/collection/date refs; readiness
 -- data is fetched server-side with these tokens, so no client-supplied

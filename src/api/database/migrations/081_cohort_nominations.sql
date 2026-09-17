@@ -1,4 +1,4 @@
--- 073: Cohort nominations for curated beta growth (max 2 invites per user)
+-- 081: Cohort nominations for curated beta growth (max 2 invites per user)
 CREATE TABLE IF NOT EXISTS cohort_nominations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nominator_id UUID NOT NULL REFERENCES users(id),

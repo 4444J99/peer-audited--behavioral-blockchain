@@ -20,7 +20,7 @@ landing sequence was #844 (landing-page heal, which had held `main` red since
 | `main` CI | green — first successful pipeline since 2026-07-23 |
 | `turbo run test` | 11/11 tasks — **2,937 tests across 260 suites** (api 1902/161, web 386/46, mobile 299/32, shared 202/9, desktop 148/12) |
 | `turbo run build lint` | 21/21 tasks |
-| Fresh empty database | 70 migrations + base seed + circles seed, **zero errors**, idempotent on re-run |
+| Fresh empty database | 82 migrations + base seed + circles seed, **zero errors**, idempotent on re-run |
 | Live circle smoke | **23/23 probes** against a booted API |
 
 The test count supersedes the "1,107 tests passing" figure quoted in older revisions.
@@ -32,7 +32,7 @@ Booting the API against a migrated Postgres found what 2,900+ passing unit tests
 not — most seriously that `proofs.content_type` did not exist, which broke proof
 submission **and the entire Fury peer-audit queue** on `main`. A static audit found 12
 such columns; migrations `063`–`065` reconcile them. Fresh installs were also
-structurally broken: the migration runner stamped all 70 migrations as applied without
+structurally broken: the migration runner stamped all 82 migrations as applied without
 running them, so 46 tables could never exist.
 
 This is now a standing caution, not a historical note: **a green suite here does not
@@ -146,7 +146,7 @@ live settlement wired.
 **Status:** ENGINEERING SUBSTANTIALLY BUILT; EXTERNAL DEPENDENCIES OPEN.
 
 ### 2a: Buildable by engineering
-- [x] KYC/Identity — schema (`007`, `043_compliance_artifacts.sql`), verification services
+- [x] KYC/Identity — schema (`007`, `046_compliance_artifacts.sql`), verification services
       (`src/api/src/modules/compliance/identity-verification.service.ts`,
       `identity-provider.service.ts` with mock + Stripe Identity adapters), fail-closed
       enforcement (`compliance-policy.service.ts`)
@@ -159,7 +159,7 @@ live settlement wired.
       switch endpoints (`admin.controller.ts` `GET/POST /admin/kill-switch`)
 - [x] Crisis detection — `src/api/services/security/crisis-detection.service.ts`,
       `crisis-intervention.service.ts`, `crisis-notification.service.ts`, crisis module
-- [x] Kill switch **persistence** — DB-backed (migration `060_system_flags.sql`);
+- [x] Kill switch **persistence** — DB-backed (migration `064_system_flags.sql`);
       verified by arming it, killing the API process, restarting, and confirming
       refund-only mode survived
 
@@ -214,10 +214,10 @@ attestation rejection paths all exercised live).
       `src/api/src/modules/contracts/fitbit.controller.ts` (registered in
       `contracts.module.ts`)
 - [x] **Verified** Fitbit ingestion — provider signature verification + OAuth token
-      storage (migration `062_fitbit_oauth_tokens.sql`); an unsigned webhook is
+      storage (migration `066_fitbit_oauth_tokens.sql`); an unsigned webhook is
       rejected (verified live)
 - [x] Device attestation framework — `src/api/services/security/device-attestation.service.ts`
-      (key registry, replay counters, structural checks; migration `051`)
+      (key registry, replay counters, structural checks; migration `055`)
 - [x] **Real attestation crypto** — App Attest X509 certificate-chain validation with
       root-CA pinning and nonce-extension binding (OID 1.2.840.113635.100.8.2), and
       Play Integrity JWKS signature verification with caching plus `exp`/package-name
@@ -240,11 +240,11 @@ demo-facing surfaces wired in #845. Three post-gate items remain unstarted (belo
 they are scope beyond the stated gate, not regressions.
 
 - [x] Danger-zone protections — `src/api/src/modules/behavioral/danger-zone.service.ts`
-- [x] Accountability partner protocol — `accountability-partner.service.ts`, migration `052`
+- [x] Accountability partner protocol — `accountability-partner.service.ts`, migration `056`
 - [x] Progress dashboard — `progress-dashboard.service.ts`
 - [x] Notification composer — 8 behavioral push types (PR #831)
 - [x] Endowed progress engine — `endowed-progress.service.ts`
-- [x] Push notification infrastructure — migration `044`
+- [x] Push notification infrastructure — migration `048`
 - [x] Weekend risk multiplier — migration `022`
 - [x] Circles (pods) member-facing pages in `src/web/app` — added in #845 (no
       `circles` route existed before it); `/circles` is now the public demo index
@@ -267,13 +267,13 @@ read. What remains is counsel review and procurement — see the final subsectio
 
 ### Merged in #833 / #835:
 - [x] Anti-Sybil layer — `src/api/src/modules/security/anti-sybil.service.ts`,
-      migration `053_anti_sybil.sql` (PR #833)
+      migration `057_anti_sybil.sql` (PR #833)
 - [x] Practitioner risk intelligence —
       `src/api/src/modules/behavioral/practitioner-intelligence.service.ts` (PR #833)
 - [x] CCPA data deletion — `src/api/src/modules/users/ccpa.service.ts`, routes
-      `/users/me/ccpa/*` in `users.controller.ts`, migration `054_ccpa_aml.sql` (PR #835)
+      `/users/me/ccpa/*` in `users.controller.ts`, migration `058_ccpa_aml.sql` (PR #835)
 - [x] AML screening — `src/api/src/modules/compliance/aml-screening.service.ts`,
-      migrations `054` + `059_aml_tables.sql` (PR #835)
+      migrations `058` + `063_aml_tables.sql` (PR #835)
 - [x] SOC 2 groundwork — hash-chained TruthLog
       (`src/api/services/ledger/truth-log.service.ts`), guards
       (`src/api/guards/auth.guard.ts`, `src/api/src/common/guards/role.guard.ts`)
@@ -283,10 +283,10 @@ read. What remains is counsel review and procurement — see the final subsectio
       `compliance.module.ts`; `PractitionerIntelligenceService` provided in
       `behavioral.module.ts` — all `/security/*`, `/compliance/aml/*` and practitioner
       routes are now reachable (verified live, including the 403 denial paths)
-- [x] Migrations 058, 060–062 (fills the 057→059 numbering gap; kill-switch state,
+- [x] Migrations 062, 064–066 (fills the historical numbering gap; kill-switch state,
       retention policy, practitioner and Fitbit OAuth tables)
-- [x] Migrations 063–065 — schema-drift reconciliation; `063` recovers columns that
-      existed only in `schema.sql` and never in the migration chain, `064` adds
+- [x] Migrations 067–069 — schema-drift reconciliation; `067` recovers columns that
+      existed only in `schema.sql` and never in the migration chain, `068` adds
       `proofs.content_type`/`description`/`uploaded_at` and `attestations.source`
       (whose absence was breaking proof submission and the Fury queue on `main`),
       `065` drops the DECO plaintext columns

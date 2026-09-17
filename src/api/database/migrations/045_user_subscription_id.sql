@@ -1,4 +1,4 @@
--- Migration 042: Store Stripe subscription linkage for early-access billing
+-- Migration 045: Store Stripe subscription linkage for early-access billing
 
 ALTER TABLE users
   ADD COLUMN IF NOT EXISTS subscription_id TEXT;

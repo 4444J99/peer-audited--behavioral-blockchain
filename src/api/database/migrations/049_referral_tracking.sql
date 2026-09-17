@@ -1,4 +1,4 @@
--- 045: Referral tracking and reward distribution
+-- 049: Referral tracking and reward distribution
 -- Adds referral_code + referred_by to users, and a referrals table for attribution.
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code VARCHAR(12) UNIQUE;
