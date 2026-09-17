@@ -9,11 +9,8 @@ const semver = require('semver');
 const mobile = createRequire(path.resolve('src/mobile/package.json'));
 const expo = createRequire(mobile.resolve('expo/package.json'));
 const configPlugins = createRequire(expo.resolve('@expo/config-plugins/package.json'));
-// Resolve through the real consumer, without assuming npm hoists this package.
 const xcodeRequire = createRequire(configPlugins.resolve('xcode/package.json'));
 
-// Xcode uses CommonJS uuid.v4(), not the removed uuid/v4 path. Keep its override
-// scoped; the API retains its independent, newer UUID version.
 test('Xcode tooling resolves a patched CommonJS UUID implementation', () => {
   assert.ok(semver.gte(xcodeRequire('uuid/package.json').version, '11.1.1'));
   const uuid = xcodeRequire('uuid');
@@ -34,29 +31,35 @@ test('patched Xcode UUIDs survive project parse, mutation, and serialization', (
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'styx-xcode-'));
   t.after(() => fs.rmSync(folder, { recursive: true, force: true }));
   const file = path.join(folder, 'project.pbxproj');
+  // Section delimiters are part of node-xcode's parsed project structure.
   fs.writeFileSync(file, `// !$*UTF8*$!
 {
   archiveVersion = 1;
   classes = {};
   objectVersion = 56;
   objects = {
-    000000000000000000000001 = {
+/* Begin PBXGroup section */
+    A00000000000000000000001 /* Main Group */ = {
       isa = PBXGroup;
       children = ();
       sourceTree = "<group>";
     };
-    000000000000000000000002 = {
+/* End PBXGroup section */
+/* Begin PBXProject section */
+    A00000000000000000000002 /* Project object */ = {
       isa = PBXProject;
-      mainGroup = 000000000000000000000001;
+      mainGroup = A00000000000000000000001;
       targets = ();
     };
+/* End PBXProject section */
   };
-  rootObject = 000000000000000000000002;
+  rootObject = A00000000000000000000002 /* Project object */;
 }
 `);
   const xcode = configPlugins('xcode');
   const project = xcode.project(file);
   project.parseSync();
+  assert.ok(project.hash.project.objects.PBXGroup);
   const generated = new Set(Array.from({ length: 128 }, () => project.generateUuid()));
   assert.equal(generated.size, 128);
   for (const value of generated) assert.match(value, /^[0-9A-F]{24}$/);
