@@ -1,0 +1,185 @@
+name: PR 993 transitive security repair
+
+# Temporary, head-guarded repair. Publication is restricted to three JSON files.
+on:
+  push:
+    branches: [dependabot/npm_and_yarn/npm-deps-bf6561acc1]
+    paths: [.github/workflows/pr-993-transitive-repair.yml]
+permissions:
+  contents: read
+  pull-requests: read
+concurrency:
+  group: pr-993-transitive-repair
+  cancel-in-progress: false
+jobs:
+  cancel_superseded:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      pull-requests: read
+      contents: read
+    steps:
+      - name: Cancel only superseded runs belonging to this exact open PR branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess, urllib.parse
+          repo = '4444J99/peer-audited--behavioral-blockchain'
+          branch = 'dependabot/npm_and_yarn/npm-deps-bf6561acc1'
+          def api(path):
+              return json.loads(subprocess.check_output(['gh','api',path],text=True))
+          pr = api(f'repos/{repo}/pulls/993')
+          assert pr['state'] == 'open' and pr['head']['sha'] == os.environ['GITHUB_SHA']
+          assert pr['head']['ref'] == branch and pr['head']['repo']['full_name'] == repo
+          query = urllib.parse.urlencode({'branch':branch,'event':'pull_request','per_page':100})
+          pages = json.loads(subprocess.check_output(['gh','api','--paginate','--slurp',f'repos/{repo}/actions/runs?{query}'],text=True))
+          for page in pages:
+              for run in page['workflow_runs']:
+                  if run['status'] == 'completed' or run['head_sha'] == os.environ['GITHUB_SHA']:
+                      continue
+                  if run['event'] != 'pull_request' or run['head_branch'] != branch:
+                      continue
+                  if not any(item['number'] == 993 for item in run.get('pull_requests', [])):
+                      continue
+                  if api(f'repos/{repo}/pulls/993')['head']['sha'] != os.environ['GITHUB_SHA']:
+                      raise RuntimeError('Head moved; stop cancelling')
+                  result = subprocess.run(['gh','api','--method','POST',f'repos/{repo}/actions/runs/{run["id"]}/cancel'],capture_output=True)
+                  print(json.dumps({'run':run['id'],'head':run['head_sha'],'cancelRequested':result.returncode == 0}))
+          PY
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify the current PR head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(gh api repos/4444J99/peer-audited--behavioral-blockchain/pulls/993 --jq '.head.sha')" = "$GITHUB_SHA"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Apply the reviewed scoped dependency corrections
+        run: |
+          npm install --global npm@10.8.2 --ignore-scripts
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('package.json')
+          root = json.loads(path.read_text())
+          assert 'xcode' not in root['overrides']
+          root['overrides']['xcode'] = {'uuid':'11.1.1'}
+          path.write_text(json.dumps(root,indent=2)+'\n')
+          path = Path('src/mobile/package.json')
+          mobile = json.loads(path.read_text())
+          assert mobile['dependencies']['@react-navigation/native'] == '^7.0.0'
+          mobile['dependencies']['@react-navigation/native'] = '^7.4.1'
+          path.write_text(json.dumps(mobile,indent=2)+'\n')
+          path = Path('package-lock.json')
+          lock = json.loads(path.read_text())
+          packages = lock['packages']
+          names = {'@react-navigation/native','@react-navigation/core','query-string','decode-uri-component','xcode'}
+          roots = [key for key in packages if 'node_modules/' in key and key.rsplit('node_modules/',1)[1] in names]
+          for key in list(packages):
+              if key in roots or any(key.startswith(root+'/node_modules/') for root in roots):
+                  del packages[key]
+          path.write_text(json.dumps(lock,indent=2)+'\n')
+          PY
+      - name: Regenerate and install with strict engines and peers
+        env:
+          npm_config_engine_strict: 'true'
+        run: |
+          npm install --package-lock-only --ignore-scripts --strict-peer-deps --no-audit --no-fund
+          npm ci --ignore-scripts --strict-peer-deps --no-audit --no-fund
+      - name: Enforce a clean audit and real tooling regression tests
+        run: |
+          npm audit --audit-level=low
+          node --test scripts/validation/dependency-regressions.test.cjs
+          npm run validate:runtime
+          npm run test:runtime
+      - name: Preserve mobile compatibility and workspace tests
+        env:
+          CI: '1'
+        run: |
+          (cd src/mobile && npx --no-install expo install --check)
+          npm run build --workspace @styx/shared
+          npm run lint --workspace @styx/mobile
+          npm run test --workspace @styx/mobile -- --runInBand
+          npm run lint --workspace @styx/test-harness
+          npm run test --workspace @styx/test-harness
+          git diff --check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: pr-993-transitive-${{ github.sha }}
+          path: |
+            package.json
+            package-lock.json
+            src/mobile/package.json
+          if-no-files-found: error
+          retention-days: 2
+  publish:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: pr-993-transitive-${{ github.sha }}
+          path: ${{ runner.temp }}/pr993-validated
+      - name: Revalidate the exact three-file repair and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh api repos/4444J99/peer-audited--behavioral-blockchain/pulls/993 --jq '.head.sha')" = "$GITHUB_SHA"
+          python3 - <<'PY'
+          import json, os, pathlib, shutil, urllib.parse
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'pr993-validated'
+          files = ['package.json','package-lock.json','src/mobile/package.json']
+          for file in files:
+              source = root / file
+              assert source.is_file() and not source.is_symlink() and source.stat().st_size < 10000000
+          expected = json.loads(pathlib.Path('package.json').read_text())
+          expected['overrides']['xcode'] = {'uuid':'11.1.1'}
+          actual_root = json.loads((root/'package.json').read_text())
+          assert expected == actual_root
+          expected = json.loads(pathlib.Path('src/mobile/package.json').read_text())
+          expected['dependencies']['@react-navigation/native'] = '^7.4.1'
+          actual_mobile = json.loads((root/'src/mobile/package.json').read_text())
+          assert expected == actual_mobile
+          lock = json.loads((root/'package-lock.json').read_text())
+          assert lock['lockfileVersion'] == 3
+          for manifest in [pathlib.Path('package.json'),*pathlib.Path('src').glob('*/package.json'),*pathlib.Path('packages').glob('*/package.json')]:
+              folder = '' if manifest.parent == pathlib.Path('.') else manifest.parent.as_posix()
+              package = actual_root if not folder else actual_mobile if folder == 'src/mobile' else json.loads(manifest.read_text())
+              for field in ['dependencies','devDependencies','optionalDependencies','engines']:
+                  assert lock['packages'][folder].get(field,{}) == package.get(field,{}), (folder,field)
+          for key, record in lock['packages'].items():
+              resolved = record.get('resolved')
+              if resolved and not record.get('link'):
+                  url = urllib.parse.urlsplit(resolved)
+                  assert url.scheme == 'https' and url.hostname == 'registry.npmjs.org', key
+          for file in files:
+              shutil.copyfile(root/file, file)
+          PY
+          git diff --check
+          git add -- package.json package-lock.json src/mobile/package.json
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = 'package-lock.json package.json src/mobile/package.json '
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(security): patch navigation decoder path and scoped Xcode UUID dependency'
+          git push origin HEAD:refs/heads/dependabot/npm_and_yarn/npm-deps-bf6561acc1
+          printf 'Validated input: `%s`\nPublished output: `%s`\n' "$GITHUB_SHA" "$(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
