@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: '24'
       - run: npm install --global npm@10.8.2
-      - name: Regenerate a single navigation peer graph with patched transitive dependencies
+      - name: Re-resolve navigation peers without relaxing engine or peer checks
         run: |
           mkdir -p "$RUNNER_TEMP/pr994-evidence"
           node <<'JS'
@@ -47,7 +47,24 @@ jobs:
           fs.writeFileSync('src/mobile/package.json',JSON.stringify(mobile,null,2)+'\n');
           JS
           set -o pipefail
-          npm install --package-lock-only --ignore-scripts --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/lock-update.log"
+          if ! npm update @react-navigation/native @react-navigation/core --package-lock-only --ignore-scripts --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/targeted-update.log"; then
+            # npm 10 can retain the old hoisted peer snapshot during an update.
+            # Discard only those generation inputs, then let npm regenerate real
+            # versions/integrities. Never invent lock metadata or use --force.
+            node <<'JS'
+          const fs=require('fs');
+          const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+          const removed=[];
+          for(const key of Object.keys(lock.packages)) {
+            if (/(^|\/)node_modules\/@react-navigation\/(core|native)(\/|$)/.test(key)) {
+              removed.push(key); delete lock.packages[key];
+            }
+          }
+          fs.writeFileSync(process.env.RUNNER_TEMP+'/pr994-evidence/regenerated-lock-inputs.json',JSON.stringify(removed,null,2)+'\n');
+          fs.writeFileSync('package-lock.json',JSON.stringify(lock,null,2)+'\n');
+          JS
+            npm install --package-lock-only --ignore-scripts --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/lock-update.log"
+          fi
           npm dedupe --package-lock-only --ignore-scripts --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/lock-dedupe.log"
           npm ci --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/strict-install.log"
           node -e 'const fs=require("fs");fs.copyFileSync(require.resolve("expo/bundledNativeModules.json"),process.env.RUNNER_TEMP+"/pr994-evidence/expo-bundled.json")'
