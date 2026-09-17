@@ -10,6 +10,9 @@ on:
 permissions:
   contents: read
 
+env:
+  npm_config_engine_strict: "true"
+
 jobs:
   # Matrix executes the actual build/test work. Renamed from `build_and_test`
   # so the canonical required-check name (`build_and_test`, the summary job
@@ -23,7 +26,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22]
+        node-version: [24]
 
     steps:
       - name: Checkout Repository
@@ -40,7 +43,13 @@ jobs:
       - name: Install Dependencies with repository npm
         run: |
           npm_version="$(node -p "require('./package.json').packageManager.replace(/^npm@/, '')")"
-          npx --yes "npm@${npm_version}" ci
+          npm install --global "npm@${npm_version}" --ignore-scripts
+          npm ci --strict-peer-deps
+
+      - name: Validate runtime policy and regression tests
+        run: |
+          npm run validate:runtime
+          npm run test:runtime
 
       - name: Turbo Cache
         uses: actions/cache@v6
@@ -175,13 +184,14 @@ jobs:
       - name: Use Node.js 24.x
         uses: actions/setup-node@v7
         with:
-          node-version: 24.x
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Install Dependencies with repository npm
         run: |
           npm_version="$(node -p "require('./package.json').packageManager.replace(/^npm@/, '')")"
-          npx --yes "npm@${npm_version}" ci
+          npm install --global "npm@${npm_version}" --ignore-scripts
+          npm ci --strict-peer-deps
 
       - name: Run Beta Readiness Suite
         env:
@@ -282,16 +292,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v7
 
-      - name: Use Node.js 22
+      - name: Use Node.js 24
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Install Dependencies with repository npm
         run: |
           npm_version="$(node -p "require('./package.json').packageManager.replace(/^npm@/, '')")"
-          npx --yes "npm@${npm_version}" ci
+          npm install --global "npm@${npm_version}" --ignore-scripts
+          npm ci --strict-peer-deps
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps ${{ matrix.browser }}
