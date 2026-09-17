@@ -9,7 +9,7 @@ Materials for selling Styx to therapists, coaches, clinics, and corporate wellne
 - **Ideal Customer Profile (ICP)** — Who we're selling to: breakup recovery coaches, therapists specializing in relationship trauma, corporate EAPs
 - **Outreach templates** — Cold email sequences, LinkedIn messages, conference follow-ups
 - **Security questionnaire** — Pre-filled answers to common enterprise security questions (SOC 2, data handling, encryption)
-- **[Security whitepaper](security-whitepaper.md)** — The architecture behind those answers: the hash-chained TruthLog, the double-entry ledger invariants, auth and role guards, the jurisdiction/geofence matrix, App Attest and Play Integrity verification, media redaction, and the honeypot/consensus peer-audit model. Every control names its implementing file; §12 lists what is *not* implemented. The questionnaire links here rather than restating it
+- **[Security whitepaper](security-whitepaper.md)** — The architecture behind those answers: the hash-chained TruthLog, the double-entry ledger invariants, auth and role guards, the jurisdiction/geofence matrix, App Attest and Play Integrity verification, media redaction, and the honeypot/consensus peer-audit model. Every control names its implementing file; §12 lists what is _not_ implemented. The questionnaire links here rather than restating it
 - **SLA template** — Service Level Agreement defining uptime guarantees and support response times
 - **Demo scripts** — How to walk a prospect through the platform
 - **Pricing proposals** — Templates for each B2B tier ($49 Starter / $149 Growth / $349 Scale / $999+ Enterprise)
@@ -26,9 +26,9 @@ Styx offers a B2B2C model: therapists/coaches subscribe to Styx, then assign beh
 
 ## Pricing Tiers
 
-| Tier | Price | Client Capacity | Target Customer |
-|------|-------|-----------------|----------------|
-| Starter | $49/mo | 5 clients | Solo coaches, emerging practitioners |
-| Growth | $149/mo | 25 clients | Established solo coaches |
-| Scale | $349/mo | 75 clients | Small coaching agencies |
-| Enterprise | $999+/mo | Unlimited | Large clinics, digital health platforms, IOPs |
+| Tier       | Price    | Client Capacity | Target Customer                               |
+| ---------- | -------- | --------------- | --------------------------------------------- |
+| Starter    | $49/mo   | 5 clients       | Solo coaches, emerging practitioners          |
+| Growth     | $149/mo  | 25 clients      | Established solo coaches                      |
+| Scale      | $349/mo  | 75 clients      | Small coaching agencies                       |
+| Enterprise | $999+/mo | Unlimited       | Large clinics, digital health platforms, IOPs |

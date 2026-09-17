@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Pool } from 'pg';
-import { DangerZoneService } from './danger-zone.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { Pool } from "pg";
+import { DangerZoneService } from "./danger-zone.service";
 
-describe('DangerZoneService', () => {
+describe("DangerZoneService", () => {
   let service: DangerZoneService;
   let pool: { query: jest.Mock };
 
@@ -10,277 +10,301 @@ describe('DangerZoneService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DangerZoneService,
-        { provide: 'DATABASE_POOL', useValue: { query: jest.fn() } },
+        { provide: "DATABASE_POOL", useValue: { query: jest.fn() } },
       ],
     }).compile();
 
     service = module.get(DangerZoneService);
-    pool = module.get('DATABASE_POOL');
+    pool = module.get("DATABASE_POOL");
   });
 
   afterEach(() => {
     jest.useRealTimers();
   });
 
-  describe('evaluateDangerWindows', () => {
-    it('detects DAY_3 window when contract started 3 days ago', async () => {
+  describe("evaluateDangerWindows", () => {
+    it("detects DAY_3 window when contract started 3 days ago", async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-07-23T12:00:00Z'));
-      const threeDaysAgo = new Date('2026-07-20T12:00:00Z');
+      jest.setSystemTime(new Date("2026-07-23T12:00:00Z"));
+      const threeDaysAgo = new Date("2026-07-20T12:00:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: threeDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-1', 'UTC');
-      const day3 = windows.find((w) => w.type === 'DAY_3');
+      const windows = await service.evaluateDangerWindows("c-1", "UTC");
+      const day3 = windows.find((w) => w.type === "DAY_3");
       expect(day3).toBeDefined();
-      expect(day3!.severity).toBe('HIGH');
-      expect(day3!.message).toBe('The critical first 72 hours');
+      expect(day3!.severity).toBe("HIGH");
+      expect(day3!.message).toBe("The critical first 72 hours");
     });
 
-    it('detects DAY_21 window when contract started 21 days ago', async () => {
+    it("detects DAY_21 window when contract started 21 days ago", async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-07-23T12:00:00Z'));
-      const twentyOneDaysAgo = new Date('2026-07-02T12:00:00Z');
+      jest.setSystemTime(new Date("2026-07-23T12:00:00Z"));
+      const twentyOneDaysAgo = new Date("2026-07-02T12:00:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: twentyOneDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 10 }] });
 
-      const windows = await service.evaluateDangerWindows('c-2', 'UTC');
-      const day21 = windows.find((w) => w.type === 'DAY_21');
+      const windows = await service.evaluateDangerWindows("c-2", "UTC");
+      const day21 = windows.find((w) => w.type === "DAY_21");
       expect(day21).toBeDefined();
-      expect(day21!.severity).toBe('CRITICAL');
-      expect(day21!.message).toBe('The extinction burst');
+      expect(day21!.severity).toBe("CRITICAL");
+      expect(day21!.message).toBe("The extinction burst");
     });
 
-    it('detects WEEKEND window on a Saturday', async () => {
+    it("detects WEEKEND window on a Saturday", async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-07-25T12:00:00Z'));
-      const threeDaysAgo = new Date('2026-07-22T12:00:00Z');
+      jest.setSystemTime(new Date("2026-07-25T12:00:00Z"));
+      const threeDaysAgo = new Date("2026-07-22T12:00:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: threeDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-3', 'UTC');
-      const weekend = windows.find((w) => w.type === 'WEEKEND');
+      const windows = await service.evaluateDangerWindows("c-3", "UTC");
+      const weekend = windows.find((w) => w.type === "WEEKEND");
       expect(weekend).toBeDefined();
-      expect(weekend!.severity).toBe('MEDIUM');
+      expect(weekend!.severity).toBe("MEDIUM");
     });
 
-    it('detects LATE_NIGHT window at 02:00 local time in UTC', async () => {
+    it("detects LATE_NIGHT window at 02:00 local time in UTC", async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-07-23T02:00:00Z'));
-      const tenDaysAgo = new Date('2026-07-13T02:00:00Z');
+      jest.setSystemTime(new Date("2026-07-23T02:00:00Z"));
+      const tenDaysAgo = new Date("2026-07-13T02:00:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-4', 'UTC');
-      const lateNight = windows.find((w) => w.type === 'LATE_NIGHT');
+      const windows = await service.evaluateDangerWindows("c-4", "UTC");
+      const lateNight = windows.find((w) => w.type === "LATE_NIGHT");
       expect(lateNight).toBeDefined();
-      expect(lateNight!.severity).toBe('HIGH');
+      expect(lateNight!.severity).toBe("HIGH");
     });
 
-    it('fires LATE_NIGHT at 2am America/New_York when the UTC clock reads 06:30', async () => {
+    it("fires LATE_NIGHT at 2am America/New_York when the UTC clock reads 06:30", async () => {
       jest.useFakeTimers();
       // 2026-07-23T06:30Z is 02:30 EDT (UTC-4) on Thursday in America/New_York.
-      jest.setSystemTime(new Date('2026-07-23T06:30:00Z'));
-      const tenDaysAgo = new Date('2026-07-13T06:30:00Z');
+      jest.setSystemTime(new Date("2026-07-23T06:30:00Z"));
+      const tenDaysAgo = new Date("2026-07-13T06:30:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-tz-1', 'America/New_York');
-      const lateNight = windows.find((w) => w.type === 'LATE_NIGHT');
+      const windows = await service.evaluateDangerWindows(
+        "c-tz-1",
+        "America/New_York",
+      );
+      const lateNight = windows.find((w) => w.type === "LATE_NIGHT");
       expect(lateNight).toBeDefined();
-      expect(lateNight!.severity).toBe('HIGH');
-      expect(windows.find((w) => w.type === 'WEEKEND')).toBeUndefined();
+      expect(lateNight!.severity).toBe("HIGH");
+      expect(windows.find((w) => w.type === "WEEKEND")).toBeUndefined();
     });
 
-    it('does NOT fire LATE_NIGHT for New York users at 02:00 UTC (10pm local)', async () => {
+    it("does NOT fire LATE_NIGHT for New York users at 02:00 UTC (10pm local)", async () => {
       jest.useFakeTimers();
       // 2026-07-23T02:00Z is 22:00 EDT on Wednesday the 22nd in America/New_York.
-      jest.setSystemTime(new Date('2026-07-23T02:00:00Z'));
-      const tenDaysAgo = new Date('2026-07-13T02:00:00Z');
+      jest.setSystemTime(new Date("2026-07-23T02:00:00Z"));
+      const tenDaysAgo = new Date("2026-07-13T02:00:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-tz-2', 'America/New_York');
-      expect(windows.find((w) => w.type === 'LATE_NIGHT')).toBeUndefined();
-      expect(windows.find((w) => w.type === 'WEEKEND')).toBeUndefined();
+      const windows = await service.evaluateDangerWindows(
+        "c-tz-2",
+        "America/New_York",
+      );
+      expect(windows.find((w) => w.type === "LATE_NIGHT")).toBeUndefined();
+      expect(windows.find((w) => w.type === "WEEKEND")).toBeUndefined();
     });
 
-    it('evaluates WEEKEND on the local day: Monday 00:30 UTC is still Sunday evening in New York', async () => {
+    it("evaluates WEEKEND on the local day: Monday 00:30 UTC is still Sunday evening in New York", async () => {
       jest.useFakeTimers();
       // 2026-07-27T00:30Z (Monday UTC) is 20:30 EDT Sunday the 26th.
-      jest.setSystemTime(new Date('2026-07-27T00:30:00Z'));
-      const tenDaysAgo = new Date('2026-07-17T00:30:00Z');
+      jest.setSystemTime(new Date("2026-07-27T00:30:00Z"));
+      const tenDaysAgo = new Date("2026-07-17T00:30:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-tz-3', 'America/New_York');
-      expect(windows.find((w) => w.type === 'WEEKEND')).toBeDefined();
+      const windows = await service.evaluateDangerWindows(
+        "c-tz-3",
+        "America/New_York",
+      );
+      expect(windows.find((w) => w.type === "WEEKEND")).toBeDefined();
       // Local hour is 20, so UTC hour 0 must NOT register as late night.
-      expect(windows.find((w) => w.type === 'LATE_NIGHT')).toBeUndefined();
+      expect(windows.find((w) => w.type === "LATE_NIGHT")).toBeUndefined();
     });
 
-    it('looks up the user timezone from the contract when none is provided', async () => {
+    it("looks up the user timezone from the contract when none is provided", async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-07-23T06:30:00Z'));
-      const tenDaysAgo = new Date('2026-07-13T06:30:00Z');
+      jest.setSystemTime(new Date("2026-07-23T06:30:00Z"));
+      const tenDaysAgo = new Date("2026-07-13T06:30:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
-        .mockResolvedValueOnce({ rows: [{ timezone: 'America/New_York' }] })
+        .mockResolvedValueOnce({ rows: [{ timezone: "America/New_York" }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-tz-4');
-      expect(windows.find((w) => w.type === 'LATE_NIGHT')).toBeDefined();
+      const windows = await service.evaluateDangerWindows("c-tz-4");
+      expect(windows.find((w) => w.type === "LATE_NIGHT")).toBeDefined();
       expect(pool.query).toHaveBeenCalledWith(
-        expect.stringContaining('JOIN users u ON u.id = c.user_id'),
-        ['c-tz-4', 'America/New_York'],
+        expect.stringContaining("JOIN users u ON u.id = c.user_id"),
+        ["c-tz-4", "America/New_York"],
       );
     });
 
-    it('falls back to America/New_York when the stored timezone is invalid', async () => {
+    it("falls back to America/New_York when the stored timezone is invalid", async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-07-23T06:30:00Z'));
-      const tenDaysAgo = new Date('2026-07-13T06:30:00Z');
+      jest.setSystemTime(new Date("2026-07-23T06:30:00Z"));
+      const tenDaysAgo = new Date("2026-07-13T06:30:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-tz-5', 'Not/A_Zone');
+      const windows = await service.evaluateDangerWindows(
+        "c-tz-5",
+        "Not/A_Zone",
+      );
       // 06:30Z resolves to 02:30 in the fallback zone → LATE_NIGHT.
-      expect(windows.find((w) => w.type === 'LATE_NIGHT')).toBeDefined();
+      expect(windows.find((w) => w.type === "LATE_NIGHT")).toBeDefined();
     });
 
-    it('returns empty array when no danger windows are active', async () => {
+    it("returns empty array when no danger windows are active", async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-07-23T12:00:00Z'));
-      const tenDaysAgo = new Date('2026-07-13T12:00:00Z');
+      jest.setSystemTime(new Date("2026-07-23T12:00:00Z"));
+      const tenDaysAgo = new Date("2026-07-13T12:00:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      const windows = await service.evaluateDangerWindows('c-5', 'UTC');
+      const windows = await service.evaluateDangerWindows("c-5", "UTC");
       expect(windows).toEqual([]);
     });
 
-    it('detects HIGH_STREAK_RISK with 30+ attestation days', async () => {
+    it("detects HIGH_STREAK_RISK with 30+ attestation days", async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-07-23T12:00:00Z'));
-      const tenDaysAgo = new Date('2026-07-13T12:00:00Z');
+      jest.setSystemTime(new Date("2026-07-23T12:00:00Z"));
+      const tenDaysAgo = new Date("2026-07-13T12:00:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 30 }] });
 
-      const windows = await service.evaluateDangerWindows('c-6', 'UTC');
-      const streakRisk = windows.find((w) => w.type === 'HIGH_STREAK_RISK');
+      const windows = await service.evaluateDangerWindows("c-6", "UTC");
+      const streakRisk = windows.find((w) => w.type === "HIGH_STREAK_RISK");
       expect(streakRisk).toBeDefined();
-      expect(streakRisk!.severity).toBe('HIGH');
-      expect(streakRisk!.message).toBe('Complacency risk from long streak');
+      expect(streakRisk!.severity).toBe("HIGH");
+      expect(streakRisk!.message).toBe("Complacency risk from long streak");
     });
   });
 
-  describe('getUserTimezone', () => {
-    it('returns the stored timezone for the contract owner', async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ timezone: 'America/Chicago' }] });
-      expect(await service.getUserTimezone('c-1')).toBe('America/Chicago');
+  describe("getUserTimezone", () => {
+    it("returns the stored timezone for the contract owner", async () => {
+      pool.query.mockResolvedValueOnce({
+        rows: [{ timezone: "America/Chicago" }],
+      });
+      expect(await service.getUserTimezone("c-1")).toBe("America/Chicago");
     });
 
-    it('defaults to America/New_York when the contract has no row', async () => {
+    it("defaults to America/New_York when the contract has no row", async () => {
       pool.query.mockResolvedValueOnce({ rows: [] });
-      expect(await service.getUserTimezone('missing')).toBe('America/New_York');
+      expect(await service.getUserTimezone("missing")).toBe("America/New_York");
     });
   });
 
-  describe('getProtectionRecommendations', () => {
-    it('maps DAY_3 danger to the correct recommendation', async () => {
+  describe("getProtectionRecommendations", () => {
+    it("maps DAY_3 danger to the correct recommendation", async () => {
       const recs = await service.getProtectionRecommendations([
-        { type: 'DAY_3', severity: 'HIGH', message: 'test' },
+        { type: "DAY_3", severity: "HIGH", message: "test" },
       ]);
       expect(recs).toHaveLength(1);
-      expect(recs[0].action).toBe('Schedule a check-in with your accountability partner');
-    });
-
-    it('maps DAY_21 danger to the correct recommendation', async () => {
-      const recs = await service.getProtectionRecommendations([
-        { type: 'DAY_21', severity: 'CRITICAL', message: 'test' },
-      ]);
-      expect(recs[0].action).toBe('Increase attestation frequency, consider reducing stakes');
-    });
-
-    it('maps WEEKEND danger to the correct recommendation', async () => {
-      const recs = await service.getProtectionRecommendations([
-        { type: 'WEEKEND', severity: 'MEDIUM', message: 'test' },
-      ]);
-      expect(recs[0].action).toBe('Pre-commit your weekend routine, avoid isolation');
-    });
-
-    it('maps LATE_NIGHT danger to the correct recommendation', async () => {
-      const recs = await service.getProtectionRecommendations([
-        { type: 'LATE_NIGHT', severity: 'HIGH', message: 'test' },
-      ]);
-      expect(recs[0].action).toBe('Enable do-not-disturb, delete tempting apps');
-    });
-
-    it('maps HIGH_STREAK_RISK danger to the correct recommendation', async () => {
-      const recs = await service.getProtectionRecommendations([
-        { type: 'HIGH_STREAK_RISK', severity: 'HIGH', message: 'test' },
-      ]);
       expect(recs[0].action).toBe(
-        'Review your original motivation, share your streak with your partner',
+        "Schedule a check-in with your accountability partner",
       );
     });
 
-    it('returns empty array for empty input', async () => {
+    it("maps DAY_21 danger to the correct recommendation", async () => {
+      const recs = await service.getProtectionRecommendations([
+        { type: "DAY_21", severity: "CRITICAL", message: "test" },
+      ]);
+      expect(recs[0].action).toBe(
+        "Increase attestation frequency, consider reducing stakes",
+      );
+    });
+
+    it("maps WEEKEND danger to the correct recommendation", async () => {
+      const recs = await service.getProtectionRecommendations([
+        { type: "WEEKEND", severity: "MEDIUM", message: "test" },
+      ]);
+      expect(recs[0].action).toBe(
+        "Pre-commit your weekend routine, avoid isolation",
+      );
+    });
+
+    it("maps LATE_NIGHT danger to the correct recommendation", async () => {
+      const recs = await service.getProtectionRecommendations([
+        { type: "LATE_NIGHT", severity: "HIGH", message: "test" },
+      ]);
+      expect(recs[0].action).toBe(
+        "Enable do-not-disturb, delete tempting apps",
+      );
+    });
+
+    it("maps HIGH_STREAK_RISK danger to the correct recommendation", async () => {
+      const recs = await service.getProtectionRecommendations([
+        { type: "HIGH_STREAK_RISK", severity: "HIGH", message: "test" },
+      ]);
+      expect(recs[0].action).toBe(
+        "Review your original motivation, share your streak with your partner",
+      );
+    });
+
+    it("returns empty array for empty input", async () => {
       const recs = await service.getProtectionRecommendations([]);
       expect(recs).toEqual([]);
     });
   });
 
-  describe('getContractDayNumber', () => {
-    it('returns correct integer for a contract started 7 days ago', async () => {
+  describe("getContractDayNumber", () => {
+    it("returns correct integer for a contract started 7 days ago", async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-07-23T12:00:00Z'));
-      const sevenDaysAgo = new Date('2026-07-16T12:00:00Z');
-      pool.query.mockResolvedValueOnce({ rows: [{ started_at: sevenDaysAgo }] });
+      jest.setSystemTime(new Date("2026-07-23T12:00:00Z"));
+      const sevenDaysAgo = new Date("2026-07-16T12:00:00Z");
+      pool.query.mockResolvedValueOnce({
+        rows: [{ started_at: sevenDaysAgo }],
+      });
 
-      const days = await service.getContractDayNumber('c-7');
+      const days = await service.getContractDayNumber("c-7");
       expect(days).toBe(7);
     });
 
-    it('throws when contract is not found', async () => {
+    it("throws when contract is not found", async () => {
       pool.query.mockResolvedValueOnce({ rows: [] });
-      await expect(service.getContractDayNumber('missing')).rejects.toThrow(
-        'Contract missing not found',
+      await expect(service.getContractDayNumber("missing")).rejects.toThrow(
+        "Contract missing not found",
       );
     });
   });
 
-  describe('isInDangerZone', () => {
-    it('returns true when danger windows are present', async () => {
+  describe("isInDangerZone", () => {
+    it("returns true when danger windows are present", async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-07-23T12:00:00Z'));
-      const threeDaysAgo = new Date('2026-07-20T12:00:00Z');
+      jest.setSystemTime(new Date("2026-07-23T12:00:00Z"));
+      const threeDaysAgo = new Date("2026-07-20T12:00:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: threeDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      expect(await service.isInDangerZone('c-8', 'UTC')).toBe(true);
+      expect(await service.isInDangerZone("c-8", "UTC")).toBe(true);
     });
 
-    it('returns false when no danger windows are present', async () => {
+    it("returns false when no danger windows are present", async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-07-23T12:00:00Z'));
-      const tenDaysAgo = new Date('2026-07-13T12:00:00Z');
+      jest.setSystemTime(new Date("2026-07-23T12:00:00Z"));
+      const tenDaysAgo = new Date("2026-07-13T12:00:00Z");
       pool.query
         .mockResolvedValueOnce({ rows: [{ started_at: tenDaysAgo }] })
         .mockResolvedValueOnce({ rows: [{ streak: 5 }] });
 
-      expect(await service.isInDangerZone('c-9', 'UTC')).toBe(false);
+      expect(await service.isInDangerZone("c-9", "UTC")).toBe(false);
     });
   });
 });

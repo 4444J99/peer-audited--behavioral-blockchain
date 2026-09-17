@@ -70,7 +70,9 @@ const ORGANIC_HINTS = [
   "do_not_text",
 ];
 
-function firstNonEmpty(...values: Array<string | null | undefined>): string | null {
+function firstNonEmpty(
+  ...values: Array<string | null | undefined>
+): string | null {
   for (const value of values) {
     if (typeof value === "string") {
       const trimmed = value.trim();
@@ -110,7 +112,9 @@ export function classifyWaitlistChannel(
  * normalized `WaitlistAttribution`. Accepts both snake_case (`utm_source`) and
  * camelCase (`utmSource`) keys so the same parser serves URLSearchParams and JSON.
  */
-export function parseWaitlistAttribution(input: AttributionInput): WaitlistAttribution {
+export function parseWaitlistAttribution(
+  input: AttributionInput,
+): WaitlistAttribution {
   const source = firstNonEmpty(input.source, input.src) ?? "direct";
   const intent = firstNonEmpty(input.intent);
   const utmSource = firstNonEmpty(input.utm_source, input.utmSource);

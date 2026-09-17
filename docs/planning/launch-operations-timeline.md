@@ -5,6 +5,7 @@ Cross-departmental milestones for taking Styx from internal prototype to public 
 ## Milestones
 
 ### March 2026: Foundation
+
 - [ ] **Apple Developer Account + TestFlight setup** (OPS, ENG — H:RO)
   - Register for Apple Developer Program ($99/yr)
   - Configure TestFlight for beta distribution
@@ -14,6 +15,7 @@ Cross-departmental milestones for taking Styx from internal prototype to public 
   - Coverage during US business hours at minimum
 
 ### April–May 2026: Internal Dogfood
+
 - [ ] **Internal dogfood beta** (ENG, PRD — H:RO, H:PRD)
   - 5–10 trusted people using the system daily
   - Weekly syncs for bug reports and UX feedback
@@ -23,6 +25,7 @@ Cross-departmental milestones for taking Styx from internal prototype to public 
   - Prioritized bug/feature backlog
 
 ### June–July 2026: External Beta — TestMoney
+
 - [ ] **TestFlight external beta (50–100 users)** (OPS, ENG — H:RO)
   - Public TestFlight link shared with allowlist
   - Users join beta with test-money mode (no real funds)
@@ -37,6 +40,7 @@ Cross-departmental milestones for taking Styx from internal prototype to public 
   - Landing pages live and converting
 
 ### August–September 2026: Beta Iteration
+
 - [ ] **Beta operations — 500+ users** (OPS, CXS — H:RO, H:CXS)
   - Scaling infrastructure if needed
   - Support channel management
@@ -47,6 +51,7 @@ Cross-departmental milestones for taking Styx from internal prototype to public 
   - Crash rate < 0.1%
 
 ### October 2026: App Store Launch
+
 - [ ] **App Store launch readiness** (OPS, LEG, PRD — H:RO, H:LC)
   - UGC moderation policy written (required for App Review)
   - Apple App Review submission package complete
@@ -57,6 +62,7 @@ Cross-departmental milestones for taking Styx from internal prototype to public 
   - Contingency plan: handle rejection and resubmit
 
 ### November–December 2026: General Availability
+
 - [ ] **Enterprise sales readiness** (BD, ENG — H:BD, H:ENG)
   - SOC 2 audit underway
   - Enterprise demo environment live
@@ -70,13 +76,13 @@ Cross-departmental milestones for taking Styx from internal prototype to public 
 
 ## Dependencies
 
-| Milestone | Depends On |
-|-----------|-----------|
-| TestFlight external | Apple Developer Account + TestFlight setup (Mar) |
-| Real-money pilot | TestFlight external + Stripe production |
-| App Store launch | Open beta + Mobile app stable + Legal compliance |
-| Enterprise sales | SOC 2 + SAML SSO + Enterprise demo env |
-| Public GA | App Store approved + Support team ready + Marketing campaign |
+| Milestone           | Depends On                                                   |
+| ------------------- | ------------------------------------------------------------ |
+| TestFlight external | Apple Developer Account + TestFlight setup (Mar)             |
+| Real-money pilot    | TestFlight external + Stripe production                      |
+| App Store launch    | Open beta + Mobile app stable + Legal compliance             |
+| Enterprise sales    | SOC 2 + SAML SSO + Enterprise demo env                       |
+| Public GA           | App Store approved + Support team ready + Marketing campaign |
 
 ## Key Owners
 

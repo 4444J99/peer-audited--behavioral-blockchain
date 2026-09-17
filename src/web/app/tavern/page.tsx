@@ -1,16 +1,34 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
+import React, { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import {
-  ArrowLeft, Flame, ScrollText, Trophy, AlertTriangle, Shield, Users,
-  RefreshCw, Loader2, Clock, DollarSign, MinusCircle,
-} from 'lucide-react';
-import { api } from '../../services/api-client';
+  ArrowLeft,
+  Flame,
+  ScrollText,
+  Trophy,
+  AlertTriangle,
+  Shield,
+  Users,
+  RefreshCw,
+  Loader2,
+  Clock,
+  DollarSign,
+  MinusCircle,
+} from "lucide-react";
+import { api } from "../../services/api-client";
 
 interface FeedItem {
   id: string;
-  type: 'contract_created' | 'contract_completed' | 'contract_failed' | 'fury_catch' | 'honeypot_test' | 'milestone' | 'bounty_paid' | 'penalty_charged';
+  type:
+    | "contract_created"
+    | "contract_completed"
+    | "contract_failed"
+    | "fury_catch"
+    | "honeypot_test"
+    | "milestone"
+    | "bounty_paid"
+    | "penalty_charged";
   message: string;
   timestamp: string;
 }
@@ -22,19 +40,56 @@ interface LeaderboardEntry {
   created_at: string;
 }
 
-const EVENT_ICONS: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
-  contract_created: { icon: ScrollText, color: 'text-blue-400', bgColor: 'bg-blue-900/30' },
-  contract_completed: { icon: Trophy, color: 'text-green-400', bgColor: 'bg-green-900/30' },
-  contract_failed: { icon: AlertTriangle, color: 'text-red-400', bgColor: 'bg-red-900/30' },
-  fury_catch: { icon: Flame, color: 'text-orange-400', bgColor: 'bg-orange-900/30' },
-  honeypot_test: { icon: Shield, color: 'text-yellow-400', bgColor: 'bg-yellow-900/30' },
-  bounty_paid: { icon: DollarSign, color: 'text-emerald-400', bgColor: 'bg-emerald-900/30' },
-  penalty_charged: { icon: MinusCircle, color: 'text-rose-400', bgColor: 'bg-rose-900/30' },
-  milestone: { icon: Users, color: 'text-purple-400', bgColor: 'bg-purple-900/30' },
+const EVENT_ICONS: Record<
+  string,
+  { icon: React.ElementType; color: string; bgColor: string }
+> = {
+  contract_created: {
+    icon: ScrollText,
+    color: "text-blue-400",
+    bgColor: "bg-blue-900/30",
+  },
+  contract_completed: {
+    icon: Trophy,
+    color: "text-green-400",
+    bgColor: "bg-green-900/30",
+  },
+  contract_failed: {
+    icon: AlertTriangle,
+    color: "text-red-400",
+    bgColor: "bg-red-900/30",
+  },
+  fury_catch: {
+    icon: Flame,
+    color: "text-orange-400",
+    bgColor: "bg-orange-900/30",
+  },
+  honeypot_test: {
+    icon: Shield,
+    color: "text-yellow-400",
+    bgColor: "bg-yellow-900/30",
+  },
+  bounty_paid: {
+    icon: DollarSign,
+    color: "text-emerald-400",
+    bgColor: "bg-emerald-900/30",
+  },
+  penalty_charged: {
+    icon: MinusCircle,
+    color: "text-rose-400",
+    bgColor: "bg-rose-900/30",
+  },
+  milestone: {
+    icon: Users,
+    color: "text-purple-400",
+    bgColor: "bg-purple-900/30",
+  },
 };
 
 function timeAgo(timestamp: string): string {
-  const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000);
+  const seconds = Math.floor(
+    (Date.now() - new Date(timestamp).getTime()) / 1000,
+  );
 
   if (seconds < 60) return `${seconds}s ago`;
   const minutes = Math.floor(seconds / 60);
@@ -50,75 +105,79 @@ function getSampleFeed(): FeedItem[] {
   const now = Date.now();
   return [
     {
-      id: 'sample-1',
-      type: 'contract_created',
-      message: 'Someone committed $250 to a 90-day fitness oath',
+      id: "sample-1",
+      type: "contract_created",
+      message: "Someone committed $250 to a 90-day fitness oath",
       timestamp: new Date(now - 2 * 60 * 1000).toISOString(),
     },
     {
-      id: 'sample-2',
-      type: 'fury_catch',
-      message: 'A Fury caught a fraudulent proof and earned $15 bounty',
+      id: "sample-2",
+      type: "fury_catch",
+      message: "A Fury caught a fraudulent proof and earned $15 bounty",
       timestamp: new Date(now - 8 * 60 * 1000).toISOString(),
     },
     {
-      id: 'sample-3',
-      type: 'contract_completed',
-      message: 'A 30-day deep work focus oath was successfully completed. $50 returned.',
+      id: "sample-3",
+      type: "contract_completed",
+      message:
+        "A 30-day deep work focus oath was successfully completed. $50 returned.",
       timestamp: new Date(now - 22 * 60 * 1000).toISOString(),
     },
     {
-      id: 'sample-4',
-      type: 'honeypot_test',
-      message: 'System honeypot test: 2/3 reviewers correctly identified the fake proof',
+      id: "sample-4",
+      type: "honeypot_test",
+      message:
+        "System honeypot test: 2/3 reviewers correctly identified the fake proof",
       timestamp: new Date(now - 45 * 60 * 1000).toISOString(),
     },
     {
-      id: 'sample-5',
-      type: 'contract_failed',
-      message: 'A sobriety oath was not fulfilled. $100 captured and redistributed.',
+      id: "sample-5",
+      type: "contract_failed",
+      message:
+        "A sobriety oath was not fulfilled. $100 captured and redistributed.",
       timestamp: new Date(now - 1.5 * 60 * 60 * 1000).toISOString(),
     },
     {
-      id: 'sample-6',
-      type: 'milestone',
-      message: '500 total contracts created across the Styx network',
+      id: "sample-6",
+      type: "milestone",
+      message: "500 total contracts created across the Styx network",
       timestamp: new Date(now - 3 * 60 * 60 * 1000).toISOString(),
     },
     {
-      id: 'sample-7',
-      type: 'contract_created',
-      message: 'Someone committed $75 to a 14-day digital fasting oath',
+      id: "sample-7",
+      type: "contract_created",
+      message: "Someone committed $75 to a 14-day digital fasting oath",
       timestamp: new Date(now - 4 * 60 * 60 * 1000).toISOString(),
     },
     {
-      id: 'sample-8',
-      type: 'fury_catch',
-      message: 'A Fury flagged a suspicious time-lapse proof for manual review',
+      id: "sample-8",
+      type: "fury_catch",
+      message: "A Fury flagged a suspicious time-lapse proof for manual review",
       timestamp: new Date(now - 5 * 60 * 60 * 1000).toISOString(),
     },
     {
-      id: 'sample-9',
-      type: 'contract_completed',
-      message: 'A 60-day writing commitment was fulfilled. $200 returned to its owner.',
+      id: "sample-9",
+      type: "contract_completed",
+      message:
+        "A 60-day writing commitment was fulfilled. $200 returned to its owner.",
       timestamp: new Date(now - 7 * 60 * 60 * 1000).toISOString(),
     },
     {
-      id: 'sample-10',
-      type: 'contract_created',
-      message: 'Someone committed $500 to a 90-day cardiovascular stamina oath',
+      id: "sample-10",
+      type: "contract_created",
+      message: "Someone committed $500 to a 90-day cardiovascular stamina oath",
       timestamp: new Date(now - 12 * 60 * 60 * 1000).toISOString(),
     },
     {
-      id: 'sample-11',
-      type: 'honeypot_test',
-      message: 'System honeypot test: 3/3 reviewers passed integrity check',
+      id: "sample-11",
+      type: "honeypot_test",
+      message: "System honeypot test: 3/3 reviewers passed integrity check",
       timestamp: new Date(now - 18 * 60 * 60 * 1000).toISOString(),
     },
     {
-      id: 'sample-12',
-      type: 'contract_failed',
-      message: 'An inbox zero commitment lapsed after 21 days. $25 captured.',
+      id: "sample-12",
+      type: "contract_failed",
+      message: "An inbox zero commitment lapsed after 21 days. $25 captured.",
       timestamp: new Date(now - 24 * 60 * 60 * 1000).toISOString(),
     },
   ];
@@ -134,7 +193,7 @@ export default function TavernPage() {
 
   const loadFeed = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
-    
+
     // 1. Fetch Feed
     try {
       const data = await api.getPublicFeed(50);
@@ -155,7 +214,7 @@ export default function TavernPage() {
       const lb = await api.getLeaderboard(10);
       setLeaderboard(lb);
     } catch (e) {
-      console.error('Failed to load leaderboard', e);
+      console.error("Failed to load leaderboard", e);
     }
 
     setLoading(false);
@@ -173,7 +232,9 @@ export default function TavernPage() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <Loader2 className="animate-spin mr-3" size={24} />
-        <span className="text-neutral-400 font-bold">Loading the Tavern Board...</span>
+        <span className="text-neutral-400 font-bold">
+          Loading the Tavern Board...
+        </span>
       </div>
     );
   }
@@ -183,7 +244,10 @@ export default function TavernPage() {
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 border-b border-neutral-800 pb-6">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-neutral-400 hover:text-white transition-colors">
+          <Link
+            href="/dashboard"
+            className="text-neutral-400 hover:text-white transition-colors"
+          >
             <ArrowLeft size={24} />
           </Link>
           <div className="flex items-center gap-3">
@@ -191,8 +255,12 @@ export default function TavernPage() {
               <ScrollText className="text-amber-200" size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tight uppercase">The Tavern Board</h1>
-              <p className="text-xs text-neutral-500 uppercase tracking-widest">Public Activity Feed</p>
+              <h1 className="text-2xl font-black tracking-tight uppercase">
+                The Tavern Board
+              </h1>
+              <p className="text-xs text-neutral-500 uppercase tracking-widest">
+                Public Activity Feed
+              </p>
             </div>
           </div>
         </div>
@@ -208,7 +276,7 @@ export default function TavernPage() {
             disabled={refreshing}
             className="px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-lg text-sm font-bold text-neutral-400 hover:text-white transition-colors flex items-center gap-2"
           >
-            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+            <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
             Refresh
           </button>
           <div className="text-xs text-neutral-600 flex items-center gap-1">
@@ -221,8 +289,9 @@ export default function TavernPage() {
       {/* Decorative Notice */}
       <div className="p-4 bg-neutral-900/50 border border-neutral-800 rounded-xl mb-8 text-center">
         <p className="text-sm text-neutral-400">
-          All entries are anonymized. No personally identifiable information is displayed.
-          The Tavern Board shows real-time system activity across the entire Styx network.
+          All entries are anonymized. No personally identifiable information is
+          displayed. The Tavern Board shows real-time system activity across the
+          entire Styx network.
         </p>
       </div>
 
@@ -236,7 +305,9 @@ export default function TavernPage() {
               key={item.id}
               className="flex items-start gap-4 p-4 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-neutral-700 transition-colors"
             >
-              <div className={`w-10 h-10 rounded-full ${config.bgColor} flex items-center justify-center shrink-0`}>
+              <div
+                className={`w-10 h-10 rounded-full ${config.bgColor} flex items-center justify-center shrink-0`}
+              >
                 <IconComponent size={18} className={config.color} />
               </div>
 
@@ -250,8 +321,10 @@ export default function TavernPage() {
                 </p>
               </div>
 
-              <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${config.bgColor} ${config.color}`}>
-                {item.type.replace(/_/g, ' ').toUpperCase()}
+              <span
+                className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${config.bgColor} ${config.color}`}
+              >
+                {item.type.replace(/_/g, " ").toUpperCase()}
               </span>
             </div>
           );
@@ -262,7 +335,9 @@ export default function TavernPage() {
         <div className="text-center py-16">
           <ScrollText className="mx-auto text-neutral-700 mb-4" size={48} />
           <p className="text-neutral-500 font-bold">The board is empty.</p>
-          <p className="text-neutral-600 text-sm mt-1">No activity yet. Be the first to create a contract.</p>
+          <p className="text-neutral-600 text-sm mt-1">
+            No activity yet. Be the first to create a contract.
+          </p>
         </div>
       )}
 
@@ -273,31 +348,44 @@ export default function TavernPage() {
           Auto-refreshing every 30 seconds
         </p>
       </div>
-      
+
       {/* Sidebar / Leaderboard Section - Desktop Only for now */}
       <div className="hidden lg:block fixed right-8 top-32 w-64">
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4">
-           <div className="flex items-center gap-2 mb-4">
-             <Trophy className="text-yellow-500" size={16} />
-             <h3 className="font-bold text-sm uppercase tracking-wider text-neutral-400">Top Integrity</h3>
-           </div>
-           
-           <div className="space-y-3">
-             {leaderboard.map((user, i) => (
-               <div key={user.id} className="flex items-center justify-between text-sm">
-                 <div className="flex items-center gap-3">
-                   <span className={`font-mono font-bold w-4 text-center ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-neutral-300' : i === 2 ? 'text-amber-700' : 'text-neutral-600'}`}>{i + 1}</span>
-                   <div className="truncate w-24 text-neutral-300">
-                     {user.email.split('@')[0]}
-                   </div>
-                 </div>
-                 <div className="font-mono font-bold text-white">
-                   {user.integrity_score.toFixed(1)}
-                 </div>
-               </div>
-             ))}
-             {leaderboard.length === 0 && <p className="text-xs text-neutral-600 italic">No rankings yet.</p>}
-           </div>
+          <div className="flex items-center gap-2 mb-4">
+            <Trophy className="text-yellow-500" size={16} />
+            <h3 className="font-bold text-sm uppercase tracking-wider text-neutral-400">
+              Top Integrity
+            </h3>
+          </div>
+
+          <div className="space-y-3">
+            {leaderboard.map((user, i) => (
+              <div
+                key={user.id}
+                className="flex items-center justify-between text-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`font-mono font-bold w-4 text-center ${i === 0 ? "text-yellow-400" : i === 1 ? "text-neutral-300" : i === 2 ? "text-amber-700" : "text-neutral-600"}`}
+                  >
+                    {i + 1}
+                  </span>
+                  <div className="truncate w-24 text-neutral-300">
+                    {user.email.split("@")[0]}
+                  </div>
+                </div>
+                <div className="font-mono font-bold text-white">
+                  {user.integrity_score.toFixed(1)}
+                </div>
+              </div>
+            ))}
+            {leaderboard.length === 0 && (
+              <p className="text-xs text-neutral-600 italic">
+                No rankings yet.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

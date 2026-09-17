@@ -28,7 +28,7 @@ The moderation architecture is designed for two gates: **(1) TestFlight / Privat
 
 ### 2.1 Guideline 1.1 — Safety / Objectionable Content
 
-Apps must not include content that is offensive, insensitive, upsetting, or intended to disgust. *See* Apple, *App Store Review Guidelines* § 1.1 (2026).
+Apps must not include content that is offensive, insensitive, upsetting, or intended to disgust. _See_ Apple, _App Store Review Guidelines_ § 1.1 (2026).
 
 **Styx implication:** Proof photos showing bodies (weigh-in photos, gym selfies, meal photos) must not contain nudity, graphic content, or content that could be characterized as body-shaming. The moderation pipeline must filter for nudity, graphic injury, and potentially offensive body-image content before any proof media is surfaced to other users (Fury auditors).
 
@@ -41,39 +41,39 @@ Any app that allows users to create or share content must implement four capabil
 3. **Blocking mechanism** — the ability to block abusive users from further interaction.
 4. **Developer contact information** — published and accessible from within the app.
 
-*See id.* § 1.2.
+_See id._ § 1.2.
 
 **Styx implication:** All four capabilities must be implemented before any App Store submission, including TestFlight external beta. The filtering mechanism may use automated content moderation (Apple's Vision framework for NSFW detection, or third-party services like Amazon Rekognition or Google Cloud Vision) supplemented by manual review escalation.
 
 ### 2.3 Guideline 1.2.1(a) — Age Restrictions
 
-Creator apps must provide age restriction mechanisms based on verified or declared age to limit access by underage users to potentially mature UGC. *See id.* § 1.2.1(a).
+Creator apps must provide age restriction mechanisms based on verified or declared age to limit access by underage users to potentially mature UGC. _See id._ § 1.2.1(a).
 
-**Styx implication:** Styx already requires 18+ age verification for financial commitment participation. *See* `docs/legal/legal--aegis-protocol.md` § 3.1. This same age gate satisfies § 1.2.1(a). The implementation must be enforced at onboarding (date-of-birth entry at minimum for TestFlight; Stripe Identity verification for public launch).
+**Styx implication:** Styx already requires 18+ age verification for financial commitment participation. _See_ `docs/legal/legal--aegis-protocol.md` § 3.1. This same age gate satisfies § 1.2.1(a). The implementation must be enforced at onboarding (date-of-birth entry at minimum for TestFlight; Stripe Identity verification for public launch).
 
 ### 2.4 Guideline 2.5.14 — Screen Recording Disclosure
 
-Apps must request user consent and provide a clear visual and/or audible indication whenever recording, logging, or otherwise making a record of user activity. *See id.* § 2.5.14.
+Apps must request user consent and provide a clear visual and/or audible indication whenever recording, logging, or otherwise making a record of user activity. _See id._ § 2.5.14.
 
-**Styx implication:** If Styx implements any form of screen recording for verification (currently Research status), a system-level permissions dialog and visible recording indicator are required. *See* `docs/legal/legal--gatekeeper-compliance.md` § 2.3 (iOS ReplayKit constraints).
+**Styx implication:** If Styx implements any form of screen recording for verification (currently Research status), a system-level permissions dialog and visible recording indicator are required. _See_ `docs/legal/legal--gatekeeper-compliance.md` § 2.3 (iOS ReplayKit constraints).
 
 ### 2.5 Guideline 4.7 — HealthKit
 
-HealthKit bridges must be written in 100% native Swift — no HTML5 wrappers or React Native bridges for health data integration. *See id.* § 4.7.
+HealthKit bridges must be written in 100% native Swift — no HTML5 wrappers or React Native bridges for health data integration. _See id._ § 4.7.
 
 **Styx implication:** The HealthKit integration module for wearable data sync must be native Swift. Any cross-platform framework used for the main app UI cannot be used for HealthKit data access.
 
 ### 2.6 Guideline 5.1.1 — Data Collection and Storage
 
-Apps must only request access to data relevant to core functionality. Users must be able to deny permissions and still use basic app functionality. *See id.* § 5.1.1.
+Apps must only request access to data relevant to core functionality. Users must be able to deny permissions and still use basic app functionality. _See id._ § 5.1.1.
 
 **Styx implication:** Camera access (for proof photos), HealthKit access (for wearable sync), and location access (for geo-verified check-ins) must each be individually optional. A user who denies camera access should still be able to use manual self-report or wearable-based verification.
 
 ### 2.7 Guidelines 5.3.3-5.3.4 — Gaming, Gambling, and Lotteries
 
-Apps may not use In-App Purchase (IAP) to buy credit or currency for real-money gaming (§ 5.3.3). Real-money gaming apps must be geo-restricted to licensed jurisdictions and use native iOS code for contest logic (§ 5.3.4). *See id.* §§ 5.3.3-5.3.4.
+Apps may not use In-App Purchase (IAP) to buy credit or currency for real-money gaming (§ 5.3.3). Real-money gaming apps must be geo-restricted to licensed jurisdictions and use native iOS code for contest logic (§ 5.3.4). _See id._ §§ 5.3.3-5.3.4.
 
-**Styx implication:** This actually benefits Styx — § 5.3.3 legally justifies using external payment processors (Stripe Connect) for commitment deposits, bypassing the 30% Apple commission. Financial onboarding occurs on the web dashboard (`styx.app`), not in the iOS app. *See* `docs/legal/legal--gatekeeper-compliance.md` § 2.2 (Apple submission strategy).
+**Styx implication:** This actually benefits Styx — § 5.3.3 legally justifies using external payment processors (Stripe Connect) for commitment deposits, bypassing the 30% Apple commission. Financial onboarding occurs on the web dashboard (`styx.app`), not in the iOS app. _See_ `docs/legal/legal--gatekeeper-compliance.md` § 2.2 (Apple submission strategy).
 
 ---
 
@@ -81,25 +81,25 @@ Apps may not use In-App Purchase (IAP) to buy credit or currency for real-money 
 
 ### 3.1 User Data Policy — Personal and Sensitive Information
 
-Screen recordings, proof photos, and health data are classified as Personal and Sensitive User Data requiring Prominent Disclosure and Consent. *See* Google, *Developer Program Policies: User Data* (2026). The disclosure must appear during normal app usage, be separate from the privacy policy, explicitly state what data is collected and how it is used, and require an affirmative user action to proceed.
+Screen recordings, proof photos, and health data are classified as Personal and Sensitive User Data requiring Prominent Disclosure and Consent. _See_ Google, _Developer Program Policies: User Data_ (2026). The disclosure must appear during normal app usage, be separate from the privacy policy, explicitly state what data is collected and how it is used, and require an affirmative user action to proceed.
 
 **Styx implication:** A standalone consent flow (not buried in the privacy policy) must be presented before the first proof photo upload, wearable sync, or location check-in. Each data type requires its own disclosure statement.
 
 ### 3.2 Bullying and Harassment Policy
 
-Google explicitly prohibits apps that "contain or facilitate threats, harassment, or bullying." *See* Google, *Developer Program Policies: Bullying and Harassment* (2026).
+Google explicitly prohibits apps that "contain or facilitate threats, harassment, or bullying." _See_ Google, _Developer Program Policies: Bullying and Harassment_ (2026).
 
 **Styx implication:** The Fury auditor system — where peer auditors verify commitment completion — must not permit personal attacks, public ridicule, body-shaming comments, or targeted harassment. Fury auditor comments must be moderated, and the reporting/blocking mechanisms must specifically address peer-to-peer harassment in the auditing context.
 
 ### 3.3 Deceptive Behavior Policy
 
-Apps must not perpetuate misleading or deceptive media. Manipulated imagery or audio requires clear user-facing watermarks. *See id.* (Deceptive Behavior).
+Apps must not perpetuate misleading or deceptive media. Manipulated imagery or audio requires clear user-facing watermarks. _See id._ (Deceptive Behavior).
 
 **Styx implication:** Proof photos must not be digitally manipulated. The verification pipeline should check for common photo manipulation artifacts (metadata stripping, resolution inconsistencies). Any AI-assisted verification must be transparent to the user.
 
 ### 3.4 Developer Verification (September 2026)
 
-Google is tightening developer identity verification. All developer accounts must complete enhanced verification by September 2026. *See id.* (Developer Verification). [COUNSEL: VERIFY CURRENT DEADLINE]
+Google is tightening developer identity verification. All developer accounts must complete enhanced verification by September 2026. _See id._ (Developer Verification). [COUNSEL: VERIFY CURRENT DEADLINE]
 
 **Styx implication:** Complete Google Play developer verification proactively during the TestFlight beta period — do not wait for Google enforcement.
 
@@ -135,7 +135,7 @@ Google is tightening developer identity verification. All developer accounts mus
 
 **Risk level:** Low. Primarily functional text, but could contain inappropriate language or dangerous goal descriptions (extreme restriction, unhealthy behaviors).
 
-**Moderation required:** Keyword screening for dangerous goal patterns (extreme caloric restriction, purging references). BMI floor and velocity cap enforcement at the system level. *See* `docs/legal/legal--aegis-protocol.md` §§ 3.2-3.3.
+**Moderation required:** Keyword screening for dangerous goal patterns (extreme caloric restriction, purging references). BMI floor and velocity cap enforcement at the system level. _See_ `docs/legal/legal--aegis-protocol.md` §§ 3.2-3.3.
 
 ### 4.4 Profile Information
 
@@ -160,6 +160,7 @@ User Upload → Automated Filter → [Pass] → Published
 ```
 
 **Automated filtering layer:**
+
 - **NSFW detection:** Apple Vision framework (on-device for iOS) or Amazon Rekognition / Google Cloud Vision (server-side). Threshold: block explicit nudity; flag partial nudity and suggestive content for manual review.
 - **Text content filtering:** Keyword/phrase blocklist for slurs, threats, body-shaming language, self-harm references. Regex-based pattern matching supplemented by a managed content moderation service.
 - **Dangerous goal detection:** Pattern matching on Oath descriptions for extreme restriction language (e.g., "zero calories," "water fast 30 days," "purge").
@@ -167,12 +168,14 @@ User Upload → Automated Filter → [Pass] → Published
 ### 5.2 Report Mechanism and Response SLAs
 
 **Report flow:**
+
 1. User taps "Report" on any content surface (proof photo, auditor comment, profile).
 2. Select report category: Harassment, NSFW Content, Spam, Dangerous Behavior, Other.
 3. Optional text description.
 4. Report submitted to moderation queue with metadata (reporter ID, content ID, timestamp, category).
 
 **Response SLAs:**
+
 - **Imminent harm** (self-harm references, threats of violence): 1 hour.
 - **NSFW / explicit content:** 4 hours.
 - **Harassment / bullying:** 24 hours.
@@ -191,9 +194,10 @@ User Upload → Automated Filter → [Pass] → Published
 
 ### 5.4 CSAM Detection Obligations
 
-Any platform that accepts user-uploaded photos has obligations under 18 U.S.C. § 2258A (mandatory reporting of apparent child sexual abuse material). *See* 18 U.S.C. § 2258A (2008).
+Any platform that accepts user-uploaded photos has obligations under 18 U.S.C. § 2258A (mandatory reporting of apparent child sexual abuse material). _See_ 18 U.S.C. § 2258A (2008).
 
 **Implementation:**
+
 - Integrate PhotoDNA or equivalent perceptual hash matching against the NCMEC database.
 - Any match triggers immediate content removal, account suspension, and mandatory report to the National Center for Missing & Exploited Children ("NCMEC") CyberTipline.
 - This obligation exists regardless of app category (Health & Fitness) or user base demographics (18+).
@@ -201,11 +205,13 @@ Any platform that accepts user-uploaded photos has obligations under 18 U.S.C. �
 ### 5.5 Age-Gating Implementation
 
 **TestFlight (minimum):**
+
 - Date-of-birth entry at onboarding.
 - Users declaring age <18 are blocked from account creation.
 - No additional verification.
 
 **Public launch (full):**
+
 - Date-of-birth entry at onboarding (first gate).
 - Stripe Identity age verification for all users initiating financial commitments (second gate).
 - Government ID verification for high-stakes commitments (>$100 deposit) (third gate). [Status: Research]
@@ -231,6 +237,7 @@ The following pre-emptive explanation should accompany all App Store submissions
 ### 6.2 For Google Play Review
 
 > **Safety Section Declaration:**
+>
 > - Data collected: Photos (proof uploads), Health info (wearable sync, weight), Location (optional geo-verified check-ins), Name/email (profile)
 > - Data shared: Photos shared with assigned peer auditors only (not publicly)
 > - Data not sold to third parties
@@ -244,31 +251,31 @@ Supporting consent and reporting screen mockups: `docs/legal/appendices/appendix
 
 ### 7.1 TestFlight / Private Beta (Gate 1)
 
-| Requirement | Status | Notes |
-|---|---|---|
-| Age gate (date-of-birth entry) | Required | Self-declaration sufficient for closed beta |
-| Content reporting mechanism | Required | Minimum: in-app report button with email notification to team |
-| User blocking | Required | Minimum: block from auditor assignment |
-| Developer contact information | Required | Email address accessible from Settings |
-| NSFW photo filter | Recommended | Can be server-side only for beta |
-| Profanity filter on comments | Recommended | Basic keyword blocklist |
-| CSAM hash matching | Required | Legal obligation regardless of beta status |
-| Moderation response SLAs | Relaxed | 24h for all categories acceptable |
-| App Review notes | Required | Include behavioral commitment framing |
+| Requirement                    | Status      | Notes                                                         |
+| ------------------------------ | ----------- | ------------------------------------------------------------- |
+| Age gate (date-of-birth entry) | Required    | Self-declaration sufficient for closed beta                   |
+| Content reporting mechanism    | Required    | Minimum: in-app report button with email notification to team |
+| User blocking                  | Required    | Minimum: block from auditor assignment                        |
+| Developer contact information  | Required    | Email address accessible from Settings                        |
+| NSFW photo filter              | Recommended | Can be server-side only for beta                              |
+| Profanity filter on comments   | Recommended | Basic keyword blocklist                                       |
+| CSAM hash matching             | Required    | Legal obligation regardless of beta status                    |
+| Moderation response SLAs       | Relaxed     | 24h for all categories acceptable                             |
+| App Review notes               | Required    | Include behavioral commitment framing                         |
 
 ### 7.2 Public App Store Launch (Gate 2)
 
-| Requirement | Status | Notes |
-|---|---|---|
-| All Gate 1 requirements | Required | — |
-| Stripe Identity age verification | Required | For all users initiating financial commitments |
-| On-device NSFW detection (iOS) | Required | Apple Vision framework |
-| Full text moderation pipeline | Required | Keyword + ML-based content classification |
-| Dedicated Safety & Moderation screen | Required | Walkthrough-ready for App Review |
-| Published Content Guidelines | Required | User-facing document in app and on web |
-| Moderation response SLAs (full) | Required | 1h imminent harm, 4h NSFW, 24h harassment |
-| PhotoDNA / CSAM detection | Required | NCMEC CyberTipline integration |
-| Prominent Disclosure (Google) | Required | Standalone consent flow per data type |
+| Requirement                          | Status   | Notes                                          |
+| ------------------------------------ | -------- | ---------------------------------------------- |
+| All Gate 1 requirements              | Required | —                                              |
+| Stripe Identity age verification     | Required | For all users initiating financial commitments |
+| On-device NSFW detection (iOS)       | Required | Apple Vision framework                         |
+| Full text moderation pipeline        | Required | Keyword + ML-based content classification      |
+| Dedicated Safety & Moderation screen | Required | Walkthrough-ready for App Review               |
+| Published Content Guidelines         | Required | User-facing document in app and on web         |
+| Moderation response SLAs (full)      | Required | 1h imminent harm, 4h NSFW, 24h harassment      |
+| PhotoDNA / CSAM detection            | Required | NCMEC CyberTipline integration                 |
+| Prominent Disclosure (Google)        | Required | Standalone consent flow per data type          |
 
 Reviewer-facing mockups for the dedicated safety screen, consent flow, and report mechanism live in `docs/legal/appendices/appendix-c--app-review-screenshot-mockups.md`.
 
@@ -276,20 +283,20 @@ Reviewer-facing mockups for the dedicated safety screen, consent flow, and repor
 
 ## 8. Linguistic Cloaker Compliance
 
-The Linguistic Cloaker middleware (`src/middleware/linguistic-cloaker.ts`) performs context-dependent terminology swapping across platform surfaces. *See* `docs/adr/adr--003-linguistic-cloaker.md`.
+The Linguistic Cloaker middleware (`src/middleware/linguistic-cloaker.ts`) performs context-dependent terminology swapping across platform surfaces. _See_ `docs/adr/adr--003-linguistic-cloaker.md`.
 
 ### 8.1 App Store Metadata Sanitization
 
 All App Store-facing surfaces (app name, subtitle, description, keywords, screenshots, App Review notes) must use sanitized terminology:
 
-| Internal Term | App Store Term |
-|---|---|
-| Fury / Fury Auditor | Integrity Auditor / Peer Reviewer |
-| Oath | Commitment / Goal |
-| Styx (mythological framing) | Styx (retained — brand name) |
-| Vault | Accountability Fund |
-| Stake / Wager | Commitment Deposit |
-| Pot / Pool | Completion Reward Fund |
+| Internal Term               | App Store Term                    |
+| --------------------------- | --------------------------------- |
+| Fury / Fury Auditor         | Integrity Auditor / Peer Reviewer |
+| Oath                        | Commitment / Goal                 |
+| Styx (mythological framing) | Styx (retained — brand name)      |
+| Vault                       | Accountability Fund               |
+| Stake / Wager               | Commitment Deposit                |
+| Pot / Pool                  | Completion Reward Fund            |
 
 ### 8.2 Binary Metadata
 
@@ -299,8 +306,8 @@ iOS binary metadata (Info.plist descriptions, usage strings) must use sanitized 
 
 ## 9. Document History
 
-| Version | Date | Author | Changes |
-|---|---|---|---|
+| Version     | Date       | Author                 | Changes                                                                                                                         |
+| ----------- | ---------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | 0.1.0-draft | 2026-03-09 | agent/research-support | Initial draft — 8 sections with Apple/Google policy analysis, content surface audit, moderation architecture, gate requirements |
 
 ---
@@ -313,7 +320,7 @@ iOS binary metadata (Info.plist descriptions, usage strings) must use sanitized 
 
 ### Platform Guidelines and Policies
 
-- Apple, *App Store Review Guidelines* §§ 1.1, 1.2, 1.2.1(a), 2.5.14, 4.7, 5.1.1, 5.3.3, 5.3.4 (2026)
-- Google, *Developer Program Policies: Bullying and Harassment* (2026)
-- Google, *Developer Program Policies: Deceptive Behavior* (2026)
-- Google, *Developer Program Policies: User Data* (2026)
+- Apple, _App Store Review Guidelines_ §§ 1.1, 1.2, 1.2.1(a), 2.5.14, 4.7, 5.1.1, 5.3.3, 5.3.4 (2026)
+- Google, _Developer Program Policies: Bullying and Harassment_ (2026)
+- Google, _Developer Program Policies: Deceptive Behavior_ (2026)
+- Google, _Developer Program Policies: User Data_ (2026)

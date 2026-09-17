@@ -1,7 +1,7 @@
-import { FeedController } from './feed.controller';
-import { Pool } from 'pg';
+import { FeedController } from "./feed.controller";
+import { Pool } from "pg";
 
-describe('FeedController', () => {
+describe("FeedController", () => {
   let controller: FeedController;
   let mockPool: { query: jest.Mock };
 
@@ -13,26 +13,26 @@ describe('FeedController', () => {
 
   // ─── getFeed ───
 
-  describe('getFeed', () => {
-    it('should return events from the database', async () => {
+  describe("getFeed", () => {
+    it("should return events from the database", async () => {
       mockPool.query.mockResolvedValue({
         rows: [
           {
-            event_type: 'PROOF_VERIFIED',
+            event_type: "PROOF_VERIFIED",
             payload: {},
-            created_at: new Date('2026-02-27T10:00:00Z'),
-            actor_id: 'user-abc123',
+            created_at: new Date("2026-02-27T10:00:00Z"),
+            actor_id: "user-abc123",
           },
         ],
       });
 
       const result = await controller.getFeed();
       expect(result.events).toHaveLength(1);
-      expect(result.events[0].type).toBe('PROOF_VERIFIED');
-      expect(result.events[0].message).toContain('styx_user');
+      expect(result.events[0].type).toBe("PROOF_VERIFIED");
+      expect(result.events[0].message).toContain("styx_user");
     });
 
-    it('should default limit to 20 when not provided', async () => {
+    it("should default limit to 20 when not provided", async () => {
       mockPool.query.mockResolvedValue({ rows: [] });
 
       await controller.getFeed();
@@ -40,106 +40,110 @@ describe('FeedController', () => {
       expect(params[0]).toBe(20);
     });
 
-    it('should respect custom limit parameter', async () => {
+    it("should respect custom limit parameter", async () => {
       mockPool.query.mockResolvedValue({ rows: [] });
 
-      await controller.getFeed('10');
+      await controller.getFeed("10");
       const params = mockPool.query.mock.calls[0][1];
       expect(params[0]).toBe(10);
     });
 
-    it('should cap limit at 50', async () => {
+    it("should cap limit at 50", async () => {
       mockPool.query.mockResolvedValue({ rows: [] });
 
-      await controller.getFeed('100');
+      await controller.getFeed("100");
       const params = mockPool.query.mock.calls[0][1];
       expect(params[0]).toBe(50);
     });
 
-    it('should handle NaN limit gracefully', async () => {
+    it("should handle NaN limit gracefully", async () => {
       mockPool.query.mockResolvedValue({ rows: [] });
 
-      await controller.getFeed('invalid');
+      await controller.getFeed("invalid");
       const params = mockPool.query.mock.calls[0][1];
       expect(params[0]).toBe(20);
     });
 
-    it('should anonymize actor IDs in events', async () => {
+    it("should anonymize actor IDs in events", async () => {
       mockPool.query.mockResolvedValue({
         rows: [
           {
-            event_type: 'CONTRACT_COMPLETED',
-            payload: { oathCategory: 'Biological' },
-            created_at: new Date('2026-02-27T10:00:00Z'),
-            actor_id: 'user-1234-full-uuid',
+            event_type: "CONTRACT_COMPLETED",
+            payload: { oathCategory: "Biological" },
+            created_at: new Date("2026-02-27T10:00:00Z"),
+            actor_id: "user-1234-full-uuid",
           },
         ],
       });
 
       const result = await controller.getFeed();
-      expect(result.events[0].message).toContain('styx_user');
-      expect(result.events[0].message).not.toContain('user-1234-full-uuid');
+      expect(result.events[0].message).toContain("styx_user");
+      expect(result.events[0].message).not.toContain("user-1234-full-uuid");
     });
 
-    it('should generate event IDs from timestamp', async () => {
-      const ts = new Date('2026-02-27T10:00:00Z');
+    it("should generate event IDs from timestamp", async () => {
+      const ts = new Date("2026-02-27T10:00:00Z");
       mockPool.query.mockResolvedValue({
-        rows: [{
-          event_type: 'PROOF_VERIFIED',
-          payload: {},
-          created_at: ts,
-          actor_id: 'u1',
-        }],
+        rows: [
+          {
+            event_type: "PROOF_VERIFIED",
+            payload: {},
+            created_at: ts,
+            actor_id: "u1",
+          },
+        ],
       });
 
       const result = await controller.getFeed();
       expect(result.events[0].id).toBe(`evt_${ts.getTime()}`);
     });
 
-    it('should return empty events array when no rows', async () => {
+    it("should return empty events array when no rows", async () => {
       mockPool.query.mockResolvedValue({ rows: [] });
 
       const result = await controller.getFeed();
       expect(result.events).toEqual([]);
     });
 
-    it('should derive the actor from the hashed payload, not an actor_id column', async () => {
+    it("should derive the actor from the hashed payload, not an actor_id column", async () => {
       mockPool.query.mockResolvedValue({ rows: [] });
 
       await controller.getFeed();
       const sql = String(mockPool.query.mock.calls[0][0]);
       expect(sql).toContain("el.payload->>'userId'");
-      expect(sql).toContain('AS actor_id');
+      expect(sql).toContain("AS actor_id");
       // event_log has no actor_id column — it is append-only and hash-chained.
       expect(sql).not.toMatch(/el\.actor_id/);
     });
 
     it('should use "System" for null actor_id', async () => {
       mockPool.query.mockResolvedValue({
-        rows: [{
-          event_type: 'PROOF_VERIFIED',
-          payload: {},
-          created_at: new Date(),
-          actor_id: null,
-        }],
+        rows: [
+          {
+            event_type: "PROOF_VERIFIED",
+            payload: {},
+            created_at: new Date(),
+            actor_id: null,
+          },
+        ],
       });
 
       const result = await controller.getFeed();
-      expect(result.events[0].message).toContain('System');
+      expect(result.events[0].message).toContain("System");
     });
   });
 
   // ─── streamEvents ───
 
-  describe('streamEvents', () => {
-    it('should derive the actor from the payload in the SSE query too', (done) => {
+  describe("streamEvents", () => {
+    it("should derive the actor from the payload in the SSE query too", (done) => {
       mockPool.query.mockResolvedValue({
         rows: [
           {
-            event_type: 'PROOF_VERIFIED',
+            event_type: "PROOF_VERIFIED",
             payload: {},
-            created_at: new Date('2026-02-27T10:00:00Z'),
-            actor_id: 'user-abc123',
+            created_at: new Date("2026-02-27T10:00:00Z"),
+            actor_id: "user-abc123",
           },
         ],
       });
@@ -147,11 +151,11 @@ describe('FeedController', () => {
       const subscription = controller.streamEvents().subscribe((message) => {
         const sql = String(mockPool.query.mock.calls[0][0]);
         expect(sql).toContain("el.payload->>'userId'");
-        expect(sql).toContain('AS actor_id');
+        expect(sql).toContain("AS actor_id");
         expect(sql).not.toMatch(/el\.actor_id/);
 
         const payload = JSON.parse((message as any).data);
-        expect(payload.events[0].message).toContain('styx_user');
+        expect(payload.events[0].message).toContain("styx_user");
 
         subscription.unsubscribe();
         done();
@@ -161,74 +165,78 @@ describe('FeedController', () => {
 
   // ─── formatEventMessage (tested via getFeed) ───
 
-  describe('event message formatting', () => {
-    const makeRow = (type: string, payload: any = {}, actorId = 'user-abcd') => ({
+  describe("event message formatting", () => {
+    const makeRow = (
+      type: string,
+      payload: any = {},
+      actorId = "user-abcd",
+    ) => ({
       event_type: type,
       payload,
       created_at: new Date(),
       actor_id: actorId,
     });
 
-    it('should format PROOF_VERIFIED message', async () => {
-      mockPool.query.mockResolvedValue({ rows: [makeRow('PROOF_VERIFIED')] });
+    it("should format PROOF_VERIFIED message", async () => {
+      mockPool.query.mockResolvedValue({ rows: [makeRow("PROOF_VERIFIED")] });
       const result = await controller.getFeed();
-      expect(result.events[0].message).toContain('peer review');
+      expect(result.events[0].message).toContain("peer review");
     });
 
-    it('should format CONTRACT_COMPLETED with oath category', async () => {
+    it("should format CONTRACT_COMPLETED with oath category", async () => {
       mockPool.query.mockResolvedValue({
-        rows: [makeRow('CONTRACT_COMPLETED', { oathCategory: 'Cognitive' })],
+        rows: [makeRow("CONTRACT_COMPLETED", { oathCategory: "Cognitive" })],
       });
       const result = await controller.getFeed();
-      expect(result.events[0].message).toContain('Cognitive');
+      expect(result.events[0].message).toContain("Cognitive");
     });
 
-    it('should format CONTRACT_FAILED message', async () => {
-      mockPool.query.mockResolvedValue({ rows: [makeRow('CONTRACT_FAILED')] });
+    it("should format CONTRACT_FAILED message", async () => {
+      mockPool.query.mockResolvedValue({ rows: [makeRow("CONTRACT_FAILED")] });
       const result = await controller.getFeed();
-      expect(result.events[0].message).toContain('forfeited');
+      expect(result.events[0].message).toContain("forfeited");
     });
 
-    it('should format FURY_BOUNTY_PAID message', async () => {
-      mockPool.query.mockResolvedValue({ rows: [makeRow('FURY_BOUNTY_PAID')] });
+    it("should format FURY_BOUNTY_PAID message", async () => {
+      mockPool.query.mockResolvedValue({ rows: [makeRow("FURY_BOUNTY_PAID")] });
       const result = await controller.getFeed();
-      expect(result.events[0].message).toContain('Fury bounty');
+      expect(result.events[0].message).toContain("Fury bounty");
     });
 
-    it('should format APPEAL_INITIATED message', async () => {
-      mockPool.query.mockResolvedValue({ rows: [makeRow('APPEAL_INITIATED')] });
+    it("should format APPEAL_INITIATED message", async () => {
+      mockPool.query.mockResolvedValue({ rows: [makeRow("APPEAL_INITIATED")] });
       const result = await controller.getFeed();
-      expect(result.events[0].message).toContain('appealed');
+      expect(result.events[0].message).toContain("appealed");
     });
 
-    it('should format DISPUTE_RESOLVED with outcome', async () => {
+    it("should format DISPUTE_RESOLVED with outcome", async () => {
       mockPool.query.mockResolvedValue({
-        rows: [makeRow('DISPUTE_RESOLVED', { outcome: 'UPHELD' })],
+        rows: [makeRow("DISPUTE_RESOLVED", { outcome: "UPHELD" })],
       });
       const result = await controller.getFeed();
-      expect(result.events[0].message).toContain('upheld');
+      expect(result.events[0].message).toContain("upheld");
     });
 
-    it('should format HONEYPOT_CAUGHT message', async () => {
-      mockPool.query.mockResolvedValue({ rows: [makeRow('HONEYPOT_CAUGHT')] });
+    it("should format HONEYPOT_CAUGHT message", async () => {
+      mockPool.query.mockResolvedValue({ rows: [makeRow("HONEYPOT_CAUGHT")] });
       const result = await controller.getFeed();
-      expect(result.events[0].message).toContain('calibration');
+      expect(result.events[0].message).toContain("calibration");
     });
 
-    it('should format STREAK_MILESTONE with day count', async () => {
+    it("should format STREAK_MILESTONE with day count", async () => {
       mockPool.query.mockResolvedValue({
-        rows: [makeRow('STREAK_MILESTONE', { days: 30 })],
+        rows: [makeRow("STREAK_MILESTONE", { days: 30 })],
       });
       const result = await controller.getFeed();
-      expect(result.events[0].message).toContain('30');
+      expect(result.events[0].message).toContain("30");
     });
 
-    it('should use fallback for unknown event types', async () => {
+    it("should use fallback for unknown event types", async () => {
       mockPool.query.mockResolvedValue({
-        rows: [makeRow('UNKNOWN_EVENT_TYPE')],
+        rows: [makeRow("UNKNOWN_EVENT_TYPE")],
       });
       const result = await controller.getFeed();
-      expect(result.events[0].message).toContain('triggered an event');
+      expect(result.events[0].message).toContain("triggered an event");
     });
   });
 });

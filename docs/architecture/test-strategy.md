@@ -18,22 +18,23 @@ Styx employs a four-tier testing strategy designed to catch regressions across f
 
 Unit tests run in the workspaces of the Turborepo monorepo. Most use Jest + ts-jest; `ask-styx` and `test-harness` use **Vitest**. Each workspace owns its test config.
 
-| Workspace | Runner | Naming Convention |
-|-----------|--------|-------------------|
-| `src/api` | Jest (`src/api/jest.config.cjs`) | `*.spec.ts` |
-| `src/web` | Jest | `*.test.ts` / `*.test.tsx` |
-| `src/mobile` | Jest | `*.spec.ts` |
-| `src/shared` | Jest | `*.spec.ts` |
-| `src/desktop` | Jest | `*.spec.ts` |
-| `src/ask-styx` | **Vitest** (`vitest run`) | `*.test.ts` |
-| `src/test-harness` | **Vitest** | `*.test.ts` |
-| `packages/audience-engine` | **Vitest** | `*.test.ts` |
-| `packages/audit-engine` | **Vitest** | `*.spec.ts` |
-| `packages/styx-cli` | **Vitest** | `*.test.ts` |
+| Workspace                  | Runner                           | Naming Convention          |
+| -------------------------- | -------------------------------- | -------------------------- |
+| `src/api`                  | Jest (`src/api/jest.config.cjs`) | `*.spec.ts`                |
+| `src/web`                  | Jest                             | `*.test.ts` / `*.test.tsx` |
+| `src/mobile`               | Jest                             | `*.spec.ts`                |
+| `src/shared`               | Jest                             | `*.spec.ts`                |
+| `src/desktop`              | Jest                             | `*.spec.ts`                |
+| `src/ask-styx`             | **Vitest** (`vitest run`)        | `*.test.ts`                |
+| `src/test-harness`         | **Vitest**                       | `*.test.ts`                |
+| `packages/audience-engine` | **Vitest**                       | `*.test.ts`                |
+| `packages/audit-engine`    | **Vitest**                       | `*.spec.ts`                |
+| `packages/styx-cli`        | **Vitest**                       | `*.test.ts`                |
 
 (`src/pitch` has no tests. Workspace globs: `src/*` and `packages/*`; the table covers the ten tested workspaces.)
 
 **Naming conventions:**
+
 - `*.spec.ts` for API service/module tests and shared library tests (NestJS convention)
 - `*.test.ts` for web and mobile component/hook tests (React convention)
 - Test files co-locate next to source: `contracts.service.ts` pairs with `contracts.service.spec.ts`
@@ -59,6 +60,7 @@ Integration tests verify cross-service behavior with mocked external dependencie
 - **External APIs:** Gemini and Groq calls are mocked at the HTTP layer using `nock`.
 
 Key integration test suites:
+
 - `contracts.integration.spec.ts` -- full contract lifecycle (create, fund, verify, settle)
 - `ledger.integration.spec.ts` -- double-entry transaction integrity under concurrent writes
 - `fury.integration.spec.ts` -- auditor assignment, proof review, consensus
@@ -68,14 +70,15 @@ Key integration test suites:
 
 Playwright defines four browser projects in `.config/playwright/playwright.config.ts`; the CI `e2e` matrix runs **chromium** and **firefox** (webkit and mobile-chrome are available for local runs):
 
-| Target | Config Key | Viewport |
-|--------|-----------|----------|
-| Chromium | `chromium` | 1280x720 |
-| Firefox | `firefox` | 1280x720 |
-| WebKit | `webkit` | 1280x720 |
-| Mobile Chrome | `mobile-chrome` | 375x667 |
+| Target        | Config Key      | Viewport |
+| ------------- | --------------- | -------- |
+| Chromium      | `chromium`      | 1280x720 |
+| Firefox       | `firefox`       | 1280x720 |
+| WebKit        | `webkit`        | 1280x720 |
+| Mobile Chrome | `mobile-chrome` | 375x667  |
 
 **Core E2E scenarios:**
+
 1. User registration and onboarding flow
 2. Contract creation with stake deposit (Stripe test mode)
 3. Proof photo submission and Fury audit assignment
@@ -91,17 +94,17 @@ E2E runs in CI via the `e2e` job in `ci.yml` (chromium + firefox) — it builds 
 
 Nine validation scripts live in `scripts/validation/`, each returning exit code 0 (pass), 1 (fail), or 2 (skip / not-applicable in this context). Gates **04–07** run in the main CI job (`build_and_test_matrix`). The beta-readiness suite (`scripts/smoke/beta-readiness.sh`) additionally runs **01** and **05** (and re-runs 04/06/07); gates **02, 03, 08, and 09** are standalone checks not currently wired into CI.
 
-| Gate | Script | Purpose |
-|------|--------|---------|
-| Phantom Money | `01-phantom-money-check.ts` | Verifies the double-entry ledger prevents unbalanced entries (debits = credits). |
-| Simulator Spoof | `02-simulator-spoof-check.ts` | Ensures hardware oracles reject manually-injected / simulated sensor data. |
-| Full Loop | `03-the-full-loop.ts` | End-to-end contract-lifecycle integration check. |
-| Redacted Build | `04-redacted-build-check.sh` | No gambling/Stygian terminology in the production build (paired with `scripts/gatekeeper-scan.sh`). |
-| Behavioral Physics | `05-behavioral-physics-check.ts` | Core behavioral constants match spec (needs `CI_GATE05_API_URL` for the live check; skips cleanly otherwise). |
-| Security Invariant | `06-security-invariant-check.ts` | No hardcoded secrets or debug backdoors in compiled output (skips when no build output is present). |
-| Claim Drift | `07-claim-drift-check.js` | File paths referenced in `docs/planning/implementation-status.md` still exist (`npm run validate:claims`). |
-| Fury Crucible | `08-fury-crucible-simulation.ts` | Fury auditor-matching simulation: no self-audit, conflict avoidance, round-robin fairness. |
-| Realm Sync | `09-realm-sync-check.ts` | Dual-source-of-truth: the `REALM_REGISTRY` TS constant and the `realms` DB table agree on IDs and stream-prefix mappings. |
+| Gate               | Script                           | Purpose                                                                                                                   |
+| ------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Phantom Money      | `01-phantom-money-check.ts`      | Verifies the double-entry ledger prevents unbalanced entries (debits = credits).                                          |
+| Simulator Spoof    | `02-simulator-spoof-check.ts`    | Ensures hardware oracles reject manually-injected / simulated sensor data.                                                |
+| Full Loop          | `03-the-full-loop.ts`            | End-to-end contract-lifecycle integration check.                                                                          |
+| Redacted Build     | `04-redacted-build-check.sh`     | No gambling/Stygian terminology in the production build (paired with `scripts/gatekeeper-scan.sh`).                       |
+| Behavioral Physics | `05-behavioral-physics-check.ts` | Core behavioral constants match spec (needs `CI_GATE05_API_URL` for the live check; skips cleanly otherwise).             |
+| Security Invariant | `06-security-invariant-check.ts` | No hardcoded secrets or debug backdoors in compiled output (skips when no build output is present).                       |
+| Claim Drift        | `07-claim-drift-check.js`        | File paths referenced in `docs/planning/implementation-status.md` still exist (`npm run validate:claims`).                |
+| Fury Crucible      | `08-fury-crucible-simulation.ts` | Fury auditor-matching simulation: no self-audit, conflict avoidance, round-robin fairness.                                |
+| Realm Sync         | `09-realm-sync-check.ts`         | Dual-source-of-truth: the `REALM_REGISTRY` TS constant and the `realms` DB table agree on IDs and stream-prefix mappings. |
 
 Gates 04–07 run after unit/integration tests in CI; a required-gate failure fails the `build_and_test` check.
 
@@ -116,6 +119,7 @@ The Turborepo build pipeline enforces workspace dependency ordering:
 ```
 
 `@styx/shared` must build first because it exports:
+
 - TypeScript types (contract shapes, API response types, event enums)
 - Validation schemas (Zod schemas for contract creation, proof submission)
 - Constants (integrity score formula, Aegis thresholds, grace day limits)
@@ -140,14 +144,14 @@ The `turbo.json` pipeline configuration:
 
 Located in `scripts/smoke/`:
 
-| Script | Purpose | When Used |
-|--------|---------|-----------|
-| `beta-readiness.sh` | Comprehensive beta-readiness suite (`npm run beta:readiness`): runs the local validation gates + remote-target probes, emits `artifacts/beta-readiness-summary.json`. | Before any beta promotion. |
-| `beta-deploy-preflight.sh` | Pre-deploy gate (`npm run beta:deploy-preflight`). | Immediately before a beta deploy. |
-| `beta-smoke.sh` / `staging-smoke.sh` | Environment-specific post-deploy smoke runs. | After a beta / staging deploy. |
-| `check-endpoints.sh` | Hits public API endpoints with health/readiness probes (status, content-type, CORS). | Post-deploy verification. |
-| `check-api-ready.sh` / `check-api-release.sh` / `check-web.sh` | Individual API-readiness, release-metadata, and web-availability checks. | Targeted post-deploy checks. |
-| `vanguard-ignition.sh` | Vanguard deployment ignition. | Vanguard rollout. |
+| Script                                                         | Purpose                                                                                                                                                               | When Used                         |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| `beta-readiness.sh`                                            | Comprehensive beta-readiness suite (`npm run beta:readiness`): runs the local validation gates + remote-target probes, emits `artifacts/beta-readiness-summary.json`. | Before any beta promotion.        |
+| `beta-deploy-preflight.sh`                                     | Pre-deploy gate (`npm run beta:deploy-preflight`).                                                                                                                    | Immediately before a beta deploy. |
+| `beta-smoke.sh` / `staging-smoke.sh`                           | Environment-specific post-deploy smoke runs.                                                                                                                          | After a beta / staging deploy.    |
+| `check-endpoints.sh`                                           | Hits public API endpoints with health/readiness probes (status, content-type, CORS).                                                                                  | Post-deploy verification.         |
+| `check-api-ready.sh` / `check-api-release.sh` / `check-web.sh` | Individual API-readiness, release-metadata, and web-availability checks.                                                                                              | Targeted post-deploy checks.      |
+| `vanguard-ignition.sh`                                         | Vanguard deployment ignition.                                                                                                                                         | Vanguard rollout.                 |
 
 ## 4. CI Integration
 
@@ -165,21 +169,24 @@ The `ci.yml` GitHub Actions workflow orchestrates the full test pipeline:
 ```
 
 Additional CI workflows:
+
 - `deploy.yml` -- runs E2E against staging after successful deploy
 - `beta-promotion.yml` -- runs `beta-readiness.sh` as a promotion gate
 - `staging-promotion.yml` -- full gate suite + manual approval step
 
 ## 5. Test Data Management
 
-> **Note:** this section describes the *intended* shared test-data layer under `src/shared/`. The `src/shared/test/` directory is not yet present in the tree — treat the files below as target design, not current state.
+> **Note:** this section describes the _intended_ shared test-data layer under `src/shared/`. The `src/shared/test/` directory is not yet present in the tree — treat the files below as target design, not current state.
 
 **Fixtures** (target: `src/shared/test/fixtures/`):
+
 - `contracts.fixture.ts` -- sample contracts across all 7 oath categories
 - `users.fixture.ts` -- users at different integrity score tiers
 - `ledger.fixture.ts` -- balanced double-entry transaction sets
 - `fury.fixture.ts` -- auditor profiles with varying reputation scores
 
 **Factory functions** (target: `src/shared/test/factories/`):
+
 - `createContract()` -- generates a valid contract with randomized but legal parameters
 - `createUser()` -- generates a user with configurable integrity score
 - `createAudit()` -- generates a Fury audit with configurable verdict distribution
@@ -188,13 +195,13 @@ Additional CI workflows:
 
 ## 6. Known Test Gaps
 
-| Gap | Severity | Tracking |
-|-----|----------|----------|
-| No HealthKit/Google Fit integration tests (stubs only) | Low (feature not yet built) | Backlog |
-| Desktop (Tauri) E2E not yet in CI | Medium | Planned for post-beta |
-| Load testing not yet automated in CI | High | See `docs/architecture/load-test-report.md` |
-| No chaos engineering for Redis/PostgreSQL failover | Medium | Post-launch |
-| Mobile E2E limited to Chrome viewport emulation (no real device) | Medium | Planned Expo EAS build integration |
+| Gap                                                              | Severity                    | Tracking                                    |
+| ---------------------------------------------------------------- | --------------------------- | ------------------------------------------- |
+| No HealthKit/Google Fit integration tests (stubs only)           | Low (feature not yet built) | Backlog                                     |
+| Desktop (Tauri) E2E not yet in CI                                | Medium                      | Planned for post-beta                       |
+| Load testing not yet automated in CI                             | High                        | See `docs/architecture/load-test-report.md` |
+| No chaos engineering for Redis/PostgreSQL failover               | Medium                      | Post-launch                                 |
+| Mobile E2E limited to Chrome viewport emulation (no real device) | Medium                      | Planned Expo EAS build integration          |
 
 ## 7. Testing Principles
 

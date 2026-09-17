@@ -1,6 +1,6 @@
 /**
  * LossAversionEngine
- * 
+ *
  * Implements the mathematical core of behavioral physics for the Styx ecosystem.
  * Weaponizes the psychological principle of Loss Aversion to ensure contract compliance.
  */
@@ -34,12 +34,13 @@ export class LossAversionEngine {
    */
   public calculatePenaltyMultiplier(volatility: number): number {
     const safeVolatility = Math.max(0, volatility);
-    const rawMultiplier = this.config.baseCoefficient * (1 + Math.log(1 + safeVolatility));
+    const rawMultiplier =
+      this.config.baseCoefficient * (1 + Math.log(1 + safeVolatility));
 
     // Clamp between min and max
     return Math.min(
       Math.max(rawMultiplier, this.config.minPenaltyMultiplier),
-      this.config.maxPenaltyMultiplier
+      this.config.maxPenaltyMultiplier,
     );
   }
 
@@ -47,10 +48,16 @@ export class LossAversionEngine {
    * Determines the "Loss Velocity" - the rate at which loss aversion increases as the deadline approaches.
    * Returns 0 for a non-positive total duration (no time has meaningfully elapsed).
    */
-  public calculateLossVelocity(daysRemaining: number, totalDays: number): number {
+  public calculateLossVelocity(
+    daysRemaining: number,
+    totalDays: number,
+  ): number {
     if (totalDays <= 0) return 0;
     // Clamp elapsed fraction to [0, 1] so out-of-range inputs can't distort the curve.
-    const elapsedRatio = Math.min(1, Math.max(0, (totalDays - daysRemaining) / totalDays));
+    const elapsedRatio = Math.min(
+      1,
+      Math.max(0, (totalDays - daysRemaining) / totalDays),
+    );
     // Exponential curve: velocity increases as time runs out
     return Math.pow(elapsedRatio, 2);
   }

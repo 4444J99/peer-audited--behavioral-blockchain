@@ -16,35 +16,41 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidationArguments,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+} from "class-validator";
+import { Type } from "class-transformer";
+import { ApiProperty } from "@nestjs/swagger";
 
-@ValidatorConstraint({ name: 'exactlyOneDeviceIdentifier', async: false })
+@ValidatorConstraint({ name: "exactlyOneDeviceIdentifier", async: false })
 class ExactlyOneDeviceIdentifier implements ValidatorConstraintInterface {
   validate(_platform: unknown, args: ValidationArguments): boolean {
     const value = args.object as DeviceFingerprintDto;
-    return [value.hash, value.rawVendorId].filter((item) => item !== undefined).length === 1;
+    return (
+      [value.hash, value.rawVendorId].filter((item) => item !== undefined)
+        .length === 1
+    );
   }
 
   defaultMessage(): string {
-    return 'deviceFingerprint requires exactly one of hash or rawVendorId';
+    return "deviceFingerprint requires exactly one of hash or rawVendorId";
   }
 }
 
 export class DeviceFingerprintDto {
-  @ApiProperty({ enum: ['ios', 'android', 'web'] })
-  @IsIn(['ios', 'android', 'web'])
+  @ApiProperty({ enum: ["ios", "android", "web"] })
+  @IsIn(["ios", "android", "web"])
   @Validate(ExactlyOneDeviceIdentifier)
-  platform!: 'ios' | 'android' | 'web';
+  platform!: "ios" | "android" | "web";
 
-  @ApiProperty({ required: false, description: 'SHA-256 device identifier' })
+  @ApiProperty({ required: false, description: "SHA-256 device identifier" })
   @IsOptional()
   @IsString()
   @Matches(/^[0-9a-f]{64}$/i)
   hash?: string;
 
-  @ApiProperty({ required: false, description: 'Opaque client device identifier' })
+  @ApiProperty({
+    required: false,
+    description: "Opaque client device identifier",
+  })
   @IsOptional()
   @IsString()
   @MinLength(16)
@@ -53,37 +59,59 @@ export class DeviceFingerprintDto {
 }
 
 export class RegisterDto {
-  @ApiProperty({ description: 'User email address', example: 'user@example.com' })
+  @ApiProperty({
+    description: "User email address",
+    example: "user@example.com",
+  })
   @IsEmail()
   email!: string;
 
-  @ApiProperty({ description: 'Password (minimum 12 characters, 1 uppercase, 1 digit, 1 symbol)', minLength: 12 }) // allow-secret
+  @ApiProperty({
+    description:
+      "Password (minimum 12 characters, 1 uppercase, 1 digit, 1 symbol)",
+    minLength: 12,
+  }) // allow-secret
   @IsString()
   @MinLength(12)
   @Matches(/(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/, {
-    message: 'Password must contain at least 1 uppercase letter, 1 digit, and 1 symbol',
+    message:
+      "Password must contain at least 1 uppercase letter, 1 digit, and 1 symbol",
   })
   password!: string; // allow-secret
 
-  @ApiProperty({ description: 'User confirms they are 18 years or older' })
+  @ApiProperty({ description: "User confirms they are 18 years or older" })
   @IsBoolean()
   ageConfirmation!: boolean;
 
-  @ApiProperty({ description: 'User accepts the Terms of Service and Privacy Policy' })
+  @ApiProperty({
+    description: "User accepts the Terms of Service and Privacy Policy",
+  })
   @IsBoolean()
   termsAccepted!: boolean;
 
-  @ApiProperty({ description: 'Date of birth (ISO 8601)', example: '1990-01-15', required: false })
+  @ApiProperty({
+    description: "Date of birth (ISO 8601)",
+    example: "1990-01-15",
+    required: false,
+  })
   @IsOptional()
   @IsDateString()
   dateOfBirth?: string;
 
-  @ApiProperty({ description: 'Optional referral code', example: 'ABC123', required: false })
+  @ApiProperty({
+    description: "Optional referral code",
+    example: "ABC123",
+    required: false,
+  })
   @IsOptional()
   @IsString()
   referralCode?: string;
 
-  @ApiProperty({ description: 'Optional device fingerprint for multi-account fraud prevention', required: false })
+  @ApiProperty({
+    description:
+      "Optional device fingerprint for multi-account fraud prevention",
+    required: false,
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => DeviceFingerprintDto)
@@ -91,7 +119,10 @@ export class RegisterDto {
 }
 
 export class LoginDto {
-  @ApiProperty({ description: 'User email address', example: 'user@example.com' })
+  @ApiProperty({
+    description: "User email address",
+    example: "user@example.com",
+  })
   @IsEmail()
   email!: string;
 
@@ -99,27 +130,33 @@ export class LoginDto {
   // The old @MinLength(12) here locked out any account whose stored password is
   // shorter than the current policy and gave a minor enumeration aid. Require only a
   // non-empty string; complexity is enforced at registration (RegisterDto), not login.
-  @ApiProperty({ description: 'User password' }) // allow-secret
+  @ApiProperty({ description: "User password" }) // allow-secret
   @IsString()
   @MinLength(1)
   password!: string; // allow-secret
 }
 
 export class EnterpriseTokenDto {
-  @ApiProperty({ description: 'Enterprise SSO token to exchange for a session JWT' }) // allow-secret
+  @ApiProperty({
+    description: "Enterprise SSO token to exchange for a session JWT",
+  }) // allow-secret
   @IsString()
   enterpriseToken!: string; // allow-secret
 }
 
 export class CreateApiKeyDto {
-  @ApiProperty({ description: 'Human-readable API key name', required: false, maxLength: 80 })
+  @ApiProperty({
+    description: "Human-readable API key name",
+    required: false,
+    maxLength: 80,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(80)
   name?: string;
 
   @ApiProperty({
-    description: 'API key lifetime in days',
+    description: "API key lifetime in days",
     required: false,
     minimum: 1,
     maximum: 365,

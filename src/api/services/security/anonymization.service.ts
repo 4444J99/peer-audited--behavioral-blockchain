@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { createHmac } from 'crypto';
+import { Injectable } from "@nestjs/common";
+import { createHmac } from "crypto";
 
 /**
  * Resolve the keyed-anonymization secret. PRV8: a bare sha256(email) is reversible
@@ -12,15 +12,16 @@ import { createHmac } from 'crypto';
 function resolveAnonymizeSecret(): string {
   const secret = process.env.ANONYMIZE_SALT || process.env.APP_SECRET; // allow-secret
   if (secret) return secret;
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('ANONYMIZE_SALT (or APP_SECRET) must be set in production for PII pseudonymization');
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "ANONYMIZE_SALT (or APP_SECRET) must be set in production for PII pseudonymization",
+    );
   }
-  return 'dev-only-insecure-anonymize-secret';
+  return "dev-only-insecure-anonymize-secret";
 }
 
 @Injectable()
 export class AnonymizationService {
-
   anonymizeUser(user: any): any {
     if (!user) return null;
 
@@ -30,7 +31,7 @@ export class AnonymizationService {
     // Redact PII
     if (safeUser.email) {
       safeUser.email_hash = this.hash(safeUser.email);
-      safeUser.email = '[REDACTED]';
+      safeUser.email = "[REDACTED]";
     }
 
     if (safeUser.name) {
@@ -40,7 +41,7 @@ export class AnonymizationService {
     }
 
     if (safeUser.phone) {
-      safeUser.phone = '[REDACTED]';
+      safeUser.phone = "[REDACTED]";
     }
 
     if (safeUser.stripe_customer_id) {
@@ -55,9 +56,9 @@ export class AnonymizationService {
    * not reversible without the server secret and cannot be precomputed.
    */
   private hash(input: string): string {
-    return createHmac('sha256', resolveAnonymizeSecret())
+    return createHmac("sha256", resolveAnonymizeSecret())
       .update(input.toLowerCase())
-      .digest('hex');
+      .digest("hex");
   }
 
   /**
@@ -66,9 +67,9 @@ export class AnonymizationService {
    * but reveals no initials / structure that could re-identify in a small cohort.
    */
   private pseudonymizeName(name: string): string {
-    const token = createHmac('sha256', resolveAnonymizeSecret())
+    const token = createHmac("sha256", resolveAnonymizeSecret())
       .update(`name:${name.trim().toLowerCase()}`)
-      .digest('hex')
+      .digest("hex")
       .slice(0, 8);
     return `user-${token}`;
   }

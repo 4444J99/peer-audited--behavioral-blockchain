@@ -564,9 +564,9 @@ describe("ContractsController", () => {
 
     it("GET /contracts/invitations delegates to getPendingInvitations", async () => {
       const invitations = [{ id: "ap-1", contract_id: "c1" }];
-      (mockContractsService.getPendingInvitations as jest.Mock).mockResolvedValue(
-        invitations,
-      );
+      (
+        mockContractsService.getPendingInvitations as jest.Mock
+      ).mockResolvedValue(invitations);
 
       const result = await controller.getInvitations(testUser);
 
@@ -577,14 +577,18 @@ describe("ContractsController", () => {
     });
 
     it("GET /contracts/partnerships delegates to getPartnerships", async () => {
-      const partnerships = [{ id: "ap-2", contract_id: "c2", status: "ACTIVE" }];
+      const partnerships = [
+        { id: "ap-2", contract_id: "c2", status: "ACTIVE" },
+      ];
       (mockContractsService.getPartnerships as jest.Mock).mockResolvedValue(
         partnerships,
       );
 
       const result = await controller.getPartnerships(testUser);
 
-      expect(mockContractsService.getPartnerships).toHaveBeenCalledWith("user-1");
+      expect(mockContractsService.getPartnerships).toHaveBeenCalledWith(
+        "user-1",
+      );
       expect(result).toEqual(partnerships);
     });
 

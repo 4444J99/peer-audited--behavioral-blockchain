@@ -1,4 +1,5 @@
 # Seed User Recruitment -- Creator Outreach & First Cohort Admissions
+
 > Issue: #373
 > Phase: Private Beta (Weeks 1-4)
 
@@ -119,29 +120,29 @@ Questions? Reply to this email or talk to [Practitioner Name].
 
 **Page content:**
 
-| Section | Content |
-|---------|---------|
-| Headline | "Be among the first 50 to try Styx" |
-| Subhead | "The accountability platform where your money is on the line -- and peer reviewers keep you honest" |
-| Value prop | "Free access during beta. Test money (no real risk). Shape the product." |
-| Application form | (see below) |
-| Social proof | "Built on behavioral economics (loss aversion lambda=1.955) and Stripe escrow" |
-| FAQ | Quick answers: "Is this gambling?" "How does the escrow work?" "How long is the beta?" |
+| Section          | Content                                                                                             |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| Headline         | "Be among the first 50 to try Styx"                                                                 |
+| Subhead          | "The accountability platform where your money is on the line -- and peer reviewers keep you honest" |
+| Value prop       | "Free access during beta. Test money (no real risk). Shape the product."                            |
+| Application form | (see below)                                                                                         |
+| Social proof     | "Built on behavioral economics (loss aversion lambda=1.955) and Stripe escrow"                      |
+| FAQ              | Quick answers: "Is this gambling?" "How does the escrow work?" "How long is the beta?"              |
 
 ### Application Form Fields
 
-| Field | Type | Required | Validation |
-|-------|------|----------|------------|
-| First name | Text | Yes | 2-50 chars |
-| Email | Email | Yes | Valid format |
-| Device | Dropdown: iOS / Android / Web only | Yes | -- |
-| Goal category | Multi-select: Recovery, Fitness, Productivity, Cognitive, Biological, Creative, Professional | Yes | At least 1 |
-| Experience with commitment devices | Radio: Never tried / Tried once or twice / Regular user / Expert | Yes | -- |
-| Willingness to provide weekly feedback | Radio: Yes / No | Yes | Must be "Yes" to proceed |
-| How did you hear about us? | Dropdown: Reddit / Twitter/X / Discord / Practitioner / Friend / Other | Yes | -- |
-| Why do you want to join the beta? | Textarea | Yes | 50-500 chars |
-| Discord username | Text | No | For support channel |
-| Age verification | Checkbox: "I confirm I am 18 or older" | Yes | Must check |
+| Field                                  | Type                                                                                         | Required | Validation               |
+| -------------------------------------- | -------------------------------------------------------------------------------------------- | -------- | ------------------------ |
+| First name                             | Text                                                                                         | Yes      | 2-50 chars               |
+| Email                                  | Email                                                                                        | Yes      | Valid format             |
+| Device                                 | Dropdown: iOS / Android / Web only                                                           | Yes      | --                       |
+| Goal category                          | Multi-select: Recovery, Fitness, Productivity, Cognitive, Biological, Creative, Professional | Yes      | At least 1               |
+| Experience with commitment devices     | Radio: Never tried / Tried once or twice / Regular user / Expert                             | Yes      | --                       |
+| Willingness to provide weekly feedback | Radio: Yes / No                                                                              | Yes      | Must be "Yes" to proceed |
+| How did you hear about us?             | Dropdown: Reddit / Twitter/X / Discord / Practitioner / Friend / Other                       | Yes      | --                       |
+| Why do you want to join the beta?      | Textarea                                                                                     | Yes      | 50-500 chars             |
+| Discord username                       | Text                                                                                         | No       | For support channel      |
+| Age verification                       | Checkbox: "I confirm I am 18 or older"                                                       | Yes      | Must check               |
 
 ### Application Review Funnel
 
@@ -170,33 +171,33 @@ Decision:
 
 ### Application Scoring Matrix
 
-| Criterion | Weight | 1 Point | 3 Points | 5 Points |
-|-----------|--------|---------|----------|----------|
-| Segment fit | 3x | Tonally off-topic | Relevant segment | High-need segment (recovery, ADHD) |
-| Motivation | 2x | "Looks cool" | "I've tried [tool]" | "I need this because [specific pain]" |
-| Written response | 1x | One sentence | Good effort | Detailed, insightful |
-| Device match | Gate | Wrong platform | -- | Correct platform |
-| Feedback commitment | Gate | "No" | -- | "Yes" |
+| Criterion           | Weight | 1 Point           | 3 Points            | 5 Points                              |
+| ------------------- | ------ | ----------------- | ------------------- | ------------------------------------- |
+| Segment fit         | 3x     | Tonally off-topic | Relevant segment    | High-need segment (recovery, ADHD)    |
+| Motivation          | 2x     | "Looks cool"      | "I've tried [tool]" | "I need this because [specific pain]" |
+| Written response    | 1x     | One sentence      | Good effort         | Detailed, insightful                  |
+| Device match        | Gate   | Wrong platform    | --                  | Correct platform                      |
+| Feedback commitment | Gate   | "No"              | --                  | "Yes"                                 |
 
 ### Application Processing SLA
 
-| Volume | Processing Time | Method |
-|--------|----------------|--------|
-| < 10/day | Same day | Manual |
-| 10-50/day | < 24 hours | Manual + automated sorting |
-| 50+/day | < 48 hours | Automated scoring + manual spot-check |
+| Volume    | Processing Time | Method                                |
+| --------- | --------------- | ------------------------------------- |
+| < 10/day  | Same day        | Manual                                |
+| 10-50/day | < 24 hours      | Manual + automated sorting            |
+| 50+/day   | < 48 hours      | Automated scoring + manual spot-check |
 
 ## Cohort Size Targeting
 
 ### Beta Phases & Cohort Sizes
 
-| Phase | Cohort Name | Size | Duration | Focus |
-|-------|-------------|------|----------|-------|
-| Private Beta A | Founders + Trusted | 10 | 2 weeks | Dogfood (see docs/operations/internal-dogfood-beta.md) |
-| Private Beta B | Pioneers | 25 | 4 weeks | Core loop validation, iOS |
-| Private Beta C | Early Adopters | 35 | 4 weeks | Cross-platform, feature coverage |
-| Public Beta A | Growth Wave | 100 | 6 weeks | Scale, real money, marketing |
-| Public Beta B | Expansion | 200+ | Ongoing | All segments, full feature set |
+| Phase          | Cohort Name        | Size | Duration | Focus                                                  |
+| -------------- | ------------------ | ---- | -------- | ------------------------------------------------------ |
+| Private Beta A | Founders + Trusted | 10   | 2 weeks  | Dogfood (see docs/operations/internal-dogfood-beta.md) |
+| Private Beta B | Pioneers           | 25   | 4 weeks  | Core loop validation, iOS                              |
+| Private Beta C | Early Adopters     | 35   | 4 weeks  | Cross-platform, feature coverage                       |
+| Public Beta A  | Growth Wave        | 100  | 6 weeks  | Scale, real money, marketing                           |
+| Public Beta B  | Expansion          | 200+ | Ongoing  | All segments, full feature set                         |
 
 ### Recruitment Pipeline
 
@@ -210,13 +211,13 @@ Expansion     200+         1000+         ~20%
 
 ### Capacity Considerations
 
-| Resource | Max Supported | Bottleneck |
-|----------|---------------|------------|
-| Support (founder time) | 50 active users | < 50: founders can handle. 50+: need part-time support |
-| Fury audit capacity | 100 active users (with 10 auditors) | < 100: founding team audits. 100+: need Fury recruitment |
-| Server cost (Render) | 500 concurrent users | ~$0.50/user/month at Starter plan |
-| Stripe test mode | Unlimited | No limit on test transactions |
-| Feedback processing | 50 active users | Each user needs ~30 min/week attention |
+| Resource               | Max Supported                       | Bottleneck                                               |
+| ---------------------- | ----------------------------------- | -------------------------------------------------------- |
+| Support (founder time) | 50 active users                     | < 50: founders can handle. 50+: need part-time support   |
+| Fury audit capacity    | 100 active users (with 10 auditors) | < 100: founding team audits. 100+: need Fury recruitment |
+| Server cost (Render)   | 500 concurrent users                | ~$0.50/user/month at Starter plan                        |
+| Stripe test mode       | Unlimited                           | No limit on test transactions                            |
+| Feedback processing    | 50 active users                     | Each user needs ~30 min/week attention                   |
 
 **Decision:** Keep first 2 cohorts at 50 total users. This keeps support load manageable (founders only).
 
@@ -224,42 +225,42 @@ Expansion     200+         1000+         ~20%
 
 ### Must-Accept
 
-| Criteria | Rationale |
-|----------|-----------|
-| Target segment (recovery, ADHD, productivity, fitness, cognitive) | Aligns with product focus |
-| Strong written application ("I've tried X, Y, Z and nothing works") | High intent user |
-| Willing to give weekly feedback | Critical for iteration |
-| Compatible device | Must be able to test core loop |
-| Age 18+ | Legal/compliance requirement |
+| Criteria                                                            | Rationale                      |
+| ------------------------------------------------------------------- | ------------------------------ |
+| Target segment (recovery, ADHD, productivity, fitness, cognitive)   | Aligns with product focus      |
+| Strong written application ("I've tried X, Y, Z and nothing works") | High intent user               |
+| Willing to give weekly feedback                                     | Critical for iteration         |
+| Compatible device                                                   | Must be able to test core loop |
+| Age 18+                                                             | Legal/compliance requirement   |
 
 ### Bonus Criteria
 
-| Criteria | Points |
-|----------|--------|
-| Previous commitment device user | +2 |
-| Active on Reddit / Discord / Twitter | +1 |
-| Practitioner referral | +3 |
-| Willing to be interviewed for case study | +2 |
-| Non-US user (helps test geofencing) | +1 |
-| Has both iOS and Android devices | +1 |
+| Criteria                                 | Points |
+| ---------------------------------------- | ------ |
+| Previous commitment device user          | +2     |
+| Active on Reddit / Discord / Twitter     | +1     |
+| Practitioner referral                    | +3     |
+| Willing to be interviewed for case study | +2     |
+| Non-US user (helps test geofencing)      | +1     |
+| Has both iOS and Android devices         | +1     |
 
 ### Waitlist Criteria
 
-| Criteria | Action |
-|----------|--------|
-| Strong application but cohort full | Waitlist (promise: "next cohort in 2-4 weeks") |
-| Weak application but correct segment | Waitlist (may mature with product) |
-| Wrong device (Android expecting iOS first) | Waitlist (notify when Android build ready) |
-| No feedback commitment | Waitlist (low-priority) |
+| Criteria                                   | Action                                         |
+| ------------------------------------------ | ---------------------------------------------- |
+| Strong application but cohort full         | Waitlist (promise: "next cohort in 2-4 weeks") |
+| Weak application but correct segment       | Waitlist (may mature with product)             |
+| Wrong device (Android expecting iOS first) | Waitlist (notify when Android build ready)     |
+| No feedback commitment                     | Waitlist (low-priority)                        |
 
 ### Rejection Criteria
 
-| Criteria | Reason | Notification |
-|----------|--------|--------------|
-| Under 18 | Legal requirement | "Styx is for users 18+ due to financial escrow requirements" |
-| Inappropriate application | Bad faith | Polite rejection, no detail |
-| Duplicate application | Spam | Silent rejection |
-| Obvious competitor | Business risk | "Not a fit right now" |
+| Criteria                  | Reason            | Notification                                                 |
+| ------------------------- | ----------------- | ------------------------------------------------------------ |
+| Under 18                  | Legal requirement | "Styx is for users 18+ due to financial escrow requirements" |
+| Inappropriate application | Bad faith         | Polite rejection, no detail                                  |
+| Duplicate application     | Spam              | Silent rejection                                             |
+| Obvious competitor        | Business risk     | "Not a fit right now"                                        |
 
 ## Onboarding Flow
 
@@ -306,14 +307,14 @@ Let's make some goals happen.
 
 ### Onboarding Sequence (First 7 Days)
 
-| Day | Touchpoint | Channel | Content |
-|-----|------------|---------|---------|
-| 1 | Welcome email | Email | Account setup, first contract creation |
-| 1 | Discord invite | Email | Community onboarding |
-| 2 | In-app guide | App | First-impression walkthrough (tooltip sequence) |
-| 3 | Check-in DM | Discord | "How's your first contract going?" |
-| 5 | Support reach-out | Discord/Email | "Need any help?" |
-| 7 | Week 1 survey | Email | Structured feedback form |
+| Day | Touchpoint        | Channel       | Content                                         |
+| --- | ----------------- | ------------- | ----------------------------------------------- |
+| 1   | Welcome email     | Email         | Account setup, first contract creation          |
+| 1   | Discord invite    | Email         | Community onboarding                            |
+| 2   | In-app guide      | App           | First-impression walkthrough (tooltip sequence) |
+| 3   | Check-in DM       | Discord       | "How's your first contract going?"              |
+| 5   | Support reach-out | Discord/Email | "Need any help?"                                |
+| 7   | Week 1 survey     | Email         | Structured feedback form                        |
 
 ### First Contract Guidance
 
@@ -330,47 +331,47 @@ Tips for your first contract:
 
 ### Activation Milestones
 
-| Milestone | Metric | Target | Intervention if Falling Short |
-|-----------|--------|--------|-------------------------------|
-| Account created | % of accepted users who create account | > 90% | Reminder email on day 2 |
-| First contract created | % of account holders who create >= 1 contract | > 80% | Discord DM support |
-| First proof submitted | % of contract creators who submit proof | > 75% | Proactive check-in |
-| First audit completed | % of proof submitters with audit verdict | > 90% (expected) | System issue check |
-| Week 1 survey submitted | % of active users | > 60% | Direct email request |
+| Milestone               | Metric                                        | Target           | Intervention if Falling Short |
+| ----------------------- | --------------------------------------------- | ---------------- | ----------------------------- |
+| Account created         | % of accepted users who create account        | > 90%            | Reminder email on day 2       |
+| First contract created  | % of account holders who create >= 1 contract | > 80%            | Discord DM support            |
+| First proof submitted   | % of contract creators who submit proof       | > 75%            | Proactive check-in            |
+| First audit completed   | % of proof submitters with audit verdict      | > 90% (expected) | System issue check            |
+| Week 1 survey submitted | % of active users                             | > 60%            | Direct email request          |
 
 ## Metrics & Tracking
 
 ### Recruitment Funnel
 
-| Stage | Target (Cohort A) | Actual | Conversion Rate |
-|-------|-------------------|--------|-----------------|
-| Applications received | 100 | | -- |
-| Qualified (passes screening) | 80 | | 80% |
-| Accepted | 25 | | 31% |
-| Onboarding email opened | 24 | | 96% |
-| Account created | 22 | | 92% |
-| First contract created | 18 | | 82% |
-| Active at week 4 | 14 | | 78% (of contract creators) |
+| Stage                        | Target (Cohort A) | Actual | Conversion Rate            |
+| ---------------------------- | ----------------- | ------ | -------------------------- |
+| Applications received        | 100               |        | --                         |
+| Qualified (passes screening) | 80                |        | 80%                        |
+| Accepted                     | 25                |        | 31%                        |
+| Onboarding email opened      | 24                |        | 96%                        |
+| Account created              | 22                |        | 92%                        |
+| First contract created       | 18                |        | 82%                        |
+| Active at week 4             | 14                |        | 78% (of contract creators) |
 
 ### Outreach Metrics
 
-| Channel | Reach | Applications | Conversion | Quality (avg score) |
-|---------|-------|--------------|------------|---------------------|
-| Reddit DMs | 50 | 30 | 60% | 4.2 |
-| Twitter/X DMs | 30 | 12 | 40% | 3.8 |
-| Discord DMs | 20 | 14 | 70% | 4.5 |
-| Reddit posts | 3 posts | 25 | N/A (organic) | 3.5 |
-| Practitioner referral | 5 | 15 | N/A (per practitioner) | 4.8 |
-| Warm email | 20 | 16 | 80% | 4.6 |
+| Channel               | Reach   | Applications | Conversion             | Quality (avg score) |
+| --------------------- | ------- | ------------ | ---------------------- | ------------------- |
+| Reddit DMs            | 50      | 30           | 60%                    | 4.2                 |
+| Twitter/X DMs         | 30      | 12           | 40%                    | 3.8                 |
+| Discord DMs           | 20      | 14           | 70%                    | 4.5                 |
+| Reddit posts          | 3 posts | 25           | N/A (organic)          | 3.5                 |
+| Practitioner referral | 5       | 15           | N/A (per practitioner) | 4.8                 |
+| Warm email            | 20      | 16           | 80%                    | 4.6                 |
 
 ### Cohort Quality Metrics
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Avg. contracts created/user/week | 1.5 | PostHog |
-| Contract completion rate | > 55% | Internal |
-| Weekly feedback submission rate | > 60% | Survey tool |
-| NPS (weekly) | > 30 | Survey |
-| Churn (users who stop logging in) | < 20%/month | PostHog |
-| Bug reports/user | 2-5 in first 2 weeks | Bug tracker |
-| Feature requests/user | 2-3 in first month | Feedback forms |
+| Metric                            | Target               | Measurement    |
+| --------------------------------- | -------------------- | -------------- |
+| Avg. contracts created/user/week  | 1.5                  | PostHog        |
+| Contract completion rate          | > 55%                | Internal       |
+| Weekly feedback submission rate   | > 60%                | Survey tool    |
+| NPS (weekly)                      | > 30                 | Survey         |
+| Churn (users who stop logging in) | < 20%/month          | PostHog        |
+| Bug reports/user                  | 2-5 in first 2 weeks | Bug tracker    |
+| Feature requests/user             | 2-3 in first month   | Feedback forms |

@@ -1,14 +1,14 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, Linking, Text, View } from 'react-native';
-import { SessionService } from './services/SessionService';
-import { OfflineCache } from './services/OfflineCache';
-import { ApiClient } from './services/ApiClient';
-import { NotificationService } from './services/NotificationService';
-import { EnterpriseSSO } from './services/EnterpriseSSO';
-import { linking, resolveNotificationDeepLink } from './config/linking';
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { ActivityIndicator, Linking, Text, View } from "react-native";
+import { SessionService } from "./services/SessionService";
+import { OfflineCache } from "./services/OfflineCache";
+import { ApiClient } from "./services/ApiClient";
+import { NotificationService } from "./services/NotificationService";
+import { EnterpriseSSO } from "./services/EnterpriseSSO";
+import { linking, resolveNotificationDeepLink } from "./config/linking";
 import {
   getMobileBetaBannerText,
   getMobileBootstrapConfig,
@@ -17,23 +17,23 @@ import {
   getLocalMobileVersion,
   isBelowMinimumSupportedVersion,
   setMobileBootstrapConfig,
-} from './config/beta';
-import { resolveMobileAppBootstrapViewState } from './config/app-bootstrap-state';
+} from "./config/beta";
+import { resolveMobileAppBootstrapViewState } from "./config/app-bootstrap-state";
 
 // Screens
-import { LoginScreen } from './screens/LoginScreen';
-import { RegisterScreen } from './screens/RegisterScreen';
-import { DashboardScreen } from './screens/DashboardScreen';
-import { ContractListScreen } from './screens/ContractListScreen';
-import { ContractDetailScreen } from './screens/ContractDetailScreen';
-import { CameraScreen } from './screens/CameraScreen';
-import { AttestationScreen } from './screens/AttestationScreen';
-import DigitalExhaustScreen from './screens/DigitalExhaustScreen';
-import { CreateContractScreen } from './screens/CreateContractScreen';
-import { FuryScreen } from './screens/FuryScreen';
-import { WalletScreen } from './screens/WalletScreen';
-import { ProfileScreen } from './screens/ProfileScreen';
-import { SettingsScreen } from './screens/SettingsScreen';
+import { LoginScreen } from "./screens/LoginScreen";
+import { RegisterScreen } from "./screens/RegisterScreen";
+import { DashboardScreen } from "./screens/DashboardScreen";
+import { ContractListScreen } from "./screens/ContractListScreen";
+import { ContractDetailScreen } from "./screens/ContractDetailScreen";
+import { CameraScreen } from "./screens/CameraScreen";
+import { AttestationScreen } from "./screens/AttestationScreen";
+import DigitalExhaustScreen from "./screens/DigitalExhaustScreen";
+import { CreateContractScreen } from "./screens/CreateContractScreen";
+import { FuryScreen } from "./screens/FuryScreen";
+import { WalletScreen } from "./screens/WalletScreen";
+import { ProfileScreen } from "./screens/ProfileScreen";
+import { SettingsScreen } from "./screens/SettingsScreen";
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -72,39 +72,39 @@ export function ContractsNavigator() {
   return (
     <ContractsStack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: '#0a0a0f' },
-        headerTintColor: '#e0e0e0',
+        headerStyle: { backgroundColor: "#0a0a0f" },
+        headerTintColor: "#e0e0e0",
       }}
     >
       <ContractsStack.Screen
         name="ContractList"
         component={ContractListScreen}
-        options={{ title: 'My Oaths' }}
+        options={{ title: "My Oaths" }}
       />
       <ContractsStack.Screen
         name="ContractDetail"
         component={ContractDetailScreen}
-        options={{ title: 'Oath Details' }}
+        options={{ title: "Oath Details" }}
       />
       <ContractsStack.Screen
         name="Attestation"
         component={AttestationScreen}
-        options={{ title: 'Daily Check-In' }}
+        options={{ title: "Daily Check-In" }}
       />
       <ContractsStack.Screen
         name="DigitalExhaust"
         component={DigitalExhaustScreen}
-        options={{ title: 'Automatic Verification' }}
+        options={{ title: "Automatic Verification" }}
       />
       <ContractsStack.Screen
         name="CreateContract"
         component={CreateContractScreen}
-        options={{ title: 'New Oath' }}
+        options={{ title: "New Oath" }}
       />
       <ContractsStack.Screen
         name="SubmitProof"
         component={CameraScreen}
-        options={{ title: 'Submit Proof' }}
+        options={{ title: "Submit Proof" }}
       />
     </ContractsStack.Navigator>
   );
@@ -114,17 +114,17 @@ export function ProfileNavigator({ onLogout }: { onLogout: () => void }) {
   return (
     <ProfileStack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: '#0a0a0f' },
-        headerTintColor: '#e0e0e0',
+        headerStyle: { backgroundColor: "#0a0a0f" },
+        headerTintColor: "#e0e0e0",
       }}
     >
-      <ProfileStack.Screen name="ProfileMain" options={{ title: 'Profile' }}>
+      <ProfileStack.Screen name="ProfileMain" options={{ title: "Profile" }}>
         {(props: any) => <ProfileScreen {...props} onLogout={onLogout} />}
       </ProfileStack.Screen>
       <ProfileStack.Screen
         name="Settings"
         component={SettingsScreen}
-        options={{ title: 'Settings' }}
+        options={{ title: "Settings" }}
       />
     </ProfileStack.Navigator>
   );
@@ -134,19 +134,21 @@ export function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
   return (
     <MainTab.Navigator
       screenOptions={{
-        tabBarStyle: { backgroundColor: '#0a0a0f', borderTopColor: '#1a1a2e' },
-        tabBarActiveTintColor: '#ff4444',
-        tabBarInactiveTintColor: '#666',
-        headerStyle: { backgroundColor: '#0a0a0f' },
-        headerTintColor: '#e0e0e0',
+        tabBarStyle: { backgroundColor: "#0a0a0f", borderTopColor: "#1a1a2e" },
+        tabBarActiveTintColor: "#ff4444",
+        tabBarInactiveTintColor: "#666",
+        headerStyle: { backgroundColor: "#0a0a0f" },
+        headerTintColor: "#e0e0e0",
       }}
     >
       <MainTab.Screen
         name="Dashboard"
         component={DashboardScreen}
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>{'⌂'}</Text>,
+          title: "Home",
+          tabBarIcon: ({ color }: { color: string }) => (
+            <Text style={{ color, fontSize: 20 }}>{"⌂"}</Text>
+          ),
         }}
       />
       <MainTab.Screen
@@ -154,16 +156,20 @@ export function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
         component={ContractsNavigator}
         options={{
           headerShown: false,
-          title: 'Oaths',
-          tabBarIcon: ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>{'📜'}</Text>,
+          title: "Oaths",
+          tabBarIcon: ({ color }: { color: string }) => (
+            <Text style={{ color, fontSize: 20 }}>{"📜"}</Text>
+          ),
         }}
       />
       <MainTab.Screen
         name="Wallet"
         component={WalletScreen}
         options={{
-          title: 'Wallet',
-          tabBarIcon: ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>{'💰'}</Text>,
+          title: "Wallet",
+          tabBarIcon: ({ color }: { color: string }) => (
+            <Text style={{ color, fontSize: 20 }}>{"💰"}</Text>
+          ),
         }}
       />
       {/* Fury / Auditor workbench intentionally hidden for Phase 1 Beta lockdown */}
@@ -171,8 +177,10 @@ export function MainTabNavigator({ onLogout }: { onLogout: () => void }) {
         name="Profile"
         options={{
           headerShown: false,
-          title: 'Profile',
-          tabBarIcon: ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>{'👤'}</Text>,
+          title: "Profile",
+          tabBarIcon: ({ color }: { color: string }) => (
+            <Text style={{ color, fontSize: 20 }}>{"👤"}</Text>
+          ),
         }}
       >
         {() => <ProfileNavigator onLogout={onLogout} />}
@@ -198,17 +206,19 @@ export default function App() {
       .then((results) => {
         if (mounted) {
           const [sessionResult, bootstrapResult] = results;
-          if (sessionResult.status === 'fulfilled') {
+          if (sessionResult.status === "fulfilled") {
             setIsLoggedIn(sessionResult.value);
           } else {
             setIsLoggedIn(false);
           }
 
-          if (bootstrapResult.status === 'fulfilled') {
+          if (bootstrapResult.status === "fulfilled") {
             setMobileBootstrapConfig(bootstrapResult.value);
             setBootstrapError(null);
           } else {
-            setBootstrapError('Unable to load beta configuration. Continuing with safe defaults.');
+            setBootstrapError(
+              "Unable to load beta configuration. Continuing with safe defaults.",
+            );
           }
         }
       })
@@ -243,21 +253,25 @@ export default function App() {
 
   // Handle push notification taps → navigate via deep link
   useEffect(() => {
-    let Notifications: typeof import('expo-notifications') | null = null;
+    let Notifications: typeof import("expo-notifications") | null = null;
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      Notifications = require('expo-notifications');
+      Notifications = require("expo-notifications");
     } catch {
       return; // expo-notifications not available
     }
 
-    const subscription = Notifications!.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data;
-      const deepLink = resolveNotificationDeepLink(data as Record<string, any>);
-      if (deepLink) {
-        Linking.openURL(deepLink);
-      }
-    });
+    const subscription = Notifications!.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data;
+        const deepLink = resolveNotificationDeepLink(
+          data as Record<string, any>,
+        );
+        if (deepLink) {
+          Linking.openURL(deepLink);
+        }
+      },
+    );
 
     return () => subscription.remove();
   }, []);
@@ -274,9 +288,18 @@ export default function App() {
 
   if (isBootstrapping) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0a0a0f', alignItems: 'center', justifyContent: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#0a0a0f",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <ActivityIndicator color="#ff4444" />
-        <Text style={{ color: '#999', marginTop: 10 }}>Loading private beta…</Text>
+        <Text style={{ color: "#999", marginTop: 10 }}>
+          Loading private beta…
+        </Text>
       </View>
     );
   }
@@ -286,37 +309,67 @@ export default function App() {
     betaBannerText: getMobileBetaBannerText(),
     featureFlags: getMobileFeatureFlags(),
     bootstrapError,
-    belowMinimumSupportedVersion: isBelowMinimumSupportedVersion(bootstrapConfig),
+    belowMinimumSupportedVersion:
+      isBelowMinimumSupportedVersion(bootstrapConfig),
     localVersion: getLocalMobileVersion(),
     localBuild: getLocalMobileBuild(),
   });
 
-  if (appBootstrapState.gate === 'maintenance') {
+  if (appBootstrapState.gate === "maintenance") {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0a0a0f', padding: 24, justifyContent: 'center' }}>
-        <Text style={{ color: '#ff4444', fontSize: 22, fontWeight: '800', marginBottom: 12 }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#0a0a0f",
+          padding: 24,
+          justifyContent: "center",
+        }}
+      >
+        <Text
+          style={{
+            color: "#ff4444",
+            fontSize: 22,
+            fontWeight: "800",
+            marginBottom: 12,
+          }}
+        >
           Maintenance Mode
         </Text>
-        <Text style={{ color: '#e0e0e0', lineHeight: 22, marginBottom: 12 }}>
+        <Text style={{ color: "#e0e0e0", lineHeight: 22, marginBottom: 12 }}>
           {appBootstrapState.betaBannerText}
         </Text>
-        <Text style={{ color: '#999', lineHeight: 20 }}>
-          The private beta is temporarily paused while we stabilize the No-Contact recovery flow. Please try again later.
+        <Text style={{ color: "#999", lineHeight: 20 }}>
+          The private beta is temporarily paused while we stabilize the
+          No-Contact recovery flow. Please try again later.
         </Text>
       </View>
     );
   }
 
-  if (appBootstrapState.gate === 'update_required') {
+  if (appBootstrapState.gate === "update_required") {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0a0a0f', padding: 24, justifyContent: 'center' }}>
-        <Text style={{ color: '#ff4444', fontSize: 22, fontWeight: '800', marginBottom: 12 }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#0a0a0f",
+          padding: 24,
+          justifyContent: "center",
+        }}
+      >
+        <Text
+          style={{
+            color: "#ff4444",
+            fontSize: 22,
+            fontWeight: "800",
+            marginBottom: 12,
+          }}
+        >
           Update Required
         </Text>
-        <Text style={{ color: '#e0e0e0', lineHeight: 22, marginBottom: 12 }}>
+        <Text style={{ color: "#e0e0e0", lineHeight: 22, marginBottom: 12 }}>
           {appBootstrapState.betaBannerText}
         </Text>
-        <Text style={{ color: '#999', lineHeight: 20 }}>
+        <Text style={{ color: "#999", lineHeight: 20 }}>
           {appBootstrapState.updateMessage}
         </Text>
       </View>
@@ -324,26 +377,29 @@ export default function App() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0a0a0f' }}>
+    <View style={{ flex: 1, backgroundColor: "#0a0a0f" }}>
       <View
         style={{
-          backgroundColor: '#20150d',
-          borderBottomColor: '#4a2a16',
+          backgroundColor: "#20150d",
+          borderBottomColor: "#4a2a16",
           borderBottomWidth: 1,
           paddingHorizontal: 12,
           paddingVertical: 8,
         }}
       >
-        <Text style={{ color: '#ffb26b', fontSize: 12, fontWeight: '700' }}>
+        <Text style={{ color: "#ffb26b", fontSize: 12, fontWeight: "700" }}>
           {appBootstrapState.betaBannerText}
         </Text>
         {appBootstrapState.showNoContactScopeNotice ? (
-          <Text style={{ color: '#e0c7a6', fontSize: 11, marginTop: 2 }}>
-            Phase 1 scope: No-Contact recovery path prioritized; other categories may be hidden.
+          <Text style={{ color: "#e0c7a6", fontSize: 11, marginTop: 2 }}>
+            Phase 1 scope: No-Contact recovery path prioritized; other
+            categories may be hidden.
           </Text>
         ) : null}
         {appBootstrapState.bootstrapError ? (
-          <Text style={{ color: '#ffd5d5', fontSize: 11, marginTop: 2 }}>{appBootstrapState.bootstrapError}</Text>
+          <Text style={{ color: "#ffd5d5", fontSize: 11, marginTop: 2 }}>
+            {appBootstrapState.bootstrapError}
+          </Text>
         ) : null}
       </View>
       <View style={{ flex: 1 }}>
@@ -353,17 +409,19 @@ export default function App() {
           ) : (
             <AuthStack.Navigator
               screenOptions={{
-                headerStyle: { backgroundColor: '#0a0a0f' },
-                headerTintColor: '#e0e0e0',
+                headerStyle: { backgroundColor: "#0a0a0f" },
+                headerTintColor: "#e0e0e0",
               }}
             >
               <AuthStack.Screen name="Login" options={{ headerShown: false }}>
-                {(props: any) => <LoginScreen {...props} onLogin={handleLogin} />}
+                {(props: any) => (
+                  <LoginScreen {...props} onLogin={handleLogin} />
+                )}
               </AuthStack.Screen>
               <AuthStack.Screen
                 name="Register"
                 component={RegisterScreen}
-                options={{ title: 'Create Account' }}
+                options={{ title: "Create Account" }}
               />
             </AuthStack.Navigator>
           )}

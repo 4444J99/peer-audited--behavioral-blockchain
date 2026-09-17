@@ -9,9 +9,10 @@
 
 ## 1. Objective & Philosophy
 
-The objective of the Beta Cohort Referral Loop is to drive **high-conviction, qualified beta growth** without transforming the Styx beta into an unmoderated, open-door public launch. 
+The objective of the Beta Cohort Referral Loop is to drive **high-conviction, qualified beta growth** without transforming the Styx beta into an unmoderated, open-door public launch.
 
 Behavioral accountability contracts require high peer trust and personal commitment. Mass unvetted referrals dilute accountability norms and skew loss-aversion mechanics. Therefore, the referral mechanic enforces strict scarcity:
+
 - **Maximum 2 peer nominations** per active beta member (`BETA_MAX_COHORT_INVITES = 2`).
 - Nominations must be intentional endorsements with an optional relationship note.
 - Nominated peers receive prioritized admission from the waitlist into active cohorts.
@@ -45,12 +46,15 @@ sequenceDiagram
 ## 3. Endpoints & Data Contracts
 
 ### 3.1 `GET /referrals/cohort-invites`
+
 Returns the user's invite quota and current nominations list.
 
 **Headers:**
+
 - `Authorization: Bearer <jwt_token>`
 
 **Response (200 OK):**
+
 ```json
 {
   "totalAllowed": 2,
@@ -71,9 +75,11 @@ Returns the user's invite quota and current nominations list.
 ```
 
 ### 3.2 `POST /referrals/nominate`
+
 Nominates an aligned peer. Enforces quota limits and deduplication.
 
 **Request Body:**
+
 ```json
 {
   "nomineeEmail": "peer@example.com",
@@ -83,6 +89,7 @@ Nominates an aligned peer. Enforces quota limits and deduplication.
 ```
 
 **Response (201 Created):**
+
 ```json
 {
   "id": "18f97b42-70b9-4081-9b19-e5879a834164",
@@ -103,6 +110,7 @@ Nominates an aligned peer. Enforces quota limits and deduplication.
 ## 4. Verification & Operational Checks
 
 To verify referral and nomination functionality:
+
 ```bash
 # Run unit tests
 cd src/api && npx jest referral.controller.spec.ts referral.service.spec.ts

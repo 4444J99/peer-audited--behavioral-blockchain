@@ -195,7 +195,9 @@ export class CohortOrchestrationService {
     }
 
     if (!emails || emails.length === 0) {
-      throw new BadRequestException("At least one email is required for invitation");
+      throw new BadRequestException(
+        "At least one email is required for invitation",
+      );
     }
 
     const currentInvites = Array.from(this.invites.values()).filter(
@@ -261,10 +263,14 @@ export class CohortOrchestrationService {
     }
 
     try {
-      await this.webhook.emitEvent(enterpriseId, "cohort.participants_invited", {
-        cohortId,
-        count: results.length,
-      });
+      await this.webhook.emitEvent(
+        enterpriseId,
+        "cohort.participants_invited",
+        {
+          cohortId,
+          count: results.length,
+        },
+      );
     } catch {
       // Non-fatal
     }
@@ -347,7 +353,12 @@ export class CohortOrchestrationService {
         alias: i.anonymizedAlias,
         status: i.status,
         enrolledAt: i.enrolledAt,
-        streakDays: i.status === "ACTIVE" ? 14 : i.status === "COMPLETED" ? cohort.durationDays : 0,
+        streakDays:
+          i.status === "ACTIVE"
+            ? 14
+            : i.status === "COMPLETED"
+              ? cohort.durationDays
+              : 0,
       })),
     };
   }
@@ -362,7 +373,9 @@ export class CohortOrchestrationService {
   ): Promise<EnterpriseCohort> {
     const cohort = await this.getCohort(enterpriseId, cohortId);
     if (new Date(cohort.startsAt).getTime() <= Date.now()) {
-      throw new ConflictException("Cannot modify cohort config after program has started");
+      throw new ConflictException(
+        "Cannot modify cohort config after program has started",
+      );
     }
 
     if (dto.name) cohort.name = dto.name.trim();
@@ -375,7 +388,14 @@ export class CohortOrchestrationService {
       await this.pool.query(
         `UPDATE enterprise_cohorts SET name = $1, max_participants = $2, pod_size = $3, updated_at = $4
          WHERE id = $5 AND enterprise_id = $6`,
-        [cohort.name, cohort.maxParticipants, cohort.podSize, cohort.updatedAt, cohortId, enterpriseId],
+        [
+          cohort.name,
+          cohort.maxParticipants,
+          cohort.podSize,
+          cohort.updatedAt,
+          cohortId,
+          enterpriseId,
+        ],
       );
     } catch {
       // In-memory fallback
@@ -434,7 +454,9 @@ export class CohortOrchestrationService {
       // Fallback
     }
 
-    throw new NotFoundException(`Cohort ${cohortId} not found for enterprise ${enterpriseId}`);
+    throw new NotFoundException(
+      `Cohort ${cohortId} not found for enterprise ${enterpriseId}`,
+    );
   }
 }
 

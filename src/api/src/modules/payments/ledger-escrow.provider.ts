@@ -1,21 +1,21 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { randomUUID } from 'crypto';
-import { Pool } from 'pg';
-import { LedgerService } from '../../../services/ledger/ledger.service';
-import { JurisdictionTier } from '../../../services/geofencing';
-import { resolveStakeDisposition } from '../../../services/escrow/disposition';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { randomUUID } from "crypto";
+import { Pool } from "pg";
+import { LedgerService } from "../../../services/ledger/ledger.service";
+import { JurisdictionTier } from "../../../services/geofencing";
+import { resolveStakeDisposition } from "../../../services/escrow/disposition";
 import {
   EscrowHold,
   EscrowHoldStatus,
   EscrowProvider,
   EscrowRail,
   StakeDisposition,
-} from '../../common/interfaces/payout-provider.interface';
+} from "../../common/interfaces/payout-provider.interface";
 
-const HOLD_TYPE = 'STAKE_HOLD';
-const RELEASE_TYPE = 'STAKE_RETURN';
-const CAPTURE_TYPE = 'STAKE_CAPTURED';
-const TRANSFER_TYPE = 'ESCROW_TRANSFER';
+const HOLD_TYPE = "STAKE_HOLD";
+const RELEASE_TYPE = "STAKE_RETURN";
+const CAPTURE_TYPE = "STAKE_CAPTURED";
+const TRANSFER_TYPE = "ESCROW_TRANSFER";
 
 interface LedgerHoldRow {
   id: string;
@@ -41,7 +41,7 @@ interface LedgerHoldRow {
  */
 @Injectable()
 export class LedgerEscrowProvider implements EscrowProvider {
-  readonly rail: EscrowRail = 'LEDGER';
+  readonly rail: EscrowRail = "LEDGER";
   readonly movesRealMoney = false;
 
   private readonly logger = new Logger(LedgerEscrowProvider.name);
@@ -54,7 +54,7 @@ export class LedgerEscrowProvider implements EscrowProvider {
   /** The rail-scoped customer handle is the user's ledger account id. */
   async createCustomer(userId: string): Promise<string> {
     const user = await this.pool.query(
-      'SELECT id, account_id FROM users WHERE id = $1',
+      "SELECT id, account_id FROM users WHERE id = $1",
       [userId],
     );
     if (user.rows.length === 0) {
@@ -71,10 +71,10 @@ export class LedgerEscrowProvider implements EscrowProvider {
       [`USER_${userId}`],
     );
     const accountId = account.rows[0].id as string;
-    await this.pool.query(
-      'UPDATE users SET account_id = $1 WHERE id = $2',
-      [accountId, userId],
-    );
+    await this.pool.query("UPDATE users SET account_id = $1 WHERE id = $2", [
+      accountId,
+      userId,
+    ]);
     this.logger.debug(`Created ledger account ${accountId} for user ${userId}`);
     return accountId;
   }
@@ -91,7 +91,7 @@ export class LedgerEscrowProvider implements EscrowProvider {
     contractId: string,
     idempotencyKeyOverride?: string,
   ): Promise<EscrowHold> {
-    const escrowAccountId = await this.requireSystemAccount('SYSTEM_ESCROW');
+    const escrowAccountId = await this.requireSystemAccount("SYSTEM_ESCROW");
     const key =
       idempotencyKeyOverride ??
       `styx_ledger_hold_${contractId}_${randomUUID()}`;
@@ -106,9 +106,9 @@ export class LedgerEscrowProvider implements EscrowProvider {
     );
     return {
       id: entryId,
-      status: 'HELD',
+      status: "HELD",
       amountCents,
-      currency: 'usd',
+      currency: "usd",
       rail: this.rail,
     };
   }
@@ -131,7 +131,7 @@ export class LedgerEscrowProvider implements EscrowProvider {
       undefined,
       key,
     );
-    return this.toHold(hold, 'RELEASED', Number(hold.amount));
+    return this.toHold(hold, "RELEASED", Number(hold.amount));
   }
 
   /**
@@ -148,7 +148,7 @@ export class LedgerEscrowProvider implements EscrowProvider {
     const hold = await this.loadHold(holdId);
     const fullAmount = Number(hold.amount);
     const captureAmount = captureAmountCents ?? fullAmount;
-    const revenueAccountId = await this.requireSystemAccount('SYSTEM_REVENUE');
+    const revenueAccountId = await this.requireSystemAccount("SYSTEM_REVENUE");
     const captureKey =
       captureAmountCents !== undefined
         ? `styx_ledger_capture_${holdId}_${captureAmountCents}`
@@ -158,7 +158,11 @@ export class LedgerEscrowProvider implements EscrowProvider {
       revenueAccountId,
       captureAmount,
       hold.contract_id ?? undefined,
-      { type: CAPTURE_TYPE, holdEntryId: holdId, captureAmountCents: captureAmountCents ?? null },
+      {
+        type: CAPTURE_TYPE,
+        holdEntryId: holdId,
+        captureAmountCents: captureAmountCents ?? null,
+      },
       undefined,
       captureKey,
     );
@@ -170,12 +174,16 @@ export class LedgerEscrowProvider implements EscrowProvider {
         hold.debit_account_id,
         remainder,
         hold.contract_id ?? undefined,
-        { type: RELEASE_TYPE, holdEntryId: holdId, reason: 'PARTIAL_CAPTURE_REMAINDER' },
+        {
+          type: RELEASE_TYPE,
+          holdEntryId: holdId,
+          reason: "PARTIAL_CAPTURE_REMAINDER",
+        },
         undefined,
         releaseKey,
       );
     }
-    return this.toHold(hold, 'CAPTURED', captureAmount);
+    return this.toHold(hold, "CAPTURED", captureAmount);
   }
 
   /** Derive the current state of a hold from the ledger's own postings. */
@@ -191,15 +199,15 @@ export class LedgerEscrowProvider implements EscrowProvider {
     );
     for (const row of settling.rows as Array<{ type: string }>) {
       if (row.type === CAPTURE_TYPE) {
-        return this.toHold(hold, 'CAPTURED', Number(hold.amount));
+        return this.toHold(hold, "CAPTURED", Number(hold.amount));
       }
     }
     for (const row of settling.rows as Array<{ type: string }>) {
       if (row.type === RELEASE_TYPE) {
-        return this.toHold(hold, 'RELEASED', Number(hold.amount));
+        return this.toHold(hold, "RELEASED", Number(hold.amount));
       }
     }
-    return this.toHold(hold, 'HELD', Number(hold.amount));
+    return this.toHold(hold, "HELD", Number(hold.amount));
   }
 
   /**
@@ -215,7 +223,7 @@ export class LedgerEscrowProvider implements EscrowProvider {
     metadata?: Record<string, any>,
     idempotencyKey?: string,
   ): Promise<{ id: string; amountCents: number }> {
-    const escrowAccountId = await this.requireSystemAccount('SYSTEM_ESCROW');
+    const escrowAccountId = await this.requireSystemAccount("SYSTEM_ESCROW");
     const entryId = await this.ledger.recordTransaction(
       escrowAccountId,
       destinationAccountId,
@@ -229,7 +237,7 @@ export class LedgerEscrowProvider implements EscrowProvider {
   }
 
   resolveDisposition(
-    outcome: 'COMPLETED' | 'FAILED',
+    outcome: "COMPLETED" | "FAILED",
     jurisdictionTier: JurisdictionTier,
   ): StakeDisposition {
     return resolveStakeDisposition(outcome, jurisdictionTier);
@@ -237,13 +245,13 @@ export class LedgerEscrowProvider implements EscrowProvider {
 
   private async requireSystemAccount(name: string): Promise<string> {
     const result = await this.pool.query(
-      'SELECT id FROM accounts WHERE name = $1 LIMIT 1',
+      "SELECT id FROM accounts WHERE name = $1 LIMIT 1",
       [name],
     );
     if (result.rows.length === 0) {
       throw new Error(
-        `Ledger escrow rail cannot ${name === 'SYSTEM_ESCROW' ? 'take custody' : 'settle'}: account ${name} is missing. ` +
-          'Run migrations 067+ which create the ledger system accounts.',
+        `Ledger escrow rail cannot ${name === "SYSTEM_ESCROW" ? "take custody" : "settle"}: account ${name} is missing. ` +
+          "Run migrations 067+ which create the ledger system accounts.",
       );
     }
     return result.rows[0].id as string;
@@ -271,7 +279,7 @@ export class LedgerEscrowProvider implements EscrowProvider {
       id: hold.id,
       status,
       amountCents,
-      currency: 'usd',
+      currency: "usd",
       rail: this.rail,
     };
   }

@@ -22,7 +22,11 @@ import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [forwardRef(() => ContractsModule), NotificationsModule],
-  controllers: [BehavioralController, PractitionerController, RetentionController],
+  controllers: [
+    BehavioralController,
+    PractitionerController,
+    RetentionController,
+  ],
   providers: [
     BehavioralEnhancementsService,
     BehavioralEnrichmentService,

@@ -53,6 +53,7 @@ ask-styx/
 ### 2. Cloudflare Worker: `ask-styx-proxy`
 
 **What it does** (~50 lines):
+
 - Accepts POST from the static site (CORS: allow the GH Pages origin)
 - Holds `GROQ_API_KEY` as a Worker secret (never exposed to browser)
 - Injects `STYX_KNOWLEDGE` system prompt
@@ -61,6 +62,7 @@ ask-styx/
 - Returns proper CORS headers for the GH Pages domain
 
 **Config** (`wrangler.toml`):
+
 ```toml
 name = "ask-styx-proxy"
 main = "worker/index.ts"
@@ -73,17 +75,20 @@ LLM_BASE_URL = "https://api.groq.com/openai/v1"
 ```
 
 Secret (set via `wrangler secret put GROQ_API_KEY`):
+
 - `GROQ_API_KEY` — never in source
 
 ### 3. Static SPA adaptations
 
 **ChatInterface.tsx changes from monorepo version:**
+
 - `fetch('/api/chat', ...)` → `fetch(WORKER_URL, ...)` where `WORKER_URL` is build-time env var
 - System prompt + knowledge base moves to the worker (not shipped in the SPA bundle — saves ~50KB)
 - Remove Next.js-specific imports
 - Keep: localStorage persistence, streaming SSE parsing, export-as-md, suggested questions, markdown rendering
 
 **ChatMessage.tsx:**
+
 - Copy as-is — zero external deps, pure React
 
 ### 4. GitHub Pages deploy workflow
@@ -115,23 +120,23 @@ jobs:
 
 ## Key decisions
 
-| Decision | Choice | Reason |
-|----------|--------|--------|
-| Knowledge base location | Worker (not SPA bundle) | Saves ~50KB from client, keeps system prompt private |
-| Framework | Vite + React 18 + Tailwind | Matches ORGAN-III SPA pattern (fetch-familiar-friends) |
-| Test runner | Vitest | Matches ORGAN-III SPA pattern |
-| Worker runtime | Cloudflare Workers | Free 100k req/day, already used in org |
-| Styling | Dark theme (neutral-950 bg, red-600 accent) | Matches existing Styx brand |
-| Base path | `/ask-styx/` | GH Pages project site under org |
+| Decision                | Choice                                      | Reason                                                 |
+| ----------------------- | ------------------------------------------- | ------------------------------------------------------ |
+| Knowledge base location | Worker (not SPA bundle)                     | Saves ~50KB from client, keeps system prompt private   |
+| Framework               | Vite + React 18 + Tailwind                  | Matches ORGAN-III SPA pattern (fetch-familiar-friends) |
+| Test runner             | Vitest                                      | Matches ORGAN-III SPA pattern                          |
+| Worker runtime          | Cloudflare Workers                          | Free 100k req/day, already used in org                 |
+| Styling                 | Dark theme (neutral-950 bg, red-600 accent) | Matches existing Styx brand                            |
+| Base path               | `/ask-styx/`                                | GH Pages project site under org                        |
 
 ## Files to extract from monorepo
 
-| Source (monorepo) | Destination (ask-styx) | Changes |
-|-------------------|------------------------|---------|
-| `src/web/components/chat/ChatMessage.tsx` | `src/components/ChatMessage.tsx` | Remove Next.js/React import compat if needed |
+| Source (monorepo)                           | Destination (ask-styx)             | Changes                                                         |
+| ------------------------------------------- | ---------------------------------- | --------------------------------------------------------------- |
+| `src/web/components/chat/ChatMessage.tsx`   | `src/components/ChatMessage.tsx`   | Remove Next.js/React import compat if needed                    |
 | `src/web/components/chat/ChatInterface.tsx` | `src/components/ChatInterface.tsx` | Replace `/api/chat` → `VITE_WORKER_URL`, remove `next/` imports |
-| `src/web/lib/styx-knowledge.ts` | `worker/styx-knowledge.ts` | Goes into worker, not SPA |
-| `src/web/app/api/chat/route.ts` | `worker/index.ts` | Rewrite as CF Worker (no Next.js, use `fetch` to Groq) |
+| `src/web/lib/styx-knowledge.ts`             | `worker/styx-knowledge.ts`         | Goes into worker, not SPA                                       |
+| `src/web/app/api/chat/route.ts`             | `worker/index.ts`                  | Rewrite as CF Worker (no Next.js, use `fetch` to Groq)          |
 
 ## Implementation order
 

@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { RecoveryState, RECOVERY_MATRIX } from '../../../shared/libs/behavioral-logic';
-
+import { Injectable } from "@nestjs/common";
+import {
+  RecoveryState,
+  RECOVERY_MATRIX,
+} from "../../../shared/libs/behavioral-logic";
 
 export interface PenaltyState {
   state: RecoveryState;
@@ -15,7 +17,7 @@ export interface PenaltyState {
 export class DynamicPenaltyService {
   /**
    * Theorem 9: Variable-State Machine.
-   * Determines the current psychological vulnerability state and associated 
+   * Determines the current psychological vulnerability state and associated
    * financial multipliers based on the contract start date and current time.
    */
   calculateState(startedAt: Date, now: Date = new Date()): PenaltyState {
@@ -32,7 +34,9 @@ export class DynamicPenaltyService {
     }
 
     // 2. Check for Dopamine Trough (Day 21 exactly)
-    if (diffDays === RECOVERY_MATRIX[RecoveryState.REWARD_INJECTION].triggerDay) {
+    if (
+      diffDays === RECOVERY_MATRIX[RecoveryState.REWARD_INJECTION].triggerDay
+    ) {
       return {
         state: RecoveryState.REWARD_INJECTION,
         multiplier: 1.0,
@@ -68,12 +72,11 @@ export class DynamicPenaltyService {
       };
     }
 
-
     // Default: Normal State
     return {
       state: RecoveryState.NORMAL,
       multiplier: 1.0,
-      description: 'Baseline stability',
+      description: "Baseline stability",
     };
   }
 

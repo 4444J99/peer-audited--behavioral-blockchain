@@ -1,5 +1,5 @@
-import React from 'react';
-import { parseSupportTraceMessage } from '../../utils/support-trace';
+import React from "react";
+import { parseSupportTraceMessage } from "../../utils/support-trace";
 
 type Props = {
   value: string | null | undefined;
@@ -11,10 +11,10 @@ type Props = {
 
 export function SupportTraceMessage({
   value,
-  messageClassName = 'text-sm text-neutral-400',
-  traceClassName = 'text-xs text-neutral-500 font-mono',
-  containerClassName = 'space-y-1',
-  traceLabel = 'Support trace ID',
+  messageClassName = "text-sm text-neutral-400",
+  traceClassName = "text-xs text-neutral-500 font-mono",
+  containerClassName = "space-y-1",
+  traceLabel = "Support trace ID",
 }: Props) {
   if (!value) {
     return null;

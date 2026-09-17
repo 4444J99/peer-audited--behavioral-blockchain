@@ -1,4 +1,4 @@
-import p5 from 'p5';
+import p5 from "p5";
 
 export const aegisShield = (p: p5) => {
   p.setup = () => {
@@ -29,7 +29,7 @@ export const aegisShield = (p: p5) => {
     p.fill(255);
     p.textAlign(p.CENTER, p.CENTER);
     p.textSize(14);
-    p.text('AEGIS', cx, cy);
+    p.text("AEGIS", cx, cy);
 
     // Attacks hitting shield
     p.strokeWeight(3);

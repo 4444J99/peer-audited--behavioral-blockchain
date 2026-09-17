@@ -1,23 +1,26 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { Pool } from 'pg';
-import { randomInt } from 'crypto';
-import { FuryRouterService } from '../fury-router/fury-router.service';
-import { TruthLogService } from '../ledger/truth-log.service';
-import { SHADOW_BAN_THRESHOLD, FURY_CONSENSUS_SIZE } from '../../../shared/libs/behavioral-logic';
-import { HoneypotEngine } from '../../../shared/fury-logic/honeypot.engine';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { Pool } from "pg";
+import { randomInt } from "crypto";
+import { FuryRouterService } from "../fury-router/fury-router.service";
+import { TruthLogService } from "../ledger/truth-log.service";
+import {
+  SHADOW_BAN_THRESHOLD,
+  FURY_CONSENSUS_SIZE,
+} from "../../../shared/libs/behavioral-logic";
+import { HoneypotEngine } from "../../../shared/fury-logic/honeypot.engine";
 
 /**
  * Varied, indistinguishable descriptions so injected honeypots cannot be
  * fingerprinted by a single constant string. One is picked per injection.
  */
 const HONEYPOT_DESCRIPTIONS = [
-  'Compliance proof — automated verification',
-  'Daily check-in submission',
-  'Routine progress update',
-  'Scheduled accountability evidence',
-  'Standard verification upload',
-  'Periodic compliance attestation',
+  "Compliance proof — automated verification",
+  "Daily check-in submission",
+  "Routine progress update",
+  "Scheduled accountability evidence",
+  "Standard verification upload",
+  "Periodic compliance attestation",
 ];
 
 /**
@@ -66,7 +69,7 @@ export class HoneypotService {
     );
     const volume = parseInt(recentAudits.rows[0].count);
     // Base 10% chance, scales with volume to maintain density
-    const probability = Math.min(0.5, 0.1 + (volume / 100));
+    const probability = Math.min(0.5, 0.1 + volume / 100);
     return Math.random() < probability;
   }
 
@@ -78,7 +81,7 @@ export class HoneypotService {
   async injectHoneypot(): Promise<void> {
     try {
       if (!(await this.shouldInject())) {
-        this.logger.debug('Skipping honeypot: probability check failed');
+        this.logger.debug("Skipping honeypot: probability check failed");
         return;
       }
 
@@ -92,7 +95,6 @@ export class HoneypotService {
            AND integrity_score >= $1`,
         [SHADOW_BAN_THRESHOLD],
       );
-
 
       const activeFuries = Number(furyCount.rows[0].count);
       if (activeFuries < HoneypotService.MIN_FURIES_FOR_INJECTION) {
@@ -111,7 +113,9 @@ export class HoneypotService {
       );
 
       if (contractResult.rows.length === 0) {
-        this.logger.debug('Skipping honeypot injection: no active contracts found');
+        this.logger.debug(
+          "Skipping honeypot injection: no active contracts found",
+        );
         return;
       }
 
@@ -125,9 +129,11 @@ export class HoneypotService {
       // preserves the adversarial-equilibrium guarantee. The DB column maps
       // PASS<->CLEAN and FAIL<->BREACH (fury.worker keys grading off
       // honeypot_expected_verdict).
-      const expectedResult: 'BREACH' | 'CLEAN' = randomInt(2) === 0 ? 'BREACH' : 'CLEAN';
+      const expectedResult: "BREACH" | "CLEAN" =
+        randomInt(2) === 0 ? "BREACH" : "CLEAN";
       const artifact = this.honeypotEngine.generateHoneypot(expectedResult);
-      const expectedVerdict: 'PASS' | 'FAIL' = artifact.expectedResult === 'CLEAN' ? 'PASS' : 'FAIL';
+      const expectedVerdict: "PASS" | "FAIL" =
+        artifact.expectedResult === "CLEAN" ? "PASS" : "FAIL";
 
       // Use a varied description and a crypto-random, non-enumerable media path
       // (seeded by the engine artifact id) so honeypots aren't trivially
@@ -160,7 +166,7 @@ export class HoneypotService {
         FURY_CONSENSUS_SIZE,
       );
 
-      await this.truthLog.appendEvent('HONEYPOT_INJECTED', {
+      await this.truthLog.appendEvent("HONEYPOT_INJECTED", {
         proofId: honeypotProofId,
         hostContractId: hostContract.id,
         furyRouteJobId: jobId,
@@ -179,7 +185,10 @@ export class HoneypotService {
    * Grade Fury performance on a resolved honeypot proof.
    * Called by the ConsensusEngine after consensus is reached on a honeypot.
    */
-  async gradeHoneypotPerformance(proofId: string, flaggedFuries: string[]): Promise<void> {
+  async gradeHoneypotPerformance(
+    proofId: string,
+    flaggedFuries: string[],
+  ): Promise<void> {
     const client = await this.pool.connect();
 
     // `flaggedFuries` is the authoritative set of incorrect voters computed by the
@@ -189,7 +198,7 @@ export class HoneypotService {
     const flaggedSet = new Set(flaggedFuries);
 
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
 
       // Get all Fury assignments for this proof
       const assignments = await client.query(
@@ -218,7 +227,7 @@ export class HoneypotService {
           this.logger.warn(
             `Fury ${assignment.fury_user_id} SHADOW-BANNED (Score: ${newScore})`,
           );
-          
+
           // Theorem 7: Formally update status to SHADOW_BANNED if below threshold
           await client.query(
             `UPDATE users SET status = 'SHADOW_BANNED' WHERE id = $1 AND status != 'SHADOW_BANNED'`,
@@ -228,20 +237,21 @@ export class HoneypotService {
 
         this.logger.log(
           `Fury ${assignment.fury_user_id}: honeypot verdict=${assignment.verdict}, ` +
-          `correct=${isCorrect}, integrity_delta=${delta}, new_score=${newScore}`,
+            `correct=${isCorrect}, integrity_delta=${delta}, new_score=${newScore}`,
         );
       }
 
-
-      await client.query('COMMIT');
+      await client.query("COMMIT");
 
       // SH10: derive BOTH counts from the SAME reviewer set (the graded
       // assignments) so correctCount + incorrectCount === totalReviewers. Using
       // `flaggedFuries.length` for the incorrect count could disagree with
       // totalReviewers if a flagged fury had no verdict row in this set.
-      const incorrectCount = assignments.rows.filter((a: any) => flaggedSet.has(a.fury_user_id)).length;
+      const incorrectCount = assignments.rows.filter((a: any) =>
+        flaggedSet.has(a.fury_user_id),
+      ).length;
       const correctCount = assignments.rows.length - incorrectCount;
-      await this.truthLog.appendEvent('HONEYPOT_GRADED', {
+      await this.truthLog.appendEvent("HONEYPOT_GRADED", {
         proofId,
         totalReviewers: assignments.rows.length,
         flaggedFuries,
@@ -249,8 +259,10 @@ export class HoneypotService {
         incorrectCount,
       });
     } catch (err) {
-      await client.query('ROLLBACK');
-      this.logger.error(`Honeypot grading failed for proof ${proofId}: ${(err as Error).message}`);
+      await client.query("ROLLBACK");
+      this.logger.error(
+        `Honeypot grading failed for proof ${proofId}: ${(err as Error).message}`,
+      );
       throw err;
     } finally {
       client.release();

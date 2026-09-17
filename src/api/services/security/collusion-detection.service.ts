@@ -1,15 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
-import { TruthLogService } from '../ledger/truth-log.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
+import { TruthLogService } from "../ledger/truth-log.service";
 
 export interface CollusionSignal {
   pairKey: string;
   furyIds: [string, string];
   signalType:
-    | 'COORDINATED_VOTE'
-    | 'SHARED_ASSIGNMENT_BIAS'
-    | 'TEMPORAL_CORRELATION'
-    | 'VERDICT_SYNC';
+    | "COORDINATED_VOTE"
+    | "SHARED_ASSIGNMENT_BIAS"
+    | "TEMPORAL_CORRELATION"
+    | "VERDICT_SYNC";
   score: number;
   evidence: Record<string, unknown>;
 }
@@ -19,7 +19,7 @@ export interface CollusionRing {
   furyIds: string[];
   confidence: number;
   signals: CollusionSignal[];
-  recommendedAction: 'MONITOR' | 'INVESTIGATE' | 'SANCTION';
+  recommendedAction: "MONITOR" | "INVESTIGATE" | "SANCTION";
 }
 
 const COORDINATION_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
@@ -96,9 +96,9 @@ export class CollusionDetectionService {
       const agreementRate = row.agree_count / row.shared_proofs;
       if (agreementRate >= MIN_VERDICT_AGREEMENT_RATE) {
         signals.push({
-          pairKey: [row.fury_a, row.fury_b].sort().join('::'),
+          pairKey: [row.fury_a, row.fury_b].sort().join("::"),
           furyIds: [row.fury_a, row.fury_b],
-          signalType: 'COORDINATED_VOTE',
+          signalType: "COORDINATED_VOTE",
           score: agreementRate,
           evidence: {
             sharedProofs: row.shared_proofs,
@@ -143,9 +143,9 @@ export class CollusionDetectionService {
       const syncRate = row.sync_count / row.total_together;
       if (syncRate >= MIN_VERDICT_AGREEMENT_RATE) {
         signals.push({
-          pairKey: [row.fury_a, row.fury_b].sort().join('::'),
+          pairKey: [row.fury_a, row.fury_b].sort().join("::"),
           furyIds: [row.fury_a, row.fury_b],
-          signalType: 'VERDICT_SYNC',
+          signalType: "VERDICT_SYNC",
           score: syncRate,
           evidence: {
             totalTogether: row.total_together,
@@ -164,7 +164,9 @@ export class CollusionDetectionService {
   /**
    * Detect pairs that cast verdicts within an unusually tight time window.
    */
-  private async findTemporalCorrelationPairs(since: Date): Promise<CollusionSignal[]> {
+  private async findTemporalCorrelationPairs(
+    since: Date,
+  ): Promise<CollusionSignal[]> {
     const result = await this.pool.query(
       `SELECT
         fa1.fury_user_id AS fury_a,
@@ -190,12 +192,15 @@ export class CollusionDetectionService {
     const signals: CollusionSignal[] = [];
     for (const row of result.rows) {
       const avgSeconds = parseFloat(row.avg_seconds_apart);
-      const score = Math.max(0, 1 - avgSeconds / (COORDINATION_WINDOW_MS / 1000));
+      const score = Math.max(
+        0,
+        1 - avgSeconds / (COORDINATION_WINDOW_MS / 1000),
+      );
 
       signals.push({
-        pairKey: [row.fury_a, row.fury_b].sort().join('::'),
+        pairKey: [row.fury_a, row.fury_b].sort().join("::"),
         furyIds: [row.fury_a, row.fury_b],
-        signalType: 'TEMPORAL_CORRELATION',
+        signalType: "TEMPORAL_CORRELATION",
         score,
         evidence: {
           overlapCount: row.overlap_count,
@@ -212,7 +217,9 @@ export class CollusionDetectionService {
    * Detect pairs that appear together on assignments far more than expected
    * given the total Fury pool size.
    */
-  private async findSharedAssignmentBias(since: Date): Promise<CollusionSignal[]> {
+  private async findSharedAssignmentBias(
+    since: Date,
+  ): Promise<CollusionSignal[]> {
     const poolSizeResult = await this.pool.query(
       `SELECT COUNT(*) AS total_furies FROM users WHERE role = 'FURY' AND status = 'ACTIVE'`,
     );
@@ -257,9 +264,9 @@ export class CollusionDetectionService {
       if (bias > 2.0) {
         // 2x more than expected
         signals.push({
-          pairKey: [row.fury_a, row.fury_b].sort().join('::'),
+          pairKey: [row.fury_a, row.fury_b].sort().join("::"),
           furyIds: [row.fury_a, row.fury_b],
-          signalType: 'SHARED_ASSIGNMENT_BIAS',
+          signalType: "SHARED_ASSIGNMENT_BIAS",
           score: Math.min(bias / 5, 1.0), // normalize to [0, 1]
           evidence: {
             sharedAssignments: row.shared_assignments,
@@ -325,8 +332,7 @@ export class CollusionDetectionService {
 
       const memberSet = new Set(members);
       const ringSignals = signals.filter(
-        (s) =>
-          memberSet.has(s.furyIds[0]) && memberSet.has(s.furyIds[1]),
+        (s) => memberSet.has(s.furyIds[0]) && memberSet.has(s.furyIds[1]),
       );
 
       const avgScore =
@@ -338,11 +344,11 @@ export class CollusionDetectionService {
         avgScore * (members.length / 2) * (ringSignals.length / members.length),
       );
 
-      let recommendedAction: CollusionRing['recommendedAction'] = 'MONITOR';
+      let recommendedAction: CollusionRing["recommendedAction"] = "MONITOR";
       if (confidence >= SANCTION_CONFIDENCE_THRESHOLD) {
-        recommendedAction = 'SANCTION';
+        recommendedAction = "SANCTION";
       } else if (confidence >= RING_CONFIDENCE_THRESHOLD) {
-        recommendedAction = 'INVESTIGATE';
+        recommendedAction = "INVESTIGATE";
       }
 
       rings.push({
@@ -409,7 +415,7 @@ export class CollusionDetectionService {
       const caseId = result.rows[0].id;
       caseIds.push(caseId);
 
-      await this.truthLog.appendEvent('COLLUSION_RING_CASE_OPENED', {
+      await this.truthLog.appendEvent("COLLUSION_RING_CASE_OPENED", {
         caseId,
         reviewerId: furyId,
         ringId: ring.ringId,
@@ -420,7 +426,7 @@ export class CollusionDetectionService {
 
     this.logger.warn(
       `Collusion ring ${ring.ringId}: opened ${caseIds.length} enforcement cases ` +
-      `(confidence=${ring.confidence.toFixed(3)}, action=${ring.recommendedAction})`,
+        `(confidence=${ring.confidence.toFixed(3)}, action=${ring.recommendedAction})`,
     );
 
     return caseIds;

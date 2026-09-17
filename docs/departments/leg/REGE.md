@@ -27,60 +27,60 @@ Daily work involves reviewing Terms of Service violation flags and monitoring fo
 
 ### Daily
 
-| ID | Activity | Output |
-|----|----------|--------|
-| D1 | Review ToS violation flags: check for users attempting prohibited contract categories (biological oaths, self-harm adjacent, third-party harm) | Violation log with disposition (warn, suspend, ban) |
-| D2 | Monitor GoalEthicsService rejection logs for edge cases that may indicate a category gap | Ethics service gap notes |
-| D3 | Review any user disputes/appeals ($5 dispute fee contracts) for procedural compliance | Dispute disposition log |
-| D4 | Check Stripe dashboard for chargeback or fraud flags on escrow transactions | Chargeback response queue |
+| ID  | Activity                                                                                                                                       | Output                                              |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| D1  | Review ToS violation flags: check for users attempting prohibited contract categories (biological oaths, self-harm adjacent, third-party harm) | Violation log with disposition (warn, suspend, ban) |
+| D2  | Monitor GoalEthicsService rejection logs for edge cases that may indicate a category gap                                                       | Ethics service gap notes                            |
+| D3  | Review any user disputes/appeals ($5 dispute fee contracts) for procedural compliance                                                          | Dispute disposition log                             |
+| D4  | Check Stripe dashboard for chargeback or fraud flags on escrow transactions                                                                    | Chargeback response queue                           |
 
 ### Weekly
 
-| ID | Activity | Output |
-|----|----------|--------|
-| W1 | Regulatory news scan: FTC, state AG announcements, CFPB guidance on fintech/wagering products | Regulatory digest with action items |
-| W2 | App store policy monitoring: Apple Guideline 5.3 (gambling), Google Play Real-Money Gambling policy | Platform policy compliance note |
-| W3 | Review any new feature specs from Product for legal risk (escrow changes, new contract categories, Fury incentive changes) | Legal review memo on pending features |
-| W4 | Stripe Restricted Business list review: verify Styx's MCC code and business description remain compliant | Stripe compliance status |
-| W5 | Review Fury auditor complaints or classification concerns | Auditor relationship health note |
+| ID  | Activity                                                                                                                   | Output                                |
+| --- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| W1  | Regulatory news scan: FTC, state AG announcements, CFPB guidance on fintech/wagering products                              | Regulatory digest with action items   |
+| W2  | App store policy monitoring: Apple Guideline 5.3 (gambling), Google Play Real-Money Gambling policy                        | Platform policy compliance note       |
+| W3  | Review any new feature specs from Product for legal risk (escrow changes, new contract categories, Fury incentive changes) | Legal review memo on pending features |
+| W4  | Stripe Restricted Business list review: verify Styx's MCC code and business description remain compliant                   | Stripe compliance status              |
+| W5  | Review Fury auditor complaints or classification concerns                                                                  | Auditor relationship health note      |
 
 ### Monthly
 
-| ID | Activity | Output |
-|----|----------|--------|
-| M1 | Full compliance checklist review: Aegis Protocol controls, GoalEthicsService rules, age verification, health-metric minimums, state exclusion list | Compliance checklist with pass/fail per control |
-| M2 | Privacy impact reassessment: review new data collection points, third-party integrations, R2 proof storage retention policies | Privacy impact update |
-| M3 | User agreement refresh check: compare live ToS/Privacy Policy against product changes shipped in the last 30 days | ToS drift report; update drafts if needed |
-| M4 | Fury auditor agreement review: assess contractor vs. employee classification risk under current engagement model | Auditor classification memo |
-| M5 | Chargeback and dispute trend analysis: identify patterns that may indicate systemic compliance issues | Dispute trend report |
+| ID  | Activity                                                                                                                                           | Output                                          |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| M1  | Full compliance checklist review: Aegis Protocol controls, GoalEthicsService rules, age verification, health-metric minimums, state exclusion list | Compliance checklist with pass/fail per control |
+| M2  | Privacy impact reassessment: review new data collection points, third-party integrations, R2 proof storage retention policies                      | Privacy impact update                           |
+| M3  | User agreement refresh check: compare live ToS/Privacy Policy against product changes shipped in the last 30 days                                  | ToS drift report; update drafts if needed       |
+| M4  | Fury auditor agreement review: assess contractor vs. employee classification risk under current engagement model                                   | Auditor classification memo                     |
+| M5  | Chargeback and dispute trend analysis: identify patterns that may indicate systemic compliance issues                                              | Dispute trend report                            |
 
 ### Quarterly
 
-| ID | Activity | Output |
-|----|----------|--------|
-| Q1 | Full regulatory audit: 50-state gambling law compliance, federal wire fraud / illegal gambling transmission analysis, CFPB fintech guidance | Regulatory audit report |
-| Q2 | IP review: patent landscape scan for commitment-device mechanics, trademark status, trade secret inventory | IP status report |
-| Q3 | Insurance coverage review: professional liability, cyber liability, errors & omissions for escrow handling | Insurance gap analysis |
-| Q4 | Fury auditor legal structure review: 1099 compliance, state-specific contractor classification tests (ABC test states), arbitration clause effectiveness | Auditor legal structure memo |
+| ID  | Activity                                                                                                                                                 | Output                       |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| Q1  | Full regulatory audit: 50-state gambling law compliance, federal wire fraud / illegal gambling transmission analysis, CFPB fintech guidance              | Regulatory audit report      |
+| Q2  | IP review: patent landscape scan for commitment-device mechanics, trademark status, trade secret inventory                                               | IP status report             |
+| Q3  | Insurance coverage review: professional liability, cyber liability, errors & omissions for escrow handling                                               | Insurance gap analysis       |
+| Q4  | Fury auditor legal structure review: 1099 compliance, state-specific contractor classification tests (ABC test states), arbitration clause effectiveness | Auditor legal structure memo |
 
 ## 3. Artifacts Registry
 
-| ID | Name | Path | Phase | Staleness (days) | Last Updated | Status |
-|----|------|------|-------|-------------------|--------------|--------|
-| L1 | Aegis Protocol | `docs/legal/legal--aegis-protocol.md` | BUILD | 30 | — | active |
-| L2 | Terms of Service | `docs/departments/leg/artifacts/terms-of-service.md` | SHAPE | 30 | — | dormant |
-| L3 | Privacy Policy | `docs/departments/leg/artifacts/privacy-policy.md` | SHAPE | 30 | — | dormant |
-| L4 | Compliance Guardrails (Research) | `docs/legal/legal--compliance-guardrails.md` | SHAPE | 60 | — | active |
-| L5 | Regulatory Risk Register | `docs/departments/leg/artifacts/regulatory-risk-register.md` | SHAPE | 30 | — | dormant |
-| L6 | Gatekeeper Compliance | `docs/legal/legal--gatekeeper-compliance.md` | SHAPE | 60 | — | active |
-| L7 | IP Assignment Agreement | `docs/departments/leg/artifacts/ip-assignment.md` | SHAPE | 180 | — | dormant |
-| L8 | Founder Agreement | `docs/legal/legal--founder-agreement-draft.md` | SHAPE | 90 | — | active |
-| L9 | Performance Wagering Analysis | `docs/legal/legal--performance-wagering.md` | SHAPE | 90 | — | active |
-| L10 | State Exclusion List | `docs/departments/leg/artifacts/state-exclusion-list.md` | SHAPE | 90 | — | dormant |
-| L11 | Fury Auditor Agreement Template | `docs/legal/fury-auditor-agreement-DRAFT.md` | SHAPE | 60 | 2026-08-15 | draft — counsel review pending (#315); §11 worker-classification risk open |
-| L13 | HIPAA BAA Template | `docs/legal/hipaa-baa-template-DRAFT.md` | SHAPE | 90 | 2026-08-15 | draft — do not execute; §0 lists unmet prerequisites |
-| L16 | Stake Custody and Escrow Agreement | `docs/legal/escrow-agreement-DRAFT.md` | SHAPE | 60 | 2026-08-15 | draft — counsel review pending (#315, #136) |
-| L17 | Cookie and Local Storage Policy | `docs/legal/cookie-policy-DRAFT.md` | SHAPE | 90 | 2026-08-15 | draft — consent banner not implemented (§6) |
+| ID  | Name                               | Path                                                         | Phase | Staleness (days) | Last Updated | Status                                                                     |
+| --- | ---------------------------------- | ------------------------------------------------------------ | ----- | ---------------- | ------------ | -------------------------------------------------------------------------- |
+| L1  | Aegis Protocol                     | `docs/legal/legal--aegis-protocol.md`                        | BUILD | 30               | —            | active                                                                     |
+| L2  | Terms of Service                   | `docs/departments/leg/artifacts/terms-of-service.md`         | SHAPE | 30               | —            | dormant                                                                    |
+| L3  | Privacy Policy                     | `docs/departments/leg/artifacts/privacy-policy.md`           | SHAPE | 30               | —            | dormant                                                                    |
+| L4  | Compliance Guardrails (Research)   | `docs/legal/legal--compliance-guardrails.md`                 | SHAPE | 60               | —            | active                                                                     |
+| L5  | Regulatory Risk Register           | `docs/departments/leg/artifacts/regulatory-risk-register.md` | SHAPE | 30               | —            | dormant                                                                    |
+| L6  | Gatekeeper Compliance              | `docs/legal/legal--gatekeeper-compliance.md`                 | SHAPE | 60               | —            | active                                                                     |
+| L7  | IP Assignment Agreement            | `docs/departments/leg/artifacts/ip-assignment.md`            | SHAPE | 180              | —            | dormant                                                                    |
+| L8  | Founder Agreement                  | `docs/legal/legal--founder-agreement-draft.md`               | SHAPE | 90               | —            | active                                                                     |
+| L9  | Performance Wagering Analysis      | `docs/legal/legal--performance-wagering.md`                  | SHAPE | 90               | —            | active                                                                     |
+| L10 | State Exclusion List               | `docs/departments/leg/artifacts/state-exclusion-list.md`     | SHAPE | 90               | —            | dormant                                                                    |
+| L11 | Fury Auditor Agreement Template    | `docs/legal/fury-auditor-agreement-DRAFT.md`                 | SHAPE | 60               | 2026-08-15   | draft — counsel review pending (#315); §11 worker-classification risk open |
+| L13 | HIPAA BAA Template                 | `docs/legal/hipaa-baa-template-DRAFT.md`                     | SHAPE | 90               | 2026-08-15   | draft — do not execute; §0 lists unmet prerequisites                       |
+| L16 | Stake Custody and Escrow Agreement | `docs/legal/escrow-agreement-DRAFT.md`                       | SHAPE | 60               | 2026-08-15   | draft — counsel review pending (#315, #136)                                |
+| L17 | Cookie and Local Storage Policy    | `docs/legal/cookie-policy-DRAFT.md`                          | SHAPE | 90               | 2026-08-15   | draft — consent banner not implemented (§6)                                |
 
 The L11 path moved to `docs/legal/` when the agreement was first drafted (2026-08-15). The
 `docs/departments/leg/artifacts/` directory holds an older partial mirror of the LEG estate and no
@@ -203,15 +203,15 @@ copy of this artifact; `docs/legal/` is where the phase gate looks for it.
 
 ## 10. Growth Backlog
 
-| ID | Item | Notes |
-|----|------|-------|
-| L2 | Terms of Service | Draft from existing legal research docs; needs outside counsel review before beta launch |
-| L3 | Privacy Policy | Draft covering proof media storage, behavioral data, therapist-patient data segregation |
-| L5 | Regulatory Risk Register | Formalize from scattered legal docs into structured risk register with probability/impact scoring |
-| L7 | IP Assignment Agreement | Standard assignment for any contractors or future employees; template from outside counsel |
-| L10 | State Exclusion List | 50-state analysis output: states where Styx must not operate or needs additional licensing |
-| L11 | Fury Auditor Agreement | Contractor agreement template with arbitration, IP assignment, non-compete, 1099 compliance |
-| L12 | Data processing agreement (B2B) | Required for Enterprise tier therapists who are data controllers for patient behavioral data |
-| L13 | HIPAA readiness assessment | If B2B therapist integration touches PHI, need HIPAA Business Associate Agreement framework |
-| L14 | International expansion legal playbook | EU gambling directive, GDPR, UK Gambling Commission — deferred until US market proven |
-| L15 | Insurance policy tracker | D&O, cyber liability, professional liability, E&O — track coverage, renewal dates, gaps |
+| ID  | Item                                   | Notes                                                                                             |
+| --- | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| L2  | Terms of Service                       | Draft from existing legal research docs; needs outside counsel review before beta launch          |
+| L3  | Privacy Policy                         | Draft covering proof media storage, behavioral data, therapist-patient data segregation           |
+| L5  | Regulatory Risk Register               | Formalize from scattered legal docs into structured risk register with probability/impact scoring |
+| L7  | IP Assignment Agreement                | Standard assignment for any contractors or future employees; template from outside counsel        |
+| L10 | State Exclusion List                   | 50-state analysis output: states where Styx must not operate or needs additional licensing        |
+| L11 | Fury Auditor Agreement                 | Contractor agreement template with arbitration, IP assignment, non-compete, 1099 compliance       |
+| L12 | Data processing agreement (B2B)        | Required for Enterprise tier therapists who are data controllers for patient behavioral data      |
+| L13 | HIPAA readiness assessment             | If B2B therapist integration touches PHI, need HIPAA Business Associate Agreement framework       |
+| L14 | International expansion legal playbook | EU gambling directive, GDPR, UK Gambling Commission — deferred until US market proven             |
+| L15 | Insurance policy tracker               | D&O, cyber liability, professional liability, E&O — track coverage, renewal dates, gaps           |

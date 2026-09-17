@@ -322,4 +322,3 @@ Use these words less or not at all in top-of-funnel copy:
 - `wager`
 - `real money`
 - `peer-audited market`
-

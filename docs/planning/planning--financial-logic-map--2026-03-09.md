@@ -36,19 +36,19 @@ Because of that, the most important finance question is not "what are the fees?"
 
 ## Financial Surface Inventory
 
-| Flow | Entry Point | Intended Unit | Writes / Effects | Reality Check |
-|---|---|---:|---|---|
-| Contract stake creation | `POST /contracts` via `ContractsService.createContract` | ambiguous in live code | creates contract row, Stripe hold, `STAKE_HOLD` ledger entry, truth log event | **Critical unit drift**: DTO documents USD, Stripe hold expects cents, ledger expects cents |
-| Onboarding bonus | `grantOnboardingBonus()` in contract activation side effects | cents | `ONBOARDING_BONUS` ledger entry, truth log event | Unit is consistent at `500` cents, but source-of-funds story is unclear |
-| Grace day | `POST /contracts/:id/grace-day` | no money | deadline extension only | financially adjacent, but no money movement |
-| Appeal fee | `DisputeService.initiateAppeal()` | cents | Stripe hold, dispute row, truth log | **No ledger mirror** for the $5 appeal fee |
-| Ticket purchase | `POST /contracts/:id/ticket` via `processIAP()` | cents | Stripe hold + capture, user->revenue ledger, truth log | Most internally consistent small-payment path |
-| Settlement preview | `GET /payments/settlement/:id/preview` | converts stored stake to cents | deterministic quote only | Quote math is internally consistent with `settlement-quote.ts` but not with all other payout code |
-| Settlement execution | `dispatchSettlement()` + `SettlementWorker` | cents | settlement run, Stripe release/capture, ledger finalization, truth log | Real-money path is richer than beta scope and has arithmetic drift against legacy FBO code |
-| Double-down stake | `POST /contracts/:id/double-down` | ambiguous | extra Stripe hold, `stake_amount` increment, `STAKE_DOUBLE_DOWN` ledger entry | Same unit ambiguity as base stake creation |
-| Wallet balance/history | `GET /wallet/*` | ledger cents | reads only | Sign convention differs from `LedgerService.getAccountBalance()` comments |
-| Dashboard exposure metrics | `DashboardService.getProgress()` | dollars + cents mixed | reads only | mixes `stake_amount` decimal dollars with ledger cents in the same response family |
-| B2B consumption billing | `consumption_logs`, B2B services | units, not dollars | enterprise billing metrics | separate from user stake economy; not a beta money blocker |
+| Flow                       | Entry Point                                                  |                  Intended Unit | Writes / Effects                                                              | Reality Check                                                                                     |
+| -------------------------- | ------------------------------------------------------------ | -----------------------------: | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Contract stake creation    | `POST /contracts` via `ContractsService.createContract`      |         ambiguous in live code | creates contract row, Stripe hold, `STAKE_HOLD` ledger entry, truth log event | **Critical unit drift**: DTO documents USD, Stripe hold expects cents, ledger expects cents       |
+| Onboarding bonus           | `grantOnboardingBonus()` in contract activation side effects |                          cents | `ONBOARDING_BONUS` ledger entry, truth log event                              | Unit is consistent at `500` cents, but source-of-funds story is unclear                           |
+| Grace day                  | `POST /contracts/:id/grace-day`                              |                       no money | deadline extension only                                                       | financially adjacent, but no money movement                                                       |
+| Appeal fee                 | `DisputeService.initiateAppeal()`                            |                          cents | Stripe hold, dispute row, truth log                                           | **No ledger mirror** for the $5 appeal fee                                                        |
+| Ticket purchase            | `POST /contracts/:id/ticket` via `processIAP()`              |                          cents | Stripe hold + capture, user->revenue ledger, truth log                        | Most internally consistent small-payment path                                                     |
+| Settlement preview         | `GET /payments/settlement/:id/preview`                       | converts stored stake to cents | deterministic quote only                                                      | Quote math is internally consistent with `settlement-quote.ts` but not with all other payout code |
+| Settlement execution       | `dispatchSettlement()` + `SettlementWorker`                  |                          cents | settlement run, Stripe release/capture, ledger finalization, truth log        | Real-money path is richer than beta scope and has arithmetic drift against legacy FBO code        |
+| Double-down stake          | `POST /contracts/:id/double-down`                            |                      ambiguous | extra Stripe hold, `stake_amount` increment, `STAKE_DOUBLE_DOWN` ledger entry | Same unit ambiguity as base stake creation                                                        |
+| Wallet balance/history     | `GET /wallet/*`                                              |                   ledger cents | reads only                                                                    | Sign convention differs from `LedgerService.getAccountBalance()` comments                         |
+| Dashboard exposure metrics | `DashboardService.getProgress()`                             |          dollars + cents mixed | reads only                                                                    | mixes `stake_amount` decimal dollars with ledger cents in the same response family                |
+| B2B consumption billing    | `consumption_logs`, B2B services                             |             units, not dollars | enterprise billing metrics                                                    | separate from user stake economy; not a beta money blocker                                        |
 
 ## Arithmetic Map By Flow
 
@@ -238,18 +238,22 @@ The financial architecture has been normalized around the following invariants:
 ## High-Risk Drift Register (REMEDIATED)
 
 ### Drift 1: There is no single canonical unit for stake amounts
+
 - **Status**: FIXED.
 - **Remedy**: `ContractsService` now calls `toCents(dto.stakeAmount)` before every ledger and payment rail operation.
 
 ### Drift 2: Safety and tier guardrails appear to compare mixed units
+
 - **Status**: FIXED.
 - **Remedy**: Validated that `tierMax` and `maxStake` are provided in USD, matching `dto.stakeAmount` at the validation boundary.
 
 ### Drift 3: Failed-settlement payout math is not unified
+
 - **Status**: FIXED.
 - **Remedy**: `settlement-quote.ts` declared as the single source of truth for payout formulas. Legacy math in `stripe-fbo.service.ts` is deprecated.
 
 ### Drift 4: Sign convention mismatch
+
 - **Status**: FIXED.
 - **Remedy**: `LedgerService.getAccountBalance` updated to `Credit - Debit`. `WalletController` updated to use the service method instead of raw SQL.
 

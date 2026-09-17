@@ -244,11 +244,11 @@ logins. Not yet walked through with her.
 Places where shipped artifacts contradict a decision above. Each is a defect
 against the record, not an open question.
 
-| #   | Divergence                                                                                                                                                                                                                                                   | Location                                                                                 | Against |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ------- |
-| 1   | Go-to-market is described as "Phase 1 targets the highly motivated, high-LTV 'biohacker' and hardcore fitness communities", with enterprise as Phase 2 — a two-phase fitness-first sequence that predates and contradicts the no-contact wedge               | `src/web/components/PitchDeck/data/slidesData.ts:33`, `src/pitch/src/data/slides.ts:295` | DR-001  |
-| 2   | The onboarding bonus is presented as a core acquisition mechanic ("$5 onboarding bonus means trying Styx is literally free", "CAC approaches zero")                                                                                                          | `src/pitch/src/data/slides.ts:130,138,146,397,447`                                       | DR-005  |
-| ~~3~~ | ~~`docs/MANIFEST.md` described the founder agreement as a split between "Jessica (Marketing) and Partner (Technical)". The draft assigns marketing strategy, audience development, and community engagement to Anthony; Jessica's remit is business leadership.~~ **Corrected 2026-07-31.** | `docs/MANIFEST.md` `DOC-LEG-05` | DR-007 |
+| #     | Divergence                                                                                                                                                                                                                                                                                  | Location                                                                                 | Against |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------- |
+| 1     | Go-to-market is described as "Phase 1 targets the highly motivated, high-LTV 'biohacker' and hardcore fitness communities", with enterprise as Phase 2 — a two-phase fitness-first sequence that predates and contradicts the no-contact wedge                                              | `src/web/components/PitchDeck/data/slidesData.ts:33`, `src/pitch/src/data/slides.ts:295` | DR-001  |
+| 2     | The onboarding bonus is presented as a core acquisition mechanic ("$5 onboarding bonus means trying Styx is literally free", "CAC approaches zero")                                                                                                                                         | `src/pitch/src/data/slides.ts:130,138,146,397,447`                                       | DR-005  |
+| ~~3~~ | ~~`docs/MANIFEST.md` described the founder agreement as a split between "Jessica (Marketing) and Partner (Technical)". The draft assigns marketing strategy, audience development, and community engagement to Anthony; Jessica's remit is business leadership.~~ **Corrected 2026-07-31.** | `docs/MANIFEST.md` `DOC-LEG-05`                                                          | DR-007  |
 
 Divergences 1 and 2 are in **pitch/investor material**, which is deliberately not
 the same document as the product roadmap — a deck may lead with the larger market
@@ -308,13 +308,13 @@ are live in shipped code and no `DR-NNN` covers any of them. Under DR-007 pricin
 is both Jessica's remit (business model and pricing) and a **joint** decision
 (pricing model changes), so engineering cannot pick one.
 
-| Model | Where | Charged? |
-| ----- | ----- | -------- |
-| `MVP_39` — $39 total = $30 stake + $9 fee | `contracts.service.ts:110-112`, `dto.ts:147` | **Stake only.** The $9 is metadata; `normalizeContractPricing` overrides the stake to $30 and the sole charge is a $30 hold. |
-| `EARLY_ACCESS_199` — $199 stake, $0 fee | `contracts.service.ts:113-115` | Stake only |
-| Ticket $4.99 per contract, captured non-refundably | `billing.ts:7`, exposed on two duplicate routes | Yes, if called |
-| Subscription $14.99/mo | `billing.ts:6` → `payments.controller.ts:195` | Yes, if called |
-| Appeal $5.00 | `billing.ts` | No — disabled by DR-004 |
+| Model                                              | Where                                           | Charged?                                                                                                                     |
+| -------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `MVP_39` — $39 total = $30 stake + $9 fee          | `contracts.service.ts:110-112`, `dto.ts:147`    | **Stake only.** The $9 is metadata; `normalizeContractPricing` overrides the stake to $30 and the sole charge is a $30 hold. |
+| `EARLY_ACCESS_199` — $199 stake, $0 fee            | `contracts.service.ts:113-115`                  | Stake only                                                                                                                   |
+| Ticket $4.99 per contract, captured non-refundably | `billing.ts:7`, exposed on two duplicate routes | Yes, if called                                                                                                               |
+| Subscription $14.99/mo                             | `billing.ts:6` → `payments.controller.ts:195`   | Yes, if called                                                                                                               |
+| Appeal $5.00                                       | `billing.ts`                                    | No — disabled by DR-004                                                                                                      |
 
 `docs/finance/pricing-strategy.md` exists but carries `generated: true`; it is an
 artifact, not a founder sign-off.

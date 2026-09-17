@@ -1,8 +1,11 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Worker, Job } from 'bullmq';
-import { Pool } from 'pg';
-import { randomUUID } from 'crypto';
-import { FURY_ROUTER_QUEUE_NAME, getDefaultQueueOptions } from '../../config/queue.config';
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { Worker, Job } from "bullmq";
+import { Pool } from "pg";
+import { randomUUID } from "crypto";
+import {
+  FURY_ROUTER_QUEUE_NAME,
+  getDefaultQueueOptions,
+} from "../../config/queue.config";
 
 export interface FuryRouteJobData {
   proofId: string;
@@ -46,17 +49,17 @@ export class FuryRouterWorker implements OnModuleInit {
       },
     );
 
-    this.worker.on('completed', (job) => {
+    this.worker.on("completed", (job) => {
       this.logger.log(`Fury routing completed for proof ${job.data.proofId}`);
     });
 
-    this.worker.on('failed', (job, err) => {
+    this.worker.on("failed", (job, err) => {
       this.logger.error(
         `Fury routing failed for proof ${job?.data?.proofId}: ${err.message}`,
       );
     });
 
-    this.logger.log('FuryRouterWorker initialized and listening for jobs');
+    this.logger.log("FuryRouterWorker initialized and listening for jobs");
   }
 
   /**
@@ -70,12 +73,12 @@ export class FuryRouterWorker implements OnModuleInit {
     const client = await this.pool.connect();
 
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
 
       // 1. Get submitter's metadata for isolation
       const submitterResult = await client.query(
         `SELECT last_known_state, social_guild_id, enterprise_id FROM users WHERE id = $1`,
-        [submitterUserId]
+        [submitterUserId],
       );
       const submitter = submitterResult.rows[0];
 
@@ -84,9 +87,9 @@ export class FuryRouterWorker implements OnModuleInit {
         `SELECT partner_user_id FROM accountability_partners 
          JOIN contracts ON accountability_partners.contract_id = contracts.id
          WHERE contracts.user_id = $1 AND partner_user_id IS NOT NULL`,
-        [submitterUserId]
+        [submitterUserId],
       );
-      const partners = partnerResult.rows.map(r => r.partner_user_id);
+      const partners = partnerResult.rows.map((r) => r.partner_user_id);
 
       // 3. Find eligible Furies with isolation:
       // - Must hold the FURY role (only auditors may review)
@@ -112,12 +115,14 @@ export class FuryRouterWorker implements OnModuleInit {
          ORDER BY RANDOM()
          LIMIT $6`,
         [
-          submitterUserId, 
-          submitter?.last_known_state || 'UNKNOWN', 
-          submitter?.social_guild_id || '00000000-0000-0000-0000-000000000000',
-          submitter?.enterprise_id || '00000000-0000-0000-0000-000000000000',
-          partners.length > 0 ? partners : ['00000000-0000-0000-0000-000000000000'],
-          requiredReviewers
+          submitterUserId,
+          submitter?.last_known_state || "UNKNOWN",
+          submitter?.social_guild_id || "00000000-0000-0000-0000-000000000000",
+          submitter?.enterprise_id || "00000000-0000-0000-0000-000000000000",
+          partners.length > 0
+            ? partners
+            : ["00000000-0000-0000-0000-000000000000"],
+          requiredReviewers,
         ],
       );
 
@@ -150,7 +155,7 @@ export class FuryRouterWorker implements OnModuleInit {
           `UPDATE proofs SET status = 'MANUAL_REVIEW' WHERE id = $1`,
           [proofId],
         );
-        await client.query('COMMIT');
+        await client.query("COMMIT");
         this.logger.warn(
           `Proof ${proofId} could not be routed (${selectedFuries.length}/${requiredReviewers} eligible Furies) ` +
             `after ${attemptsMade + 1} attempts; dead-lettered to MANUAL_REVIEW for human escalation.`,
@@ -175,13 +180,13 @@ export class FuryRouterWorker implements OnModuleInit {
         [proofId],
       );
 
-      await client.query('COMMIT');
+      await client.query("COMMIT");
 
       this.logger.log(
-        `Routed proof ${proofId} to ${selectedFuries.length} Furies: [${selectedFuries.map((f: any) => f.id).join(', ')}]`,
+        `Routed proof ${proofId} to ${selectedFuries.length} Furies: [${selectedFuries.map((f: any) => f.id).join(", ")}]`,
       );
     } catch (e) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw e;
     } finally {
       client.release();

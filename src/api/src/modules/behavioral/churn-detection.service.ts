@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { Pool } from 'pg';
-import { NotificationsService } from '../notifications/notifications.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { Pool } from "pg";
+import { NotificationsService } from "../notifications/notifications.service";
 
-export type ChurnRisk = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type ChurnRisk = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
 export interface ChurnSignal {
   userId: string;
@@ -32,7 +32,7 @@ export class ChurnDetectionService {
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async detectChurnSignals() {
-    this.logger.log('Running churn signal detection...');
+    this.logger.log("Running churn signal detection...");
     const atRisk = await this.scan();
     this.logger.log(`Detected ${atRisk.length} at-risk users`);
 
@@ -40,7 +40,7 @@ export class ChurnDetectionService {
       try {
         await this.notifications.create({
           userId: user.userId,
-          type: 'CHURN_WARNING',
+          type: "CHURN_WARNING",
           title: this.getChurnTitle(user.risk),
           body: this.getChurnBody(user),
           metadata: {
@@ -50,7 +50,9 @@ export class ChurnDetectionService {
           },
         });
       } catch (err: any) {
-        this.logger.error(`Failed to notify user ${user.userId}: ${err.message}`);
+        this.logger.error(
+          `Failed to notify user ${user.userId}: ${err.message}`,
+        );
       }
     }
   }
@@ -68,52 +70,63 @@ export class ChurnDetectionService {
 
     for (const row of users.rows) {
       const daysSinceLastActive = row.last_active_at
-        ? Math.floor((Date.now() - new Date(row.last_active_at).getTime()) / 86400000)
+        ? Math.floor(
+            (Date.now() - new Date(row.last_active_at).getTime()) / 86400000,
+          )
         : 999;
 
       const userSignals: string[] = [];
       const integrityScore = row.integrity_score ?? 0;
 
       if (daysSinceLastActive >= CHURN_DAYS_CRITICAL) {
-        userSignals.push('No activity in 30+ days');
+        userSignals.push("No activity in 30+ days");
       } else if (daysSinceLastActive >= CHURN_DAYS_HIGH) {
-        userSignals.push('No activity in 14+ days');
+        userSignals.push("No activity in 14+ days");
       } else if (daysSinceLastActive >= CHURN_DAYS_WARNING) {
-        userSignals.push('No activity in 7+ days');
+        userSignals.push("No activity in 7+ days");
       }
 
       if (row.consecutive_missed_proofs >= 3) {
-        userSignals.push(`${row.consecutive_missed_proofs} consecutive missed proofs`);
+        userSignals.push(
+          `${row.consecutive_missed_proofs} consecutive missed proofs`,
+        );
       }
 
       if (integrityScore < MIN_INTEGRITY_FOR_ACTIVE) {
-        userSignals.push('Low integrity score');
+        userSignals.push("Low integrity score");
       }
 
       const activeContractCount = await this.checkActiveContracts(row.id);
       if (activeContractCount === 0 && daysSinceLastActive > 0) {
-        userSignals.push('No active contracts');
+        userSignals.push("No active contracts");
       }
 
       if (daysSinceLastActive > 0) {
         const declining = await this.checkDecliningAttestationRate(row.id);
         if (declining) {
-          userSignals.push('Declining attestation rate');
+          userSignals.push("Declining attestation rate");
         }
       }
 
       if (userSignals.length === 0) continue;
 
-      let risk: ChurnRisk = 'LOW';
+      let risk: ChurnRisk = "LOW";
       if (
         daysSinceLastActive >= CHURN_DAYS_CRITICAL ||
-        (daysSinceLastActive >= CHURN_DAYS_HIGH && row.consecutive_missed_proofs >= 3)
+        (daysSinceLastActive >= CHURN_DAYS_HIGH &&
+          row.consecutive_missed_proofs >= 3)
       ) {
-        risk = 'CRITICAL';
-      } else if (daysSinceLastActive >= CHURN_DAYS_HIGH || userSignals.length >= 3) {
-        risk = 'HIGH';
-      } else if (daysSinceLastActive >= CHURN_DAYS_WARNING || userSignals.length >= 2) {
-        risk = 'MEDIUM';
+        risk = "CRITICAL";
+      } else if (
+        daysSinceLastActive >= CHURN_DAYS_HIGH ||
+        userSignals.length >= 3
+      ) {
+        risk = "HIGH";
+      } else if (
+        daysSinceLastActive >= CHURN_DAYS_WARNING ||
+        userSignals.length >= 2
+      ) {
+        risk = "MEDIUM";
       }
 
       signals.push({
@@ -138,7 +151,9 @@ export class ChurnDetectionService {
     return result.rows[0].count;
   }
 
-  private async checkDecliningAttestationRate(userId: string): Promise<boolean> {
+  private async checkDecliningAttestationRate(
+    userId: string,
+  ): Promise<boolean> {
     const rates = await this.pool.query(
       `WITH weekly AS (
          SELECT
@@ -166,19 +181,22 @@ export class ChurnDetectionService {
 
     const latestRate = parseFloat(row.latest_rate);
     const oldestRate = parseFloat(row.oldest_rate);
-    return oldestRate > 0 && (oldestRate - latestRate) / oldestRate > DECLINING_RATE_THRESHOLD;
+    return (
+      oldestRate > 0 &&
+      (oldestRate - latestRate) / oldestRate > DECLINING_RATE_THRESHOLD
+    );
   }
 
   private getChurnTitle(risk: ChurnRisk): string {
     switch (risk) {
-      case 'CRITICAL':
-        return 'We miss you — your streak is at risk';
-      case 'HIGH':
-        return 'Don\'t lose your progress — check in';
-      case 'MEDIUM':
-        return 'Small step today — keep the chain alive';
+      case "CRITICAL":
+        return "We miss you — your streak is at risk";
+      case "HIGH":
+        return "Don't lose your progress — check in";
+      case "MEDIUM":
+        return "Small step today — keep the chain alive";
       default:
-        return 'Your next chapter starts now';
+        return "Your next chapter starts now";
     }
   }
 
@@ -190,9 +208,9 @@ export class ChurnDetectionService {
     if (user.missedStreak >= 3) {
       parts.push(`${user.missedStreak} missed proofs in a row`);
     }
-    if (user.signals.includes('No active contracts')) {
-      parts.push('Create a new contract to restart your journey');
+    if (user.signals.includes("No active contracts")) {
+      parts.push("Create a new contract to restart your journey");
     }
-    return parts.join('. ') + '.';
+    return parts.join(". ") + ".";
   }
 }

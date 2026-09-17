@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
 import {
   CollusionDetectionService,
   CollusionRing,
-} from '../../../services/security/collusion-detection.service';
+} from "../../../services/security/collusion-detection.service";
 
 /**
  * The only thing that runs the collusion engine.
@@ -35,7 +35,7 @@ export class CollusionDetectionScheduler {
 
   constructor(private readonly collusion: CollusionDetectionService) {}
 
-  @Cron('0 20 */6 * * *') // every 6 hours, offset off the hour to miss the other sweeps
+  @Cron("0 20 */6 * * *") // every 6 hours, offset off the hour to miss the other sweeps
   async sweepForCollusionRings(): Promise<void> {
     let rings: CollusionRing[];
     try {
@@ -54,7 +54,7 @@ export class CollusionDetectionScheduler {
 
     // MONITOR rings are below the investigation threshold — recorded in the log,
     // not filed as cases, so the admin queue stays a queue of real suspicions.
-    const actionable = rings.filter((r) => r.recommendedAction !== 'MONITOR');
+    const actionable = rings.filter((r) => r.recommendedAction !== "MONITOR");
     const monitored = rings.length - actionable.length;
 
     let casesOpened = 0;

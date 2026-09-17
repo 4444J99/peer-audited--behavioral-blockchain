@@ -27,58 +27,58 @@ Daily work involves triaging user feedback from beta testers, reviewing analytic
 
 ### Daily
 
-| ID | Activity | Output |
-|----|----------|--------|
-| D1 | Triage user feedback: categorize by theme (UX friction, contract confusion, Fury complaints, pricing objections) | Feedback log with theme tags and severity |
-| D2 | Review key metrics: contract creation rate, proof submission rate, Fury audit turnaround, completion rate, churn | Daily metrics snapshot |
-| D3 | Monitor App Store / Play Store reviews and ratings | Review response drafts for negative reviews |
-| D4 | Check support ticket queue for product-impacting patterns | Pattern report if > 3 tickets on same issue |
-| D5 | Review A/B test results for any active experiments | Experiment status update |
+| ID  | Activity                                                                                                         | Output                                      |
+| --- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| D1  | Triage user feedback: categorize by theme (UX friction, contract confusion, Fury complaints, pricing objections) | Feedback log with theme tags and severity   |
+| D2  | Review key metrics: contract creation rate, proof submission rate, Fury audit turnaround, completion rate, churn | Daily metrics snapshot                      |
+| D3  | Monitor App Store / Play Store reviews and ratings                                                               | Review response drafts for negative reviews |
+| D4  | Check support ticket queue for product-impacting patterns                                                        | Pattern report if > 3 tickets on same issue |
+| D5  | Review A/B test results for any active experiments                                                               | Experiment status update                    |
 
 ### Weekly
 
-| ID | Activity | Output |
-|----|----------|--------|
-| W1 | Sprint planning with Engineering: scope next sprint, review velocity, adjust priorities | Sprint plan document with acceptance criteria |
-| W2 | Feature prioritization: score backlog items by impact (revenue, retention, activation) vs. effort | Updated FEATURE-BACKLOG.md with priority scores |
-| W3 | Competitive monitoring: check StickK, Beeminder, Forfeit, Habitica for new features or pricing changes | Competitive intelligence brief |
-| W4 | B2B pipeline review: track therapist/coach signups, onboarding completion, feature requests | B2B funnel metrics |
-| W5 | Review Fury auditor satisfaction: response rates, accuracy scores, payout turnaround | Fury health report |
+| ID  | Activity                                                                                               | Output                                          |
+| --- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| W1  | Sprint planning with Engineering: scope next sprint, review velocity, adjust priorities                | Sprint plan document with acceptance criteria   |
+| W2  | Feature prioritization: score backlog items by impact (revenue, retention, activation) vs. effort      | Updated FEATURE-BACKLOG.md with priority scores |
+| W3  | Competitive monitoring: check StickK, Beeminder, Forfeit, Habitica for new features or pricing changes | Competitive intelligence brief                  |
+| W4  | B2B pipeline review: track therapist/coach signups, onboarding completion, feature requests            | B2B funnel metrics                              |
+| W5  | Review Fury auditor satisfaction: response rates, accuracy scores, payout turnaround                   | Fury health report                              |
 
 ### Monthly
 
-| ID | Activity | Output |
-|----|----------|--------|
-| M1 | Roadmap review: assess progress against quarterly goals, re-prioritize based on learnings | Updated roadmap document |
-| M2 | Persona validation: compare assumed user profiles against actual beta user demographics and behavior | Persona delta report |
-| M3 | Pricing sensitivity analysis: review conversion rates by price point, analyze willingness-to-pay signals | Pricing memo |
-| M4 | UX audit: identify top 5 friction points from session recordings, heatmaps, and support tickets | `artifacts/ux-audit.md` updated |
-| M5 | Feature adoption review: measure usage of shipped features against predicted adoption rates | Feature adoption scorecard |
-| M6 | B2B feature gap analysis: compare therapist requests against current Practice/Enterprise capabilities | B2B gap register |
+| ID  | Activity                                                                                                 | Output                          |
+| --- | -------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| M1  | Roadmap review: assess progress against quarterly goals, re-prioritize based on learnings                | Updated roadmap document        |
+| M2  | Persona validation: compare assumed user profiles against actual beta user demographics and behavior     | Persona delta report            |
+| M3  | Pricing sensitivity analysis: review conversion rates by price point, analyze willingness-to-pay signals | Pricing memo                    |
+| M4  | UX audit: identify top 5 friction points from session recordings, heatmaps, and support tickets          | `artifacts/ux-audit.md` updated |
+| M5  | Feature adoption review: measure usage of shipped features against predicted adoption rates              | Feature adoption scorecard      |
+| M6  | B2B feature gap analysis: compare therapist requests against current Practice/Enterprise capabilities    | B2B gap register                |
 
 ### Quarterly
 
-| ID | Activity | Output |
-|----|----------|--------|
-| Q1 | Competitive deep-dive: full teardown of 3 closest competitors (update existing research docs) | Updated competitor deep-dive files |
-| Q2 | Pricing review: evaluate B2C contract pricing ($39), platform fee ($9), and B2B tier pricing against market and unit economics | Pricing review document |
-| Q3 | Market positioning audit: validate "peer-audited behavioral market" positioning against user perception | Positioning report |
-| Q4 | Annual roadmap planning: define next 4 quarters of product direction | Annual roadmap draft |
+| ID  | Activity                                                                                                                       | Output                             |
+| --- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| Q1  | Competitive deep-dive: full teardown of 3 closest competitors (update existing research docs)                                  | Updated competitor deep-dive files |
+| Q2  | Pricing review: evaluate B2C contract pricing ($39), platform fee ($9), and B2B tier pricing against market and unit economics | Pricing review document            |
+| Q3  | Market positioning audit: validate "peer-audited behavioral market" positioning against user perception                        | Positioning report                 |
+| Q4  | Annual roadmap planning: define next 4 quarters of product direction                                                           | Annual roadmap draft               |
 
 ## 3. Artifacts Registry
 
-| ID | Name | Path | Phase | Staleness (days) | Last Updated | Status |
-|----|------|------|-------|-------------------|--------------|--------|
-| P1 | Product Requirements Document | `docs/departments/prd/artifacts/prd.md` | SHAPE | 30 | — | dormant |
-| P2 | User Personas | `docs/departments/prd/artifacts/user-personas.md` | SHAPE | 60 | — | dormant |
-| P3 | UX Audit | `docs/departments/prd/artifacts/ux-audit.md` | PROVE | 30 | — | dormant |
-| P4 | Feature Matrix | `docs/departments/prd/artifacts/feature-matrix.md` | BUILD | 14 | — | dormant |
-| P5 | Competitive Teardown | `docs/research/research--competitor-teardown-v2.md` | SHAPE | 90 | — | active |
-| P6 | Feature Backlog | `docs/FEATURE-BACKLOG.md` | BUILD | 7 | — | active |
-| P7 | Roadmap | `docs/planning/planning--roadmap.md` | SHAPE | 30 | — | active |
-| P8 | B2B Pricing Model | `docs/departments/prd/artifacts/b2b-pricing-model.md` | SHAPE | 90 | — | dormant |
-| P9 | Fury Auditor Playbook | `docs/departments/prd/artifacts/fury-auditor-playbook.md` | SHAPE | 60 | — | dormant |
-| P10 | Behavioral Physics Constants | `docs/research/research--behavioral-physics-manifesto.md` | SHAPE | 90 | — | active |
+| ID  | Name                          | Path                                                      | Phase | Staleness (days) | Last Updated | Status  |
+| --- | ----------------------------- | --------------------------------------------------------- | ----- | ---------------- | ------------ | ------- |
+| P1  | Product Requirements Document | `docs/departments/prd/artifacts/prd.md`                   | SHAPE | 30               | —            | dormant |
+| P2  | User Personas                 | `docs/departments/prd/artifacts/user-personas.md`         | SHAPE | 60               | —            | dormant |
+| P3  | UX Audit                      | `docs/departments/prd/artifacts/ux-audit.md`              | PROVE | 30               | —            | dormant |
+| P4  | Feature Matrix                | `docs/departments/prd/artifacts/feature-matrix.md`        | BUILD | 14               | —            | dormant |
+| P5  | Competitive Teardown          | `docs/research/research--competitor-teardown-v2.md`       | SHAPE | 90               | —            | active  |
+| P6  | Feature Backlog               | `docs/FEATURE-BACKLOG.md`                                 | BUILD | 7                | —            | active  |
+| P7  | Roadmap                       | `docs/planning/planning--roadmap.md`                      | SHAPE | 30               | —            | active  |
+| P8  | B2B Pricing Model             | `docs/departments/prd/artifacts/b2b-pricing-model.md`     | SHAPE | 90               | —            | dormant |
+| P9  | Fury Auditor Playbook         | `docs/departments/prd/artifacts/fury-auditor-playbook.md` | SHAPE | 60               | —            | dormant |
+| P10 | Behavioral Physics Constants  | `docs/research/research--behavioral-physics-manifesto.md` | SHAPE | 90               | —            | active  |
 
 ## 4. Generative Prompts (GEN:)
 
@@ -219,14 +219,14 @@ Daily work involves triaging user feedback from beta testers, reviewing analytic
 
 ## 10. Growth Backlog
 
-| ID | Item | Notes |
-|----|------|-------|
-| P1 | Product Requirements Document | Formalize the PRD from scattered planning docs into canonical format |
-| P2 | User Personas | Synthesize from behavioral economics research + early beta data |
-| P3 | UX Audit | First audit deferred until beta has 25+ active users with session data |
-| P4 | Feature Matrix | Consolidate feature-backlog into structured matrix with tier mapping |
-| P8 | B2B Pricing Model | Full unit-economics model for Solo/Practice/Enterprise with CAC/LTV projections |
-| P9 | Fury Auditor Playbook | Onboarding guide, quality standards, and incentive structure for peer auditors |
-| P11 | Retention cohort analysis framework | Track 7/14/30/60-day retention by contract type and persona |
-| P12 | A/B test registry | Formal experiment tracking with hypothesis, metrics, and results log |
-| P13 | Therapist integration guide | Documentation for B2B therapists on prescribing Styx contracts to patients |
+| ID  | Item                                | Notes                                                                           |
+| --- | ----------------------------------- | ------------------------------------------------------------------------------- |
+| P1  | Product Requirements Document       | Formalize the PRD from scattered planning docs into canonical format            |
+| P2  | User Personas                       | Synthesize from behavioral economics research + early beta data                 |
+| P3  | UX Audit                            | First audit deferred until beta has 25+ active users with session data          |
+| P4  | Feature Matrix                      | Consolidate feature-backlog into structured matrix with tier mapping            |
+| P8  | B2B Pricing Model                   | Full unit-economics model for Solo/Practice/Enterprise with CAC/LTV projections |
+| P9  | Fury Auditor Playbook               | Onboarding guide, quality standards, and incentive structure for peer auditors  |
+| P11 | Retention cohort analysis framework | Track 7/14/30/60-day retention by contract type and persona                     |
+| P12 | A/B test registry                   | Formal experiment tracking with hypothesis, metrics, and results log            |
+| P13 | Therapist integration guide         | Documentation for B2B therapists on prescribing Styx contracts to patients      |

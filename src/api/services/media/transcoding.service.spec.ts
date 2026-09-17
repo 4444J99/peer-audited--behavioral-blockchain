@@ -78,7 +78,10 @@ describe("TranscodingService", () => {
         return {} as any;
       });
 
-      const result = await service.validateVideo(Buffer.from("fake"), "video/mp4");
+      const result = await service.validateVideo(
+        Buffer.from("fake"),
+        "video/mp4",
+      );
       expect(result).toBe(true);
     });
 
@@ -88,7 +91,10 @@ describe("TranscodingService", () => {
         return {} as any;
       });
 
-      const result = await service.validateVideo(Buffer.from("fake"), "video/mp4");
+      const result = await service.validateVideo(
+        Buffer.from("fake"),
+        "video/mp4",
+      );
       expect(result).toBe(false);
     });
   });

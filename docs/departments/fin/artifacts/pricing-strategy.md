@@ -18,10 +18,10 @@ Styx pricing is designed around a core behavioral economics insight: the fee mus
 
 ### Current Model
 
-| Component | Amount | Timing | Refundable |
-|-----------|--------|--------|------------|
+| Component                 | Amount | Timing               | Refundable         |
+| ------------------------- | ------ | -------------------- | ------------------ |
 | Behavioral contract stake | $39.00 | At contract creation | Yes, on completion |
-| Platform fee | $9.00 | At contract creation | No |
+| Platform fee              | $9.00  | At contract creation | No                 |
 
 The $39/$9 price point was chosen through the following reasoning:
 
@@ -31,12 +31,12 @@ The $39/$9 price point was chosen through the following reasoning:
 
 ### Future Variable Contract Sizing
 
-| Contract Tier | Stake Range | Platform Fee | Fee % |
-|---------------|-------------|-------------|-------|
-| Starter | $19-$39 | $5-$9 | 23-26% |
-| Standard | $39-$99 | $9-$19 | 19-23% |
-| High-Stakes | $99-$499 | $19-$49 | 10-19% |
-| Premium | $499-$2,000 | $49-$99 | 5-10% |
+| Contract Tier | Stake Range | Platform Fee | Fee %  |
+| ------------- | ----------- | ------------ | ------ |
+| Starter       | $19-$39     | $5-$9        | 23-26% |
+| Standard      | $39-$99     | $9-$19       | 19-23% |
+| High-Stakes   | $99-$499    | $19-$49      | 10-19% |
+| Premium       | $499-$2,000 | $49-$99      | 5-10%  |
 
 Fee percentage decreases as stake increases — this is intentional. Higher-stake users have stronger loss aversion signals and require less platform-side incentive design. The lower fee percentage also reduces price sensitivity for users making serious commitments (addiction recovery, major life changes).
 
@@ -55,19 +55,19 @@ This framing is critical. Styx marketing always emphasizes "you only lose money 
 
 ### Tier Structure
 
-| Feature | Solo ($49/mo) | Practice ($199/mo) | Enterprise ($999+/mo) |
-|---------|:---:|:---:|:---:|
-| Client limit | 10 | 50 | Unlimited |
-| Dashboard access | Basic | Full | Full + custom |
-| Contract templates | 5 standard | 20 + custom | Unlimited custom |
-| Analytics | Summary stats | Detailed trends | Data lake + exports |
-| Compliance reporting | — | Standard | SOC 2, custom |
-| SSO/SAML | — | — | Yes |
-| Webhook integrations | — | 3 endpoints | Unlimited |
-| API access | — | Read-only | Full CRUD |
-| Dedicated support | Email (48h) | Email (24h) | Slack channel (4h) |
-| White-label option | — | — | Add-on ($500/mo) |
-| Client data export | CSV | CSV + JSON | CSV + JSON + Parquet |
+| Feature              | Solo ($49/mo) | Practice ($199/mo) | Enterprise ($999+/mo) |
+| -------------------- | :-----------: | :----------------: | :-------------------: |
+| Client limit         |      10       |         50         |       Unlimited       |
+| Dashboard access     |     Basic     |        Full        |     Full + custom     |
+| Contract templates   |  5 standard   |    20 + custom     |   Unlimited custom    |
+| Analytics            | Summary stats |  Detailed trends   |  Data lake + exports  |
+| Compliance reporting |       —       |      Standard      |     SOC 2, custom     |
+| SSO/SAML             |       —       |         —          |          Yes          |
+| Webhook integrations |       —       |    3 endpoints     |       Unlimited       |
+| API access           |       —       |     Read-only      |       Full CRUD       |
+| Dedicated support    |  Email (48h)  |    Email (24h)     |  Slack channel (4h)   |
+| White-label option   |       —       |         —          |   Add-on ($500/mo)    |
+| Client data export   |      CSV      |     CSV + JSON     | CSV + JSON + Parquet  |
 
 ### Tier Design Rationale
 
@@ -81,11 +81,11 @@ This framing is critical. Styx marketing always emphasizes "you only lose money 
 
 The B2B price is anchored against the value delivered per client:
 
-| Tier | Price | Client Limit | Price/Client/Mo | Value Created/Client/Mo |
-|------|-------|-------------|-----------------|------------------------|
-| Solo | $49 | 10 | $4.90 | ~$50 (improved outcomes, reduced no-shows) |
-| Practice | $199 | 50 | $3.98 | ~$50 |
-| Enterprise | $999 | Unlimited (est. 200) | $5.00 | ~$50 |
+| Tier       | Price | Client Limit         | Price/Client/Mo | Value Created/Client/Mo                    |
+| ---------- | ----- | -------------------- | --------------- | ------------------------------------------ |
+| Solo       | $49   | 10                   | $4.90           | ~$50 (improved outcomes, reduced no-shows) |
+| Practice   | $199  | 50                   | $3.98           | ~$50                                       |
+| Enterprise | $999  | Unlimited (est. 200) | $5.00           | ~$50                                       |
 
 At ~$5/client/month, the practitioner pays roughly 10% of the value Styx delivers through improved client follow-through. This 10:1 value ratio is well within enterprise SaaS norms.
 
@@ -93,12 +93,12 @@ At ~$5/client/month, the practitioner pays roughly 10% of the value Styx deliver
 
 ### Direct Competitors (Commitment Devices)
 
-| Platform | Model | Stake Range | Fee | Peer Audit | Blockchain |
-|----------|-------|-------------|-----|:---:|:---:|
-| **Styx** | Platform fee + stake | $19-$2,000 | $5-$99 | Yes (Fury) | Yes (double-entry) |
-| Beeminder | Pledge escalation | $5-$2,430 | Free tier + pledges | No (self-report) | No |
-| StickK | Referee + charity | $5-$5,000+ | Free (charity model) | Partial (referee) | No |
-| Pact (defunct) | Peer wagering | $5-$50/wk | Revenue from failures | No | No |
+| Platform       | Model                | Stake Range | Fee                   |    Peer Audit     |     Blockchain     |
+| -------------- | -------------------- | ----------- | --------------------- | :---------------: | :----------------: |
+| **Styx**       | Platform fee + stake | $19-$2,000  | $5-$99                |    Yes (Fury)     | Yes (double-entry) |
+| Beeminder      | Pledge escalation    | $5-$2,430   | Free tier + pledges   | No (self-report)  |         No         |
+| StickK         | Referee + charity    | $5-$5,000+  | Free (charity model)  | Partial (referee) |         No         |
+| Pact (defunct) | Peer wagering        | $5-$50/wk   | Revenue from failures |        No         |         No         |
 
 ### Key Differentiators
 
@@ -109,12 +109,12 @@ At ~$5/client/month, the practitioner pays roughly 10% of the value Styx deliver
 
 ### Indirect Competitors (Habit Apps)
 
-| App | Monthly Price | Mechanism | Completion Rate |
-|-----|--------------|-----------|----------------|
-| Habitica | Free / $4.99 | Gamification | ~30% |
-| Streaks | $4.99 (one-time) | Streak tracking | ~25% |
-| Coach.me | Free / $25/wk (coaching) | Social + coaching | ~40% |
-| **Styx** | $9/contract | Financial loss aversion | ~65% (projected) |
+| App      | Monthly Price            | Mechanism               | Completion Rate  |
+| -------- | ------------------------ | ----------------------- | ---------------- |
+| Habitica | Free / $4.99             | Gamification            | ~30%             |
+| Streaks  | $4.99 (one-time)         | Streak tracking         | ~25%             |
+| Coach.me | Free / $25/wk (coaching) | Social + coaching       | ~40%             |
+| **Styx** | $9/contract              | Financial loss aversion | ~65% (projected) |
 
 Styx's projected 65% completion rate comes from commitment device literature showing 2-3x improvement over gamification-only approaches when real money is at stake.
 
@@ -125,13 +125,13 @@ Styx's projected 65% completion rate comes from commitment device literature sho
 The relationship between stake size and behavior follows a curve:
 
 | Stake | Perceived Loss (λ=1.955) | Completion Rate (est.) | Barrier to Entry |
-|-------|--------------------------|----------------------|-----------------|
-| $10 | $19.55 | 45% | Very low |
-| $25 | $48.88 | 55% | Low |
-| $39 | $76.25 | 65% | Moderate |
-| $75 | $146.63 | 75% | High |
-| $150 | $293.25 | 82% | Very high |
-| $500 | $977.50 | 90% | Extreme |
+| ----- | ------------------------ | ---------------------- | ---------------- |
+| $10   | $19.55                   | 45%                    | Very low         |
+| $25   | $48.88                   | 55%                    | Low              |
+| $39   | $76.25                   | 65%                    | Moderate         |
+| $75   | $146.63                  | 75%                    | High             |
+| $150  | $293.25                  | 82%                    | Very high        |
+| $500  | $977.50                  | 90%                    | Extreme          |
 
 The sweet spot is $25-$75: high enough to trigger genuine loss aversion, low enough to not deter first-time users. The $39 default sits in the center of this range.
 
@@ -140,13 +140,13 @@ The sweet spot is $25-$75: high enough to trigger genuine loss aversion, low eno
 Consumer willingness to pay the platform fee decreases sharply above 25% of stake:
 
 | Fee as % of Stake | Conversion Impact (est.) |
-|-------------------|------------------------|
-| 10% | Baseline |
-| 15% | -5% conversion |
-| 20% | -12% conversion |
-| 23% (current) | -18% conversion |
-| 30% | -35% conversion |
-| 50% | -70% conversion |
+| ----------------- | ------------------------ |
+| 10%               | Baseline                 |
+| 15%               | -5% conversion           |
+| 20%               | -12% conversion          |
+| 23% (current)     | -18% conversion          |
+| 30%               | -35% conversion          |
+| 50%               | -70% conversion          |
 
 At 23%, Styx is near the upper bound of acceptable fee ratio. As contract sizes scale up, the percentage must decrease (see variable contract sizing above).
 
@@ -156,37 +156,37 @@ At 23%, Styx is near the upper bound of acceptable fee ratio. As contract sizes 
 
 Specialized contract types with enhanced verification:
 
-| Category | Additional Fee | Features |
-|----------|---------------|----------|
-| Recovery Protocol | +$5 | Multi-phase contracts, sponsor integration, crisis routing |
-| Fitness Verified | +$3 | Wearable oracle integration, biometric proof |
-| Financial Discipline | +$3 | Bank API integration, spending verification |
-| Creative Commitment | +$2 | Deliverable upload + peer review |
+| Category             | Additional Fee | Features                                                   |
+| -------------------- | -------------- | ---------------------------------------------------------- |
+| Recovery Protocol    | +$5            | Multi-phase contracts, sponsor integration, crisis routing |
+| Fitness Verified     | +$3            | Wearable oracle integration, biometric proof               |
+| Financial Discipline | +$3            | Bank API integration, spending verification                |
+| Creative Commitment  | +$2            | Deliverable upload + peer review                           |
 
 ### Faster Fury Routing
 
-| Speed Tier | Additional Fee | Audit SLA |
-|-----------|---------------|-----------|
-| Standard | Included | 24-48 hours |
-| Priority | +$2 | 4-8 hours |
-| Instant | +$5 | < 1 hour |
+| Speed Tier | Additional Fee | Audit SLA   |
+| ---------- | -------------- | ----------- |
+| Standard   | Included       | 24-48 hours |
+| Priority   | +$2            | 4-8 hours   |
+| Instant    | +$5            | < 1 hour    |
 
 ### Enhanced Analytics (Consumer)
 
-| Feature | Price | Description |
-|---------|-------|-------------|
-| Streak analytics | Free | Basic completion history |
-| Behavioral insights | $3/mo | Loss aversion profile, optimal stake recommendations |
-| Progress reports | $5/mo | Exportable reports for therapists, coaches, or personal records |
+| Feature             | Price | Description                                                     |
+| ------------------- | ----- | --------------------------------------------------------------- |
+| Streak analytics    | Free  | Basic completion history                                        |
+| Behavioral insights | $3/mo | Loss aversion profile, optimal stake recommendations            |
+| Progress reports    | $5/mo | Exportable reports for therapists, coaches, or personal records |
 
 ### White-Label (Enterprise Add-On)
 
-| Component | Monthly Add-On |
-|-----------|---------------|
-| Custom domain | +$200 |
-| Branded UI | +$300 |
-| Custom oath categories | +$200 |
-| Full white-label | +$500 (bundle) |
+| Component              | Monthly Add-On |
+| ---------------------- | -------------- |
+| Custom domain          | +$200          |
+| Branded UI             | +$300          |
+| Custom oath categories | +$200          |
+| Full white-label       | +$500 (bundle) |
 
 ## Pricing Governance
 

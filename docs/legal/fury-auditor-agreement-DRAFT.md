@@ -23,7 +23,7 @@ _Effective date: [TBD -- prior to beta launch]_
 > drafted. Do not present it to a prospective auditor before counsel review.
 
 Named by the phase gate at `docs/checklists/phase-gate-public-process.md` §2 → Legal Documents:
-*"Fury Auditor Agreement published (terms governing peer audit obligations)."*
+_"Fury Auditor Agreement published (terms governing peer audit obligations)."_
 Registered as artifact **L11** in `docs/departments/leg/REGE.md`.
 
 Companion documents: `docs/legal/terms-of-service.md` (§ Definitions — "Fury", "Bounty",
@@ -72,12 +72,12 @@ disclose it through the Platform.
 
 ## 4. Compensation
 
-| Term | Value |
-|---|---|
-| Bounty per correct audit | **$2.00** (200 cents) |
-| Penalty per incorrect audit | **$2.00** (200 cents) |
-| Payment trigger | Panel consensus resolves the proof |
-| Payment method | Credit to your Platform ledger account |
+| Term                        | Value                                  |
+| --------------------------- | -------------------------------------- |
+| Bounty per correct audit    | **$2.00** (200 cents)                  |
+| Penalty per incorrect audit | **$2.00** (200 cents)                  |
+| Payment trigger             | Panel consensus resolves the proof     |
+| Payment method              | Credit to your Platform ledger account |
 
 An audit is "correct" when your verdict matches the panel's resolved consensus outcome. An audit is
 "incorrect" when it does not. **Both directions are financial**: a correct audit credits your
@@ -168,11 +168,11 @@ The Company characterizes auditors as independent contractors (§1). That charac
 ABC test (California, Illinois, New Jersey, Massachusetts, and others) and the federal
 economic-reality test. Applying the ABC test to the facts as implemented:
 
-| Prong | Facts as the Platform actually operates | Assessment |
-|---|---|---|
-| **(A)** Free from control and direction | Auditors set no schedule, accept no minimum volume, and can decline any assignment. **But** the Company sets the review criteria, sets the price unilaterally, routes the work, grades the output against a hidden answer key (§5), and penalizes disagreement financially. | **Contested.** The honeypot-and-penalty mechanism is a strong control signal. |
-| **(B)** Work outside the usual course of business | Peer audit **is** the product. Styx does not exist without Fury verdicts. | **Fails on its face.** |
-| **(C)** Independently established trade | Auditors have no independent auditing business, no other clients, no ability to set their own rate, and cannot subcontract. | **Fails.** |
+| Prong                                             | Facts as the Platform actually operates                                                                                                                                                                                                                                     | Assessment                                                                    |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **(A)** Free from control and direction           | Auditors set no schedule, accept no minimum volume, and can decline any assignment. **But** the Company sets the review criteria, sets the price unilaterally, routes the work, grades the output against a hidden answer key (§5), and penalizes disagreement financially. | **Contested.** The honeypot-and-penalty mechanism is a strong control signal. |
+| **(B)** Work outside the usual course of business | Peer audit **is** the product. Styx does not exist without Fury verdicts.                                                                                                                                                                                                   | **Fails on its face.**                                                        |
+| **(C)** Independently established trade           | Auditors have no independent auditing business, no other clients, no ability to set their own rate, and cannot subcontract.                                                                                                                                                 | **Fails.**                                                                    |
 
 **Prong B is not arguable.** Any state applying a strict ABC test is likely to classify Furies as
 employees on these facts. The disclosed exposure is payroll taxes, minimum wage (note that the $2.00
@@ -201,13 +201,13 @@ document. This section is the placeholder that review fills.
 
 ## Drafting Notes (internal — remove before publication)
 
-| Item | Status |
-|---|---|
-| Outside counsel retained | **No** — issue #315 |
-| Worker-classification memo | **Not performed** — §11 is the open question, not the answer |
-| Arbitration clause | **Deliberately absent** — requires counsel |
-| Entity formed / named | **No** — "[ORGANVM Entity TBD]" throughout |
-| Non-compete | **Deliberately absent** — the REGE backlog names one; enforceability against a $2.00-per-audit contractor is doubtful and it is not drafted here |
+| Item                       | Status                                                                                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Outside counsel retained   | **No** — issue #315                                                                                                                              |
+| Worker-classification memo | **Not performed** — §11 is the open question, not the answer                                                                                     |
+| Arbitration clause         | **Deliberately absent** — requires counsel                                                                                                       |
+| Entity formed / named      | **No** — "[ORGANVM Entity TBD]" throughout                                                                                                       |
+| Non-compete                | **Deliberately absent** — the REGE backlog names one; enforceability against a $2.00-per-audit contractor is doubtful and it is not drafted here |
 
 **Source of every factual claim about mechanism in this draft:**
 `src/api/services/fury-router/fury-router.worker.ts` (§3 isolation rules, panel routing),

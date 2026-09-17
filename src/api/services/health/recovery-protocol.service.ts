@@ -1,10 +1,10 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, HttpException, HttpStatus } from "@nestjs/common";
+import { Pool } from "pg";
 import {
   MAX_NOCONTACT_DURATION_DAYS,
   MAX_NOCONTACT_TARGETS,
   ABSOLUTE_MAX_ISOLATION_TARGETS,
-} from '../../../shared/libs/behavioral-logic';
+} from "../../../shared/libs/behavioral-logic";
 
 export interface RecoveryMetadata {
   accountabilityPartnerEmail: string;
@@ -25,7 +25,10 @@ export class RecoveryProtocolService {
    * Theorem 8: Anti-Isolation Guardrails.
    * Checks if the user is attempting to block too many people across all active contracts.
    */
-  async checkIsolationRisk(userId: string, newTargetCount: number): Promise<void> {
+  async checkIsolationRisk(
+    userId: string,
+    newTargetCount: number,
+  ): Promise<void> {
     const activeContracts = await this.pool.query(
       `SELECT metadata, oath_category FROM contracts 
        WHERE user_id = $1 AND status = 'ACTIVE' 
@@ -40,7 +43,7 @@ export class RecoveryProtocolService {
       totalTargets += targets.length;
 
       // Substance/Detox oaths count as 1 virtual "isolation point" each
-      if (contract.oath_category !== 'RECOVERY_NOCONTACT') {
+      if (contract.oath_category !== "RECOVERY_NOCONTACT") {
         totalTargets += 1;
       }
     }
@@ -66,15 +69,18 @@ export class RecoveryProtocolService {
     // All RECOVERY_ oaths require metadata
     if (!metadata) {
       throw new HttpException(
-        'Recovery contracts require accountability partner and safety acknowledgments.',
+        "Recovery contracts require accountability partner and safety acknowledgments.",
         HttpStatus.NOT_ACCEPTABLE,
       );
     }
 
     // Mandatory accountability partner for all RECOVERY_ oaths
-    if (!metadata.accountabilityPartnerEmail || metadata.accountabilityPartnerEmail.trim() === '') {
+    if (
+      !metadata.accountabilityPartnerEmail ||
+      metadata.accountabilityPartnerEmail.trim() === ""
+    ) {
       throw new HttpException(
-        'Recovery Protocol: An accountability partner email is required for all recovery contracts.',
+        "Recovery Protocol: An accountability partner email is required for all recovery contracts.",
         HttpStatus.NOT_ACCEPTABLE,
       );
     }
@@ -85,9 +91,9 @@ export class RecoveryProtocolService {
       [metadata.accountabilityPartnerEmail.toLowerCase()],
     );
 
-    if (partner.rows.length === 0 || partner.rows[0].status !== 'ACTIVE') {
+    if (partner.rows.length === 0 || partner.rows[0].status !== "ACTIVE") {
       throw new HttpException(
-        'Recovery Protocol: Accountability partner must be an active, registered user. Please ensure they have verified their account.',
+        "Recovery Protocol: Accountability partner must be an active, registered user. Please ensure they have verified their account.",
         HttpStatus.NOT_ACCEPTABLE,
       );
     }
@@ -101,10 +107,13 @@ export class RecoveryProtocolService {
     }
 
     // No-contact target count cap (RECOVERY_NOCONTACT specific)
-    if (oathCategory === 'RECOVERY_NOCONTACT') {
-      if (!metadata.noContactIdentifiers || metadata.noContactIdentifiers.length === 0) {
+    if (oathCategory === "RECOVERY_NOCONTACT") {
+      if (
+        !metadata.noContactIdentifiers ||
+        metadata.noContactIdentifiers.length === 0
+      ) {
         throw new HttpException(
-          'Recovery Protocol: At least one no-contact identifier is required.',
+          "Recovery Protocol: At least one no-contact identifier is required.",
           HttpStatus.NOT_ACCEPTABLE,
         );
       }
@@ -116,14 +125,23 @@ export class RecoveryProtocolService {
       }
 
       // Theorem 8: Check global isolation risk across all contracts
-      await this.checkIsolationRisk(userId, metadata.noContactIdentifiers.length);
+      await this.checkIsolationRisk(
+        userId,
+        metadata.noContactIdentifiers.length,
+      );
     }
 
     // Safety acknowledgments — all must be true
     const acks = metadata.acknowledgments;
-    if (!acks || !acks.voluntary || !acks.noMinors || !acks.noDependents || !acks.noLegalObligations) {
+    if (
+      !acks ||
+      !acks.voluntary ||
+      !acks.noMinors ||
+      !acks.noDependents ||
+      !acks.noLegalObligations
+    ) {
       throw new HttpException(
-        'Recovery Protocol: All safety acknowledgments must be confirmed before contract creation.',
+        "Recovery Protocol: All safety acknowledgments must be confirmed before contract creation.",
         HttpStatus.NOT_ACCEPTABLE,
       );
     }
@@ -131,4 +149,3 @@ export class RecoveryProtocolService {
     return true;
   }
 }
-

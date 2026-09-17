@@ -18,14 +18,14 @@ Four primary personas representing Styx's core user segments. Each persona captu
 
 ### Demographics
 
-| Attribute | Value |
-|-----------|-------|
-| Age | 28 |
-| Location | Austin, TX |
-| Occupation | UX designer at a mid-size SaaS company |
-| Income | $75,000/year |
-| Relationship status | Recently single (3 weeks post-breakup) |
-| Tech comfort | High (daily smartphone user, familiar with fintech apps) |
+| Attribute           | Value                                                    |
+| ------------------- | -------------------------------------------------------- |
+| Age                 | 28                                                       |
+| Location            | Austin, TX                                               |
+| Occupation          | UX designer at a mid-size SaaS company                   |
+| Income              | $75,000/year                                             |
+| Relationship status | Recently single (3 weeks post-breakup)                   |
+| Tech comfort        | High (daily smartphone user, familiar with fintech apps) |
 
 ### Background
 
@@ -48,6 +48,7 @@ Alex ended a 2.5-year relationship and is struggling with the urge to text their
 ### Usage Scenario
 
 Alex creates a **Recovery Oath** with the following parameters:
+
 - Duration: 30 days
 - No-contact targets: ex-partner (1 target)
 - Stake: $39 (standard contract)
@@ -79,14 +80,14 @@ On Day 12, Alex feels a strong urge to text. They open Styx, see the stake amoun
 
 ### Demographics
 
-| Attribute | Value |
-|-----------|-------|
-| Age | 35 |
-| Location | Denver, CO |
-| Occupation | Senior software engineer (remote) |
-| Income | $145,000/year |
-| Relationship status | Married, one child (age 3) |
-| Tech comfort | Very high (builds software for a living) |
+| Attribute           | Value                                    |
+| ------------------- | ---------------------------------------- |
+| Age                 | 35                                       |
+| Location            | Denver, CO                               |
+| Occupation          | Senior software engineer (remote)        |
+| Income              | $145,000/year                            |
+| Relationship status | Married, one child (age 3)               |
+| Tech comfort        | Very high (builds software for a living) |
 
 ### Background
 
@@ -109,6 +110,7 @@ Jordan has been trying to lose 20 pounds for two years. They have a gym membersh
 ### Usage Scenario
 
 Jordan creates a **Biological Oath** with the following parameters:
+
 - Duration: 84 days (12 weeks)
 - Verification: 4x/week photo proof (gym selfie with timestamp + location metadata)
 - Stake: $150 (elevated stake, Jordan's integrity score allows up to $200)
@@ -144,14 +146,14 @@ At week 6, Jordan uses a grace day for a family vacation. The ledger records the
 
 ### Demographics
 
-| Attribute | Value |
-|-----------|-------|
-| Age | 42 |
-| Location | Portland, OR |
-| Occupation | Licensed clinical psychologist (CBT specialty) |
-| Income | $130,000/year (private practice) |
-| Practice size | Solo practitioner, 35 active clients |
-| Tech comfort | Moderate (uses practice management software, telehealth) |
+| Attribute     | Value                                                    |
+| ------------- | -------------------------------------------------------- |
+| Age           | 42                                                       |
+| Location      | Portland, OR                                             |
+| Occupation    | Licensed clinical psychologist (CBT specialty)           |
+| Income        | $130,000/year (private practice)                         |
+| Practice size | Solo practitioner, 35 active clients                     |
+| Tech comfort  | Moderate (uses practice management software, telehealth) |
 
 ### Background
 
@@ -208,14 +210,14 @@ The key insight for Dr. Chen: she does not need to be the verifier. The Fury net
 
 ### Demographics
 
-| Attribute | Value |
-|-----------|-------|
-| Age | 31 |
-| Location | Chicago, IL |
-| Occupation | Freelance graphic designer |
-| Income | $55,000/year (variable) |
-| Platform role | Fury (peer auditor) |
-| Tech comfort | High |
+| Attribute     | Value                      |
+| ------------- | -------------------------- |
+| Age           | 31                         |
+| Location      | Chicago, IL                |
+| Occupation    | Freelance graphic designer |
+| Income        | $55,000/year (variable)    |
+| Platform role | Fury (peer auditor)        |
+| Tech comfort  | High                       |
 
 ### Background
 
@@ -293,9 +295,9 @@ Dr. Chen (B2B) <--monitors-- Compliance Dashboard
 
 ## Persona Priority
 
-| Persona | Segment | Beta Priority | Revenue Channel |
-|---------|---------|---------------|-----------------|
-| Alex | Breakup recovery | P0 (launch wedge) | Consumer contract fee ($9 per $39) |
-| Jordan | Fitness/health | P1 (beta expansion) | Consumer contract fee (variable) |
-| Dr. Chen | B2B practitioner | P1 (beta soft launch) | Subscription ($49-999+/mo) |
-| Marcus | Fury auditor | P0 (required for all) | Bounty cost (platform expense) |
+| Persona  | Segment          | Beta Priority         | Revenue Channel                    |
+| -------- | ---------------- | --------------------- | ---------------------------------- |
+| Alex     | Breakup recovery | P0 (launch wedge)     | Consumer contract fee ($9 per $39) |
+| Jordan   | Fitness/health   | P1 (beta expansion)   | Consumer contract fee (variable)   |
+| Dr. Chen | B2B practitioner | P1 (beta soft launch) | Subscription ($49-999+/mo)         |
+| Marcus   | Fury auditor     | P0 (required for all) | Bounty cost (platform expense)     |

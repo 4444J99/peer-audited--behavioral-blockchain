@@ -10,16 +10,16 @@
 
 The project board has grown organically through AI-assisted triage sessions, producing 221 open issues and a project board that's become an "endless sprawl." Diagnosis:
 
-| Problem | Evidence |
-|---------|----------|
-| **125 issues orphaned** | 221 open issues, only 96 on the board |
-| **90/96 items stuck at "Todo"** | Only 2 "In Progress", 4 "Done" — board is static |
-| **No priority field** | Can't distinguish P0-blockers from P3-nice-to-haves |
-| **No effort/size field** | Can't plan capacity or estimate work |
-| **189/221 issues have no milestone** | No timeline visibility |
-| **Generic views** | "View 1" (table), "View 2" (board), "View 3" (roadmap) — unnamed, unfiltered |
-| **42 labels** | Label sprawl — duplicates concern axes that should be fields |
-| **Category field is misleading** | 91 of 96 items = "A-Plans"; provides no differentiation |
+| Problem                              | Evidence                                                                     |
+| ------------------------------------ | ---------------------------------------------------------------------------- |
+| **125 issues orphaned**              | 221 open issues, only 96 on the board                                        |
+| **90/96 items stuck at "Todo"**      | Only 2 "In Progress", 4 "Done" — board is static                             |
+| **No priority field**                | Can't distinguish P0-blockers from P3-nice-to-haves                          |
+| **No effort/size field**             | Can't plan capacity or estimate work                                         |
+| **189/221 issues have no milestone** | No timeline visibility                                                       |
+| **Generic views**                    | "View 1" (table), "View 2" (board), "View 3" (roadmap) — unnamed, unfiltered |
+| **42 labels**                        | Label sprawl — duplicates concern axes that should be fields                 |
+| **Category field is misleading**     | 91 of 96 items = "A-Plans"; provides no differentiation                      |
 
 **What's working:** Source Plan field (12 options, fully populated), 6 automations enabled, issue templates exist, milestones defined with gates.
 
@@ -28,12 +28,14 @@ The project board has grown organically through AI-assisted triage sessions, pro
 ### Step 1: Add Priority field (single-select)
 
 Add to project: `Priority` with options:
+
 - `P0-blocker` — must-have for beta gate
 - `P1-high` — should-have for beta
 - `P2-medium` — post-beta
 - `P3-backlog` — nice-to-have / may archive
 
 **Bulk-set from existing labels** (already labeled):
+
 - `P0-beta-blocker` (3 issues) → P0
 - `P1-beta-enhancer` (24 issues) → P1
 - `P2-post-beta` (62 issues) → P2
@@ -48,6 +50,7 @@ Leave blank initially — populate as items enter sprints. Don't burn time sizin
 ### Step 3: Add Target Date field (date)
 
 For milestone-gated items, set Target Date from milestone due dates:
+
 - Beta Gate items → `2026-04-30`
 - Gamma Gate items → `2026-06-30`
 - Delta Gate items → `2026-09-30`
@@ -55,14 +58,14 @@ For milestone-gated items, set Target Date from milestone due dates:
 
 ### Step 4: Rename and configure views (replace "View 1/2/3")
 
-| View | Layout | Filter/Group | Purpose |
-|------|--------|-------------|---------|
-| **Sprint Board** | Board | Status columns, sorted by Priority | Daily execution |
-| **Backlog** | Table | `Status != Done`, sorted by Priority desc | Prioritized queue |
-| **Roadmap** | Roadmap | Target Date field, grouped by Source Plan | Timeline visibility |
-| **By Epic** | Table | Grouped by Source Plan | Epic progress tracking |
-| **Needs Triage** | Table | `Priority = EMPTY` or `Status = Todo` for 60+ days | Weekly hygiene |
-| **Beta Gate** | Table | Milestone = "Beta Gate", sorted by Priority | Release focus |
+| View             | Layout  | Filter/Group                                       | Purpose                |
+| ---------------- | ------- | -------------------------------------------------- | ---------------------- |
+| **Sprint Board** | Board   | Status columns, sorted by Priority                 | Daily execution        |
+| **Backlog**      | Table   | `Status != Done`, sorted by Priority desc          | Prioritized queue      |
+| **Roadmap**      | Roadmap | Target Date field, grouped by Source Plan          | Timeline visibility    |
+| **By Epic**      | Table   | Grouped by Source Plan                             | Epic progress tracking |
+| **Needs Triage** | Table   | `Priority = EMPTY` or `Status = Todo` for 60+ days | Weekly hygiene         |
+| **Beta Gate**    | Table   | Milestone = "Beta Gate", sorted by Priority        | Release focus          |
 
 ### Step 5: Add all 125 orphaned issues to this project board
 

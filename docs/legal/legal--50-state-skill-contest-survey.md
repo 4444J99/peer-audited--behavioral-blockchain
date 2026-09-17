@@ -24,12 +24,15 @@ However, states apply different legal tests to determine if a contest is predomi
 3.  **Any Chance Test (Approx. 2 States):** Contests are illegal if "any chance" influences the outcome.
 
 ### Core Legal Assertion for Styx
+
 Styx contracts are **unilateral performance contracts** where the "prize" is the return of the user's own staked funds upon successful completion of a pre-defined behavioral goal. Because the outcome is entirely within the user's control (e.g., walking 10,000 steps), the element of "chance" is legally de minimis or non-existent.
 
 ### Survey Scope
+
 This survey covers all 50 US states plus the District of Columbia (51 jurisdictions total). For each jurisdiction, we analyze the primary gambling statute, applicable legal test, DFS legislation (if any), skill-contest carve-outs, Attorney General opinions and enforcement history, risk classification, and blocklist recommendation. The survey reflects the legal landscape as of March 2026.
 
 ### Key Findings
+
 - **8 jurisdictions recommended for immediate blocking:** Arizona, Arkansas, Hawaii, Idaho, Montana, Nevada, South Dakota, and Utah.
 - **6 jurisdictions classified as high-risk (monitor):** South Carolina, Washington, Georgia, Minnesota, Oregon, and Louisiana.
 - **37 jurisdictions classified as low or medium risk:** Favorable deployment targets with varying compliance requirements.
@@ -40,6 +43,7 @@ This survey covers all 50 US states plus the District of Columbia (51 jurisdicti
 ## 2. Methodology
 
 Each state entry includes:
+
 - **Gambling Statute:** Primary criminal code citation using Bluebook format.
 - **Legal Test:** The specific standard applied by courts (Dominant Factor, Material Element, Any Chance).
 - **DFS Legislation:** Whether the state has enacted specific Daily Fantasy Sports legislation, with statutory citation and year of enactment.
@@ -54,24 +58,28 @@ Each state entry includes:
 The risk classifications used in this survey are based on a multi-factor assessment:
 
 **Low Risk** — States meeting ALL of the following:
+
 - Dominant Factor test OR explicit statutory safe harbor for skill contests.
 - No hostile AG opinions or enforcement actions against skill/DFS platforms.
 - DFS legislation enacted OR strong common-law skill-contest exemption.
 - No pending legislation that could restrict skill contests.
 
 **Medium Risk** — States meeting ANY of the following:
+
 - Material Element test without explicit statutory safe harbor.
 - "Any Chance" test but with statutory language favorable to Styx (e.g., "control or influence" qualifier).
 - No DFS legislation in a state where the AG has not provided guidance.
 - Regulatory ambiguity requiring ongoing monitoring.
 
 **High Risk** — States meeting ANY of the following:
+
 - "Any Chance" test applied aggressively by courts or AG.
 - AG has expressed opposition to DFS/skill contests without formal prohibition.
 - No statutory safe harbor combined with hostile enforcement environment.
 - Significant compliance burdens (e.g., Washington's MHMDA for wearable data).
 
 **Block** — States meeting ANY of the following:
+
 - AG has issued formal opinion declaring DFS/skill contests illegal.
 - Constitutional prohibition on wagering (Utah).
 - Full gaming licensure required for any wagering (Nevada).
@@ -116,7 +124,7 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 2. **Complete user control:** The outcome is determined entirely by the user's own actions, not by external events, other players, or random processes.
 3. **Verifiable performance:** Behavioral goals are verified through peer audit and device telemetry, not through subjective judging or random selection.
 4. **Return of own funds:** The "prize" is the return of the user's own staked funds, not a redistribution of a collective prize pool.
-5. **Commitment device framing:** Styx can be characterized as a "commitment device" — a behavioral economics tool — rather than a wagering platform. This framing has been recognized by behavioral economics literature (*See* Thaler & Sunstein, *Nudge* (2008); Karlan et al., "Getting to the Top of Mind: How Reminders Increase Saving" (2016)).
+5. **Commitment device framing:** Styx can be characterized as a "commitment device" — a behavioral economics tool — rather than a wagering platform. This framing has been recognized by behavioral economics literature (_See_ Thaler & Sunstein, _Nudge_ (2008); Karlan et al., "Getting to the Top of Mind: How Reminders Increase Saving" (2016)).
 
 ---
 
@@ -125,11 +133,11 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 ### 3.1 Alabama
 
 - **Gambling Statute:** ALA. CODE § 13A-12-20.
-- **Legal Test:** Dominant Factor Test. *See Logan v. State*, 829 So. 2d 139 (Ala. 2002).
+- **Legal Test:** Dominant Factor Test. _See Logan v. State_, 829 So. 2d 139 (Ala. 2002).
 - **DFS Legislation:** ALA. CODE § 8-19E-1 et seq. (Fantasy Contests Act).
 - **Skill-Contest Carve-Outs:** Alabama law permits "bona fide business transactions valid under the law of contracts" and "contests of skill." The Fantasy Contests Act specifically provides a safe harbor for platforms where skill determines the outcome.
 - **AG Opinions / Enforcement History:** AG Steve Marshall's office has taken a measured approach to skill-based contests. The 2019 passage of the Fantasy Contests Act followed bipartisan legislative effort and AG guidance confirming that skill-predominant platforms were not the target of the state's anti-gambling enforcement. No known enforcement actions against DFS or skill-contest operators.
-- **Analysis:** Alabama's adoption of the Fantasy Contests Act in 2019 provided a safe harbor for skill-based games. The "Dominant Factor" test is favorable to Styx, as behavioral goals are 100% skill/effort based. The *Logan* precedent reinforces that the court examines the predominant factor rather than requiring complete absence of chance. Alabama's statutory framework is among the most clearly delineated in the Southeast.
+- **Analysis:** Alabama's adoption of the Fantasy Contests Act in 2019 provided a safe harbor for skill-based games. The "Dominant Factor" test is favorable to Styx, as behavioral goals are 100% skill/effort based. The _Logan_ precedent reinforces that the court examines the predominant factor rather than requiring complete absence of chance. Alabama's statutory framework is among the most clearly delineated in the Southeast.
 - **Risk Classification:** Low.
 - **STYX_STATE_BLOCKLIST:** **ALLOWED** — Dominant Factor test plus explicit statutory safe harbor for skill contests.
 
@@ -169,11 +177,11 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 ### 3.5 California
 
 - **Gambling Statute:** CAL. PENAL CODE § 330 et seq.
-- **Legal Test:** Dominant Factor Test. *See People v. Settles*, 29 Cal. App. 2d Supp. 781 (1938).
+- **Legal Test:** Dominant Factor Test. _See People v. Settles_, 29 Cal. App. 2d Supp. 781 (1938).
 - **DFS Legislation:** None enacted. AB 1437 (2016), the proposed Fantasy Sports legislation, passed the Assembly but died in the Senate Appropriations Committee following intense lobbying from tribal gaming interests and disagreement over regulatory structure. Subsequent legislative attempts (AB 1441, SB 1437) also failed.
 - **Skill-Contest Carve-Outs:** Broadly permitted under common law if skill is the predominant factor. CAL. PENAL CODE § 330 prohibits "banking" and "percentage" games but does not reach bona fide contests of skill. CAL. BUS. & PROF. CODE § 17200 (unfair competition) provides an alternative enforcement pathway but is consumer-protection focused.
-- **AG Opinions / Enforcement History:** AG Xavier Becerra (2017-2021) took a consumer protection stance toward DFS, issuing a 2018 advisory letter warning that operators must ensure transparent odds disclosure and player fund segregation. The AG stopped short of declaring DFS illegal under § 330, implicitly accepting the Dominant Factor framework. AG Rob Bonta (2021-present) has continued this posture. No enforcement actions against DFS operators under the gambling statute. The *Settles* precedent (1938) remains the foundational case, holding that poker is a game of chance but leaving open that other contests may be predominantly skill-based.
-- **Analysis:** California is a "permissive" state for skill-based platforms. The lack of DFS legislation means the "Dominant Factor" test from *Settles* remains the primary hurdle. Styx's behavioral ledger is inherently skill-dominant, as the outcome depends entirely on user effort. The state's massive market (39M+ population) and the AG's consumer-protection-rather-than-prohibition approach make California a priority deployment jurisdiction. The key risk is regulatory uncertainty if a future AG takes a more aggressive stance, but Styx's performance-contract model is structurally distinct from traditional DFS.
+- **AG Opinions / Enforcement History:** AG Xavier Becerra (2017-2021) took a consumer protection stance toward DFS, issuing a 2018 advisory letter warning that operators must ensure transparent odds disclosure and player fund segregation. The AG stopped short of declaring DFS illegal under § 330, implicitly accepting the Dominant Factor framework. AG Rob Bonta (2021-present) has continued this posture. No enforcement actions against DFS operators under the gambling statute. The _Settles_ precedent (1938) remains the foundational case, holding that poker is a game of chance but leaving open that other contests may be predominantly skill-based.
+- **Analysis:** California is a "permissive" state for skill-based platforms. The lack of DFS legislation means the "Dominant Factor" test from _Settles_ remains the primary hurdle. Styx's behavioral ledger is inherently skill-dominant, as the outcome depends entirely on user effort. The state's massive market (39M+ population) and the AG's consumer-protection-rather-than-prohibition approach make California a priority deployment jurisdiction. The key risk is regulatory uncertainty if a future AG takes a more aggressive stance, but Styx's performance-contract model is structurally distinct from traditional DFS.
 - **Risk Classification:** Low.
 - **STYX_STATE_BLOCKLIST:** **ALLOWED** — Dominant Factor test plus favorable AG posture; largest single-state market.
 
@@ -217,7 +225,7 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 - **DFS Legislation:** FLA. STAT. § 546.10 (Fantasy Sports, enacted 2018).
 - **Skill-Contest Carve-Outs:** FLA. STAT. § 849.14 excludes contests of skill where players are participants. The statute distinguishes between "betting" (prohibited) and "entrance fees" for bona fide skill competitions (permitted).
 - **AG Opinions / Enforcement History:** AG Ashley Moody's office issued a 2017 advisory opinion (prior to her tenure as AG, issued by then-AG Pam Bondi's office) confirming that fantasy sports contests where outcomes are determined predominantly by participant knowledge and skill are not "gambling" under Chapter 849. The advisory specifically noted that DFS platforms like FanDuel and DraftKings were not targets of enforcement. Post-2018 legislation, enforcement has focused on unlicensed sports betting and illegal slot machines rather than skill contests.
-- **Analysis:** Florida law explicitly prohibits betting on the result of a contest of skill *unless* the prize is provided by a third party or the entry fees form the prize pool in a bona fide contest. Styx's "Unilateral Performance" model is safer than traditional P2P wagering because the user is staking against their own behavioral commitment, not against another player's performance. The 2017 AG advisory opinion and subsequent legislation provide strong precedent for skill-contest platforms. Florida's large market (22M+ population) and favorable legal landscape make it a priority jurisdiction.
+- **Analysis:** Florida law explicitly prohibits betting on the result of a contest of skill _unless_ the prize is provided by a third party or the entry fees form the prize pool in a bona fide contest. Styx's "Unilateral Performance" model is safer than traditional P2P wagering because the user is staking against their own behavioral commitment, not against another player's performance. The 2017 AG advisory opinion and subsequent legislation provide strong precedent for skill-contest platforms. Florida's large market (22M+ population) and favorable legal landscape make it a priority jurisdiction.
 - **Risk Classification:** Low.
 - **STYX_STATE_BLOCKLIST:** **ALLOWED** — Dominant Factor test plus explicit statutory carve-out and favorable AG advisory opinion.
 
@@ -239,7 +247,7 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 - **DFS Legislation:** None enacted. The legislature has repeatedly rejected DFS bills. AG opposition has been consistent and vocal.
 - **Skill-Contest Carve-Outs:** Virtually none. HAW. REV. STAT. § 712-1220 defines gambling broadly to include any activity where one stakes something of value upon the outcome of a contest of chance or a future contingent event.
 - **AG Opinions / Enforcement History:** The Hawaii AG's office has consistently opposed any expansion of legal gaming. In 2016, AG Doug Chin publicly stated that DFS constituted illegal gambling under state law and warned operators to cease offering contests to Hawaii residents. This position has been maintained by subsequent AGs. The AG's office coordinated with the legislature to defeat proposed DFS legalization bills in 2016, 2017, and 2019. Hawaii remains one of only two states (with Utah) that prohibit virtually all forms of gambling.
-- **Analysis:** Hawaii is one of the most restrictive jurisdictions in the US. The state's definition of "gambling" includes any activity where one stakes something of value upon the outcome of a contest of chance or a future contingent event not under their control or influence. While behavioral performance *is* under the user's control, Hawaii's historical hostility to all wagering suggests a "Block" posture is safest. The AG's aggressive opposition to DFS and the legislature's consistent refusal to create safe harbors leave no regulatory pathway for Styx at this time.
+- **Analysis:** Hawaii is one of the most restrictive jurisdictions in the US. The state's definition of "gambling" includes any activity where one stakes something of value upon the outcome of a contest of chance or a future contingent event not under their control or influence. While behavioral performance _is_ under the user's control, Hawaii's historical hostility to all wagering suggests a "Block" posture is safest. The AG's aggressive opposition to DFS and the legislature's consistent refusal to create safe harbors leave no regulatory pathway for Styx at this time.
 - **Risk Classification:** Block.
 - **STYX_STATE_BLOCKLIST:** **BLOCKED** — Comprehensive prohibition; aggressive AG opposition; no regulatory pathway.
 
@@ -345,11 +353,11 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 ### 3.21 Massachusetts
 
 - **Gambling Statute:** MASS. GEN. LAWS ch. 271, § 1.
-- **Legal Test:** Dominant Factor Test. *See Commonwealth v. Plissner*, 4 N.E.2d 241 (Mass. 1936).
+- **Legal Test:** Dominant Factor Test. _See Commonwealth v. Plissner_, 4 N.E.2d 241 (Mass. 1936).
 - **DFS Legislation:** 940 MASS. CODE REGS. 34.00 (Attorney General Regulations, effective 2016).
 - **Skill-Contest Carve-Outs:** Explicit safe harbors for skill contests. The AG regulations provide detailed consumer protection requirements for DFS operators, including player fund segregation, advertising restrictions, and age verification.
 - **AG Opinions / Enforcement History:** AG Andrea Joy Campbell's office has maintained the comprehensive regulatory framework established by former AG Maura Healey. In 2015, Healey issued proposed regulations after a thorough investigation of DFS platforms, concluding that DFS was a permissible skill-based activity when properly regulated. The 940 CMR 34.00 regulations, finalized in 2016, established Massachusetts as a national leader in DFS consumer protection. The AG's enforcement posture has been regulatory rather than prohibitory — focused on ensuring compliance with the regulations rather than banning skill-based contests.
-- **Analysis:** Massachusetts has some of the most detailed consumer protection regulations for skill contests in the country. Compliance with 940 CMR 34.00 is mandatory for DFS, but Styx's behavioral model is generally exempt from the heaviest registration burdens. The Dominant Factor test from *Plissner* is well-established. The AG's regulatory approach — rather than prohibition — signals strong support for properly structured skill-based platforms. Styx should confirm whether its performance-contract model triggers the CMR 34.00 registration requirements.
+- **Analysis:** Massachusetts has some of the most detailed consumer protection regulations for skill contests in the country. Compliance with 940 CMR 34.00 is mandatory for DFS, but Styx's behavioral model is generally exempt from the heaviest registration burdens. The Dominant Factor test from _Plissner_ is well-established. The AG's regulatory approach — rather than prohibition — signals strong support for properly structured skill-based platforms. Styx should confirm whether its performance-contract model triggers the CMR 34.00 registration requirements.
 - **Risk Classification:** Low.
 - **STYX_STATE_BLOCKLIST:** **ALLOWED** — Dominant Factor test plus detailed regulatory framework; AG posture is regulatory, not prohibitory.
 
@@ -371,7 +379,7 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 - **DFS Legislation:** None enacted. Multiple bills have been introduced but none passed.
 - **Skill-Contest Carve-Outs:** Limited. MINN. STAT. § 609.761 provides narrow exemptions for social gambling and certain contests.
 - **AG Opinions / Enforcement History:** AG Keith Ellison's office has not issued formal opinions on DFS or behavioral skill contests. The AG's enforcement focus has been on illegal sports betting and unlicensed gambling operations. Minnesota's historically strict gaming laws have not been updated to address modern digital skill-contest platforms, creating regulatory ambiguity.
-- **Analysis:** Minnesota applies a strict "Any Chance" standard. However, the statute defines a "bet" as a bargain where the outcome is dependent on "chance" and "not under the control or influence of the person." Since behavioral goals *are* under the user's control, Styx has a strong defense under the statutory language itself. The "not under the control or influence" qualifier distinguishes Minnesota from other "Any Chance" states, as it provides an explicit carve-out for outcomes within the participant's control. This statutory language is uniquely favorable to Styx's model despite the overall strict standard.
+- **Analysis:** Minnesota applies a strict "Any Chance" standard. However, the statute defines a "bet" as a bargain where the outcome is dependent on "chance" and "not under the control or influence of the person." Since behavioral goals _are_ under the user's control, Styx has a strong defense under the statutory language itself. The "not under the control or influence" qualifier distinguishes Minnesota from other "Any Chance" states, as it provides an explicit carve-out for outcomes within the participant's control. This statutory language is uniquely favorable to Styx's model despite the overall strict standard.
 - **Risk Classification:** Medium.
 - **STYX_STATE_BLOCKLIST:** **ALLOWED** — Statutory "control or influence" qualifier provides defense for behavioral performance contracts.
 
@@ -389,7 +397,7 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 ### 3.25 Missouri
 
 - **Gambling Statute:** MO. REV. STAT. § 572.010.
-- **Legal Test:** Dominant Factor Test. Missouri courts examine whether skill or chance is the "dominant factor" in determining contest outcomes. *See State v. Sauer*, 38 Mo. 557 (1866) (early precedent distinguishing games of skill from games of chance).
+- **Legal Test:** Dominant Factor Test. Missouri courts examine whether skill or chance is the "dominant factor" in determining contest outcomes. _See State v. Sauer_, 38 Mo. 557 (1866) (early precedent distinguishing games of skill from games of chance).
 - **DFS Legislation:** None enacted. SB 567 (2016) and HB 1941 (2018) proposed DFS regulation frameworks but neither passed. DFS platforms have operated in Missouri without explicit statutory authorization, relying on the Dominant Factor test and the skill-contest exception in the general gambling statute.
 - **Skill-Contest Carve-Outs:** MO. REV. STAT. § 572.010(7) defines "gambling" as staking something of value upon the outcome of a contest of chance. The "contest of chance" language implicitly excludes contests of skill. Additionally, MO. REV. STAT. § 572.010(8) defines "gambling device" in terms of chance-based outcomes, further supporting the distinction between skill and chance.
 - **AG Opinions / Enforcement History:** AG Andrew Bailey's office has not issued formal opinions on DFS or skill-based behavioral platforms. His predecessor, AG Eric Schmitt (2019-2023), maintained a neutral enforcement posture toward DFS operators, neither pursuing enforcement actions nor providing formal safe harbor guidance. In 2016, during the peak of national DFS scrutiny, the Missouri AG's office informally indicated to legislative staff that DFS platforms likely operated within legal bounds under the Dominant Factor test. The AG's enforcement priorities have centered on illegal gambling operations, particularly unlicensed machines and internet sweepstakes cafes. Missouri's gaming regulatory infrastructure is administered through the Missouri Gaming Commission, which has not asserted jurisdiction over DFS platforms.
@@ -436,10 +444,10 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 - **Legal Test:** Dominant Factor Test. New Hampshire courts follow the traditional common-law approach examining whether skill or chance predominates in determining the contest outcome.
 - **DFS Legislation:** N.H. REV. STAT. ANN. § 287-H:1 et seq. (enacted 2017). The statute requires operator registration with the New Hampshire Lottery Commission, imposes consumer protection requirements (player fund segregation, responsible gaming provisions, age verification), and provides clear legal authorization for skill-based fantasy contests.
 - **Skill-Contest Carve-Outs:** Explicit DFS safe harbor under § 287-H:1 et seq. The gambling statute at § 647:2 defines "gambling" in terms of chance-based outcomes, implicitly excluding skill-dominant contests. The DFS legislation provides an additional layer of explicit protection.
-- **AG Opinions / Enforcement History:** AG John Formella's office has maintained a permissive approach to regulated gaming following the 2017 DFS legislation and the 2019 sports betting legalization (HB 480). Notably, the New Hampshire Lottery Commission, which won the landmark federal case *New Hampshire Lottery Commission v. Rosen*, 986 F.3d 38 (1st Cir. 2021) — establishing that the Wire Act applies only to sports betting — serves as the primary regulatory body for DFS. This federal court victory demonstrates New Hampshire's institutional commitment to defending regulated gaming against federal overreach. No enforcement actions against skill-contest operators. The AG's office has focused enforcement resources on unlicensed gambling operations and consumer fraud.
-- **Analysis:** New Hampshire provides a permissive environment for skill-based gaming following its 2017 legislation. The Dominant Factor test is favorable, and the explicit DFS framework provides clear authorization. The *Rosen* decision, litigated by New Hampshire's own Lottery Commission, is a landmark in federal gambling law that benefits all skill-based platforms nationwide. Registration with the Lottery Commission is straightforward, and the state's progressive approach to digital gaming — evidenced by its early adoption of both DFS and sports betting — signals institutional comfort with Styx's model. Styx's behavioral performance model is well-suited to the New Hampshire regulatory environment and may qualify for protection under both the DFS statute and the broader skill-contest common law defense.
+- **AG Opinions / Enforcement History:** AG John Formella's office has maintained a permissive approach to regulated gaming following the 2017 DFS legislation and the 2019 sports betting legalization (HB 480). Notably, the New Hampshire Lottery Commission, which won the landmark federal case _New Hampshire Lottery Commission v. Rosen_, 986 F.3d 38 (1st Cir. 2021) — establishing that the Wire Act applies only to sports betting — serves as the primary regulatory body for DFS. This federal court victory demonstrates New Hampshire's institutional commitment to defending regulated gaming against federal overreach. No enforcement actions against skill-contest operators. The AG's office has focused enforcement resources on unlicensed gambling operations and consumer fraud.
+- **Analysis:** New Hampshire provides a permissive environment for skill-based gaming following its 2017 legislation. The Dominant Factor test is favorable, and the explicit DFS framework provides clear authorization. The _Rosen_ decision, litigated by New Hampshire's own Lottery Commission, is a landmark in federal gambling law that benefits all skill-based platforms nationwide. Registration with the Lottery Commission is straightforward, and the state's progressive approach to digital gaming — evidenced by its early adoption of both DFS and sports betting — signals institutional comfort with Styx's model. Styx's behavioral performance model is well-suited to the New Hampshire regulatory environment and may qualify for protection under both the DFS statute and the broader skill-contest common law defense.
 - **Risk Classification:** Low.
-- **STYX_STATE_BLOCKLIST:** **ALLOWED** — Dominant Factor test plus explicit DFS safe harbor; state's *Rosen* victory strengthens federal position.
+- **STYX_STATE_BLOCKLIST:** **ALLOWED** — Dominant Factor test plus explicit DFS safe harbor; state's _Rosen_ victory strengthens federal position.
 
 ### 3.30 New Jersey
 
@@ -447,10 +455,10 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 - **Legal Test:** Dominant Factor Test. New Jersey courts apply a well-developed analytical framework examining whether skill or chance predominates, with extensive case law from the state's long history of regulated gaming.
 - **DFS Legislation:** N.J. STAT. ANN. § 5:18-1 et seq. (enacted 2017). The statute requires operator licensing with the Division of Gaming Enforcement (DGE), imposes comprehensive consumer protection requirements, and provides explicit legal authorization for skill-based fantasy contests. Annual license fees and compliance costs are significant but manageable for a platform of Styx's scale.
 - **Skill-Contest Carve-Outs:** Robust protections for skill-based gaming. N.J. STAT. ANN. § 2C:37-1(b) defines "contest of chance" and the negative implication is that contests of skill are excluded. The DFS statute provides additional explicit protection. New Jersey's Division of Gaming Enforcement (DGE) administers a comprehensive regulatory framework for both traditional gaming and digital skill-based platforms, with clear guidance documents available for operators.
-- **AG Opinions / Enforcement History:** AG Matthew Platkin's office has maintained New Jersey's position as a national leader in regulated gaming. The AG's office collaborated with the DGE and the New Jersey Casino Control Commission on the 2018 sports betting launch following the Supreme Court's *Murphy v. NCAA* decision, which originated from New Jersey's challenge to PASPA. This landmark Supreme Court victory — brought by New Jersey — reshaped the entire US gaming landscape by opening the door to state-level sports betting. The AG has not challenged the legality of DFS or skill-contest operators within the regulatory framework. Enforcement has focused on unlicensed operators and consumer protection violations. The DGE issues detailed compliance guidance that provides clear expectations for operators.
-- **Analysis:** New Jersey has a sophisticated regulatory framework that explicitly permits and regulates skill-based gaming and DFS. The state's pioneering role in online gaming (2013 iGaming legalization) and sports betting (2018 PASPA challenge in *Murphy v. NCAA*) demonstrates deep institutional expertise in digital gaming regulation. New Jersey has more experience regulating online gaming than any other US state. The Dominant Factor test is clearly established, the DGE provides a well-understood compliance pathway, and the state's regulatory infrastructure is the gold standard nationally. New Jersey's large market (9.3M population) and proximity to New York City make it a top-tier priority jurisdiction. The DGE's track record of processing operator applications efficiently reduces deployment friction.
+- **AG Opinions / Enforcement History:** AG Matthew Platkin's office has maintained New Jersey's position as a national leader in regulated gaming. The AG's office collaborated with the DGE and the New Jersey Casino Control Commission on the 2018 sports betting launch following the Supreme Court's _Murphy v. NCAA_ decision, which originated from New Jersey's challenge to PASPA. This landmark Supreme Court victory — brought by New Jersey — reshaped the entire US gaming landscape by opening the door to state-level sports betting. The AG has not challenged the legality of DFS or skill-contest operators within the regulatory framework. Enforcement has focused on unlicensed operators and consumer protection violations. The DGE issues detailed compliance guidance that provides clear expectations for operators.
+- **Analysis:** New Jersey has a sophisticated regulatory framework that explicitly permits and regulates skill-based gaming and DFS. The state's pioneering role in online gaming (2013 iGaming legalization) and sports betting (2018 PASPA challenge in _Murphy v. NCAA_) demonstrates deep institutional expertise in digital gaming regulation. New Jersey has more experience regulating online gaming than any other US state. The Dominant Factor test is clearly established, the DGE provides a well-understood compliance pathway, and the state's regulatory infrastructure is the gold standard nationally. New Jersey's large market (9.3M population) and proximity to New York City make it a top-tier priority jurisdiction. The DGE's track record of processing operator applications efficiently reduces deployment friction.
 - **Risk Classification:** Low.
-- **STYX_STATE_BLOCKLIST:** **ALLOWED** — Dominant Factor test plus most sophisticated regulatory framework in the US; brought the *Murphy* case that reshaped national gaming law.
+- **STYX_STATE_BLOCKLIST:** **ALLOWED** — Dominant Factor test plus most sophisticated regulatory framework in the US; brought the _Murphy_ case that reshaped national gaming law.
 
 ### 3.31 New Mexico
 
@@ -466,11 +474,11 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 ### 3.32 New York
 
 - **Gambling Statute:** N.Y. PENAL LAW § 225.00.
-- **Legal Test:** Material Element Test. *See White v. Cuomo*, 38 N.Y.3d 311 (2022).
+- **Legal Test:** Material Element Test. _See White v. Cuomo_, 38 N.Y.3d 311 (2022).
 - **DFS Legislation:** N.Y. RACING, PARI-MUTUEL WAGERING & BREEDING LAW §§ 1400-1410 (enacted 2016).
-- **Skill-Contest Carve-Outs:** Substantial following the *White v. Cuomo* decision, which upheld the constitutionality of the DFS statute. The Racing Law provides detailed consumer protection requirements and operator registration with the New York State Gaming Commission.
-- **AG Opinions / Enforcement History:** AG Letitia James' office has maintained oversight of DFS operators through the Gaming Commission framework. Her predecessor, AG Eric Schneiderman, issued landmark 2015 cease-and-desist orders to FanDuel and DraftKings, declaring that their operations constituted illegal gambling under N.Y. PENAL LAW § 225.00. This enforcement action triggered a national reckoning in the DFS industry and directly led to the passage of N.Y. Racing Law §§ 1400-1410 in 2016, which explicitly authorized DFS contests where skill is the predominant factor. The *White v. Cuomo* decision (2022) subsequently upheld the constitutionality of this statute against a challenge arguing that DFS violated the state constitutional prohibition on gambling. The Court of Appeals held that the legislature had authority to define certain skill-based contests as non-gambling, providing strong precedent for skill-contest platforms.
-- **Analysis:** The New York Court of Appeals recently upheld the constitutionality of the state's DFS law, clarifying that skill-based contests are not "gambling" under the state constitution even if they involve some element of chance, provided they meet the statutory criteria. This is a major victory for Styx's "Performance Wagering" model. The *Schneiderman→Legislation→White* arc demonstrates how New York moved from active prohibition to explicit authorization, creating one of the most thoroughly litigated and tested legal frameworks for skill-based contests in the country. The Material Element test, while stricter than the Dominant Factor standard, has been effectively mitigated by the legislative and judicial framework.
+- **Skill-Contest Carve-Outs:** Substantial following the _White v. Cuomo_ decision, which upheld the constitutionality of the DFS statute. The Racing Law provides detailed consumer protection requirements and operator registration with the New York State Gaming Commission.
+- **AG Opinions / Enforcement History:** AG Letitia James' office has maintained oversight of DFS operators through the Gaming Commission framework. Her predecessor, AG Eric Schneiderman, issued landmark 2015 cease-and-desist orders to FanDuel and DraftKings, declaring that their operations constituted illegal gambling under N.Y. PENAL LAW § 225.00. This enforcement action triggered a national reckoning in the DFS industry and directly led to the passage of N.Y. Racing Law §§ 1400-1410 in 2016, which explicitly authorized DFS contests where skill is the predominant factor. The _White v. Cuomo_ decision (2022) subsequently upheld the constitutionality of this statute against a challenge arguing that DFS violated the state constitutional prohibition on gambling. The Court of Appeals held that the legislature had authority to define certain skill-based contests as non-gambling, providing strong precedent for skill-contest platforms.
+- **Analysis:** The New York Court of Appeals recently upheld the constitutionality of the state's DFS law, clarifying that skill-based contests are not "gambling" under the state constitution even if they involve some element of chance, provided they meet the statutory criteria. This is a major victory for Styx's "Performance Wagering" model. The _Schneiderman→Legislation→White_ arc demonstrates how New York moved from active prohibition to explicit authorization, creating one of the most thoroughly litigated and tested legal frameworks for skill-based contests in the country. The Material Element test, while stricter than the Dominant Factor standard, has been effectively mitigated by the legislative and judicial framework.
 - **Risk Classification:** Low.
 - **STYX_STATE_BLOCKLIST:** **ALLOWED** — Material Element test overridden by explicit statutory authorization upheld as constitutional.
 
@@ -499,7 +507,7 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 ### 3.35 Ohio
 
 - **Gambling Statute:** OHIO REV. CODE ANN. § 2915.01.
-- **Legal Test:** Dominant Factor Test. Ohio courts examine the "dominant element" of the contest, consistent with the majority approach nationally. *See State v. Goldfinger Holdings, LLC*, 2015-Ohio-4734 (holding that the dominant factor analysis applies to digital gaming platforms).
+- **Legal Test:** Dominant Factor Test. Ohio courts examine the "dominant element" of the contest, consistent with the majority approach nationally. _See State v. Goldfinger Holdings, LLC_, 2015-Ohio-4734 (holding that the dominant factor analysis applies to digital gaming platforms).
 - **DFS Legislation:** OHIO REV. CODE ANN. § 3774.01 et seq. (Fantasy Contests Act, enacted 2017). The Act requires operator registration with the Ohio Casino Control Commission (OCCC), imposes consumer protection requirements (player fund segregation, responsible gaming, age verification), and provides explicit legal authorization for fantasy contests where skill predominates. Annual registration fees are tiered based on operator revenue.
 - **Skill-Contest Carve-Outs:** OHIO REV. CODE ANN. § 2915.01(OO) provides a broad safe harbor for "skill-based amusement machines," which are explicitly excluded from the definition of "gambling device." The statute defines these as devices where the outcome is determined "predominantly by the skill of the operator" — a definition that maps directly to Styx's behavioral performance model. The Fantasy Contests Act provides additional explicit authorization for skill-based contests. Additionally, § 2915.02(D) exempts "schemes of chance conducted as a bona fide contest for the determination of skill" from prosecution.
 - **AG Opinions / Enforcement History:** AG Dave Yost's office has supported the state's progressive approach to regulated gaming. The Fantasy Contests Act was enacted with AG support following collaborative work between the AG's consumer protection division, the OCCC, and the legislature. The AG issued informal guidance in 2018 confirming that the skill-contest safe harbor in § 2915.01(OO) applies to digital platforms, not only physical amusement machines. No enforcement actions against DFS or skill-contest operators within the statutory framework. The AG's enforcement priorities have been illegal gambling machines in unlicensed locations and unlicensed sports betting operations. Ohio's 2021 sports betting legalization (HB 29) further demonstrates the state's modernized approach to gaming regulation.
@@ -510,7 +518,7 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 ### 3.36 Oklahoma
 
 - **Gambling Statute:** OKLA. STAT. tit. 21, § 941.
-- **Legal Test:** Dominant Factor Test. Oklahoma courts follow the traditional common-law approach, examining whether skill or chance is the predominant element in determining the contest outcome. *See* *State ex rel. Brown v. Drillers*, 2004 OK CIV APP 63 (examining the skill/chance distinction in promotional gaming).
+- **Legal Test:** Dominant Factor Test. Oklahoma courts follow the traditional common-law approach, examining whether skill or chance is the predominant element in determining the contest outcome. _See_ _State ex rel. Brown v. Drillers_, 2004 OK CIV APP 63 (examining the skill/chance distinction in promotional gaming).
 - **DFS Legislation:** None enacted (active legislative efforts ongoing). HB 3375 (2018) and SB 1175 (2020) proposed DFS regulation frameworks modeled on the Virginia Fantasy Contests Act, but neither advanced past committee. Tribal gaming interests have been a significant factor in legislative stalemate, as tribes have questioned whether DFS falls within their exclusive gaming compact rights.
 - **Skill-Contest Carve-Outs:** Broadly permitted under common law. OKLA. STAT. tit. 21, § 941 prohibits betting on "any game," but Oklahoma courts have consistently interpreted "game" in the gambling context to mean games of chance, not contests of skill. OKLA. STAT. tit. 21, § 942 further defines gambling in terms of "hazard" and "chance," reinforcing the distinction between chance-based gambling and skill-based contests. The Oklahoma Horse Racing Commission's regulatory framework (3A OKLA. STAT. § 200 et seq.) — which recognizes skill-based analysis in pari-mutuel wagering — provides additional contextual support for skill-contest exemptions.
 - **AG Opinions / Enforcement History:** AG Gentner Drummond's office has not issued formal opinions on DFS or behavioral skill contests. The AG's enforcement focus has been on illegal gambling operations, particularly unregulated electronic gaming machines on tribal lands — a politically contentious issue that has absorbed the AG's gaming enforcement resources. Oklahoma's extensive tribal gaming compact system (40+ tribes under IGRA compacts) creates a complex regulatory landscape, but tribal compacts under the Indian Gaming Regulatory Act (IGRA) generally cover Class II and Class III gaming on tribal lands and do not extend to digital skill-contest platforms operated by non-tribal entities. No known enforcement actions against DFS or skill-contest operators. The AG's consumer protection division has not flagged skill-contest platforms as a priority area.
@@ -532,11 +540,11 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 ### 3.38 Pennsylvania
 
 - **Gambling Statute:** 18 PA. CONS. STAT. § 5513.
-- **Legal Test:** Dominant Factor Test. *See Commonwealth v. Dent*, 992 A.2d 190 (Pa. Super. 2010).
+- **Legal Test:** Dominant Factor Test. _See Commonwealth v. Dent_, 992 A.2d 190 (Pa. Super. 2010).
 - **DFS Legislation:** 4 PA. CONS. STAT. § 301 et seq. (Fantasy Contests, enacted 2017 as part of comprehensive gaming expansion).
 - **Skill-Contest Carve-Outs:** Robust protections for skill-based gaming. The 2017 gaming expansion provided explicit authorization for DFS and skill-based platforms, administered by the Pennsylvania Gaming Control Board (PGCB).
-- **AG Opinions / Enforcement History:** AG Michelle Henry's office has deferred to the PGCB on gaming matters. The AG supported the 2017 gaming expansion legislation. The *Dent* decision (2010) established strong precedent for the Dominant Factor test, holding that a contest must be examined as a whole to determine whether skill or chance predominates. No enforcement actions against DFS or skill-contest operators within the statutory framework. The PGCB has processed operator registrations efficiently.
-- **Analysis:** Pennsylvania has a strong pro-skill-gaming case law history. The *Dent* precedent provides a clear analytical framework: courts examine the contest holistically to determine whether skill is the dominant factor. The state's 2017 gaming expansion, which legalized and regulated DFS, further solidified the legality of skill-based platforms. The PGCB provides a well-understood compliance pathway. Pennsylvania's large market (13M+ population) and mature regulatory infrastructure make it a priority jurisdiction.
+- **AG Opinions / Enforcement History:** AG Michelle Henry's office has deferred to the PGCB on gaming matters. The AG supported the 2017 gaming expansion legislation. The _Dent_ decision (2010) established strong precedent for the Dominant Factor test, holding that a contest must be examined as a whole to determine whether skill or chance predominates. No enforcement actions against DFS or skill-contest operators within the statutory framework. The PGCB has processed operator registrations efficiently.
+- **Analysis:** Pennsylvania has a strong pro-skill-gaming case law history. The _Dent_ precedent provides a clear analytical framework: courts examine the contest holistically to determine whether skill is the dominant factor. The state's 2017 gaming expansion, which legalized and regulated DFS, further solidified the legality of skill-based platforms. The PGCB provides a well-understood compliance pathway. Pennsylvania's large market (13M+ population) and mature regulatory infrastructure make it a priority jurisdiction.
 - **Risk Classification:** Low.
 - **STYX_STATE_BLOCKLIST:** **ALLOWED** — Dominant Factor test with strong case law plus explicit statutory authorization.
 
@@ -620,7 +628,7 @@ Styx's "Unilateral Performance Contract" model provides structural advantages th
 ### 3.46 Virginia
 
 - **Gambling Statute:** VA. CODE ANN. § 18.2-325. The statute defines "illegal gambling" as making, placing, or receiving any bet or wager of money or other thing of value on the outcome of any game "dependent upon chance." The "dependent upon chance" language provides a clear textual basis for excluding skill-based contests where the outcome depends on the participant's effort.
-- **Legal Test:** Dominant Factor Test. Virginia courts apply the traditional common-law analysis, and the statutory language reinforces that only chance-dependent activities constitute gambling. *See* *Tate v. Commonwealth*, 258 Va. 6 (1999) (examining the chance/skill distinction in the context of promotional gaming).
+- **Legal Test:** Dominant Factor Test. Virginia courts apply the traditional common-law analysis, and the statutory language reinforces that only chance-dependent activities constitute gambling. _See_ _Tate v. Commonwealth_, 258 Va. 6 (1999) (examining the chance/skill distinction in the context of promotional gaming).
 - **DFS Legislation:** VA. CODE ANN. § 59.1-556 et seq. (Fantasy Contests Act, enacted 2016). Virginia was the first state in the nation to formally legalize DFS through dedicated legislation, establishing a model that was subsequently adopted by more than 20 other states. The Act is administered by the Virginia Department of Agriculture and Consumer Services (DACS) and requires: operator registration ($50,000 annual fee for major operators), background investigation, player fund segregation, responsible gaming provisions (self-exclusion, deposit limits, cooling-off periods), age verification (18+), and annual compliance reporting. Virginia's subsequent legalization of sports betting (2020, VA. CODE ANN. § 58.1-4030 et seq.) and casino gaming (2020, VA. CODE ANN. § 58.1-4100 et seq.) has created one of the most comprehensive gaming regulatory frameworks in the country.
 - **Skill-Contest Carve-Outs:** Virginia was the first state to formally legalize DFS, and the Fantasy Contests Act provides robust operator protections. VA. CODE ANN. § 59.1-556 defines "fantasy contest" as a "simulated game or contest" where the outcome "predominantly reflects the relative knowledge and skill of the participants." The gambling statute's "dependent upon chance" language provides an independent basis for the skill-contest exemption. Virginia's Uniform Commercial Code provisions (VA. CODE ANN. § 8.01 et seq.) further support the characterization of Styx contracts as enforceable performance agreements rather than wagering instruments.
 - **AG Opinions / Enforcement History:** AG Jason Miyares' office has maintained the state's permissive approach to regulated gaming, continuing the bipartisan tradition established when the Fantasy Contests Act was signed by then-Governor Terry McAuliffe (D) in 2016. The AG's office worked closely with DACS to develop the initial regulatory framework and has supported the subsequent expansion of legal gaming. No enforcement actions against DFS or skill-contest operators within the statutory framework. The AG's consumer protection division has focused on ensuring operator compliance with the Fantasy Contests Act's consumer protection provisions rather than challenging the legality of skill-based platforms. Virginia's regulatory approach is frequently cited as a national model by the Fantasy Sports & Gaming Association and by other states developing their own frameworks.
@@ -693,16 +701,16 @@ Based on the statutory analysis in Section 3, Styx should implement the followin
 
 The following states should be blocked due to broad gambling definitions, "Any Chance" judicial standards, or explicit hostility to unlicensed wagering.
 
-| State | Code | Legal Reasoning |
-| :--- | :--- | :--- |
-| **Arizona** | `AZ` | Broad statutory definitions and historical "Any Chance" standard; licensing requirement. |
-| **Arkansas** | `AR` | Strict "Material Element" test and prohibition on betting on "games of skill." |
-| **Hawaii** | `HI` | Comprehensive prohibition on all forms of wagering; AG actively opposes expansion; no DFS safe harbor. |
-| **Idaho** | `ID` | Formal AG opinion declaring DFS illegal; "Any Chance" standard applied to all digital wagering. |
-| **Montana** | `MT` | Restrictive gaming laws; explicit AG guidance opposing unlicensed contests. |
-| **Nevada** | `NV` | Requires full gaming licensure for any wagering; GCB actively enforces against unlicensed operators. |
+| State            | Code | Legal Reasoning                                                                                             |
+| :--------------- | :--- | :---------------------------------------------------------------------------------------------------------- |
+| **Arizona**      | `AZ` | Broad statutory definitions and historical "Any Chance" standard; licensing requirement.                    |
+| **Arkansas**     | `AR` | Strict "Material Element" test and prohibition on betting on "games of skill."                              |
+| **Hawaii**       | `HI` | Comprehensive prohibition on all forms of wagering; AG actively opposes expansion; no DFS safe harbor.      |
+| **Idaho**        | `ID` | Formal AG opinion declaring DFS illegal; "Any Chance" standard applied to all digital wagering.             |
+| **Montana**      | `MT` | Restrictive gaming laws; explicit AG guidance opposing unlicensed contests.                                 |
+| **Nevada**       | `NV` | Requires full gaming licensure for any wagering; GCB actively enforces against unlicensed operators.        |
 | **South Dakota** | `SD` | Broadest "Any Chance" statutory language ("in part upon chance"); AG guidance opposing DFS; no safe harbor. |
-| **Utah** | `UT` | Constitutional and statutory prohibition on all wagering; no regulatory pathway. |
+| **Utah**         | `UT` | Constitutional and statutory prohibition on all wagering; no regulatory pathway.                            |
 
 **Recommended ENV Configuration:**
 `STYX_STATE_BLOCKLIST=AZ,AR,HI,ID,MT,NV,SD,UT`
@@ -827,17 +835,17 @@ The following states are allowed but require heightened compliance monitoring an
 
 ### 5.2 Key Case Law
 
-- *Logan v. State*, 829 So. 2d 139 (Ala. 2002) (applying Dominant Factor test; examining whether skill or chance predominates).
-- *People v. Settles*, 29 Cal. App. 2d Supp. 781 (1938) (foundational California Dominant Factor precedent; holding that the court must examine the nature of the contest to determine if chance or skill predominates).
-- *Commonwealth v. Plissner*, 4 N.E.2d 241 (Mass. 1936) (Massachusetts Dominant Factor test; distinguishing games of chance from skill contests).
-- *State v. Sauer*, 38 Mo. 557 (1866) (early Missouri precedent distinguishing games of skill from games of chance).
-- *State ex rel. Brown v. Drillers*, 2004 OK CIV APP 63 (Oklahoma; examining skill/chance distinction in promotional gaming).
-- *State v. Goldfinger Holdings, LLC*, 2015-Ohio-4734 (Ohio; applying Dominant Factor analysis to digital gaming platforms).
-- *Tate v. Commonwealth*, 258 Va. 6 (1999) (Virginia; examining chance/skill distinction in promotional gaming context).
-- *White v. Cuomo*, 38 N.Y.3d 311 (2022) (New York Court of Appeals; upheld constitutionality of DFS statute; held that legislature has authority to define skill-based contests as non-gambling).
-- *Commonwealth v. Dent*, 992 A.2d 190 (Pa. Super. 2010) (Pennsylvania; established holistic Dominant Factor analysis for digital contests).
-- *Murphy v. National Collegiate Athletic Ass'n*, 138 S. Ct. 1461 (2018) (U.S. Supreme Court; struck down PASPA; opened state-level sports betting regulation).
-- *New Hampshire Lottery Commission v. Rosen*, 986 F.3d 38 (1st Cir. 2021) (First Circuit; held Wire Act applies only to sports wagering, not all online gambling).
+- _Logan v. State_, 829 So. 2d 139 (Ala. 2002) (applying Dominant Factor test; examining whether skill or chance predominates).
+- _People v. Settles_, 29 Cal. App. 2d Supp. 781 (1938) (foundational California Dominant Factor precedent; holding that the court must examine the nature of the contest to determine if chance or skill predominates).
+- _Commonwealth v. Plissner_, 4 N.E.2d 241 (Mass. 1936) (Massachusetts Dominant Factor test; distinguishing games of chance from skill contests).
+- _State v. Sauer_, 38 Mo. 557 (1866) (early Missouri precedent distinguishing games of skill from games of chance).
+- _State ex rel. Brown v. Drillers_, 2004 OK CIV APP 63 (Oklahoma; examining skill/chance distinction in promotional gaming).
+- _State v. Goldfinger Holdings, LLC_, 2015-Ohio-4734 (Ohio; applying Dominant Factor analysis to digital gaming platforms).
+- _Tate v. Commonwealth_, 258 Va. 6 (1999) (Virginia; examining chance/skill distinction in promotional gaming context).
+- _White v. Cuomo_, 38 N.Y.3d 311 (2022) (New York Court of Appeals; upheld constitutionality of DFS statute; held that legislature has authority to define skill-based contests as non-gambling).
+- _Commonwealth v. Dent_, 992 A.2d 190 (Pa. Super. 2010) (Pennsylvania; established holistic Dominant Factor analysis for digital contests).
+- _Murphy v. National Collegiate Athletic Ass'n_, 138 S. Ct. 1461 (2018) (U.S. Supreme Court; struck down PASPA; opened state-level sports betting regulation).
+- _New Hampshire Lottery Commission v. Rosen_, 986 F.3d 38 (1st Cir. 2021) (First Circuit; held Wire Act applies only to sports wagering, not all online gambling).
 
 ### 5.3 Federal Statutes
 
@@ -882,7 +890,7 @@ While gambling regulation is primarily a state-law matter, several federal statu
 
 ### 6.1 The Wire Act (18 U.S.C. § 1084)
 
-The Wire Act prohibits the use of wire communications to place bets or wagers on sporting events or contests. The DOJ's 2011 Office of Legal Counsel opinion (the "Holder Memo") narrowed the Wire Act's scope to sports betting, concluding that it does not apply to non-sports online gambling. In 2018, the DOJ reversed this position under AG Jeff Sessions, but the First Circuit in *New Hampshire Lottery Commission v. Rosen*, 986 F.3d 38 (1st Cir. 2021), upheld the 2011 interpretation, limiting the Wire Act to sports wagering.
+The Wire Act prohibits the use of wire communications to place bets or wagers on sporting events or contests. The DOJ's 2011 Office of Legal Counsel opinion (the "Holder Memo") narrowed the Wire Act's scope to sports betting, concluding that it does not apply to non-sports online gambling. In 2018, the DOJ reversed this position under AG Jeff Sessions, but the First Circuit in _New Hampshire Lottery Commission v. Rosen_, 986 F.3d 38 (1st Cir. 2021), upheld the 2011 interpretation, limiting the Wire Act to sports wagering.
 
 **Styx Implications:** Styx's behavioral performance contracts are not "bets or wagers on sporting events or contests" within the meaning of the Wire Act. The user is staking against their own behavioral commitment, not wagering on a sporting event. Under either DOJ interpretation, the Wire Act should not reach Styx's operations.
 
@@ -895,6 +903,7 @@ UIGEA prohibits the processing of payments for "unlawful internet gambling," def
 ### 6.3 The Interstate Horseracing Act & Fantasy Sports Exemption
 
 The Unlawful Internet Gambling Enforcement Act (31 U.S.C. § 5362(1)(E)(ix)) includes a specific exemption for "any fantasy or simulation sports game" where:
+
 1. No outcome is based on the final score or performance of a single real-world team or player.
 2. All prizes are established and made known before the contest.
 3. The outcome reflects the relative knowledge and skill of participants.
@@ -903,11 +912,12 @@ The Unlawful Internet Gambling Enforcement Act (31 U.S.C. § 5362(1)(E)(ix)) inc
 
 ### 6.4 The Professional and Amateur Sports Protection Act (PASPA) — Repealed
 
-PASPA (28 U.S.C. §§ 3701-3704) was struck down by the Supreme Court in *Murphy v. National Collegiate Athletic Ass'n*, 138 S. Ct. 1461 (2018). While PASPA's repeal opened the door for state-level sports betting, it is relevant to Styx primarily because the post-PASPA regulatory landscape has generated extensive state-level gaming legislation. Many of the DFS and skill-contest statutes cited in this survey were enacted in the regulatory wave following PASPA's repeal.
+PASPA (28 U.S.C. §§ 3701-3704) was struck down by the Supreme Court in _Murphy v. National Collegiate Athletic Ass'n_, 138 S. Ct. 1461 (2018). While PASPA's repeal opened the door for state-level sports betting, it is relevant to Styx primarily because the post-PASPA regulatory landscape has generated extensive state-level gaming legislation. Many of the DFS and skill-contest statutes cited in this survey were enacted in the regulatory wave following PASPA's repeal.
 
 ### 6.5 Federal Trade Commission Oversight
 
 The FTC has authority over deceptive and unfair business practices (15 U.S.C. § 45). While the FTC has not specifically addressed behavioral commitment devices, its enforcement actions against misleading prize promotions and subscription services provide guidance on consumer protection requirements. Styx should ensure:
+
 1. Clear disclosure of the mechanics (stake, behavioral goal, return conditions).
 2. Transparent refund policies for force majeure events.
 3. No misleading advertising regarding success rates or typical outcomes.
@@ -930,6 +940,7 @@ The CFPB has jurisdiction over "consumer financial products and services" (12 U.
 A separate but related regulatory consideration is whether Styx's handling of user funds triggers state money transmitter licensing requirements. Most states require money transmitter licenses for entities that "receive money or monetary value... for the purpose of... transmitting money" (model language from the Uniform Money Services Act). If Styx holds user-staked funds in escrow pending contract completion, this could trigger money transmitter licensing in some states.
 
 **Mitigation strategies:**
+
 1. Use a licensed payment processor (e.g., Stripe, PayPal) that holds funds on Styx's behalf, avoiding direct custody.
 2. Structure the transaction as a "payment for services" rather than money transmission.
 3. Seek exemptions available in many states for "payment processors" that merely facilitate transactions.
@@ -950,6 +961,7 @@ STYX_STATE_BLOCKLIST=AZ,AR,HI,ID,MT,NV,SD,UT
 ```
 
 **Implementation requirements:**
+
 - [ ] IP geolocation blocking for all Tier 1 states.
 - [ ] GPS/device-location verification at contract creation.
 - [ ] Payment processor address verification for Tier 1 state billing addresses.
@@ -961,6 +973,7 @@ STYX_STATE_BLOCKLIST=AZ,AR,HI,ID,MT,NV,SD,UT
 **States:** South Carolina, Washington, Georgia, Minnesota, Oregon, Louisiana.
 
 **Implementation requirements:**
+
 - [ ] Enhanced monitoring dashboards for user volume in Tier 2 states.
 - [ ] Automatic legal review trigger when any Tier 2 state exceeds 10,000 active users.
 - [ ] Washington-specific MHMDA compliance for wearable data collection.
@@ -970,6 +983,7 @@ STYX_STATE_BLOCKLIST=AZ,AR,HI,ID,MT,NV,SD,UT
 ### 7.3 Tier 3: Standard Deployment (All Other States)
 
 **Implementation requirements:**
+
 - [ ] Standard Terms of Service with state-specific addenda where required.
 - [ ] DFS registration in states requiring it (if Styx classified as DFS): Virginia, Indiana, Ohio, Pennsylvania, Tennessee, and others.
 - [ ] Consumer protection disclosures compliant with state AG requirements.
@@ -994,24 +1008,25 @@ The following matrix provides a high-level view of all 51 jurisdictions organize
 
 ### 8.1 Risk by Legal Test
 
-| Legal Test | Low Risk | Medium Risk | High Risk | Block |
-| :--- | :--- | :--- | :--- | :--- |
-| **Dominant Factor** | AL, AK, CA, DE, FL, IL, IN, KY, ME, MA, MO, NE, NH, NJ, NC, OH, OK, PA, TN, TX, VA, WV, WY, DC | GA, NM | — | — |
-| **Material Element** | MD, MI, NY, ND, VT | CO, CT, IA, KS, MS | — | AR |
-| **Any Chance** | — | LA, MN, OR, RI, WI | SC, WA | AZ, HI, ID, MT, SD, UT, NV |
+| Legal Test           | Low Risk                                                                                       | Medium Risk        | High Risk | Block                      |
+| :------------------- | :--------------------------------------------------------------------------------------------- | :----------------- | :-------- | :------------------------- |
+| **Dominant Factor**  | AL, AK, CA, DE, FL, IL, IN, KY, ME, MA, MO, NE, NH, NJ, NC, OH, OK, PA, TN, TX, VA, WV, WY, DC | GA, NM             | —         | —                          |
+| **Material Element** | MD, MI, NY, ND, VT                                                                             | CO, CT, IA, KS, MS | —         | AR                         |
+| **Any Chance**       | —                                                                                              | LA, MN, OR, RI, WI | SC, WA    | AZ, HI, ID, MT, SD, UT, NV |
 
 ### 8.2 Blocklist Summary
 
-| Classification | Count | Jurisdictions |
-| :--- | :--- | :--- |
-| **BLOCKED** | 8 | AZ, AR, HI, ID, MT, NV, SD, UT |
-| **HIGH (Allowed with monitoring)** | 2 | SC, WA |
-| **MEDIUM (Allowed)** | 11 | CO, CT, GA, IA, KS, LA, MN, MS, NM, OR, RI, WI |
-| **LOW (Allowed)** | 30 | AL, AK, CA, DC, DE, FL, IL, IN, KY, MA, MD, ME, MI, MO, NC, ND, NE, NH, NJ, NY, OH, OK, PA, TN, TX, VA, VT, WI, WV, WY |
+| Classification                     | Count | Jurisdictions                                                                                                          |
+| :--------------------------------- | :---- | :--------------------------------------------------------------------------------------------------------------------- |
+| **BLOCKED**                        | 8     | AZ, AR, HI, ID, MT, NV, SD, UT                                                                                         |
+| **HIGH (Allowed with monitoring)** | 2     | SC, WA                                                                                                                 |
+| **MEDIUM (Allowed)**               | 11    | CO, CT, GA, IA, KS, LA, MN, MS, NM, OR, RI, WI                                                                         |
+| **LOW (Allowed)**                  | 30    | AL, AK, CA, DC, DE, FL, IL, IN, KY, MA, MD, ME, MI, MO, NC, ND, NE, NH, NJ, NY, OH, OK, PA, TN, TX, VA, VT, WI, WV, WY |
 
 ### 8.3 Population Coverage
 
 Based on 2025 Census estimates:
+
 - **BLOCKED states population:** ~26.7M (7.9% of US)
 - **ALLOWED states population:** ~305.3M (92.1% of US)
 - **Total addressable market (ALLOWED):** 92.1% of US population
@@ -1026,18 +1041,18 @@ The blocklist strategy sacrifices less than 8% of the US population while elimin
 
 For Styx's initial Beta launch, the following 10 states are recommended as the first deployment cohort. These states combine favorable legal frameworks, large addressable markets, and low regulatory friction.
 
-| Priority | State | Population | Legal Test | Key Advantage |
-| :--- | :--- | :--- | :--- | :--- |
-| 1 | **California** | 39.0M | Dominant Factor | Largest state market; AG consumer-protection (not prohibition) stance; *Settles* precedent. |
-| 2 | **Texas** | 30.5M | Any Chance (mitigated) | Second-largest market; explicit statutory exclusion § 47.01(1)(B); AG Opinion KP-0057 favorable. |
-| 3 | **Florida** | 22.6M | Dominant Factor | Third-largest market; explicit statutory carve-out § 849.14; 2017 AG advisory opinion favorable. |
-| 4 | **New York** | 19.6M | Material Element | *White v. Cuomo* constitutional endorsement; Racing Law §§ 1400-1410; sophisticated market. |
-| 5 | **Pennsylvania** | 13.0M | Dominant Factor | *Dent* case law; 4 PA. CONS. STAT. § 301 explicit authorization; PGCB compliance pathway. |
-| 6 | **Illinois** | 12.6M | Dominant Factor | § 5/28-1(b)(2) explicit skill/speed/strength exemption; AG inquiry resolved favorably. |
-| 7 | **Ohio** | 11.8M | Dominant Factor | § 2915.01(OO) broad safe harbor; Fantasy Contests Act; OCCC mature framework. |
-| 8 | **New Jersey** | 9.3M | Dominant Factor | Most sophisticated regulatory framework nationally; DGE compliance pathway established. |
-| 9 | **Virginia** | 8.6M | Dominant Factor | First state to legalize DFS; mature regulatory infrastructure; DC metro access. |
-| 10 | **Massachusetts** | 7.0M | Dominant Factor | 940 CMR 34.00 detailed regulations; *Plissner* precedent; AG regulatory (not prohibitory) stance. |
+| Priority | State             | Population | Legal Test             | Key Advantage                                                                                     |
+| :------- | :---------------- | :--------- | :--------------------- | :------------------------------------------------------------------------------------------------ |
+| 1        | **California**    | 39.0M      | Dominant Factor        | Largest state market; AG consumer-protection (not prohibition) stance; _Settles_ precedent.       |
+| 2        | **Texas**         | 30.5M      | Any Chance (mitigated) | Second-largest market; explicit statutory exclusion § 47.01(1)(B); AG Opinion KP-0057 favorable.  |
+| 3        | **Florida**       | 22.6M      | Dominant Factor        | Third-largest market; explicit statutory carve-out § 849.14; 2017 AG advisory opinion favorable.  |
+| 4        | **New York**      | 19.6M      | Material Element       | _White v. Cuomo_ constitutional endorsement; Racing Law §§ 1400-1410; sophisticated market.       |
+| 5        | **Pennsylvania**  | 13.0M      | Dominant Factor        | _Dent_ case law; 4 PA. CONS. STAT. § 301 explicit authorization; PGCB compliance pathway.         |
+| 6        | **Illinois**      | 12.6M      | Dominant Factor        | § 5/28-1(b)(2) explicit skill/speed/strength exemption; AG inquiry resolved favorably.            |
+| 7        | **Ohio**          | 11.8M      | Dominant Factor        | § 2915.01(OO) broad safe harbor; Fantasy Contests Act; OCCC mature framework.                     |
+| 8        | **New Jersey**    | 9.3M       | Dominant Factor        | Most sophisticated regulatory framework nationally; DGE compliance pathway established.           |
+| 9        | **Virginia**      | 8.6M       | Dominant Factor        | First state to legalize DFS; mature regulatory infrastructure; DC metro access.                   |
+| 10       | **Massachusetts** | 7.0M       | Dominant Factor        | 940 CMR 34.00 detailed regulations; _Plissner_ precedent; AG regulatory (not prohibitory) stance. |
 
 **Combined Phase 1 population:** ~174M (52.5% of US). This cohort provides access to more than half the US population with minimal legal risk.
 
@@ -1045,18 +1060,18 @@ For Styx's initial Beta launch, the following 10 states are recommended as the f
 
 Following successful Beta in Phase 1 states, the second deployment phase targets states with favorable legal frameworks and moderate-to-large markets.
 
-| State | Population | Legal Test | Notes |
-| :--- | :--- | :--- | :--- |
-| **Georgia** | 10.8M | Dominant Factor | No DFS statute but AG posture permissive; monitor legislation. |
-| **Michigan** | 10.1M | Any Chance (overridden) | Statutory safe harbor overrides historical standard; MGCB registration may be required. |
-| **North Carolina** | 10.7M | Dominant Factor | Growing tech hub; favorable statutory language. |
-| **Tennessee** | 7.1M | Dominant Factor | Early DFS adopter; progressive mobile gaming stance. |
-| **Indiana** | 6.8M | Dominant Factor | Paid Fantasy Sports Act; IGC registration pathway. |
-| **Missouri** | 6.2M | Dominant Factor | Favorable statutory language; no hostile AG history. |
-| **Maryland** | 6.2M | Material Element | Mature DFS framework since 2012; regulatory not prohibitory. |
-| **Colorado** | 5.8M | Material Element | Explicit skill-contest carve-out § 18-10-102(2). |
-| **Minnesota** | 5.7M | Any Chance (mitigated) | "Control or influence" qualifier unique defense for Styx. |
-| **Connecticut** | 3.6M | Material Element | DFS licensing pathway; consumer protection focus. |
+| State              | Population | Legal Test              | Notes                                                                                   |
+| :----------------- | :--------- | :---------------------- | :-------------------------------------------------------------------------------------- |
+| **Georgia**        | 10.8M      | Dominant Factor         | No DFS statute but AG posture permissive; monitor legislation.                          |
+| **Michigan**       | 10.1M      | Any Chance (overridden) | Statutory safe harbor overrides historical standard; MGCB registration may be required. |
+| **North Carolina** | 10.7M      | Dominant Factor         | Growing tech hub; favorable statutory language.                                         |
+| **Tennessee**      | 7.1M       | Dominant Factor         | Early DFS adopter; progressive mobile gaming stance.                                    |
+| **Indiana**        | 6.8M       | Dominant Factor         | Paid Fantasy Sports Act; IGC registration pathway.                                      |
+| **Missouri**       | 6.2M       | Dominant Factor         | Favorable statutory language; no hostile AG history.                                    |
+| **Maryland**       | 6.2M       | Material Element        | Mature DFS framework since 2012; regulatory not prohibitory.                            |
+| **Colorado**       | 5.8M       | Material Element        | Explicit skill-contest carve-out § 18-10-102(2).                                        |
+| **Minnesota**      | 5.7M       | Any Chance (mitigated)  | "Control or influence" qualifier unique defense for Styx.                               |
+| **Connecticut**    | 3.6M       | Material Element        | DFS licensing pathway; consumer protection focus.                                       |
 
 **Combined Phase 2 population:** ~73M. Together with Phase 1, covers ~247M (74.5% of US).
 
@@ -1071,12 +1086,14 @@ The remaining ALLOWED states can be deployed in Phase 3 as Styx's legal and comp
 A critical strategic question is whether Styx should proactively register as a DFS operator in states with explicit DFS frameworks, or maintain its position as a "performance contract" platform outside the DFS definition.
 
 **Arguments for DFS registration:**
+
 1. Provides explicit statutory safe harbor in registered states.
 2. Demonstrates good faith to regulators and AGs.
 3. Preempts potential reclassification disputes.
 4. May be required if regulators classify behavioral contracts as "fantasy contests."
 
 **Arguments against DFS registration:**
+
 1. Triggers compliance costs (registration fees, annual reporting, audits).
 2. Creates regulatory expectations that may not fit Styx's model.
 3. Concedes that Styx is a "gaming" platform rather than a "commitment device."
@@ -1088,7 +1105,7 @@ A critical strategic question is whether Styx should proactively register as a D
 
 Styx's strongest long-term legal position relies on the "commitment device" theory, which characterizes the platform not as a gaming or wagering service but as a behavioral economics tool. This theory is supported by:
 
-1. **Academic literature:** The economics of commitment devices is well-established. *See* Thaler & Sunstein, *Nudge* (2008); Bryan, Karlan & Nelson, "Commitment Devices," 2 *Annual Review of Economics* 671 (2010); Kaur, Kremer & Mullainathan, "Self-Control at Work," 123 *Journal of Political Economy* 1227 (2015).
+1. **Academic literature:** The economics of commitment devices is well-established. _See_ Thaler & Sunstein, _Nudge_ (2008); Bryan, Karlan & Nelson, "Commitment Devices," 2 _Annual Review of Economics_ 671 (2010); Kaur, Kremer & Mullainathan, "Self-Control at Work," 123 _Journal of Political Economy_ 1227 (2015).
 
 2. **Platform precedent:** StickK (founded by Yale economists Dean Karlan and Ian Ayres) has operated a commitment contract platform since 2008 without facing gambling enforcement in any US jurisdiction. StickK's model — where users stake money against behavioral goals — is structurally identical to Styx's and has been accepted by regulators for nearly two decades.
 
@@ -1102,25 +1119,25 @@ Styx's strongest long-term legal position relies on the "commitment device" theo
 
 ## 10. Glossary of Key Terms
 
-| Term | Definition |
-| :--- | :--- |
-| **AG** | Attorney General — the chief legal officer of each state. |
-| **Commitment Device** | A behavioral economics tool that binds a person to a future course of action to overcome present-bias and temptation. |
-| **DFS** | Daily Fantasy Sports — a category of online contests where participants assemble virtual teams of real athletes and compete based on statistical performance. |
-| **DGE** | Division of Gaming Enforcement (New Jersey). |
-| **Dominant Factor Test** | Legal standard where a contest is not "gambling" if skill is the predominant factor (>50%) in determining the outcome. |
-| **GCB** | Gaming Control Board (Nevada). |
-| **Gatekeeper Protocol** | Styx's internal system for geographic access control, implementing state blocklists and compliance checks. |
-| **Material Element Test** | Legal standard where a contest is "gambling" if chance is a "material" (significant) element in the outcome, even if skill predominates. |
-| **MHMDA** | My Health My Data Act (Washington) — state privacy law governing health and biometric data from wearable devices. |
-| **OCCC** | Ohio Casino Control Commission. |
-| **PASPA** | Professional and Amateur Sports Protection Act — federal law struck down by the Supreme Court in *Murphy v. NCAA* (2018). |
-| **Performance Contract** | A unilateral contract where one party (the user) commits to performing a specific action in exchange for a benefit (return of staked funds). |
-| **PGCB** | Pennsylvania Gaming Control Board. |
-| **STYX_STATE_BLOCKLIST** | Environment variable in Styx's Gatekeeper protocol listing state codes where the platform is geographically restricted. |
-| **UIGEA** | Unlawful Internet Gambling Enforcement Act — federal law prohibiting payment processing for unlawful internet gambling. |
-| **Unilateral Performance Model** | Styx's contract structure where the user stakes against their own behavioral commitment, with no counterparty wagering. |
-| **Wire Act** | Federal statute (18 U.S.C. § 1084) prohibiting wire communications for placing bets on sporting events. |
+| Term                             | Definition                                                                                                                                                    |
+| :------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **AG**                           | Attorney General — the chief legal officer of each state.                                                                                                     |
+| **Commitment Device**            | A behavioral economics tool that binds a person to a future course of action to overcome present-bias and temptation.                                         |
+| **DFS**                          | Daily Fantasy Sports — a category of online contests where participants assemble virtual teams of real athletes and compete based on statistical performance. |
+| **DGE**                          | Division of Gaming Enforcement (New Jersey).                                                                                                                  |
+| **Dominant Factor Test**         | Legal standard where a contest is not "gambling" if skill is the predominant factor (>50%) in determining the outcome.                                        |
+| **GCB**                          | Gaming Control Board (Nevada).                                                                                                                                |
+| **Gatekeeper Protocol**          | Styx's internal system for geographic access control, implementing state blocklists and compliance checks.                                                    |
+| **Material Element Test**        | Legal standard where a contest is "gambling" if chance is a "material" (significant) element in the outcome, even if skill predominates.                      |
+| **MHMDA**                        | My Health My Data Act (Washington) — state privacy law governing health and biometric data from wearable devices.                                             |
+| **OCCC**                         | Ohio Casino Control Commission.                                                                                                                               |
+| **PASPA**                        | Professional and Amateur Sports Protection Act — federal law struck down by the Supreme Court in _Murphy v. NCAA_ (2018).                                     |
+| **Performance Contract**         | A unilateral contract where one party (the user) commits to performing a specific action in exchange for a benefit (return of staked funds).                  |
+| **PGCB**                         | Pennsylvania Gaming Control Board.                                                                                                                            |
+| **STYX_STATE_BLOCKLIST**         | Environment variable in Styx's Gatekeeper protocol listing state codes where the platform is geographically restricted.                                       |
+| **UIGEA**                        | Unlawful Internet Gambling Enforcement Act — federal law prohibiting payment processing for unlawful internet gambling.                                       |
+| **Unilateral Performance Model** | Styx's contract structure where the user stakes against their own behavioral commitment, with no counterparty wagering.                                       |
+| **Wire Act**                     | Federal statute (18 U.S.C. § 1084) prohibiting wire communications for placing bets on sporting events.                                                       |
 
 ---
 
@@ -1128,59 +1145,59 @@ Styx's strongest long-term legal position relies on the "commitment device" theo
 
 The following table summarizes the DFS legislative status across all 51 jurisdictions as of March 2026.
 
-| State | DFS Statute | Year | Regulatory Body | Registration Fee |
-| :--- | :--- | :--- | :--- | :--- |
-| Alabama | ALA. CODE § 8-19E-1 | 2019 | Secretary of State | $1,000/yr |
-| Alaska | None | — | — | — |
-| Arizona | ARIZ. REV. STAT. § 5-1201 | 2016 | Dept. of Gaming | $5,000/yr |
-| Arkansas | ARK. CODE ANN. § 23-116-101 | 2017 | Racing Commission | $5,000/yr |
-| California | None | — | — | — |
-| Colorado | COLO. REV. STAT. § 12-15.5-101 | 2016 | Secretary of State | $500/yr |
-| Connecticut | CONN. GEN. STAT. § 12-850 | 2017 | Consumer Protection | $50,000 bond |
-| Delaware | DEL. CODE ANN. tit. 29, § 4860 | 2012 | Lottery | Varies |
-| DC | D.C. CODE § 36-601.01 | 2019 | Office of Lottery | $10,000/yr |
-| Florida | FLA. STAT. § 546.10 | 2018 | Dept. of Business | $500/yr |
-| Georgia | None | — | — | — |
-| Hawaii | None (Prohibited) | — | — | — |
-| Idaho | None (Prohibited per AG) | — | — | — |
-| Illinois | None (AG tolerated) | — | — | — |
-| Indiana | IND. CODE § 4-33-24-1 | 2016 | Gaming Commission | $50,000/yr |
-| Iowa | IOWA CODE § 99E.1 | 2019 | Racing & Gaming | $5,000/yr |
-| Kansas | None | — | — | — |
-| Kentucky | None | — | — | — |
-| Louisiana | LA. REV. STAT. ANN. § 4:701 | 2018 | Gaming Control Bd. | Parish-level |
-| Maine | ME. REV. STAT. ANN. tit. 8, § 1101 | 2017 | Gambling Control | $2,500/yr |
-| Maryland | MD. CODE ANN. § 9-1D-01 | 2012 | Lottery & Gaming | $2,500/yr |
-| Massachusetts | 940 CMR 34.00 | 2016 | Attorney General | None (reg. compliance) |
-| Michigan | MICH. COMP. LAWS § 432.501 | 2019 | Gaming Control Bd. | $5,000/yr |
-| Minnesota | None | — | — | — |
-| Mississippi | MISS. CODE ANN. § 97-33-301 | 2017 | Gaming Commission | $5,000/yr |
-| Missouri | None | — | — | — |
-| Montana | None (Prohibited per AG) | — | — | — |
-| Nebraska | NEB. REV. STAT. § 9-1001 | 2020 | Dept. of Revenue | $10,000/yr |
-| Nevada | NEV. REV. STAT. § 463 (Full license) | 2015 | Gaming Control Bd. | $500,000+ |
-| New Hampshire | N.H. REV. STAT. ANN. § 287-H:1 | 2017 | Lottery Commission | $2,500/yr |
-| New Jersey | N.J. STAT. ANN. § 5:18-1 | 2017 | DGE | $100,000/yr |
-| New Mexico | None | — | — | — |
-| New York | N.Y. Racing Law §§ 1400-1410 | 2016 | Gaming Commission | $500,000/yr |
-| North Carolina | None | — | — | — |
-| North Dakota | N.D. CENT. CODE § 53-12.2 | 2017 | AG's Office | $1,000/yr |
-| Ohio | OHIO REV. CODE ANN. § 3774.01 | 2017 | Casino Control | $10,000/yr |
-| Oklahoma | None | — | — | — |
-| Oregon | None | — | — | — |
-| Pennsylvania | 4 PA. CONS. STAT. § 301 | 2017 | PGCB | $50,000/yr |
-| Rhode Island | R.I. GEN. LAWS § 11-19-1.1 | 2016 | Business Regulation | $2,500/yr |
-| South Carolina | None | — | — | — |
-| South Dakota | None (Prohibited per AG) | — | — | — |
-| Tennessee | TENN. CODE ANN. § 47-18-5601 | 2016 | Secretary of State | $50,000/yr |
-| Texas | None (AG opinion) | — | — | — |
-| Utah | None (Prohibited) | — | — | — |
-| Vermont | VT. STAT. ANN. tit. 9, § 4171 | 2017 | AG's Office | $1,000/yr |
-| Virginia | VA. CODE ANN. § 59.1-556 | 2016 | DACS | $50,000/yr |
-| Washington | None (Prohibited per AG) | — | — | — |
-| West Virginia | W. VA. CODE § 29-22D-1 | 2017 | Lottery Commission | $10,000/yr |
-| Wisconsin | None | — | — | — |
-| Wyoming | WYO. STAT. ANN. § 9-24-101 | 2021 | Gaming Commission | $5,000/yr |
+| State          | DFS Statute                          | Year | Regulatory Body     | Registration Fee       |
+| :------------- | :----------------------------------- | :--- | :------------------ | :--------------------- |
+| Alabama        | ALA. CODE § 8-19E-1                  | 2019 | Secretary of State  | $1,000/yr              |
+| Alaska         | None                                 | —    | —                   | —                      |
+| Arizona        | ARIZ. REV. STAT. § 5-1201            | 2016 | Dept. of Gaming     | $5,000/yr              |
+| Arkansas       | ARK. CODE ANN. § 23-116-101          | 2017 | Racing Commission   | $5,000/yr              |
+| California     | None                                 | —    | —                   | —                      |
+| Colorado       | COLO. REV. STAT. § 12-15.5-101       | 2016 | Secretary of State  | $500/yr                |
+| Connecticut    | CONN. GEN. STAT. § 12-850            | 2017 | Consumer Protection | $50,000 bond           |
+| Delaware       | DEL. CODE ANN. tit. 29, § 4860       | 2012 | Lottery             | Varies                 |
+| DC             | D.C. CODE § 36-601.01                | 2019 | Office of Lottery   | $10,000/yr             |
+| Florida        | FLA. STAT. § 546.10                  | 2018 | Dept. of Business   | $500/yr                |
+| Georgia        | None                                 | —    | —                   | —                      |
+| Hawaii         | None (Prohibited)                    | —    | —                   | —                      |
+| Idaho          | None (Prohibited per AG)             | —    | —                   | —                      |
+| Illinois       | None (AG tolerated)                  | —    | —                   | —                      |
+| Indiana        | IND. CODE § 4-33-24-1                | 2016 | Gaming Commission   | $50,000/yr             |
+| Iowa           | IOWA CODE § 99E.1                    | 2019 | Racing & Gaming     | $5,000/yr              |
+| Kansas         | None                                 | —    | —                   | —                      |
+| Kentucky       | None                                 | —    | —                   | —                      |
+| Louisiana      | LA. REV. STAT. ANN. § 4:701          | 2018 | Gaming Control Bd.  | Parish-level           |
+| Maine          | ME. REV. STAT. ANN. tit. 8, § 1101   | 2017 | Gambling Control    | $2,500/yr              |
+| Maryland       | MD. CODE ANN. § 9-1D-01              | 2012 | Lottery & Gaming    | $2,500/yr              |
+| Massachusetts  | 940 CMR 34.00                        | 2016 | Attorney General    | None (reg. compliance) |
+| Michigan       | MICH. COMP. LAWS § 432.501           | 2019 | Gaming Control Bd.  | $5,000/yr              |
+| Minnesota      | None                                 | —    | —                   | —                      |
+| Mississippi    | MISS. CODE ANN. § 97-33-301          | 2017 | Gaming Commission   | $5,000/yr              |
+| Missouri       | None                                 | —    | —                   | —                      |
+| Montana        | None (Prohibited per AG)             | —    | —                   | —                      |
+| Nebraska       | NEB. REV. STAT. § 9-1001             | 2020 | Dept. of Revenue    | $10,000/yr             |
+| Nevada         | NEV. REV. STAT. § 463 (Full license) | 2015 | Gaming Control Bd.  | $500,000+              |
+| New Hampshire  | N.H. REV. STAT. ANN. § 287-H:1       | 2017 | Lottery Commission  | $2,500/yr              |
+| New Jersey     | N.J. STAT. ANN. § 5:18-1             | 2017 | DGE                 | $100,000/yr            |
+| New Mexico     | None                                 | —    | —                   | —                      |
+| New York       | N.Y. Racing Law §§ 1400-1410         | 2016 | Gaming Commission   | $500,000/yr            |
+| North Carolina | None                                 | —    | —                   | —                      |
+| North Dakota   | N.D. CENT. CODE § 53-12.2            | 2017 | AG's Office         | $1,000/yr              |
+| Ohio           | OHIO REV. CODE ANN. § 3774.01        | 2017 | Casino Control      | $10,000/yr             |
+| Oklahoma       | None                                 | —    | —                   | —                      |
+| Oregon         | None                                 | —    | —                   | —                      |
+| Pennsylvania   | 4 PA. CONS. STAT. § 301              | 2017 | PGCB                | $50,000/yr             |
+| Rhode Island   | R.I. GEN. LAWS § 11-19-1.1           | 2016 | Business Regulation | $2,500/yr              |
+| South Carolina | None                                 | —    | —                   | —                      |
+| South Dakota   | None (Prohibited per AG)             | —    | —                   | —                      |
+| Tennessee      | TENN. CODE ANN. § 47-18-5601         | 2016 | Secretary of State  | $50,000/yr             |
+| Texas          | None (AG opinion)                    | —    | —                   | —                      |
+| Utah           | None (Prohibited)                    | —    | —                   | —                      |
+| Vermont        | VT. STAT. ANN. tit. 9, § 4171        | 2017 | AG's Office         | $1,000/yr              |
+| Virginia       | VA. CODE ANN. § 59.1-556             | 2016 | DACS                | $50,000/yr             |
+| Washington     | None (Prohibited per AG)             | —    | —                   | —                      |
+| West Virginia  | W. VA. CODE § 29-22D-1               | 2017 | Lottery Commission  | $10,000/yr             |
+| Wisconsin      | None                                 | —    | —                   | —                      |
+| Wyoming        | WYO. STAT. ANN. § 9-24-101           | 2021 | Gaming Commission   | $5,000/yr              |
 
 ---
 
@@ -1190,15 +1207,15 @@ Understanding how Styx's "Unilateral Performance Contract" model differs from tr
 
 ### 12.1 Structural Differences
 
-| Feature | Traditional DFS | Styx Performance Contract |
-| :--- | :--- | :--- |
-| **Counterparty** | Other players in the contest | User's own future self |
-| **Outcome Determinant** | Real-world athlete performance + participant selection skill | User's own behavioral effort |
-| **Element of Chance** | Present (player injuries, weather, game-day decisions) | Absent (user controls own behavior) |
-| **Prize Pool** | Aggregated entry fees minus operator rake | Return of user's own staked funds |
-| **Information Asymmetry** | Significant (professional DFS players vs. casual) | None (user competes only against their own commitment) |
-| **Operator Revenue Model** | Rake on prize pool (typically 5-15%) | Forfeited stakes from failed commitments |
-| **Regulatory Classification** | "Fantasy contest" or "game of skill" | "Commitment device" or "performance contract" |
+| Feature                       | Traditional DFS                                              | Styx Performance Contract                              |
+| :---------------------------- | :----------------------------------------------------------- | :----------------------------------------------------- |
+| **Counterparty**              | Other players in the contest                                 | User's own future self                                 |
+| **Outcome Determinant**       | Real-world athlete performance + participant selection skill | User's own behavioral effort                           |
+| **Element of Chance**         | Present (player injuries, weather, game-day decisions)       | Absent (user controls own behavior)                    |
+| **Prize Pool**                | Aggregated entry fees minus operator rake                    | Return of user's own staked funds                      |
+| **Information Asymmetry**     | Significant (professional DFS players vs. casual)            | None (user competes only against their own commitment) |
+| **Operator Revenue Model**    | Rake on prize pool (typically 5-15%)                         | Forfeited stakes from failed commitments               |
+| **Regulatory Classification** | "Fantasy contest" or "game of skill"                         | "Commitment device" or "performance contract"          |
 
 ### 12.2 Legal Implications
 
@@ -1229,168 +1246,196 @@ When communicating with state regulators or AGs, Styx should use the following f
 For each state where Styx may need to register (either as DFS or as a skill-contest platform), the following provides the primary regulatory contact and key filing requirements.
 
 **Alabama**
+
 - Agency: Alabama Secretary of State, Business Services Division
 - Statute: ALA. CODE § 8-19E-3
 - Requirements: Annual registration, $1,000 fee, operator disclosure form, responsible gaming plan
 - Contact: sos.alabama.gov/business-services
 
 **Arizona (BLOCKED — for reference only)**
+
 - Agency: Arizona Department of Gaming
 - Statute: ARIZ. REV. STAT. § 5-1201
 - Requirements: Full operator license, $5,000 annual fee, background investigation, tribal compact compliance
 - Contact: gaming.az.gov
 
 **Colorado**
+
 - Agency: Colorado Secretary of State
 - Statute: COLO. REV. STAT. § 12-15.5-103
 - Requirements: Annual registration, $500 fee, consumer protection plan, player fund segregation
 - Contact: sos.state.co.us
 
 **Connecticut**
+
 - Agency: Connecticut Department of Consumer Protection, Gaming Division
 - Statute: CONN. GEN. STAT. § 12-851
 - Requirements: Operator license, $50,000 surety bond, annual audit, responsible gaming provisions
 - Contact: portal.ct.gov/dcp
 
 **Delaware**
+
 - Agency: Delaware Lottery
 - Statute: DEL. CODE ANN. tit. 29, § 4860
 - Requirements: Licensing through Lottery framework, background check, player fund requirements
 - Contact: delottery.com
 
 **District of Columbia**
+
 - Agency: DC Office of Lottery and Gaming
 - Statute: D.C. CODE § 36-601.01
 - Requirements: Operator license, $10,000 annual fee, consumer protection plan, responsible gaming
 - Contact: dclottery.com
 
 **Florida**
+
 - Agency: Florida Department of Business and Professional Regulation
 - Statute: FLA. STAT. § 546.10
 - Requirements: Annual registration, $500 fee, player fund segregation, age verification
 - Contact: myfloridalicense.com
 
 **Indiana**
+
 - Agency: Indiana Gaming Commission
 - Statute: IND. CODE § 4-33-24-3
 - Requirements: Full operator license, $50,000 annual fee, background investigation, annual audit, responsible gaming
 - Contact: in.gov/igc
 
 **Iowa**
+
 - Agency: Iowa Racing and Gaming Commission
 - Statute: IOWA CODE § 99E.1
 - Requirements: Operator license, $5,000 annual fee, background investigation, financial audit
 - Contact: irgc.iowa.gov
 
 **Maine**
+
 - Agency: Maine Gambling Control Unit, Department of Public Safety
 - Statute: ME. REV. STAT. ANN. tit. 8, § 1101
 - Requirements: Annual registration, $2,500 fee, background check, player fund segregation
 - Contact: maine.gov/dps/gamb-control
 
 **Maryland**
+
 - Agency: Maryland Lottery and Gaming Control Commission
 - Statute: MD. CODE ANN., STATE GOV'T § 9-1D-01
 - Requirements: Annual registration, $2,500 fee, consumer protection compliance, responsible gaming
 - Contact: mdlottery.com
 
 **Massachusetts**
+
 - Agency: Massachusetts Attorney General's Office, Consumer Protection Division
 - Statute: 940 MASS. CODE REGS. 34.00
 - Requirements: No separate registration fee; compliance with 940 CMR 34.00 regulations (player fund segregation, advertising restrictions, age verification, responsible gaming)
 - Contact: mass.gov/ago
 
 **Michigan**
+
 - Agency: Michigan Gaming Control Board
 - Statute: MICH. COMP. LAWS § 432.501
 - Requirements: Operator license, $5,000 annual fee, background investigation, player protection plan
 - Contact: michigan.gov/mgcb
 
 **Mississippi**
+
 - Agency: Mississippi Gaming Commission
 - Statute: MISS. CODE ANN. § 97-33-303
 - Requirements: Operator registration, $5,000 annual fee, financial audit, responsible gaming
 - Contact: msgamingcommission.com
 
 **Nebraska**
+
 - Agency: Nebraska Department of Revenue, Gaming Division
 - Statute: NEB. REV. STAT. § 9-1003
 - Requirements: Annual registration, $10,000 fee, background investigation, player fund segregation
 - Contact: revenue.nebraska.gov
 
 **Nevada (BLOCKED — for reference only)**
+
 - Agency: Nevada Gaming Control Board
 - Statute: NEV. REV. STAT. § 463.160
 - Requirements: Full gaming license (application fee $500,000+), extensive background investigation, ongoing regulatory oversight
 - Contact: gaming.nv.gov
 
 **New Hampshire**
+
 - Agency: New Hampshire Lottery Commission
 - Statute: N.H. REV. STAT. ANN. § 287-H:3
 - Requirements: Annual registration, $2,500 fee, player fund segregation, responsible gaming plan
 - Contact: nhlottery.com
 
 **New Jersey**
+
 - Agency: Division of Gaming Enforcement (DGE)
 - Statute: N.J. STAT. ANN. § 5:18-3
 - Requirements: Full operator license, $100,000 annual fee, extensive background investigation, annual compliance audit, responsible gaming
 - Contact: nj.gov/oag/ge
 
 **New York**
+
 - Agency: New York State Gaming Commission
 - Statute: N.Y. RACING LAW § 1404
 - Requirements: Annual registration, $500,000 fee (major operators), background investigation, player fund segregation, responsible gaming
 - Contact: gaming.ny.gov
 
 **North Dakota**
+
 - Agency: North Dakota Attorney General's Office
 - Statute: N.D. CENT. CODE § 53-12.2-03
 - Requirements: Annual registration, $1,000 fee, AG compliance review, player protection provisions
 - Contact: attorneygeneral.nd.gov
 
 **Ohio**
+
 - Agency: Ohio Casino Control Commission (OCCC)
 - Statute: OHIO REV. CODE ANN. § 3774.03
 - Requirements: Annual registration, $10,000 fee, background investigation, financial audit, responsible gaming
 - Contact: casinocontrol.ohio.gov
 
 **Pennsylvania**
+
 - Agency: Pennsylvania Gaming Control Board (PGCB)
 - Statute: 4 PA. CONS. STAT. § 303
 - Requirements: Full operator license, $50,000 annual fee, background investigation, annual compliance audit
 - Contact: gamingcontrolboard.pa.gov
 
 **Rhode Island**
+
 - Agency: Rhode Island Department of Business Regulation
 - Statute: R.I. GEN. LAWS § 11-19-1.1
 - Requirements: Annual registration, $2,500 fee, player fund segregation, responsible gaming
 - Contact: dbr.ri.gov
 
 **Tennessee**
+
 - Agency: Tennessee Secretary of State
 - Statute: TENN. CODE ANN. § 47-18-5604
 - Requirements: Annual registration, $50,000 fee, background investigation, consumer protection compliance
 - Contact: sos.tn.gov
 
 **Vermont**
+
 - Agency: Vermont Attorney General's Office
 - Statute: VT. STAT. ANN. tit. 9, § 4173
 - Requirements: Annual registration, $1,000 fee, AG compliance review, player protection provisions
 - Contact: ago.vermont.gov
 
 **Virginia**
+
 - Agency: Virginia Department of Agriculture and Consumer Services (DACS)
 - Statute: VA. CODE ANN. § 59.1-558
 - Requirements: Annual registration, $50,000 fee, background investigation, consumer protection compliance
 - Contact: vdacs.virginia.gov
 
 **West Virginia**
+
 - Agency: West Virginia Lottery Commission, Interactive Wagering Division
 - Statute: W. VA. CODE § 29-22D-3
 - Requirements: Full operator license, $10,000 annual fee, background investigation, responsible gaming
 - Contact: wvlottery.com
 
 **Wyoming**
+
 - Agency: Wyoming Gaming Commission
 - Statute: WYO. STAT. ANN. § 9-24-103
 - Requirements: Annual registration, $5,000 fee, background investigation, player fund requirements
@@ -1400,14 +1445,14 @@ For each state where Styx may need to register (either as DFS or as a skill-cont
 
 If Styx registers as a DFS operator in all applicable states, the estimated annual registration cost is:
 
-| Category | Cost Estimate |
-| :--- | :--- |
-| **Registration fees** | ~$870,000/year (dominated by NY $500K and NJ $100K) |
-| **Background investigations** | ~$50,000-$100,000 (one-time, varies by state) |
-| **Surety bonds** | ~$50,000-$100,000 (CT and others) |
-| **Legal counsel (multi-state)** | ~$200,000-$400,000/year |
-| **Compliance infrastructure** | ~$150,000-$300,000/year |
-| **Total estimated annual cost** | ~$1.3M-$1.8M/year |
+| Category                        | Cost Estimate                                       |
+| :------------------------------ | :-------------------------------------------------- |
+| **Registration fees**           | ~$870,000/year (dominated by NY $500K and NJ $100K) |
+| **Background investigations**   | ~$50,000-$100,000 (one-time, varies by state)       |
+| **Surety bonds**                | ~$50,000-$100,000 (CT and others)                   |
+| **Legal counsel (multi-state)** | ~$200,000-$400,000/year                             |
+| **Compliance infrastructure**   | ~$150,000-$300,000/year                             |
+| **Total estimated annual cost** | ~$1.3M-$1.8M/year                                   |
 
 **Note:** If Styx successfully maintains its "performance contract/commitment device" classification (outside the DFS definition), most of these costs would not apply. The DFS registration strategy should be reserved as a fallback if regulators insist on DFS classification.
 
@@ -1463,6 +1508,7 @@ Several existing platforms operate commitment-device models in the United States
 The consistent regulatory treatment of commitment device platforms as non-gambling across all US jurisdictions — including hostile states like Washington and Utah — provides strong precedent for Styx's legal position. No commitment device platform has ever been subjected to gambling enforcement in any US state over nearly two decades of operation. This track record supports the argument that regulators and AGs recognize the fundamental distinction between commitment devices and gambling, even in states with restrictive gambling laws.
 
 Key precedential findings:
+
 1. **No enforcement actions:** Zero gambling enforcement actions against any commitment device platform in any US state since 2008 (18 years of operational history across multiple platforms).
 2. **FTC classification:** The FTC classified Pact as a consumer product (consumer protection enforcement), not a gambling product.
 3. **Academic endorsement:** Commitment devices are endorsed by Nobel Prize-winning behavioral economists (Richard Thaler, Daniel Kahneman) as legitimate financial wellness tools.
@@ -1477,6 +1523,7 @@ Key precedential findings:
 This survey is prepared for internal strategic planning purposes and does not constitute legal advice. The analysis reflects the legal landscape as of March 2026 and is subject to change as legislatures enact new statutes, courts issue new opinions, and attorneys general revise their enforcement postures.
 
 **Critical limitations:**
+
 1. **Not a legal opinion.** This survey identifies risk levels and recommends operational postures but should not be relied upon as a substitute for formal legal opinions from licensed attorneys in each jurisdiction.
 2. **Rapidly evolving landscape.** State gambling laws are changing rapidly in the post-PASPA environment. This survey should be reviewed and updated quarterly.
 3. **AG opinions may shift.** Attorney General opinions are not binding law and can change with new administrations. The enforcement posture assessments in this survey reflect the current AG's approach but may not persist through election cycles.
@@ -1485,6 +1532,7 @@ This survey is prepared for internal strategic planning purposes and does not co
 6. **Tax implications.** This survey does not address the tax treatment of Styx contracts (e.g., whether returned stakes constitute taxable income, whether forfeited stakes are deductible). Tax analysis should be conducted separately.
 
 **Recommended next steps:**
+
 - Engage gaming-specialized counsel in the 10 Phase 1 deployment states for formal legal opinions.
 - Seek an informal AG advisory opinion in Virginia (most favorable jurisdiction) as a reference document for other states.
 - Monitor the Fantasy Sports & Gaming Association (FSGA) legislative tracker for real-time updates to state gaming laws.
@@ -1494,10 +1542,10 @@ This survey is prepared for internal strategic planning purposes and does not co
 
 ## 16. Revision History
 
-| Version | Date | Changes |
-| :--- | :--- | :--- |
-| 1.0.0 | 2026-03-10 | Initial 51-jurisdiction survey. |
+| Version | Date       | Changes                         |
+| :------ | :--------- | :------------------------------ |
+| 1.0.0   | 2026-03-10 | Initial 51-jurisdiction survey. |
 
-| Version | Date | Changes |
-| :--- | :--- | :--- |
-| 1.0.0 | 2026-03-10 | Initial 51-jurisdiction survey covering all 50 states + DC. Includes Executive Summary, Methodology, Legal Tests explanation, State-by-State Analysis (51 entries), Consolidated Blocklist, Table of Authorities (statutes, case law, AG opinions, legislative history), Federal Law Considerations, Compliance Implementation Checklist, Risk Summary Matrix, Strategic Deployment Recommendations, Glossary, DFS Legislation Tracker, and Styx vs. DFS Comparison. |
+| Version | Date       | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| :------ | :--------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0.0   | 2026-03-10 | Initial 51-jurisdiction survey covering all 50 states + DC. Includes Executive Summary, Methodology, Legal Tests explanation, State-by-State Analysis (51 entries), Consolidated Blocklist, Table of Authorities (statutes, case law, AG opinions, legislative history), Federal Law Considerations, Compliance Implementation Checklist, Risk Summary Matrix, Strategic Deployment Recommendations, Glossary, DFS Legislation Tracker, and Styx vs. DFS Comparison. |

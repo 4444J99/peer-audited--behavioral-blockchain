@@ -1,5 +1,10 @@
-import { createParamDecorator, ExecutionContext, SetMetadata, UnauthorizedException } from '@nestjs/common';
-import { IS_PUBLIC_KEY } from '../../../guards/auth.guard';
+import {
+  createParamDecorator,
+  ExecutionContext,
+  SetMetadata,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { IS_PUBLIC_KEY } from "../../../guards/auth.guard";
 
 export const CurrentUser = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext) => {
@@ -9,7 +14,7 @@ export const CurrentUser = createParamDecorator(
     // undefined user and operate on `undefined.id`, silently bypassing auth.
     // Throwing here guarantees a route can never run with an unauthenticated user.
     if (!request.user) {
-      throw new UnauthorizedException('Authentication required');
+      throw new UnauthorizedException("Authentication required");
     }
     return request.user;
   },

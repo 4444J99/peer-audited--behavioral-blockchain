@@ -1,7 +1,10 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { Pool } from "pg";
 import { createHash } from "crypto";
-import { createDecoProof, DecoProofRequest } from "../../../../shared/libs/behavioral-logic";
+import {
+  createDecoProof,
+  DecoProofRequest,
+} from "../../../../shared/libs/behavioral-logic";
 
 @Injectable()
 export class DecoCommitmentService {
@@ -14,7 +17,10 @@ export class DecoCommitmentService {
    * database reader, and rows outlive the user (the FK only nulls user_id).
    * Verification recomputes the hash from a supplied claim instead.
    */
-  async createCommitment(params: DecoProofRequest, userId?: string): Promise<{
+  async createCommitment(
+    params: DecoProofRequest,
+    userId?: string,
+  ): Promise<{
     verified: boolean;
     commitmentHash: string;
     timestamp: string;
@@ -35,7 +41,13 @@ export class DecoCommitmentService {
       await this.pool.query(
         `INSERT INTO deco_commitments (user_id, domain, committed_at, commitment_hash, verified)
          VALUES ($1, $2, $3, $4, $5)`,
-        [userId ?? null, domain, result.timestamp, result.commitmentHash, result.verified],
+        [
+          userId ?? null,
+          domain,
+          result.timestamp,
+          result.commitmentHash,
+          result.verified,
+        ],
       );
       stored = true;
     } catch {
@@ -68,7 +80,12 @@ export class DecoCommitmentService {
       [commitmentHash],
     );
     if (rows.length === 0) {
-      return { exists: false, matches: null, committedAt: null, createdAt: null };
+      return {
+        exists: false,
+        matches: null,
+        committedAt: null,
+        createdAt: null,
+      };
     }
 
     const row = rows[0];
@@ -78,7 +95,12 @@ export class DecoCommitmentService {
         : row.committed_at;
 
     if (!claim) {
-      return { exists: true, matches: null, committedAt, createdAt: row.created_at };
+      return {
+        exists: true,
+        matches: null,
+        committedAt,
+        createdAt: row.created_at,
+      };
     }
 
     const recomputed = createHash("sha256")

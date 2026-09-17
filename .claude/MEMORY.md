@@ -1,6 +1,7 @@
 # Styx (peer-audited--behavioral-blockchain) — Project Memory
 
 ## Identity
+
 - **Full name:** peer-audited--behavioral-blockchain (codename: Styx)
 - **Organ:** ORGAN-III (Ergon) — commercial products
 - **Tier:** flagship
@@ -8,6 +9,7 @@
 - **GitHub org:** labores-profani-crux
 
 ## Architecture
+
 - **Monorepo** managed by Turborepo
 - `src/api/` — NestJS backend (port 3000)
 - `src/web/` — Next.js frontend (port 3001)
@@ -19,6 +21,7 @@
 - `docs/` — research, legal, planning, architecture docs
 
 ## Key Constants
+
 - Loss aversion lambda: 1.955
 - Onboarding bonus: $5 (endowed progress)
 - Grace days: 2/month
@@ -27,6 +30,7 @@
 - Stake tiers: $0 / $20 / $100 / $1,000 / unlimited
 
 ## Development
+
 - Node 20, TypeScript strict
 - `npm run dev` — turbo dev (API + web)
 - `npm test` — turbo test
@@ -35,6 +39,7 @@
 - Deploy: tag-triggered to Render via `.github/workflows/deploy.yml`
 
 ## Deployment
+
 - **Provider:** Render (Oregon region, starter plans)
 - **Services:** API, Web, PostgreSQL, Redis
 - **CDN/WAF:** Cloudflare (free tier)
@@ -43,17 +48,21 @@
 - **Production status:** Not yet deployed with real-money settlement
 
 ## Linguistic Cloaker
+
 App Store compliance layer — swaps gambling-adjacent terms:
+
 - stake → vault
 - bet → commitment
 - fury (peer review system) → peer review
 - Enforced by `scripts/gatekeeper-scan.sh` and `scripts/validation/04-redacted-build-check.sh`
 
 ## Agent Departments
+
 7 seeded agent contexts in `.claude/agents/` — none yet activated:
 enterprise, finance, growth, support, ops, product, legal
 
 ## Sprint History
+
 - Sprint 2-3 (Feb 27): Core feature implementation
 - Docs rename/reorganize (Feb 27): 19 renames + 5 moves
 - Test hardening (Feb 27): CI + E2E + deploy pipeline
@@ -66,6 +75,7 @@ enterprise, finance, growth, support, ops, product, legal
 - AI session audit (Mar 6): 7 GitHub issues created
 
 ## Key Issues (Blocked on Human Action)
+
 - #132: KYC integration
 - #133: High-risk merchant account
 - #136: Skill-based contest whitepaper + counsel sign-off
@@ -76,11 +86,13 @@ enterprise, finance, growth, support, ops, product, legal
 - #184: FUNDING.yml (community health gap)
 
 ## Unexecuted Plans (High Value)
+
 - `ask-styx-static-chat` — standalone chat SPA for GH Pages
 - `architecture-completeness-matrix` — 8-phase deep dive, 19 feature areas
 - `stub-placeholder-inventory` — grep-based stub/TODO search (subordinate to above)
 
 ## Security Remediation & Release Engineering (2026-05-26)
+
 Merged to `main` as squash **f45c80c** (PR #607, squashed 6 commits). Audited the
 #605 "security & correctness hardening" commit, found **89 issues**, fixed all of
 them. Verified locally: `tsc --noEmit` clean + **994 tests / 95 suites green**.
@@ -90,7 +102,7 @@ run — see Known Gaps.)
 - **Money/idempotency:** Stripe idempotency keys on `transferFunds`/`processIAP`/
   `recordUsage`/capture/lock; DB-enforced ledger `idempotency_key` (migration
   **030**) with a PARTIAL unique index → `ON CONFLICT (idempotency_key) WHERE
-  idempotency_key IS NOT NULL DO NOTHING`; per-(run,type) settlement dedupe;
+idempotency_key IS NOT NULL DO NOTHING`; per-(run,type) settlement dedupe;
   concurrent-reclaim status guards; `payment_intent.succeeded` verifies amount +
   currency before activating a contract.
 - **Auth:** banned-user guard on wallet/oracles; **`ENTERPRISE_SSO_SECRET` is now
@@ -121,6 +133,7 @@ run — see Known Gaps.)
 - **New required env var:** `ENTERPRISE_SSO_SECRET`.
 
 ### Known Gaps / Operator TODO (do not lose)
+
 - **`build_and_test` is NOT running on PRs** (repo Actions gating, not a YAML bug).
   FIX THIS before applying `main.json` — a required check that never reports would
   deadlock every merge.

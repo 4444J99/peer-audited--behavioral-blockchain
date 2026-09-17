@@ -26,25 +26,25 @@ public API or full web deployment was independently verified. See the
 
 ## Choose your reading path
 
-| I am reading as... | Start here | First question answered |
-| --- | --- | --- |
-| A general or nontechnical reader | [Plain-language edition](docs/audiences/general.md) | What is this, and what happens when someone uses it? |
-| A software engineer | [Technical edition](docs/audiences/technical.md) | How is it built, tested, and bounded? |
-| A humanities scholar, artist, or educator | [Humanities edition](docs/audiences/humanities.md) | What does peer judgment turn into knowledge, memory, and power? |
-| An operator, founder, or prospective client | [Business edition](docs/audiences/business.md) | What workflow might this change, and what is only proposed? |
-| A hiring manager, collaborator, or funder | [Evaluator edition](docs/audiences/evaluator.md) | What did Anthony contribute, and where is the evidence? |
+| I am reading as...                          | Start here                                          | First question answered                                         |
+| ------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------- |
+| A general or nontechnical reader            | [Plain-language edition](docs/audiences/general.md) | What is this, and what happens when someone uses it?            |
+| A software engineer                         | [Technical edition](docs/audiences/technical.md)    | How is it built, tested, and bounded?                           |
+| A humanities scholar, artist, or educator   | [Humanities edition](docs/audiences/humanities.md)  | What does peer judgment turn into knowledge, memory, and power? |
+| An operator, founder, or prospective client | [Business edition](docs/audiences/business.md)      | What workflow might this change, and what is only proposed?     |
+| A hiring manager, collaborator, or funder   | [Evaluator edition](docs/audiences/evaluator.md)    | What did Anthony contribute, and where is the evidence?         |
 
 ## Project at a glance
 
-| | |
-| --- | --- |
-| **What it is** | A multi-interface behavioral-commitment prototype with peer proof review, a double-entry ledger, and configurable payment/compliance controls. |
-| **Problem addressed** | Ordinary accountability systems often separate the promise, the evidence, and the consequence; Styx explores one auditable workflow connecting all three. |
-| **Current state** | `PROTOTYPE`. Local synthetic, test-money flows and deployment automation exist; a usable public product deployment was not verified on 2026-08-31. |
-| **Intended users** | The current product wedge is adults using no-contact or breakup-recovery commitments. Fitness/wellness and employer-funded programs are later proposed applications. |
-| **Anthony's role** | Product/technical policy and implementation lead, as recorded in the repository's founder decision ledger; that record cites an unsigned founder-agreement draft and does not establish sole authorship or ownership. |
-| **Evidence** | Source modules, automated tests, CI and deployment workflows, architecture records, and the claim-to-control matrix. |
-| **Known limitations** | No verified public adoption, revenue, behavioral outcome, enterprise-scale performance, or production payment settlement is claimed here. The current public Pages artifact is incomplete. |
+|                       |                                                                                                                                                                                                                       |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **What it is**        | A multi-interface behavioral-commitment prototype with peer proof review, a double-entry ledger, and configurable payment/compliance controls.                                                                        |
+| **Problem addressed** | Ordinary accountability systems often separate the promise, the evidence, and the consequence; Styx explores one auditable workflow connecting all three.                                                             |
+| **Current state**     | `PROTOTYPE`. Local synthetic, test-money flows and deployment automation exist; a usable public product deployment was not verified on 2026-08-31.                                                                    |
+| **Intended users**    | The current product wedge is adults using no-contact or breakup-recovery commitments. Fitness/wellness and employer-funded programs are later proposed applications.                                                  |
+| **Anthony's role**    | Product/technical policy and implementation lead, as recorded in the repository's founder decision ledger; that record cites an unsigned founder-agreement draft and does not establish sole authorship or ownership. |
+| **Evidence**          | Source modules, automated tests, CI and deployment workflows, architecture records, and the claim-to-control matrix.                                                                                                  |
+| **Known limitations** | No verified public adoption, revenue, behavioral outcome, enterprise-scale performance, or production payment settlement is claimed here. The current public Pages artifact is incomplete.                            |
 
 ## Canonical long-form documentation
 
@@ -205,13 +205,13 @@ flowchart TB
 Status below is a dated observation, not a deployment promise. It was checked on
 **2026-08-31**.
 
-| Surface | URL or location | Observed status |
-| --- | --- | --- |
-| Source repository | `https://github.com/4444J99/peer-audited--behavioral-blockchain` | Public source and documentation were accessible. |
-| Current GitHub Pages root | `https://4444j99.github.io/peer-audited--behavioral-blockchain/` | Returned `200`, but the HTML identifies itself as “Ask Styx”. Post-merge on 2026-09-08, root-relative JS/CSS assets returned `200`. |
-| Former organization Pages root | `https://a-organvm.github.io/peer-audited--behavioral-blockchain/` | Returned `404`; the older activation ledger is stale on this point. |
-| Launch and Ask Styx routes | `/launch`, `/ask-styx` | Returned `404` under the current Pages root. |
-| API and full web application | Render blueprints and workflows in the repository | Deployment paths exist in source. No public target was independently verified for this update. |
+| Surface                        | URL or location                                                    | Observed status                                                                                                                     |
+| ------------------------------ | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Source repository              | `https://github.com/4444J99/peer-audited--behavioral-blockchain`   | Public source and documentation were accessible.                                                                                    |
+| Current GitHub Pages root      | `https://4444j99.github.io/peer-audited--behavioral-blockchain/`   | Returned `200`, but the HTML identifies itself as “Ask Styx”. Post-merge on 2026-09-08, root-relative JS/CSS assets returned `200`. |
+| Former organization Pages root | `https://a-organvm.github.io/peer-audited--behavioral-blockchain/` | Returned `404`; the older activation ledger is stale on this point.                                                                 |
+| Launch and Ask Styx routes     | `/launch`, `/ask-styx`                                             | Returned `404` under the current Pages root.                                                                                        |
+| API and full web application   | Render blueprints and workflows in the repository                  | Deployment paths exist in source. No public target was independently verified for this update.                                      |
 
 The historical [activation ledger](docs/activation/activation-ledger--peer-audited--2026-06-11.md)
 remains useful as an earlier record, but its live-URL result has been superseded
@@ -271,18 +271,18 @@ fresh local diagnostic run on 2026-08-31 passed 3,378 and failed 4, so this is
 not presented as an all-green release receipt. The former README said `1,107`
 while its own four subtotals summed to `1,207`; both figures are obsolete.
 
-| Workspace | Defined tests | Fresh result |
-| --- | ---: | ---: |
-| API | 2,108 | 2,104 passed; 4 failed |
-| Web | 481 | 481 passed |
-| Mobile | 324 | 324 passed |
-| Desktop | 148 | 148 passed |
-| Shared | 215 | 215 passed |
-| Ask Styx | 46 | 46 passed |
-| Test harness | 4 | 4 passed |
-| Audience engine | 21 | 21 passed |
-| Audit engine | 31 | 31 passed |
-| Styx CLI | 4 | 4 passed |
+| Workspace       | Defined tests |           Fresh result |
+| --------------- | ------------: | ---------------------: |
+| API             |         2,108 | 2,104 passed; 4 failed |
+| Web             |           481 |             481 passed |
+| Mobile          |           324 |             324 passed |
+| Desktop         |           148 |             148 passed |
+| Shared          |           215 |             215 passed |
+| Ask Styx        |            46 |              46 passed |
+| Test harness    |             4 |               4 passed |
+| Audience engine |            21 |              21 passed |
+| Audit engine    |            31 |              31 passed |
+| Styx CLI        |             4 |               4 passed |
 
 The run also found root manifest/lockfile drift that prevents a clean `npm ci`.
 See the exact commands, compatibility workaround, and failure classification in

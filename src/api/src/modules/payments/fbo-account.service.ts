@@ -1,5 +1,5 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, Inject, Logger } from "@nestjs/common";
+import { Pool } from "pg";
 
 export interface FboAccount {
   id: string;
@@ -14,7 +14,7 @@ export interface FboAccount {
 export class FboAccountService {
   private readonly logger = new Logger(FboAccountService.name);
 
-  constructor(@Inject('DATABASE_POOL') private pool: Pool) {}
+  constructor(@Inject("DATABASE_POOL") private pool: Pool) {}
 
   async registerConnectedAccount(params: {
     platformAccountId: string;
@@ -26,11 +26,18 @@ export class FboAccountService {
       `INSERT INTO fbo_accounts (platform_account_id, platform_name, jurisdiction, is_active)
        VALUES ($1, $2, $3, $4)
        RETURNING id, platform_account_id, platform_name, jurisdiction, is_active, created_at`,
-      [params.platformAccountId, params.platformName, params.jurisdiction, params.isActive],
+      [
+        params.platformAccountId,
+        params.platformName,
+        params.jurisdiction,
+        params.isActive,
+      ],
     );
 
     const row = result.rows[0];
-    this.logger.log(`Registered FBO account ${row.platform_account_id} for ${row.jurisdiction}`);
+    this.logger.log(
+      `Registered FBO account ${row.platform_account_id} for ${row.jurisdiction}`,
+    );
 
     return {
       id: row.id,
@@ -90,7 +97,9 @@ export class FboAccountService {
     );
 
     if (result.rowCount === 0) {
-      this.logger.warn(`FBO account ${platformAccountId} not found for deactivation`);
+      this.logger.warn(
+        `FBO account ${platformAccountId} not found for deactivation`,
+      );
     } else {
       this.logger.log(`Deactivated FBO account ${platformAccountId}`);
     }
@@ -144,6 +153,6 @@ export class FboAccountService {
       };
     }
 
-    return this.getActiveAccount('US');
+    return this.getActiveAccount("US");
   }
 }

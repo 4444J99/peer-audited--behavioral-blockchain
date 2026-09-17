@@ -9,31 +9,35 @@ The SECURITY.md file has already been edited on disk (supported versions table u
 ## Steps
 
 ### 1. Commit existing SECURITY.md changes
+
 - `git add .github/SECURITY.md`
 - `git commit` with message: `docs: update SECURITY.md supported versions table`
 - No need to re-read or discuss file content — the edit is already done on disk
 
 ### 2. Create CODE_OF_CONDUCT.md
+
 - Write `.github/CODE_OF_CONDUCT.md` using Contributor Covenant v2.1
 - Contact email: use the GitHub private reporting reference (consistent with SECURITY.md/SUPPORT.md pattern)
 - Standard boilerplate — no content filter risk here
 
 ### 3. Create FUNDING.yml
+
 - Write `.github/FUNDING.yml`
 - Placeholder structure (github username, ko_fi, etc.) — user can fill in actual links
 - If the user has a GitHub Sponsors profile, reference it; otherwise leave commented placeholders
 
 ### 4. Commit new files
+
 - `git add .github/CODE_OF_CONDUCT.md .github/FUNDING.yml`
 - Single commit: `docs: add CODE_OF_CONDUCT.md and FUNDING.yml`
 
 ## Files
 
-| File | Action |
-|------|--------|
-| `.github/SECURITY.md` | Commit existing changes (already edited on disk) |
-| `.github/CODE_OF_CONDUCT.md` | Create — Contributor Covenant v2.1 |
-| `.github/FUNDING.yml` | Create — sponsorship link placeholders |
+| File                         | Action                                           |
+| ---------------------------- | ------------------------------------------------ |
+| `.github/SECURITY.md`        | Commit existing changes (already edited on disk) |
+| `.github/CODE_OF_CONDUCT.md` | Create — Contributor Covenant v2.1               |
+| `.github/FUNDING.yml`        | Create — sponsorship link placeholders           |
 
 ## Content Filter Workaround
 

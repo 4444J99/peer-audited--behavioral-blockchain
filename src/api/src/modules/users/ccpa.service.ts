@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool, PoolClient } from 'pg';
-import { createHash, randomUUID } from 'crypto';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool, PoolClient } from "pg";
+import { createHash, randomUUID } from "crypto";
 
-const GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+const GENESIS_HASH =
+  "0000000000000000000000000000000000000000000000000000000000000000";
 const TRUTH_LOG_APPEND_LOCK_KEY = 0x57_54_4c_47;
 
 // How long a DELETE request sits before the sweep executes it.
@@ -22,8 +23,8 @@ const CCPA_DELETION_GRACE_DAYS = 7;
 
 export type CCPADeletionRequest = {
   userId: string;
-  requestType: 'DELETE' | 'OPT_OUT';
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'DENIED';
+  requestType: "DELETE" | "OPT_OUT";
+  status: "PENDING" | "PROCESSING" | "COMPLETED" | "DENIED";
   requestedAt: Date;
   completedAt?: Date;
   denialReason?: string;
@@ -31,7 +32,7 @@ export type CCPADeletionRequest = {
 
 export type PersonalInfoCategory = {
   category: string;
-  '收集目的': string;
+  收集目的: string;
   thirdParties: string[];
   retentionPeriod: string;
 };
@@ -48,14 +49,17 @@ export class CcpaService {
 
   constructor(private readonly pool: Pool) {}
 
-  private async appendTruthLogEvent(eventType: string, payload: Record<string, unknown>): Promise<void> {
+  private async appendTruthLogEvent(
+    eventType: string,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
     const client: PoolClient = await this.pool.connect();
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
       await this.appendTruthLogEventWithClient(client, eventType, payload);
-      await client.query('COMMIT');
+      await client.query("COMMIT");
     } catch (e) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw e;
     } finally {
       client.release();
@@ -67,18 +71,24 @@ export class CcpaService {
     eventType: string,
     payload: Record<string, unknown>,
   ): Promise<void> {
-    await client.query('SELECT pg_advisory_xact_lock($1)', [TRUTH_LOG_APPEND_LOCK_KEY]);
+    await client.query("SELECT pg_advisory_xact_lock($1)", [
+      TRUTH_LOG_APPEND_LOCK_KEY,
+    ]);
 
     const latestRes = await client.query(
       `SELECT sequence_index, current_hash FROM event_log ORDER BY sequence_index DESC LIMIT 1 FOR UPDATE`,
     );
-    const previousHash = latestRes.rows.length > 0 ? latestRes.rows[0].current_hash : GENESIS_HASH;
-    const nextIndex = latestRes.rows.length > 0 ? parseInt(latestRes.rows[0].sequence_index, 10) + 1 : 1;
+    const previousHash =
+      latestRes.rows.length > 0 ? latestRes.rows[0].current_hash : GENESIS_HASH;
+    const nextIndex =
+      latestRes.rows.length > 0
+        ? parseInt(latestRes.rows[0].sequence_index, 10) + 1
+        : 1;
     const timestamp = new Date().toISOString();
 
     const payloadString = JSON.stringify(payload);
     const hashInput = `${nextIndex}|${eventType}|${timestamp}|${previousHash}|${payloadString}`;
-    const currentHash = createHash('sha256').update(hashInput).digest('hex');
+    const currentHash = createHash("sha256").update(hashInput).digest("hex");
 
     await client.query(
       `INSERT INTO event_log (sequence_index, event_type, payload, previous_hash, current_hash, created_at)
@@ -90,8 +100,8 @@ export class CcpaService {
   async requestDataDeletion(userId: string): Promise<CCPADeletionRequest> {
     const request: CCPADeletionRequest = {
       userId,
-      requestType: 'DELETE',
-      status: 'PENDING',
+      requestType: "DELETE",
+      status: "PENDING",
       requestedAt: new Date(),
     };
 
@@ -123,7 +133,10 @@ export class CcpaService {
    * OPT_OUT requests are deliberately excluded — those are do-not-sell flags,
    * not erasures, and are handled by `optOutOfSale`.
    */
-  async processPendingDeletions(): Promise<{ processed: number; skipped: number }> {
+  async processPendingDeletions(): Promise<{
+    processed: number;
+    skipped: number;
+  }> {
     const pending = await this.pool.query(
       `SELECT id FROM ccpa_deletion_requests
        WHERE status = 'PENDING'
@@ -143,7 +156,7 @@ export class CcpaService {
       } catch (err) {
         const correlationId = randomUUID();
         this.logger.error(
-          `Failed to process CCPA deletion request (correlationId=${correlationId}, error=${err instanceof Error ? err.name : 'Unknown'})`,
+          `Failed to process CCPA deletion request (correlationId=${correlationId}, error=${err instanceof Error ? err.name : "Unknown"})`,
         );
         skipped++;
       }
@@ -152,7 +165,9 @@ export class CcpaService {
     return { processed, skipped };
   }
 
-  async processDeletionRequest(requestId: string): Promise<CCPADeletionRequest> {
+  async processDeletionRequest(
+    requestId: string,
+  ): Promise<CCPADeletionRequest> {
     const result = await this.pool.query(
       `UPDATE ccpa_deletion_requests SET status = 'PROCESSING' WHERE id = $1 RETURNING *`,
       [requestId],
@@ -173,21 +188,25 @@ export class CcpaService {
     // 'PENDING' is safe precisely because the erasure is transactional: on
     // failure the data is untouched, so the next sweep can retry cleanly.
     try {
-      if (typeof (this.pool as Partial<Pool>).connect === 'function') {
+      if (typeof (this.pool as Partial<Pool>).connect === "function") {
         const client: PoolClient = await this.pool.connect();
         try {
-          await client.query('BEGIN');
+          await client.query("BEGIN");
           await this.runErasureStatements(client, userId);
-          await this.appendTruthLogEventWithClient(client, 'CCPA_DELETION_COMPLETED', {
-            userId,
-            requestId,
-            anonymizedAt: new Date().toISOString(),
-          });
-          await client.query('COMMIT');
+          await this.appendTruthLogEventWithClient(
+            client,
+            "CCPA_DELETION_COMPLETED",
+            {
+              userId,
+              requestId,
+              anonymizedAt: new Date().toISOString(),
+            },
+          );
+          await client.query("COMMIT");
         } catch (e) {
           // A failed rollback must never mask the error that caused it.
           try {
-            await client.query('ROLLBACK');
+            await client.query("ROLLBACK");
           } catch {
             /* swallowed deliberately — the original error is rethrown below */
           }
@@ -197,7 +216,7 @@ export class CcpaService {
         }
       } else {
         await this.runErasureStatements(this.pool, userId);
-        await this.appendTruthLogEvent('CCPA_DELETION_COMPLETED', {
+        await this.appendTruthLogEvent("CCPA_DELETION_COMPLETED", {
           userId,
           requestId,
           anonymizedAt: new Date().toISOString(),
@@ -226,13 +245,16 @@ export class CcpaService {
     return {
       userId,
       requestType: row.request_type,
-      status: 'COMPLETED',
+      status: "COMPLETED",
       requestedAt: row.requested_at,
       completedAt,
     };
   }
 
-  private async runErasureStatements(db: Pool | PoolClient, userId: string): Promise<void> {
+  private async runErasureStatements(
+    db: Pool | PoolClient,
+    userId: string,
+  ): Promise<void> {
     await db.query(
       `UPDATE users SET
         email = $2,
@@ -252,7 +274,7 @@ export class CcpaService {
       [userId, `deleted-${userId}@anonymized.styx`],
     );
 
-    await db.query('DELETE FROM notifications WHERE user_id = $1', [userId]);
+    await db.query("DELETE FROM notifications WHERE user_id = $1", [userId]);
 
     await db.query(
       `UPDATE contracts SET metadata = '{}'::jsonb WHERE user_id = $1`,
@@ -290,7 +312,7 @@ export class CcpaService {
     );
 
     await db.query(
-      'DELETE FROM dashboard_progress_snapshots WHERE user_id = $1',
+      "DELETE FROM dashboard_progress_snapshots WHERE user_id = $1",
       [userId],
     );
   }
@@ -318,34 +340,34 @@ export class CcpaService {
   async getPersonalInfoCategories(): Promise<PersonalInfoCategory[]> {
     return [
       {
-        category: 'Identifiers (email, phone)',
-        '收集目的': 'Account management and identity verification',
-        thirdParties: ['Stripe'],
-        retentionPeriod: 'Until deletion request',
+        category: "Identifiers (email, phone)",
+        收集目的: "Account management and identity verification",
+        thirdParties: ["Stripe"],
+        retentionPeriod: "Until deletion request",
       },
       {
-        category: 'Health data (biometrics, attestations)',
-        '收集目的': 'Proof verification and contract integrity',
+        category: "Health data (biometrics, attestations)",
+        收集目的: "Proof verification and contract integrity",
         thirdParties: [],
-        retentionPeriod: 'Contract duration + 7 years',
+        retentionPeriod: "Contract duration + 7 years",
       },
       {
-        category: 'Commercial info (contracts, stakes)',
-        '收集目的': 'Financial integrity and regulatory compliance',
-        thirdParties: ['Stripe'],
-        retentionPeriod: '7 years (tax/legal)',
+        category: "Commercial info (contracts, stakes)",
+        收集目的: "Financial integrity and regulatory compliance",
+        thirdParties: ["Stripe"],
+        retentionPeriod: "7 years (tax/legal)",
       },
       {
-        category: 'Internet activity (app usage, proof submissions)',
-        '收集目的': 'Fraud detection and platform security',
+        category: "Internet activity (app usage, proof submissions)",
+        收集目的: "Fraud detection and platform security",
         thirdParties: [],
-        retentionPeriod: '2 years',
+        retentionPeriod: "2 years",
       },
       {
-        category: 'Geolocation (from proofs)',
-        '收集目的': 'Geofence compliance for proof verification',
+        category: "Geolocation (from proofs)",
+        收集目的: "Geofence compliance for proof verification",
         thirdParties: [],
-        retentionPeriod: 'Contract duration',
+        retentionPeriod: "Contract duration",
       },
     ];
   }
@@ -361,10 +383,12 @@ export class CcpaService {
     }
 
     const metadata = result.rows[0].compliance_metadata;
-    return metadata?.state === 'CA';
+    return metadata?.state === "CA";
   }
 
-  async getDeletionRequestStatus(userId: string): Promise<CCPADeletionRequest | null> {
+  async getDeletionRequestStatus(
+    userId: string,
+  ): Promise<CCPADeletionRequest | null> {
     const result = await this.pool.query(
       `SELECT * FROM ccpa_deletion_requests WHERE user_id = $1 ORDER BY requested_at DESC LIMIT 1`,
       [userId],

@@ -300,4 +300,3 @@ The final propulsion formula is simple:
 - prove Apple/TestFlight control
 - ship only with moderation and readiness evidence
 - keep finance and legal expansion work parallel, not blocking, unless the scope changes
-

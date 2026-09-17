@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Loader2, Shield } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Loader2, Shield } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const deviceIdentifier = () => {
-    const key = 'styx-device-id';
+    const key = "styx-device-id";
     const existing = window.localStorage.getItem(key);
     if (existing) return existing;
     const created = window.crypto.randomUUID();
@@ -32,36 +32,41 @@ export default function RegisterPage() {
     setError(null);
 
     if (password.length < 12) {
-      setError('Password must be at least 12 characters');
+      setError("Password must be at least 12 characters");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
     if (!dateOfBirth) {
-      setError('Date of birth is required');
+      setError("Date of birth is required");
       return;
     }
 
     // Verify user is at least 18
     const dob = new Date(dateOfBirth);
     const today = new Date();
-    const age = today.getFullYear() - dob.getFullYear() - (today < new Date(today.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
+    const age =
+      today.getFullYear() -
+      dob.getFullYear() -
+      (today < new Date(today.getFullYear(), dob.getMonth(), dob.getDate())
+        ? 1
+        : 0);
     if (age < 18) {
-      setError('You must be 18 years or older to use Styx');
+      setError("You must be 18 years or older to use Styx");
       return;
     }
 
     if (!ageConfirmed) {
-      setError('You must confirm you are 18 years or older');
+      setError("You must confirm you are 18 years or older");
       return;
     }
 
     if (!termsAccepted) {
-      setError('You must accept the Terms of Service and Privacy Policy');
+      setError("You must accept the Terms of Service and Privacy Policy");
       return;
     }
 
@@ -71,11 +76,11 @@ export default function RegisterPage() {
         ageConfirmation: true,
         termsAccepted: true,
         dateOfBirth,
-        deviceFingerprint: { platform: 'web', rawVendorId: deviceIdentifier() },
+        deviceFingerprint: { platform: "web", rawVendorId: deviceIdentifier() },
       });
-      router.push('/dashboard');
+      router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -88,8 +93,12 @@ export default function RegisterPage() {
           <div className="w-16 h-16 bg-red-600 rounded-full mx-auto mb-6 flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.4)]">
             <span className="text-2xl font-black text-black">S</span>
           </div>
-          <h1 className="text-4xl font-black tracking-tighter uppercase">Start Your Recovery</h1>
-          <p className="text-neutral-400 mt-2">Create your account for the Styx private beta.</p>
+          <h1 className="text-4xl font-black tracking-tighter uppercase">
+            Start Your Recovery
+          </h1>
+          <p className="text-neutral-400 mt-2">
+            Create your account for the Styx private beta.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -100,7 +109,10 @@ export default function RegisterPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2">
+            <label
+              htmlFor="email"
+              className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2"
+            >
               Email
             </label>
             <input
@@ -116,7 +128,10 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2">
+            <label
+              htmlFor="password"
+              className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2"
+            >
               Password
             </label>
             <input
@@ -132,7 +147,10 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="confirm-password" className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2">
+            <label
+              htmlFor="confirm-password"
+              className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2"
+            >
               Confirm Password
             </label>
             <input
@@ -148,7 +166,10 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="dob" className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2">
+            <label
+              htmlFor="dob"
+              className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2"
+            >
               Date of Birth
             </label>
             <input
@@ -165,7 +186,9 @@ export default function RegisterPage() {
           <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-4">
             <div className="flex items-center gap-3">
               <Shield size={18} className="text-red-500 shrink-0" />
-              <span className="text-sm font-bold text-neutral-300 uppercase tracking-wider">Legal Requirements</span>
+              <span className="text-sm font-bold text-neutral-300 uppercase tracking-wider">
+                Legal Requirements
+              </span>
             </div>
 
             <label className="flex items-start gap-3 cursor-pointer group">
@@ -176,7 +199,10 @@ export default function RegisterPage() {
                 className="mt-1 w-4 h-4 rounded border-neutral-600 bg-black text-red-600 focus:ring-red-600 focus:ring-offset-0 cursor-pointer"
               />
               <span className="text-sm text-neutral-400 group-hover:text-neutral-300 transition-colors">
-                I confirm that I am <strong className="text-white">18 years of age or older</strong>. Styx involves financial stakes (simulated test-money in this beta) and is restricted to adults.
+                I confirm that I am{" "}
+                <strong className="text-white">18 years of age or older</strong>
+                . Styx involves financial stakes (simulated test-money in this
+                beta) and is restricted to adults.
               </span>
             </label>
 
@@ -188,16 +214,31 @@ export default function RegisterPage() {
                 className="mt-1 w-4 h-4 rounded border-neutral-600 bg-black text-red-600 focus:ring-red-600 focus:ring-offset-0 cursor-pointer"
               />
               <span className="text-sm text-neutral-400 group-hover:text-neutral-300 transition-colors">
-                I accept the{' '}
-                <Link href="/legal/terms" className="text-red-500 hover:text-red-400 underline" target="_blank">
+                I accept the{" "}
+                <Link
+                  href="/legal/terms"
+                  className="text-red-500 hover:text-red-400 underline"
+                  target="_blank"
+                >
                   Terms of Service
-                </Link>,{' '}
-                <Link href="/legal/privacy" className="text-red-500 hover:text-red-400 underline" target="_blank">
+                </Link>
+                ,{" "}
+                <Link
+                  href="/legal/privacy"
+                  className="text-red-500 hover:text-red-400 underline"
+                  target="_blank"
+                >
                   Privacy Policy
-                </Link>, and{' '}
-                <Link href="/legal/rules" className="text-red-500 hover:text-red-400 underline" target="_blank">
+                </Link>
+                , and{" "}
+                <Link
+                  href="/legal/rules"
+                  className="text-red-500 hover:text-red-400 underline"
+                  target="_blank"
+                >
                   Contest Rules
-                </Link>.
+                </Link>
+                .
               </span>
             </label>
           </div>
@@ -208,13 +249,16 @@ export default function RegisterPage() {
             className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-neutral-800 disabled:cursor-not-allowed text-white font-black rounded-xl transition-colors flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 size={20} className="animate-spin" /> : null}
-            {loading ? 'CREATING IDENTITY...' : 'CREATE ACCOUNT'}
+            {loading ? "CREATING IDENTITY..." : "CREATE ACCOUNT"}
           </button>
         </form>
 
         <p className="text-center text-neutral-500 text-sm">
-          Already have an account?{' '}
-          <Link href="/login" className="text-red-500 font-bold hover:text-red-400 transition-colors">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="text-red-500 font-bold hover:text-red-400 transition-colors"
+          >
             Sign in
           </Link>
         </p>

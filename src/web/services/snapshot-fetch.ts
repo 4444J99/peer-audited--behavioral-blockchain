@@ -23,14 +23,14 @@
  * It is inert outside snapshot mode: `isSnapshotMode()` is a build-time constant,
  * so a normal build keeps its real network stack untouched.
  */
-import { isSnapshotMode, snapshotRespond } from './snapshot';
+import { isSnapshotMode, snapshotRespond } from "./snapshot";
 
 let installed = false;
 
 /** Resolves whatever fetch() accepts into an absolute URL, or null if unparseable. */
 function resolveUrl(input: RequestInfo | URL): URL | null {
   try {
-    if (typeof input === 'string') return new URL(input, window.location.href);
+    if (typeof input === "string") return new URL(input, window.location.href);
     if (input instanceof URL) return input;
     return new URL(input.url, window.location.href);
   } catch {
@@ -40,14 +40,15 @@ function resolveUrl(input: RequestInfo | URL): URL | null {
 
 function resolveMethod(input: RequestInfo | URL, init?: RequestInit): string {
   if (init?.method) return String(init.method).toUpperCase();
-  if (typeof input !== 'string' && !(input instanceof URL)) return input.method.toUpperCase();
-  return 'GET';
+  if (typeof input !== "string" && !(input instanceof URL))
+    return input.method.toUpperCase();
+  return "GET";
 }
 
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'content-type': 'application/json' },
+    headers: { "content-type": "application/json" },
   });
 }
 
@@ -59,19 +60,29 @@ function jsonResponse(body: unknown, status: number): Response {
  */
 export function installSnapshotFetch(): void {
   if (!isSnapshotMode()) return;
-  if (installed || typeof window === 'undefined') return;
+  if (installed || typeof window === "undefined") return;
   installed = true;
 
   const nativeFetch = window.fetch.bind(window);
 
-  window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  window.fetch = async (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ): Promise<Response> => {
     const url = resolveUrl(input);
-    if (!url || url.origin !== window.location.origin || !url.pathname.startsWith('/api/')) {
+    if (
+      !url ||
+      url.origin !== window.location.origin ||
+      !url.pathname.startsWith("/api/")
+    ) {
       return nativeFetch(input as RequestInfo, init);
     }
 
-    const path = url.pathname.slice('/api'.length) + (url.search || '');
-    const result = await snapshotRespond<unknown>(path, resolveMethod(input, init));
+    const path = url.pathname.slice("/api".length) + (url.search || "");
+    const result = await snapshotRespond<unknown>(
+      path,
+      resolveMethod(input, init),
+    );
     if (result.ok) return jsonResponse(result.data, 200);
 
     // A 404 means no fixture was captured for this endpoint. Record it where a
@@ -81,7 +92,7 @@ export function installSnapshotFetch(): void {
     // that no one wrote and that happened to be false. A page rendering nonsense
     // silently is exactly what this snapshot must never do.
     if (result.status === 404) {
-      const misses = (window as Window & { __STYX_SNAPSHOT_MISSES__?: string[] });
+      const misses = window as Window & { __STYX_SNAPSHOT_MISSES__?: string[] };
       misses.__STYX_SNAPSHOT_MISSES__ = misses.__STYX_SNAPSHOT_MISSES__ || [];
       misses.__STYX_SNAPSHOT_MISSES__.push(path);
     }
@@ -89,6 +100,9 @@ export function installSnapshotFetch(): void {
     // Callers read `message` off the error body (see practitionerFetch, kycFetch),
     // so the honest explanation reaches the screen through code that already exists
     // rather than needing every page to learn about snapshot mode.
-    return jsonResponse({ message: result.message, error: 'SNAPSHOT_READ_ONLY' }, result.status);
+    return jsonResponse(
+      { message: result.message, error: "SNAPSHOT_READ_ONLY" },
+      result.status,
+    );
   };
 }

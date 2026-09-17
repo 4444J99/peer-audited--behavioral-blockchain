@@ -68,7 +68,7 @@ code.
 - **`curl -q`.** A personal `.curlrc` (user-agent etc.) can trip Cloudflare/bot
   filters or change headers under you. Always `curl -q`.
 - **`access_tier` is lowercase.** The API's `allowed_tiers` field is a
-  wire-format value (`TIER_1_MICRO_STAKES`), but any *query/param* spelled
+  wire-format value (`TIER_1_MICRO_STAKES`), but any _query/param_ spelled
   `access_tier` must be lowercase on the wire. Mixed case silently 404s or
   returns an empty set.
 - **Real enum values.** `oathCategory` and `verificationMethod` reject prose

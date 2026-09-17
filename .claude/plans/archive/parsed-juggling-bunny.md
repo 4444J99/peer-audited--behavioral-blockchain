@@ -4,16 +4,17 @@
 
 The first 8 sprints resolved 20 of 25 gaps (G1-G9, G12, G17, G19-G25) across 8 commits now pushed to origin. The remaining 6 gaps were deferred as "too large or requires external services":
 
-| Gap | Feature | Original Deferral Reason |
-|-----|---------|--------------------------|
-| G10 | Blockchain/SBT integration | Significant external dependency |
-| G11 | WebSocket live interview scoring | 6-8 hours, requires real LLM |
-| G13 | Custom mask creation UI | 6-8 hours, new feature |
-| G15 | LLM agent executor | 8-12 hours, requires LLM infra |
-| G16 | Community marketplace | 40+ hours, Phase 9 aspiration |
-| G18 | Full WCAG 2.1 AA | 20-40 hours |
+| Gap | Feature                          | Original Deferral Reason        |
+| --- | -------------------------------- | ------------------------------- |
+| G10 | Blockchain/SBT integration       | Significant external dependency |
+| G11 | WebSocket live interview scoring | 6-8 hours, requires real LLM    |
+| G13 | Custom mask creation UI          | 6-8 hours, new feature          |
+| G15 | LLM agent executor               | 8-12 hours, requires LLM infra  |
+| G16 | Community marketplace            | 40+ hours, Phase 9 aspiration   |
+| G18 | Full WCAG 2.1 AA                 | 20-40 hours                     |
 
 **Exploration revealed that several gaps are more tractable than originally estimated:**
+
 - **G13**: `MaskEditor.tsx` (589 lines) and API routes already fully exist — only needs UI wiring (~4 hours)
 - **G11**: WebSocket + GraphQL-WS transport already wired, `CompatibilityAnalyzer` works — needs incremental scoring + PubSub events
 - **G15**: Full agent framework (10 roles, config, RoutedAgentExecutor) exists — only StubExecutor needs replacement
@@ -44,6 +45,7 @@ The first 8 sprints resolved 20 of 25 gaps (G1-G9, G12, G17, G19-G25) across 8 c
 - Add "Custom" section below the 3 ontology groups + "Create New" link
 
 Files:
+
 - **Create**: `apps/web/src/app/admin/masks/page.tsx`
 - **Modify**: `apps/web/src/components/MaskSelector.tsx`, admin nav pages
 
@@ -213,21 +215,22 @@ Files:
 
 ## Effort Summary
 
-| Sprint | Gap | Hours | Commits | New Deps |
-|--------|-----|-------|---------|----------|
-| 1 | G13 Custom Masks | 4-6 | 2 | — |
-| 2 | G18 Accessibility | 12-16 | 4 | vitest-axe |
-| 3 | G11 Interview WS | 16-20 | 4 | — |
-| 4 | G15 LLM Agent | 20-28 | 5 | — |
-| 5 | G10 Blockchain/SBT | 20-26 | 5 | viem |
-| 6 | G16 Marketplace | 18-24 | 5 | — |
-| **Total** | | **90-120** | **25** | **2** |
+| Sprint    | Gap                | Hours      | Commits | New Deps   |
+| --------- | ------------------ | ---------- | ------- | ---------- |
+| 1         | G13 Custom Masks   | 4-6        | 2       | —          |
+| 2         | G18 Accessibility  | 12-16      | 4       | vitest-axe |
+| 3         | G11 Interview WS   | 16-20      | 4       | —          |
+| 4         | G15 LLM Agent      | 20-28      | 5       | —          |
+| 5         | G10 Blockchain/SBT | 20-26      | 5       | viem       |
+| 6         | G16 Marketplace    | 18-24      | 5       | —          |
+| **Total** |                    | **90-120** | **25**  | **2**      |
 
 ---
 
 ## Verification
 
 After all sprints:
+
 1. `pnpm typecheck` — all packages build without errors
 2. `pnpm lint` — no new violations
 3. `pnpm test` — unit tests pass (including new jest-axe tests)

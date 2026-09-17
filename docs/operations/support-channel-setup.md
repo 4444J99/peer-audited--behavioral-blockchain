@@ -1,4 +1,5 @@
 # Support Channel Setup -- Email, Discord, FAQ, & Escalation
+
 > Issue: #371
 > Phase: Pre-Private Beta
 
@@ -10,36 +11,36 @@ Styx operates in a sensitive domain: real money, behavior change, and peer revie
 
 ### Tool Choice: Intercom (Recommended)
 
-| Criteria | Intercom | Zendesk | Free Tier Status |
-|----------|----------|---------|------------------|
-| In-app chat | Yes | Yes (add-on) | Both offer free trials |
-| Email ticketing | Yes | Yes | Intercom: 10 conversations/mo free |
-| Knowledge base | Yes | Yes | Zendesk: Suite Team $55/agent/mo |
-| Bot/automation | Yes (Fin AI) | Yes | Intercom Essential: $39/mo |
-| Integration (API) | Yes | Yes | Both good |
-| Startup pricing | 90% off first year | 50% off first year | Apply for startup programs |
+| Criteria          | Intercom           | Zendesk            | Free Tier Status                   |
+| ----------------- | ------------------ | ------------------ | ---------------------------------- |
+| In-app chat       | Yes                | Yes (add-on)       | Both offer free trials             |
+| Email ticketing   | Yes                | Yes                | Intercom: 10 conversations/mo free |
+| Knowledge base    | Yes                | Yes                | Zendesk: Suite Team $55/agent/mo   |
+| Bot/automation    | Yes (Fin AI)       | Yes                | Intercom Essential: $39/mo         |
+| Integration (API) | Yes                | Yes                | Both good                          |
+| Startup pricing   | 90% off first year | 50% off first year | Apply for startup programs         |
 
 **Recommendation:** Intercom for beta (free / startup plan). Migrate to Zendesk only if ticket volume exceeds 500/mo post-launch.
 
 ### Alternative for Bootstrap: Open-Source Stack
 
-| Tool | Cost | Purpose |
-|------|------|---------|
-| Zammad (self-hosted on Render) | $7/mo (Render Starter) | Ticketing system |
-| Crisp (free tier) | $0 | In-app chat (up to 2 operators) |
-| Discord (free) | $0 | Community support |
+| Tool                           | Cost                   | Purpose                         |
+| ------------------------------ | ---------------------- | ------------------------------- |
+| Zammad (self-hosted on Render) | $7/mo (Render Starter) | Ticketing system                |
+| Crisp (free tier)              | $0                     | In-app chat (up to 2 operators) |
+| Discord (free)                 | $0                     | Community support               |
 
 ### Support Email Aliases
 
-| Alias | Purpose | Forwarded To |
-|-------|---------|--------------|
-| `support@styx.app` | General support | Intercom inbox (default) |
-| `billing@styx.app` | Payment / escrow questions | Intercom + founders |
-| `security@styx.app` | Security concerns | Founders only |
-| `abuse@styx.app` | Report abuse / policy violation | Founders only |
-| `press@styx.app` | Media inquiries | Non-technical founder |
-| `practitioners@styx.app` | Practitioner-specific support | Intercom + practitioner lead |
-| `fury@styx.app` | Fury auditor support | Intercom |
+| Alias                    | Purpose                         | Forwarded To                 |
+| ------------------------ | ------------------------------- | ---------------------------- |
+| `support@styx.app`       | General support                 | Intercom inbox (default)     |
+| `billing@styx.app`       | Payment / escrow questions      | Intercom + founders          |
+| `security@styx.app`      | Security concerns               | Founders only                |
+| `abuse@styx.app`         | Report abuse / policy violation | Founders only                |
+| `press@styx.app`         | Media inquiries                 | Non-technical founder        |
+| `practitioners@styx.app` | Practitioner-specific support   | Intercom + practitioner lead |
+| `fury@styx.app`          | Fury auditor support            | Intercom                     |
 
 ### Ticket Lifecycle
 
@@ -56,33 +57,33 @@ Styx operates in a sensitive domain: real money, behavior change, and peer revie
 
 ### Ticket Categories & Routing
 
-| Category | Priority | Assignee | First Response SLA |
-|----------|----------|----------|-------------------|
-| Account access (login, reset) | High | Founders | < 2 hours |
-| Payment / escrow issue | Critical | Technical founder | < 1 hour |
-| Contract dispute | High | Both founders | < 2 hours |
-| Bug report | Varies | Technical founder | < 4 hours |
-| Feature request | Low | Product manager (when hired) | < 24 hours |
-| Abuse / policy violation | Critical | Both founders | < 1 hour |
-| General question | Medium | Support (when hired) | < 4 hours |
-| Fury audit question | Medium | Support (when hired) | < 4 hours |
+| Category                      | Priority | Assignee                     | First Response SLA |
+| ----------------------------- | -------- | ---------------------------- | ------------------ |
+| Account access (login, reset) | High     | Founders                     | < 2 hours          |
+| Payment / escrow issue        | Critical | Technical founder            | < 1 hour           |
+| Contract dispute              | High     | Both founders                | < 2 hours          |
+| Bug report                    | Varies   | Technical founder            | < 4 hours          |
+| Feature request               | Low      | Product manager (when hired) | < 24 hours         |
+| Abuse / policy violation      | Critical | Both founders                | < 1 hour           |
+| General question              | Medium   | Support (when hired)         | < 4 hours          |
+| Fury audit question           | Medium   | Support (when hired)         | < 4 hours          |
 
 ### Canned Responses (Templates)
 
 Create response templates for common issues:
 
-| Issue | Template ID |
-|-------|-------------|
-| How to create a contract | `t_create_contract` |
-| Proof was rejected | `t_proof_rejected` |
-| Refund request | `t_refund_request` |
-| What is Fury | `t_fury_explained` |
-| Is this gambling | `t_not_gambling` |
-| Password reset | `t_password_reset` |
-| Payment failed | `t_payment_failed` |
-| Change stake amount | `t_change_stake` |
-| Become a Fury auditor | `t_become_fury` |
-| Practitioner setup | `t_practitioner_setup` |
+| Issue                    | Template ID            |
+| ------------------------ | ---------------------- |
+| How to create a contract | `t_create_contract`    |
+| Proof was rejected       | `t_proof_rejected`     |
+| Refund request           | `t_refund_request`     |
+| What is Fury             | `t_fury_explained`     |
+| Is this gambling         | `t_not_gambling`       |
+| Password reset           | `t_password_reset`     |
+| Payment failed           | `t_payment_failed`     |
+| Change stake amount      | `t_change_stake`       |
+| Become a Fury auditor    | `t_become_fury`        |
+| Practitioner setup       | `t_practitioner_setup` |
 
 ## Discord Server Setup
 
@@ -118,58 +119,58 @@ Styx Community (Public)
 
 ### Discord Roles
 
-| Role | Color | Permissions | Assignment |
-|------|-------|------------|------------|
-| `@admin` | Red | Full admin | Founders |
-| `@moderator` | Orange | Moderate channels, mute/kick | Trusted community members |
-| `@fury-auditor` | Purple | Access fury-auditors channel | Verified auditors |
-| `@practitioner` | Green | Access practitioners channel | Verified practitioners |
-| `@beta-tester` | Blue | Colored name, priority support | Beta participants |
-| `@helper` | Yellow | Access to help channel moderation | Active community helpers |
-| `@member` | Default | Standard access | All users |
+| Role            | Color   | Permissions                       | Assignment                |
+| --------------- | ------- | --------------------------------- | ------------------------- |
+| `@admin`        | Red     | Full admin                        | Founders                  |
+| `@moderator`    | Orange  | Moderate channels, mute/kick      | Trusted community members |
+| `@fury-auditor` | Purple  | Access fury-auditors channel      | Verified auditors         |
+| `@practitioner` | Green   | Access practitioners channel      | Verified practitioners    |
+| `@beta-tester`  | Blue    | Colored name, priority support    | Beta participants         |
+| `@helper`       | Yellow  | Access to help channel moderation | Active community helpers  |
+| `@member`       | Default | Standard access                   | All users                 |
 
 ### Moderation Guidelines
 
-| Violation | Action (First) | Action (Repeat) |
-|-----------|---------------|-----------------|
-| Spam / self-promotion | Warning + delete | 24h mute -> ban |
-| Harassment | Warning + delete | 7d mute -> ban |
-| Gambling accusations (bad faith) | Redirect to FAQ | 24h mute |
-| Sharing private contract details | Warning + ask to delete | 24h mute |
-| NSFW content | Immediate delete + 7d mute | Ban |
-| Impersonation | Immediate ban | -- |
-| Doxxing | Immediate ban | -- |
+| Violation                        | Action (First)             | Action (Repeat) |
+| -------------------------------- | -------------------------- | --------------- |
+| Spam / self-promotion            | Warning + delete           | 24h mute -> ban |
+| Harassment                       | Warning + delete           | 7d mute -> ban  |
+| Gambling accusations (bad faith) | Redirect to FAQ            | 24h mute        |
+| Sharing private contract details | Warning + ask to delete    | 24h mute        |
+| NSFW content                     | Immediate delete + 7d mute | Ban             |
+| Impersonation                    | Immediate ban              | --              |
+| Doxxing                          | Immediate ban              | --              |
 
 ### Discord Moderation Bot
 
-| Bot | Purpose | Configuration |
-|-----|---------|---------------|
-| MEE6 | Auto-mod, leveling, welcome messages | Set up filter rules |
-| Carl-bot | Moderation commands, reaction roles | Set up reaction roles for Fury/Practitioner |
-| YAGPDB | Automated moderation, logging | Set up mod-log channel |
-| Dyno | Custom commands, auto-responses | Create !styx, !faq commands |
+| Bot      | Purpose                              | Configuration                               |
+| -------- | ------------------------------------ | ------------------------------------------- |
+| MEE6     | Auto-mod, leveling, welcome messages | Set up filter rules                         |
+| Carl-bot | Moderation commands, reaction roles  | Set up reaction roles for Fury/Practitioner |
+| YAGPDB   | Automated moderation, logging        | Set up mod-log channel                      |
+| Dyno     | Custom commands, auto-responses      | Create !styx, !faq commands                 |
 
 ### Auto-Response Commands
 
-| Command | Response |
-|---------|----------|
-| `!styx` | Brief description + link to website |
-| `!faq` | Link to FAQ/knowledge base |
-| `!rules` | Link to server rules |
+| Command     | Response                                                                                |
+| ----------- | --------------------------------------------------------------------------------------- |
+| `!styx`     | Brief description + link to website                                                     |
+| `!faq`      | Link to FAQ/knowledge base                                                              |
+| `!rules`    | Link to server rules                                                                    |
 | `!gambling` | "Styx is not gambling. Outcome is controlled by user behavior, not chance. FAQ: [link]" |
-| `!roles` | Available roles + how to get them |
-| `!support` | "For support requests, please open a ticket in #getting-help or email support@styx.app" |
+| `!roles`    | Available roles + how to get them                                                       |
+| `!support`  | "For support requests, please open a ticket in #getting-help or email support@styx.app" |
 
 ## FAQ / Knowledge Base
 
 ### Hosting
 
-| Option | Cost | Pros | Cons |
-|--------|------|------|------|
-| Intercom Articles | Included w/ Intercom | Integrated with tickets | Limited customization |
-| Notion (public page) | Free | Easy to edit, version history | Not integrated with support flow |
-| Helpjuice | $120/mo | Powerful search, analytics | Expensive for beta |
-| Custom (Next.js page) | Hosting cost only | Full control, branded | Engineering time |
+| Option                | Cost                 | Pros                          | Cons                             |
+| --------------------- | -------------------- | ----------------------------- | -------------------------------- |
+| Intercom Articles     | Included w/ Intercom | Integrated with tickets       | Limited customization            |
+| Notion (public page)  | Free                 | Easy to edit, version history | Not integrated with support flow |
+| Helpjuice             | $120/mo              | Powerful search, analytics    | Expensive for beta               |
+| Custom (Next.js page) | Hosting cost only    | Full control, branded         | Engineering time                 |
 
 **Recommendation:** Start with a public Notion page for beta. Migrate to Intercom Articles when Intercom is adopted.
 
@@ -252,28 +253,28 @@ Styx FAQ
 
 ### Beta Phase (Private + Public Beta)
 
-| Channel | Hours | Response Time | Resolution Time |
-|---------|-------|---------------|-----------------|
-| Email (general) | Mon-Fri 9am-9pm ET | < 4 hours | < 24 hours |
-| Email (billing) | Mon-Fri 9am-9pm ET | < 2 hours | < 12 hours |
-| Email (security) | 24/7 | < 1 hour | < 4 hours |
-| Discord (public) | Mon-Fri 9am-9pm ET | < 2 hours | < 12 hours |
-| Discord (DM founders) | 24/7 (emergency only) | < 30 min | < 2 hours |
-| In-app chat | Mon-Fri 9am-9pm ET | < 2 hours | < 12 hours |
-| Bug fix (P0) | 24/7 | Immediate | < 4 hours |
-| Bug fix (P1) | Next business day | < 4 hours | < 24 hours |
+| Channel               | Hours                 | Response Time | Resolution Time |
+| --------------------- | --------------------- | ------------- | --------------- |
+| Email (general)       | Mon-Fri 9am-9pm ET    | < 4 hours     | < 24 hours      |
+| Email (billing)       | Mon-Fri 9am-9pm ET    | < 2 hours     | < 12 hours      |
+| Email (security)      | 24/7                  | < 1 hour      | < 4 hours       |
+| Discord (public)      | Mon-Fri 9am-9pm ET    | < 2 hours     | < 12 hours      |
+| Discord (DM founders) | 24/7 (emergency only) | < 30 min      | < 2 hours       |
+| In-app chat           | Mon-Fri 9am-9pm ET    | < 2 hours     | < 12 hours      |
+| Bug fix (P0)          | 24/7                  | Immediate     | < 4 hours       |
+| Bug fix (P1)          | Next business day     | < 4 hours     | < 24 hours      |
 
 ### Launch Phase
 
-| Channel | Hours | Response Time | Resolution Time |
-|---------|-------|---------------|-----------------|
-| Email (general) | 7am-11pm ET daily | < 2 hours | < 12 hours |
-| Email (billing) | 7am-11pm ET daily | < 1 hour | < 6 hours |
-| Email (security) | 24/7 | < 30 min | < 2 hours |
-| Discord (public) | 7am-11pm ET daily | < 1 hour | < 8 hours |
-| In-app chat | 7am-11pm ET daily | < 1 hour | < 8 hours |
-| Bug fix (P0) | 24/7 | < 30 min | < 2 hours |
-| Bug fix (P1) | 12 hours | < 2 hours | < 12 hours |
+| Channel          | Hours             | Response Time | Resolution Time |
+| ---------------- | ----------------- | ------------- | --------------- |
+| Email (general)  | 7am-11pm ET daily | < 2 hours     | < 12 hours      |
+| Email (billing)  | 7am-11pm ET daily | < 1 hour      | < 6 hours       |
+| Email (security) | 24/7              | < 30 min      | < 2 hours       |
+| Discord (public) | 7am-11pm ET daily | < 1 hour      | < 8 hours       |
+| In-app chat      | 7am-11pm ET daily | < 1 hour      | < 8 hours       |
+| Bug fix (P0)     | 24/7              | < 30 min      | < 2 hours       |
+| Bug fix (P1)     | 12 hours          | < 2 hours     | < 12 hours      |
 
 ### SLA Exclusions
 
@@ -286,12 +287,12 @@ Styx FAQ
 
 ### Escalation Levels
 
-| Level | Who | Authority | When |
-|-------|-----|-----------|------|
-| L0 | Automated (bot/FAQ) | Respond with canned answer | Common questions, password reset |
-| L1 | Support (when hired) | Answer questions, escalate bugs | Most tickets |
-| L2 | Founders (both) | Refund decisions, account changes, bug fixes | Payment issues, disputes, P0 bugs |
-| L3 | Technical founder | Code changes, infrastructure, Stripe issues | System bugs, data issues, Stripe problems |
+| Level | Who                  | Authority                                    | When                                      |
+| ----- | -------------------- | -------------------------------------------- | ----------------------------------------- |
+| L0    | Automated (bot/FAQ)  | Respond with canned answer                   | Common questions, password reset          |
+| L1    | Support (when hired) | Answer questions, escalate bugs              | Most tickets                              |
+| L2    | Founders (both)      | Refund decisions, account changes, bug fixes | Payment issues, disputes, P0 bugs         |
+| L3    | Technical founder    | Code changes, infrastructure, Stripe issues  | System bugs, data issues, Stripe problems |
 
 ### Escalation Flow
 
@@ -320,78 +321,79 @@ L1/L2: First response within SLA
 
 ### When to Escalate
 
-| Situation | Escalate To | Urgency |
-|-----------|-------------|---------|
-| Dispute / refund request > $200 | Both founders | High |
-| Stripe error / payment system down | Technical founder | Critical |
+| Situation                          | Escalate To                                | Urgency   |
+| ---------------------------------- | ------------------------------------------ | --------- |
+| Dispute / refund request > $200    | Both founders                              | High      |
+| Stripe error / payment system down | Technical founder                          | Critical  |
 | User expresses self-harm or crisis | Immediate resources (988) + pause contract | Emergency |
-| Legal / regulatory question | Both founders + legal counsel | High |
-| Data breach suspicion | Both founders | Critical |
-| Press / media inquiry | Non-technical founder | Medium |
-| Abuse / policy violation | Both founders | High |
-| Repeated bug reports (same issue) | Technical founder + product backlog | Medium |
+| Legal / regulatory question        | Both founders + legal counsel              | High      |
+| Data breach suspicion              | Both founders                              | Critical  |
+| Press / media inquiry              | Non-technical founder                      | Medium    |
+| Abuse / policy violation           | Both founders                              | High      |
+| Repeated bug reports (same issue)  | Technical founder + product backlog        | Medium    |
 
 ### Emergency Contact
 
-| Situation | Contact | Method |
-|-----------|---------|--------|
-| Server down | Technical founder | Phone (SMS gateway) |
-| Stripe outage | Technical founder | Phone |
-| Security incident | Both founders | Phone + Signal |
-| User crisis | 988 Suicide & Crisis Lifeline | Phone (not Styx) |
+| Situation         | Contact                       | Method              |
+| ----------------- | ----------------------------- | ------------------- |
+| Server down       | Technical founder             | Phone (SMS gateway) |
+| Stripe outage     | Technical founder             | Phone               |
+| Security incident | Both founders                 | Phone + Signal      |
+| User crisis       | 988 Suicide & Crisis Lifeline | Phone (not Styx)    |
 
 ## Support Tools & Infrastructure
 
-| Tool | Purpose | Cost (Beta) |
-|------|---------|-------------|
-| Crisp (free tier) | In-app chat | $0 |
-| Discord | Community support | $0 |
-| Notion (public) | Knowledge base / FAQ | $0 |
-| Google Forms | Bug report intake (structured) | $0 |
-| Linear/GitHub Issues | Bug tracking | $0 |
-| Sentry | Error monitoring (triggers support tickets) | $0 (free tier) |
-| PostHog | Product analytics (identify friction) | $0 (free tier) |
+| Tool                 | Purpose                                     | Cost (Beta)    |
+| -------------------- | ------------------------------------------- | -------------- |
+| Crisp (free tier)    | In-app chat                                 | $0             |
+| Discord              | Community support                           | $0             |
+| Notion (public)      | Knowledge base / FAQ                        | $0             |
+| Google Forms         | Bug report intake (structured)              | $0             |
+| Linear/GitHub Issues | Bug tracking                                | $0             |
+| Sentry               | Error monitoring (triggers support tickets) | $0 (free tier) |
+| PostHog              | Product analytics (identify friction)       | $0 (free tier) |
 
 ## Support Metrics & Reporting
 
-| Metric | Tool | Frequency | Target |
-|--------|------|-----------|--------|
-| First response time | Intercom/Crisp | Weekly | < SLA for all channels |
-| Resolution time | Intercom/Crisp | Weekly | < 24h for 90% of tickets |
-| CSAT (satisfaction) | Post-resolution survey | Weekly | > 4.0 / 5.0 |
-| Ticket volume | Intercom/Crisp | Daily | Trending |
-| Common issues (top 5) | Tag analysis | Weekly | Reduced week-over-week |
-| Bug report count | Linear/GitHub | Daily | Decreasing |
-| Self-service rate | FAQ analytics | Monthly | > 40% of inquiries |
-| Escalation rate | Ticket tags | Weekly | < 10% of tickets |
-| Discord engagement | Discord analytics | Weekly | Growing |
-| Escrow-related tickets | Stripe + ticket tags | Daily | < 2/week |
+| Metric                 | Tool                   | Frequency | Target                   |
+| ---------------------- | ---------------------- | --------- | ------------------------ |
+| First response time    | Intercom/Crisp         | Weekly    | < SLA for all channels   |
+| Resolution time        | Intercom/Crisp         | Weekly    | < 24h for 90% of tickets |
+| CSAT (satisfaction)    | Post-resolution survey | Weekly    | > 4.0 / 5.0              |
+| Ticket volume          | Intercom/Crisp         | Daily     | Trending                 |
+| Common issues (top 5)  | Tag analysis           | Weekly    | Reduced week-over-week   |
+| Bug report count       | Linear/GitHub          | Daily     | Decreasing               |
+| Self-service rate      | FAQ analytics          | Monthly   | > 40% of inquiries       |
+| Escalation rate        | Ticket tags            | Weekly    | < 10% of tickets         |
+| Discord engagement     | Discord analytics      | Weekly    | Growing                  |
+| Escrow-related tickets | Stripe + ticket tags   | Daily     | < 2/week                 |
 
 ## Support Team Scaling
 
-| Phase | Team Size | Who | Tools |
-|-------|-----------|-----|-------|
-| Private beta (wk 1-8) | 2 (both founders) | Both founders split support | Discord + Crisp + Notion |
-| Public beta (wk 9-20) | 2 + 1 part-time | Founders + first support hire | Intercom + Discord |
-| Launch (wk 21+) | 3 + 1 support engineer | Dedicated support lead + engineer | Intercom + Zendesk (if needed) |
+| Phase                 | Team Size              | Who                               | Tools                          |
+| --------------------- | ---------------------- | --------------------------------- | ------------------------------ |
+| Private beta (wk 1-8) | 2 (both founders)      | Both founders split support       | Discord + Crisp + Notion       |
+| Public beta (wk 9-20) | 2 + 1 part-time        | Founders + first support hire     | Intercom + Discord             |
+| Launch (wk 21+)       | 3 + 1 support engineer | Dedicated support lead + engineer | Intercom + Zendesk (if needed) |
 
 ## On-Call Rotation
 
 ### Beta Phase (Founders)
 
-| Day | Primary | Secondary |
-|-----|---------|-----------|
-| Monday | Technical founder | Non-technical founder |
-| Tuesday | Technical founder | Non-technical founder |
-| Wednesday | Non-technical founder | Technical founder |
-| Thursday | Non-technical founder | Technical founder |
-| Friday | Both | -- |
-| Saturday | Technical founder (on-call) | -- |
-| Sunday | Non-technical founder (on-call) | -- |
+| Day       | Primary                         | Secondary             |
+| --------- | ------------------------------- | --------------------- |
+| Monday    | Technical founder               | Non-technical founder |
+| Tuesday   | Technical founder               | Non-technical founder |
+| Wednesday | Non-technical founder           | Technical founder     |
+| Thursday  | Non-technical founder           | Technical founder     |
+| Friday    | Both                            | --                    |
+| Saturday  | Technical founder (on-call)     | --                    |
+| Sunday    | Non-technical founder (on-call) | --                    |
 
 ### Incident Response
 
 For P0/Critical issues (see docs/operations/incident-response.md):
+
 - Alert via Slack + SMS (Twilio)
 - Primary responds within 15 min
 - If no response in 15 min, secondary is paged

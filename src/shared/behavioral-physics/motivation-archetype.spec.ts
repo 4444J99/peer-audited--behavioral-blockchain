@@ -27,7 +27,9 @@ describe("Motivation Profiling at Intake (Issue #54)", () => {
     expect(profile.dashboardEmphasis).toBe("STAKE");
     expect(profile.scores.FINANCIAL).toBeGreaterThan(profile.scores.COMMUNAL);
 
-    const copy = getArchetypeNotificationCopy("FINANCIAL", { stakeFormatted: "$50" });
+    const copy = getArchetypeNotificationCopy("FINANCIAL", {
+      stakeFormatted: "$50",
+    });
     expect(copy.body).toContain("$50 committed");
   });
 
@@ -43,7 +45,9 @@ describe("Motivation Profiling at Intake (Issue #54)", () => {
     expect(profile.recommendedAccountability).toBe("AUDIENCE");
     expect(profile.dashboardEmphasis).toBe("REPUTATION");
 
-    const copy = getArchetypeNotificationCopy("REPUTATIONAL", { streakDays: 7 });
+    const copy = getArchetypeNotificationCopy("REPUTATIONAL", {
+      streakDays: 7,
+    });
     expect(copy.body).toContain("Day 7 is active");
   });
 

@@ -10,25 +10,25 @@ export interface HealthKitValidationResult {
   reason?: string;
 }
 
-const MANUAL_ENTRY_SOURCE_BUNDLES = new Set([
-  'com.apple.Health',
-]);
+const MANUAL_ENTRY_SOURCE_BUNDLES = new Set(["com.apple.Health"]);
 
 function normalizeBoolean(value: unknown): boolean {
-  if (typeof value === 'boolean') {
+  if (typeof value === "boolean") {
     return value;
   }
-  if (typeof value === 'number') {
+  if (typeof value === "number") {
     return value === 1;
   }
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     const normalized = value.trim().toLowerCase();
-    return normalized === 'true' || normalized === '1' || normalized === 'yes';
+    return normalized === "true" || normalized === "1" || normalized === "yes";
   }
   return false;
 }
 
-export function isLikelyManualHealthEntry(metadata: HealthKitSampleMetadata): boolean {
+export function isLikelyManualHealthEntry(
+  metadata: HealthKitSampleMetadata,
+): boolean {
   if (!metadata) {
     return false;
   }
@@ -40,7 +40,7 @@ export function isLikelyManualHealthEntry(metadata: HealthKitSampleMetadata): bo
     return true;
   }
 
-  const sourceBundleId = String(metadata.sourceBundleId || '').trim();
+  const sourceBundleId = String(metadata.sourceBundleId || "").trim();
   if (!sourceBundleId) {
     return false;
   }
@@ -54,7 +54,7 @@ export function validateHealthKitSampleMetadata(
   if (isLikelyManualHealthEntry(metadata)) {
     return {
       accepted: false,
-      reason: 'Rejected manual HealthKit entry (WasUserEntered/source policy)',
+      reason: "Rejected manual HealthKit entry (WasUserEntered/source policy)",
     };
   }
   return { accepted: true };

@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-The `docs/architecture/` corpus has **strong substance and weak curation**. The technical content is competent — in places excellent — but the directory is a sediment layer of past research drops rather than an authored architectural record. Three of the ten files (`feasibility-stack.md`, `truth-blockchain.md`, `truth-blockchain-v2.md`) answer the same question from three different LLM authors, and two of those three are content-equivalent renders of the same source material. Engineering docs (`test-strategy.md`, `load-test-report.md`) contain *verifiable filesystem drift* — they reference paths (`apps/api`, `packages/shared`, `scripts/gates/`) that don't exist in the current repo and gate names that don't match the actual `scripts/validation/` files. Compounding the curation gap: a separate `docs/adr/` directory holds 5 substantive ADRs that answer questions the architecture corpus leaves implicit (dual-layer pattern, Stripe FBO escrow design, Fury consensus parameters) — but no file under `docs/architecture/` links to or references them.
+The `docs/architecture/` corpus has **strong substance and weak curation**. The technical content is competent — in places excellent — but the directory is a sediment layer of past research drops rather than an authored architectural record. Three of the ten files (`feasibility-stack.md`, `truth-blockchain.md`, `truth-blockchain-v2.md`) answer the same question from three different LLM authors, and two of those three are content-equivalent renders of the same source material. Engineering docs (`test-strategy.md`, `load-test-report.md`) contain _verifiable filesystem drift_ — they reference paths (`apps/api`, `packages/shared`, `scripts/gates/`) that don't exist in the current repo and gate names that don't match the actual `scripts/validation/` files. Compounding the curation gap: a separate `docs/adr/` directory holds 5 substantive ADRs that answer questions the architecture corpus leaves implicit (dual-layer pattern, Stripe FBO escrow design, Fury consensus parameters) — but no file under `docs/architecture/` links to or references them.
 
 Six concrete issues, ranked:
 
@@ -42,7 +42,7 @@ The good news: every issue is reversible without losing content. Most are curati
 **Weaknesses**
 
 - **Triplicate coverage of one question** (issue #1 above). `truth-blockchain.md` v1 and v2 are content-equivalent (same source material rendered with different footnote styles — LaTeX-ish numerical refs vs Markdown links). `feasibility-stack.md` covers the same topic from a different LLM. Reader cannot tell which is current or canonical.
-- **Generated artifacts treated as authored documents.** No frontmatter on the long research files indicating generator, prompt, date, intended use, or replacement plan. By contrast, `load-test-report.md` and `test-strategy.md` *do* have `generated: true` frontmatter — a partial convention that hasn't been applied to the research docs.
+- **Generated artifacts treated as authored documents.** No frontmatter on the long research files indicating generator, prompt, date, intended use, or replacement plan. By contrast, `load-test-report.md` and `test-strategy.md` _do_ have `generated: true` frontmatter — a partial convention that hasn't been applied to the research docs.
 - **Filesystem drift in two engineering docs** (issue #2 above). Specifically:
   - `test-strategy.md:24-28` (workspaces table): `apps/api`, `apps/web`, `apps/mobile`, `packages/shared` — none exist. Actual: `src/api`, `src/web`, `src/mobile`, `src/shared`.
   - `test-strategy.md:86-95` (validation gates table): 8 gates with mismatched names. Actual `scripts/validation/` holds 9 files (01-phantom-money, 02-simulator-spoof, 03-the-full-loop, 04-redacted-build, 05-behavioral-physics, 06-security-invariant, 07-claim-drift, 08-fury-crucible, 09-realm-sync).
@@ -73,7 +73,7 @@ The good news: every issue is reversible without losing content. Most are curati
 
 **Reasoning gaps**
 
-- No doc explains *why* the project chose Render over the recommended cost-optimized stacks (Hetzner+Cloudflare R2 alone would, per the corpus's own analysis, reduce video TCO 60×). The decision was clearly made; the rationale is absent.
+- No doc explains _why_ the project chose Render over the recommended cost-optimized stacks (Hetzner+Cloudflare R2 alone would, per the corpus's own analysis, reduce video TCO 60×). The decision was clearly made; the rationale is absent.
 - No doc explains how the **Aegis Protocol** and **Recovery Protocol** map onto the dual-layer (`services/` + `src/modules/`) implementation. The reconciliation doc names the gates but doesn't tie them to code locations. (ADR-001 documents the pattern itself; the mapping from safety gates to dual-layer placement is what's missing.)
 - Stripe FBO escrow gets one line in `alpha-to-omega-plan.md`. The actual design lives in `adr--002-fbo-escrow-model.md` (alternatives considered, hold/capture/cancel lifecycle, code locations). The gap is that `docs/architecture/` does not reference ADR-002 — a reader of the architecture corpus alone would conclude the highest-risk subsystem is undocumented when it isn't.
 
@@ -91,11 +91,11 @@ The good news: every issue is reversible without losing content. Most are curati
 
 ### 1.3 Logos — Rational Appeal
 
-**Argument clarity**: High in the well-formed docs (`aegis-tier-reconciliation.md`, the two `spec--*` files, `load-test-report.md`). Medium in the long research docs (good per-section, weak at the *integration* layer — they don't argue *why* this stack vs others except by feature comparison).
+**Argument clarity**: High in the well-formed docs (`aegis-tier-reconciliation.md`, the two `spec--*` files, `load-test-report.md`). Medium in the long research docs (good per-section, weak at the _integration_ layer — they don't argue _why_ this stack vs others except by feature comparison).
 
 **Evidence quality**: Mixed. The biometric API claims are well-anchored to vendor docs. The cost claims are arithmetic from current vendor pricing pages. The leaderboard argument (Redis Sorted Sets, O(log N)) is well-supported by standard distributed-systems sources. The Supabase argument relies more on vendor-comparison blog posts (Leanware, UI Bakery — content-marketing tier sources) than primary engineering evidence.
 
-**Persuasive strength**: The corpus is persuasive in the "feasibility study" mode — does the platform technically exist? Yes, with these primitives, here are the costs. It is weaker as architectural advocacy — *why* this stack, *why* these tradeoffs, *what* would have to change for an alternative to win. An ADR (Architecture Decision Record) directory adjacent would carry the persuasive load that the long research docs over-extend into.
+**Persuasive strength**: The corpus is persuasive in the "feasibility study" mode — does the platform technically exist? Yes, with these primitives, here are the costs. It is weaker as architectural advocacy — _why_ this stack, _why_ these tradeoffs, _what_ would have to change for an alternative to win. An ADR (Architecture Decision Record) directory adjacent would carry the persuasive load that the long research docs over-extend into.
 
 **Enhancement recommendations**
 
@@ -114,7 +114,7 @@ The two `spec--*` files use a more clinical voice ("Per METADOC Section 4.C — 
 
 **Recommendations**
 
-- Decide who the docs are *for* and pin it in a README header.
+- Decide who the docs are _for_ and pin it in a README header.
 - If they're for internal maintenance: split research-as-input from architecture-as-record and label each.
 - If they're (also) for external review: add a 1-page "system at a glance" diagram at the directory root.
 
@@ -147,12 +147,12 @@ Consolidating Phase 1 findings into resolvable actions.
 
 **Resolve contradictions**
 
-| Contradiction | Resolution |
-|---|---|
-| Triplicate truth-blockchain coverage | Delete `truth-blockchain.md` (v1). Mark `truth-blockchain-v2.md` and `feasibility-stack.md` with `kind: research-input, status: archived` frontmatter. Write a new ~150-line `architecture--core.md` that describes the **as-built** stack with code-location links. |
-| Supabase/Hetzner/Plaid recommendations vs as-built stack | In the new `architecture--core.md`, state the actual decisions (Render, R2, Stripe FBO, BullMQ, native PG/Redis). Cross-reference an ADR for each choice. |
-| Fury consensus: 3-of-5 vs 2-of-3 | Pick one (per `fury-router.md` v2 spec, 2-of-3 with escalation to "High Trust" for $1000+). Update `test-strategy.md` to match, or update the spec to match the codebase — whichever is currently true in `services/fury-router/`. |
-| Google Fit references in `feasibility-stack.md` | Quarantine behind a "legacy — Health Connect is the path forward" note OR remove section if Health Connect content now lives in `truth-blockchain-v2.md`. |
+| Contradiction                                            | Resolution                                                                                                                                                                                                                                                           |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Triplicate truth-blockchain coverage                     | Delete `truth-blockchain.md` (v1). Mark `truth-blockchain-v2.md` and `feasibility-stack.md` with `kind: research-input, status: archived` frontmatter. Write a new ~150-line `architecture--core.md` that describes the **as-built** stack with code-location links. |
+| Supabase/Hetzner/Plaid recommendations vs as-built stack | In the new `architecture--core.md`, state the actual decisions (Render, R2, Stripe FBO, BullMQ, native PG/Redis). Cross-reference an ADR for each choice.                                                                                                            |
+| Fury consensus: 3-of-5 vs 2-of-3                         | Pick one (per `fury-router.md` v2 spec, 2-of-3 with escalation to "High Trust" for $1000+). Update `test-strategy.md` to match, or update the spec to match the codebase — whichever is currently true in `services/fury-router/`.                                   |
+| Google Fit references in `feasibility-stack.md`          | Quarantine behind a "legacy — Health Connect is the path forward" note OR remove section if Health Connect content now lives in `truth-blockchain-v2.md`.                                                                                                            |
 
 **Fill reasoning gaps**
 
@@ -167,7 +167,7 @@ Consolidating Phase 1 findings into resolvable actions.
 
 **Strengthen transitional logic**
 
-- The new `architecture--core.md` should be the *entry point* — every other doc in the directory should be linked from it with a one-line description.
+- The new `architecture--core.md` should be the _entry point_ — every other doc in the directory should be linked from it with a one-line description.
 - The README should answer: which doc do I read first? which docs are research inputs? which describe future work?
 
 ---
@@ -199,28 +199,34 @@ Consolidating Phase 1 findings into resolvable actions.
 ### 3.2 Shatter Points — Critical Vulnerabilities
 
 **1. `test-strategy.md` drift would fail external audit** (Severity: HIGH)
+
 - A SOC 2 / ISO 27001 auditor opening `test-strategy.md` and finding workspace paths (`apps/api`) that don't exist would conclude the documentation is unreliable. This contaminates trust in adjacent compliance-relevant docs (Aegis, Recovery Protocol).
-- *Preventive measure*: fix this week; add `07-claim-drift-check.js` coverage for `test-strategy.md` so this can't recur.
+- _Preventive measure_: fix this week; add `07-claim-drift-check.js` coverage for `test-strategy.md` so this can't recur.
 
 **2. LLM-research docs presented as architecture-of-record** (Severity: MEDIUM-HIGH)
+
 - A diligence reviewer who recognizes the Perplexity logo / Gemini phrasing without an authorship statement will downgrade their confidence in the team's authorship of the design. The technical content is sound; the framing is the risk.
-- *Preventive measure*: add `kind: research-input, generated-by: <model>, generated-on: <date>, current-role: archived-or-reference` frontmatter to all three large research docs.
+- _Preventive measure_: add `kind: research-input, generated-by: <model>, generated-on: <date>, current-role: archived-or-reference` frontmatter to all three large research docs.
 
 **3. Stripe FBO architecture orphaned from `docs/architecture/`** (Severity: MEDIUM)
-- The design exists in `adr--002-fbo-escrow-model.md` (hold/capture/cancel lifecycle, alternatives, code locations). The 2026-02-28 review's "no Stripe idempotency keys" finding is *not* addressed in ADR-002 — that specific failure mode (network-retry duplicate PaymentIntents) is still uncovered.
-- *Preventive measure*: cross-reference ADR-002 from the new `architecture/README.md` and `architecture--core.md`. Extend ADR-002 (or write ADR-006) covering the idempotency strategy specifically. Do not duplicate ADR-002's content in `docs/architecture/`.
+
+- The design exists in `adr--002-fbo-escrow-model.md` (hold/capture/cancel lifecycle, alternatives, code locations). The 2026-02-28 review's "no Stripe idempotency keys" finding is _not_ addressed in ADR-002 — that specific failure mode (network-retry duplicate PaymentIntents) is still uncovered.
+- _Preventive measure_: cross-reference ADR-002 from the new `architecture/README.md` and `architecture--core.md`. Extend ADR-002 (or write ADR-006) covering the idempotency strategy specifically. Do not duplicate ADR-002's content in `docs/architecture/`.
 
 **4. Fury consensus parameter contradicted three ways** (Severity: MEDIUM-HIGH)
+
 - `test-strategy.md` says 3-of-5; `spec--fury-router.md` says 2-of-3-conditional-on-$1000; `adr--004-fury-consensus-engine.md` (canonical) says 3-auditor with 2/3 or 3/3 agreement and 3-way-split escalation, no $1000 threshold. The ADR points at `src/api/services/fury-router/fury-router.service.ts` as the implementation; that file is the codebase truth. The architecture corpus is internally inconsistent and additionally inconsistent with the ADR.
-- *Preventive measure*: pull the consensus parameter into `src/shared/libs/integrity.ts` (or behavioral-logic.ts) as an exported constant referenced by both the code and the doc. Update `test-strategy.md` and `spec--fury-router.md` to match ADR-004 verbatim, or supersede them.
+- _Preventive measure_: pull the consensus parameter into `src/shared/libs/integrity.ts` (or behavioral-logic.ts) as an exported constant referenced by both the code and the doc. Update `test-strategy.md` and `spec--fury-router.md` to match ADR-004 verbatim, or supersede them.
 
 **5. Dual-layer API pattern documented in ADR-001 but invisible from `docs/architecture/`** (Severity: LOW)
+
 - `adr--001-dual-layer-services-modules.md` describes the pattern (directory tree, rules, positive/negative consequences, alternatives rejected). The architecture corpus does not link to it. A contributor reading `docs/architecture/` first would miss the canonical record.
-- *Preventive measure*: link ADR-001 from `architecture/README.md` and surface the directory-tree diagram in `architecture--core.md` (with the ADR as the authoritative source).
+- _Preventive measure_: link ADR-001 from `architecture/README.md` and surface the directory-tree diagram in `architecture--core.md` (with the ADR as the authoritative source).
 
 **6. No diagram, anywhere** (Severity: LOW but persistent)
+
 - Architecture without diagrams is testimonial architecture. Every reader has to construct the picture from prose. This compounds with the other shatter points.
-- *Preventive measure*: one canonical block diagram of the data flow (sensor → API → ledger → Fury → settlement → leaderboard) at the root. Mermaid or ASCII is fine.
+- _Preventive measure_: one canonical block diagram of the data flow (sensor → API → ledger → Fury → settlement → leaderboard) at the root. Mermaid or ASCII is fine.
 
 **Attack vectors a hostile reviewer would use**
 
@@ -242,10 +248,10 @@ Consolidating Phase 1 findings into resolvable actions.
 Three patterns the corpus reveals that go beyond any single fix:
 
 **Pattern 1: The corpus is a sediment layer, not a curated record.**
-What's here is what landed when, never re-curated. The fix isn't to delete things — it's to *acknowledge sediment layers* and label them. Add a `kind:` frontmatter taxonomy: `as-built` (describes current code), `research-input` (informed past decisions, archived), `forward-spec` (proposes future state), `roadmap` (planning, belongs elsewhere). The triplicate-truth-blockchain problem dissolves once two of the three are explicitly `research-input` and not competing for "canonical."
+What's here is what landed when, never re-curated. The fix isn't to delete things — it's to _acknowledge sediment layers_ and label them. Add a `kind:` frontmatter taxonomy: `as-built` (describes current code), `research-input` (informed past decisions, archived), `forward-spec` (proposes future state), `roadmap` (planning, belongs elsewhere). The triplicate-truth-blockchain problem dissolves once two of the three are explicitly `research-input` and not competing for "canonical."
 
 **Pattern 2: There is no separation between "what we built," "what we considered," and "what we plan."**
-This is the root cause of the contradiction set. An as-built doc and a forward-spec for the same module can coexist without contradiction *if labeled*. The fix is taxonomic, not editorial.
+This is the root cause of the contradiction set. An as-built doc and a forward-spec for the same module can coexist without contradiction _if labeled_. The fix is taxonomic, not editorial.
 
 **Pattern 3: The team voice and the LLM voice are interleaved.**
 `aegis-tier-reconciliation.md` and the smaller engineering docs sound like the team. The big research docs sound like Perplexity/Gemini. The interleaving is silent. Labeling the source is honest and frees the team to use LLM research without ethos cost.
@@ -259,7 +265,7 @@ This is the root cause of the contradiction set. An as-built doc and a forward-s
 **Novel angles**
 
 - The `kind:` taxonomy + a `last-verified-against-code:` date field would, with one CI check, make docs verifiable artifacts the way `07-claim-drift-check.js` makes claims verifiable.
-- The triplicate situation is an opportunity to *show the work*: instead of deleting the duplicates, archive them under `docs/architecture/research-inputs/` as a record of "here is the LLM research that informed our decisions" — useful for future diligence as evidence of due process.
+- The triplicate situation is an opportunity to _show the work_: instead of deleting the duplicates, archive them under `docs/architecture/research-inputs/` as a record of "here is the LLM research that informed our decisions" — useful for future diligence as evidence of due process.
 
 **Cross-domain connections**
 
@@ -294,7 +300,7 @@ A two-tier action queue. Tier 1 is a half-day of work and closes the credibility
 5. Author `architecture--core.md` (~150–200 lines): as-built description of the actual stack (Render + PostgreSQL 15 + Redis 7 + R2 + Stripe FBO + BullMQ + NestJS dual-layer). One block diagram. Code-location links throughout. This becomes the canonical entry point.
 6. Move `architecture--alpha-to-omega-plan.md` → `docs/planning/` (it's a roadmap; the planning directory already has the canonical version).
 7. Move `spec--digital-exhaust-intake.md` and `spec--fury-router.md` → `docs/specs/` (create directory) — they are forward-looking module specs, not architecture.
-8. Cross-reference the **existing** 5 ADRs from the new `architecture/README.md`. Surface ADR-001's directory tree in `architecture--core.md`, ADR-002's lifecycle diagram in the escrow section, ADR-004's consensus rules in any Fury discussion. *Do not duplicate ADR content into `docs/architecture/`* — the ADR is the canonical source; architecture/ links to it.
+8. Cross-reference the **existing** 5 ADRs from the new `architecture/README.md`. Surface ADR-001's directory tree in `architecture--core.md`, ADR-002's lifecycle diagram in the escrow section, ADR-004's consensus rules in any Fury discussion. _Do not duplicate ADR content into `docs/architecture/`_ — the ADR is the canonical source; architecture/ links to it.
 9. Author the **missing** ADRs for decisions not yet captured: ADR-006 Render vs alternatives (hosting); ADR-007 Cloudflare R2 + native FFmpeg vs Cloudflare Stream / Mux; ADR-008 BullMQ over RabbitMQ; ADR-009 Native PG/Redis over Supabase; ADR-010 Stripe idempotency strategy (extends ADR-002, addresses the 2026-02-28 review finding). Verify before authoring each whether the decision is already captured in ADR-001–005.
 
 **Tier 3 — Verification Hardening (longer horizon)**
@@ -348,16 +354,16 @@ docs/adr/                                   # EXISTING (5 ADRs, was not surfaced
 
 ## Summary & Next Step
 
-| Phase | Verdict |
-|---|---|
-| Critique | Strong content, weak curation; specific drift in 1 doc; triplication of 3 docs. |
-| Logic | 5 contradictions found, all resolvable; 3 reasoning gaps named. |
-| Logos | Argument depth high per-doc, persuasive structure weak at corpus level. |
-| Pathos | Two voices interleaved; no acknowledgment of the switch. |
-| Ethos | Authorship gaps + filesystem drift compound into credibility risk. |
-| Risk | 1 HIGH-severity shatter point (drift), 1 MEDIUM-HIGH (3-way Fury consensus contradiction), 3 MEDIUM, 1 LOW. |
-| Growth | Taxonomy + ADR series + drift CI = durable structural improvement. |
+| Phase    | Verdict                                                                                                     |
+| -------- | ----------------------------------------------------------------------------------------------------------- |
+| Critique | Strong content, weak curation; specific drift in 1 doc; triplication of 3 docs.                             |
+| Logic    | 5 contradictions found, all resolvable; 3 reasoning gaps named.                                             |
+| Logos    | Argument depth high per-doc, persuasive structure weak at corpus level.                                     |
+| Pathos   | Two voices interleaved; no acknowledgment of the switch.                                                    |
+| Ethos    | Authorship gaps + filesystem drift compound into credibility risk.                                          |
+| Risk     | 1 HIGH-severity shatter point (drift), 1 MEDIUM-HIGH (3-way Fury consensus contradiction), 3 MEDIUM, 1 LOW. |
+| Growth   | Taxonomy + ADR series + drift CI = durable structural improvement.                                          |
 
 **Recommended next step**: Tier 1 (3 mechanical fixes, ~½ day). Tier 2 (curation + new authored docs, 1–2 days) closes the rest. Tier 3 is the recurrence-prevention investment.
 
-*— end of report.*
+_— end of report._

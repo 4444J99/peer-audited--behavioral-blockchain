@@ -28,7 +28,9 @@ describe("Behavioral Science Suite", () => {
     });
 
     it("parses 12-hour AM/PM times and normalizes to 24-hour HH:MM", () => {
-      const morning = parseImplementationIntention("I will meditate at 8:15 AM");
+      const morning = parseImplementationIntention(
+        "I will meditate at 8:15 AM",
+      );
       expect(morning?.declaredTime).toBe("08:15");
 
       const evening = parseImplementationIntention(
@@ -46,7 +48,11 @@ describe("Behavioral Science Suite", () => {
     it("verifies proof submission timestamp within ±30 min tolerance", () => {
       // Target: 08:00
       const onTime = new Date("2026-09-12T08:15:00");
-      const checkOnTime = verifyProofTimestampAgainstIntention(onTime, "08:00", 30);
+      const checkOnTime = verifyProofTimestampAgainstIntention(
+        onTime,
+        "08:00",
+        30,
+      );
       expect(checkOnTime.valid).toBe(true);
       expect(checkOnTime.deltaMinutes).toBe(15);
 
@@ -59,7 +65,11 @@ describe("Behavioral Science Suite", () => {
 
     it("handles midnight wrap-around accurately in time verification", () => {
       const lateNight = new Date("2026-09-12T23:55:00");
-      const earlyMorning = verifyProofTimestampAgainstIntention(lateNight, "00:05", 30);
+      const earlyMorning = verifyProofTimestampAgainstIntention(
+        lateNight,
+        "00:05",
+        30,
+      );
       expect(earlyMorning.valid).toBe(true);
       expect(earlyMorning.deltaMinutes).toBe(10);
     });
@@ -74,13 +84,19 @@ describe("Behavioral Science Suite", () => {
 
       // 50 meters away
       const insideGeofence = { latitude: 40.7131, longitude: -74.0061 };
-      const checkInside = verifyProofLocationAgainstIntention(insideGeofence, gymLocation);
+      const checkInside = verifyProofLocationAgainstIntention(
+        insideGeofence,
+        gymLocation,
+      );
       expect(checkInside.valid).toBe(true);
       expect(checkInside.distanceMeters).toBeLessThan(200);
 
       // 5 km away
       const outsideGeofence = { latitude: 40.7589, longitude: -73.9851 };
-      const checkOutside = verifyProofLocationAgainstIntention(outsideGeofence, gymLocation);
+      const checkOutside = verifyProofLocationAgainstIntention(
+        outsideGeofence,
+        gymLocation,
+      );
       expect(checkOutside.valid).toBe(false);
       expect(checkOutside.distanceMeters).toBeGreaterThan(200);
     });
@@ -101,7 +117,9 @@ describe("Behavioral Science Suite", () => {
       expect(window.daysRemaining).toBe(20);
       expect(window.receptivityMultiplier).toBe(2.2);
       expect(window.promotionalGraceDays).toBe(3);
-      expect(window.recommendationMessage).toContain("Active discontinuity window");
+      expect(window.recommendationMessage).toContain(
+        "Active discontinuity window",
+      );
     });
 
     it("marks window expired after 30 days have elapsed", () => {
@@ -135,7 +153,9 @@ describe("Behavioral Science Suite", () => {
       expect(trajectory.currentRating).toBe(2.5);
       expect(trajectory.devaluationPct).toBe(71); // (8.5 - 2.5)/8.5 = 70.58% -> 71%
       expect(trajectory.isTherapeuticMilestone).toBe(true);
-      expect(trajectory.guidanceMessage).toContain("Therapeutic milestone reached");
+      expect(trajectory.guidanceMessage).toContain(
+        "Therapeutic milestone reached",
+      );
     });
 
     it("returns safe defaults when no ratings are provided", () => {
@@ -157,8 +177,16 @@ describe("Behavioral Science Suite", () => {
       const initialUrge = 9.0;
       const minutesElapsed = 10;
 
-      const urgeWithBBO = calculateCravingUrgeDecay(initialUrge, minutesElapsed, true);
-      const urgeWithoutBBO = calculateCravingUrgeDecay(initialUrge, minutesElapsed, false);
+      const urgeWithBBO = calculateCravingUrgeDecay(
+        initialUrge,
+        minutesElapsed,
+        true,
+      );
+      const urgeWithoutBBO = calculateCravingUrgeDecay(
+        initialUrge,
+        minutesElapsed,
+        false,
+      );
 
       // With BBO (decay rate 0.35), urge after 10 min drops to ~1.0
       expect(urgeWithBBO).toBeLessThan(urgeWithoutBBO);
@@ -168,17 +196,26 @@ describe("Behavioral Science Suite", () => {
 
   describe("5. Gateway Oath Tier — Two-Minute Rule Ladder (#99)", () => {
     it("evaluates Stage 1 Two-Minute Gateway and triggers escalation at streak >= 5", () => {
-      const underThreshold = evaluateGatewayLadder(GatewayLadderStage.TWO_MINUTE_GATEWAY, 3);
+      const underThreshold = evaluateGatewayLadder(
+        GatewayLadderStage.TWO_MINUTE_GATEWAY,
+        3,
+      );
       expect(underThreshold.readyForEscalation).toBe(false);
       expect(underThreshold.nextStage).toBeNull();
 
-      const atThreshold = evaluateGatewayLadder(GatewayLadderStage.TWO_MINUTE_GATEWAY, 5);
+      const atThreshold = evaluateGatewayLadder(
+        GatewayLadderStage.TWO_MINUTE_GATEWAY,
+        5,
+      );
       expect(atThreshold.readyForEscalation).toBe(true);
       expect(atThreshold.nextStage).toBe(GatewayLadderStage.HABITUATION);
     });
 
     it("evaluates Stage 2 Habituation and escalates to Full Oath", () => {
-      const habituated = evaluateGatewayLadder(GatewayLadderStage.HABITUATION, 6);
+      const habituated = evaluateGatewayLadder(
+        GatewayLadderStage.HABITUATION,
+        6,
+      );
       expect(habituated.readyForEscalation).toBe(true);
       expect(habituated.nextStage).toBe(GatewayLadderStage.FULL_OATH);
     });

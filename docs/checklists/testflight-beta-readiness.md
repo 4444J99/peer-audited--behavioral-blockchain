@@ -18,17 +18,17 @@ Two halves, deliberately separated:
 ## Apple-side atoms (human/vendor — each already filed, cited here once)
 
 - [ ] Apple Developer Program enrolment decided and executed
-  — Owner: founder decision Q-7 (`planning--founder-decision-brief--2026-07-31.md`) +
-  blocked-handoff #141. Default on record: individual enrolment under Anthony (1–3 days),
-  transferred to the entity at NewCo. This is the only hard gate on distributing any iOS build.
+      — Owner: founder decision Q-7 (`planning--founder-decision-brief--2026-07-31.md`) +
+      blocked-handoff #141. Default on record: individual enrolment under Anthony (1–3 days),
+      transferred to the entity at NewCo. This is the only hard gate on distributing any iOS build.
 - [ ] App Store Connect app record + bundle ID registered
-  — Owner: #141 (follows enrolment mechanically).
+      — Owner: #141 (follows enrolment mechanically).
 - [ ] iOS build signing configured (certificates, provisioning via Expo/EAS)
-  — Owner: #141; the repo side (eas config) is buildable once credentials exist.
+      — Owner: #141; the repo side (eas config) is buildable once credentials exist.
 - [ ] APNs key minted and uploaded to Expo
-  — Owner: blocked-handoff #127. Server sender (`ExpoPushProvider`) already ships.
+      — Owner: blocked-handoff #127. Server sender (`ExpoPushProvider`) already ships.
 - [ ] Export compliance questionnaire submitted
-  — Owner: #141 (App Store Connect form; the app uses standard HTTPS crypto only).
+      — Owner: #141 (App Store Connect form; the app uses standard HTTPS crypto only).
 
 ## Build/product items (buildable in-repo, verified before first external build)
 
@@ -43,8 +43,8 @@ Two halves, deliberately separated:
 ## Human process items
 
 - [ ] Internal dogfood cohort completed on TestFlight internal testing
-  — Owner: issue #369; upstream of it, the dogfood-on-web scope decision
-  (founder brief 2026-07-31, proposal 1) is the recorded unblock for the "zero users" root gate.
+      — Owner: issue #369; upstream of it, the dogfood-on-web scope decision
+      (founder brief 2026-07-31, proposal 1) is the recorded unblock for the "zero users" root gate.
 - [ ] External tester list (50–100) recruited — Owner: issues #372/#373.
 
 ## Pass criteria

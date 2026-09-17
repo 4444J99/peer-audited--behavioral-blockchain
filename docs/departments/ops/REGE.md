@@ -34,51 +34,51 @@ Operations owns the reliability and availability of Styx's production systems. I
 
 ### Daily
 
-| ID | Activity | Description |
-|----|----------|-------------|
-| D1 | Monitoring dashboard review | Check Sentry error rates, Render CPU/memory, Redis memory, PostgreSQL connections. Confirm no new SEV1/2 alerts. |
-| D2 | Deploy queue check | Review pending PRs tagged `ready-to-deploy`. Verify CI passed. If a deploy is queued, confirm pre-deploy checklist from O2. |
-| D3 | Backup verification | Confirm Render's automatic PostgreSQL backup completed in the last 24 hours. Check backup log in Render dashboard. |
-| D4 | Fury queue health | Check BullMQ queue depth (waiting, active, failed). Flag if waiting > 500 or failed > 10. |
-| D5 | Health endpoint validation | Confirm `GET /health` returns 200 with all components healthy. If degraded, investigate the unhealthy component. |
+| ID  | Activity                    | Description                                                                                                                 |
+| --- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Monitoring dashboard review | Check Sentry error rates, Render CPU/memory, Redis memory, PostgreSQL connections. Confirm no new SEV1/2 alerts.            |
+| D2  | Deploy queue check          | Review pending PRs tagged `ready-to-deploy`. Verify CI passed. If a deploy is queued, confirm pre-deploy checklist from O2. |
+| D3  | Backup verification         | Confirm Render's automatic PostgreSQL backup completed in the last 24 hours. Check backup log in Render dashboard.          |
+| D4  | Fury queue health           | Check BullMQ queue depth (waiting, active, failed). Flag if waiting > 500 or failed > 10.                                   |
+| D5  | Health endpoint validation  | Confirm `GET /health` returns 200 with all components healthy. If degraded, investigate the unhealthy component.            |
 
 ### Weekly
 
-| ID | Activity | Description |
-|----|----------|-------------|
-| W1 | Performance metrics review | Check API p50/p99 response times (target: p50 <500ms, p99 <1s). Check PostgreSQL query durations and dead tuple counts. |
-| W2 | Incident retrospective | If any SEV1-3 incidents occurred, complete the blameless postmortem template from O1. File action items as GitHub Issues with `incident-action` label. |
-| W3 | Resource utilization report | Record CPU, memory, disk, and connection counts for all Render services. Compare against scaling trigger thresholds. |
-| W4 | Security scan review | Review Dependabot alerts and `npm audit` results from the weekly security-scan.yml workflow. Triage new vulnerabilities. |
+| ID  | Activity                    | Description                                                                                                                                            |
+| --- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| W1  | Performance metrics review  | Check API p50/p99 response times (target: p50 <500ms, p99 <1s). Check PostgreSQL query durations and dead tuple counts.                                |
+| W2  | Incident retrospective      | If any SEV1-3 incidents occurred, complete the blameless postmortem template from O1. File action items as GitHub Issues with `incident-action` label. |
+| W3  | Resource utilization report | Record CPU, memory, disk, and connection counts for all Render services. Compare against scaling trigger thresholds.                                   |
+| W4  | Security scan review        | Review Dependabot alerts and `npm audit` results from the weekly security-scan.yml workflow. Triage new vulnerabilities.                               |
 
 ### Monthly
 
-| ID | Activity | Description |
-|----|----------|-------------|
-| M1 | Load test execution | Run the synthetic end-to-end contract lifecycle test (create contract, submit proof, route to Fury, complete audit, verify ledger). Record response times and compare to previous month. |
-| M2 | Cost optimization review | Compare Render billing against expected costs for current user tier. Identify any services that could be downgraded or any free-tier limits approaching. |
-| M3 | Backup recovery drill | Restore the most recent PostgreSQL backup to a temporary database. Run post-restore verification (ledger balance, row counts, foreign key integrity). Record results per O4 drill template. |
-| M4 | Monitoring threshold review | Review alert thresholds in O3 against actual traffic patterns. Adjust if false-positive rate > 5% or if thresholds are too loose (missed incidents). |
+| ID  | Activity                    | Description                                                                                                                                                                                 |
+| --- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M1  | Load test execution         | Run the synthetic end-to-end contract lifecycle test (create contract, submit proof, route to Fury, complete audit, verify ledger). Record response times and compare to previous month.    |
+| M2  | Cost optimization review    | Compare Render billing against expected costs for current user tier. Identify any services that could be downgraded or any free-tier limits approaching.                                    |
+| M3  | Backup recovery drill       | Restore the most recent PostgreSQL backup to a temporary database. Run post-restore verification (ledger balance, row counts, foreign key integrity). Record results per O4 drill template. |
+| M4  | Monitoring threshold review | Review alert thresholds in O3 against actual traffic patterns. Adjust if false-positive rate > 5% or if thresholds are too loose (missed incidents).                                        |
 
 ### Quarterly
 
-| ID | Activity | Description |
-|----|----------|-------------|
-| Q1 | Disaster recovery test | Simulate a Render region failure: deploy to an alternative platform (Fly.io or Railway) from Docker images. Measure time to operational. Target: <4 hours. |
-| Q2 | Infrastructure capacity planning | Based on user growth trajectory, project when each scaling trigger (Render Starter to Standard, PostgreSQL upgrade, Redis upgrade) will be hit. Produce a timeline with cost impact. Feed to FIN for F5 update. |
-| Q3 | Dependency audit | Full review of all third-party dependencies (npm packages, Render services, Cloudflare, Stripe API versions). Identify end-of-life risks, version pinning gaps, and upgrade paths. |
-| Q4 | Runbook refresh | Review all OPS artifacts (O1-O4) for accuracy. Update any procedures that have drifted from actual practice. Add new scenarios discovered from incidents. |
+| ID  | Activity                         | Description                                                                                                                                                                                                     |
+| --- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1  | Disaster recovery test           | Simulate a Render region failure: deploy to an alternative platform (Fly.io or Railway) from Docker images. Measure time to operational. Target: <4 hours.                                                      |
+| Q2  | Infrastructure capacity planning | Based on user growth trajectory, project when each scaling trigger (Render Starter to Standard, PostgreSQL upgrade, Redis upgrade) will be hit. Produce a timeline with cost impact. Feed to FIN for F5 update. |
+| Q3  | Dependency audit                 | Full review of all third-party dependencies (npm packages, Render services, Cloudflare, Stripe API versions). Identify end-of-life risks, version pinning gaps, and upgrade paths.                              |
+| Q4  | Runbook refresh                  | Review all OPS artifacts (O1-O4) for accuracy. Update any procedures that have drifted from actual practice. Add new scenarios discovered from incidents.                                                       |
 
 ## 3. Artifacts Registry
 
-| ID | Name | Path | Phase | Staleness (days) | Last Updated | Status |
-|----|------|------|-------|-------------------|--------------|--------|
-| O1 | Incident Response | `artifacts/incident-response.md` | hardening | 30 | 2026-03-08 | Active |
-| O2 | Deployment Procedure | `artifacts/deployment-procedure.md` | foundation | 30 | 2026-03-08 | Active |
-| O3 | Monitoring Setup | `artifacts/monitoring-setup.md` | hardening | 30 | 2026-03-08 | Active |
-| O4 | Backup & Recovery | `artifacts/backup-recovery.md` | foundation | 30 | 2026-03-08 | Active |
-| O5 | Cost Management | `artifacts/cost-management.md` | — | — | — | Dormant (deferred) |
-| O6 | On-Call Rotation | `artifacts/on-call-rotation.md` | — | — | — | Dormant (deferred) |
+| ID  | Name                 | Path                                | Phase      | Staleness (days) | Last Updated | Status             |
+| --- | -------------------- | ----------------------------------- | ---------- | ---------------- | ------------ | ------------------ |
+| O1  | Incident Response    | `artifacts/incident-response.md`    | hardening  | 30               | 2026-03-08   | Active             |
+| O2  | Deployment Procedure | `artifacts/deployment-procedure.md` | foundation | 30               | 2026-03-08   | Active             |
+| O3  | Monitoring Setup     | `artifacts/monitoring-setup.md`     | hardening  | 30               | 2026-03-08   | Active             |
+| O4  | Backup & Recovery    | `artifacts/backup-recovery.md`      | foundation | 30               | 2026-03-08   | Active             |
+| O5  | Cost Management      | `artifacts/cost-management.md`      | —          | —                | —            | Dormant (deferred) |
+| O6  | On-Call Rotation     | `artifacts/on-call-rotation.md`     | —          | —                | —            | Dormant (deferred) |
 
 **Phase definitions:** foundation = structured and validated against current infrastructure; hardening = tested against real incidents or simulations, revision-triggered by production events.
 
@@ -170,24 +170,24 @@ Operations owns the reliability and availability of Styx's production systems. I
 
 ### Emits
 
-| Signal | Consumers | Trigger |
-|--------|-----------|---------|
-| `signal:deploy-complete` | ENG, FIN | Every successful production deploy (tag reaches live traffic) |
-| `signal:incident-detected` | PULSE (all departments) | Any SEV1 or SEV2 incident detected |
-| `signal:incident-resolved` | FIN, CXS, ENG | When a SEV1-3 incident is resolved and postmortem initiated |
-| `signal:performance-degradation` | ENG | When API p99 > 2s for >15 minutes, or database query times cross critical threshold |
-| `signal:scaling-trigger-approaching` | FIN | When any infrastructure metric reaches 80% of the next tier's trigger threshold |
-| `signal:backup-integrity-failure` | FIN, ENG | When a backup verification drill fails any check |
+| Signal                               | Consumers               | Trigger                                                                             |
+| ------------------------------------ | ----------------------- | ----------------------------------------------------------------------------------- |
+| `signal:deploy-complete`             | ENG, FIN                | Every successful production deploy (tag reaches live traffic)                       |
+| `signal:incident-detected`           | PULSE (all departments) | Any SEV1 or SEV2 incident detected                                                  |
+| `signal:incident-resolved`           | FIN, CXS, ENG           | When a SEV1-3 incident is resolved and postmortem initiated                         |
+| `signal:performance-degradation`     | ENG                     | When API p99 > 2s for >15 minutes, or database query times cross critical threshold |
+| `signal:scaling-trigger-approaching` | FIN                     | When any infrastructure metric reaches 80% of the next tier's trigger threshold     |
+| `signal:backup-integrity-failure`    | FIN, ENG                | When a backup verification drill fails any check                                    |
 
 ### Consumes
 
-| Signal | Source | Action |
-|--------|--------|--------|
-| `signal:api-change` | ENG | Review deployment procedure (O2) for new environment variables, changed health check contracts, or new services to monitor. Update O3 alert rules if new endpoints exist. |
-| `signal:feature-shipped` | PRD | Verify monitoring coverage for the new feature: does it have Sentry instrumentation, does /health reflect its status, are relevant business metrics tracked in O3? |
-| `signal:escrow-frozen` | FIN | Treat as SEV1 trigger. Verify that the API is returning appropriate error responses for financial operations. Monitor for user-facing impact. |
-| `signal:pricing-change` | FIN | Check if pricing change affects infrastructure projections (higher ARPU may drive different traffic patterns). Update Q2 capacity planning inputs. |
-| `signal:user-milestone` | GRO | Cross-reference user count against infrastructure scaling triggers. If approaching a tier transition, alert FIN and begin planning the upgrade. |
+| Signal                   | Source | Action                                                                                                                                                                    |
+| ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `signal:api-change`      | ENG    | Review deployment procedure (O2) for new environment variables, changed health check contracts, or new services to monitor. Update O3 alert rules if new endpoints exist. |
+| `signal:feature-shipped` | PRD    | Verify monitoring coverage for the new feature: does it have Sentry instrumentation, does /health reflect its status, are relevant business metrics tracked in O3?        |
+| `signal:escrow-frozen`   | FIN    | Treat as SEV1 trigger. Verify that the API is returning appropriate error responses for financial operations. Monitor for user-facing impact.                             |
+| `signal:pricing-change`  | FIN    | Check if pricing change affects infrastructure projections (higher ARPU may drive different traffic patterns). Update Q2 capacity planning inputs.                        |
+| `signal:user-milestone`  | GRO    | Cross-reference user count against infrastructure scaling triggers. If approaching a tier transition, alert FIN and begin planning the upgrade.                           |
 
 ## 8. Human Checkpoints
 
@@ -236,11 +236,11 @@ Operations owns the reliability and availability of Styx's production systems. I
 
 ### Deferred Artifacts
 
-| ID | Name | Description | Activation Trigger |
-|----|------|-------------|--------------------|
-| O5 | Cost Management | Infrastructure cost tracking dashboard with per-service breakdown, trend analysis, and optimization recommendations. Consolidates the manual M2 review into an automated report. | Monthly infrastructure costs exceed $200 (Tier 2 scaling threshold crossed) |
-| O6 | On-Call Rotation | Formal on-call schedule, escalation paths, and pager integration. Meaningless for a solo founder but required when the team grows to 2+ engineers. | Second engineer hired or first contractor with production access |
-| O7 | Chaos Engineering Playbook | Controlled failure injection: kill a Redis connection, simulate Stripe webhook timeout, introduce artificial latency. Validates that HEAL procedures work under real conditions. | After first 6 months of production operation with >500 active users |
+| ID  | Name                       | Description                                                                                                                                                                      | Activation Trigger                                                          |
+| --- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| O5  | Cost Management            | Infrastructure cost tracking dashboard with per-service breakdown, trend analysis, and optimization recommendations. Consolidates the manual M2 review into an automated report. | Monthly infrastructure costs exceed $200 (Tier 2 scaling threshold crossed) |
+| O6  | On-Call Rotation           | Formal on-call schedule, escalation paths, and pager integration. Meaningless for a solo founder but required when the team grows to 2+ engineers.                               | Second engineer hired or first contractor with production access            |
+| O7  | Chaos Engineering Playbook | Controlled failure injection: kill a Redis connection, simulate Stripe webhook timeout, introduce artificial latency. Validates that HEAL procedures work under real conditions. | After first 6 months of production operation with >500 active users         |
 
 ### Future Capabilities
 

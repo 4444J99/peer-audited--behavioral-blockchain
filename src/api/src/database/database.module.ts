@@ -1,8 +1,8 @@
-import { Module, Global } from '@nestjs/common';
-import { Pool } from 'pg';
-import { resolveDatabaseUrl } from '../config/runtime';
+import { Module, Global } from "@nestjs/common";
+import { Pool } from "pg";
+import { resolveDatabaseUrl } from "../config/runtime";
 
-const DATABASE_POOL = 'DATABASE_POOL';
+const DATABASE_POOL = "DATABASE_POOL";
 
 const poolProvider = {
   provide: DATABASE_POOL,

@@ -1,32 +1,36 @@
 <!-- ORGANVM:AUTO:START -->
+
 ## Agent Context (auto-generated — do not edit)
 
 This repo participates in the **ORGAN-III (Commerce)** swarm.
 
 ### Active Subscriptions
+
 - Event: `theory.updated` → Action: Review theory changes for product implications
 - Event: `governance.updated` → Action: Check compliance with updated governance rules
 - Event: `community.event_created` → Action: Community event registered for this product
 - Event: `distribution.dispatched` → Action: Announcement distributed via POSSE pipeline
 
 ### Production Responsibilities
+
 - **Produce** `product` for unspecified
 - **Produce** `community_signal` for organvm-vi-koinonia/community-hub
 - **Produce** `distribution_signal` for organvm-vii-kerygma/kerygma-pipeline
 - **Produce** `essay_material` for organvm-v-logos/essay-pipeline
 
 ### External Dependencies
+
 - **Consume** `theory` from [`organvm-i-theoria/styx-behavioral-economics-theory`](../../organvm-i-theoria/styx-behavioral-economics-theory/CLAUDE.md)
 - **Consume** `creative-artifact` from [`organvm-ii-poiesis/styx-behavioral-art`](../../organvm-ii-poiesis/styx-behavioral-art/CLAUDE.md)
 - **Consume** `governance-rules` from [`organvm-iv-taxis/orchestration-start-here`](../../organvm-iv-taxis/orchestration-start-here/CLAUDE.md)
 
 ### Governance Constraints
+
 - Adhere to unidirectional flow: I→II→III
 - Never commit secrets or credentials
 
-*Last synced: 2026-06-07T14:00:33Z*
+_Last synced: 2026-06-07T14:00:33Z_
 <!-- ORGANVM:AUTO:END -->
-
 
 ## Session Review Protocol
 
@@ -49,19 +53,19 @@ Transcripts are on-demand (never committed):
 
 Turborepo + npm workspaces. Package scope: `@styx/*`. Root `tsconfig.json` maps `@styx/shared/*` → `src/shared/*`. Workspaces span both `src/*` and `packages/*`.
 
-| Workspace | Stack | Entry | Notes |
-|---|---|---|---|
-| `src/api` | NestJS 11, BullMQ, Stripe, pg | `nest-cli.json` entryFile: `api/src/main` | Double-entry ledger, Fury router, escrow |
-| `src/web` | Next.js 16, React 18, Tailwind | `STYX_WEB_PUBLIC_URL` / `STYX_WEB_PORT` | Dashboard, Fury workbench |
-| `src/mobile` | React Native 0.81, Expo 54 | `expo run:ios` / `expo run:android` | Sensor bridge, camera, biometrics |
-| `src/desktop` | Tauri 2, Vite, React | `src-tauri/tauri.conf.json` | "The Judge" admin dashboard |
-| `src/shared` | TypeScript | `dist/index.js` | Constants, types, algorithms — **must build before others** |
-| `src/pitch` | Vite, React, p5.js | interactive pitch deck | Build outputs to `docs/`, not `dist/` |
-| `src/ask-styx` | Cloudflare Worker (wrangler) | `worker/index.ts` | LLM proxy for Ask Styx UI |
-| `src/test-harness` | Vitest, Commander CLI | `bin/ergon-test` | Validation & simulation suite |
-| `packages/styx-cli` | TypeScript, Vitest | `dist/cli.js` | Audience Growth Engine CLI; depends on `@styx/audience-engine` |
-| `packages/audit-engine` | TypeScript, Vitest | `dist/index.js` | Peer-audited behavioral verification |
-| `packages/audience-engine` | TypeScript, Vitest | `dist/index.js` | Parameterized content plan generator |
+| Workspace                  | Stack                          | Entry                                     | Notes                                                          |
+| -------------------------- | ------------------------------ | ----------------------------------------- | -------------------------------------------------------------- |
+| `src/api`                  | NestJS 11, BullMQ, Stripe, pg  | `nest-cli.json` entryFile: `api/src/main` | Double-entry ledger, Fury router, escrow                       |
+| `src/web`                  | Next.js 16, React 18, Tailwind | `STYX_WEB_PUBLIC_URL` / `STYX_WEB_PORT`   | Dashboard, Fury workbench                                      |
+| `src/mobile`               | React Native 0.81, Expo 54     | `expo run:ios` / `expo run:android`       | Sensor bridge, camera, biometrics                              |
+| `src/desktop`              | Tauri 2, Vite, React           | `src-tauri/tauri.conf.json`               | "The Judge" admin dashboard                                    |
+| `src/shared`               | TypeScript                     | `dist/index.js`                           | Constants, types, algorithms — **must build before others**    |
+| `src/pitch`                | Vite, React, p5.js             | interactive pitch deck                    | Build outputs to `docs/`, not `dist/`                          |
+| `src/ask-styx`             | Cloudflare Worker (wrangler)   | `worker/index.ts`                         | LLM proxy for Ask Styx UI                                      |
+| `src/test-harness`         | Vitest, Commander CLI          | `bin/ergon-test`                          | Validation & simulation suite                                  |
+| `packages/styx-cli`        | TypeScript, Vitest             | `dist/cli.js`                             | Audience Growth Engine CLI; depends on `@styx/audience-engine` |
+| `packages/audit-engine`    | TypeScript, Vitest             | `dist/index.js`                           | Peer-audited behavioral verification                           |
+| `packages/audience-engine` | TypeScript, Vitest             | `dist/index.js`                           | Parameterized content plan generator                           |
 
 ### Setup & Dev Commands
 
@@ -116,18 +120,19 @@ The CI uses a **job dependency graph**, not just a linear list. Branch protectio
 
 **Blocking jobs** (must pass for merge):
 
-| Job | Node | Depends on | Purpose |
-|---|---|---|---|
-| `build_and_test_matrix` | 22 | — | Test, build, lint, Gates 04–08, load-test syntax |
-| `beta_readiness` | 24.x | `build_and_test_matrix` | Beta readiness contract |
-| `changed-files` | — | — | Checks if web files changed (`src/web/`, `e2e/`, `src/shared/`, `.config/playwright/`) |
-| `e2e_browsers` | 22 | `build_and_test_matrix`, `beta_readiness`, `changed-files` | Playwright chromium+firefox; **web-gated** (skips if no web changes) |
-| `build_and_test` | — | `build_and_test_matrix`, `beta_readiness` | Summary gate; `if: always()` — never SKIPPED |
-| `e2e` | — | `changed-files`, `e2e_browsers` | Summary gate; `if: always()` — never SKIPPED |
-| `terraform_validate` | — | — | Standalone `terraform fmt -check` + `validate` |
-| `deploy.yml` | — | `beta_readiness` | Production deploy; has its own **Gate 08b compliance artifact check** against production DB |
+| Job                     | Node | Depends on                                                 | Purpose                                                                                     |
+| ----------------------- | ---- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `build_and_test_matrix` | 22   | —                                                          | Test, build, lint, Gates 04–08, load-test syntax                                            |
+| `beta_readiness`        | 24.x | `build_and_test_matrix`                                    | Beta readiness contract                                                                     |
+| `changed-files`         | —    | —                                                          | Checks if web files changed (`src/web/`, `e2e/`, `src/shared/`, `.config/playwright/`)      |
+| `e2e_browsers`          | 22   | `build_and_test_matrix`, `beta_readiness`, `changed-files` | Playwright chromium+firefox; **web-gated** (skips if no web changes)                        |
+| `build_and_test`        | —    | `build_and_test_matrix`, `beta_readiness`                  | Summary gate; `if: always()` — never SKIPPED                                                |
+| `e2e`                   | —    | `changed-files`, `e2e_browsers`                            | Summary gate; `if: always()` — never SKIPPED                                                |
+| `terraform_validate`    | —    | —                                                          | Standalone `terraform fmt -check` + `validate`                                              |
+| `deploy.yml`            | —    | `beta_readiness`                                           | Production deploy; has its own **Gate 08b compliance artifact check** against production DB |
 
 **Within `build_and_test_matrix`** (linear steps):
+
 1. `npm ci` + `npm audit --audit-level=high`
 2. `turbo run test` — **no** `--coverage --ci`; retries up to 3 times for flaky exits
 3. `npx turbo run build`
@@ -141,6 +146,7 @@ The CI uses a **job dependency graph**, not just a linear list. Branch protectio
 11. Load-test syntax check (`node --check` on load-test scripts; execution is deployment-gated)
 
 **Key notes**:
+
 - Coverage is enforced per-workspace via `jest --coverage` in each workspace's own `test` script
 - The `e2e_browsers` job builds `src/web` and runs Playwright with `E2E_BASE_URL: http://127.0.0.1:3001`
 - CodeQL runs in a dedicated `codeql.yml` workflow, not `ci.yml`
@@ -241,6 +247,7 @@ See `docs/triage/pattern-log.md` for per-batch learnings. See `scripts/triage/` 
 All autonomous and remote agents must adhere to the 5-lane branch constitution in `BRANCHES.md` and the full operating procedures in `docs/operations/agent-operations-manual.md`.
 
 ### Agent Quick Start
+
 1. **Query Owning Lane**: Check `docs/triage/issue-ownership.json` to find which standing lane owns your issue.
 2. **Cut Worktree**:
    ```bash

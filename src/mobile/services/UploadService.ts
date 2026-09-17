@@ -3,10 +3,10 @@
  * from the mobile buffer to the Cloudflare R2 bucket holding pen.
  */
 
-import { SessionService } from './SessionService';
-import { ApiClient } from './ApiClient';
-import type { ProofProcessingStatus } from './ApiClient';
-import { API_BASE } from '../config/api';
+import { SessionService } from "./SessionService";
+import { ApiClient } from "./ApiClient";
+import type { ProofProcessingStatus } from "./ApiClient";
+import { API_BASE } from "../config/api";
 
 /** First gap between processing-status polls. */
 export const PROCESSING_POLL_INITIAL_MS = 2_000;
@@ -15,7 +15,7 @@ export const PROCESSING_POLL_MAX_MS = 30_000;
 /** Total wall-clock budget before the client stops asking and surfaces a retry. */
 export const PROCESSING_POLL_DEADLINE_MS = 300_000;
 
-const TERMINAL_PROCESSING_STATUSES = ['COMPLETED', 'FAILED'];
+const TERMINAL_PROCESSING_STATUSES = ["COMPLETED", "FAILED"];
 
 function isTerminalProcessingStatus(overallStatus: string): boolean {
   return TERMINAL_PROCESSING_STATUSES.includes(overallStatus);
@@ -41,14 +41,21 @@ export class UploadService {
     contractId: string,
     fileType: string,
     description?: string,
-  ): Promise<{ uploadUrl: string; proofId: string; storageKey: string; captureNonce?: string }> {
-    console.log(`UploadService: Requesting Pre-Signed URL for ${fileType} (contract=${contractId})...`);
+  ): Promise<{
+    uploadUrl: string;
+    proofId: string;
+    storageKey: string;
+    captureNonce?: string;
+  }> {
+    console.log(
+      `UploadService: Requesting Pre-Signed URL for ${fileType} (contract=${contractId})...`,
+    );
 
     const token = await SessionService.getToken();
     const res = await fetch(`${API_BASE}/proofs/upload-url`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
@@ -63,7 +70,9 @@ export class UploadService {
     }
 
     const data = await res.json();
-    console.log(`UploadService: Pre-Signed URL received for proof [${data.proofId}]`);
+    console.log(
+      `UploadService: Pre-Signed URL received for proof [${data.proofId}]`,
+    );
     return {
       uploadUrl: data.uploadUrl,
       proofId: data.proofId,
@@ -76,15 +85,20 @@ export class UploadService {
    * @param localUri The fast-storage URI returned by the CameraModule
    * @param presignedUrl The URL obtained from requestPreSignedUrl
    */
-  static async uploadVideoBuffer(localUri: string, presignedUrl: string): Promise<boolean> {
-    console.log(`UploadService: Transmitting video buffer [${localUri}] to [${presignedUrl.substring(0, 30)}...]`);
+  static async uploadVideoBuffer(
+    localUri: string,
+    presignedUrl: string,
+  ): Promise<boolean> {
+    console.log(
+      `UploadService: Transmitting video buffer [${localUri}] to [${presignedUrl.substring(0, 30)}...]`,
+    );
 
     try {
       const response = await fetch(localUri);
       const blob = await response.blob();
 
       const uploadRes = await fetch(presignedUrl, {
-        method: 'PUT',
+        method: "PUT",
         body: blob,
       });
 
@@ -92,10 +106,12 @@ export class UploadService {
         throw new Error(`Upload failed: ${uploadRes.status}`);
       }
 
-      console.log('UploadService: Transmission verified. Payload secured in R2.');
+      console.log(
+        "UploadService: Transmission verified. Payload secured in R2.",
+      );
       return true;
     } catch (e) {
-      console.error('UploadService: Transmission failed', e);
+      console.error("UploadService: Transmission failed", e);
       return false;
     }
   }
@@ -115,16 +131,18 @@ export class UploadService {
   static async confirmUpload(
     proofId: string,
     storageKey: string,
-    captureSource: 'NATIVE_CAMERA' | 'SYNTHETIC_BETA' = 'SYNTHETIC_BETA',
+    captureSource: "NATIVE_CAMERA" | "SYNTHETIC_BETA" = "SYNTHETIC_BETA",
     captureNonce?: string,
   ): Promise<boolean> {
-    console.log(`UploadService: Confirming upload for Proof [${proofId}]. Dispatching to Fury Router...`);
+    console.log(
+      `UploadService: Confirming upload for Proof [${proofId}]. Dispatching to Fury Router...`,
+    );
 
     const token = await SessionService.getToken();
     const res = await fetch(`${API_BASE}/proofs/${proofId}/confirm-upload`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({ storageKey, captureSource, captureNonce }),
@@ -146,7 +164,9 @@ export class UploadService {
    * awaited for its side effect: it rehydrates ApiClient's in-memory auth token
    * after a cold start, where only AsyncStorage still holds the session.
    */
-  static async getProcessingStatus(proofId: string): Promise<ProofProcessingStatus> {
+  static async getProcessingStatus(
+    proofId: string,
+  ): Promise<ProofProcessingStatus> {
     await SessionService.getToken();
     return ApiClient.getProcessingStatus(proofId);
   }
@@ -174,7 +194,8 @@ export class UploadService {
     const deadlineMs = options.deadlineMs ?? PROCESSING_POLL_DEADLINE_MS;
     const now = options.now ?? (() => Date.now());
     const sleep =
-      options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+      options.sleep ??
+      ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
     const isCancelled = options.isCancelled ?? (() => false);
 
     const startedAt = now();
@@ -194,7 +215,9 @@ export class UploadService {
         }
       } catch (e: any) {
         lastError = e?.message || String(e);
-        console.warn(`UploadService: Processing-status poll failed for ${proofId}: ${lastError}`);
+        console.warn(
+          `UploadService: Processing-status poll failed for ${proofId}: ${lastError}`,
+        );
       }
 
       const remainingMs = deadlineMs - (now() - startedAt);

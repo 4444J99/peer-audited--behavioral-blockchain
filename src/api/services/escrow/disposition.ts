@@ -1,5 +1,5 @@
-import { JurisdictionTier } from '../geofencing';
-import type { StakeDisposition } from '../../src/common/interfaces/payout-provider.interface';
+import { JurisdictionTier } from "../geofencing";
+import type { StakeDisposition } from "../../src/common/interfaces/payout-provider.interface";
 
 export type { StakeDisposition };
 
@@ -22,19 +22,19 @@ export type { StakeDisposition };
  * each adapter re-deriving it and drifting.
  */
 export function resolveStakeDisposition(
-  outcome: 'COMPLETED' | 'FAILED',
+  outcome: "COMPLETED" | "FAILED",
   jurisdictionTier: JurisdictionTier,
 ): StakeDisposition {
   // Successful contracts always return stake to user
-  if (outcome === 'COMPLETED') {
-    return 'REFUND';
+  if (outcome === "COMPLETED") {
+    return "REFUND";
   }
 
   // Failed contracts: only TIER_1 captures as platform revenue
   if (jurisdictionTier === JurisdictionTier.TIER_1) {
-    return 'CAPTURE';
+    return "CAPTURE";
   }
 
   // TIER_2 and TIER_3: refund-only (P0-011 compliance requirement)
-  return 'REFUND';
+  return "REFUND";
 }

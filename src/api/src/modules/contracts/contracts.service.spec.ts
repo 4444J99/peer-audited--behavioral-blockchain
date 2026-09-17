@@ -2996,7 +2996,9 @@ describe("ContractsService", () => {
 
       expect(res).toEqual({ success: true, status: "ACTIVE" });
       expect(notifyPool.query).toHaveBeenCalledWith(
-        expect.stringContaining("partner_email = (SELECT email FROM users WHERE id = $3)"),
+        expect.stringContaining(
+          "partner_email = (SELECT email FROM users WHERE id = $3)",
+        ),
         ["ACTIVE", "c-1", "partner-9"],
       );
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(

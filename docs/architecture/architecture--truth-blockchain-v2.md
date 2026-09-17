@@ -299,60 +299,63 @@ verification, utilizing modern Open Banking standards.
 The following table provides a comparative analysis of viable financial
 API alternatives for zero-trust balance verification:
 
-  -------------------------------------------------------------------------------
-  **Financial API   **Primary         **Read-Only Balance       **Target Market &
-  Provider**        Architectural     Verification**            Geographic
-                    Advantage**                                 Focus**
-  ----------------- ----------------- ------------------------- -----------------
-  **Plaid**         Industry          Yes                       Global
-                    standard, massive (/accounts/balance/get)   (Comprehensive)
-                    coverage,                                   ^26^
-                    advanced                                    
-                    ML-powered risk                             
-                    signals (Signal).                           
+---
 
-  **Teller**        API-first, highly Yes                       US primarily ^28^
-                    transparent                                 
-                    pricing, avoids                             
-                    fragile                                     
-                    screen-scraping                             
-                    where possible.                             
+**Financial API **Primary **Read-Only Balance **Target Market &
+Provider** Architectural Verification** Geographic
+Advantage** Focus**
 
-  **Flinks**        Strong            Yes                       North America
-                    alternative to                              ^30^
-                    Plaid, highly                               
-                    rated for                                   
-                    financial data                              
-                    APIs and testing.                           
+---
 
-  **Open Bank       Open-source       Yes                       Europe/Global
-  Project**         RESTful API                                 (Open Source)
-                    platform,                                   ^31^
-                    connects directly                           
-                    to PSD2/Open                                
-                    Banking APIs                                
-                    without                                     
-                    intermediaries.                             
+**Plaid** Industry Yes Global
+standard, massive (/accounts/balance/get) (Comprehensive)
+coverage, ^26^
+advanced  
+ML-powered risk  
+signals (Signal).
 
-  **Quiltt**        Wholesale         Yes                       US ^28^
-                    reseller of                                 
-                    enterprise APIs                             
-                    (MX and                                     
-                    Finicity), highly                           
-                    transparent                                 
-                    pricing for                                 
-                    startups.                                   
+**Teller** API-first, highly Yes US primarily ^28^
+transparent  
+pricing, avoids  
+fragile  
+screen-scraping  
+where possible.
 
-  **Yapily**        Europe-focused,   Yes                       Europe/UK ^33^
-                    direct open                                 
-                    banking                                     
-                    infrastructure                              
-                    offering a                                  
-                    white-label                                 
-                    experience                                  
-                    without screen                              
-                    scraping.                                   
-  -------------------------------------------------------------------------------
+**Flinks** Strong Yes North America
+alternative to ^30^
+Plaid, highly  
+rated for  
+financial data  
+APIs and testing.
+
+**Open Bank Open-source Yes Europe/Global
+Project** RESTful API (Open Source)
+platform, ^31^
+connects directly  
+to PSD2/Open  
+Banking APIs  
+without  
+intermediaries.
+
+**Quiltt** Wholesale Yes US ^28^
+reseller of  
+enterprise APIs  
+(MX and  
+Finicity), highly  
+transparent  
+pricing for  
+startups.
+
+**Yapily** Europe-focused, Yes Europe/UK ^33^
+direct open  
+banking  
+infrastructure  
+offering a  
+white-label  
+experience  
+without screen  
+scraping.
+-------------------------------------------------------------------------------
 
 For maximum cost-efficiency and architectural control, utilizing
 **Quiltt** or integrating the **Open Bank Project** offers the most
@@ -398,26 +401,29 @@ costs will scale exponentially faster than storage costs.
 A comparative analysis of modern object storage and streaming providers
 reveals critical economic disparities:
 
-  --------------------------------------------------------------------------
-  **Component    **AWS S3       **Cloudflare   **Mux (Video   **Bunny
-  (Pricing Per   Standard**     R2**           API)**         Stream**
-  Month)**                                                    
-  -------------- -------------- -------------- -------------- --------------
-  **Storage      \$0.023 / GB   \$0.015 / GB   \~\$3.00 /     \$10.00 / TB
-  Cost**         ^35^           ^35^           1000 mins ^36^ ^36^
+---
 
-  **Egress /     \$0.09 / GB    **\$0.00 (Zero \~\$0.96 / 100 \$5.00 / TB
-  Delivery       (after 100GB)  Egress)** ^35^ mins ^36^      ^36^
-  Cost**         ^35^                                         
+**Component **AWS S3 **Cloudflare **Mux (Video **Bunny
+(Pricing Per Standard** R2** API)** Stream**
+Month)**
 
-  **PUT/POST     \$5.00 /       \$4.50 /       Included in    Variable
-  Operations**   million ^35^   million ^35^   minute rate    
+---
 
-  **10TB         \$9,230.00     **\$150.00**   Variable by    \~\$600.00
-  Storage +      ^35^           ^35^           Bitrate        ^36^
-  100TB Egress                                                
-  Cost**                                                      
-  --------------------------------------------------------------------------
+**Storage \$0.023 / GB \$0.015 / GB \~\$3.00 / \$10.00 / TB
+Cost** ^35^ ^35^ 1000 mins ^36^ ^36^
+
+**Egress / \$0.09 / GB **\$0.00 (Zero \~\$0.96 / 100 \$5.00 / TB
+Delivery (after 100GB) Egress)** ^35^ mins ^36^ ^36^
+Cost** ^35^
+
+**PUT/POST \$5.00 / \$4.50 / Included in Variable
+Operations** million ^35^ million ^35^ minute rate
+
+**10TB \$9,230.00 **\$150.00** Variable by \~\$600.00
+Storage + ^35^ ^35^ Bitrate ^36^
+100TB Egress  
+Cost**
+--------------------------------------------------------------------------
 
 **Architectural Recommendation:** The system must fundamentally abandon
 AWS S3 for video delivery in favor of **Cloudflare R2**. Cloudflare R2
@@ -473,11 +479,11 @@ wrappers around FFmpeg---the backend extracts a series of specific
 frames from the uploaded video.^40^ The algorithm then generates a
 perceptual hash based on two core components:
 
-- *Spatial Hashing:* Evaluates the distribution of bright and dark
+- _Spatial Hashing:_ Evaluates the distribution of bright and dark
   regions within individual frames, generating a structural
   signature.^40^
 
-- *Temporal Hashing:* Evaluates the delta in brightness and movement
+- _Temporal Hashing:_ Evaluates the delta in brightness and movement
   between consecutive frames, generating a chronological signature.^40^
 
 These components are synthesized into a 64-bit comparable hash
@@ -545,7 +551,7 @@ GYNOPTICON framework used in modern anti-cheat systems.^53^
   system dynamically routes the video to a secondary, \"High Trust\"
   tier of veteran reviewers for a definitive tie-breaking consensus.^53^
 
-- *Baiting Mechanism:* To continually audit reviewer integrity, the
+- _Baiting Mechanism:_ To continually audit reviewer integrity, the
   system periodically routes \"honeypot\" videos---pre-determined videos
   that are known definitive passes or definitive failures---to reviewers
   disguised as standard tasks.^54^ If a reviewer consistently votes

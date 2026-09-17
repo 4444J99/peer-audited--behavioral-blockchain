@@ -57,26 +57,26 @@ That means:
 
 ## Surface Matrix
 
-| Surface | Current Reality | Beta Decision | Action |
-|---|---|---|---|
-| iOS auth (`Login`, `Register`) | core flow exists | keep | leave on |
-| iOS create contract | screen exists, scope notice exists, payload contract is drifted | keep, but only after API payload is corrected | patch request shape and keep No-Contact only |
-| iOS contract detail | active tester surface | keep | leave on |
-| iOS daily attestation | primary Phase 1 journey | keep | leave on |
-| iOS digital exhaust | secondary recovery proof path | keep if stable, otherwise hide | decide after device-level smoke |
-| iOS wallet | useful read-only reassurance | keep | leave on, test-money labeled |
-| iOS Fury tab | non-primary, exposes reviewer economy and moderation complexity | hide | remove from bottom tabs for external beta |
-| iOS camera proof capture | current implementation is synthetic | disable or relabel internal | hide button unless native capture is ready, or relabel as non-production |
-| Web dashboard | currently mixes consumer navigation with beta-irrelevant routes | internal/support only | reduce nav or gate by role |
-| Web `/fury` | tester-visible today | hide from testers | gate behind admin/internal role or remove nav entry |
-| Web `/tavern` | community/social surface | hide | remove nav link and beta access |
-| Web `/ask` | AI companion / experimental | hide | remove beta CTA |
-| Web `/pitch` | investor/manifesto surface | hide from tester journey | remove beta CTA |
-| Web `/admin` | operator tool | internal-only | keep behind auth/admin only |
-| Web `/hr` | already hidden by flag | internal-only | keep flag off |
-| Web `/realms` | non-core discovery surface | hide | keep out of beta nav |
-| Desktop judge app | internal-only per scope | internal-only | do not distribute to testers |
-| Real-money settlement endpoints | rich internal tooling exists | internal-only / deferred | keep out of tester flows and maintain `test-money` |
+| Surface                         | Current Reality                                                 | Beta Decision                                 | Action                                                                   |
+| ------------------------------- | --------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------ |
+| iOS auth (`Login`, `Register`)  | core flow exists                                                | keep                                          | leave on                                                                 |
+| iOS create contract             | screen exists, scope notice exists, payload contract is drifted | keep, but only after API payload is corrected | patch request shape and keep No-Contact only                             |
+| iOS contract detail             | active tester surface                                           | keep                                          | leave on                                                                 |
+| iOS daily attestation           | primary Phase 1 journey                                         | keep                                          | leave on                                                                 |
+| iOS digital exhaust             | secondary recovery proof path                                   | keep if stable, otherwise hide                | decide after device-level smoke                                          |
+| iOS wallet                      | useful read-only reassurance                                    | keep                                          | leave on, test-money labeled                                             |
+| iOS Fury tab                    | non-primary, exposes reviewer economy and moderation complexity | hide                                          | remove from bottom tabs for external beta                                |
+| iOS camera proof capture        | current implementation is synthetic                             | disable or relabel internal                   | hide button unless native capture is ready, or relabel as non-production |
+| Web dashboard                   | currently mixes consumer navigation with beta-irrelevant routes | internal/support only                         | reduce nav or gate by role                                               |
+| Web `/fury`                     | tester-visible today                                            | hide from testers                             | gate behind admin/internal role or remove nav entry                      |
+| Web `/tavern`                   | community/social surface                                        | hide                                          | remove nav link and beta access                                          |
+| Web `/ask`                      | AI companion / experimental                                     | hide                                          | remove beta CTA                                                          |
+| Web `/pitch`                    | investor/manifesto surface                                      | hide from tester journey                      | remove beta CTA                                                          |
+| Web `/admin`                    | operator tool                                                   | internal-only                                 | keep behind auth/admin only                                              |
+| Web `/hr`                       | already hidden by flag                                          | internal-only                                 | keep flag off                                                            |
+| Web `/realms`                   | non-core discovery surface                                      | hide                                          | keep out of beta nav                                                     |
+| Desktop judge app               | internal-only per scope                                         | internal-only                                 | do not distribute to testers                                             |
+| Real-money settlement endpoints | rich internal tooling exists                                    | internal-only / deferred                      | keep out of tester flows and maintain `test-money`                       |
 
 ## What To Hide Immediately
 

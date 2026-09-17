@@ -6,20 +6,20 @@ Guided onboarding with a default contract template increases 7-day contract comp
 
 ## Variants
 
-| Variant | Description |
-|---------|-------------|
-| **Control (A)** | Current onboarding — OnboardingWizard with empty contract creation flow |
+| Variant           | Description                                                                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Control (A)**   | Current onboarding — OnboardingWizard with empty contract creation flow                                                                  |
 | **Treatment (B)** | Guided — onboarding suggests a default "No Contact for 7 Days" template, pre-filled with sensible defaults (stake: $39, check-in: daily) |
-| **Treatment (C)** | Guided + video — same as B with a 90-second explainer video embedded in step 2 |
+| **Treatment (C)** | Guided + video — same as B with a 90-second explainer video embedded in step 2                                                           |
 
 ## Metrics
 
-| Metric | Definition | Target |
-|--------|-----------|--------|
-| Primary | 7-day contract completion rate | +15% relative (B vs A, C vs A) |
-| Secondary | Day-7 retention (user active at day 7) | +10% relative |
-| Guardrail | Contract creation abandonment rate | No increase >5% |
-| Guardrail | Average stake amount | No decrease >10% |
+| Metric    | Definition                             | Target                         |
+| --------- | -------------------------------------- | ------------------------------ |
+| Primary   | 7-day contract completion rate         | +15% relative (B vs A, C vs A) |
+| Secondary | Day-7 retention (user active at day 7) | +10% relative                  |
+| Guardrail | Contract creation abandonment rate     | No increase >5%                |
+| Guardrail | Average stake amount                   | No decrease >10%               |
 
 ## Assignment
 

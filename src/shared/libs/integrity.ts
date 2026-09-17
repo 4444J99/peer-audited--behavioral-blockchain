@@ -44,7 +44,9 @@ export function calculateIntegrity(history: UserHistory): number {
   // compressed score keeps them within a range where fixed-point
   // deductions still move the needle.
   if (score > INTEGRITY_CEILING_HIGH) {
-    score = INTEGRITY_CEILING_HIGH + (score - INTEGRITY_CEILING_HIGH) * CEILING_PENALTY_RATE;
+    score =
+      INTEGRITY_CEILING_HIGH +
+      (score - INTEGRITY_CEILING_HIGH) * CEILING_PENALTY_RATE;
   }
 
   return Math.round(score);
@@ -54,11 +56,17 @@ export function calculateIntegrity(history: UserHistory): number {
  * Determines what financial tiers a user can access based on their Integrity Score.
  */
 export function getAllowedTiers(score: number): string[] {
-  if (score < 20) return ['RESTRICTED_MODE']; // Essentially Shadowbanned
-  if (score < 50) return ['TIER_1_MICRO_STAKES']; // Under $20
-  if (score < 100) return ['TIER_1_MICRO_STAKES', 'TIER_2_STANDARD']; // Up to $100
-  if (score < 500) return ['TIER_1_MICRO_STAKES', 'TIER_2_STANDARD', 'TIER_3_HIGH_ROLLER']; // Up to $1000
-  return ['TIER_1_MICRO_STAKES', 'TIER_2_STANDARD', 'TIER_3_HIGH_ROLLER', 'TIER_4_WHALE_VAULTS']; // Unlimited
+  if (score < 20) return ["RESTRICTED_MODE"]; // Essentially Shadowbanned
+  if (score < 50) return ["TIER_1_MICRO_STAKES"]; // Under $20
+  if (score < 100) return ["TIER_1_MICRO_STAKES", "TIER_2_STANDARD"]; // Up to $100
+  if (score < 500)
+    return ["TIER_1_MICRO_STAKES", "TIER_2_STANDARD", "TIER_3_HIGH_ROLLER"]; // Up to $1000
+  return [
+    "TIER_1_MICRO_STAKES",
+    "TIER_2_STANDARD",
+    "TIER_3_HIGH_ROLLER",
+    "TIER_4_WHALE_VAULTS",
+  ]; // Unlimited
 }
 
 /**
@@ -71,7 +79,9 @@ export function calculateAccuracy(history: FuryHistory): number {
   if (history.totalAudits === 0) return 1.0; // Benefit of doubt for new Furies
 
   // Weighted calculation mathematically punishing false claims 3x
-  const netSuccess = history.successfulAudits - (history.falseAccusations * FALSE_ACCUSATION_WEIGHT);
+  const netSuccess =
+    history.successfulAudits -
+    history.falseAccusations * FALSE_ACCUSATION_WEIGHT;
   const ratio = netSuccess / history.totalAudits;
 
   // Clamp between 0.0 and 1.0
@@ -84,13 +94,13 @@ export function calculateAccuracy(history: FuryHistory): number {
  */
 export function calculateReviewerWeight(history: FuryHistory): number {
   const accuracy = calculateAccuracy(history);
-  
+
   // Master Tier: >200 audits, >= 95% accuracy
   if (history.totalAudits >= 200 && accuracy >= 0.95) return 2.0;
-  
+
   // Journeyman Tier: >50 audits, >= 90% accuracy
-  if (history.totalAudits >= 50 && accuracy >= 0.90) return 1.5;
-  
+  if (history.totalAudits >= 50 && accuracy >= 0.9) return 1.5;
+
   // Novice Tier: Default
   return 1.0;
 }
@@ -108,23 +118,23 @@ export function shouldDemoteFury(history: FuryHistory): boolean {
  * Returns a display-friendly tier name for the frontend based on Integrity Score.
  */
 export function getDisplayTier(score: number): string {
-  if (score >= 500) return 'WHALE';
-  if (score >= 100) return 'HIGH_ROLLER';
-  if (score >= 50) return 'STANDARD';
-  if (score >= 20) return 'MICRO';
-  return 'RESTRICTED';
+  if (score >= 500) return "WHALE";
+  if (score >= 100) return "HIGH_ROLLER";
+  if (score >= 50) return "STANDARD";
+  if (score >= 20) return "MICRO";
+  return "RESTRICTED";
 }
 
 /** Returns the maximum stake amount in cents for a given set of allowed tiers. */
 export function getTierMaxStake(tiers: string[]): number {
-  if (tiers.includes('TIER_4_WHALE_VAULTS')) return Infinity;
-  if (tiers.includes('TIER_3_HIGH_ROLLER')) return 100000; // $1,000
-  if (tiers.includes('TIER_2_STANDARD')) return 10000; // $100
-  if (tiers.includes('TIER_1_MICRO_STAKES')) return 2000; // $20
+  if (tiers.includes("TIER_4_WHALE_VAULTS")) return Infinity;
+  if (tiers.includes("TIER_3_HIGH_ROLLER")) return 100000; // $1,000
+  if (tiers.includes("TIER_2_STANDARD")) return 10000; // $100
+  if (tiers.includes("TIER_1_MICRO_STAKES")) return 2000; // $20
   return 0;
 }
 
 export {
   FURY_CONSENSUS_SIZE as FURY_CONSENSUS_AUDITORS,
   FURY_CONSENSUS_AGREEMENT_REQUIRED,
-} from './behavioral-logic';
+} from "./behavioral-logic";

@@ -1,6 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PayoutProvider, PayoutResult, PayoutStatus } from '../../common/interfaces/payout-provider.interface';
-import { StripeFboService } from '../../../services/escrow/stripe.service';
+import { Injectable, Logger } from "@nestjs/common";
+import {
+  PayoutProvider,
+  PayoutResult,
+  PayoutStatus,
+} from "../../common/interfaces/payout-provider.interface";
+import { StripeFboService } from "../../../services/escrow/stripe.service";
 
 @Injectable()
 export class StripePayoutProvider implements PayoutProvider {
@@ -8,7 +12,11 @@ export class StripePayoutProvider implements PayoutProvider {
 
   constructor(private readonly stripeService: StripeFboService) {}
 
-  async releaseFunds(paymentIntentId: string, amountCents: number, _metadata?: Record<string, any>): Promise<PayoutResult> {
+  async releaseFunds(
+    paymentIntentId: string,
+    amountCents: number,
+    _metadata?: Record<string, any>,
+  ): Promise<PayoutResult> {
     try {
       // PM27: in our FBO model "releasing" funds means CANCELLING the manual hold, which always
       // returns the ENTIRE authorization to the customer — there is no partial-cancel primitive.
@@ -19,7 +27,8 @@ export class StripePayoutProvider implements PayoutProvider {
       // than releasing more than the ledger will record. (A true partial refund must be modeled as
       // a partial CAPTURE of the kept portion, not a release.)
       const current = await this.stripeService.retrieveIntent(paymentIntentId);
-      const authorized = typeof current.amount === 'number' ? current.amount : undefined;
+      const authorized =
+        typeof current.amount === "number" ? current.amount : undefined;
       if (authorized !== undefined && authorized !== amountCents) {
         const msg =
           `Refusing partial release of PaymentIntent ${paymentIntentId}: requested ${amountCents}¢ ` +
@@ -44,7 +53,11 @@ export class StripePayoutProvider implements PayoutProvider {
     }
   }
 
-  async captureFunds(paymentIntentId: string, amountCents: number, _metadata?: Record<string, any>): Promise<PayoutResult> {
+  async captureFunds(
+    paymentIntentId: string,
+    amountCents: number,
+    _metadata?: Record<string, any>,
+  ): Promise<PayoutResult> {
     try {
       // Pass the settlement amount so partial captures take only `amountCents`, not the full
       // authorized hold. (Previously amountCents was ignored, so partial settlement captured
@@ -56,7 +69,10 @@ export class StripePayoutProvider implements PayoutProvider {
       // (BOUNTY_POOL_TOPUP). Individual auditors are then paid from that pool internally by the
       // fury worker — there is no Stripe transfer to per-fury connected accounts on this path.
       // The array is therefore intentionally not wired to a Stripe payout here.
-      const intent = await this.stripeService.captureStake(paymentIntentId, amountCents);
+      const intent = await this.stripeService.captureStake(
+        paymentIntentId,
+        amountCents,
+      );
       return {
         status: PayoutStatus.SUCCESS,
         providerTransactionId: intent.id,
@@ -71,13 +87,17 @@ export class StripePayoutProvider implements PayoutProvider {
     }
   }
 
-  async getTransactionStatus(providerTransactionId: string): Promise<PayoutStatus> {
+  async getTransactionStatus(
+    providerTransactionId: string,
+  ): Promise<PayoutStatus> {
     try {
-      const intent = await this.stripeService.retrieveIntent(providerTransactionId);
+      const intent = await this.stripeService.retrieveIntent(
+        providerTransactionId,
+      );
       switch (intent.status) {
-        case 'succeeded':
+        case "succeeded":
           return PayoutStatus.SUCCESS;
-        case 'canceled': {
+        case "canceled": {
           // PM25: be CONSERVATIVE about a null cancellation_reason. A deliberate operator/user
           // release uses 'requested_by_customer', but a null reason is AMBIGUOUS — Stripe also
           // surfaces null for an auto-expiry of an uncaptured hold (an involuntary cancellation
@@ -86,15 +106,16 @@ export class StripePayoutProvider implements PayoutProvider {
           // ONLY an explicit 'requested_by_customer' as a successful release; every other reason,
           // including null/undefined, is reported as FAILED so settlement does not silently
           // finalize on an uncaptured/expired hold.
-          const reason = (intent as any).cancellation_reason as string | null | undefined;
-          const deliberateRelease = reason === 'requested_by_customer';
+          const reason = (intent as any).cancellation_reason as
+            string | null | undefined;
+          const deliberateRelease = reason === "requested_by_customer";
           return deliberateRelease ? PayoutStatus.SUCCESS : PayoutStatus.FAILED;
         }
-        case 'requires_capture':
-        case 'processing':
-        case 'requires_payment_method':
-        case 'requires_confirmation':
-        case 'requires_action':
+        case "requires_capture":
+        case "processing":
+        case "requires_payment_method":
+        case "requires_confirmation":
+        case "requires_action":
           return PayoutStatus.PENDING;
         default:
           return PayoutStatus.FAILED;

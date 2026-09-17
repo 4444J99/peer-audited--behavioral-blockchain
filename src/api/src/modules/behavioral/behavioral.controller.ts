@@ -1,10 +1,21 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+} from "@nestjs/common";
 import { AuthGuard } from "../../../guards/auth.guard";
 import { BehavioralEnhancementsService } from "./behavioral-enhancements.service";
 import { BehavioralEnrichmentService } from "./behavioral-enrichment.service";
 import { DecoCommitmentService } from "./deco-commitment.service";
 import {
-  LifeTransitionType, ImplementationIntention, OathCategory, PassiveProvider,
+  LifeTransitionType,
+  ImplementationIntention,
+  OathCategory,
+  PassiveProvider,
 } from "../../../../shared/libs/behavioral-logic";
 
 // The bootstrap middleware sets req.id to a correlation ID, so the
@@ -29,13 +40,21 @@ export class BehavioralController {
 
   @Post("device/unsubscribe")
   async unsubscribe(@Req() req: any, @Body("deviceId") deviceId: string) {
-    return this.enhancements.unsubscribeFromDevice(resolveUserId(req), deviceId);
+    return this.enhancements.unsubscribeFromDevice(
+      resolveUserId(req),
+      deviceId,
+    );
   }
 
   @Post("propose-swap")
   async proposeSwap(
     @Req() req: any,
-    @Body() body: { sourceContractId: string; targetOathCategory: string; carryOverPct: number },
+    @Body()
+    body: {
+      sourceContractId: string;
+      targetOathCategory: string;
+      carryOverPct: number;
+    },
   ) {
     return this.enhancements.proposeBehaviorSwap(
       resolveUserId(req),
@@ -56,7 +75,10 @@ export class BehavioralController {
   }
 
   @Post("friction-audit")
-  async frictionAudit(@Body() body: { answers: Record<string, number> }, @Req() req: any) {
+  async frictionAudit(
+    @Body() body: { answers: Record<string, number> },
+    @Req() req: any,
+  ) {
     return this.enrichment.frictionAudit(resolveUserId(req), body.answers);
   }
 
@@ -67,7 +89,11 @@ export class BehavioralController {
 
   @Get("gateway-oath/eligibility")
   async gatewayEligibility(@Req() req: any) {
-    return this.enrichment.checkGatewayOathEligibility(resolveUserId(req), 100, 7);
+    return this.enrichment.checkGatewayOathEligibility(
+      resolveUserId(req),
+      100,
+      7,
+    );
   }
 
   @Get("reentry/eligibility")
@@ -86,12 +112,18 @@ export class BehavioralController {
     @Body() body: { answers: Record<string, any> },
     @Req() req: any,
   ) {
-    return this.enrichment.submitExitInterview(contractId, resolveUserId(req), body.answers);
+    return this.enrichment.submitExitInterview(
+      contractId,
+      resolveUserId(req),
+      body.answers,
+    );
   }
 
   @Get("exit-interview/questions/:outcome")
   getExitQuestions(@Param("outcome") outcome: string) {
-    return this.enrichment.getExitInterviewQuestions(outcome as "COMPLETED" | "FAILED");
+    return this.enrichment.getExitInterviewQuestions(
+      outcome as "COMPLETED" | "FAILED",
+    );
   }
 
   @Get("day21/:contractId")
@@ -126,7 +158,11 @@ export class BehavioralController {
     @Body() body: { rating: number },
     @Req() req: any,
   ) {
-    return this.enrichment.recordDisenchantmentRating(resolveUserId(req), contractId, body.rating);
+    return this.enrichment.recordDisenchantmentRating(
+      resolveUserId(req),
+      contractId,
+      body.rating,
+    );
   }
 
   @Get("disenchantment/:contractId")
@@ -139,7 +175,10 @@ export class BehavioralController {
     @Param("type") type: string,
     @Param("days") days: string,
   ) {
-    return this.enrichment.getDiscontinuityWindow(type as LifeTransitionType, parseInt(days, 10));
+    return this.enrichment.getDiscontinuityWindow(
+      type as LifeTransitionType,
+      parseInt(days, 10),
+    );
   }
 
   @Post("implementation-intention/parse")
@@ -148,46 +187,91 @@ export class BehavioralController {
   }
 
   @Post("implementation-intention/validate")
-  async validateIntention(@Body() body: { intention: ImplementationIntention }) {
+  async validateIntention(
+    @Body() body: { intention: ImplementationIntention },
+  ) {
     return this.enrichment.validateImplIntention(body.intention);
   }
 
   @Get("implementation-intention/template/:category")
   async intentionTemplate(@Param("category") category: string) {
-    return { template: this.enrichment.getImplementationIntentionTemplate(category as OathCategory) };
+    return {
+      template: this.enrichment.getImplementationIntentionTemplate(
+        category as OathCategory,
+      ),
+    };
   }
 
   // #108: Passive proof providers
   @Get("passive-providers")
-  getPassiveProviders() { return this.enrichment.getPassiveProviders(); }
+  getPassiveProviders() {
+    return this.enrichment.getPassiveProviders();
+  }
 
   @Get("passive-providers/:provider/config")
   getPassiveProviderConfig(@Param("provider") provider: string) {
-    return this.enrichment.getPassiveProviderConfig(provider as PassiveProvider);
+    return this.enrichment.getPassiveProviderConfig(
+      provider as PassiveProvider,
+    );
   }
 
   // #107: Emotional contagion safeguards
   @Post("pod/broadcast-evaluate")
-  evaluatePodBroadcast(@Body() body: { podId: string; failureCount: number; memberCount: number; lastBroadcastAt: string | null }) {
-    return this.enrichment.evaluatePodBroadcast(body.podId, body.failureCount, body.memberCount, body.lastBroadcastAt ? new Date(body.lastBroadcastAt) : null);
+  evaluatePodBroadcast(
+    @Body()
+    body: {
+      podId: string;
+      failureCount: number;
+      memberCount: number;
+      lastBroadcastAt: string | null;
+    },
+  ) {
+    return this.enrichment.evaluatePodBroadcast(
+      body.podId,
+      body.failureCount,
+      body.memberCount,
+      body.lastBroadcastAt ? new Date(body.lastBroadcastAt) : null,
+    );
   }
 
   // #106: Auditor wellness
   @Post("auditor/wellness")
-  assessAuditorWellness(@Body() body: { auditorId: string; consecutiveReviews: number; avgReviewTimeSec: number; recentRejectionRate: number }) {
-    return this.enrichment.assessAuditorWellness(body.auditorId, body.consecutiveReviews, body.avgReviewTimeSec, body.recentRejectionRate);
+  assessAuditorWellness(
+    @Body()
+    body: {
+      auditorId: string;
+      consecutiveReviews: number;
+      avgReviewTimeSec: number;
+      recentRejectionRate: number;
+    },
+  ) {
+    return this.enrichment.assessAuditorWellness(
+      body.auditorId,
+      body.consecutiveReviews,
+      body.avgReviewTimeSec,
+      body.recentRejectionRate,
+    );
   }
 
   // #105: Generosity loop
   @Get("generosity-grant/:completedContracts/:avgStakeCents")
-  getGenerosityGrant(@Param("completedContracts") completedContracts: string, @Param("avgStakeCents") avgStakeCents: string) {
-    return this.enrichment.calculateGenerosityGrant(parseInt(completedContracts, 10), parseInt(avgStakeCents, 10));
+  getGenerosityGrant(
+    @Param("completedContracts") completedContracts: string,
+    @Param("avgStakeCents") avgStakeCents: string,
+  ) {
+    return this.enrichment.calculateGenerosityGrant(
+      parseInt(completedContracts, 10),
+      parseInt(avgStakeCents, 10),
+    );
   }
 
   // #104: Contract rollover
   @Post("contract-rollover")
   getContractRollover(@Body() body: { category: string; stakeCents: number }) {
-    return this.enrichment.generateRolloverOffer(body.category, body.stakeCents);
+    return this.enrichment.generateRolloverOffer(
+      body.category,
+      body.stakeCents,
+    );
   }
 
   // #103: Academy
@@ -204,7 +288,9 @@ export class BehavioralController {
 
   // #93: Intake assessment
   @Get("intake-assessment")
-  getIntakeAssessment() { return this.enrichment.getIntakeAssessment(); }
+  getIntakeAssessment() {
+    return this.enrichment.getIntakeAssessment();
+  }
 
   @Post("intake-assessment/profile")
   calculateProfile(@Body() body: { answers: Record<string, number> }) {
@@ -213,7 +299,10 @@ export class BehavioralController {
 
   // #92: DECO oracle stub
   @Post("deco-proof")
-  async createDecoProof(@Req() req: any, @Body() body: { url: string; selector: string; expectedValue: string }) {
+  async createDecoProof(
+    @Req() req: any,
+    @Body() body: { url: string; selector: string; expectedValue: string },
+  ) {
     return this.decoCommitment.createCommitment(body, resolveUserId(req));
   }
 
@@ -225,19 +314,38 @@ export class BehavioralController {
 
   // #90: Stablecoin quote
   @Get("stablecoin-quote/:usdCents/:stablecoinType")
-  getStablecoinQuote(@Param("usdCents") usdCents: string, @Param("stablecoinType") stablecoinType: string) {
-    return this.enrichment.quoteStablecoinStake(parseInt(usdCents, 10), stablecoinType as 'USDC' | 'USDT');
+  getStablecoinQuote(
+    @Param("usdCents") usdCents: string,
+    @Param("stablecoinType") stablecoinType: string,
+  ) {
+    return this.enrichment.quoteStablecoinStake(
+      parseInt(usdCents, 10),
+      stablecoinType as "USDC" | "USDT",
+    );
   }
 
   // #89: Revenue share
   @Post("revenue-share")
-  calculateRevenueShare(@Body() body: { totalPoolCents: number; totalDataPoints: number; userDataPoints: number }) {
-    return this.enrichment.calculateRevenueShare(body.totalPoolCents, body.totalDataPoints, body.userDataPoints);
+  calculateRevenueShare(
+    @Body()
+    body: {
+      totalPoolCents: number;
+      totalDataPoints: number;
+      userDataPoints: number;
+    },
+  ) {
+    return this.enrichment.calculateRevenueShare(
+      body.totalPoolCents,
+      body.totalDataPoints,
+      body.userDataPoints,
+    );
   }
 
   // #88: Whistleblower
   @Post("whistleblower-report")
-  createWhistleblowerReport(@Body() body: { category: 'FRAUD' | 'ABUSE' | 'COLLUSION' | 'OTHER' }) {
+  createWhistleblowerReport(
+    @Body() body: { category: "FRAUD" | "ABUSE" | "COLLUSION" | "OTHER" },
+  ) {
     return this.enrichment.createWhistleblowerReport(body.category);
   }
 }

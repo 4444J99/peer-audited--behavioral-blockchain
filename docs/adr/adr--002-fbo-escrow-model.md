@@ -9,6 +9,7 @@ Accepted
 Styx requires users to stake real money on behavioral contracts. The platform must hold these funds during the contract period and release them based on audit outcomes. This creates a critical design question: how does Styx custody user funds without becoming a money transmitter or taking on direct fiduciary liability?
 
 Three escrow models were evaluated:
+
 1. **Direct custody** — Styx holds funds in its own bank account
 2. **Smart contract escrow** — on-chain escrow via Ethereum/Solana
 3. **FBO (For Benefit Of)** — Stripe holds funds on behalf of individual users
@@ -38,6 +39,7 @@ User stakes $100 → Stripe creates PaymentIntent (hold)
 ## Consequences
 
 **Positive:**
+
 - Styx never has direct custody of user funds — Stripe is the regulated entity
 - Reduces money transmitter licensing burden (Stripe handles compliance)
 - PaymentIntent lifecycle maps cleanly to contract lifecycle (hold → audit → capture/cancel)
@@ -45,6 +47,7 @@ User stakes $100 → Stripe creates PaymentIntent (hold)
 - PCI compliance delegated to Stripe
 
 **Negative:**
+
 - Stripe fees reduce margins on small stakes (significant at $5-$20 micro-stakes)
 - Platform is dependent on Stripe's risk appetite — high-risk merchant classification is possible
 - Hold expiration window (7 days default) must align with contract durations

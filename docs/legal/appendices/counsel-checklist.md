@@ -17,14 +17,14 @@
 
 ## Where its items actually live
 
-| Old item | Canonical location |
-| --- | --- |
-| FBO Account Agreement & Custodial Mandate | `appendix-a--fbo-architecture-diagram.md`, `fbo-architecture.md` |
-| Money Transmitter Exemption Analysis | `legal--real-money-activation-brief.md` §§ 3–4 |
-| State-by-State Skill-Contest Compliance Survey | `legal--50-state-skill-contest-survey.md`, `state-jurisdiction-matrix-DRAFT.md` |
-| Terms of Service Aegis Cross-References | `appendix-b--terms-of-service-aegis-markup.md` |
-| Privacy Policy & Data Handling Disclosures | `privacy-policy.md` |
-| Responsible Use & Crisis Prevention Policy | **Not written.** Responsible-use disclosure lives inside `legal--aegis-protocol.md`; there is no standalone policy document, so this item was never true. |
-| KYC / AML Verification Service Integration | `legal--compliance-guardrails.md`; code in `src/api/src/modules/compliance/` |
-| Automated Content Moderation & UGC Controls | `legal--app-store-ugc-moderation-packet.md` |
-| Real-Money Settlement Idempotency & Audit Engine | `legal--real-money-activation-brief.md` § 6 |
+| Old item                                         | Canonical location                                                                                                                                        |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FBO Account Agreement & Custodial Mandate        | `appendix-a--fbo-architecture-diagram.md`, `fbo-architecture.md`                                                                                          |
+| Money Transmitter Exemption Analysis             | `legal--real-money-activation-brief.md` §§ 3–4                                                                                                            |
+| State-by-State Skill-Contest Compliance Survey   | `legal--50-state-skill-contest-survey.md`, `state-jurisdiction-matrix-DRAFT.md`                                                                           |
+| Terms of Service Aegis Cross-References          | `appendix-b--terms-of-service-aegis-markup.md`                                                                                                            |
+| Privacy Policy & Data Handling Disclosures       | `privacy-policy.md`                                                                                                                                       |
+| Responsible Use & Crisis Prevention Policy       | **Not written.** Responsible-use disclosure lives inside `legal--aegis-protocol.md`; there is no standalone policy document, so this item was never true. |
+| KYC / AML Verification Service Integration       | `legal--compliance-guardrails.md`; code in `src/api/src/modules/compliance/`                                                                              |
+| Automated Content Moderation & UGC Controls      | `legal--app-store-ugc-moderation-packet.md`                                                                                                               |
+| Real-Money Settlement Idempotency & Audit Engine | `legal--real-money-activation-brief.md` § 6                                                                                                               |

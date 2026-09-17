@@ -19,7 +19,9 @@ describe("RedactionService", () => {
   describe("getProfileForContentType", () => {
     it("returns FACE_BLUR for video types", () => {
       expect(service.getProfileForContentType("video/mp4")).toBe("FACE_BLUR");
-      expect(service.getProfileForContentType("video/quicktime")).toBe("FACE_BLUR");
+      expect(service.getProfileForContentType("video/quicktime")).toBe(
+        "FACE_BLUR",
+      );
     });
 
     it("returns VOICE_PIVOT for audio types", () => {

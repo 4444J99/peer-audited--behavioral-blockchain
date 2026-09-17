@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { createHash } from 'crypto';
+import { Injectable } from "@nestjs/common";
+import { createHash } from "crypto";
 
 /**
  * Anonymization layer for B2B HR exports.
@@ -49,12 +49,22 @@ export interface AnonymizedExport {
  */
 const K_ANONYMITY = 5;
 
-const PII_FIELDS = ['email', 'password_hash', 'stripe_customer_id', 'subscription_id', 'ip_address', 'name', 'first_name', 'last_name', 'phone'] as const;
+const PII_FIELDS = [
+  "email",
+  "password_hash",
+  "stripe_customer_id",
+  "subscription_id",
+  "ip_address",
+  "name",
+  "first_name",
+  "last_name",
+  "phone",
+] as const;
 
 function requireAnonymizeSalt(): string {
   const salt = process.env.ANONYMIZE_SALT; // allow-secret
   if (!salt) {
-    throw new Error('ANONYMIZE_SALT must be set');
+    throw new Error("ANONYMIZE_SALT must be set");
   }
   return salt;
 }
@@ -76,7 +86,7 @@ export class AnonymizeService {
     const input = `${this.salt}:${enterpriseId}:${userId}`;
     // Keep 128 bits (32 hex chars) to make collisions/brute-force reversal of the
     // pseudonym infeasible; the previous 64-bit truncation was too narrow.
-    return createHash('sha256').update(input).digest('hex').slice(0, 32);
+    return createHash("sha256").update(input).digest("hex").slice(0, 32);
   }
 
   /**
@@ -88,7 +98,8 @@ export class AnonymizeService {
     for (const [key, value] of Object.entries(row)) {
       if ((PII_FIELDS as readonly string[]).includes(key)) continue;
       // Redact any field that looks like an email
-      if (typeof value === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) continue;
+      if (typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+        continue;
       cleaned[key] = value;
     }
     return cleaned;
@@ -99,9 +110,9 @@ export class AnonymizeService {
    * Prevents re-identification via exact join dates.
    */
   coarsenDate(date: Date | string): string {
-    const d = typeof date === 'string' ? new Date(date) : date;
+    const d = typeof date === "string" ? new Date(date) : date;
     const year = d.getUTCFullYear();
-    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
     return `${year}-${month}`;
   }
 
@@ -120,7 +131,8 @@ export class AnonymizeService {
     }>,
   ): AnonymizedExport {
     const anonymized: AnonymizedEmployee[] = employees.map((emp) => {
-      const total = emp.contracts.completed + emp.contracts.failed + emp.contracts.active;
+      const total =
+        emp.contracts.completed + emp.contracts.failed + emp.contracts.active;
       return {
         anonymousId: this.hashUserId(emp.id, enterpriseId),
         integrityScore: emp.integrity_score,
@@ -128,16 +140,21 @@ export class AnonymizeService {
         completedContracts: emp.contracts.completed,
         failedContracts: emp.contracts.failed,
         activeContracts: emp.contracts.active,
-        completionRate: total > 0 ? Math.round((emp.contracts.completed / total) * 100) : 0,
+        completionRate:
+          total > 0 ? Math.round((emp.contracts.completed / total) * 100) : 0,
         joinedMonth: this.coarsenDate(emp.created_at),
       };
     });
 
     const totalContracts = anonymized.reduce(
-      (sum, e) => sum + e.completedContracts + e.failedContracts + e.activeContracts,
+      (sum, e) =>
+        sum + e.completedContracts + e.failedContracts + e.activeContracts,
       0,
     );
-    const totalCompleted = anonymized.reduce((sum, e) => sum + e.completedContracts, 0);
+    const totalCompleted = anonymized.reduce(
+      (sum, e) => sum + e.completedContracts,
+      0,
+    );
 
     // PRV10: k-anonymity suppression. A cohort smaller than K is re-identifiable, so
     // release only aggregate statistics for it (no per-employee rows).
@@ -150,12 +167,20 @@ export class AnonymizeService {
       suppressed,
       employees: suppressed ? [] : anonymized,
       aggregate: {
-        avgIntegrityScore: anonymized.length > 0
-          ? Math.round(anonymized.reduce((s, e) => s + e.integrityScore, 0) / anonymized.length)
-          : 0,
-        avgCompletionRate: anonymized.length > 0
-          ? Math.round(anonymized.reduce((s, e) => s + e.completionRate, 0) / anonymized.length)
-          : 0,
+        avgIntegrityScore:
+          anonymized.length > 0
+            ? Math.round(
+                anonymized.reduce((s, e) => s + e.integrityScore, 0) /
+                  anonymized.length,
+              )
+            : 0,
+        avgCompletionRate:
+          anonymized.length > 0
+            ? Math.round(
+                anonymized.reduce((s, e) => s + e.completionRate, 0) /
+                  anonymized.length,
+              )
+            : 0,
         totalContracts,
         completedContracts: totalCompleted,
       },

@@ -55,6 +55,7 @@ Your Integrity Score is Styx's measure of behavioral consistency. Here's how it 
 - **Visible to you.** Your score appears on your dashboard. In future versions, practitioners can see it too (with your consent).
 
 Why does this matter? A high Integrity Score unlocks:
+
 - Access to higher-stake contracts
 - Priority Fury matching (faster audit turnaround)
 - Community recognition (future: leaderboards, badges)
@@ -82,6 +83,7 @@ Here's the audit process:
 4. **Final outcome.** At the end of your contract period, your overall compliance determines whether you pass or fail.
 
 **What makes Furies trustworthy?**
+
 - They're identity-verified (government ID required)
 - They complete a 45-minute training and certification program
 - Their accuracy is tracked — Furies below 85% accuracy are suspended
@@ -173,12 +175,14 @@ We've analyzed our beta data. Here's what separates people who complete contract
 You've been on Styx for two weeks. Whether you've completed a contract, are mid-way through one, or haven't started yet — this is the moment to level up.
 
 **Why 30-day contracts matter:**
+
 - They're where real behavioral change happens (research shows 21-66 days to form a habit)
 - They carry higher Integrity Score rewards
 - They test your commitment beyond initial motivation
 - They're the contracts therapists and coaches most commonly assign
 
 **Popular 30-day contracts:**
+
 - **Recovery:** 30 days no-contact with a specified person
 - **Biological:** Exercise 4x/week for 4 consecutive weeks
 - **Cognitive:** Read 30 minutes daily for 30 days
@@ -237,6 +241,7 @@ The fastest way to see Styx in action is to assign a contract to a real client.
 5. Assign a contract from your template library or create a custom one
 
 **Best practices for first assignments:**
+
 - Start with your most motivated client (early wins build your confidence with the tool)
 - Choose a 7-14 day contract (short enough to see results quickly)
 - Use a moderate stake ($39-$75) — enough to motivate, not enough to cause anxiety
@@ -266,11 +271,13 @@ Generic contracts have lower completion rates. Templates tailored to your practi
 5. Add practitioner notes (visible only to you — context for when to assign this template)
 
 **Template design principles:**
+
 - **Verifiable terms.** Every condition must be provable with a photo, screenshot, or text statement. If a Fury can't verify it, the contract is unenforceable.
 - **Reasonable frequency.** Daily proof submissions work for short contracts. Weekly proof is better for 30+ day contracts to avoid submission fatigue.
 - **Appropriate stakes.** Know your client's financial situation. The stake should be motivating, not distressing. Styx is a tool, not a punishment.
 
 **Starter templates included with your account:**
+
 - 7-Day Biological Starter (exercise or nutrition)
 - 14-Day Cognitive Habit Builder (reading, meditation, study)
 - 30-Day Recovery Standard (no-contact)
@@ -291,15 +298,16 @@ Your dashboard gives you visibility into what happens between sessions.
 
 **Key metrics on your dashboard:**
 
-| Metric | What It Tells You |
-|--------|-------------------|
-| **Active Contracts** | How many clients have live oaths right now |
-| **Completion Rate** | % of contracts completed successfully (target: 60%+) |
-| **Proof Submission Rate** | % of proof windows where clients submitted on time |
-| **Average Integrity Score** | Your client cohort's mean behavioral consistency |
-| **At-Risk Clients** | Clients who missed a recent proof submission (intervention opportunity) |
+| Metric                      | What It Tells You                                                       |
+| --------------------------- | ----------------------------------------------------------------------- |
+| **Active Contracts**        | How many clients have live oaths right now                              |
+| **Completion Rate**         | % of contracts completed successfully (target: 60%+)                    |
+| **Proof Submission Rate**   | % of proof windows where clients submitted on time                      |
+| **Average Integrity Score** | Your client cohort's mean behavioral consistency                        |
+| **At-Risk Clients**         | Clients who missed a recent proof submission (intervention opportunity) |
 
 **How to use analytics in sessions:**
+
 - Review a client's contract history before their appointment
 - Use completion rates as objective outcome data ("You've completed 4 of 5 contracts — that's consistency")
 - Flag at-risk clients for proactive outreach (a missed proof submission is often a therapeutic signal)
@@ -321,6 +329,7 @@ Your dashboard gives you visibility into what happens between sessions.
 You've had 10 days with Styx. Here's what's available as you scale:
 
 **Practice Tier ($199/mo) features:**
+
 - Up to 50 active clients
 - Custom contract templates (unlimited)
 - Cohort analytics and trend reporting
@@ -328,6 +337,7 @@ You've had 10 days with Styx. Here's what's available as you scale:
 - Client data export (CSV)
 
 **Enterprise Tier ($999+/mo) features:**
+
 - Unlimited clients
 - SAML 2.0 SSO (planned)
 - Data lake integration (JSON webhook streams)
@@ -351,14 +361,14 @@ You've had 10 days with Styx. Here's what's available as you scale:
 
 Triggered on first web app login. 6-step progressive tooltip tour:
 
-| Step | Element | Tooltip Content |
-|------|---------|----------------|
-| 1 | Dashboard header | "This is your command center. Active contracts, Integrity Score, and recent activity — all at a glance." |
-| 2 | Create Oath button | "Start here. Choose a category, define your terms, and stake your money." |
-| 3 | Integrity Score badge | "Your Integrity Score measures behavioral consistency. Complete contracts to raise it." |
-| 4 | Proof submission area | "When it's time, submit proof here. Photos, screenshots, or text — whatever your contract requires." |
-| 5 | Contract timeline | "Track your progress. Green = compliant submissions. Red = missed or failed. Gray = upcoming." |
-| 6 | Help/Support icon | "Stuck? Tap here for FAQs, live chat (beta), or email support. We respond in under 4 hours." |
+| Step | Element               | Tooltip Content                                                                                          |
+| ---- | --------------------- | -------------------------------------------------------------------------------------------------------- |
+| 1    | Dashboard header      | "This is your command center. Active contracts, Integrity Score, and recent activity — all at a glance." |
+| 2    | Create Oath button    | "Start here. Choose a category, define your terms, and stake your money."                                |
+| 3    | Integrity Score badge | "Your Integrity Score measures behavioral consistency. Complete contracts to raise it."                  |
+| 4    | Proof submission area | "When it's time, submit proof here. Photos, screenshots, or text — whatever your contract requires."     |
+| 5    | Contract timeline     | "Track your progress. Green = compliant submissions. Red = missed or failed. Gray = upcoming."           |
+| 6    | Help/Support icon     | "Stuck? Tap here for FAQs, live chat (beta), or email support. We respond in under 4 hours."             |
 
 **Behavior:** User can skip the tour at any step. Tour does not replay unless user requests it from Settings. Each tooltip has a "Next" and "Skip Tour" button.
 
@@ -366,22 +376,22 @@ Triggered on first web app login. 6-step progressive tooltip tour:
 
 Every screen with no data shows a contextual empty state:
 
-| Screen | Empty State Message | CTA |
-|--------|-------------------|-----|
-| Dashboard (no contracts) | "Your accountability journey starts with one Oath. What will you commit to?" | Create Your First Oath |
-| Proof Submissions (none yet) | "No proof due yet. Once your contract is active, you'll submit evidence here." | View Active Contracts |
-| Integrity Score (0) | "Your score is 0 — everyone starts here. Complete your first contract to start building." | Browse Oath Categories |
-| Contract History (empty) | "No contract history yet. Your completed and failed oaths will appear here." | Create an Oath |
-| Community (not joined) | "The Styx community is where accountability gets social. 300+ members and growing." | Join Discord |
+| Screen                       | Empty State Message                                                                       | CTA                    |
+| ---------------------------- | ----------------------------------------------------------------------------------------- | ---------------------- |
+| Dashboard (no contracts)     | "Your accountability journey starts with one Oath. What will you commit to?"              | Create Your First Oath |
+| Proof Submissions (none yet) | "No proof due yet. Once your contract is active, you'll submit evidence here."            | View Active Contracts  |
+| Integrity Score (0)          | "Your score is 0 — everyone starts here. Complete your first contract to start building." | Browse Oath Categories |
+| Contract History (empty)     | "No contract history yet. Your completed and failed oaths will appear here."              | Create an Oath         |
+| Community (not joined)       | "The Styx community is where accountability gets social. 300+ members and growing."       | Join Discord           |
 
 ### Progressive Disclosure
 
 Features are revealed as users advance:
 
-| Trigger | Feature Unlocked |
-|---------|-----------------|
-| Account created | Basic dashboard, single contract creation |
+| Trigger                  | Feature Unlocked                                                       |
+| ------------------------ | ---------------------------------------------------------------------- |
+| Account created          | Basic dashboard, single contract creation                              |
 | First contract completed | Multi-contract support (up to 3 simultaneous), Integrity Score details |
-| 3 contracts completed | Community features, Fury application link, longer contract durations |
-| Integrity Score > 50 | Higher stake limits ($500+), advanced proof formats |
-| Integrity Score > 100 | Premium contract types, priority Fury matching |
+| 3 contracts completed    | Community features, Fury application link, longer contract durations   |
+| Integrity Score > 50     | Higher stake limits ($500+), advanced proof formats                    |
+| Integrity Score > 100    | Premium contract types, priority Fury matching                         |

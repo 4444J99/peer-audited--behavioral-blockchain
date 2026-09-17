@@ -1,46 +1,46 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { FuryController } from './fury.controller';
-import { EnforcementController } from './enforcement.controller';
-import { FuryWorker } from './fury.worker';
-import { FuryRouterWorker } from '../../../services/fury-router/fury-router.worker';
-import { ConsensusEngine } from './consensus.engine';
-import { EnforcementService } from './enforcement.service';
-import { CollusionDetectionService } from '../../../services/security/collusion-detection.service';
-import { CollusionDetectionScheduler } from './collusion-detection.scheduler';
-import { LedgerService } from '../../../services/ledger/ledger.service';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { R2StorageService } from '../../../services/storage/r2.service';
-import { HoneypotService } from '../../../services/intelligence/honeypot.service';
-import { FuryRouterService } from '../../../services/fury-router/fury-router.service';
-import { ContractsModule } from '../contracts/contracts.module';
-import { NotificationsModule } from '../notifications/notifications.module';
-import { JudgeService } from './judge.service';
-import { CounterClaimService } from './counter-claim.service';
-import { RoleGuard } from '../../common/guards/role.guard';
+import { Module, forwardRef } from "@nestjs/common";
+import { FuryController } from "./fury.controller";
+import { EnforcementController } from "./enforcement.controller";
+import { FuryWorker } from "./fury.worker";
+import { FuryRouterWorker } from "../../../services/fury-router/fury-router.worker";
+import { ConsensusEngine } from "./consensus.engine";
+import { EnforcementService } from "./enforcement.service";
+import { CollusionDetectionService } from "../../../services/security/collusion-detection.service";
+import { CollusionDetectionScheduler } from "./collusion-detection.scheduler";
+import { LedgerService } from "../../../services/ledger/ledger.service";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { R2StorageService } from "../../../services/storage/r2.service";
+import { HoneypotService } from "../../../services/intelligence/honeypot.service";
+import { FuryRouterService } from "../../../services/fury-router/fury-router.service";
+import { ContractsModule } from "../contracts/contracts.module";
+import { NotificationsModule } from "../notifications/notifications.module";
+import { JudgeService } from "./judge.service";
+import { CounterClaimService } from "./counter-claim.service";
+import { RoleGuard } from "../../common/guards/role.guard";
 
 @Module({
   imports: [forwardRef(() => ContractsModule), NotificationsModule],
   controllers: [FuryController, EnforcementController],
   providers: [
-    FuryWorker, 
-    FuryRouterWorker, 
-    ConsensusEngine, 
+    FuryWorker,
+    FuryRouterWorker,
+    ConsensusEngine,
     EnforcementService,
     CollusionDetectionService,
     CollusionDetectionScheduler,
-    LedgerService, 
-    TruthLogService, 
-    R2StorageService, 
-    HoneypotService, 
+    LedgerService,
+    TruthLogService,
+    R2StorageService,
+    HoneypotService,
     FuryRouterService,
     JudgeService,
     CounterClaimService,
     RoleGuard,
   ],
   exports: [
-    FuryWorker, 
-    FuryRouterWorker, 
-    ConsensusEngine, 
+    FuryWorker,
+    FuryRouterWorker,
+    ConsensusEngine,
     EnforcementService,
     CollusionDetectionService,
     R2StorageService,

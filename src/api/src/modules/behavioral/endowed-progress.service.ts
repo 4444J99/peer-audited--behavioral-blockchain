@@ -1,5 +1,5 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { Pool } from "pg";
 
 export interface ProgressState {
   contractId: string;
@@ -19,17 +19,47 @@ export interface ProgressTier {
 }
 
 const PROGRESS_TIERS: ProgressTier[] = [
-  { name: 'Awakening', threshold: 0, message: 'The journey of a thousand miles begins with a single step.', boost: 0.12 },
-  { name: 'Commitment', threshold: 0.15, message: 'You chose yourself. That takes courage.', boost: 0.08 },
-  { name: 'Momentum', threshold: 0.30, message: 'The hardest part is over. Keep building.', boost: 0.05 },
-  { name: 'Resilience', threshold: 0.50, message: 'Halfway there. You are not the same person who started.', boost: 0.03 },
-  { name: 'Mastery', threshold: 0.70, message: 'This is who you are now.', boost: 0.02 },
-  { name: 'Transcendence', threshold: 0.90, message: 'You made it. This is proof.', boost: 0 },
+  {
+    name: "Awakening",
+    threshold: 0,
+    message: "The journey of a thousand miles begins with a single step.",
+    boost: 0.12,
+  },
+  {
+    name: "Commitment",
+    threshold: 0.15,
+    message: "You chose yourself. That takes courage.",
+    boost: 0.08,
+  },
+  {
+    name: "Momentum",
+    threshold: 0.3,
+    message: "The hardest part is over. Keep building.",
+    boost: 0.05,
+  },
+  {
+    name: "Resilience",
+    threshold: 0.5,
+    message: "Halfway there. You are not the same person who started.",
+    boost: 0.03,
+  },
+  {
+    name: "Mastery",
+    threshold: 0.7,
+    message: "This is who you are now.",
+    boost: 0.02,
+  },
+  {
+    name: "Transcendence",
+    threshold: 0.9,
+    message: "You made it. This is proof.",
+    boost: 0,
+  },
 ];
 
 @Injectable()
 export class EndowedProgressService {
-  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
+  constructor(@Inject("DATABASE_POOL") private readonly pool: Pool) {}
 
   getCurrentTier(realProgress: number): ProgressTier {
     let current = PROGRESS_TIERS[0];
@@ -47,7 +77,7 @@ export class EndowedProgressService {
         return { nextTier: tier.name, at: tier.threshold };
       }
     }
-    return { nextTier: 'Complete', at: 1.0 };
+    return { nextTier: "Complete", at: 1.0 };
   }
 
   getMotivationMessage(tier: ProgressTier): string {
@@ -86,7 +116,9 @@ export class EndowedProgressService {
     };
   }
 
-  async applyDynamicDownscaling(contractId: string): Promise<{ multiplier: number; reason: string }> {
+  async applyDynamicDownscaling(
+    contractId: string,
+  ): Promise<{ multiplier: number; reason: string }> {
     const result = await this.pool.query(
       `SELECT strikes, duration_days, started_at FROM contracts WHERE id = $1`,
       [contractId],
@@ -116,12 +148,13 @@ export class EndowedProgressService {
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     if (isWeekend && realProgress >= 0.7) {
       multiplier *= 0.85;
-      reasons.push('weekend vulnerability in final 30%');
+      reasons.push("weekend vulnerability in final 30%");
     }
 
     return {
       multiplier,
-      reason: reasons.length > 0 ? reasons.join('; ') : 'no downscaling applied',
+      reason:
+        reasons.length > 0 ? reasons.join("; ") : "no downscaling applied",
     };
   }
 }

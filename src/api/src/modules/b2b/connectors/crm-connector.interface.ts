@@ -13,10 +13,10 @@
  * before it is pushed to a customer's Salesforce/HubSpot org.
  */
 export const EMPLOYEE_EVENT_TYPES = [
-  'contract_created',
-  'contract_completed',
-  'contract_failed',
-  'integrity_change',
+  "contract_created",
+  "contract_completed",
+  "contract_failed",
+  "integrity_change",
 ] as const;
 
 export type EmployeeEventType = (typeof EMPLOYEE_EVENT_TYPES)[number];

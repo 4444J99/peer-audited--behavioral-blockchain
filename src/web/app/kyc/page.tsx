@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
+import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   AlertTriangle,
   ExternalLink,
@@ -10,14 +10,10 @@ import {
   RefreshCw,
   ShieldCheck,
   Upload,
-} from 'lucide-react';
+} from "lucide-react";
 
 type VerificationStatus =
-  | 'NOT_STARTED'
-  | 'PENDING'
-  | 'VERIFIED'
-  | 'FAILED'
-  | 'REJECTED';
+  "NOT_STARTED" | "PENDING" | "VERIFIED" | "FAILED" | "REJECTED";
 
 interface ComplianceStatus {
   userId: string;
@@ -31,7 +27,7 @@ interface ComplianceStatus {
 }
 
 interface StartVerificationSession {
-  provider: 'MOCK' | 'STRIPE_IDENTITY';
+  provider: "MOCK" | "STRIPE_IDENTITY";
   verificationId: string;
   status: string;
   clientSecret?: string | null;
@@ -40,36 +36,41 @@ interface StartVerificationSession {
 }
 
 type UploadPhase =
-  | 'idle'
-  | 'selected'
-  | 'starting'
-  | 'awaiting_provider'
-  | 'completing'
-  | 'done';
+  | "idle"
+  | "selected"
+  | "starting"
+  | "awaiting_provider"
+  | "completing"
+  | "done";
 
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+const ACCEPTED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+];
 const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB
 
-const UNAUTHENTICATED = 'UNAUTHENTICATED';
+const UNAUTHENTICATED = "UNAUTHENTICATED";
 
 function readCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  for (const cookie of document.cookie.split(';')) {
-    const [rawKey, ...rawValue] = cookie.trim().split('=');
-    if (rawKey === name) return decodeURIComponent(rawValue.join('='));
+  if (typeof document === "undefined") return null;
+  for (const cookie of document.cookie.split(";")) {
+    const [rawKey, ...rawValue] = cookie.trim().split("=");
+    if (rawKey === name) return decodeURIComponent(rawValue.join("="));
   }
   return null;
 }
 
 async function kycFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const method = String(options?.method || 'GET').toUpperCase();
-  const csrfToken = readCookie('styx_csrf_token') || '';
+  const method = String(options?.method || "GET").toUpperCase();
+  const csrfToken = readCookie("styx_csrf_token") || "";
   const res = await fetch(`/api${path}`, {
     ...options,
-    credentials: 'include',
+    credentials: "include",
     headers: {
-      'Content-Type': 'application/json',
-      ...(method !== 'GET' && csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+      "Content-Type": "application/json",
+      ...(method !== "GET" && csrfToken ? { "x-csrf-token": csrfToken } : {}),
       ...options?.headers,
     },
   });
@@ -80,7 +81,8 @@ async function kycFetch<T>(path: string, options?: RequestInit): Promise<T> {
     let message = `API ${res.status}`;
     try {
       const payload = await res.json();
-      const detail = payload?.message || payload?.error?.message || payload?.error;
+      const detail =
+        payload?.message || payload?.error?.message || payload?.error;
       if (detail) message = `API ${res.status}: ${String(detail)}`;
     } catch {
       // non-JSON error body — keep the generic message
@@ -92,15 +94,15 @@ async function kycFetch<T>(path: string, options?: RequestInit): Promise<T> {
 
 function statusBadgeClasses(status: VerificationStatus): string {
   switch (status) {
-    case 'VERIFIED':
-      return 'border-green-700 bg-green-950/40 text-green-400';
-    case 'PENDING':
-      return 'border-yellow-700 bg-yellow-950/40 text-yellow-400';
-    case 'FAILED':
-    case 'REJECTED':
-      return 'border-red-700 bg-red-950/40 text-red-400';
+    case "VERIFIED":
+      return "border-green-700 bg-green-950/40 text-green-400";
+    case "PENDING":
+      return "border-yellow-700 bg-yellow-950/40 text-yellow-400";
+    case "FAILED":
+    case "REJECTED":
+      return "border-red-700 bg-red-950/40 text-red-400";
     default:
-      return 'border-neutral-700 bg-neutral-900 text-neutral-400';
+      return "border-neutral-700 bg-neutral-900 text-neutral-400";
   }
 }
 
@@ -115,23 +117,31 @@ export default function KycPage() {
   const [loading, setLoading] = useState(true);
   const [authRequired, setAuthRequired] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [file, setFile] = useState<{ name: string; size: number; type: string } | null>(null);
+  const [file, setFile] = useState<{
+    name: string;
+    size: number;
+    type: string;
+  } | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [phase, setPhase] = useState<UploadPhase>('idle');
+  const [phase, setPhase] = useState<UploadPhase>("idle");
   const [session, setSession] = useState<StartVerificationSession | null>(null);
 
   const loadStatus = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await kycFetch<ComplianceStatus>('/users/me/compliance');
+      const data = await kycFetch<ComplianceStatus>("/users/me/compliance");
       setStatus(data);
       setAuthRequired(false);
     } catch (err) {
       if (err instanceof Error && err.message === UNAUTHENTICATED) {
         setAuthRequired(true);
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to load verification status');
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load verification status",
+        );
       }
     } finally {
       setLoading(false);
@@ -147,71 +157,77 @@ export default function KycPage() {
     const selected = event.target.files?.[0];
     if (!selected) {
       setFile(null);
-      setPhase('idle');
+      setPhase("idle");
       return;
     }
     if (!ACCEPTED_TYPES.includes(selected.type)) {
       setFile(null);
-      setPhase('idle');
-      setFileError('Unsupported document type. Use JPEG, PNG, WebP, or PDF.');
+      setPhase("idle");
+      setFileError("Unsupported document type. Use JPEG, PNG, WebP, or PDF.");
       return;
     }
     if (selected.size > MAX_FILE_BYTES) {
       setFile(null);
-      setPhase('idle');
-      setFileError('Document exceeds the 10 MB limit.');
+      setPhase("idle");
+      setFileError("Document exceeds the 10 MB limit.");
       return;
     }
     setFile({ name: selected.name, size: selected.size, type: selected.type });
-    setPhase('selected');
+    setPhase("selected");
   };
 
   const beginVerification = async () => {
     setError(null);
-    setPhase('starting');
+    setPhase("starting");
     try {
       const result = await kycFetch<StartVerificationSession>(
-        '/users/me/compliance/identity/start',
+        "/users/me/compliance/identity/start",
         {
-          method: 'POST',
+          method: "POST",
           body: JSON.stringify({
-            mode: 'KYC_AND_AGE',
+            mode: "KYC_AND_AGE",
             returnUrl: `${window.location.origin}/kyc`,
           }),
         },
       );
       setSession(result);
-      setPhase('awaiting_provider');
+      setPhase("awaiting_provider");
     } catch (err) {
-      setPhase('selected');
+      setPhase("selected");
       if (err instanceof Error && err.message === UNAUTHENTICATED) {
         setAuthRequired(true);
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to start verification');
+        setError(
+          err instanceof Error ? err.message : "Failed to start verification",
+        );
       }
     }
   };
 
-  const completeMock = async (outcome: 'VERIFIED' | 'REJECTED') => {
+  const completeMock = async (outcome: "VERIFIED" | "REJECTED") => {
     setError(null);
-    setPhase('completing');
+    setPhase("completing");
     try {
       const result = await kycFetch<ComplianceStatus>(
-        '/users/me/compliance/identity/mock-complete',
+        "/users/me/compliance/identity/mock-complete",
         {
-          method: 'POST',
-          body: JSON.stringify({ mode: 'KYC_AND_AGE', status: outcome }),
+          method: "POST",
+          body: JSON.stringify({ mode: "KYC_AND_AGE", status: outcome }),
         },
       );
       setStatus(result);
       setSession(null);
-      setPhase('done');
+      setPhase("done");
     } catch (err) {
-      setPhase('awaiting_provider');
+      setPhase("awaiting_provider");
       if (err instanceof Error && err.message === UNAUTHENTICATED) {
         setAuthRequired(true);
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to complete verification');
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to complete verification",
+        );
       }
     }
   };
@@ -221,10 +237,12 @@ export default function KycPage() {
       <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center p-6">
         <div className="max-w-md text-center space-y-4">
           <ShieldCheck className="mx-auto text-red-500" size={42} />
-          <h1 className="text-xl font-black tracking-tight uppercase">Sign in required</h1>
+          <h1 className="text-xl font-black tracking-tight uppercase">
+            Sign in required
+          </h1>
           <p className="text-sm text-neutral-400 leading-6">
-            Identity verification is tied to your account. Sign in to check your status or
-            upload a document.
+            Identity verification is tied to your account. Sign in to check your
+            status or upload a document.
           </p>
           <Link
             href="/login"
@@ -241,17 +259,21 @@ export default function KycPage() {
     return (
       <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
         <Loader2 className="animate-spin mr-3" size={24} />
-        <span className="text-neutral-400 font-bold">Loading Verification Status...</span>
+        <span className="text-neutral-400 font-bold">
+          Loading Verification Status...
+        </span>
       </div>
     );
   }
 
-  const busy = phase === 'starting' || phase === 'completing';
+  const busy = phase === "starting" || phase === "completing";
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white p-6 md:p-12 font-sans">
       <header className="max-w-3xl mx-auto mb-10 border-b border-neutral-800 pb-6">
-        <h1 className="text-3xl font-black tracking-tighter uppercase">Identity Verification</h1>
+        <h1 className="text-3xl font-black tracking-tighter uppercase">
+          Identity Verification
+        </h1>
         <p className="text-sm text-neutral-500 mt-1 uppercase tracking-widest">
           KYC &amp; Age Check — unlocks real-money tiers
         </p>
@@ -280,26 +302,34 @@ export default function KycPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-black border border-neutral-800 p-4 rounded-lg">
-              <h3 className="text-neutral-500 text-xs uppercase mb-2">KYC Identity</h3>
+              <h3 className="text-neutral-500 text-xs uppercase mb-2">
+                KYC Identity
+              </h3>
               <span
-                className={`inline-block px-3 py-1 rounded-full border text-xs font-bold tracking-wide ${statusBadgeClasses(status?.kycStatus ?? 'NOT_STARTED')}`}
+                className={`inline-block px-3 py-1 rounded-full border text-xs font-bold tracking-wide ${statusBadgeClasses(status?.kycStatus ?? "NOT_STARTED")}`}
               >
-                {(status?.kycStatus ?? 'NOT_STARTED').replace('_', ' ')}
+                {(status?.kycStatus ?? "NOT_STARTED").replace("_", " ")}
               </span>
             </div>
             <div className="bg-black border border-neutral-800 p-4 rounded-lg">
-              <h3 className="text-neutral-500 text-xs uppercase mb-2">Age Verification</h3>
+              <h3 className="text-neutral-500 text-xs uppercase mb-2">
+                Age Verification
+              </h3>
               <span
-                className={`inline-block px-3 py-1 rounded-full border text-xs font-bold tracking-wide ${statusBadgeClasses(status?.ageVerificationStatus ?? 'NOT_STARTED')}`}
+                className={`inline-block px-3 py-1 rounded-full border text-xs font-bold tracking-wide ${statusBadgeClasses(status?.ageVerificationStatus ?? "NOT_STARTED")}`}
               >
-                {(status?.ageVerificationStatus ?? 'NOT_STARTED').replace('_', ' ')}
+                {(status?.ageVerificationStatus ?? "NOT_STARTED").replace(
+                  "_",
+                  " ",
+                )}
               </span>
             </div>
           </div>
           {status?.identityVerifiedAt ? (
             <p className="text-xs text-neutral-500 mt-4">
-              Verified {new Date(status.identityVerifiedAt).toLocaleDateString()} via{' '}
-              {status.identityProvider ?? 'provider'}
+              Verified{" "}
+              {new Date(status.identityVerifiedAt).toLocaleDateString()} via{" "}
+              {status.identityProvider ?? "provider"}
             </p>
           ) : null}
         </section>
@@ -313,7 +343,8 @@ export default function KycPage() {
                 You are fully verified
               </h2>
               <p className="text-sm text-neutral-400 mt-1 leading-6">
-                Your identity and age are confirmed. No further documents are needed.
+                Your identity and age are confirmed. No further documents are
+                needed.
               </p>
             </div>
           </section>
@@ -323,9 +354,10 @@ export default function KycPage() {
               Upload Identity Document
             </h2>
             <p className="text-sm text-neutral-400 leading-6">
-              Select a government-issued ID (passport, driver&apos;s license, or national ID
-              card). The document itself is captured by our verification provider over an
-              encrypted session — it never touches Styx servers.
+              Select a government-issued ID (passport, driver&apos;s license, or
+              national ID card). The document itself is captured by our
+              verification provider over an encrypted session — it never touches
+              Styx servers.
             </p>
 
             <div>
@@ -338,12 +370,14 @@ export default function KycPage() {
               <input
                 id="kyc-document"
                 type="file"
-                accept={ACCEPTED_TYPES.join(',')}
+                accept={ACCEPTED_TYPES.join(",")}
                 onChange={onFileChange}
                 className="block w-full text-sm text-neutral-300 file:mr-4 file:rounded-md file:border-0 file:bg-red-600 file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-red-500"
               />
               {fileError ? (
-                <p className="text-red-400 text-sm mt-2 font-semibold">{fileError}</p>
+                <p className="text-red-400 text-sm mt-2 font-semibold">
+                  {fileError}
+                </p>
               ) : null}
               {file ? (
                 <p className="text-neutral-400 text-sm mt-2 flex items-center gap-2">
@@ -353,36 +387,38 @@ export default function KycPage() {
               ) : null}
             </div>
 
-            {(phase === 'awaiting_provider' || phase === 'completing') && session ? (
+            {(phase === "awaiting_provider" || phase === "completing") &&
+            session ? (
               <div className="border border-yellow-900 bg-yellow-950/20 rounded-lg p-4 space-y-3">
                 <p className="text-yellow-300 text-sm font-bold">
                   Verification session created — status {session.status}.
                 </p>
-                {session.provider === 'STRIPE_IDENTITY' && session.hostedUrl ? (
+                {session.provider === "STRIPE_IDENTITY" && session.hostedUrl ? (
                   <a
                     href={session.hostedUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-white text-black text-sm font-extrabold hover:bg-neutral-200"
                   >
-                    <ExternalLink size={14} /> Continue to Secure Document Upload
+                    <ExternalLink size={14} /> Continue to Secure Document
+                    Upload
                   </a>
                 ) : null}
-                {session.provider === 'MOCK' ? (
+                {session.provider === "MOCK" ? (
                   <div className="space-y-2">
                     <p className="text-xs text-neutral-500 uppercase tracking-wider">
                       Mock provider (non-production) — resolve the session:
                     </p>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => completeMock('VERIFIED')}
+                        onClick={() => completeMock("VERIFIED")}
                         disabled={busy}
                         className="px-4 py-2 rounded-md border border-green-700 text-green-300 hover:bg-green-900/20 text-sm font-semibold disabled:opacity-50"
                       >
                         Approve (Mock)
                       </button>
                       <button
-                        onClick={() => completeMock('REJECTED')}
+                        onClick={() => completeMock("REJECTED")}
                         disabled={busy}
                         className="px-4 py-2 rounded-md border border-red-700 text-red-300 hover:bg-red-900/20 text-sm font-semibold disabled:opacity-50"
                       >
@@ -395,25 +431,32 @@ export default function KycPage() {
             ) : (
               <button
                 onClick={beginVerification}
-                disabled={phase !== 'selected' || busy}
+                disabled={phase !== "selected" || busy}
                 className="px-6 py-3 rounded-full bg-red-600 text-white font-extrabold hover:bg-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {busy ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-                {phase === 'starting' ? 'Starting Verification...' : 'Begin Verification'}
+                {busy ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Upload size={16} />
+                )}
+                {phase === "starting"
+                  ? "Starting Verification..."
+                  : "Begin Verification"}
               </button>
             )}
 
-            {phase === 'done' ? (
+            {phase === "done" ? (
               <p className="text-sm text-neutral-400">
-                Session resolved. Your status above reflects the latest verification result.
+                Session resolved. Your status above reflects the latest
+                verification result.
               </p>
             ) : null}
           </section>
         )}
 
         <p className="text-xs text-neutral-600 uppercase tracking-widest text-center">
-          Documents are processed by the identity provider only. Styx stores the verification
-          outcome, never the document.
+          Documents are processed by the identity provider only. Styx stores the
+          verification outcome, never the document.
         </p>
       </main>
     </div>

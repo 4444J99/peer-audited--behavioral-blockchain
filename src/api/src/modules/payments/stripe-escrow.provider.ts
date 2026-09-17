@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { JurisdictionTier } from '../../../services/geofencing';
-import { StripeFboService } from '../../../services/escrow/stripe.service';
-import { resolveStakeDisposition } from '../../../services/escrow/disposition';
+import { Injectable } from "@nestjs/common";
+import { JurisdictionTier } from "../../../services/geofencing";
+import { StripeFboService } from "../../../services/escrow/stripe.service";
+import { resolveStakeDisposition } from "../../../services/escrow/disposition";
 import {
   EscrowHold,
   EscrowHoldStatus,
   EscrowProvider,
   EscrowRail,
   StakeDisposition,
-} from '../../common/interfaces/payout-provider.interface';
+} from "../../common/interfaces/payout-provider.interface";
 
 /**
  * Stripe as an escrow *entry* rail.
@@ -21,7 +21,7 @@ import {
  */
 @Injectable()
 export class StripeEscrowProvider implements EscrowProvider {
-  readonly rail: EscrowRail = 'STRIPE';
+  readonly rail: EscrowRail = "STRIPE";
 
   constructor(private readonly stripeService: StripeFboService) {}
 
@@ -52,8 +52,14 @@ export class StripeEscrowProvider implements EscrowProvider {
     return this.toHold(intent, amountCents);
   }
 
-  async captureStake(holdId: string, captureAmountCents?: number): Promise<EscrowHold> {
-    const intent = await this.stripeService.captureStake(holdId, captureAmountCents);
+  async captureStake(
+    holdId: string,
+    captureAmountCents?: number,
+  ): Promise<EscrowHold> {
+    const intent = await this.stripeService.captureStake(
+      holdId,
+      captureAmountCents,
+    );
     return this.toHold(intent, captureAmountCents);
   }
 
@@ -83,7 +89,7 @@ export class StripeEscrowProvider implements EscrowProvider {
   }
 
   resolveDisposition(
-    outcome: 'COMPLETED' | 'FAILED',
+    outcome: "COMPLETED" | "FAILED",
     jurisdictionTier: JurisdictionTier,
   ): StakeDisposition {
     return resolveStakeDisposition(outcome, jurisdictionTier);
@@ -97,7 +103,7 @@ export class StripeEscrowProvider implements EscrowProvider {
       id: intent.id,
       status: this.toHoldStatus(intent.status),
       amountCents: intent.amount ?? fallbackAmountCents ?? 0,
-      currency: intent.currency ?? 'usd',
+      currency: intent.currency ?? "usd",
       rail: this.rail,
     };
   }
@@ -109,14 +115,14 @@ export class StripeEscrowProvider implements EscrowProvider {
    */
   private toHoldStatus(status: string | undefined): EscrowHoldStatus {
     switch (status) {
-      case 'requires_capture':
-        return 'HELD';
-      case 'succeeded':
-        return 'CAPTURED';
-      case 'canceled':
-        return 'RELEASED';
+      case "requires_capture":
+        return "HELD";
+      case "succeeded":
+        return "CAPTURED";
+      case "canceled":
+        return "RELEASED";
       default:
-        return 'PENDING';
+        return "PENDING";
     }
   }
 }

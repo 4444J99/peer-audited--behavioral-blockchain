@@ -1,6 +1,6 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Pool } from 'pg';
-import { createHash } from 'crypto';
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { Pool } from "pg";
+import { createHash } from "crypto";
 
 export interface PublicProfile {
   alias: string;
@@ -26,9 +26,9 @@ export class SocialLayerService implements OnModuleInit {
   onModuleInit(): void {
     if (!process.env.APP_SECRET) {
       const message =
-        'APP_SECRET is not set. It is required to derive pseudonymous social aliases. ' +
-        'Set APP_SECRET (a long random value) in the environment.';
-      if (process.env.NODE_ENV === 'production') {
+        "APP_SECRET is not set. It is required to derive pseudonymous social aliases. " +
+        "Set APP_SECRET (a long random value) in the environment.";
+      if (process.env.NODE_ENV === "production") {
         throw new Error(message);
       }
       this.logger.warn(message);
@@ -45,18 +45,18 @@ export class SocialLayerService implements OnModuleInit {
       `SELECT integrity_score, badges, 
         (SELECT COUNT(*) FROM contracts WHERE user_id = users.id AND status = 'ACTIVE') as active_count
        FROM users WHERE id = $1`,
-      [userId]
+      [userId],
     );
 
     if (userResult.rows.length === 0) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     const appSecret = process.env.APP_SECRET; // allow-secret
     if (!appSecret) {
       // No insecure fallback (a predictable default would make aliases reversible).
       throw new Error(
-        'APP_SECRET must be set to generate pseudonymous social aliases (see startup config).',
+        "APP_SECRET must be set to generate pseudonymous social aliases (see startup config).",
       );
     }
 
@@ -64,17 +64,25 @@ export class SocialLayerService implements OnModuleInit {
     const monthKey = new Date().toISOString().substring(0, 7); // e.g. "2026-03"
 
     // Deterministic but non-reversible alias for the current month
-    const hash = createHash('sha256')
+    const hash = createHash("sha256")
       .update(`${userId}:${monthKey}:${appSecret}`)
-      .digest('hex');
-    
-    const animalPrefixes = ['Stoic', 'Vigilant', 'Resilient', 'Honorable', 'Ancient', 'Silent'];
-    const animals = ['Wolf', 'Owl', 'Bear', 'Eagle', 'Stag', 'Lynx'];
-    
-    const prefixIndex = parseInt(hash.substring(0, 2), 16) % animalPrefixes.length;
+      .digest("hex");
+
+    const animalPrefixes = [
+      "Stoic",
+      "Vigilant",
+      "Resilient",
+      "Honorable",
+      "Ancient",
+      "Silent",
+    ];
+    const animals = ["Wolf", "Owl", "Bear", "Eagle", "Stag", "Lynx"];
+
+    const prefixIndex =
+      parseInt(hash.substring(0, 2), 16) % animalPrefixes.length;
     const animalIndex = parseInt(hash.substring(2, 4), 16) % animals.length;
     const suffix = hash.substring(4, 8);
-    
+
     const alias = `${animalPrefixes[prefixIndex]} ${animals[animalIndex]} ${suffix}`;
 
     return {
@@ -96,11 +104,11 @@ export class SocialLayerService implements OnModuleInit {
        AND integrity_score > 50
        ORDER BY integrity_score DESC 
        LIMIT $1`,
-      [limit]
+      [limit],
     );
 
     const profiles = await Promise.all(
-      topUsers.rows.map(user => this.getPublicProfile(user.id))
+      topUsers.rows.map((user) => this.getPublicProfile(user.id)),
     );
 
     return profiles;

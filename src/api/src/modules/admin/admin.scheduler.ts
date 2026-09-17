@@ -1,11 +1,11 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
-import { Pool } from 'pg';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
+import { Pool } from "pg";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
 import {
   ESCROW_PROVIDER,
   EscrowProvider,
-} from '../../common/interfaces/payout-provider.interface';
+} from "../../common/interfaces/payout-provider.interface";
 
 const RECONCILE_MAX_ATTEMPTS = 5;
 const RECONCILE_BATCH_LIMIT = 100;
@@ -20,7 +20,7 @@ export class AdminScheduler {
     private readonly truthLog: TruthLogService,
   ) {}
 
-  @Cron('0 3 * * *') // 3 AM daily
+  @Cron("0 3 * * *") // 3 AM daily
   async verifyHashChain(): Promise<void> {
     const result = await this.truthLog.verifyChain();
     if (!result.valid) {
@@ -52,7 +52,7 @@ export class AdminScheduler {
    * RECONCILE_REQUIRED for an operator — the sweep never silently settles money
    * it cannot account for.
    */
-  @Cron('0 */15 * * * *')
+  @Cron("0 */15 * * * *")
   async reconcileStuckContracts(): Promise<void> {
     let target: Array<{
       id: string;
@@ -95,10 +95,10 @@ export class AdminScheduler {
              WHERE id = $1`,
             [contractId, nextAttempts],
           );
-          await this.truthLog.appendEvent('CONTRACT_RECONCILED_STAKE_FAILED', {
+          await this.truthLog.appendEvent("CONTRACT_RECONCILED_STAKE_FAILED", {
             contractId,
             attempts: nextAttempts,
-            reason: 'no_payment_intent',
+            reason: "no_payment_intent",
           });
           reclaimed++;
           continue;
@@ -123,13 +123,13 @@ export class AdminScheduler {
           continue;
         }
 
-        if (hold.status === 'HELD') {
+        if (hold.status === "HELD") {
           // The authorization is live but activation never completed. Complete it.
           await this.pool.query(
             `UPDATE contracts SET status = 'ACTIVE', reconcile_attempts = $2 WHERE id = $1`,
             [contractId, nextAttempts],
           );
-          await this.truthLog.appendEvent('CONTRACT_RECONCILED_ACTIVATED', {
+          await this.truthLog.appendEvent("CONTRACT_RECONCILED_ACTIVATED", {
             contractId,
             paymentIntentId: payment_intent_id,
             attempts: nextAttempts,
@@ -143,7 +143,7 @@ export class AdminScheduler {
           `UPDATE contracts SET status = 'RECONCILED', reconcile_attempts = $2 WHERE id = $1`,
           [contractId, nextAttempts],
         );
-        await this.truthLog.appendEvent('CONTRACT_RECONCILED', {
+        await this.truthLog.appendEvent("CONTRACT_RECONCILED", {
           contractId,
           paymentIntentId: payment_intent_id,
           holdStatus: hold.status,

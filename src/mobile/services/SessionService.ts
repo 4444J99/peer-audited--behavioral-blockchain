@@ -1,8 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { setAuthToken } from './ApiClient';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { setAuthToken } from "./ApiClient";
 
-const TOKEN_KEY = '@styx_auth_token';
-const USER_ID_KEY = '@styx_user_id';
+const TOKEN_KEY = "@styx_auth_token";
+const USER_ID_KEY = "@styx_user_id";
 
 export class SessionService {
   /**
@@ -11,14 +11,15 @@ export class SessionService {
    * Note: In a true prod bare workflow, consider `react-native-keychain` for
    * stronger hardware-backed encryption, but AsyncStorage works for Alpha.
    */
-  static async saveSession(userId: string, token: string): Promise<void> { // allow-secret
+  static async saveSession(userId: string, token: string): Promise<void> {
+    // allow-secret
     try {
       await AsyncStorage.setItem(TOKEN_KEY, token);
       await AsyncStorage.setItem(USER_ID_KEY, userId);
       setAuthToken(token);
     } catch (e) {
-      console.error('SessionService: Failed to save session', e);
-      throw new Error('Failed to save authentication session.');
+      console.error("SessionService: Failed to save session", e);
+      throw new Error("Failed to save authentication session.");
     }
   }
 
@@ -33,7 +34,7 @@ export class SessionService {
       }
       return token;
     } catch (e) {
-      console.error('SessionService: Failed to get token', e);
+      console.error("SessionService: Failed to get token", e);
       return null;
     }
   }
@@ -45,7 +46,7 @@ export class SessionService {
     try {
       return await AsyncStorage.getItem(USER_ID_KEY);
     } catch (e) {
-      console.error('SessionService: Failed to get user ID', e);
+      console.error("SessionService: Failed to get user ID", e);
       return null;
     }
   }
@@ -59,7 +60,7 @@ export class SessionService {
       await AsyncStorage.removeItem(USER_ID_KEY);
       setAuthToken(null);
     } catch (e) {
-      console.error('SessionService: Failed to clear session', e);
+      console.error("SessionService: Failed to clear session", e);
     }
   }
 

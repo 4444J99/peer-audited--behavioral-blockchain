@@ -1,26 +1,35 @@
-'use client';
+"use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
+import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
-  ArrowLeft, Ban, Check, Clock, Inbox, Loader2, MessageSquare, PenLine, Users, X,
-} from 'lucide-react';
-import { api } from '../../services/api-client';
-import { useAuth } from '../../contexts/AuthContext';
+  ArrowLeft,
+  Ban,
+  Check,
+  Clock,
+  Inbox,
+  Loader2,
+  MessageSquare,
+  PenLine,
+  Users,
+  X,
+} from "lucide-react";
+import { api } from "../../services/api-client";
+import { useAuth } from "../../contexts/AuthContext";
 import type {
   AccountabilityStatus,
   PartnerCheckIn,
   PartnerInvitation,
   Partnership,
-} from '../../services/api-client';
+} from "../../services/api-client";
 
 function categoryLabel(oathCategory: string): string {
-  return oathCategory.replace(/_/g, ' ');
+  return oathCategory.replace(/_/g, " ");
 }
 
 function stakeLabel(stakeAmount: string): string {
   const value = Number(stakeAmount);
-  return Number.isFinite(value) ? `$${value.toFixed(2)}` : '$0.00';
+  return Number.isFinite(value) ? `$${value.toFixed(2)}` : "$0.00";
 }
 
 /**
@@ -28,7 +37,7 @@ function stakeLabel(stakeAmount: string): string {
  * one partner action that is category-conditional.
  */
 export function supportsVeto(oathCategory: string): boolean {
-  return oathCategory.startsWith('RECOVERY_');
+  return oathCategory.startsWith("RECOVERY_");
 }
 
 export function InvitationCard({
@@ -45,22 +54,34 @@ export function InvitationCard({
   return (
     <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4">
       <div>
-        <p className="text-xs uppercase tracking-widest text-neutral-500">Invited by</p>
-        <p className="font-bold text-white break-all">{invitation.owner_email}</p>
+        <p className="text-xs uppercase tracking-widest text-neutral-500">
+          Invited by
+        </p>
+        <p className="font-bold text-white break-all">
+          {invitation.owner_email}
+        </p>
       </div>
       <div className="flex flex-wrap gap-6">
         <div>
-          <p className="text-xs uppercase tracking-widest text-neutral-500">Oath</p>
-          <p className="font-bold text-white">{categoryLabel(invitation.oath_category)}</p>
+          <p className="text-xs uppercase tracking-widest text-neutral-500">
+            Oath
+          </p>
+          <p className="font-bold text-white">
+            {categoryLabel(invitation.oath_category)}
+          </p>
         </div>
         <div>
-          <p className="text-xs uppercase tracking-widest text-neutral-500">Stake</p>
-          <p className="font-bold text-red-500">{stakeLabel(invitation.stake_amount)}</p>
+          <p className="text-xs uppercase tracking-widest text-neutral-500">
+            Stake
+          </p>
+          <p className="font-bold text-red-500">
+            {stakeLabel(invitation.stake_amount)}
+          </p>
         </div>
       </div>
       <p className="text-sm text-neutral-400">
-        As their partner you co-sign daily attestations and can veto an intentional break
-        while it is still in its 24-hour cooldown.
+        As their partner you co-sign daily attestations and can veto an
+        intentional break while it is still in its 24-hour cooldown.
       </p>
       <div className="flex gap-3">
         <button
@@ -68,7 +89,11 @@ export function InvitationCard({
           disabled={busy}
           className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-black font-black rounded-xl transition-colors flex items-center justify-center gap-2"
         >
-          {busy ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />}
+          {busy ? (
+            <Loader2 className="animate-spin" size={16} />
+          ) : (
+            <Check size={16} />
+          )}
           ACCEPT
         </button>
         <button
@@ -97,11 +122,13 @@ export function CheckInThread({
   onDraftChange: (value: string) => void;
   onComplete: (checkInId: string) => void;
 }) {
-  const pending = checkIns.find((c) => c.status === 'PENDING');
+  const pending = checkIns.find((c) => c.status === "PENDING");
 
   return (
     <div className="space-y-3">
-      <h4 className="text-xs uppercase tracking-widest text-neutral-500">Check-In History</h4>
+      <h4 className="text-xs uppercase tracking-widest text-neutral-500">
+        Check-In History
+      </h4>
       {checkIns.length === 0 ? (
         <p className="text-sm text-neutral-500">No check-ins scheduled yet.</p>
       ) : (
@@ -112,21 +139,27 @@ export function CheckInThread({
               className="p-3 bg-black border border-neutral-800 rounded-xl flex items-start justify-between gap-3"
             >
               <div className="min-w-0">
-                <p className="text-sm font-bold text-white">{checkIn.type.replace(/_/g, ' ')}</p>
+                <p className="text-sm font-bold text-white">
+                  {checkIn.type.replace(/_/g, " ")}
+                </p>
                 <p className="text-xs text-neutral-500">
-                  {checkIn.scheduledAt ? new Date(checkIn.scheduledAt).toLocaleString() : 'Unscheduled'}
+                  {checkIn.scheduledAt
+                    ? new Date(checkIn.scheduledAt).toLocaleString()
+                    : "Unscheduled"}
                 </p>
                 {checkIn.message && (
-                  <p className="text-sm text-neutral-300 mt-1 break-words">{checkIn.message}</p>
+                  <p className="text-sm text-neutral-300 mt-1 break-words">
+                    {checkIn.message}
+                  </p>
                 )}
               </div>
               <span
                 className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${
-                  checkIn.status === 'COMPLETED'
-                    ? 'bg-green-900/30 text-green-400'
-                    : checkIn.status === 'PENDING'
-                      ? 'bg-blue-900/30 text-blue-400'
-                      : 'bg-red-900/30 text-red-400'
+                  checkIn.status === "COMPLETED"
+                    ? "bg-green-900/30 text-green-400"
+                    : checkIn.status === "PENDING"
+                      ? "bg-blue-900/30 text-blue-400"
+                      : "bg-red-900/30 text-red-400"
                 }`}
               >
                 {checkIn.status}
@@ -150,7 +183,11 @@ export function CheckInThread({
             disabled={busy || draft.trim().length === 0}
             className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
           >
-            {busy ? <Loader2 className="animate-spin" size={16} /> : <MessageSquare size={16} />}
+            {busy ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : (
+              <MessageSquare size={16} />
+            )}
             COMPLETE CHECK-IN
           </button>
         </div>
@@ -188,10 +225,15 @@ export function PartnershipCard({
     <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-widest text-neutral-500">Partnered with</p>
-          <p className="font-bold text-white break-all">{partnership.owner_email}</p>
+          <p className="text-xs uppercase tracking-widest text-neutral-500">
+            Partnered with
+          </p>
+          <p className="font-bold text-white break-all">
+            {partnership.owner_email}
+          </p>
           <p className="text-sm text-neutral-400 mt-1">
-            {categoryLabel(partnership.oath_category)} &bull; {stakeLabel(partnership.stake_amount)} at stake
+            {categoryLabel(partnership.oath_category)} &bull;{" "}
+            {stakeLabel(partnership.stake_amount)} at stake
           </p>
         </div>
         <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-900/30 text-blue-400">
@@ -205,7 +247,11 @@ export function PartnershipCard({
           disabled={busy}
           className="flex-1 min-w-[12rem] py-3 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-black font-black rounded-xl transition-colors flex items-center justify-center gap-2"
         >
-          {busy ? <Loader2 className="animate-spin" size={16} /> : <PenLine size={16} />}
+          {busy ? (
+            <Loader2 className="animate-spin" size={16} />
+          ) : (
+            <PenLine size={16} />
+          )}
           CO-SIGN ATTESTATION
         </button>
         {supportsVeto(partnership.oath_category) && (
@@ -223,14 +269,16 @@ export function PartnershipCard({
           className="py-3 px-4 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-xl transition-colors flex items-center gap-2"
         >
           <Clock size={16} />
-          {expanded ? 'HIDE HISTORY' : 'SHOW HISTORY'}
+          {expanded ? "HIDE HISTORY" : "SHOW HISTORY"}
         </button>
       </div>
 
       {expanded && (
         <div className="space-y-6 pt-2 border-t border-neutral-800">
           <div className="space-y-3 pt-4">
-            <h4 className="text-xs uppercase tracking-widest text-neutral-500">Partner Ledger</h4>
+            <h4 className="text-xs uppercase tracking-widest text-neutral-500">
+              Partner Ledger
+            </h4>
             {status && status.history.length > 0 ? (
               <ul className="space-y-2">
                 {status.history.map((event) => (
@@ -239,16 +287,20 @@ export function PartnershipCard({
                     className="p-3 bg-black border border-neutral-800 rounded-xl flex items-center justify-between gap-3"
                   >
                     <span className="text-sm font-bold text-white">
-                      {event.event_type.replace(/_/g, ' ')}
+                      {event.event_type.replace(/_/g, " ")}
                     </span>
                     <span className="text-xs text-neutral-500">
-                      {event.created_at ? new Date(event.created_at).toLocaleString() : ''}
+                      {event.created_at
+                        ? new Date(event.created_at).toLocaleString()
+                        : ""}
                     </span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-neutral-500">No partner events recorded yet.</p>
+              <p className="text-sm text-neutral-500">
+                No partner events recorded yet.
+              </p>
             )}
           </div>
 
@@ -269,8 +321,12 @@ export default function PartnerPage() {
   const { user, isLoading: authLoading } = useAuth();
   const [invitations, setInvitations] = useState<PartnerInvitation[]>([]);
   const [partnerships, setPartnerships] = useState<Partnership[]>([]);
-  const [statuses, setStatuses] = useState<Record<string, AccountabilityStatus>>({});
-  const [checkIns, setCheckIns] = useState<Record<string, PartnerCheckIn[]>>({});
+  const [statuses, setStatuses] = useState<
+    Record<string, AccountabilityStatus>
+  >({});
+  const [checkIns, setCheckIns] = useState<Record<string, PartnerCheckIn[]>>(
+    {},
+  );
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [expanded, setExpanded] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -291,7 +347,11 @@ export default function PartnerPage() {
     if (authLoading || !user) return;
     reload()
       .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Failed to load partner activity');
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load partner activity",
+        );
       })
       .finally(() => setLoading(false));
   }, [user, authLoading, reload]);
@@ -306,7 +366,7 @@ export default function PartnerPage() {
       setNotice(await action());
       await reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Action failed');
+      setError(err instanceof Error ? err.message : "Action failed");
     } finally {
       setBusyId(null);
     }
@@ -315,13 +375,13 @@ export default function PartnerPage() {
   const handleAccept = (contractId: string) =>
     run(contractId, async () => {
       await api.acceptPartnerInvitation(contractId);
-      return 'Invitation accepted. You are now an active accountability partner.';
+      return "Invitation accepted. You are now an active accountability partner.";
     });
 
   const handleDecline = (contractId: string) =>
     run(contractId, async () => {
       await api.respondToPartnerInvite(contractId, false);
-      return 'Invitation declined.';
+      return "Invitation declined.";
     });
 
   const handleCosign = (contractId: string) =>
@@ -338,11 +398,11 @@ export default function PartnerPage() {
 
   const handleCompleteCheckIn = (contractId: string, checkInId: string) =>
     run(contractId, async () => {
-      await api.completePartnerCheckIn(checkInId, drafts[contractId] ?? '');
-      setDrafts((prev) => ({ ...prev, [contractId]: '' }));
+      await api.completePartnerCheckIn(checkInId, drafts[contractId] ?? "");
+      setDrafts((prev) => ({ ...prev, [contractId]: "" }));
       const refreshed = await api.getPartnerCheckIns(contractId);
       setCheckIns((prev) => ({ ...prev, [contractId]: refreshed }));
-      return 'Check-in recorded.';
+      return "Check-in recorded.";
     });
 
   const handleToggle = async (contractId: string) => {
@@ -359,7 +419,9 @@ export default function PartnerPage() {
       setStatuses((prev) => ({ ...prev, [contractId]: status }));
       setCheckIns((prev) => ({ ...prev, [contractId]: history }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load partner history');
+      setError(
+        err instanceof Error ? err.message : "Failed to load partner history",
+      );
     }
   };
 
@@ -367,7 +429,9 @@ export default function PartnerPage() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <Loader2 className="animate-spin mr-3" size={24} />
-        <span className="text-neutral-400 font-bold">Loading partner activity...</span>
+        <span className="text-neutral-400 font-bold">
+          Loading partner activity...
+        </span>
       </div>
     );
   }
@@ -386,7 +450,9 @@ export default function PartnerPage() {
             <Users className="text-black" size={24} />
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight uppercase">Accountability Partner</h1>
+            <h1 className="text-2xl font-black tracking-tight uppercase">
+              Accountability Partner
+            </h1>
             <p className="text-xs text-neutral-500 uppercase tracking-widest">
               Invitations, co-signatures, and vetoes
             </p>
@@ -444,12 +510,15 @@ export default function PartnerPage() {
                 expanded={expanded === partnership.contract_id}
                 status={statuses[partnership.contract_id] ?? null}
                 checkIns={checkIns[partnership.contract_id] ?? []}
-                draft={drafts[partnership.contract_id] ?? ''}
+                draft={drafts[partnership.contract_id] ?? ""}
                 onToggle={() => handleToggle(partnership.contract_id)}
                 onCosign={() => handleCosign(partnership.contract_id)}
                 onVeto={() => handleVeto(partnership.contract_id)}
                 onDraftChange={(value) =>
-                  setDrafts((prev) => ({ ...prev, [partnership.contract_id]: value }))
+                  setDrafts((prev) => ({
+                    ...prev,
+                    [partnership.contract_id]: value,
+                  }))
                 }
                 onCompleteCheckIn={(checkInId) =>
                   handleCompleteCheckIn(partnership.contract_id, checkInId)

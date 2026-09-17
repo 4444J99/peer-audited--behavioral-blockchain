@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { slides } from '../data/slides';
+import { useState, useEffect, useCallback } from "react";
+import { slides } from "../data/slides";
 
 const TOTAL = slides.length;
 
@@ -8,14 +8,17 @@ export function useNavigation() {
 
   // IntersectionObserver to track which section is in view
   useEffect(() => {
-    const sections = document.querySelectorAll<HTMLElement>('[data-section]');
+    const sections = document.querySelectorAll<HTMLElement>("[data-section]");
     if (!sections.length) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            const idx = parseInt(entry.target.getAttribute('data-section') || '0', 10);
+            const idx = parseInt(
+              entry.target.getAttribute("data-section") || "0",
+              10,
+            );
             setCurrentSlide(idx);
           }
         }
@@ -29,11 +32,15 @@ export function useNavigation() {
 
   // Scroll-reveal observer
   useEffect(() => {
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const els = document.querySelectorAll('[data-reveal], [data-reveal-left], [data-reveal-scale]');
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const els = document.querySelectorAll(
+      "[data-reveal], [data-reveal-left], [data-reveal-scale]",
+    );
 
     if (prefersReduced) {
-      els.forEach((el) => el.classList.add('visible'));
+      els.forEach((el) => el.classList.add("visible"));
       return;
     }
 
@@ -45,7 +52,7 @@ export function useNavigation() {
             const siblings = parent ? Array.from(parent.children) : [];
             const idx = siblings.indexOf(entry.target as Element);
             const delay = Math.max(0, idx) * 120;
-            setTimeout(() => entry.target.classList.add('visible'), delay);
+            setTimeout(() => entry.target.classList.add("visible"), delay);
             observer.unobserve(entry.target);
           }
         }
@@ -60,27 +67,28 @@ export function useNavigation() {
   const goTo = useCallback((index: number) => {
     const clamped = Math.max(0, Math.min(TOTAL - 1, index));
     // Scroll to the sketch stage (visual intro) for this slide
-    const stages = document.querySelectorAll<HTMLElement>('.sketch-stage');
-    const target = stages[clamped] || document.querySelector(`[data-section="${clamped}"]`);
+    const stages = document.querySelectorAll<HTMLElement>(".sketch-stage");
+    const target =
+      stages[clamped] || document.querySelector(`[data-section="${clamped}"]`);
     if (target) {
-      target.scrollIntoView({ behavior: 'smooth' });
+      target.scrollIntoView({ behavior: "smooth" });
     }
   }, []);
 
   // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
         e.preventDefault();
         goTo(currentSlide + 1);
-      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
         e.preventDefault();
         goTo(currentSlide - 1);
       }
     };
 
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, [currentSlide, goTo]);
 
   return { currentSlide, goTo };

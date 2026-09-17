@@ -1,6 +1,6 @@
 /**
  * VolatilityEngine
- * 
+ *
  * Manages temporal behavioral multipliers (e.g., Weekend Volatility).
  * Identifies high-risk temporal windows and scales stake requirements accordingly.
  */
@@ -42,7 +42,10 @@ export class VolatilityEngine {
   /**
    * Calculates the "Behavioral Heat" - a combination of temporal risk and user-specific volatility.
    */
-  public calculateBehavioralHeat(userVolatility: number, date: Date = new Date()): number {
+  public calculateBehavioralHeat(
+    userVolatility: number,
+    date: Date = new Date(),
+  ): number {
     const temporalMultiplier = this.getTemporalMultiplier(date);
     return userVolatility * temporalMultiplier;
   }

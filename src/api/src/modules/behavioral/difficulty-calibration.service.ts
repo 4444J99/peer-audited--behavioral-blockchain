@@ -1,15 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { Pool } from 'pg';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { Pool } from "pg";
 
-const TARGET_COMPLETION_RATE_LOW = 0.80;
+const TARGET_COMPLETION_RATE_LOW = 0.8;
 const TARGET_COMPLETION_RATE_HIGH = 0.85;
 const CALIBRATION_WINDOW_DAYS = 14;
 const PATIENCE_GUARDIAN_MAX_STAKE_PCT = 0.05;
 const DEFAULT_INCOME_CENTS = 500000;
 
 export interface CalibrationResult {
-  streak: 'escalate' | 'deescalate' | 'stable';
+  streak: "escalate" | "deescalate" | "stable";
   completionRate: number;
   sampleSize: number;
   adjustmentCents?: number;
@@ -23,7 +23,7 @@ export class DifficultyCalibrationService {
 
   @Cron(CronExpression.EVERY_WEEK)
   async calibrate() {
-    this.logger.log('Running Goldilocks difficulty calibration...');
+    this.logger.log("Running Goldilocks difficulty calibration...");
     const windows = await this.computeCalibrationWindows();
     for (const w of windows) {
       this.logger.log(
@@ -34,9 +34,9 @@ export class DifficultyCalibrationService {
 
   async computeCalibrationWindows(): Promise<CalibrationResult[]> {
     const tiers = [
-      { label: 'entry', min: 0, max: 1000 },
-      { label: 'standard', min: 1001, max: 5000 },
-      { label: 'serious', min: 5001, max: 25000 },
+      { label: "entry", min: 0, max: 1000 },
+      { label: "standard", min: 1001, max: 5000 },
+      { label: "serious", min: 5001, max: 25000 },
     ];
 
     const results: CalibrationResult[] = [];
@@ -60,24 +60,33 @@ export class DifficultyCalibrationService {
       const completed = data.rows[0].completed;
 
       if (total < 10) {
-        results.push({ streak: 'stable', completionRate: 0, sampleSize: total });
+        results.push({
+          streak: "stable",
+          completionRate: 0,
+          sampleSize: total,
+        });
         continue;
       }
 
       const rate = completed / total;
-      let streak: CalibrationResult['streak'] = 'stable';
+      let streak: CalibrationResult["streak"] = "stable";
 
       if (rate > TARGET_COMPLETION_RATE_HIGH) {
-        streak = 'escalate';
+        streak = "escalate";
       } else if (rate < TARGET_COMPLETION_RATE_LOW) {
-        streak = 'deescalate';
+        streak = "deescalate";
       }
 
       results.push({
         streak,
         completionRate: rate,
         sampleSize: total,
-        adjustmentCents: streak === 'escalate' ? 500 : streak === 'deescalate' ? -500 : undefined,
+        adjustmentCents:
+          streak === "escalate"
+            ? 500
+            : streak === "deescalate"
+              ? -500
+              : undefined,
       });
     }
 

@@ -8,7 +8,7 @@
 
 **Loss-Averse Commitment Devices with Decentralized Peer Audit: A Cybernetic Framework for Financially-Staked Behavioral Contracts**
 
-*Design, Formalization, and Prototype Evaluation of the Styx Peer-Audited Behavioral Market*
+_Design, Formalization, and Prototype Evaluation of the Styx Peer-Audited Behavioral Market_
 
 ---
 
@@ -217,26 +217,26 @@ The Styx prototype was developed with the assistance of AI-augmented software en
 
 ## List of Figures
 
-| Figure | Title | Chapter |
-|--------|-------|---------|
-| Figure 1 | Contract Lifecycle State Machine | Ch. 3 |
-| Figure 2 | Dispute Resolution Finite State Machine (Theorem T6) | Ch. 4 |
-| Figure 3 | Proof Verification Pipeline: Five-Layer Stack | Ch. 3 |
-| Figure 4 | HVCS Cybernetic Block Diagram | Ch. 2 |
-| Figure 5 | Integrity Score Tier Thresholds and Stake Ceilings | Ch. 4 |
-| Figure 6 | Fury Accuracy Payoff Matrix: Honest vs. Dishonest Strategy | Ch. 4 |
-| Figure 7 | Aegis Feasibility Region in (sigma, IS) Space | Ch. 4 |
-| Figure 8 | Honeypot Random Walk: Integrity Trajectory Under Repeated Injection | Ch. 4 |
-| Figure 9 | pHash Hamming Distance Distribution for Genuine vs. Duplicate Media | Ch. 4 |
-| Figure 10 | Oath Category Taxonomy Tree (7 Streams, 27 Types) | Ch. 2 |
-| Figure 11 | System Architecture Overview: Monorepo Workspace Topology | Ch. 3 |
-| Figure 12 | Double-Entry Ledger Transaction Flow | Ch. 3 |
-| Figure 13 | Escrow Lifecycle: Stripe FBO Hold, Capture, and Cancel | Ch. 3 |
-| Figure 14 | BullMQ Fury Router Queue Architecture | Ch. 3 |
-| Figure 15 | Web Dashboard: Contract Creation and Monitoring | Ch. 7 |
-| Figure 16 | Mobile Application: Sensor Bridge and Camera Proof Submission | Ch. 7 |
-| Figure 17 | Desktop Application: The Judge Administrative Dashboard | Ch. 7 |
-| Figure 18 | DSR Methodology Cycle Applied to Styx Development | Ch. 3 |
+| Figure    | Title                                                               | Chapter |
+| --------- | ------------------------------------------------------------------- | ------- |
+| Figure 1  | Contract Lifecycle State Machine                                    | Ch. 3   |
+| Figure 2  | Dispute Resolution Finite State Machine (Theorem T6)                | Ch. 4   |
+| Figure 3  | Proof Verification Pipeline: Five-Layer Stack                       | Ch. 3   |
+| Figure 4  | HVCS Cybernetic Block Diagram                                       | Ch. 2   |
+| Figure 5  | Integrity Score Tier Thresholds and Stake Ceilings                  | Ch. 4   |
+| Figure 6  | Fury Accuracy Payoff Matrix: Honest vs. Dishonest Strategy          | Ch. 4   |
+| Figure 7  | Aegis Feasibility Region in (sigma, IS) Space                       | Ch. 4   |
+| Figure 8  | Honeypot Random Walk: Integrity Trajectory Under Repeated Injection | Ch. 4   |
+| Figure 9  | pHash Hamming Distance Distribution for Genuine vs. Duplicate Media | Ch. 4   |
+| Figure 10 | Oath Category Taxonomy Tree (7 Streams, 27 Types)                   | Ch. 2   |
+| Figure 11 | System Architecture Overview: Monorepo Workspace Topology           | Ch. 3   |
+| Figure 12 | Double-Entry Ledger Transaction Flow                                | Ch. 3   |
+| Figure 13 | Escrow Lifecycle: Stripe FBO Hold, Capture, and Cancel              | Ch. 3   |
+| Figure 14 | BullMQ Fury Router Queue Architecture                               | Ch. 3   |
+| Figure 15 | Web Dashboard: Contract Creation and Monitoring                     | Ch. 7   |
+| Figure 16 | Mobile Application: Sensor Bridge and Camera Proof Submission       | Ch. 7   |
+| Figure 17 | Desktop Application: The Judge Administrative Dashboard             | Ch. 7   |
+| Figure 18 | DSR Methodology Cycle Applied to Styx Development                   | Ch. 3   |
 
 ---
 
@@ -244,18 +244,18 @@ The Styx prototype was developed with the assistance of AI-augmented software en
 
 ## List of Tables
 
-| Table | Title | Chapter |
-|-------|-------|---------|
-| Table 1 | Digital Health App Retention Rates: Day 1 Through Day 30 | Ch. 1 |
-| Table 2 | Integrity Score Tier Thresholds and Maximum Stake Limits | Ch. 2 |
-| Table 3 | Oath Category Taxonomy: Streams, Categories, and Verification Methods | Ch. 2 |
-| Table 4 | Aegis Safety Predicates (P1--P6) and Harms Prevented | Ch. 4 |
-| Table 5 | Competitor Comparison: Styx vs. StickK, Beeminder, Forfeit, and Mend | Ch. 2 |
-| Table 6 | Dispute Resolution FSM Transition Function | Ch. 4 |
-| Table 7 | Behavioral Constants: Loss Aversion, Grace Days, Stakes, and Thresholds | Ch. 3 |
-| Table 8 | Fury Accuracy Mechanism Parameters | Ch. 4 |
-| Table 9 | Code-to-Proof Mapping Summary for Theorems T1--T9 | Ch. 4 |
-| Table 10 | Research Questions Mapped to Theorems and Literature Sources | Ch. 1 |
+| Table    | Title                                                                   | Chapter |
+| -------- | ----------------------------------------------------------------------- | ------- |
+| Table 1  | Digital Health App Retention Rates: Day 1 Through Day 30                | Ch. 1   |
+| Table 2  | Integrity Score Tier Thresholds and Maximum Stake Limits                | Ch. 2   |
+| Table 3  | Oath Category Taxonomy: Streams, Categories, and Verification Methods   | Ch. 2   |
+| Table 4  | Aegis Safety Predicates (P1--P6) and Harms Prevented                    | Ch. 4   |
+| Table 5  | Competitor Comparison: Styx vs. StickK, Beeminder, Forfeit, and Mend    | Ch. 2   |
+| Table 6  | Dispute Resolution FSM Transition Function                              | Ch. 4   |
+| Table 7  | Behavioral Constants: Loss Aversion, Grace Days, Stakes, and Thresholds | Ch. 3   |
+| Table 8  | Fury Accuracy Mechanism Parameters                                      | Ch. 4   |
+| Table 9  | Code-to-Proof Mapping Summary for Theorems T1--T9                       | Ch. 4   |
+| Table 10 | Research Questions Mapped to Theorems and Literature Sources            | Ch. 1   |
 
 ---
 
@@ -263,27 +263,27 @@ The Styx prototype was developed with the assistance of AI-augmented software en
 
 ## List of Definitions and Theorems
 
-| ID | Title | Chapter |
-|----|-------|---------|
-| Definition D1 | Net Account Balance (Double-Entry Ledger) | Ch. 4 |
-| Definition D2 | Hash Chain Construction (Truth Log) | Ch. 4 |
-| Definition D3 | Integrity Score Function | Ch. 4 |
-| Definition D4 | Fury Accuracy Function | Ch. 4 |
-| Definition D5 | Aegis Safety Predicate Set | Ch. 4 |
-| Definition D6 | Dispute Resolution FSM | Ch. 4 |
-| Definition D7 | Honeypot Injection System | Ch. 4 |
-| Definition D8 | Anti-Isolation Predicate (Recovery Protocol) | Ch. 4 |
-| Definition D9 | Duplicate Detection Decision Rule (pHash) | Ch. 4 |
-| Theorem T1 | Ledger Balance Invariant | Ch. 4 |
-| Theorem T2 | Truth Log Tamper Evidence | Ch. 4 |
-| Theorem T3 | Integrity Score Boundedness and Tier Monotonicity | Ch. 4 |
-| Theorem T4 | Honest Auditor Dominance | Ch. 4 |
-| Theorem T5 | Aegis Safety CSP | Ch. 4 |
-| Theorem T6 | Dispute Resolution FSM Termination and Determinism | Ch. 4 |
-| Theorem T7 | Honeypot Detection Rate Lower Bound | Ch. 4 |
-| Theorem T8 | Anti-Isolation Guarantee | Ch. 4 |
-| Theorem T9 | pHash Duplicate Detection Soundness | Ch. 4 |
-| Corollary T1.1 | Conservation of Stake (Contract-Scoped) | Ch. 4 |
+| ID             | Title                                              | Chapter |
+| -------------- | -------------------------------------------------- | ------- |
+| Definition D1  | Net Account Balance (Double-Entry Ledger)          | Ch. 4   |
+| Definition D2  | Hash Chain Construction (Truth Log)                | Ch. 4   |
+| Definition D3  | Integrity Score Function                           | Ch. 4   |
+| Definition D4  | Fury Accuracy Function                             | Ch. 4   |
+| Definition D5  | Aegis Safety Predicate Set                         | Ch. 4   |
+| Definition D6  | Dispute Resolution FSM                             | Ch. 4   |
+| Definition D7  | Honeypot Injection System                          | Ch. 4   |
+| Definition D8  | Anti-Isolation Predicate (Recovery Protocol)       | Ch. 4   |
+| Definition D9  | Duplicate Detection Decision Rule (pHash)          | Ch. 4   |
+| Theorem T1     | Ledger Balance Invariant                           | Ch. 4   |
+| Theorem T2     | Truth Log Tamper Evidence                          | Ch. 4   |
+| Theorem T3     | Integrity Score Boundedness and Tier Monotonicity  | Ch. 4   |
+| Theorem T4     | Honest Auditor Dominance                           | Ch. 4   |
+| Theorem T5     | Aegis Safety CSP                                   | Ch. 4   |
+| Theorem T6     | Dispute Resolution FSM Termination and Determinism | Ch. 4   |
+| Theorem T7     | Honeypot Detection Rate Lower Bound                | Ch. 4   |
+| Theorem T8     | Anti-Isolation Guarantee                           | Ch. 4   |
+| Theorem T9     | pHash Duplicate Detection Soundness                | Ch. 4   |
+| Corollary T1.1 | Conservation of Stake (Contract-Scoped)            | Ch. 4   |
 
 ---
 
@@ -291,61 +291,61 @@ The Styx prototype was developed with the assistance of AI-augmented software en
 
 ## List of Abbreviations
 
-| Abbreviation | Full Term |
-|-------------|-----------|
-| AES | Advanced Encryption Standard |
-| AML | Anti-Money Laundering |
-| API | Application Programming Interface |
-| BMI | Body Mass Index |
-| BTS | Behavioral Truth Score (integrity score) |
-| CAGR | Compound Annual Growth Rate |
-| CI | Continuous Integration |
-| CLV | Customer Lifetime Value |
-| COM-B | Capability, Opportunity, Motivation --- Behavior (model) |
-| CSP | Communicating Sequential Processes |
-| C2PA | Coalition for Content Provenance and Authenticity |
-| DAU | Daily Active Users |
-| DDL | Data Definition Language |
-| DID | Decentralized Identifier |
-| DSR | Design Science Research |
-| DTx | Digital Therapeutics |
-| EXIF | Exchangeable Image File Format |
-| FBO | For Benefit Of (escrow structure) |
-| FDA | Food and Drug Administration |
-| FNR | False Negative Rate |
-| FPR | False Positive Rate |
-| FSM | Finite State Machine |
-| FTC | Federal Trade Commission |
-| GDPR | General Data Protection Regulation |
-| GPS | Global Positioning System |
-| HIPAA | Health Insurance Portability and Accountability Act |
-| HVCS | Human Vice Control System |
-| JWT | JSON Web Token |
-| KYC | Know Your Customer |
-| MCA | Merchant Cash Advance |
-| NFC | Near-Field Communication |
-| ODR | Online Dispute Resolution |
-| ORM | Object-Relational Mapping |
-| P2P | Peer-to-Peer |
-| PCT | Perceptual Control Theory |
-| pHash | Perceptual Hash |
-| POSSE | Publish on Own Site, Syndicate Elsewhere |
-| R2 | Cloudflare R2 (object storage) |
-| RCT | Randomized Controlled Trial |
-| SaaS | Software as a Service |
-| SDT | Self-Determination Theory |
-| SHA | Secure Hash Algorithm |
-| SPA | Single-Page Application |
-| SQL | Structured Query Language |
-| SSE | Server-Sent Events |
-| SSO | Single Sign-On |
-| TAM | Total Addressable Market |
-| TTL | Time to Live |
-| UCC | Uniform Commercial Code |
-| UIGEA | Unlawful Internet Gambling Enforcement Act |
-| URL | Uniform Resource Locator |
-| UX | User Experience |
-| WAF | Web Application Firewall |
+| Abbreviation | Full Term                                                |
+| ------------ | -------------------------------------------------------- |
+| AES          | Advanced Encryption Standard                             |
+| AML          | Anti-Money Laundering                                    |
+| API          | Application Programming Interface                        |
+| BMI          | Body Mass Index                                          |
+| BTS          | Behavioral Truth Score (integrity score)                 |
+| CAGR         | Compound Annual Growth Rate                              |
+| CI           | Continuous Integration                                   |
+| CLV          | Customer Lifetime Value                                  |
+| COM-B        | Capability, Opportunity, Motivation --- Behavior (model) |
+| CSP          | Communicating Sequential Processes                       |
+| C2PA         | Coalition for Content Provenance and Authenticity        |
+| DAU          | Daily Active Users                                       |
+| DDL          | Data Definition Language                                 |
+| DID          | Decentralized Identifier                                 |
+| DSR          | Design Science Research                                  |
+| DTx          | Digital Therapeutics                                     |
+| EXIF         | Exchangeable Image File Format                           |
+| FBO          | For Benefit Of (escrow structure)                        |
+| FDA          | Food and Drug Administration                             |
+| FNR          | False Negative Rate                                      |
+| FPR          | False Positive Rate                                      |
+| FSM          | Finite State Machine                                     |
+| FTC          | Federal Trade Commission                                 |
+| GDPR         | General Data Protection Regulation                       |
+| GPS          | Global Positioning System                                |
+| HIPAA        | Health Insurance Portability and Accountability Act      |
+| HVCS         | Human Vice Control System                                |
+| JWT          | JSON Web Token                                           |
+| KYC          | Know Your Customer                                       |
+| MCA          | Merchant Cash Advance                                    |
+| NFC          | Near-Field Communication                                 |
+| ODR          | Online Dispute Resolution                                |
+| ORM          | Object-Relational Mapping                                |
+| P2P          | Peer-to-Peer                                             |
+| PCT          | Perceptual Control Theory                                |
+| pHash        | Perceptual Hash                                          |
+| POSSE        | Publish on Own Site, Syndicate Elsewhere                 |
+| R2           | Cloudflare R2 (object storage)                           |
+| RCT          | Randomized Controlled Trial                              |
+| SaaS         | Software as a Service                                    |
+| SDT          | Self-Determination Theory                                |
+| SHA          | Secure Hash Algorithm                                    |
+| SPA          | Single-Page Application                                  |
+| SQL          | Structured Query Language                                |
+| SSE          | Server-Sent Events                                       |
+| SSO          | Single Sign-On                                           |
+| TAM          | Total Addressable Market                                 |
+| TTL          | Time to Live                                             |
+| UCC          | Uniform Commercial Code                                  |
+| UIGEA        | Unlawful Internet Gambling Enforcement Act               |
+| URL          | Uniform Resource Locator                                 |
+| UX           | User Experience                                          |
+| WAF          | Web Application Firewall                                 |
 
 ---
 

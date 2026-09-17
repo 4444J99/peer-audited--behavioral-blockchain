@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { Bell } from 'lucide-react';
-import { api, getAuthToken } from '../services/api-client';
+import React, { useEffect, useState, useCallback } from "react";
+import { Bell } from "lucide-react";
+import { api, getAuthToken } from "../services/api-client";
 
 interface Notification {
   id: string;
@@ -35,7 +35,7 @@ export default function NotificationPanel() {
     loadNotifications();
 
     // Try SSE first, fall back to polling
-    const API_BASE = '/api';
+    const API_BASE = "/api";
     let eventSource: EventSource | null = null;
     let pollInterval: ReturnType<typeof setInterval> | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -75,7 +75,9 @@ export default function NotificationPanel() {
         await api.issueNotificationStreamCookie();
         if (stopped) return;
 
-        const source = new EventSource(`${API_BASE}/notifications/stream`, { withCredentials: true });
+        const source = new EventSource(`${API_BASE}/notifications/stream`, {
+          withCredentials: true,
+        });
         eventSource = source;
 
         source.onopen = () => {
@@ -137,7 +139,7 @@ export default function NotificationPanel() {
         <Bell size={16} />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full text-[10px] font-black text-white flex items-center justify-center">
-            {unreadCount > 9 ? '9+' : unreadCount}
+            {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
@@ -145,11 +147,15 @@ export default function NotificationPanel() {
       {open && (
         <div className="absolute right-0 top-12 w-80 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl z-50 max-h-96 overflow-y-auto">
           <div className="p-4 border-b border-neutral-800">
-            <h3 className="font-bold text-sm uppercase tracking-widest text-neutral-400">Notifications</h3>
+            <h3 className="font-bold text-sm uppercase tracking-widest text-neutral-400">
+              Notifications
+            </h3>
           </div>
 
           {notifications.length === 0 ? (
-            <div className="p-6 text-center text-neutral-600 text-sm">No notifications yet.</div>
+            <div className="p-6 text-center text-neutral-600 text-sm">
+              No notifications yet.
+            </div>
           ) : (
             <div>
               {notifications.map((n) => (
@@ -157,17 +163,19 @@ export default function NotificationPanel() {
                   key={n.id}
                   onClick={() => !n.read && handleMarkRead(n.id)}
                   className={`w-full text-left p-4 border-b border-neutral-800/50 hover:bg-neutral-800/50 transition-colors ${
-                    !n.read ? 'bg-neutral-800/30' : ''
+                    !n.read ? "bg-neutral-800/30" : ""
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     {!n.read && (
                       <span className="w-2 h-2 bg-red-500 rounded-full mt-1.5 shrink-0" />
                     )}
-                    <div className={!n.read ? '' : 'ml-5'}>
+                    <div className={!n.read ? "" : "ml-5"}>
                       <p className="font-bold text-sm text-white">{n.title}</p>
                       {n.body && (
-                        <p className="text-xs text-neutral-500 mt-1">{n.body}</p>
+                        <p className="text-xs text-neutral-500 mt-1">
+                          {n.body}
+                        </p>
                       )}
                       <p className="text-[10px] text-neutral-600 mt-1">
                         {new Date(n.created_at).toLocaleString()}

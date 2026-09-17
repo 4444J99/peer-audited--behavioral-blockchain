@@ -109,7 +109,9 @@ export class CrisisNotificationService {
    * and then throw so callers and monitoring see the failure. Outside
    * production the warn-only path is kept for local/test convenience.
    */
-  private async sendImmediateAlert(notification: CrisisNotification): Promise<void> {
+  private async sendImmediateAlert(
+    notification: CrisisNotification,
+  ): Promise<void> {
     const webhookUrl = process.env.CRISIS_WEBHOOK_URL;
 
     if (!webhookUrl) {
@@ -216,7 +218,9 @@ export class CrisisNotificationService {
     );
 
     if (result.rows.length === 0) {
-      this.logger.warn(`Follow-up ${followUpId} not found or already completed`);
+      this.logger.warn(
+        `Follow-up ${followUpId} not found or already completed`,
+      );
       return null as unknown as FollowUpCheckIn;
     }
 
@@ -246,9 +250,7 @@ export class CrisisNotificationService {
     );
 
     for (const row of result.rows) {
-      this.logger.warn(
-        `MISSED follow-up for user ${row.user_id} — escalating`,
-      );
+      this.logger.warn(`MISSED follow-up for user ${row.user_id} — escalating`);
 
       await this.pool.query(
         `INSERT INTO crisis_notifications (user_id, severity, category, matched_keywords, source, message, acknowledged)

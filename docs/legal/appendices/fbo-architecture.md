@@ -13,7 +13,7 @@ sequenceDiagram
     User->>Stripe: 1. Authorize Stake / Hold (POST /subscribe)
     Stripe->>FBO: 2. Lock Stake in FBO Escrow
     Note over FBO: Funds held off-balance-sheet<br/>per FBO Escrow Agreement
-    
+
     alt Dispute Resolved - Verified / Succeeded
         FBO->>User: 3a. Return Stake + Bounty Yield
     else Dispute Resolved - Failed / Forfeited

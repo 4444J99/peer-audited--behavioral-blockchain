@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 
 export interface GoalEthicsResult {
   ethical: boolean;
@@ -16,12 +16,11 @@ export interface GoalEthicsResult {
  */
 @Injectable()
 export class GoalEthicsService {
-
   async isGoalEthical(goalDescription: string): Promise<boolean> {
     if (!process.env.GEMINI_API_KEY) return true;
 
     try {
-      const { screenGoalEthics } = await import('./GeminiClient');
+      const { screenGoalEthics } = await import("./GeminiClient");
       const result = await screenGoalEthics(goalDescription);
       return result.ethical;
     } catch {

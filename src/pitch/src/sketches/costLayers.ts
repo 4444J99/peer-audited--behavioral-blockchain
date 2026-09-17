@@ -1,17 +1,17 @@
-import p5 from 'p5';
+import p5 from "p5";
 
 export const costLayers = (p: p5) => {
   // Stacked cost bars that build up across 4 milestone phases
   const phases = [
-    { label: 'MVP', total: 50, layers: [15, 10, 0, 7, 18] },
-    { label: '10K', total: 200, layers: [50, 30, 5, 65, 50] },
-    { label: '100K', total: 1000, layers: [300, 100, 50, 350, 200] },
-    { label: '500K+', total: 5000, layers: [1500, 400, 200, 1500, 1400] },
+    { label: "MVP", total: 50, layers: [15, 10, 0, 7, 18] },
+    { label: "10K", total: 200, layers: [50, 30, 5, 65, 50] },
+    { label: "100K", total: 1000, layers: [300, 100, 50, 350, 200] },
+    { label: "500K+", total: 5000, layers: [1500, 400, 200, 1500, 1400] },
   ];
   const colors: [number, number, number][] = [
-    [163, 230, 53],  // lime — Postgres
-    [56, 189, 248],  // sky — Redis
-    [251, 146, 60],  // orange — R2
+    [163, 230, 53], // lime — Postgres
+    [56, 189, 248], // sky — Redis
+    [251, 146, 60], // orange — R2
     [192, 132, 252], // purple — Compute
     [100, 116, 139], // slate — Other
   ];
@@ -20,7 +20,7 @@ export const costLayers = (p: p5) => {
 
   p.setup = () => {
     p.createCanvas(p.windowWidth, p.windowHeight);
-    p.textFont('monospace');
+    p.textFont("monospace");
   };
 
   p.draw = () => {
@@ -66,7 +66,7 @@ export const costLayers = (p: p5) => {
         p.fill(163, 230, 53, 200);
         p.textSize(14);
         p.textAlign(p.CENTER, p.BOTTOM);
-        p.text('$' + phase.total + '/mo', x + barW / 2, y - 6);
+        p.text("$" + phase.total + "/mo", x + barW / 2, y - 6);
       }
     }
 

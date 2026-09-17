@@ -1,8 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
-import { SalesforceConnector } from './connectors/salesforce.connector';
-import { HubSpotConnector } from './connectors/hubspot.connector';
-import { CrmConnector, EmployeeEvent, EmployeeEventType } from './connectors/crm-connector.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
+import { SalesforceConnector } from "./connectors/salesforce.connector";
+import { HubSpotConnector } from "./connectors/hubspot.connector";
+import {
+  CrmConnector,
+  EmployeeEvent,
+  EmployeeEventType,
+} from "./connectors/crm-connector.interface";
 
 export interface CrmUser {
   email: string;
@@ -23,25 +27,30 @@ export class CrmService {
   ) {
     if (process.env.SALESFORCE_BASE_URL) {
       this.connector = this.salesforce;
-      this.logger.log('[CRM] Using Salesforce connector');
+      this.logger.log("[CRM] Using Salesforce connector");
     } else if (process.env.HUBSPOT_API_KEY) {
       this.connector = this.hubspot;
-      this.logger.log('[CRM] Using HubSpot connector');
+      this.logger.log("[CRM] Using HubSpot connector");
     } else {
       this.connector = null;
-      this.logger.log('[CRM] No CRM connector configured — logging only');
+      this.logger.log("[CRM] No CRM connector configured — logging only");
     }
   }
 
-  async pushEmployeeEvent(enterpriseId: string, event: EmployeeEvent): Promise<void> {
-    this.logger.log(`Dispatching event ${event.eventType} for employee ${event.employeeId} in enterprise ${enterpriseId}`);
+  async pushEmployeeEvent(
+    enterpriseId: string,
+    event: EmployeeEvent,
+  ): Promise<void> {
+    this.logger.log(
+      `Dispatching event ${event.eventType} for employee ${event.employeeId} in enterprise ${enterpriseId}`,
+    );
 
     // In a full implementation, the enterprise configuration would dictate the destination
     // For now, we attempt to push to both configured systems
     try {
       await this.salesforce.pushEmployeeEvent(event);
     } catch (error: any) {
-      if (!error.message.includes('Salesforce not configured')) {
+      if (!error.message.includes("Salesforce not configured")) {
         this.logger.error(`Salesforce push failed: ${error.message}`);
       }
     }
@@ -49,7 +58,7 @@ export class CrmService {
     try {
       await this.hubspot.pushEmployeeEvent(event);
     } catch (error: any) {
-      if (!error.message.includes('HubSpot not configured')) {
+      if (!error.message.includes("HubSpot not configured")) {
         this.logger.error(`HubSpot push failed: ${error.message}`);
       }
     }
@@ -59,13 +68,17 @@ export class CrmService {
     this.logger.log(`[CRM_SYNC] Syncing user ${user.email}...`);
 
     if (!this.connector) {
-      this.logger.log(`[CRM_SYNC] No connector configured — skipping sync for ${user.email}`);
+      this.logger.log(
+        `[CRM_SYNC] No connector configured — skipping sync for ${user.email}`,
+      );
       return;
     }
 
-    const enterpriseId = user.company || 'default';
+    const enterpriseId = user.company || "default";
     const users = await this.connector.syncUserList(enterpriseId);
-    this.logger.log(`[CRM_SYNC] Synced ${users.length} users for enterprise ${enterpriseId}`);
+    this.logger.log(
+      `[CRM_SYNC] Synced ${users.length} users for enterprise ${enterpriseId}`,
+    );
   }
 
   /**
@@ -74,8 +87,14 @@ export class CrmService {
    * on the wire to a customer's CRM. Narrowing it here pushes the rejection to the
    * edge (the controller validates the HTTP body against EMPLOYEE_EVENT_TYPES).
    */
-  async logInteraction(email: string, type: EmployeeEventType, metadata: Record<string, any>): Promise<void> {
-    this.logger.log(`[CRM_INTERACTION] ${email} - ${type}: ${JSON.stringify(metadata)}`);
+  async logInteraction(
+    email: string,
+    type: EmployeeEventType,
+    metadata: Record<string, any>,
+  ): Promise<void> {
+    this.logger.log(
+      `[CRM_INTERACTION] ${email} - ${type}: ${JSON.stringify(metadata)}`,
+    );
 
     if (!this.connector) {
       return;
@@ -140,7 +159,7 @@ export class CrmService {
        FROM user_stats
        CROSS JOIN contract_stats
        CROSS JOIN velocity_stats`,
-      [enterpriseId]
+      [enterpriseId],
     );
 
     if (stats.rows.length === 0) {

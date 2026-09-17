@@ -18,14 +18,15 @@ Styx employs a four-tier testing strategy designed to catch regressions across f
 
 Unit tests run in every workspace of the Turborepo monorepo. Each package maintains its own Jest configuration inheriting from a root `jest.config.base.ts`.
 
-| Workspace | Config | Naming Convention | Current Count |
-|-----------|--------|-------------------|---------------|
-| `apps/api` | `jest.config.ts` | `*.spec.ts` | ~280 |
-| `apps/web` | `jest.config.ts` | `*.test.ts` | ~90 |
-| `apps/mobile` | `jest.config.ts` | `*.test.ts` | ~40 |
-| `packages/shared` | `jest.config.ts` | `*.spec.ts` | ~89 |
+| Workspace         | Config           | Naming Convention | Current Count |
+| ----------------- | ---------------- | ----------------- | ------------- |
+| `apps/api`        | `jest.config.ts` | `*.spec.ts`       | ~280          |
+| `apps/web`        | `jest.config.ts` | `*.test.ts`       | ~90           |
+| `apps/mobile`     | `jest.config.ts` | `*.test.ts`       | ~40           |
+| `packages/shared` | `jest.config.ts` | `*.spec.ts`       | ~89           |
 
 **Naming conventions:**
+
 - `*.spec.ts` for API service/module tests and shared library tests (NestJS convention)
 - `*.test.ts` for web and mobile component/hook tests (React convention)
 - Test files co-locate next to source: `contracts.service.ts` pairs with `contracts.service.spec.ts`
@@ -51,6 +52,7 @@ Integration tests verify cross-service behavior with mocked external dependencie
 - **External APIs:** Gemini and Groq calls are mocked at the HTTP layer using `nock`.
 
 Key integration test suites:
+
 - `contracts.integration.spec.ts` -- full contract lifecycle (create, fund, verify, settle)
 - `ledger.integration.spec.ts` -- double-entry transaction integrity under concurrent writes
 - `fury.integration.spec.ts` -- auditor assignment, proof review, consensus
@@ -60,14 +62,15 @@ Key integration test suites:
 
 Playwright tests cover critical user journeys across four browser targets:
 
-| Target | Config Key | Viewport |
-|--------|-----------|----------|
-| Chromium | `chromium` | 1280x720 |
-| Firefox | `firefox` | 1280x720 |
-| WebKit | `webkit` | 1280x720 |
-| Mobile Chrome | `mobile-chrome` | 375x667 |
+| Target        | Config Key      | Viewport |
+| ------------- | --------------- | -------- |
+| Chromium      | `chromium`      | 1280x720 |
+| Firefox       | `firefox`       | 1280x720 |
+| WebKit        | `webkit`        | 1280x720 |
+| Mobile Chrome | `mobile-chrome` | 375x667  |
 
 **Core E2E scenarios:**
+
 1. User registration and onboarding flow
 2. Contract creation with stake deposit (Stripe test mode)
 3. Proof photo submission and Fury audit assignment
@@ -83,16 +86,16 @@ E2E tests run in CI on the `deploy.yml` workflow against the staging environment
 
 Eight custom validation gates run as part of CI. Each gate is a standalone script in `scripts/gates/` that returns exit code 0 (pass) or 1 (fail).
 
-| Gate | ID | Purpose |
-|------|----|---------|
-| Phantom Money | `01-phantom-money` | Verifies double-entry ledger balance invariant: sum of all debits equals sum of all credits. Catches off-by-one errors in escrow settlement. |
-| Orphan Contracts | `02-orphan-contracts` | Ensures every contract has a valid user, a funded vault entry, and at least one scheduled verification window. |
-| Fury Quorum | `03-fury-quorum` | Validates that audit consensus requires 2-of-3 agreement and that no single auditor can unilaterally pass/fail a contract. |
-| Aegis Floor | `04-aegis-floor` | Confirms BMI floor (18.5) enforcement in biological oath creation. Rejects contracts that could incentivize dangerous weight loss. |
-| Velocity Cap | `05-velocity-cap` | Validates the 2% weekly loss velocity cap is enforced on all biological oaths. |
-| Escrow Integrity | `06-escrow-integrity` | Cross-references Stripe FBO balance against internal ledger totals. Flags any discrepancy > $0.01. |
-| Recovery Guardrails | `07-recovery-guardrails` | Verifies recovery contracts enforce max 30-day duration, max 3 no-contact targets, and mandatory cooldown periods. |
-| Fury Crucible | `08-fury-crucible` | Stress test for the auditor matching algorithm: ensures no auditor is assigned to audit their own contract, no geographic/social-graph conflicts, and round-robin fairness within 10% deviation. |
+| Gate                | ID                       | Purpose                                                                                                                                                                                          |
+| ------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Phantom Money       | `01-phantom-money`       | Verifies double-entry ledger balance invariant: sum of all debits equals sum of all credits. Catches off-by-one errors in escrow settlement.                                                     |
+| Orphan Contracts    | `02-orphan-contracts`    | Ensures every contract has a valid user, a funded vault entry, and at least one scheduled verification window.                                                                                   |
+| Fury Quorum         | `03-fury-quorum`         | Validates that audit consensus requires 2-of-3 agreement and that no single auditor can unilaterally pass/fail a contract.                                                                       |
+| Aegis Floor         | `04-aegis-floor`         | Confirms BMI floor (18.5) enforcement in biological oath creation. Rejects contracts that could incentivize dangerous weight loss.                                                               |
+| Velocity Cap        | `05-velocity-cap`        | Validates the 2% weekly loss velocity cap is enforced on all biological oaths.                                                                                                                   |
+| Escrow Integrity    | `06-escrow-integrity`    | Cross-references Stripe FBO balance against internal ledger totals. Flags any discrepancy > $0.01.                                                                                               |
+| Recovery Guardrails | `07-recovery-guardrails` | Verifies recovery contracts enforce max 30-day duration, max 3 no-contact targets, and mandatory cooldown periods.                                                                               |
+| Fury Crucible       | `08-fury-crucible`       | Stress test for the auditor matching algorithm: ensures no auditor is assigned to audit their own contract, no geographic/social-graph conflicts, and round-robin fairness within 10% deviation. |
 
 Gates run sequentially after unit and integration tests pass. A gate failure blocks deployment.
 
@@ -107,6 +110,7 @@ The Turborepo build pipeline enforces workspace dependency ordering:
 ```
 
 `@styx/shared` must build first because it exports:
+
 - TypeScript types (contract shapes, API response types, event enums)
 - Validation schemas (Zod schemas for contract creation, proof submission)
 - Constants (integrity score formula, Aegis thresholds, grace day limits)
@@ -131,13 +135,13 @@ The `turbo.json` pipeline configuration:
 
 Located in `scripts/`:
 
-| Script | Purpose | When Used |
-|--------|---------|-----------|
-| `beta-readiness.sh` | Runs the readiness gate suite — remote smoke checks plus validation gates 01/04/05/06/07 — and writes `artifacts/beta-readiness-summary.json` with per-gate status and required flags. (No coverage check and no Playwright in this script; the live-route Playwright sweep is the separate `beta_verify` workflow job.) | Before any beta promotion. |
-| `check-endpoints.sh` | Hits all public API endpoints with health/readiness probes. Verifies 200 responses, correct content-types, and CORS headers. | Post-deploy verification. |
-| `smoke-stripe.sh` | Creates a test customer, initiates a $1 charge, verifies webhook receipt, refunds. End-to-end Stripe FBO smoke test. | After Stripe config changes. |
-| `smoke-fury.sh` | Creates a contract, submits mock proof, triggers Fury assignment, verifies audit flow completes. | After Fury algorithm changes. |
-| `seed-test-db.sh` | Populates test database with fixture data: 10 users, 5 active contracts, 3 Fury auditors, sample ledger entries. | Local development setup. |
+| Script               | Purpose                                                                                                                                                                                                                                                                                                                  | When Used                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- |
+| `beta-readiness.sh`  | Runs the readiness gate suite — remote smoke checks plus validation gates 01/04/05/06/07 — and writes `artifacts/beta-readiness-summary.json` with per-gate status and required flags. (No coverage check and no Playwright in this script; the live-route Playwright sweep is the separate `beta_verify` workflow job.) | Before any beta promotion.    |
+| `check-endpoints.sh` | Hits all public API endpoints with health/readiness probes. Verifies 200 responses, correct content-types, and CORS headers.                                                                                                                                                                                             | Post-deploy verification.     |
+| `smoke-stripe.sh`    | Creates a test customer, initiates a $1 charge, verifies webhook receipt, refunds. End-to-end Stripe FBO smoke test.                                                                                                                                                                                                     | After Stripe config changes.  |
+| `smoke-fury.sh`      | Creates a contract, submits mock proof, triggers Fury assignment, verifies audit flow completes.                                                                                                                                                                                                                         | After Fury algorithm changes. |
+| `seed-test-db.sh`    | Populates test database with fixture data: 10 users, 5 active contracts, 3 Fury auditors, sample ledger entries.                                                                                                                                                                                                         | Local development setup.      |
 
 ## 4. CI Integration
 
@@ -157,6 +161,7 @@ The `ci.yml` GitHub Actions workflow orchestrates the full test pipeline:
 ```
 
 Additional CI workflows:
+
 - `deploy.yml` -- runs E2E against staging after successful deploy
 - `beta-promotion.yml` -- runs `beta-readiness.sh` as a promotion gate
 - `staging-promotion.yml` -- full gate suite + manual approval step
@@ -164,12 +169,14 @@ Additional CI workflows:
 ## 5. Test Data Management
 
 **Fixtures** live in `packages/shared/test/fixtures/`:
+
 - `contracts.fixture.ts` -- sample contracts across all 7 oath categories
 - `users.fixture.ts` -- users at different integrity score tiers
 - `ledger.fixture.ts` -- balanced double-entry transaction sets
 - `fury.fixture.ts` -- auditor profiles with varying reputation scores
 
 **Factory functions** in `packages/shared/test/factories/`:
+
 - `createContract()` -- generates a valid contract with randomized but legal parameters
 - `createUser()` -- generates a user with configurable integrity score
 - `createAudit()` -- generates a Fury audit with configurable verdict distribution
@@ -178,13 +185,13 @@ Additional CI workflows:
 
 ## 6. Known Test Gaps
 
-| Gap | Severity | Tracking |
-|-----|----------|----------|
-| No HealthKit/Google Fit integration tests (stubs only) | Low (feature not yet built) | Backlog |
-| Desktop (Tauri) E2E not yet in CI | Medium | Planned for post-beta |
-| Load testing not yet automated in CI | High | See `docs/architecture/load-test-report.md` |
-| No chaos engineering for Redis/PostgreSQL failover | Medium | Post-launch |
-| Mobile E2E limited to Chrome viewport emulation (no real device) | Medium | Planned Expo EAS build integration |
+| Gap                                                              | Severity                    | Tracking                                    |
+| ---------------------------------------------------------------- | --------------------------- | ------------------------------------------- |
+| No HealthKit/Google Fit integration tests (stubs only)           | Low (feature not yet built) | Backlog                                     |
+| Desktop (Tauri) E2E not yet in CI                                | Medium                      | Planned for post-beta                       |
+| Load testing not yet automated in CI                             | High                        | See `docs/architecture/load-test-report.md` |
+| No chaos engineering for Redis/PostgreSQL failover               | Medium                      | Post-launch                                 |
+| Mobile E2E limited to Chrome viewport emulation (no real device) | Medium                      | Planned Expo EAS build integration          |
 
 ## 7. Testing Principles
 

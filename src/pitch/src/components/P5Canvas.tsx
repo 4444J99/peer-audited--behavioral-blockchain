@@ -1,12 +1,12 @@
-import { useRef, useEffect, useState } from 'react';
-import p5 from 'p5';
+import { useRef, useEffect, useState } from "react";
+import p5 from "p5";
 
 interface P5CanvasProps {
   sketch: (p: p5) => void;
   className?: string;
 }
 
-export function P5Canvas({ sketch, className = '' }: P5CanvasProps) {
+export function P5Canvas({ sketch, className = "" }: P5CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 

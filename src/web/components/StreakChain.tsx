@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Flame, Zap, AlertTriangle } from 'lucide-react';
+import React from "react";
+import { Flame, Zap, AlertTriangle } from "lucide-react";
 
 interface StreakDay {
   date: string;
@@ -51,7 +51,14 @@ export default function StreakChain({
         </div>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-neutral-400">
-            Current: <strong className={currentStreak > 0 ? 'text-green-500' : 'text-neutral-500'}>{currentStreak}d</strong>
+            Current:{" "}
+            <strong
+              className={
+                currentStreak > 0 ? "text-green-500" : "text-neutral-500"
+              }
+            >
+              {currentStreak}d
+            </strong>
           </span>
           <span className="text-neutral-400">
             Best: <strong className="text-yellow-500">{longestStreak}d</strong>
@@ -68,19 +75,19 @@ export default function StreakChain({
           let tooltip: string;
 
           if (day.attested) {
-            bg = 'bg-green-600';
+            bg = "bg-green-600";
             tooltip = `${day.date}: Attested`;
           } else if (day.graceUsed) {
-            bg = 'bg-yellow-600';
+            bg = "bg-yellow-600";
             tooltip = `${day.date}: Grace day`;
           } else if (day.chainBroken) {
-            bg = 'bg-red-800';
+            bg = "bg-red-800";
             tooltip = `${day.date}: Chain broken`;
           } else if (isToday) {
-            bg = 'bg-neutral-700';
+            bg = "bg-neutral-700";
             tooltip = `${day.date}: Today — pending`;
           } else {
-            bg = 'bg-neutral-800';
+            bg = "bg-neutral-800";
             tooltip = `${day.date}: Missed`;
           }
 
@@ -88,7 +95,9 @@ export default function StreakChain({
             <div
               key={day.date}
               className={`relative group flex-1 min-w-[8px] max-w-[16px] ${bg} rounded-t cursor-pointer transition-all hover:opacity-80`}
-              style={{ height: day.attested ? '32px' : day.graceUsed ? '24px' : '16px' }}
+              style={{
+                height: day.attested ? "32px" : day.graceUsed ? "24px" : "16px",
+              }}
             >
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10">
                 <div className="bg-neutral-800 text-xs text-neutral-200 px-2 py-1 rounded whitespace-nowrap border border-neutral-700">
@@ -96,7 +105,7 @@ export default function StreakChain({
                 </div>
               </div>
               <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] text-neutral-600">
-                {i % 5 === 0 ? dayNum : ''}
+                {i % 5 === 0 ? dayNum : ""}
               </span>
             </div>
           );
@@ -118,7 +127,8 @@ export default function StreakChain({
         <div className="mt-4 flex items-center gap-2 p-3 bg-red-900/20 border border-red-800/50 rounded-lg">
           <AlertTriangle size={14} className="text-red-500 shrink-0" />
           <p className="text-xs text-red-400">
-            Never Miss Twice active — penalty is {penaltyMultiplier}x daily rate for consecutive misses.
+            Never Miss Twice active — penalty is {penaltyMultiplier}x daily rate
+            for consecutive misses.
           </p>
         </div>
       )}

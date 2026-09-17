@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
-import { GdprService } from './gdpr.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
+import { GdprService } from "./gdpr.service";
 
 @Injectable()
 export class GdprScheduler {
@@ -8,7 +8,7 @@ export class GdprScheduler {
 
   constructor(private readonly gdpr: GdprService) {}
 
-  @Cron('0 4 * * *') // 4 AM daily
+  @Cron("0 4 * * *") // 4 AM daily
   async processPendingDeletions(): Promise<void> {
     const result = await this.gdpr.processPendingDeletions();
     if (result.processed > 0 || result.skipped > 0) {

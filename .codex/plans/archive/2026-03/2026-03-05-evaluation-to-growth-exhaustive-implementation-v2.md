@@ -1,14 +1,17 @@
 # 2026-03-05 Evaluation-to-Growth Exhaustive Implementation (v2)
 
 ## Goal
+
 Execute a project-wide quality pass using the Evaluation→Reinforcement→Risk→Growth lens, then implement concrete code/test fixes for discovered gaps.
 
 ## Scope
+
 - Monorepo build/test health across all workspaces
 - Incomplete skeleton/stub behavior in active runtime paths
 - Test-suite adequacy and missing critical assertions
 
 ## Execution Steps
+
 1. Establish baseline:
    - Run full `npm test` from repo root.
    - Capture failing workspace(s) and root-cause them.
@@ -32,6 +35,7 @@ Execute a project-wide quality pass using the Evaluation→Reinforcement→Risk�
    - Growth plan with sequenced implementation next-steps.
 
 ## Success Criteria
+
 - Full monorepo `npm test` passes.
 - No unresolved compile blockers in touched packages.
 - At least one high-impact stub/skeleton path materially improved and covered by tests.

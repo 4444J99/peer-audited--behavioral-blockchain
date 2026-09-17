@@ -1,6 +1,12 @@
-import { useMemo, useState } from 'react';
-import { Fingerprint, Search, AlertCircle, Copy, SlidersHorizontal } from 'lucide-react';
-import { api } from '../services/api';
+import { useMemo, useState } from "react";
+import {
+  Fingerprint,
+  Search,
+  AlertCircle,
+  Copy,
+  SlidersHorizontal,
+} from "lucide-react";
+import { api } from "../services/api";
 import {
   buildCollisionTicketDraft,
   classifyCollisionSeverity,
@@ -8,8 +14,8 @@ import {
   getCollisionSimilarity,
   normalizeCollisionList,
   type HashCollision,
-} from './hash-collider.utils';
-import './HashCollider.css';
+} from "./hash-collider.utils";
+import "./HashCollider.css";
 
 export default function HashCollider() {
   const [isScanning, setIsScanning] = useState(false);
@@ -31,7 +37,7 @@ export default function HashCollider() {
       const result = await api.scanHashCollisions();
       setCollisions(normalizeCollisionList(result.collisions || []));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Scan failed');
+      setError(e instanceof Error ? e.message : "Scan failed");
       setCollisions([]);
     } finally {
       setIsScanning(false);
@@ -43,12 +49,13 @@ export default function HashCollider() {
     const draft = buildCollisionTicketDraft(collision);
     try {
       if (!globalThis.navigator?.clipboard?.writeText) {
-        throw new Error('Clipboard API unavailable in current runtime.');
+        throw new Error("Clipboard API unavailable in current runtime.");
       }
       await globalThis.navigator.clipboard.writeText(draft);
       setFeedback(`Ticket draft copied for ${collision.duplicate.id}.`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to copy ticket draft.';
+      const message =
+        err instanceof Error ? err.message : "Failed to copy ticket draft.";
       setFeedback(message);
     }
   };
@@ -64,14 +71,19 @@ export default function HashCollider() {
           disabled={isScanning}
           className="scan-button"
         >
-          <Search size={14} className={isScanning ? 'scan-icon-spinning' : ''} />
-          {isScanning ? 'MATRIX SCAN RUNNING...' : 'SCAN CLOUDFLARE R2 BUCKET'}
+          <Search
+            size={14}
+            className={isScanning ? "scan-icon-spinning" : ""}
+          />
+          {isScanning ? "MATRIX SCAN RUNNING..." : "SCAN CLOUDFLARE R2 BUCKET"}
         </button>
       </div>
 
       <div className="info-box">
         <p className="info-text">
-          This sub-system calculates perceptual hashes (pHash) against all uploaded media proofs in Cloudflare R2 to detect duplicate whistle-blower submissions across different user accounts.
+          This sub-system calculates perceptual hashes (pHash) against all
+          uploaded media proofs in Cloudflare R2 to detect duplicate
+          whistle-blower submissions across different user accounts.
         </p>
 
         <div className="threshold-controls">
@@ -87,12 +99,15 @@ export default function HashCollider() {
             max={100}
             step={1}
             value={similarityThreshold}
-            onChange={(event) => setSimilarityThreshold(Number(event.target.value))}
+            onChange={(event) =>
+              setSimilarityThreshold(Number(event.target.value))
+            }
             className="threshold-slider"
             aria-label="Similarity threshold"
           />
           <div className="threshold-caption">
-            Showing {visibleCollisions.length} of {collisions.length} detected collisions.
+            Showing {visibleCollisions.length} of {collisions.length} detected
+            collisions.
           </div>
         </div>
 
@@ -113,7 +128,8 @@ export default function HashCollider() {
           </div>
         ) : visibleCollisions.length === 0 ? (
           <div className="no-collisions-state">
-            Collisions exist but none pass the current {similarityThreshold}% threshold.
+            Collisions exist but none pass the current {similarityThreshold}%
+            threshold.
           </div>
         ) : (
           <div className="collisions-list">
@@ -122,37 +138,69 @@ export default function HashCollider() {
               const severity = classifyCollisionSeverity(similarity);
 
               return (
-                <div key={`${collision.origin.id}:${collision.duplicate.id}:${index}`} className={`collision-item severity-${severity}`}>
+                <div
+                  key={`${collision.origin.id}:${collision.duplicate.id}:${index}`}
+                  className={`collision-item severity-${severity}`}
+                >
                   <div className="collision-header">
                     <div className="collision-title">
                       <AlertCircle size={16} />
                       COLLISION DETECTED ({similarity.toFixed(2)}%)
-                      <span className={`severity-chip severity-${severity}`}>{severity.toUpperCase()}</span>
+                      <span className={`severity-chip severity-${severity}`}>
+                        {severity.toUpperCase()}
+                      </span>
                     </div>
-                    <button className="ticket-button" onClick={() => handleCopyTicketDraft(collision)}>
+                    <button
+                      className="ticket-button"
+                      onClick={() => handleCopyTicketDraft(collision)}
+                    >
                       <Copy size={12} /> COPY TICKET DRAFT
                     </button>
                   </div>
 
                   <div className="comparison-grid">
                     <div className="origin-box">
-                      <div className="box-label origin">Original Submission</div>
-                      <div className="user-info">User: {collision.origin.user}</div>
-                      <div className="proof-id">Proof ID: {collision.origin.id}</div>
-                      <div className="proof-id">Contract: {collision.origin.contractId}</div>
-                      <div className="proof-id">Captured: {collision.origin.timestamp}</div>
-                      <div className="phash-info">pHash: {collision.origin.pHash}</div>
+                      <div className="box-label origin">
+                        Original Submission
+                      </div>
+                      <div className="user-info">
+                        User: {collision.origin.user}
+                      </div>
+                      <div className="proof-id">
+                        Proof ID: {collision.origin.id}
+                      </div>
+                      <div className="proof-id">
+                        Contract: {collision.origin.contractId}
+                      </div>
+                      <div className="proof-id">
+                        Captured: {collision.origin.timestamp}
+                      </div>
+                      <div className="phash-info">
+                        pHash: {collision.origin.pHash}
+                      </div>
                     </div>
 
                     <div className="vs-divider">VS</div>
 
                     <div className="duplicate-box">
-                      <div className="box-label duplicate">Duplicate Detected</div>
-                      <div className="user-info">User: {collision.duplicate.user}</div>
-                      <div className="proof-id">Proof ID: {collision.duplicate.id}</div>
-                      <div className="proof-id">Contract: {collision.duplicate.contractId}</div>
-                      <div className="proof-id">Captured: {collision.duplicate.timestamp}</div>
-                      <div className="phash-info">pHash: {collision.duplicate.pHash}</div>
+                      <div className="box-label duplicate">
+                        Duplicate Detected
+                      </div>
+                      <div className="user-info">
+                        User: {collision.duplicate.user}
+                      </div>
+                      <div className="proof-id">
+                        Proof ID: {collision.duplicate.id}
+                      </div>
+                      <div className="proof-id">
+                        Contract: {collision.duplicate.contractId}
+                      </div>
+                      <div className="proof-id">
+                        Captured: {collision.duplicate.timestamp}
+                      </div>
+                      <div className="phash-info">
+                        pHash: {collision.duplicate.pHash}
+                      </div>
                     </div>
                   </div>
                 </div>

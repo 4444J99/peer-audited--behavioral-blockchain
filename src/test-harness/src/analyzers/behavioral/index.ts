@@ -1,7 +1,7 @@
-import fs from 'fs';
-import path from 'path';
-import { pathToFileURL } from 'url';
-import { SuiteResult, AnalyzerResult } from '../../types/index';
+import fs from "fs";
+import path from "path";
+import { pathToFileURL } from "url";
+import { SuiteResult, AnalyzerResult } from "../../types/index";
 
 const LOSS_AVERSION_ITERATIONS = 10_000;
 const COLLUSION_PANELS = 5_000;
@@ -21,14 +21,16 @@ const PANEL_SIZE = 5;
 interface AuditorDecisionLike {
   auditorId: string;
   integrityScore: number;
-  decision: 'BREACH' | 'CLEAN';
+  decision: "BREACH" | "CLEAN";
 }
 
 /** Minimal structural contracts for the engines loaded from the target repo. */
 interface PenaltyEngine {
   calculatePenaltyMultiplier(volatility: number): number;
 }
-type PenaltyEngineCtor = new (config?: { baseCoefficient?: number }) => PenaltyEngine;
+type PenaltyEngineCtor = new (config?: {
+  baseCoefficient?: number;
+}) => PenaltyEngine;
 
 interface HeatEngine {
   calculateBehavioralHeat(userVolatility: number, date?: Date): number;
@@ -37,7 +39,7 @@ interface HeatEngine {
 type HeatEngineCtor = new () => HeatEngine;
 
 interface Resolver {
-  resolve(decisions: AuditorDecisionLike[]): 'BREACH' | 'CLEAN' | 'UNCERTAIN';
+  resolve(decisions: AuditorDecisionLike[]): "BREACH" | "CLEAN" | "UNCERTAIN";
 }
 type ResolverCtor = new () => Resolver;
 
@@ -73,33 +75,47 @@ interface EngineLayout {
  */
 const ENGINE_LAYOUTS: readonly EngineLayout[] = [
   {
-    name: 'monorepo-shared',
+    name: "monorepo-shared",
     files: {
-      LossAversionEngine: ['src', 'shared', 'behavioral-physics', 'loss-aversion.engine'],
-      VolatilityEngine: ['src', 'shared', 'behavioral-physics', 'volatility.engine'],
-      ConsensusResolver: ['src', 'shared', 'fury-logic', 'consensus.resolver'],
+      LossAversionEngine: [
+        "src",
+        "shared",
+        "behavioral-physics",
+        "loss-aversion.engine",
+      ],
+      VolatilityEngine: [
+        "src",
+        "shared",
+        "behavioral-physics",
+        "volatility.engine",
+      ],
+      ConsensusResolver: ["src", "shared", "fury-logic", "consensus.resolver"],
     },
   },
   {
-    name: 'audit-engine-package',
+    name: "audit-engine-package",
     files: {
-      LossAversionEngine: ['packages', 'audit-engine', 'src', 'loss-aversion'],
-      VolatilityEngine: ['packages', 'audit-engine', 'src', 'volatility'],
-      ConsensusResolver: ['packages', 'audit-engine', 'src', 'consensus'],
+      LossAversionEngine: ["packages", "audit-engine", "src", "loss-aversion"],
+      VolatilityEngine: ["packages", "audit-engine", "src", "volatility"],
+      ConsensusResolver: ["packages", "audit-engine", "src", "consensus"],
     },
   },
   {
-    name: 'standalone',
+    name: "standalone",
     files: {
-      LossAversionEngine: ['src', 'loss-aversion'],
-      VolatilityEngine: ['src', 'volatility'],
-      ConsensusResolver: ['src', 'consensus'],
+      LossAversionEngine: ["src", "loss-aversion"],
+      VolatilityEngine: ["src", "volatility"],
+      ConsensusResolver: ["src", "consensus"],
     },
     requireAll: true,
   },
 ];
 
-const ENGINE_NAMES = ['LossAversionEngine', 'VolatilityEngine', 'ConsensusResolver'] as const;
+const ENGINE_NAMES = [
+  "LossAversionEngine",
+  "VolatilityEngine",
+  "ConsensusResolver",
+] as const;
 
 /**
  * Outcome of probing one layout in the audited repo:
@@ -109,9 +125,9 @@ const ENGINE_NAMES = ['LossAversionEngine', 'VolatilityEngine', 'ConsensusResolv
  *    renamed export, or a load error) → the economic core under audit is broken.
  */
 type LayoutLoad =
-  | { kind: 'ok'; engines: EngineBundle }
-  | { kind: 'absent' }
-  | { kind: 'broken'; reason: string };
+  | { kind: "ok"; engines: EngineBundle }
+  | { kind: "absent" }
+  | { kind: "broken"; reason: string };
 
 /**
  * Deterministic PRNG (mulberry32). A quality gate must be reproducible, so the
@@ -129,9 +145,12 @@ function createRng(seed: number): () => number {
 }
 
 /** Resolve a module path (no extension) to the first existing source file. */
-function resolveEngineFile(repoPath: string, segments: readonly string[]): string | null {
+function resolveEngineFile(
+  repoPath: string,
+  segments: readonly string[],
+): string | null {
   const base = path.join(repoPath, ...segments);
-  for (const ext of ['.ts', '.js', '.mjs']) {
+  for (const ext of [".ts", ".js", ".mjs"]) {
     if (fs.existsSync(base + ext)) return base + ext;
   }
   return null;
@@ -174,7 +193,7 @@ export class BehavioralAnalyzer {
         load: await this.loadLayout(layout, isAuditEnginePkg),
       })),
     );
-    const auditable = probed.filter((p) => p.load.kind !== 'absent');
+    const auditable = probed.filter((p) => p.load.kind !== "absent");
 
     if (auditable.length === 0) {
       // A package whose metadata claims it is an audit engine must ship a
@@ -183,30 +202,30 @@ export class BehavioralAnalyzer {
       // with no audit-engine identity legitimately have nothing to audit.
       if (isAuditEnginePkg) {
         const message =
-          'Package identifies as an audit engine but ships no loadable engine layout ' +
-          '(expected src/{loss-aversion,volatility,consensus}); the economic core under audit is missing.';
+          "Package identifies as an audit engine but ships no loadable engine layout " +
+          "(expected src/{loss-aversion,volatility,consensus}); the economic core under audit is missing.";
         return {
-          analyzer: 'behavioral',
+          analyzer: "behavioral",
           results: [
-            { check: 'loss-aversion-stability', status: 'FAIL', message },
-            { check: 'collusion-resilience', status: 'FAIL', message },
+            { check: "loss-aversion-stability", status: "FAIL", message },
+            { check: "collusion-resilience", status: "FAIL", message },
           ],
         };
       }
       return {
-        analyzer: 'behavioral',
+        analyzer: "behavioral",
         results: [
           {
-            check: 'loss-aversion-stability',
-            status: 'SKIP',
+            check: "loss-aversion-stability",
+            status: "SKIP",
             message:
-              'Target repo ships no behavioral-physics/fury-logic engine layout; economic simulation not applicable.',
+              "Target repo ships no behavioral-physics/fury-logic engine layout; economic simulation not applicable.",
           },
           {
-            check: 'collusion-resilience',
-            status: 'SKIP',
+            check: "collusion-resilience",
+            status: "SKIP",
             message:
-              'Target repo ships no behavioral-physics/fury-logic engine layout; economic simulation not applicable.',
+              "Target repo ships no behavioral-physics/fury-logic engine layout; economic simulation not applicable.",
           },
         ],
       };
@@ -218,14 +237,22 @@ export class BehavioralAnalyzer {
     const results: AnalyzerResult[] = [];
 
     for (const { layout, load } of auditable) {
-      const tag = qualify ? ` [${layout.name}]` : '';
-      if (load.kind === 'broken') {
+      const tag = qualify ? ` [${layout.name}]` : "";
+      if (load.kind === "broken") {
         const message = `Engines present but unusable (${load.reason}); the economic core under audit is broken.`;
-        results.push({ check: `loss-aversion-stability${tag}`, status: 'FAIL', message });
-        results.push({ check: `collusion-resilience${tag}`, status: 'FAIL', message });
+        results.push({
+          check: `loss-aversion-stability${tag}`,
+          status: "FAIL",
+          message,
+        });
+        results.push({
+          check: `collusion-resilience${tag}`,
+          status: "FAIL",
+          message,
+        });
         continue;
       }
-      if (load.kind !== 'ok') continue; // 'absent' is already filtered out; this narrows the type.
+      if (load.kind !== "ok") continue; // 'absent' is already filtered out; this narrows the type.
       // Fresh, identically-seeded RNG per layout so each layout's audit is
       // deterministic and independent of how many layouts precede it.
       const rng = createRng(0x57595800); // "STYX"
@@ -233,7 +260,7 @@ export class BehavioralAnalyzer {
       results.push(this.simulateCollusionResilience(load.engines, rng, tag));
     }
 
-    return { analyzer: 'behavioral', results };
+    return { analyzer: "behavioral", results };
   }
 
   /**
@@ -244,18 +271,18 @@ export class BehavioralAnalyzer {
    */
   private repoIdentifiesAsAuditEngine(): boolean {
     try {
-      const pkgPath = path.join(this.repoPath, 'package.json');
+      const pkgPath = path.join(this.repoPath, "package.json");
       if (!fs.existsSync(pkgPath)) return false;
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8')) as {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8")) as {
         name?: unknown;
         keywords?: unknown;
       };
-      const name = typeof pkg.name === 'string' ? pkg.name : '';
+      const name = typeof pkg.name === "string" ? pkg.name : "";
       const keywords = Array.isArray(pkg.keywords) ? pkg.keywords : [];
       return (
-        name.includes('audit-engine') ||
-        keywords.includes('behavioral-verification') ||
-        keywords.includes('peer-audit')
+        name.includes("audit-engine") ||
+        keywords.includes("behavioral-verification") ||
+        keywords.includes("peer-audit")
       );
     } catch {
       return false;
@@ -275,9 +302,15 @@ export class BehavioralAnalyzer {
    * only a defect when the repo actually identifies as an audit-engine package;
    * for an unrelated repo that merely shares a filename it is simply `absent`.
    */
-  private async loadLayout(layout: EngineLayout, isAuditEnginePkg: boolean): Promise<LayoutLoad> {
+  private async loadLayout(
+    layout: EngineLayout,
+    isAuditEnginePkg: boolean,
+  ): Promise<LayoutLoad> {
     const files = Object.fromEntries(
-      ENGINE_NAMES.map((n) => [n, resolveEngineFile(this.repoPath, layout.files[n])]),
+      ENGINE_NAMES.map((n) => [
+        n,
+        resolveEngineFile(this.repoPath, layout.files[n]),
+      ]),
     ) as Record<EngineName, string | null>;
     const present = ENGINE_NAMES.filter((n) => files[n]);
     const missingFiles = ENGINE_NAMES.filter((n) => !files[n]);
@@ -288,13 +321,19 @@ export class BehavioralAnalyzer {
         // least one engine file to completeness; otherwise the names are
         // coincidental and the layout is simply not present.
         return present.length > 0 && isAuditEnginePkg
-          ? { kind: 'broken', reason: `missing engine file(s): ${missingFiles.join(', ')}` }
-          : { kind: 'absent' };
+          ? {
+              kind: "broken",
+              reason: `missing engine file(s): ${missingFiles.join(", ")}`,
+            }
+          : { kind: "absent" };
       }
       // Specific layout: no files = not present; some files = a broken set.
       return present.length === 0
-        ? { kind: 'absent' }
-        : { kind: 'broken', reason: `missing engine file(s): ${missingFiles.join(', ')}` };
+        ? { kind: "absent" }
+        : {
+            kind: "broken",
+            reason: `missing engine file(s): ${missingFiles.join(", ")}`,
+          };
     }
 
     let modules: Record<EngineName, Record<string, unknown>>;
@@ -302,28 +341,35 @@ export class BehavioralAnalyzer {
       const loaded = await Promise.all(
         ENGINE_NAMES.map((n) => import(pathToFileURL(files[n]!).href)),
       );
-      modules = Object.fromEntries(ENGINE_NAMES.map((n, i) => [n, loaded[i]])) as Record<
-        EngineName,
-        Record<string, unknown>
-      >;
+      modules = Object.fromEntries(
+        ENGINE_NAMES.map((n, i) => [n, loaded[i]]),
+      ) as Record<EngineName, Record<string, unknown>>;
     } catch (err) {
-      return { kind: 'broken', reason: `engine module failed to load: ${(err as Error).message}` };
+      return {
+        kind: "broken",
+        reason: `engine module failed to load: ${(err as Error).message}`,
+      };
     }
 
-    const badExports = ENGINE_NAMES.filter((n) => typeof modules[n]?.[n] !== 'function');
+    const badExports = ENGINE_NAMES.filter(
+      (n) => typeof modules[n]?.[n] !== "function",
+    );
     if (badExports.length > 0) {
       return {
-        kind: 'broken',
-        reason: `missing or non-constructable export(s): ${badExports.join(', ')}`,
+        kind: "broken",
+        reason: `missing or non-constructable export(s): ${badExports.join(", ")}`,
       };
     }
 
     return {
-      kind: 'ok',
+      kind: "ok",
       engines: {
-        LossAversionEngine: modules.LossAversionEngine.LossAversionEngine as PenaltyEngineCtor,
-        VolatilityEngine: modules.VolatilityEngine.VolatilityEngine as HeatEngineCtor,
-        ConsensusResolver: modules.ConsensusResolver.ConsensusResolver as ResolverCtor,
+        LossAversionEngine: modules.LossAversionEngine
+          .LossAversionEngine as PenaltyEngineCtor,
+        VolatilityEngine: modules.VolatilityEngine
+          .VolatilityEngine as HeatEngineCtor,
+        ConsensusResolver: modules.ConsensusResolver
+          .ConsensusResolver as ResolverCtor,
       },
     };
   }
@@ -368,17 +414,17 @@ export class BehavioralAnalyzer {
     // engine. Covers the full weekend vigil (Fri 18:00 → Mon 06:00), late-night
     // peak, weekend/late-night precedence, and the standard-window boundaries.
     const temporalSpec: Array<[Date, number]> = [
-      [new Date('2026-03-11T12:00:00Z'), 1.0], // Wed midday — STANDARD
-      [new Date('2026-03-13T12:00:00Z'), 1.0], // Fri midday (before 18:00) — STANDARD
-      [new Date('2026-03-13T18:00:00Z'), 1.25], // Fri 18:00 exactly — vigil START boundary
-      [new Date('2026-03-13T20:00:00Z'), 1.25], // Fri night — WEEKEND_VIGIL
-      [new Date('2026-03-14T12:00:00Z'), 1.25], // Sat midday — WEEKEND_VIGIL
-      [new Date('2026-03-15T12:00:00Z'), 1.25], // Sun midday — WEEKEND_VIGIL
-      [new Date('2026-03-16T05:00:00Z'), 1.25], // Mon 05:00 (before 06:00) — WEEKEND_VIGIL
-      [new Date('2026-03-16T06:00:00Z'), 1.0], // Mon 06:00 exactly — vigil END boundary (exclusive)
-      [new Date('2026-03-16T08:00:00Z'), 1.0], // Mon 08:00 (after vigil) — STANDARD
-      [new Date('2026-03-11T02:00:00Z'), 1.5], // Wed late night — PEAK_VULNERABILITY
-      [new Date('2026-03-14T02:00:00Z'), 1.5], // Sat late night — PEAK over WEEKEND
+      [new Date("2026-03-11T12:00:00Z"), 1.0], // Wed midday — STANDARD
+      [new Date("2026-03-13T12:00:00Z"), 1.0], // Fri midday (before 18:00) — STANDARD
+      [new Date("2026-03-13T18:00:00Z"), 1.25], // Fri 18:00 exactly — vigil START boundary
+      [new Date("2026-03-13T20:00:00Z"), 1.25], // Fri night — WEEKEND_VIGIL
+      [new Date("2026-03-14T12:00:00Z"), 1.25], // Sat midday — WEEKEND_VIGIL
+      [new Date("2026-03-15T12:00:00Z"), 1.25], // Sun midday — WEEKEND_VIGIL
+      [new Date("2026-03-16T05:00:00Z"), 1.25], // Mon 05:00 (before 06:00) — WEEKEND_VIGIL
+      [new Date("2026-03-16T06:00:00Z"), 1.0], // Mon 06:00 exactly — vigil END boundary (exclusive)
+      [new Date("2026-03-16T08:00:00Z"), 1.0], // Mon 08:00 (after vigil) — STANDARD
+      [new Date("2026-03-11T02:00:00Z"), 1.5], // Wed late night — PEAK_VULNERABILITY
+      [new Date("2026-03-14T02:00:00Z"), 1.5], // Sat late night — PEAK over WEEKEND
     ];
     const temporalSpecOk = temporalSpec.every(
       ([date, expected]) => ve.getTemporalMultiplier(date) === expected,
@@ -401,7 +447,10 @@ export class BehavioralAnalyzer {
       max = Math.max(max, multiplier);
       sum += multiplier;
       samples++;
-      if (multiplier < SPEC_PENALTY_MIN - 1e-9 || multiplier > SPEC_PENALTY_MAX + 1e-9) {
+      if (
+        multiplier < SPEC_PENALTY_MIN - 1e-9 ||
+        multiplier > SPEC_PENALTY_MAX + 1e-9
+      ) {
         outOfBounds++;
       }
     };
@@ -427,7 +476,8 @@ export class BehavioralAnalyzer {
         !Number.isFinite(expectedHeat) ||
         !Number.isFinite(heat) ||
         heat < 0 ||
-        Math.abs(heat - expectedHeat) > 1e-9 * Math.max(1, Math.abs(expectedHeat))
+        Math.abs(heat - expectedHeat) >
+          1e-9 * Math.max(1, Math.abs(expectedHeat))
       ) {
         heatAnomalies++;
       }
@@ -443,14 +493,17 @@ export class BehavioralAnalyzer {
 
     const mean = samples === 0 ? NaN : sum / samples;
     const anchor = lae.calculatePenaltyMultiplier(0);
-    const anchorOk = Number.isFinite(anchor) && Math.abs(anchor - CANONICAL_LAMBDA) < 1e-9;
+    const anchorOk =
+      Number.isFinite(anchor) && Math.abs(anchor - CANONICAL_LAMBDA) < 1e-9;
 
     // Directly probe both clamps so removing the clamping logic is detectable
     // even though the natural formula never reaches the lower bound.
-    const upperClampFires = lae.calculatePenaltyMultiplier(1e6) === SPEC_PENALTY_MAX;
+    const upperClampFires =
+      lae.calculatePenaltyMultiplier(1e6) === SPEC_PENALTY_MAX;
     const lowerClampFires =
-      new engines.LossAversionEngine({ baseCoefficient: 0 }).calculatePenaltyMultiplier(0) ===
-      SPEC_PENALTY_MIN;
+      new engines.LossAversionEngine({
+        baseCoefficient: 0,
+      }).calculatePenaltyMultiplier(0) === SPEC_PENALTY_MIN;
 
     // Directly probe a negative input: the documented guard treats negative
     // volatility as zero, so it must return the same finite anchor (λ). The
@@ -472,15 +525,15 @@ export class BehavioralAnalyzer {
 
     return {
       check: `loss-aversion-stability${tag}`,
-      status: pass ? 'PASS' : 'FAIL',
+      status: pass ? "PASS" : "FAIL",
       message:
         `Monte Carlo (${LOSS_AVERSION_ITERATIONS} runs incl. stress): ` +
         `anchor=${anchor.toFixed(3)} (target ${CANONICAL_LAMBDA}), mean=${mean.toFixed(3)}, ` +
         `range=[${min.toFixed(3)}, ${max.toFixed(3)}], out-of-bounds=${outOfBounds}, ` +
         `non-finite=${nonFinite}, heat-anomalies=${heatAnomalies}, ` +
-        `temporal-spec=${temporalSpecOk ? 'ok' : 'BROKEN'}, ` +
-        `clamps=${upperClampFires && lowerClampFires ? 'enforced' : 'BROKEN'}, ` +
-        `negative-guard=${negativeInputGuarded ? 'ok' : 'BROKEN'}.`,
+        `temporal-spec=${temporalSpecOk ? "ok" : "BROKEN"}, ` +
+        `clamps=${upperClampFires && lowerClampFires ? "enforced" : "BROKEN"}, ` +
+        `negative-guard=${negativeInputGuarded ? "ok" : "BROKEN"}.`,
     };
   }
 
@@ -521,8 +574,9 @@ export class BehavioralAnalyzer {
     let colluderMajorityPanels = 0;
 
     for (let i = 0; i < COLLUSION_PANELS; i++) {
-      const groundTruth: 'BREACH' | 'CLEAN' = rng() < 0.5 ? 'BREACH' : 'CLEAN';
-      const adversarial: 'BREACH' | 'CLEAN' = groundTruth === 'BREACH' ? 'CLEAN' : 'BREACH';
+      const groundTruth: "BREACH" | "CLEAN" = rng() < 0.5 ? "BREACH" : "CLEAN";
+      const adversarial: "BREACH" | "CLEAN" =
+        groundTruth === "BREACH" ? "CLEAN" : "BREACH";
       const colluderCount = 1 + Math.floor(rng() * 3); // 1-3 colluders (can be a majority of 5)
       if (colluderCount > PANEL_SIZE - colluderCount) colluderMajorityPanels++;
 
@@ -531,7 +585,9 @@ export class BehavioralAnalyzer {
         const isColluder = j < colluderCount;
         // Low-integrity colluders vs high-integrity honest auditors. Bands are
         // wide enough apart that the honest weight wins even at a 3:2 deficit.
-        const integrityScore = isColluder ? 0.05 + rng() * 0.15 : 0.8 + rng() * 0.2;
+        const integrityScore = isColluder
+          ? 0.05 + rng() * 0.15
+          : 0.8 + rng() * 0.2;
         decisions.push({
           auditorId: `A${j}`,
           integrityScore,
@@ -549,16 +605,16 @@ export class BehavioralAnalyzer {
 
       const verdict = resolver.resolve(decisions);
       if (verdict === groundTruth) correctVerdicts++;
-      if (groundTruth === 'CLEAN' && verdict === 'BREACH') fraudulentBreaches++;
-      if (groundTruth === 'BREACH' && verdict !== 'BREACH') missedBreaches++;
-      if (verdict === 'UNCERTAIN') uncertainVerdicts++;
+      if (groundTruth === "CLEAN" && verdict === "BREACH") fraudulentBreaches++;
+      if (groundTruth === "BREACH" && verdict !== "BREACH") missedBreaches++;
+      if (verdict === "UNCERTAIN") uncertainVerdicts++;
     }
 
     const pass = correctVerdicts === COLLUSION_PANELS;
 
     return {
       check: `collusion-resilience${tag}`,
-      status: pass ? 'PASS' : 'FAIL',
+      status: pass ? "PASS" : "FAIL",
       message:
         `Shatter-point simulation (${COLLUSION_PANELS} panels, integrity-weighted consensus, ` +
         `${colluderMajorityPanels} with a colluder majority): ${correctVerdicts} correct verdicts, ` +

@@ -27,6 +27,7 @@ graph TD
 ```
 
 ### Workspace Package Breakdown
+
 1. `@styx/api` — NestJS Core API, Ledger, Escrow, Fury Router
 2. `@styx/web` — Next.js Web App, Admin Console, Pitch Deck
 3. `@styx/mobile` — React Native / Expo Application

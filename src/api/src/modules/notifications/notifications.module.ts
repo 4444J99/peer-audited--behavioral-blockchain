@@ -22,6 +22,10 @@ import { PushReceiptsScheduler } from "./push-receipts.scheduler";
     NotificationComposerService,
     PushReceiptsScheduler,
   ],
-  exports: [NotificationsService, PushTokensService, NotificationComposerService],
+  exports: [
+    NotificationsService,
+    PushTokensService,
+    NotificationComposerService,
+  ],
 })
 export class NotificationsModule {}

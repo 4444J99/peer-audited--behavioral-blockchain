@@ -15,13 +15,13 @@ landing sequence was #844 (landing-page heal, which had held `main` red since
 
 **Verified against a running system, not just a test suite:**
 
-| Check | Result |
-| --- | --- |
-| `main` CI | green — first successful pipeline since 2026-07-23 |
-| `turbo run test` | 11/11 tasks — **2,937 tests across 260 suites** (api 1902/161, web 386/46, mobile 299/32, shared 202/9, desktop 148/12) |
-| `turbo run build lint` | 21/21 tasks |
-| Fresh empty database | 82 migrations + base seed + circles seed, **zero errors**, idempotent on re-run |
-| Live circle smoke | **23/23 probes** against a booted API |
+| Check                  | Result                                                                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `main` CI              | green — first successful pipeline since 2026-07-23                                                                      |
+| `turbo run test`       | 11/11 tasks — **2,937 tests across 260 suites** (api 1902/161, web 386/46, mobile 299/32, shared 202/9, desktop 148/12) |
+| `turbo run build lint` | 21/21 tasks                                                                                                             |
+| Fresh empty database   | 82 migrations + base seed + circles seed, **zero errors**, idempotent on re-run                                         |
+| Live circle smoke      | **23/23 probes** against a booted API                                                                                   |
 
 The test count supersedes the "1,107 tests passing" figure quoted in older revisions.
 
@@ -80,7 +80,7 @@ other documents bound it, and this plan is subordinate to both:
 - **`planning--phase1-private-beta-scope.md`** — what actually ships to the first testers.
   Circles 3–5 are largely **built ahead of** Phase 1, deliberately; the agreed go-to-market
   sequence is **no-contact recovery → health/fitness → B2B corporate wellness** (DR-001), so
-  most of what Circle 3 and Circle 5 contain is *later-phase capability that exists early*,
+  most of what Circle 3 and Circle 5 contain is _later-phase capability that exists early_,
   not Phase 1 launch surface.
 
 A circle being ✅ therefore does **not** mean its features are tester-facing. The Phase 1
@@ -117,6 +117,7 @@ engineering item and closed one long-standing block:
 ---
 
 ## Circle 1: Clear the Backlog (merge all PRs)
+
 **Goal:** All existing code work merged to main. Clean slate.
 **Launch gate:** All 16 PRs merged, CI green, zero open PRs.
 **Status:** ✅ **CLOSED (2026-07-30).**
@@ -136,16 +137,18 @@ every push for a week and blocked five dependabot PRs behind it. Fixed in #844.
 ---
 
 ## Circle 2: Beta Launch Readiness (P0 blockers)
+
 **Goal:** Ship a beta-ready product — real proofs, real safety, and settlement built to
 real-money standard. **The beta itself ships test-money only**, with no real-money
 settlement (DR-006, and `planning--phase1-private-beta-scope.md`). Earlier revisions of
-this line said "real money", which contradicted both; the money *path* is production-grade,
-the money *mode* is not, and conflating them is how a test-money pilot ends up shipping with
+this line said "real money", which contradicted both; the money _path_ is production-grade,
+the money _mode_ is not, and conflating them is how a test-money pilot ends up shipping with
 live settlement wired.
 **Launch gate:** All 38 P0 blockers resolved, deployment pipeline live, production CI/CD active.
 **Status:** ENGINEERING SUBSTANTIALLY BUILT; EXTERNAL DEPENDENCIES OPEN.
 
 ### 2a: Buildable by engineering
+
 - [x] KYC/Identity — schema (`007`, `046_compliance_artifacts.sql`), verification services
       (`src/api/src/modules/compliance/identity-verification.service.ts`,
       `identity-provider.service.ts` with mock + Stripe Identity adapters), fail-closed
@@ -173,7 +176,7 @@ they take real work, not because anyone is still weighing them.
       `$5.00` hold before an appeal is accepted, and the dispute lifecycle captures or
       cancels it. Setting the constant to `0` does **not** work — Stripe rejects a
       zero-amount authorization, so `initiateAppeal` would fail closed and nobody could
-      appeal at all. Free means *skipping the hold*: a nullable `disputes.payment_intent_id`,
+      appeal at all. Free means _skipping the hold_: a nullable `disputes.payment_intent_id`,
       a fee-free counterpart to `FEE_AUTHORIZED_PENDING_REVIEW`, and a resolution path with
       nothing to capture or cancel. Keep `APPEAL_FEE_AMOUNT` behind a policy gate — DR-004
       explicitly reserves the right to reintroduce the fee if frivolous appeals appear at
@@ -191,6 +194,7 @@ they take real work, not because anyone is still weighing them.
       Needs an answer before any real-money charge.
 
 ### 2c: External dependencies (human-gated, still open)
+
 - [ ] Legal counsel retention
 - [ ] Stripe Connect FBO production account
 - [ ] State jurisdiction matrix counsel sign-off (draft now exists:
@@ -202,6 +206,7 @@ they take real work, not because anyone is still weighing them.
 ---
 
 ## Circle 3: Gamma — Proof Integrity at Scale
+
 **Goal:** Scale the reviewer network. Trust the evidence.
 **Launch gate:** Health data integration, video proof pipeline, reviewer redaction, anti-collusion.
 **Status:** ✅ **ENGINEERING COMPLETE** — built in #829, wired and hardened in #845.
@@ -233,6 +238,7 @@ attestation rejection paths all exercised live).
 ---
 
 ## Circle 4: Delta — Retention + Network Effects
+
 **Goal:** Will people come back? Build the engagement loop.
 **Launch gate:** Danger-zone protections, accountability partners, progress dashboard, push notifications.
 **Status:** ✅ **ENGINEERING COMPLETE** for the launch-gate items — built in #830/#831,
@@ -258,6 +264,7 @@ Post-gate scope, still unstarted — these were never part of the Circle 4 launc
 ---
 
 ## Circle 5: Omega — Enterprise Expansion
+
 **Goal:** Can enterprises buy this? Legal, compliance, revenue.
 **Launch gate:** Legal whitepaper, enterprise compliance, revenue packaging.
 **Status:** ✅ **ENGINEERING COMPLETE; HUMAN-GATED ITEMS OPEN.** #833 (anti-Sybil,
@@ -266,6 +273,7 @@ practitioner intelligence) and #835 (CCPA deletion, AML screening) supplied the 
 read. What remains is counsel review and procurement — see the final subsection.
 
 ### Merged in #833 / #835:
+
 - [x] Anti-Sybil layer — `src/api/src/modules/security/anti-sybil.service.ts`,
       migration `057_anti_sybil.sql` (PR #833)
 - [x] Practitioner risk intelligence —
@@ -279,6 +287,7 @@ read. What remains is counsel review and procurement — see the final subsectio
       (`src/api/guards/auth.guard.ts`, `src/api/src/common/guards/role.guard.ts`)
 
 ### Wired/added in #845:
+
 - [x] `SecurityModule` registered in `app.module.ts`; `AmlController` registered in
       `compliance.module.ts`; `PractitionerIntelligenceService` provided in
       `behavioral.module.ts` — all `/security/*`, `/compliance/aml/*` and practitioner
@@ -299,6 +308,7 @@ read. What remains is counsel review and procurement — see the final subsectio
 - [x] Demo seed + KYC / practitioner / circles pages in `src/web/app`
 
 ### Added in #847:
+
 - [x] Demo jurisdiction substrate — all twelve demo users placed across the three
       geofencing tiers, and `fbo_accounts` seeded. Without it `/admin/jurisdictions`
       rendered every user as an identical TIER_3 fallback, CCPA deletion returned 403
@@ -306,7 +316,7 @@ read. What remains is counsel review and procurement — see the final subsectio
       state), and FBO routing was inert against an empty table
 - [x] Fixed a state-match collision in `fbo-account.service.ts`: a bare
       `SPLIT_PART(x, '-', 2)` returns `''` for undelimited values, so `US` and `CA`
-      compared equal — the country-level fallback account matched *every* state.
+      compared equal — the country-level fallback account matched _every_ state.
       Only visible once real rows existed
 - [x] **CCPA deletions are now actually executed.**
       `CcpaService.processDeletionRequest` had zero callers — no admin route, no
@@ -329,6 +339,7 @@ read. What remains is counsel review and procurement — see the final subsectio
       partially reversed a completed CCPA deletion
 
 ### Remaining engineering — open decisions, not defects:
+
 - [ ] **CCPA deletion grace window** is set to 7 days (`CCPA_DELETION_GRACE_DAYS` in
       `ccpa.service.ts`). CCPA allows 45 days to respond and the sibling GDPR path
       holds for 30; 30 here would leave only 15 days of slack for a failed sweep to be
@@ -338,12 +349,13 @@ read. What remains is counsel review and procurement — see the final subsectio
       `payments.module.ts`, has a passing spec, and is called by nothing.
       `SettlementService` operates on internal ledger accounts
       (`debit_account_id`/`credit_account_id`); this service maps to external Stripe
-      *connected* accounts. Wiring them together means deciding that payouts route
+      _connected_ accounts. Wiring them together means deciding that payouts route
       through jurisdiction-partitioned custody — a compliance and architecture call
       that changes money movement, not a defect to patch. #847 made the data and the
       query correct so the decision is cheap to act on either way.
 
 ### Remaining (human-gated — cannot be closed by engineering):
+
 - [ ] Legal defense whitepaper counsel review — review-ready draft now at
       `docs/legal/legal-defense-whitepaper-DRAFT.md`
 - [ ] State jurisdiction matrix counsel sign-off — review-ready draft now at
@@ -373,6 +385,7 @@ runner to baseline-stamp (skip) the rest of the chain.
 ---
 
 ## Execution Strategy
+
 1. **Circle 1 first** - merge everything, get a clean baseline
 2. **Circle 2 in parallel** - start P0 blockers while PRs are merging
 3. **Circles 3-5 planning** - define exact sub-tasks as we approach each circle
@@ -395,6 +408,7 @@ runner to baseline-stamp (skip) the rest of the chain.
 ---
 
 ## Agent Allocation (Limен fleet)
+
 - **Jules**: Batch feature work, test writing, schema migrations
 - **Claude**: Architecture decisions, complex refactors, legal doc drafting
 - **Codex**: Code review, CI fixes, deployment pipeline

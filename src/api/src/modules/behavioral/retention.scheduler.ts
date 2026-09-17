@@ -1,35 +1,38 @@
-import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { Pool } from 'pg';
+import { Inject, Injectable, Logger, Optional } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { Pool } from "pg";
 import {
   DangerZoneService,
   DangerWindow,
   DangerWindowType,
   DEFAULT_TIMEZONE,
-} from './danger-zone.service';
-import { AccountabilityPartnerService, EscalationLevel } from './accountability-partner.service';
+} from "./danger-zone.service";
+import {
+  AccountabilityPartnerService,
+  EscalationLevel,
+} from "./accountability-partner.service";
 import {
   NotificationComposerService,
   NotificationType,
-} from '../notifications/notification-composer.service';
-import { NotificationsService } from '../notifications/notifications.service';
+} from "../notifications/notification-composer.service";
+import { NotificationsService } from "../notifications/notifications.service";
 
 // The composer has no per-window types, so each danger window maps onto the
 // closest composed notification: day-based windows onto the danger alert,
 // the weekend window onto its dedicated warning, and the 2am window onto the
 // crisis-resource prompt (impulse control is weakest late at night).
 const WINDOW_EVENT_TYPE: Record<DangerWindowType, NotificationType> = {
-  DAY_3: 'DANGER_ZONE_ALERT',
-  DAY_21: 'DANGER_ZONE_ALERT',
-  HIGH_STREAK_RISK: 'DANGER_ZONE_ALERT',
-  WEEKEND: 'WEEKEND_WARNING',
-  LATE_NIGHT: 'CRISIS_RESOURCE',
+  DAY_3: "DANGER_ZONE_ALERT",
+  DAY_21: "DANGER_ZONE_ALERT",
+  HIGH_STREAK_RISK: "DANGER_ZONE_ALERT",
+  WEEKEND: "WEEKEND_WARNING",
+  LATE_NIGHT: "CRISIS_RESOURCE",
 };
 
 const ESCALATION_TITLES: Record<EscalationLevel, string> = {
-  NOTIFY: 'Missed Partner Check-In',
-  STAKE_WARNING: 'Stake Warning: Missed Check-Ins',
-  CRISIS_TEAM: 'Safety Team Alerted',
+  NOTIFY: "Missed Partner Check-In",
+  STAKE_WARNING: "Stake Warning: Missed Check-Ins",
+  CRISIS_TEAM: "Safety Team Alerted",
 };
 
 @Injectable()
@@ -37,11 +40,12 @@ export class RetentionScheduler {
   private readonly logger = new Logger(RetentionScheduler.name);
 
   constructor(
-    @Inject('DATABASE_POOL') private readonly pool: Pool,
+    @Inject("DATABASE_POOL") private readonly pool: Pool,
     private readonly dangerZone: DangerZoneService,
     private readonly partners: AccountabilityPartnerService,
     private readonly composer: NotificationComposerService,
-    @Optional() @Inject(NotificationsService)
+    @Optional()
+    @Inject(NotificationsService)
     private readonly notifications?: NotificationsService,
   ) {}
 
@@ -70,7 +74,9 @@ export class RetentionScheduler {
         );
         if (windows.length === 0) continue;
 
-        const day = await this.dangerZone.getContractDayNumber(contract.contract_id);
+        const day = await this.dangerZone.getContractDayNumber(
+          contract.contract_id,
+        );
         for (const window of windows) {
           await this.fireDangerWindow(
             contract.user_id,
@@ -96,7 +102,9 @@ export class RetentionScheduler {
   @Cron(CronExpression.EVERY_HOUR)
   async sendPartnerCheckInPrompts(): Promise<void> {
     if (!this.notifications) {
-      this.logger.debug('[Retention] Notifications unavailable — skipping check-in prompts');
+      this.logger.debug(
+        "[Retention] Notifications unavailable — skipping check-in prompts",
+      );
       return;
     }
 
@@ -120,14 +128,14 @@ export class RetentionScheduler {
         const claim = await this.claimNotification(
           checkIn.owner_id,
           checkIn.contract_id,
-          'PARTNER_CHECK_IN_PROMPT',
+          "PARTNER_CHECK_IN_PROMPT",
           checkIn.checkin_id,
           localDate,
         );
         if (!claim) continue;
 
         const composed = this.composer.compose({
-          type: 'CHECK_IN_REMINDER',
+          type: "CHECK_IN_REMINDER",
           userId: checkIn.owner_id,
           contractId: checkIn.contract_id,
           metadata: {
@@ -139,10 +147,14 @@ export class RetentionScheduler {
         try {
           await this.notifications.create({
             userId: checkIn.owner_id,
-            type: 'CHECK_IN_REMINDER',
+            type: "CHECK_IN_REMINDER",
             title: composed.title,
             body: composed.body,
-            metadata: { ...composed.data, checkInId: checkIn.checkin_id, priority: composed.priority },
+            metadata: {
+              ...composed.data,
+              checkInId: checkIn.checkin_id,
+              priority: composed.priority,
+            },
           });
           this.logger.log(
             `[Retention] Check-in prompt sent to user ${checkIn.owner_id} (check-in ${checkIn.checkin_id})`,
@@ -164,7 +176,7 @@ export class RetentionScheduler {
    * that have been PENDING for more than 24 hours as MISSED and run the
    * partner service's escalation ladder for each.
    */
-  @Cron('30 0 * * *')
+  @Cron("30 0 * * *")
   async escalateOverdueCheckIns(): Promise<void> {
     const missed = await this.pool.query(
       `UPDATE partner_checkins
@@ -175,11 +187,15 @@ export class RetentionScheduler {
     );
     if (missed.rows.length === 0) return;
 
-    this.logger.log(`[Retention] Escalating ${missed.rows.length} overdue check-in(s)`);
+    this.logger.log(
+      `[Retention] Escalating ${missed.rows.length} overdue check-in(s)`,
+    );
 
     for (const row of missed.rows) {
       try {
-        const { level, message } = await this.partners.escalateMissedCheckIn(row.id);
+        const { level, message } = await this.partners.escalateMissedCheckIn(
+          row.id,
+        );
         if (!this.notifications) continue;
 
         const owner = await this.pool.query(
@@ -191,7 +207,7 @@ export class RetentionScheduler {
 
         await this.notifications.create({
           userId: ownerId,
-          type: 'PARTNER_CHECKIN_ESCALATION',
+          type: "PARTNER_CHECKIN_ESCALATION",
           title: ESCALATION_TITLES[level],
           body: message,
           metadata: {
@@ -227,7 +243,7 @@ export class RetentionScheduler {
     const claim = await this.claimNotification(
       userId,
       contractId,
-      'DANGER_ZONE',
+      "DANGER_ZONE",
       window.type,
       localDate,
     );
@@ -289,24 +305,28 @@ export class RetentionScheduler {
   // Release a claimed dedupe mark after a failed delivery so the next hourly
   // run can retry instead of silently dropping the notification for the day.
   private async releaseClaim(claimId: string): Promise<void> {
-    await this.pool.query(
-      `DELETE FROM retention_notifications WHERE id = $1`,
-      [claimId],
-    );
+    await this.pool.query(`DELETE FROM retention_notifications WHERE id = $1`, [
+      claimId,
+    ]);
   }
 
   // YYYY-MM-DD in the user's timezone; dedupe must roll over on the user's
   // midnight, not UTC's (late-night windows straddle the UTC date line).
   private localDate(at: Date, timeZone: string): string {
     const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
     };
     try {
-      return new Intl.DateTimeFormat('en-CA', { ...options, timeZone }).format(at);
+      return new Intl.DateTimeFormat("en-CA", { ...options, timeZone }).format(
+        at,
+      );
     } catch {
-      return new Intl.DateTimeFormat('en-CA', { ...options, timeZone: DEFAULT_TIMEZONE }).format(at);
+      return new Intl.DateTimeFormat("en-CA", {
+        ...options,
+        timeZone: DEFAULT_TIMEZONE,
+      }).format(at);
     }
   }
 }

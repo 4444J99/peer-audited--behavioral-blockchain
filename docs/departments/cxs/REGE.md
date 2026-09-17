@@ -54,13 +54,13 @@ CXS is the primary sensor for product health. Every support ticket is a signal. 
 
 ## 3. Artifacts Registry
 
-| ID | Name | Path | Phase | Staleness | Last Updated | Status |
-|----|------|------|-------|-----------|--------------|--------|
-| C1 | FAQ | `artifacts/faq.md` | hardening | 14d | 2026-03-08 | active |
-| C2 | Onboarding Sequences | `artifacts/onboarding-sequence.md` | hardening | 30d | 2026-03-08 | active |
-| C3 | Canned Response Library | `artifacts/canned-responses.md` | — | — | — | dormant |
-| C4 | Escalation Playbook | `artifacts/escalation-playbook.md` | — | — | — | dormant |
-| C5 | Fury Auditor Guidelines | `artifacts/fury-guidelines.md` | — | — | — | dormant |
+| ID  | Name                    | Path                               | Phase     | Staleness | Last Updated | Status  |
+| --- | ----------------------- | ---------------------------------- | --------- | --------- | ------------ | ------- |
+| C1  | FAQ                     | `artifacts/faq.md`                 | hardening | 14d       | 2026-03-08   | active  |
+| C2  | Onboarding Sequences    | `artifacts/onboarding-sequence.md` | hardening | 30d       | 2026-03-08   | active  |
+| C3  | Canned Response Library | `artifacts/canned-responses.md`    | —         | —         | —            | dormant |
+| C4  | Escalation Playbook     | `artifacts/escalation-playbook.md` | —         | —         | —            | dormant |
+| C5  | Fury Auditor Guidelines | `artifacts/fury-guidelines.md`     | —         | —         | —            | dormant |
 
 **Staleness rules:** C1 stale after 14 days (FAQ must track rapidly evolving product). C2 stale after 30 days. C3-C5 activated when ticket volume exceeds 50/week.
 
@@ -152,23 +152,23 @@ CXS is the primary sensor for product health. Every support ticket is a signal. 
 
 ### Emits
 
-| Signal | Recipients | Payload |
-|--------|------------|---------|
-| `signal:churn-risk` | PRD, B2B | `{segment, user_count, risk_score, top_reasons, recoverable_list}` |
-| `signal:faq-gap` | ENG, PRD | `{topic, ticket_count, severity, proposed_faq_entry}` |
-| `signal:onboarding-friction` | PRD | `{step, drop_off_rate, duration, cohort_size, hypothesis}` |
-| `signal:fury-quality-alert` | PRD, OPS | `{dispute_rate, flagged_auditors, resolution_time_p95}` |
-| `signal:nps-results` | PRD, GRO, FIN | `{nps_score, segment, sample_size, top_promoter_reasons, top_detractor_reasons}` |
+| Signal                       | Recipients    | Payload                                                                          |
+| ---------------------------- | ------------- | -------------------------------------------------------------------------------- |
+| `signal:churn-risk`          | PRD, B2B      | `{segment, user_count, risk_score, top_reasons, recoverable_list}`               |
+| `signal:faq-gap`             | ENG, PRD      | `{topic, ticket_count, severity, proposed_faq_entry}`                            |
+| `signal:onboarding-friction` | PRD           | `{step, drop_off_rate, duration, cohort_size, hypothesis}`                       |
+| `signal:fury-quality-alert`  | PRD, OPS      | `{dispute_rate, flagged_auditors, resolution_time_p95}`                          |
+| `signal:nps-results`         | PRD, GRO, FIN | `{nps_score, segment, sample_size, top_promoter_reasons, top_detractor_reasons}` |
 
 ### Consumes
 
-| Signal | Source | Action |
-|--------|--------|--------|
-| `signal:feature-shipped` | PRD | Update FAQ (C1), onboarding sequence (C2), and canned responses (C3) within 48 hours; test new feature from user perspective |
-| `signal:deploy-complete` | OPS | Verify all user-facing changes work correctly; spot-check 3 user flows; report any regressions within 2 hours |
-| `signal:tos-update` | LEG | Update FAQ entries referencing terms, refund policy, or dispute resolution within 24 hours; review canned responses for compliance |
-| `signal:pricing-change` | FIN | Update all onboarding materials, FAQ pricing sections, and canned responses referencing costs within 24 hours |
-| `signal:content-published` | GRO | Share relevant content with practitioners during check-ins; add to onboarding resources if educational |
+| Signal                     | Source | Action                                                                                                                             |
+| -------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `signal:feature-shipped`   | PRD    | Update FAQ (C1), onboarding sequence (C2), and canned responses (C3) within 48 hours; test new feature from user perspective       |
+| `signal:deploy-complete`   | OPS    | Verify all user-facing changes work correctly; spot-check 3 user flows; report any regressions within 2 hours                      |
+| `signal:tos-update`        | LEG    | Update FAQ entries referencing terms, refund policy, or dispute resolution within 24 hours; review canned responses for compliance |
+| `signal:pricing-change`    | FIN    | Update all onboarding materials, FAQ pricing sections, and canned responses referencing costs within 24 hours                      |
+| `signal:content-published` | GRO    | Share relevant content with practitioners during check-ins; add to onboarding resources if educational                             |
 
 ## 8. Human Checkpoints
 
@@ -213,11 +213,11 @@ CXS is the primary sensor for product health. Every support ticket is a signal. 
 
 ## 10. Growth Backlog
 
-| ID | Name | Description | Priority | Blocked By |
-|----|------|-------------|----------|------------|
-| C3 | Canned Response Library | Pre-written, tone-calibrated responses for the 20 most common ticket types. Must handle the emotional range from "I completed my first Oath!" to "I lost $39 during a breakup relapse." | high | Ticket volume >50/week to justify investment |
-| C4 | Escalation Playbook | Documented escalation paths for edge cases: simultaneous disputes, practitioner-client conflicts, suspected Fury collusion, multi-contract forfeiture grief. | high | First 100 resolved disputes for pattern data |
-| C5 | Fury Auditor Guidelines | Public-facing guide for Fury auditors: evidence evaluation standards, communication expectations, dispute handling, compensation structure. | high | PRD finalization of Fury program mechanics |
-| C6 | Self-Service Help Center | Searchable knowledge base replacing static FAQ. Includes video walkthroughs for contract creation, proof submission, and practitioner dashboard. | medium | Active user base >500 |
-| C7 | Community Peer Support Program | Trained volunteer moderators in Discord who can answer basic questions and share their own contract completion stories. Reduces ticket load. | medium | Discord community >200 active members |
-| C8 | Practitioner Success Playbook | Guide for practitioners on how to introduce Styx to clients, set appropriate contract parameters, and interpret Integrity Score data in clinical context. | high | 10+ active practitioner partners for feedback |
+| ID  | Name                           | Description                                                                                                                                                                             | Priority | Blocked By                                    |
+| --- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------- |
+| C3  | Canned Response Library        | Pre-written, tone-calibrated responses for the 20 most common ticket types. Must handle the emotional range from "I completed my first Oath!" to "I lost $39 during a breakup relapse." | high     | Ticket volume >50/week to justify investment  |
+| C4  | Escalation Playbook            | Documented escalation paths for edge cases: simultaneous disputes, practitioner-client conflicts, suspected Fury collusion, multi-contract forfeiture grief.                            | high     | First 100 resolved disputes for pattern data  |
+| C5  | Fury Auditor Guidelines        | Public-facing guide for Fury auditors: evidence evaluation standards, communication expectations, dispute handling, compensation structure.                                             | high     | PRD finalization of Fury program mechanics    |
+| C6  | Self-Service Help Center       | Searchable knowledge base replacing static FAQ. Includes video walkthroughs for contract creation, proof submission, and practitioner dashboard.                                        | medium   | Active user base >500                         |
+| C7  | Community Peer Support Program | Trained volunteer moderators in Discord who can answer basic questions and share their own contract completion stories. Reduces ticket load.                                            | medium   | Discord community >200 active members         |
+| C8  | Practitioner Success Playbook  | Guide for practitioners on how to introduce Styx to clients, set appropriate contract parameters, and interpret Integrity Score data in clinical context.                               | high     | 10+ active practitioner partners for feedback |

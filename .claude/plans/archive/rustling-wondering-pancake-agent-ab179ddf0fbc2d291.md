@@ -1,12 +1,15 @@
 # Styx Project Deep Exploration Plan
 
 ## Objective
+
 Comprehensive evaluation-to-growth review of the peer-audited behavioral blockchain (Styx) project focusing on architecture coherence, service layer quality, test quality, type safety, and code health.
 
 ## Investigation Scope
 
 ### 1. Architecture Coherence (Phase 1)
+
 **Files to analyze:**
+
 - `turbo.json` - Turborepo configuration and task pipeline
 - `tsconfig.json` (root) - Base TypeScript configuration
 - `package.json` (root) - Root workspace package definition
@@ -14,6 +17,7 @@ Comprehensive evaluation-to-growth review of the peer-audited behavioral blockch
 - `tsconfig.json` in each workspace
 
 **Checks:**
+
 - Verify monorepo isolation and @styx/* scope imports
 - Trace cross-workspace dependencies
 - Identify circular dependencies
@@ -23,18 +27,22 @@ Comprehensive evaluation-to-growth review of the peer-audited behavioral blockch
 **Deliverable:** Architecture coherence assessment with dependency graph analysis
 
 ### 2. Service Layer Quality (Phase 2)
+
 **Core services to analyze:**
+
 - `src/api/services/ledger/ledger.service.ts` - Double-entry ledger transactions
 - `src/api/services/ledger/truth-log.service.ts` - SHA-256 hash-chained audit log
 - `src/api/services/escrow/stripe.service.ts` - Stripe FBO escrow operations
 - `src/api/services/fury-router/fury-router.service.ts` - BullMQ proof routing
 
 **Additional services to scan:**
+
 - `src/api/services/health/aegis.service.ts` - BMI/velocity guardrails
 - `src/api/services/security/geofence.service.ts` - Jurisdiction checks
 - `src/api/services/security/moderation.service.ts` - Ban/exile logic
 
 **Quality checks:**
+
 - Error handling patterns (try-catch, error propagation)
 - SQL injection risks and parameterization
 - Transaction safety and ACID compliance
@@ -47,7 +55,9 @@ Comprehensive evaluation-to-growth review of the peer-audited behavioral blockch
 **Deliverable:** Service layer quality report with risk assessment
 
 ### 3. Test Quality (Phase 3)
+
 **Test files to analyze:**
+
 - `src/api/services/ledger/ledger.service.spec.ts`
 - `src/api/services/fury-router/fury-router.service.spec.ts`
 - `src/api/services/ledger/truth-log.service.spec.ts`
@@ -55,6 +65,7 @@ Comprehensive evaluation-to-growth review of the peer-audited behavioral blockch
 - Additional spec files found in services directory
 
 **Quality assessment:**
+
 - Behavior vs implementation testing balance
 - Mocking depth and appropriateness
 - Test brittleness and maintenance burden
@@ -67,13 +78,16 @@ Comprehensive evaluation-to-growth review of the peer-audited behavioral blockch
 **Deliverable:** Test quality analysis with coverage gaps
 
 ### 4. Type Safety (Phase 4)
+
 **Key files to trace:**
+
 - `src/shared/libs/integrity.ts` - Integrity scoring algorithm
 - `src/shared/libs/behavioral-logic.ts` - Behavioral verification logic
 - `src/shared/` - All type definitions
 - Search for type usage across workspaces
 
 **Checks:**
+
 - Verify exported types are actually used by consumers
 - Trace algorithm exports to their usage points
 - Check for any-type usage
@@ -84,7 +98,9 @@ Comprehensive evaluation-to-growth review of the peer-audited behavioral blockch
 **Deliverable:** Type safety audit with unused type identification
 
 ### 5. Code Health (Phase 5)
+
 **Health indicators:**
+
 - Dead code and unused exports (grep analysis)
 - TODO/FIXME/HACK comment locations
 - Console.log statements
@@ -95,10 +111,13 @@ Comprehensive evaluation-to-growth review of the peer-audited behavioral blockch
 **Deliverable:** Code health assessment with cleanup recommendations
 
 ### 6. Database Schema (Phase 6)
+
 **File to analyze:**
+
 - `src/api/database/schema.sql`
 
 **Checks:**
+
 - Index coverage on foreign keys and frequent queries
 - Normalization (3NF compliance)
 - Constraint design (PK, FK, UNIQUE, CHECK)
@@ -121,6 +140,7 @@ Comprehensive evaluation-to-growth review of the peer-audited behavioral blockch
 ## Output Format
 
 Final report will be structured as:
+
 1. Executive Summary
 2. Architecture Coherence Findings (with file:line references)
 3. Service Layer Quality Findings (with risk ratings)
@@ -131,6 +151,7 @@ Final report will be structured as:
 8. Consolidated Recommendations for Growth
 
 ## Status
+
 - [ ] Phase 1: Architecture Analysis
 - [ ] Phase 2: Service Quality Review
 - [ ] Phase 3: Test Quality Assessment

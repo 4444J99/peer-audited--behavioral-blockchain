@@ -3,12 +3,12 @@ import {
   Logger,
   BadRequestException,
   ServiceUnavailableException,
-} from '@nestjs/common';
-import { Pool } from 'pg';
-import * as crypto from 'crypto';
-import { TruthLogService } from '../ledger/truth-log.service';
+} from "@nestjs/common";
+import { Pool } from "pg";
+import * as crypto from "crypto";
+import { TruthLogService } from "../ledger/truth-log.service";
 
-export type AttestationPlatform = 'ios' | 'android';
+export type AttestationPlatform = "ios" | "android";
 
 export interface AppAttestRegistration {
   /**
@@ -59,7 +59,7 @@ export interface PlayIntegrityVerdict {
 export interface DeviceAttestationResult {
   verified: boolean;
   platform: AttestationPlatform;
-  deviceIntegrity: 'STRONG' | 'WEAK' | 'NONE' | 'DEV_BYPASS';
+  deviceIntegrity: "STRONG" | "WEAK" | "NONE" | "DEV_BYPASS";
   reason?: string;
   riskFlags: string[];
 }
@@ -75,12 +75,12 @@ const MAX_CBOR_DEPTH = 16;
 
 function readCborUint(buf: Buffer, offset: number, byteLength: number): number {
   if (offset + byteLength > buf.length) {
-    throw new CborDecodeError('truncated CBOR item');
+    throw new CborDecodeError("truncated CBOR item");
   }
   if (byteLength === 8) {
     const big = buf.readBigUInt64BE(offset);
     if (big > BigInt(Number.MAX_SAFE_INTEGER)) {
-      throw new CborDecodeError('CBOR integer exceeds safe range');
+      throw new CborDecodeError("CBOR integer exceeds safe range");
     }
     return Number(big);
   }
@@ -93,19 +93,19 @@ function decodeCborItem(
   depth: number,
 ): { value: unknown; offset: number } {
   if (depth > MAX_CBOR_DEPTH) {
-    throw new CborDecodeError('CBOR nesting too deep');
+    throw new CborDecodeError("CBOR nesting too deep");
   }
   if (offset >= buf.length) {
-    throw new CborDecodeError('truncated CBOR item');
+    throw new CborDecodeError("truncated CBOR item");
   }
   const initial = buf[offset];
   const major = initial >> 5;
   const additional = initial & 0x1f;
   if (additional === 31) {
-    throw new CborDecodeError('indefinite-length CBOR items are not allowed');
+    throw new CborDecodeError("indefinite-length CBOR items are not allowed");
   }
   if (additional > 27) {
-    throw new CborDecodeError('reserved CBOR additional-info value');
+    throw new CborDecodeError("reserved CBOR additional-info value");
   }
 
   let cursor = offset + 1;
@@ -125,7 +125,7 @@ function decodeCborItem(
       return { value: -1 - argument, offset: cursor };
     case 2: {
       if (cursor + argument > buf.length) {
-        throw new CborDecodeError('truncated CBOR byte string');
+        throw new CborDecodeError("truncated CBOR byte string");
       }
       return {
         value: Buffer.from(buf.subarray(cursor, cursor + argument)),
@@ -134,10 +134,10 @@ function decodeCborItem(
     }
     case 3: {
       if (cursor + argument > buf.length) {
-        throw new CborDecodeError('truncated CBOR text string');
+        throw new CborDecodeError("truncated CBOR text string");
       }
       return {
-        value: buf.subarray(cursor, cursor + argument).toString('utf8'),
+        value: buf.subarray(cursor, cursor + argument).toString("utf8"),
         offset: cursor + argument,
       };
     }
@@ -154,11 +154,13 @@ function decodeCborItem(
       const map: Record<string, unknown> = {};
       for (let i = 0; i < argument; i++) {
         const key = decodeCborItem(buf, cursor, depth + 1);
-        if (typeof key.value !== 'string') {
-          throw new CborDecodeError('only text-string CBOR map keys are supported');
+        if (typeof key.value !== "string") {
+          throw new CborDecodeError(
+            "only text-string CBOR map keys are supported",
+          );
         }
         if (Object.prototype.hasOwnProperty.call(map, key.value)) {
-          throw new CborDecodeError('duplicate CBOR map key');
+          throw new CborDecodeError("duplicate CBOR map key");
         }
         cursor = key.offset;
         const value = decodeCborItem(buf, cursor, depth + 1);
@@ -175,7 +177,7 @@ function decodeCborItem(
 function decodeCbor(buf: Buffer): unknown {
   const { value, offset } = decodeCborItem(buf, 0, 0);
   if (offset !== buf.length) {
-    throw new CborDecodeError('trailing bytes after CBOR item');
+    throw new CborDecodeError("trailing bytes after CBOR item");
   }
   return value;
 }
@@ -194,11 +196,11 @@ interface DerTlv {
 
 function readDerTlv(buf: Buffer, offset: number): DerTlv {
   if (offset + 2 > buf.length) {
-    throw new Error('truncated DER structure');
+    throw new Error("truncated DER structure");
   }
   const tag = buf[offset];
   if ((tag & 0x1f) === 0x1f) {
-    throw new Error('multi-byte DER tags are not supported');
+    throw new Error("multi-byte DER tags are not supported");
   }
   const lengthByte = buf[offset + 1];
   let contentStart = offset + 2;
@@ -208,23 +210,23 @@ function readDerTlv(buf: Buffer, offset: number): DerTlv {
   } else {
     const numBytes = lengthByte & 0x7f;
     if (numBytes === 0 || numBytes > 2) {
-      throw new Error('unsupported DER length encoding');
+      throw new Error("unsupported DER length encoding");
     }
     if (contentStart + numBytes > buf.length) {
-      throw new Error('truncated DER length');
+      throw new Error("truncated DER length");
     }
     length = buf.readUIntBE(contentStart, numBytes);
     contentStart += numBytes;
   }
   const contentEnd = contentStart + length;
   if (contentEnd > buf.length) {
-    throw new Error('DER content exceeds buffer');
+    throw new Error("DER content exceeds buffer");
   }
   return { tag, contentStart, contentEnd, end: contentEnd };
 }
 
 // DER encoding of OID 1.2.840.113635.100.8.2 (Apple App Attest nonce extension)
-const APPLE_NONCE_OID = Buffer.from('06092a864886f763640802', 'hex');
+const APPLE_NONCE_OID = Buffer.from("06092a864886f763640802", "hex");
 
 /**
  * Extension value structure: OCTET STRING { SEQUENCE { [1] { OCTET STRING nonce } } }
@@ -244,13 +246,14 @@ function extractAppleNonce(cert: crypto.X509Certificate): Buffer | null {
         offset = readDerTlv(raw, offset).end;
       }
       const extnValue = readDerTlv(raw, offset);
-      if (extnValue.tag !== 0x04) throw new Error('expected OCTET STRING extnValue');
+      if (extnValue.tag !== 0x04)
+        throw new Error("expected OCTET STRING extnValue");
       const seq = readDerTlv(raw, extnValue.contentStart);
-      if (seq.tag !== 0x30) throw new Error('expected SEQUENCE');
+      if (seq.tag !== 0x30) throw new Error("expected SEQUENCE");
       const ctx = readDerTlv(raw, seq.contentStart);
-      if (ctx.tag !== 0xa1) throw new Error('expected [1] context tag');
+      if (ctx.tag !== 0xa1) throw new Error("expected [1] context tag");
       const octet = readDerTlv(raw, ctx.contentStart);
-      if (octet.tag !== 0x04) throw new Error('expected OCTET STRING nonce');
+      if (octet.tag !== 0x04) throw new Error("expected OCTET STRING nonce");
       return Buffer.from(raw.subarray(octet.contentStart, octet.contentEnd));
     } catch {
       // The OID byte pattern matched unrelated bytes — keep scanning.
@@ -265,7 +268,7 @@ function extractAppleNonce(cert: crypto.X509Certificate): Buffer | null {
 // ---------------------------------------------------------------------------
 
 function sha256(data: Buffer | string): Buffer {
-  return crypto.createHash('sha256').update(data).digest();
+  return crypto.createHash("sha256").update(data).digest();
 }
 
 function constantTimeEquals(a: Buffer, b: Buffer): boolean {
@@ -292,22 +295,22 @@ type JsonWebKeyLike = {
  * 0x04 || X || Y for a P-256 key — the byte sequence Apple hashes to derive keyId.
  */
 function uncompressedEcPoint(publicKey: crypto.KeyObject): Buffer {
-  const jwk = publicKey.export({ format: 'jwk' }) as JsonWebKeyLike;
-  if (jwk.kty !== 'EC' || jwk.crv !== 'P-256' || !jwk.x || !jwk.y) {
-    throw new Error('credential key is not an EC P-256 key');
+  const jwk = publicKey.export({ format: "jwk" }) as JsonWebKeyLike;
+  if (jwk.kty !== "EC" || jwk.crv !== "P-256" || !jwk.x || !jwk.y) {
+    throw new Error("credential key is not an EC P-256 key");
   }
   return Buffer.concat([
     Buffer.from([0x04]),
-    Buffer.from(jwk.x, 'base64url'),
-    Buffer.from(jwk.y, 'base64url'),
+    Buffer.from(jwk.x, "base64url"),
+    Buffer.from(jwk.y, "base64url"),
   ]);
 }
 
 const APP_ATTEST_AAGUID_PROD = Buffer.concat([
-  Buffer.from('appattest', 'ascii'),
+  Buffer.from("appattest", "ascii"),
   Buffer.alloc(7),
 ]);
-const APP_ATTEST_AAGUID_DEV = Buffer.from('appattestdevelop', 'ascii');
+const APP_ATTEST_AAGUID_DEV = Buffer.from("appattestdevelop", "ascii");
 
 // authData layout: rpIdHash(32) flags(1) counter(4) aaguid(16) credIdLen(2) credId(32)
 const ATTESTATION_AUTH_DATA_MIN_LENGTH = 87;
@@ -316,7 +319,7 @@ const FLAG_USER_PRESENT = 0x01;
 const FLAG_ATTESTED_CREDENTIAL_DATA = 0x40;
 
 const DEFAULT_PLAY_INTEGRITY_JWKS_URL =
-  'https://www.googleapis.com/service_accounts/v1/jwk/cloud-integrity@system.gserviceaccount.com';
+  "https://www.googleapis.com/service_accounts/v1/jwk/cloud-integrity@system.gserviceaccount.com";
 const JWKS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const JWKS_REFETCH_COOLDOWN_MS = 60 * 1000;
 const PLAY_INTEGRITY_MAX_AGE_MS = 15 * 60 * 1000;
@@ -364,13 +367,16 @@ export class DeviceAttestationService {
   // -------------------------------------------------------------------------
 
   private isProduction(): boolean {
-    return process.env.NODE_ENV === 'production';
+    return process.env.NODE_ENV === "production";
   }
 
   private devBypassAllowed(): boolean {
     // The bypass is only honored OUTSIDE production; in production a missing
     // config always throws regardless of the flag.
-    return !this.isProduction() && process.env.DEVICE_ATTESTATION_DEV_BYPASS === 'true';
+    return (
+      !this.isProduction() &&
+      process.env.DEVICE_ATTESTATION_DEV_BYPASS === "true"
+    );
   }
 
   private async handleMissingConfig(
@@ -381,16 +387,16 @@ export class DeviceAttestationService {
       this.logger.warn(
         `Device attestation dev bypass active (${missingVar} unset) — returning SIMULATED verdict`,
       );
-      await this.truthLog.appendEvent('DEVICE_ATTESTATION_DEV_BYPASS', {
+      await this.truthLog.appendEvent("DEVICE_ATTESTATION_DEV_BYPASS", {
         platform,
         missingVar,
       });
       return {
         verified: true,
         platform,
-        deviceIntegrity: 'DEV_BYPASS',
+        deviceIntegrity: "DEV_BYPASS",
         reason: `Simulated verdict: ${missingVar} is not configured and DEVICE_ATTESTATION_DEV_BYPASS=true`,
-        riskFlags: ['dev_bypass'],
+        riskFlags: ["dev_bypass"],
       };
     }
     throw new ServiceUnavailableException(
@@ -416,16 +422,16 @@ export class DeviceAttestationService {
       !registration.attestationObject ||
       !registration.challenge
     ) {
-      throw new BadRequestException('Incomplete App Attest registration');
+      throw new BadRequestException("Incomplete App Attest registration");
     }
 
     const appId = process.env.APPLE_APP_ATTEST_APP_ID;
     if (!appId) {
-      return this.handleMissingConfig('ios', 'APPLE_APP_ATTEST_APP_ID');
+      return this.handleMissingConfig("ios", "APPLE_APP_ATTEST_APP_ID");
     }
     const rootCaPem = process.env.APPLE_APP_ATTEST_ROOT_CA_PEM;
     if (!rootCaPem) {
-      return this.handleMissingConfig('ios', 'APPLE_APP_ATTEST_ROOT_CA_PEM');
+      return this.handleMissingConfig("ios", "APPLE_APP_ATTEST_ROOT_CA_PEM");
     }
 
     let rootCa: crypto.X509Certificate;
@@ -434,7 +440,7 @@ export class DeviceAttestationService {
     } catch {
       // Misconfiguration, not client error — fail closed.
       throw new ServiceUnavailableException(
-        'APPLE_APP_ATTEST_ROOT_CA_PEM is not a valid PEM certificate',
+        "APPLE_APP_ATTEST_ROOT_CA_PEM is not a valid PEM certificate",
       );
     }
 
@@ -442,24 +448,29 @@ export class DeviceAttestationService {
 
     let decoded: unknown;
     try {
-      decoded = decodeCbor(Buffer.from(registration.attestationObject, 'base64'));
+      decoded = decodeCbor(
+        Buffer.from(registration.attestationObject, "base64"),
+      );
     } catch {
-      return this.rejectIos(userId, registration.keyId, 'Attestation object is not valid CBOR', [
-        'malformed_attestation',
-      ]);
+      return this.rejectIos(
+        userId,
+        registration.keyId,
+        "Attestation object is not valid CBOR",
+        ["malformed_attestation"],
+      );
     }
 
     const attestation = decoded as Record<string, unknown>;
     if (
-      typeof attestation !== 'object' ||
+      typeof attestation !== "object" ||
       attestation === null ||
-      attestation.fmt !== 'apple-appattest'
+      attestation.fmt !== "apple-appattest"
     ) {
       return this.rejectIos(
         userId,
         registration.keyId,
-        'Attestation format is not apple-appattest',
-        ['malformed_attestation'],
+        "Attestation format is not apple-appattest",
+        ["malformed_attestation"],
       );
     }
 
@@ -475,8 +486,8 @@ export class DeviceAttestationService {
       return this.rejectIos(
         userId,
         registration.keyId,
-        'Attestation statement is missing certificate chain or authenticator data',
-        ['malformed_attestation'],
+        "Attestation statement is missing certificate chain or authenticator data",
+        ["malformed_attestation"],
       );
     }
 
@@ -484,46 +495,61 @@ export class DeviceAttestationService {
     try {
       certs = (x5c as Buffer[]).map((der) => new crypto.X509Certificate(der));
     } catch {
-      return this.rejectIos(userId, registration.keyId, 'Certificate parse failure', [
-        'invalid_certificate_chain',
-      ]);
+      return this.rejectIos(
+        userId,
+        registration.keyId,
+        "Certificate parse failure",
+        ["invalid_certificate_chain"],
+      );
     }
 
     const chainError = this.verifyCertificateChain(certs, rootCa);
     if (chainError) {
-      return this.rejectIos(userId, registration.keyId, `Certificate chain invalid: ${chainError}`, [
-        'invalid_certificate_chain',
-      ]);
+      return this.rejectIos(
+        userId,
+        registration.keyId,
+        `Certificate chain invalid: ${chainError}`,
+        ["invalid_certificate_chain"],
+      );
     }
 
     if (authData.length < ATTESTATION_AUTH_DATA_MIN_LENGTH) {
-      return this.rejectIos(userId, registration.keyId, 'Authenticator data too short', [
-        'malformed_attestation',
-      ]);
+      return this.rejectIos(
+        userId,
+        registration.keyId,
+        "Authenticator data too short",
+        ["malformed_attestation"],
+      );
     }
 
-    const expectedRpIdHash = sha256(Buffer.from(appId, 'utf8'));
+    const expectedRpIdHash = sha256(Buffer.from(appId, "utf8"));
     if (!constantTimeEquals(authData.subarray(0, 32), expectedRpIdHash)) {
       return this.rejectIos(
         userId,
         registration.keyId,
-        'rpIdHash does not match APPLE_APP_ATTEST_APP_ID',
-        ['rp_id_mismatch'],
+        "rpIdHash does not match APPLE_APP_ATTEST_APP_ID",
+        ["rp_id_mismatch"],
       );
     }
 
     const flags = authData[32];
     if (!(flags & FLAG_ATTESTED_CREDENTIAL_DATA)) {
-      return this.rejectIos(userId, registration.keyId, 'Attested credential data flag not set', [
-        'malformed_attestation',
-      ]);
+      return this.rejectIos(
+        userId,
+        registration.keyId,
+        "Attested credential data flag not set",
+        ["malformed_attestation"],
+      );
     }
 
     const counter = authData.readUInt32BE(33);
     if (counter !== 0) {
-      return this.rejectIos(userId, registration.keyId, 'Initial attestation counter must be 0', [
-        'nonzero_initial_counter',
-      ]);
+      return this.rejectIos(
+        userId,
+        registration.keyId,
+        "Initial attestation counter must be 0",
+        ["nonzero_initial_counter"],
+      );
     }
 
     const aaguid = authData.subarray(37, 53);
@@ -533,33 +559,39 @@ export class DeviceAttestationService {
           return this.rejectIos(
             userId,
             registration.keyId,
-            'Development aaguid is not accepted in production',
-            ['development_aaguid'],
+            "Development aaguid is not accepted in production",
+            ["development_aaguid"],
           );
         }
-        riskFlags.push('development_aaguid');
+        riskFlags.push("development_aaguid");
       } else {
-        return this.rejectIos(userId, registration.keyId, 'Unrecognized App Attest aaguid', [
-          'malformed_attestation',
-        ]);
+        return this.rejectIos(
+          userId,
+          registration.keyId,
+          "Unrecognized App Attest aaguid",
+          ["malformed_attestation"],
+        );
       }
     }
 
     const credIdLength = authData.readUInt16BE(53);
     if (credIdLength !== 32 || authData.length < 55 + credIdLength) {
-      return this.rejectIos(userId, registration.keyId, 'Malformed credential ID', [
-        'malformed_attestation',
-      ]);
+      return this.rejectIos(
+        userId,
+        registration.keyId,
+        "Malformed credential ID",
+        ["malformed_attestation"],
+      );
     }
     const credId = authData.subarray(55, 55 + credIdLength);
 
-    const keyIdBytes = Buffer.from(registration.keyId, 'base64');
+    const keyIdBytes = Buffer.from(registration.keyId, "base64");
     if (keyIdBytes.length !== 32 || !credId.equals(keyIdBytes)) {
       return this.rejectIos(
         userId,
         registration.keyId,
-        'Credential ID does not match the supplied keyId',
-        ['key_id_mismatch'],
+        "Credential ID does not match the supplied keyId",
+        ["key_id_mismatch"],
       );
     }
 
@@ -568,36 +600,41 @@ export class DeviceAttestationService {
     try {
       publicKeyPoint = uncompressedEcPoint(credCert.publicKey);
     } catch {
-      return this.rejectIos(userId, registration.keyId, 'Credential key is not an EC P-256 key', [
-        'unsupported_key_type',
-      ]);
+      return this.rejectIos(
+        userId,
+        registration.keyId,
+        "Credential key is not an EC P-256 key",
+        ["unsupported_key_type"],
+      );
     }
 
     if (!constantTimeEquals(sha256(publicKeyPoint), keyIdBytes)) {
       return this.rejectIos(
         userId,
         registration.keyId,
-        'keyId is not the SHA-256 of the attested public key',
-        ['key_id_mismatch'],
+        "keyId is not the SHA-256 of the attested public key",
+        ["key_id_mismatch"],
       );
     }
 
     // Nonce binding: nonce = SHA256(authData || SHA256(challenge)) must appear
     // in the credential certificate's Apple nonce extension. This proves the
     // certificate was minted for exactly this authData + challenge pair.
-    const clientDataHash = sha256(Buffer.from(registration.challenge, 'utf8'));
+    const clientDataHash = sha256(Buffer.from(registration.challenge, "utf8"));
     const expectedNonce = sha256(Buffer.concat([authData, clientDataHash]));
     const actualNonce = extractAppleNonce(credCert);
     if (!actualNonce || !constantTimeEquals(actualNonce, expectedNonce)) {
       return this.rejectIos(
         userId,
         registration.keyId,
-        'Attestation nonce does not match the challenge binding',
-        ['nonce_mismatch'],
+        "Attestation nonce does not match the challenge binding",
+        ["nonce_mismatch"],
       );
     }
 
-    const publicKeyPem = credCert.publicKey.export({ type: 'spki', format: 'pem' }).toString();
+    const publicKeyPem = credCert.publicKey
+      .export({ type: "spki", format: "pem" })
+      .toString();
 
     // sign_count deliberately NOT reset on conflict: replaying a captured
     // registration for an existing key must not re-enable assertion replay.
@@ -613,20 +650,19 @@ export class DeviceAttestationService {
         registration.keyId,
         publicKeyPem,
         JSON.stringify({
-          aaguid: aaguid.equals(APP_ATTEST_AAGUID_DEV) ? 'appattestdevelop' : 'appattest',
+          aaguid: aaguid.equals(APP_ATTEST_AAGUID_DEV)
+            ? "appattestdevelop"
+            : "appattest",
         }),
       ],
     );
 
-    const deviceIntegrity: DeviceAttestationResult['deviceIntegrity'] = riskFlags.includes(
-      'development_aaguid',
-    )
-      ? 'WEAK'
-      : 'STRONG';
+    const deviceIntegrity: DeviceAttestationResult["deviceIntegrity"] =
+      riskFlags.includes("development_aaguid") ? "WEAK" : "STRONG";
 
-    await this.truthLog.appendEvent('DEVICE_KEY_REGISTERED', {
+    await this.truthLog.appendEvent("DEVICE_KEY_REGISTERED", {
       userId,
-      platform: 'ios',
+      platform: "ios",
       keyId: registration.keyId,
       deviceIntegrity,
       riskFlags,
@@ -634,7 +670,7 @@ export class DeviceAttestationService {
 
     return {
       verified: true,
-      platform: 'ios',
+      platform: "ios",
       deviceIntegrity,
       riskFlags,
     };
@@ -652,29 +688,32 @@ export class DeviceAttestationService {
     for (const cert of [...chain, root]) {
       const notBefore = new Date(cert.validFrom);
       const notAfter = new Date(cert.validTo);
-      if (Number.isNaN(notBefore.getTime()) || Number.isNaN(notAfter.getTime())) {
-        return 'certificate has an unparseable validity window';
+      if (
+        Number.isNaN(notBefore.getTime()) ||
+        Number.isNaN(notAfter.getTime())
+      ) {
+        return "certificate has an unparseable validity window";
       }
       if (now < notBefore || now > notAfter) {
-        return 'certificate outside its validity window';
+        return "certificate outside its validity window";
       }
     }
     for (let i = 0; i < chain.length; i++) {
       const issuer = i + 1 < chain.length ? chain[i + 1] : root;
       try {
         if (!chain[i].verify(issuer.publicKey)) {
-          return 'signature verification failed';
+          return "signature verification failed";
         }
       } catch {
-        return 'signature verification failed';
+        return "signature verification failed";
       }
     }
     try {
       if (!root.verify(root.publicKey)) {
-        return 'root CA is not self-signed';
+        return "root CA is not self-signed";
       }
     } catch {
-      return 'root CA is not self-signed';
+      return "root CA is not self-signed";
     }
     return null;
   }
@@ -685,17 +724,17 @@ export class DeviceAttestationService {
     reason: string,
     riskFlags: string[],
   ): Promise<DeviceAttestationResult> {
-    await this.truthLog.appendEvent('DEVICE_ATTESTATION_REJECTED', {
+    await this.truthLog.appendEvent("DEVICE_ATTESTATION_REJECTED", {
       userId,
-      platform: 'ios',
+      platform: "ios",
       keyId,
       reason,
       riskFlags,
     });
     return {
       verified: false,
-      platform: 'ios',
-      deviceIntegrity: 'NONE',
+      platform: "ios",
+      deviceIntegrity: "NONE",
       reason,
       riskFlags,
     };
@@ -727,12 +766,12 @@ export class DeviceAttestationService {
       !assertion.keyId ||
       !assertion.signature
     ) {
-      throw new BadRequestException('Incomplete App Attest assertion');
+      throw new BadRequestException("Incomplete App Attest assertion");
     }
 
     const appId = process.env.APPLE_APP_ATTEST_APP_ID;
     if (!appId) {
-      return this.handleMissingConfig('ios', 'APPLE_APP_ATTEST_APP_ID');
+      return this.handleMissingConfig("ios", "APPLE_APP_ATTEST_APP_ID");
     }
 
     const riskFlags: string[] = [];
@@ -745,36 +784,44 @@ export class DeviceAttestationService {
     );
 
     if (keyResult.rows.length === 0) {
-      await this.truthLog.appendEvent('DEVICE_ATTESTATION_KEY_NOT_FOUND', {
+      await this.truthLog.appendEvent("DEVICE_ATTESTATION_KEY_NOT_FOUND", {
         userId,
-        platform: 'ios',
+        platform: "ios",
         keyId: assertion.keyId,
       });
       return {
         verified: false,
-        platform: 'ios',
-        deviceIntegrity: 'NONE',
-        reason: 'Attestation key not registered or revoked',
-        riskFlags: ['unknown_key'],
+        platform: "ios",
+        deviceIntegrity: "NONE",
+        reason: "Attestation key not registered or revoked",
+        riskFlags: ["unknown_key"],
       };
     }
 
     const key = keyResult.rows[0];
 
-    const authenticatorData = Buffer.from(assertion.authenticatorData, 'base64');
+    const authenticatorData = Buffer.from(
+      assertion.authenticatorData,
+      "base64",
+    );
     if (authenticatorData.length < ASSERTION_AUTH_DATA_MIN_LENGTH) {
-      return this.rejectIos(userId, assertion.keyId, 'authenticatorData too short', [
-        'malformed_assertion',
-      ]);
-    }
-
-    const expectedRpIdHash = sha256(Buffer.from(appId, 'utf8'));
-    if (!constantTimeEquals(authenticatorData.subarray(0, 32), expectedRpIdHash)) {
       return this.rejectIos(
         userId,
         assertion.keyId,
-        'rpIdHash does not match APPLE_APP_ATTEST_APP_ID',
-        ['rp_id_mismatch'],
+        "authenticatorData too short",
+        ["malformed_assertion"],
+      );
+    }
+
+    const expectedRpIdHash = sha256(Buffer.from(appId, "utf8"));
+    if (
+      !constantTimeEquals(authenticatorData.subarray(0, 32), expectedRpIdHash)
+    ) {
+      return this.rejectIos(
+        userId,
+        assertion.keyId,
+        "rpIdHash does not match APPLE_APP_ATTEST_APP_ID",
+        ["rp_id_mismatch"],
       );
     }
 
@@ -783,7 +830,7 @@ export class DeviceAttestationService {
     const counter = authenticatorData.readUInt32BE(33);
     const storedCount = Number(key.sign_count);
     if (counter <= storedCount) {
-      await this.truthLog.appendEvent('DEVICE_ATTESTATION_COUNTER_REPLAY', {
+      await this.truthLog.appendEvent("DEVICE_ATTESTATION_COUNTER_REPLAY", {
         userId,
         keyId: assertion.keyId,
         storedCount,
@@ -791,33 +838,44 @@ export class DeviceAttestationService {
       });
       return {
         verified: false,
-        platform: 'ios',
-        deviceIntegrity: 'NONE',
-        reason: 'Assertion counter is not monotonically increasing (possible replay)',
-        riskFlags: ['counter_replay'],
+        platform: "ios",
+        deviceIntegrity: "NONE",
+        reason:
+          "Assertion counter is not monotonically increasing (possible replay)",
+        riskFlags: ["counter_replay"],
       };
     }
 
     // Apple: nonce = SHA256(authenticatorData || SHA256(clientDataJSON)),
     // signed by the Secure Enclave key with ECDSA-SHA256.
-    const clientData = Buffer.from(assertion.clientDataJSON, 'base64');
-    const nonce = sha256(Buffer.concat([authenticatorData, sha256(clientData)]));
-    const signature = Buffer.from(assertion.signature, 'base64');
+    const clientData = Buffer.from(assertion.clientDataJSON, "base64");
+    const nonce = sha256(
+      Buffer.concat([authenticatorData, sha256(clientData)]),
+    );
+    const signature = Buffer.from(assertion.signature, "base64");
 
     let signatureValid = false;
     try {
-      signatureValid = crypto.verify('sha256', nonce, key.public_key, signature);
+      signatureValid = crypto.verify(
+        "sha256",
+        nonce,
+        key.public_key,
+        signature,
+      );
     } catch {
       signatureValid = false;
     }
     if (!signatureValid) {
-      return this.rejectIos(userId, assertion.keyId, 'Assertion signature verification failed', [
-        'invalid_signature',
-      ]);
+      return this.rejectIos(
+        userId,
+        assertion.keyId,
+        "Assertion signature verification failed",
+        ["invalid_signature"],
+      );
     }
 
     if (!(authenticatorData[32] & FLAG_USER_PRESENT)) {
-      riskFlags.push('user_not_present');
+      riskFlags.push("user_not_present");
     }
 
     await this.pool.query(
@@ -825,20 +883,20 @@ export class DeviceAttestationService {
       [counter, key.id],
     );
 
-    await this.truthLog.appendEvent('DEVICE_ATTESTATION_VERIFIED', {
+    await this.truthLog.appendEvent("DEVICE_ATTESTATION_VERIFIED", {
       userId,
-      platform: 'ios',
+      platform: "ios",
       keyId: assertion.keyId,
       verified: true,
-      deviceIntegrity: 'STRONG',
+      deviceIntegrity: "STRONG",
       riskFlags,
       counter,
     });
 
     return {
       verified: true,
-      platform: 'ios',
-      deviceIntegrity: 'STRONG',
+      platform: "ios",
+      deviceIntegrity: "STRONG",
       riskFlags,
     };
   }
@@ -862,156 +920,180 @@ export class DeviceAttestationService {
     verdict: PlayIntegrityVerdict,
   ): Promise<DeviceAttestationResult> {
     if (!verdict || !verdict.tokenResult || !verdict.requestPackageName) {
-      throw new BadRequestException('Incomplete Play Integrity verdict');
+      throw new BadRequestException("Incomplete Play Integrity verdict");
     }
 
     const expectedPackage = process.env.ANDROID_PACKAGE_NAME;
     if (!expectedPackage) {
-      return this.handleMissingConfig('android', 'ANDROID_PACKAGE_NAME');
+      return this.handleMissingConfig("android", "ANDROID_PACKAGE_NAME");
     }
 
     if (verdict.requestPackageName !== expectedPackage) {
-      return this.rejectAndroid(userId, 'Claimed package name does not match ANDROID_PACKAGE_NAME', [
-        'package_mismatch',
-      ]);
+      return this.rejectAndroid(
+        userId,
+        "Claimed package name does not match ANDROID_PACKAGE_NAME",
+        ["package_mismatch"],
+      );
     }
 
-    const parts = verdict.tokenResult.split('.');
+    const parts = verdict.tokenResult.split(".");
     if (parts.length !== 3 || parts.some((p) => p.length === 0)) {
-      return this.rejectAndroid(userId, 'Token is not a JWS', ['malformed_token']);
+      return this.rejectAndroid(userId, "Token is not a JWS", [
+        "malformed_token",
+      ]);
     }
 
     let header: Record<string, unknown>;
     try {
-      header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+      header = JSON.parse(Buffer.from(parts[0], "base64url").toString("utf8"));
     } catch {
-      return this.rejectAndroid(userId, 'Could not decode JWS header', ['malformed_token']);
+      return this.rejectAndroid(userId, "Could not decode JWS header", [
+        "malformed_token",
+      ]);
     }
 
     const alg = header.alg;
-    if (alg !== 'ES256' && alg !== 'RS256') {
-      return this.rejectAndroid(userId, `Unsupported JWS algorithm: ${String(alg)}`, [
-        'unsupported_algorithm',
-      ]);
+    if (alg !== "ES256" && alg !== "RS256") {
+      return this.rejectAndroid(
+        userId,
+        `Unsupported JWS algorithm: ${String(alg)}`,
+        ["unsupported_algorithm"],
+      );
     }
     const kid = header.kid;
-    if (typeof kid !== 'string' || kid.length === 0) {
-      return this.rejectAndroid(userId, 'JWS header is missing kid', ['missing_key_id']);
+    if (typeof kid !== "string" || kid.length === 0) {
+      return this.rejectAndroid(userId, "JWS header is missing kid", [
+        "missing_key_id",
+      ]);
     }
 
     const jwk = await this.getGoogleSigningKey(kid);
     if (!jwk) {
-      return this.rejectAndroid(userId, `No Google signing key found for kid ${kid}`, [
-        'unknown_signing_key',
-      ]);
+      return this.rejectAndroid(
+        userId,
+        `No Google signing key found for kid ${kid}`,
+        ["unknown_signing_key"],
+      );
     }
 
     let publicKey: crypto.KeyObject;
     try {
-      publicKey = crypto.createPublicKey({ key: jwk, format: 'jwk' } as Parameters<typeof crypto.createPublicKey>[0]);
+      publicKey = crypto.createPublicKey({
+        key: jwk,
+        format: "jwk",
+      } as Parameters<typeof crypto.createPublicKey>[0]);
     } catch {
-      return this.rejectAndroid(userId, 'Google signing key could not be imported', [
-        'invalid_signing_key',
-      ]);
+      return this.rejectAndroid(
+        userId,
+        "Google signing key could not be imported",
+        ["invalid_signing_key"],
+      );
     }
 
-    const signingInput = Buffer.from(`${parts[0]}.${parts[1]}`, 'ascii');
-    const signature = Buffer.from(parts[2], 'base64url');
+    const signingInput = Buffer.from(`${parts[0]}.${parts[1]}`, "ascii");
+    const signature = Buffer.from(parts[2], "base64url");
     let signatureValid = false;
     try {
       signatureValid =
-        alg === 'ES256'
+        alg === "ES256"
           ? crypto.verify(
-              'sha256',
+              "sha256",
               signingInput,
-              { key: publicKey, dsaEncoding: 'ieee-p1363' },
+              { key: publicKey, dsaEncoding: "ieee-p1363" },
               signature,
             )
-          : crypto.verify('sha256', signingInput, publicKey, signature);
+          : crypto.verify("sha256", signingInput, publicKey, signature);
     } catch {
       signatureValid = false;
     }
     if (!signatureValid) {
-      return this.rejectAndroid(userId, 'JWS signature verification failed', [
-        'invalid_signature',
+      return this.rejectAndroid(userId, "JWS signature verification failed", [
+        "invalid_signature",
       ]);
     }
 
     let payload: Record<string, unknown>;
     try {
-      payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+      payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
     } catch {
-      return this.rejectAndroid(userId, 'Could not decode JWS payload', ['malformed_token']);
+      return this.rejectAndroid(userId, "Could not decode JWS payload", [
+        "malformed_token",
+      ]);
     }
 
     const nowSeconds = Math.floor(Date.now() / 1000);
-    if (typeof payload.exp === 'number' && payload.exp < nowSeconds) {
-      return this.rejectAndroid(userId, 'Token is expired', ['token_expired']);
+    if (typeof payload.exp === "number" && payload.exp < nowSeconds) {
+      return this.rejectAndroid(userId, "Token is expired", ["token_expired"]);
     }
 
     const riskFlags: string[] = [];
-    const requestDetails = payload.requestDetails as Record<string, unknown> | undefined;
+    const requestDetails = payload.requestDetails as
+      Record<string, unknown> | undefined;
     if (requestDetails?.requestPackageName !== expectedPackage) {
-      return this.rejectAndroid(userId, 'Signed payload package name mismatch', [
-        'package_mismatch',
-      ]);
+      return this.rejectAndroid(
+        userId,
+        "Signed payload package name mismatch",
+        ["package_mismatch"],
+      );
     }
 
     const timestampMillis = Number(requestDetails?.timestampMillis);
     if (Number.isFinite(timestampMillis)) {
       if (Date.now() - timestampMillis > PLAY_INTEGRITY_MAX_AGE_MS) {
-        riskFlags.push('stale_verdict');
+        riskFlags.push("stale_verdict");
       }
     } else {
-      riskFlags.push('missing_timestamp');
+      riskFlags.push("missing_timestamp");
     }
 
-    const deviceIntegrityClaim = payload.deviceIntegrity as Record<string, unknown> | undefined;
+    const deviceIntegrityClaim = payload.deviceIntegrity as
+      Record<string, unknown> | undefined;
     const recognitionVerdicts: string[] = Array.isArray(
       deviceIntegrityClaim?.deviceRecognitionVerdict,
     )
       ? (deviceIntegrityClaim!.deviceRecognitionVerdict as unknown[]).filter(
-          (v): v is string => typeof v === 'string',
+          (v): v is string => typeof v === "string",
         )
       : [];
 
-    let deviceIntegrity: DeviceAttestationResult['deviceIntegrity'];
+    let deviceIntegrity: DeviceAttestationResult["deviceIntegrity"];
     if (
-      recognitionVerdicts.includes('MEETS_STRONG_INTEGRITY') ||
-      recognitionVerdicts.includes('MEETS_DEVICE_INTEGRITY')
+      recognitionVerdicts.includes("MEETS_STRONG_INTEGRITY") ||
+      recognitionVerdicts.includes("MEETS_DEVICE_INTEGRITY")
     ) {
-      deviceIntegrity = 'STRONG';
-    } else if (recognitionVerdicts.includes('MEETS_BASIC_INTEGRITY')) {
-      deviceIntegrity = 'WEAK';
-      riskFlags.push('basic_integrity_only');
+      deviceIntegrity = "STRONG";
+    } else if (recognitionVerdicts.includes("MEETS_BASIC_INTEGRITY")) {
+      deviceIntegrity = "WEAK";
+      riskFlags.push("basic_integrity_only");
     } else {
-      deviceIntegrity = 'NONE';
-      riskFlags.push('no_device_integrity');
+      deviceIntegrity = "NONE";
+      riskFlags.push("no_device_integrity");
     }
 
-    const appIntegrityClaim = payload.appIntegrity as Record<string, unknown> | undefined;
-    if (appIntegrityClaim?.appRecognitionVerdict !== 'PLAY_RECOGNIZED') {
-      riskFlags.push('app_not_play_recognized');
+    const appIntegrityClaim = payload.appIntegrity as
+      Record<string, unknown> | undefined;
+    if (appIntegrityClaim?.appRecognitionVerdict !== "PLAY_RECOGNIZED") {
+      riskFlags.push("app_not_play_recognized");
     }
 
     // Downgrade STRONG on soft risk signals; NONE stays NONE.
     if (
-      deviceIntegrity === 'STRONG' &&
-      (riskFlags.includes('stale_verdict') ||
-        riskFlags.includes('missing_timestamp') ||
-        riskFlags.includes('app_not_play_recognized'))
+      deviceIntegrity === "STRONG" &&
+      (riskFlags.includes("stale_verdict") ||
+        riskFlags.includes("missing_timestamp") ||
+        riskFlags.includes("app_not_play_recognized"))
     ) {
-      deviceIntegrity = 'WEAK';
+      deviceIntegrity = "WEAK";
     }
 
-    const verified = deviceIntegrity !== 'NONE';
+    const verified = deviceIntegrity !== "NONE";
 
     if (verified) {
       // Record WHICH Google key verified this verdict (kid + SPKI fingerprint),
       // never a fabricated placeholder value.
       const spkiFingerprint = sha256(
-        publicKey.export({ type: 'spki', format: 'der' }) as Buffer,
-      ).toString('hex');
+        publicKey.export({ type: "spki", format: "der" }) as Buffer,
+      ).toString("hex");
       await this.pool.query(
         `INSERT INTO device_attestation_keys (user_id, platform, key_id, public_key, device_info)
          VALUES ($1, 'android', $2, $3, $4)
@@ -1026,15 +1108,16 @@ export class DeviceAttestationService {
           JSON.stringify({
             packageName: expectedPackage,
             deviceRecognitionVerdict: recognitionVerdicts,
-            appRecognitionVerdict: appIntegrityClaim?.appRecognitionVerdict ?? null,
+            appRecognitionVerdict:
+              appIntegrityClaim?.appRecognitionVerdict ?? null,
           }),
         ],
       );
     }
 
-    await this.truthLog.appendEvent('DEVICE_ATTESTATION_VERIFIED', {
+    await this.truthLog.appendEvent("DEVICE_ATTESTATION_VERIFIED", {
       userId,
-      platform: 'android',
+      platform: "android",
       packageName: expectedPackage,
       verified,
       deviceIntegrity,
@@ -1043,7 +1126,7 @@ export class DeviceAttestationService {
 
     return {
       verified,
-      platform: 'android',
+      platform: "android",
       deviceIntegrity,
       riskFlags,
     };
@@ -1054,23 +1137,27 @@ export class DeviceAttestationService {
     reason: string,
     riskFlags: string[],
   ): Promise<DeviceAttestationResult> {
-    await this.truthLog.appendEvent('DEVICE_ATTESTATION_REJECTED', {
+    await this.truthLog.appendEvent("DEVICE_ATTESTATION_REJECTED", {
       userId,
-      platform: 'android',
+      platform: "android",
       reason,
       riskFlags,
     });
     return {
       verified: false,
-      platform: 'android',
-      deviceIntegrity: 'NONE',
+      platform: "android",
+      deviceIntegrity: "NONE",
       reason,
       riskFlags,
     };
   }
 
-  private async getGoogleSigningKey(kid: string): Promise<Record<string, unknown> | null> {
-    const url = process.env.GOOGLE_PLAY_INTEGRITY_JWKS_URL || DEFAULT_PLAY_INTEGRITY_JWKS_URL;
+  private async getGoogleSigningKey(
+    kid: string,
+  ): Promise<Record<string, unknown> | null> {
+    const url =
+      process.env.GOOGLE_PLAY_INTEGRITY_JWKS_URL ||
+      DEFAULT_PLAY_INTEGRITY_JWKS_URL;
     const now = Date.now();
 
     if (
@@ -1099,7 +1186,9 @@ export class DeviceAttestationService {
     try {
       response = await fetch(url);
     } catch {
-      throw new ServiceUnavailableException('Unable to fetch Play Integrity signing keys');
+      throw new ServiceUnavailableException(
+        "Unable to fetch Play Integrity signing keys",
+      );
     }
     if (!response.ok) {
       throw new ServiceUnavailableException(
@@ -1110,13 +1199,19 @@ export class DeviceAttestationService {
     try {
       body = await response.json();
     } catch {
-      throw new ServiceUnavailableException('Play Integrity JWKS response is not valid JSON');
+      throw new ServiceUnavailableException(
+        "Play Integrity JWKS response is not valid JSON",
+      );
     }
     const keys = (body as { keys?: unknown }).keys;
     if (!Array.isArray(keys)) {
-      throw new ServiceUnavailableException('Play Integrity JWKS response missing keys array');
+      throw new ServiceUnavailableException(
+        "Play Integrity JWKS response missing keys array",
+      );
     }
-    return keys.filter((k): k is Record<string, unknown> => !!k && typeof k === 'object');
+    return keys.filter(
+      (k): k is Record<string, unknown> => !!k && typeof k === "object",
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -1132,6 +1227,6 @@ export class DeviceAttestationService {
       [userId, keyId],
     );
 
-    await this.truthLog.appendEvent('DEVICE_KEY_REVOKED', { userId, keyId });
+    await this.truthLog.appendEvent("DEVICE_KEY_REVOKED", { userId, keyId });
   }
 }

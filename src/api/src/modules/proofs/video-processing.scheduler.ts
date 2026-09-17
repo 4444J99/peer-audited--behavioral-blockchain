@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
-import { VideoProcessingService } from './video-processing.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
+import { VideoProcessingService } from "./video-processing.service";
 
 /**
  * The redaction safety net.
@@ -21,12 +21,14 @@ export class VideoProcessingScheduler {
 
   constructor(private readonly videoProcessing: VideoProcessingService) {}
 
-  @Cron('0 */10 * * * *') // every 10 minutes
+  @Cron("0 */10 * * * *") // every 10 minutes
   async sweepPendingProofs(): Promise<void> {
     try {
       const dispatched = await this.videoProcessing.dispatchPendingProofs();
       if (dispatched > 0) {
-        this.logger.log(`Redaction sweep dispatched ${dispatched} proof(s) that missed their inline enqueue.`);
+        this.logger.log(
+          `Redaction sweep dispatched ${dispatched} proof(s) that missed their inline enqueue.`,
+        );
       }
     } catch (error) {
       this.logger.error(`Redaction sweep failed: ${(error as Error)?.message}`);

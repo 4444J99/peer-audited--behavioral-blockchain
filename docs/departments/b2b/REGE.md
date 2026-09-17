@@ -54,14 +54,14 @@ Three ICP tiers drive pipeline prioritization: Tier 1 (licensed therapists speci
 
 ## 3. Artifacts Registry
 
-| ID | Name | Path | Phase | Staleness | Last Updated | Status |
-|----|------|------|-------|-----------|--------------|--------|
-| B1 | Ideal Customer Profile | `artifacts/icp.md` | hardening | 30d | 2026-03-08 | active |
-| B2 | Outreach Sequences | `artifacts/outreach-sequences.md` | hardening | 21d | 2026-03-08 | active |
-| B3 | Security Questionnaire | `artifacts/security-questionnaire.md` | hardening | 90d | 2026-03-08 | active |
-| B4 | Objection Handling Playbook | `artifacts/objection-playbook.md` | — | — | — | dormant |
-| B5 | Partner Onboarding Checklist | `artifacts/partner-onboarding.md` | — | — | — | dormant |
-| B6 | Enterprise Pricing Calculator | `artifacts/pricing-calculator.md` | — | — | — | dormant |
+| ID  | Name                          | Path                                  | Phase     | Staleness | Last Updated | Status  |
+| --- | ----------------------------- | ------------------------------------- | --------- | --------- | ------------ | ------- |
+| B1  | Ideal Customer Profile        | `artifacts/icp.md`                    | hardening | 30d       | 2026-03-08   | active  |
+| B2  | Outreach Sequences            | `artifacts/outreach-sequences.md`     | hardening | 21d       | 2026-03-08   | active  |
+| B3  | Security Questionnaire        | `artifacts/security-questionnaire.md` | hardening | 90d       | 2026-03-08   | active  |
+| B4  | Objection Handling Playbook   | `artifacts/objection-playbook.md`     | —         | —         | —            | dormant |
+| B5  | Partner Onboarding Checklist  | `artifacts/partner-onboarding.md`     | —         | —         | —            | dormant |
+| B6  | Enterprise Pricing Calculator | `artifacts/pricing-calculator.md`     | —         | —         | —            | dormant |
 
 **Staleness rules:** B1 stale after 30 days (ICP must track market learning). B2 stale after 21 days (outreach sequences decay fast). B3 stale after 90 days (compliance requirements change quarterly).
 
@@ -129,7 +129,7 @@ Three ICP tiers drive pipeline prioritization: Tier 1 (licensed therapists speci
   - delivery.api must be live (API access for integrations)
   - community platform must exist (customer success channel)
   - content.docs_site must be live (self-service documentation)
-  Cross-reference against active Enterprise pipeline deals and their stated requirements.
+    Cross-reference against active Enterprise pipeline deals and their stated requirements.
 - **Output:** Enterprise readiness assessment in `reviews/YYYY-QN--enterprise-readiness.md`
 - **Escalate:** If enterprise tier is sold but required arms are not live → signal:enterprise-readiness-gap → OPS, ENG
 
@@ -164,24 +164,24 @@ Three ICP tiers drive pipeline prioritization: Tier 1 (licensed therapists speci
 
 ### Emits
 
-| Signal | Recipients | Payload |
-|--------|------------|---------|
-| `signal:deal-closed` | FIN, CXS | `{practitioner_name, plan_tier, mrr, estimated_client_volume, specialization}` |
-| `signal:icp-shift` | PRD, GRO | `{segment_changed, direction, evidence, recommended_action}` |
-| `signal:enterprise-feature-request` | PRD | `{requester, feature, business_impact, deal_value_at_risk, priority}` |
-| `signal:competitor-mentioned` | GRO, PRD | `{competitor, context, deal_stage, prospect_segment}` |
-| `signal:pipeline-forecast` | FIN | `{period, weighted_pipeline_value, expected_closes, plan_tier_distribution}` |
+| Signal                              | Recipients | Payload                                                                        |
+| ----------------------------------- | ---------- | ------------------------------------------------------------------------------ |
+| `signal:deal-closed`                | FIN, CXS   | `{practitioner_name, plan_tier, mrr, estimated_client_volume, specialization}` |
+| `signal:icp-shift`                  | PRD, GRO   | `{segment_changed, direction, evidence, recommended_action}`                   |
+| `signal:enterprise-feature-request` | PRD        | `{requester, feature, business_impact, deal_value_at_risk, priority}`          |
+| `signal:competitor-mentioned`       | GRO, PRD   | `{competitor, context, deal_stage, prospect_segment}`                          |
+| `signal:pipeline-forecast`          | FIN        | `{period, weighted_pipeline_value, expected_closes, plan_tier_distribution}`   |
 
 ### Consumes
 
-| Signal | Source | Action |
-|--------|--------|--------|
-| `signal:pricing-change` | FIN | Update all proposals, one-pagers, and outreach sequences referencing pricing within 24 hours; re-qualify active deals affected by price change |
-| `signal:content-published` | GRO | Share relevant practitioner-facing content (case studies, research summaries) with active prospects at appropriate pipeline stage; add to outreach sequence as social proof |
-| `signal:compliance-alert` | LEG | Update security questionnaire (B3) within 48 hours; pause Enterprise outreach if compliance status materially changed; notify active Enterprise prospects of timeline adjustments |
-| `signal:feature-shipped` | PRD | Update demo script, one-pagers, and outreach sequences to highlight new capability; prioritize notification to prospects who requested the feature |
-| `signal:churn-risk` | CXS | Review churning practitioner segment for commonalities with active pipeline; if churn is concentrated in a segment, flag for ICP adjustment; contact churning partners to understand root cause before they cancel |
-| `signal:lead-practitioner` | GRO | Qualify inbound practitioner lead against ICP within 24 hours; if qualified, add to pipeline and initiate outreach sequence; if unqualified, route to nurture |
+| Signal                     | Source | Action                                                                                                                                                                                                             |
+| -------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `signal:pricing-change`    | FIN    | Update all proposals, one-pagers, and outreach sequences referencing pricing within 24 hours; re-qualify active deals affected by price change                                                                     |
+| `signal:content-published` | GRO    | Share relevant practitioner-facing content (case studies, research summaries) with active prospects at appropriate pipeline stage; add to outreach sequence as social proof                                        |
+| `signal:compliance-alert`  | LEG    | Update security questionnaire (B3) within 48 hours; pause Enterprise outreach if compliance status materially changed; notify active Enterprise prospects of timeline adjustments                                  |
+| `signal:feature-shipped`   | PRD    | Update demo script, one-pagers, and outreach sequences to highlight new capability; prioritize notification to prospects who requested the feature                                                                 |
+| `signal:churn-risk`        | CXS    | Review churning practitioner segment for commonalities with active pipeline; if churn is concentrated in a segment, flag for ICP adjustment; contact churning partners to understand root cause before they cancel |
+| `signal:lead-practitioner` | GRO    | Qualify inbound practitioner lead against ICP within 24 hours; if qualified, add to pipeline and initiate outreach sequence; if unqualified, route to nurture                                                      |
 
 ## 8. Human Checkpoints
 
@@ -229,11 +229,11 @@ Three ICP tiers drive pipeline prioritization: Tier 1 (licensed therapists speci
 
 ## 10. Growth Backlog
 
-| ID | Name | Description | Priority | Blocked By |
-|----|------|-------------|----------|------------|
-| B4 | Objection Handling Playbook | Documented rebuttals for top 15 objections: "my clients can't afford $39," "this feels like gambling," "I'm not comfortable with financial pressure on vulnerable clients," "what about HIPAA," "Beeminder already does this." Requires 50+ demo conversations for pattern saturation. | high | 50 completed demos |
-| B5 | Partner Onboarding Checklist | Step-by-step checklist for new practitioner partners: account setup, Stripe connect, first client invitation, proof configuration, outcome report walkthrough. Bridges the gap between B2B (closes the deal) and CXS (owns the relationship). | high | CXS practitioner onboarding flow finalized |
-| B6 | Enterprise Pricing Calculator | Interactive tool for constructing custom Enterprise proposals: base price, per-seat add-ons, annual discount, volume-based platform fee tiers, implementation fee. Currently done manually in spreadsheets. | medium | 5+ Enterprise deals to validate pricing levers |
-| B7 | Channel Partner Program | Formalized program for practice management software companies (SimplePractice, Jane) to embed Styx as an integration/referral. Revenue share model. Requires proven practitioner demand signal. | low | 50+ active practitioner partners |
-| B8 | EAP Sales Playbook | Specialized sales motion for corporate Employee Assistance Programs: longer cycle, procurement process, security review, pilot program structure, ROI framework (reduced absenteeism, improved program utilization). | medium | SOC 2 Type II certification |
-| B9 | Practitioner Advisory Board | Formalize a 5-7 person advisory board of power-user practitioners who co-design features, beta test, and provide testimonials. Compensation: free subscription + equity advisory shares. | medium | 20+ active practitioner partners |
+| ID  | Name                          | Description                                                                                                                                                                                                                                                                            | Priority | Blocked By                                     |
+| --- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------------- |
+| B4  | Objection Handling Playbook   | Documented rebuttals for top 15 objections: "my clients can't afford $39," "this feels like gambling," "I'm not comfortable with financial pressure on vulnerable clients," "what about HIPAA," "Beeminder already does this." Requires 50+ demo conversations for pattern saturation. | high     | 50 completed demos                             |
+| B5  | Partner Onboarding Checklist  | Step-by-step checklist for new practitioner partners: account setup, Stripe connect, first client invitation, proof configuration, outcome report walkthrough. Bridges the gap between B2B (closes the deal) and CXS (owns the relationship).                                          | high     | CXS practitioner onboarding flow finalized     |
+| B6  | Enterprise Pricing Calculator | Interactive tool for constructing custom Enterprise proposals: base price, per-seat add-ons, annual discount, volume-based platform fee tiers, implementation fee. Currently done manually in spreadsheets.                                                                            | medium   | 5+ Enterprise deals to validate pricing levers |
+| B7  | Channel Partner Program       | Formalized program for practice management software companies (SimplePractice, Jane) to embed Styx as an integration/referral. Revenue share model. Requires proven practitioner demand signal.                                                                                        | low      | 50+ active practitioner partners               |
+| B8  | EAP Sales Playbook            | Specialized sales motion for corporate Employee Assistance Programs: longer cycle, procurement process, security review, pilot program structure, ROI framework (reduced absenteeism, improved program utilization).                                                                   | medium   | SOC 2 Type II certification                    |
+| B9  | Practitioner Advisory Board   | Formalize a 5-7 person advisory board of power-user practitioners who co-design features, beta test, and provide testimonials. Compensation: free subscription + equity advisory shares.                                                                                               | medium   | 20+ active practitioner partners               |

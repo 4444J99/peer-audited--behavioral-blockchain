@@ -5,9 +5,11 @@ export interface SupportTraceMessage {
   traceId: string | null;
 }
 
-export function parseSupportTraceMessage(input: string | null | undefined): SupportTraceMessage {
+export function parseSupportTraceMessage(
+  input: string | null | undefined,
+): SupportTraceMessage {
   if (!input) {
-    return { message: '', traceId: null };
+    return { message: "", traceId: null };
   }
 
   const trimmed = input.trim();
@@ -17,7 +19,7 @@ export function parseSupportTraceMessage(input: string | null | undefined): Supp
   }
 
   return {
-    message: trimmed.replace(REQUEST_ID_SUFFIX_RE, '').trim(),
+    message: trimmed.replace(REQUEST_ID_SUFFIX_RE, "").trim(),
     traceId: match[1].trim(),
   };
 }

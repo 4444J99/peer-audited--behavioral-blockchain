@@ -1,11 +1,11 @@
-import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
-jest.mock('./services/gemini', () => ({
+jest.mock("./services/gemini", () => ({
   callGemini: jest.fn(),
 }));
 
-jest.mock('lucide-react', () => ({
+jest.mock("lucide-react", () => ({
   Play: () => <span>Play</span>,
   Wand2: () => <span>Wand2</span>,
   ChevronLeft: () => <span>ChevronLeft</span>,
@@ -18,33 +18,33 @@ jest.mock('lucide-react', () => ({
   Menu: () => <span>Menu</span>,
 }));
 
-import PitchDeck from './PitchDeck';
+import PitchDeck from "./PitchDeck";
 
-describe('PitchDeck', () => {
-  it('renders without crashing', () => {
+describe("PitchDeck", () => {
+  it("renders without crashing", () => {
     const html = renderToStaticMarkup(<PitchDeck />);
 
     expect(html).toBeTruthy();
   });
 
-  it('renders the first slide title area', () => {
+  it("renders the first slide title area", () => {
     const html = renderToStaticMarkup(<PitchDeck />);
 
     // The header should contain STYX branding
-    expect(html).toContain('STYX');
+    expect(html).toContain("STYX");
   });
 
-  it('renders the spoken script tab', () => {
+  it("renders the spoken script tab", () => {
     const html = renderToStaticMarkup(<PitchDeck />);
 
-    expect(html).toContain('Spoken Script');
+    expect(html).toContain("Spoken Script");
   });
 
-  it('renders slide navigation controls', () => {
+  it("renders slide navigation controls", () => {
     const html = renderToStaticMarkup(<PitchDeck />);
 
     // Footer nav has slide count indicator
-    expect(html).toContain('1');
-    expect(html).toContain('10');
+    expect(html).toContain("1");
+    expect(html).toContain("10");
   });
 });

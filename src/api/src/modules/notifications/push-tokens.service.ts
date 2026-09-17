@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable } from "@nestjs/common";
+import { Pool } from "pg";
 
 export interface PendingReceiptDelivery {
   id: string;
@@ -51,11 +51,13 @@ export class PushTokensService {
     );
   }
 
-  async getActiveTokens(userId: string): Promise<Array<{
-    id: string;
-    token: string;
-    platform: string;
-  }>> {
+  async getActiveTokens(userId: string): Promise<
+    Array<{
+      id: string;
+      token: string;
+      platform: string;
+    }>
+  > {
     const result = await this.pool.query(
       `SELECT id, token, platform
        FROM push_tokens
@@ -86,9 +88,16 @@ export class PushTokensService {
         (push_token_id, user_id, notification_type, title, body, payload, provider, status, provider_result, error_message, provider_ticket_id, receipt_status, delivered_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CASE WHEN $11 IS NULL THEN NULL ELSE 'PENDING' END, CASE WHEN $8 IN ('SENT', 'UNREGISTERED') THEN NOW() ELSE NULL END)`,
       [
-        pushTokenId, userId, notificationType, title, body,
+        pushTokenId,
+        userId,
+        notificationType,
+        title,
+        body,
         payload ? JSON.stringify(payload) : null,
-        provider, status, providerResult ?? null, errorMessage ?? null,
+        provider,
+        status,
+        providerResult ?? null,
+        errorMessage ?? null,
         ticketId ?? null,
       ],
     );
@@ -128,7 +137,7 @@ export class PushTokensService {
    */
   async recordReceiptOutcome(
     deliveryId: string,
-    receiptStatus: 'OK' | 'ERROR',
+    receiptStatus: "OK" | "ERROR",
     deliveryStatus: string,
     errorCode?: string,
     errorMessage?: string,
@@ -142,7 +151,13 @@ export class PushTokensService {
            status = $4,
            error_message = COALESCE($5, error_message)
        WHERE id = $1`,
-      [deliveryId, receiptStatus, errorCode ?? null, deliveryStatus, errorMessage ?? null],
+      [
+        deliveryId,
+        receiptStatus,
+        errorCode ?? null,
+        deliveryStatus,
+        errorMessage ?? null,
+      ],
     );
   }
 
@@ -151,7 +166,10 @@ export class PushTokensService {
    * sweep; at the ceiling it becomes UNAVAILABLE, because Expo drops receipts
    * after roughly a day and a ticket that old will never resolve.
    */
-  async markReceiptUnresolved(deliveryId: string, giveUp: boolean): Promise<void> {
+  async markReceiptUnresolved(
+    deliveryId: string,
+    giveUp: boolean,
+  ): Promise<void> {
     await this.pool.query(
       `UPDATE push_deliveries
        SET receipt_attempts = receipt_attempts + 1,

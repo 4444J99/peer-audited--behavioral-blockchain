@@ -6,12 +6,12 @@ what was found on the way. Companion to the scope change recorded in
 
 ## Starting state (all verified, not assumed)
 
-| Surface | State on 2026-08-14 morning |
-|---|---|
-| Local demo | Live and verified (48 tour routes, LAN share, collector) |
-| Cloudflare snapshot | Built + verified, never published |
-| Render beta | Dark since 2026-03-10; preflight hard-fails on the missing `BETA_DEMO_PASSWORD`; the one green March run had **skipped migrations**; every documented beta/dogfood URL returned Render's `no-server` |
-| Docs | Dead URLs, wrong script paths, one false capability claim, a machine-local path leak |
+| Surface             | State on 2026-08-14 morning                                                                                                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Local demo          | Live and verified (48 tour routes, LAN share, collector)                                                                                                                                             |
+| Cloudflare snapshot | Built + verified, never published                                                                                                                                                                    |
+| Render beta         | Dark since 2026-03-10; preflight hard-fails on the missing `BETA_DEMO_PASSWORD`; the one green March run had **skipped migrations**; every documented beta/dogfood URL returned Render's `no-server` |
+| Docs                | Dead URLs, wrong script paths, one false capability claim, a machine-local path leak                                                                                                                 |
 
 ## Why the beta could not have worked even with the secret set
 
@@ -25,7 +25,7 @@ Three structural gaps, each closed by `.github/workflows/beta-promotion.yml` job
    `demo@styx.protocol` matches neither. → WHERE widened (also #886).
 3. **The tour compiled out of the web build.** `NEXT_PUBLIC_STYX_GUIDED_TOUR` is inlined at
    build time and was unset on the service — while the Private-Beta banner defaults ON.
-   → `ensure_beta_env` sets the env vars *before* the deploys.
+   → `ensure_beta_env` sets the env vars _before_ the deploys.
 
 ## Defects found while building (each with its own PR)
 
@@ -40,7 +40,7 @@ Three structural gaps, each closed by `.github/workflows/beta-promotion.yml` job
   live sweep within minutes of it existing.
 - Snapshot deploy lessons (in #886): `wrangler pages deploy` neither creates a missing
   Pages project (interactive prompt = CI hang) nor labels uploads production unless
-  `--branch main` is pinned (a topic-branch deploy is a *preview*, and the canonical URL
+  `--branch main` is pinned (a topic-branch deploy is a _preview_, and the canonical URL
   serves nothing while the output says Success).
 
 ## What is live
@@ -48,7 +48,7 @@ Three structural gaps, each closed by `.github/workflows/beta-promotion.yml` job
 - **Snapshot**: `https://styx-demo-snapshot.pages.dev` — 48/48 routes verified against the
   live host, no backend, no off-origin calls beyond the documented cdnjs font.
 - **Beta**: one dispatch away. `gh workflow run beta-promotion.yml -f promotion_target=beta
-  -f run_migrations=true` runs the full lifecycle and refuses `promotion_ready` until
+-f run_migrations=true` runs the full lifecycle and refuses `promotion_ready` until
   smoke + strict readiness + `beta_verify` (every tour route, signed in per persona) are
   all green. Prerequisite: `BETA_DEMO_PASSWORD` + `BETA_FEEDBACK_TOKEN` in the `beta`
   environment (minted 2026-08-14; landing them is a one-paste operator action).

@@ -1,9 +1,12 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { Pool } from 'pg';
-import { Queue } from 'bullmq';
-import { Subject, Observable } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
-import { PUSH_DISPATCH_QUEUE_NAME, getDefaultQueueOptions } from '../../../config/queue.config';
+import { Injectable, Inject } from "@nestjs/common";
+import { Pool } from "pg";
+import { Queue } from "bullmq";
+import { Subject, Observable } from "rxjs";
+import { filter, map } from "rxjs/operators";
+import {
+  PUSH_DISPATCH_QUEUE_NAME,
+  getDefaultQueueOptions,
+} from "../../../config/queue.config";
 
 export interface CreateNotificationDto {
   userId: string;
@@ -26,13 +29,24 @@ export interface Notification {
 
 // Notification types eligible for push dispatch
 const PUSH_ELIGIBLE_TYPES = new Set([
-  'CONTRACT_CREATED', 'PARTNER_INVITATION', 'PAYMENT_FAILED',
-  'CHARGE_DISPUTED', 'RAIN_INTERCESSION', 'FURY_ASSIGNMENT',
-  'VERDICT_RESULT', 'DEADLINE_WARNING', 'ATTESTATION_REMINDER',
-  'GRACE_DAY_REMINDER', 'WALLET_UPDATE',
+  "CONTRACT_CREATED",
+  "PARTNER_INVITATION",
+  "PAYMENT_FAILED",
+  "CHARGE_DISPUTED",
+  "RAIN_INTERCESSION",
+  "FURY_ASSIGNMENT",
+  "VERDICT_RESULT",
+  "DEADLINE_WARNING",
+  "ATTESTATION_REMINDER",
+  "GRACE_DAY_REMINDER",
+  "WALLET_UPDATE",
   // Circle-4 retention (RetentionScheduler / RetentionController)
-  'DANGER_ZONE_ALERT', 'WEEKEND_WARNING', 'CRISIS_RESOURCE',
-  'CHECK_IN_REMINDER', 'PARTNER_CHECK_IN', 'PARTNER_CHECKIN_ESCALATION',
+  "DANGER_ZONE_ALERT",
+  "WEEKEND_WARNING",
+  "CRISIS_RESOURCE",
+  "CHECK_IN_REMINDER",
+  "PARTNER_CHECK_IN",
+  "PARTNER_CHECKIN_ESCALATION",
 ]);
 
 @Injectable()
@@ -41,7 +55,10 @@ export class NotificationsService {
   private readonly pushQueue: Queue;
 
   constructor(private readonly pool: Pool) {
-    this.pushQueue = new Queue(PUSH_DISPATCH_QUEUE_NAME, getDefaultQueueOptions());
+    this.pushQueue = new Queue(
+      PUSH_DISPATCH_QUEUE_NAME,
+      getDefaultQueueOptions(),
+    );
   }
 
   /**
@@ -50,7 +67,7 @@ export class NotificationsService {
   getStreamForUser(userId: string): Observable<MessageEvent> {
     return this.notificationSubject.asObservable().pipe(
       filter((n) => n.user_id === userId),
-      map((n) => ({ data: n } as MessageEvent)),
+      map((n) => ({ data: n }) as MessageEvent),
     );
   }
 
@@ -59,7 +76,13 @@ export class NotificationsService {
       `INSERT INTO notifications (user_id, type, title, body, metadata)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [dto.userId, dto.type, dto.title, dto.body ?? null, dto.metadata ? JSON.stringify(dto.metadata) : null],
+      [
+        dto.userId,
+        dto.type,
+        dto.title,
+        dto.body ?? null,
+        dto.metadata ? JSON.stringify(dto.metadata) : null,
+      ],
     );
     const notification = result.rows[0];
 
@@ -70,7 +93,9 @@ export class NotificationsService {
     if (PUSH_ELIGIBLE_TYPES.has(dto.type)) {
       this.enqueuePush(dto).catch((err) => {
         // Log but don't fail the notification creation
-        console.error(`Failed to enqueue push for notification: ${err.message}`);
+        console.error(
+          `Failed to enqueue push for notification: ${err.message}`,
+        );
       });
     }
 
@@ -78,7 +103,7 @@ export class NotificationsService {
   }
 
   private async enqueuePush(dto: CreateNotificationDto): Promise<void> {
-    await this.pushQueue.add('push-notification', {
+    await this.pushQueue.add("push-notification", {
       userId: dto.userId,
       type: dto.type,
       title: dto.title,
@@ -87,7 +112,10 @@ export class NotificationsService {
     });
   }
 
-  async getUserNotifications(userId: string, limit = 20): Promise<Notification[]> {
+  async getUserNotifications(
+    userId: string,
+    limit = 20,
+  ): Promise<Notification[]> {
     const result = await this.pool.query(
       `SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2`,
       [userId, limit],
@@ -114,13 +142,17 @@ export class NotificationsService {
    * F-AEGIS-08: RAIN Mindfulness Notification
    * Triggers a specialized mindfulness intercession sequence.
    */
-  async createRainNotification(userId: string, contractId: string, reason: string): Promise<Notification> {
+  async createRainNotification(
+    userId: string,
+    contractId: string,
+    reason: string,
+  ): Promise<Notification> {
     return this.create({
       userId,
-      type: 'RAIN_INTERCESSION',
-      title: 'Take a Breath: RAIN Protocol',
-      body: 'You missed a check-in. Before proceeding, use RAIN: Recognize the urge, Allow it to be there, Investigate the feeling, Note the experience.',
-      metadata: { contractId, reason, protocol: 'RAIN' },
+      type: "RAIN_INTERCESSION",
+      title: "Take a Breath: RAIN Protocol",
+      body: "You missed a check-in. Before proceeding, use RAIN: Recognize the urge, Allow it to be there, Investigate the feeling, Note the experience.",
+      metadata: { contractId, reason, protocol: "RAIN" },
     });
   }
 
@@ -128,12 +160,14 @@ export class NotificationsService {
    * Returns anonymized public feed events from the event_log.
    * Strips all PII — returns only event types and anonymized descriptions.
    */
-  async getPublicFeed(limit: number = 50): Promise<{ events: Array<{
-    id: string;
-    type: string;
-    message: string;
-    timestamp: string;
-  }> }> {
+  async getPublicFeed(limit: number = 50): Promise<{
+    events: Array<{
+      id: string;
+      type: string;
+      message: string;
+      timestamp: string;
+    }>;
+  }> {
     const result = await this.pool.query(
       `SELECT id, event_type, payload, created_at
        FROM event_log
@@ -159,54 +193,60 @@ export class NotificationsService {
 
   private mapEventType(eventType: string): string {
     const map: Record<string, string> = {
-      CONTRACT_CREATED: 'contract_created',
-      CONTRACT_RESOLVED: 'contract_completed',
-      PROOF_SUBMITTED: 'contract_created',
-      CONSENSUS_REACHED: 'fury_catch',
-      FURY_VERDICT: 'fury_catch',
-      HONEYPOT_DETECTED: 'honeypot_test',
-      FURY_BOUNTY_PAID: 'bounty_paid',
-      FURY_PENALTY_CHARGED: 'penalty_charged',
+      CONTRACT_CREATED: "contract_created",
+      CONTRACT_RESOLVED: "contract_completed",
+      PROOF_SUBMITTED: "contract_created",
+      CONSENSUS_REACHED: "fury_catch",
+      FURY_VERDICT: "fury_catch",
+      HONEYPOT_DETECTED: "honeypot_test",
+      FURY_BOUNTY_PAID: "bounty_paid",
+      FURY_PENALTY_CHARGED: "penalty_charged",
     };
-    return map[eventType] || 'milestone';
+    return map[eventType] || "milestone";
   }
 
-  private anonymizeEvent(eventType: string, payload: Record<string, unknown>): string {
+  private anonymizeEvent(
+    eventType: string,
+    payload: Record<string, unknown>,
+  ): string {
     const amount = payload?.stakeAmount || payload?.amount;
     const category = payload?.oathCategory
-      ? String(payload.oathCategory).replace(/_/g, ' ').toLowerCase()
-      : 'behavioral';
+      ? String(payload.oathCategory).replace(/_/g, " ").toLowerCase()
+      : "behavioral";
     const duration = payload?.durationDays;
 
     switch (eventType) {
-      case 'CONTRACT_CREATED':
-        return `Someone committed ${amount ? `$${amount}` : 'capital'} to a ${duration ? `${duration}-day` : ''} ${category} oath`;
-      case 'CONTRACT_RESOLVED': {
+      case "CONTRACT_CREATED":
+        return `Someone committed ${amount ? `$${amount}` : "capital"} to a ${duration ? `${duration}-day` : ""} ${category} oath`;
+      case "CONTRACT_RESOLVED": {
         const outcome = payload?.outcome;
-        if (outcome === 'COMPLETED') {
-          return `A ${category} oath was successfully completed${amount ? `. $${amount} returned.` : '.'}`;
+        if (outcome === "COMPLETED") {
+          return `A ${category} oath was successfully completed${amount ? `. $${amount} returned.` : "."}`;
         }
-        return `A ${category} oath was not fulfilled${amount ? `. $${amount} captured and redistributed.` : '.'}`;
+        return `A ${category} oath was not fulfilled${amount ? `. $${amount} captured and redistributed.` : "."}`;
       }
-      case 'CONSENSUS_REACHED':
+      case "CONSENSUS_REACHED":
         return `Fury consensus reached on a proof review`;
-      case 'FURY_VERDICT': {
+      case "FURY_VERDICT": {
         const verdict = payload?.verdict;
-        if (verdict === 'FAIL') {
+        if (verdict === "FAIL") {
           return `A Fury caught a fraudulent proof and earned a bounty`;
         }
         return `A Fury verified a proof submission`;
       }
-      case 'HONEYPOT_DETECTED':
+      case "HONEYPOT_DETECTED":
         return `System honeypot test completed — auditor integrity validated`;
-      case 'FURY_BOUNTY_PAID': {
+      case "FURY_BOUNTY_PAID": {
         const bountyAmount = payload?.amount;
-        return `A Fury earned a $${bountyAmount || '2.00'} bounty for a correct audit`;
+        return `A Fury earned a $${bountyAmount || "2.00"} bounty for a correct audit`;
       }
-      case 'FURY_PENALTY_CHARGED': {
+      case "FURY_PENALTY_CHARGED": {
         const penaltyAmount = payload?.amount;
-        const reason = payload?.reason === 'honeypot_failure' ? 'failing a honeypot test' : 'an incorrect audit';
-        return `A Fury was charged a $${penaltyAmount || '2.00'} penalty for ${reason}`;
+        const reason =
+          payload?.reason === "honeypot_failure"
+            ? "failing a honeypot test"
+            : "an incorrect audit";
+        return `A Fury was charged a $${penaltyAmount || "2.00"} penalty for ${reason}`;
       }
       default:
         return `System event recorded`;

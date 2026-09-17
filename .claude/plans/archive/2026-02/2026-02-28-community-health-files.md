@@ -9,17 +9,20 @@ The `.github/SECURITY.md` version table has already been updated (diff applied, 
 ## Changes
 
 ### 1. Commit existing SECURITY.md update
+
 - **File**: `.github/SECURITY.md` (already modified)
 - **Change**: Version table expanded from single `0.1.x` row to full version history with emoji status indicators (0.4.x supported, older versions unsupported)
 - **Action**: Stage and commit
 
 ### 2. Create CODE_OF_CONDUCT.md
+
 - **File**: `.github/CODE_OF_CONDUCT.md`
 - **Content**: Contributor Covenant v2.1 (industry standard, widely adopted)
 - **Contact method**: Use GitHub's private vulnerability reporting (consistent with SECURITY.md) — or a generic project email placeholder
 - **Keep language generic** — no domain-specific terminology
 
 ### 3. Create issue template config
+
 - **File**: `.github/ISSUE_TEMPLATE/config.yml`
 - **Content**:
   - `blank_issues_enabled: false` (force use of structured templates)

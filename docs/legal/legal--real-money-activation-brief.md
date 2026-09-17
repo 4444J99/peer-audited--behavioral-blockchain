@@ -31,6 +31,7 @@ The central thesis is: **the product architecture does not change at real-money 
 ### 2.1 Test-Money Mode (Current)
 
 In test-money mode, Styx simulates financial commitments:
+
 - Users "deposit" virtual funds that have no monetary value.
 - Forfeitures and payouts are tracked in the ledger but involve no actual fund movements.
 - No payment processor is connected for user-facing transactions.
@@ -39,6 +40,7 @@ In test-money mode, Styx simulates financial commitments:
 ### 2.2 Real-Money Mode (Target)
 
 In real-money mode, Styx processes actual financial transactions:
+
 - Users deposit real funds via Stripe Connect into FBO escrow accounts.
 - Forfeitures result in actual financial loss to the user.
 - Successful completions result in actual payouts from the FBO account to the user's linked payout method.
@@ -46,20 +48,21 @@ In real-money mode, Styx processes actual financial transactions:
 
 ### 2.3 What Changes
 
-| Component | Test-Money | Real-Money | Legal Implication |
-|---|---|---|---|
-| Fund custody | None | FBO escrow via Stripe Connect | Money transmission analysis required |
-| User financial risk | None | Real loss possible | Mandatory disclosure obligations |
-| Payment processing | None | Stripe Connect (high-risk underwriting) | Processor compliance per `legal--gatekeeper-compliance.md` |
-| KYC/AML | Not required | Required above thresholds | FinCEN, BSA, Stripe Identity |
-| Tax reporting | Not applicable | 1099 reporting for payouts >$600 | IRS reporting obligations |
-| State regulation | Skill-based contest theory only | Same + financial services overlay | State-by-state assessment |
-| Refund obligations | N/A | Required for medical guardrail triggers | Consumer protection compliance |
-| Insurance | Not required | E&O and cyber liability recommended | Risk management |
+| Component           | Test-Money                      | Real-Money                              | Legal Implication                                          |
+| ------------------- | ------------------------------- | --------------------------------------- | ---------------------------------------------------------- |
+| Fund custody        | None                            | FBO escrow via Stripe Connect           | Money transmission analysis required                       |
+| User financial risk | None                            | Real loss possible                      | Mandatory disclosure obligations                           |
+| Payment processing  | None                            | Stripe Connect (high-risk underwriting) | Processor compliance per `legal--gatekeeper-compliance.md` |
+| KYC/AML             | Not required                    | Required above thresholds               | FinCEN, BSA, Stripe Identity                               |
+| Tax reporting       | Not applicable                  | 1099 reporting for payouts >$600        | IRS reporting obligations                                  |
+| State regulation    | Skill-based contest theory only | Same + financial services overlay       | State-by-state assessment                                  |
+| Refund obligations  | N/A                             | Required for medical guardrail triggers | Consumer protection compliance                             |
+| Insurance           | Not required                    | E&O and cyber liability recommended     | Risk management                                            |
 
 ### 2.4 What Does Not Change
 
 The following components are identical in both modes:
+
 - Commitment mechanics (goal-setting, duration, verification requirements).
 - Scoring algorithms (deterministic, no RNG, no house odds).
 - Verification pipeline (photo proof, wearable sync, peer attestation).
@@ -73,24 +76,24 @@ The following components are identical in both modes:
 
 ### 3.1 The Zero-Custody Principle
 
-Styx must never hold, possess, or take legal title to user funds in corporate bank accounts. All user-staked capital must be held in segregated For Benefit Of (FBO) accounts at a federally chartered banking institution via Stripe Connect. *See* `docs/legal/legal--aegis-protocol.md` § 4.1.
+Styx must never hold, possess, or take legal title to user funds in corporate bank accounts. All user-staked capital must be held in segregated For Benefit Of (FBO) accounts at a federally chartered banking institution via Stripe Connect. _See_ `docs/legal/legal--aegis-protocol.md` § 4.1.
 
-**Legal basis:** Operating outside the flow of funds is the primary mechanism for avoiding classification as an unlicensed money transmitter. *See* Modern Treasury, *How Do Money Transmission Laws Work?* (2024) (explaining FBO structures as a safe harbor from state money transmitter licensing requirements).
+**Legal basis:** Operating outside the flow of funds is the primary mechanism for avoiding classification as an unlicensed money transmitter. _See_ Modern Treasury, _How Do Money Transmission Laws Work?_ (2024) (explaining FBO structures as a safe harbor from state money transmitter licensing requirements).
 
 ### 3.2 Money Transmitter Licensing (MTL) Analysis
 
-Under the Bank Secrecy Act, money transmitters must register with FinCEN as Money Services Businesses (MSBs) and obtain state-level Money Transmitter Licenses (MTLs) in all operating states. *See* 31 U.S.C. §§ 5311-5330; 31 C.F.R. § 1022.380.
+Under the Bank Secrecy Act, money transmitters must register with FinCEN as Money Services Businesses (MSBs) and obtain state-level Money Transmitter Licenses (MTLs) in all operating states. _See_ 31 U.S.C. §§ 5311-5330; 31 C.F.R. § 1022.380.
 
 #### 3.2.1 Federal (FinCEN) Exemptions
 
 Styx's position is supported by a robust corpus of FinCEN administrative guidance and rulings:
 
-1.  **Payment Processor Exemption (FIN-2019-G001):** FinCEN exempts traditional payment processors that facilitate the purchase of goods or services through settlement systems restricted to BSA-regulated financial institutions (e.g., ACH, Fedwire) pursuant to a formal agreement with the payee. *See* FinCEN, *Application of FinCEN’s Regulations to Persons Administering, Exchanging, or Using Virtual Currencies*, FIN-2019-G001 (May 9, 2019).
-2.  **Integral to Service (FIN-2014-R004):** FinCEN has ruled that escrow services for internet sales are not money transmission when the movement of funds is "necessary and integral" to the transaction management service. *See* FinCEN Administrative Ruling FIN-2014-R004 (Mar. 11, 2014).
-3.  **Agent of the Payee (FIN-2014-R007):** A person that accepts currency as an agent of the payee (the party to whom money is owed) is not a money transmitter. Receipt by the agent is legally receipt by the payee. *See* FinCEN Administrative Ruling FIN-2014-R007 (May 14, 2014).
-4.  **Flow-through Limitations (FIN-2013-G001):** FinCEN distinguishes between "administrators" and "users" of value. Styx's lack of ownership or "dominion and control" over the FBO funds places it outside the administrator definition. *See* FIN-2013-G001 (Mar. 18, 2013).
-5.  **Third-Party Payment Processors (FIN-2004-1):** FinCEN guidance on third-party payment processors suggests that entities that only process payments for goods and services, and do not provide other money transmission services, are generally not considered money transmitters. *See* FinCEN, *Definition of Money Transmitter (Third-Party Payment Processors)*, FIN-2004-1 (Aug. 17, 2004).
-6.  **Escrow Conditions Precedent:** To maintain these exemptions, Styx’s smart-contract logic acts as the "conditions precedent" for fund release (behavioral verification), consistent with the fiduciary duties of an escrow agent. *Cf. Heller v. Cen-Tex Savings & Loan Ass’n*, 410 S.W.2d 267 (Tex. Civ. App. 1966) (defining escrow holders as fiduciaries requiring strict compliance with agreement terms).
+1.  **Payment Processor Exemption (FIN-2019-G001):** FinCEN exempts traditional payment processors that facilitate the purchase of goods or services through settlement systems restricted to BSA-regulated financial institutions (e.g., ACH, Fedwire) pursuant to a formal agreement with the payee. _See_ FinCEN, _Application of FinCEN’s Regulations to Persons Administering, Exchanging, or Using Virtual Currencies_, FIN-2019-G001 (May 9, 2019).
+2.  **Integral to Service (FIN-2014-R004):** FinCEN has ruled that escrow services for internet sales are not money transmission when the movement of funds is "necessary and integral" to the transaction management service. _See_ FinCEN Administrative Ruling FIN-2014-R004 (Mar. 11, 2014).
+3.  **Agent of the Payee (FIN-2014-R007):** A person that accepts currency as an agent of the payee (the party to whom money is owed) is not a money transmitter. Receipt by the agent is legally receipt by the payee. _See_ FinCEN Administrative Ruling FIN-2014-R007 (May 14, 2014).
+4.  **Flow-through Limitations (FIN-2013-G001):** FinCEN distinguishes between "administrators" and "users" of value. Styx's lack of ownership or "dominion and control" over the FBO funds places it outside the administrator definition. _See_ FIN-2013-G001 (Mar. 18, 2013).
+5.  **Third-Party Payment Processors (FIN-2004-1):** FinCEN guidance on third-party payment processors suggests that entities that only process payments for goods and services, and do not provide other money transmission services, are generally not considered money transmitters. _See_ FinCEN, _Definition of Money Transmitter (Third-Party Payment Processors)_, FIN-2004-1 (Aug. 17, 2004).
+6.  **Escrow Conditions Precedent:** To maintain these exemptions, Styx’s smart-contract logic acts as the "conditions precedent" for fund release (behavioral verification), consistent with the fiduciary duties of an escrow agent. _Cf. Heller v. Cen-Tex Savings & Loan Ass’n_, 410 S.W.2d 267 (Tex. Civ. App. 1966) (defining escrow holders as fiduciaries requiring strict compliance with agreement terms).
 
 #### 3.2.2 OCC Guidance on Bank-Fintech Payment Partnerships
 
@@ -104,7 +107,7 @@ Taken together, these OCC actions confirm that the federal banking regulator vie
 
 #### 3.2.3 CSBS Model Money Transmission Modernization Act
 
-The Conference of State Bank Supervisors (CSBS) published the *Model Money Transmission Modernization Act* in 2021 to harmonize the patchwork of state money transmitter licensing regimes. *See* CSBS, *Model Money Transmission Modernization Act* (2021). The CSBS model provides a streamlined multi-state licensing framework with standardized definitions, examination procedures, and reciprocity provisions.
+The Conference of State Bank Supervisors (CSBS) published the _Model Money Transmission Modernization Act_ in 2021 to harmonize the patchwork of state money transmitter licensing regimes. _See_ CSBS, _Model Money Transmission Modernization Act_ (2021). The CSBS model provides a streamlined multi-state licensing framework with standardized definitions, examination procedures, and reciprocity provisions.
 
 A key provision of the CSBS model act is its exclusion of "the provision of payment processing services through a bank" from the definition of "money transmission." This carve-out directly supports Styx’s bank-partnership FBO model: because all user funds are held at and transmitted through a chartered banking institution (via Stripe Connect’s FBO accounts), Styx’s fund-handling activity falls squarely within the bank-payment-processing exclusion.
 
@@ -116,28 +119,29 @@ As of 2025, approximately 30 states have adopted or are considering legislation 
 
 Styx's launch strategy targets states with statutory or administrative AOTP exemptions to ensure compliance without individual MTLs.
 
-| State | Exemption Status | Legal Authority / Requirement |
-|---|---|---|
-| **California** | **Yes** | Cal. Fin. Code § 2010(l). Requires written contract stating receipt by agent satisfies payor's debt. |
-| **New York** | **Yes** | N.Y. Banking Law § 641(1). Requires receipt to customer acknowledging agent's authority. |
-| **Texas** | **Yes** | Tex. Fin. Code § 151.003(9) (MTMA 2023). Standard AOTP language for marketplaces. |
-| **Illinois** | **Yes** | 205 ILCS 657/15 (Modernization Act 2024). Debt extinguishment upon receipt by agent. |
-| **Florida** | **No (Strict)** | Fla. Stat. § 560. OFR historically rejects AOTP petitions. **[BLOCKLIST CANDIDATE]** |
-| **Pennsylvania**| **Yes** | 7 P.S. § 6101 *et seq.* Recognized where agent acts for the recipient. |
-| **Ohio** | **Yes** | Ohio Rev. Code § 1315.02. Restricted to custodial interest in funds. |
-| **Georgia** | **Yes** | O.C.G.A. § 7-1-682(12). Requires public representation of agency. |
-| **N. Carolina** | **Yes** | N.C. Gen. Stat. § 53-208.44(a)(8). Requires formal request for verification. |
-| **Michigan** | **Yes** | Mich. Comp. Laws § 487.1004. Requires formal determination from DIFS. |
+| State            | Exemption Status | Legal Authority / Requirement                                                                        |
+| ---------------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
+| **California**   | **Yes**          | Cal. Fin. Code § 2010(l). Requires written contract stating receipt by agent satisfies payor's debt. |
+| **New York**     | **Yes**          | N.Y. Banking Law § 641(1). Requires receipt to customer acknowledging agent's authority.             |
+| **Texas**        | **Yes**          | Tex. Fin. Code § 151.003(9) (MTMA 2023). Standard AOTP language for marketplaces.                    |
+| **Illinois**     | **Yes**          | 205 ILCS 657/15 (Modernization Act 2024). Debt extinguishment upon receipt by agent.                 |
+| **Florida**      | **No (Strict)**  | Fla. Stat. § 560. OFR historically rejects AOTP petitions. **[BLOCKLIST CANDIDATE]**                 |
+| **Pennsylvania** | **Yes**          | 7 P.S. § 6101 _et seq._ Recognized where agent acts for the recipient.                               |
+| **Ohio**         | **Yes**          | Ohio Rev. Code § 1315.02. Restricted to custodial interest in funds.                                 |
+| **Georgia**      | **Yes**          | O.C.G.A. § 7-1-682(12). Requires public representation of agency.                                    |
+| **N. Carolina**  | **Yes**          | N.C. Gen. Stat. § 53-208.44(a)(8). Requires formal request for verification.                         |
+| **Michigan**     | **Yes**          | Mich. Comp. Laws § 487.1004. Requires formal determination from DIFS.                                |
 
 ### 3.3 Stripe Connect FBO Architecture
 
 **Account type:** Stripe Connect Custom accounts. Custom accounts provide maximum control over fund flows and minimize Styx's direct handling of user financial data.
 
 **FBO reconciliation:**
+
 - **Deposit flow:** User → Stripe Connect payment intent → FBO account at partner bank. Styx receives webhook confirmation only.
 - **Payout flow:** Upon verified goal completion, Styx issues transfer instruction to Stripe Connect. Stripe executes payout from FBO to user's linked method.
 - **Fee collection:** Flat platform fee split at point of deposit via Stripe's application fee mechanism.
-- **Ledger integrity:** PostgreSQL double-entry ledger records all fund movements (debits and credits) with timestamps, user IDs, and Stripe transaction references. Monthly reconciliation between Stripe balance reports and internal ledger is mandatory, with discrepancies >$1.00 investigated within 48 hours. *See* `docs/legal/legal--aegis-protocol.md` § 4.2-4.3.
+- **Ledger integrity:** PostgreSQL double-entry ledger records all fund movements (debits and credits) with timestamps, user IDs, and Stripe transaction references. Monthly reconciliation between Stripe balance reports and internal ledger is mandatory, with discrepancies >$1.00 investigated within 48 hours. _See_ `docs/legal/legal--aegis-protocol.md` § 4.2-4.3.
 
 **Supporting artifact:** `docs/legal/appendices/appendix-a--fbo-architecture-diagram.md` (Mermaid source + rendered SVG for counsel and processor review).
 
@@ -147,7 +151,7 @@ Styx's launch strategy targets states with statutory or administrative AOTP exem
 
 ### 4.1 Pre-Clearance Requirement
 
-Styx must not process any live financial transaction until formal pre-clearance is obtained from the payment processor. Standard Stripe accounts will trigger automated risk review and likely result in account freeze and fund hold. *See* `docs/legal/legal--gatekeeper-compliance.md` § 1.1.
+Styx must not process any live financial transaction until formal pre-clearance is obtained from the payment processor. Standard Stripe accounts will trigger automated risk review and likely result in account freeze and fund hold. _See_ `docs/legal/legal--gatekeeper-compliance.md` § 1.1.
 
 ### 4.2 Stripe Pre-Clearance Workflow
 
@@ -157,15 +161,16 @@ Styx must not process any live financial transaction until formal pre-clearance 
 4. Obtain **written approval** before processing any live transaction.
 5. Document the approval for regulatory and audit purposes.
 
-**Timeline:** High-risk merchant account underwriting requires 3-6 weeks. Application must be submitted during alpha testing, well before public beta. *See* `docs/legal/legal--gatekeeper-compliance.md` § 1.2.
+**Timeline:** High-risk merchant account underwriting requires 3-6 weeks. Application must be submitted during alpha testing, well before public beta. _See_ `docs/legal/legal--gatekeeper-compliance.md` § 1.2.
 
 ### 4.3 Terminology for Merchant Applications
 
-All merchant applications describe the product as a **"Performance-Based Accountability Escrow"** — never "contest," "bet," "wager," or "prize." *See* `docs/legal/legal--gatekeeper-compliance.md` § 1.4 (terminology sanitization matrix).
+All merchant applications describe the product as a **"Performance-Based Accountability Escrow"** — never "contest," "bet," "wager," or "prize." _See_ `docs/legal/legal--gatekeeper-compliance.md` § 1.4 (terminology sanitization matrix).
 
 ### 4.4 Processor Redundancy
 
 Maintain relationships with at least two processors to prevent single-point-of-failure risk:
+
 - **Primary:** Stripe Connect (preferred for developer tooling and FBO structure).
 - **Secondary:** Adyen (supports complex marketplace models) or a dedicated high-risk provider (Corepay, Allied Wallet).
 - **Fee expectation:** High-risk accounts charge 3-6% per transaction (vs. Stripe standard 2.9%) and typically require a 5-10% rolling reserve.
@@ -176,12 +181,12 @@ Maintain relationships with at least two processors to prevent single-point-of-f
 
 ### 5.1 Threshold Tiers
 
-| Tier | Deposit Amount | KYC Requirement | Verification Method |
-|---|---|---|---|
-| **Tier 0** | Test-money only (no real deposit) | None | — |
-| **Tier 1** | $1 - $50 | Basic identity verification | Email + phone verification |
-| **Tier 2** | $51 - $500 | Enhanced identity verification | Stripe Identity (document + selfie) |
-| **Tier 3** | $501+ | Full KYC | Government ID + address verification + source of funds declaration |
+| Tier       | Deposit Amount                    | KYC Requirement                | Verification Method                                                |
+| ---------- | --------------------------------- | ------------------------------ | ------------------------------------------------------------------ |
+| **Tier 0** | Test-money only (no real deposit) | None                           | —                                                                  |
+| **Tier 1** | $1 - $50                          | Basic identity verification    | Email + phone verification                                         |
+| **Tier 2** | $51 - $500                        | Enhanced identity verification | Stripe Identity (document + selfie)                                |
+| **Tier 3** | $501+                             | Full KYC                       | Government ID + address verification + source of funds declaration |
 
 [COUNSEL: REVIEW tier thresholds against FinCEN CTR ($10,000) and SAR ($5,000 for MSBs) reporting thresholds. Determine whether Styx's non-MSB classification affects these thresholds.]
 
@@ -197,6 +202,7 @@ Stripe Identity provides document verification (driver's license, passport, stat
 ### 5.3 Transaction Monitoring
 
 Implement automated monitoring for suspicious transaction patterns:
+
 - Rapid sequential deposits from the same user (structuring indicator).
 - Deposits immediately followed by voluntary withdrawal (money laundering indicator).
 - Multiple accounts from the same device or IP address.
@@ -227,13 +233,14 @@ Every user must acknowledge the following disclosure before making their first r
 
 ### 6.2 Not-an-Investment Disclaimer
 
-The Styx website, app, and all marketing materials must include a clear disclaimer that Styx is not an investment product, is not regulated by the SEC or CFTC, and does not offer returns on investment. This prevents mischaracterization as a security under the *SEC v. W.J. Howey Co.*, 328 U.S. 293 (1946), investment contract test.
+The Styx website, app, and all marketing materials must include a clear disclaimer that Styx is not an investment product, is not regulated by the SEC or CFTC, and does not offer returns on investment. This prevents mischaracterization as a security under the _SEC v. W.J. Howey Co._, 328 U.S. 293 (1946), investment contract test.
 
 ### 6.3 Problem Gambling and Mental Health Resources
 
 Despite Styx's legal classification as a skill-based system (not gambling), responsible practice requires providing users with resources for problem gambling and mental health support:
 
 > **Need Help?**
+>
 > - National Problem Gambling Helpline: 1-800-522-4700
 > - Crisis Text Line: Text HOME to 741741
 > - National Eating Disorders Association: 1-800-931-2237
@@ -247,7 +254,7 @@ This disclosure should be accessible from the app's Settings screen and from the
 >
 > Payouts from Styx commitments may be taxable income. If your total payouts in a calendar year exceed $600, Styx will issue a 1099-MISC or 1099-NEC reporting your earnings to the IRS. You are responsible for reporting all income from Styx on your tax return, regardless of whether you receive a 1099.
 
-*See* 26 U.S.C. § 6041 (information reporting for payments of $600 or more); 26 C.F.R. § 1.6041-1.
+_See_ 26 U.S.C. § 6041 (information reporting for payments of $600 or more); 26 C.F.R. § 1.6041-1.
 
 ---
 
@@ -255,7 +262,7 @@ This disclosure should be accessible from the app's Settings screen and from the
 
 ### 7.1 States Requiring Explicit Exclusion
 
-States where the legal theory faces elevated risk are hard-blocked at the API layer. *See* `docs/legal/legal--gatekeeper-compliance.md` § 4.1.
+States where the legal theory faces elevated risk are hard-blocked at the API layer. _See_ `docs/legal/legal--gatekeeper-compliance.md` § 4.1.
 
 **Current blocklist:** Arizona, Arkansas.
 
@@ -268,17 +275,17 @@ States where the legal theory faces elevated risk are hard-blocked at the API la
 Some states may permit skill-based contests but impose specific constraints:
 
 - **Entry fee caps:** Some state skill-contest statutes cap the maximum entry fee. [COUNSEL: SURVEY state-by-state entry fee limits for skill-based contests.]
-- **Registration requirements:** Some states require registration of skill-based contest operators. *See, e.g.*, N.Y. Racing, Pari-Mutuel Wagering & Breeding Law §§ 1400-1410 (Interactive Fantasy Sports Law — requires registration and $50,000 surety bond). [COUNSEL: DETERMINE whether Styx must register under fantasy sports statutes in states that have them.]
+- **Registration requirements:** Some states require registration of skill-based contest operators. _See, e.g._, N.Y. Racing, Pari-Mutuel Wagering & Breeding Law §§ 1400-1410 (Interactive Fantasy Sports Law — requires registration and $50,000 surety bond). [COUNSEL: DETERMINE whether Styx must register under fantasy sports statutes in states that have them.]
 - **Refund-only variant:** In states where forfeiture redistribution is problematic, Styx could offer a "refund-only" mode where users who complete their commitment receive their full deposit back (no additional earnings from forfeited funds). This eliminates the "prize" element from the three-element test, resolving the classification question entirely at the cost of reduced platform appeal.
 
 ### 7.3 International Expansion Gates
 
 International expansion requires separate legal analysis for each target jurisdiction:
 
-- **EU/EEA:** GDPR compliance (explicit consent for health data, data minimization, right to erasure). Gambling regulation varies by member state. *See* `docs/legal/legal--cross-jurisdictional-consent-matrix.md` § 5.
+- **EU/EEA:** GDPR compliance (explicit consent for health data, data minimization, right to erasure). Gambling regulation varies by member state. _See_ `docs/legal/legal--cross-jurisdictional-consent-matrix.md` § 5.
 - **UK:** UK GDPR + Gambling Act 2005. Skill-based contest classification differs from US framework. [COUNSEL: FULL ANALYSIS REQUIRED]
 - **Canada:** PIPEDA + Criminal Code gambling provisions. Provincial variation in skill-contest law.
-- **Sanctioned jurisdictions:** North Korea, Iran, Syria, Sudan, Cuba — permanent exclusion per OFAC sanctions. 31 C.F.R. pt. 500 *et seq.*
+- **Sanctioned jurisdictions:** North Korea, Iran, Syria, Sudan, Cuba — permanent exclusion per OFAC sanctions. 31 C.F.R. pt. 500 _et seq._
 
 ---
 
@@ -286,12 +293,12 @@ International expansion requires separate legal analysis for each target jurisdi
 
 ### 8.1 Deposit and Loss Caps
 
-| Cap Type | Limit | Rationale |
-|---|---|---|
-| Per-commitment deposit cap | $500 (default); $1,000 (verified users) | Prevents disproportionate financial exposure |
-| Monthly deposit cap | $1,000 (default); $2,500 (verified users) | Limits cumulative monthly risk |
-| Cumulative loss cap | $2,000 per rolling 12-month period | Triggers mandatory cool-off period |
-| Maximum active commitments | 3 concurrent | Prevents over-commitment |
+| Cap Type                   | Limit                                     | Rationale                                    |
+| -------------------------- | ----------------------------------------- | -------------------------------------------- |
+| Per-commitment deposit cap | $500 (default); $1,000 (verified users)   | Prevents disproportionate financial exposure |
+| Monthly deposit cap        | $1,000 (default); $2,500 (verified users) | Limits cumulative monthly risk               |
+| Cumulative loss cap        | $2,000 per rolling 12-month period        | Triggers mandatory cool-off period           |
+| Maximum active commitments | 3 concurrent                              | Prevents over-commitment                     |
 
 [COUNSEL: REVIEW cap levels against responsible gambling industry standards and state skill-contest fee limits.]
 
@@ -325,17 +332,17 @@ Triggered flags are reviewed by a human moderator who may contact the user, enfo
 
 ## 9. Open Risk Register — Risks Active at Real-Money Transition
 
-| Risk ID | Risk | Severity | Likelihood | Mitigation | Status |
-|---|---|---|---|---|---|
-| R-01 | Gambling classification by state AG | Critical | Low | Whitepaper + geo-blocking + skill-based design. *See* `legal--skill-based-contest-whitepaper.md`. | Active |
-| R-02 | Money transmitter classification | Critical | Low | FBO zero-custody architecture. *See* `legal--aegis-protocol.md` § 4. | Active |
-| R-06 | Payment processor account freeze | High | Medium | High-risk pre-clearance + processor redundancy. *See* `legal--gatekeeper-compliance.md` § 1. | Planned |
-| R-07 | App Store rejection or removal | High | Medium | Health & Fitness categorization + UGC moderation. *See* `legal--app-store-ugc-moderation-packet.md`. | Planned |
-| R-10 | Tax reporting non-compliance | Medium | Low | 1099 issuance for payouts >$600; user disclosure. *See* 26 U.S.C. § 6041. | Planned |
-| R-11 | User financial harm / class action | High | Low | Deposit caps + self-exclusion + harm monitoring + mandatory disclosures. | Planned |
-| R-12 | CFPB complaint escalation | Medium | Low | Clear refund policy + responsive support + financial risk disclosures. | Research |
+| Risk ID | Risk                                | Severity | Likelihood | Mitigation                                                                                           | Status   |
+| ------- | ----------------------------------- | -------- | ---------- | ---------------------------------------------------------------------------------------------------- | -------- |
+| R-01    | Gambling classification by state AG | Critical | Low        | Whitepaper + geo-blocking + skill-based design. _See_ `legal--skill-based-contest-whitepaper.md`.    | Active   |
+| R-02    | Money transmitter classification    | Critical | Low        | FBO zero-custody architecture. _See_ `legal--aegis-protocol.md` § 4.                                 | Active   |
+| R-06    | Payment processor account freeze    | High     | Medium     | High-risk pre-clearance + processor redundancy. _See_ `legal--gatekeeper-compliance.md` § 1.         | Planned  |
+| R-07    | App Store rejection or removal      | High     | Medium     | Health & Fitness categorization + UGC moderation. _See_ `legal--app-store-ugc-moderation-packet.md`. | Planned  |
+| R-10    | Tax reporting non-compliance        | Medium   | Low        | 1099 issuance for payouts >$600; user disclosure. _See_ 26 U.S.C. § 6041.                            | Planned  |
+| R-11    | User financial harm / class action  | High     | Low        | Deposit caps + self-exclusion + harm monitoring + mandatory disclosures.                             | Planned  |
+| R-12    | CFPB complaint escalation           | Medium   | Low        | Clear refund policy + responsive support + financial risk disclosures.                               | Research |
 
-*See* `docs/legal/regulatory-risk-register.md` for the complete risk register.
+_See_ `docs/legal/regulatory-risk-register.md` for the complete risk register.
 
 ---
 
@@ -358,6 +365,7 @@ The following materials should be assembled for outside counsel review before re
 13. **Appendix E — Counsel submission checklist** (`docs/legal/appendices/appendix-e--counsel-submission-checklist.md`) — ordered packet assembly and review checklist.
 
 **Counsel deliverables requested:**
+
 - [ ] Formal opinion: skill-based contest classification in target launch states.
 - [ ] Formal opinion: FBO structure eliminates money transmitter classification.
 - [ ] Formal opinion: UIGEA exclusion applicability to self-competition model.
@@ -371,13 +379,13 @@ The following materials should be assembled for outside counsel review before re
 
 ## 11. Document History
 
-| Version | Date | Author | Changes |
-|---|---|---|---|
+| Version     | Date       | Author                 | Changes                                                                                                                                                                          |
+| ----------- | ---------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0.1.0-draft | 2026-03-09 | agent/research-support | Initial draft — 10 sections covering transition analysis, FBO architecture, KYC/AML, disclosures, jurisdiction rules, responsible use, risk register, counsel submission package |
-| 0.2.0-draft | 2026-03-10 | agent/research-support | Expanded Table of Authorities; added FinCEN escrow and payee-agent guidance |
-| 0.3.0-draft | 2026-03-10 | agent/financial-reg | Deepened FinCEN/MTL analysis (§3); added 10-state AOTP matrix and 5+ FinCEN rulings; added Heller precedent |
-| 0.4.0-draft | 2026-03-10 | agent/financial-reg | Added OCC interpretive letters (§3.2.2); added CSBS model act discussion (§3.2.3); expanded Table of Authorities |
-| 0.5.0-draft | 2026-03-09 | agent/research-support | Added 3 cases to ToA (*FanDuel v. AG*, *Langone v. Kaiser*, *State v. Rosenthal*) per whitepaper #562 sync |
+| 0.2.0-draft | 2026-03-10 | agent/research-support | Expanded Table of Authorities; added FinCEN escrow and payee-agent guidance                                                                                                      |
+| 0.3.0-draft | 2026-03-10 | agent/financial-reg    | Deepened FinCEN/MTL analysis (§3); added 10-state AOTP matrix and 5+ FinCEN rulings; added Heller precedent                                                                      |
+| 0.4.0-draft | 2026-03-10 | agent/financial-reg    | Added OCC interpretive letters (§3.2.2); added CSBS model act discussion (§3.2.3); expanded Table of Authorities                                                                 |
+| 0.5.0-draft | 2026-03-09 | agent/research-support | Added 3 cases to ToA (_FanDuel v. AG_, _Langone v. Kaiser_, _State v. Rosenthal_) per whitepaper #562 sync                                                                       |
 
 ---
 
@@ -385,20 +393,20 @@ The following materials should be assembled for outside counsel review before re
 
 ### Cases
 
-- *Dew-Becker v. Wu*, 2020 IL 124472 (Ill. 2020)
-- *FanDuel, Inc. v. Attorney General*, No. 16-1079 (Mass. Super. Ct. 2016)
-- *Heller v. Cen-Tex Savings & Loan Ass’n*, 410 S.W.2d 267 (Tex. Civ. App. 1966)
-- *Langone v. Kaiser*, 2016 WL 7104331 (N.D. Ill. 2016)
-- *SEC v. W.J. Howey Co.*, 328 U.S. 293 (1946)
-- *State v. Rosenthal*, 559 P.2d 830 (Nev. 1977)
-- *White v. Cuomo*, 38 N.Y.3d 311 (N.Y. 2022)
+- _Dew-Becker v. Wu_, 2020 IL 124472 (Ill. 2020)
+- _FanDuel, Inc. v. Attorney General_, No. 16-1079 (Mass. Super. Ct. 2016)
+- _Heller v. Cen-Tex Savings & Loan Ass’n_, 410 S.W.2d 267 (Tex. Civ. App. 1966)
+- _Langone v. Kaiser_, 2016 WL 7104331 (N.D. Ill. 2016)
+- _SEC v. W.J. Howey Co._, 328 U.S. 293 (1946)
+- _State v. Rosenthal_, 559 P.2d 830 (Nev. 1977)
+- _White v. Cuomo_, 38 N.Y.3d 311 (N.Y. 2022)
 
 ### Statutes and Regulations
 
 - 26 C.F.R. § 1.6041-1 (information reporting requirements)
 - 26 U.S.C. § 6041 (information reporting for payments of $600 or more)
 - 31 C.F.R. § 1022.380 (FinCEN MSB registration)
-- 31 C.F.R. pt. 500 *et seq.* (OFAC sanctions regulations)
+- 31 C.F.R. pt. 500 _et seq._ (OFAC sanctions regulations)
 - 31 U.S.C. §§ 5311-5330 (Bank Secrecy Act)
 - 31 U.S.C. §§ 5361-5367 (Unlawful Internet Gambling Enforcement Act of 2006)
 - 205 ILCS 657/15 (Illinois Money Transmission Modernization Act)
@@ -408,8 +416,8 @@ The following materials should be assembled for outside counsel review before re
 
 ### Administrative Guidance
 
-- FinCEN, *Application of FinCEN's Regulations to Persons Administering, Exchanging, or Using Virtual Currencies* (FIN-2013-G001, 2013)
-- FinCEN, *Definition of Money Transmitter (Third-Party Payment Processors)*, FIN-2004-1 (Aug. 17, 2004)
+- FinCEN, _Application of FinCEN's Regulations to Persons Administering, Exchanging, or Using Virtual Currencies_ (FIN-2013-G001, 2013)
+- FinCEN, _Definition of Money Transmitter (Third-Party Payment Processors)_, FIN-2004-1 (Aug. 17, 2004)
 - FinCEN Administrative Ruling FIN-2014-R004 (Mar. 11, 2014) (escrow integral to service)
 - FinCEN Administrative Ruling FIN-2014-R007 (May 14, 2014) (agent of payee)
 - FinCEN Guidance FIN-2019-G001 (May 9, 2019) (comprehensive payment processor and CVC guidance)
@@ -419,5 +427,5 @@ The following materials should be assembled for outside counsel review before re
 
 ### Secondary Sources
 
-- Conference of State Bank Supervisors (CSBS), *Model Money Transmission Modernization Act* (2021)
-- Modern Treasury, *How Do Money Transmission Laws Work?* (2024)
+- Conference of State Bank Supervisors (CSBS), _Model Money Transmission Modernization Act_ (2021)
+- Modern Treasury, _How Do Money Transmission Laws Work?_ (2024)

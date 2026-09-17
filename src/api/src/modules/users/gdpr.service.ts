@@ -1,13 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool, PoolClient } from 'pg';
-import { createHash, randomUUID } from 'crypto';
-import Stripe from 'stripe';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool, PoolClient } from "pg";
+import { createHash, randomUUID } from "crypto";
+import Stripe from "stripe";
 
 type StripeClient = InstanceType<typeof Stripe>;
 
 // Matches TruthLogService.GENESIS_HASH / APPEND_LOCK_KEY so audit events written
 // here stay part of the same tamper-evident chain.
-const GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+const GENESIS_HASH =
+  "0000000000000000000000000000000000000000000000000000000000000000";
 const TRUTH_LOG_APPEND_LOCK_KEY = 0x57_54_4c_47; // 'WTLG'
 
 @Injectable()
@@ -16,8 +17,8 @@ export class GdprService {
   private readonly stripe: StripeClient;
 
   constructor(private readonly pool: Pool) {
-    const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
-    this.stripe = new Stripe(apiKey, { apiVersion: '2026-08-26.dahlia' });
+    const apiKey = process.env.STRIPE_SECRET_KEY || "sk_test_mock_key"; // allow-secret
+    this.stripe = new Stripe(apiKey, { apiVersion: "2026-08-26.dahlia" });
   }
 
   /**
@@ -26,14 +27,17 @@ export class GdprService {
    * BIGSERIAL default, which would collide with explicit-index writers). Mirrors
    * TruthLogService.appendEvent / UsersService.appendTruthLogEvent.
    */
-  private async appendTruthLogEvent(eventType: string, payload: Record<string, unknown>): Promise<void> {
+  private async appendTruthLogEvent(
+    eventType: string,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
     const client: PoolClient = await this.pool.connect();
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
       await this.appendTruthLogEventWithClient(client, eventType, payload);
-      await client.query('COMMIT');
+      await client.query("COMMIT");
     } catch (e) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw e;
     } finally {
       client.release();
@@ -52,18 +56,24 @@ export class GdprService {
     eventType: string,
     payload: Record<string, unknown>,
   ): Promise<void> {
-    await client.query('SELECT pg_advisory_xact_lock($1)', [TRUTH_LOG_APPEND_LOCK_KEY]);
+    await client.query("SELECT pg_advisory_xact_lock($1)", [
+      TRUTH_LOG_APPEND_LOCK_KEY,
+    ]);
 
     const latestRes = await client.query(
       `SELECT sequence_index, current_hash FROM event_log ORDER BY sequence_index DESC LIMIT 1 FOR UPDATE`,
     );
-    const previousHash = latestRes.rows.length > 0 ? latestRes.rows[0].current_hash : GENESIS_HASH;
-    const nextIndex = latestRes.rows.length > 0 ? parseInt(latestRes.rows[0].sequence_index, 10) + 1 : 1;
+    const previousHash =
+      latestRes.rows.length > 0 ? latestRes.rows[0].current_hash : GENESIS_HASH;
+    const nextIndex =
+      latestRes.rows.length > 0
+        ? parseInt(latestRes.rows[0].sequence_index, 10) + 1
+        : 1;
     const timestamp = new Date().toISOString();
 
     const payloadString = JSON.stringify(payload);
     const hashInput = `${nextIndex}|${eventType}|${timestamp}|${previousHash}|${payloadString}`;
-    const currentHash = createHash('sha256').update(hashInput).digest('hex');
+    const currentHash = createHash("sha256").update(hashInput).digest("hex");
 
     await client.query(
       `INSERT INTO event_log (sequence_index, event_type, payload, previous_hash, current_hash, created_at)
@@ -74,37 +84,38 @@ export class GdprService {
 
   /** GDPR Article 20: Export all user data in a machine-readable format. */
   async exportUserData(userId: string): Promise<Record<string, unknown>> {
-    const [user, contracts, proofs, entries, notifications, attestations] = await Promise.all([
-      this.pool.query(
-        'SELECT id, email, integrity_score, role, status, created_at FROM users WHERE id = $1',
-        [userId],
-      ),
-      this.pool.query(
-        'SELECT id, oath_category, verification_method, stake_amount, status, duration_days, started_at, ends_at, created_at FROM contracts WHERE user_id = $1',
-        [userId],
-      ),
-      this.pool.query(
-        'SELECT id, contract_id, status, submitted_at FROM proofs WHERE user_id = $1',
-        [userId],
-      ),
-      // Scope strictly to THIS user's own account. The previous query joined
-      // users on account_id, which would over-return every entry for any user
-      // sharing the same account_id. Bind the requesting user's account directly.
-      this.pool.query(
-        `SELECT e.* FROM entries e
+    const [user, contracts, proofs, entries, notifications, attestations] =
+      await Promise.all([
+        this.pool.query(
+          "SELECT id, email, integrity_score, role, status, created_at FROM users WHERE id = $1",
+          [userId],
+        ),
+        this.pool.query(
+          "SELECT id, oath_category, verification_method, stake_amount, status, duration_days, started_at, ends_at, created_at FROM contracts WHERE user_id = $1",
+          [userId],
+        ),
+        this.pool.query(
+          "SELECT id, contract_id, status, submitted_at FROM proofs WHERE user_id = $1",
+          [userId],
+        ),
+        // Scope strictly to THIS user's own account. The previous query joined
+        // users on account_id, which would over-return every entry for any user
+        // sharing the same account_id. Bind the requesting user's account directly.
+        this.pool.query(
+          `SELECT e.* FROM entries e
          WHERE e.debit_account_id = (SELECT account_id FROM users WHERE id = $1)
             OR e.credit_account_id = (SELECT account_id FROM users WHERE id = $1)`,
-        [userId],
-      ),
-      this.pool.query(
-        'SELECT id, type, title, body, created_at FROM notifications WHERE user_id = $1',
-        [userId],
-      ),
-      this.pool.query(
-        'SELECT a.* FROM attestations a JOIN contracts c ON a.contract_id = c.id WHERE c.user_id = $1',
-        [userId],
-      ),
-    ]);
+          [userId],
+        ),
+        this.pool.query(
+          "SELECT id, type, title, body, created_at FROM notifications WHERE user_id = $1",
+          [userId],
+        ),
+        this.pool.query(
+          "SELECT a.* FROM attestations a JOIN contracts c ON a.contract_id = c.id WHERE c.user_id = $1",
+          [userId],
+        ),
+      ]);
 
     return {
       exportedAt: new Date().toISOString(),
@@ -121,7 +132,10 @@ export class GdprService {
    * GDPR Article 17: Process pending deletions after 30-day cooling period.
    * Anonymizes PII but retains ledger entries for financial integrity (Article 6(1)(c)).
    */
-  async processPendingDeletions(): Promise<{ processed: number; skipped: number }> {
+  async processPendingDeletions(): Promise<{
+    processed: number;
+    skipped: number;
+  }> {
     const pendingUsers = await this.pool.query(
       `SELECT id FROM users
        WHERE status = 'PENDING_DELETION'
@@ -142,7 +156,7 @@ export class GdprService {
         // and the error class only, so failures stay diagnosable without leaking PII.
         const correlationId = randomUUID();
         this.logger.error(
-          `Failed to process pending deletion (correlationId=${correlationId}, error=${err instanceof Error ? err.name : 'Unknown'})`,
+          `Failed to process pending deletion (correlationId=${correlationId}, error=${err instanceof Error ? err.name : "Unknown"})`,
         );
         skipped++;
       }
@@ -159,19 +173,23 @@ export class GdprService {
     // connection inside one transaction. Fall back to non-transactional pool.query
     // only if the pool lacks connect() (mirrors appendTruthLogEvent's pattern and
     // keeps unit tests that mock a bare pool working).
-    if (typeof (this.pool as Partial<Pool>).connect === 'function') {
+    if (typeof (this.pool as Partial<Pool>).connect === "function") {
       const client: PoolClient = await this.pool.connect();
       try {
-        await client.query('BEGIN');
+        await client.query("BEGIN");
         await this.cancelStoredSubscriptionIfPresent(client, userId);
         await this.runErasureStatements(client, userId);
-        await this.appendTruthLogEventWithClient(client, 'GDPR_ERASURE_COMPLETED', {
-          userId,
-          anonymizedAt: new Date().toISOString(),
-        });
-        await client.query('COMMIT');
+        await this.appendTruthLogEventWithClient(
+          client,
+          "GDPR_ERASURE_COMPLETED",
+          {
+            userId,
+            anonymizedAt: new Date().toISOString(),
+          },
+        );
+        await client.query("COMMIT");
       } catch (e) {
-        await client.query('ROLLBACK');
+        await client.query("ROLLBACK");
         throw e;
       } finally {
         client.release();
@@ -180,7 +198,7 @@ export class GdprService {
       // Non-transactional fallback (no atomicity guarantee).
       await this.cancelStoredSubscriptionIfPresent(this.pool, userId);
       await this.runErasureStatements(this.pool, userId);
-      await this.appendTruthLogEvent('GDPR_ERASURE_COMPLETED', {
+      await this.appendTruthLogEvent("GDPR_ERASURE_COMPLETED", {
         userId,
         anonymizedAt: new Date().toISOString(),
       });
@@ -194,11 +212,14 @@ export class GdprService {
     userId: string,
   ): Promise<void> {
     const subscriptionResult = await db.query(
-      'SELECT subscription_id FROM users WHERE id = $1',
+      "SELECT subscription_id FROM users WHERE id = $1",
       [userId],
     );
     const subscriptionId = subscriptionResult.rows[0]?.subscription_id;
-    if (typeof subscriptionId !== 'string' || subscriptionId.trim().length === 0) {
+    if (
+      typeof subscriptionId !== "string" ||
+      subscriptionId.trim().length === 0
+    ) {
       return;
     }
 
@@ -243,7 +264,7 @@ export class GdprService {
     );
 
     // 2. Delete notifications (non-essential, pure PII: titles/bodies).
-    await db.query('DELETE FROM notifications WHERE user_id = $1', [userId]);
+    await db.query("DELETE FROM notifications WHERE user_id = $1", [userId]);
 
     // 3. Scrub PII from contract metadata (keep contract records for ledger integrity).
     await db.query(
@@ -294,7 +315,7 @@ export class GdprService {
     // 8. Delete the user's dashboard progress snapshots (payload_json is a derived
     //    behavioral PII blob keyed to the user; remove rather than retain).
     await db.query(
-      'DELETE FROM dashboard_progress_snapshots WHERE user_id = $1',
+      "DELETE FROM dashboard_progress_snapshots WHERE user_id = $1",
       [userId],
     );
 

@@ -1,29 +1,29 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 const PUBLIC_PATHS = [
-  '/',
-  '/login',
-  '/register',
-  '/pitch',
-  '/users/leaderboard',
-  '/do-not-text-your-ex-tonight',
-  '/beta',
-  '/beta/confirm',
+  "/",
+  "/login",
+  "/register",
+  "/pitch",
+  "/users/leaderboard",
+  "/do-not-text-your-ex-tonight",
+  "/beta",
+  "/beta/confirm",
 ];
 
 const PROTECTED_PATHS = [
-  '/dashboard',
-  '/fury',
-  '/wallet',
-  '/settings',
-  '/profile',
-  '/admin',
-  '/contracts',
-  '/hr',
-  '/tavern',
-  '/referrals',
-  '/partner',
+  "/dashboard",
+  "/fury",
+  "/wallet",
+  "/settings",
+  "/profile",
+  "/admin",
+  "/contracts",
+  "/hr",
+  "/tavern",
+  "/referrals",
+  "/partner",
 ];
 
 // Browser auth uses HttpOnly cookie sessions. This proxy enforces auth-gating
@@ -37,19 +37,23 @@ export function proxy(request: NextRequest) {
   }
 
   // Allow static assets and API routes
-  if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.includes('.')) {
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname.includes(".")
+  ) {
     return NextResponse.next();
   }
 
   // Check if the path is protected
   const isProtected = PROTECTED_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(p + '/'),
+    (p) => pathname === p || pathname.startsWith(p + "/"),
   );
 
   if (isProtected) {
-    const token = request.cookies.get('styx_auth_token');
+    const token = request.cookies.get("styx_auth_token");
     if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL("/login", request.url));
     }
   }
 
@@ -57,5 +61,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

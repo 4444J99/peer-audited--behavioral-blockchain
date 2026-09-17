@@ -6,19 +6,19 @@
  * Uses the same mock pattern from api.spec.ts (node env, no DOM).
  */
 
-import { api } from '../services/api';
+import { api } from "../services/api";
 
-jest.mock('../services/api', () => ({
+jest.mock("../services/api", () => ({
   api: {
     getAdminStats: jest.fn(),
     getTruthLog: jest.fn(),
   },
 }));
 
-jest.mock('lucide-react', () => ({
-  Activity: 'Activity',
-  ShieldAlert: 'ShieldAlert',
-  RefreshCw: 'RefreshCw',
+jest.mock("lucide-react", () => ({
+  Activity: "Activity",
+  ShieldAlert: "ShieldAlert",
+  RefreshCw: "RefreshCw",
 }));
 
 const mockGetAdminStats = api.getAdminStats as jest.Mock;
@@ -48,7 +48,7 @@ async function buildQueue(): Promise<{
   stats: any;
   error: string;
 }> {
-  let error = '';
+  let error = "";
   let stats: any = null;
   const items: QueueItem[] = [];
 
@@ -58,10 +58,10 @@ async function buildQueue(): Promise<{
 
     if (statsResult.pendingProofs > 0) {
       items.push({
-        id: 'fury_q_pending',
-        severity: statsResult.pendingProofs > 10 ? 'HIGH' : 'MEDIUM',
-        type: 'PENDING_PROOFS',
-        user: 'SYSTEM',
+        id: "fury_q_pending",
+        severity: statsResult.pendingProofs > 10 ? "HIGH" : "MEDIUM",
+        type: "PENDING_PROOFS",
+        user: "SYSTEM",
         peers: [],
         status: `${statsResult.pendingProofs} PROOFS AWAITING REVIEW`,
       });
@@ -72,24 +72,24 @@ async function buildQueue(): Promise<{
       const transactions = logResult.transactions || [];
       transactions.forEach((tx: any, idx: number) => {
         if (
-          tx.type === 'APPEAL' ||
-          tx.type === 'CONFLICT' ||
-          tx.type === 'HONEYPOT_FAIL' ||
-          tx.status === 'ESCALATED' ||
-          tx.status === 'PENALTY_PENDING'
+          tx.type === "APPEAL" ||
+          tx.type === "CONFLICT" ||
+          tx.type === "HONEYPOT_FAIL" ||
+          tx.status === "ESCALATED" ||
+          tx.status === "PENALTY_PENDING"
         ) {
           items.push({
             id: tx.id || tx.tx_hash || `fury_q_${idx}`,
             severity:
-              tx.type === 'HONEYPOT_FAIL'
-                ? 'CRITICAL'
-                : tx.type === 'CONFLICT'
-                  ? 'HIGH'
-                  : 'LOW',
-            type: tx.type || tx.event_type || 'UNKNOWN',
-            user: tx.user || tx.user_id || 'UNKNOWN',
+              tx.type === "HONEYPOT_FAIL"
+                ? "CRITICAL"
+                : tx.type === "CONFLICT"
+                  ? "HIGH"
+                  : "LOW",
+            type: tx.type || tx.event_type || "UNKNOWN",
+            user: tx.user || tx.user_id || "UNKNOWN",
             peers: tx.peers || [],
-            status: tx.status || 'PENDING',
+            status: tx.status || "PENDING",
           });
         }
       });
@@ -97,15 +97,15 @@ async function buildQueue(): Promise<{
       // Truth log fetch failed — queue still shows stats-based items
     }
   } catch (err: any) {
-    error = err.message || 'Failed to load dashboard data';
+    error = err.message || "Failed to load dashboard data";
   }
 
   return { queue: items, stats, error };
 }
 
-describe('MacroReview', () => {
-  describe('data fetching', () => {
-    it('calls getAdminStats() and getTruthLog(20)', async () => {
+describe("MacroReview", () => {
+  describe("data fetching", () => {
+    it("calls getAdminStats() and getTruthLog(20)", async () => {
       mockGetAdminStats.mockResolvedValue({
         totalUsers: 500,
         activeContracts: 120,
@@ -120,33 +120,33 @@ describe('MacroReview', () => {
       expect(mockGetTruthLog).toHaveBeenCalledWith(20);
     });
 
-    it('sets error when getAdminStats rejects', async () => {
-      mockGetAdminStats.mockRejectedValue(new Error('Server unavailable'));
+    it("sets error when getAdminStats rejects", async () => {
+      mockGetAdminStats.mockRejectedValue(new Error("Server unavailable"));
 
       const { error } = await buildQueue();
 
-      expect(error).toBe('Server unavailable');
+      expect(error).toBe("Server unavailable");
     });
 
-    it('still builds queue from stats if getTruthLog fails', async () => {
+    it("still builds queue from stats if getTruthLog fails", async () => {
       mockGetAdminStats.mockResolvedValue({
         totalUsers: 100,
         activeContracts: 50,
         pendingProofs: 15,
         avgIntegrity: 60.0,
       });
-      mockGetTruthLog.mockRejectedValue(new Error('Log unavailable'));
+      mockGetTruthLog.mockRejectedValue(new Error("Log unavailable"));
 
       const { queue, error } = await buildQueue();
 
-      expect(error).toBe('');
+      expect(error).toBe("");
       expect(queue).toHaveLength(1);
-      expect(queue[0].type).toBe('PENDING_PROOFS');
+      expect(queue[0].type).toBe("PENDING_PROOFS");
     });
   });
 
-  describe('queue building from stats', () => {
-    it('adds PENDING_PROOFS item when pendingProofs > 0', async () => {
+  describe("queue building from stats", () => {
+    it("adds PENDING_PROOFS item when pendingProofs > 0", async () => {
       mockGetAdminStats.mockResolvedValue({
         totalUsers: 100,
         activeContracts: 50,
@@ -159,14 +159,14 @@ describe('MacroReview', () => {
 
       expect(queue).toHaveLength(1);
       expect(queue[0]).toMatchObject({
-        id: 'fury_q_pending',
-        type: 'PENDING_PROOFS',
-        user: 'SYSTEM',
+        id: "fury_q_pending",
+        type: "PENDING_PROOFS",
+        user: "SYSTEM",
       });
-      expect(queue[0].status).toContain('5 PROOFS AWAITING REVIEW');
+      expect(queue[0].status).toContain("5 PROOFS AWAITING REVIEW");
     });
 
-    it('skips PENDING_PROOFS when pendingProofs is 0', async () => {
+    it("skips PENDING_PROOFS when pendingProofs is 0", async () => {
       mockGetAdminStats.mockResolvedValue({
         totalUsers: 100,
         activeContracts: 50,
@@ -180,7 +180,7 @@ describe('MacroReview', () => {
       expect(queue).toHaveLength(0);
     });
 
-    it('sets severity HIGH when pendingProofs > 10', async () => {
+    it("sets severity HIGH when pendingProofs > 10", async () => {
       mockGetAdminStats.mockResolvedValue({
         totalUsers: 100,
         activeContracts: 50,
@@ -191,10 +191,10 @@ describe('MacroReview', () => {
 
       const { queue } = await buildQueue();
 
-      expect(queue[0].severity).toBe('HIGH');
+      expect(queue[0].severity).toBe("HIGH");
     });
 
-    it('sets severity MEDIUM when pendingProofs <= 10', async () => {
+    it("sets severity MEDIUM when pendingProofs <= 10", async () => {
       mockGetAdminStats.mockResolvedValue({
         totalUsers: 100,
         activeContracts: 50,
@@ -205,11 +205,11 @@ describe('MacroReview', () => {
 
       const { queue } = await buildQueue();
 
-      expect(queue[0].severity).toBe('MEDIUM');
+      expect(queue[0].severity).toBe("MEDIUM");
     });
   });
 
-  describe('queue building from truth log', () => {
+  describe("queue building from truth log", () => {
     beforeEach(() => {
       mockGetAdminStats.mockResolvedValue({
         totalUsers: 100,
@@ -219,64 +219,86 @@ describe('MacroReview', () => {
       });
     });
 
-    it('adds HONEYPOT_FAIL as CRITICAL severity', async () => {
+    it("adds HONEYPOT_FAIL as CRITICAL severity", async () => {
       mockGetTruthLog.mockResolvedValue({
         transactions: [
-          { id: 'tx1', type: 'HONEYPOT_FAIL', user: 'usr_bad', status: 'PENALTY_PENDING', peers: [] },
+          {
+            id: "tx1",
+            type: "HONEYPOT_FAIL",
+            user: "usr_bad",
+            status: "PENALTY_PENDING",
+            peers: [],
+          },
         ],
       });
 
       const { queue } = await buildQueue();
 
       expect(queue).toHaveLength(1);
-      expect(queue[0].severity).toBe('CRITICAL');
-      expect(queue[0].type).toBe('HONEYPOT_FAIL');
+      expect(queue[0].severity).toBe("CRITICAL");
+      expect(queue[0].type).toBe("HONEYPOT_FAIL");
     });
 
-    it('adds CONFLICT as HIGH severity', async () => {
+    it("adds CONFLICT as HIGH severity", async () => {
       mockGetTruthLog.mockResolvedValue({
         transactions: [
-          { id: 'tx2', type: 'CONFLICT', user: 'usr_dispute', status: 'ESCALATED', peers: ['usr_a', 'usr_b'] },
+          {
+            id: "tx2",
+            type: "CONFLICT",
+            user: "usr_dispute",
+            status: "ESCALATED",
+            peers: ["usr_a", "usr_b"],
+          },
         ],
       });
 
       const { queue } = await buildQueue();
 
       expect(queue).toHaveLength(1);
-      expect(queue[0].severity).toBe('HIGH');
-      expect(queue[0].peers).toEqual(['usr_a', 'usr_b']);
+      expect(queue[0].severity).toBe("HIGH");
+      expect(queue[0].peers).toEqual(["usr_a", "usr_b"]);
     });
 
-    it('adds APPEAL as LOW severity', async () => {
+    it("adds APPEAL as LOW severity", async () => {
       mockGetTruthLog.mockResolvedValue({
         transactions: [
-          { id: 'tx3', type: 'APPEAL', user: 'usr_appeal', status: 'PENDING' },
+          { id: "tx3", type: "APPEAL", user: "usr_appeal", status: "PENDING" },
         ],
       });
 
       const { queue } = await buildQueue();
 
       expect(queue).toHaveLength(1);
-      expect(queue[0].severity).toBe('LOW');
+      expect(queue[0].severity).toBe("LOW");
     });
 
-    it('includes items with ESCALATED status regardless of type', async () => {
+    it("includes items with ESCALATED status regardless of type", async () => {
       mockGetTruthLog.mockResolvedValue({
         transactions: [
-          { id: 'tx4', type: 'SOME_OTHER_TYPE', user: 'usr_esc', status: 'ESCALATED' },
+          {
+            id: "tx4",
+            type: "SOME_OTHER_TYPE",
+            user: "usr_esc",
+            status: "ESCALATED",
+          },
         ],
       });
 
       const { queue } = await buildQueue();
 
       expect(queue).toHaveLength(1);
-      expect(queue[0].user).toBe('usr_esc');
+      expect(queue[0].user).toBe("usr_esc");
     });
 
-    it('includes items with PENALTY_PENDING status', async () => {
+    it("includes items with PENALTY_PENDING status", async () => {
       mockGetTruthLog.mockResolvedValue({
         transactions: [
-          { id: 'tx5', type: 'SOME_TYPE', user: 'usr_pen', status: 'PENALTY_PENDING' },
+          {
+            id: "tx5",
+            type: "SOME_TYPE",
+            user: "usr_pen",
+            status: "PENALTY_PENDING",
+          },
         ],
       });
 
@@ -285,11 +307,16 @@ describe('MacroReview', () => {
       expect(queue).toHaveLength(1);
     });
 
-    it('ignores transactions that do not match escalation criteria', async () => {
+    it("ignores transactions that do not match escalation criteria", async () => {
       mockGetTruthLog.mockResolvedValue({
         transactions: [
-          { id: 'tx6', type: 'STAKE_LOCKED', user: 'usr_normal', status: 'CONFIRMED' },
-          { id: 'tx7', type: 'PAYOUT', user: 'usr_happy', status: 'COMPLETED' },
+          {
+            id: "tx6",
+            type: "STAKE_LOCKED",
+            user: "usr_normal",
+            status: "CONFIRMED",
+          },
+          { id: "tx7", type: "PAYOUT", user: "usr_happy", status: "COMPLETED" },
         ],
       });
 
@@ -298,83 +325,108 @@ describe('MacroReview', () => {
       expect(queue).toHaveLength(0);
     });
 
-    it('uses fallback id from tx_hash when id is missing', async () => {
+    it("uses fallback id from tx_hash when id is missing", async () => {
       mockGetTruthLog.mockResolvedValue({
         transactions: [
-          { tx_hash: 'hash_fallback', type: 'APPEAL', user: 'usr_x', status: 'PENDING' },
+          {
+            tx_hash: "hash_fallback",
+            type: "APPEAL",
+            user: "usr_x",
+            status: "PENDING",
+          },
         ],
       });
 
       const { queue } = await buildQueue();
 
-      expect(queue[0].id).toBe('hash_fallback');
+      expect(queue[0].id).toBe("hash_fallback");
     });
 
-    it('uses index-based id when both id and tx_hash are missing', async () => {
+    it("uses index-based id when both id and tx_hash are missing", async () => {
       mockGetTruthLog.mockResolvedValue({
         transactions: [
-          { type: 'CONFLICT', user: 'usr_y', status: 'ESCALATED' },
+          { type: "CONFLICT", user: "usr_y", status: "ESCALATED" },
         ],
       });
 
       const { queue } = await buildQueue();
 
-      expect(queue[0].id).toBe('fury_q_0');
+      expect(queue[0].id).toBe("fury_q_0");
     });
   });
 
-  describe('critical count calculation', () => {
-    it('counts CRITICAL items correctly', async () => {
+  describe("critical count calculation", () => {
+    it("counts CRITICAL items correctly", async () => {
       mockGetAdminStats.mockResolvedValue({
-        totalUsers: 100, activeContracts: 50, pendingProofs: 0, avgIntegrity: 60,
+        totalUsers: 100,
+        activeContracts: 50,
+        pendingProofs: 0,
+        avgIntegrity: 60,
       });
       mockGetTruthLog.mockResolvedValue({
         transactions: [
-          { id: 'tx1', type: 'HONEYPOT_FAIL', user: 'u1', status: 'PENALTY_PENDING' },
-          { id: 'tx2', type: 'HONEYPOT_FAIL', user: 'u2', status: 'PENALTY_PENDING' },
-          { id: 'tx3', type: 'APPEAL', user: 'u3', status: 'PENDING' },
+          {
+            id: "tx1",
+            type: "HONEYPOT_FAIL",
+            user: "u1",
+            status: "PENALTY_PENDING",
+          },
+          {
+            id: "tx2",
+            type: "HONEYPOT_FAIL",
+            user: "u2",
+            status: "PENALTY_PENDING",
+          },
+          { id: "tx3", type: "APPEAL", user: "u3", status: "PENDING" },
         ],
       });
 
       const { queue } = await buildQueue();
-      const criticalCount = queue.filter((item) => item.severity === 'CRITICAL').length;
+      const criticalCount = queue.filter(
+        (item) => item.severity === "CRITICAL",
+      ).length;
 
       expect(criticalCount).toBe(2);
     });
 
-    it('returns 0 critical when no HONEYPOT_FAIL events', async () => {
+    it("returns 0 critical when no HONEYPOT_FAIL events", async () => {
       mockGetAdminStats.mockResolvedValue({
-        totalUsers: 100, activeContracts: 50, pendingProofs: 3, avgIntegrity: 60,
+        totalUsers: 100,
+        activeContracts: 50,
+        pendingProofs: 3,
+        avgIntegrity: 60,
       });
       mockGetTruthLog.mockResolvedValue({
         transactions: [
-          { id: 'tx1', type: 'APPEAL', user: 'u1', status: 'PENDING' },
+          { id: "tx1", type: "APPEAL", user: "u1", status: "PENDING" },
         ],
       });
 
       const { queue } = await buildQueue();
-      const criticalCount = queue.filter((item) => item.severity === 'CRITICAL').length;
+      const criticalCount = queue.filter(
+        (item) => item.severity === "CRITICAL",
+      ).length;
 
       expect(criticalCount).toBe(0);
     });
   });
 
-  describe('stats display', () => {
-    it('formats pendingProofs color based on threshold', () => {
+  describe("stats display", () => {
+    it("formats pendingProofs color based on threshold", () => {
       // pendingProofs > 0 → yellow (#eab308), else green (#22c55e)
       const pending = 5;
-      const color = pending > 0 ? '#eab308' : '#22c55e';
-      expect(color).toBe('#eab308');
+      const color = pending > 0 ? "#eab308" : "#22c55e";
+      expect(color).toBe("#eab308");
 
       const noPending = 0;
-      const greenColor = noPending > 0 ? '#eab308' : '#22c55e';
-      expect(greenColor).toBe('#22c55e');
+      const greenColor = noPending > 0 ? "#eab308" : "#22c55e";
+      expect(greenColor).toBe("#22c55e");
     });
 
-    it('formats avgIntegrity color based on 50 threshold', () => {
+    it("formats avgIntegrity color based on 50 threshold", () => {
       // >= 50 → green, < 50 → red
-      expect(65 >= 50 ? '#22c55e' : '#DC2626').toBe('#22c55e');
-      expect(42 >= 50 ? '#22c55e' : '#DC2626').toBe('#DC2626');
+      expect(65 >= 50 ? "#22c55e" : "#DC2626").toBe("#22c55e");
+      expect(42 >= 50 ? "#22c55e" : "#DC2626").toBe("#DC2626");
     });
   });
 });

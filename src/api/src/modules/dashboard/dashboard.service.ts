@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
 
 const NEVER_MISS_TWICE_MULTIPLIER = 2;
 
@@ -45,23 +45,29 @@ export class DashboardService {
       `SELECT id, oath_category, status, stake_amount, duration_days, started_at, ends_at,
               (SELECT COUNT(*) FROM attestations WHERE contract_id = contracts.id AND status IN ('ATTESTED', 'COSIGNED')) as streak
        FROM contracts WHERE user_id = $1 AND status = 'ACTIVE'`,
-      [userId]
+      [userId],
     );
 
     const vaultStats = await this.pool.query(
       `SELECT COALESCE(SUM(amount), 0) as total FROM entries e 
        JOIN accounts a ON e.credit_account_id = a.id
        WHERE a.name = 'PROTECTED_VAULT' AND e.contract_id IN (SELECT id FROM contracts WHERE user_id = $1)`,
-      [userId]
+      [userId],
     );
 
     return {
       activeContracts: contracts.rows,
       protectedVaultBalanceCents: parseInt(vaultStats.rows[0].total),
       summary: {
-        totalActiveStakeUsd: contracts.rows.reduce((sum, c) => sum + parseFloat(c.stake_amount), 0),
-        longestStreak: Math.max(...contracts.rows.map(c => parseInt(c.streak) || 0), 0),
-      }
+        totalActiveStakeUsd: contracts.rows.reduce(
+          (sum, c) => sum + parseFloat(c.stake_amount),
+          0,
+        ),
+        longestStreak: Math.max(
+          ...contracts.rows.map((c) => parseInt(c.streak) || 0),
+          0,
+        ),
+      },
     };
   }
 
@@ -77,10 +83,12 @@ export class DashboardService {
 
     const dayMap = new Map<string, { attested: boolean; graceUsed: boolean }>();
     for (const row of data.rows) {
-      const dateStr = row.attestation_date instanceof Date
-        ? row.attestation_date.toISOString().slice(0, 10)
-        : String(row.attestation_date).slice(0, 10);
-      const attested = row.att_status === 'ATTESTED' || row.att_status === 'COSIGNED';
+      const dateStr =
+        row.attestation_date instanceof Date
+          ? row.attestation_date.toISOString().slice(0, 10)
+          : String(row.attestation_date).slice(0, 10);
+      const attested =
+        row.att_status === "ATTESTED" || row.att_status === "COSIGNED";
       if (!dayMap.has(dateStr) || attested) {
         dayMap.set(dateStr, { attested, graceUsed: row.grace_days_used > 0 });
       }
@@ -119,7 +127,9 @@ export class DashboardService {
     }
 
     const neverMissTwiceActive = consecutiveMisses === 0;
-    const penaltyMultiplier = neverMissTwiceActive ? 1 : NEVER_MISS_TWICE_MULTIPLIER;
+    const penaltyMultiplier = neverMissTwiceActive
+      ? 1
+      : NEVER_MISS_TWICE_MULTIPLIER;
 
     return {
       days,
@@ -161,15 +171,26 @@ export class DashboardService {
       ),
     ]);
 
-    const settledCount = Number.parseInt(String(settlements.rows[0].settled_count), 10);
-    const fraudCount = Number.parseInt(String(settlements.rows[0].fraud_count), 10);
+    const settledCount = Number.parseInt(
+      String(settlements.rows[0].settled_count),
+      10,
+    );
+    const fraudCount = Number.parseInt(
+      String(settlements.rows[0].fraud_count),
+      10,
+    );
 
     return {
       total_staked: Number.parseInt(String(staked.rows[0].total_staked), 10),
-      active_users: Number.parseInt(String(activeUsers.rows[0].active_users), 10),
+      active_users: Number.parseInt(
+        String(activeUsers.rows[0].active_users),
+        10,
+      ),
       fraud_rate: settledCount === 0 ? 0 : fraudCount / settledCount,
-      payout_volume: Number.parseInt(String(settlements.rows[0].payout_volume), 10),
+      payout_volume: Number.parseInt(
+        String(settlements.rows[0].payout_volume),
+        10,
+      ),
     };
   }
 }
-

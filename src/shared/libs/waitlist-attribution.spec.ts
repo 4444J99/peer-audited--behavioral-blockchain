@@ -76,7 +76,10 @@ describe("parseWaitlistAttribution", () => {
   });
 
   it("treats a referral code in the ref param as referral traffic", () => {
-    const result = parseWaitlistAttribution({ source: "friend", ref: "abc123" });
+    const result = parseWaitlistAttribution({
+      source: "friend",
+      ref: "abc123",
+    });
     expect(result.referralCode).toBe("abc123");
     expect(result.channel).toBe("referral");
   });

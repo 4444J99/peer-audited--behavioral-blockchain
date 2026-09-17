@@ -14,7 +14,7 @@ Without a real mechanism for accountability, the cost of breaking your word to y
 
 Styx was built on a simple premise: **Motivation gets you started, but commitment devices keep you going.**
 
-By introducing a formal commitment contract — staking real funds backed by peer verification and automated proof — we realign short-term incentives with your long-term emotional recovery goals. 
+By introducing a formal commitment contract — staking real funds backed by peer verification and automated proof — we realign short-term incentives with your long-term emotional recovery goals.
 
 1. **Skin in the Game**: Staking funds creates an immediate, tangible cost for impulsive behavior.
 2. **Peer Verification**: Neutral peers audit behavioral proofs, eliminating self-deception.

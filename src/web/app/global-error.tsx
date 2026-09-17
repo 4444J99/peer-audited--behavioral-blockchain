@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 export default function GlobalError({
   error,
@@ -10,7 +10,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('[Styx] Global error boundary:', error);
+    console.error("[Styx] Global error boundary:", error);
   }, [error]);
 
   return (
@@ -21,12 +21,16 @@ export default function GlobalError({
             <span className="text-red-500 text-4xl">!</span>
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight">Something Went Wrong</h1>
+            <h1 className="text-2xl font-black tracking-tight">
+              Something Went Wrong
+            </h1>
             <p className="text-neutral-500 mt-2 text-sm">
-              {error.message || 'An unexpected error occurred.'}
+              {error.message || "An unexpected error occurred."}
             </p>
             {error.digest && (
-              <p className="text-neutral-600 text-xs mt-1 font-mono">Error ID: {error.digest}</p>
+              <p className="text-neutral-600 text-xs mt-1 font-mono">
+                Error ID: {error.digest}
+              </p>
             )}
             <p className="text-neutral-600 text-xs mt-3">
               Try refreshing the page or returning to the dashboard.

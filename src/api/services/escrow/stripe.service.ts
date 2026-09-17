@@ -1,19 +1,23 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { randomUUID } from 'crypto';
-import Stripe from 'stripe';
-import { JurisdictionTier } from '../geofencing';
-import { geofenceFailsOpenOnMissingLocation } from '../../src/modules/compliance/compliance-policy.service';
-import { testMoneyModeEnabled } from '../../src/config/runtime';
+import { Injectable, Logger } from "@nestjs/common";
+import { randomUUID } from "crypto";
+import Stripe from "stripe";
+import { JurisdictionTier } from "../geofencing";
+import { geofenceFailsOpenOnMissingLocation } from "../../src/modules/compliance/compliance-policy.service";
+import { testMoneyModeEnabled } from "../../src/config/runtime";
 
-import { resolveStakeDisposition } from './disposition';
-import type { StakeDisposition } from '../../src/common/interfaces/payout-provider.interface';
+import { resolveStakeDisposition } from "./disposition";
+import type { StakeDisposition } from "../../src/common/interfaces/payout-provider.interface";
 
 export type { StakeDisposition };
 
 type StripeClient = InstanceType<typeof Stripe>;
-type StripePaymentIntent = Awaited<ReturnType<StripeClient['paymentIntents']['retrieve']>>;
-type StripePaymentIntentCaptureParams = NonNullable<Parameters<StripeClient['paymentIntents']['capture']>[1]>;
-type StripeTransfer = Awaited<ReturnType<StripeClient['transfers']['create']>>;
+type StripePaymentIntent = Awaited<
+  ReturnType<StripeClient["paymentIntents"]["retrieve"]>
+>;
+type StripePaymentIntentCaptureParams = NonNullable<
+  Parameters<StripeClient["paymentIntents"]["capture"]>[1]
+>;
+type StripeTransfer = Awaited<ReturnType<StripeClient["transfers"]["create"]>>;
 
 @Injectable()
 export class StripeFboService {
@@ -21,8 +25,8 @@ export class StripeFboService {
   private stripe: StripeClient;
 
   constructor() {
-    const apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key'; // allow-secret
-    const isProduction = process.env.NODE_ENV === 'production';
+    const apiKey = process.env.STRIPE_SECRET_KEY || "sk_test_mock_key"; // allow-secret
+    const isProduction = process.env.NODE_ENV === "production";
 
     // The test-money rail never calls Stripe. It is valid for the local demo
     // and beta runtime to have no Stripe credential even when the container
@@ -32,16 +36,17 @@ export class StripeFboService {
     if (
       isProduction &&
       !testMoneyModeEnabled() &&
-      (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_mock_key')
+      (!process.env.STRIPE_SECRET_KEY ||
+        process.env.STRIPE_SECRET_KEY === "sk_test_mock_key")
     ) {
       throw new Error(
-        'FATAL: STRIPE_SECRET_KEY is required in production. ' +
-        'Set a valid Stripe secret key to prevent mock mode in production.'
+        "FATAL: STRIPE_SECRET_KEY is required in production. " +
+          "Set a valid Stripe secret key to prevent mock mode in production.",
       );
     }
 
     this.stripe = new Stripe(apiKey, {
-      apiVersion: '2026-08-26.dahlia',
+      apiVersion: "2026-08-26.dahlia",
     });
   }
 
@@ -53,7 +58,7 @@ export class StripeFboService {
    */
   private get isMockMode(): boolean {
     const key = process.env.STRIPE_SECRET_KEY;
-    return !key || key === 'sk_test_mock_key';
+    return !key || key === "sk_test_mock_key";
   }
 
   /**
@@ -68,8 +73,8 @@ export class StripeFboService {
    * separately answerable: "can we call Stripe?" and "is this real?".
    */
   get movesRealMoney(): boolean {
-    const key = process.env.STRIPE_SECRET_KEY ?? '';
-    return key.startsWith('sk_live_') || key.startsWith('rk_live_');
+    const key = process.env.STRIPE_SECRET_KEY ?? "";
+    return key.startsWith("sk_live_") || key.startsWith("rk_live_");
   }
 
   /**
@@ -91,12 +96,12 @@ export class StripeFboService {
     if (geofenceFailsOpenOnMissingLocation()) {
       throw new Error(
         `Refusing to ${operation} with real money while the geofence fails open: an ` +
-          'unresolvable location would be granted FULL_ACCESS, defeating the US-only ' +
+          "unresolvable location would be granted FULL_ACCESS, defeating the US-only " +
           'boundary (DR-003). Unset GEO_MISSING_HEADER_ACTION or set it to "block".',
       );
     }
 
-    if (String(process.env.KYC_ENFORCEMENT_ENABLED).toLowerCase() !== 'true') {
+    if (String(process.env.KYC_ENFORCEMENT_ENABLED).toLowerCase() !== "true") {
       throw new Error(
         `Refusing to ${operation} with real money while KYC enforcement is disabled. ` +
           'KYC_ENFORCEMENT_ENABLED must be "true" once STRIPE_SECRET_KEY is a live key.',
@@ -104,11 +109,14 @@ export class StripeFboService {
     }
 
     // Defaults on, so real money requires deliberately setting it to false.
-    if (String(process.env.STYX_TEST_MONEY_MODE ?? 'true').toLowerCase() !== 'false') {
+    if (
+      String(process.env.STYX_TEST_MONEY_MODE ?? "true").toLowerCase() !==
+      "false"
+    ) {
       throw new Error(
         `Refusing to ${operation} with real money while STYX_TEST_MONEY_MODE is on — ` +
-          'every tester-facing surface is currently labelled a test-money pilot. ' +
-          'Set STYX_TEST_MONEY_MODE=false to activate real money.',
+          "every tester-facing surface is currently labelled a test-money pilot. " +
+          "Set STYX_TEST_MONEY_MODE=false to activate real money.",
       );
     }
   }
@@ -141,23 +149,26 @@ export class StripeFboService {
     contractId: string,
     idempotencyKeyOverride?: string,
   ): Promise<StripePaymentIntent> {
-    this.assertRealMoneyAllowed('authorize a hold');
+    this.assertRealMoneyAllowed("authorize a hold");
     if (this.isMockMode) {
-      this.logger.debug(`[DEV] Mock hold ${amountCents}¢ for contract ${contractId}`);
+      this.logger.debug(
+        `[DEV] Mock hold ${amountCents}¢ for contract ${contractId}`,
+      );
       return {
         id: `pi_dev_${randomUUID().slice(0, 8)}`,
-        status: 'requires_capture',
+        status: "requires_capture",
         amount: amountCents,
-        currency: 'usd',
+        currency: "usd",
       } as any;
     }
-    const idempotencyKey = idempotencyKeyOverride ?? `styx_hold_${contractId}_${randomUUID()}`;
+    const idempotencyKey =
+      idempotencyKeyOverride ?? `styx_hold_${contractId}_${randomUUID()}`;
     const intent = await this.stripe.paymentIntents.create(
       {
         amount: amountCents,
-        currency: 'usd',
+        currency: "usd",
         customer: customerId,
-        capture_method: 'manual',
+        capture_method: "manual",
         metadata: { contractId },
       },
       { idempotencyKey },
@@ -178,19 +189,26 @@ export class StripeFboService {
    * job would retry forever. We only throw for genuinely invalid states (e.g. `canceled`), where
    * capture can never succeed and a fast, clear error beats an opaque Stripe failure.
    */
-  async captureStake(paymentIntentId: string, captureAmountCents?: number): Promise<StripePaymentIntent> {
-    this.assertRealMoneyAllowed('capture a stake');
+  async captureStake(
+    paymentIntentId: string,
+    captureAmountCents?: number,
+  ): Promise<StripePaymentIntent> {
+    this.assertRealMoneyAllowed("capture a stake");
     if (this.isMockMode) {
       // PM18: surface the partial-capture amount in dev so units/partial-capture bugs are not
       // hidden by an amount-agnostic mock. amount_received reflects what would actually be taken.
       this.logger.debug(
         `[DEV] Mock capture ${paymentIntentId}` +
-          (captureAmountCents !== undefined ? ` for ${captureAmountCents}¢` : ' (full hold)'),
+          (captureAmountCents !== undefined
+            ? ` for ${captureAmountCents}¢`
+            : " (full hold)"),
       );
       return {
         id: paymentIntentId,
-        status: 'succeeded',
-        ...(captureAmountCents !== undefined ? { amount_received: captureAmountCents } : {}),
+        status: "succeeded",
+        ...(captureAmountCents !== undefined
+          ? { amount_received: captureAmountCents }
+          : {}),
       } as any;
     }
 
@@ -198,26 +216,31 @@ export class StripeFboService {
 
     // Already captured by a prior (possibly crashed) attempt — treat as success so the
     // caller can proceed to finalize the ledger idempotently instead of throwing.
-    if (current.status === 'succeeded') {
-      this.logger.debug(`Capture for PaymentIntent ${paymentIntentId} already succeeded; returning idempotently.`);
+    if (current.status === "succeeded") {
+      this.logger.debug(
+        `Capture for PaymentIntent ${paymentIntentId} already succeeded; returning idempotently.`,
+      );
       return current;
     }
 
-    if (current.status !== 'requires_capture') {
+    if (current.status !== "requires_capture") {
       throw new Error(
         `Cannot capture PaymentIntent ${paymentIntentId}: expected status 'requires_capture' but found '${current.status}'`,
       );
     }
 
     const params: StripePaymentIntentCaptureParams =
-      captureAmountCents !== undefined ? { amount_to_capture: captureAmountCents } : {};
+      captureAmountCents !== undefined
+        ? { amount_to_capture: captureAmountCents }
+        : {};
 
     // PM17: the idempotency key must incorporate the capture amount. A fixed
     // `styx_capture_${paymentIntentId}` key reused with a DIFFERENT amount_to_capture (a
     // legitimate re-capture at a partial amount) makes Stripe replay the FIRST request's
     // result and silently ignore the new amount. Including the amount makes each distinct
     // capture amount its own idempotent operation while still deduping true retries.
-    const amountKeyPart = captureAmountCents !== undefined ? String(captureAmountCents) : 'full';
+    const amountKeyPart =
+      captureAmountCents !== undefined ? String(captureAmountCents) : "full";
     return this.stripe.paymentIntents.capture(paymentIntentId, params, {
       idempotencyKey: `styx_capture_${paymentIntentId}_${amountKeyPart}`,
     });
@@ -226,7 +249,7 @@ export class StripeFboService {
   async retrieveIntent(paymentIntentId: string): Promise<StripePaymentIntent> {
     if (this.isMockMode) {
       this.logger.debug(`[DEV] Mock retrieve ${paymentIntentId}`);
-      return { id: paymentIntentId, status: 'succeeded' } as any;
+      return { id: paymentIntentId, status: "succeeded" } as any;
     }
     return this.stripe.paymentIntents.retrieve(paymentIntentId);
   }
@@ -234,7 +257,7 @@ export class StripeFboService {
   async cancelHold(paymentIntentId: string): Promise<StripePaymentIntent> {
     if (this.isMockMode) {
       this.logger.debug(`[DEV] Mock cancel ${paymentIntentId}`);
-      return { id: paymentIntentId, status: 'canceled' } as any;
+      return { id: paymentIntentId, status: "canceled" } as any;
     }
     return this.stripe.paymentIntents.cancel(paymentIntentId, undefined, {
       idempotencyKey: `styx_cancel_${paymentIntentId}`,
@@ -258,10 +281,15 @@ export class StripeFboService {
     metadata?: Record<string, any>,
     idempotencyKey?: string,
   ): Promise<StripeTransfer> {
-    this.assertRealMoneyAllowed('transfer funds');
+    this.assertRealMoneyAllowed("transfer funds");
     if (this.isMockMode) {
-      this.logger.debug(`[DEV] Mock transfer ${amountCents}¢ to ${destinationAccountId}`);
-      return { id: `tr_dev_${randomUUID().slice(0, 8)}`, amount: amountCents } as any;
+      this.logger.debug(
+        `[DEV] Mock transfer ${amountCents}¢ to ${destinationAccountId}`,
+      );
+      return {
+        id: `tr_dev_${randomUUID().slice(0, 8)}`,
+        amount: amountCents,
+      } as any;
     }
     const stableId =
       idempotencyKey ||
@@ -276,7 +304,7 @@ export class StripeFboService {
     return this.stripe.transfers.create(
       {
         amount: amountCents,
-        currency: 'usd',
+        currency: "usd",
         destination: destinationAccountId,
         metadata,
       },
@@ -292,7 +320,7 @@ export class StripeFboService {
    * `./disposition` and every rail delegates to it.
    */
   resolveDisposition(
-    outcome: 'COMPLETED' | 'FAILED',
+    outcome: "COMPLETED" | "FAILED",
     jurisdictionTier: JurisdictionTier,
   ): StakeDisposition {
     return resolveStakeDisposition(outcome, jurisdictionTier);

@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
 
 export interface UsageSummary {
   enterpriseId: string;
@@ -14,8 +14,14 @@ export class ConsumptionBillingService {
 
   constructor(private readonly pool: Pool) {}
 
-  async trackEvent(enterpriseId: string, eventType: string, units: number = 1): Promise<void> {
-    this.logger.log(`[BILLING] Enterprise ${enterpriseId}: ${units}x ${eventType}`);
+  async trackEvent(
+    enterpriseId: string,
+    eventType: string,
+    units: number = 1,
+  ): Promise<void> {
+    this.logger.log(
+      `[BILLING] Enterprise ${enterpriseId}: ${units}x ${eventType}`,
+    );
     await this.pool.query(
       `INSERT INTO consumption_logs (enterprise_id, event_type, units, recorded_at) VALUES ($1, $2, $3, NOW())`,
       [enterpriseId, eventType, units],
@@ -53,7 +59,10 @@ export class ConsumptionBillingService {
     };
   }
 
-  async getUsageHistory(enterpriseId: string, months: number = 6): Promise<UsageSummary[]> {
+  async getUsageHistory(
+    enterpriseId: string,
+    months: number = 6,
+  ): Promise<UsageSummary[]> {
     const result = await this.pool.query(
       `SELECT event_type,
               COALESCE(SUM(units), 0)::int AS total,

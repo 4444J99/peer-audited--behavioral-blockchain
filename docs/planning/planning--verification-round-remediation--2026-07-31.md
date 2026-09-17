@@ -15,21 +15,21 @@ cannot see.
 
 Reading the code afterward, they are not ten independent bugs. **Each one is a place where
 a capability was left half-built, and the half that exists papered over the half that
-doesn't.** The corrections below therefore heal the defect *and* finish the capability —
+doesn't.** The corrections below therefore heal the defect _and_ finish the capability —
 no fix reduces a surface to make itself small.
 
 The three structural ones:
 
 - **The payment port is half-built.** `PayoutProvider`
-  (`src/api/src/common/interfaces/payout-provider.interface.ts`) abstracts the *exit* —
+  (`src/api/src/common/interfaces/payout-provider.interface.ts`) abstracts the _exit_ —
   `releaseFunds` / `captureFunds` / `getTransactionStatus` — with two working adapters
-  (Stripe, Corepay) routed by `PaymentRouterService`. The *entry* half has no port at all:
+  (Stripe, Corepay) routed by `PaymentRouterService`. The _entry_ half has no port at all:
   `contracts.service.ts:140` injects `StripeFboService` directly and bypasses the router.
   You can pay **out** through Corepay but can only take money **in** through Stripe. That
-  asymmetry is *why* the `sk_test_` bug existed — with the entry path Stripe-shaped,
+  asymmetry is _why_ the `sk_test_` bug existed — with the entry path Stripe-shaped,
   "is this real money?" degenerated into "what does the key string look like?"
 - **The saga has no drain.** `RECONCILE_REQUIRED` is written by `contracts.service.ts:973`
-  and `dispute.service.ts:44`, and read only by an admin *count* at
+  and `dispute.service.ts:44`, and read only by an admin _count_ at
   `admin.controller.ts:506`. `ReconciliationService.reconcileContract(contractId)` exists
   but nothing ever sweeps. Compensation records a dead letter and walks away.
 - **Verification has no surface where the fix lives.** The mobile ZK provider, the
@@ -40,14 +40,14 @@ The three structural ones:
 Two findings are worse than the verification report stated:
 
 - `contracts.service.ts:1291` has an **inverted guard**. The happy path is the branch that
-  gets *skipped*, so every contract created through the transactional path stays
+  gets _skipped_, so every contract created through the transactional path stays
   `PENDING_STAKE` with a NULL `payment_intent_id` and no bounty row — while an
   already-finalized row gets its intent overwritten and a duplicate bounty inserted.
 - The web app renders unstyled **in production too**: Tailwind **4.3.3** is installed but
   `src/web/app/globals.css` still uses v3 `@tailwind` directives. v4's entrypoint is
   `@import "tailwindcss"`, so no utilities are generated at all.
 
-**Design principle** (`docs/logos/telos.md`): Styx's authority is *verifiability*. Every
+**Design principle** (`docs/logos/telos.md`): Styx's authority is _verifiability_. Every
 change removes a place where the code asserts knowledge it does not have. One predicate per
 real property; ignorance is never converted into a verdict. Where a capability is missing,
 build it — an N/A is a vacuum, not a resting state.
@@ -81,7 +81,7 @@ ordinary `sk_test_…` key (what `.env.example:1` documents) is treated as real 
 `KYC_ENFORCEMENT_ENABLED=false`. The error text already names the right predicate — "once
 STRIPE_SECRET_KEY is a live key" — but the code never checks for `sk_live_`.
 
-**Evolve:** stop sniffing key strings. Which rail is installed *is* the answer.
+**Evolve:** stop sniffing key strings. Which rail is installed _is_ the answer.
 
 1. **Extend the existing port** with the entry half, in the file that already defines it:
 
@@ -106,7 +106,7 @@ STRIPE_SECRET_KEY is a live key" — but the code never checks for `sk_live_`.
    the high-risk merchant path in `docs/legal/` becomes usable end to end.
    **`LedgerEscrowProvider`** performs the hold against the internal double-entry ledger:
    `LedgerService.recordTransaction(userAccount, SYSTEM_ESCROW, cents, contractId, …,
-   idempotencyKey)` — every piece already exists (`services/ledger/ledger.service.ts:23`,
+idempotencyKey)` — every piece already exists (`services/ledger/ledger.service.ts:23`,
    `SYSTEM_ESCROW` at `contracts.service.ts:1042`), and it declares `movesRealMoney: false`.
 
 3. **Route the entry half through `PaymentRouterService`**, which already picks a processor
@@ -117,7 +117,7 @@ STRIPE_SECRET_KEY is a live key" — but the code never checks for `sk_live_`.
 4. **`STYX_TEST_MONEY_MODE` becomes a real interlock**, not a banner string — the open item
    from the strategic plan. `true` (the default) selects `LedgerEscrowProvider`: the pilot
    holds real balances on the real ledger with no external rail attached, so the escrow path
-   is *exercised* rather than mocked, and no configuration mistake can move outside money.
+   is _exercised_ rather than mocked, and no configuration mistake can move outside money.
    `assertRealMoneyAllowed` gates on `provider.movesRealMoney` — a declared property, not a
    prefix guess. `stripe-production.guard.ts` already enforces `sk_live_` in production and
    is unchanged.
@@ -183,10 +183,10 @@ monetized path loosens.
 each link returning `{country, region, source, confidence}`:
 
 1. `cf-ipstate` / `cloudfront-viewer-country-region` (gated on `trustProxy` — the guard at
-   `geofence.guard.ts` *already logs* `hasCloudfrontViewerCountryRegion`, a header nothing
+   `geofence.guard.ts` _already logs_ `hasCloudfrontViewerCountryRegion`, a header nothing
    reads; wire it rather than deleting the diagnostic)
 2. **MaxMind GeoLite2 City** when `MAXMIND_DB_PATH` is present — this is the fix for the
-   *data*, and it belongs alongside the model fix, not instead of it
+   _data_, and it belongs alongside the model fix, not instead of it
 3. `geoip-lite` as the always-present floor, so no new hard dependency at boot
 4. dev-only `x-styx-state` override, unchanged
 
@@ -210,7 +210,7 @@ sentinel under `NODE_ENV==="test"` and otherwise throws at `requireOneEnv` first
 fallback is unreachable; `resolveCacheRedisConfig` tests for port `6381`, which the sentinel
 never returns. The API refuses to boot with only `REDIS_URL` set. Heal by returning `null`
 for "not configured" and moving the requirement to the callers
-(`purpose-specific ?? resolveRedisConnectionConfig()`); keep throwing on *partial* config,
+(`purpose-specific ?? resolveRedisConnectionConfig()`); keep throwing on _partial_ config,
 which is misconfiguration rather than absence. Evolve into a small purpose registry so a new
 queue is a table row, not a copied function. Render sets both purpose URLs — deployed
 behavior unchanged.
@@ -265,7 +265,7 @@ journey with money on it.
 Then persist `.claude/skills/verify/SKILL.md` at the repo root: the cold-start handle, the
 flows worth driving, and the gotchas that cost time (`curl -q`, lowercase `access_tier`,
 real enum values). Ten green checks over four holes is the finding under the findings; a
-recipe that starts the next round from a *running app* is the fix for it.
+recipe that starts the next round from a _running app_ is the fix for it.
 
 ---
 
@@ -283,18 +283,18 @@ createdb styx_v858 && npm run dev:migrate          # 71 migrations incl. 066
 npm run dev:api & npm run dev:web
 ```
 
-| # | Drive | Expect | Outcome |
-|---|---|---|---|
-| 1 | `POST /contracts` on the **ledger** rail (`STYX_TEST_MONEY_MODE=true`, no Stripe key), then query `contracts` + `ledger_entries` | `ACTIVE`, hold id set, one bounty row, a balanced user→`SYSTEM_ESCROW` pair. Repeat the finalize → no duplicate bounty | **PASS** — exactly-once ledger; balanced pair; no duplicate bounty |
-| 2 | Same with a real `sk_test_…` key and `STYX_TEST_MONEY_MODE=false` | 201 on the Stripe rail — not the 500 "Refusing to authorize a hold with real money" | **BLOCKED → #865** — no `sk_test_…` key available (dependency-free ask); logged as an issue |
-| 3 | Force the hold to fail, then run the scheduler pass | Row lands `RECONCILE_REQUIRED`, is swept, and a second create is allowed (slot not burned) | **PASS** — `56dd6ac6-…` → `STAKE_FAILED` + `CONTRACT_RECONCILED_STAKE_FAILED`; second create allowed |
-| 4 | `GET /contracts` with `x-forwarded-for: 8.8.8.8`, `TRUST_PROXY=true` + `GEO=block` | **200**, `source: ip-country-only`. Contrast: `POST /contracts` same header → 403 `JURISDICTION_BLOCKED`; `91.198.174.192` (NL) → 403 on both | **PASS** — US 200 `ip-country-only`; NL 403 on both routes |
-| 5 | Same request with `MAXMIND_DB_PATH` set | Resolves to a real state, `source: maxmind`, higher confidence in the audit row | **PASS** — Provisioned `GeoLite2-City-Test.mmdb` and verified resolution to US region via MaxMind integration |
-| 6 | Boot with no `STRIPE_SECRET_KEY`; boot with only `REDIS_URL` | Both listen on :3900, `/health` 200 | **PASS** — Stripe absent + Redis single-URL redundancy boot clean |
-| 7 | Load `/dashboard` and `/help` in Chrome | Styled — real utilities and live `@theme` tokens, not native `<details>` and blue links. Screenshot both | **PASS** — `docs/verification/verify-row7-dashboard.png`, `verify-row7-help.png` |
-| 8 | Log in from an IP with no region | Dashboard renders; contracts section shows the jurisdiction notice; no "backend service is reachable" | **BLOCKED → #867** — jurisdiction notice unreachable: only `/contracts` is geofence-guarded and `page.tsx:58` `.catch(() => [])` swallows the 403 |
-| 9 | `GET /api/docs`, paste the `CreateContractDto` example verbatim into `POST /contracts` | Accepted | **PASS** — schema-example body → 201 (contract `3f7a8934-…`, `MVP_39` plan override) |
-| 10 | `npm run web` in `src/mobile`, open `DigitalExhaustScreen` with no log provider installed | "Scan Unavailable" — **not** a clean `COMPLIANT`. Screenshot | **PASS** — "Scan Unavailable On This Device" fail-closed rendered (F1 web target + `registerRootComponent` entry + `DigitalExhaust` deep link); `docs/verification/verify-row10-mobile-digital-exhaust.png` |
-| 11 | Trigger a 500 with `NODE_ENV` and `STYX_DEBUG_ERROR_DETAILS` unset | No `details.stack` in the body | **PASS** — `{"error_code":"INTERNAL_SERVER_ERROR","message":"…","trace_id":"…"}` — no `details` key, no stack |
+| #   | Drive                                                                                                                            | Expect                                                                                                                                        | Outcome                                                                                                                                                                                                     |
+| --- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `POST /contracts` on the **ledger** rail (`STYX_TEST_MONEY_MODE=true`, no Stripe key), then query `contracts` + `ledger_entries` | `ACTIVE`, hold id set, one bounty row, a balanced user→`SYSTEM_ESCROW` pair. Repeat the finalize → no duplicate bounty                        | **PASS** — exactly-once ledger; balanced pair; no duplicate bounty                                                                                                                                          |
+| 2   | Same with a real `sk_test_…` key and `STYX_TEST_MONEY_MODE=false`                                                                | 201 on the Stripe rail — not the 500 "Refusing to authorize a hold with real money"                                                           | **BLOCKED → #865** — no `sk_test_…` key available (dependency-free ask); logged as an issue                                                                                                                 |
+| 3   | Force the hold to fail, then run the scheduler pass                                                                              | Row lands `RECONCILE_REQUIRED`, is swept, and a second create is allowed (slot not burned)                                                    | **PASS** — `56dd6ac6-…` → `STAKE_FAILED` + `CONTRACT_RECONCILED_STAKE_FAILED`; second create allowed                                                                                                        |
+| 4   | `GET /contracts` with `x-forwarded-for: 8.8.8.8`, `TRUST_PROXY=true` + `GEO=block`                                               | **200**, `source: ip-country-only`. Contrast: `POST /contracts` same header → 403 `JURISDICTION_BLOCKED`; `91.198.174.192` (NL) → 403 on both | **PASS** — US 200 `ip-country-only`; NL 403 on both routes                                                                                                                                                  |
+| 5   | Same request with `MAXMIND_DB_PATH` set                                                                                          | Resolves to a real state, `source: maxmind`, higher confidence in the audit row                                                               | **PASS** — Provisioned `GeoLite2-City-Test.mmdb` and verified resolution to US region via MaxMind integration                                                                                               |
+| 6   | Boot with no `STRIPE_SECRET_KEY`; boot with only `REDIS_URL`                                                                     | Both listen on :3900, `/health` 200                                                                                                           | **PASS** — Stripe absent + Redis single-URL redundancy boot clean                                                                                                                                           |
+| 7   | Load `/dashboard` and `/help` in Chrome                                                                                          | Styled — real utilities and live `@theme` tokens, not native `<details>` and blue links. Screenshot both                                      | **PASS** — `docs/verification/verify-row7-dashboard.png`, `verify-row7-help.png`                                                                                                                            |
+| 8   | Log in from an IP with no region                                                                                                 | Dashboard renders; contracts section shows the jurisdiction notice; no "backend service is reachable"                                         | **BLOCKED → #867** — jurisdiction notice unreachable: only `/contracts` is geofence-guarded and `page.tsx:58` `.catch(() => [])` swallows the 403                                                           |
+| 9   | `GET /api/docs`, paste the `CreateContractDto` example verbatim into `POST /contracts`                                           | Accepted                                                                                                                                      | **PASS** — schema-example body → 201 (contract `3f7a8934-…`, `MVP_39` plan override)                                                                                                                        |
+| 10  | `npm run web` in `src/mobile`, open `DigitalExhaustScreen` with no log provider installed                                        | "Scan Unavailable" — **not** a clean `COMPLIANT`. Screenshot                                                                                  | **PASS** — "Scan Unavailable On This Device" fail-closed rendered (F1 web target + `registerRootComponent` entry + `DigitalExhaust` deep link); `docs/verification/verify-row10-mobile-digital-exhaust.png` |
+| 11  | Trigger a 500 with `NODE_ENV` and `STYX_DEBUG_ERROR_DETAILS` unset                                                               | No `details.stack` in the body                                                                                                                | **PASS** — `{"error_code":"INTERNAL_SERVER_ERROR","message":"…","trace_id":"…"}` — no `details` key, no stack                                                                                               |
 
 Screenshots for 4, 7, 8, 10 delivered via `SendUserFile`; the report names what was sent.

@@ -147,19 +147,22 @@ export class UsersController {
 
   @Put("me/push-token")
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Register or update a push notification device token" })
+  @ApiOperation({
+    summary: "Register or update a push notification device token",
+  })
   @UseGuards(AuthGuard)
   async registerPushToken(
     @CurrentUser() user: { id: string },
-    @Body() body: { token: string; platform?: string; deviceIdentifier?: string },
+    @Body()
+    body: { token: string; platform?: string; deviceIdentifier?: string },
   ) {
     if (!body.token) {
-      throw new BadRequestException('token is required');
+      throw new BadRequestException("token is required");
     }
     await this.pushTokens.registerToken(
       user.id,
       body.token,
-      body.platform || 'unknown',
+      body.platform || "unknown",
       body.deviceIdentifier,
     );
     return { success: true };
@@ -255,7 +258,10 @@ export class UsersController {
     if (typeof body?.active !== "boolean") {
       throw new BadRequestException("active (boolean) is required");
     }
-    const result = await this.usersService.setPregnancyExclusion(user.id, body.active);
+    const result = await this.usersService.setPregnancyExclusion(
+      user.id,
+      body.active,
+    );
     if (body.active) {
       await this.contractsService.suspendPregnancyExcludedContracts(user.id);
     }

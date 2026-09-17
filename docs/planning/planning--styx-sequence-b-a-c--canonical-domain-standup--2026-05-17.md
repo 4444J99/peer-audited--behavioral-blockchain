@@ -10,15 +10,15 @@ This plan resolves the standing A/B/C decision carried forward from `.conductor/
 
 ## Authority pointers (this plan does not duplicate values)
 
-| Value class | Authority file | Resolves to |
-|---|---|---|
-| Runtime identity (`CANONICAL_DOMAIN`, `PROJECT_NAME`, `MOBILE_BUNDLE_ID`, `DEEP_LINK_SCHEME`, `CONTACT_EMAIL_DOMAIN`, `RENDER_*_SERVICE_NAME`, `CANONICAL_REPO_URL`) | `${CANONICAL_REPO_PATH}/.env.example` Project Identity section [26] | Values in `.env.example`; runtime overrides in gitignored `.env` |
-| IRF (work registry) | Home `~/CLAUDE.md` four-registry table | `~/Code/organvm/organvm-corpvs-testamentvm/INST-INDEX-RERUM-FACIENDARUM.md` |
-| Plan-action ratio (≤3:1) | `.conductor/active-handoff.md:99` [20] + premortem [21][22] | Hard-stop |
-| Phase 1 targets (5 cold messages, ≥1 reply) | Premortem checklist [21] + handoff [20] | Integer counters |
-| Domain registration budget | `docs/departments/fin/artifacts/runway-tracker.md:29` [23] | `$36/year`, estimated |
-| Dissertation URL (`${DISSERTATION_URL}`) | `~/Code/organvm/public-process/_config.yml` + canonical tags [19] | Jekyll-built site |
-| Outreach log path | Forward-declared: `${CANONICAL_REPO_PATH}/.outreach-log` (flat append-only; format TBD until Phase 1 reveals shape) | n/a |
+| Value class                                                                                                                                                          | Authority file                                                                                                      | Resolves to                                                                 |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Runtime identity (`CANONICAL_DOMAIN`, `PROJECT_NAME`, `MOBILE_BUNDLE_ID`, `DEEP_LINK_SCHEME`, `CONTACT_EMAIL_DOMAIN`, `RENDER_*_SERVICE_NAME`, `CANONICAL_REPO_URL`) | `${CANONICAL_REPO_PATH}/.env.example` Project Identity section [26]                                                 | Values in `.env.example`; runtime overrides in gitignored `.env`            |
+| IRF (work registry)                                                                                                                                                  | Home `~/CLAUDE.md` four-registry table                                                                              | `~/Code/organvm/organvm-corpvs-testamentvm/INST-INDEX-RERUM-FACIENDARUM.md` |
+| Plan-action ratio (≤3:1)                                                                                                                                             | `.conductor/active-handoff.md:99` [20] + premortem [21][22]                                                         | Hard-stop                                                                   |
+| Phase 1 targets (5 cold messages, ≥1 reply)                                                                                                                          | Premortem checklist [21] + handoff [20]                                                                             | Integer counters                                                            |
+| Domain registration budget                                                                                                                                           | `docs/departments/fin/artifacts/runway-tracker.md:29` [23]                                                          | `$36/year`, estimated                                                       |
+| Dissertation URL (`${DISSERTATION_URL}`)                                                                                                                             | `~/Code/organvm/public-process/_config.yml` + canonical tags [19]                                                   | Jekyll-built site                                                           |
+| Outreach log path                                                                                                                                                    | Forward-declared: `${CANONICAL_REPO_PATH}/.outreach-log` (flat append-only; format TBD until Phase 1 reveals shape) | n/a                                                                         |
 
 The plan REFERENCES these authorities. It does not duplicate their values. Where this plan uses `${VAR}` notation, the binding comes from the authority listed above.
 
@@ -27,6 +27,7 @@ The plan REFERENCES these authorities. It does not duplicate their values. Where
 **The center is `https://${CANONICAL_DOMAIN}`** — currently resolves to `https://styx.app` per `.env.example` [26].
 
 Convergent evidence:
+
 - Named 100+ times across 11+ distinct files in `${CANONICAL_REPO_PATH}` — legal docs [1][10], outreach [3], EXPORT [2]
 - `${MOBILE_BUNDLE_ID}` orbits the domain — iOS [4][5], Android [6][7]
 - `${DEEP_LINK_SCHEME}://` declared on both mobile platforms — Android [8], iOS [9]
@@ -37,17 +38,17 @@ Convergent evidence:
 
 **Currently-live URLs (the smeared center):**
 
-| URL | Status | Role |
-|---|---|---|
-| `${DISSERTATION_URL}` | Live; per-chapter `<link rel="canonical">` [19] | Documentation node — not product hub |
-| `${CANONICAL_REPO_URL}` | Live [24] | OSS canonical repo — for developers, not buyers |
-| `https://${CANONICAL_DOMAIN}` | **Not registered** | What the repo writes toward [2][16] |
+| URL                           | Status                                          | Role                                            |
+| ----------------------------- | ----------------------------------------------- | ----------------------------------------------- |
+| `${DISSERTATION_URL}`         | Live; per-chapter `<link rel="canonical">` [19] | Documentation node — not product hub            |
+| `${CANONICAL_REPO_URL}`       | Live [24]                                       | OSS canonical repo — for developers, not buyers |
+| `https://${CANONICAL_DOMAIN}` | **Not registered**                              | What the repo writes toward [2][16]             |
 
 ## Ideal logical order: B → A → C
 
 Alphabetical labels inherited from prior handoffs are NOT priority-ordered. Logic dictates:
 
-**B first.** The prior handoff's hardest constraint — *"If plan-to-action ratio exceeds 3:1, send an email instead of writing another plan"* [20][21][22] — is a logic gate, not a preference. B is the only path that starts external. A and C both add internal artifact before external contact, re-entering the diagnosed Möbius [17][20].
+**B first.** The prior handoff's hardest constraint — _"If plan-to-action ratio exceeds 3:1, send an email instead of writing another plan"_ [20][21][22] — is a logic gate, not a preference. B is the only path that starts external. A and C both add internal artifact before external contact, re-entering the diagnosed Möbius [17][20].
 
 **A second.** IRF propagation is bookkeeping. Done before B → codifies pre-validation assumptions. Done after B → records validated demand. Same activity at different positions has opposite information value.
 
@@ -56,6 +57,7 @@ Alphabetical labels inherited from prior handoffs are NOT priority-ordered. Logi
 ## Phase-by-phase
 
 ### Phase 1 — B (market activation + URL standup)
+
 - **Trigger:** User acts (not "approves in text"). The two-track action below IS the approval.
 - **First action (two-track, both required):**
   1. User names ≥1 real person/company who needs peer-audited verification.
@@ -63,11 +65,13 @@ Alphabetical labels inherited from prior handoffs are NOT priority-ordered. Logi
 - **Gate to advance:** 5 cold messages sent + ≥1 substantive reply [20][21]. Names + responses logged to `${CANONICAL_REPO_PATH}/.outreach-log` (flat append-only; no schema until format is genuinely needed).
 
 ### Phase 2 — A (IRF propagation, validated)
+
 - **Trigger:** Phase 1 gate met.
 - **First action:** Append entries to `~/Code/organvm/organvm-corpvs-testamentvm/INST-INDEX-RERUM-FACIENDARUM.md` reflecting Phase 1 ground truth — named buyers, stated needs, `${CANONICAL_DOMAIN}` registration, validated demand evidence. Also append the three IRF candidates surfaced by v4 itself (see Propagation gap section).
 - **Gate to advance:** IRF reflects B's results.
 
 ### Phase 3 — C (technical extraction, demand-driven)
+
 - **Trigger:** Phase 2 gate met **AND** ≥1 named buyer has explicitly asked for the extracted package.
 - **First action:** Create `${CANONICAL_REPO_PATH}/packages/audit-engine/` skeleton.
 - **Gate:** Buyer reviews and approves the package contract before any npm publish.
@@ -113,7 +117,7 @@ Every artifact-producing agent including Claude is a smoothing agent. This plan 
 - **Möbius reassertion at the URL layer.** Registering `${CANONICAL_DOMAIN}` but populating with internal artifact (strategy docs, dissertations) [16][17] leaves the center smeared. Landing must be minimal and outbound-pointing.
 - **Sequence drift.** Three phases tempts three-phases-of-scaffolding [20][21]. The hard-stop applies to THIS plan, not just to the system in general.
 - **`${PROJECT_NAME}`-vocabulary leak.** External-facing artifacts (landing, cold messages) must pass the "explain without `${PROJECT_NAME}` vocabulary" test [20]. (Separate from the ORGANVM-vocabulary leak: technical/internal terminology must not appear in buyer-facing copy.)
-- **A-before-B regression.** Under pressure, "just clean up IRF first" will reassert [20]. Phase 2's trigger — *Phase 1 gate met* — is the bulwark. Not optional.
+- **A-before-B regression.** Under pressure, "just clean up IRF first" will reassert [20]. Phase 2's trigger — _Phase 1 gate met_ — is the bulwark. Not optional.
 - **Propagation gap reassertion.** If build-time templating (IRF candidate #1) isn't implemented soon, future edits to brand values will continue to drift independently. The README badge / git remote divergence [24][25] is the canary case.
 
 ## Citations

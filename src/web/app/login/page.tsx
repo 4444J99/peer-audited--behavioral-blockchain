@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Loader2 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Loader2 } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -20,9 +20,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      router.push('/dashboard');
+      router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
@@ -35,8 +35,12 @@ export default function LoginPage() {
           <div className="w-16 h-16 bg-red-600 rounded-full mx-auto mb-6 flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.4)]">
             <span className="text-2xl font-black text-black">S</span>
           </div>
-          <h1 className="text-4xl font-black tracking-tighter uppercase">Access Your Recovery</h1>
-          <p className="text-neutral-400 mt-2">Authenticate to access the Styx private beta.</p>
+          <h1 className="text-4xl font-black tracking-tighter uppercase">
+            Access Your Recovery
+          </h1>
+          <p className="text-neutral-400 mt-2">
+            Authenticate to access the Styx private beta.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -45,12 +49,17 @@ export default function LoginPage() {
               <div className="p-4 bg-red-900/30 border border-red-800 rounded-xl text-red-400 text-sm font-medium">
                 {error}
               </div>
-              <p className="text-neutral-500 text-xs text-center italic">If this persists, contact the beta team.</p>
+              <p className="text-neutral-500 text-xs text-center italic">
+                If this persists, contact the beta team.
+              </p>
             </div>
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2">
+            <label
+              htmlFor="email"
+              className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2"
+            >
               Email
             </label>
             <input
@@ -66,7 +75,10 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2">
+            <label
+              htmlFor="password"
+              className="block text-sm font-bold text-neutral-400 uppercase tracking-widest mb-2"
+            >
               Password
             </label>
             <input
@@ -87,13 +99,16 @@ export default function LoginPage() {
             className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-neutral-800 text-white font-black rounded-xl transition-colors flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 size={20} className="animate-spin" /> : null}
-            {loading ? 'AUTHENTICATING...' : 'SIGN IN'}
+            {loading ? "AUTHENTICATING..." : "SIGN IN"}
           </button>
         </form>
 
         <p className="text-center text-neutral-500 text-sm">
-          No account?{' '}
-          <Link href="/register" className="text-red-500 font-bold hover:text-red-400 transition-colors">
+          No account?{" "}
+          <Link
+            href="/register"
+            className="text-red-500 font-bold hover:text-red-400 transition-colors"
+          >
             Register
           </Link>
         </p>

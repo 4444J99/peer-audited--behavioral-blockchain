@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,28 +9,28 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-} from 'react-native';
-import { ApiClient } from '../services/ApiClient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Crypto from 'expo-crypto';
-import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { AuthStackParamList } from '../App';
+} from "react-native";
+import { ApiClient } from "../services/ApiClient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Crypto from "expo-crypto";
+import { SupportTraceErrorBanner } from "../components/SupportTraceErrorBanner";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { AuthStackParamList } from "../App";
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
+type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 
 export function RegisterScreen({ navigation }: Props) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const deviceIdentifier = async () => {
-    const key = '@styx_device_id';
+    const key = "@styx_device_id";
     const existing = await AsyncStorage.getItem(key);
     if (existing) return existing;
     const created = Crypto.randomUUID();
@@ -40,27 +40,27 @@ export function RegisterScreen({ navigation }: Props) {
 
   const handleRegister = async () => {
     if (!email || !password || !dateOfBirth) {
-      setError('All fields are required');
+      setError("All fields are required");
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError("Password must be at least 8 characters");
       return;
     }
     if (!ageConfirmed) {
-      setError('You must confirm you are 18 or older');
+      setError("You must confirm you are 18 or older");
       return;
     }
     if (!termsAccepted) {
-      setError('You must accept the Terms of Service and Privacy Policy');
+      setError("You must accept the Terms of Service and Privacy Policy");
       return;
     }
 
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
@@ -71,13 +71,16 @@ export function RegisterScreen({ navigation }: Props) {
         dateOfBirth,
         ageConfirmation: ageConfirmed,
         termsAccepted: termsAccepted,
-        deviceFingerprint: { platform: Platform.OS === 'ios' ? 'ios' : 'android', rawVendorId },
+        deviceFingerprint: {
+          platform: Platform.OS === "ios" ? "ios" : "android",
+          rawVendorId,
+        },
       });
-      Alert.alert('Account Created', 'You can now log in.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
+      Alert.alert("Account Created", "You can now log in.", [
+        { text: "OK", onPress: () => navigation.goBack() },
       ]);
     } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      setError(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -86,7 +89,7 @@ export function RegisterScreen({ navigation }: Props) {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.form}>
         <Text style={styles.title}>Join Styx</Text>
@@ -140,10 +143,14 @@ export function RegisterScreen({ navigation }: Props) {
           onPress={() => setAgeConfirmed(!ageConfirmed)}
           activeOpacity={0.7}
         >
-          <View style={[styles.checkbox, ageConfirmed && styles.checkboxChecked]}>
-            {ageConfirmed ? <Text style={styles.checkmark}>{'✓'}</Text> : null}
+          <View
+            style={[styles.checkbox, ageConfirmed && styles.checkboxChecked]}
+          >
+            {ageConfirmed ? <Text style={styles.checkmark}>{"✓"}</Text> : null}
           </View>
-          <Text style={styles.checkboxLabel}>I confirm I am 18 years of age or older</Text>
+          <Text style={styles.checkboxLabel}>
+            I confirm I am 18 years of age or older
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -151,8 +158,10 @@ export function RegisterScreen({ navigation }: Props) {
           onPress={() => setTermsAccepted(!termsAccepted)}
           activeOpacity={0.7}
         >
-          <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
-            {termsAccepted ? <Text style={styles.checkmark}>{'✓'}</Text> : null}
+          <View
+            style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}
+          >
+            {termsAccepted ? <Text style={styles.checkmark}>{"✓"}</Text> : null}
           </View>
           <Text style={styles.checkboxLabel}>
             I accept the Terms of Service and Privacy Policy
@@ -160,7 +169,11 @@ export function RegisterScreen({ navigation }: Props) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, (loading || !ageConfirmed || !termsAccepted) && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            (loading || !ageConfirmed || !termsAccepted) &&
+              styles.buttonDisabled,
+          ]}
           onPress={handleRegister}
           disabled={loading || !ageConfirmed || !termsAccepted}
         >
@@ -185,80 +198,80 @@ export function RegisterScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0f',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#0a0a0f",
+    justifyContent: "center",
+    alignItems: "center",
   },
   form: {
-    width: '85%',
+    width: "85%",
     maxWidth: 400,
   },
   title: {
     fontSize: 28,
-    fontWeight: '800',
-    color: '#ff4444',
-    textAlign: 'center',
+    fontWeight: "800",
+    color: "#ff4444",
+    textAlign: "center",
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
+    color: "#888",
+    textAlign: "center",
     marginBottom: 32,
   },
   error: {
-    color: '#ff6666',
-    backgroundColor: '#ff444420',
+    color: "#ff6666",
+    backgroundColor: "#ff444420",
     padding: 10,
     borderRadius: 8,
     marginBottom: 16,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 13,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   errorTrace: {
-    color: '#888',
+    color: "#888",
     fontSize: 11,
     marginTop: -8,
     marginBottom: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   input: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
     borderWidth: 1,
-    borderColor: '#2a2a3e',
+    borderColor: "#2a2a3e",
     borderRadius: 8,
     padding: 14,
-    color: '#e0e0e0',
+    color: "#e0e0e0",
     fontSize: 15,
     marginBottom: 12,
   },
   button: {
-    backgroundColor: '#ff4444',
+    backgroundColor: "#ff4444",
     borderRadius: 8,
     padding: 14,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 8,
   },
   buttonDisabled: {
-    backgroundColor: '#333',
+    backgroundColor: "#333",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   linkButton: {
     marginTop: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   linkText: {
-    color: '#ff4444',
+    color: "#ff4444",
     fontSize: 14,
   },
   checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
     paddingHorizontal: 2,
   },
@@ -267,23 +280,23 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#2a2a3e',
-    backgroundColor: '#1a1a2e',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: "#2a2a3e",
+    backgroundColor: "#1a1a2e",
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 10,
   },
   checkboxChecked: {
-    backgroundColor: '#ff4444',
-    borderColor: '#ff4444',
+    backgroundColor: "#ff4444",
+    borderColor: "#ff4444",
   },
   checkmark: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   checkboxLabel: {
-    color: '#ccc',
+    color: "#ccc",
     fontSize: 13,
     flex: 1,
   },

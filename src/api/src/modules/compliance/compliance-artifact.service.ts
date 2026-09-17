@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
-import type { ComplianceArtifactStatus } from '../../../../shared/index';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
+import type { ComplianceArtifactStatus } from "../../../../shared/index";
 
 @Injectable()
 export class ComplianceArtifactService {
@@ -8,7 +8,9 @@ export class ComplianceArtifactService {
 
   constructor(private readonly pool: Pool) {}
 
-  async getActiveArtifact(artifactType: string): Promise<ComplianceArtifactStatus | null> {
+  async getActiveArtifact(
+    artifactType: string,
+  ): Promise<ComplianceArtifactStatus | null> {
     const result = await this.pool.query(
       `SELECT artifact_type, version, content_hash, signed_by,
               signed_at, expires_at, is_active, jurisdictions
@@ -54,7 +56,10 @@ export class ComplianceArtifactService {
     }));
   }
 
-  async getArtifactByVersion(artifactType: string, version: string): Promise<ComplianceArtifactStatus | null> {
+  async getArtifactByVersion(
+    artifactType: string,
+    version: string,
+  ): Promise<ComplianceArtifactStatus | null> {
     const result = await this.pool.query(
       `SELECT artifact_type, version, content_hash, signed_by,
               signed_at, expires_at, is_active, jurisdictions

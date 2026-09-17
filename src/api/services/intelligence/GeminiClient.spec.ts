@@ -1,53 +1,60 @@
-import { callGemini, generateVCQuestions, simplifyConcept, screenGoalEthics } from './GeminiClient';
+import {
+  callGemini,
+  generateVCQuestions,
+  simplifyConcept,
+  screenGoalEthics,
+} from "./GeminiClient";
 
 // Mock global fetch
 const mockFetch = jest.fn();
 global.fetch = mockFetch as any;
 
-describe('GeminiClient', () => {
+describe("GeminiClient", () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    process.env.GEMINI_API_KEY = 'test-key';
+    process.env.GEMINI_API_KEY = "test-key";
   });
 
   afterEach(() => {
     delete process.env.GEMINI_API_KEY;
   });
 
-  describe('callGemini', () => {
-    it('should call Gemini API with correct parameters', async () => {
+  describe("callGemini", () => {
+    it("should call Gemini API with correct parameters", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          candidates: [{ content: { parts: [{ text: 'Hello world' }] } }],
+          candidates: [{ content: { parts: [{ text: "Hello world" }] } }],
         }),
       });
 
-      const result = await callGemini('test prompt');
-      expect(result).toBe('Hello world');
+      const result = await callGemini("test prompt");
+      expect(result).toBe("Hello world");
       expect(mockFetch).toHaveBeenCalledTimes(1);
 
       const [url, options] = mockFetch.mock.calls[0];
-      expect(url).toContain('generativelanguage.googleapis.com');
-      expect(options.headers['x-goog-api-key']).toBe('test-key');
+      expect(url).toContain("generativelanguage.googleapis.com");
+      expect(options.headers["x-goog-api-key"]).toBe("test-key");
     });
 
-    it('should throw when API key is missing', async () => {
+    it("should throw when API key is missing", async () => {
       delete process.env.GEMINI_API_KEY;
-      await expect(callGemini('test')).rejects.toThrow('GEMINI_API_KEY not configured');
+      await expect(callGemini("test")).rejects.toThrow(
+        "GEMINI_API_KEY not configured",
+      );
     });
 
-    it('should throw on non-OK response', async () => {
+    it("should throw on non-OK response", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 429,
-        text: async () => 'Rate limited',
+        text: async () => "Rate limited",
       });
 
-      await expect(callGemini('test')).rejects.toThrow('Gemini API 429');
+      await expect(callGemini("test")).rejects.toThrow("Gemini API 429");
     });
 
-    it('should request JSON response when isJson is true', async () => {
+    it("should request JSON response when isJson is true", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -55,57 +62,69 @@ describe('GeminiClient', () => {
         }),
       });
 
-      await callGemini('test', true);
+      await callGemini("test", true);
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-      expect(body.generationConfig.responseMimeType).toBe('application/json');
+      expect(body.generationConfig.responseMimeType).toBe("application/json");
     });
 
-    it('should not set responseMimeType when isJson is false', async () => {
+    it("should not set responseMimeType when isJson is false", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          candidates: [{ content: { parts: [{ text: 'plain text' }] } }],
+          candidates: [{ content: { parts: [{ text: "plain text" }] } }],
         }),
       });
 
-      await callGemini('test', false);
+      await callGemini("test", false);
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
       expect(body.generationConfig).toEqual({});
     });
   });
 
-  describe('generateVCQuestions', () => {
-    it('should return parsed array of questions', async () => {
-      const questions = ['Why this market?', 'What is your moat?', 'How do you scale?'];
+  describe("generateVCQuestions", () => {
+    it("should return parsed array of questions", async () => {
+      const questions = [
+        "Why this market?",
+        "What is your moat?",
+        "How do you scale?",
+      ];
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          candidates: [{ content: { parts: [{ text: JSON.stringify(questions) }] } }],
+          candidates: [
+            { content: { parts: [{ text: JSON.stringify(questions) }] } },
+          ],
         }),
       });
 
-      const result = await generateVCQuestions('Our product does X');
+      const result = await generateVCQuestions("Our product does X");
       expect(result).toEqual(questions);
       expect(result).toHaveLength(3);
     });
   });
 
-  describe('simplifyConcept', () => {
-    it('should return simplified text', async () => {
+  describe("simplifyConcept", () => {
+    it("should return simplified text", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          candidates: [{ content: { parts: [{ text: 'It is like a piggy bank but on a computer' }] } }],
+          candidates: [
+            {
+              content: {
+                parts: [{ text: "It is like a piggy bank but on a computer" }],
+              },
+            },
+          ],
         }),
       });
 
-      const result = await simplifyConcept('Blockchain escrow');
-      expect(result).toBe('It is like a piggy bank but on a computer');
+      const result = await simplifyConcept("Blockchain escrow");
+      expect(result).toBe("It is like a piggy bank but on a computer");
     });
   });
 
-  describe('screenGoalEthics', () => {
-    it('should return ethical:true for safe goals', async () => {
+  describe("screenGoalEthics", () => {
+    it("should return ethical:true for safe goals", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -113,23 +132,31 @@ describe('GeminiClient', () => {
         }),
       });
 
-      const result = await screenGoalEthics('Run a 5K marathon');
+      const result = await screenGoalEthics("Run a 5K marathon");
       expect(result).toEqual({ ethical: true });
     });
 
-    it('should return ethical:false with reason for unsafe goals', async () => {
+    it("should return ethical:false with reason for unsafe goals", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          candidates: [{ content: { parts: [{ text: '{"ethical":false,"reason":"Self-harm risk"}' }] } }],
+          candidates: [
+            {
+              content: {
+                parts: [
+                  { text: '{"ethical":false,"reason":"Self-harm risk"}' },
+                ],
+              },
+            },
+          ],
         }),
       });
 
-      const result = await screenGoalEthics('Starve myself');
-      expect(result).toEqual({ ethical: false, reason: 'Self-harm risk' });
+      const result = await screenGoalEthics("Starve myself");
+      expect(result).toEqual({ ethical: false, reason: "Self-harm risk" });
     });
 
-    it('should send JSON mode request', async () => {
+    it("should send JSON mode request", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -137,12 +164,12 @@ describe('GeminiClient', () => {
         }),
       });
 
-      await screenGoalEthics('Read more books');
+      await screenGoalEthics("Read more books");
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-      expect(body.generationConfig.responseMimeType).toBe('application/json');
+      expect(body.generationConfig.responseMimeType).toBe("application/json");
     });
 
-    it('should include recovery-specific screening for RECOVERY_ oaths', async () => {
+    it("should include recovery-specific screening for RECOVERY_ oaths", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -150,29 +177,18 @@ describe('GeminiClient', () => {
         }),
       });
 
-      await screenGoalEthics('No contact with ex-partner for 30 days', 'RECOVERY_NOCONTACT');
-      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-      const prompt = body.contents[0].parts[0].text;
-      expect(prompt).toContain('coercive control');
-      expect(prompt).toContain('isolation from support networks');
-      expect(prompt).toContain('stalking');
-    });
-
-    it('should not include recovery screening for non-RECOVERY oaths', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          candidates: [{ content: { parts: [{ text: '{"ethical":true}' }] } }],
-        }),
-      });
-
-      await screenGoalEthics('Run a marathon', 'BIOLOGICAL_CARDIO');
+      await screenGoalEthics(
+        "No contact with ex-partner for 30 days",
+        "RECOVERY_NOCONTACT",
+      );
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
       const prompt = body.contents[0].parts[0].text;
-      expect(prompt).not.toContain('coercive control');
+      expect(prompt).toContain("coercive control");
+      expect(prompt).toContain("isolation from support networks");
+      expect(prompt).toContain("stalking");
     });
 
-    it('should not include recovery screening when oathCategory is undefined', async () => {
+    it("should not include recovery screening for non-RECOVERY oaths", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -180,10 +196,24 @@ describe('GeminiClient', () => {
         }),
       });
 
-      await screenGoalEthics('General goal');
+      await screenGoalEthics("Run a marathon", "BIOLOGICAL_CARDIO");
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
       const prompt = body.contents[0].parts[0].text;
-      expect(prompt).not.toContain('coercive control');
+      expect(prompt).not.toContain("coercive control");
+    });
+
+    it("should not include recovery screening when oathCategory is undefined", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: '{"ethical":true}' }] } }],
+        }),
+      });
+
+      await screenGoalEthics("General goal");
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const prompt = body.contents[0].parts[0].text;
+      expect(prompt).not.toContain("coercive control");
     });
   });
 });

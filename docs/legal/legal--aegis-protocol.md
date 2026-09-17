@@ -20,7 +20,7 @@ linked_issues: []
 
 The Aegis Protocol defines the non-negotiable compliance guardrails that maintain Styx's legal classification as a skill-based behavioral commitment system rather than a gambling, lottery, or wagering product. These guardrails are structural — they are embedded in the product architecture, not merely stated in terms of service.
 
-Every guardrail in this document serves a dual function: (1) it protects users from harm, and (2) it provides a concrete legal defense against classification as illegal gambling under the three-element test (prize, consideration, chance) applied across United States jurisdictions. *See* 31 U.S.C. § 5362(1)(E)(ix) (2006) (excluding from the definition of "bet or wager" certain games of skill where the outcome is substantially based on the skill of the participants).
+Every guardrail in this document serves a dual function: (1) it protects users from harm, and (2) it provides a concrete legal defense against classification as illegal gambling under the three-element test (prize, consideration, chance) applied across United States jurisdictions. _See_ 31 U.S.C. § 5362(1)(E)(ix) (2006) (excluding from the definition of "bet or wager" certain games of skill where the outcome is substantially based on the skill of the participants).
 
 > **Implementation status cross-reference:** For the claim-to-control mapping of each guardrail (Implemented / Partial / Planned / Research), see `docs/planning/planning--implementation-status.md`.
 
@@ -30,9 +30,9 @@ Every guardrail in this document serves a dual function: (1) it protects users f
 
 ### 2.1 Legal Basis
 
-Styx operates as a **skill-based deposit contract**, not a gambling platform. The legal theory rests on eliminating the "chance" element from the three-element gambling test recognized across nearly all United States jurisdictions. *See* Braslow Legal, *A Legal Guide to Skill Gaming* (2020) (surveying the three-element test across jurisdictions).
+Styx operates as a **skill-based deposit contract**, not a gambling platform. The legal theory rests on eliminating the "chance" element from the three-element gambling test recognized across nearly all United States jurisdictions. _See_ Braslow Legal, _A Legal Guide to Skill Gaming_ (2020) (surveying the three-element test across jurisdictions).
 
-Under the Dominant Factor Test — the most widely adopted standard — an activity is a legal game of skill if the outcome is determined more than 50% by the participant's skill, knowledge, strategy, and effort rather than by chance. *See White v. Cuomo*, 38 N.Y.3d 311, 319 (2022) (adopting the dominant factor test as the constitutional standard for judging games of chance under the New York State Constitution); *Dew-Becker v. Wu*, 2020 IL 124472, ¶ 38 (holding that head-to-head contests where skill determines the victor do not constitute gambling under Illinois law).
+Under the Dominant Factor Test — the most widely adopted standard — an activity is a legal game of skill if the outcome is determined more than 50% by the participant's skill, knowledge, strategy, and effort rather than by chance. _See White v. Cuomo_, 38 N.Y.3d 311, 319 (2022) (adopting the dominant factor test as the constitutional standard for judging games of chance under the New York State Constitution); _Dew-Becker v. Wu_, 2020 IL 124472, ¶ 38 (holding that head-to-head contests where skill determines the victor do not constitute gambling under Illinois law).
 
 ### 2.2 Product Design Requirements
 
@@ -47,13 +47,13 @@ For the skill-based classification to hold, the following product design constra
 
 ### 2.3 Jurisdictional Classification
 
-| Legal Test | Standard | Styx Risk Level | Basis |
-|---|---|---|---|
-| **Dominant Factor Test** | Skill must outweigh chance (>50%) | Low | User controls diet, exercise, and behavioral compliance. *White v. Cuomo*, 38 N.Y.3d at 319. |
-| **Material Element Test** | Chance cannot play a material role | Low | Minor chance elements (illness, metabolic variance) are not material to multi-week behavioral goals. |
-| **Any Chance Test** | Any chance element = gambling | Elevated | Theoretical chance of sudden illness; mitigated by geofencing states that apply this test. |
+| Legal Test                | Standard                           | Styx Risk Level | Basis                                                                                                |
+| ------------------------- | ---------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------- |
+| **Dominant Factor Test**  | Skill must outweigh chance (>50%)  | Low             | User controls diet, exercise, and behavioral compliance. _White v. Cuomo_, 38 N.Y.3d at 319.         |
+| **Material Element Test** | Chance cannot play a material role | Low             | Minor chance elements (illness, metabolic variance) are not material to multi-week behavioral goals. |
+| **Any Chance Test**       | Any chance element = gambling      | Elevated        | Theoretical chance of sudden illness; mitigated by geofencing states that apply this test.           |
 
-**Geofencing requirement:** States applying the Any Chance Test (historically Arizona, Arkansas) must be excluded from the platform's operational territory via `STYX_STATE_BLOCKLIST` enforcement at the API layer. *See* `docs/legal/legal--cross-jurisdictional-consent-matrix.md` § 8 (state blocklist implementation). The launch-state rationale set is tracked in `docs/legal/appendices/appendix-d--state-blocklist-justification-table.md`.
+**Geofencing requirement:** States applying the Any Chance Test (historically Arizona, Arkansas) must be excluded from the platform's operational territory via `STYX_STATE_BLOCKLIST` enforcement at the API layer. _See_ `docs/legal/legal--cross-jurisdictional-consent-matrix.md` § 8 (state blocklist implementation). The launch-state rationale set is tracked in `docs/legal/appendices/appendix-d--state-blocklist-justification-table.md`.
 
 ---
 
@@ -63,11 +63,12 @@ For the skill-based classification to hold, the following product design constra
 
 **Rule:** No user under the age of 18 may create an account or participate in any commitment contract involving financial stakes.
 
-**Legal basis:** Participants must be legally capable of entering into a binding contract. *See* Restatement (Second) of Contracts § 14 (1981) (stating that minors lack capacity to incur contractual duties). Both DietBet and HealthyWage mandate 18+ participation. *See* DietBet, *Weight Loss Challenge Rules*, https://www.dietbet.com/kickstarter/rules (last visited Mar. 9, 2026); HealthyWage, *Official Rules*, https://www.healthywage.com/rules/official-rules/ (last visited Mar. 9, 2026).
+**Legal basis:** Participants must be legally capable of entering into a binding contract. _See_ Restatement (Second) of Contracts § 14 (1981) (stating that minors lack capacity to incur contractual duties). Both DietBet and HealthyWage mandate 18+ participation. _See_ DietBet, _Weight Loss Challenge Rules_, https://www.dietbet.com/kickstarter/rules (last visited Mar. 9, 2026); HealthyWage, _Official Rules_, https://www.healthywage.com/rules/official-rules/ (last visited Mar. 9, 2026).
 
-Recent state legislation underscores regulatory hostility toward youth involvement in weight-related commercial incentives. *See* N.Y. Gen. Bus. Law § 391-oo (restricting sale of weight-loss supplements to minors); *see also* Epstein Becker Green, *Second Circuit Affirms Denial of Preliminary Injunction in Challenge to N.Y. Law* (2026) (upholding the statute against First Amendment challenge).
+Recent state legislation underscores regulatory hostility toward youth involvement in weight-related commercial incentives. _See_ N.Y. Gen. Bus. Law § 391-oo (restricting sale of weight-loss supplements to minors); _see also_ Epstein Becker Green, _Second Circuit Affirms Denial of Preliminary Injunction in Challenge to N.Y. Law_ (2026) (upholding the statute against First Amendment challenge).
 
 **Implementation tiers:**
+
 - **TestFlight/Beta:** Self-declared age gate at onboarding (date-of-birth entry). [Status: Planned]
 - **Public Launch:** Stripe Identity age verification for all users initiating financial commitments. [Status: Research]
 - **High-Stakes (>$100):** Government ID verification via Stripe Identity or equivalent KYC provider. [Status: Research]
@@ -78,9 +79,10 @@ Recent state legislation underscores regulatory hostility toward youth involveme
 
 **Rule:** No user with a Body Mass Index below 18.5 at the time of enrollment may participate in any weight-loss commitment contract. No goal may be set that would result in a projected ending BMI below 18.5.
 
-**Legal basis:** A BMI of 18.5 is the World Health Organization's threshold for underweight classification. Permitting underweight users to participate in financially incentivized weight-loss programs creates liability for facilitating eating disorders and invites enforcement actions from state attorneys general and the FTC. *See* FTC, *Voluntary Guidelines for Providers of Weight Loss Products or Services* (1999) (establishing disclosure and safety standards for weight-loss programs).
+**Legal basis:** A BMI of 18.5 is the World Health Organization's threshold for underweight classification. Permitting underweight users to participate in financially incentivized weight-loss programs creates liability for facilitating eating disorders and invites enforcement actions from state attorneys general and the FTC. _See_ FTC, _Voluntary Guidelines for Providers of Weight Loss Products or Services_ (1999) (establishing disclosure and safety standards for weight-loss programs).
 
 **Implementation:**
+
 - Height and starting weight are captured at enrollment.
 - The system computes BMI and rejects enrollment if BMI < 18.5.
 - Goal-setting algorithms reject any target weight that would produce a projected ending BMI < 18.5.
@@ -92,9 +94,10 @@ Recent state legislation underscores regulatory hostility toward youth involveme
 
 **Medical basis:** The National Institutes of Health generally defines safe weight loss as one to two pounds per week, or approximately 1% of body weight per week. The 2% threshold provides a safety margin while preventing starvation, purging, severe dehydration, and other medically dangerous tactics.
 
-**Precedent:** HealthyWage enforces a strict 2% per-week maximum and automatically adjusts ending weights upward when this threshold is exceeded. *See* HealthyWage, *Official Rules*, https://www.healthywage.com/rules/official-rules/ (last visited Mar. 9, 2026). DietBet caps maximum weight loss at 12% of initial body weight for four-week challenges. *See* DietBet, *Weight Loss Challenge Rules*, https://www.dietbet.com/kickstarter/rules (last visited Mar. 9, 2026).
+**Precedent:** HealthyWage enforces a strict 2% per-week maximum and automatically adjusts ending weights upward when this threshold is exceeded. _See_ HealthyWage, _Official Rules_, https://www.healthywage.com/rules/official-rules/ (last visited Mar. 9, 2026). DietBet caps maximum weight loss at 12% of initial body weight for four-week challenges. _See_ DietBet, _Weight Loss Challenge Rules_, https://www.dietbet.com/kickstarter/rules (last visited Mar. 9, 2026).
 
 **Formula:**
+
 ```
 max_weekly_loss = starting_weight × 0.02
 adjusted_weight = max(verified_weight, starting_weight - (max_weekly_loss × weeks_elapsed))
@@ -103,6 +106,7 @@ adjusted_weight = max(verified_weight, starting_weight - (max_weekly_loss × wee
 If `verified_weight < adjusted_weight`, the system substitutes `adjusted_weight` for all payout calculations.
 
 **Prohibited behaviors** (declared in Terms of Service, trigger disqualification):
+
 - Binging, purging, or self-induced vomiting
 - Extreme fasting (>72 hours without caloric intake)
 - Deliberate dehydration or unusual water loading before weigh-ins
@@ -115,7 +119,7 @@ If `verified_weight < adjusted_weight`, the system substitutes `adjusted_weight`
 
 **Medical basis:** Intentional caloric restriction during pregnancy poses developmental risks to the fetus. Weight loss from giving birth does not count toward challenge goals.
 
-**Precedent:** *See* HealthyWage, *Official Rules* (requiring pregnancy suspension without financial penalty); DietBet, *Weight Loss Challenge Rules* (same).
+**Precedent:** _See_ HealthyWage, _Official Rules_ (requiring pregnancy suspension without financial penalty); DietBet, _Weight Loss Challenge Rules_ (same).
 
 ---
 
@@ -127,12 +131,12 @@ If `verified_weight < adjusted_weight`, the system substitutes `adjusted_weight`
 
 **Legal basis:** This architecture relies on a multi-layered regulatory safe harbor:
 
-1.  **Bank-Centric Custody:** Because chartered banks are exempt from Money Transmitter Licensing (MTL) requirements, holding funds in an FBO account under the bank's regulatory umbrella ensures that legal custody remains with an exempt entity. The OCC has expressly endorsed bank-fintech custody partnerships: Interpretive Letter #1170 (Feb. 2020) confirms that national banks may partner with fintech companies for payment processing; Interpretive Letter #1174 (Oct. 2020) affirms that national banks may hold deposits on behalf of fintech platforms in FBO arrangements; and the OCC Conditional Approval Letter (Jan. 2021) establishes a payment charter framework recognizing non-traditional payment models. Together, these authorities confirm that Styx's bank-partnership FBO structure is squarely within the federally sanctioned regulatory model. *See also* CSBS, *Model Money Transmission Modernization Act* (2021) (excluding "the provision of payment processing services through a bank" from the definition of "money transmission" — approximately 30 states have adopted or are considering legislation based on this model).
-2.  **Federal (FinCEN) Exemptions:** Styx operates as a payment processor and escrow agent whose transmission of funds is "necessary and integral" to the underlying behavioral verification service. *See* FinCEN Administrative Rulings FIN-2014-R004 (Mar. 11, 2014) and FIN-2019-G001 (May 9, 2019). 
-3.  **Agent of the Payee (AOTP):** In most US jurisdictions (e.g., CA, NY, TX), a person who accepts currency as an agent of the payee is not a money transmitter. Styx acts as the agent for the redistribution pool; thus, receipt of funds by Styx (or its partner bank) legally satisfies the payor’s obligation. *See, e.g.*, Cal. Fin. Code § 2010(l); N.Y. Banking Law § 641(1); *see also* FinCEN Administrative Ruling FIN-2014-R007 (May 14, 2014).
-4.  **Fiduciary Escrow Status:** Styx’s automated verification logic acts as the "conditions precedent" for fund release, establishing a fiduciary duty of strict compliance consistent with neutral escrow agents. *Cf. Heller v. Cen-Tex Savings & Loan Ass’n*, 410 S.W.2d 267 (Tex. Civ. App. 1966).
+1.  **Bank-Centric Custody:** Because chartered banks are exempt from Money Transmitter Licensing (MTL) requirements, holding funds in an FBO account under the bank's regulatory umbrella ensures that legal custody remains with an exempt entity. The OCC has expressly endorsed bank-fintech custody partnerships: Interpretive Letter #1170 (Feb. 2020) confirms that national banks may partner with fintech companies for payment processing; Interpretive Letter #1174 (Oct. 2020) affirms that national banks may hold deposits on behalf of fintech platforms in FBO arrangements; and the OCC Conditional Approval Letter (Jan. 2021) establishes a payment charter framework recognizing non-traditional payment models. Together, these authorities confirm that Styx's bank-partnership FBO structure is squarely within the federally sanctioned regulatory model. _See also_ CSBS, _Model Money Transmission Modernization Act_ (2021) (excluding "the provision of payment processing services through a bank" from the definition of "money transmission" — approximately 30 states have adopted or are considering legislation based on this model).
+2.  **Federal (FinCEN) Exemptions:** Styx operates as a payment processor and escrow agent whose transmission of funds is "necessary and integral" to the underlying behavioral verification service. _See_ FinCEN Administrative Rulings FIN-2014-R004 (Mar. 11, 2014) and FIN-2019-G001 (May 9, 2019).
+3.  **Agent of the Payee (AOTP):** In most US jurisdictions (e.g., CA, NY, TX), a person who accepts currency as an agent of the payee is not a money transmitter. Styx acts as the agent for the redistribution pool; thus, receipt of funds by Styx (or its partner bank) legally satisfies the payor’s obligation. _See, e.g._, Cal. Fin. Code § 2010(l); N.Y. Banking Law § 641(1); _see also_ FinCEN Administrative Ruling FIN-2014-R007 (May 14, 2014).
+4.  **Fiduciary Escrow Status:** Styx’s automated verification logic acts as the "conditions precedent" for fund release, establishing a fiduciary duty of strict compliance consistent with neutral escrow agents. _Cf. Heller v. Cen-Tex Savings & Loan Ass’n_, 410 S.W.2d 267 (Tex. Civ. App. 1966).
 
-Failure to implement this structuring would require Styx to obtain MTLs in all fifty states and register as a Money Services Business (MSB) with FinCEN — a multi-year, multi-million-dollar compliance burden. *See* 31 C.F.R. § 1022.380.
+Failure to implement this structuring would require Styx to obtain MTLs in all fifty states and register as a Money Services Business (MSB) with FinCEN — a multi-year, multi-million-dollar compliance burden. _See_ 31 C.F.R. § 1022.380.
 
 **Supporting diagram:** `docs/legal/appendices/appendix-a--fbo-architecture-diagram.md`.
 
@@ -148,7 +152,7 @@ Failure to implement this structuring would require Styx to obtain MTLs in all f
 - All fund movements must have corresponding ledger entries with timestamps, user IDs, and transaction references.
 - Monthly reconciliation between the Stripe Connect balance report and the internal ledger is mandatory.
 - Discrepancies exceeding $1.00 must be investigated and resolved within 48 hours.
-- Reconciliation reports are retained for 7 years per IRS record-keeping requirements. *See* 26 C.F.R. § 1.6001-1 (general record-keeping requirement).
+- Reconciliation reports are retained for 7 years per IRS record-keeping requirements. _See_ 26 C.F.R. § 1.6001-1 (general record-keeping requirement).
 
 ---
 
@@ -156,41 +160,41 @@ Failure to implement this structuring would require Styx to obtain MTLs in all f
 
 Each guardrail must be verifiable through automated or manual testing:
 
-| Guardrail | Test Method | Pass Criteria | Frequency |
-|---|---|---|---|
-| Skill-based classification | Architecture review | No RNG, no house odds, no random prize allocation in codebase | Per release |
-| Age gate | Automated test | Users declaring age <18 cannot create accounts | Per release |
-| BMI floor | Automated test | Enrollment rejected when computed BMI < 18.5 | Per release |
-| Velocity cap | Automated test | Weigh-in exceeding 2%/week triggers adjustment or disqualification | Per release |
-| Pregnancy exclusion | Manual test | Suspension flow returns full refund, no penalty | Quarterly |
-| FBO zero-custody | Stripe dashboard audit | No user funds in corporate Stripe account | Monthly |
-| Ledger reconciliation | Automated script | Stripe balance matches internal ledger ± $1.00 | Monthly |
-| State geofencing | Automated test | API rejects requests from blocked state IP ranges | Per release |
+| Guardrail                  | Test Method            | Pass Criteria                                                      | Frequency   |
+| -------------------------- | ---------------------- | ------------------------------------------------------------------ | ----------- |
+| Skill-based classification | Architecture review    | No RNG, no house odds, no random prize allocation in codebase      | Per release |
+| Age gate                   | Automated test         | Users declaring age <18 cannot create accounts                     | Per release |
+| BMI floor                  | Automated test         | Enrollment rejected when computed BMI < 18.5                       | Per release |
+| Velocity cap               | Automated test         | Weigh-in exceeding 2%/week triggers adjustment or disqualification | Per release |
+| Pregnancy exclusion        | Manual test            | Suspension flow returns full refund, no penalty                    | Quarterly   |
+| FBO zero-custody           | Stripe dashboard audit | No user funds in corporate Stripe account                          | Monthly     |
+| Ledger reconciliation      | Automated script       | Stripe balance matches internal ledger ± $1.00                     | Monthly     |
+| State geofencing           | Automated test         | API rejects requests from blocked state IP ranges                  | Per release |
 
 ---
 
 ## 6. Risk Register Cross-References
 
-| Aegis Guardrail | Risk Register Entry | Mitigation Status |
-|---|---|---|
-| Skill-based classification | R-01: Gambling Classification | Active — see `legal--skill-based-contest-whitepaper.md` |
-| Medical guardrails | R-05: User Health Liability | Active — velocity cap + BMI floor |
-| FBO architecture | R-02: Money Transmitter Classification | Active — Stripe Connect FBO |
-| Age verification | R-04: Minor Participation | Planned — Stripe Identity integration |
-| State geofencing | R-09: Cross-Jurisdictional Consent | Active — see `legal--cross-jurisdictional-consent-matrix.md` |
+| Aegis Guardrail            | Risk Register Entry                    | Mitigation Status                                            |
+| -------------------------- | -------------------------------------- | ------------------------------------------------------------ |
+| Skill-based classification | R-01: Gambling Classification          | Active — see `legal--skill-based-contest-whitepaper.md`      |
+| Medical guardrails         | R-05: User Health Liability            | Active — velocity cap + BMI floor                            |
+| FBO architecture           | R-02: Money Transmitter Classification | Active — Stripe Connect FBO                                  |
+| Age verification           | R-04: Minor Participation              | Planned — Stripe Identity integration                        |
+| State geofencing           | R-09: Cross-Jurisdictional Consent     | Active — see `legal--cross-jurisdictional-consent-matrix.md` |
 
 ---
 
 ## 7. Document History
 
-| Version | Date | Author | Changes |
-|---|---|---|---|
-| 0.1.0 | 2026-02-24 | agent/research-support | Initial stub (3 sections) |
-| 0.2.0-draft | 2026-03-09 | agent/research-support | Full rewrite with Bluebook citations, compliance testing framework, risk register cross-references |
-| 0.3.0-draft | 2026-03-10 | agent/research-support | Expanded Table of Authorities; added HHS-OIG clinical safety precedent |
-| 0.4.0-draft | 2026-03-10 | agent/financial-reg | Strengthened FBO legal basis (§4.1); added AOTP and fiduciary escrow analysis; integrated FinCEN rulings |
-| 0.5.0-draft | 2026-03-10 | agent/financial-reg | Added OCC interpretive letters and CSBS model act to §4.1 bank-centric custody; synced FIN-2013-G001 and Tex. Fin. Code § 151.003(9) into ToA |
-| 0.6.0-draft | 2026-03-09 | agent/research-support | Added 3 cases to ToA (*FanDuel v. AG*, *Langone v. Kaiser*, *State v. Rosenthal*) per whitepaper #562 sync |
+| Version     | Date       | Author                 | Changes                                                                                                                                       |
+| ----------- | ---------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.1.0       | 2026-02-24 | agent/research-support | Initial stub (3 sections)                                                                                                                     |
+| 0.2.0-draft | 2026-03-09 | agent/research-support | Full rewrite with Bluebook citations, compliance testing framework, risk register cross-references                                            |
+| 0.3.0-draft | 2026-03-10 | agent/research-support | Expanded Table of Authorities; added HHS-OIG clinical safety precedent                                                                        |
+| 0.4.0-draft | 2026-03-10 | agent/financial-reg    | Strengthened FBO legal basis (§4.1); added AOTP and fiduciary escrow analysis; integrated FinCEN rulings                                      |
+| 0.5.0-draft | 2026-03-10 | agent/financial-reg    | Added OCC interpretive letters and CSBS model act to §4.1 bank-centric custody; synced FIN-2013-G001 and Tex. Fin. Code § 151.003(9) into ToA |
+| 0.6.0-draft | 2026-03-09 | agent/research-support | Added 3 cases to ToA (_FanDuel v. AG_, _Langone v. Kaiser_, _State v. Rosenthal_) per whitepaper #562 sync                                    |
 
 ---
 
@@ -198,17 +202,17 @@ Each guardrail must be verifiable through automated or manual testing:
 
 ### Cases
 
-- *Dew-Becker v. Wu*, 2020 IL 124472 (Ill. 2020)
-- *FanDuel, Inc. v. Attorney General*, No. 16-1079 (Mass. Super. Ct. 2016)
-- *Heller v. Cen-Tex Savings & Loan Ass’n*, 410 S.W.2d 267 (Tex. Civ. App. 1966)
-- *Humphrey v. Viacom, Inc.*, 2007 WL 1797648 (D.N.J. 2007)
-- *Langone v. Kaiser*, 2016 WL 7104331 (N.D. Ill. 2016)
-- *Las Vegas Hacienda, Inc. v. Gibson*, 359 P.2d 85 (Nev. 1961)
-- *Morrow v. State*, 511 P.2d 127 (Alaska 1973)
-- *Murphy v. NCAA*, 584 U.S. 453 (2018)
-- *People v. World Interactive Gaming Corp.*, 714 N.Y.S.2d 844 (N.Y. Sup. Ct. 1999)
-- *State v. Rosenthal*, 559 P.2d 830 (Nev. 1977)
-- *White v. Cuomo*, 38 N.Y.3d 311 (N.Y. 2022)
+- _Dew-Becker v. Wu_, 2020 IL 124472 (Ill. 2020)
+- _FanDuel, Inc. v. Attorney General_, No. 16-1079 (Mass. Super. Ct. 2016)
+- _Heller v. Cen-Tex Savings & Loan Ass’n_, 410 S.W.2d 267 (Tex. Civ. App. 1966)
+- _Humphrey v. Viacom, Inc._, 2007 WL 1797648 (D.N.J. 2007)
+- _Langone v. Kaiser_, 2016 WL 7104331 (N.D. Ill. 2016)
+- _Las Vegas Hacienda, Inc. v. Gibson_, 359 P.2d 85 (Nev. 1961)
+- _Morrow v. State_, 511 P.2d 127 (Alaska 1973)
+- _Murphy v. NCAA_, 584 U.S. 453 (2018)
+- _People v. World Interactive Gaming Corp._, 714 N.Y.S.2d 844 (N.Y. Sup. Ct. 1999)
+- _State v. Rosenthal_, 559 P.2d 830 (Nev. 1977)
+- _White v. Cuomo_, 38 N.Y.3d 311 (N.Y. 2022)
 
 ### Statutes and Regulations
 
@@ -226,20 +230,20 @@ Each guardrail must be verifiable through automated or manual testing:
 
 - FinCEN Administrative Ruling FIN-2014-R004 (Mar. 11, 2014)
 - FinCEN Administrative Ruling FIN-2014-R007 (May 14, 2014)
-- FinCEN, *Application of FinCEN's Regulations to Persons Administering, Exchanging, or Using Virtual Currencies*, FIN-2013-G001 (Mar. 18, 2013)
-- FinCEN, *Definition of Money Transmitter (Third-Party Payment Processors)*, FIN-2004-1 (Aug. 17, 2004)
+- FinCEN, _Application of FinCEN's Regulations to Persons Administering, Exchanging, or Using Virtual Currencies_, FIN-2013-G001 (Mar. 18, 2013)
+- FinCEN, _Definition of Money Transmitter (Third-Party Payment Processors)_, FIN-2004-1 (Aug. 17, 2004)
 - FinCEN Guidance FIN-2019-G001 (May 9, 2019)
 - HHS-OIG Advisory Opinion No. 22-04 (Mar. 2022)
 - OCC Conditional Approval Letter (Jan. 2021) (payment charter framework for non-bank payment companies)
 - OCC Interpretive Letter #1170 (Feb. 2020) (bank-fintech partnership models for payment processing)
 - OCC Interpretive Letter #1174 (Oct. 2020) (national banks may hold reserves and serve as FBO custodians for fintech platforms)
-- SAMHSA, *Advisory: Contingency Management for the Treatment of Substance Use Disorders* (2025 update)
+- SAMHSA, _Advisory: Contingency Management for the Treatment of Substance Use Disorders_ (2025 update)
 
 ### Secondary Sources
 
-- Braslow Legal, *A Legal Guide to Skill Gaming* (2020)
-- Conference of State Bank Supervisors (CSBS), *Model Money Transmission Modernization Act* (2021)
-- DietBet, *Weight Loss Challenge Rules*, https://www.dietbet.com/kickstarter/rules
-- FTC, *Voluntary Guidelines for Providers of Weight Loss Products or Services* (1999)
-- HealthyWage, *Official Rules*, https://www.healthywage.com/rules/official-rules/
-- Modern Treasury, *How Do Money Transmission Laws Work?* (2024)
+- Braslow Legal, _A Legal Guide to Skill Gaming_ (2020)
+- Conference of State Bank Supervisors (CSBS), _Model Money Transmission Modernization Act_ (2021)
+- DietBet, _Weight Loss Challenge Rules_, https://www.dietbet.com/kickstarter/rules
+- FTC, _Voluntary Guidelines for Providers of Weight Loss Products or Services_ (1999)
+- HealthyWage, _Official Rules_, https://www.healthywage.com/rules/official-rules/
+- Modern Treasury, _How Do Money Transmission Laws Work?_ (2024)

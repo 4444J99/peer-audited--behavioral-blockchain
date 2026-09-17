@@ -1,6 +1,14 @@
-import { Controller, Post, Body, UseGuards, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+} from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 import {
   IsArray,
   IsNumber,
@@ -8,15 +16,18 @@ import {
   IsOptional,
   IsString,
   ValidateNested,
-} from 'class-validator';
-import { Pool } from 'pg';
-import * as crypto from 'crypto';
-import { AuthGuard } from '../../../guards/auth.guard';
-import { BannedUserGuard } from '../../guards/banned-user.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { HealthKitGuardService, HealthKitSampleMetadata } from '../compliance/healthkit-guard.service';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { ContractsService } from '../contracts/contracts.service';
+} from "class-validator";
+import { Pool } from "pg";
+import * as crypto from "crypto";
+import { AuthGuard } from "../../../guards/auth.guard";
+import { BannedUserGuard } from "../../guards/banned-user.guard";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import {
+  HealthKitGuardService,
+  HealthKitSampleMetadata,
+} from "../compliance/healthkit-guard.service";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { ContractsService } from "../contracts/contracts.service";
 
 export class HealthKitSampleDto {
   @IsString()
@@ -53,8 +64,8 @@ export class IngestHealthKitSamplesDto {
  * / signed payloads (App Attest, Play Integrity). (residual)
  */
 const TRUSTED_SOURCE_BUNDLES = new Set<string>([
-  'com.apple.health.watchos',
-  'com.google.android.apps.healthdata',
+  "com.apple.health.watchos",
+  "com.google.android.apps.healthdata",
 ]);
 
 // SH5: legitimate hardware samples are frequently attributed to device-/version-
@@ -65,9 +76,9 @@ const TRUSTED_SOURCE_BUNDLES = new Set<string>([
 // roots, which would re-open the spoofing surface). Mirrors src/shared/native/
 // health-bridge.ts `isTrustedBundle`; the two should eventually be consolidated.
 const TRUSTED_SOURCE_BUNDLE_PREFIXES: readonly string[] = [
-  'com.apple.health',
-  'com.google.android.apps.healthdata',
-  'com.google.android.apps.fitness',
+  "com.apple.health",
+  "com.google.android.apps.healthdata",
+  "com.google.android.apps.fitness",
 ];
 
 function isTrustedSourceBundle(sourceBundleId: string): boolean {
@@ -75,7 +86,8 @@ function isTrustedSourceBundle(sourceBundleId: string): boolean {
     return true;
   }
   return TRUSTED_SOURCE_BUNDLE_PREFIXES.some(
-    (prefix) => sourceBundleId === prefix || sourceBundleId.startsWith(prefix + '.'),
+    (prefix) =>
+      sourceBundleId === prefix || sourceBundleId.startsWith(prefix + "."),
   );
 }
 
@@ -91,9 +103,9 @@ const FUTURE_SKEW_TOLERANCE_MS = 5 * 60 * 1000; // 5 minutes
 // in-handler live-status check below additionally denies QUARANTINED/SUSPENDED/
 // PENDING_DELETION (which BannedUserGuard does not cover). BannedUserGuard only
 // needs the global Pool, so no module provider change is required.
-@ApiTags('Oracles')
+@ApiTags("Oracles")
 @ApiBearerAuth()
-@Controller('oracles')
+@Controller("oracles")
 @UseGuards(AuthGuard, BannedUserGuard)
 export class OraclesController {
   private readonly logger = new Logger(OraclesController.name);
@@ -105,14 +117,18 @@ export class OraclesController {
     private readonly contractsService: ContractsService,
   ) {}
 
-  @Post('healthkit/samples')
-  @ApiOperation({ summary: 'Ingest HealthKit samples with server-side manual entry filtering' })
+  @Post("healthkit/samples")
+  @ApiOperation({
+    summary: "Ingest HealthKit samples with server-side manual entry filtering",
+  })
   async ingestHealthKitSamples(
     @CurrentUser() user: { id: string },
     @Body() dto: IngestHealthKitSamplesDto,
   ) {
     if (!dto || !Array.isArray(dto.samples)) {
-      throw new BadRequestException('Request body must include a samples array');
+      throw new BadRequestException(
+        "Request body must include a samples array",
+      );
     }
 
     // AU1: live-status re-check. The 15-min access token outlives a mid-session
@@ -120,14 +136,16 @@ export class OraclesController {
     // advances money-bearing contracts, require the account to be ACTIVE before
     // processing any sample (denies QUARANTINED/SUSPENDED/PENDING_DELETION too).
     const statusResult = await this.pool.query(
-      'SELECT status FROM users WHERE id = $1',
+      "SELECT status FROM users WHERE id = $1",
       [user.id],
     );
     if (statusResult.rows.length === 0) {
-      throw new ForbiddenException('User account not found');
+      throw new ForbiddenException("User account not found");
     }
-    if (String(statusResult.rows[0].status || '').toUpperCase() !== 'ACTIVE') {
-      throw new ForbiddenException('Account is not active and cannot submit health samples');
+    if (String(statusResult.rows[0].status || "").toUpperCase() !== "ACTIVE") {
+      throw new ForbiddenException(
+        "Account is not active and cannot submit health samples",
+      );
     }
 
     const results = [];
@@ -141,7 +159,10 @@ export class OraclesController {
       const validation = this.resolveValidation(sample, metadata);
 
       const payloadString = JSON.stringify(sample);
-      const sampleHash = crypto.createHash('sha256').update(payloadString + user.id).digest('hex');
+      const sampleHash = crypto
+        .createHash("sha256")
+        .update(payloadString + user.id)
+        .digest("hex");
 
       // TKT-P1-007: Health Data Bridge Schema insertion.
       // Dedup on sample_hash: only process when the insert created a NEW row, so a
@@ -156,7 +177,7 @@ export class OraclesController {
            RETURNING id`,
           [
             user.id,
-            metadata.sourceBundleId || 'UNKNOWN',
+            metadata.sourceBundleId || "UNKNOWN",
             this.healthKitGuard.isLikelyManualEntry(metadata),
             sampleHash,
             validation.accepted,
@@ -166,29 +187,39 @@ export class OraclesController {
         );
         insertedNewRow = (insertResult.rowCount ?? 0) > 0;
       } catch (err) {
-        this.logger.warn(`Failed to insert health_oracle_samples record: ${err}`);
+        this.logger.warn(
+          `Failed to insert health_oracle_samples record: ${err}`,
+        );
       }
 
       if (!validation.accepted) {
-        await this.truthLog.appendEvent('HEALTHKIT_SAMPLE_REJECTED', {
+        await this.truthLog.appendEvent("HEALTHKIT_SAMPLE_REJECTED", {
           userId: user.id,
           sampleType: sample.type,
           reason: validation.reason,
           metadata: sample.metadata,
         });
-        results.push({ type: sample.type, accepted: false, reason: validation.reason });
+        results.push({
+          type: sample.type,
+          accepted: false,
+          reason: validation.reason,
+        });
         continue;
       }
 
       // Replayed / duplicate payload: the dedup insert hit ON CONFLICT and did not
       // insert a new row. Skip processing so contracts are not advanced again.
       if (!insertedNewRow) {
-        results.push({ type: sample.type, accepted: false, reason: 'Duplicate sample (already processed)' });
+        results.push({
+          type: sample.type,
+          accepted: false,
+          reason: "Duplicate sample (already processed)",
+        });
         continue;
       }
 
       // Record accepted sample in TruthLog
-      await this.truthLog.appendEvent('HEALTHKIT_SAMPLE_ACCEPTED', {
+      await this.truthLog.appendEvent("HEALTHKIT_SAMPLE_ACCEPTED", {
         userId: user.id,
         sampleType: sample.type,
         value: sample.value,
@@ -217,18 +248,27 @@ export class OraclesController {
     }
 
     // 2. Required metadata fields must be present (reject if missing).
-    const sourceBundleId = String(metadata.sourceBundleId || '').trim();
+    const sourceBundleId = String(metadata.sourceBundleId || "").trim();
     if (!sourceBundleId) {
-      return { accepted: false, reason: 'Missing required metadata field: sourceBundleId' };
+      return {
+        accepted: false,
+        reason: "Missing required metadata field: sourceBundleId",
+      };
     }
     if (!metadata.sourceName) {
-      return { accepted: false, reason: 'Missing required metadata field: sourceName' };
+      return {
+        accepted: false,
+        reason: "Missing required metadata field: sourceName",
+      };
     }
 
     // 3. Allowlist of trusted hardware source bundle families (fail closed for
     // unknown sources; SH5 — accepts legitimate first-party child bundles).
     if (!isTrustedSourceBundle(sourceBundleId)) {
-      return { accepted: false, reason: 'Sample must originate from a verified hardware device/app' };
+      return {
+        accepted: false,
+        reason: "Sample must originate from a verified hardware device/app",
+      };
     }
 
     // 4. Timestamp sanity: reject future-dated or stale readings.
@@ -240,23 +280,32 @@ export class OraclesController {
     return { accepted: true };
   }
 
-  private validateTimestamps(sample: HealthKitSampleDto): { accepted: boolean; reason?: string } {
+  private validateTimestamps(sample: HealthKitSampleDto): {
+    accepted: boolean;
+    reason?: string;
+  } {
     const start = Date.parse(sample.startDate);
     const end = Date.parse(sample.endDate);
 
     if (Number.isNaN(start) || Number.isNaN(end)) {
-      return { accepted: false, reason: 'Invalid startDate/endDate' };
+      return { accepted: false, reason: "Invalid startDate/endDate" };
     }
     if (end < start) {
-      return { accepted: false, reason: 'endDate precedes startDate' };
+      return { accepted: false, reason: "endDate precedes startDate" };
     }
 
     const now = Date.now();
-    if (start > now + FUTURE_SKEW_TOLERANCE_MS || end > now + FUTURE_SKEW_TOLERANCE_MS) {
-      return { accepted: false, reason: 'Reading is dated in the future' };
+    if (
+      start > now + FUTURE_SKEW_TOLERANCE_MS ||
+      end > now + FUTURE_SKEW_TOLERANCE_MS
+    ) {
+      return { accepted: false, reason: "Reading is dated in the future" };
     }
     if (now - start > MAX_SAMPLE_AGE_MS) {
-      return { accepted: false, reason: 'Reading is outside the accepted ingestion window' };
+      return {
+        accepted: false,
+        reason: "Reading is outside the accepted ingestion window",
+      };
     }
 
     return { accepted: true };

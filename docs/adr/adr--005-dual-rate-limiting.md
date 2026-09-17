@@ -41,23 +41,25 @@ const RATE_LIMIT_MAX = 30;
 
 ### Why Two Layers
 
-| Concern | API Throttle | Edge Limiter |
-|---------|-------------|--------------|
-| Identity | JWT user ID | IP address |
-| Storage | Redis (persistent) | In-memory Map (ephemeral) |
-| Scope | Authenticated endpoints | Public AI chat |
-| Reset | Per-user, persists across requests | Per-worker instance, resets on deploy |
-| Cost | Redis read/write per request | Zero (in-memory) |
+| Concern  | API Throttle                       | Edge Limiter                          |
+| -------- | ---------------------------------- | ------------------------------------- |
+| Identity | JWT user ID                        | IP address                            |
+| Storage  | Redis (persistent)                 | In-memory Map (ephemeral)             |
+| Scope    | Authenticated endpoints            | Public AI chat                        |
+| Reset    | Per-user, persists across requests | Per-worker instance, resets on deploy |
+| Cost     | Redis read/write per request       | Zero (in-memory)                      |
 
 ## Consequences
 
 **Positive:**
+
 - Edge limiting protects the LLM API key (Groq) from abuse without requiring authentication
 - API throttle prevents authenticated users from abusing financial endpoints
 - Each layer is independently tunable — edge limits can be tightened without affecting logged-in users
 - Edge limiter has zero external dependencies (no Redis needed at the edge)
 
 **Negative:**
+
 - In-memory edge limiting resets on worker redeploy (acceptable for abuse prevention, not for billing)
 - IP-based limiting can be bypassed by distributed attacks or VPNs (mitigated by Cloudflare's built-in DDoS protection)
 - Two separate implementations to maintain

@@ -19,23 +19,23 @@ day-30 retention, intermediary conversions.
 
 ## Targets
 
-| KPI | 30-day target | 90-day target |
-|-----|---------------|---------------|
-| Followers (net) | +1,000–2,000 | trajectory to ~25,000 |
-| Email subscribers (net) | +300 | +1,500 |
-| Lead-magnet conversion | ≥ 25% of landing visits | ≥ 30% |
-| Qualified waitlist | 50+ | 200+ |
-| Cohort 1 | seated (15–30) by Day 60 | → 30-day completions |
-| Intermediary partners | 2–3 in conversation | 5+ active |
+| KPI                     | 30-day target            | 90-day target         |
+| ----------------------- | ------------------------ | --------------------- |
+| Followers (net)         | +1,000–2,000             | trajectory to ~25,000 |
+| Email subscribers (net) | +300                     | +1,500                |
+| Lead-magnet conversion  | ≥ 25% of landing visits  | ≥ 30%                 |
+| Qualified waitlist      | 50+                      | 200+                  |
+| Cohort 1                | seated (15–30) by Day 60 | → 30-day completions  |
+| Intermediary partners   | 2–3 in conversation      | 5+ active             |
 
 ## Weekly log
 
-| Week | Followers (net) | Reach | Eng% | Email (net) | LM conv% | Aud. rev | Waitlist (src) | →Admit | Activation | D7 | D30 | Partners | Band |
-|------|-----------------|-------|------|-------------|----------|----------|----------------|--------|------------|----|----|----------|------|
-| W1 | | | | | | | | | | | | | |
-| W2 | | | | | | | | | | | | | |
-| W3 | | | | | | | | | | | | | |
-| W4 | | | | | | | | | | | | | |
+| Week | Followers (net) | Reach | Eng% | Email (net) | LM conv% | Aud. rev | Waitlist (src) | →Admit | Activation | D7  | D30 | Partners | Band |
+| ---- | --------------- | ----- | ---- | ----------- | -------- | -------- | -------------- | ------ | ---------- | --- | --- | -------- | ---- |
+| W1   |                 |       |      |             |          |          |                |        |            |     |     |          |      |
+| W2   |                 |       |      |             |          |          |                |        |            |     |     |          |      |
+| W3   |                 |       |      |             |          |          |                |        |            |     |     |          |      |
+| W4   |                 |       |      |             |          |          |                |        |            |     |     |          |      |
 
 ## Health bands (aligned to GRO REGE §9 where applicable)
 

@@ -1,12 +1,12 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { Queue } from 'bullmq';
-import { Pool } from 'pg';
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
+import { Queue } from "bullmq";
+import { Pool } from "pg";
 import {
   ENTERPRISE_WEBHOOK_QUEUE_NAME,
   getDefaultQueueOptions,
-} from '../../../config/queue.config';
-import { AnonymizeService } from './anonymize.service';
-import { WebhookService } from './webhook.service';
+} from "../../../config/queue.config";
+import { AnonymizeService } from "./anonymize.service";
+import { WebhookService } from "./webhook.service";
 
 export interface WebhookSubscription {
   id: string;
@@ -27,10 +27,10 @@ export interface WebhookSubscription {
  * entitled to know that engagement happened, not to what a person is working on.
  */
 export interface EnterpriseWebhookEvent {
-  type: 'CONTRACT_RESOLVED';
+  type: "CONTRACT_RESOLVED";
   enterpriseId: string;
   subject: string;
-  outcome: 'COMPLETED' | 'FAILED';
+  outcome: "COMPLETED" | "FAILED";
   occurredAt: string;
 }
 
@@ -50,7 +50,10 @@ export class WebhookSubscriptionService {
     private readonly webhook: WebhookService,
     private readonly anonymize: AnonymizeService,
   ) {
-    this.queue = new Queue(ENTERPRISE_WEBHOOK_QUEUE_NAME, getDefaultQueueOptions());
+    this.queue = new Queue(
+      ENTERPRISE_WEBHOOK_QUEUE_NAME,
+      getDefaultQueueOptions(),
+    );
   }
 
   /**
@@ -68,7 +71,7 @@ export class WebhookSubscriptionService {
     try {
       await this.webhook.assertDeliverableUrl(url);
     } catch (error: any) {
-      throw new BadRequestException(error?.message || 'Invalid webhook URL');
+      throw new BadRequestException(error?.message || "Invalid webhook URL");
     }
 
     const result = await this.pool.query(
@@ -112,7 +115,7 @@ export class WebhookSubscriptionService {
   async enqueueContractResolved(input: {
     enterpriseId: string;
     userId: string;
-    outcome: 'COMPLETED' | 'FAILED';
+    outcome: "COMPLETED" | "FAILED";
     occurredAt: string;
   }): Promise<number> {
     const subscriptions = await this.listActive(input.enterpriseId);
@@ -121,7 +124,7 @@ export class WebhookSubscriptionService {
     }
 
     const event: EnterpriseWebhookEvent = {
-      type: 'CONTRACT_RESOLVED',
+      type: "CONTRACT_RESOLVED",
       enterpriseId: input.enterpriseId,
       subject: this.anonymize.hashUserId(input.userId, input.enterpriseId),
       outcome: input.outcome,
@@ -134,7 +137,7 @@ export class WebhookSubscriptionService {
         url: subscription.url,
         event,
       };
-      await this.queue.add('enterprise-webhook', job);
+      await this.queue.add("enterprise-webhook", job);
     }
 
     this.logger.log(

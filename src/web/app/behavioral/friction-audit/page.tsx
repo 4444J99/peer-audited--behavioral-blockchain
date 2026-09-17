@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Shield } from 'lucide-react';
-import { FrictionAuditWizard } from '../../../components/FrictionAuditWizard';
+import React from "react";
+import { Shield } from "lucide-react";
+import { FrictionAuditWizard } from "../../../components/FrictionAuditWizard";
 
 export default function FrictionAuditPage() {
   return (
@@ -12,8 +12,9 @@ export default function FrictionAuditPage() {
         <h1 className="text-xl font-bold">Friction Audit</h1>
       </div>
       <p className="text-sm text-gray-400">
-        This quick assessment identifies the friction points in your environment. Answer 5 questions
-        to get personalized recommendations for making good habits easier and bad habits harder.
+        This quick assessment identifies the friction points in your
+        environment. Answer 5 questions to get personalized recommendations for
+        making good habits easier and bad habits harder.
       </p>
       <FrictionAuditWizard />
     </div>

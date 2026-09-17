@@ -15,40 +15,47 @@ authoritative: false
 
 ## 1. The Market Matrix
 
-| Target | Core Drive | Verification | The Weasel Point | Enforcement Economics | Styx Parry |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **stickK** | Social Proof | Manual (Referee) | Referee Collusion | House/Charity | **Fury Network** (Adversarial) |
-| **Beeminder** | Data Integrity | API (Autodata) | Sync Error Disputes | House/Staff | **Digital Exhaust** (Native Logs) |
-| **Forfeit** | Visual Proof | GPT-4 + Staff | "Bad Photo" Claims | House wins | **Fury Bounty** (Peer Reward) |
-| **HealthyWage** | Communal Pot | Video Weigh-in | Water Loading | House Take (25%) | **Dynamic Audit Bounty** |
-| **Habitica** | RPG Progress | Honor System | "Saving the Party" | No Stakes | **Hard Stakes + Progress** |
-| **Opal** | Gating | OS ScreenTime | Uninstalling App | Subscription | **Contractual Stakes** |
-| **Pavlok** | Physical Pain | Hardware Sensor | Taking band off | Device Sale | **Financial "Zap"** |
-| **Coach Lee** | Strategic Scarcity| Self-Report | Ego-driven lying | Coaching Fee | **Aegis Protocol Guardrails** |
-| **TaskRatchet** | Binary Task | Honor System | Clicking "Done" | Commission | **Artifact Verification** |
-| **Focusmate** | Body Doubling | Social Presence | Passive Scrolling | Subscription | **Active Artifact Audit** |
+| Target          | Core Drive         | Verification     | The Weasel Point    | Enforcement Economics | Styx Parry                        |
+| :-------------- | :----------------- | :--------------- | :------------------ | :-------------------- | :-------------------------------- |
+| **stickK**      | Social Proof       | Manual (Referee) | Referee Collusion   | House/Charity         | **Fury Network** (Adversarial)    |
+| **Beeminder**   | Data Integrity     | API (Autodata)   | Sync Error Disputes | House/Staff           | **Digital Exhaust** (Native Logs) |
+| **Forfeit**     | Visual Proof       | GPT-4 + Staff    | "Bad Photo" Claims  | House wins            | **Fury Bounty** (Peer Reward)     |
+| **HealthyWage** | Communal Pot       | Video Weigh-in   | Water Loading       | House Take (25%)      | **Dynamic Audit Bounty**          |
+| **Habitica**    | RPG Progress       | Honor System     | "Saving the Party"  | No Stakes             | **Hard Stakes + Progress**        |
+| **Opal**        | Gating             | OS ScreenTime    | Uninstalling App    | Subscription          | **Contractual Stakes**            |
+| **Pavlok**      | Physical Pain      | Hardware Sensor  | Taking band off     | Device Sale           | **Financial "Zap"**               |
+| **Coach Lee**   | Strategic Scarcity | Self-Report      | Ego-driven lying    | Coaching Fee          | **Aegis Protocol Guardrails**     |
+| **TaskRatchet** | Binary Task        | Honor System     | Clicking "Done"     | Commission            | **Artifact Verification**         |
+| **Focusmate**   | Body Doubling      | Social Presence  | Passive Scrolling   | Subscription          | **Active Artifact Audit**         |
 
 ---
 
 ## 2. Pattern Recognition: Unifying Vulnerabilities
 
 ### A. The Universal Oracle Problem
+
 **90% of incumbents** rely on either the user's honesty (TaskRatchet, Habitica) or a collusive proxy (stickK). Even automated systems (Beeminder) rely on fragile third-party APIs that create a "Dispute Debt."
-*   **Styx Advantage:** The **Fury Network** treats every truth-claim as an adversarial event with a financial bounty.
+
+- **Styx Advantage:** The **Fury Network** treats every truth-claim as an adversarial event with a financial bounty.
 
 ### B. The "House Wins" Friction
+
 In every staked model (Forfeit, HealthyWage, TaskRatchet), the platform benefits when the user fails. This creates a low-trust environment.
-*   **Styx Advantage:** The protocol never keeps the bounty. Bounties flow to **Peer Auditors** and **Pool Liquidity**, aligning the community against fraud, not the user.
+
+- **Styx Advantage:** The protocol never keeps the bounty. Bounties flow to **Peer Auditors** and **Pool Liquidity**, aligning the community against fraud, not the user.
 
 ### C. The OS Sandbox Ceiling
+
 App-gating tools (Opal, Freedom) are fighting a losing battle against Apple/Google privacy changes.
-*   **Styx Advantage:** Styx focuses on **Verifiable Artifacts** (Digital Exhaust) rather than "App Blocking," making the enforcement OS-agnostic and robust.
+
+- **Styx Advantage:** Styx focuses on **Verifiable Artifacts** (Digital Exhaust) rather than "App Blocking," making the enforcement OS-agnostic and robust.
 
 ---
 
 ## 3. Market Gravity vs. The Void
-*   **Market Gravity (Crowded):** Fitness tracking, generic habits, soft-gamification.
-*   **The Void (White Space):** High-stakes relationship recovery, decentralized adversarial auditing, privacy-first behavioral proof (ZKP).
+
+- **Market Gravity (Crowded):** Fitness tracking, generic habits, soft-gamification.
+- **The Void (White Space):** High-stakes relationship recovery, decentralized adversarial auditing, privacy-first behavioral proof (ZKP).
 
 ---
 
@@ -103,50 +110,55 @@ Per METADOC Section 2.A — formalizing the market's invariant failure patterns 
 **Problem:** A behavioral verification system relies on a single entity (user, referee, platform, API) to determine truth.
 **Context:** Any commitment device must answer the question "Did the user keep their commitment?" This requires an Oracle — some mechanism that produces a truth-value.
 **Forces:**
-*   Users are incentivized to deceive the Oracle to avoid loss.
-*   Single-entity Oracles (human or automated) can be corrupted through collusion, technical failure, or conflicted incentives.
-*   Increasing Oracle sophistication (manual → API → AI) does not eliminate corruption — it changes the attack surface.
-**Solution:** Distribute the Oracle across multiple financially-incentivized adversarial agents. No single agent can determine truth; consensus among agents with opposing incentives produces robust truth-values.
-**Known Uses:** stickK (corrupt via collusion), Beeminder (corrupt via sync errors), Forfeit (corrupt via centralized conflict of interest), Habitica (no Oracle at all), TaskRatchet (self-Oracle).
-**Styx Resolution:** The **Fury Network** — anonymous, adversarial, bounty-incentivized peer auditors with anti-collusion guards (honeypots, geographic jitter).
+
+- Users are incentivized to deceive the Oracle to avoid loss.
+- Single-entity Oracles (human or automated) can be corrupted through collusion, technical failure, or conflicted incentives.
+- Increasing Oracle sophistication (manual → API → AI) does not eliminate corruption — it changes the attack surface.
+  **Solution:** Distribute the Oracle across multiple financially-incentivized adversarial agents. No single agent can determine truth; consensus among agents with opposing incentives produces robust truth-values.
+  **Known Uses:** stickK (corrupt via collusion), Beeminder (corrupt via sync errors), Forfeit (corrupt via centralized conflict of interest), Habitica (no Oracle at all), TaskRatchet (self-Oracle).
+  **Styx Resolution:** The **Fury Network** — anonymous, adversarial, bounty-incentivized peer auditors with anti-collusion guards (honeypots, geographic jitter).
 
 ### Pattern 2: The Misaligned House
 
 **Problem:** The platform that enforces commitment contracts profits when users fail.
 **Context:** Staked commitment platforms collect forfeited money. The platform's financial incentive is to maximize forfeiture, not maximize user success.
 **Forces:**
-*   Users perceive the platform as adversarial ("they want my money").
-*   Dispute resolution is biased — the house rules in its own favor.
-*   Long-term trust erodes as users realize the incentive structure.
-*   Marketing must constantly overcome the "it's a scam" objection.
-**Solution:** Remove the platform from the economic outcome of user failure. Route all forfeited stakes to external parties (auditors, community pools, charitable causes) with transparent, verifiable distribution.
-**Known Uses:** HealthyWage (25% house take), Forfeit (house retains forfeits), TaskRatchet (commission on forfeits).
-**Styx Resolution:** **Zero-Retained Bounties** — 20% to Auditor, 70% to Prize Pool, 10% Protocol Fee (operational costs only, not profit center). All flows are on-chain and auditable.
+
+- Users perceive the platform as adversarial ("they want my money").
+- Dispute resolution is biased — the house rules in its own favor.
+- Long-term trust erodes as users realize the incentive structure.
+- Marketing must constantly overcome the "it's a scam" objection.
+  **Solution:** Remove the platform from the economic outcome of user failure. Route all forfeited stakes to external parties (auditors, community pools, charitable causes) with transparent, verifiable distribution.
+  **Known Uses:** HealthyWage (25% house take), Forfeit (house retains forfeits), TaskRatchet (commission on forfeits).
+  **Styx Resolution:** **Zero-Retained Bounties** — 20% to Auditor, 70% to Prize Pool, 10% Protocol Fee (operational costs only, not profit center). All flows are on-chain and auditable.
 
 ### Pattern 3: The Removable Enforcer
 
 **Problem:** Physical or software-based enforcement can be trivially bypassed by removing the enforcement mechanism.
 **Context:** Hardware devices (wristbands) can be taken off. Apps can be uninstalled. OS permissions can be revoked. Any enforcement mechanism the user can access can be disabled.
 **Forces:**
-*   Users in a moment of weakness will bypass enforcement if possible.
-*   OS vendors (Apple, Google) prioritize user control over third-party enforcement, making app-level restrictions inherently weak.
-*   Hardware enforcement requires the user to voluntarily maintain the enforcement — a contradiction.
-**Solution:** Shift from "preventing the action" to "detecting the action post-hoc and imposing irreversible consequences." The enforcement mechanism is not a barrier but a record — removing the monitoring is itself detectable (Integrity Heartbeat failure) and consequential (automatic forfeiture).
-**Known Uses:** Pavlok (remove the band), Opal/Freedom (uninstall the app), Accountable AI (disable the service).
-**Styx Resolution:** **Cryptographic Integrity Heartbeat** — the device must send regular proof-of-monitoring. Heartbeat failure triggers a grace period, then automatic stake forfeiture. Removing the app doesn't remove the commitment — it accelerates the consequence.
+
+- Users in a moment of weakness will bypass enforcement if possible.
+- OS vendors (Apple, Google) prioritize user control over third-party enforcement, making app-level restrictions inherently weak.
+- Hardware enforcement requires the user to voluntarily maintain the enforcement — a contradiction.
+  **Solution:** Shift from "preventing the action" to "detecting the action post-hoc and imposing irreversible consequences." The enforcement mechanism is not a barrier but a record — removing the monitoring is itself detectable (Integrity Heartbeat failure) and consequential (automatic forfeiture).
+  **Known Uses:** Pavlok (remove the band), Opal/Freedom (uninstall the app), Accountable AI (disable the service).
+  **Styx Resolution:** **Cryptographic Integrity Heartbeat** — the device must send regular proof-of-monitoring. Heartbeat failure triggers a grace period, then automatic stake forfeiture. Removing the app doesn't remove the commitment — it accelerates the consequence.
 
 ### Pattern 4: The Cheerleader Trap
 
 **Problem:** Platforms that prioritize emotional support over behavioral enforcement produce high engagement but low behavioral change.
 **Context:** Users prefer apps that make them feel good (gamification, encouraging notifications, community support) over apps that impose consequences. Platforms that optimize for retention and engagement naturally drift toward "cheerleading."
 **Forces:**
-*   Positive reinforcement feels good and drives short-term engagement.
-*   Negative consequences feel bad and drive churn.
-*   Revenue models (subscription, coaching fees) reward engagement time, not behavioral outcomes.
-*   The 80% No Contact failure rate persists across all "supportive" platforms because support does not equal enforcement.
-**Solution:** Align the revenue model with user success, not user engagement. Make the platform's economic interest identical to the user's behavioral interest. Provide support within a framework of inescapable accountability.
-**Known Uses:** Habitica (gamified cheerleading), Mend (emotional support), Coach Lee (strategic coaching), Focusmate (presence-based encouragement).
-**Styx Resolution:** **The Aegis Protocol** — safety-screened contracts with financial stakes. The platform earns protocol fees on successful completions, not failure. The Integrity Score provides positive reinforcement (visible progress) within an adversarial verification framework.
+
+- Positive reinforcement feels good and drives short-term engagement.
+- Negative consequences feel bad and drive churn.
+- Revenue models (subscription, coaching fees) reward engagement time, not behavioral outcomes.
+- The 80% No Contact failure rate persists across all "supportive" platforms because support does not equal enforcement.
+  **Solution:** Align the revenue model with user success, not user engagement. Make the platform's economic interest identical to the user's behavioral interest. Provide support within a framework of inescapable accountability.
+  **Known Uses:** Habitica (gamified cheerleading), Mend (emotional support), Coach Lee (strategic coaching), Focusmate (presence-based encouragement).
+  **Styx Resolution:** **The Aegis Protocol** — safety-screened contracts with financial stakes. The platform earns protocol fees on successful completions, not failure. The Integrity Score provides positive reinforcement (visible progress) within an adversarial verification framework.
 
 ---
-*Generated per METADOC Stage II (Ontology) & Gold Path SOP | Styx Research | v2.0.0*
+
+_Generated per METADOC Stage II (Ontology) & Gold Path SOP | Styx Research | v2.0.0_

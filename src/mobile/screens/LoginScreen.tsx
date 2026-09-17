@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,29 +8,29 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { ApiClient } from '../services/ApiClient';
-import { SessionService } from '../services/SessionService';
-import { SupportTraceErrorBanner } from '../components/SupportTraceErrorBanner';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { AuthStackParamList } from '../App';
+} from "react-native";
+import { ApiClient } from "../services/ApiClient";
+import { SessionService } from "../services/SessionService";
+import { SupportTraceErrorBanner } from "../components/SupportTraceErrorBanner";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { AuthStackParamList } from "../App";
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Login'> & {
+type Props = NativeStackScreenProps<AuthStackParamList, "Login"> & {
   onLogin: () => void;
 };
 
 export function LoginScreen({ navigation, onLogin }: Props) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      setError('Please enter email and password');
+      setError("Please enter email and password");
       return;
     }
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
@@ -38,7 +38,7 @@ export function LoginScreen({ navigation, onLogin }: Props) {
       await SessionService.saveSession(userId, token);
       onLogin();
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,7 @@ export function LoginScreen({ navigation, onLogin }: Props) {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.form}>
         <Text style={styles.title}>STYX</Text>
@@ -92,7 +92,7 @@ export function LoginScreen({ navigation, onLogin }: Props) {
 
         <TouchableOpacity
           style={styles.linkButton}
-          onPress={() => navigation.navigate('Register')}
+          onPress={() => navigation.navigate("Register")}
         >
           <Text style={styles.linkText}>New here? Create an account</Text>
         </TouchableOpacity>
@@ -104,76 +104,76 @@ export function LoginScreen({ navigation, onLogin }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0f',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#0a0a0f",
+    justifyContent: "center",
+    alignItems: "center",
   },
   form: {
-    width: '85%',
+    width: "85%",
     maxWidth: 400,
   },
   title: {
     fontSize: 36,
-    fontWeight: '800',
-    color: '#ff4444',
-    textAlign: 'center',
+    fontWeight: "800",
+    color: "#ff4444",
+    textAlign: "center",
     marginBottom: 4,
     letterSpacing: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
+    color: "#888",
+    textAlign: "center",
     marginBottom: 32,
   },
   error: {
-    color: '#ff6666',
-    backgroundColor: '#ff444420',
+    color: "#ff6666",
+    backgroundColor: "#ff444420",
     padding: 10,
     borderRadius: 8,
     marginBottom: 16,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 13,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   errorTrace: {
-    color: '#888',
+    color: "#888",
     fontSize: 11,
     marginTop: -8,
     marginBottom: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   input: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
     borderWidth: 1,
-    borderColor: '#2a2a3e',
+    borderColor: "#2a2a3e",
     borderRadius: 8,
     padding: 14,
-    color: '#e0e0e0',
+    color: "#e0e0e0",
     fontSize: 15,
     marginBottom: 12,
   },
   button: {
-    backgroundColor: '#ff4444',
+    backgroundColor: "#ff4444",
     borderRadius: 8,
     padding: 14,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 8,
   },
   buttonDisabled: {
-    backgroundColor: '#333',
+    backgroundColor: "#333",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   linkButton: {
     marginTop: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   linkText: {
-    color: '#ff4444',
+    color: "#ff4444",
     fontSize: 14,
   },
 });

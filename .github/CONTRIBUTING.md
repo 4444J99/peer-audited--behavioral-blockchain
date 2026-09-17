@@ -35,12 +35,12 @@ make dev
 
 ### Workspace Structure
 
-| Workspace | Port | Command |
-|-----------|------|---------|
-| `src/api` | 3000 | `cd src/api && npm run dev` |
-| `src/web` | 3001 | `cd src/web && npm run dev` |
-| `src/mobile` | Metro | `cd src/mobile && npm start` |
-| `src/desktop` | Vite | `cd src/desktop && npm run dev` |
+| Workspace     | Port  | Command                         |
+| ------------- | ----- | ------------------------------- |
+| `src/api`     | 3000  | `cd src/api && npm run dev`     |
+| `src/web`     | 3001  | `cd src/web && npm run dev`     |
+| `src/mobile`  | Metro | `cd src/mobile && npm start`    |
+| `src/desktop` | Vite  | `cd src/desktop && npm run dev` |
 
 API docs are available at `http://localhost:3000/api/docs` when the API is running.
 

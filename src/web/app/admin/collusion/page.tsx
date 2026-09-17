@@ -29,7 +29,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 function statusClass(status: string): string {
   return (
-    STATUS_COLORS[status] || "bg-neutral-800 text-neutral-400 border-neutral-700"
+    STATUS_COLORS[status] ||
+    "bg-neutral-800 text-neutral-400 border-neutral-700"
   );
 }
 
@@ -141,9 +142,7 @@ export default function CollusionPage() {
         </button>
       </div>
 
-      {error && (
-        <p className="mb-6 text-red-400 font-bold text-sm">{error}</p>
-      )}
+      {error && <p className="mb-6 text-red-400 font-bold text-sm">{error}</p>}
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="p-4 rounded-2xl border bg-neutral-900 border-neutral-800 text-center">

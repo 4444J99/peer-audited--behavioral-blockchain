@@ -18,13 +18,13 @@ Styx deploys to Render (Oregon region) via tag-triggered GitHub Actions workflow
 
 ### Deployment Targets
 
-| Service | Render Service | Port | Type |
-|---------|---------------|------|------|
-| styx-api | `styx-api` | 3000 | Web Service (NestJS 11) |
-| styx-web | `styx-web` | 3001 | Web Service (Next.js 16) |
-| styx-db | `styx-db` | 5432 | Managed PostgreSQL 16 |
-| styx-redis-bullmq | `styx-redis-bullmq` | 6379 | Managed Redis 7 (BullMQ queues) |
-| styx-redis-cache | `styx-redis-cache` | 6379 | Managed Redis 7 (Cache / SSE / Anomaly) |
+| Service           | Render Service      | Port | Type                                    |
+| ----------------- | ------------------- | ---- | --------------------------------------- |
+| styx-api          | `styx-api`          | 3000 | Web Service (NestJS 11)                 |
+| styx-web          | `styx-web`          | 3001 | Web Service (Next.js 16)                |
+| styx-db           | `styx-db`           | 5432 | Managed PostgreSQL 16                   |
+| styx-redis-bullmq | `styx-redis-bullmq` | 6379 | Managed Redis 7 (BullMQ queues)         |
+| styx-redis-cache  | `styx-redis-cache`  | 6379 | Managed Redis 7 (Cache / SSE / Anomaly) |
 
 ### Deploy Flow
 
@@ -51,15 +51,15 @@ Developer
 
 ## GitHub Actions Workflows
 
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `ci.yml` | Push to main, PRs | Tests, lint, type-check |
-| `deploy.yml` | Tag `v*` | Full deploy pipeline |
-| `beta-promotion.yml` | Manual dispatch | Promote to beta environment |
-| `staging-promotion.yml` | Manual dispatch | Promote to staging |
-| `security-scan.yml` | Weekly + PR | Dependency vulnerability scan |
-| `e2e.yml` | Deploy completion | Playwright end-to-end tests |
-| `validate-gates.yml` | PR | Run 8 validation gates |
+| Workflow                | Trigger           | Purpose                       |
+| ----------------------- | ----------------- | ----------------------------- |
+| `ci.yml`                | Push to main, PRs | Tests, lint, type-check       |
+| `deploy.yml`            | Tag `v*`          | Full deploy pipeline          |
+| `beta-promotion.yml`    | Manual dispatch   | Promote to beta environment   |
+| `staging-promotion.yml` | Manual dispatch   | Promote to staging            |
+| `security-scan.yml`     | Weekly + PR       | Dependency vulnerability scan |
+| `e2e.yml`               | Deploy completion | Playwright end-to-end tests   |
+| `validate-gates.yml`    | PR                | Run 8 validation gates        |
 
 ## Pre-Deploy Checklist
 
@@ -82,16 +82,16 @@ npm run validate:all
 
 Individual gates:
 
-| Gate | Command | What It Checks |
-|------|---------|---------------|
-| 1. Unit Tests | `npm run test` | 499+ tests pass |
-| 2. Lint | `npm run lint` | No lint errors |
-| 3. Type Safety | `npm run typecheck` | No TypeScript errors |
-| 4. Security | `npm audit --audit-level=high` | No high/critical vulns |
-| 5. Ledger Integrity | `npm run validate:ledger` | Double-entry reconciliation |
-| 6. API Readiness | `npm run validate:api` | All endpoints respond correctly |
-| 7. E2E | `npm run test:e2e` | Playwright scenarios pass |
-| 8. Performance | `npm run validate:perf` | Response times within SLA |
+| Gate                | Command                        | What It Checks                  |
+| ------------------- | ------------------------------ | ------------------------------- |
+| 1. Unit Tests       | `npm run test`                 | 499+ tests pass                 |
+| 2. Lint             | `npm run lint`                 | No lint errors                  |
+| 3. Type Safety      | `npm run typecheck`            | No TypeScript errors            |
+| 4. Security         | `npm audit --audit-level=high` | No high/critical vulns          |
+| 5. Ledger Integrity | `npm run validate:ledger`      | Double-entry reconciliation     |
+| 6. API Readiness    | `npm run validate:api`         | All endpoints respond correctly |
+| 7. E2E              | `npm run test:e2e`             | Playwright scenarios pass       |
+| 8. Performance      | `npm run validate:perf`        | Response times within SLA       |
 
 ### Financial Safety
 
@@ -152,13 +152,13 @@ bash scripts/smoke/beta-readiness.sh
 
 ### 4. Post-Deploy Smoke Tests
 
-| Check | Command/URL | Expected |
-|-------|------------|----------|
-| API health | `GET /health` | 200 + JSON with service statuses |
-| Web root | `GET /` | 200 + HTML |
-| Ledger reconciliation | `GET /api/admin/reconcile` | `{ balanced: true }` |
-| Fury queue | `GET /api/admin/fury/status` | Queue depth reported, workers active |
-| Stripe connectivity | `GET /api/admin/stripe/status` | Connected, webhook secret valid |
+| Check                 | Command/URL                    | Expected                             |
+| --------------------- | ------------------------------ | ------------------------------------ |
+| API health            | `GET /health`                  | 200 + JSON with service statuses     |
+| Web root              | `GET /`                        | 200 + HTML                           |
+| Ledger reconciliation | `GET /api/admin/reconcile`     | `{ balanced: true }`                 |
+| Fury queue            | `GET /api/admin/fury/status`   | Queue depth reported, workers active |
+| Stripe connectivity   | `GET /api/admin/stripe/status` | Connected, webhook secret valid      |
 
 ## Database Migrations
 
@@ -198,13 +198,13 @@ npm run migrate:revert -- --to <migration-name>
 
 The `render.yaml` defines the infrastructure:
 
-| Service | Plan | Region | Auto-Deploy |
-|---------|------|--------|-------------|
-| styx-api | Starter ($7/mo) | Oregon | From `main` branch |
-| styx-web | Starter ($7/mo) | Oregon | From `main` branch |
-| styx-db | Free | Oregon | Managed PostgreSQL 16 |
-| styx-redis-bullmq | Starter | Oregon | Managed Redis 7 |
-| styx-redis-cache | Starter | Oregon | Managed Redis 7 |
+| Service           | Plan            | Region | Auto-Deploy           |
+| ----------------- | --------------- | ------ | --------------------- |
+| styx-api          | Starter ($7/mo) | Oregon | From `main` branch    |
+| styx-web          | Starter ($7/mo) | Oregon | From `main` branch    |
+| styx-db           | Free            | Oregon | Managed PostgreSQL 16 |
+| styx-redis-bullmq | Starter         | Oregon | Managed Redis 7       |
+| styx-redis-cache  | Starter         | Oregon | Managed Redis 7       |
 
 ### Key Configuration
 
@@ -252,32 +252,32 @@ If a migration introduced a bug:
 
 ### Required Secrets (Render Dashboard)
 
-| Variable | Service | Description |
-|----------|---------|-------------|
-| `DATABASE_URL` | API | PostgreSQL connection string (Render provides automatically) |
-| `REDIS_URL` | API | Redis connection string (Render provides automatically) |
-| `STRIPE_SECRET_KEY` | API | Stripe API secret key |
-| `STRIPE_WEBHOOK_SECRET` | API | Stripe webhook signing secret |
-| `STRIPE_PUBLISHABLE_KEY` | Web | Stripe publishable key (client-safe) |
-| `R2_ACCESS_KEY_ID` | API | Cloudflare R2 access key |
-| `R2_SECRET_ACCESS_KEY` | API | Cloudflare R2 secret key |
-| `R2_BUCKET_NAME` | API | R2 bucket name for proof storage |
-| `R2_ENDPOINT` | API | R2 S3-compatible endpoint URL |
-| `SENTRY_DSN` | API, Web | Sentry error tracking DSN |
-| `JWT_SECRET` | API | JWT signing secret (min 256-bit) |
-| `SESSION_SECRET` | Web | Session cookie secret |
-| `NODE_ENV` | API, Web | `production` |
+| Variable                 | Service  | Description                                                  |
+| ------------------------ | -------- | ------------------------------------------------------------ |
+| `DATABASE_URL`           | API      | PostgreSQL connection string (Render provides automatically) |
+| `REDIS_URL`              | API      | Redis connection string (Render provides automatically)      |
+| `STRIPE_SECRET_KEY`      | API      | Stripe API secret key                                        |
+| `STRIPE_WEBHOOK_SECRET`  | API      | Stripe webhook signing secret                                |
+| `STRIPE_PUBLISHABLE_KEY` | Web      | Stripe publishable key (client-safe)                         |
+| `R2_ACCESS_KEY_ID`       | API      | Cloudflare R2 access key                                     |
+| `R2_SECRET_ACCESS_KEY`   | API      | Cloudflare R2 secret key                                     |
+| `R2_BUCKET_NAME`         | API      | R2 bucket name for proof storage                             |
+| `R2_ENDPOINT`            | API      | R2 S3-compatible endpoint URL                                |
+| `SENTRY_DSN`             | API, Web | Sentry error tracking DSN                                    |
+| `JWT_SECRET`             | API      | JWT signing secret (min 256-bit)                             |
+| `SESSION_SECRET`         | Web      | Session cookie secret                                        |
+| `NODE_ENV`               | API, Web | `production`                                                 |
 
 ### Non-Secret Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | 3000 (API), 3001 (Web) | Service port |
-| `LOG_LEVEL` | `info` | Pino log level |
-| `FURY_QUEUE_CONCURRENCY` | 5 | BullMQ worker concurrency |
-| `FURY_AUDIT_TIMEOUT_MS` | 172800000 | 48 hours (audit window) |
-| `LEDGER_RECONCILE_ON_WRITE` | `true` | Check balance on every ledger write |
-| `GEOFENCE_ENABLED` | `false` | Geographic restriction toggle |
+| Variable                    | Default                | Description                         |
+| --------------------------- | ---------------------- | ----------------------------------- |
+| `PORT`                      | 3000 (API), 3001 (Web) | Service port                        |
+| `LOG_LEVEL`                 | `info`                 | Pino log level                      |
+| `FURY_QUEUE_CONCURRENCY`    | 5                      | BullMQ worker concurrency           |
+| `FURY_AUDIT_TIMEOUT_MS`     | 172800000              | 48 hours (audit window)             |
+| `LEDGER_RECONCILE_ON_WRITE` | `true`                 | Check balance on every ledger write |
+| `GEOFENCE_ENABLED`          | `false`                | Geographic restriction toggle       |
 
 ## Environments
 
@@ -314,19 +314,19 @@ Docker Compose services: `styx-api`, `styx-web`, `styx-postgres` (5432), `styx-r
 
 ## Deploy Cadence
 
-| Type | Frequency | Process |
-|------|-----------|---------|
-| Hotfix (SEV1/2) | As needed | Branch from tag, fix, new patch tag (v1.2.4) |
-| Patch release | Weekly | Batch small fixes, create patch tag |
-| Minor release | Bi-weekly | New features, create minor tag (v1.3.0) |
-| Major release | Monthly+ | Breaking changes, migration required, create major tag (v2.0.0) |
+| Type            | Frequency | Process                                                         |
+| --------------- | --------- | --------------------------------------------------------------- |
+| Hotfix (SEV1/2) | As needed | Branch from tag, fix, new patch tag (v1.2.4)                    |
+| Patch release   | Weekly    | Batch small fixes, create patch tag                             |
+| Minor release   | Bi-weekly | New features, create minor tag (v1.3.0)                         |
+| Major release   | Monthly+  | Breaking changes, migration required, create major tag (v2.0.0) |
 
 ## Troubleshooting
 
-| Symptom | Likely Cause | Fix |
-|---------|-------------|-----|
-| Deploy stuck at "Building" | OOM during build | Reduce build parallelism, or upgrade Render plan |
-| Health check fails post-deploy | Missing env var or bad migration | Check Render logs, verify env vars |
-| 502 after deploy | App crashed on start | Check Sentry, Render logs for startup error |
-| Slow first request | Render starter plan cold start | Expected behavior — first request after sleep takes 10-30s |
-| Database connection refused | Connection string changed | Verify `DATABASE_URL` in Render dashboard |
+| Symptom                        | Likely Cause                     | Fix                                                        |
+| ------------------------------ | -------------------------------- | ---------------------------------------------------------- |
+| Deploy stuck at "Building"     | OOM during build                 | Reduce build parallelism, or upgrade Render plan           |
+| Health check fails post-deploy | Missing env var or bad migration | Check Render logs, verify env vars                         |
+| 502 after deploy               | App crashed on start             | Check Sentry, Render logs for startup error                |
+| Slow first request             | Render starter plan cold start   | Expected behavior — first request after sleep takes 10-30s |
+| Database connection refused    | Connection string changed        | Verify `DATABASE_URL` in Render dashboard                  |

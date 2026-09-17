@@ -22,10 +22,10 @@
  *     static export wrote 54 phantom sessions into the presenter's real
  *     collector.
  */
-import { isSnapshotMode } from '../../services/snapshot';
+import { isSnapshotMode } from "../../services/snapshot";
 
-const SESSION_KEY = 'styx.guidedTour.sessionId';
-const NAME_KEY = 'styx.guidedTour.name';
+const SESSION_KEY = "styx.guidedTour.sessionId";
+const NAME_KEY = "styx.guidedTour.name";
 
 /**
  * Opt-out, set by anything driving the demo in a browser that is not a person.
@@ -37,35 +37,35 @@ const NAME_KEY = 'styx.guidedTour.name';
  * nothing: it is a confident, wrong answer to the only question the report exists
  * to answer.
  */
-const OPT_OUT_KEY = 'styx.guidedTour.telemetry';
+const OPT_OUT_KEY = "styx.guidedTour.telemetry";
 
 export type FeedbackEvent = {
-  type: 'route_view' | 'tooltip_open' | 'audience_change' | 'nav';
+  type: "route_view" | "tooltip_open" | "audience_change" | "nav";
   route: string;
   detail?: string;
   dwellMs?: number;
 };
 
-const collectorPort = process.env.NEXT_PUBLIC_STYX_FEEDBACK_PORT || '4312';
+const collectorPort = process.env.NEXT_PUBLIC_STYX_FEEDBACK_PORT || "4312";
 
 /**
  * Hosted deployments (the Render beta) set an absolute collector URL at build
  * time; rule 2's same-hostname derivation is meaningless there because the
  * collector is its own service, not a port on the web host.
  */
-const configuredCollector = process.env.NEXT_PUBLIC_STYX_FEEDBACK_URL || '';
+const configuredCollector = process.env.NEXT_PUBLIC_STYX_FEEDBACK_URL || "";
 
 /** Same hostname the viewer used, so every device reports to the presenter's machine. */
 function collectorBase(): string | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   if (isSnapshotMode()) return null; // rule 4: no collector exists behind a static host
   try {
-    if (window.localStorage.getItem(OPT_OUT_KEY) === 'off') return null;
+    if (window.localStorage.getItem(OPT_OUT_KEY) === "off") return null;
   } catch {
     // localStorage can throw in a locked-down context; that is not a reason to
     // break the demo, and telemetry is the layer that must yield (rule 1).
   }
-  if (configuredCollector) return configuredCollector.replace(/\/+$/, '');
+  if (configuredCollector) return configuredCollector.replace(/\/+$/, "");
   return `${window.location.protocol}//${window.location.hostname}:${collectorPort}`;
 }
 
@@ -79,39 +79,43 @@ function collectorBase(): string | null {
  * the correct failure for a layer that must never affect the demo.
  */
 function mintId(): string {
-  const webCrypto: Crypto | undefined = typeof crypto !== 'undefined' ? crypto : undefined;
-  if (!webCrypto) return '';
+  const webCrypto: Crypto | undefined =
+    typeof crypto !== "undefined" ? crypto : undefined;
+  if (!webCrypto) return "";
 
   // crypto.randomUUID is restricted to SECURE CONTEXTS, so it is undefined on
   // http://<lan-ip>:4311 -- which is precisely how the room opens this demo. The
   // TypeScript lib types declare it unconditionally, so this has to be a runtime
   // check; getRandomValues has no such restriction and is the real path here.
-  const randomUUID = (webCrypto as Crypto & { randomUUID?: () => string }).randomUUID;
-  if (typeof randomUUID === 'function') return randomUUID.call(webCrypto);
+  const randomUUID = (webCrypto as Crypto & { randomUUID?: () => string })
+    .randomUUID;
+  if (typeof randomUUID === "function") return randomUUID.call(webCrypto);
 
   const bytes = new Uint8Array(16);
   webCrypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
 }
 
 export function getSessionId(): string {
-  if (typeof window === 'undefined') return '';
+  if (typeof window === "undefined") return "";
   let id = window.localStorage.getItem(SESSION_KEY);
   if (!id) {
     id = mintId();
-    if (!id) return '';
+    if (!id) return "";
     window.localStorage.setItem(SESSION_KEY, id);
   }
   return id;
 }
 
 export function getViewerName(): string {
-  if (typeof window === 'undefined') return '';
-  return window.localStorage.getItem(NAME_KEY) || '';
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(NAME_KEY) || "";
 }
 
 export function setViewerName(name: string): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   window.localStorage.setItem(NAME_KEY, name);
 }
 
@@ -120,8 +124,8 @@ async function post(path: string, body: unknown): Promise<boolean> {
   if (!base) return false;
   try {
     const response = await fetch(`${base}${path}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      method: "POST",
+      headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
       keepalive: true,
     });
@@ -135,21 +139,21 @@ async function post(path: string, body: unknown): Promise<boolean> {
 export function registerSession(name: string, audience: string): void {
   const sessionId = getSessionId();
   if (!sessionId) return;
-  void post('/session', { sessionId, name, audience });
+  void post("/session", { sessionId, name, audience });
 }
 
 export function trackEvents(events: FeedbackEvent[]): void {
   const sessionId = getSessionId();
   if (!sessionId || !events.length) return;
-  void post('/events', { sessionId, events });
+  void post("/events", { sessionId, events });
 }
 
 export function sendNote(route: string, text: string): Promise<boolean> {
   const sessionId = getSessionId();
   // A note without a session still deserves to reach the presenter, so this is the
   // one path that proceeds anonymously rather than dropping the viewer's words.
-  return post('/notes', {
-    sessionId: sessionId || 'anonymous',
+  return post("/notes", {
+    sessionId: sessionId || "anonymous",
     name: getViewerName(),
     route,
     text,

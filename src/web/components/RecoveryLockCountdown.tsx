@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, Loader2, Lock, Unlock, X } from 'lucide-react';
-import { api } from '../services/api-client';
-import type { RecoveryBreakRequest } from '../services/api-client';
+import React, { useCallback, useEffect, useState } from "react";
+import { AlertTriangle, Loader2, Lock, Unlock, X } from "lucide-react";
+import { api } from "../services/api-client";
+import type { RecoveryBreakRequest } from "../services/api-client";
 
 /**
  * Renders the remaining cooldown as `Hh MMm SSs`, rounding up so the display
@@ -14,7 +14,7 @@ export function formatCountdown(remainingMs: number): string {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return `${hours}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+  return `${hours}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
 }
 
 export interface RecoveryLockPanelProps {
@@ -54,8 +54,8 @@ export function RecoveryLockPanel({
   // states arrive on the same row and share this branch.
   const live =
     request !== null &&
-    (request.status === 'PENDING_COOLDOWN' || request.status === 'UNLOCKED');
-  const unlocked = request?.status === 'UNLOCKED';
+    (request.status === "PENDING_COOLDOWN" || request.status === "UNLOCKED");
+  const unlocked = request?.status === "UNLOCKED";
 
   return (
     <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-4">
@@ -110,7 +110,11 @@ export function RecoveryLockPanel({
             disabled={cancelling}
             className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
           >
-            {cancelling ? <Loader2 className="animate-spin" size={16} /> : <X size={16} />}
+            {cancelling ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : (
+              <X size={16} />
+            )}
             Cancel Break Request
           </button>
         </div>
@@ -120,14 +124,16 @@ export function RecoveryLockPanel({
             Breaking a recovery contract is deliberate, never immediate. A
             request sits behind a 24-hour cooldown you can cancel at any point.
           </p>
-          {request?.status === 'CANCELLED' && (
+          {request?.status === "CANCELLED" && (
             <p className="text-xs text-neutral-500">
-              Last request cancelled &mdash; requested {new Date(request.requested_at).toLocaleString()}.
+              Last request cancelled &mdash; requested{" "}
+              {new Date(request.requested_at).toLocaleString()}.
             </p>
           )}
-          {request?.status === 'CONSUMED' && (
+          {request?.status === "CONSUMED" && (
             <p className="text-xs text-neutral-500">
-              Last break used &mdash; requested {new Date(request.requested_at).toLocaleString()}.
+              Last break used &mdash; requested{" "}
+              {new Date(request.requested_at).toLocaleString()}.
             </p>
           )}
           {canRequestBreak ? (
@@ -144,7 +150,11 @@ export function RecoveryLockPanel({
                 disabled={requesting || !reason.trim()}
                 className="w-full py-3 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
               >
-                {requesting ? <Loader2 className="animate-spin" size={16} /> : <Lock size={16} />}
+                {requesting ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : (
+                  <Lock size={16} />
+                )}
                 Request Break
               </button>
             </>
@@ -182,7 +192,7 @@ export default function RecoveryLockCountdown({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [reason, setReason] = useState('');
+  const [reason, setReason] = useState("");
   const [requesting, setRequesting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [now, setNow] = useState(() => Date.now());
@@ -202,7 +212,9 @@ export default function RecoveryLockCountdown({
         setRequest(status.activeRequest);
       } catch (err) {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Failed to load timelock status');
+        setError(
+          err instanceof Error ? err.message : "Failed to load timelock status",
+        );
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -214,7 +226,7 @@ export default function RecoveryLockCountdown({
   }, [contractId]);
 
   useEffect(() => {
-    if (!request || request.status !== 'PENDING_COOLDOWN') return;
+    if (!request || request.status !== "PENDING_COOLDOWN") return;
     const unlockAt = new Date(request.unlock_at).getTime();
     const timer = setInterval(() => {
       const tick = Date.now();
@@ -237,11 +249,11 @@ export default function RecoveryLockCountdown({
     try {
       const created = await api.requestRecoveryBreak(contractId, reason.trim());
       setRequest(created);
-      setReason('');
+      setReason("");
       setNow(Date.now());
-      setNotice('Break queued. The 24-hour cooldown has started.');
+      setNotice("Break queued. The 24-hour cooldown has started.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to request break');
+      setError(err instanceof Error ? err.message : "Failed to request break");
     } finally {
       setRequesting(false);
     }
@@ -254,9 +266,11 @@ export default function RecoveryLockCountdown({
     try {
       const result = await api.cancelRecoveryBreak(contractId);
       setRequest(result.request);
-      setNotice('Break request cancelled. Your contract stands.');
+      setNotice("Break request cancelled. Your contract stands.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to cancel break request');
+      setError(
+        err instanceof Error ? err.message : "Failed to cancel break request",
+      );
     } finally {
       setCancelling(false);
     }

@@ -53,16 +53,16 @@ The department serves two distinct funnels: **B2C direct** (consumers searching 
 
 ## 3. Artifacts Registry
 
-| ID | Name | Path | Phase | Staleness | Last Updated | Status |
-|----|------|------|-------|-----------|--------------|--------|
-| G1 | GTM Strategy | `artifacts/gtm-strategy.md` | hardening | 30d | 2026-03-08 | active |
-| G2 | Content Calendar | `artifacts/content-calendar.md` | hardening | 14d | 2026-03-08 | active |
-| G3 | SEO Strategy | `artifacts/seo-strategy.md` | hardening | 30d | 2026-03-08 | active |
-| G4 | Paid Acquisition Playbook | `artifacts/paid-acquisition.md` | — | — | — | dormant |
-| G5 | Referral Program Design | `artifacts/referral-program.md` | — | — | — | dormant |
-| G6 | Practitioner Co-Marketing Kit | `artifacts/co-marketing-kit.md` | — | — | — | dormant |
-| G10 | Audience Growth Engine (portable playbook) | `../../playbooks/playbook--audience-growth-engine.md` | hardening | 90d | 2026-06-01 | active |
-| G11 | Audience Growth — Styx/Jessica Instance | `../../planning/planning--audience-growth-engine--styx-instance--2026-06-01.md` | hardening | 30d | 2026-06-01 | active |
+| ID  | Name                                       | Path                                                                            | Phase     | Staleness | Last Updated | Status  |
+| --- | ------------------------------------------ | ------------------------------------------------------------------------------- | --------- | --------- | ------------ | ------- |
+| G1  | GTM Strategy                               | `artifacts/gtm-strategy.md`                                                     | hardening | 30d       | 2026-03-08   | active  |
+| G2  | Content Calendar                           | `artifacts/content-calendar.md`                                                 | hardening | 14d       | 2026-03-08   | active  |
+| G3  | SEO Strategy                               | `artifacts/seo-strategy.md`                                                     | hardening | 30d       | 2026-03-08   | active  |
+| G4  | Paid Acquisition Playbook                  | `artifacts/paid-acquisition.md`                                                 | —         | —         | —            | dormant |
+| G5  | Referral Program Design                    | `artifacts/referral-program.md`                                                 | —         | —         | —            | dormant |
+| G6  | Practitioner Co-Marketing Kit              | `artifacts/co-marketing-kit.md`                                                 | —         | —         | —            | dormant |
+| G10 | Audience Growth Engine (portable playbook) | `../../playbooks/playbook--audience-growth-engine.md`                           | hardening | 90d       | 2026-06-01   | active  |
+| G11 | Audience Growth — Styx/Jessica Instance    | `../../planning/planning--audience-growth-engine--styx-instance--2026-06-01.md` | hardening | 30d       | 2026-06-01   | active  |
 
 **Staleness rules:** G1 stale after 90 days without review. G2 stale after 14 days. G3 stale after 30 days. G10 (portable engine) stale after 90 days. G11 (Styx instance) stale after 30 days — it drives the live Jessica content engine. G11's derived assets (30-day calendar, content asset pack, audience-as-product model, engagement economics, metrics tracker) live alongside it in `docs/planning/planning--*--2026-06-01.md` and are governed by the same content-quality and human-checkpoint rules below.
 
@@ -164,22 +164,22 @@ The department serves two distinct funnels: **B2C direct** (consumers searching 
 
 ### Emits
 
-| Signal | Recipients | Payload |
-|--------|------------|---------|
-| `signal:content-published` | CXS, B2B | `{title, url, audience, keywords, cta_type}` |
-| `signal:campaign-results` | PRD, FIN | `{channel, period, spend, conversions, cac, ltv_cac_ratio}` |
-| `signal:competitor-intel` | PRD, B2B | `{competitor, feature_announcements, messaging_shifts, content_gaps}` |
-| `signal:lead-practitioner` | B2B | `{source, name, practice_type, inbound_channel, interest_level}` |
+| Signal                     | Recipients | Payload                                                               |
+| -------------------------- | ---------- | --------------------------------------------------------------------- |
+| `signal:content-published` | CXS, B2B   | `{title, url, audience, keywords, cta_type}`                          |
+| `signal:campaign-results`  | PRD, FIN   | `{channel, period, spend, conversions, cac, ltv_cac_ratio}`           |
+| `signal:competitor-intel`  | PRD, B2B   | `{competitor, feature_announcements, messaging_shifts, content_gaps}` |
+| `signal:lead-practitioner` | B2B        | `{source, name, practice_type, inbound_channel, interest_level}`      |
 
 ### Consumes
 
-| Signal | Source | Action |
-|--------|--------|--------|
-| `signal:feature-shipped` | PRD | Update marketing copy, landing pages, and feature comparison tables within 48 hours |
-| `signal:pricing-change` | FIN | Update all landing pages, ad copy, and email sequences referencing pricing within 24 hours |
-| `signal:tos-update` | LEG | Review all marketing claims against new terms; pull any non-compliant copy immediately |
-| `signal:deal-closed` | B2B | Create practitioner success story draft if partner consents; add to case study pipeline |
-| `signal:churn-risk` | CXS | Analyze churning segment for messaging gaps; test retention-focused content angle |
+| Signal                   | Source | Action                                                                                     |
+| ------------------------ | ------ | ------------------------------------------------------------------------------------------ |
+| `signal:feature-shipped` | PRD    | Update marketing copy, landing pages, and feature comparison tables within 48 hours        |
+| `signal:pricing-change`  | FIN    | Update all landing pages, ad copy, and email sequences referencing pricing within 24 hours |
+| `signal:tos-update`      | LEG    | Review all marketing claims against new terms; pull any non-compliant copy immediately     |
+| `signal:deal-closed`     | B2B    | Create practitioner success story draft if partner consents; add to case study pipeline    |
+| `signal:churn-risk`      | CXS    | Analyze churning segment for messaging gaps; test retention-focused content angle          |
 
 ## 8. Human Checkpoints
 
@@ -218,13 +218,13 @@ The department serves two distinct funnels: **B2C direct** (consumers searching 
 
 ## 10. Growth Backlog
 
-| ID | Name | Description | Priority | Blocked By |
-|----|------|-------------|----------|------------|
-| G4 | Paid Acquisition Playbook | Documented strategy for first paid experiments (Google Ads for "breakup accountability," Meta for therapist targeting). Requires validated organic CAC baseline first. | medium | Organic CAC data (need 90 days post-launch) |
-| G5 | Referral Program Design | User-to-user and practitioner-to-practitioner referral mechanics. "Bring a friend to Styx" with stake discount or fee waiver. Requires active user base >500. | medium | Active user count threshold |
-| G6 | Practitioner Co-Marketing Kit | Brandable materials practitioners can share with their client base — email templates, social posts, in-office flyers. Requires at least 5 active practitioner partners for feedback. | high | 5+ active practitioner partners |
-| G7 | Podcast/Media Outreach Strategy | Target behavioral economics podcasts (Choiceology, Hidden Brain adjacent), breakup recovery influencers, therapy industry publications. | low | G1 phase 2 completion |
-| G8 | Community-Led Growth Playbook | Discord/community strategy for organic word-of-mouth among completed-contract users sharing success stories. | low | Active user base >200 |
-| G9 | Breakup Seasonality Calendar | Map marketing intensity to known breakup peaks (post-Valentine's, post-holidays, back-to-school) for campaign timing. | medium | 12 months of user data |
-| G12 | Creator-Owned Audience Monetization | Stand up the audience-as-product ladder (lead magnet → low-ticket → community → sponsorship) for the Jessica Host channel as a standalone media asset alongside the Styx funnel. Detailed in `../../planning/planning--audience-as-product-model--2026-06-01.md`. | high | Email list baseline + free-value engine live |
-| G13 | Sibling-Venture Instantiations | Re-run the G10 engine for other ORGAN-III ventures (`public-record-data-scrapper`, `sovereign-ecosystem--real-estate-luxury`, etc.) via the instantiation worksheet. Proves portability. | low | G11 validated through one full 90-day cycle |
+| ID  | Name                                | Description                                                                                                                                                                                                                                                       | Priority | Blocked By                                   |
+| --- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------- |
+| G4  | Paid Acquisition Playbook           | Documented strategy for first paid experiments (Google Ads for "breakup accountability," Meta for therapist targeting). Requires validated organic CAC baseline first.                                                                                            | medium   | Organic CAC data (need 90 days post-launch)  |
+| G5  | Referral Program Design             | User-to-user and practitioner-to-practitioner referral mechanics. "Bring a friend to Styx" with stake discount or fee waiver. Requires active user base >500.                                                                                                     | medium   | Active user count threshold                  |
+| G6  | Practitioner Co-Marketing Kit       | Brandable materials practitioners can share with their client base — email templates, social posts, in-office flyers. Requires at least 5 active practitioner partners for feedback.                                                                              | high     | 5+ active practitioner partners              |
+| G7  | Podcast/Media Outreach Strategy     | Target behavioral economics podcasts (Choiceology, Hidden Brain adjacent), breakup recovery influencers, therapy industry publications.                                                                                                                           | low      | G1 phase 2 completion                        |
+| G8  | Community-Led Growth Playbook       | Discord/community strategy for organic word-of-mouth among completed-contract users sharing success stories.                                                                                                                                                      | low      | Active user base >200                        |
+| G9  | Breakup Seasonality Calendar        | Map marketing intensity to known breakup peaks (post-Valentine's, post-holidays, back-to-school) for campaign timing.                                                                                                                                             | medium   | 12 months of user data                       |
+| G12 | Creator-Owned Audience Monetization | Stand up the audience-as-product ladder (lead magnet → low-ticket → community → sponsorship) for the Jessica Host channel as a standalone media asset alongside the Styx funnel. Detailed in `../../planning/planning--audience-as-product-model--2026-06-01.md`. | high     | Email list baseline + free-value engine live |
+| G13 | Sibling-Venture Instantiations      | Re-run the G10 engine for other ORGAN-III ventures (`public-record-data-scrapper`, `sovereign-ecosystem--real-estate-luxury`, etc.) via the instantiation worksheet. Proves portability.                                                                          | low      | G11 validated through one full 90-day cycle  |

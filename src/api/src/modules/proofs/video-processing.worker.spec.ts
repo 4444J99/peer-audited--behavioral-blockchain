@@ -61,7 +61,12 @@ describe("VideoProcessingWorker", () => {
     it("records error message when provided", async () => {
       mockPool.query.mockResolvedValue({ rowCount: 1 });
 
-      await (worker as any).recordStage("proof-1", "VALIDATE", "FAILED", "Not a video");
+      await (worker as any).recordStage(
+        "proof-1",
+        "VALIDATE",
+        "FAILED",
+        "Not a video",
+      );
 
       expect(mockPool.query).toHaveBeenCalledWith(
         expect.stringContaining("INSERT INTO proof_processing_jobs"),

@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { ContractsService } from '../contracts/contracts.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { ContractsService } from "../contracts/contracts.service";
 
 export interface MedicalExemptionRequest {
   contractId: string;
@@ -29,16 +29,16 @@ export class MedicalExemptionService {
   async requestExemption(req: MedicalExemptionRequest): Promise<void> {
     const client = await this.pool.connect();
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
 
       // 1. Verify contract ownership
       const contractResult = await client.query(
-        'SELECT status FROM contracts WHERE id = $1 AND user_id = $2',
-        [req.contractId, req.userId]
+        "SELECT status FROM contracts WHERE id = $1 AND user_id = $2",
+        [req.contractId, req.userId],
       );
 
       if (contractResult.rows.length === 0) {
-        throw new Error('Contract not found or unauthorized');
+        throw new Error("Contract not found or unauthorized");
       }
 
       // 2. Update contract status to EXEMPT_PENDING
@@ -51,20 +51,22 @@ export class MedicalExemptionService {
                'medical_exemption_doc', $3
              )
          WHERE id = $1`,
-        [req.contractId, req.reason, req.documentationUri]
+        [req.contractId, req.reason, req.documentationUri],
       );
 
       // 3. Log event
-      await this.truthLog.appendEvent('MEDICAL_EXEMPTION_REQUESTED', {
+      await this.truthLog.appendEvent("MEDICAL_EXEMPTION_REQUESTED", {
         contractId: req.contractId,
         userId: req.userId,
         reason: req.reason,
       });
 
-      await client.query('COMMIT');
-      this.logger.log(`Medical exemption requested for contract ${req.contractId}`);
+      await client.query("COMMIT");
+      this.logger.log(
+        `Medical exemption requested for contract ${req.contractId}`,
+      );
     } catch (e) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw e;
     } finally {
       client.release();
@@ -83,12 +85,12 @@ export class MedicalExemptionService {
              'approved_by_judge', $2
            )
        WHERE id = $1`,
-      [contractId, judgeId]
+      [contractId, judgeId],
     );
 
-    await this.contractsService.resolveContract(contractId, 'COMPLETED');
+    await this.contractsService.resolveContract(contractId, "COMPLETED");
 
-    await this.truthLog.appendEvent('MEDICAL_EXEMPTION_APPROVED', {
+    await this.truthLog.appendEvent("MEDICAL_EXEMPTION_APPROVED", {
       contractId,
       judgeId,
     });

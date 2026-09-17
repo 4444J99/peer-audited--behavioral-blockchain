@@ -1,8 +1,11 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
-import { Worker, Job } from 'bullmq';
-import { PUSH_DISPATCH_QUEUE_NAME, getRedisConnectionConfig } from '../../../config/queue.config';
-import { PushTokensService } from './push-tokens.service';
-import { ExpoPushProvider } from './expo-push.provider';
+import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
+import { Worker, Job } from "bullmq";
+import {
+  PUSH_DISPATCH_QUEUE_NAME,
+  getRedisConnectionConfig,
+} from "../../../config/queue.config";
+import { PushTokensService } from "./push-tokens.service";
+import { ExpoPushProvider } from "./expo-push.provider";
 
 interface PushJob {
   userId: string;
@@ -29,11 +32,11 @@ export class PushDispatchWorker implements OnModuleInit {
       { connection: getRedisConnectionConfig(), concurrency: 4 },
     );
 
-    this.worker.on('failed', (job, err) => {
+    this.worker.on("failed", (job, err) => {
       this.logger.error(`Push dispatch job ${job?.id} failed: ${err.message}`);
     });
 
-    this.logger.log('Push dispatch worker initialized');
+    this.logger.log("Push dispatch worker initialized");
   }
 
   private async process(job: Job<PushJob>): Promise<void> {
@@ -62,19 +65,23 @@ export class PushDispatchWorker implements OnModuleInit {
         title,
         body ?? null,
         metadata ?? null,
-        'expo',
+        "expo",
         result.status,
         result.providerResult,
         result.errorMessage,
         result.ticketId,
       );
 
-      if (result.status === 'UNREGISTERED') {
-        this.logger.warn(`Deactivating unregistered push token ${t.id} for user ${userId}`);
+      if (result.status === "UNREGISTERED") {
+        this.logger.warn(
+          `Deactivating unregistered push token ${t.id} for user ${userId}`,
+        );
         await this.pushTokens.unregisterToken(userId, t.token);
       }
     }
 
-    this.logger.log(`Push sent to ${tokens.length} device(s) for user ${userId} [${type}]`);
+    this.logger.log(
+      `Push sent to ${tokens.length} device(s) for user ${userId} [${type}]`,
+    );
   }
 }

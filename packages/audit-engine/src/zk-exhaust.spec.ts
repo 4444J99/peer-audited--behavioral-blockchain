@@ -78,11 +78,7 @@ describe("ZKExhaustVerifier", () => {
     const targetPseudonym = ZKExhaustVerifier.pseudonymForPhone(phone);
 
     expect(
-      ZKExhaustVerifier.verify(
-        proof,
-        targetPseudonym,
-        generateZkChallenge(),
-      ),
+      ZKExhaustVerifier.verify(proof, targetPseudonym, generateZkChallenge()),
     ).toBe(false);
   });
 

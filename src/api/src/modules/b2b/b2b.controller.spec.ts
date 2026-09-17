@@ -1,22 +1,22 @@
-import { Pool } from 'pg';
-import { B2BController } from './b2b.controller';
-import { BillingService } from './billing.service';
-import { WebhookService } from './webhook.service';
-import { WebhookSubscriptionService } from './webhook-subscription.service';
-import { MetricsService } from './metrics.service';
-import { AnonymizeService } from './anonymize.service';
-import { DataLakeService } from './datalake.service';
-import { CrmService } from './crm.service';
+import { Pool } from "pg";
+import { B2BController } from "./b2b.controller";
+import { BillingService } from "./billing.service";
+import { WebhookService } from "./webhook.service";
+import { WebhookSubscriptionService } from "./webhook-subscription.service";
+import { MetricsService } from "./metrics.service";
+import { AnonymizeService } from "./anonymize.service";
+import { DataLakeService } from "./datalake.service";
+import { CrmService } from "./crm.service";
 
-describe('B2BController', () => {
+describe("B2BController", () => {
   let controller: B2BController;
 
   // Caller is an ADMIN belonging to the enterprise they request, so the
   // tenant-membership check passes for these happy-path tests.
-  const adminUser = { id: 'admin-1' };
+  const adminUser = { id: "admin-1" };
   const mockPool = {
     query: jest.fn().mockResolvedValue({
-      rows: [{ enterprise_id: 'ent-001', role: 'ADMIN' }],
+      rows: [{ enterprise_id: "ent-001", role: "ADMIN" }],
     }),
   } as unknown as Pool;
 
@@ -39,19 +39,24 @@ describe('B2BController', () => {
 
   const mockAnonymize = {
     anonymizeEmployeeData: jest.fn().mockReturnValue({
-      enterpriseId: 'ent-001',
-      generatedAt: '2026-01-01T00:00:00Z',
+      enterpriseId: "ent-001",
+      generatedAt: "2026-01-01T00:00:00Z",
       employeeCount: 0,
       employees: [],
-      aggregate: { avgIntegrityScore: 0, avgCompletionRate: 0, totalContracts: 0, completedContracts: 0 },
+      aggregate: {
+        avgIntegrityScore: 0,
+        avgCompletionRate: 0,
+        totalContracts: 0,
+        completedContracts: 0,
+      },
     }),
   } as unknown as AnonymizeService;
 
   const mockDataLake = {
     extractSnapshot: jest.fn().mockResolvedValue({
-      extractedAt: '2026-01-01T00:00:00Z',
-      enterpriseId: 'ent-001',
-      period: { start: '2026-01-01', end: '2026-02-01' },
+      extractedAt: "2026-01-01T00:00:00Z",
+      enterpriseId: "ent-001",
+      period: { start: "2026-01-01", end: "2026-02-01" },
       contractMetrics: [],
       behavioralTrends: [],
       cohortAnalysis: [],
@@ -70,12 +75,22 @@ describe('B2BController', () => {
   } as unknown as CrmService;
 
   const mockCohorts = {
-    createCohort: jest.fn().mockResolvedValue({ id: 'coh-1', name: 'Test Cohort' }),
-    inviteParticipants: jest.fn().mockResolvedValue({ cohortId: 'coh-1', totalInvited: 2 }),
-    listCohorts: jest.fn().mockResolvedValue([{ id: 'coh-1', name: 'Test Cohort' }]),
-    getCohortDetails: jest.fn().mockResolvedValue({ cohort: { id: 'coh-1' }, stats: {} }),
-    updateCohortConfig: jest.fn().mockResolvedValue({ id: 'coh-1', name: 'Updated' }),
-    closeCohort: jest.fn().mockResolvedValue({ id: 'coh-1', status: 'CLOSED' }),
+    createCohort: jest
+      .fn()
+      .mockResolvedValue({ id: "coh-1", name: "Test Cohort" }),
+    inviteParticipants: jest
+      .fn()
+      .mockResolvedValue({ cohortId: "coh-1", totalInvited: 2 }),
+    listCohorts: jest
+      .fn()
+      .mockResolvedValue([{ id: "coh-1", name: "Test Cohort" }]),
+    getCohortDetails: jest
+      .fn()
+      .mockResolvedValue({ cohort: { id: "coh-1" }, stats: {} }),
+    updateCohortConfig: jest
+      .fn()
+      .mockResolvedValue({ id: "coh-1", name: "Updated" }),
+    closeCohort: jest.fn().mockResolvedValue({ id: "coh-1", status: "CLOSED" }),
   } as any;
 
   beforeEach(() => {
@@ -95,22 +110,22 @@ describe('B2BController', () => {
     );
     jest.clearAllMocks();
     (mockPool.query as jest.Mock).mockResolvedValue({
-      rows: [{ enterprise_id: 'ent-001', role: 'ADMIN' }],
+      rows: [{ enterprise_id: "ent-001", role: "ADMIN" }],
     });
     (mockWebhookSubscriptions.register as jest.Mock).mockResolvedValue({
-      id: 'sub-1',
-      enterpriseId: 'ent-001',
-      url: 'https://example.com/webhook',
+      id: "sub-1",
+      enterpriseId: "ent-001",
+      url: "https://example.com/webhook",
       active: true,
       lastDeliveryAt: null,
       lastDeliveryOk: null,
     });
   });
 
-  describe('getMetrics', () => {
-    it('should return enterprise metrics for a given enterpriseId', async () => {
+  describe("getMetrics", () => {
+    it("should return enterprise metrics for a given enterpriseId", async () => {
       const expected = {
-        enterpriseId: 'ent-001',
+        enterpriseId: "ent-001",
         totalContracts: 100,
         completedContracts: 80,
         failedContracts: 10,
@@ -119,332 +134,392 @@ describe('B2BController', () => {
         avgIntegrityScore: 72,
         totalEmployees: 50,
       };
-      (mockMetrics.getEnterpriseMetrics as jest.Mock).mockResolvedValueOnce(expected);
+      (mockMetrics.getEnterpriseMetrics as jest.Mock).mockResolvedValueOnce(
+        expected,
+      );
 
-      const result = await controller.getMetrics(adminUser, 'ent-001');
+      const result = await controller.getMetrics(adminUser, "ent-001");
 
       expect(result).toEqual(expected);
-      expect(mockMetrics.getEnterpriseMetrics).toHaveBeenCalledWith('ent-001');
+      expect(mockMetrics.getEnterpriseMetrics).toHaveBeenCalledWith("ent-001");
     });
   });
 
-  describe('getBilling', () => {
-    it('should return billing summary WITHOUT recording a consumption event', async () => {
-      const result = await controller.getBilling(adminUser, 'ent-001');
+  describe("getBilling", () => {
+    it("should return billing summary WITHOUT recording a consumption event", async () => {
+      const result = await controller.getBilling(adminUser, "ent-001");
 
       expect(result).toEqual({
-        enterpriseId: 'ent-001',
-        plan: 'CONSUMPTION',
+        enterpriseId: "ent-001",
+        plan: "CONSUMPTION",
         events: [],
         totalDue: 0,
-        currency: 'USD',
+        currency: "USD",
       });
       // Read-only fetch must not bill the customer.
       expect(mockBilling.recordConsumptionEvent).not.toHaveBeenCalled();
     });
   });
 
-  describe('registerWebhook', () => {
-    it('should persist the registration and return its subscription id', async () => {
+  describe("registerWebhook", () => {
+    it("should persist the registration and return its subscription id", async () => {
       const result = await controller.registerWebhook(adminUser, {
-        enterpriseId: 'ent-001',
-        url: 'https://example.com/webhook',
+        enterpriseId: "ent-001",
+        url: "https://example.com/webhook",
       });
 
       expect(mockWebhookSubscriptions.register).toHaveBeenCalledWith(
-        'ent-001',
-        'https://example.com/webhook',
-        'admin-1',
+        "ent-001",
+        "https://example.com/webhook",
+        "admin-1",
       );
       expect(result).toEqual({
-        status: 'registered',
-        subscriptionId: 'sub-1',
-        enterpriseId: 'ent-001',
-        url: 'https://example.com/webhook',
+        status: "registered",
+        subscriptionId: "sub-1",
+        enterpriseId: "ent-001",
+        url: "https://example.com/webhook",
       });
     });
 
-    it('should reject before persisting when the caller is not an admin of the enterprise', async () => {
+    it("should reject before persisting when the caller is not an admin of the enterprise", async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ enterprise_id: 'other-ent', role: 'ADMIN' }],
+        rows: [{ enterprise_id: "other-ent", role: "ADMIN" }],
       });
 
       await expect(
         controller.registerWebhook(adminUser, {
-          enterpriseId: 'ent-001',
-          url: 'https://example.com/webhook',
+          enterpriseId: "ent-001",
+          url: "https://example.com/webhook",
         }),
       ).rejects.toThrow();
       expect(mockWebhookSubscriptions.register).not.toHaveBeenCalled();
     });
   });
 
-  describe('listWebhookSubscriptions', () => {
-    it('should return the active subscriptions of the enterprise', async () => {
+  describe("listWebhookSubscriptions", () => {
+    it("should return the active subscriptions of the enterprise", async () => {
       const rows = [
         {
-          id: 'sub-1',
-          enterpriseId: 'ent-001',
-          url: 'https://example.com/webhook',
+          id: "sub-1",
+          enterpriseId: "ent-001",
+          url: "https://example.com/webhook",
           active: true,
           lastDeliveryAt: null,
           lastDeliveryOk: null,
         },
       ];
-      (mockWebhookSubscriptions.listActive as jest.Mock).mockResolvedValueOnce(rows);
+      (mockWebhookSubscriptions.listActive as jest.Mock).mockResolvedValueOnce(
+        rows,
+      );
 
       await expect(
-        controller.listWebhookSubscriptions(adminUser, 'ent-001'),
+        controller.listWebhookSubscriptions(adminUser, "ent-001"),
       ).resolves.toEqual(rows);
-      expect(mockWebhookSubscriptions.listActive).toHaveBeenCalledWith('ent-001');
+      expect(mockWebhookSubscriptions.listActive).toHaveBeenCalledWith(
+        "ent-001",
+      );
     });
   });
 
-  describe('testWebhook', () => {
-    it('should dispatch a test payload and return sent status', async () => {
-      (mockWebhook.dispatchEnterpriseMetricEvent as jest.Mock).mockResolvedValueOnce(true);
+  describe("testWebhook", () => {
+    it("should dispatch a test payload and return sent status", async () => {
+      (
+        mockWebhook.dispatchEnterpriseMetricEvent as jest.Mock
+      ).mockResolvedValueOnce(true);
 
       const result = await controller.testWebhook(adminUser, {
-        enterpriseId: 'ent-001',
-        url: 'https://example.com/hook',
+        enterpriseId: "ent-001",
+        url: "https://example.com/hook",
       });
 
-      expect(result).toEqual({ status: 'sent' });
+      expect(result).toEqual({ status: "sent" });
       expect(mockWebhook.dispatchEnterpriseMetricEvent).toHaveBeenCalledWith(
-        'https://example.com/hook',
-        expect.objectContaining({ type: 'TEST' }),
+        "https://example.com/hook",
+        expect.objectContaining({ type: "TEST" }),
       );
     });
 
-    it('should return failed status when dispatch fails', async () => {
-      (mockWebhook.dispatchEnterpriseMetricEvent as jest.Mock).mockResolvedValueOnce(false);
+    it("should return failed status when dispatch fails", async () => {
+      (
+        mockWebhook.dispatchEnterpriseMetricEvent as jest.Mock
+      ).mockResolvedValueOnce(false);
 
       const result = await controller.testWebhook(adminUser, {
-        enterpriseId: 'ent-001',
-        url: 'https://bad.com/hook',
+        enterpriseId: "ent-001",
+        url: "https://bad.com/hook",
       });
 
-      expect(result).toEqual({ status: 'failed' });
+      expect(result).toEqual({ status: "failed" });
     });
 
-    it('should reject when caller is not a member/admin of the enterprise (PRV6)', async () => {
+    it("should reject when caller is not a member/admin of the enterprise (PRV6)", async () => {
       // Caller belongs to a different enterprise -> tenant check must block before
       // any outbound dispatch happens (SSRF probing surface).
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ enterprise_id: 'other-ent', role: 'ADMIN' }],
+        rows: [{ enterprise_id: "other-ent", role: "ADMIN" }],
       });
 
       await expect(
         controller.testWebhook(adminUser, {
-          enterpriseId: 'ent-001',
-          url: 'http://169.254.169.254/latest/meta-data',
+          enterpriseId: "ent-001",
+          url: "http://169.254.169.254/latest/meta-data",
         }),
       ).rejects.toThrow();
       expect(mockWebhook.dispatchEnterpriseMetricEvent).not.toHaveBeenCalled();
     });
   });
 
-  describe('exportHrData', () => {
-    it('should return anonymized employee data', async () => {
+  describe("exportHrData", () => {
+    it("should return anonymized employee data", async () => {
       (mockMetrics.getEnterpriseMetrics as jest.Mock).mockResolvedValueOnce({});
 
-      const result = await controller.exportHrData(adminUser, 'ent-001');
+      const result = await controller.exportHrData(adminUser, "ent-001");
 
       expect(result.employeeCount).toBe(0);
-      expect(mockAnonymize.anonymizeEmployeeData).toHaveBeenCalledWith('ent-001', []);
+      expect(mockAnonymize.anonymizeEmployeeData).toHaveBeenCalledWith(
+        "ent-001",
+        [],
+      );
     });
   });
 
-  describe('getDataLakeSnapshot', () => {
-    it('should return a data lake snapshot for the given period', async () => {
-      const result = await controller.getDataLakeSnapshot(adminUser, 'ent-001', '2026-01-01', '2026-02-01');
+  describe("getDataLakeSnapshot", () => {
+    it("should return a data lake snapshot for the given period", async () => {
+      const result = await controller.getDataLakeSnapshot(
+        adminUser,
+        "ent-001",
+        "2026-01-01",
+        "2026-02-01",
+      );
 
-      expect(result.enterpriseId).toBe('ent-001');
-      expect(mockDataLake.extractSnapshot).toHaveBeenCalledWith('ent-001', '2026-01-01', '2026-02-01');
+      expect(result.enterpriseId).toBe("ent-001");
+      expect(mockDataLake.extractSnapshot).toHaveBeenCalledWith(
+        "ent-001",
+        "2026-01-01",
+        "2026-02-01",
+      );
     });
   });
 
-  describe('getCorporateIntegrityScore', () => {
-    it('should return the aggregate integrity score for the enterprise', async () => {
-      const result = await controller.getCorporateIntegrityScore(adminUser, 'ent-001');
+  describe("getCorporateIntegrityScore", () => {
+    it("should return the aggregate integrity score for the enterprise", async () => {
+      const result = await controller.getCorporateIntegrityScore(
+        adminUser,
+        "ent-001",
+      );
 
-      expect(result).toEqual({ averageIntegrity: 70, activeContracts: 2, behavioralVelocity: 2 });
-      expect(mockCrm.calculateCorporateIntegrityScore).toHaveBeenCalledWith('ent-001');
+      expect(result).toEqual({
+        averageIntegrity: 70,
+        activeContracts: 2,
+        behavioralVelocity: 2,
+      });
+      expect(mockCrm.calculateCorporateIntegrityScore).toHaveBeenCalledWith(
+        "ent-001",
+      );
     });
 
-    it('should reject when caller is not a member/admin of the enterprise', async () => {
+    it("should reject when caller is not a member/admin of the enterprise", async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ enterprise_id: 'other-ent', role: 'ADMIN' }],
+        rows: [{ enterprise_id: "other-ent", role: "ADMIN" }],
       });
 
-      await expect(controller.getCorporateIntegrityScore(adminUser, 'ent-001')).rejects.toThrow();
+      await expect(
+        controller.getCorporateIntegrityScore(adminUser, "ent-001"),
+      ).rejects.toThrow();
       expect(mockCrm.calculateCorporateIntegrityScore).not.toHaveBeenCalled();
     });
   });
 
-  describe('pushCrmEvent', () => {
-    it('should dispatch the event with a server-stamped timestamp', async () => {
-      const result = await controller.pushCrmEvent(adminUser, 'ent-001', {
-        employeeId: 'emp-1',
-        eventType: 'contract_completed',
+  describe("pushCrmEvent", () => {
+    it("should dispatch the event with a server-stamped timestamp", async () => {
+      const result = await controller.pushCrmEvent(adminUser, "ent-001", {
+        employeeId: "emp-1",
+        eventType: "contract_completed",
         metadata: { integrityDelta: 5 },
       });
 
       expect(result).toEqual({
-        status: 'dispatched',
-        enterpriseId: 'ent-001',
-        employeeId: 'emp-1',
-        eventType: 'contract_completed',
+        status: "dispatched",
+        enterpriseId: "ent-001",
+        employeeId: "emp-1",
+        eventType: "contract_completed",
       });
-      expect(mockCrm.pushEmployeeEvent).toHaveBeenCalledWith('ent-001', {
-        employeeId: 'emp-1',
-        eventType: 'contract_completed',
+      expect(mockCrm.pushEmployeeEvent).toHaveBeenCalledWith("ent-001", {
+        employeeId: "emp-1",
+        eventType: "contract_completed",
         timestamp: expect.any(Date),
         metadata: { integrityDelta: 5 },
       });
     });
 
-    it('should reject an eventType outside the connector union', async () => {
+    it("should reject an eventType outside the connector union", async () => {
       await expect(
-        controller.pushCrmEvent(adminUser, 'ent-001', {
-          employeeId: 'emp-1',
-          eventType: 'employee_terminated',
+        controller.pushCrmEvent(adminUser, "ent-001", {
+          employeeId: "emp-1",
+          eventType: "employee_terminated",
         }),
       ).rejects.toThrow(/eventType must be one of/);
       expect(mockCrm.pushEmployeeEvent).not.toHaveBeenCalled();
     });
 
-    it('should reject a missing employeeId', async () => {
+    it("should reject a missing employeeId", async () => {
       await expect(
-        controller.pushCrmEvent(adminUser, 'ent-001', {
-          employeeId: '',
-          eventType: 'contract_created',
+        controller.pushCrmEvent(adminUser, "ent-001", {
+          employeeId: "",
+          eventType: "contract_created",
         }),
       ).rejects.toThrow(/employeeId is required/);
       expect(mockCrm.pushEmployeeEvent).not.toHaveBeenCalled();
     });
 
-    it('should reject before dispatching when the caller fails the tenant check', async () => {
+    it("should reject before dispatching when the caller fails the tenant check", async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ enterprise_id: 'other-ent', role: 'ADMIN' }],
+        rows: [{ enterprise_id: "other-ent", role: "ADMIN" }],
       });
 
       await expect(
-        controller.pushCrmEvent(adminUser, 'ent-001', {
-          employeeId: 'emp-1',
-          eventType: 'contract_created',
+        controller.pushCrmEvent(adminUser, "ent-001", {
+          employeeId: "emp-1",
+          eventType: "contract_created",
         }),
       ).rejects.toThrow();
       expect(mockCrm.pushEmployeeEvent).not.toHaveBeenCalled();
     });
   });
 
-  describe('logCrmInteraction', () => {
-    it('should log the interaction against the employee email', async () => {
-      const result = await controller.logCrmInteraction(adminUser, 'ent-001', {
-        email: 'employee@example.com',
-        type: 'integrity_change',
+  describe("logCrmInteraction", () => {
+    it("should log the interaction against the employee email", async () => {
+      const result = await controller.logCrmInteraction(adminUser, "ent-001", {
+        email: "employee@example.com",
+        type: "integrity_change",
         metadata: { delta: -3 },
       });
 
       expect(result).toEqual({
-        status: 'logged',
-        enterpriseId: 'ent-001',
-        email: 'employee@example.com',
-        type: 'integrity_change',
+        status: "logged",
+        enterpriseId: "ent-001",
+        email: "employee@example.com",
+        type: "integrity_change",
       });
-      expect(mockCrm.logInteraction).toHaveBeenCalledWith('employee@example.com', 'integrity_change', {
-        delta: -3,
-      });
+      expect(mockCrm.logInteraction).toHaveBeenCalledWith(
+        "employee@example.com",
+        "integrity_change",
+        {
+          delta: -3,
+        },
+      );
     });
 
-    it('should reject a type outside the connector union', async () => {
+    it("should reject a type outside the connector union", async () => {
       await expect(
-        controller.logCrmInteraction(adminUser, 'ent-001', {
-          email: 'employee@example.com',
-          type: 'demo_booked',
+        controller.logCrmInteraction(adminUser, "ent-001", {
+          email: "employee@example.com",
+          type: "demo_booked",
         }),
       ).rejects.toThrow(/type must be one of/);
       expect(mockCrm.logInteraction).not.toHaveBeenCalled();
     });
   });
 
-  describe('syncCrmUser', () => {
-    it('should pin the CRM tenant to the verified enterprise, not the body', async () => {
-      const result = await controller.syncCrmUser(adminUser, 'ent-001', {
-        email: 'employee@example.com',
-        firstName: 'Ada',
-        lastName: 'Lovelace',
+  describe("syncCrmUser", () => {
+    it("should pin the CRM tenant to the verified enterprise, not the body", async () => {
+      const result = await controller.syncCrmUser(adminUser, "ent-001", {
+        email: "employee@example.com",
+        firstName: "Ada",
+        lastName: "Lovelace",
       });
 
       expect(result).toEqual({
-        status: 'synced',
-        enterpriseId: 'ent-001',
-        email: 'employee@example.com',
+        status: "synced",
+        enterpriseId: "ent-001",
+        email: "employee@example.com",
       });
       expect(mockCrm.syncUser).toHaveBeenCalledWith({
-        email: 'employee@example.com',
-        firstName: 'Ada',
-        lastName: 'Lovelace',
-        company: 'ent-001',
+        email: "employee@example.com",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        company: "ent-001",
       });
     });
 
-    it('should reject a missing email', async () => {
+    it("should reject a missing email", async () => {
       await expect(
-        controller.syncCrmUser(adminUser, 'ent-001', { email: '' }),
+        controller.syncCrmUser(adminUser, "ent-001", { email: "" }),
       ).rejects.toThrow(/email is required/);
       expect(mockCrm.syncUser).not.toHaveBeenCalled();
     });
 
-    it('should reject when caller is not a member/admin of the enterprise', async () => {
+    it("should reject when caller is not a member/admin of the enterprise", async () => {
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ enterprise_id: 'other-ent', role: 'ADMIN' }],
+        rows: [{ enterprise_id: "other-ent", role: "ADMIN" }],
       });
 
       await expect(
-        controller.syncCrmUser(adminUser, 'ent-001', { email: 'employee@example.com' }),
+        controller.syncCrmUser(adminUser, "ent-001", {
+          email: "employee@example.com",
+        }),
       ).rejects.toThrow();
       expect(mockCrm.syncUser).not.toHaveBeenCalled();
     });
   });
 
-  describe('Cohort Orchestration Endpoints', () => {
-    it('creates cohort and asserts membership', async () => {
-      const res = await controller.createCohort(adminUser, 'ent-001', {
-        name: 'Leadership Program',
-        startsAt: '2026-10-01T00:00:00Z',
+  describe("Cohort Orchestration Endpoints", () => {
+    it("creates cohort and asserts membership", async () => {
+      const res = await controller.createCohort(adminUser, "ent-001", {
+        name: "Leadership Program",
+        startsAt: "2026-10-01T00:00:00Z",
       });
-      expect(res).toEqual({ id: 'coh-1', name: 'Test Cohort' });
-      expect(mockCohorts.createCohort).toHaveBeenCalledWith('ent-001', expect.anything());
+      expect(res).toEqual({ id: "coh-1", name: "Test Cohort" });
+      expect(mockCohorts.createCohort).toHaveBeenCalledWith(
+        "ent-001",
+        expect.anything(),
+      );
     });
 
-    it('invites cohort participants', async () => {
-      const res = await controller.inviteCohortParticipants(adminUser, 'ent-001', 'coh-1', {
-        emails: ['client@example.com'],
-      });
-      expect(res).toEqual({ cohortId: 'coh-1', totalInvited: 2 });
-      expect(mockCohorts.inviteParticipants).toHaveBeenCalledWith('ent-001', 'coh-1', ['client@example.com']);
+    it("invites cohort participants", async () => {
+      const res = await controller.inviteCohortParticipants(
+        adminUser,
+        "ent-001",
+        "coh-1",
+        {
+          emails: ["client@example.com"],
+        },
+      );
+      expect(res).toEqual({ cohortId: "coh-1", totalInvited: 2 });
+      expect(mockCohorts.inviteParticipants).toHaveBeenCalledWith(
+        "ent-001",
+        "coh-1",
+        ["client@example.com"],
+      );
     });
 
-    it('lists cohorts for enterprise', async () => {
-      const res = await controller.listCohorts(adminUser, 'ent-001');
-      expect(res).toEqual([{ id: 'coh-1', name: 'Test Cohort' }]);
+    it("lists cohorts for enterprise", async () => {
+      const res = await controller.listCohorts(adminUser, "ent-001");
+      expect(res).toEqual([{ id: "coh-1", name: "Test Cohort" }]);
     });
 
-    it('fetches cohort details', async () => {
-      const res = await controller.getCohortDetails(adminUser, 'ent-001', 'coh-1');
-      expect(res.cohort.id).toBe('coh-1');
+    it("fetches cohort details", async () => {
+      const res = await controller.getCohortDetails(
+        adminUser,
+        "ent-001",
+        "coh-1",
+      );
+      expect(res.cohort.id).toBe("coh-1");
     });
 
-    it('updates cohort config', async () => {
-      const res = await controller.updateCohortConfig(adminUser, 'ent-001', 'coh-1', { name: 'Updated' });
-      expect(res.id).toBe('coh-1');
+    it("updates cohort config", async () => {
+      const res = await controller.updateCohortConfig(
+        adminUser,
+        "ent-001",
+        "coh-1",
+        { name: "Updated" },
+      );
+      expect(res.id).toBe("coh-1");
     });
 
-    it('closes cohort', async () => {
-      const res = await controller.closeCohort(adminUser, 'ent-001', 'coh-1');
-      expect(res.status).toBe('CLOSED');
+    it("closes cohort", async () => {
+      const res = await controller.closeCohort(adminUser, "ent-001", "coh-1");
+      expect(res.status).toBe("CLOSED");
     });
   });
 });

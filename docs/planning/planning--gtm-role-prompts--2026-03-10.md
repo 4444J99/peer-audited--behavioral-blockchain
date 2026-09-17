@@ -268,4 +268,3 @@ This pack separates the market push into five conquest lanes:
 - one commander lane
 
 That is enough to run the first 30 GTM days without cross-contaminating ownership.
-

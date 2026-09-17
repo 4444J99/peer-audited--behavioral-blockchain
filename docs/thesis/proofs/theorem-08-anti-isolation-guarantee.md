@@ -11,19 +11,19 @@
 
 The **Anti-Isolation Predicate** is a universally quantified conjunction over all recovery contracts:
 
-> ∀*c* ∈ *C*_recovery: *Φ*(*c*)
+> ∀*c* ∈ _C__recovery: _Φ_(_c_)
 
-where *Φ*(*c*) = *φ*₁(*c*) ∧ *φ*₂(*c*) ∧ *φ*₃(*c*) ∧ *φ*₄(*c*) ∧ *φ*₅(*c*)
+where _Φ_(_c_) = *φ*₁(_c_) ∧ *φ*₂(_c_) ∧ *φ*₃(_c_) ∧ *φ*₄(_c_) ∧ *φ*₅(_c_)
 
-| Predicate | Statement | Purpose |
-|-----------|-----------|---------|
-| *φ*₁ | |targets(*c*)| ≤ *n̄*NC = 3 | Prevent broad social isolation |
-| *φ*₂ | duration(*c*) ≤ *δ̄*R = 30 days | Force periodic re-evaluation |
-| *φ*₃ | *AP*(*c*) ≠ ∅ | Ensure external accountability witness |
-| *φ*₄ | voluntary(*c*) = true | Prevent coerced self-harm |
-| *φ*₅ | noMinors(*c*) ∧ noDependents(*c*) ∧ noLegalObligations(*c*) | Prevent harm to vulnerable third parties |
+| Predicate | Statement                                                   | Purpose                                  |
+| --------- | ----------------------------------------------------------- | ---------------------------------------- |
+| *φ*₁      |                                                             | targets(_c_)                             | ≤ *n̄*NC = 3 | Prevent broad social isolation |
+| *φ*₂      | duration(_c_) ≤ *δ̄*R = 30 days                              | Force periodic re-evaluation             |
+| *φ*₃      | _AP_(_c_) ≠ ∅                                               | Ensure external accountability witness   |
+| *φ*₄      | voluntary(_c_) = true                                       | Prevent coerced self-harm                |
+| *φ*₅      | noMinors(_c_) ∧ noDependents(_c_) ∧ noLegalObligations(_c_) | Prevent harm to vulnerable third parties |
 
-**Domain restriction:** *C*_recovery = {*c* ∈ *C* : oathCategory(*c*) ∈ *O*_R} where *O*_R = {RECOVERY_NOCONTACT, RECOVERY_SUBSTANCE, RECOVERY_DETOX, RECOVERY_AVOIDANCE}.
+**Domain restriction:** _C__recovery = {_c_ ∈ _C_ : oathCategory(_c_) ∈ _O__R} where _O__R = {RECOVERY_NOCONTACT, RECOVERY_SUBSTANCE, RECOVERY_DETOX, RECOVERY_AVOIDANCE}.
 
 ---
 
@@ -47,7 +47,7 @@ where *Φ*(*c*) = *φ*₁(*c*) ∧ *φ*₂(*c*) ∧ *φ*₃(*c*) ∧ *φ*₄(*c*
 
 ### Part (a): Isolation Prevention (*φ*₁)
 
-**Claim:** |targets(*c*)| ≤ 3 for all recovery contracts.
+**Claim:** |targets(_c_)| ≤ 3 for all recovery contracts.
 
 **Proof by code enforcement:**
 
@@ -71,19 +71,22 @@ The service rejects any contract with more than 3 targets before persistence. Si
 Additionally, the contract requires at least one target:
 
 ```typescript
-if (!metadata.noContactIdentifiers || metadata.noContactIdentifiers.length === 0) {
+if (
+  !metadata.noContactIdentifiers ||
+  metadata.noContactIdentifiers.length === 0
+) {
   throw new HttpException(
-    'Recovery Protocol: At least one no-contact identifier is required.',
+    "Recovery Protocol: At least one no-contact identifier is required.",
     HttpStatus.NOT_ACCEPTABLE,
   );
 }
 ```
 
-This ensures: 1 ≤ |targets(*c*)| ≤ 3 for no-contact contracts. ✓
+This ensures: 1 ≤ |targets(_c_)| ≤ 3 for no-contact contracts. ✓
 
 ### Part (b): Temporal Bound (*φ*₂)
 
-**Claim:** duration(*c*) ≤ 30 days for all recovery contracts.
+**Claim:** duration(_c_) ≤ 30 days for all recovery contracts.
 
 ```typescript
 if (durationDays > MAX_NOCONTACT_DURATION_DAYS) {
@@ -103,20 +106,24 @@ where `MAX_NOCONTACT_DURATION_DAYS = 30` (from `behavioral-logic.ts:99`).
 **Claim:** Every recovery contract has a non-empty accountability partner.
 
 ```typescript
-if (!metadata.accountabilityPartnerEmail || metadata.accountabilityPartnerEmail.trim() === '') {
+if (
+  !metadata.accountabilityPartnerEmail ||
+  metadata.accountabilityPartnerEmail.trim() === ""
+) {
   throw new HttpException(
-    'Recovery Protocol: An accountability partner email is required for all recovery contracts.',
+    "Recovery Protocol: An accountability partner email is required for all recovery contracts.",
     HttpStatus.NOT_ACCEPTABLE,
   );
 }
 ```
 
 The accountability partner is external to the Styx platform (identified by email, not Styx user ID), ensuring:
+
 1. At least one person outside the platform is aware of the recovery commitment
 2. The user cannot be entirely isolated within a closed Styx feedback loop
 3. An external party can intervene if the commitment becomes harmful
 
-**Formal property:** *AP*(*c*) ∈ EmailAddr \ {∅} for all *c* ∈ *C*_recovery. ✓
+**Formal property:** _AP_(_c_) ∈ EmailAddr \ {∅} for all _c_ ∈ _C__recovery. ✓
 
 ### Part (d): Consent Completeness (*φ*₄ ∧ *φ*₅)
 
@@ -124,24 +131,30 @@ The accountability partner is external to the Styx platform (identified by email
 
 ```typescript
 const acks = metadata.acknowledgments;
-if (!acks || !acks.voluntary || !acks.noMinors || !acks.noDependents || !acks.noLegalObligations) {
+if (
+  !acks ||
+  !acks.voluntary ||
+  !acks.noMinors ||
+  !acks.noDependents ||
+  !acks.noLegalObligations
+) {
   throw new HttpException(
-    'Recovery Protocol: All safety acknowledgments must be confirmed before contract creation.',
+    "Recovery Protocol: All safety acknowledgments must be confirmed before contract creation.",
     HttpStatus.NOT_ACCEPTABLE,
   );
 }
 ```
 
-The four acknowledgments form a safety attestation tuple *Ack*(*c*) ∈ 𝔹⁴:
+The four acknowledgments form a safety attestation tuple _Ack_(_c_) ∈ 𝔹⁴:
 
-| Acknowledgment | Prevents |
-|---------------|----------|
-| `voluntary` | Coerced participation (e.g., abusive partner forcing no-contact) |
-| `noMinors` | No-contact with minor children (child custody interference) |
-| `noDependents` | No-contact with dependent individuals (elder care interference) |
+| Acknowledgment       | Prevents                                                                        |
+| -------------------- | ------------------------------------------------------------------------------- |
+| `voluntary`          | Coerced participation (e.g., abusive partner forcing no-contact)                |
+| `noMinors`           | No-contact with minor children (child custody interference)                     |
+| `noDependents`       | No-contact with dependent individuals (elder care interference)                 |
 | `noLegalObligations` | No-contact violating existing legal obligations (custody orders, care mandates) |
 
-All four must be true: *Ack*(*c*) = (T, T, T, T). Any false value → rejection. ✓
+All four must be true: _Ack_(_c_) = (T, T, T, T). Any false value → rejection. ✓
 
 ### Part (e): Conjunction Necessity
 
@@ -180,15 +193,15 @@ This conjunction is **satisfiable** (non-empty feasibility region): a voluntary 
 
 ## Code-to-Proof Mapping
 
-| Proof Element | Code Location | Line(s) |
-|--------------|---------------|---------|
-| Metadata requirement | `recovery-protocol.service.ts:validateRecoveryContract()` | L31–36 |
-| Accountability partner | `recovery-protocol.service.ts:validateRecoveryContract()` | L39–44 |
-| Duration cap (30 days) | `recovery-protocol.service.ts:validateRecoveryContract()` | L47–52 |
-| Target minimum (1) | `recovery-protocol.service.ts:validateRecoveryContract()` | L56–60 |
-| Target maximum (3) | `recovery-protocol.service.ts:validateRecoveryContract()` | L61–67 |
-| Acknowledgments | `recovery-protocol.service.ts:validateRecoveryContract()` | L71–77 |
-| Constants | `behavioral-logic.ts` | L99–101 |
+| Proof Element          | Code Location                                             | Line(s) |
+| ---------------------- | --------------------------------------------------------- | ------- |
+| Metadata requirement   | `recovery-protocol.service.ts:validateRecoveryContract()` | L31–36  |
+| Accountability partner | `recovery-protocol.service.ts:validateRecoveryContract()` | L39–44  |
+| Duration cap (30 days) | `recovery-protocol.service.ts:validateRecoveryContract()` | L47–52  |
+| Target minimum (1)     | `recovery-protocol.service.ts:validateRecoveryContract()` | L56–60  |
+| Target maximum (3)     | `recovery-protocol.service.ts:validateRecoveryContract()` | L61–67  |
+| Acknowledgments        | `recovery-protocol.service.ts:validateRecoveryContract()` | L71–77  |
+| Constants              | `behavioral-logic.ts`                                     | L99–101 |
 
 ---
 
@@ -196,11 +209,11 @@ This conjunction is **satisfiable** (non-empty feasibility region): a voluntary 
 
 The Recovery Protocol (T8) and Aegis Protocol (T5) form a complementary safety system:
 
-| Domain | Aegis (T5) | Recovery (T8) |
-|--------|-----------|---------------|
-| Financial harm | Stake caps, downscaling | — |
-| Physical harm | BMI floor, velocity cap | — |
-| Social harm | — | Target limits, accountability partner |
-| Psychological harm | Duration minimum | Duration maximum, consent verification |
+| Domain             | Aegis (T5)              | Recovery (T8)                          |
+| ------------------ | ----------------------- | -------------------------------------- |
+| Financial harm     | Stake caps, downscaling | —                                      |
+| Physical harm      | BMI floor, velocity cap | —                                      |
+| Social harm        | —                       | Target limits, accountability partner  |
+| Psychological harm | Duration minimum        | Duration maximum, consent verification |
 
 Together, they cover all four identified harm domains without overlap.

@@ -1,18 +1,21 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { LedgerService } from '../../../services/ledger/ledger.service';
-import { calculateReviewerWeight, FuryHistory } from '../../../../shared/libs/integrity';
-import { FURY_CONSENSUS_SIZE } from '../../../../shared/libs/behavioral-logic';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { LedgerService } from "../../../services/ledger/ledger.service";
+import {
+  calculateReviewerWeight,
+  FuryHistory,
+} from "../../../../shared/libs/integrity";
+import { FURY_CONSENSUS_SIZE } from "../../../../shared/libs/behavioral-logic";
 
-export type Verdict = 'PASS' | 'FAIL';
+export type Verdict = "PASS" | "FAIL";
 
 export interface FuryVote {
   furyUserId: string;
   verdict: Verdict;
 }
 
-export type ConsensusOutcome = 'VERIFIED' | 'REJECTED' | 'SPLIT';
+export type ConsensusOutcome = "VERIFIED" | "REJECTED" | "SPLIT";
 
 export interface ConsensusResult {
   outcome: ConsensusOutcome;
@@ -49,7 +52,7 @@ export class ConsensusEngine {
     proofId: string,
     votes: FuryVote[],
     isHoneypot: boolean,
-    expectedVerdict: Verdict = 'FAIL',
+    expectedVerdict: Verdict = "FAIL",
   ): Promise<ConsensusResult> {
     let totalPower = 0;
     let passPower = 0;
@@ -68,7 +71,7 @@ export class ConsensusEngine {
          FROM fury_assignments fa
          JOIN proofs p ON fa.proof_id = p.id
          WHERE fa.fury_user_id = $1`,
-        [vote.furyUserId]
+        [vote.furyUserId],
       );
 
       const stats = statsResult.rows[0];
@@ -82,7 +85,7 @@ export class ConsensusEngine {
       const weight = calculateReviewerWeight(history);
       totalPower += weight;
 
-      if (vote.verdict === 'PASS') {
+      if (vote.verdict === "PASS") {
         passPower += weight;
       } else {
         failPower += weight;
@@ -98,13 +101,13 @@ export class ConsensusEngine {
 
     if (totalPower === 0 || distinctVoters < FURY_CONSENSUS_SIZE) {
       // Empty/zero-weight votes (NaN guard) or sub-quorum → escalate to human judge.
-      outcome = 'SPLIT';
+      outcome = "SPLIT";
     } else if (passPower / totalPower > THRESHOLD) {
-      outcome = 'VERIFIED';
+      outcome = "VERIFIED";
     } else if (failPower / totalPower > THRESHOLD) {
-      outcome = 'REJECTED';
+      outcome = "REJECTED";
     } else {
-      outcome = 'SPLIT'; // escalate to human judge
+      outcome = "SPLIT"; // escalate to human judge
     }
 
     // Honeypot detection: flag Furies whose verdict disagreed with the honeypot's
@@ -119,7 +122,7 @@ export class ConsensusEngine {
     }
 
     // Log consensus to TruthLog
-    await this.truthLog.appendEvent('CONSENSUS_REACHED', {
+    await this.truthLog.appendEvent("CONSENSUS_REACHED", {
       proofId,
       outcome,
       weightedStats: {
@@ -128,8 +131,8 @@ export class ConsensusEngine {
         failPower,
       },
       rawCounts: {
-        pass: votes.filter(v => v.verdict === 'PASS').length,
-        fail: votes.filter(v => v.verdict === 'FAIL').length,
+        pass: votes.filter((v) => v.verdict === "PASS").length,
+        fail: votes.filter((v) => v.verdict === "FAIL").length,
       },
       isHoneypot,
       flaggedFuries,

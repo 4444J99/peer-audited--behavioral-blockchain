@@ -1,4 +1,4 @@
-import p5 from 'p5';
+import p5 from "p5";
 
 export const revenueWaterfall = (p: p5) => {
   const drops: { col: number; y: number; isHouse: boolean }[] = [];

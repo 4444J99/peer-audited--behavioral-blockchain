@@ -37,11 +37,11 @@ The stake is then returned or forfeited according to the outcome **and** the use
 
 That shape produces four security problems that a conventional SaaS application does not have:
 
-| Problem | Why it is unusual | Primary control |
-|---|---|---|
-| The audit trail is the product | A disputed verdict is worth money, so the log itself is an attack target | Hash-chained TruthLog (§2) |
-| Money must never be created | Settlement is automated; a bug that mints value is a solvency event | Double-entry ledger invariants (§3) |
-| Auditors are adversaries | A Fury is paid per audit and can profit by voting without looking | Honeypots + weighted consensus (§7) |
+| Problem                          | Why it is unusual                                                                | Primary control                                  |
+| -------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------ |
+| The audit trail is the product   | A disputed verdict is worth money, so the log itself is an attack target         | Hash-chained TruthLog (§2)                       |
+| Money must never be created      | Settlement is automated; a bug that mints value is a solvency event              | Double-entry ledger invariants (§3)              |
+| Auditors are adversaries         | A Fury is paid per audit and can profit by voting without looking                | Honeypots + weighted consensus (§7)              |
 | The legal answer varies by state | The same forfeited stake is revenue in one state and an illegal wager in another | Jurisdiction tiering + fail-closed geofence (§5) |
 
 The rest of this document works through those four, plus the conventional controls (auth, media
@@ -67,7 +67,7 @@ SHA256( sequence_index | event_type | timestamp | previous_hash | JSON(payload) 
 ```
 
 The preimage deliberately includes `event_type` and the explicit `sequence_index`, not just the
-payload: an attacker who rewrote an event's *type* while leaving its payload intact, or who
+payload: an attacker who rewrote an event's _type_ while leaving its payload intact, or who
 reordered entries, would otherwise produce a chain that still verified.
 
 ### 2.2 What verification actually proves
@@ -142,7 +142,7 @@ the pre-existing entry's id and observes idempotent success rather than a second
 ### 3.3 What `verifyLedgerIntegrity()` actually checks
 
 This is worth stating precisely, because the obvious formulation is worthless. In this schema each
-row debits and credits the *same* amount, so a global "sum of debits equals sum of credits" check is
+row debits and credits the _same_ amount, so a global "sum of debits equals sum of credits" check is
 tautologically true and detects nothing. The implemented check asserts the three invariants that
 corruption, a bad migration, or a manual write bypassing `recordTransaction()` **can** violate:
 
@@ -165,7 +165,7 @@ by construction and are **not** used to decide `balanced`.
 - Hard-integrity enforcement is **environment-gated** (`STYX_ENFORCE_HARD_INTEGRITY`), not
   unconditional, because the check is a full-table scan on each posting.
 - The invariants are structural. They prove no phantom entry exists; they do not prove that a
-  business rule chose the *right* accounts for a given settlement.
+  business rule chose the _right_ accounts for a given settlement.
 
 ---
 
@@ -175,13 +175,13 @@ by construction and are **not** used to decide `balanced`.
 
 ### 4.1 Credentials and sessions
 
-| Control | As implemented |
-|---|---|
-| Password hashing | `bcryptjs`, cost factor **10** (`BCRYPT_ROUNDS`) |
-| Access token | JWT, **HS256**, `expiresIn: 15m`, signed with `JWT_SECRET` (startup fails if unset) |
-| Refresh token | 32 random bytes; only its SHA-256 hash is stored in `refresh_tokens`; **7-day** expiry |
-| Refresh rotation | Each refresh revokes the presented token and issues a new pair |
-| Login timing | A bcrypt compare runs against a fixed dummy hash even when no user exists, so response time does not disclose account existence |
+| Control                   | As implemented                                                                                                                                                                                                 |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Password hashing          | `bcryptjs`, cost factor **10** (`BCRYPT_ROUNDS`)                                                                                                                                                               |
+| Access token              | JWT, **HS256**, `expiresIn: 15m`, signed with `JWT_SECRET` (startup fails if unset)                                                                                                                            |
+| Refresh token             | 32 random bytes; only its SHA-256 hash is stored in `refresh_tokens`; **7-day** expiry                                                                                                                         |
+| Refresh rotation          | Each refresh revokes the presented token and issues a new pair                                                                                                                                                 |
+| Login timing              | A bcrypt compare runs against a fixed dummy hash even when no user exists, so response time does not disclose account existence                                                                                |
 | Enterprise SSO assertions | Verified against a **dedicated** `ENTERPRISE_SSO_SECRET`, never `JWT_SECRET`. If the dedicated secret is unprovisioned, enterprise SSO is rejected outright rather than falling back to the shared session key |
 
 Verification pins the algorithm (`algorithms: ['HS256']`), which closes the `alg: none` and
@@ -191,13 +191,13 @@ algorithm-confusion class.
 
 `AuthController.issueBrowserSessionCookies()` sets exactly three cookies:
 
-| Cookie | httpOnly | Purpose | Max age |
-|---|---|---|---|
-| `styx_auth_token` | yes | Access token | 15 minutes |
-| `styx_refresh_token` | yes | Refresh token | 7 days |
-| `styx_csrf_token` | **no** | Double-submit CSRF token | 15 minutes |
+| Cookie               | httpOnly | Purpose                  | Max age    |
+| -------------------- | -------- | ------------------------ | ---------- |
+| `styx_auth_token`    | yes      | Access token             | 15 minutes |
+| `styx_refresh_token` | yes      | Refresh token            | 7 days     |
+| `styx_csrf_token`    | **no**   | Double-submit CSRF token | 15 minutes |
 
-All three are `secure` in production and `sameSite: lax`. The CSRF token is *derived from* the
+All three are `secure` in production and `sameSite: lax`. The CSRF token is _derived from_ the
 access token (`deriveCsrfToken`), so the guard validates it against the session rather than trusting
 an arbitrary attacker-supplied cookie value. It is deliberately readable by JavaScript — that is the
 double-submit pattern, not an oversight.
@@ -241,11 +241,11 @@ therefore classifies every request's jurisdiction before permitting a monetized 
 
 ### 5.1 The three tiers
 
-| Tier | Meaning | Effect on a failed Oath |
-|---|---|---|
-| `TIER_1` FULL_ACCESS | Predominance-doctrine states | Stake may be **captured** as revenue |
-| `TIER_2` REFUND_ONLY | Licensing / material-element states | Stake **must be refunded** |
-| `TIER_3` HARD_BLOCK | Prohibited or unresolvable | Monetized actions blocked entirely |
+| Tier                 | Meaning                             | Effect on a failed Oath              |
+| -------------------- | ----------------------------------- | ------------------------------------ |
+| `TIER_1` FULL_ACCESS | Predominance-doctrine states        | Stake may be **captured** as revenue |
+| `TIER_2` REFUND_ONLY | Licensing / material-element states | Stake **must be refunded**           |
+| `TIER_3` HARD_BLOCK  | Prohibited or unresolvable          | Monetized actions blocked entirely   |
 
 `STATE_TIERS` enumerates all 50 states plus DC explicitly.
 
@@ -286,7 +286,7 @@ drift apart:
 **Implementation:** `src/api/services/security/device-attestation.service.ts` (~1,100 lines)
 
 Proof submission comes from mobile clients. A rooted device, an emulator, or a repackaged binary
-can fabricate sensor and media evidence, so Styx verifies the *device and app* server-side before
+can fabricate sensor and media evidence, so Styx verifies the _device and app_ server-side before
 trusting a client.
 
 ### 6.1 iOS — Apple App Attest
@@ -458,7 +458,7 @@ Styx never receives, stores, or transmits card numbers; Stripe holds all payment
 A stake is taken as a Stripe PaymentIntent with `capture_method: 'manual'` — an **authorization
 hold**, not a transfer of funds into a Styx-controlled account. At settlement the hold is either
 captured (in whole or in part) or released. Both operations carry Stripe idempotency keys, and the
-capture key incorporates the capture *amount*, because a fixed key reused with a different
+capture key incorporates the capture _amount_, because a fixed key reused with a different
 `amount_to_capture` makes Stripe replay the first request rather than perform the new one.
 
 FBO (For Benefit Of) connected accounts are registered per ISO-3166-2 jurisdiction and selected by
@@ -496,14 +496,14 @@ provider path exists for development and is gated unreachable in production.
 
 ## 10. Software Supply Chain and Secure Development
 
-| Control | As implemented |
-|---|---|
-| Static analysis | GitHub CodeQL (`.github/workflows/codeql.yml`) on pull requests |
-| Secret scanning | `.github/workflows/secret-scan.yml` blocks credential-shaped strings |
-| Dependency alerts | GitHub Dependabot |
-| Type safety | TypeScript strict mode; `tsc --noEmit` in CI |
-| Branch protection | Enforced and diffed by `scripts/branch-protection.sh` and `scripts/branch-protection-diff.mjs` |
-| Release gates | `scripts/validation/` — phantom-money check, simulator-spoof check, full-loop check, redacted-build check, security-invariant check, claim-drift check, compliance-artifact check, Fury-crucible simulation, realm-sync check |
+| Control           | As implemented                                                                                                                                                                                                                |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Static analysis   | GitHub CodeQL (`.github/workflows/codeql.yml`) on pull requests                                                                                                                                                               |
+| Secret scanning   | `.github/workflows/secret-scan.yml` blocks credential-shaped strings                                                                                                                                                          |
+| Dependency alerts | GitHub Dependabot                                                                                                                                                                                                             |
+| Type safety       | TypeScript strict mode; `tsc --noEmit` in CI                                                                                                                                                                                  |
+| Branch protection | Enforced and diffed by `scripts/branch-protection.sh` and `scripts/branch-protection-diff.mjs`                                                                                                                                |
+| Release gates     | `scripts/validation/` — phantom-money check, simulator-spoof check, full-loop check, redacted-build check, security-invariant check, claim-drift check, compliance-artifact check, Fury-crucible simulation, realm-sync check |
 
 The **claim-drift check** (`scripts/validation/07-claim-drift-check.js`) is the gate that governs
 this document's category: it fails the build when a status document references a repository path
@@ -534,21 +534,21 @@ backup/DR, incident response, and access-control specifics.
 Everything in this section is **absent from the codebase today**. It is listed so that a reviewer
 can distinguish a gap we know about from one we are hiding.
 
-| Item | Status |
-|---|---|
-| SOC 2 Type II | Not started. No auditor engaged. |
-| Third-party penetration test | Not performed. |
-| Multi-factor authentication | Not implemented. |
-| SAML 2.0 SSO | Not implemented. The `exchangeEnterpriseToken` path verifies a pre-shared HS256 assertion, which is not SAML. |
-| Asymmetric (RS256) token signing | Not implemented. Session JWTs are HS256. |
-| Token revocation list | Not implemented. Revocation is by refresh-token rotation and the database-read role/ban check, not a blacklist. |
-| External anchoring of the TruthLog | Not implemented. No notarization to an external timestamping service. |
-| Live sanctions-list (OFAC) screening | Not implemented. Screening is against an internal watchlist. |
-| Structuring detection in service | **Broken, not merely absent.** `detectStructuring()` queries a column that does not exist (§9.1). Needs a fix and an integration test, not a roadmap entry. |
-| HIPAA Business Associate Agreements | Template drafted ([`../legal/hipaa-baa-template-DRAFT.md`](../legal/hipaa-baa-template-DRAFT.md)), **not counsel-reviewed, none executed**. |
-| Counsel sign-off on jurisdiction tiering | Open — issues #315 (retain counsel) and #317 (matrix sign-off). |
-| Responsible disclosure policy | Not published. No `security.txt` yet. |
-| Disaster-recovery test | Not performed. |
+| Item                                     | Status                                                                                                                                                      |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SOC 2 Type II                            | Not started. No auditor engaged.                                                                                                                            |
+| Third-party penetration test             | Not performed.                                                                                                                                              |
+| Multi-factor authentication              | Not implemented.                                                                                                                                            |
+| SAML 2.0 SSO                             | Not implemented. The `exchangeEnterpriseToken` path verifies a pre-shared HS256 assertion, which is not SAML.                                               |
+| Asymmetric (RS256) token signing         | Not implemented. Session JWTs are HS256.                                                                                                                    |
+| Token revocation list                    | Not implemented. Revocation is by refresh-token rotation and the database-read role/ban check, not a blacklist.                                             |
+| External anchoring of the TruthLog       | Not implemented. No notarization to an external timestamping service.                                                                                       |
+| Live sanctions-list (OFAC) screening     | Not implemented. Screening is against an internal watchlist.                                                                                                |
+| Structuring detection in service         | **Broken, not merely absent.** `detectStructuring()` queries a column that does not exist (§9.1). Needs a fix and an integration test, not a roadmap entry. |
+| HIPAA Business Associate Agreements      | Template drafted ([`../legal/hipaa-baa-template-DRAFT.md`](../legal/hipaa-baa-template-DRAFT.md)), **not counsel-reviewed, none executed**.                 |
+| Counsel sign-off on jurisdiction tiering | Open — issues #315 (retain counsel) and #317 (matrix sign-off).                                                                                             |
+| Responsible disclosure policy            | Not published. No `security.txt` yet.                                                                                                                       |
+| Disaster-recovery test                   | Not performed.                                                                                                                                              |
 
 ---
 

@@ -16,6 +16,7 @@ Fixing these closes every known code gap. The only remaining work after this is 
 **File**: `src/api/src/modules/b2b/datalake.service.ts:126-153`
 
 The `extractBehavioralTrends` method computes monthly trends but returns `avgIntegrityDelta: 0` as a placeholder. The integrity system works like this:
+
 - Completion → +5 integrity (from `calculateIntegrity` in `src/shared/libs/integrity.ts`)
 - Failure → -15 integrity
 - These deltas are applied in `src/api/src/modules/contracts/contracts.service.ts:344`

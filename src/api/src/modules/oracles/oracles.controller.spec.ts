@@ -1,11 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { OraclesController } from './oracles.controller';
-import { HealthKitGuardService } from '../compliance/healthkit-guard.service';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { Pool } from 'pg';
-import { ContractsService } from '../contracts/contracts.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { OraclesController } from "./oracles.controller";
+import { HealthKitGuardService } from "../compliance/healthkit-guard.service";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { Pool } from "pg";
+import { ContractsService } from "../contracts/contracts.service";
 
-describe('OraclesController', () => {
+describe("OraclesController", () => {
   let controller: OraclesController;
   let healthKitGuard: jest.Mocked<HealthKitGuardService>;
   let truthLog: jest.Mocked<TruthLogService>;
@@ -27,10 +27,10 @@ describe('OraclesController', () => {
     // proceeds for ACTIVE accounts, then performs the dedup insert (rowCount: 1 so
     // accepted samples are processed). Route the status query to an ACTIVE row.
     const mockPoolQuery = jest.fn((sql: string) => {
-      if (typeof sql === 'string' && sql.includes('SELECT status FROM users')) {
-        return Promise.resolve({ rows: [{ status: 'ACTIVE' }], rowCount: 1 });
+      if (typeof sql === "string" && sql.includes("SELECT status FROM users")) {
+        return Promise.resolve({ rows: [{ status: "ACTIVE" }], rowCount: 1 });
       }
-      return Promise.resolve({ rows: [{ id: 'sample-1' }], rowCount: 1 });
+      return Promise.resolve({ rows: [{ id: "sample-1" }], rowCount: 1 });
     });
 
     const module: TestingModule = await Test.createTestingModule({
@@ -49,23 +49,23 @@ describe('OraclesController', () => {
     contractsService = module.get(ContractsService);
   });
 
-  it('should accept valid samples and call processHealthKitSample', async () => {
+  it("should accept valid samples and call processHealthKitSample", async () => {
     healthKitGuard.validateMetadata.mockReturnValue({ accepted: true });
 
-    const user = { id: 'user-123' };
+    const user = { id: "user-123" };
     // A recent, in-window reading from an allowlisted hardware source with the
     // required metadata fields present.
     const now = new Date().toISOString();
     const dto = {
       samples: [
         {
-          type: 'HKQuantityTypeIdentifierBodyMass',
+          type: "HKQuantityTypeIdentifierBodyMass",
           value: 180,
           startDate: now,
           endDate: now,
           metadata: {
-            sourceBundleId: 'com.apple.health.watchos',
-            sourceName: 'Apple Watch',
+            sourceBundleId: "com.apple.health.watchos",
+            sourceName: "Apple Watch",
           },
         },
       ],
@@ -74,22 +74,31 @@ describe('OraclesController', () => {
     const result = await controller.ingestHealthKitSamples(user, dto);
 
     expect(result.results[0].accepted).toBe(true);
-    expect(truthLog.appendEvent).toHaveBeenCalledWith('HEALTHKIT_SAMPLE_ACCEPTED', expect.any(Object));
-    expect(contractsService.processHealthKitSample).toHaveBeenCalledWith(user.id, dto.samples[0]);
+    expect(truthLog.appendEvent).toHaveBeenCalledWith(
+      "HEALTHKIT_SAMPLE_ACCEPTED",
+      expect.any(Object),
+    );
+    expect(contractsService.processHealthKitSample).toHaveBeenCalledWith(
+      user.id,
+      dto.samples[0],
+    );
   });
 
-  it('should reject manual samples and log rejection', async () => {
-    healthKitGuard.validateMetadata.mockReturnValue({ accepted: false, reason: 'manual' });
-    
-    const user = { id: 'user-123' };
+  it("should reject manual samples and log rejection", async () => {
+    healthKitGuard.validateMetadata.mockReturnValue({
+      accepted: false,
+      reason: "manual",
+    });
+
+    const user = { id: "user-123" };
     const dto = {
       samples: [
         {
-          type: 'HKQuantityTypeIdentifierBodyMass',
+          type: "HKQuantityTypeIdentifierBodyMass",
           value: 180,
-          startDate: '2026-03-04T00:00:00Z',
-          endDate: '2026-03-04T00:00:00Z',
-          metadata: { sourceBundleId: 'com.apple.Health' },
+          startDate: "2026-03-04T00:00:00Z",
+          endDate: "2026-03-04T00:00:00Z",
+          metadata: { sourceBundleId: "com.apple.Health" },
         },
       ],
     };
@@ -97,17 +106,26 @@ describe('OraclesController', () => {
     const result = await controller.ingestHealthKitSamples(user, dto);
 
     expect(result.results[0].accepted).toBe(false);
-    expect(truthLog.appendEvent).toHaveBeenCalledWith('HEALTHKIT_SAMPLE_REJECTED', expect.any(Object));
+    expect(truthLog.appendEvent).toHaveBeenCalledWith(
+      "HEALTHKIT_SAMPLE_REJECTED",
+      expect.any(Object),
+    );
     expect(contractsService.processHealthKitSample).not.toHaveBeenCalled();
   });
 
-  it('AU1: rejects ingestion for a non-ACTIVE (e.g. quarantined) account before processing', async () => {
-    const { ForbiddenException } = require('@nestjs/common');
+  it("AU1: rejects ingestion for a non-ACTIVE (e.g. quarantined) account before processing", async () => {
+    const { ForbiddenException } = require("@nestjs/common");
     // Override the pool so the live-status check returns a non-ACTIVE status.
     (controller as any).pool = {
       query: jest.fn((sql: string) => {
-        if (typeof sql === 'string' && sql.includes('SELECT status FROM users')) {
-          return Promise.resolve({ rows: [{ status: 'QUARANTINED' }], rowCount: 1 });
+        if (
+          typeof sql === "string" &&
+          sql.includes("SELECT status FROM users")
+        ) {
+          return Promise.resolve({
+            rows: [{ status: "QUARANTINED" }],
+            rowCount: 1,
+          });
         }
         return Promise.resolve({ rows: [], rowCount: 0 });
       }),
@@ -117,16 +135,21 @@ describe('OraclesController', () => {
     const dto = {
       samples: [
         {
-          type: 'HKQuantityTypeIdentifierBodyMass',
+          type: "HKQuantityTypeIdentifierBodyMass",
           value: 180,
           startDate: now,
           endDate: now,
-          metadata: { sourceBundleId: 'com.apple.health.watchos', sourceName: 'Apple Watch' },
+          metadata: {
+            sourceBundleId: "com.apple.health.watchos",
+            sourceName: "Apple Watch",
+          },
         },
       ],
     };
 
-    await expect(controller.ingestHealthKitSamples({ id: 'banned-user' }, dto)).rejects.toThrow(ForbiddenException);
+    await expect(
+      controller.ingestHealthKitSamples({ id: "banned-user" }, dto),
+    ).rejects.toThrow(ForbiddenException);
     expect(contractsService.processHealthKitSample).not.toHaveBeenCalled();
   });
 });

@@ -117,12 +117,14 @@ describe("IdentityOathService", () => {
       // The row keeps its original activated_at; only the identity fields move.
       mockPool.query.mockResolvedValueOnce({ rows: [storedRow] });
 
-      return service.declare("user-1", { archetypeId: archetype.id }).then(() => {
-        const [sql] = mockPool.query.mock.calls[0];
-        expect(sql).toContain(
-          "activated_at = COALESCE(user_identity_oaths.activated_at, EXCLUDED.activated_at)",
-        );
-      });
+      return service
+        .declare("user-1", { archetypeId: archetype.id })
+        .then(() => {
+          const [sql] = mockPool.query.mock.calls[0];
+          expect(sql).toContain(
+            "activated_at = COALESCE(user_identity_oaths.activated_at, EXCLUDED.activated_at)",
+          );
+        });
     });
 
     it("rejects an unknown archetype without touching the database", async () => {

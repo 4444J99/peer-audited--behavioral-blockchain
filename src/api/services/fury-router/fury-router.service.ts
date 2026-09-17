@@ -1,7 +1,10 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Queue } from 'bullmq';
-import { FURY_ROUTER_QUEUE_NAME, getDefaultQueueOptions } from '../../config/queue.config';
-import { FURY_CONSENSUS_SIZE } from '../../../shared/libs/behavioral-logic';
+import { Injectable, OnModuleInit } from "@nestjs/common";
+import { Queue } from "bullmq";
+import {
+  FURY_ROUTER_QUEUE_NAME,
+  getDefaultQueueOptions,
+} from "../../config/queue.config";
+import { FURY_CONSENSUS_SIZE } from "../../../shared/libs/behavioral-logic";
 
 @Injectable()
 export class FuryRouterService implements OnModuleInit {
@@ -21,27 +24,26 @@ export class FuryRouterService implements OnModuleInit {
    * Ensures the original submitter cannot review their own proof.
    */
   async routeProof(
-    proofId: string, 
-    submitterUserId: string, 
-    requiredReviewers: number = FURY_CONSENSUS_SIZE
+    proofId: string,
+    submitterUserId: string,
+    requiredReviewers: number = FURY_CONSENSUS_SIZE,
   ): Promise<string> {
-    
-    // In the real worker implementation, this job will query the database 
-    // to find N staked/eligible furies where fury_id != submitterUserId, 
+    // In the real worker implementation, this job will query the database
+    // to find N staked/eligible furies where fury_id != submitterUserId,
     // and then create review_assignments. We enqueue the intent here.
-    
+
     const jobData = {
       proofId,
       submitterUserId,
       requiredReviewers,
-      dispatchedAt: new Date().toISOString()
+      dispatchedAt: new Date().toISOString(),
     };
 
-    const job = await this.queue.add('route-fury-review', jobData, {
+    const job = await this.queue.add("route-fury-review", jobData, {
       attempts: 3,
-      backoff: { type: 'exponential', delay: 2000 }
+      backoff: { type: "exponential", delay: 2000 },
     });
 
-    return job.id ? job.id.toString() : 'fallback-job-id';
+    return job.id ? job.id.toString() : "fallback-job-id";
   }
 }

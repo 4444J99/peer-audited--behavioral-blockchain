@@ -10,18 +10,19 @@ authoritative: false
 # Pillar 2: Market Differentiation \& Competitor Analysis
 
 The Objective: To tear down the existing players in the habit-tracking space so you know exactly where their weaknesses are.
+
 > "Act as a Senior Product Strategist. I need a teardown of the gamified habit-tracking and financial-stakes app market.
 > Please analyze the top competitors, specifically: DietBet, StepBet, HealthyWage, Habitica, and Beeminder.
 > For each competitor, provide:
->  * Their core mechanic (How do they keep users engaged?).
->  * Their monetization strategy (How do they make money?).
->  * Their primary weakness or vulnerability (Where does their system fail regarding cheating, user retention, or feature sprawl?).
->  * Based on their weaknesses, suggest three distinct market gaps a new app could exploit by introducing a 'Fury Bounty' (financially incentivizing users to catch others faking their progress)."
 >
+> - Their core mechanic (How do they keep users engaged?).
+> - Their monetization strategy (How do they make money?).
+> - Their primary weakness or vulnerability (Where does their system fail regarding cheating, user retention, or feature sprawl?).
+> - Based on their weaknesses, suggest three distinct market gaps a new app could exploit by introducing a 'Fury Bounty' (financially incentivizing users to catch others faking their progress)."
 
 Here’s a structured teardown of the five products, plus how a “Fury Bounty” mechanic could exploit their blind spots.
 
-***
+---
 
 ## 1. DietBet
 
@@ -30,53 +31,51 @@ Here’s a structured teardown of the five products, plus how a “Fury Bounty�
 - Group weight‑loss betting. Users join “games” with a buy‑in (e.g., 20–100+ dollars) and must lose a fixed percentage of body weight (e.g., 4% in 4 weeks, or 10%+ in longer “Transformer” games). Winners split the pot.[^1_1][^1_2]
 - Verification via photo (and sometimes video) weigh‑ins: users submit scale photos with a keyword; referees approve.[^1_3][^1_1]
 - Engagement levers:
-    - Short, time‑boxed challenges (30 days, 6 months).
-    - Social feeds inside each game, sometimes with influencers/coaches.
-    - The sunk‑cost + fear‑of‑loss effect: “don’t lose your bet”.
-
+  - Short, time‑boxed challenges (30 days, 6 months).
+  - Social feeds inside each game, sometimes with influencers/coaches.
+  - The sunk‑cost + fear‑of‑loss effect: “don’t lose your bet”.
 
 ### Monetization model
 
 - Takes a fixed commission off the total pot, commonly cited around 10–25%.[^1_4][^1_5]
 - Uses that commission to ensure “no winner loses money” even when many people succeed, which in practice caps upside: in some scenarios winners effectively just get their stake back minus membership fees.[^1_4]
 - Additional revenue from:
-    - Memberships (e.g., to play multiple overlapping games or special formats).[^1_6][^1_4]
-    - Sponsored/celebrity games and affiliate partnerships.[^1_5]
-
+  - Memberships (e.g., to play multiple overlapping games or special formats).[^1_6][^1_4]
+  - Sponsored/celebrity games and affiliate partnerships.[^1_5]
 
 ### Primary weaknesses / vulnerabilities
 
 1. **Cheating and unhealthy optimization**
-    - Known pattern: users “water load” for the initial weigh‑in and then crash‑diet / dehydrate for the final weigh‑in to hit the number without real fat loss.[^1_7][^1_1]
-    - Some users openly describe “fighter-style” weight cuts just for final weigh‑ins, not sustainable lifestyle change.[^1_7]
-    - Verification is limited to a couple of snapshots; there is no robust longitudinal fraud detection.
+   - Known pattern: users “water load” for the initial weigh‑in and then crash‑diet / dehydrate for the final weigh‑in to hit the number without real fat loss.[^1_7][^1_1]
+   - Some users openly describe “fighter-style” weight cuts just for final weigh‑ins, not sustainable lifestyle change.[^1_7]
+   - Verification is limited to a couple of snapshots; there is no robust longitudinal fraud detection.
 2. **Perceived unfair economics and low ROI**
-    - In some games, if many people hit their goal, DietBet’s cut means winners may get back only their original stake (or marginally more), leading to posts like “PSA do not use DietBet”.[^1_4]
-    - Commission is taken from the entire pot, not just “profits”, which feels unintuitive to many and gets labeled “scammy” even if technically disclosed.[^1_8][^1_5][^1_4]
+   - In some games, if many people hit their goal, DietBet’s cut means winners may get back only their original stake (or marginally more), leading to posts like “PSA do not use DietBet”.[^1_4]
+   - Commission is taken from the entire pot, not just “profits”, which feels unintuitive to many and gets labeled “scammy” even if technically disclosed.[^1_8][^1_5][^1_4]
 3. **Short‑termism and retention**
-    - Games are typically one‑off, short sprints: motivate strongly for 4 weeks, then drop off.
-    - Once users are near their target weight, the fixed % goals become increasingly difficult and encourage unhealthy behavior or churn.[^1_8][^1_4]
-    - After a couple of cycles, many either burn out or feel they have “harvested” the system and leave.
+   - Games are typically one‑off, short sprints: motivate strongly for 4 weeks, then drop off.
+   - Once users are near their target weight, the fixed % goals become increasingly difficult and encourage unhealthy behavior or churn.[^1_8][^1_4]
+   - After a couple of cycles, many either burn out or feel they have “harvested” the system and leave.
 
 ### Fury Bounty–driven market gaps vs DietBet
 
 1. **Continuous, crowd‑audited verification instead of two weigh‑in snapshots**
-    - Gap: current model checks only start/end weights; everything in between is invisible and easy to game.
-    - Fury Bounty angle: require periodic micro‑proofs (short videos with dynamic prompts, body circumference, heart‑rate/step summaries) that can be randomly surfaced for peer audit. “Furies” who spot inconsistent patterns (e.g., implausible weight trajectory, reused photos, obvious editing) earn a bounty from the offender’s stake.
-    - Result: a reputation for being meaningfully harder to cheat than DietBet, while still remote‑friendly.
-2. **Reward structure tied to *quality* of loss, not just final number**
-    - Gap: DietBet implicitly rewards any method that hits the final number, including crash dieting and water manipulation.[^1_7][^1_4]
-    - Fury Bounty angle: add bounties for catching “unhealthy wins” (suspicious patterns such as massive week‑of drop after flat weight, or body measurements not matching claimed loss). Users could earn by flagging and evidencing “cutting” behavior against clearly stated rules (e.g., >X% loss in last 3 days invalidates win).
-    - This positions the new app as “evidence‑based, sustainable weight betting,” explicitly differentiating from DietBet’s loopholes.
+   - Gap: current model checks only start/end weights; everything in between is invisible and easy to game.
+   - Fury Bounty angle: require periodic micro‑proofs (short videos with dynamic prompts, body circumference, heart‑rate/step summaries) that can be randomly surfaced for peer audit. “Furies” who spot inconsistent patterns (e.g., implausible weight trajectory, reused photos, obvious editing) earn a bounty from the offender’s stake.
+   - Result: a reputation for being meaningfully harder to cheat than DietBet, while still remote‑friendly.
+2. **Reward structure tied to _quality_ of loss, not just final number**
+   - Gap: DietBet implicitly rewards any method that hits the final number, including crash dieting and water manipulation.[^1_7][^1_4]
+   - Fury Bounty angle: add bounties for catching “unhealthy wins” (suspicious patterns such as massive week‑of drop after flat weight, or body measurements not matching claimed loss). Users could earn by flagging and evidencing “cutting” behavior against clearly stated rules (e.g., >X% loss in last 3 days invalidates win).
+   - This positions the new app as “evidence‑based, sustainable weight betting,” explicitly differentiating from DietBet’s loopholes.
 3. **Transparent economics with user‑aligned anti‑fraud pool**
-    - Gap: DietBet’s commission feels extractive and opaque.[^1_5][^1_4]
-    - Fury Bounty angle: publish a clear split such as:
-        - 80% pot to honest winners
-        - 10% to an “Integrity Pool” used to pay Fury Bounties and fund dispute resolution
-        - 10% platform fee
-    - When a fury successfully proves cheating, their bounty comes from the offender’s stake plus the Integrity Pool, not from honest winners. This creates a differentiator: “you’re not competing with hidden house rake; you’re competing with cheaters for bounties.”
+   - Gap: DietBet’s commission feels extractive and opaque.[^1_5][^1_4]
+   - Fury Bounty angle: publish a clear split such as:
+     - 80% pot to honest winners
+     - 10% to an “Integrity Pool” used to pay Fury Bounties and fund dispute resolution
+     - 10% platform fee
+   - When a fury successfully proves cheating, their bounty comes from the offender’s stake plus the Integrity Pool, not from honest winners. This creates a differentiator: “you’re not competing with hidden house rake; you’re competing with cheaters for bounties.”
 
-***
+---
 
 ## 2. StepBet (WayBetter / StepBet)
 
@@ -84,230 +83,222 @@ Here’s a structured teardown of the five products, plus how a “Fury Bounty�
 
 - Users bet (often around 40 dollars) that they can hit personalized step goals for multi‑week games (typically 6 weeks: 1 warm‑up + 5 active weeks).[^1_9][^1_10][^1_11]
 - App reads historic activity from a tracker (Fitbit, Apple Watch, Garmin, Apple Health, etc.) to set:
-    - “Active” days target
-    - Higher “Power” or “Stretch” days
+  - “Active” days target
+  - Higher “Power” or “Stretch” days
 - To win, you must hit Active targets 4 days/week and Power targets 2 days/week (typical default) across the game; miss and you’re out.[^1_12][^1_10][^1_13]
-
 
 ### Monetization model
 
 - Non‑members: StepBet takes a cut of the pot (commonly cited 12.5–15%, rising over time; some games now around 15–25%).[^1_10][^1_14][^1_15]
 - Membership / WayBetter subscription:
-    - Annual or multi‑month membership lets you play multiple simultaneous games and often avoids the pot cut.[^1_15][^1_11]
-    - Recently, users report WayBetter membership pricing increases (e.g., 129 dollars for six months), which significantly shifts ROI and perceived value.[^1_16][^1_17][^1_18]
-
+  - Annual or multi‑month membership lets you play multiple simultaneous games and often avoids the pot cut.[^1_15][^1_11]
+  - Recently, users report WayBetter membership pricing increases (e.g., 129 dollars for six months), which significantly shifts ROI and perceived value.[^1_16][^1_17][^1_18]
 
 ### Primary weaknesses / vulnerabilities
 
 1. **Small upside vs. rising fixed costs**
-    - Typical profit per successful six‑week game is on the order of 5–10 dollars, with many users reporting about 6–7 dollars for 40 dollar bets in non‑member games.[^1_14][^1_10][^1_16]
-    - With higher membership fees (e.g., 129 dollars/6 months), users must win many games just to break even, and perceived payoff has trended downward over time.[^1_17][^1_16]
+   - Typical profit per successful six‑week game is on the order of 5–10 dollars, with many users reporting about 6–7 dollars for 40 dollar bets in non‑member games.[^1_14][^1_10][^1_16]
+   - With higher membership fees (e.g., 129 dollars/6 months), users must win many games just to break even, and perceived payoff has trended downward over time.[^1_17][^1_16]
 2. **Goal inflation and opaque difficulty**
-    - Step targets increase based on historical activity; long‑time users report that goals can become unsustainably high.[^1_13][^1_10]
-    - “Maintenance” or “recovery” games that stabilize or lower targets are often locked behind membership tiers, which feels like pay‑to‑fix‑a‑problem-they-created.[^1_13]
+   - Step targets increase based on historical activity; long‑time users report that goals can become unsustainably high.[^1_13][^1_10]
+   - “Maintenance” or “recovery” games that stabilize or lower targets are often locked behind membership tiers, which feels like pay‑to‑fix‑a‑problem-they-created.[^1_13]
 3. **Easy to spoof tracker data; minimal anti‑cheat**
-    - As with any step‑based system, users can game it by shaking the device, attaching it to pets/fans, or doing micro‑movements not equivalent to real activity. There is no strong social or adversarial verification layer.
-    - Complaints around technicalities (missed syncs causing failure) and rigid customer support further erode trust.[^1_19]
+   - As with any step‑based system, users can game it by shaking the device, attaching it to pets/fans, or doing micro‑movements not equivalent to real activity. There is no strong social or adversarial verification layer.
+   - Complaints around technicalities (missed syncs causing failure) and rigid customer support further erode trust.[^1_19]
 4. **Perception that WayBetter/StepBet may be financially strained**
-    - Users report payout delays (from instant to 1–8 days), weaker support, and WayBetter crowdfunding pitches, raising questions about platform stability.[^1_20]
-    - Higher minimum bets and fewer players per game also appear, which can affect both community feel and pot dynamics.[^1_20]
+   - Users report payout delays (from instant to 1–8 days), weaker support, and WayBetter crowdfunding pitches, raising questions about platform stability.[^1_20]
+   - Higher minimum bets and fewer players per game also appear, which can affect both community feel and pot dynamics.[^1_20]
 
 ### Fury Bounty–driven market gaps vs StepBet
 
 1. **Device‑agnostic, anomaly‑detected steps with crowd verification**
-    - Gap: StepBet relies mainly on raw step counts; it has little tooling to detect obviously artificial patterns.
-    - Fury Bounty angle: algorithmically surface suspicious traces (e.g., perfect hourly stepping, abrupt spikes at 11:59 pm) and let rats scrutinize them. If they can show convincing evidence of spoofing (for example, video of a device on a paint shaker posted by the user, inconsistent GPS, or implausible cadence profiles), they collect a bounty.
-    - This enables marketing the product as “cheat‑resistant step betting” and will attract users frustrated by perceived cheaters.
+   - Gap: StepBet relies mainly on raw step counts; it has little tooling to detect obviously artificial patterns.
+   - Fury Bounty angle: algorithmically surface suspicious traces (e.g., perfect hourly stepping, abrupt spikes at 11:59 pm) and let rats scrutinize them. If they can show convincing evidence of spoofing (for example, video of a device on a paint shaker posted by the user, inconsistent GPS, or implausible cadence profiles), they collect a bounty.
+   - This enables marketing the product as “cheat‑resistant step betting” and will attract users frustrated by perceived cheaters.
 2. **Geo‑and‑social verification for higher‑stakes games**
-    - Gap: StepBet is purely remote; there is no meaningful identity or real‑world co‑presence check.
-    - Fury Bounty angle:
-        - Introduce “High‑Integrity Leagues” where:
-            - Participants verify identity once (KYC‑style).
-            - Local clusters (same city/region) can opt into occasional in‑person check‑ins (e.g., weekly community walk/race).
-            - Furies in that cluster can challenge obviously inconsistent claims (“never seen this person on any runs; steps look fake”), with strong proof incentives.
-    - This opens a segment for much higher stakes than StepBet can safely support.
+   - Gap: StepBet is purely remote; there is no meaningful identity or real‑world co‑presence check.
+   - Fury Bounty angle:
+     - Introduce “High‑Integrity Leagues” where:
+       - Participants verify identity once (KYC‑style).
+       - Local clusters (same city/region) can opt into occasional in‑person check‑ins (e.g., weekly community walk/race).
+       - Furies in that cluster can challenge obviously inconsistent claims (“never seen this person on any runs; steps look fake”), with strong proof incentives.
+   - This opens a segment for much higher stakes than StepBet can safely support.
 3. **Transparent, user‑owned anti‑cheat pool**
-    - Gap: StepBet’s economics feel like small wins plus invisible rake and rising membership fees.[^1_14][^1_16][^1_17]
-    - Fury Bounty angle: again, clearly reserve a portion of every pot for bounties and explicitly show, per game:
-        - How many suspected cheaters were caught
-        - How much was redistributed
-        - Which users earned bounties
-    - Honest grinders feel that their upside includes harvesting cheaters, not just subsidizing the house.
+   - Gap: StepBet’s economics feel like small wins plus invisible rake and rising membership fees.[^1_14][^1_16][^1_17]
+   - Fury Bounty angle: again, clearly reserve a portion of every pot for bounties and explicitly show, per game:
+     - How many suspected cheaters were caught
+     - How much was redistributed
+     - Which users earned bounties
+   - Honest grinders feel that their upside includes harvesting cheaters, not just subsidizing the house.
 
-***
+---
 
 ## 3. HealthyWage
 
 ### Core mechanic
 
 - Individual “make your own bet” on weight loss:
-    - User picks target weight, timeline (6–36 months), and monthly wager.
-    - The site returns a promised payout if the goal is met, often significantly higher than the total stake.[^1_21][^1_22][^1_23]
+  - User picks target weight, timeline (6–36 months), and monthly wager.
+  - The site returns a promised payout if the goal is met, often significantly higher than the total stake.[^1_21][^1_22][^1_23]
 - Verification via video weigh‑ins, doctor/health-club verification for some products.[^1_24][^1_21]
 - Also runs team challenges and step‑based challenges similar to StepBet.[^1_25][^1_22]
-
 
 ### Monetization model
 
 - Built on actuarial math: most participants fail, so lost bets finance winners and margin.[^1_26][^1_23]
 - Revenue sources:
-    - The difference between total stakes and payout obligations (embedded “admin fee”).
-    - Team and corporate‑wellness challenges, sometimes sponsored or packaged via insurers/employers.[^1_27][^1_26]
-    - Step challenges with entry fees and small profit margins per user.[^1_25]
-
+  - The difference between total stakes and payout obligations (embedded “admin fee”).
+  - Team and corporate‑wellness challenges, sometimes sponsored or packaged via insurers/employers.[^1_27][^1_26]
+  - Step challenges with entry fees and small profit margins per user.[^1_25]
 
 ### Primary weaknesses / vulnerabilities
 
 1. **Opaque prize calculations**
-    - Prize calculators appear dynamic and sometimes change; users notice that formulas and sample payouts shift, which can feel manipulative.[^1_28][^1_22]
-    - People often do not understand effectively what spread/edge the company is taking, only that “they make money when you lose”.[^1_23][^1_21]
+   - Prize calculators appear dynamic and sometimes change; users notice that formulas and sample payouts shift, which can feel manipulative.[^1_28][^1_22]
+   - People often do not understand effectively what spread/edge the company is taking, only that “they make money when you lose”.[^1_23][^1_21]
 2. **Health and sustainability issues**
-    - Same pattern as DietBet: crash dieting, extreme regimes to beat the clock. Some users or observers highlight laxative dehydration strategies and fast regain after the bet.[^1_21][^1_27]
-    - There is almost no reward for *maintaining* weight after success.
+   - Same pattern as DietBet: crash dieting, extreme regimes to beat the clock. Some users or observers highlight laxative dehydration strategies and fast regain after the bet.[^1_21][^1_27]
+   - There is almost no reward for _maintaining_ weight after success.
 3. **Verification limitations**
-    - Video weigh‑ins are stricter than photos, but still remote. Subtle manipulations (e.g., using hidden weights at the initial weigh‑in, clothing tricks) are hard to detect.
-    - Limited ongoing monitoring between endpoints; cheaters can maintain two different “weigh‑in setups” without peers noticing.
+   - Video weigh‑ins are stricter than photos, but still remote. Subtle manipulations (e.g., using hidden weights at the initial weigh‑in, clothing tricks) are hard to detect.
+   - Limited ongoing monitoring between endpoints; cheaters can maintain two different “weigh‑in setups” without peers noticing.
 4. **Retention problem post‑bet**
-    - Many report winning a large bet and then gaining weight back within months.[^1_21]
-    - Once a big bet is cashed out, there is no structural reason to stay; the economics and stress of another big commitment are daunting.
+   - Many report winning a large bet and then gaining weight back within months.[^1_21]
+   - Once a big bet is cashed out, there is no structural reason to stay; the economics and stress of another big commitment are daunting.
 
 ### Fury Bounty–driven market gaps vs HealthyWage
 
 1. **Actuarially fair, auditable odds + crowd‑audited actuarial engine**
-    - Gap: HealthyWage’s calculator is a black box; trust relies on brand and testimonials.[^1_28][^1_23]
-    - Fury Bounty angle:
-        - Publish simplified actuarial assumptions and expected win/loss rates by segment (age, BMI, timeframe).
-        - Allow “actuarial rats” (quant‑minded users) to audit for exploitable inconsistencies; if they find mispriced bet categories or statistical anomalies, pay out a bounty in governance tokens or credits.
-    - This ladders into a positioning of “transparent, user‑audited weight betting.”
+   - Gap: HealthyWage’s calculator is a black box; trust relies on brand and testimonials.[^1_28][^1_23]
+   - Fury Bounty angle:
+     - Publish simplified actuarial assumptions and expected win/loss rates by segment (age, BMI, timeframe).
+     - Allow “actuarial rats” (quant‑minded users) to audit for exploitable inconsistencies; if they find mispriced bet categories or statistical anomalies, pay out a bounty in governance tokens or credits.
+   - This ladders into a positioning of “transparent, user‑audited weight betting.”
 2. **Bounties for exposing unhealthy-but-technically-legal behavior**
-    - Gap: current incentives don’t distinguish healthy vs. harmful means; only the final scale reading matters.[^1_27][^1_21]
-    - Fury Bounty angle:
-        - Explicitly outlaw certain behaviors (e.g., dehydration at >X% rapid loss, diuretics) and invite rats to flag social‑media posts or logs where users brag about using them.
-        - Use captured stakes to fund support for “maintainers” (long‑term maintenance pools).
+   - Gap: current incentives don’t distinguish healthy vs. harmful means; only the final scale reading matters.[^1_27][^1_21]
+   - Fury Bounty angle:
+     - Explicitly outlaw certain behaviors (e.g., dehydration at >X% rapid loss, diuretics) and invite rats to flag social‑media posts or logs where users brag about using them.
+     - Use captured stakes to fund support for “maintainers” (long‑term maintenance pools).
 3. **Maintenance pools that pay rats for catching relapses (with consent)**
-    - Gap: no structured support once a challenge is over; people often rebound weight.[^1_21]
-    - Fury Bounty angle:
-        - After a successful bet, users can optionally enter a maintenance pool where they stake a smaller monthly amount that they only lose if they cross an agreed regain threshold.
-        - Furies (peers in the same pool) can earn small bounties for flagging unreported regains or obviously manipulated weigh‑ins, using longer time‑series of photos, body measurements, and lifestyle data.
-    - This reframes the product as a multi‑year commitment architecture, not a one‑off stunt.
+   - Gap: no structured support once a challenge is over; people often rebound weight.[^1_21]
+   - Fury Bounty angle:
+     - After a successful bet, users can optionally enter a maintenance pool where they stake a smaller monthly amount that they only lose if they cross an agreed regain threshold.
+     - Furies (peers in the same pool) can earn small bounties for flagging unreported regains or obviously manipulated weigh‑ins, using longer time‑series of photos, body measurements, and lifestyle data.
+   - This reframes the product as a multi‑year commitment architecture, not a one‑off stunt.
 
-***
+---
 
 ## 4. Habitica
 
 ### Core mechanic
 
 - Gamified habit/task manager styled as an RPG:
-    - Users create Habits, Dailies, and To‑dos; completing them grants XP and gold.[^1_29][^1_30]
-    - Gold buys in‑game items, equipment, pets, mounts; leveling unlocks classes (Warrior, Mage, Rogue, Healer).
-    - Parties \& quests: groups fight bosses where each member’s Dailies/Habits translate into damage or party damage taken.[^1_31][^1_29]
+  - Users create Habits, Dailies, and To‑dos; completing them grants XP and gold.[^1_29][^1_30]
+  - Gold buys in‑game items, equipment, pets, mounts; leveling unlocks classes (Warrior, Mage, Rogue, Healer).
+  - Parties \& quests: groups fight bosses where each member’s Dailies/Habits translate into damage or party damage taken.[^1_31][^1_29]
 - Everything is self‑reported; no device integration or external proof.
-
 
 ### Monetization model
 
 - Freemium:
-    - Free for core habit features.[^1_32][^1_29]
-    - Monetizes via gems (premium currency) and subscriptions:
-        - Direct gem purchases with real money.
-        - Subscriptions grant a monthly allowance of gems and the ability to convert gold to gems up to a cap (e.g., up to 45–50 gems/month at highest subscription tiers).[^1_33][^1_34][^1_35]
-    - Group plans for teams/organizations.
+  - Free for core habit features.[^1_32][^1_29]
+  - Monetizes via gems (premium currency) and subscriptions:
+    - Direct gem purchases with real money.
+    - Subscriptions grant a monthly allowance of gems and the ability to convert gold to gems up to a cap (e.g., up to 45–50 gems/month at highest subscription tiers).[^1_33][^1_34][^1_35]
+  - Group plans for teams/organizations.
 - Cosmetic content (gear, backgrounds, pets, mounts, seasonal items) is the main monetized value.[^1_36][^1_33]
-
 
 ### Primary weaknesses / vulnerabilities
 
 1. **Pure honor system; trivial to “cheat”**
-    - Community and devs explicitly frame cheating as only hurting yourself; many responses say there is “no such thing as cheating” unless you are in competitive challenges.[^1_37][^1_38]
-    - For many, this is a strength (low pressure). But for users who need real external accountability or financial stakes, it is a non‑starter.
+   - Community and devs explicitly frame cheating as only hurting yourself; many responses say there is “no such thing as cheating” unless you are in competitive challenges.[^1_37][^1_38]
+   - For many, this is a strength (low pressure). But for users who need real external accountability or financial stakes, it is a non‑starter.
 2. **Limited “game depth” and slow feature progress**
-    - Frequent criticism: not enough actual game; tasks feel disconnected from shallow RPG mechanics.[^1_38]
-    - Very slow pace of new functional features; recent history dominated by cosmetic additions and bug fixes.[^1_39][^1_40]
+   - Frequent criticism: not enough actual game; tasks feel disconnected from shallow RPG mechanics.[^1_38]
+   - Very slow pace of new functional features; recent history dominated by cosmetic additions and bug fixes.[^1_39][^1_40]
 3. **Volunteer‑heavy model and community scandals**
-    - Habitica has relied heavily on unpaid moderators, artists, and community managers; critics argue the for‑profit company benefits from large volumes of free labor.[^1_39]
-    - 2022–2024 saw controversies: mistreatment of moderators, removal of guilds and taverns, perceived hollowing‑out of community features.[^1_40][^1_39]
-    - This degrades the social layer that was Habitica’s differentiator versus generic habit trackers.
+   - Habitica has relied heavily on unpaid moderators, artists, and community managers; critics argue the for‑profit company benefits from large volumes of free labor.[^1_39]
+   - 2022–2024 saw controversies: mistreatment of moderators, removal of guilds and taverns, perceived hollowing‑out of community features.[^1_40][^1_39]
+   - This degrades the social layer that was Habitica’s differentiator versus generic habit trackers.
 4. **No built‑in financial stakes**
-    - External stakes are manual (e.g., users privately agree to penalties/rewards). There is no integrated, enforceable “if I fail, I lose money” mechanic.
+   - External stakes are manual (e.g., users privately agree to penalties/rewards). There is no integrated, enforceable “if I fail, I lose money” mechanic.
 
 ### Fury Bounty–driven market gaps vs Habitica
 
-1. **RPG‑like habit app with *trustable* progress**
-    - Gap: Habitica proves nothing about real‑world behavior; some users literally treat it as a clicker game.[^1_30][^1_37]
-    - Fury Bounty angle:
-        - Keep an RPG shell but require proof for certain high‑value habits (photos, geotagging, integration logs).
-        - Furies can inspect and challenge suspect submissions in competitive modes; confirmed fakes lose in‑game progress *and* money.
-    - This fills the niche of “Habitica, but with real accountability and money on the line.”
+1. **RPG‑like habit app with _trustable_ progress**
+   - Gap: Habitica proves nothing about real‑world behavior; some users literally treat it as a clicker game.[^1_30][^1_37]
+   - Fury Bounty angle:
+     - Keep an RPG shell but require proof for certain high‑value habits (photos, geotagging, integration logs).
+     - Furies can inspect and challenge suspect submissions in competitive modes; confirmed fakes lose in‑game progress _and_ money.
+   - This fills the niche of “Habitica, but with real accountability and money on the line.”
 2. **Paid moderators and fury auditors instead of unpaid labor**
-    - Gap: Habitica’s moderation/content system depends on unpaid volunteers, leading to burnout and scandal.[^1_39]
-    - Fury Bounty angle:
-        - Pay a percentage of platform revenue into a shared “governance bounty” pool.
-        - Moderators and fury‑auditors earn from this pool based on work performed (fraud investigations, rule enforcement, dispute resolution).
-    - This becomes part of the brand: “your fees pay the people who keep the game fair,” a direct rebuttal to Habitica’s criticized model.
+   - Gap: Habitica’s moderation/content system depends on unpaid volunteers, leading to burnout and scandal.[^1_39]
+   - Fury Bounty angle:
+     - Pay a percentage of platform revenue into a shared “governance bounty” pool.
+     - Moderators and fury‑auditors earn from this pool based on work performed (fraud investigations, rule enforcement, dispute resolution).
+   - This becomes part of the brand: “your fees pay the people who keep the game fair,” a direct rebuttal to Habitica’s criticized model.
 3. **Cross‑party competitive leagues with audited scoring**
-    - Gap: Habitica’s PvE boss fights are mostly cooperative, with minimal ranking or trustworthy competition; proposals for rankings have been resisted largely due to cheating risk and design complexity.[^1_41][^1_42]
-    - Fury Bounty angle:
-        - Create seasons where parties compete for real prize pools.
-        - Every scoring event in high‑stakes leagues can be challenged by rats for bounty; parties must maintain clean records.
-    - That opens a more esport‑like, spectator‑friendly layer that Habitica cannot safely support on an honor system.
+   - Gap: Habitica’s PvE boss fights are mostly cooperative, with minimal ranking or trustworthy competition; proposals for rankings have been resisted largely due to cheating risk and design complexity.[^1_41][^1_42]
+   - Fury Bounty angle:
+     - Create seasons where parties compete for real prize pools.
+     - Every scoring event in high‑stakes leagues can be challenged by rats for bounty; parties must maintain clean records.
+   - That opens a more esport‑like, spectator‑friendly layer that Habitica cannot safely support on an honor system.
 
-***
+---
 
 ## 5. Beeminder
 
 ### Core mechanic
 
 - “Goal tracking with teeth”:
-    - User defines a numerical goal and a goal rate (e.g., 3 gym sessions/week, 400 XP/day in Duolingo).[^1_43][^1_44]
-    - Beeminder draws a “yellow brick road” between current value and target; user must keep their cumulative data points on or within a safe buffer of that road.
-    - If the user falls off the road, they “derail” and are charged a pledge amount (starting at 5 dollars and escalating with repeated derailments).[^1_45][^1_43]
+  - User defines a numerical goal and a goal rate (e.g., 3 gym sessions/week, 400 XP/day in Duolingo).[^1_43][^1_44]
+  - Beeminder draws a “yellow brick road” between current value and target; user must keep their cumulative data points on or within a safe buffer of that road.
+  - If the user falls off the road, they “derail” and are charged a pledge amount (starting at 5 dollars and escalating with repeated derailments).[^1_45][^1_43]
 - Data entry via manual input or numerous autodata integrations (RescueTime, GitHub, Duolingo, Fitbit, etc.).[^1_44][^1_46]
-
 
 ### Monetization model
 
 - Primary: derailment charges (penalties for failure).[^1_45][^1_43]
-    - Pledges escalate exponentially by default (e.g., 5 → 10 → 30 → 90 dollars), though users can cap them.[^1_43][^1_45]
+  - Pledges escalate exponentially by default (e.g., 5 → 10 → 30 → 90 dollars), though users can cap them.[^1_43][^1_45]
 - Secondary: premium subscriptions:
-    - Unlock higher pledge caps, custom goal types, auto‑ratcheting, multi‑goal tools, and other power features.[^1_47][^1_48][^1_45]
-    - Some users pay for plans mainly to get advanced automation, not necessarily to pay more in derails.
-
+  - Unlock higher pledge caps, custom goal types, auto‑ratcheting, multi‑goal tools, and other power features.[^1_47][^1_48][^1_45]
+  - Some users pay for plans mainly to get advanced automation, not necessarily to pay more in derails.
 
 ### Primary weaknesses / vulnerabilities
 
 1. **Cheating and “weaseling” by falsifying data**
-    - Multiple users report being tempted to (or actually) lie to avoid charges, especially when pledges become large.[^1_49][^1_47]
-    - Even with autodata, some integrations allow retroactive editing of source data or recorded values.[^1_50][^1_51]
-    - Beeminder recognizes this; the founders have written about “cheating” and introduced “weasel‑proofing” and supporters, but it remains a fundamental risk.[^1_52][^1_53]
+   - Multiple users report being tempted to (or actually) lie to avoid charges, especially when pledges become large.[^1_49][^1_47]
+   - Even with autodata, some integrations allow retroactive editing of source data or recorded values.[^1_50][^1_51]
+   - Beeminder recognizes this; the founders have written about “cheating” and introduced “weasel‑proofing” and supporters, but it remains a fundamental risk.[^1_52][^1_53]
 2. **Cognitive and UX friction**
-    - New users find setup confusing (slopes, safety buffer, yellow brick road semantics), and the UI feels technical.[^1_54][^1_45]
-    - Many churn after first few days by just cancelling all goals or lowering pledges; the teeth never really bite, so the value proposition is never felt.[^1_48]
+   - New users find setup confusing (slopes, safety buffer, yellow brick road semantics), and the UI feels technical.[^1_54][^1_45]
+   - Many churn after first few days by just cancelling all goals or lowering pledges; the teeth never really bite, so the value proposition is never felt.[^1_48]
 3. **Penalty anxiety and avoidance**
-    - Some users find monetary penalties so stressful that they either:
-        - Stop entering data honestly (cheating), or
-        - Cancel/pause goals preemptively whenever life gets complex.[^1_55][^1_48]
-    - This makes Beeminder self‑selecting for a niche who are both willing to risk real money and confident enough not to panic.
+   - Some users find monetary penalties so stressful that they either:
+     - Stop entering data honestly (cheating), or
+     - Cancel/pause goals preemptively whenever life gets complex.[^1_55][^1_48]
+   - This makes Beeminder self‑selecting for a niche who are both willing to risk real money and confident enough not to panic.
 
 ### Fury Bounty–driven market gaps vs Beeminder
 
 1. **Externalized verification instead of self‑report**
-    - Gap: Beeminder largely trusts whatever data shows up, with only weak weasel‑proof mechanisms.[^1_51][^1_52][^1_55]
-    - Fury Bounty angle:
-        - For high‑stakes goals, require proof artifacts (screenshots, logs, GPS traces) that are stored and can be randomly audited.
-        - Furies can browse past “on-the-edge” days and challenge suspicious points; if the challenge is upheld, the user is retroactively derailed and the challenger earns part of the derail fee.
-    - This reduces the incentive to “just lie in the app” and creates a stronger distinction between honest and dishonest Beeminder‑style users.
+   - Gap: Beeminder largely trusts whatever data shows up, with only weak weasel‑proof mechanisms.[^1_51][^1_52][^1_55]
+   - Fury Bounty angle:
+     - For high‑stakes goals, require proof artifacts (screenshots, logs, GPS traces) that are stored and can be randomly audited.
+     - Furies can browse past “on-the-edge” days and challenge suspicious points; if the challenge is upheld, the user is retroactively derailed and the challenger earns part of the derail fee.
+   - This reduces the incentive to “just lie in the app” and creates a stronger distinction between honest and dishonest Beeminder‑style users.
 2. **Shared‑pot commitment contracts**
-    - Gap: Beeminder’s penalties go solely to the company; some users wish money went to anti‑charities or peers instead.[^1_52][^1_45]
-    - Fury Bounty angle:
-        - Allow creation of shared‑pot goals where failure moves funds to a pool that can only be claimed by rats who prove misreporting or by peers who met their own commitments.
-    - This diversifies the value proposition away from pure “pay Beeminder” toward “put money into a market where honesty is defended by bounty hunters.”
+   - Gap: Beeminder’s penalties go solely to the company; some users wish money went to anti‑charities or peers instead.[^1_52][^1_45]
+   - Fury Bounty angle:
+     - Allow creation of shared‑pot goals where failure moves funds to a pool that can only be claimed by rats who prove misreporting or by peers who met their own commitments.
+   - This diversifies the value proposition away from pure “pay Beeminder” toward “put money into a market where honesty is defended by bounty hunters.”
 3. **“Weasel detection” as a built‑in feature**
-    - Gap: When users change or pause goals strategically to avoid derailment, the integrity of the system declines.[^1_48][^1_45]
-    - Fury Bounty angle:
-        - Make certain changes (e.g., big slope decreases right before a tough day) flaggable. Furies can review a change timeline and, if they can show that the change violated pre‑agreed rules (like no last‑minute slope reduction), they earn a bounty and the user is forced to pay or revert.
-    - This codifies “no excuses mode” into a socially enforced system.
+   - Gap: When users change or pause goals strategically to avoid derailment, the integrity of the system declines.[^1_48][^1_45]
+   - Fury Bounty angle:
+     - Make certain changes (e.g., big slope decreases right before a tough day) flaggable. Furies can review a change timeline and, if they can show that the change violated pre‑agreed rules (like no last‑minute slope reduction), they earn a bounty and the user is forced to pay or revert.
+   - This codifies “no excuses mode” into a socially enforced system.
 
-***
+---
 
 ## Three Cross‑Market Gaps for a “Fury Bounty” Entrant
 
@@ -323,17 +314,17 @@ Synthesizing across all five competitors:
 
 **Opportunity with Fury Bounty:**
 
-- Make verification a *first‑class mechanic*, not an afterthought:
-    - Every high‑stakes claim (weight, steps, study hours, etc.) must have an associated proof object: time‑stamped data, short video, screenshot, or third‑party integration log.
-    - The system randomly highlights candidates for audit based on anomaly detection (e.g., suspicious trajectories, edge‑of‑failure saves, repeated last‑minute miracles).
+- Make verification a _first‑class mechanic_, not an afterthought:
+  - Every high‑stakes claim (weight, steps, study hours, etc.) must have an associated proof object: time‑stamped data, short video, screenshot, or third‑party integration log.
+  - The system randomly highlights candidates for audit based on anomaly detection (e.g., suspicious trajectories, edge‑of‑failure saves, repeated last‑minute miracles).
 - Introduce a two‑sided market:
-    - “Doers” stake money on their habits.
-    - “Furies” stake time and attention reviewing proof; when they demonstrate fraud or rule‑breaking, they earn bounties funded by offenders’ forfeits and a dedicated integrity pool.
-    - False accusations carry a small penalty or reputation hit, discouraging witch hunts.
+  - “Doers” stake money on their habits.
+  - “Furies” stake time and attention reviewing proof; when they demonstrate fraud or rule‑breaking, they earn bounties funded by offenders’ forfeits and a dedicated integrity pool.
+  - False accusations carry a small penalty or reputation hit, discouraging witch hunts.
 
 This directly targets the most important unsolved piece for financial‑stakes habit apps: credible remote verification without building a giant in‑house compliance team.
 
-***
+---
 
 ### Gap 2: Long‑term adherence rather than last‑minute sprints and crash behavior
 
@@ -346,18 +337,18 @@ This directly targets the most important unsolved piece for financial‑stakes h
 
 **Opportunity with Fury Bounty:**
 
-- Structure bets as *longitudinal contracts* with:
-    - Gentle, consistent daily/weekly requirements.
-    - Built‑in maintenance phases after initial goals are hit.
-    - Rewards for avoiding dramatic reversals (e.g., large weight regain, long inactivity gaps).
+- Structure bets as _longitudinal contracts_ with:
+  - Gentle, consistent daily/weekly requirements.
+  - Built‑in maintenance phases after initial goals are hit.
+  - Rewards for avoiding dramatic reversals (e.g., large weight regain, long inactivity gaps).
 - Fury Bounty variant:
-    - Furies do not only look for outright fraud, but also for “Goodharting”: behaviors that technically satisfy metrics while violating health rules (crash diets, step farming without real exertion).
-    - When rules define clearly forbidden tactics, rats can earn bounties by providing evidence of those tactics even if the numeric goal was met.
+  - Furies do not only look for outright fraud, but also for “Goodharting”: behaviors that technically satisfy metrics while violating health rules (crash diets, step farming without real exertion).
+  - When rules define clearly forbidden tactics, rats can earn bounties by providing evidence of those tactics even if the numeric goal was met.
 - Combining this with streak‑friendly gamification (avatars, guilds, quests) positions the app as: “a game for building a life‑long identity, protected from metric‑hacking by fury auditors.”
 
 This exploits the dissatisfaction of people who have lost weight or hit step goals with existing apps, only to backslide quickly.
 
-***
+---
 
 ### Gap 3: A reputation and governance layer that aligns honest users against cheaters and the “house”
 
@@ -370,18 +361,18 @@ This exploits the dissatisfaction of people who have lost weight or hit step goa
 **Opportunity with Fury Bounty:**
 
 - Treat reputation as a key asset:
-    - Every user has a publicly visible “integrity score” (e.g., based on frequency of successful unchallenged completions, the outcome of disputes, and whether they have ever been found cheating).
-    - Furies also have a reputation: successful, accurate auditors vs. frivolous accusers.
+  - Every user has a publicly visible “integrity score” (e.g., based on frequency of successful unchallenged completions, the outcome of disputes, and whether they have ever been found cheating).
+  - Furies also have a reputation: successful, accurate auditors vs. frivolous accusers.
 - Money flows are transparent:
-    - Show, per league/game/goal: total stakes, total platform fee, total bounties paid, number of cheaters caught, and their identity or pseudonym.
-    - Allow high‑reputation users to take on paid roles (judges, super‑rats) with elevated powers.
+  - Show, per league/game/goal: total stakes, total platform fee, total bounties paid, number of cheaters caught, and their identity or pseudonym.
+  - Allow high‑reputation users to take on paid roles (judges, super‑rats) with elevated powers.
 - Over time, governance features can be opened:
-    - High‑rep users can vote on rule changes (e.g., what counts as proof, how severe certain penalties should be).
-    - A portion of fees is earmarked for fury and judge compensation, visibly.
+  - High‑rep users can vote on rule changes (e.g., what counts as proof, how severe certain penalties should be).
+  - A portion of fees is earmarked for fury and judge compensation, visibly.
 
-This builds a *civic* layer absent in current products. Instead of “house vs. user,” the framing becomes: “honest users + rats vs. cheaters, with the platform as protocol and referee,” which dovetails perfectly with your “Fury Bounty” concept.
+This builds a _civic_ layer absent in current products. Instead of “house vs. user,” the framing becomes: “honest users + rats vs. cheaters, with the platform as protocol and referee,” which dovetails perfectly with your “Fury Bounty” concept.
 
-***
+---
 
 ### How this positions a new app
 
@@ -638,7 +629,6 @@ If helpful, the next step can be a concrete product spec: flows for submitting p
 
 [^1_118]: https://www.reddit.com/r/beeminder/comments/1prfla9/flock_cowork_on_your_todos_with_friends/
 
-
 ---
 
 # Product Specification: Fury Bounty Habit-Tracking System
@@ -660,8 +650,7 @@ User Stake (100%) splits into:
 └─ Platform Fee (10%) → Operations + development
 ```
 
-
-***
+---
 
 ## II. Proof Submission System
 
@@ -675,7 +664,6 @@ Each habit has a **Proof Tier** that determines verification rigor:
 - **Audit probability:** 5% random spot-check
 - **Example:** "Took vitamins," "Meditated 5 minutes"
 
-
 #### Tier 2: Device-Verified (< \$50/week stake)
 
 - **Proof:** Auto-sync from trusted integrations (Apple Health, Fitbit, Strava, RescueTime)
@@ -683,27 +671,25 @@ Each habit has a **Proof Tier** that determines verification rigor:
 - **Audit probability:** 15% random + flagging system
 - **Example:** "10K steps/day," "Study 2 hours/day"
 
-
 #### Tier 3: High-Stakes Evidence (≥ \$50/week stake)
 
 - **Proof:** All Tier 2 requirements PLUS:
-    - Timestamped photo/video with dynamic daily prompt
-    - Biometric markers where applicable (weight, body measurements, GPS route)
-    - Weekly narrative summary (150+ words describing execution)
+  - Timestamped photo/video with dynamic daily prompt
+  - Biometric markers where applicable (weight, body measurements, GPS route)
+  - Weekly narrative summary (150+ words describing execution)
 - **Audit probability:** 30% random + mandatory peer review for edge cases
 - **Example:** Weight loss goals, marathon training, sobriety tracking
-
 
 #### Tier 4: Social Verification (Competitive leagues)
 
 - **Proof:** All Tier 3 requirements PLUS:
-    - Optional: Local in-person check-ins with other league members
-    - Social media cross-posting with unique hashtag
-    - Video call spot-checks (scheduled or surprise, user opts in)
+  - Optional: Local in-person check-ins with other league members
+  - Social media cross-posting with unique hashtag
+  - Video call spot-checks (scheduled or surprise, user opts in)
 - **Audit probability:** 50%+ with crowd-sourced anomaly detection
 - **Example:** High-stakes tournaments, team competitions with prize pools > \$500
 
-***
+---
 
 ### B. Proof Submission Flow (Tier 3 Example: Weight Loss)
 
@@ -738,26 +724,26 @@ Weekly Check-In:
 - Codes are revealed only at submission time in app
 - Example: "Today's code: Draw a star on your palm and show it with your scale reading"
 
-***
+---
 
 ### C. Proof Storage \& Immutability
 
 **Technical Implementation:**
 
 1. **Submission:**
-    - User uploads proof → instant hash generation (SHA-256)
-    - Hash + metadata written to append-only ledger
-    - Original file stored in encrypted cold storage (S3 Glacier or similar)
+   - User uploads proof → instant hash generation (SHA-256)
+   - Hash + metadata written to append-only ledger
+   - Original file stored in encrypted cold storage (S3 Glacier or similar)
 2. **Audit Trail:**
-    - Every view/download of proof logged with viewer ID
-    - No deletion possible; only privacy-preserving redaction for PII (face blur, etc.)
+   - Every view/download of proof logged with viewer ID
+   - No deletion possible; only privacy-preserving redaction for PII (face blur, etc.)
 3. **Access Control:**
-    - Doer: full access to own proofs
-    - Furies: time-limited access (48 hours) once audit initiated
-    - Judges: full access during dispute resolution
-    - Public: anonymized proof summaries for resolved disputes (educational)
+   - Doer: full access to own proofs
+   - Furies: time-limited access (48 hours) once audit initiated
+   - Judges: full access during dispute resolution
+   - Public: anonymized proof summaries for resolved disputes (educational)
 
-***
+---
 
 ## III. Fury Audit System
 
@@ -765,13 +751,12 @@ Weekly Check-In:
 
 **Reputation-Gated Access:**
 
-
-| Fury Level | Requirements | Daily Audit Quota | Bounty Multiplier |
-| :-- | :-- | :-- | :-- |
-| **Novice Fury** | 0 successful audits | 3 audits/day | 1.0× |
-| **Scout Fury** | 5 successful + 80%+ accuracy | 10 audits/day | 1.2× |
-| **Elite Fury** | 25 successful + 85%+ accuracy | 25 audits/day | 1.5× |
-| **Master Fury** | 100 successful + 90%+ accuracy | Unlimited | 2.0× + Judge nomination |
+| Fury Level      | Requirements                   | Daily Audit Quota | Bounty Multiplier       |
+| :-------------- | :----------------------------- | :---------------- | :---------------------- |
+| **Novice Fury** | 0 successful audits            | 3 audits/day      | 1.0×                    |
+| **Scout Fury**  | 5 successful + 80%+ accuracy   | 10 audits/day     | 1.2×                    |
+| **Elite Fury**  | 25 successful + 85%+ accuracy  | 25 audits/day     | 1.5×                    |
+| **Master Fury** | 100 successful + 90%+ accuracy | Unlimited         | 2.0× + Judge nomination |
 
 **Accuracy = (Successful challenges - False accusations × 3) / Total challenges**
 
@@ -781,7 +766,7 @@ Weekly Check-In:
 - False accusations result in stake deductions
 - Prevents spam and ensures skin-in-the-game
 
-***
+---
 
 ### B. Fury Audit Flow
 
@@ -809,7 +794,7 @@ Audit Queue (sorted by bounty potential)
 - Only one Fury per claim (first-come, first-served)
 - If Fury abandons (no submission in 48 hrs), audit returns to queue and Fury reputation penalized
 
-***
+---
 
 #### Step 2: Investigation
 
@@ -843,7 +828,7 @@ Anomaly Details:
 - Comparison overlays (side-by-side video frames)
 - Access to user's past flagged behaviors (if any)
 
-***
+---
 
 #### Step 3: Filing a Bounty Claim
 
@@ -853,17 +838,20 @@ Anomaly Details:
 ## Challenge Type: [Edited Media / Fraudulent Weight Reading]
 
 ## Evidence:
+
 1. Video metadata shows Photoshop editing timestamp
 2. Weight drop (2.6 lbs in 7 days) exceeds user's historical average (2.1 lbs/week) by 2.4 sigma
 3. Scale background differs from previous weeks (different room?)
 4. Audio analysis: voice pitch inconsistent (possible voice modulation or different person)
 
 ## Requested Ruling:
+
 - Mark Week 4 proof as INVALID
 - Apply strike to user Phoenix_87
 - Award bounty from user's stake
 
 ## Attachments:
+
 [Screenshot 1: EXIF data]
 [Screenshot 2: Waveform comparison]
 [Video clip: Background inconsistency highlighted]
@@ -875,7 +863,7 @@ Anomaly Details:
 - Challenge enters Judge Queue
 - All proofs locked (no new submissions until resolved)
 
-***
+---
 
 ## IV. Adjudication System
 
@@ -900,7 +888,7 @@ FOR each challenge:
 - Bonus: +\$5 if ruling matches majority (incentivizes consensus)
 - Penalty: −10 reputation if ruling is later overturned on appeal
 
-***
+---
 
 ### B. Adjudication Flow
 
@@ -932,7 +920,7 @@ Case #47392: Phoenix_87 vs. Rat_Hunter_12
 - If split (1-1-1), case escalates to Master Judge panel (5 judges)
 - All rulings and rationales published in anonymized public log
 
-***
+---
 
 ### C. Ruling Outcomes
 
@@ -964,7 +952,7 @@ Judges (×3):
 1. **Accept ruling** → Resubmit valid proof within 48 hours OR withdraw from challenge (forfeit remaining stake)
 2. **Appeal** → Costs \$25 non-refundable, goes to Master Judge panel (high bar for reversal)
 
-***
+---
 
 #### Outcome 2: INCONCLUSIVE (No winner)
 
@@ -993,8 +981,7 @@ Judges:
 └─ Receive only $3 base fee (reduced for inconclusive)
 ```
 
-
-***
+---
 
 #### Outcome 3: FALSE CLAIM (User wins)
 
@@ -1023,8 +1010,7 @@ Judges:
 └─ Full $5 base fee + $5 bonus (rewarding correct identification of bad-faith audit)
 ```
 
-
-***
+---
 
 ## V. Game Modes \& Pot/Bounty Splits
 
@@ -1058,11 +1044,11 @@ IF user fails week 5:
 **Fury Bounty Potential:**
 
 - If Fury proves fraud anytime during 8 weeks:
-    - Fury earns \$40 (10% of total stake)
-    - User forfeits entire \$400
-    - Remaining \$360 → 70% Integrity Pool / 20% Platform / 10% Charity
+  - Fury earns \$40 (10% of total stake)
+  - User forfeits entire \$400
+  - Remaining \$360 → 70% Integrity Pool / 20% Platform / 10% Charity
 
-***
+---
 
 ### Mode 2: Group Pot (DietBet/StepBet model)
 
@@ -1097,7 +1083,7 @@ If Fury catches 2 cheaters:
 - Fixed bounty: \$40 per confirmed fraud
 - Bonus: If Fury catches ≥3 cheaters in one challenge, earns 1.5× multiplier
 
-***
+---
 
 ### Mode 3: Competitive League (Habitica + Stakes)
 
@@ -1130,8 +1116,8 @@ Platform fee: $50 (5%)
 
 - Any league member can challenge another's quest completion
 - Bounty scales with rank:
-    - Catching \#1 cheater: \$50
-    - Catching \#5 cheater: \$20
+  - Catching \#1 cheater: \$50
+  - Catching \#5 cheater: \$20
 - Furies can be league members (dual role) or external auditors
 
 **Anti-Collusion:**
@@ -1139,7 +1125,7 @@ Platform fee: $50 (5%)
 - League members who fury on each other must have challenge reviewed by external Judge (no internal adjudication)
 - False accusations between league members = automatic disqualification from current league
 
-***
+---
 
 ### Mode 4: High-Stakes Tournament (Shark Tank)
 
@@ -1172,9 +1158,9 @@ Platform fee: $7,500 (7.5%)
 
 - "Bounty Hunters Guild" (dedicated Furies) review ALL top 20 finishers
 - Bounty tiers:
-    - Catching Top 3: \$2,000
-    - Catching Top 10: \$1,000
-    - Catching Top 20: \$500
+  - Catching Top 3: \$2,000
+  - Catching Top 10: \$1,000
+  - Catching Top 20: \$500
 - All bounties paid from Integrity Pool
 - Falsely accusing a Top 10 finisher: \$500 penalty + 30-day suspension
 
@@ -1184,7 +1170,7 @@ Platform fee: $7,500 (7.5%)
 - Random metabolic/body composition scan for Top 3 (in-person, expenses covered)
 - Refusal to comply = automatic disqualification
 
-***
+---
 
 ## VI. Integrity Score System
 
@@ -1207,17 +1193,15 @@ Integrity Score (0–100) =
 
 **Score Benefits:**
 
+| Score Range | Benefits                                                                     |
+| :---------- | :--------------------------------------------------------------------------- |
+| 90–100      | Priority matching in leagues; reduced platform fees (8%); Judge eligibility  |
+| 75–89       | Standard access; 10% platform fee                                            |
+| 60–74       | Requires Tier 2+ proof for all challenges; 12% platform fee                  |
+| 40–59       | Restricted to Solo Challenges only; 15% platform fee; mandatory Judge review |
+| 0–39        | Suspended; must appeal to regain access                                      |
 
-| Score Range | Benefits |
-| :-- | :-- |
-| 90–100 | Priority matching in leagues; reduced platform fees (8%); Judge eligibility |
-| 75–89 | Standard access; 10% platform fee |
-| 60–74 | Requires Tier 2+ proof for all challenges; 12% platform fee |
-| 40–59 | Restricted to Solo Challenges only; 15% platform fee; mandatory Judge review |
-| 0–39 | Suspended; must appeal to regain access |
-
-
-***
+---
 
 ## VII. Anti-Gaming Mechanisms
 
@@ -1242,8 +1226,7 @@ False Claim #3: −50 reputation, $50 penalty, 30-day suspension
 False Claim #4: Permanent ban from Fury role
 ```
 
-
-***
+---
 
 ### B. Preventing Doer Fraud
 
@@ -1267,8 +1250,7 @@ Strike 3: Forfeit entire challenge + Integrity Score −30 + 90-day ban
 Strike 4: Permanent ban
 ```
 
-
-***
+---
 
 ### C. Judge Quality Control
 
@@ -1286,7 +1268,7 @@ Judge Score =
 - Score < 85 for 10 consecutive cases → lose Judge status
 - Must re-qualify by serving as Fury and reaching Master tier again
 
-***
+---
 
 ## VIII. User Flows (End-to-End)
 
@@ -1329,8 +1311,7 @@ Day 25: Consequences
 └─ Alex complies with real proof, completes challenge (but lost $30 + reputation damage)
 ```
 
-
-***
+---
 
 ### Flow 2: Fury Falsely Accuses Doer
 
@@ -1360,8 +1341,7 @@ Day 19: Consequences
 └─ TriggerHappy warning: "2 more false claims = suspension"
 ```
 
-
-***
+---
 
 ### Flow 3: Judge Resolves Ambiguous Case
 
@@ -1386,15 +1366,14 @@ Day 13: Resolution
 └─ Future Maya challenges require: Enhanced offline proof or Tier 4 verification
 ```
 
-
-***
+---
 
 ## IX. Technical Implementation Notes
 
 ### Proof Storage Architecture
 
 ```
-User uploads video → 
+User uploads video →
   ├─ Client-side hash (SHA-256) generated immediately
   ├─ Hash + metadata written to append-only DB (PostgreSQL + TimescaleDB)
   ├─ Video encrypted (AES-256) → uploaded to S3 Glacier
@@ -1409,7 +1388,7 @@ User uploads video →
 - Root hash published daily to public ledger (Ethereum or similar for auditability)
 - Prevents retroactive editing
 
-***
+---
 
 ### Anomaly Detection ML Pipeline
 
@@ -1426,7 +1405,7 @@ User uploads video →
 - Auto-escalate if score > 70
 - Scores 50–70 → suggest voluntary Fury review to user for transparency bonus
 
-***
+---
 
 ### Judge Dashboard Tech Stack
 
@@ -1444,35 +1423,35 @@ User uploads video →
 - If majority agrees → auto-execute consequences
 - If split → escalate to Master Judge panel
 
-***
+---
 
 ## X. Monetization Beyond Platform Fees
 
 **Additional Revenue Streams:**
 
 1. **Premium Memberships (\$15/month):**
-    - Unlimited challenges (free users: 2 simultaneous max)
-    - Advanced analytics dashboard
-    - Priority Judge resolution (48-hour guarantee)
-    - Custom challenge types
+   - Unlimited challenges (free users: 2 simultaneous max)
+   - Advanced analytics dashboard
+   - Priority Judge resolution (48-hour guarantee)
+   - Custom challenge types
 2. **Corporate Wellness Partnerships:**
-    - Companies sponsor employee leagues
-    - Employer contributes to prize pools
-    - Aggregate anonymized health data reports (HIPAA-compliant)
+   - Companies sponsor employee leagues
+   - Employer contributes to prize pools
+   - Aggregate anonymized health data reports (HIPAA-compliant)
 3. **Fury-as-a-Service API:**
-    - External apps integrate audit layer
-    - Example: Dating app verifies "gym selfies" are real
-    - Per-audit API fee
+   - External apps integrate audit layer
+   - Example: Dating app verifies "gym selfies" are real
+   - Per-audit API fee
 4. **NFT Reputation Badges (Web3 Extension):**
-    - High-integrity users mint "Verified Achiever" NFTs
-    - Transferable reputation across platforms
-    - Small minting fee per badge
+   - High-integrity users mint "Verified Achiever" NFTs
+   - Transferable reputation across platforms
+   - Small minting fee per badge
 5. **Data Insights (Opt-In, Anonymized):**
-    - Aggregate habit success rates by demographic
-    - Sell to research institutions, public health agencies
-    - Users who opt in get small revenue share
+   - Aggregate habit success rates by demographic
+   - Sell to research institutions, public health agencies
+   - Users who opt in get small revenue share
 
-***
+---
 
 ## XI. Roadmap Phases
 
@@ -1484,7 +1463,6 @@ User uploads video →
 - 3-Judge adjudication
 - Web app + iOS/Android apps
 
-
 ### Phase 2: Community (Months 7–12)
 
 - Group Pot challenges (Mode 2)
@@ -1492,7 +1470,6 @@ User uploads video →
 - Fury reputation system + tiering
 - Public dispute resolution log
 - Judge performance tracking
-
 
 ### Phase 3: Competitive (Months 13–18)
 
@@ -1502,7 +1479,6 @@ User uploads video →
 - Video call spot-checks
 - Corporate wellness partnerships
 
-
 ### Phase 4: Ecosystem (Months 19–24)
 
 - API launch for third-party integrations
@@ -1510,7 +1486,7 @@ User uploads video →
 - Governance DAO for rule changes
 - International expansion (localized verification rules)
 
-***
+---
 
 ## XII. Key Success Metrics
 
@@ -1538,7 +1514,7 @@ User uploads video →
 - Integrity Pool utilization (target: 60–80% paid as bounties)
 - Platform fee collection vs. operational costs (target: 40% margin)
 
-***
+---
 
 This spec provides the complete system architecture for Fury Bounty incentives integrated into habit tracking. The key innovations:
 
@@ -1548,4 +1524,3 @@ This spec provides the complete system architecture for Fury Bounty incentives i
 4. **Reputation as currency** builds long-term platform value beyond individual challenges
 
 Next step if needed: detailed wireframes for key screens (Doer dashboard, Fury audit workbench, Judge panel).
-

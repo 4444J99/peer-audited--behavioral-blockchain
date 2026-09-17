@@ -9,35 +9,35 @@
 
 ## Formal Definition (D6)
 
-The **Dispute Resolution Finite State Machine** is a 5-tuple *M* = (*Q*, *Σ*, *δ*FSM, *q*₀, *Q*F) where:
+The **Dispute Resolution Finite State Machine** is a 5-tuple _M_ = (_Q_, _Σ_, *δ*FSM, *q*₀, *Q*F) where:
 
-- *Q* = {*q*₁, *q*₂, *q*₃, *q*₄, *q*₅} (state set)
-- *Σ* = {REVIEW, UPHOLD, OVERTURN, ESCALATE, RE_REVIEW} (input alphabet)
-- *δ*FSM: *Q* × *Σ* → *Q* (transition function, partial)
+- _Q_ = {*q*₁, *q*₂, *q*₃, *q*₄, *q*₅} (state set)
+- _Σ_ = {REVIEW, UPHOLD, OVERTURN, ESCALATE, RE_REVIEW} (input alphabet)
+- *δ*FSM: _Q_ × _Σ_ → _Q_ (transition function, partial)
 - *q*₀ = *q*₁ (initial state)
 - *Q*F = {*q*₄, *q*₅} (terminal/accepting states)
 
 ### State Definitions
 
-| State | Name | Meaning |
-|-------|------|---------|
-| *q*₁ | `FEE_AUTHORIZED_PENDING_REVIEW` | Appeal fee held; awaiting judge assignment |
-| *q*₂ | `IN_REVIEW` | Judge actively reviewing evidence |
-| *q*₃ | `ESCALATED` | Requires additional investigation |
-| *q*₄ | `RESOLVED_UPHELD` | Original verdict stands (terminal) |
-| *q*₅ | `RESOLVED_OVERTURNED` | Original verdict reversed (terminal) |
+| State | Name                            | Meaning                                    |
+| ----- | ------------------------------- | ------------------------------------------ |
+| *q*₁  | `FEE_AUTHORIZED_PENDING_REVIEW` | Appeal fee held; awaiting judge assignment |
+| *q*₂  | `IN_REVIEW`                     | Judge actively reviewing evidence          |
+| *q*₃  | `ESCALATED`                     | Requires additional investigation          |
+| *q*₄  | `RESOLVED_UPHELD`               | Original verdict stands (terminal)         |
+| *q*₅  | `RESOLVED_OVERTURNED`           | Original verdict reversed (terminal)       |
 
 ### Transition Table
 
-| Current State | Input | Next State | Financial Side Effect |
-|--------------|-------|------------|----------------------|
-| *q*₁ | REVIEW | *q*₂ | — |
-| *q*₂ | UPHOLD | *q*₄ | Capture appeal fee as revenue |
-| *q*₂ | OVERTURN | *q*₅ | Cancel appeal fee hold; penalize Furies |
-| *q*₂ | ESCALATE | *q*₃ | Hold appeal fee; flag for investigation |
-| *q*₃ | RE_REVIEW | *q*₂ | — |
-| *q*₃ | UPHOLD | *q*₄ | Capture appeal fee |
-| *q*₃ | OVERTURN | *q*₅ | Cancel appeal fee; penalize Furies |
+| Current State | Input     | Next State | Financial Side Effect                   |
+| ------------- | --------- | ---------- | --------------------------------------- |
+| *q*₁          | REVIEW    | *q*₂       | —                                       |
+| *q*₂          | UPHOLD    | *q*₄       | Capture appeal fee as revenue           |
+| *q*₂          | OVERTURN  | *q*₅       | Cancel appeal fee hold; penalize Furies |
+| *q*₂          | ESCALATE  | *q*₃       | Hold appeal fee; flag for investigation |
+| *q*₃          | RE_REVIEW | *q*₂       | —                                       |
+| *q*₃          | UPHOLD    | *q*₄       | Capture appeal fee                      |
+| *q*₃          | OVERTURN  | *q*₅       | Cancel appeal fee; penalize Furies      |
 
 States *q*₄ and *q*₅ have NO outgoing transitions (terminal).
 
@@ -45,7 +45,7 @@ States *q*₄ and *q*₅ have NO outgoing transitions (terminal).
 
 ## Theorem Statement
 
-**Theorem T6 (Dispute Resolution Properties).** The dispute FSM *M* satisfies:
+**Theorem T6 (Dispute Resolution Properties).** The dispute FSM _M_ satisfies:
 
 **(a) Termination:** Every dispute reaches a terminal state in at most 3 transitions from *q*₁.
 
@@ -62,15 +62,13 @@ States *q*₄ and *q*₅ have NO outgoing transitions (terminal).
 We enumerate all possible paths from *q*₁ and show none exceeds length 3.
 
 **Direct resolution paths (length 2):**
+
 1. *q*₁ →[REVIEW] *q*₂ →[UPHOLD] *q*₄ ✓
 2. *q*₁ →[REVIEW] *q*₂ →[OVERTURN] *q*₅ ✓
 
-**Escalated resolution paths (length 3):**
-3. *q*₁ →[REVIEW] *q*₂ →[ESCALATE] *q*₃ →[UPHOLD] *q*₄ ✓
-4. *q*₁ →[REVIEW] *q*₂ →[ESCALATE] *q*₃ →[OVERTURN] *q*₅ ✓
+**Escalated resolution paths (length 3):** 3. *q*₁ →[REVIEW] *q*₂ →[ESCALATE] *q*₃ →[UPHOLD] *q*₄ ✓ 4. *q*₁ →[REVIEW] *q*₂ →[ESCALATE] *q*₃ →[OVERTURN] *q*₅ ✓
 
-**Re-reviewed paths (length 3+):**
-5. *q*₁ →[REVIEW] *q*₂ →[ESCALATE] *q*₃ →[RE_REVIEW] *q*₂ → …
+**Re-reviewed paths (length 3+):** 5. *q*₁ →[REVIEW] *q*₂ →[ESCALATE] *q*₃ →[RE_REVIEW] *q*₂ → …
 
 Path 5 introduces a cycle: *q*₂ →[ESCALATE] *q*₃ →[RE_REVIEW] *q*₂. In the unbounded case, this cycle could repeat indefinitely.
 
@@ -78,7 +76,7 @@ Path 5 introduces a cycle: *q*₂ →[ESCALATE] *q*₃ →[RE_REVIEW] *q*₂. In
 
 **Practical bound:** To guarantee termination, an administrative policy constraint limits escalation depth. The `resolveDispute()` implementation processes outcomes UPHELD, OVERTURNED, and ESCALATED as exhaustive — there is no fourth option. After at most one escalation cycle, the judge must render a final verdict.
 
-**Formal termination guarantee (with bounded escalation):** If we impose the policy constraint that ESCALATE can be invoked at most *k* times per dispute (with *k* = 1 as the default), then the maximum path length is 2 + *k* = 3.
+**Formal termination guarantee (with bounded escalation):** If we impose the policy constraint that ESCALATE can be invoked at most _k_ times per dispute (with _k_ = 1 as the default), then the maximum path length is 2 + _k_ = 3.
 
 Without the policy bound, termination is guaranteed by the judge's obligation to eventually select UPHOLD or OVERTURN (a liveness assumption on the human actor). ✓
 
@@ -86,17 +84,17 @@ Without the policy bound, termination is guaranteed by the judge's obligation to
 
 We verify by exhaustive enumeration that no (state, input) pair maps to multiple next states.
 
-| State | Input | Next State | Unique? |
-|-------|-------|------------|---------|
-| *q*₁ | REVIEW | *q*₂ | ✓ |
-| *q*₂ | UPHOLD | *q*₄ | ✓ |
-| *q*₂ | OVERTURN | *q*₅ | ✓ |
-| *q*₂ | ESCALATE | *q*₃ | ✓ |
-| *q*₃ | RE_REVIEW | *q*₂ | ✓ |
-| *q*₃ | UPHOLD | *q*₄ | ✓ |
-| *q*₃ | OVERTURN | *q*₅ | ✓ |
-| *q*₄ | (any) | undefined | Terminal — no transitions |
-| *q*₅ | (any) | undefined | Terminal — no transitions |
+| State | Input     | Next State | Unique?                   |
+| ----- | --------- | ---------- | ------------------------- |
+| *q*₁  | REVIEW    | *q*₂       | ✓                         |
+| *q*₂  | UPHOLD    | *q*₄       | ✓                         |
+| *q*₂  | OVERTURN  | *q*₅       | ✓                         |
+| *q*₂  | ESCALATE  | *q*₃       | ✓                         |
+| *q*₃  | RE_REVIEW | *q*₂       | ✓                         |
+| *q*₃  | UPHOLD    | *q*₄       | ✓                         |
+| *q*₃  | OVERTURN  | *q*₅       | ✓                         |
+| *q*₄  | (any)     | undefined  | Terminal — no transitions |
+| *q*₅  | (any)     | undefined  | Terminal — no transitions |
 
 No row has multiple next states. The transition function is a partial function (defined on 7 of 5×5 = 25 possible pairs), and wherever defined, it is single-valued. ✓
 
@@ -117,6 +115,7 @@ TypeScript's type system restricts `outcome` to the union `'UPHELD' | 'OVERTURNE
 For each terminal state, we verify the financial side effect:
 
 **Terminal *q*₄ (RESOLVED_UPHELD):**
+
 - Appeal fee: **captured** as platform revenue
 - Proof status: REJECTED (original Fury verdict stands)
 - Furies: no penalty (they were correct)
@@ -130,6 +129,7 @@ case 'UPHELD':
 ```
 
 **Terminal *q*₅ (RESOLVED_OVERTURNED):**
+
 - Appeal fee: **cancelled** (returned to appellant)
 - Proof status: VERIFIED (overriding Fury rejection)
 - Furies: penalized (−10 integrity for incorrect FAIL voters)
@@ -178,16 +178,16 @@ Double-bracketed states [[·]] are terminal.
 
 ## Code-to-Proof Mapping
 
-| Proof Element | Code Location | Line(s) |
-|--------------|---------------|---------|
-| Initial state | `dispute.service.ts:initiateAppeal()` | L122–126 |
-| Appeal fee hold | `dispute.service.ts:initiateAppeal()` | L101 |
-| State transitions | `dispute.service.ts:resolveDispute()` | L336–377 |
-| UPHELD outcome | `dispute.service.ts:resolveDispute()` | L337–347 |
-| OVERTURNED outcome | `dispute.service.ts:resolveDispute()` | L350–370 |
-| ESCALATED outcome | `dispute.service.ts:resolveDispute()` | L373–376 |
+| Proof Element       | Code Location                         | Line(s)  |
+| ------------------- | ------------------------------------- | -------- |
+| Initial state       | `dispute.service.ts:initiateAppeal()` | L122–126 |
+| Appeal fee hold     | `dispute.service.ts:initiateAppeal()` | L101     |
+| State transitions   | `dispute.service.ts:resolveDispute()` | L336–377 |
+| UPHELD outcome      | `dispute.service.ts:resolveDispute()` | L337–347 |
+| OVERTURNED outcome  | `dispute.service.ts:resolveDispute()` | L350–370 |
+| ESCALATED outcome   | `dispute.service.ts:resolveDispute()` | L373–376 |
 | Stripe side effects | `dispute.service.ts:resolveDispute()` | L393–415 |
-| Truth log audit | `dispute.service.ts:resolveDispute()` | L427–436 |
+| Truth log audit     | `dispute.service.ts:resolveDispute()` | L427–436 |
 
 ---
 

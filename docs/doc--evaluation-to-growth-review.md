@@ -37,6 +37,7 @@ The API separates pure business logic (`src/api/services/`) from HTTP/DI wiring 
 
 **S2. Parameterized SQL everywhere**
 Every database query across all 15+ service files uses parameterized placeholders (`$1`, `$2`, etc.). No string interpolation, no template literals building SQL. Zero SQL injection vectors found.
+
 - `src/api/services/ledger/ledger.service.ts:37` — `[debitAccountId, creditAccountId, amount, ...]`
 - `src/api/src/modules/auth/auth.service.ts:61` — `'SELECT id FROM users WHERE email = $1', [email]`
 
@@ -45,12 +46,14 @@ The `TruthLogService` implements a SHA-256 hash chain with `FOR UPDATE` row lock
 
 **S4. Fail-closed production guards**
 Critical services hard-fail if production env vars are missing:
+
 - `src/api/src/main.ts:56-57` — CORS_ORIGINS required in production
 - `src/api/src/modules/auth/auth.service.ts:11-12` — JWT_SECRET required in production
 - `src/api/services/escrow/stripe.service.ts:14-18` — STRIPE_SECRET_KEY required and cannot be mock value
 
 **S5. CSRF double-submit cookie protection**
 Cookie-based auth requests require a matching `x-csrf-token` header and `styx_csrf_token` cookie for all mutating methods (POST/PUT/PATCH/DELETE). The guard correctly skips CSRF validation for Bearer token auth and SSE ticket auth.
+
 - `src/api/guards/auth.guard.ts:40-42` — CSRF enforcement
 - `src/api/guards/auth.guard.ts:72-85` — Method and token validation
 
@@ -59,6 +62,7 @@ Cookie-based auth requests require a matching `x-csrf-token` header and `styx_cs
 
 **S7. Seven-gate CI pipeline**
 Beyond standard lint/build/test, the CI includes:
+
 - Gate 04: Redacted build check (no gambling vocabulary in production output)
 - Gate 05: Behavioral physics check (constants match specification)
 - Gate 06: Security invariant check (no hardcoded secrets in build output)
@@ -80,11 +84,13 @@ Every request gets a UUID trace ID propagated through headers (`x-styx-request-i
 
 **W1. Module-scoped mutable auth token**
 `src/web/services/api-client.ts:7-8` stores `currentToken` and `currentCsrfToken` as module-level `let` variables. This creates two problems:
+
 1. **SSR token leakage**: In Next.js server-side rendering, module scope is shared across all concurrent requests, so one user's token could be visible to another's request.
 2. **Page refresh amnesia**: After a browser refresh, the in-memory token is lost. The `useFuryStore.connectStream()` checks this token (`src/web/store/useFuryStore.ts:36-39`) and refuses to start polling if it's empty — even though cookie auth would work. This means Fury polling breaks on page refresh.
 
 **W2. `as any` casts in financial code**
 The Stripe service returns minimal mock objects cast as `any` in dev mode:
+
 - `src/api/services/escrow/stripe.service.ts:52` — Mock PaymentIntent with 4 of ~30 fields
 - `src/api/services/escrow/stripe.service.ts:67,75` — Same pattern for capture/cancel
 
@@ -95,6 +101,7 @@ JWT tokens expire after 24 hours (`src/api/src/modules/auth/auth.service.ts:7`) 
 
 **W4. Linguistic cloaker lacks word boundaries**
 `src/web/utils/linguistic-cloak.ts:13-14` — The "bet" pattern matches the substring `bet` anywhere (case-insensitive), transforming:
+
 - "between" → "commitmentween"
 - "better" → "commitmentter"
 - "Elizabeth" → "Elizacommitment"
@@ -130,6 +137,7 @@ The integrity score tier system (`src/shared/libs/integrity.ts:46-82`) allows `T
 All shared constants (`LOSS_AVERSION_COEFFICIENT = 1.955`, `DOWNSCALE_STRIKE_THRESHOLD = 3`, `FAILURE_COOL_OFF_DAYS = 7`, `MISSED_ATTESTATION_AUTO_FAIL = 3`, `MAX_NOCONTACT_DURATION_DAYS = 30`, `MAX_NOCONTACT_TARGETS = 3`) match the specification values in CLAUDE.md. Gate 05 in CI validates this at build time (when configured).
 
 **LC6. Database schema constraints align with service logic**
+
 - `entries.amount > 0` constraint (`schema.sql:17`) mirrors `LedgerService.recordTransaction` guard (`ledger.service.ts:19`)
 - `contracts.stake_amount > 0` constraint (`schema.sql:57`) mirrors Aegis validation
 - `attestations (contract_id, attestation_date) UNIQUE` (`schema.sql:112`) prevents double daily attestations
@@ -148,6 +156,7 @@ The `LOSS_AVERSION_COEFFICIENT = 1.955` (`src/shared/libs/behavioral-logic.ts:54
 
 **LO3. Jurisdiction tiers map to actual US gambling law doctrine**
 `src/api/services/geofencing.ts` classifies all 50 US states + DC into three tiers based on legal standards:
+
 - TIER_1 (Predominance doctrine) — 33 states + DC — full access
 - TIER_2 (Material Element doctrine) — 11 states — refund only
 - TIER_3 (Any Chance doctrine) — 6 states (WA, AR, HI, UT, ID, SC) — hard block
@@ -167,12 +176,13 @@ The intelligence service injects known-outcome "honeypot" proofs into the Fury a
 **PA1. Aegis protocol prevents emotional self-harm**
 `src/api/services/health/aegis.service.ts:17-26` — The $500 absolute stake cap, combined with the 3-failure downscale to $50 (`aegis.service.ts:37-42`), directly addresses "revenge staking" — the behavioral finance pattern where users double down after losses. The error messages are deliberately verbose and educational:
 
-> *"Aegis Violation: Proposed stake ($X) exceeds the absolute psychological safety ceiling of $500. Contract rejected to prevent emotional self-harm."*
+> _"Aegis Violation: Proposed stake ($X) exceeds the absolute psychological safety ceiling of $500. Contract rejected to prevent emotional self-harm."_
 
 This is not just input validation — it is a product that actively refuses to let users hurt themselves.
 
 **PA2. Recovery protocol enforces accountability and prevents isolation**
 `src/api/services/health/recovery-protocol.service.ts:25-80` — Recovery contracts (e.g., no-contact commitments) require:
+
 - An accountability partner email (line 39)
 - Maximum 3 no-contact targets to prevent self-isolation (line 62)
 - Maximum 30-day duration with forced renewal (line 47)
@@ -200,7 +210,7 @@ The bootstrap sequence (`src/api/src/main.ts`) applies: Helmet security headers,
 `src/api/src/modules/auth/auth.service.ts:111-128` — All login failure modes (missing user, missing password hash, inactive account, wrong password) return the identical message `"Invalid email or password"`. This prevents attackers from discovering which emails are registered.
 
 **ET4. Beta transparency**
-`src/api/src/modules/beta/beta.controller.ts:14-24` — Feature flags explicitly declare `privateBeta: true`, `testMoneyMode: true`, and `allowlistUsOnly: true`. The mobile bootstrap endpoint exposes a clear compliance notice: *"Private beta access is limited to invited US allowlist participants. Identity/KYC flows remain non-production in this pilot."* This is honest communication about the system's maturity.
+`src/api/src/modules/beta/beta.controller.ts:14-24` — Feature flags explicitly declare `privateBeta: true`, `testMoneyMode: true`, and `allowlistUsOnly: true`. The mobile bootstrap endpoint exposes a clear compliance notice: _"Private beta access is limited to invited US allowlist participants. Identity/KYC flows remain non-production in this pilot."_ This is honest communication about the system's maturity.
 
 **ET5. CI enforces code integrity**
 CodeQL static analysis, `npm audit --audit-level=high`, Terraform validation, Playwright E2E on both Chromium and Firefox, and four custom validation gates. The pipeline runs on every push to main and every PR. This demonstrates engineering discipline.
@@ -212,24 +222,28 @@ CodeQL static analysis, `npm audit --audit-level=high`, Terraform validation, Pl
 ### 2.1 Synthesis (Contradictions → Resolution)
 
 **C1. Registration leaks email existence despite anti-enumeration on login**
+
 - **Login** (`auth.service.ts:111-128`): Uniform error message prevents enumeration
 - **Registration** (`auth.service.ts:63`): `ConflictException('Email already registered')` reveals whether an email exists
 
 **Resolution**: This is a deliberate UX tradeoff. Fully hiding email existence on registration creates a confusing experience ("I registered but got no confirmation?"). The standard industry approach is to accept the registration and send a "if this email exists..." email. For Styx's current beta phase with an allowlist, the current approach is acceptable but should be revisited before public launch.
 
 **C2. Aegis $500 cap vs. integrity tier system unlimited staking**
+
 - **Aegis** (`aegis.service.ts:17`): Hard cap at $500 for all users
 - **Integrity tiers** (`integrity.ts:46-82`): TIER_4 allows unlimited stakes
 
-**Resolution**: Aegis is the final safety gate, not the tier system. The tier system determines *eligibility* (what you could theoretically do), while Aegis determines *safety* (what you should actually be allowed to do). The $500 cap should be documented as the Aegis override, and TIER_4 should be annotated as "unlimited subject to Aegis safety ceiling." This is not a bug — it's an undocumented design decision.
+**Resolution**: Aegis is the final safety gate, not the tier system. The tier system determines _eligibility_ (what you could theoretically do), while Aegis determines _safety_ (what you should actually be allowed to do). The $500 cap should be documented as the Aegis override, and TIER_4 should be annotated as "unlimited subject to Aegis safety ceiling." This is not a bug — it's an undocumented design decision.
 
 **C3. SSE infrastructure exists but web client uses polling**
+
 - **API**: SSE ticket/cookie endpoints exist for both notifications and Fury streams
 - **Web**: `useFuryStore.ts` uses 5-second HTTP polling; `NotificationPanel.tsx` attempts SSE but falls back to 30-second polling
 
 **Resolution**: The SSE → polling migration was a pragmatic response to Vercel's serverless deployment (SSE requires persistent connections). `NotificationPanel.tsx:37-107` shows the correct pattern: try SSE first, fall back to polling with reconnection attempts. `useFuryStore.ts` should adopt the same pattern rather than polling-only.
 
 **C4. `signToken` is public but used only internally**
+
 - `src/api/src/modules/auth/auth.service.ts:134` — `signToken` is not marked `private`
 - All callers are internal methods within `AuthService`
 
@@ -247,7 +261,7 @@ CodeQL static analysis, `npm audit --audit-level=high`, Terraform validation, Pl
 **Impact**: The "blockchain of truth" marketing claim rests on an integrity mechanism that is defined but dormant. A compromised database administrator could modify event_log rows without detection.
 
 **BS2. No database-level immutability on event_log**
-`src/api/database/schema.sql:23-30` — The `event_log` table has no `BEFORE UPDATE OR DELETE` trigger to prevent row modification. The hash chain provides tamper *detection* (via the unexecuted `verifyChain`), but not tamper *prevention*. Any `UPDATE` or `DELETE` query against `event_log` will succeed silently.
+`src/api/database/schema.sql:23-30` — The `event_log` table has no `BEFORE UPDATE OR DELETE` trigger to prevent row modification. The hash chain provides tamper _detection_ (via the unexecuted `verifyChain`), but not tamper _prevention_. Any `UPDATE` or `DELETE` query against `event_log` will succeed silently.
 
 **BS3. GDPR data export/deletion not implemented**
 The system handles financial data for users who may be in EU-adjacent jurisdictions (non-US users default to TIER_1 full access per `src/api/services/security/geofence.service.ts:24`). The `api.deleteAccount()` endpoint exists on the web client (`src/web/services/api-client.ts:412-415`), but there is no evidence of a GDPR-compliant data export flow or right-to-erasure implementation that handles the ledger's immutability constraints.
@@ -267,6 +281,7 @@ The auth throttle (`auth.controller.ts:59`) limits to 5 login attempts per minut
 
 **SP1. Security Gate 06 is silently broken** (Critical)
 `scripts/validation/06-security-invariant-check.ts:59` — The recursive call to `collectFiles(full)` omits the required `extensions` parameter (defined on line 50 as `collectFiles(dir: string, extensions: Set<string>)`). When the function recurses into a subdirectory:
+
 1. `extensions` is `undefined`
 2. Line 60 (`extensions.has(extname(full))`) throws `TypeError: Cannot read properties of undefined (reading 'has')`
 3. The `try/catch` on line 56-65 catches the error silently ("Skip unreadable files")
@@ -312,6 +327,7 @@ The concept of context-aware vocabulary swapping for platform compliance is nove
 ### 4.2 Evolve — Strategic Roadmap
 
 #### Phase Alpha: Security Hardening (Immediate — Sprint 11)
+
 1. Fix Gate 06 `collectFiles` recursive call to pass `extensions` parameter
 2. Add Stripe idempotency keys to all write operations
 3. Fix linguistic cloaker word-boundary bugs
@@ -320,6 +336,7 @@ The concept of context-aware vocabulary swapping for platform compliance is nove
 6. Add missing ledger indexes (`entries.debit_account_id`, `entries.credit_account_id`, `entries.contract_id`)
 
 #### Phase Beta: Integrity Assurance (Sprint 12-13)
+
 1. Implement `verifyChain()` as a scheduled job (daily) and admin endpoint
 2. Add `BEFORE UPDATE OR DELETE` trigger on `event_log` table for immutability
 3. Implement account lockout after N failed login attempts
@@ -327,12 +344,14 @@ The concept of context-aware vocabulary swapping for platform compliance is nove
 5. Migrate `useFuryStore` from polling-only to SSE-with-polling-fallback (matching `NotificationPanel` pattern)
 
 #### Phase Gamma: Financial Precision (Sprint 14)
+
 1. Migrate ledger amounts from floating-point to integer cents throughout stack
 2. Add Stripe webhook signature verification audit
 3. Implement BMI floor and weight velocity cap in Aegis service
 4. Add explicit `{ algorithms: ['HS256'] }` to all `jwt.verify()` calls
 
 #### Phase Delta: Compliance & Scale (Sprint 15-16)
+
 1. Implement GDPR data export and right-to-erasure (with ledger anonymization strategy)
 2. Add VPN detection or require identity verification for geofenced jurisdictions
 3. Extract auth-check pattern into Next.js middleware
@@ -342,29 +361,29 @@ The concept of context-aware vocabulary swapping for platform compliance is nove
 
 ### 4.3 Evolve — Prioritized Implementation Tasks
 
-| # | Priority | Task | File(s) | Effort |
-|---|----------|------|---------|--------|
-| 1 | P0-Critical | Fix `collectFiles` recursive call: add `extensions` parameter | `scripts/validation/06-security-invariant-check.ts:59` | 1 line |
-| 2 | P0-Critical | Add Stripe idempotency keys to `paymentIntents.create` | `src/api/services/escrow/stripe.service.ts:54` | S |
-| 3 | P0-Critical | Add `\b` word boundaries to linguistic cloaker regex patterns | `src/web/utils/linguistic-cloak.ts:13-14` | S |
-| 4 | P1-High | Validate `dateOfBirth` is a real date before age calculation | `src/api/src/modules/auth/auth.service.ts:50-57` | S |
-| 5 | P1-High | Make `signToken` private | `src/api/src/modules/auth/auth.service.ts:134` | 1 line |
-| 6 | P1-High | Add indexes on `entries.debit_account_id`, `credit_account_id`, `contract_id` | `src/api/database/schema.sql` | S |
-| 7 | P1-High | Schedule daily `verifyChain()` execution + admin endpoint | `src/api/services/ledger/truth-log.service.ts` | M |
-| 8 | P1-High | Add `BEFORE UPDATE OR DELETE` trigger on `event_log` | `src/api/database/schema.sql` | S |
-| 9 | P2-Medium | Implement JWT refresh token flow | `src/api/src/modules/auth/auth.service.ts`, `src/web/contexts/AuthContext.tsx` | L |
-| 10 | P2-Medium | Fix `useFuryStore` token check to work with cookie auth | `src/web/store/useFuryStore.ts:36-39` | S |
-| 11 | P2-Medium | Migrate `useFuryStore` to SSE-with-fallback pattern | `src/web/store/useFuryStore.ts` | M |
-| 12 | P2-Medium | Implement account lockout after N failed login attempts | `src/api/src/modules/auth/auth.service.ts` | M |
-| 13 | P2-Medium | Implement BMI floor and weight velocity cap in Aegis | `src/api/services/health/aegis.service.ts` | M |
-| 14 | P2-Medium | Move poll timer out of Zustand state to closure ref | `src/web/store/useFuryStore.ts:56` | S |
-| 15 | P3-Low | Migrate ledger amounts to integer cents | `src/api/services/ledger/ledger.service.ts`, `src/shared/libs/`, multiple services | XL |
-| 16 | P3-Low | Add `{ algorithms: ['HS256'] }` to `jwt.verify()` calls | `src/api/guards/auth.guard.ts:49`, `auth.service.ts:142,167` | S |
-| 17 | P3-Low | Implement GDPR data export and right-to-erasure | Multiple files | XL |
-| 18 | P3-Low | Extract web auth-check into Next.js middleware | `src/web/` pages | M |
+| #   | Priority    | Task                                                                          | File(s)                                                                            | Effort |
+| --- | ----------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------ |
+| 1   | P0-Critical | Fix `collectFiles` recursive call: add `extensions` parameter                 | `scripts/validation/06-security-invariant-check.ts:59`                             | 1 line |
+| 2   | P0-Critical | Add Stripe idempotency keys to `paymentIntents.create`                        | `src/api/services/escrow/stripe.service.ts:54`                                     | S      |
+| 3   | P0-Critical | Add `\b` word boundaries to linguistic cloaker regex patterns                 | `src/web/utils/linguistic-cloak.ts:13-14`                                          | S      |
+| 4   | P1-High     | Validate `dateOfBirth` is a real date before age calculation                  | `src/api/src/modules/auth/auth.service.ts:50-57`                                   | S      |
+| 5   | P1-High     | Make `signToken` private                                                      | `src/api/src/modules/auth/auth.service.ts:134`                                     | 1 line |
+| 6   | P1-High     | Add indexes on `entries.debit_account_id`, `credit_account_id`, `contract_id` | `src/api/database/schema.sql`                                                      | S      |
+| 7   | P1-High     | Schedule daily `verifyChain()` execution + admin endpoint                     | `src/api/services/ledger/truth-log.service.ts`                                     | M      |
+| 8   | P1-High     | Add `BEFORE UPDATE OR DELETE` trigger on `event_log`                          | `src/api/database/schema.sql`                                                      | S      |
+| 9   | P2-Medium   | Implement JWT refresh token flow                                              | `src/api/src/modules/auth/auth.service.ts`, `src/web/contexts/AuthContext.tsx`     | L      |
+| 10  | P2-Medium   | Fix `useFuryStore` token check to work with cookie auth                       | `src/web/store/useFuryStore.ts:36-39`                                              | S      |
+| 11  | P2-Medium   | Migrate `useFuryStore` to SSE-with-fallback pattern                           | `src/web/store/useFuryStore.ts`                                                    | M      |
+| 12  | P2-Medium   | Implement account lockout after N failed login attempts                       | `src/api/src/modules/auth/auth.service.ts`                                         | M      |
+| 13  | P2-Medium   | Implement BMI floor and weight velocity cap in Aegis                          | `src/api/services/health/aegis.service.ts`                                         | M      |
+| 14  | P2-Medium   | Move poll timer out of Zustand state to closure ref                           | `src/web/store/useFuryStore.ts:56`                                                 | S      |
+| 15  | P3-Low      | Migrate ledger amounts to integer cents                                       | `src/api/services/ledger/ledger.service.ts`, `src/shared/libs/`, multiple services | XL     |
+| 16  | P3-Low      | Add `{ algorithms: ['HS256'] }` to `jwt.verify()` calls                       | `src/api/guards/auth.guard.ts:49`, `auth.service.ts:142,167`                       | S      |
+| 17  | P3-Low      | Implement GDPR data export and right-to-erasure                               | Multiple files                                                                     | XL     |
+| 18  | P3-Low      | Extract web auth-check into Next.js middleware                                | `src/web/` pages                                                                   | M      |
 
 **Size guide**: S = < 2 hours, M = 2-8 hours, L = 1-2 days, XL = 3+ days
 
 ---
 
-*Generated by the Evaluation-to-Growth framework. All findings cite specific file paths and line numbers verified against the codebase as of 2026-02-28.*
+_Generated by the Evaluation-to-Growth framework. All findings cite specific file paths and line numbers verified against the codebase as of 2026-02-28._

@@ -1,4 +1,4 @@
-import p5 from 'p5';
+import p5 from "p5";
 
 export const furyNetwork = (p: p5) => {
   let isFraud = false;
@@ -31,7 +31,7 @@ export const furyNetwork = (p: p5) => {
     p.noStroke();
     p.textAlign(p.CENTER, p.CENTER);
     p.textSize(13);
-    p.text('USER', cx, cy);
+    p.text("USER", cx, cy);
 
     // 3 Fury nodes
     for (let i = 0; i < 3; i++) {
@@ -46,7 +46,7 @@ export const furyNetwork = (p: p5) => {
       p.fill(255);
       p.noStroke();
       p.textSize(12);
-      p.text('FURY', x, y);
+      p.text("FURY", x, y);
 
       // Bounty particles on fraud
       if (isFraud) {
@@ -65,7 +65,7 @@ export const furyNetwork = (p: p5) => {
       p.textSize(18);
       p.textStyle(p.BOLD);
       p.textAlign(p.CENTER, p.CENTER);
-      p.text('FRAUD DETECTED: BOUNTY PAID', cx, cy - r - 40);
+      p.text("FRAUD DETECTED: BOUNTY PAID", cx, cy - r - 40);
       p.textStyle(p.NORMAL);
       flashAlpha -= 4;
     }

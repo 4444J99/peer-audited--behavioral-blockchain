@@ -1,9 +1,9 @@
-import { Injectable, Logger, Optional, Inject } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { Pool } from 'pg';
-import { ContractsService } from './contracts.service';
-import { NotificationsService } from '../notifications/notifications.service';
-import { NOCONTACT_MISS_STRIKE_THRESHOLD } from '../../../../shared/libs/behavioral-logic';
+import { Injectable, Logger, Optional, Inject } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { Pool } from "pg";
+import { ContractsService } from "./contracts.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { NOCONTACT_MISS_STRIKE_THRESHOLD } from "../../../../shared/libs/behavioral-logic";
 
 @Injectable()
 export class AttestationScheduler {
@@ -12,7 +12,8 @@ export class AttestationScheduler {
   constructor(
     private readonly pool: Pool,
     private readonly contractsService: ContractsService,
-    @Optional() @Inject(NotificationsService)
+    @Optional()
+    @Inject(NotificationsService)
     private readonly notifications?: NotificationsService,
   ) {}
 
@@ -37,7 +38,9 @@ export class AttestationScheduler {
     );
 
     if (result.rows.length > 0) {
-      this.logger.log(`Created ${result.rows.length} pending attestation(s) for today.`);
+      this.logger.log(
+        `Created ${result.rows.length} pending attestation(s) for today.`,
+      );
     }
   }
 
@@ -45,7 +48,7 @@ export class AttestationScheduler {
    * Midnight: Mark yesterday's PENDING attestations as MISSED,
    * apply strikes, and auto-FAIL contracts that hit the threshold.
    */
-  @Cron('0 0 * * *')
+  @Cron("0 0 * * *")
   async processExpiredAttestations(): Promise<void> {
     // 1. Find all PENDING attestations from yesterday
     const missed = await this.pool.query(
@@ -67,7 +70,10 @@ export class AttestationScheduler {
     //    yesterday, but a catch-up run after downtime can surface several days.)
     const missedCountByContract = new Map<string, number>();
     for (const r of missed.rows) {
-      missedCountByContract.set(r.contract_id, (missedCountByContract.get(r.contract_id) || 0) + 1);
+      missedCountByContract.set(
+        r.contract_id,
+        (missedCountByContract.get(r.contract_id) || 0) + 1,
+      );
     }
 
     for (const [contractId, missedCount] of missedCountByContract) {
@@ -100,11 +106,13 @@ export class AttestationScheduler {
           const { user_id, strikes } = updated.rows[0];
 
           if (strikes >= NOCONTACT_MISS_STRIKE_THRESHOLD) {
-            this.logger.log(`Contract ${contractId} hit ${NOCONTACT_MISS_STRIKE_THRESHOLD} missed attestations — auto-FAIL.`);
+            this.logger.log(
+              `Contract ${contractId} hit ${NOCONTACT_MISS_STRIKE_THRESHOLD} missed attestations — auto-FAIL.`,
+            );
             // resolveContract is idempotent (it re-checks and locks the status),
             // so even if this throws transiently and a later run retries, it will
             // not double-settle: the conditional status claim only succeeds once.
-            await this.contractsService.resolveContract(contractId, 'FAILED');
+            await this.contractsService.resolveContract(contractId, "FAILED");
             // Threshold reached — remaining missed days for this contract are moot
             // (it is now resolved); stop here rather than over-counting strikes.
             break;
@@ -114,7 +122,11 @@ export class AttestationScheduler {
           // THIS miss. Doing it per-step means a catch-up still delivers the
           // pre-threshold interventions instead of a single batched notification.
           if (this.notifications) {
-            await this.notifications.createRainNotification(user_id, contractId, 'MISSED_ATTESTATION');
+            await this.notifications.createRainNotification(
+              user_id,
+              contractId,
+              "MISSED_ATTESTATION",
+            );
           }
         }
       } catch (err) {

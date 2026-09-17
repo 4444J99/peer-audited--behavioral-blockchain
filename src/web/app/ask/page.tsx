@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { ChatInterface } from '../../components/chat/ChatInterface';
+import { ChatInterface } from "../../components/chat/ChatInterface";
 
 export default function AskPage() {
   return (

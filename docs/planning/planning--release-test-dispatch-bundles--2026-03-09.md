@@ -184,13 +184,13 @@ Done when:
 
 ## Rollup
 
-| Bundle | Automated tests |
-|---|---:|
-| `A` Runtime Truth | `320` |
-| `B` Surface Truth | `45` |
+| Bundle                        |                Automated tests |
+| ----------------------------- | -----------------------------: |
+| `A` Runtime Truth             |                          `320` |
+| `B` Surface Truth             |                           `45` |
 | `C` Financial + Release Truth | `49` required / `64` preferred |
-| **Required total** | **414** |
-| **Preferred total** | **429** |
+| **Required total**            |                        **414** |
+| **Preferred total**           |                        **429** |
 
 ## Fastest Dispatch Option
 

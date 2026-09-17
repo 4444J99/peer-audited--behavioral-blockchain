@@ -1,10 +1,10 @@
-import Link from 'next/link';
-import type { Metadata } from 'next';
+import Link from "next/link";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Styx | The Concentric Circles',
+  title: "Styx | The Concentric Circles",
   description:
-    'A guided index of every live Styx demo surface, organized by product circle: consumer wedge, commitment loop, proof integrity, retention pods, and enterprise.',
+    "A guided index of every live Styx demo surface, organized by product circle: consumer wedge, commitment loop, proof integrity, retention pods, and enterprise.",
 };
 
 interface DemoSurface {
@@ -24,97 +24,98 @@ interface Circle {
 
 const CIRCLES: Circle[] = [
   {
-    letter: 'α',
-    name: 'Circle Alpha — The Wedge',
-    tagline: 'Consumer no-contact recovery: the public face and the funnel.',
-    accent: 'text-red-500',
-    ring: 'border-red-600/40',
+    letter: "α",
+    name: "Circle Alpha — The Wedge",
+    tagline: "Consumer no-contact recovery: the public face and the funnel.",
+    accent: "text-red-500",
+    ring: "border-red-600/40",
     surfaces: [
       {
-        href: '/',
-        label: 'Landing',
-        look: 'Recovery-first framing with a single CTA into the beta — no money or audit language above the fold.',
+        href: "/",
+        label: "Landing",
+        look: "Recovery-first framing with a single CTA into the beta — no money or audit language above the fold.",
       },
       {
-        href: '/beta',
-        label: 'Beta Waitlist',
-        look: 'The signup funnel: source attribution, qualification fields, and the confirmation flow that feeds cohorts.',
+        href: "/beta",
+        label: "Beta Waitlist",
+        look: "The signup funnel: source attribution, qualification fields, and the confirmation flow that feeds cohorts.",
       },
     ],
   },
   {
-    letter: 'β',
-    name: 'Circle Beta — The Loop',
-    tagline: 'Commitment contracts: stake, attest daily, resolve.',
-    accent: 'text-orange-400',
-    ring: 'border-orange-500/40',
+    letter: "β",
+    name: "Circle Beta — The Loop",
+    tagline: "Commitment contracts: stake, attest daily, resolve.",
+    accent: "text-orange-400",
+    ring: "border-orange-500/40",
     surfaces: [
       {
-        href: '/contracts/new',
-        label: 'New Oath',
-        look: 'Contract creation — oath category, stake amount, duration, and verification method form the core commitment device.',
+        href: "/contracts/new",
+        label: "New Oath",
+        look: "Contract creation — oath category, stake amount, duration, and verification method form the core commitment device.",
       },
     ],
   },
   {
-    letter: 'γ',
-    name: 'Circle Gamma — Proof Integrity',
-    tagline: 'Trust machinery: anonymous audit, identity, and jurisdiction control.',
-    accent: 'text-yellow-400',
-    ring: 'border-yellow-500/40',
+    letter: "γ",
+    name: "Circle Gamma — Proof Integrity",
+    tagline:
+      "Trust machinery: anonymous audit, identity, and jurisdiction control.",
+    accent: "text-yellow-400",
+    ring: "border-yellow-500/40",
     surfaces: [
       {
-        href: '/fury',
-        label: 'Fury Queue',
-        look: 'The anonymous peer-audit bench: masked subject aliases, honeypot reveals, and PASS/FAIL verdicts.',
+        href: "/fury",
+        label: "Fury Queue",
+        look: "The anonymous peer-audit bench: masked subject aliases, honeypot reveals, and PASS/FAIL verdicts.",
       },
       {
-        href: '/kyc',
-        label: 'Identity Verification',
-        look: 'KYC and age-check document flow — the compliance gate between test-money and real-money tiers.',
+        href: "/kyc",
+        label: "Identity Verification",
+        look: "KYC and age-check document flow — the compliance gate between test-money and real-money tiers.",
       },
       {
-        href: '/admin/jurisdictions',
-        label: 'Jurisdiction Switchboard',
-        look: 'Per-region disposition modes and tiering — how the protocol adapts stake handling to local law.',
+        href: "/admin/jurisdictions",
+        label: "Jurisdiction Switchboard",
+        look: "Per-region disposition modes and tiering — how the protocol adapts stake handling to local law.",
       },
     ],
   },
   {
-    letter: 'δ',
-    name: 'Circle Delta — Retention',
-    tagline: 'Pods, realms, and the social fabric that keeps streaks alive.',
-    accent: 'text-green-400',
-    ring: 'border-green-500/40',
+    letter: "δ",
+    name: "Circle Delta — Retention",
+    tagline: "Pods, realms, and the social fabric that keeps streaks alive.",
+    accent: "text-green-400",
+    ring: "border-green-500/40",
     surfaces: [
       {
-        href: '/tavern',
-        label: 'The Tavern Board',
-        look: 'Real-time network activity — the ambient proof that other people are holding their lines too.',
+        href: "/tavern",
+        label: "The Tavern Board",
+        look: "Real-time network activity — the ambient proof that other people are holding their lines too.",
       },
       {
-        href: '/realms',
-        label: 'Behavioral Realms',
-        look: 'Domain separation: each behavioral stream gets its own realm, oracle, and specialized auditors.',
+        href: "/realms",
+        label: "Behavioral Realms",
+        look: "Domain separation: each behavioral stream gets its own realm, oracle, and specialized auditors.",
       },
     ],
   },
   {
-    letter: 'Ω',
-    name: 'Circle Omega — The Enterprise',
-    tagline: 'B2B and clinical tiers built on the same attestation substrate.',
-    accent: 'text-blue-400',
-    ring: 'border-blue-500/40',
+    letter: "Ω",
+    name: "Circle Omega — The Enterprise",
+    tagline: "B2B and clinical tiers built on the same attestation substrate.",
+    accent: "text-blue-400",
+    ring: "border-blue-500/40",
     surfaces: [
       {
-        href: '/practitioner',
-        label: 'Practitioner Console',
-        look: 'Composite risk profiles, trend detection, and journal alerts for a clinician’s assigned clients.',
+        href: "/practitioner",
+        label: "Practitioner Console",
+        look: "Composite risk profiles, trend detection, and journal alerts for a clinician’s assigned clients.",
       },
       {
-        href: '/hr',
-        label: 'Enterprise Analytics',
-        look: 'Anonymized workforce metrics — completion rate and risk exposure with employee PII structurally redacted.',
+        href: "/hr",
+        label: "Enterprise Analytics",
+        look: "Anonymized workforce metrics — completion rate and risk exposure with employee PII structurally redacted.",
       },
     ],
   },
@@ -133,10 +134,10 @@ export default function CirclesPage() {
           The Concentric Circles
         </h1>
         <p className="mt-3 text-neutral-400 leading-7 max-w-2xl mx-auto">
-          Styx is built outward from a single wedge — no-contact recovery — through proof
-          integrity and retention mechanics to the enterprise tier. Each circle below is live
-          in this demo environment; every link opens a working surface seeded with the demo
-          cohort.
+          Styx is built outward from a single wedge — no-contact recovery —
+          through proof integrity and retention mechanics to the enterprise
+          tier. Each circle below is live in this demo environment; every link
+          opens a working surface seeded with the demo cohort.
         </p>
         <p className="mt-2 text-xs text-neutral-600 uppercase tracking-widest">
           Demo logins &amp; seed instructions: scripts/demo/README.md
@@ -156,7 +157,9 @@ export default function CirclesPage() {
               >
                 {circle.letter}
               </span>
-              <h2 className="text-xl font-black tracking-tight uppercase">{circle.name}</h2>
+              <h2 className="text-xl font-black tracking-tight uppercase">
+                {circle.name}
+              </h2>
             </div>
             <p className="text-sm text-neutral-500 mb-6">{circle.tagline}</p>
 
@@ -186,7 +189,8 @@ export default function CirclesPage() {
 
         <footer className="text-center pt-4">
           <p className="text-xs text-neutral-600 uppercase tracking-widest">
-            One substrate, five circles — attestation, stake, and audit all the way out.
+            One substrate, five circles — attestation, stake, and audit all the
+            way out.
           </p>
         </footer>
       </main>

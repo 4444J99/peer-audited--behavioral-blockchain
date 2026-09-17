@@ -100,9 +100,17 @@ export class VideoProcessingWorker implements OnModuleInit {
 
       // Stage 2: Validate source video
       await this.recordStage(proofId, "VALIDATE", "IN_PROGRESS");
-      const valid = await this.transcoding.validateVideo(sourceBuffer, contentType);
+      const valid = await this.transcoding.validateVideo(
+        sourceBuffer,
+        contentType,
+      );
       if (!valid) {
-        await this.recordStage(proofId, "VALIDATE", "FAILED", "Source video is not decodable");
+        await this.recordStage(
+          proofId,
+          "VALIDATE",
+          "FAILED",
+          "Source video is not decodable",
+        );
         throw new Error("Source video validation failed");
       }
       await this.recordStage(proofId, "VALIDATE", "COMPLETED");
@@ -115,9 +123,14 @@ export class VideoProcessingWorker implements OnModuleInit {
 
       // Stage 3: Redact PII (face blur / voice pivot) for reviewer privacy
       await this.recordStage(proofId, "REDACT", "IN_PROGRESS");
-      const redactionProfile = this.redaction.getProfileForContentType(contentType);
+      const redactionProfile =
+        this.redaction.getProfileForContentType(contentType);
       const { redactedBuffer, redactionApplied, facesDetected } =
-        await this.redaction.redact(transcodedBuffer, redactionProfile, "video/mp4");
+        await this.redaction.redact(
+          transcodedBuffer,
+          redactionProfile,
+          "video/mp4",
+        );
       await this.recordStage(proofId, "REDACT", "COMPLETED");
 
       // Stage 4: Upload processed files to R2
@@ -179,11 +192,7 @@ export class VideoProcessingWorker implements OnModuleInit {
                challenge_token = NULL,
                redaction_status = $2
            WHERE id = $3`,
-          [
-            redactedKey,
-            redactionApplied ? "COMPLETED" : "BYPASSED",
-            proofId,
-          ],
+          [redactedKey, redactionApplied ? "COMPLETED" : "BYPASSED", proofId],
         );
       }
 
@@ -213,7 +222,9 @@ export class VideoProcessingWorker implements OnModuleInit {
         `Video proof ${proofId} processed: ${metadata.duration}s, ${metadata.width}x${metadata.height}, ${metadata.codec}`,
       );
     } catch (err: any) {
-      this.logger.error(`Video processing failed for proof ${proofId}: ${err.message}`);
+      this.logger.error(
+        `Video processing failed for proof ${proofId}: ${err.message}`,
+      );
       await this.recordStage(
         proofId,
         "ERROR",
@@ -233,13 +244,17 @@ export class VideoProcessingWorker implements OnModuleInit {
     status: string,
     error?: string,
   ): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO proof_processing_jobs (proof_id, stage, status, error)
+    await this.pool
+      .query(
+        `INSERT INTO proof_processing_jobs (proof_id, stage, status, error)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT DO NOTHING`,
-      [proofId, stage, status, error || null],
-    ).catch((err) => {
-      this.logger.warn(`Failed to record stage ${stage} for ${proofId}: ${err.message}`);
-    });
+        [proofId, stage, status, error || null],
+      )
+      .catch((err) => {
+        this.logger.warn(
+          `Failed to record stage ${stage} for ${proofId}: ${err.message}`,
+        );
+      });
   }
 }

@@ -5,6 +5,7 @@
 **Started:** 18 issues (#178, #278, #280, #289, #386, #387, #388, #389, #392, #393, #394, #396, #397, #399, #405, #412, #413, #414). **Built:** 18. **Tests:** All 3,428 monorepo unit/integration tests passed; strict tsc passed; verify-agent-pr passed.
 
 **Evidence:**
+
 - #178: `src/api/src/modules/ops/beta-readiness.service.ts:20` (BetaReadinessService evaluating all Blitzkrieg lanes)
 - #278: `src/api/src/common/guards/geofence.guard.ts:25` (Fail-closed geofence guard and policy registry)
 - #280: `src/api/services/security/self-exclusion.service.ts:15` (Runtime self-exclusion & cooldown enforcement)
@@ -32,6 +33,7 @@
 reconciliation passed; no code path changed.
 
 **Evidence:**
+
 - #315: outside legal counsel retainer ($9k–$25k) is blocked on business execution;
   counsel submission packet is assembled at `docs/legal/appendices/appendix-e--counsel-submission-checklist.md:1`.
 - #316: FBO escrow custody sign-off is blocked on #315 outside counsel; architecture
@@ -44,7 +46,6 @@ reconciliation passed; no code path changed.
 **Lesson:** Blockers are not stagnant noise or candidates for batch-closing.
 Recording specific on-disk evidence, exact blockers, and actionable unblocking
 criteria allows governance and audit systems to verify readiness truthfully.
-
 
 ## blocked-verdicts-2026-09-11 — 2026-09-11 — Blocked handoff governance
 
@@ -445,7 +446,7 @@ PR. Closure is deferred to PR merge with file:line evidence, per discipline.
 
 **Key discovery before building:** the existing `WaitlistService`
 (`src/api/src/modules/contracts/waitlist.service.ts`, migration 036) is the
-*authenticated in-app cohort fill queue* (keyed by user_id + cohort_id). It is
+_authenticated in-app cohort fill queue_ (keyed by user_id + cohort_id). It is
 **not** the public top-of-funnel signup #506 describes. The public funnel did
 not exist, and the no-contact emergency asset CTA routed straight to `/register`
 (full account creation) rather than a low-friction email capture. Both gaps are
@@ -459,13 +460,13 @@ now closed.
 - Shared: `src/shared/libs/waitlist-attribution.ts` — single source of truth for
   channel classification (organic | creator | practitioner | referral | direct),
   exported from `src/shared/index.ts`. Used by the API; the web side only
-  *forwards* raw params (no duplicated classifier).
+  _forwards_ raw params (no duplicated classifier).
 - API: `src/api/src/modules/marketing/` — public `POST /beta-waitlist` (no auth,
   throttled), public `GET /beta-waitlist/confirm`, admin `GET /beta-waitlist`
   (export) and `GET /beta-waitlist/stats` (conversion). Signup is idempotent on
   email and never re-confirms an already-confirmed prospect. Email delivery is a
   seam (`BetaWaitlistNotifier`) with a logging default returning a
-  queue-confirmation URL — the issue explicitly allows email *or* equivalent flow.
+  queue-confirmation URL — the issue explicitly allows email _or_ equivalent flow.
 - Web: `src/web/app/beta/page.tsx` (single-CTA "Join the Private Beta" funnel with
   locked Phase 1 copy + signup form), `src/web/app/beta/confirm/page.tsx`,
   `src/web/utils/waitlist.ts`. Homepage primary CTA now routes to `/beta`; the
@@ -496,6 +497,7 @@ a ledger record — the exact "resolved but unproven-closed" gap the audit batch
 warned about. One (#591) carried residual drift that this batch fixed.
 
 **Verification (evidence on `main` unless noted):**
+
 - #590 (test-strategy path/gate drift, HIGH): `docs/architecture/test-strategy.md`
   already uses `src/api`/`scripts/validation/`/`scripts/smoke/` and lists the 9
   real gate files — the `apps/api` / `scripts/gates/` drift is gone.
@@ -543,10 +545,11 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
 
 **Started:** 4 issues (#28, #32, #34, #159).
 **Closed:** 4/4.
-**Built:** 0. 
+**Built:** 0.
 **Tests:** Passed workspace tests.
 
 **Evidence verified on disk:**
+
 - migrate.ts:1
 - payment-router.service.ts:1
 - contracts.service.ts:1
@@ -561,6 +564,7 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
 **Built:** 1. **Tests:** Passed workspace tests (src/api 170/170 suites, 2108/2108 tests, tsc clean).
 
 **Evidence verified on disk:**
+
 - runtime.ts:237 (isTestMoneyModeEnabled — rail predicate)
 - tier.guard.ts (escrow ceiling rail-aware)
 - contracts/dto.ts:36 (StakeMinimumConstraint — $0 stake on test-money rail)
@@ -575,12 +579,14 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
 **Issues:** #82 (Anti-Sybil), #122 (Ask Styx Allowed Origins), #172 (Accountability Partner Mobile UI).
 **Status:** TESTED across all 3 items with passing tests and verified on-disk evidence.
 **Tests:** Passed workspace tests:
+
 - `src/api`: 93/93 tests (auth + security suites)
 - `src/ask-styx`: 50/50 tests (vitest worker + client suites)
 - `src/mobile`: 325/325 tests (all 33 mobile suites)
 - `src/web`: 37/37 tests (api-client suite)
 
 **Evidence verified on disk:**
+
 - `src/api/src/modules/auth/auth.service.ts:210` (AntiSybil device fingerprinting wired to registration)
 - `src/ask-styx/worker/wrangler.toml:15` (Multi-origin CORS resilience supporting both active and legacy Pages domains)
 - `src/mobile/screens/DashboardScreen.tsx:190` (Reachable partner invitation card and accept flow)
@@ -591,28 +597,32 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
 
 **Issues:** #350 (Financial Reconciliation Loop), #351 (CAC/LTV Unit Economics Engine), #345 (Curated Cohort Referral Mechanic).
 **Status:** CLOSED across all 3 items with verified evidence and passing tests.
-**Tests:** 
+**Tests:**
+
 - `src/api`: 90/90 tests passing across payments, dashboard, and referral suites (`npx jest payments.controller.spec.ts reconciliation.service.spec.ts dashboard.controller.spec.ts unit-economics.service.spec.ts referral.controller.spec.ts referral.service.spec.ts migrate.spec.ts`)
 - TypeScript monorepo lint: 12/12 packages passed (`npx turbo run lint`)
 
 **Evidence verified on disk:**
+
 - `src/api/src/modules/payments/reconciliation.service.ts:168` (Platform-wide batch settlement reconciliation runner `auditRecentSettlements` with discrepancy breakdown, status reporting, and CLI runner `scripts/ops/reconcile-financial-records.ts`)
 - `src/api/src/modules/dashboard/unit-economics.service.ts:47` (Executive CAC/LTV unit economics engine calculating channel CAC, cohort retention/LTV, LTV:CAC ratios, and payback period)
 - `src/api/src/modules/referrals/referral.service.ts:227` (Curated cohort referral loop enforcing 2-invite limit per beta member, waitlist priority attribution, and nomination tracking via migration `081_cohort_nominations.sql` and runbook `docs/ops/ops--beta-cohort-referral-mechanic.md`)
 
 **Lesson:** Financial controls and growth systems are strongest when built on top of immutable ledger structures rather than ad-hoc counters. Tying waitlist channel attribution directly into CAC calculation and double-entry settlements into LTV yields real auditability without external BI dependencies.
 
-
 ## Batch: close-dept-trackers
+
 - **Phase**: Wave 2 — Consolidate illogical department trackers
 - **Learnings**: The repo organizes work by phase and branch lanes, not by traditional corporate departments. The 7 department tracker issues were illogical duplication of the Omega Phase epics. They were successfully superseded.
 
 ## Batch: behavioral-psychology-core-2026-09-12
+
 - **Phase**: Phase Delta
 - **Issues**: #111, #110, #109, #102, #99, #97
 - **Learnings**: Behavioral Science Suite implemented and tested in `@styx/shared`. Fixed a Jest CommonJS incompatibility in `motivation-archetype.spec.ts` caused by importing Vitest globals into a Jest environment. All 235 shared tests now pass.
 
 ## Batch: verify-login-throttle-2026-09-16
+
 - **Phase**: Verify
 - **Issue**: #990
 - **Status**: TESTED; parent dogfood tracker #369 remains open.

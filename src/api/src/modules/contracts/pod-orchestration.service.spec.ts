@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { PodOrchestrationService } from './pod-orchestration.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { PodOrchestrationService } from "./pod-orchestration.service";
 
-describe('PodOrchestrationService', () => {
+describe("PodOrchestrationService", () => {
   let service: PodOrchestrationService;
   let pool: any;
 
@@ -12,223 +12,337 @@ describe('PodOrchestrationService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PodOrchestrationService,
-        { provide: 'DATABASE_POOL', useFactory: mockPool },
+        { provide: "DATABASE_POOL", useFactory: mockPool },
       ],
     }).compile();
 
     service = module.get<PodOrchestrationService>(PodOrchestrationService);
-    pool = module.get('DATABASE_POOL');
+    pool = module.get("DATABASE_POOL");
   });
 
-  describe('enforceMaxPodSize', () => {
-    it('returns allowed true when under limit', async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ count: 2 }], rowCount: 1 } as any);
+  describe("enforceMaxPodSize", () => {
+    it("returns allowed true when under limit", async () => {
+      pool.query.mockResolvedValueOnce({
+        rows: [{ count: 2 }],
+        rowCount: 1,
+      } as any);
 
-      const result = await service.enforceMaxPodSize('pod-1', 'cohort-1');
+      const result = await service.enforceMaxPodSize("pod-1", "cohort-1");
 
       expect(result).toEqual({ allowed: true, currentCount: 2, maxMembers: 5 });
     });
 
-    it('returns allowed false when at limit', async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ count: 5 }], rowCount: 1 } as any);
+    it("returns allowed false when at limit", async () => {
+      pool.query.mockResolvedValueOnce({
+        rows: [{ count: 5 }],
+        rowCount: 1,
+      } as any);
 
-      const result = await service.enforceMaxPodSize('pod-1', 'cohort-1');
+      const result = await service.enforceMaxPodSize("pod-1", "cohort-1");
 
-      expect(result).toEqual({ allowed: false, currentCount: 5, maxMembers: 5 });
+      expect(result).toEqual({
+        allowed: false,
+        currentCount: 5,
+        maxMembers: 5,
+      });
     });
 
-    it('returns allowed true when pod is empty', async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ count: 0 }], rowCount: 1 } as any);
+    it("returns allowed true when pod is empty", async () => {
+      pool.query.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+      } as any);
 
-      const result = await service.enforceMaxPodSize('pod-1', 'cohort-1');
+      const result = await service.enforceMaxPodSize("pod-1", "cohort-1");
 
       expect(result).toEqual({ allowed: true, currentCount: 0, maxMembers: 5 });
     });
   });
 
-  describe('addMemberToPod', () => {
-    it('succeeds when under limit', async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ count: 3 }], rowCount: 1 } as any);
+  describe("addMemberToPod", () => {
+    it("succeeds when under limit", async () => {
+      pool.query.mockResolvedValueOnce({
+        rows: [{ count: 3 }],
+        rowCount: 1,
+      } as any);
       pool.query.mockResolvedValueOnce({ rows: [], rowCount: 1 } as any);
 
-      const result = await service.addMemberToPod('user-1', 'pod-1', 'cohort-1', 'contract-1', 'Alex');
+      const result = await service.addMemberToPod(
+        "user-1",
+        "pod-1",
+        "cohort-1",
+        "contract-1",
+        "Alex",
+      );
 
-      expect(result).toEqual(expect.objectContaining({
-        userId: 'user-1',
-        alias: 'Alex',
-        contractId: 'contract-1',
-        status: 'ACTIVE',
-      }));
+      expect(result).toEqual(
+        expect.objectContaining({
+          userId: "user-1",
+          alias: "Alex",
+          contractId: "contract-1",
+          status: "ACTIVE",
+        }),
+      );
       expect(result.joinedAt).toBeInstanceOf(Date);
     });
 
-    it('uses default alias when none provided', async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ count: 1 }], rowCount: 1 } as any);
+    it("uses default alias when none provided", async () => {
+      pool.query.mockResolvedValueOnce({
+        rows: [{ count: 1 }],
+        rowCount: 1,
+      } as any);
       pool.query.mockResolvedValueOnce({ rows: [], rowCount: 1 } as any);
 
-      const result = await service.addMemberToPod('user-2', 'pod-1', 'cohort-1', 'contract-2');
+      const result = await service.addMemberToPod(
+        "user-2",
+        "pod-1",
+        "cohort-1",
+        "contract-2",
+      );
 
-      expect(result.alias).toBe('Participant');
+      expect(result.alias).toBe("Participant");
     });
 
-    it('throws BadRequestException when pod is full', async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ count: 5 }], rowCount: 1 } as any);
+    it("throws BadRequestException when pod is full", async () => {
+      pool.query.mockResolvedValueOnce({
+        rows: [{ count: 5 }],
+        rowCount: 1,
+      } as any);
 
       await expect(
-        service.addMemberToPod('user-6', 'pod-1', 'cohort-1', 'contract-6'),
+        service.addMemberToPod("user-6", "pod-1", "cohort-1", "contract-6"),
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('throws BadRequestException when pod has 4 members and tries to add 6th', async () => {
-      pool.query.mockResolvedValueOnce({ rows: [{ count: 5 }], rowCount: 1 } as any);
+    it("throws BadRequestException when pod has 4 members and tries to add 6th", async () => {
+      pool.query.mockResolvedValueOnce({
+        rows: [{ count: 5 }],
+        rowCount: 1,
+      } as any);
 
       await expect(
-        service.addMemberToPod('user-6', 'pod-1', 'cohort-1', 'contract-6'),
-      ).rejects.toThrow('Pod pod-1 is full (max 5)');
+        service.addMemberToPod("user-6", "pod-1", "cohort-1", "contract-6"),
+      ).rejects.toThrow("Pod pod-1 is full (max 5)");
     });
   });
 
-  describe('removeMemberFromPod', () => {
-    it('succeeds when member exists', async () => {
+  describe("removeMemberFromPod", () => {
+    it("succeeds when member exists", async () => {
       pool.query.mockResolvedValueOnce({ rows: [], rowCount: 1 } as any);
 
       await expect(
-        service.removeMemberFromPod('user-1', 'pod-1', 'cohort-1'),
+        service.removeMemberFromPod("user-1", "pod-1", "cohort-1"),
       ).resolves.toBeUndefined();
     });
 
-    it('throws NotFoundException when member not found', async () => {
+    it("throws NotFoundException when member not found", async () => {
       pool.query.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
       await expect(
-        service.removeMemberFromPod('user-99', 'pod-1', 'cohort-1'),
+        service.removeMemberFromPod("user-99", "pod-1", "cohort-1"),
       ).rejects.toThrow(NotFoundException);
     });
   });
 
-  describe('getPeerIdentities', () => {
-    it('returns ANONYMOUS for members under 7 days', async () => {
-      const recentDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+  describe("getPeerIdentities", () => {
+    it("returns ANONYMOUS for members under 7 days", async () => {
+      const recentDate = new Date(
+        Date.now() - 3 * 24 * 60 * 60 * 1000,
+      ).toISOString();
       pool.query.mockResolvedValueOnce({
         rows: [
-          { user_id: 'user-1', display_alias: 'Alice Smith', created_at: recentDate },
-          { user_id: 'user-2', display_alias: 'Bob Jones', created_at: recentDate },
+          {
+            user_id: "user-1",
+            display_alias: "Alice Smith",
+            created_at: recentDate,
+          },
+          {
+            user_id: "user-2",
+            display_alias: "Bob Jones",
+            created_at: recentDate,
+          },
         ],
         rowCount: 2,
       } as any);
 
-      const result = await service.getPeerIdentities('pod-1', 'cohort-1', 'user-1');
+      const result = await service.getPeerIdentities(
+        "pod-1",
+        "cohort-1",
+        "user-1",
+      );
 
       expect(result[0]).toEqual({
-        userId: 'user-1',
-        revealLevel: 'FULL_ALIAS',
-        alias: 'Alice Smith',
+        userId: "user-1",
+        revealLevel: "FULL_ALIAS",
+        alias: "Alice Smith",
       });
       expect(result[1]).toEqual({
-        userId: 'user-2',
-        revealLevel: 'ANONYMOUS',
-        alias: 'Member 2',
+        userId: "user-2",
+        revealLevel: "ANONYMOUS",
+        alias: "Member 2",
       });
     });
 
-    it('bases the anonymity window on pod join time, not contract creation', async () => {
-      const oldContract = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
-      const justJoined = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    it("bases the anonymity window on pod join time, not contract creation", async () => {
+      const oldContract = new Date(
+        Date.now() - 60 * 24 * 60 * 60 * 1000,
+      ).toISOString();
+      const justJoined = new Date(
+        Date.now() - 2 * 24 * 60 * 60 * 1000,
+      ).toISOString();
       pool.query.mockResolvedValueOnce({
         rows: [
-          { user_id: 'user-1', display_alias: 'Alice Smith', created_at: oldContract, cohort_joined_at: justJoined },
-          { user_id: 'user-2', display_alias: 'Bob Jones', created_at: oldContract, cohort_joined_at: justJoined },
+          {
+            user_id: "user-1",
+            display_alias: "Alice Smith",
+            created_at: oldContract,
+            cohort_joined_at: justJoined,
+          },
+          {
+            user_id: "user-2",
+            display_alias: "Bob Jones",
+            created_at: oldContract,
+            cohort_joined_at: justJoined,
+          },
         ],
         rowCount: 2,
       } as any);
 
-      const result = await service.getPeerIdentities('pod-1', 'cohort-1', 'user-1');
+      const result = await service.getPeerIdentities(
+        "pod-1",
+        "cohort-1",
+        "user-1",
+      );
 
       // A 60-day-old contract that joined the pod 2 days ago is still ANONYMOUS.
       expect(result[1]).toEqual({
-        userId: 'user-2',
-        revealLevel: 'ANONYMOUS',
-        alias: 'Member 2',
+        userId: "user-2",
+        revealLevel: "ANONYMOUS",
+        alias: "Member 2",
       });
     });
 
-    it('returns FIRST_NAME for members between 7-29 days', async () => {
-      const midDate = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString();
+    it("returns FIRST_NAME for members between 7-29 days", async () => {
+      const midDate = new Date(
+        Date.now() - 15 * 24 * 60 * 60 * 1000,
+      ).toISOString();
       pool.query.mockResolvedValueOnce({
         rows: [
-          { user_id: 'user-1', display_alias: 'Alice Smith', created_at: midDate },
-          { user_id: 'user-2', display_alias: 'Bob Jones', created_at: midDate },
+          {
+            user_id: "user-1",
+            display_alias: "Alice Smith",
+            created_at: midDate,
+          },
+          {
+            user_id: "user-2",
+            display_alias: "Bob Jones",
+            created_at: midDate,
+          },
         ],
         rowCount: 2,
       } as any);
 
-      const result = await service.getPeerIdentities('pod-1', 'cohort-1', 'user-1');
+      const result = await service.getPeerIdentities(
+        "pod-1",
+        "cohort-1",
+        "user-1",
+      );
 
       expect(result[1]).toEqual({
-        userId: 'user-2',
-        revealLevel: 'FIRST_NAME',
-        alias: 'Bob',
+        userId: "user-2",
+        revealLevel: "FIRST_NAME",
+        alias: "Bob",
       });
     });
 
-    it('returns FULL_ALIAS for members with 30+ days', async () => {
-      const oldDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString();
+    it("returns FULL_ALIAS for members with 30+ days", async () => {
+      const oldDate = new Date(
+        Date.now() - 45 * 24 * 60 * 60 * 1000,
+      ).toISOString();
       pool.query.mockResolvedValueOnce({
         rows: [
-          { user_id: 'user-1', display_alias: 'Alice Smith', created_at: oldDate },
-          { user_id: 'user-2', display_alias: 'Bob Jones', created_at: oldDate },
+          {
+            user_id: "user-1",
+            display_alias: "Alice Smith",
+            created_at: oldDate,
+          },
+          {
+            user_id: "user-2",
+            display_alias: "Bob Jones",
+            created_at: oldDate,
+          },
         ],
         rowCount: 2,
       } as any);
 
-      const result = await service.getPeerIdentities('pod-1', 'cohort-1', 'user-1');
+      const result = await service.getPeerIdentities(
+        "pod-1",
+        "cohort-1",
+        "user-1",
+      );
 
       expect(result[1]).toEqual({
-        userId: 'user-2',
-        revealLevel: 'FULL_ALIAS',
-        alias: 'Bob Jones',
+        userId: "user-2",
+        revealLevel: "FULL_ALIAS",
+        alias: "Bob Jones",
       });
     });
 
-    it('always shows requesting user their own FULL_ALIAS', async () => {
-      const recentDate = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString();
+    it("always shows requesting user their own FULL_ALIAS", async () => {
+      const recentDate = new Date(
+        Date.now() - 1 * 24 * 60 * 60 * 1000,
+      ).toISOString();
       pool.query.mockResolvedValueOnce({
         rows: [
-          { user_id: 'user-1', display_alias: 'Alice Smith', created_at: recentDate },
+          {
+            user_id: "user-1",
+            display_alias: "Alice Smith",
+            created_at: recentDate,
+          },
         ],
         rowCount: 1,
       } as any);
 
-      const result = await service.getPeerIdentities('pod-1', 'cohort-1', 'user-1');
+      const result = await service.getPeerIdentities(
+        "pod-1",
+        "cohort-1",
+        "user-1",
+      );
 
       expect(result[0]).toEqual({
-        userId: 'user-1',
-        revealLevel: 'FULL_ALIAS',
-        alias: 'Alice Smith',
+        userId: "user-1",
+        revealLevel: "FULL_ALIAS",
+        alias: "Alice Smith",
       });
     });
 
-    it('falls back to Participant when alias is missing', async () => {
-      const recentDate = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString();
+    it("falls back to Participant when alias is missing", async () => {
+      const recentDate = new Date(
+        Date.now() - 15 * 24 * 60 * 60 * 1000,
+      ).toISOString();
       pool.query.mockResolvedValueOnce({
         rows: [
-          { user_id: 'user-1', display_alias: null, created_at: recentDate },
+          { user_id: "user-1", display_alias: null, created_at: recentDate },
         ],
         rowCount: 1,
       } as any);
 
-      const result = await service.getPeerIdentities('pod-1', 'cohort-1', 'user-2');
+      const result = await service.getPeerIdentities(
+        "pod-1",
+        "cohort-1",
+        "user-2",
+      );
 
       expect(result[0]).toEqual({
-        userId: 'user-1',
-        revealLevel: 'FIRST_NAME',
-        alias: 'Participant',
+        userId: "user-1",
+        revealLevel: "FIRST_NAME",
+        alias: "Participant",
       });
     });
   });
 
-  describe('broadcastPodFailure', () => {
-    it('broadcasts and logs when not dampened', async () => {
+  describe("broadcastPodFailure", () => {
+    it("broadcasts and logs when not dampened", async () => {
       pool.query.mockResolvedValueOnce({
         rows: [{ failure_count: 0, last_broadcast_at: null }],
         rowCount: 1,
@@ -239,9 +353,9 @@ describe('PodOrchestrationService', () => {
       } as any);
       pool.query.mockResolvedValueOnce({ rows: [], rowCount: 1 } as any);
 
-      const result = await service.broadcastPodFailure('pod-1', 'cohort-1', {
-        userId: 'user-1',
-        type: 'MISSED_CHECK_IN',
+      const result = await service.broadcastPodFailure("pod-1", "cohort-1", {
+        userId: "user-1",
+        type: "MISSED_CHECK_IN",
       });
 
       expect(result.broadcast).toBe(true);
@@ -250,13 +364,17 @@ describe('PodOrchestrationService', () => {
       // Log insert uses the migration-050/057 column set.
       expect(pool.query).toHaveBeenNthCalledWith(
         3,
-        expect.stringContaining('INSERT INTO pod_broadcast_log (pod_id, cohort_id, user_id, failure_type, failure_count)'),
-        ['pod-1', 'cohort-1', 'user-1', 'MISSED_CHECK_IN', 1],
+        expect.stringContaining(
+          "INSERT INTO pod_broadcast_log (pod_id, cohort_id, user_id, failure_type, failure_count)",
+        ),
+        ["pod-1", "cohort-1", "user-1", "MISSED_CHECK_IN", 1],
       );
     });
 
-    it('dampens when broadcast is within cooldown', async () => {
-      const recentBroadcast = new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString();
+    it("dampens when broadcast is within cooldown", async () => {
+      const recentBroadcast = new Date(
+        Date.now() - 1 * 60 * 60 * 1000,
+      ).toISOString();
       pool.query.mockResolvedValueOnce({
         rows: [{ failure_count: 5, last_broadcast_at: recentBroadcast }],
         rowCount: 1,
@@ -266,17 +384,19 @@ describe('PodOrchestrationService', () => {
         rowCount: 1,
       } as any);
 
-      const result = await service.broadcastPodFailure('pod-1', 'cohort-1', {
-        userId: 'user-2',
-        type: 'RELAPSE',
+      const result = await service.broadcastPodFailure("pod-1", "cohort-1", {
+        userId: "user-2",
+        type: "RELAPSE",
       });
 
       expect(result.dampened).toBe(true);
       expect(result.recipientsNotified).toBe(0);
     });
 
-    it('does not log to pod_broadcast_log when dampened', async () => {
-      const recentBroadcast = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    it("does not log to pod_broadcast_log when dampened", async () => {
+      const recentBroadcast = new Date(
+        Date.now() - 30 * 60 * 1000,
+      ).toISOString();
       pool.query.mockResolvedValueOnce({
         rows: [{ failure_count: 3, last_broadcast_at: recentBroadcast }],
         rowCount: 1,
@@ -286,22 +406,22 @@ describe('PodOrchestrationService', () => {
         rowCount: 1,
       } as any);
 
-      await service.broadcastPodFailure('pod-1', 'cohort-1', {
-        userId: 'user-1',
-        type: 'MISSED_CHECK_IN',
+      await service.broadcastPodFailure("pod-1", "cohort-1", {
+        userId: "user-1",
+        type: "MISSED_CHECK_IN",
       });
 
       expect(pool.query).toHaveBeenCalledTimes(2);
     });
   });
 
-  describe('getPodStats', () => {
-    it('returns correct aggregations', async () => {
+  describe("getPodStats", () => {
+    it("returns correct aggregations", async () => {
       pool.query.mockResolvedValueOnce({
         rows: [
-          { user_id: 'user-1', status: 'ACTIVE' },
-          { user_id: 'user-2', status: 'ACTIVE' },
-          { user_id: 'user-3', status: 'LEFT' },
+          { user_id: "user-1", status: "ACTIVE" },
+          { user_id: "user-2", status: "ACTIVE" },
+          { user_id: "user-3", status: "LEFT" },
         ],
         rowCount: 3,
       } as any);
@@ -314,7 +434,7 @@ describe('PodOrchestrationService', () => {
         rowCount: 1,
       } as any);
 
-      const result = await service.getPodStats('pod-1', 'cohort-1');
+      const result = await service.getPodStats("pod-1", "cohort-1");
 
       expect(result).toEqual({
         totalMembers: 3,
@@ -324,11 +444,14 @@ describe('PodOrchestrationService', () => {
       });
     });
 
-    it('handles empty pod', async () => {
+    it("handles empty pod", async () => {
       pool.query.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
-      pool.query.mockResolvedValueOnce({ rows: [{ total: 0 }], rowCount: 1 } as any);
+      pool.query.mockResolvedValueOnce({
+        rows: [{ total: 0 }],
+        rowCount: 1,
+      } as any);
 
-      const result = await service.getPodStats('pod-empty', 'cohort-1');
+      const result = await service.getPodStats("pod-empty", "cohort-1");
 
       expect(result).toEqual({
         totalMembers: 0,
@@ -339,23 +462,23 @@ describe('PodOrchestrationService', () => {
     });
   });
 
-  describe('getPodState', () => {
-    it('returns full pod state with broadcast count', async () => {
+  describe("getPodState", () => {
+    it("returns full pod state with broadcast count", async () => {
       pool.query.mockResolvedValueOnce({
         rows: [
           {
-            contract_id: 'c-1',
-            user_id: 'user-1',
-            status: 'ACTIVE',
-            created_at: new Date('2026-01-01').toISOString(),
-            display_alias: 'Alice',
+            contract_id: "c-1",
+            user_id: "user-1",
+            status: "ACTIVE",
+            created_at: new Date("2026-01-01").toISOString(),
+            display_alias: "Alice",
           },
           {
-            contract_id: 'c-2',
-            user_id: 'user-2',
-            status: 'ACTIVE',
-            created_at: new Date('2026-01-02').toISOString(),
-            display_alias: 'Bob',
+            contract_id: "c-2",
+            user_id: "user-2",
+            status: "ACTIVE",
+            created_at: new Date("2026-01-02").toISOString(),
+            display_alias: "Bob",
           },
         ],
         rowCount: 2,
@@ -365,10 +488,10 @@ describe('PodOrchestrationService', () => {
         rowCount: 1,
       } as any);
 
-      const result = await service.getPodState('pod-1', 'cohort-1');
+      const result = await service.getPodState("pod-1", "cohort-1");
 
-      expect(result.podId).toBe('pod-1');
-      expect(result.cohortId).toBe('cohort-1');
+      expect(result.podId).toBe("pod-1");
+      expect(result.cohortId).toBe("cohort-1");
       expect(result.members).toHaveLength(2);
       expect(result.activeCount).toBe(2);
       expect(result.maxMembers).toBe(5);
@@ -376,41 +499,41 @@ describe('PodOrchestrationService', () => {
     });
   });
 
-  describe('getPodMembers', () => {
-    it('returns member list with correct status mapping', async () => {
+  describe("getPodMembers", () => {
+    it("returns member list with correct status mapping", async () => {
       pool.query.mockResolvedValueOnce({
         rows: [
           {
-            contract_id: 'c-1',
-            user_id: 'user-1',
-            status: 'ACTIVE',
-            created_at: new Date('2026-01-01').toISOString(),
-            display_alias: 'Alice',
+            contract_id: "c-1",
+            user_id: "user-1",
+            status: "ACTIVE",
+            created_at: new Date("2026-01-01").toISOString(),
+            display_alias: "Alice",
           },
           {
-            contract_id: 'c-2',
-            user_id: 'user-2',
-            status: 'PENDING_STAKE',
-            created_at: new Date('2026-01-02').toISOString(),
-            display_alias: 'Bob',
+            contract_id: "c-2",
+            user_id: "user-2",
+            status: "PENDING_STAKE",
+            created_at: new Date("2026-01-02").toISOString(),
+            display_alias: "Bob",
           },
           {
-            contract_id: 'c-3',
-            user_id: 'user-3',
-            status: 'COMPLETED',
-            created_at: new Date('2026-01-03').toISOString(),
-            display_alias: 'Charlie',
+            contract_id: "c-3",
+            user_id: "user-3",
+            status: "COMPLETED",
+            created_at: new Date("2026-01-03").toISOString(),
+            display_alias: "Charlie",
           },
         ],
         rowCount: 3,
       } as any);
 
-      const result = await service.getPodMembers('pod-1', 'cohort-1');
+      const result = await service.getPodMembers("pod-1", "cohort-1");
 
       expect(result).toHaveLength(3);
-      expect(result[0].status).toBe('ACTIVE');
-      expect(result[1].status).toBe('ACTIVE');
-      expect(result[2].status).toBe('LEFT');
+      expect(result[0].status).toBe("ACTIVE");
+      expect(result[1].status).toBe("ACTIVE");
+      expect(result[2].status).toBe("LEFT");
     });
   });
 });

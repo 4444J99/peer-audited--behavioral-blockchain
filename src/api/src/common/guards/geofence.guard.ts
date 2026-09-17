@@ -1,6 +1,12 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Logger } from '@nestjs/common';
-import { Request } from 'express';
-import { CompliancePolicyService } from '../../modules/compliance/compliance-policy.service';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Logger,
+} from "@nestjs/common";
+import { Request } from "express";
+import { CompliancePolicyService } from "../../modules/compliance/compliance-policy.service";
 
 @Injectable()
 export class GeofenceGuard implements CanActivate {
@@ -14,11 +20,12 @@ export class GeofenceGuard implements CanActivate {
 
     if (decision.missingLocation) {
       this.logger.warn({
-        msg: 'Missing geolocation headers during geofence evaluation',
+        msg: "Missing geolocation headers during geofence evaluation",
         path: request.originalUrl || request.url,
         method: request.method,
-        hasCfIpState: !!request.headers['cf-ipstate'],
-        hasCloudfrontViewerCountryRegion: !!request.headers['cloudfront-viewer-country-region'],
+        hasCfIpState: !!request.headers["cf-ipstate"],
+        hasCloudfrontViewerCountryRegion:
+          !!request.headers["cloudfront-viewer-country-region"],
         country: decision.country,
         stateSource: decision.stateSource,
         source: decision.source,
@@ -29,7 +36,7 @@ export class GeofenceGuard implements CanActivate {
 
     if (decision.overrideIgnoredInProduction) {
       this.logger.warn({
-        msg: 'Ignored x-styx-state geofence override header in production',
+        msg: "Ignored x-styx-state geofence override header in production",
         path: request.originalUrl || request.url,
         method: request.method,
       });

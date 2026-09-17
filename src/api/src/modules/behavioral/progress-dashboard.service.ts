@@ -1,5 +1,5 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { Pool } from "pg";
 
 export interface StreakInfo {
   currentStreak: number;
@@ -10,13 +10,13 @@ export interface StreakInfo {
 
 export interface Milestone {
   type:
-    | 'FIRST_PROOF'
-    | 'WEEK_1'
-    | 'WEEK_2'
-    | 'DAY_30'
-    | 'DAY_90'
-    | 'DAY_180'
-    | 'DAY_365';
+    | "FIRST_PROOF"
+    | "WEEK_1"
+    | "WEEK_2"
+    | "DAY_30"
+    | "DAY_90"
+    | "DAY_180"
+    | "DAY_365";
   title: string;
   achievedAt: Date | null;
   message: string;
@@ -25,7 +25,7 @@ export interface Milestone {
 export interface RelapseRiskScore {
   score: number;
   factors: string[];
-  level: 'LOW' | 'MODERATE' | 'ELEVATED' | 'HIGH' | 'CRITICAL';
+  level: "LOW" | "MODERATE" | "ELEVATED" | "HIGH" | "CRITICAL";
 }
 
 export interface DashboardSummary {
@@ -37,60 +37,58 @@ export interface DashboardSummary {
 }
 
 const MILESTONE_THRESHOLDS: {
-  type: Milestone['type'];
+  type: Milestone["type"];
   days: number;
   title: string;
   message: string;
 }[] = [
   {
-    type: 'FIRST_PROOF',
+    type: "FIRST_PROOF",
     days: 0,
-    title: 'First Proof',
-    message: 'Your journey begins.',
+    title: "First Proof",
+    message: "Your journey begins.",
   },
   {
-    type: 'WEEK_1',
+    type: "WEEK_1",
     days: 7,
-    title: 'One Week Strong',
-    message: 'Seven days in. The hardest part is starting — you did.',
+    title: "One Week Strong",
+    message: "Seven days in. The hardest part is starting — you did.",
   },
   {
-    type: 'WEEK_2',
+    type: "WEEK_2",
     days: 14,
-    title: 'Two Weeks',
-    message: 'Habits start forming around day 14. Keep going.',
+    title: "Two Weeks",
+    message: "Habits start forming around day 14. Keep going.",
   },
   {
-    type: 'DAY_30',
+    type: "DAY_30",
     days: 30,
-    title: '30 Days',
-    message: 'A full month. You are proving something to yourself.',
+    title: "30 Days",
+    message: "A full month. You are proving something to yourself.",
   },
   {
-    type: 'DAY_90',
+    type: "DAY_90",
     days: 90,
-    title: '90 Days',
-    message: 'The neural pathways are rewiring. You are changing.',
+    title: "90 Days",
+    message: "The neural pathways are rewiring. You are changing.",
   },
   {
-    type: 'DAY_180',
+    type: "DAY_180",
     days: 180,
-    title: '180 Days',
-    message: 'Six months. This is not willpower anymore — it is identity.',
+    title: "180 Days",
+    message: "Six months. This is not willpower anymore — it is identity.",
   },
   {
-    type: 'DAY_365',
+    type: "DAY_365",
     days: 365,
-    title: 'One Year',
-    message: 'A full year. You are proof that recovery is real.',
+    title: "One Year",
+    message: "A full year. You are proof that recovery is real.",
   },
 ];
 
 @Injectable()
 export class ProgressDashboardService {
-  constructor(
-    @Inject('DATABASE_POOL') private readonly pool: Pool,
-  ) {}
+  constructor(@Inject("DATABASE_POOL") private readonly pool: Pool) {}
 
   async getStreakInfo(userId: string): Promise<StreakInfo> {
     const result = await this.pool.query(
@@ -117,14 +115,14 @@ export class ProgressDashboardService {
 
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = today.toISOString().split("T")[0];
 
     let currentStreak = 0;
     let streakStartDate: Date | null = null;
     const checkDate = new Date(today);
 
     for (let i = 0; i < 365 * 2; i++) {
-      const dateStr = checkDate.toISOString().split('T')[0];
+      const dateStr = checkDate.toISOString().split("T")[0];
       if (uniqueDates.includes(dateStr)) {
         currentStreak++;
         streakStartDate = new Date(checkDate);
@@ -198,7 +196,7 @@ export class ProgressDashboardService {
     return MILESTONE_THRESHOLDS.map((threshold) => {
       let achievedAt: Date | null = null;
 
-      if (threshold.type === 'FIRST_PROOF') {
+      if (threshold.type === "FIRST_PROOF") {
         achievedAt = firstProofAt;
       } else if (elapsedDays >= threshold.days) {
         achievedAt = new Date(startedAt);
@@ -250,18 +248,18 @@ export class ProgressDashboardService {
     const missedDays = 7 - recentDays;
     const frequencyScore = Math.min(30, missedDays * (30 / 7));
     score += frequencyScore;
-    if (missedDays >= 3) factors.push('missed_recent_proofs');
+    if (missedDays >= 3) factors.push("missed_recent_proofs");
 
     let dayScore = 0;
     if (elapsedDays >= 2 && elapsedDays <= 4) {
       dayScore = 20;
-      factors.push('day_3_danger_zone');
+      factors.push("day_3_danger_zone");
     } else if (elapsedDays >= 19 && elapsedDays <= 23) {
       dayScore = 25;
-      factors.push('day_21_extinction_burst');
+      factors.push("day_21_extinction_burst");
     } else if (elapsedDays < 7) {
       dayScore = 10;
-      factors.push('early_contract');
+      factors.push("early_contract");
     }
     score += dayScore;
 
@@ -288,7 +286,7 @@ export class ProgressDashboardService {
     let streakScore = 0;
     if (currentStreak >= 90) {
       streakScore = 15;
-      factors.push('long_streak_complacency');
+      factors.push("long_streak_complacency");
     } else if (currentStreak >= 30) {
       streakScore = 8;
     }
@@ -305,7 +303,7 @@ export class ProgressDashboardService {
     let timingScore = 0;
     if (lateNightCount >= 3) {
       timingScore = 15;
-      factors.push('frequent_late_night_proofs');
+      factors.push("frequent_late_night_proofs");
     } else if (lateNightCount >= 1) {
       timingScore = 7;
     }
@@ -314,28 +312,25 @@ export class ProgressDashboardService {
     let violationScore = 0;
     if (strikes >= 3) {
       violationScore = 15;
-      factors.push('multiple_violations');
+      factors.push("multiple_violations");
     } else if (strikes >= 1) {
       violationScore = strikes * 5;
-      factors.push('prior_violation');
+      factors.push("prior_violation");
     }
     score += violationScore;
 
     score = Math.min(100, Math.max(0, score));
 
-    let level: RelapseRiskScore['level'] = 'LOW';
-    if (score >= 81) level = 'CRITICAL';
-    else if (score >= 61) level = 'HIGH';
-    else if (score >= 41) level = 'ELEVATED';
-    else if (score >= 21) level = 'MODERATE';
+    let level: RelapseRiskScore["level"] = "LOW";
+    if (score >= 81) level = "CRITICAL";
+    else if (score >= 61) level = "HIGH";
+    else if (score >= 41) level = "ELEVATED";
+    else if (score >= 21) level = "MODERATE";
 
     return { score, factors, level };
   }
 
-  async getRecentProofCount(
-    userId: string,
-    days: number = 7,
-  ): Promise<number> {
+  async getRecentProofCount(userId: string, days: number = 7): Promise<number> {
     const result = await this.pool.query(
       `SELECT COUNT(DISTINCT DATE(created_at)) AS cnt
        FROM proofs
@@ -356,18 +351,15 @@ export class ProgressDashboardService {
         this.getMilestones(userId, contractId),
         this.calculateRelapseRiskScore(contractId),
         this.getRecentProofCount(userId, 7),
-        this.pool.query(
-          `SELECT ends_at FROM contracts WHERE id = $1`,
-          [contractId],
-        ),
+        this.pool.query(`SELECT ends_at FROM contracts WHERE id = $1`, [
+          contractId,
+        ]),
       ]);
 
     const endsAt = new Date(contractResult.rows[0]?.ends_at ?? new Date());
     const daysRemaining = Math.max(
       0,
-      Math.floor(
-        (endsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-      ),
+      Math.floor((endsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
     );
 
     return {

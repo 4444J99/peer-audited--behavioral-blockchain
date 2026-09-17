@@ -42,16 +42,16 @@ Because of that scope lock, the entire monorepo does **not** need to be the laun
 
 Current local inventory:
 
-| Workspace | Test files | Test cases |
-|---|---:|---:|
-| `src/api` | 93 | 855 |
-| `src/web` | 40 | 344 |
-| `src/mobile` | 32 | 299 |
-| `src/shared` | 4 | 111 |
-| `src/desktop` | 8 | 127 |
-| `src/ask-styx` | 4 | 35 |
-| repo / other | 8 | 51 |
-| **Total** | **189** | **1,822** |
+| Workspace      | Test files | Test cases |
+| -------------- | ---------: | ---------: |
+| `src/api`      |         93 |        855 |
+| `src/web`      |         40 |        344 |
+| `src/mobile`   |         32 |        299 |
+| `src/shared`   |          4 |        111 |
+| `src/desktop`  |          8 |        127 |
+| `src/ask-styx` |          4 |         35 |
+| repo / other   |          8 |         51 |
+| **Total**      |    **189** |  **1,822** |
 
 That is the repo safety net, not the release gate.
 
@@ -116,11 +116,11 @@ Subtotal: `15`
 
 ## Release Math
 
-| Bar | Automated tests |
-|---|---:|
-| Required beta bar | `414` |
-| Preferred beta bar | `429` |
-| Whole-repo inventory | `1,822` |
+| Bar                  | Automated tests |
+| -------------------- | --------------: |
+| Required beta bar    |           `414` |
+| Preferred beta bar   |           `429` |
+| Whole-repo inventory |         `1,822` |
 
 Where `414` comes from:
 

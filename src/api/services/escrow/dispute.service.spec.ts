@@ -1,11 +1,11 @@
-import { DisputeService } from './dispute.service';
-import { EscrowProvider } from '../../src/common/interfaces/payout-provider.interface';
-import { HttpException, HttpStatus } from '@nestjs/common';
-import { Pool } from 'pg';
-import { LedgerService } from '../ledger/ledger.service';
-import { TruthLogService } from '../ledger/truth-log.service';
+import { DisputeService } from "./dispute.service";
+import { EscrowProvider } from "../../src/common/interfaces/payout-provider.interface";
+import { HttpException, HttpStatus } from "@nestjs/common";
+import { Pool } from "pg";
+import { LedgerService } from "../ledger/ledger.service";
+import { TruthLogService } from "../ledger/truth-log.service";
 
-describe('DisputeService', () => {
+describe("DisputeService", () => {
   let disputeService: DisputeService;
 
   let mockStripeService: any;
@@ -36,7 +36,7 @@ describe('DisputeService', () => {
     };
 
     const stripeMock = {
-      rail: 'STRIPE',
+      rail: "STRIPE",
       movesRealMoney: false,
       holdStake: jest.fn(),
       captureStake: jest.fn(),
@@ -61,132 +61,166 @@ describe('DisputeService', () => {
     mockPool.query.mockResolvedValue({ rows: [] });
   });
 
-  describe('initiateAppeal (DR-004: free by default)', () => {
+  describe("initiateAppeal (DR-004: free by default)", () => {
     // DR-004 removed the appeal fee for the beta cohort. These cases pin the
     // default path: no Stripe call at all, a fee-free status, and a null
     // payment_intent_id — the fee cannot be expressed as a 0-amount hold because
     // Stripe rejects those, which would fail closed and deny every appeal.
-    it('should return the existing appeal instead of rewriting its terms', async () => {
+    it("should return the existing appeal instead of rewriting its terms", async () => {
       // A fee-policy flip must not rewrite a live dispute: disabling the fee
       // would null out a real payment_intent_id and orphan its authorization.
       (mockPool.query as jest.Mock).mockResolvedValueOnce({
-        rows: [{ appeal_status: 'FEE_AUTHORIZED_PENDING_REVIEW', payment_intent_id: 'pi_existing' }],
+        rows: [
+          {
+            appeal_status: "FEE_AUTHORIZED_PENDING_REVIEW",
+            payment_intent_id: "pi_existing",
+          },
+        ],
       });
 
-      const result = await disputeService.initiateAppeal('user-1', 'proof-1', null);
+      const result = await disputeService.initiateAppeal(
+        "user-1",
+        "proof-1",
+        null,
+      );
 
       expect(result).toEqual({
-        appealStatus: 'FEE_AUTHORIZED_PENDING_REVIEW',
-        paymentIntentId: 'pi_existing',
+        appealStatus: "FEE_AUTHORIZED_PENDING_REVIEW",
+        paymentIntentId: "pi_existing",
       });
       const inserted = (mockPool.query as jest.Mock).mock.calls.some(([sql]) =>
-        String(sql).includes('INSERT INTO disputes'),
+        String(sql).includes("INSERT INTO disputes"),
       );
       expect(inserted).toBe(false);
     });
 
-    it('should place no hold and charge nothing by default', async () => {
-      const result = await disputeService.initiateAppeal('user-1', 'proof-1', 'cus_123');
+    it("should place no hold and charge nothing by default", async () => {
+      const result = await disputeService.initiateAppeal(
+        "user-1",
+        "proof-1",
+        "cus_123",
+      );
 
       expect(mockStripeService.holdStake).not.toHaveBeenCalled();
-      expect(result.appealStatus).toBe('PENDING_REVIEW');
+      expect(result.appealStatus).toBe("PENDING_REVIEW");
       expect(result.paymentIntentId).toBeNull();
     });
 
-    it('should let a user with no payment method on file appeal', async () => {
-      const result = await disputeService.initiateAppeal('user-1', 'proof-1', null);
+    it("should let a user with no payment method on file appeal", async () => {
+      const result = await disputeService.initiateAppeal(
+        "user-1",
+        "proof-1",
+        null,
+      );
 
-      expect(result.appealStatus).toBe('PENDING_REVIEW');
+      expect(result.appealStatus).toBe("PENDING_REVIEW");
       expect(mockStripeService.holdStake).not.toHaveBeenCalled();
     });
 
-    it('should persist a null payment_intent_id and the fee-free status', async () => {
-      await disputeService.initiateAppeal('user-1', 'proof-1', null);
+    it("should persist a null payment_intent_id and the fee-free status", async () => {
+      await disputeService.initiateAppeal("user-1", "proof-1", null);
 
       const insert = (mockPool.query as jest.Mock).mock.calls.find(([sql]) =>
-        String(sql).includes('INSERT INTO disputes'),
+        String(sql).includes("INSERT INTO disputes"),
       );
       expect(insert).toBeDefined();
-      expect(insert[1]).toEqual(['proof-1', 'user-1', null, 'PENDING_REVIEW']);
+      expect(insert[1]).toEqual(["proof-1", "user-1", null, "PENDING_REVIEW"]);
     });
 
-    it('should log a zero-amount appeal event when the fee is off', async () => {
-      await disputeService.initiateAppeal('user-1', 'proof-1', null);
+    it("should log a zero-amount appeal event when the fee is off", async () => {
+      await disputeService.initiateAppeal("user-1", "proof-1", null);
 
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
-        'APPEAL_INITIATED',
+        "APPEAL_INITIATED",
         expect.objectContaining({ amount: 0, paymentIntentId: null }),
       );
     });
 
-    it('should not attempt compensation on persistence failure when nothing was held', async () => {
+    it("should not attempt compensation on persistence failure when nothing was held", async () => {
       const client = {
-        query: jest.fn()
+        query: jest
+          .fn()
           .mockResolvedValueOnce({ rows: [] }) // BEGIN
-          .mockRejectedValueOnce(new Error('db unavailable')) // dispute insert
+          .mockRejectedValueOnce(new Error("db unavailable")) // dispute insert
           .mockResolvedValueOnce({ rows: [] }), // ROLLBACK
         release: jest.fn(),
       };
       mockPool.connect.mockResolvedValueOnce(client);
 
       await expect(
-        disputeService.initiateAppeal('user-1', 'proof-1', null),
+        disputeService.initiateAppeal("user-1", "proof-1", null),
       ).rejects.toThrow(HttpException);
 
       expect(mockStripeService.cancelHold).not.toHaveBeenCalled();
     });
   });
 
-  describe('initiateAppeal (fee re-enabled per DR-004 escape hatch)', () => {
+  describe("initiateAppeal (fee re-enabled per DR-004 escape hatch)", () => {
     beforeEach(() => {
-      process.env.STYX_APPEAL_FEE_ENABLED = 'true';
+      process.env.STYX_APPEAL_FEE_ENABLED = "true";
     });
 
     afterEach(() => {
       delete process.env.STYX_APPEAL_FEE_ENABLED;
     });
 
-    it('should reject an appeal with no payment method while the fee is on', async () => {
+    it("should reject an appeal with no payment method while the fee is on", async () => {
       await expect(
-        disputeService.initiateAppeal('user-1', 'proof-1', null),
+        disputeService.initiateAppeal("user-1", "proof-1", null),
       ).rejects.toThrow(/payment method is required/);
     });
 
-    it('should successfully initiate an appeal if the $5 fee holds', async () => {
+    it("should successfully initiate an appeal if the $5 fee holds", async () => {
       (mockStripeService.holdStake as jest.Mock).mockResolvedValueOnce({
-        id: 'pi_test_appeal_fee',
-        status: 'requires_capture',
+        id: "pi_test_appeal_fee",
+        status: "requires_capture",
       });
 
-      const result = await disputeService.initiateAppeal('user-1', 'proof-1', 'cus_123');
+      const result = await disputeService.initiateAppeal(
+        "user-1",
+        "proof-1",
+        "cus_123",
+      );
 
-      expect(result.appealStatus).toBe('FEE_AUTHORIZED_PENDING_REVIEW');
-      expect(result.paymentIntentId).toBe('pi_test_appeal_fee');
+      expect(result.appealStatus).toBe("FEE_AUTHORIZED_PENDING_REVIEW");
+      expect(result.paymentIntentId).toBe("pi_test_appeal_fee");
 
-      const holdCallArgs = (mockStripeService.holdStake as jest.Mock).mock.calls[0];
-      expect(holdCallArgs[0]).toBe('cus_123');
+      const holdCallArgs = (mockStripeService.holdStake as jest.Mock).mock
+        .calls[0];
+      expect(holdCallArgs[0]).toBe("cus_123");
       expect(holdCallArgs[1]).toBe(500); // Asserts the APPEAL_FEE_AMOUNT is 500 cents ($5.00)
     });
 
-    it('should throw HttpException (402) if the appeal fee cannot be authorized', async () => {
-      (mockStripeService.holdStake as jest.Mock).mockRejectedValue(new Error('Card declined'));
+    it("should throw HttpException (402) if the appeal fee cannot be authorized", async () => {
+      (mockStripeService.holdStake as jest.Mock).mockRejectedValue(
+        new Error("Card declined"),
+      );
 
-      const promise = disputeService.initiateAppeal('user-2', 'proof-2', 'cus_456');
+      const promise = disputeService.initiateAppeal(
+        "user-2",
+        "proof-2",
+        "cus_456",
+      );
       await expect(promise).rejects.toThrow(HttpException);
-      await expect(promise).rejects.toThrow(/Could not authorize the \$5\.00 appeal fee/);
+      await expect(promise).rejects.toThrow(
+        /Could not authorize the \$5\.00 appeal fee/,
+      );
     });
 
-    it('should return 500 and attempt compensation when DB persistence fails after fee authorization', async () => {
+    it("should return 500 and attempt compensation when DB persistence fails after fee authorization", async () => {
       (mockStripeService.holdStake as jest.Mock).mockResolvedValueOnce({
-        id: 'pi_appeal_tx_1',
-        status: 'requires_capture',
+        id: "pi_appeal_tx_1",
+        status: "requires_capture",
       });
-      (mockStripeService.cancelHold as jest.Mock).mockResolvedValueOnce({ id: 'pi_appeal_tx_1' });
+      (mockStripeService.cancelHold as jest.Mock).mockResolvedValueOnce({
+        id: "pi_appeal_tx_1",
+      });
 
       const client = {
-        query: jest.fn()
+        query: jest
+          .fn()
           .mockResolvedValueOnce({ rows: [] }) // BEGIN
-          .mockRejectedValueOnce(new Error('db unavailable')) // dispute insert
+          .mockRejectedValueOnce(new Error("db unavailable")) // dispute insert
           .mockResolvedValueOnce({ rows: [] }), // ROLLBACK
         release: jest.fn(),
       };
@@ -194,23 +228,37 @@ describe('DisputeService', () => {
 
       let caught: HttpException | null = null;
       try {
-        await disputeService.initiateAppeal('user-1', 'proof-1', 'cus_123');
+        await disputeService.initiateAppeal("user-1", "proof-1", "cus_123");
       } catch (err) {
         caught = err as HttpException;
       }
 
       expect(caught).toBeInstanceOf(HttpException);
       expect(caught?.getStatus()).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
-      expect(mockStripeService.cancelHold).toHaveBeenCalledWith('pi_appeal_tx_1');
-      expect(client.query).toHaveBeenCalledWith('ROLLBACK');
+      expect(mockStripeService.cancelHold).toHaveBeenCalledWith(
+        "pi_appeal_tx_1",
+      );
+      expect(client.query).toHaveBeenCalledWith("ROLLBACK");
     });
   });
 
-  describe('getDisputeQueue', () => {
-    it('should return pending disputes ordered by creation date', async () => {
+  describe("getDisputeQueue", () => {
+    it("should return pending disputes ordered by creation date", async () => {
       const rows = [
-        { id: 'dispute-1', proof_id: 'proof-1', user_id: 'user-1', appeal_status: 'FEE_AUTHORIZED_PENDING_REVIEW', created_at: '2026-03-01' },
-        { id: 'dispute-2', proof_id: 'proof-2', user_id: 'user-2', appeal_status: 'IN_REVIEW', created_at: '2026-03-02' },
+        {
+          id: "dispute-1",
+          proof_id: "proof-1",
+          user_id: "user-1",
+          appeal_status: "FEE_AUTHORIZED_PENDING_REVIEW",
+          created_at: "2026-03-01",
+        },
+        {
+          id: "dispute-2",
+          proof_id: "proof-2",
+          user_id: "user-2",
+          appeal_status: "IN_REVIEW",
+          created_at: "2026-03-02",
+        },
       ];
       mockPool.query.mockResolvedValueOnce({ rows });
 
@@ -218,11 +266,11 @@ describe('DisputeService', () => {
 
       expect(result).toEqual(rows);
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('FEE_AUTHORIZED_PENDING_REVIEW'),
+        expect.stringContaining("FEE_AUTHORIZED_PENDING_REVIEW"),
       );
     });
 
-    it('should return empty array when no pending disputes', async () => {
+    it("should return empty array when no pending disputes", async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       const result = await disputeService.getDisputeQueue();
@@ -231,169 +279,201 @@ describe('DisputeService', () => {
     });
   });
 
-  describe('getDisputeDetail', () => {
-    it('should return full dispute detail with fury votes', async () => {
+  describe("getDisputeDetail", () => {
+    it("should return full dispute detail with fury votes", async () => {
       mockPool.query
         .mockResolvedValueOnce({
-          rows: [{
-            id: 'dispute-1',
-            proof_id: 'proof-1',
-            contract_id: 'contract-1',
-            user_id: 'user-1',
-            user_email: 'user@styx.app',
-            oath_category: 'DEEP_WORK_FOCUS',
-            proof_status: 'DISPUTED',
-            media_uri: 'proofs/123.mp4',
-            submitted_at: '2026-03-01',
-            appeal_status: 'FEE_AUTHORIZED_PENDING_REVIEW',
-            judge_user_id: null,
-            judge_notes: null,
-            resolved_at: null,
-          }],
+          rows: [
+            {
+              id: "dispute-1",
+              proof_id: "proof-1",
+              contract_id: "contract-1",
+              user_id: "user-1",
+              user_email: "user@styx.app",
+              oath_category: "DEEP_WORK_FOCUS",
+              proof_status: "DISPUTED",
+              media_uri: "proofs/123.mp4",
+              submitted_at: "2026-03-01",
+              appeal_status: "FEE_AUTHORIZED_PENDING_REVIEW",
+              judge_user_id: null,
+              judge_notes: null,
+              resolved_at: null,
+            },
+          ],
         })
         .mockResolvedValueOnce({
           rows: [
-            { furyUserId: 'fury-1', verdict: 'FAIL', reviewedAt: '2026-03-01' },
-            { furyUserId: 'fury-2', verdict: 'PASS', reviewedAt: '2026-03-01' },
+            { furyUserId: "fury-1", verdict: "FAIL", reviewedAt: "2026-03-01" },
+            { furyUserId: "fury-2", verdict: "PASS", reviewedAt: "2026-03-01" },
           ],
         });
 
-      const result = await disputeService.getDisputeDetail('dispute-1');
+      const result = await disputeService.getDisputeDetail("dispute-1");
 
-      expect(result.id).toBe('dispute-1');
-      expect(result.proofId).toBe('proof-1');
-      expect(result.contractId).toBe('contract-1');
-      expect(result.userEmail).toBe('user@styx.app');
+      expect(result.id).toBe("dispute-1");
+      expect(result.proofId).toBe("proof-1");
+      expect(result.contractId).toBe("contract-1");
+      expect(result.userEmail).toBe("user@styx.app");
       expect(result.furyVotes).toHaveLength(2);
     });
 
-    it('should throw NotFoundException when dispute does not exist', async () => {
+    it("should throw NotFoundException when dispute does not exist", async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
-      await expect(disputeService.getDisputeDetail('nonexistent'))
-        .rejects
-        .toThrow('Dispute not found');
+      await expect(
+        disputeService.getDisputeDetail("nonexistent"),
+      ).rejects.toThrow("Dispute not found");
     });
   });
 
-  describe('getAuditTrail', () => {
-    it('should compose dispute detail with event log and ledger entries', async () => {
+  describe("getAuditTrail", () => {
+    it("should compose dispute detail with event log and ledger entries", async () => {
       // Mock getDisputeDetail (two queries: dispute + fury votes)
       mockPool.query
         .mockResolvedValueOnce({
-          rows: [{
-            id: 'dispute-1',
-            proof_id: 'proof-1',
-            contract_id: 'contract-1',
-            user_id: 'user-1',
-            user_email: 'user@styx.app',
-            oath_category: 'DEEP_WORK_FOCUS',
-            proof_status: 'DISPUTED',
-            media_uri: null,
-            submitted_at: '2026-03-01',
-            appeal_status: 'FEE_AUTHORIZED_PENDING_REVIEW',
-            judge_user_id: null,
-            judge_notes: null,
-            resolved_at: null,
-          }],
+          rows: [
+            {
+              id: "dispute-1",
+              proof_id: "proof-1",
+              contract_id: "contract-1",
+              user_id: "user-1",
+              user_email: "user@styx.app",
+              oath_category: "DEEP_WORK_FOCUS",
+              proof_status: "DISPUTED",
+              media_uri: null,
+              submitted_at: "2026-03-01",
+              appeal_status: "FEE_AUTHORIZED_PENDING_REVIEW",
+              judge_user_id: null,
+              judge_notes: null,
+              resolved_at: null,
+            },
+          ],
         })
         .mockResolvedValueOnce({ rows: [] }) // fury votes
         .mockResolvedValueOnce({
           rows: [
-            { id: 'evt-1', event_type: 'APPEAL_INITIATED', payload: { proofId: 'proof-1' }, created_at: '2026-03-01' },
+            {
+              id: "evt-1",
+              event_type: "APPEAL_INITIATED",
+              payload: { proofId: "proof-1" },
+              created_at: "2026-03-01",
+            },
           ],
         }) // event_log
         .mockResolvedValueOnce({
           rows: [
-            { id: 'entry-1', amount: 500, debit_account: 'user-acct', credit_account: 'escrow', created_at: '2026-03-01', metadata: null },
+            {
+              id: "entry-1",
+              amount: 500,
+              debit_account: "user-acct",
+              credit_account: "escrow",
+              created_at: "2026-03-01",
+              metadata: null,
+            },
           ],
         }); // ledger entries
 
-      const result = await disputeService.getAuditTrail('dispute-1');
+      const result = await disputeService.getAuditTrail("dispute-1");
 
-      expect(result.dispute.id).toBe('dispute-1');
+      expect(result.dispute.id).toBe("dispute-1");
       expect(result.timeline).toHaveLength(1);
-      expect(result.timeline[0].type).toBe('EVENT');
-      expect(result.timeline[0].eventType).toBe('APPEAL_INITIATED');
+      expect(result.timeline[0].type).toBe("EVENT");
+      expect(result.timeline[0].eventType).toBe("APPEAL_INITIATED");
       expect(result.ledger).toHaveLength(1);
-      expect(result.ledger[0].type).toBe('LEDGER');
+      expect(result.ledger[0].type).toBe("LEDGER");
       expect(result.ledger[0].amount).toBe(500);
     });
 
-    it('should propagate NotFoundException if dispute does not exist', async () => {
+    it("should propagate NotFoundException if dispute does not exist", async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
-      await expect(disputeService.getAuditTrail('nonexistent'))
-        .rejects
-        .toThrow('Dispute not found');
+      await expect(disputeService.getAuditTrail("nonexistent")).rejects.toThrow(
+        "Dispute not found",
+      );
     });
   });
 
-  describe('resolveDispute', () => {
-    it('should queue appeal-fee capture in outbox, record the fee in the ledger (PM22), and avoid Stripe call inside resolution transaction', async () => {
+  describe("resolveDispute", () => {
+    it("should queue appeal-fee capture in outbox, record the fee in the ledger (PM22), and avoid Stripe call inside resolution transaction", async () => {
       const client = {
         query: jest.fn().mockImplementation(async (sql: string) => {
           const text = String(sql);
-          if (text.startsWith('BEGIN') || text.startsWith('COMMIT') || text.startsWith('ROLLBACK')) {
+          if (
+            text.startsWith("BEGIN") ||
+            text.startsWith("COMMIT") ||
+            text.startsWith("ROLLBACK")
+          ) {
             return { rows: [] };
           }
-          if (text.includes('FROM disputes d') && text.includes('JOIN users u')) {
+          if (
+            text.includes("FROM disputes d") &&
+            text.includes("JOIN users u")
+          ) {
             return {
-              rows: [{
-                id: 'dispute-1',
-                proof_id: 'proof-1',
-                user_id: 'user-1',
-                payment_intent_id: 'pi_appeal_1',
-                contract_id: 'contract-1',
-                user_account_id: 'acct-user-1',
-              }],
+              rows: [
+                {
+                  id: "dispute-1",
+                  proof_id: "proof-1",
+                  user_id: "user-1",
+                  payment_intent_id: "pi_appeal_1",
+                  contract_id: "contract-1",
+                  user_account_id: "acct-user-1",
+                },
+              ],
             };
           }
           if (text.includes("name = 'SYSTEM_REVENUE'")) {
-            return { rows: [{ id: 'acct-revenue' }] };
+            return { rows: [{ id: "acct-revenue" }] };
           }
           // ledger INSERT (recordTransaction with external client + idempotency key)
-          if (text.includes('INSERT INTO entries')) {
-            return { rows: [{ id: 'entry-appeal-fee' }] };
+          if (text.includes("INSERT INTO entries")) {
+            return { rows: [{ id: "entry-appeal-fee" }] };
           }
           return { rows: [] };
         }),
         release: jest.fn(),
       };
       mockPool.connect.mockResolvedValueOnce(client);
-      mockTruthLog.appendEvent.mockResolvedValueOnce('event-1');
+      mockTruthLog.appendEvent.mockResolvedValueOnce("event-1");
       // recordTransaction is the real LedgerService here? No — mockLedger is injected, so the
       // ledger posting goes through the mock. Make it resolve to an entry id.
-      mockLedger.recordTransaction.mockResolvedValueOnce('entry-appeal-fee');
+      mockLedger.recordTransaction.mockResolvedValueOnce("entry-appeal-fee");
 
       const result = await disputeService.resolveDispute(
-        'dispute-1',
-        'judge-1',
-        'UPHELD',
-        'Original verdict stands',
+        "dispute-1",
+        "judge-1",
+        "UPHELD",
+        "Original verdict stands",
       );
 
-      expect(result.status).toBe('RESOLVED_UPHELD');
+      expect(result.status).toBe("RESOLVED_UPHELD");
       expect(mockStripeService.captureStake).not.toHaveBeenCalled();
       expect(mockStripeService.cancelHold).not.toHaveBeenCalled();
 
       const outboxInsertCall = client.query.mock.calls.find(
-        ([sql]: [string]) => typeof sql === 'string' && sql.includes('INSERT INTO contract_resolution_side_effects'),
+        ([sql]: [string]) =>
+          typeof sql === "string" &&
+          sql.includes("INSERT INTO contract_resolution_side_effects"),
       );
       expect(outboxInsertCall).toBeDefined();
-      expect(outboxInsertCall?.[1][2]).toBe('STRIPE_CAPTURE_APPEAL_FEE');
-      expect(outboxInsertCall?.[1][3]).toContain('dispute-resolution:dispute-1:UPHELD:stripe');
+      expect(outboxInsertCall?.[1][2]).toBe("STRIPE_CAPTURE_APPEAL_FEE");
+      expect(outboxInsertCall?.[1][3]).toContain(
+        "dispute-resolution:dispute-1:UPHELD:stripe",
+      );
 
       // PM22: the captured $5 appeal fee must be posted to the ledger (user → revenue) with a
       // deterministic idempotency key so a re-resolution cannot double-post it.
       expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
-        'acct-user-1',
-        'acct-revenue',
+        "acct-user-1",
+        "acct-revenue",
         500,
-        'contract-1',
-        expect.objectContaining({ type: 'APPEAL_FEE_CAPTURED', disputeId: 'dispute-1' }),
+        "contract-1",
+        expect.objectContaining({
+          type: "APPEAL_FEE_CAPTURED",
+          disputeId: "dispute-1",
+        }),
         client,
-        'styx_appeal_fee_dispute-1',
+        "styx_appeal_fee_dispute-1",
       );
     });
   });

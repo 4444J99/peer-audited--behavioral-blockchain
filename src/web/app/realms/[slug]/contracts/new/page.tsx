@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useParams } from 'next/navigation';
-import { redirect } from 'next/navigation';
+import { useParams } from "next/navigation";
+import { redirect } from "next/navigation";
 
 /**
  * Realm-scoped contract creation redirects to /contracts/new?realm=<slug>

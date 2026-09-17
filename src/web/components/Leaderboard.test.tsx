@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 
-import React from 'react';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import React from "react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 
 class MockEventSource {
   static instances: MockEventSource[] = [];
@@ -35,18 +35,20 @@ class MockEventSource {
   }
 }
 
-jest.mock('../services/api-client', () => ({
+jest.mock("../services/api-client", () => ({
   api: {
     getLeaderboard: jest.fn().mockResolvedValue([]),
-    issueLeaderboardStreamCookie: jest.fn().mockResolvedValue({ expiresInSeconds: 60 }),
+    issueLeaderboardStreamCookie: jest
+      .fn()
+      .mockResolvedValue({ expiresInSeconds: 60 }),
   },
-  getAuthToken: jest.fn().mockReturnValue('session-token'),
+  getAuthToken: jest.fn().mockReturnValue("session-token"),
 }));
 
-jest.mock('./Leaderboard.css', () => ({}));
+jest.mock("./Leaderboard.css", () => ({}));
 
-import Leaderboard from './Leaderboard';
-import { api, getAuthToken } from '../services/api-client';
+import Leaderboard from "./Leaderboard";
+import { api, getAuthToken } from "../services/api-client";
 
 const mockApi = api as unknown as {
   getLeaderboard: jest.Mock;
@@ -55,49 +57,51 @@ const mockApi = api as unknown as {
 const mockGetAuthToken = getAuthToken as unknown as jest.Mock;
 
 const ROW = {
-  id: 'u-1',
-  email: 'valkyrie@styx.protocol',
+  id: "u-1",
+  email: "valkyrie@styx.protocol",
   integrity_score: 93,
-  created_at: '2026-01-02T00:00:00Z',
+  created_at: "2026-01-02T00:00:00Z",
 };
 
-describe('Leaderboard', () => {
+describe("Leaderboard", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     MockEventSource.instances = [];
     (global as any).EventSource = MockEventSource;
     mockApi.getLeaderboard.mockResolvedValue([]);
-    mockApi.issueLeaderboardStreamCookie.mockResolvedValue({ expiresInSeconds: 60 });
-    mockGetAuthToken.mockReturnValue('session-token');
+    mockApi.issueLeaderboardStreamCookie.mockResolvedValue({
+      expiresInSeconds: 60,
+    });
+    mockGetAuthToken.mockReturnValue("session-token");
   });
 
   afterEach(() => {
     delete (global as any).EventSource;
   });
 
-  it('renders the header and the period filters', async () => {
+  it("renders the header and the period filters", async () => {
     render(<Leaderboard />);
 
     expect(screen.getByText(/Tavern Board/)).toBeDefined();
-    expect(screen.getByText('weekly')).toBeDefined();
-    expect(screen.getByText('monthly')).toBeDefined();
-    expect(screen.getByText('All Time')).toBeDefined();
+    expect(screen.getByText("weekly")).toBeDefined();
+    expect(screen.getByText("monthly")).toBeDefined();
+    expect(screen.getByText("All Time")).toBeDefined();
 
     await waitFor(() => expect(mockApi.getLeaderboard).toHaveBeenCalled());
   });
 
-  it('opens an SSE subscription after issuing the stream cookie', async () => {
+  it("opens an SSE subscription after issuing the stream cookie", async () => {
     render(<Leaderboard />);
 
     await waitFor(() => expect(MockEventSource.instances).toHaveLength(1));
 
     expect(mockApi.issueLeaderboardStreamCookie).toHaveBeenCalled();
     const source = MockEventSource.instances[0];
-    expect(source.url).toBe('/api/dashboard/leaderboard/stream?limit=10');
+    expect(source.url).toBe("/api/dashboard/leaderboard/stream?limit=10");
     expect(source.withCredentials).toBe(true);
   });
 
-  it('renders rows pushed over the stream', async () => {
+  it("renders rows pushed over the stream", async () => {
     render(<Leaderboard />);
 
     await waitFor(() => expect(MockEventSource.instances).toHaveLength(1));
@@ -107,11 +111,11 @@ describe('Leaderboard', () => {
     });
 
     // The name appears twice: the ranked row and the Fury of the Week spotlight.
-    expect(screen.getAllByText('valkyrie')).toHaveLength(2);
-    expect(screen.getByText('Fury of the Week')).toBeDefined();
+    expect(screen.getAllByText("valkyrie")).toHaveLength(2);
+    expect(screen.getByText("Fury of the Week")).toBeDefined();
   });
 
-  it('ignores a malformed stream message instead of blanking the board', async () => {
+  it("ignores a malformed stream message instead of blanking the board", async () => {
     render(<Leaderboard />);
 
     await waitFor(() => expect(MockEventSource.instances).toHaveLength(1));
@@ -120,14 +124,14 @@ describe('Leaderboard', () => {
       MockEventSource.instances[0].simulateMessage([ROW]);
     });
     await act(async () => {
-      MockEventSource.instances[0].onmessage?.({ data: 'not-json' });
+      MockEventSource.instances[0].onmessage?.({ data: "not-json" });
       MockEventSource.instances[0].simulateMessage({ notAnArray: true });
     });
 
-    expect(screen.getAllByText('valkyrie').length).toBeGreaterThan(0);
+    expect(screen.getAllByText("valkyrie").length).toBeGreaterThan(0);
   });
 
-  it('falls back to polling when the stream errors', async () => {
+  it("falls back to polling when the stream errors", async () => {
     jest.useFakeTimers();
     try {
       render(<Leaderboard />);
@@ -152,14 +156,16 @@ describe('Leaderboard', () => {
         jest.advanceTimersByTime(30000);
       });
 
-      expect(mockApi.getLeaderboard.mock.calls.length).toBeGreaterThan(callsBeforeError);
+      expect(mockApi.getLeaderboard.mock.calls.length).toBeGreaterThan(
+        callsBeforeError,
+      );
     } finally {
       jest.useRealTimers();
     }
   });
 
-  it('polls without opening a stream when there is no session token', async () => {
-    mockGetAuthToken.mockReturnValue('');
+  it("polls without opening a stream when there is no session token", async () => {
+    mockGetAuthToken.mockReturnValue("");
 
     render(<Leaderboard />);
 
@@ -168,7 +174,7 @@ describe('Leaderboard', () => {
     expect(mockApi.issueLeaderboardStreamCookie).not.toHaveBeenCalled();
   });
 
-  it('polls without opening a stream when EventSource is unavailable', async () => {
+  it("polls without opening a stream when EventSource is unavailable", async () => {
     delete (global as any).EventSource;
 
     render(<Leaderboard />);
@@ -177,7 +183,7 @@ describe('Leaderboard', () => {
     expect(mockApi.issueLeaderboardStreamCookie).not.toHaveBeenCalled();
   });
 
-  it('closes the stream on unmount', async () => {
+  it("closes the stream on unmount", async () => {
     const { unmount } = render(<Leaderboard />);
 
     await waitFor(() => expect(MockEventSource.instances).toHaveLength(1));

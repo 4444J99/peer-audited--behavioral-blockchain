@@ -1,22 +1,54 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Pool } from "pg";
 import {
-  validateGatewayOath, calculateStakeTaper, getCmRewardForDay, calculateMicroReward,
-  calculateHabitStrength, getHabitStrengthLabel, getBboRecommendations, calculateFrictionScore,
-  classifyAbandonment, checkReentryEligibility,
-  EXIT_INTERVIEW_QUESTIONS_SUCCESS, EXIT_INTERVIEW_QUESTIONS_FAILURE,
-  DAY21_TARGET_DAY, DAY21_BONUS_INTEGRITY_POINTS, DAY21_VAULT_BONUS_CENTS, DAY21_BADGE_NAME,
-  BboEntry, TemptationBundle, getTemptationBundles, getRecoveryState, RecoveryState,
-  DisenchantmentEntry, DisenchantmentResult, calculateDisenchantment,
-  LifeTransitionType, DiscontinuityWindow, detectDiscontinuityWindow,
-  ImplementationIntention, ImplementationIntentionValidation,
-  parseImplementationIntention, validateImplementationIntention, generateImplementationIntentionTemplate,
+  validateGatewayOath,
+  calculateStakeTaper,
+  getCmRewardForDay,
+  calculateMicroReward,
+  calculateHabitStrength,
+  getHabitStrengthLabel,
+  getBboRecommendations,
+  calculateFrictionScore,
+  classifyAbandonment,
+  checkReentryEligibility,
+  EXIT_INTERVIEW_QUESTIONS_SUCCESS,
+  EXIT_INTERVIEW_QUESTIONS_FAILURE,
+  DAY21_TARGET_DAY,
+  DAY21_BONUS_INTEGRITY_POINTS,
+  DAY21_VAULT_BONUS_CENTS,
+  DAY21_BADGE_NAME,
+  BboEntry,
+  TemptationBundle,
+  getTemptationBundles,
+  getRecoveryState,
+  RecoveryState,
+  DisenchantmentEntry,
+  DisenchantmentResult,
+  calculateDisenchantment,
+  LifeTransitionType,
+  DiscontinuityWindow,
+  detectDiscontinuityWindow,
+  ImplementationIntention,
+  ImplementationIntentionValidation,
+  parseImplementationIntention,
+  validateImplementationIntention,
+  generateImplementationIntentionTemplate,
   OathCategory,
-  PassiveProvider, getPassiveProviders, getPassiveProviderConfig,
-  evaluatePodBroadcast, assessAuditorWellness, calculateGenerosityGrant,
-  generateRolloverOffer, getAcademyProgress, detectResistancePatterns,
-  INTAKE_ASSESSMENT, calculateAssessmentProfile, createDecoProof,
-  resolveOracleFailure, quoteStablecoinStake, calculateRevenueShare,
+  PassiveProvider,
+  getPassiveProviders,
+  getPassiveProviderConfig,
+  evaluatePodBroadcast,
+  assessAuditorWellness,
+  calculateGenerosityGrant,
+  generateRolloverOffer,
+  getAcademyProgress,
+  detectResistancePatterns,
+  INTAKE_ASSESSMENT,
+  calculateAssessmentProfile,
+  createDecoProof,
+  resolveOracleFailure,
+  quoteStablecoinStake,
+  calculateRevenueShare,
   createWhistleblowerReport,
 } from "../../../../shared/libs/behavioral-logic";
 
@@ -26,7 +58,11 @@ export class BehavioralEnrichmentService {
 
   constructor(private readonly pool: Pool) {}
 
-  async checkGatewayOathEligibility(userId: string, stakeCents: number, durationDays: number) {
+  async checkGatewayOathEligibility(
+    userId: string,
+    stakeCents: number,
+    durationDays: number,
+  ) {
     const { rows } = await this.pool.query(
       `SELECT COUNT(*)::int AS count FROM contracts WHERE user_id = $1`,
       [userId],
@@ -73,9 +109,13 @@ export class BehavioralEnrichmentService {
        WHERE c.user_id = $1`,
       [userId],
     );
-    if (!rows[0] || rows[0].total === 0) return { strength: 0, label: "Fragile" };
+    if (!rows[0] || rows[0].total === 0)
+      return { strength: 0, label: "Fragile" };
     const strength = calculateHabitStrength(rows[0].completed, rows[0].total);
-    return { strength: Math.round(strength * 100) / 100, label: getHabitStrengthLabel(strength) };
+    return {
+      strength: Math.round(strength * 100) / 100,
+      label: getHabitStrengthLabel(strength),
+    };
   }
 
   getBboRecommendations(category: string, count = 3): BboEntry[] {
@@ -95,24 +135,29 @@ export class BehavioralEnrichmentService {
   }
 
   classifyAbandonment(userId: string) {
-    return this.pool.query(
-      `SELECT
+    return this.pool
+      .query(
+        `SELECT
         COALESCE((SELECT COUNT(*) FILTER (WHERE status = 'COMPLETED')::int FROM contracts WHERE user_id = $1), 0) AS completed,
         COALESCE((SELECT COUNT(*) FILTER (WHERE status = 'FAILED')::int FROM contracts WHERE user_id = $1), 0) AS failed,
         COALESCE((SELECT COUNT(*)::int FROM support_tickets WHERE user_id = $1), 0) AS tickets`,
-      [userId],
-    ).then(({ rows }) => {
-      const r = rows[0];
-      return classifyAbandonment({
-        completedContracts: r.completed,
-        failedContracts: r.failed,
-        averageCompletionRate: (r.completed + r.failed) > 0 ? r.completed / (r.completed + r.failed) : 0,
-        daysSinceLastActive: 0,
-        streakAtExit: 0,
-        integrityScore: 0,
-        supportTicketsOpened: r.tickets,
+        [userId],
+      )
+      .then(({ rows }) => {
+        const r = rows[0];
+        return classifyAbandonment({
+          completedContracts: r.completed,
+          failedContracts: r.failed,
+          averageCompletionRate:
+            r.completed + r.failed > 0
+              ? r.completed / (r.completed + r.failed)
+              : 0,
+          daysSinceLastActive: 0,
+          streakAtExit: 0,
+          integrityScore: 0,
+          supportTicketsOpened: r.tickets,
+        });
       });
-    });
   }
 
   async checkReentryEligibility(userId: string) {
@@ -135,18 +180,28 @@ export class BehavioralEnrichmentService {
   }
 
   getExitInterviewQuestions(outcome: "COMPLETED" | "FAILED") {
-    return outcome === "COMPLETED" ? EXIT_INTERVIEW_QUESTIONS_SUCCESS : EXIT_INTERVIEW_QUESTIONS_FAILURE;
+    return outcome === "COMPLETED"
+      ? EXIT_INTERVIEW_QUESTIONS_SUCCESS
+      : EXIT_INTERVIEW_QUESTIONS_FAILURE;
   }
 
-  async submitExitInterview(contractId: string, userId: string, answers: Record<string, any>) {
-    const { rows: [row] } = await this.pool.query(
+  async submitExitInterview(
+    contractId: string,
+    userId: string,
+    answers: Record<string, any>,
+  ) {
+    const {
+      rows: [row],
+    } = await this.pool.query(
       `INSERT INTO exit_interviews (contract_id, user_id, answers)
        VALUES ($1, $2, $3)
        ON CONFLICT (contract_id) DO UPDATE SET answers = $3, updated_at = NOW()
        RETURNING id`,
       [contractId, userId, JSON.stringify(answers)],
     );
-    this.logger.log(`Exit interview submitted for contract ${contractId} (id=${row.id})`);
+    this.logger.log(
+      `Exit interview submitted for contract ${contractId} (id=${row.id})`,
+    );
     return { id: row.id };
   }
 
@@ -162,20 +217,31 @@ export class BehavioralEnrichmentService {
     if (!rows[0]) return null;
     const now = new Date();
     const isWeekend = now.getDay() === 0 || now.getDay() === 6;
-    return { state: getRecoveryState(rows[0].age_days, isWeekend), ageDays: rows[0].age_days };
+    return {
+      state: getRecoveryState(rows[0].age_days, isWeekend),
+      ageDays: rows[0].age_days,
+    };
   }
 
-  async recordDisenchantmentRating(userId: string, contractId: string, rating: number) {
+  async recordDisenchantmentRating(
+    userId: string,
+    contractId: string,
+    rating: number,
+  ) {
     const { rows } = await this.pool.query(
       `INSERT INTO disenchantment_ratings (user_id, contract_id, rating)
        VALUES ($1, $2, $3) RETURNING id, created_at`,
       [userId, contractId, rating],
     );
-    this.logger.log(`Disenchantment rating ${rating} recorded for contract ${contractId}`);
+    this.logger.log(
+      `Disenchantment rating ${rating} recorded for contract ${contractId}`,
+    );
     return rows[0];
   }
 
-  async getDisenchantmentTrend(contractId: string): Promise<DisenchantmentResult> {
+  async getDisenchantmentTrend(
+    contractId: string,
+  ): Promise<DisenchantmentResult> {
     const { rows } = await this.pool.query(
       `SELECT rating, created_at::date::text AS date
        FROM disenchantment_ratings WHERE contract_id = $1
@@ -185,7 +251,10 @@ export class BehavioralEnrichmentService {
     return calculateDisenchantment(rows as DisenchantmentEntry[]);
   }
 
-  getDiscontinuityWindow(transitionType: LifeTransitionType, daysSinceTransition: number): DiscontinuityWindow {
+  getDiscontinuityWindow(
+    transitionType: LifeTransitionType,
+    daysSinceTransition: number,
+  ): DiscontinuityWindow {
     return detectDiscontinuityWindow({ transitionType, daysSinceTransition });
   }
 
@@ -193,7 +262,9 @@ export class BehavioralEnrichmentService {
     return parseImplementationIntention(raw);
   }
 
-  validateImplIntention(intention: ImplementationIntention): ImplementationIntentionValidation {
+  validateImplIntention(
+    intention: ImplementationIntention,
+  ): ImplementationIntentionValidation {
     return validateImplementationIntention(intention);
   }
 
@@ -214,7 +285,9 @@ export class BehavioralEnrichmentService {
       `UPDATE users SET integrity_score = integrity_score + $1 WHERE id = $2`,
       [DAY21_BONUS_INTEGRITY_POINTS, rows[0].user_id],
     );
-    this.logger.log(`Day 21 milestone reward applied for contract ${contractId}`);
+    this.logger.log(
+      `Day 21 milestone reward applied for contract ${contractId}`,
+    );
     return {
       day21Reached: true,
       ageDays,
@@ -225,38 +298,82 @@ export class BehavioralEnrichmentService {
   }
 
   // #108: Passive proof API integrations
-  getPassiveProviders() { return getPassiveProviders(); }
-  getPassiveProviderConfig(provider: PassiveProvider) { return getPassiveProviderConfig(provider); }
+  getPassiveProviders() {
+    return getPassiveProviders();
+  }
+  getPassiveProviderConfig(provider: PassiveProvider) {
+    return getPassiveProviderConfig(provider);
+  }
 
   // #107: Emotional contagion safeguards
-  evaluatePodBroadcast(podId: string, failureCount: number, memberCount: number, lastBroadcastAt: Date | null) {
-    return evaluatePodBroadcast({ podId, failureCount, memberCount, lastBroadcastAt });
+  evaluatePodBroadcast(
+    podId: string,
+    failureCount: number,
+    memberCount: number,
+    lastBroadcastAt: Date | null,
+  ) {
+    return evaluatePodBroadcast({
+      podId,
+      failureCount,
+      memberCount,
+      lastBroadcastAt,
+    });
   }
 
   // #106: Auditor wellness
-  assessAuditorWellness(auditorId: string, consecutiveReviews: number, avgReviewTimeSec: number, recentRejectionRate: number) {
-    return assessAuditorWellness({ auditorId, consecutiveReviews, avgReviewTimeSec, recentRejectionRate });
+  assessAuditorWellness(
+    auditorId: string,
+    consecutiveReviews: number,
+    avgReviewTimeSec: number,
+    recentRejectionRate: number,
+  ) {
+    return assessAuditorWellness({
+      auditorId,
+      consecutiveReviews,
+      avgReviewTimeSec,
+      recentRejectionRate,
+    });
   }
 
   // #105: Generosity loop
-  calculateGenerosityGrant(giverCompletedContracts: number, giverAverageStakeCents: number) {
-    return calculateGenerosityGrant(giverCompletedContracts, giverAverageStakeCents);
+  calculateGenerosityGrant(
+    giverCompletedContracts: number,
+    giverAverageStakeCents: number,
+  ) {
+    return calculateGenerosityGrant(
+      giverCompletedContracts,
+      giverAverageStakeCents,
+    );
   }
 
   // #104: Contract rollover
-  generateRolloverOffer(completedContractCategory: string, completedContractStakeCents: number) {
-    return generateRolloverOffer({ completedContractCategory, completedContractStakeCents });
+  generateRolloverOffer(
+    completedContractCategory: string,
+    completedContractStakeCents: number,
+  ) {
+    return generateRolloverOffer({
+      completedContractCategory,
+      completedContractStakeCents,
+    });
   }
 
   // #103: Academy
-  getAcademyProgress(completedIds: string[]) { return getAcademyProgress(completedIds); }
+  getAcademyProgress(completedIds: string[]) {
+    return getAcademyProgress(completedIds);
+  }
 
   // #100: Resistance patterns
-  detectResistancePatterns(text: string) { return detectResistancePatterns(text); }
+  detectResistancePatterns(text: string) {
+    return detectResistancePatterns(text);
+  }
 
   // #93: Intake assessment
-  getIntakeAssessment() { return INTAKE_ASSESSMENT; }
-  calculateAssessmentProfile(answers: Record<string, number>) { return calculateAssessmentProfile(answers); }
+  getIntakeAssessment() {
+    return INTAKE_ASSESSMENT;
+  }
+  calculateAssessmentProfile(answers: Record<string, number>) {
+    return calculateAssessmentProfile(answers);
+  }
 
   // #92: DECO oracle stub
   async createDecoProof(url: string, selector: string, expectedValue: string) {
@@ -264,20 +381,32 @@ export class BehavioralEnrichmentService {
   }
 
   // #91: Oracle failure fallback
-  resolveOracleFailure(verdicts: any[]) { return resolveOracleFailure(verdicts); }
+  resolveOracleFailure(verdicts: any[]) {
+    return resolveOracleFailure(verdicts);
+  }
 
   // #90: Stablecoin quote
-  quoteStablecoinStake(usdCents: number, stablecoinType: 'USDC' | 'USDT') {
+  quoteStablecoinStake(usdCents: number, stablecoinType: "USDC" | "USDT") {
     return quoteStablecoinStake(usdCents, stablecoinType);
   }
 
   // #89: Revenue share
-  calculateRevenueShare(totalPoolCents: number, totalDataPoints: number, userDataPoints: number) {
-    return calculateRevenueShare({ totalPoolCents, totalDataPoints, userDataPoints });
+  calculateRevenueShare(
+    totalPoolCents: number,
+    totalDataPoints: number,
+    userDataPoints: number,
+  ) {
+    return calculateRevenueShare({
+      totalPoolCents,
+      totalDataPoints,
+      userDataPoints,
+    });
   }
 
   // #88: Whistleblower
-  createWhistleblowerReport(category: 'FRAUD' | 'ABUSE' | 'COLLUSION' | 'OTHER') {
+  createWhistleblowerReport(
+    category: "FRAUD" | "ABUSE" | "COLLUSION" | "OTHER",
+  ) {
     return createWhistleblowerReport(category);
   }
 }

@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ChatMessage, ChatMessageProps } from './ChatMessage';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { ChatMessage, ChatMessageProps } from "./ChatMessage";
 
-const STORAGE_KEY = 'styx-chat-messages';
+const STORAGE_KEY = "styx-chat-messages";
 const MAX_HISTORY_MESSAGES = 20;
 
 const SUGGESTED_QUESTIONS = [
-  'How does the integrity score work?',
-  'What are the 7 oath categories?',
-  'How does the Fury peer audit network work?',
+  "How does the integrity score work?",
+  "What are the 7 oath categories?",
+  "How does the Fury peer audit network work?",
   "What's the revenue model?",
   "What's included in the Phase 1 beta?",
-  'How does the escrow system handle payments?',
-  'What tech stack powers Styx?',
+  "How does the escrow system handle payments?",
+  "What tech stack powers Styx?",
   "What's the current implementation status?",
 ];
 
 function loadMessages(): ChatMessageProps[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
@@ -37,7 +37,7 @@ function saveMessages(messages: ChatMessageProps[]) {
 
 export function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessageProps[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -61,7 +61,7 @@ export function ChatInterface() {
 
   // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = useCallback(
@@ -70,10 +70,10 @@ export function ChatInterface() {
       if (!trimmed || isStreaming) return;
 
       setError(null);
-      setInput('');
+      setInput("");
 
       const userMessage: ChatMessageProps = {
-        role: 'user',
+        role: "user",
         content: trimmed,
         timestamp: Date.now(),
       };
@@ -90,8 +90,8 @@ export function ChatInterface() {
       setIsStreaming(true);
 
       const assistantMessage: ChatMessageProps = {
-        role: 'assistant',
-        content: '',
+        role: "assistant",
+        content: "",
         timestamp: Date.now(),
       };
 
@@ -99,36 +99,36 @@ export function ChatInterface() {
       setMessages((prev) => [...prev, assistantMessage]);
 
       try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: history }),
         });
 
         if (!response.ok) {
           const errBody = await response.json().catch(() => ({}));
           throw new Error(
-            errBody.error || `Request failed (${response.status})`
+            errBody.error || `Request failed (${response.status})`,
           );
         }
 
         const reader = response.body?.getReader();
-        if (!reader) throw new Error('No response stream');
+        if (!reader) throw new Error("No response stream");
 
         const decoder = new TextDecoder();
-        let accumulated = '';
+        let accumulated = "";
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
+          const lines = chunk.split("\n");
 
           for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
+            if (!line.startsWith("data: ")) continue;
             const data = line.slice(6);
-            if (data === '[DONE]') continue;
+            if (data === "[DONE]") continue;
 
             try {
               const parsed = JSON.parse(data);
@@ -150,7 +150,7 @@ export function ChatInterface() {
             } catch (parseErr) {
               if (
                 parseErr instanceof Error &&
-                parseErr.message !== 'Unexpected end of JSON input'
+                parseErr.message !== "Unexpected end of JSON input"
               ) {
                 // Only throw non-parse errors (stream errors from server)
                 if ((parseErr as Error).message !== data) {
@@ -161,12 +161,12 @@ export function ChatInterface() {
           }
         }
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Something went wrong';
+        const msg = err instanceof Error ? err.message : "Something went wrong";
         setError(msg);
         // Remove the empty assistant message on error
         setMessages((prev) => {
           const last = prev[prev.length - 1];
-          if (last?.role === 'assistant' && !last.content) {
+          if (last?.role === "assistant" && !last.content) {
             return prev.slice(0, -1);
           }
           return prev;
@@ -175,7 +175,7 @@ export function ChatInterface() {
         setIsStreaming(false);
       }
     },
-    [messages, isStreaming]
+    [messages, isStreaming],
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -184,7 +184,7 @@ export function ChatInterface() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage(input);
     }
@@ -192,14 +192,14 @@ export function ChatInterface() {
 
   const exportConversation = () => {
     const lines = messages.map((msg) => {
-      const role = msg.role === 'user' ? 'You' : 'Styx';
+      const role = msg.role === "user" ? "You" : "Styx";
       const time = new Date(msg.timestamp).toLocaleString();
       return `### ${role} (${time})\n\n${msg.content}`;
     });
-    const markdown = `# Ask Styx — Conversation Export\n\nExported: ${new Date().toLocaleString()}\n\n---\n\n${lines.join('\n\n---\n\n')}\n`;
-    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const markdown = `# Ask Styx — Conversation Export\n\nExported: ${new Date().toLocaleString()}\n\n---\n\n${lines.join("\n\n---\n\n")}\n`;
+    const blob = new Blob([markdown], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `styx-chat-${new Date().toISOString().slice(0, 10)}.md`;
     a.click();
@@ -232,7 +232,7 @@ export function ChatInterface() {
           </h1>
           {messages.length > 0 && (
             <span className="text-xs text-neutral-500">
-              {messages.length} {messages.length === 1 ? 'message' : 'messages'}
+              {messages.length} {messages.length === 1 ? "message" : "messages"}
             </span>
           )}
         </div>
@@ -280,7 +280,7 @@ export function ChatInterface() {
           <ChatMessage key={i} {...msg} />
         ))}
 
-        {isStreaming && messages[messages.length - 1]?.content === '' && (
+        {isStreaming && messages[messages.length - 1]?.content === "" && (
           <div className="flex justify-start mb-4">
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl px-4 py-3">
               <span className="text-neutral-500 text-sm animate-pulse">

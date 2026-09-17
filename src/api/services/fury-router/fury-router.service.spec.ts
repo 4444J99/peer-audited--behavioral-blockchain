@@ -1,10 +1,10 @@
-import { FuryRouterService } from './fury-router.service';
-import { Queue } from 'bullmq';
-import { FURY_CONSENSUS_SIZE } from '../../../shared/libs/behavioral-logic';
+import { FuryRouterService } from "./fury-router.service";
+import { Queue } from "bullmq";
+import { FURY_CONSENSUS_SIZE } from "../../../shared/libs/behavioral-logic";
 
-describe('FuryRouterService', () => {
+describe("FuryRouterService", () => {
   let service: FuryRouterService;
-  
+
   // Create a mock Queue object
   const mockQueue = {
     add: jest.fn(),
@@ -17,21 +17,23 @@ describe('FuryRouterService', () => {
     jest.clearAllMocks();
   });
 
-  describe('routeProof', () => {
-    it('should enqueue a job with the correct parameters and exclude submitter logic params', async () => {
+  describe("routeProof", () => {
+    it("should enqueue a job with the correct parameters and exclude submitter logic params", async () => {
       // Mock the queue returning a job object with an ID
-      (mockQueue.add as jest.Mock).mockResolvedValueOnce({ id: 'bullmq-job-999' });
+      (mockQueue.add as jest.Mock).mockResolvedValueOnce({
+        id: "bullmq-job-999",
+      });
 
-      const proofId = 'proof-uuid-123';
-      const submitterId = 'user-abc';
-      
+      const proofId = "proof-uuid-123";
+      const submitterId = "user-abc";
+
       const returnedJobId = await service.routeProof(proofId, submitterId, 3);
-      
-      expect(returnedJobId).toBe('bullmq-job-999');
-      
+
+      expect(returnedJobId).toBe("bullmq-job-999");
+
       const addCall = (mockQueue.add as jest.Mock).mock.calls[0];
       // Arg 0: job name
-      expect(addCall[0]).toBe('route-fury-review');
+      expect(addCall[0]).toBe("route-fury-review");
       // Arg 1: job payload
       expect(addCall[1].proofId).toBe(proofId);
       expect(addCall[1].submitterUserId).toBe(submitterId);
@@ -41,10 +43,12 @@ describe('FuryRouterService', () => {
       expect(addCall[2].attempts).toBe(3);
     });
 
-    it('should default to the canonical Fury consensus reviewer count', async () => {
-      (mockQueue.add as jest.Mock).mockResolvedValueOnce({ id: 'bullmq-job-default' });
+    it("should default to the canonical Fury consensus reviewer count", async () => {
+      (mockQueue.add as jest.Mock).mockResolvedValueOnce({
+        id: "bullmq-job-default",
+      });
 
-      await service.routeProof('proof-uuid-default', 'user-def');
+      await service.routeProof("proof-uuid-default", "user-def");
 
       const addCall = (mockQueue.add as jest.Mock).mock.calls[0];
       expect(addCall[1].requiredReviewers).toBe(FURY_CONSENSUS_SIZE);

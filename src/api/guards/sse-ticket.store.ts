@@ -1,6 +1,6 @@
-import { randomBytes } from 'crypto';
+import { randomBytes } from "crypto";
 
-export type SseTicketScope = 'notifications' | 'fury' | 'leaderboard';
+export type SseTicketScope = "notifications" | "fury" | "leaderboard";
 
 interface SseTicketRecord {
   userId: string;
@@ -26,7 +26,7 @@ export function issueSseTicket(
 ): { ticket: string; expiresInSeconds: number } {
   cleanupExpiredTickets();
 
-  const ticket = randomBytes(24).toString('hex');
+  const ticket = randomBytes(24).toString("hex");
   tickets.set(ticket, {
     userId,
     scope,
@@ -39,7 +39,10 @@ export function issueSseTicket(
   };
 }
 
-export function consumeSseTicket(ticket: string, scope: SseTicketScope): string | null {
+export function consumeSseTicket(
+  ticket: string,
+  scope: SseTicketScope,
+): string | null {
   cleanupExpiredTickets();
 
   const record = tickets.get(ticket);

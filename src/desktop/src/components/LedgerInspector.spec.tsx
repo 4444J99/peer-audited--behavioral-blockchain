@@ -5,10 +5,10 @@
  * Uses the same mock-fetch pattern from api.spec.ts (node env, no DOM).
  */
 
-import { api } from '../services/api';
+import { api } from "../services/api";
 
 // ---- Mock the api module so component-level imports resolve ----
-jest.mock('../services/api', () => ({
+jest.mock("../services/api", () => ({
   api: {
     getTruthLog: jest.fn(),
     getAdminStats: jest.fn(),
@@ -16,11 +16,11 @@ jest.mock('../services/api', () => ({
 }));
 
 // ---- Stub lucide-react (no real SVG in node) ----
-jest.mock('lucide-react', () => ({
-  Database: 'Database',
-  Search: 'Search',
-  ArrowRightLeft: 'ArrowRightLeft',
-  RefreshCw: 'RefreshCw',
+jest.mock("lucide-react", () => ({
+  Database: "Database",
+  Search: "Search",
+  ArrowRightLeft: "ArrowRightLeft",
+  RefreshCw: "RefreshCw",
 }));
 
 const mockGetTruthLog = api.getTruthLog as jest.Mock;
@@ -37,9 +37,9 @@ beforeEach(() => {
 // and that the data transformations produce expected shapes.
 // ---------------------------------------------------------------------------
 
-describe('LedgerInspector', () => {
-  describe('data fetching', () => {
-    it('calls getTruthLog(100) and getAdminStats() on mount', async () => {
+describe("LedgerInspector", () => {
+  describe("data fetching", () => {
+    it("calls getTruthLog(100) and getAdminStats() on mount", async () => {
       mockGetTruthLog.mockResolvedValue({ transactions: [] });
       mockGetAdminStats.mockResolvedValue({
         totalUsers: 100,
@@ -56,18 +56,18 @@ describe('LedgerInspector', () => {
 
       expect(mockGetTruthLog).toHaveBeenCalledWith(100);
       expect(mockGetAdminStats).toHaveBeenCalled();
-      expect(logResult.status).toBe('fulfilled');
-      expect(statsResult.status).toBe('fulfilled');
+      expect(logResult.status).toBe("fulfilled");
+      expect(statsResult.status).toBe("fulfilled");
     });
 
-    it('normalizes transaction objects into TruthEvent shape', async () => {
+    it("normalizes transaction objects into TruthEvent shape", async () => {
       const rawTx = {
-        tx_hash: 'abc123',
-        timestamp: '2026-02-24T10:00:00Z',
-        type: 'STAKE_LOCKED',
-        user: 'usr_001',
+        tx_hash: "abc123",
+        timestamp: "2026-02-24T10:00:00Z",
+        type: "STAKE_LOCKED",
+        user: "usr_001",
         amount: 25,
-        status: 'CONFIRMED',
+        status: "CONFIRMED",
       };
       mockGetTruthLog.mockResolvedValue({ transactions: [rawTx] });
 
@@ -76,69 +76,102 @@ describe('LedgerInspector', () => {
 
       // Reproduce the normalization logic from the component
       const event = {
-        tx_hash: tx.tx_hash || tx.hash || tx.id || '---',
-        timestamp: tx.timestamp || tx.created_at || tx.createdAt || '---',
-        type: tx.type || tx.event_type || tx.eventType || 'UNKNOWN',
-        user: tx.user || tx.user_id || tx.userId || '---',
-        amount: tx.amount != null ? `$${Number(tx.amount).toFixed(2)}` : '---',
-        status: tx.status || 'UNKNOWN',
+        tx_hash: tx.tx_hash || tx.hash || tx.id || "---",
+        timestamp: tx.timestamp || tx.created_at || tx.createdAt || "---",
+        type: tx.type || tx.event_type || tx.eventType || "UNKNOWN",
+        user: tx.user || tx.user_id || tx.userId || "---",
+        amount: tx.amount != null ? `$${Number(tx.amount).toFixed(2)}` : "---",
+        status: tx.status || "UNKNOWN",
       };
 
-      expect(event.tx_hash).toBe('abc123');
-      expect(event.amount).toBe('$25.00');
-      expect(event.type).toBe('STAKE_LOCKED');
-      expect(event.status).toBe('CONFIRMED');
+      expect(event.tx_hash).toBe("abc123");
+      expect(event.amount).toBe("$25.00");
+      expect(event.type).toBe("STAKE_LOCKED");
+      expect(event.status).toBe("CONFIRMED");
     });
 
-    it('falls back to alternative field names when primary fields are absent', () => {
+    it("falls back to alternative field names when primary fields are absent", () => {
       const tx = {
-        hash: 'fallback-hash',
-        created_at: '2026-01-01',
-        event_type: 'PAYOUT',
-        user_id: 'usr_fallback',
+        hash: "fallback-hash",
+        created_at: "2026-01-01",
+        event_type: "PAYOUT",
+        user_id: "usr_fallback",
         amount: null,
         status: undefined,
       };
 
       const event = {
-        tx_hash: tx.hash || '---',
-        timestamp: tx.created_at || '---',
-        type: tx.event_type || 'UNKNOWN',
-        user: tx.user_id || '---',
-        amount: tx.amount != null ? `$${Number(tx.amount).toFixed(2)}` : '---',
-        status: tx.status || 'UNKNOWN',
+        tx_hash: tx.hash || "---",
+        timestamp: tx.created_at || "---",
+        type: tx.event_type || "UNKNOWN",
+        user: tx.user_id || "---",
+        amount: tx.amount != null ? `$${Number(tx.amount).toFixed(2)}` : "---",
+        status: tx.status || "UNKNOWN",
       };
 
-      expect(event.tx_hash).toBe('fallback-hash');
-      expect(event.timestamp).toBe('2026-01-01');
-      expect(event.type).toBe('PAYOUT');
-      expect(event.user).toBe('usr_fallback');
-      expect(event.amount).toBe('---');
-      expect(event.status).toBe('UNKNOWN');
+      expect(event.tx_hash).toBe("fallback-hash");
+      expect(event.timestamp).toBe("2026-01-01");
+      expect(event.type).toBe("PAYOUT");
+      expect(event.user).toBe("usr_fallback");
+      expect(event.amount).toBe("---");
+      expect(event.status).toBe("UNKNOWN");
     });
 
-    it('sets error message when getTruthLog rejects', async () => {
-      mockGetTruthLog.mockRejectedValue(new Error('Network failure'));
-      mockGetAdminStats.mockResolvedValue({ totalUsers: 0, activeContracts: 0, pendingProofs: 0, avgIntegrity: 0 });
+    it("sets error message when getTruthLog rejects", async () => {
+      mockGetTruthLog.mockRejectedValue(new Error("Network failure"));
+      mockGetAdminStats.mockResolvedValue({
+        totalUsers: 0,
+        activeContracts: 0,
+        pendingProofs: 0,
+        avgIntegrity: 0,
+      });
 
       const [logResult] = await Promise.allSettled([
         api.getTruthLog(100),
         api.getAdminStats(),
       ]);
 
-      expect(logResult.status).toBe('rejected');
-      if (logResult.status === 'rejected') {
-        expect(logResult.reason.message).toBe('Network failure');
+      expect(logResult.status).toBe("rejected");
+      if (logResult.status === "rejected") {
+        expect(logResult.reason.message).toBe("Network failure");
       }
     });
   });
 
-  describe('search filter logic', () => {
+  describe("search filter logic", () => {
     const sampleEvents = [
-      { tx_hash: 'tx_abc123', timestamp: '2026-02-24', type: 'STAKE_LOCKED', user: 'usr_alpha77', amount: '$100.00', status: 'CONFIRMED' },
-      { tx_hash: 'tx_def456', timestamp: '2026-02-25', type: 'BURNED', user: 'usr_beta99', amount: '$50.00', status: 'FAILED' },
-      { tx_hash: 'tx_ghi789', timestamp: '2026-02-26', type: 'PAYOUT', user: 'usr_alpha77', amount: '$75.00', status: 'CONFIRMED' },
-      { tx_hash: 'tx_jkl012', timestamp: '2026-02-27', type: 'FRAUD_DETECTED', user: 'usr_gamma', amount: '$200.00', status: 'PENDING' },
+      {
+        tx_hash: "tx_abc123",
+        timestamp: "2026-02-24",
+        type: "STAKE_LOCKED",
+        user: "usr_alpha77",
+        amount: "$100.00",
+        status: "CONFIRMED",
+      },
+      {
+        tx_hash: "tx_def456",
+        timestamp: "2026-02-25",
+        type: "BURNED",
+        user: "usr_beta99",
+        amount: "$50.00",
+        status: "FAILED",
+      },
+      {
+        tx_hash: "tx_ghi789",
+        timestamp: "2026-02-26",
+        type: "PAYOUT",
+        user: "usr_alpha77",
+        amount: "$75.00",
+        status: "CONFIRMED",
+      },
+      {
+        tx_hash: "tx_jkl012",
+        timestamp: "2026-02-27",
+        type: "FRAUD_DETECTED",
+        user: "usr_gamma",
+        amount: "$200.00",
+        status: "PENDING",
+      },
     ];
 
     function filterEvents(events: typeof sampleEvents, searchQuery: string) {
@@ -152,41 +185,41 @@ describe('LedgerInspector', () => {
       );
     }
 
-    it('returns all events when search query is empty', () => {
-      expect(filterEvents(sampleEvents, '')).toHaveLength(4);
+    it("returns all events when search query is empty", () => {
+      expect(filterEvents(sampleEvents, "")).toHaveLength(4);
     });
 
-    it('filters by tx_hash substring', () => {
-      const results = filterEvents(sampleEvents, 'def456');
+    it("filters by tx_hash substring", () => {
+      const results = filterEvents(sampleEvents, "def456");
       expect(results).toHaveLength(1);
-      expect(results[0].tx_hash).toBe('tx_def456');
+      expect(results[0].tx_hash).toBe("tx_def456");
     });
 
-    it('filters by user ID (case-insensitive)', () => {
-      const results = filterEvents(sampleEvents, 'ALPHA77');
+    it("filters by user ID (case-insensitive)", () => {
+      const results = filterEvents(sampleEvents, "ALPHA77");
       expect(results).toHaveLength(2);
-      expect(results.every((e) => e.user === 'usr_alpha77')).toBe(true);
+      expect(results.every((e) => e.user === "usr_alpha77")).toBe(true);
     });
 
-    it('filters by event type substring', () => {
-      const results = filterEvents(sampleEvents, 'burned');
+    it("filters by event type substring", () => {
+      const results = filterEvents(sampleEvents, "burned");
       expect(results).toHaveLength(1);
-      expect(results[0].type).toBe('BURNED');
+      expect(results[0].type).toBe("BURNED");
     });
 
-    it('matches FRAUD across type field', () => {
-      const results = filterEvents(sampleEvents, 'fraud');
+    it("matches FRAUD across type field", () => {
+      const results = filterEvents(sampleEvents, "fraud");
       expect(results).toHaveLength(1);
-      expect(results[0].type).toBe('FRAUD_DETECTED');
+      expect(results[0].type).toBe("FRAUD_DETECTED");
     });
 
-    it('returns empty when no match', () => {
-      expect(filterEvents(sampleEvents, 'nonexistent')).toHaveLength(0);
+    it("returns empty when no match", () => {
+      expect(filterEvents(sampleEvents, "nonexistent")).toHaveLength(0);
     });
   });
 
-  describe('stats display logic', () => {
-    it('formats stats correctly from API response', async () => {
+  describe("stats display logic", () => {
+    it("formats stats correctly from API response", async () => {
       const statsData = {
         totalUsers: 12500,
         activeContracts: 843,
@@ -196,13 +229,13 @@ describe('LedgerInspector', () => {
       mockGetAdminStats.mockResolvedValue(statsData);
 
       const stats = await api.getAdminStats();
-      expect(stats.totalUsers.toLocaleString()).toBe('12,500');
-      expect(stats.avgIntegrity.toFixed(1)).toBe('63.2');
+      expect(stats.totalUsers.toLocaleString()).toBe("12,500");
+      expect(stats.avgIntegrity.toFixed(1)).toBe("63.2");
     });
 
-    it('handles null stats gracefully (displays ---)', () => {
+    it("handles null stats gracefully (displays ---)", () => {
       const stats: any = null;
-      expect(stats ? stats.totalUsers.toLocaleString() : '---').toBe('---');
+      expect(stats ? stats.totalUsers.toLocaleString() : "---").toBe("---");
     });
   });
 });

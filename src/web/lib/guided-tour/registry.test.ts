@@ -19,7 +19,10 @@ function discoverAppRoutes(dir: string = APP_DIR, prefix = ""): string[] {
     if (statSync(full).isDirectory()) {
       // Route groups and private folders do not appear in the URL.
       if (entry.startsWith("_")) continue;
-      const segment = entry.startsWith("(") && entry.endsWith(")") ? "" : `/${decodeURIComponent(entry)}`;
+      const segment =
+        entry.startsWith("(") && entry.endsWith(")")
+          ? ""
+          : `/${decodeURIComponent(entry)}`;
       found.push(...discoverAppRoutes(full, `${prefix}${segment}`));
     } else if (entry === "page.tsx") {
       found.push(prefix === "" ? "/" : prefix);
@@ -42,7 +45,9 @@ describe("guided tour registry", () => {
 
   it("has no entry for a route that no longer exists", () => {
     const actual = new Set(appRoutes);
-    const stale = TOUR_ROUTES.map((route) => route.path).filter((route) => !actual.has(route));
+    const stale = TOUR_ROUTES.map((route) => route.path).filter(
+      (route) => !actual.has(route),
+    );
     expect(stale).toEqual([]);
   });
 
@@ -66,12 +71,16 @@ describe("guided tour registry", () => {
 
   it("orders every route exactly once", () => {
     expect(TOUR_ORDER).toHaveLength(TOUR_ROUTES.length);
-    expect(new Set(TOUR_ORDER.map((route) => route.path)).size).toBe(TOUR_ROUTES.length);
+    expect(new Set(TOUR_ORDER.map((route) => route.path)).size).toBe(
+      TOUR_ROUTES.length,
+    );
   });
 
   it("matches dynamic routes to their registry entry", () => {
     expect(matchTourRoute("/contracts/abc123")?.path).toBe("/contracts/[id]");
-    expect(matchTourRoute("/contracts/abc123/attest")?.path).toBe("/contracts/[id]/attest");
+    expect(matchTourRoute("/contracts/abc123/attest")?.path).toBe(
+      "/contracts/[id]/attest",
+    );
     expect(matchTourRoute("/realms/fitness")?.path).toBe("/realms/[slug]");
     expect(matchTourRoute("/dashboard")?.path).toBe("/dashboard");
     expect(matchTourRoute("/not-a-real-route")).toBeUndefined();

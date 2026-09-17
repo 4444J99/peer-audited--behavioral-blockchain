@@ -1,4 +1,4 @@
-import { snapshotContractParams } from '../../../lib/snapshot-params';
+import { snapshotContractParams } from "../../../lib/snapshot-params";
 
 /**
  * Exists only to declare the pages the Cloudflare snapshot export generates for this
@@ -13,6 +13,10 @@ export function generateStaticParams() {
   return snapshotContractParams();
 }
 
-export default function ContractSegmentLayout({ children }: { children: React.ReactNode }) {
+export default function ContractSegmentLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

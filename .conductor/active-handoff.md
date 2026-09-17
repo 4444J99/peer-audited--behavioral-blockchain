@@ -18,7 +18,7 @@ from the dated file and one of the two will be wrong.
   failure mode. **Grep the symbol, don't trust the line number** — the same drift
   will happen to these citations as soon as anyone edits the files.
 - Two review findings were **refuted** on inspection, and are recorded here so
-  nobody re-opens them: the handoff *is* on `main` (PR #859 squash-merged; the
+  nobody re-opens them: the handoff _is_ on `main` (PR #859 squash-merged; the
   topic branch was deleted, which is what made it look unpushed), and the `162`
   jest baseline is correct (`find` returns 167 because `jest.config.cjs:12`
   excludes 5 `*.int.spec.ts`).

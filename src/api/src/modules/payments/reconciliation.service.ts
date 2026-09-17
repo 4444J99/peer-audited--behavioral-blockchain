@@ -1,12 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Pool } from 'pg';
-import { LedgerService } from '../../../services/ledger/ledger.service';
-import { toCents } from '../../../../shared/libs/money';
+import { Injectable, Logger } from "@nestjs/common";
+import { Pool } from "pg";
+import { LedgerService } from "../../../services/ledger/ledger.service";
+import { toCents } from "../../../../shared/libs/money";
 
 /**
  * ReconciliationService
- * 
- * Ensures that the Real-Money Rails (Stripe) are in sync with the 
+ *
+ * Ensures that the Real-Money Rails (Stripe) are in sync with the
  * Double-Entry Ledger and the settlement_runs log.
  */
 
@@ -24,7 +24,7 @@ export interface BatchReconciliationSummary {
   balancedCount: number;
   discrepancyCount: number;
   auditedAt: string;
-  status: 'HEALTHY' | 'DEGRADED' | 'CRITICAL';
+  status: "HEALTHY" | "DEGRADED" | "CRITICAL";
   discrepancies: Array<{
     contractId: string;
     expectedAmountCents: number;
@@ -52,7 +52,7 @@ export class ReconciliationService {
     // 1. Get the contract definition
     const contract = await this.pool.query(
       "SELECT stake_amount, status FROM contracts WHERE id = $1",
-      [contractId]
+      [contractId],
     );
     if (contract.rows.length === 0) {
       throw new Error(`Contract ${contractId} not found`);
@@ -62,11 +62,11 @@ export class ReconciliationService {
     // 2. Get the most recent successful settlement run (deterministic ordering).
     const runs = await this.pool.query(
       "SELECT * FROM settlement_runs WHERE contract_id = $1 AND status = 'SUCCESS' ORDER BY completed_at DESC NULLS LAST, started_at DESC",
-      [contractId]
+      [contractId],
     );
     const run = runs.rows[0];
     if (!run) {
-      discrepancies.push('No successful settlement run found');
+      discrepancies.push("No successful settlement run found");
     }
 
     // 3. Aggregate Ledger Entries
@@ -76,7 +76,7 @@ export class ReconciliationService {
     // A settlement withdrawal must DEBIT the escrow account. Counting by magnitude alone let a
     // wrong-direction entry of equal value silently balance the books.
     const escrowAccount = await this.pool.query(
-      "SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1"
+      "SELECT id FROM accounts WHERE name = 'SYSTEM_ESCROW' LIMIT 1",
     );
     const escrowAccountId = escrowAccount.rows[0]?.id;
 
@@ -93,26 +93,31 @@ export class ReconciliationService {
     // pool (debits revenue, not escrow) and is a downstream split of an already-captured stake,
     // not a withdrawal of escrow.
     const ESCROW_WITHDRAWAL_TYPES = [
-      'SETTLEMENT_RELEASE',
-      'SETTLEMENT_CAPTURE',
-      'STAKE_RETURN',
-      'REFUND_ONLY_DISPOSITION',
-      'STAKE_CAPTURED',
+      "SETTLEMENT_RELEASE",
+      "SETTLEMENT_CAPTURE",
+      "STAKE_RETURN",
+      "REFUND_ONLY_DISPOSITION",
+      "STAKE_CAPTURED",
     ];
     const settlementEntries = ledgerEntries.filter((e) => {
       const t = e.metadata?.type;
-      return typeof t === 'string' && ESCROW_WITHDRAWAL_TYPES.some((known) => t.includes(known));
+      return (
+        typeof t === "string" &&
+        ESCROW_WITHDRAWAL_TYPES.some((known) => t.includes(known))
+      );
     });
 
     const escrowWithdrawals = settlementEntries
-      .filter(e => e.debitAccountId === escrowAccountId)
+      .filter((e) => e.debitAccountId === escrowAccountId)
       .reduce((sum, e) => sum + e.amount, 0);
 
     // Flag any settlement entry that does not debit escrow (wrong direction / wrong account).
-    const wrongDirection = settlementEntries.filter(e => e.debitAccountId !== escrowAccountId);
+    const wrongDirection = settlementEntries.filter(
+      (e) => e.debitAccountId !== escrowAccountId,
+    );
     if (wrongDirection.length > 0) {
       discrepancies.push(
-        `Wrong-direction settlement entries: ${wrongDirection.length} entry(ies) do not debit the escrow account`
+        `Wrong-direction settlement entries: ${wrongDirection.length} entry(ies) do not debit the escrow account`,
       );
     }
 
@@ -126,7 +131,9 @@ export class ReconciliationService {
         `Ledger over-withdrawal: Expected at most ${expectedAmountCents} withdrew ${escrowWithdrawals}`,
       );
     } else if (escrowWithdrawals === 0 && expectedAmountCents > 0) {
-      discrepancies.push(`Ledger imbalance: Expected ${expectedAmountCents} withdrew 0`);
+      discrepancies.push(
+        `Ledger imbalance: Expected ${expectedAmountCents} withdrew 0`,
+      );
     }
     // 0 < escrowWithdrawals <= expectedAmountCents is a valid (possibly partial) settlement.
 
@@ -135,7 +142,7 @@ export class ReconciliationService {
       isBalanced: discrepancies.length === 0,
       expectedAmountCents,
       ledgerTotalCents: escrowWithdrawals,
-      runStatus: run?.status || 'NOT_FOUND',
+      runStatus: run?.status || "NOT_FOUND",
       discrepancies,
     };
   }
@@ -166,10 +173,12 @@ export class ReconciliationService {
   /**
    * Runs batch reconciliation across settled contracts and flags discrepancies.
    */
-  async auditRecentSettlements(options: {
-    limit?: number;
-    onlyDiscrepancies?: boolean;
-  } = {}): Promise<BatchReconciliationSummary> {
+  async auditRecentSettlements(
+    options: {
+      limit?: number;
+      onlyDiscrepancies?: boolean;
+    } = {},
+  ): Promise<BatchReconciliationSummary> {
     const limit = Math.min(Math.max(options.limit ?? 50, 1), 500);
     const contractsQuery = await this.pool.query(
       `SELECT DISTINCT contract_id
@@ -180,7 +189,7 @@ export class ReconciliationService {
     );
 
     const auditedAt = new Date().toISOString();
-    const discrepancyList: BatchReconciliationSummary['discrepancies'] = [];
+    const discrepancyList: BatchReconciliationSummary["discrepancies"] = [];
     let balancedCount = 0;
 
     for (const row of contractsQuery.rows) {
@@ -202,8 +211,8 @@ export class ReconciliationService {
           contractId: row.contract_id,
           expectedAmountCents: 0,
           ledgerTotalCents: 0,
-          runStatus: 'ERROR',
-          reasons: [err.message || 'Audit exception'],
+          runStatus: "ERROR",
+          reasons: [err.message || "Audit exception"],
         });
       }
     }
@@ -211,22 +220,24 @@ export class ReconciliationService {
     const totalAudited = contractsQuery.rows.length;
     const discrepancyCount = discrepancyList.length;
 
-    let status: BatchReconciliationSummary['status'] = 'HEALTHY';
+    let status: BatchReconciliationSummary["status"] = "HEALTHY";
     if (totalAudited > 0) {
       const errorRatio = discrepancyCount / totalAudited;
       if (errorRatio > 0.05) {
-        status = 'CRITICAL';
+        status = "CRITICAL";
       } else if (discrepancyCount > 0) {
-        status = 'DEGRADED';
+        status = "DEGRADED";
       }
     }
 
-    if (status !== 'HEALTHY') {
+    if (status !== "HEALTHY") {
       this.logger.warn(
         `Batch reconciliation finished with status ${status}: ${discrepancyCount}/${totalAudited} contracts had discrepancies.`,
       );
     } else {
-      this.logger.log(`Batch reconciliation finished clean: ${totalAudited} contracts audited, 0 discrepancies.`);
+      this.logger.log(
+        `Batch reconciliation finished clean: ${totalAudited} contracts audited, 0 discrepancies.`,
+      );
     }
 
     return {

@@ -14,7 +14,9 @@ describe("BehavioralEnrichmentService", () => {
         { provide: Pool, useValue: mockPool },
       ],
     }).compile();
-    service = module.get<BehavioralEnrichmentService>(BehavioralEnrichmentService);
+    service = module.get<BehavioralEnrichmentService>(
+      BehavioralEnrichmentService,
+    );
   });
 
   it("getBboRecommendations returns entries", () => {

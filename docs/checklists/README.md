@@ -21,6 +21,7 @@ Phase gate checklists that must pass before Styx advances to the next stage. Eac
 ## How It Works
 
 Each checklist item has:
+
 1. **What it is** — Plain English description
 2. **How to verify** — Specific steps to confirm it's done
 3. **Who owns it** — Which person or team is responsible

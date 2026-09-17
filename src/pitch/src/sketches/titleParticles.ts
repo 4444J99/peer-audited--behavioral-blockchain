@@ -1,7 +1,14 @@
-import p5 from 'p5';
+import p5 from "p5";
 
 export const titleParticles = (p: p5) => {
-  const particles: { x: number; y: number; vx: number; vy: number; tgtX: number; tgtY: number }[] = [];
+  const particles: {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    tgtX: number;
+    tgtY: number;
+  }[] = [];
 
   p.setup = () => {
     p.createCanvas(p.windowWidth, p.windowHeight);

@@ -1,12 +1,23 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { Eye, ShieldAlert, CheckCircle, Target, Loader2, AlertTriangle, Inbox, LogOut, Flag, SlidersHorizontal } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { api } from '../../services/api-client';
-import { useAuth } from '../../contexts/AuthContext';
-import { useFuryStore } from '../../store/useFuryStore';
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  Eye,
+  ShieldAlert,
+  CheckCircle,
+  Target,
+  Loader2,
+  AlertTriangle,
+  Inbox,
+  LogOut,
+  Flag,
+  SlidersHorizontal,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { api } from "../../services/api-client";
+import { useAuth } from "../../contexts/AuthContext";
+import { useFuryStore } from "../../store/useFuryStore";
 
 interface FuryStats {
   totalAudits: number;
@@ -23,16 +34,26 @@ interface FuryStats {
 export default function FuryWorkbench() {
   const { user: authUser, logout, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  
+
   // Zustand State
-  const { assignments, isConnected, error: streamError, connectStream, disconnectStream, removeAssignment } = useFuryStore();
+  const {
+    assignments,
+    isConnected,
+    error: streamError,
+    connectStream,
+    disconnectStream,
+    removeAssignment,
+  } = useFuryStore();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [stats, setStats] = useState<FuryStats | null>(null);
   const [confidence, setConfidence] = useState(75);
-  const [honeypotFeedback, setHoneypotFeedback] = useState<{ wasHoneypot: boolean; correct: boolean } | null>(null);
+  const [honeypotFeedback, setHoneypotFeedback] = useState<{
+    wasHoneypot: boolean;
+    correct: boolean;
+  } | null>(null);
 
   const loadStats = useCallback(async () => {
     try {
@@ -58,10 +79,10 @@ export default function FuryWorkbench() {
   const handleLogout = () => {
     disconnectStream();
     logout();
-    router.push('/login');
+    router.push("/login");
   };
 
-  const handleVerdict = async (verdict: 'PASS' | 'FAIL' | 'FLAG') => {
+  const handleVerdict = async (verdict: "PASS" | "FAIL" | "FLAG") => {
     const current = assignments[currentIndex];
     if (!current) return;
 
@@ -71,9 +92,9 @@ export default function FuryWorkbench() {
     try {
       const result = await api.submitVerdict({
         assignmentId: current.assignmentId,
-        verdict: verdict === 'FLAG' ? 'FAIL' : verdict,
+        verdict: verdict === "FLAG" ? "FAIL" : verdict,
         confidence,
-        flagged: verdict === 'FLAG',
+        flagged: verdict === "FLAG",
       });
 
       // Check for honeypot feedback in response
@@ -83,23 +104,25 @@ export default function FuryWorkbench() {
           correct: result.honeypotReveal.wasCorrect,
         });
         // Show feedback for 3 seconds before moving on
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         setHoneypotFeedback(null);
       }
 
       // Remove from store immediately for snappy UI
       removeAssignment(current.assignmentId);
-      
+
       // Update UI index if necessary
       if (currentIndex >= assignments.length - 1) {
         setCurrentIndex(Math.max(0, assignments.length - 2));
       }
-      
+
       // Reset confidence for next proof
       setConfidence(75);
       loadStats();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to submit verdict');
+      setActionError(
+        err instanceof Error ? err.message : "Failed to submit verdict",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -123,8 +146,13 @@ export default function FuryWorkbench() {
         <div className="text-center space-y-4">
           <AlertTriangle className="mx-auto text-red-500" size={48} />
           <p className="text-red-400 font-bold">{streamError}</p>
-          <p className="text-neutral-500 text-sm">Attempting to reconnect to The Panopticon...</p>
-          <button onClick={connectStream} className="px-6 py-2 bg-neutral-800 rounded-lg text-sm font-bold hover:bg-neutral-700 transition-colors mt-4">
+          <p className="text-neutral-500 text-sm">
+            Attempting to reconnect to The Panopticon...
+          </p>
+          <button
+            onClick={connectStream}
+            className="px-6 py-2 bg-neutral-800 rounded-lg text-sm font-bold hover:bg-neutral-700 transition-colors mt-4"
+          >
             FORCE RECONNECT
           </button>
         </div>
@@ -135,7 +163,9 @@ export default function FuryWorkbench() {
   return (
     <div className="min-h-screen bg-black text-white p-6 md:p-12 font-sans flex flex-col">
       <div className="mx-auto max-w-4xl px-4 py-3 mb-6 rounded-xl border border-amber-700/40 bg-amber-950/40 text-amber-200 text-xs font-bold uppercase tracking-wider text-center">
-        SYNTHETIC DEMO — This Fury review queue shows seeded peer-audited proof assignments. In production, auditors are anonymous and reviews are binding.
+        SYNTHETIC DEMO — This Fury review queue shows seeded peer-audited proof
+        assignments. In production, auditors are anonymous and reviews are
+        binding.
       </div>
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-red-900/40 pb-6">
         <div className="flex items-center gap-4">
@@ -143,8 +173,12 @@ export default function FuryWorkbench() {
             <Eye className="text-black" />
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tighter uppercase text-red-500">The Panopticon</h1>
-            <p className="text-xs text-neutral-500 uppercase tracking-widest">Fury Peer Review Pipeline</p>
+            <h1 className="text-2xl font-black tracking-tighter uppercase text-red-500">
+              The Panopticon
+            </h1>
+            <p className="text-xs text-neutral-500 uppercase tracking-widest">
+              Fury Peer Review Pipeline
+            </p>
           </div>
         </div>
         <div className="flex gap-4 items-center">
@@ -167,30 +201,52 @@ export default function FuryWorkbench() {
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
           <div className="px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg">
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Audits</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Audits
+            </p>
             <p className="font-black text-lg text-white">{stats.totalAudits}</p>
           </div>
           <div className="px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg">
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Accuracy</p>
-            <p className="font-black text-lg text-lime-400">{(stats.accuracy * 100).toFixed(1)}%</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Accuracy
+            </p>
+            <p className="font-black text-lg text-lime-400">
+              {(stats.accuracy * 100).toFixed(1)}%
+            </p>
           </div>
           <div className="px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg">
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Net Earnings</p>
-            <p className={`font-black text-lg ${stats.netEarnings >= 0 ? 'text-lime-400' : 'text-red-500'}`}>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Net Earnings
+            </p>
+            <p
+              className={`font-black text-lg ${stats.netEarnings >= 0 ? "text-lime-400" : "text-red-500"}`}
+            >
               ${stats.netEarnings.toFixed(2)}
             </p>
           </div>
           <div className="px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg">
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Bounties</p>
-            <p className="font-black text-lg text-lime-400">${stats.totalBountiesEarned.toFixed(2)}</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Bounties
+            </p>
+            <p className="font-black text-lg text-lime-400">
+              ${stats.totalBountiesEarned.toFixed(2)}
+            </p>
           </div>
           <div className="px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg">
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Honeypots Caught</p>
-            <p className="font-black text-lg text-white">{stats.honeypotsCaught}</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Honeypots Caught
+            </p>
+            <p className="font-black text-lg text-white">
+              {stats.honeypotsCaught}
+            </p>
           </div>
           <div className="px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg">
-            <p className="text-xs text-neutral-500 uppercase tracking-wider">Penalties</p>
-            <p className="font-black text-lg text-red-500">${stats.totalPenaltiesPaid.toFixed(2)}</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider">
+              Penalties
+            </p>
+            <p className="font-black text-lg text-red-500">
+              ${stats.totalPenaltiesPaid.toFixed(2)}
+            </p>
           </div>
         </div>
       )}
@@ -201,8 +257,11 @@ export default function FuryWorkbench() {
             <Inbox className="mx-auto text-neutral-600" size={64} />
             <p className="text-neutral-500 font-bold text-lg">Queue Empty</p>
             <p className="text-neutral-600 text-sm">
-              No proofs awaiting review. The Panopticon is actively scanning... <br />
-              <span className="text-lime-500/50 mt-2 inline-block">● Live Connection Active</span>
+              No proofs awaiting review. The Panopticon is actively scanning...{" "}
+              <br />
+              <span className="text-lime-500/50 mt-2 inline-block">
+                ● Live Connection Active
+              </span>
             </p>
           </div>
         </div>
@@ -212,7 +271,7 @@ export default function FuryWorkbench() {
           <div className="lg:col-span-2 flex flex-col gap-4">
             <div className="w-full aspect-video bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden relative group">
               {current.viewUrl ? (
-                current.contentType?.startsWith('image') ? (
+                current.contentType?.startsWith("image") ? (
                   <img
                     src={current.viewUrl}
                     alt={`Proof ${current.proofId.slice(0, 8)}`}
@@ -226,27 +285,36 @@ export default function FuryWorkbench() {
                     playsInline
                     preload="metadata"
                   >
-                    <source src={current.viewUrl} type={current.contentType || 'video/mp4'} />
+                    <source
+                      src={current.viewUrl}
+                      type={current.contentType || "video/mp4"}
+                    />
                     Your browser does not support video playback.
                   </video>
                 )
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-neutral-700 font-bold tracking-widest">[ MEDIA LOADING... ]</span>
+                  <span className="text-neutral-700 font-bold tracking-widest">
+                    [ MEDIA LOADING... ]
+                  </span>
                 </div>
               )}
 
               {/* Honeypot Feedback Overlay */}
               {honeypotFeedback && (
-                <div className={`absolute inset-0 flex items-center justify-center z-20 ${honeypotFeedback.correct ? 'bg-lime-500/20' : 'bg-red-600/20'} backdrop-blur-sm`}>
+                <div
+                  className={`absolute inset-0 flex items-center justify-center z-20 ${honeypotFeedback.correct ? "bg-lime-500/20" : "bg-red-600/20"} backdrop-blur-sm`}
+                >
                   <div className="text-center px-8 py-6 rounded-2xl bg-black/80 border border-white/10">
                     <p className="text-2xl font-black mb-2">
-                      {honeypotFeedback.correct ? '✅ HONEYPOT DETECTED' : '⚠️ HONEYPOT MISSED'}
+                      {honeypotFeedback.correct
+                        ? "✅ HONEYPOT DETECTED"
+                        : "⚠️ HONEYPOT MISSED"}
                     </p>
                     <p className="text-sm text-neutral-400">
                       {honeypotFeedback.correct
-                        ? 'Excellent work. Integrity score boosted +5.'
-                        : 'This was a known-fail proof. Integrity score reduced -5.'}
+                        ? "Excellent work. Integrity score boosted +5."
+                        : "This was a known-fail proof. Integrity score reduced -5."}
                     </p>
                   </div>
                 </div>
@@ -262,20 +330,26 @@ export default function FuryWorkbench() {
                 </span>
                 {current.contentType && (
                   <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-md text-xs font-bold text-neutral-400 border border-white/10 uppercase">
-                    {current.contentType.split('/')[1]}
+                    {current.contentType.split("/")[1]}
                   </span>
                 )}
               </div>
             </div>
 
             <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-2xl">
-              <h3 className="font-bold text-neutral-400 mb-2 uppercase text-xs tracking-widest">Assignment Details</h3>
+              <h3 className="font-bold text-neutral-400 mb-2 uppercase text-xs tracking-widest">
+                Assignment Details
+              </h3>
               <p className="text-white text-sm">
-                <span className="text-neutral-500">Contract:</span> {current.contractId.slice(0, 8)}...
-                <span className="text-neutral-500 ml-4">Assigned:</span> {new Date(current.assignedAt).toLocaleString()}
+                <span className="text-neutral-500">Contract:</span>{" "}
+                {current.contractId.slice(0, 8)}...
+                <span className="text-neutral-500 ml-4">Assigned:</span>{" "}
+                {new Date(current.assignedAt).toLocaleString()}
               </p>
               {current.description && (
-                <p className="text-neutral-400 text-sm mt-2 italic">{current.description}</p>
+                <p className="text-neutral-400 text-sm mt-2 italic">
+                  {current.description}
+                </p>
               )}
             </div>
           </div>
@@ -288,9 +362,14 @@ export default function FuryWorkbench() {
               </h2>
 
               <p className="text-sm text-neutral-400 mb-6">
-                Analyze the evidence. If the user successfully completed the habit parameters, hit VERIFY. If they are forging, stalling, or failing, hit BURN.
-                <br /><br />
-                <strong className="text-red-500">WARNING:</strong> If you verify a Honeypot (fake proof) your grading score will drop and you will incur a financial penalty.
+                Analyze the evidence. If the user successfully completed the
+                habit parameters, hit VERIFY. If they are forging, stalling, or
+                failing, hit BURN.
+                <br />
+                <br />
+                <strong className="text-red-500">WARNING:</strong> If you verify
+                a Honeypot (fake proof) your grading score will drop and you
+                will incur a financial penalty.
               </p>
 
               {/* Confidence Slider */}
@@ -299,7 +378,9 @@ export default function FuryWorkbench() {
                   <span className="text-xs text-neutral-500 uppercase tracking-wider flex items-center gap-1">
                     <SlidersHorizontal size={12} /> Confidence
                   </span>
-                  <span className={`text-sm font-black ${confidence >= 80 ? 'text-lime-400' : confidence >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
+                  <span
+                    className={`text-sm font-black ${confidence >= 80 ? "text-lime-400" : confidence >= 50 ? "text-yellow-400" : "text-red-400"}`}
+                  >
                     {confidence}%
                   </span>
                 </div>
@@ -322,25 +403,33 @@ export default function FuryWorkbench() {
 
               <div className="mt-auto space-y-3">
                 <button
-                  onClick={() => handleVerdict('PASS')}
+                  onClick={() => handleVerdict("PASS")}
                   disabled={submitting}
                   className="w-full py-5 bg-green-500/10 hover:bg-green-500/20 border border-green-500/50 text-green-400 font-black rounded-xl transition-all flex justify-center items-center gap-2 text-lg disabled:opacity-50"
                 >
-                  {submitting ? <Loader2 size={24} className="animate-spin" /> : <CheckCircle size={24} />}
+                  {submitting ? (
+                    <Loader2 size={24} className="animate-spin" />
+                  ) : (
+                    <CheckCircle size={24} />
+                  )}
                   VERIFY PROOF
                 </button>
 
                 <button
-                  onClick={() => handleVerdict('FAIL')}
+                  onClick={() => handleVerdict("FAIL")}
                   disabled={submitting}
                   className="w-full py-5 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl transition-all flex justify-center items-center gap-2 shadow-[0_0_30px_rgba(220,38,38,0.3)] text-lg disabled:opacity-50"
                 >
-                  {submitting ? <Loader2 size={24} className="animate-spin" /> : <ShieldAlert size={24} />}
+                  {submitting ? (
+                    <Loader2 size={24} className="animate-spin" />
+                  ) : (
+                    <ShieldAlert size={24} />
+                  )}
                   BURN STAKE (FRAUD)
                 </button>
 
                 <button
-                  onClick={() => handleVerdict('FLAG')}
+                  onClick={() => handleVerdict("FLAG")}
                   disabled={submitting}
                   className="w-full py-3 bg-yellow-600/10 hover:bg-yellow-600/20 border border-yellow-600/50 text-yellow-400 font-bold rounded-xl transition-all flex justify-center items-center gap-2 text-sm disabled:opacity-50"
                 >
@@ -350,7 +439,10 @@ export default function FuryWorkbench() {
               </div>
             </div>
 
-            <Link href="/dashboard" className="w-full py-4 text-center text-neutral-500 hover:text-white font-bold text-sm bg-neutral-900 border border-neutral-800 rounded-xl transition-colors block">
+            <Link
+              href="/dashboard"
+              className="w-full py-4 text-center text-neutral-500 hover:text-white font-bold text-sm bg-neutral-900 border border-neutral-800 rounded-xl transition-colors block"
+            >
               EXIT PANOPTICON
             </Link>
           </div>

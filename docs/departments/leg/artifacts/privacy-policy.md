@@ -31,44 +31,44 @@ Because Styx handles financial, behavioral, and potentially health-adjacent data
 
 Collected at registration and profile creation:
 
-| Data Point | Purpose | Required |
-|------------|---------|----------|
-| Full legal name | Identity verification, 1099 issuance | Yes |
-| Email address | Account access, notifications, communications | Yes |
-| Password (hashed) | Authentication | Yes |
-| Date of birth | Age verification (18+ requirement) | Yes |
-| Phone number | Two-factor authentication, account recovery | Optional |
-| Mailing address | 1099 issuance (Furies earning $600+/year) | Conditional |
-| Profile photo | Account identification | Optional |
+| Data Point        | Purpose                                       | Required    |
+| ----------------- | --------------------------------------------- | ----------- |
+| Full legal name   | Identity verification, 1099 issuance          | Yes         |
+| Email address     | Account access, notifications, communications | Yes         |
+| Password (hashed) | Authentication                                | Yes         |
+| Date of birth     | Age verification (18+ requirement)            | Yes         |
+| Phone number      | Two-factor authentication, account recovery   | Optional    |
+| Mailing address   | 1099 issuance (Furies earning $600+/year)     | Conditional |
+| Profile photo     | Account identification                        | Optional    |
 
 ### 2.2 Financial Data
 
 Processed through Stripe (we do not store raw payment credentials):
 
-| Data Point | Purpose | Stored By |
-|------------|---------|-----------|
-| Credit/debit card details | Vault deposit funding | Stripe (PCI-DSS compliant) |
-| Bank account details | Withdrawal processing | Stripe |
-| Transaction history | Ledger integrity, dispute resolution | Styx (double-entry ledger) |
-| Vault deposit amounts | Escrow management | Styx + Stripe FBO |
-| Platform fee payments | Revenue accounting | Styx + Stripe |
-| Fury bounty earnings | Bounty distribution, tax reporting | Styx + Stripe |
+| Data Point                | Purpose                              | Stored By                  |
+| ------------------------- | ------------------------------------ | -------------------------- |
+| Credit/debit card details | Vault deposit funding                | Stripe (PCI-DSS compliant) |
+| Bank account details      | Withdrawal processing                | Stripe                     |
+| Transaction history       | Ledger integrity, dispute resolution | Styx (double-entry ledger) |
+| Vault deposit amounts     | Escrow management                    | Styx + Stripe FBO          |
+| Platform fee payments     | Revenue accounting                   | Styx + Stripe              |
+| Fury bounty earnings      | Bounty distribution, tax reporting   | Styx + Stripe              |
 
 ### 2.3 Behavioral and Health Data
 
 Collected through Oath creation and proof submission:
 
-| Data Point | Purpose | Sensitivity |
-|------------|---------|-------------|
-| Oath parameters (habit type, duration, frequency) | Contract management | Medium |
-| Oath category (Biological, Recovery, etc.) | Feature routing, safety protocols | High |
-| Proof photos | Fury audit verification | High |
-| Proof submission timestamps | Verification window compliance | Medium |
-| Completion/failure history | Integrity Score calculation | Medium |
-| BMI data (biological oaths only) | Aegis Protocol safety validation | High |
-| Weight targets (biological oaths only) | Aegis velocity cap enforcement | High |
-| No-contact target identifiers (recovery oaths) | Recovery Protocol enforcement | Very High |
-| Call/text log screenshots (recovery oaths) | No-contact verification | Very High |
+| Data Point                                        | Purpose                           | Sensitivity |
+| ------------------------------------------------- | --------------------------------- | ----------- |
+| Oath parameters (habit type, duration, frequency) | Contract management               | Medium      |
+| Oath category (Biological, Recovery, etc.)        | Feature routing, safety protocols | High        |
+| Proof photos                                      | Fury audit verification           | High        |
+| Proof submission timestamps                       | Verification window compliance    | Medium      |
+| Completion/failure history                        | Integrity Score calculation       | Medium      |
+| BMI data (biological oaths only)                  | Aegis Protocol safety validation  | High        |
+| Weight targets (biological oaths only)            | Aegis velocity cap enforcement    | High        |
+| No-contact target identifiers (recovery oaths)    | Recovery Protocol enforcement     | Very High   |
+| Call/text log screenshots (recovery oaths)        | No-contact verification           | Very High   |
 
 **Special note on health data:** Styx is not a healthcare provider and does not claim HIPAA compliance. However, biological Oath data (BMI, weight targets) and recovery Oath data (behavioral patterns) are treated with health-data-level security controls. See Section 7 for retention and deletion.
 
@@ -76,14 +76,14 @@ Collected through Oath creation and proof submission:
 
 Collected automatically through Platform use:
 
-| Data Point | Purpose | Source |
-|------------|---------|--------|
-| IP address | Geofencing (US-only), security | Server logs |
-| Browser/device fingerprint | Fraud detection | Client-side |
+| Data Point                      | Purpose                                         | Source        |
+| ------------------------------- | ----------------------------------------------- | ------------- |
+| IP address                      | Geofencing (US-only), security                  | Server logs   |
+| Browser/device fingerprint      | Fraud detection                                 | Client-side   |
 | EXIF metadata from proof photos | Timestamp/location verification for Fury audits | Photo uploads |
-| GPS coordinates (from EXIF) | Proof location verification | Photo uploads |
-| Device type and OS | Compatibility, bug triage | Client-side |
-| Session duration and navigation | UX analytics | Client-side |
+| GPS coordinates (from EXIF)     | Proof location verification                     | Photo uploads |
+| Device type and OS              | Compatibility, bug triage                       | Client-side   |
+| Session duration and navigation | UX analytics                                    | Client-side   |
 
 **EXIF metadata disclosure:** When you upload a proof photo, we extract and store EXIF metadata including timestamp, GPS coordinates, camera model, and image dimensions. This metadata is shared with Fury auditors to verify proof authenticity. If you prefer not to share location data, you may disable GPS in your device camera settings, but Furies may consider location-free proofs less verifiable.
 
@@ -91,11 +91,11 @@ Collected automatically through Platform use:
 
 Data processed by third-party AI services:
 
-| Feature | AI Provider | Data Sent | Data Retained by Provider |
-|---------|-------------|-----------|---------------------------|
-| Grill Me (motivation challenge) | Google Gemini | Oath description, user prompt | Per Google's AI terms (transient) |
-| ELI5 (explain terms) | Groq (Llama) | Contract parameters, user question | Per Groq's terms (not retained) |
-| Proof pre-screening (future) | TBD | Proof photo, Oath criteria | TBD |
+| Feature                         | AI Provider   | Data Sent                          | Data Retained by Provider         |
+| ------------------------------- | ------------- | ---------------------------------- | --------------------------------- |
+| Grill Me (motivation challenge) | Google Gemini | Oath description, user prompt      | Per Google's AI terms (transient) |
+| ELI5 (explain terms)            | Groq (Llama)  | Contract parameters, user question | Per Groq's terms (not retained)   |
+| Proof pre-screening (future)    | TBD           | Proof photo, Oath criteria         | TBD                               |
 
 We do not send financial data, PII, or no-contact target identities to AI providers. AI prompts are constructed with anonymized context only.
 
@@ -138,12 +138,14 @@ We do not send financial data, PII, or no-contact target identities to AI provid
 ### 4.1 With Fury Auditors
 
 When a Fury is assigned to audit your proof submission, they receive:
+
 - Your proof photo
 - EXIF metadata (timestamp, GPS coordinates)
 - Oath category and verification criteria
 - Your current Integrity Score
 
 Furies do **NOT** receive:
+
 - Your name, email, or any PII
 - Your financial details or deposit amount
 - No-contact target identities (Recovery Oaths)
@@ -151,14 +153,14 @@ Furies do **NOT** receive:
 
 ### 4.2 With Third-Party Processors
 
-| Processor | Data Shared | Purpose | Location |
-|-----------|-------------|---------|----------|
-| **Stripe** | Financial data, identity data (for KYC) | Payment processing, FBO escrow | US |
-| **Cloudflare R2** | Proof photos | Object storage | US (Oregon) |
-| **Render** | Application data (encrypted at rest) | Infrastructure hosting | US (Oregon) |
-| **Google Gemini** | Anonymized Oath context | Grill Me AI feature | US |
-| **Groq** | Anonymized contract parameters | ELI5 AI feature | US |
-| **SendGrid** (or equivalent) | Email addresses | Transactional email delivery | US |
+| Processor                    | Data Shared                             | Purpose                        | Location    |
+| ---------------------------- | --------------------------------------- | ------------------------------ | ----------- |
+| **Stripe**                   | Financial data, identity data (for KYC) | Payment processing, FBO escrow | US          |
+| **Cloudflare R2**            | Proof photos                            | Object storage                 | US (Oregon) |
+| **Render**                   | Application data (encrypted at rest)    | Infrastructure hosting         | US (Oregon) |
+| **Google Gemini**            | Anonymized Oath context                 | Grill Me AI feature            | US          |
+| **Groq**                     | Anonymized contract parameters          | ELI5 AI feature                | US          |
+| **SendGrid** (or equivalent) | Email addresses                         | Transactional email delivery   | US          |
 
 ### 4.3 With Law Enforcement
 
@@ -167,6 +169,7 @@ We will disclose personal information when required by law, subpoena, court orde
 ### 4.4 With B2B Practitioners
 
 If your Oath was assigned by a B2B practitioner (therapist/coach), the practitioner receives:
+
 - Oath status (active, completed, failed)
 - Compliance rate (percentage of verification windows met)
 - Completion date
@@ -209,6 +212,7 @@ You may update your account information at any time through your Profile setting
 ### 6.3 Deletion
 
 You may request deletion of your account and associated data. Upon deletion:
+
 - Account PII is permanently erased within 30 days
 - Proof photos are deleted from Cloudflare R2 within 30 days
 - Ledger entries are anonymized (financial records retained for tax/compliance, but de-identified)
@@ -220,6 +224,7 @@ You may request deletion of your account and associated data. Upon deletion:
 ### 6.4 Portability
 
 You may export your data in JSON format, including:
+
 - Oath history (parameters, outcomes)
 - Proof submission history (metadata, not photos -- photos available as separate download)
 - Integrity Score history
@@ -229,28 +234,30 @@ You may export your data in JSON format, including:
 ### 6.5 Opt-Out
 
 You may opt out of:
+
 - Marketing communications (one-click unsubscribe)
 - Analytics tracking (browser Do Not Track honored)
 - AI feature processing (disable Grill Me and ELI5 in settings)
 
 You may **NOT** opt out of:
+
 - Transactional communications (Oath confirmations, audit results)
 - EXIF metadata extraction from proof photos (required for Fury verification)
 - Security monitoring and fraud detection
 
 ## 7. Data Retention
 
-| Data Category | Retention Period | Basis |
-|---------------|-----------------|-------|
-| Account PII | Duration of account + 30 days after deletion | Service provision |
-| Financial records (ledger) | 7 years (anonymized after account deletion) | US tax law, IRS requirements |
-| Proof photos | Duration of Oath + 90 days, or until account deletion | Dispute resolution window |
-| EXIF metadata | Same as proof photos | Tied to proof lifecycle |
-| Fury audit records | 3 years (anonymized) | Platform integrity |
-| Behavioral data (Oath history) | Duration of account + 30 days after deletion | Service provision |
-| No-contact target identifiers | Duration of Recovery Oath + 30 days | Recovery Protocol |
-| Server logs (IP, requests) | 90 days | Security, debugging |
-| AI processing logs | Not retained by Styx; see provider terms | Transient |
+| Data Category                  | Retention Period                                      | Basis                        |
+| ------------------------------ | ----------------------------------------------------- | ---------------------------- |
+| Account PII                    | Duration of account + 30 days after deletion          | Service provision            |
+| Financial records (ledger)     | 7 years (anonymized after account deletion)           | US tax law, IRS requirements |
+| Proof photos                   | Duration of Oath + 90 days, or until account deletion | Dispute resolution window    |
+| EXIF metadata                  | Same as proof photos                                  | Tied to proof lifecycle      |
+| Fury audit records             | 3 years (anonymized)                                  | Platform integrity           |
+| Behavioral data (Oath history) | Duration of account + 30 days after deletion          | Service provision            |
+| No-contact target identifiers  | Duration of Recovery Oath + 30 days                   | Recovery Protocol            |
+| Server logs (IP, requests)     | 90 days                                               | Security, debugging          |
+| AI processing logs             | Not retained by Styx; see provider terms              | Transient                    |
 
 ## 8. CCPA Compliance (California Residents)
 
@@ -259,6 +266,7 @@ If you are a California resident, the California Consumer Privacy Act (CCPA) pro
 ### 8.1 Right to Know
 
 You have the right to request disclosure of:
+
 - The categories of personal information collected
 - The sources of personal information
 - The business purpose for collection

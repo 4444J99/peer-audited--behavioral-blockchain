@@ -40,17 +40,17 @@ Hevner et al. (2004) articulate seven guidelines for design-science research. Ea
 
 Peffers et al. (2007) propose a six-phase Design Science Research Methodology (DSRM) process model. Table 7 maps each phase to this dissertation's specific activities (see Figure 18 for a visual representation of this mapping).
 
-*Phase 1: Problem Identification and Motivation.* The retention crisis in digital behavioral health, quantified through industry benchmarks (Adjust, 2024), establishes the practical problem. The HVCS cybernetic analysis provides the theoretical diagnosis: feedback loop interruption. Chapter 1 presents both.
+_Phase 1: Problem Identification and Motivation._ The retention crisis in digital behavioral health, quantified through industry benchmarks (Adjust, 2024), establishes the practical problem. The HVCS cybernetic analysis provides the theoretical diagnosis: feedback loop interruption. Chapter 1 presents both.
 
-*Phase 2: Objectives of a Solution.* The solution must provide consequence density --- the reliable coupling of behavioral output to meaningful, timely, and personally costly outcomes. Specific objectives include: (a) operationalize loss aversion as a calibrated penalty parameter, (b) achieve incentive-compatible truthful auditing through a peer network, (c) enforce formal safety invariants that prevent iatrogenic harm, and (d) position the system legally as a skill-based contest rather than gambling. These objectives correspond directly to the five research questions (RQ1--RQ5).
+_Phase 2: Objectives of a Solution._ The solution must provide consequence density --- the reliable coupling of behavioral output to meaningful, timely, and personally costly outcomes. Specific objectives include: (a) operationalize loss aversion as a calibrated penalty parameter, (b) achieve incentive-compatible truthful auditing through a peer network, (c) enforce formal safety invariants that prevent iatrogenic harm, and (d) position the system legally as a skill-based contest rather than gambling. These objectives correspond directly to the five research questions (RQ1--RQ5).
 
-*Phase 3: Design and Development.* The Styx platform is designed and implemented as a Turborepo monorepo comprising six workspaces (Section 3.2). Nine formal definitions (Section 3.3) specify the mathematical objects. Nine theorems (Chapter 4) prove properties of those objects. The implementation is verified by 467+ automated tests and 8 validation gates (Section 3.4).
+_Phase 3: Design and Development._ The Styx platform is designed and implemented as a Turborepo monorepo comprising six workspaces (Section 3.2). Nine formal definitions (Section 3.3) specify the mathematical objects. Nine theorems (Chapter 4) prove properties of those objects. The implementation is verified by 467+ automated tests and 8 validation gates (Section 3.4).
 
-*Phase 4: Demonstration.* The working prototype demonstrates that the designed artifact is technically feasible. The prototype processes contract creation, stake escrow, proof submission, Fury routing, consensus evaluation, and dispute resolution across its full lifecycle. Validation gates demonstrate that the system's invariants hold under automated testing.
+_Phase 4: Demonstration._ The working prototype demonstrates that the designed artifact is technically feasible. The prototype processes contract creation, stake escrow, proof submission, Fury routing, consensus evaluation, and dispute resolution across its full lifecycle. Validation gates demonstrate that the system's invariants hold under automated testing.
 
-*Phase 5: Evaluation.* Formal proofs (Chapter 4) evaluate the mathematical correctness of the artifact's core algorithms. Automated tests evaluate implementation fidelity. The code-to-proof mapping protocol (Section 3.4.3) enables independent verification of correspondence between formal claims and executable code.
+_Phase 5: Evaluation._ Formal proofs (Chapter 4) evaluate the mathematical correctness of the artifact's core algorithms. Automated tests evaluate implementation fidelity. The code-to-proof mapping protocol (Section 3.4.3) enables independent verification of correspondence between formal claims and executable code.
 
-*Phase 6: Communication.* This dissertation constitutes the communication phase, presenting the artifact, its theoretical grounding, its formal properties, and its evaluation to the scholarly community.
+_Phase 6: Communication._ This dissertation constitutes the communication phase, presenting the artifact, its theoretical grounding, its formal properties, and its evaluation to the scholarly community.
 
 ### 3.1.4 Contrast with Empirical Approaches
 
@@ -70,14 +70,14 @@ The Styx platform is implemented as a Turborepo monorepo managed by npm workspac
 
 The monorepo comprises six workspaces, each published under the `@styx` npm scope:
 
-| Workspace | Package Name | Stack | Responsibility |
-|-----------|-------------|-------|---------------|
-| `src/api` | `@styx/api` | NestJS 11, BullMQ, Stripe, pg, pino | Backend: ledger, escrow, Fury routing, oracles, health guards |
-| `src/web` | `@styx/web` | Next.js 16, React 18, Tailwind CSS, Zustand | Dashboard, Fury workbench, contract management |
-| `src/mobile` | `@styx/mobile` | Expo 54, React Native 0.81, React Navigation 7 | Sensor bridge, camera proof capture, biometrics |
-| `src/shared` | `@styx/shared` | TypeScript (pure library) | Constants, types, core algorithms |
-| `src/desktop` | `@styx/desktop` | Tauri 2.0 beta, Vite, React | "The Judge" administrative dashboard |
-| `src/pitch` | `@styx/pitch` | Vite, React 18, p5.js, Tailwind CSS | Interactive pitch deck (GitHub Pages) |
+| Workspace     | Package Name    | Stack                                          | Responsibility                                                |
+| ------------- | --------------- | ---------------------------------------------- | ------------------------------------------------------------- |
+| `src/api`     | `@styx/api`     | NestJS 11, BullMQ, Stripe, pg, pino            | Backend: ledger, escrow, Fury routing, oracles, health guards |
+| `src/web`     | `@styx/web`     | Next.js 16, React 18, Tailwind CSS, Zustand    | Dashboard, Fury workbench, contract management                |
+| `src/mobile`  | `@styx/mobile`  | Expo 54, React Native 0.81, React Navigation 7 | Sensor bridge, camera proof capture, biometrics               |
+| `src/shared`  | `@styx/shared`  | TypeScript (pure library)                      | Constants, types, core algorithms                             |
+| `src/desktop` | `@styx/desktop` | Tauri 2.0 beta, Vite, React                    | "The Judge" administrative dashboard                          |
+| `src/pitch`   | `@styx/pitch`   | Vite, React 18, p5.js, Tailwind CSS            | Interactive pitch deck (GitHub Pages)                         |
 
 The Turborepo pipeline enforces build ordering: `@styx/shared` must build before any workspace that imports it (`@styx/api`, `@styx/web`, `@styx/mobile`, `@styx/desktop`). The test pipeline inherits this dependency: `"test": { "dependsOn": ["build"] }`, ensuring that all workspaces test against freshly compiled shared types.
 
@@ -173,23 +173,23 @@ $$IS(u) = \max\!\big(0,\; IS_0 + \beta_c \cdot c_u - \beta_f \cdot f_u - \beta_s
 
 where the constants are:
 
-| Parameter | Symbol | Value | Code Reference |
-|-----------|--------|-------|---------------|
-| Base score | $IS_0$ | 50 | `BASE_INTEGRITY` |
-| Completion bonus | $\beta_c$ | 5 | `COMPLETION_BONUS` |
-| Fraud penalty | $\beta_f$ | 15 | `FRAUD_PENALTY` |
-| Strike penalty | $\beta_s$ | 20 | `STRIKE_PENALTY` |
-| Inactivity decay | $\beta_d$ | 1 | Implicit (1 point per month) |
+| Parameter        | Symbol    | Value | Code Reference               |
+| ---------------- | --------- | ----- | ---------------------------- |
+| Base score       | $IS_0$    | 50    | `BASE_INTEGRITY`             |
+| Completion bonus | $\beta_c$ | 5     | `COMPLETION_BONUS`           |
+| Fraud penalty    | $\beta_f$ | 15    | `FRAUD_PENALTY`              |
+| Strike penalty   | $\beta_s$ | 20    | `STRIKE_PENALTY`             |
+| Inactivity decay | $\beta_d$ | 1     | Implicit (1 point per month) |
 
 The Integrity Score maps to a tier function $T: \mathbb{Z}_{\geq 0} \to \text{Tier}$ that determines access to financial stake levels:
 
-| Tier | Score Threshold | Maximum Stake |
-|------|----------------|--------------|
-| `RESTRICTED_MODE` | $IS < 20$ | $0 (no staking) |
-| `TIER_1_MICRO_STAKES` | $20 \leq IS < 50$ | $20 |
-| `TIER_2_STANDARD` | $50 \leq IS < 100$ | $100 |
-| `TIER_3_HIGH_ROLLER` | $100 \leq IS < 500$ | $1,000 |
-| `TIER_4_WHALE_VAULTS` | $IS \geq 500$ | Unlimited |
+| Tier                  | Score Threshold     | Maximum Stake   |
+| --------------------- | ------------------- | --------------- |
+| `RESTRICTED_MODE`     | $IS < 20$           | $0 (no staking) |
+| `TIER_1_MICRO_STAKES` | $20 \leq IS < 50$   | $20             |
+| `TIER_2_STANDARD`     | $50 \leq IS < 100$  | $100            |
+| `TIER_3_HIGH_ROLLER`  | $100 \leq IS < 500$ | $1,000          |
+| `TIER_4_WHALE_VAULTS` | $IS \geq 500$       | Unlimited       |
 
 The definition is implemented in `calculateIntegrity()` and `getAllowedTiers()` in `src/shared/libs/integrity.ts`. The `max(0, ...)` floor ensures that the Integrity Score is always non-negative, regardless of the magnitude of penalties accumulated. The tier thresholds are implemented as conditional branches in `getAllowedTiers()`, with `getTierMaxStake()` returning the corresponding maximum stake amount in cents.
 
@@ -249,16 +249,16 @@ Additionally, the Aegis Protocol includes a volatility multiplier $\mu(t)$ imple
 
 The transition function is defined by the following table:
 
-| Current State | Input | Next State |
-|---------------|-------|------------|
-| $q_1$ (`FEE_AUTHORIZED_PENDING_REVIEW`) | UPHELD | $q_4$ (`RESOLVED_UPHELD`) |
-| $q_1$ | OVERTURNED | $q_5$ (`RESOLVED_OVERTURNED`) |
-| $q_1$ | ESCALATED | $q_3$ (`ESCALATED`) |
-| $q_2$ (`IN_REVIEW`) | UPHELD | $q_4$ |
-| $q_2$ | OVERTURNED | $q_5$ |
-| $q_2$ | ESCALATED | $q_3$ |
-| $q_3$ (`ESCALATED`) | UPHELD | $q_4$ |
-| $q_3$ | OVERTURNED | $q_5$ |
+| Current State                           | Input      | Next State                    |
+| --------------------------------------- | ---------- | ----------------------------- |
+| $q_1$ (`FEE_AUTHORIZED_PENDING_REVIEW`) | UPHELD     | $q_4$ (`RESOLVED_UPHELD`)     |
+| $q_1$                                   | OVERTURNED | $q_5$ (`RESOLVED_OVERTURNED`) |
+| $q_1$                                   | ESCALATED  | $q_3$ (`ESCALATED`)           |
+| $q_2$ (`IN_REVIEW`)                     | UPHELD     | $q_4$                         |
+| $q_2$                                   | OVERTURNED | $q_5$                         |
+| $q_2$                                   | ESCALATED  | $q_3$                         |
+| $q_3$ (`ESCALATED`)                     | UPHELD     | $q_4$                         |
+| $q_3$                                   | OVERTURNED | $q_5$                         |
 
 The FSM is implemented in `DisputeService.resolveDispute()` (`src/api/services/escrow/dispute.service.ts`). The method accepts a dispute ID, judge user ID, outcome (from $\Sigma$), and judge notes. It queries disputes in states $q_1$ or $q_2$, applies the transition function via a `switch` statement, updates the dispute and proof records within a PostgreSQL transaction, and appends a `DISPUTE_RESOLVED` event to the truth log.
 
@@ -282,12 +282,12 @@ $$\forall c \in C_{\text{recovery}}:\; |targets(c)| \leq \bar{n}_{\text{NC}} \;\
 
 where:
 
-| Parameter | Symbol | Value | Code Reference |
-|-----------|--------|-------|---------------|
-| Max no-contact targets | $\bar{n}_{\text{NC}}$ | 3 | `MAX_NOCONTACT_TARGETS` |
-| Max recovery duration | $\bar{\delta}_R$ | 30 days | `MAX_NOCONTACT_DURATION_DAYS` |
-| Accountability partner | $AP(c)$ | Non-empty email | `accountabilityPartnerEmail` |
-| Safety acknowledgments | $Ack(c)$ | 4-tuple of booleans, all true | `acknowledgments` |
+| Parameter              | Symbol                | Value                         | Code Reference                |
+| ---------------------- | --------------------- | ----------------------------- | ----------------------------- |
+| Max no-contact targets | $\bar{n}_{\text{NC}}$ | 3                             | `MAX_NOCONTACT_TARGETS`       |
+| Max recovery duration  | $\bar{\delta}_R$      | 30 days                       | `MAX_NOCONTACT_DURATION_DAYS` |
+| Accountability partner | $AP(c)$               | Non-empty email               | `accountabilityPartnerEmail`  |
+| Safety acknowledgments | $Ack(c)$              | 4-tuple of booleans, all true | `acknowledgments`             |
 
 The safety acknowledgment tuple $Ack(c) = (\text{voluntary}, \text{noMinors}, \text{noDependents}, \text{noLegalObligations})$ requires the user to affirm four conditions: (1) participation is voluntary and not coerced, (2) the no-contact targets do not include minors, (3) the targets are not dependents of the user, and (4) no legal obligations (e.g., custody arrangements, court orders) prohibit the no-contact commitment.
 
@@ -319,12 +319,12 @@ The Styx codebase employs Jest as its testing framework across all workspaces, c
 
 As of the most recent test run, the system contains 467+ automated tests distributed across all active workspaces. The API workspace, which contains the majority of domain logic, enforces coverage thresholds via `jest.config.cjs`:
 
-| Metric | Threshold |
-|--------|-----------|
-| Lines | 70% |
-| Branches | 60% |
-| Functions | 60% |
-| Statements | 70% |
+| Metric     | Threshold |
+| ---------- | --------- |
+| Lines      | 70%       |
+| Branches   | 60%       |
+| Functions  | 60%       |
+| Statements | 70%       |
 
 These thresholds are enforced in the CI pipeline: if any metric falls below its threshold, the build fails and the merge is blocked. The thresholds were calibrated to balance rigor with pragmatism --- higher thresholds would incentivize the creation of trivial tests that inflate coverage without testing meaningful behavior, while lower thresholds would permit untested code paths in critical financial logic.
 
@@ -374,11 +374,11 @@ Second, it grounds the formal contribution in executable reality. Many formal an
 
 Each theorem in Chapter 4 includes a code-to-proof mapping table of the following form:
 
-| Formal Object | Code Location | Test File |
-|---------------|---------------|-----------|
-| $B(a)$ | `LedgerService.getAccountBalance()` | `ledger.service.spec.ts` |
-| $h_j$ | `TruthLogService.appendEvent()` | `truth-log.service.spec.ts` |
-| $IS(u)$ | `calculateIntegrity()` | `integrity.spec.ts` |
+| Formal Object | Code Location                       | Test File                   |
+| ------------- | ----------------------------------- | --------------------------- |
+| $B(a)$        | `LedgerService.getAccountBalance()` | `ledger.service.spec.ts`    |
+| $h_j$         | `TruthLogService.appendEvent()`     | `truth-log.service.spec.ts` |
+| $IS(u)$       | `calculateIntegrity()`              | `integrity.spec.ts`         |
 
 This protocol is applied uniformly across all nine theorems, providing a complete bidirectional traceability matrix between formal mathematics and executable TypeScript.
 

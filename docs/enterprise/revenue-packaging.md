@@ -11,12 +11,12 @@ numbers currently enforced.
 
 ## Tier Ladder
 
-| # | Tier | Who pays | What is billed | Implemented? |
-|---|------|----------|----------------|--------------|
-| 0 | Consumer beta (free / test money) | Nobody | Nothing — test-money mode | Yes (flags) |
-| 1 | Pro subscription | Individual user | $14.99/mo + per-event fees | Yes (constants + checkout) |
-| 2 | Practitioner seat | Coach/therapist | Monthly seat, per published tiers | Partially (model + docs; seat billing not coded) |
-| 3 | Enterprise B2B | Company | Platform fee + metered usage | Yes (metered pipeline) |
+| #   | Tier                              | Who pays        | What is billed                    | Implemented?                                     |
+| --- | --------------------------------- | --------------- | --------------------------------- | ------------------------------------------------ |
+| 0   | Consumer beta (free / test money) | Nobody          | Nothing — test-money mode         | Yes (flags)                                      |
+| 1   | Pro subscription                  | Individual user | $14.99/mo + per-event fees        | Yes (constants + checkout)                       |
+| 2   | Practitioner seat                 | Coach/therapist | Monthly seat, per published tiers | Partially (model + docs; seat billing not coded) |
+| 3   | Enterprise B2B                    | Company         | Platform fee + metered usage      | Yes (metered pipeline)                           |
 
 ---
 
@@ -27,6 +27,7 @@ moves, which also underpins the legal posture in
 `docs/legal/legal-defense-whitepaper-DRAFT.md` §6.
 
 **Enforcing code / config:**
+
 - `STYX_PRIVATE_BETA` / `STYX_TEST_MONEY_MODE` feature flags (documented in
   `docs/CLAUDE.md` → "Beta / Feature Flags"; consumed across API and web)
 - Beta gates module: `src/api/src/modules/beta/`
@@ -45,6 +46,7 @@ moves, which also underpins the legal posture in
 `src/api/services/billing.ts:6`.
 
 **Billing mechanics (all implemented):**
+
 - Subscription checkout uses the constant directly:
   `src/api/src/modules/payments/payments.controller.ts` (Stripe checkout
   `unit_amount: MONTHLY_SUBSCRIPTION_PRICE` at line ~193; subscription status
@@ -72,6 +74,7 @@ stake. Model and published draft pricing live in `docs/enterprise/README.md`:
 $49 Starter (5 clients) / $149 Growth / $349 Scale / $999+ Enterprise.
 
 **What the code provides today:**
+
 - Practitioner-facing risk intelligence (the thing the seat actually buys):
   `src/api/src/modules/behavioral/practitioner-intelligence.service.ts` — composite
   client risk profiles (GREEN/YELLOW/RED), journal alerts
@@ -100,7 +103,7 @@ build-vs-sell gap in the ladder.
    `042_metered_usage_events.sql`), then forwards to Stripe billing.
 2. **Stripe metered billing** — `src/api/src/modules/b2b/billing.service.ts`:
    `METERED_EVENT_TYPES = ["phash_scan", "gemini_call", "anomaly_detection",
-   "proof_accepted"]`; reports via `stripe.billing.meterEvents.create`, resolves the
+"proof_accepted"]`; reports via `stripe.billing.meterEvents.create`, resolves the
    enterprise's metered subscription item
    (`price.recurring.usage_type === "metered"`), and reads usage back through
    `stripe.billing.meters.listEventSummaries`.

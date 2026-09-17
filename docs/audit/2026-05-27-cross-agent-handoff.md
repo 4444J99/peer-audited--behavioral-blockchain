@@ -19,17 +19,20 @@ updated (the strict merge queue should auto-update it on approval). Both branche
 already merged up-to-date with `main @ 8566d32`.
 
 ### Open PRs (auto-merge armed SQUASH; both need a human CODEOWNERS approval — a bot cannot self-approve or drive the merge queue)
-| PR | Branch | Contents | Checks |
-|----|--------|----------|--------|
-| **#611** (merge 1st) | `claude/ci-health-green-PWWb9` | shared ts-jest config (119 tests now run), test-harness lint → `tsc --noEmit`, CI stops forwarding jest-only `--coverage --ci`; merged with #608's summary-job structure | **build_and_test GREEN**; advisory jobs red (below) |
-| **#609** (merge 2nd) | `claude/index-sync-vacuum-log-PWWb9` | `.claude/MEMORY.md`, `docs/CLAUDE.md` required-secrets, index/vacuum log, this handoff | docs-only; `build_and_test` RED until #611 lands (lacks the fix) |
+
+| PR                   | Branch                               | Contents                                                                                                                                                                 | Checks                                                           |
+| -------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| **#611** (merge 1st) | `claude/ci-health-green-PWWb9`       | shared ts-jest config (119 tests now run), test-harness lint → `tsc --noEmit`, CI stops forwarding jest-only `--coverage --ci`; merged with #608's summary-job structure | **build_and_test GREEN**; advisory jobs red (below)              |
+| **#609** (merge 2nd) | `claude/index-sync-vacuum-log-PWWb9` | `.claude/MEMORY.md`, `docs/CLAUDE.md` required-secrets, index/vacuum log, this handoff                                                                                   | docs-only; `build_and_test` RED until #611 lands (lacks the fix) |
 
 ## Verification facts (local; Node v22 — CI pins Node 20)
+
 - API: `tsc --noEmit` clean; **994 tests / 95 suites** pass (`cd src/api && npx jest`).
 - Shared: **119 tests** pass once the new ts-jest config is present (`cd src/shared && npx jest`).
 - `turbo run build` 8/8; `turbo run lint` 7/7 (after test-harness fix); Gates 04/06/07 pass.
 
 ## Human / operator TODO (I cannot do these — no access/authority here)
+
 1. **Approve + merge #611, then #609** (CODEOWNERS review + merge queue). Auto-merge will fire on approval.
 2. **Dismiss the CodeQL SSRF alert** (Security → Code scanning) — real DNS-rebinding vuln is fixed via IP-pinning; remaining alert is a static false-positive. Justification: connection pinned to a pre-validated IP, all A-records validated, redirects disabled, tenant/admin-gated.
 3. **Set `ENTERPRISE_SSO_SECRET`** in every environment (Render services + GitHub Environments). Until set, `/auth/enterprise` fail-closes.
@@ -38,6 +41,7 @@ already merged up-to-date with `main @ 8566d32`.
 6. **Build `docs/logos/` tetradic layer** (telos/pragma/praxis/receptio/alchemical-io) — documented VACUUM (Symmetry 0.0). Logged + planned, not built.
 
 ## Constraints & gotchas for the next agent
+
 - **Branch protection is live** — never push to `main` directly; never bypass protection to force a merge. Use PR + review + merge queue.
 - **Container Node is v22, CI is Node 20** — you CANNOT faithfully reproduce CI locally; verify suspicious failures by pushing and observing CI.
 - **GitHub here is MCP-only** (no `gh` CLI, not shell-accessible) — you cannot build a `Monitor` to watch PRs; use the PR-activity subscription for events.
@@ -49,5 +53,6 @@ already merged up-to-date with `main @ 8566d32`.
 - A linter/process in this repo periodically restores working-tree files on branch switch — stage files explicitly (`git add <path>`), never `git add -A`.
 
 ## Do-not / integrity notes
+
 - Closed **no** GitHub issues — none of the 40 open issues is actually resolved by this work (#603 npm-audit vulns are NOT fixed; #555/#556 are phase gates).
 - All work is on the remote; local≡remote parity verified; no stashes; nothing lost.

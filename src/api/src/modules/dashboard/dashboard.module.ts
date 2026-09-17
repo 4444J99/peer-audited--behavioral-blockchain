@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
-import { DashboardController } from './dashboard.controller';
-import { DashboardService } from './dashboard.service';
-import { UnitEconomicsService } from './unit-economics.service';
-import { UsersModule } from '../users/users.module';
+import { Module } from "@nestjs/common";
+import { DashboardController } from "./dashboard.controller";
+import { DashboardService } from "./dashboard.service";
+import { UnitEconomicsService } from "./unit-economics.service";
+import { UsersModule } from "../users/users.module";
 
 @Module({
   imports: [UsersModule],
@@ -11,4 +11,3 @@ import { UsersModule } from '../users/users.module';
   exports: [DashboardService, UnitEconomicsService],
 })
 export class DashboardModule {}
-

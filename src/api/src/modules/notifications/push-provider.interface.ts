@@ -6,7 +6,7 @@ export interface PushMessage {
 }
 
 export interface PushResult {
-  status: 'SENT' | 'FAILED' | 'UNREGISTERED';
+  status: "SENT" | "FAILED" | "UNREGISTERED";
   providerResult?: string;
   errorMessage?: string;
   /**
@@ -24,7 +24,7 @@ export interface PushResult {
  * is safe to branch on; the human message wording is not a contract.
  */
 export interface PushReceipt {
-  status: 'OK' | 'ERROR';
+  status: "OK" | "ERROR";
   errorCode?: string;
   errorMessage?: string;
 }

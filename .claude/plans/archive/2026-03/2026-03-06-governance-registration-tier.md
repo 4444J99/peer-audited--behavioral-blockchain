@@ -9,6 +9,7 @@ The user's concern: **did this expansion break the ORGANVM governance model?** T
 ## Critical Finding: Styx Is Not In The Registry
 
 `peer-audited--behavioral-blockchain` does NOT exist in `registry-v2.json`. The registry lists 27 ORGAN-III repos, but Styx is not among them. It exists:
+
 - On GitHub: `organvm-iii-ergon/peer-audited--behavioral-blockchain` (public, created 2026-02-22)
 - Locally: `~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/` (159 commits)
 - In seed.yaml: organ III, tier standard, PUBLIC_PROCESS
@@ -20,21 +21,24 @@ This means the system doesn't know this repo exists. No metrics, no governance t
 ## Structural Violations Identified
 
 ### 1. REGISTRY ABSENCE (Critical)
+
 Styx has never been registered. The system cannot govern what it cannot see.
 
 ### 2. ROLE CONFUSION: Repo vs. Organ vs. System
+
 The ORGANVM model has clear layers:
 
-| Layer | Governance Owner | Example |
-|-------|-----------------|---------|
-| **Repo** | Code, tests, local docs | `peer-audited--behavioral-blockchain/` |
-| **Organ** | Cross-repo policies, governance | `commerce--meta/governance/` |
-| **System** | Registry, schemas, dependency graph | `organvm-corpvs-testamentvm/` |
-| **Orchestration** | Workflows, agents, skills | `organvm-iv-taxis/` |
+| Layer             | Governance Owner                    | Example                                |
+| ----------------- | ----------------------------------- | -------------------------------------- |
+| **Repo**          | Code, tests, local docs             | `peer-audited--behavioral-blockchain/` |
+| **Organ**         | Cross-repo policies, governance     | `commerce--meta/governance/`           |
+| **System**        | Registry, schemas, dependency graph | `organvm-corpvs-testamentvm/`          |
+| **Orchestration** | Workflows, agents, skills           | `organvm-iv-taxis/`                    |
 
 The previous session created artifacts at **all four levels from within a single repo session**, some of which are correctly placed and some of which are questionable:
 
 #### Correctly Placed (in the repo)
+
 - Test files (co-located with source) — correct
 - E2G report in `docs/planning/` — correct
 - ADRs in `docs/adr/` — correct
@@ -48,15 +52,18 @@ The previous session created artifacts at **all four levels from within a single
 - `infra/terraform/` — correct
 
 #### Correctly Placed (at organ level, in commerce--meta)
+
 - `governance/policies/code-review-policy.md` — correct (organ-wide policy)
 - `governance/policies/security-audit-cadence.md` — correct (organ-wide policy)
 
 #### No Placement Violations Found
+
 The session actually placed things correctly. The **concern is not misplacement — it's that Styx has organically grown into something that transcends the "standard tier repo" classification** without the registry knowing.
 
 ### 3. THE REAL ISSUE: Styx Is a Flagship, Not Standard Tier
 
 The seed.yaml says `tier: standard`. But Styx has:
+
 - 499+ tests (most tested repo in the entire system by far)
 - 147 doc files (more than most organs combined)
 - 7 CI workflows
@@ -71,14 +78,17 @@ The seed.yaml says `tier: standard`. But Styx has:
 This is not "standard." This is a **flagship** repo that has outgrown its classification.
 
 ### 4. SUBMODULE QUESTION
+
 The organ CLAUDE.md explicitly notes Styx is "standalone — not a submodule." Every other tracked repo in ORGAN-III is a submodule. This is an intentional exception but creates governance drift.
 
 ## What Needs To Happen
 
 ### Part 1: Register Styx in registry-v2.json
+
 **File**: `~/Workspace/meta-organvm/organvm-corpvs-testamentvm/registry-v2.json`
 
 Add a new entry to ORGAN-III repositories:
+
 ```json
 {
   "name": "peer-audited--behavioral-blockchain",
@@ -99,6 +109,7 @@ Add a new entry to ORGAN-III repositories:
 Update `repository_count` from 27 → 28, update `total_repos` in summary, update `implementation_status_distribution`.
 
 ### Part 2: Promote seed.yaml tier
+
 **File**: `~/Workspace/organvm-iii-ergon/peer-audited--behavioral-blockchain/seed.yaml`
 
 Change `tier: standard` → `tier: flagship`
@@ -110,6 +121,7 @@ This is the "business organism" pattern extracted from Styx. It belongs in **the
 **File**: `~/Workspace/meta-organvm/organvm-corpvs-testamentvm/docs/standards/12-habitat-governance-lifecycle.md`
 
 Content structure:
+
 1. **Definition**: What a "business habitat" is — a repo that has grown beyond code to include all limbs of a venture
 2. **The Seven Departments** (extracted from Styx's `.claude/agents/`): enterprise, product, growth, support, ops, finance, legal
 3. **Directory anatomy**: Where each department's artifacts live within a repo vs. at the organ level vs. at system level
@@ -164,17 +176,18 @@ ORCHESTRATION LAYER (organvm-iv-taxis/)
 ```
 
 ### Part 5: Run system sync
+
 - `organvm registry validate` — will now catch the new entry
 - `organvm metrics calculate` — update code-substance-report.json
 - `organvm seed validate` — verify seed.yaml consistency
 
 ## Files to Create/Modify
 
-| # | File | Action | Layer |
-|---|------|--------|-------|
-| 1 | `organvm-corpvs-testamentvm/registry-v2.json` | Add Styx entry, bump counts | System |
-| 2 | `peer-audited--behavioral-blockchain/seed.yaml` | tier: standard → flagship | Repo |
-| 3 | `organvm-corpvs-testamentvm/docs/standards/12-habitat-governance-lifecycle.md` | Create: business organism pattern + topology map | System |
+| #   | File                                                                           | Action                                           | Layer  |
+| --- | ------------------------------------------------------------------------------ | ------------------------------------------------ | ------ |
+| 1   | `organvm-corpvs-testamentvm/registry-v2.json`                                  | Add Styx entry, bump counts                      | System |
+| 2   | `peer-audited--behavioral-blockchain/seed.yaml`                                | tier: standard → flagship                        | Repo   |
+| 3   | `organvm-corpvs-testamentvm/docs/standards/12-habitat-governance-lifecycle.md` | Create: business organism pattern + topology map | System |
 
 ## Verification
 

@@ -52,14 +52,14 @@ evaluated.
 
 Checked from a clean external HTTP client on **2026-08-31**:
 
-| Request                                                                | Result     | Interpretation                                                                              |
-| ---------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------- |
-| `https://a-organvm.github.io/peer-audited--behavioral-blockchain/`     | `404`      | The older activation ledger's `200` observation is stale.                                   |
-| `https://4444j99.github.io/peer-audited--behavioral-blockchain/`       | `200`      | An HTML shell responds, but this alone does not prove the application works.                |
-| HTML title at the current root                                         | `Ask Styx` | The served artifact differs from the checked-in pitch artifact described by the old README. |
-| `/launch` under the current root                                       | `404`      | The documented launch surface is unavailable.                                               |
-| `/ask-styx` under the current root                                     | `404`      | The documented Q&A route is unavailable.                                                    |
-| `/peer-audited--behavioral-blockchain/assets/...` referenced by HTML   | `200`      | The bundle bytes serve, but working chat, API, and lifecycle remain unverified.             |
+| Request                                                              | Result     | Interpretation                                                                              |
+| -------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| `https://a-organvm.github.io/peer-audited--behavioral-blockchain/`   | `404`      | The older activation ledger's `200` observation is stale.                                   |
+| `https://4444j99.github.io/peer-audited--behavioral-blockchain/`     | `200`      | An HTML shell responds, but this alone does not prove the application works.                |
+| HTML title at the current root                                       | `Ask Styx` | The served artifact differs from the checked-in pitch artifact described by the old README. |
+| `/launch` under the current root                                     | `404`      | The documented launch surface is unavailable.                                               |
+| `/ask-styx` under the current root                                   | `404`      | The documented Q&A route is unavailable.                                                    |
+| `/peer-audited--behavioral-blockchain/assets/...` referenced by HTML | `200`      | The bundle bytes serve, but working chat, API, and lifecycle remain unverified.             |
 
 This is why the project record uses `PROTOTYPE` and `not-deployed` rather than
 inferring a working deployment from a `200` root response.

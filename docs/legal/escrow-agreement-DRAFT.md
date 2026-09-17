@@ -23,7 +23,7 @@ _Effective date: [TBD -- prior to real-money activation]_
 > a regulator, or a payment processor until counsel has reviewed and revised it.
 
 Named by the phase gate at `docs/checklists/phase-gate-public-process.md` §2 → Legal Documents:
-*"Escrow Agreement published (terms governing stake holding and release)."*
+_"Escrow Agreement published (terms governing stake holding and release)."_
 
 Companion documents: `docs/legal/terms-of-service.md` (§ Definitions, § Vault),
 `docs/legal/legal--performance-wagering.md` (the classification analysis this agreement rests on),
@@ -95,10 +95,10 @@ within three to five business days and is outside the Company's control.
 
 If the Oath resolves as failed, the disposition of the Stake depends on the User's jurisdiction:
 
-| Jurisdiction tier | Disposition of a failed Oath's Stake |
-|---|---|
-| **TIER_1** (full access) | **Captured.** The authorization is captured and the amount becomes Company revenue. |
-| **TIER_2** (refund-only) | **Released.** The authorization is released in full. No amount is captured. |
+| Jurisdiction tier         | Disposition of a failed Oath's Stake                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------ |
+| **TIER_1** (full access)  | **Captured.** The authorization is captured and the amount becomes Company revenue.        |
+| **TIER_2** (refund-only)  | **Released.** The authorization is released in full. No amount is captured.                |
 | **TIER_3** (hard-blocked) | **Released.** An Oath should never exist in this tier; if one does, the Stake is released. |
 
 This is not discretionary. It is enforced by a single function in the codebase
@@ -187,13 +187,13 @@ Oath. A change never applies retroactively to an Oath already in progress.
 
 ## Drafting Notes (internal — remove before publication)
 
-| Item | Status |
-|---|---|
-| Outside counsel retained | **No** — issue #315 |
-| Gambling-classification opinion on file | **No** — issue #136 |
-| Jurisdiction tier assignments signed off | **No** — issue #317 |
-| Entity formed / named | **No** — "[ORGANVM Entity TBD]" throughout |
-| Money transmitter analysis | **Not performed** |
+| Item                                      | Status                                                       |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| Outside counsel retained                  | **No** — issue #315                                          |
+| Gambling-classification opinion on file   | **No** — issue #136                                          |
+| Jurisdiction tier assignments signed off  | **No** — issue #317                                          |
+| Entity formed / named                     | **No** — "[ORGANVM Entity TBD]" throughout                   |
+| Money transmitter analysis                | **Not performed**                                            |
 | Processor high-risk underwriting approved | Tracked at `docs/checklists/phase-gate-public-process.md` §2 |
 
 **Source of every factual claim about mechanism in this draft:**

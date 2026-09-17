@@ -98,7 +98,13 @@ describe("UsersService", () => {
       // The old query named "truth_log", which no migration ever created; every
       // call 500'd and /profile swallowed it into a plausible empty history.
       (mockPool.query as jest.Mock).mockResolvedValue({
-        rows: [{ event_type: "CONTRACT_CREATED", payload: {}, created_at: "2026-01-01" }],
+        rows: [
+          {
+            event_type: "CONTRACT_CREATED",
+            payload: {},
+            created_at: "2026-01-01",
+          },
+        ],
       });
 
       const rows = await service.getUserHistory("user-1");

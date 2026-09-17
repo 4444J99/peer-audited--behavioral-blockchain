@@ -1,15 +1,28 @@
-import { Injectable, Inject, OnModuleInit, Logger, forwardRef, Optional } from '@nestjs/common';
-import { Worker, Job } from 'bullmq';
-import { Pool } from 'pg';
-import { FURY_ROUTER_QUEUE_NAME, getRedisConnectionConfig } from '../../../config/queue.config';
-import { ConsensusEngine, FuryVote } from './consensus.engine';
-import { ContractsService } from '../contracts/contracts.service';
-import { NotificationsService } from '../notifications/notifications.service';
-import { LedgerService } from '../../../services/ledger/ledger.service';
-import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import { HoneypotService } from '../../../services/intelligence/honeypot.service';
-import { EnforcementService } from './enforcement.service';
-import { shouldDemoteFury, AUDITOR_STAKE_AMOUNT } from '../../../../shared/libs/integrity';
+import {
+  Injectable,
+  Inject,
+  OnModuleInit,
+  Logger,
+  forwardRef,
+  Optional,
+} from "@nestjs/common";
+import { Worker, Job } from "bullmq";
+import { Pool } from "pg";
+import {
+  FURY_ROUTER_QUEUE_NAME,
+  getRedisConnectionConfig,
+} from "../../../config/queue.config";
+import { ConsensusEngine, FuryVote } from "./consensus.engine";
+import { ContractsService } from "../contracts/contracts.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { LedgerService } from "../../../services/ledger/ledger.service";
+import { TruthLogService } from "../../../services/ledger/truth-log.service";
+import { HoneypotService } from "../../../services/intelligence/honeypot.service";
+import { EnforcementService } from "./enforcement.service";
+import {
+  shouldDemoteFury,
+  AUDITOR_STAKE_AMOUNT,
+} from "../../../../shared/libs/integrity";
 
 interface FuryRouteJob {
   proofId: string;
@@ -28,17 +41,25 @@ export class FuryWorker implements OnModuleInit {
     private readonly consensusEngine: ConsensusEngine,
     @Inject(forwardRef(() => ContractsService))
     private readonly contractsService: ContractsService,
-    @Optional() @Inject(NotificationsService) private readonly notifications?: NotificationsService,
+    @Optional()
+    @Inject(NotificationsService)
+    private readonly notifications?: NotificationsService,
     @Optional() @Inject(LedgerService) private readonly ledger?: LedgerService,
-    @Optional() @Inject(TruthLogService) private readonly truthLog?: TruthLogService,
-    @Optional() @Inject(HoneypotService) private readonly honeypotService?: HoneypotService,
-    @Optional() @Inject(EnforcementService) private readonly enforcement?: EnforcementService,
+    @Optional()
+    @Inject(TruthLogService)
+    private readonly truthLog?: TruthLogService,
+    @Optional()
+    @Inject(HoneypotService)
+    private readonly honeypotService?: HoneypotService,
+    @Optional()
+    @Inject(EnforcementService)
+    private readonly enforcement?: EnforcementService,
   ) {}
 
   onModuleInit() {
-    if (process.env.STYX_ENABLE_LEGACY_FURY_QUEUE_CONSUMER !== 'true') {
+    if (process.env.STYX_ENABLE_LEGACY_FURY_QUEUE_CONSUMER !== "true") {
       this.logger.log(
-        'Legacy Fury queue consumer disabled; routing jobs are handled by FuryRouterWorker',
+        "Legacy Fury queue consumer disabled; routing jobs are handled by FuryRouterWorker",
       );
       return;
     }
@@ -52,11 +73,11 @@ export class FuryWorker implements OnModuleInit {
       },
     );
 
-    this.worker.on('failed', (job, err) => {
+    this.worker.on("failed", (job, err) => {
       this.logger.error(`Fury job ${job?.id} failed: ${err.message}`);
     });
 
-    this.logger.log('Fury worker started, listening on FURY_ROUTER_QUEUE');
+    this.logger.log("Fury worker started, listening on FURY_ROUTER_QUEUE");
   }
 
   private async process(job: Job<FuryRouteJob>): Promise<void> {
@@ -106,7 +127,9 @@ export class FuryWorker implements OnModuleInit {
       [proofId],
     );
 
-    const allVoted = assignments.rows.length > 0 && assignments.rows.every((r) => r.verdict !== null);
+    const allVoted =
+      assignments.rows.length > 0 &&
+      assignments.rows.every((r) => r.verdict !== null);
     if (!allVoted) return; // not all reviewers have voted yet
 
     // Atomically "claim" resolution so near-simultaneous final verdicts cannot
@@ -141,35 +164,47 @@ export class FuryWorker implements OnModuleInit {
       // legacy known-fail assumption) when unset, so a CLEAN honeypot ('PASS') is honored.
       // For real (non-honeypot) proofs there is no expected verdict, so don't rely on
       // the column at all — the engine ignores expectedVerdict unless isHoneypot.
-      const expectedVerdict: 'PASS' | 'FAIL' =
-        is_honeypot && proofResult.rows[0].honeypot_expected_verdict === 'PASS' ? 'PASS' : 'FAIL';
+      const expectedVerdict: "PASS" | "FAIL" =
+        is_honeypot && proofResult.rows[0].honeypot_expected_verdict === "PASS"
+          ? "PASS"
+          : "FAIL";
 
       const votes: FuryVote[] = assignments.rows.map((r) => ({
         furyUserId: r.fury_user_id,
         verdict: r.verdict,
       }));
 
-      const result = await this.consensusEngine.evaluate(proofId, votes, is_honeypot, expectedVerdict);
+      const result = await this.consensusEngine.evaluate(
+        proofId,
+        votes,
+        is_honeypot,
+        expectedVerdict,
+      );
 
       // Update proof status based on consensus
       const proofStatus =
-        result.outcome === 'VERIFIED'
-          ? 'VERIFIED'
-          : result.outcome === 'REJECTED'
-            ? 'REJECTED'
-            : 'SPLIT';
+        result.outcome === "VERIFIED"
+          ? "VERIFIED"
+          : result.outcome === "REJECTED"
+            ? "REJECTED"
+            : "SPLIT";
 
-      await this.pool.query(
-        `UPDATE proofs SET status = $1 WHERE id = $2`,
-        [proofStatus, proofId],
-      );
+      await this.pool.query(`UPDATE proofs SET status = $1 WHERE id = $2`, [
+        proofStatus,
+        proofId,
+      ]);
 
       // Grade honeypot performance via HoneypotService (nuanced ±5 scoring)
       if (is_honeypot && this.honeypotService) {
         try {
-          await this.honeypotService.gradeHoneypotPerformance(proofId, result.flaggedFuries);
+          await this.honeypotService.gradeHoneypotPerformance(
+            proofId,
+            result.flaggedFuries,
+          );
         } catch (err) {
-          this.logger.error(`Honeypot grading failed for proof ${proofId}: ${err instanceof Error ? err.message : err}`);
+          this.logger.error(
+            `Honeypot grading failed for proof ${proofId}: ${err instanceof Error ? err.message : err}`,
+          );
         }
       }
 
@@ -181,7 +216,10 @@ export class FuryWorker implements OnModuleInit {
       // RESOLVING over a case-filing failure would cost more than the missed case.
       if (is_honeypot && this.enforcement && result.flaggedFuries.length > 0) {
         try {
-          await this.enforcement.evaluateCollusion(proofId, result.flaggedFuries);
+          await this.enforcement.evaluateCollusion(
+            proofId,
+            result.flaggedFuries,
+          );
         } catch (err) {
           this.logger.error(
             `Enforcement case filing failed for honeypot proof ${proofId}: ${err instanceof Error ? err.message : err}`,
@@ -202,16 +240,20 @@ export class FuryWorker implements OnModuleInit {
       // is skipped. SPLIT outcomes apply neither scoring nor bounties, so they need
       // no guard; demotion (FURY->USER) is naturally idempotent (AND role = 'FURY').
       const consensusAlreadyApplied =
-        !!this.ledger && result.outcome !== 'SPLIT'
+        !!this.ledger && result.outcome !== "SPLIT"
           ? await this.consensusSideEffectsAlreadyApplied(proofId)
           : false;
 
       // Track Fury accuracy: reward correct votes, penalize incorrect ones
-      if (!is_honeypot && result.outcome !== 'SPLIT' && !consensusAlreadyApplied) {
+      if (
+        !is_honeypot &&
+        result.outcome !== "SPLIT" &&
+        !consensusAlreadyApplied
+      ) {
         for (const vote of votes) {
           const wasCorrect =
-            (result.outcome === 'VERIFIED' && vote.verdict === 'PASS') ||
-            (result.outcome === 'REJECTED' && vote.verdict === 'FAIL');
+            (result.outcome === "VERIFIED" && vote.verdict === "PASS") ||
+            (result.outcome === "REJECTED" && vote.verdict === "FAIL");
 
           if (wasCorrect) {
             await this.pool.query(
@@ -230,8 +272,18 @@ export class FuryWorker implements OnModuleInit {
       // Disburse Fury bounties/penalties via the double-entry ledger. Idempotent at
       // the DB level via per-(proof,fury) idempotencyKey, so re-running on a retry
       // cannot double-pay even if the marker check above raced.
-      if (this.ledger && result.outcome !== 'SPLIT' && !consensusAlreadyApplied) {
-        await this.disburseFuryBounties(votes, result, is_honeypot, contract_id, proofId);
+      if (
+        this.ledger &&
+        result.outcome !== "SPLIT" &&
+        !consensusAlreadyApplied
+      ) {
+        await this.disburseFuryBounties(
+          votes,
+          result,
+          is_honeypot,
+          contract_id,
+          proofId,
+        );
       }
 
       // Check if any Fury should be demoted based on accuracy
@@ -248,17 +300,21 @@ export class FuryWorker implements OnModuleInit {
             [vote.furyUserId],
           );
           const stats = furyStats.rows[0];
-          if (shouldDemoteFury({
-            furyId: vote.furyUserId,
-            successfulAudits: Number(stats.successful_audits),
-            falseAccusations: Number(stats.false_accusations),
-            totalAudits: Number(stats.total_audits),
-          })) {
+          if (
+            shouldDemoteFury({
+              furyId: vote.furyUserId,
+              successfulAudits: Number(stats.successful_audits),
+              falseAccusations: Number(stats.false_accusations),
+              totalAudits: Number(stats.total_audits),
+            })
+          ) {
             await this.pool.query(
               `UPDATE users SET role = 'USER' WHERE id = $1 AND role = 'FURY'`,
               [vote.furyUserId],
             );
-            this.logger.warn(`Fury ${vote.furyUserId} demoted due to low accuracy`);
+            this.logger.warn(
+              `Fury ${vote.furyUserId} demoted due to low accuracy`,
+            );
           }
         }
       }
@@ -272,22 +328,28 @@ export class FuryWorker implements OnModuleInit {
         if (contractResult.rows.length > 0) {
           await this.notifications?.create({
             userId: contractResult.rows[0].user_id,
-            type: 'CONSENSUS_REACHED',
-            title: `Proof ${result.outcome === 'VERIFIED' ? 'Verified' : result.outcome === 'REJECTED' ? 'Rejected' : 'Split'}`,
-            body: result.outcome === 'VERIFIED'
-              ? 'Your proof has been verified by the Fury network.'
-              : result.outcome === 'REJECTED'
-                ? 'Your proof has been rejected by the Fury network.'
-                : 'The Fury network reached a split decision on your proof.',
-            metadata: { proofId, contractId: contract_id, outcome: result.outcome },
+            type: "CONSENSUS_REACHED",
+            title: `Proof ${result.outcome === "VERIFIED" ? "Verified" : result.outcome === "REJECTED" ? "Rejected" : "Split"}`,
+            body:
+              result.outcome === "VERIFIED"
+                ? "Your proof has been verified by the Fury network."
+                : result.outcome === "REJECTED"
+                  ? "Your proof has been rejected by the Fury network."
+                  : "The Fury network reached a split decision on your proof.",
+            metadata: {
+              proofId,
+              contractId: contract_id,
+              outcome: result.outcome,
+            },
           });
         }
       }
 
       // Bridge: resolve the contract based on consensus outcome
-      if (contract_id && result.outcome !== 'SPLIT') {
+      if (contract_id && result.outcome !== "SPLIT") {
         try {
-          const resolution = result.outcome === 'VERIFIED' ? 'COMPLETED' : 'FAILED';
+          const resolution =
+            result.outcome === "VERIFIED" ? "COMPLETED" : "FAILED";
           await this.contractsService.resolveContract(contract_id, resolution);
           this.logger.log(
             `Contract ${contract_id} resolved as ${resolution} via consensus`,
@@ -324,7 +386,9 @@ export class FuryWorker implements OnModuleInit {
    * existing entry means a prior (now-reverted or partially-completed) run already
    * disbursed/penalized for this proof and the score+bounty block must NOT re-run.
    */
-  private async consensusSideEffectsAlreadyApplied(proofId: string): Promise<boolean> {
+  private async consensusSideEffectsAlreadyApplied(
+    proofId: string,
+  ): Promise<boolean> {
     const existing = await this.pool.query(
       `SELECT 1 FROM entries WHERE metadata->>'consensusProofId' = $1 LIMIT 1`,
       [proofId],
@@ -350,7 +414,8 @@ export class FuryWorker implements OnModuleInit {
     const revenueResult = await this.pool.query(
       `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE' LIMIT 1`,
     );
-    if (bountyPoolResult.rows.length === 0 || revenueResult.rows.length === 0) return;
+    if (bountyPoolResult.rows.length === 0 || revenueResult.rows.length === 0)
+      return;
 
     const bountyPoolAccountId = bountyPoolResult.rows[0].id;
     const revenueAccountId = revenueResult.rows[0].id;
@@ -362,7 +427,8 @@ export class FuryWorker implements OnModuleInit {
           `SELECT account_id FROM users WHERE id = $1`,
           [furyId],
         );
-        if (furyUser.rows.length === 0 || !furyUser.rows[0].account_id) continue;
+        if (furyUser.rows.length === 0 || !furyUser.rows[0].account_id)
+          continue;
 
         try {
           const debitAccountId = furyUser.rows[0].account_id;
@@ -371,15 +437,15 @@ export class FuryWorker implements OnModuleInit {
             revenueAccountId,
             AUDITOR_STAKE_AMOUNT,
             contractId ?? undefined,
-            { type: 'FURY_PENALTY', consensusProofId: proofId },
+            { type: "FURY_PENALTY", consensusProofId: proofId },
             undefined,
             `consensus:${proofId}:${furyId}:honeypot-penalty`,
           );
-          await this.truthLog?.appendEvent('FURY_PENALTY_CHARGED', {
+          await this.truthLog?.appendEvent("FURY_PENALTY_CHARGED", {
             furyUserId: furyId,
             proofId,
             amount: AUDITOR_STAKE_AMOUNT,
-            reason: 'honeypot_failure',
+            reason: "honeypot_failure",
           });
 
           // Record the automatic slash AS an enforcement case with a penalty row
@@ -396,7 +462,9 @@ export class FuryWorker implements OnModuleInit {
             AUDITOR_STAKE_AMOUNT,
           );
         } catch (err) {
-          this.logger.error(`Failed to charge honeypot penalty for Fury ${furyId}: ${err instanceof Error ? err.message : err}`);
+          this.logger.error(
+            `Failed to charge honeypot penalty for Fury ${furyId}: ${err instanceof Error ? err.message : err}`,
+          );
         }
       }
       return;
@@ -405,8 +473,8 @@ export class FuryWorker implements OnModuleInit {
     // For regular proofs with clear outcome, reward/penalize each voter
     for (const vote of votes) {
       const wasCorrect =
-        (result.outcome === 'VERIFIED' && vote.verdict === 'PASS') ||
-        (result.outcome === 'REJECTED' && vote.verdict === 'FAIL');
+        (result.outcome === "VERIFIED" && vote.verdict === "PASS") ||
+        (result.outcome === "REJECTED" && vote.verdict === "FAIL");
 
       const furyUser = await this.pool.query(
         `SELECT account_id FROM users WHERE id = $1`,
@@ -423,11 +491,11 @@ export class FuryWorker implements OnModuleInit {
             furyAccountId,
             AUDITOR_STAKE_AMOUNT,
             contractId ?? undefined,
-            { type: 'FURY_BOUNTY', consensusProofId: proofId },
+            { type: "FURY_BOUNTY", consensusProofId: proofId },
             undefined,
             `consensus:${proofId}:${vote.furyUserId}:bounty`,
           );
-          await this.truthLog?.appendEvent('FURY_BOUNTY_PAID', {
+          await this.truthLog?.appendEvent("FURY_BOUNTY_PAID", {
             furyUserId: vote.furyUserId,
             proofId,
             amount: AUDITOR_STAKE_AMOUNT,
@@ -438,18 +506,20 @@ export class FuryWorker implements OnModuleInit {
             revenueAccountId,
             AUDITOR_STAKE_AMOUNT,
             contractId ?? undefined,
-            { type: 'FURY_PENALTY', consensusProofId: proofId },
+            { type: "FURY_PENALTY", consensusProofId: proofId },
             undefined,
             `consensus:${proofId}:${vote.furyUserId}:penalty`,
           );
-          await this.truthLog?.appendEvent('FURY_PENALTY_CHARGED', {
+          await this.truthLog?.appendEvent("FURY_PENALTY_CHARGED", {
             furyUserId: vote.furyUserId,
             proofId,
             amount: AUDITOR_STAKE_AMOUNT,
           });
         }
       } catch (err) {
-        this.logger.error(`Failed to process bounty for Fury ${vote.furyUserId}: ${err instanceof Error ? err.message : err}`);
+        this.logger.error(
+          `Failed to process bounty for Fury ${vote.furyUserId}: ${err instanceof Error ? err.message : err}`,
+        );
       }
     }
   }
@@ -484,7 +554,7 @@ export class FuryWorker implements OnModuleInit {
           furyId,
           JSON.stringify({
             proofId,
-            reason: 'Automatic honeypot slash applied at consensus',
+            reason: "Automatic honeypot slash applied at consensus",
             automatic: true,
           }),
         ],

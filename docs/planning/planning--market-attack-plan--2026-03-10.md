@@ -421,4 +421,3 @@ The winning move is:
 - run a curated private-beta funnel
 - build trust through specificity, not abstraction
 - expand into broader accountability and B2B only after this wedge proves itself
-

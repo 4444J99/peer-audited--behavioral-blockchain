@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { RealmsController } from './realms.controller';
+import { Module } from "@nestjs/common";
+import { RealmsController } from "./realms.controller";
 
 @Module({
   controllers: [RealmsController],
