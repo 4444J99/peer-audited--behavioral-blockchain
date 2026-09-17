@@ -7,7 +7,7 @@ import {
 import { Pool, PoolClient } from "pg";
 import * as bcrypt from "bcryptjs";
 import { createHash } from "crypto";
-import { getDisplayTier } from "../../../../shared/libs/integrity";
+import { getDisplayTier, getAllowedTiers, getTierMaxStake } from "../../../../shared/libs/integrity";
 
 const BCRYPT_ROUNDS = 10;
 // SH12 — INVARIANT: these MUST stay byte-for-byte identical to
@@ -119,6 +119,8 @@ export class UsersService {
       email: row.email,
       integrity_score: row.integrity_score,
       tier: getDisplayTier(row.integrity_score),
+      allowed_tiers: getAllowedTiers(row.integrity_score),
+      tier_max_stake_cents: getTierMaxStake(getAllowedTiers(row.integrity_score)),
       contract_count: contractCount,
       total_staked: totalStaked,
       role: row.role,
