@@ -3902,7 +3902,10 @@ export class ContractsService {
   ) {
     const status = accept ? "ACTIVE" : "DECLINED";
     const result = await this.pool.query(
-      "UPDATE accountability_partners SET status = \$1 WHERE contract_id = \$2 AND partner_user_id = \$3 RETURNING *",
+      `UPDATE accountability_partners
+       SET status = $1, partner_user_id = $3, accepted_at = CASE WHEN $1 = 'ACTIVE' THEN NOW() ELSE accepted_at END
+       WHERE contract_id = $2 AND (partner_user_id = $3 OR partner_email = (SELECT email FROM users WHERE id = $3))
+       RETURNING *`,
       [status, contractId, partnerId],
     );
 
@@ -3910,9 +3913,16 @@ export class ContractsService {
       throw new NotFoundException("Invitation not found");
 
     await this.pool.query(
-      "INSERT INTO accountability_partner_events (contract_id, actor_id, event_type) VALUES (\$1, \$2, \$3)",
+      `INSERT INTO accountability_partner_events (contract_id, actor_id, event_type) VALUES ($1, $2, $3)`,
       [contractId, partnerId, accept ? "INVITE_ACCEPTED" : "INVITE_DECLINED"],
     );
+
+    if (accept) {
+      await this.truthLog.appendEvent("PARTNER_INVITATION_ACCEPTED", {
+        contractId,
+        partnerUserId: partnerId,
+      });
+    }
 
     // Notify the contract owner (non-critical). A decline is the case that
     // most needs a signal: the owner is otherwise left waiting on a partner
