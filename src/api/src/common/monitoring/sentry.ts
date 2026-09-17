@@ -14,6 +14,8 @@ let sentryAvailable = false;
 let SentryModule: any = null;
 
 export function initSentry(): void {
+  sentryAvailable = false;
+  SentryModule = null;
   const dsn = process.env.SENTRY_DSN;
   if (!dsn) {
     console.info('[Sentry] SENTRY_DSN not set — error monitoring disabled.');
@@ -21,7 +23,7 @@ export function initSentry(): void {
   }
 
   try {
-    // Dynamic require so the app doesn't crash if @sentry/nestjs isn't installed
+    // Defer loading the installed runtime SDK until a DSN is configured.
     SentryModule = require('@sentry/nestjs');
     SentryModule.init({
       dsn,
@@ -32,8 +34,8 @@ export function initSentry(): void {
     });
     sentryAvailable = true;
     console.info('[Sentry] Initialized successfully.');
-  } catch {
-    console.warn('[Sentry] @sentry/nestjs not installed — run: npm install @sentry/nestjs');
+  } catch (error) {
+    console.warn('[Sentry] initialization failed; monitoring unavailable:', error);
   }
 }
 

@@ -1,0 +1,63 @@
+name: Deploy Ask Styx to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/ask-styx/**'
+      - 'src/pitch/**'
+      - 'docs/index.html'
+      - 'docs/assets/**'
+      - 'scripts/ci/check-pages-assets.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/deploy-ask-styx.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write # allow-secret
+
+concurrency:
+  group: ask-styx-pages
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install with repository npm
+        run: |
+          npm_version="$(node -p "require('./package.json').packageManager.replace(/^npm@/, '')")"
+          npx --yes "npm@${npm_version}" ci
+      - run: npm run build
+        working-directory: src/ask-styx
+        env:
+          VITE_WORKER_URL: ${{ vars.ASK_STYX_WORKER_URL }}
+
+      - name: Rebuild pitch from the current source
+        run: npm run build --workspace=@styx/pitch
+
+      # Keep the root pitch and the nested Ask Styx bundles separate.
+      - name: Combine static sites
+        run: |
+          mkdir -p _site
+          cp -R docs/. _site/
+          mkdir -p _site/ask-styx
+          cp -R src/ask-styx/dist/. _site/ask-styx/
+          node scripts/ci/check-pages-assets.mjs _site
+
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v5

@@ -7,6 +7,8 @@ describe('Sentry monitoring', () => {
   });
 
   afterEach(() => {
+    jest.dontMock('@sentry/nestjs');
+    jest.restoreAllMocks();
     delete process.env.SENTRY_DSN;
   });
 
@@ -26,15 +28,17 @@ describe('Sentry monitoring', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should gracefully handle missing @sentry/nestjs package', () => {
+  it('reports initialization failure without pretending monitoring is available', () => {
     process.env.SENTRY_DSN = 'https://examplePublicKey@o0.ingest.sentry.io/0';
+    jest.doMock('@sentry/nestjs', () => { throw new Error('simulated SDK initialization failure'); });
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     sentryModule = require('./sentry');
     sentryModule.initSentry();
-    // @sentry/nestjs is not installed in this project, so it should warn
+    // Failure is injected explicitly; the runtime package must be installed.
     expect(sentryModule.isSentryAvailable()).toBe(false);
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('@sentry/nestjs not installed'),
+      expect.stringContaining('initialization failed'),
+      expect.any(Error),
     );
     warnSpy.mockRestore();
   });
@@ -67,4 +71,24 @@ describe('Sentry monitoring', () => {
     );
     errorSpy.mockRestore();
   });
+  it('ships the runtime transport and dispatches a financial alert through it', () => {
+    expect(require.resolve('@sentry/nestjs')).toBeTruthy();
+    const scope = { setLevel: jest.fn(), setTag: jest.fn(), setFingerprint: jest.fn(), setContext: jest.fn() };
+    const sdk = {
+      init: jest.fn(), captureMessage: jest.fn(),
+      withScope: jest.fn((callback) => callback(scope)),
+    };
+    jest.doMock('@sentry/nestjs', () => sdk);
+    process.env.SENTRY_DSN = 'https://examplePublicKey@o0.ingest.sentry.io/0';
+    sentryModule = require('./sentry');
+    sentryModule.initSentry();
+    sentryModule.captureFinancialAlert('LEDGER_QUARANTINE_ACTIVATED', { accountId: 'acct-1' });
+    expect(sentryModule.isSentryAvailable()).toBe(true);
+    expect(scope.setTag).toHaveBeenCalledWith('financial_event', 'LEDGER_QUARANTINE_ACTIVATED');
+    expect(sdk.captureMessage).toHaveBeenCalledWith('FINANCIAL INTEGRITY ALERT: LEDGER_QUARANTINE_ACTIVATED', 'error');
+    delete process.env.SENTRY_DSN;
+    sentryModule.initSentry();
+    expect(sentryModule.isSentryAvailable()).toBe(false);
+  });
+
 });

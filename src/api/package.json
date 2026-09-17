@@ -11,7 +11,7 @@
     "migrate": "node ../../scripts/dev/run-migrate.mjs"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=24.0.0"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1116.0",
@@ -44,7 +44,8 @@
     "sharp": "^0.35.3",
     "stripe": "^22.5.0",
     "swagger-ui-express": "5.0.1",
-    "uuid": "14.0.2"
+    "uuid": "14.0.2",
+    "@sentry/nestjs": "10.74.0"
   },
   "devDependencies": {
     "@nestjs/cli": "11.0.24",

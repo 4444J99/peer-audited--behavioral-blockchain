@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
+import { inTransaction } from '../../../services/ledger/transaction';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { AUDITOR_STAKE_AMOUNT } from '../../../../shared/libs/integrity';
@@ -229,100 +230,73 @@ export class EnforcementService {
         `${penaltyType} is a financial penalty and requires a positive amountCents.`,
       );
     }
-    // Atomically claim the case (TOCTOU-safe): only the caller that flips
-    // PENDING_REVIEW -> PENALTY_APPLIED proceeds, so two concurrent confirmations
-    // can't both apply a penalty. The loser matches zero rows and is rejected.
-    const claim = await this.pool.query(
-      `UPDATE fury_enforcement_cases SET status = 'PENALTY_APPLIED'
-       WHERE id = $1 AND status = 'PENDING_REVIEW'
-       RETURNING id`,
-      [caseId]
-    );
-
-    if (claim.rows.length === 0) {
-      throw new NotFoundException('Pending case not found');
-    }
-
-    await this.applyPenalty(caseId, penaltyType, resolvedAmount);
+    await inTransaction(this.pool, async (client) => {
+      const claim = await client.query(
+        `UPDATE fury_enforcement_cases SET status = 'PENALTY_APPLIED'
+         WHERE id = $1 AND status = 'PENDING_REVIEW' RETURNING id`,
+        [caseId],
+      );
+      if (claim.rows.length === 0) throw new NotFoundException('Pending case not found');
+      await this.applyPenaltyWithClient(client, caseId, penaltyType, resolvedAmount);
+    });
     return { success: true, caseId, status: 'PENALTY_APPLIED', amountCents: resolvedAmount };
   }
 
   async applyPenalty(caseId: string, penaltyType: string, amountCents: number = 0) {
-    // LC9: applyPenalty is public and was previously unconditional, so a direct or
-    // legacy caller invoking it on an already-applied case inserted a DUPLICATE
-    // penalty (and double-logged FURY_PENALTY_APPLIED). There is no UNIQUE
-    // constraint on fury_penalties.case_id, so we guard idempotency in SQL: insert
-    // exactly one penalty per case via INSERT...SELECT...WHERE NOT EXISTS, which is
-    // atomic within the single statement. If a row already exists, RETURNING yields
-    // zero rows and we bail without re-applying status or re-appending to TruthLog.
-    const inserted = await this.pool.query(
+    await inTransaction(this.pool, (client) =>
+      this.applyPenaltyWithClient(client, caseId, penaltyType, amountCents));
+  }
+
+  private async applyPenaltyWithClient(
+    client: PoolClient, caseId: string, penaltyType: string, amountCents: number,
+  ): Promise<void> {
+    if (FINANCIAL_PENALTY_TYPES.has(penaltyType) &&
+        (!Number.isSafeInteger(amountCents) || amountCents <= 0)) {
+      throw new BadRequestException(`${penaltyType} requires a positive integer amountCents.`);
+    }
+    // All entry points serialize on the same parent row, including direct retries.
+    // NOT EXISTS alone would not prevent two concurrent INSERTs under READ COMMITTED.
+    const locked = await client.query(
+      'SELECT reviewer_id FROM fury_enforcement_cases WHERE id = $1 FOR UPDATE', [caseId],
+    );
+    if (locked.rows.length === 0) throw new NotFoundException('Enforcement case not found');
+    const reviewerId = locked.rows[0].reviewer_id;
+    const inserted = await client.query(
       `INSERT INTO fury_penalties (case_id, penalty_type, amount_cents)
        SELECT $1, $2, $3
        WHERE NOT EXISTS (SELECT 1 FROM fury_penalties WHERE case_id = $1)
        RETURNING id`,
-      [caseId, penaltyType, amountCents]
+      [caseId, penaltyType, amountCents],
     );
-
-    if (inserted.rows.length === 0) {
-      // A penalty for this case already exists — nothing to do (idempotent no-op).
-      return;
-    }
-
-    await this.pool.query(
-      `UPDATE fury_enforcement_cases SET status = 'PENALTY_APPLIED' WHERE id = $1`,
-      [caseId]
-    );
-
-    const caseData = await this.pool.query(`SELECT reviewer_id FROM fury_enforcement_cases WHERE id = $1`, [caseId]);
-    const reviewerId = caseData.rows[0]?.reviewer_id;
+    if (inserted.rows.length === 0) return;
 
     let ledgerTransactionId: string | null = null;
     let ledgerDebitAccountId: string | null = null;
-
-    if (FINANCIAL_PENALTY_TYPES.has(penaltyType) && amountCents > 0 && reviewerId) {
-      const userRes = await this.pool.query(
-        `SELECT account_id FROM users WHERE id = $1`,
-        [reviewerId],
-      );
-      ledgerDebitAccountId = userRes?.rows?.[0]?.account_id || null;
-
-      const revenueRes = await this.pool.query(
-        `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE'`,
-      );
-
-      if (ledgerDebitAccountId && revenueRes?.rows?.length > 0) {
-        ledgerTransactionId = await this.ledger.recordTransaction(
-          ledgerDebitAccountId,
-          revenueRes.rows[0].id,
-          amountCents,
-          undefined,
-          {
-            type: 'FURY_STAKE_SLASH',
-            caseId,
-            reviewerId,
-            penaltyType,
-          },
-          undefined,
-          `fury-penalty:${caseId}`,
-        );
-
-        await this.pool.query(
-          `UPDATE fury_penalties
-           SET ledger_transaction_id = $1, ledger_debit_account_id = $2
-           WHERE case_id = $3`,
-          [ledgerTransactionId, ledgerDebitAccountId, caseId],
-        );
+    if (FINANCIAL_PENALTY_TYPES.has(penaltyType)) {
+      const user = await client.query('SELECT account_id FROM users WHERE id = $1', [reviewerId]);
+      const revenue = await client.query("SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE'");
+      ledgerDebitAccountId = user.rows[0]?.account_id || null;
+      if (!ledgerDebitAccountId || !revenue.rows[0]?.id) {
+        throw new BadRequestException('Cannot apply financial penalty: ledger accounts are missing.');
       }
+      ledgerTransactionId = await this.ledger.recordTransaction(
+        ledgerDebitAccountId, revenue.rows[0].id, amountCents, undefined,
+        { type: 'FURY_STAKE_SLASH', caseId, reviewerId, penaltyType },
+        client, `fury-penalty:${caseId}`,
+      );
+      await client.query(
+        `UPDATE fury_penalties SET ledger_transaction_id = $1, ledger_debit_account_id = $2
+         WHERE case_id = $3`,
+        [ledgerTransactionId, ledgerDebitAccountId, caseId],
+      );
     }
-
+    await client.query(
+      "UPDATE fury_enforcement_cases SET status = 'PENALTY_APPLIED' WHERE id = $1", [caseId],
+    );
     await this.truthLog.appendEvent('FURY_PENALTY_APPLIED', {
-      caseId,
-      penaltyType,
-      reviewerId,
-      amountCents,
-      ledgerTransactionId,
-      ledgerDebitAccountId,
-    });
+      caseId, penaltyType, reviewerId, amountCents, ledgerTransactionId, ledgerDebitAccountId,
+    }, client);
+    // Parent claim, penalty row, ledger leg, link, and audit commit together.
   }
 
   async appealCase(caseId: string, reviewerId: string, reason: string) {
@@ -358,7 +332,8 @@ export class EnforcementService {
       throw new BadRequestException('Outcome must be UPHELD or REVERSED');
     }
 
-    const claim = await this.pool.query(
+    return inTransaction(this.pool, async (client) => {
+    const claim = await client.query(
       `UPDATE fury_enforcement_cases
        SET status = $1,
            evidence_json = evidence_json || jsonb_build_object(
@@ -379,7 +354,7 @@ export class EnforcementService {
 
     let refundedCents = 0;
     if (outcome === 'REVERSED') {
-      refundedCents = await this.reversePenalty(caseId, reviewerId);
+      refundedCents = await this.reversePenalty(caseId, reviewerId, client);
     }
 
     await this.truthLog.appendEvent('FURY_APPEAL_RESOLVED', {
@@ -388,9 +363,10 @@ export class EnforcementService {
       outcome,
       reason: reason || null,
       refundedCents,
-    });
+    }, client);
 
     return { success: true, caseId, outcome, refundedCents };
+    });
   }
 
   /**
@@ -403,8 +379,8 @@ export class EnforcementService {
    * makes this idempotent — re-resolving an already-reversed case refunds nothing
    * a second time.
    */
-  private async reversePenalty(caseId: string, reviewerId: string): Promise<number> {
-    const penalty = await this.pool.query(
+  private async reversePenalty(caseId: string, reviewerId: string, client: PoolClient): Promise<number> {
+    const penalty = await client.query(
       `SELECT id, amount_cents, ledger_transaction_id, ledger_debit_account_id, reversal_transaction_id
        FROM fury_penalties
        WHERE case_id = $1`,
@@ -423,14 +399,14 @@ export class EnforcementService {
     if (!row.ledger_transaction_id || !row.ledger_debit_account_id || amountCents <= 0) {
       // A penalty with no financial leg (REP_BURN, or a legacy row predating the
       // ledger link in migration 069). Mark it reversed; there is no money to move.
-      await this.pool.query(
+      await client.query(
         `UPDATE fury_penalties SET reversed_at = NOW() WHERE id = $1`,
         [row.id],
       );
       return 0;
     }
 
-    const revenue = await this.pool.query(
+    const revenue = await client.query(
       `SELECT id FROM accounts WHERE name = 'SYSTEM_REVENUE'`,
     );
     if (revenue.rows.length === 0) {
@@ -451,11 +427,11 @@ export class EnforcementService {
         reviewerId,
         reversesTransactionId: row.ledger_transaction_id,
       },
-      undefined,
+      client,
       `fury-appeal-reversal:${caseId}`,
     );
 
-    await this.pool.query(
+    await client.query(
       `UPDATE fury_penalties
        SET reversed_at = NOW(), reversal_transaction_id = $2
        WHERE id = $1`,
@@ -468,7 +444,7 @@ export class EnforcementService {
       amountCents,
       reversalTransactionId: reversalId,
       reversesTransactionId: row.ledger_transaction_id,
-    });
+    }, client);
 
     return amountCents;
   }

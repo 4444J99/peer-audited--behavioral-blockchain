@@ -572,9 +572,15 @@
         414
       ],
       "started": "2026-09-17T01:03:37Z",
-      "completed": "2026-09-17T01:03:49Z",
-      "reconciled": true,
-      "test_passed": true
+      "completed": null,
+      "reconciled": false,
+      "test_passed": false,
+      "previous_completion_claim": {
+        "completed": "2026-09-17T01:03:49Z",
+        "reconciled": true,
+        "test_passed": true
+      },
+      "review_note": "PR #994 is open. Prior completion claim is retained above for audit, not accepted as merge or pilot execution evidence."
     },
     {
       "id": "ci-gate-fixes-2026-09-17",
@@ -597,9 +603,15 @@
         343
       ],
       "started": "2026-09-17T15:03:56Z",
-      "completed": "2026-09-17T15:07:05Z",
-      "reconciled": true,
-      "test_passed": true
+      "completed": null,
+      "reconciled": false,
+      "test_passed": false,
+      "previous_completion_claim": {
+        "completed": "2026-09-17T15:07:05Z",
+        "reconciled": true,
+        "test_passed": true
+      },
+      "review_note": "PR #994 is open. Prior completion claim is retained above for audit, not accepted as merge or pilot execution evidence."
     }
   ],
   "issues": {
@@ -4751,7 +4763,7 @@
         "unimplemented-plan"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -4773,12 +4785,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/src/modules/ops/beta-readiness.service.ts:20",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "179": {
       "action": "FUTURE",
@@ -7429,7 +7448,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -7451,12 +7470,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/src/common/guards/geofence.guard.ts:25",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "279": {
       "title": "feat: Forfeit disposition policy engine & refund-only kill switch (TKT-P0-011)",
@@ -7491,7 +7517,7 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -7513,12 +7539,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/services/security/self-exclusion.service.ts:15",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "281": {
       "title": "feat: Health data bridge — native UI completion (TKT-P1-007)",
@@ -7736,7 +7769,7 @@
         "P1-beta-enhancer"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -7758,12 +7791,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/src/modules/fury/enforcement.service.ts:133",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "290": {
       "action": "TRACK",
@@ -10475,7 +10515,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -10497,12 +10537,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/database/migrations/007_user_compliance_identity_fields.sql:1",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "387": {
       "title": "KYC: API — verification endpoint + progressive tier logic",
@@ -10510,7 +10557,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -10532,12 +10579,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/src/modules/compliance/identity-verification.service.ts:35",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "388": {
       "title": "KYC: UI — identity upload flow + stake tier display",
@@ -10545,7 +10599,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -10567,12 +10621,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/web/app/kyc/page.tsx:28",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "389": {
       "title": "KYC: Tests — unit + integration for tier transitions",
@@ -10580,7 +10641,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -10602,12 +10663,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/src/modules/compliance/identity-verification.service.spec.ts:1",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "390": {
       "title": "KYC: Legal — counsel sign-off on verification requirements",
@@ -10667,7 +10735,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -10689,12 +10757,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/src/modules/proofs/proofs.controller.ts:43",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "393": {
       "title": "Camera: Schema — proof_submissions table + metadata",
@@ -10702,7 +10777,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -10724,12 +10799,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/database/migrations/003_proof_hashes.sql:1",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "394": {
       "title": "Camera: Tests — capture flow + nonce challenge verification",
@@ -10737,7 +10819,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -10759,12 +10841,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/src/modules/proofs/proofs.controller.spec.ts:1",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "395": {
       "title": "Settlement: Stripe Connect FBO account configuration",
@@ -10797,7 +10886,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -10819,12 +10908,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/services/ledger/ledger.service.ts:68",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "397": {
       "title": "Settlement: Schema — transactions + ledger tables",
@@ -10832,7 +10928,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -10854,12 +10950,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/database/migrations/001_initial_schema.sql:1",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "398": {
       "title": "Settlement: Reconciliation — automated Stripe vs internal check",
@@ -10892,7 +10995,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -10914,12 +11017,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/services/ledger/ledger.service.spec.ts:1",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "400": {
       "title": "Settlement: Legal — FBO custody model counsel review",
@@ -11053,7 +11163,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -11075,12 +11185,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/src/common/guards/geofence.guard.spec.ts:1",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "406": {
       "title": "Forfeit: Policy engine — jurisdiction-aware disposition rules",
@@ -11239,7 +11356,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -11261,12 +11378,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/web/components/DangerZoneBanner.tsx:12",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "413": {
       "title": "Guardrails: API — crisis event logging + escalation trigger",
@@ -11274,7 +11398,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -11296,12 +11420,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:42Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/services/security/crisis-detection.service.ts:25",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:42Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "414": {
       "title": "Guardrails: Tests — detection accuracy + false positive rate",
@@ -11309,7 +11440,7 @@
         "P0-beta-blocker"
       ],
       "action": "BUILD",
-      "state": "CLOSED",
+      "state": "BUILD_STARTED",
       "batch": "teamwork-preview-verified-core-2026-09-17",
       "history": [
         {
@@ -11331,12 +11462,19 @@
           "from": "BUILD_STARTED",
           "to": "CLOSED",
           "at": "2026-09-17T01:03:43Z"
+        },
+        {
+          "from": "CLOSED",
+          "to": "BUILD_STARTED",
+          "at": "2026-09-17T18:32:02Z",
+          "reason": "PR #994 review correction: implementation needs full verification and merge evidence; prior direct closure was premature."
         }
       ],
       "evidence": "src/api/services/security/crisis-detection.service.spec.ts:1",
-      "pr": null,
-      "state_updated": "2026-09-17T01:03:43Z",
-      "closed_at": null
+      "pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/994",
+      "state_updated": "2026-09-17T18:32:02Z",
+      "closed_at": null,
+      "claimed_by": "gpt6-pr994-repair"
     },
     "415": {
       "action": "TRACK",

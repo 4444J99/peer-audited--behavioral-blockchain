@@ -15,7 +15,7 @@ This guide walks a dogfood participant through the full Styx behavioral commitme
 
 ## Prerequisites
 
-1. **Node 22+** and **Docker Desktop** installed
+1. **Node 24+** and **Docker Desktop** installed
 2. Repo cloned and `.env` set up:
    ```bash
    cp .env.example .env
@@ -34,9 +34,9 @@ This guide walks a dogfood participant through the full Styx behavioral commitme
 
 1. Open `http://localhost:3001`
 2. Click **Get Started**
-3. Fill in: name, email, password (8+ chars)
-4. Complete phone verification (test OTP: check API logs for the code)
-5. Accept terms
+3. Enter email, date of birth, password, and password confirmation. The password must have at least 12 characters, an uppercase letter, a digit, and a symbol.
+4. Confirm that you are at least 18 years old. There is no name field or phone/OTP step in this form.
+5. Accept the terms and privacy policy, then submit registration.
 
 **What to notice:** Is onboarding copy clear? Is the value prop obvious in 10 seconds?
 
@@ -76,10 +76,10 @@ Open the mobile app in Expo Go (`expo start` from `src/mobile`):
 1. Log in with the same credentials
 2. Navigate to your active contract
 3. Tap **Capture Proof**
-4. Record a short video statement (10–30 sec) confirming you upheld your oath
-5. Submit — watch the upload progress and SHA-256 hash confirmation
+4. Exercise the start/stop controls. This beta currently generates a **synthetic capture payload**; it does not record a native 10–30-second camera video.
+5. Submit the generated payload and verify it is identified as `SYNTHETIC_BETA`.
 
-**What to notice:** Is the camera flow intuitive? Is the proof submission confirmation reassuring?
+**What to notice:** Are the synthetic preview, upload, and confirmation clearly labeled? Record native camera capture as **not verified**, not passed.
 
 ---
 
@@ -103,18 +103,16 @@ cd src/desktop && npm run dev
 
 ## Step 6 — Contract Settlement (Simulated)
 
-To fast-forward to settlement (for testing purposes), use the test harness:
+There is no supported `--advance-contract` / `--to-day` command. Do not change live contract dates or claim that a harness invocation completed the lifecycle.
+
+For deterministic **unit-test** coverage (not a live dogfood settlement), from the repository root run:
 
 ```bash
-cd src/test-harness
-npx tsx src/index.ts --advance-contract <contract-id> --to-day 30
+cd src/api
+npx jest src/modules/payments/settlement.service.spec.ts --runInBand --coverage=false
 ```
 
-Or wait for the actual 30-day contract to mature. On settlement day:
-
-1. Navigate to **Wallet** in the web app
-2. Confirm stake returned (success) or slashed (failure)
-3. Review the double-entry ledger entries in the admin panel
+For the real test-money dogfood contract, wait for its configured duration and normal settlement processing. On settlement day, inspect Wallet and the ledger inspector and record whether the stake outcome matches the contract. Until then, mark live settlement **pending**, even when unit tests pass.
 
 ---
 

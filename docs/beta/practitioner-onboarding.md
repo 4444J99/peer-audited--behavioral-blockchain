@@ -1,6 +1,6 @@
 # Practitioner Pilot — Onboarding Guide
 
-**Issue:** #363 | **Lane:** `lane/verify` | **Status:** First 1-3 practitioners  
+**Issue:** #363 | **Lane:** `lane/verify` | **Status:** Demo preparation; external pilot not yet executed
 **Related:** [One-Pager](./practitioner-one-pager.md) | [Feedback Template](./feedback-synthesis-template.md)
 
 ---
@@ -21,14 +21,14 @@ A Practitioner is a licensed professional (therapist, life coach, recovery couns
 
 - [ ] Practitioner receives the [Styx Practitioner One-Pager](./practitioner-one-pager.md)
 - [ ] 20-minute demo call scheduled (use the [Demo Loop Script](#demo-loop-script) below)
-- [ ] Practitioner signs the Beta Participant NDA (template: `docs/legal/templates/beta-nda.md`)
-- [ ] Practitioner registered as `role: practitioner` in the system:
+- [ ] For an external pilot, obtain counsel-approved participant documents and the required privacy/compliance approvals (#315–#317). This repository does **not** provide an approved beta NDA; do not describe this prerequisite as completed.
+- [ ] For the **local seeded demo only**, use the existing practitioner persona rather than the nonexistent `/api/admin/users/promote` endpoint:
   ```bash
-  # Admin CLI registration
-  curl -X POST http://localhost:3000/api/admin/users/promote \
-    -H "Authorization: Bearer $ADMIN_TOKEN" \
-    -d '{"userId": "<user-id>", "role": "practitioner"}'
+  npm run demo:launch
+  npm run demo:credentials
   ```
+  The seeded `dr.moira@demo.styx.protocol` account has role `PRACTITIONER`; obtain its local demo password from the credentials command and use the `/practitioner` web route. See `scripts/demo/README.md` and `scripts/demo/seed-circles.sql`. Never promote a real user by copying the old curl example; production practitioner provisioning remains an explicit pilot prerequisite owned by #363.
+
 - [ ] Practitioner confirmed they've reviewed `docs/legal/legal--aegis-protocol.md` Sections 1–3
 
 ### Phase 2 — First Session Setup
@@ -74,22 +74,22 @@ A structured 20-minute walkthrough for the practitioner pre-engagement call:
 ### Minutes 18–20: Pricing & Next Steps
 - Current beta: Free for pilot practitioners
 - Future model: $49–$349/mo practitioner seat (from `docs/planning/`)
-- Next step: Sign NDA → First client contract
+- Next step: Resolve the external-pilot prerequisites above before enrolling a real practitioner or client.
 
 ---
 
 ## Practitioner FAQ
 
-**Q: Can I see my client's actual messages/communications?**  
+**Q: Can I see my client's actual messages/communications?**
 A: No. Styx verifies the absence of contact using cryptographic proof and digital exhaust metadata, not message content. Privacy is by design.
 
-**Q: What if my client disputes an audit result?**  
+**Q: What if my client disputes an audit result?**
 A: A 24-hour dispute window exists. Disputed verdicts trigger a second Fury panel with different auditors. The `ZKPrivacyEngine` ensures audit integrity without exposing private data.
 
-**Q: Is Styx HIPAA compliant?**  
+**Q: Is Styx HIPAA compliant?**
 A: Beta mode does not yet have formal HIPAA BAA in place. Do not use Styx for clinical PHI until legal counsel completes sign-off (Issue #315–#317).
 
-**Q: What happens if the client fails?**  
+**Q: What happens if the client fails?**
 A: Staked funds are slashed from the client's escrow account and transferred to the configured forfeiture destination (either system revenue or a designated charity — configurable per contract).
 
 ---

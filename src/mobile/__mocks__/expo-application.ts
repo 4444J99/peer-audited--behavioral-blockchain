@@ -1,7 +1,2 @@
-export function getAndroidId(): string {
-  return 'test-android-device-id';
-}
-
-export async function getIosIdForVendorAsync(): Promise<string> {
-  return 'test-ios-vendor-id';
-}
+export const getAndroidId = jest.fn(() => '0123456789abcdef');
+export const getIosIdForVendorAsync = jest.fn(async () => 'AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE');

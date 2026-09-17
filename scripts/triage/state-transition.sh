@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 # state-transition.sh — the ONLY way to modify triage.json
-# Usage: state-transition.sh <issue-number> <to-state> [--evidence <file:line>] [--pr <url>]
+# Usage: state-transition.sh <issue-number> <to-state> [--evidence <file:line>] [--pr <url>] [--reason <reopening reason>]
 # Enforces the legal state machine. Rejects illegal transitions.
 
 ISSUE="$1"
@@ -10,10 +10,15 @@ shift 2
 
 EVIDENCE=""
 PR=""
+REASON=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
   --evidence)
     EVIDENCE="$2"
+    shift 2
+    ;;
+  --reason)
+    REASON="$2"
     shift 2
     ;;
   --pr)
@@ -59,18 +64,21 @@ valid_transition() {
   "WAITING→SUPERSEDED") return 0 ;;
   "FUTURE→SUPERSEDED") return 0 ;;
   "TRACKING→SUPERSEDED") return 0 ;;
+  "CLOSED→BUILD_STARTED") return 0 ;; # recovery; requires an explicit reason
+  "BUG→BUILD_STARTED") return 0 ;;
   "BUILD_STARTED→BUILD_DONE") return 0 ;;
   "BUILD_DONE→TESTED") return 0 ;;
   "TESTED→PR_CREATED") return 0 ;;
   "PR_CREATED→PR_MERGED") return 0 ;;
   "PR_MERGED→CLOSED") return 0 ;;
-  "BUILD_STARTED→CLOSED") return 0 ;; # direct path for already-implemented-in-build
-  "BUILD_DONE→CLOSED") return 0 ;;    # direct close for simple fixes (no PR needed)
-  "TESTED→CLOSED") return 0 ;;        # direct close after tests pass
-  "BUG→CLOSED") return 0 ;;           # bug fix verified
   *) return 1 ;;
   esac
 }
+
+if [[ "$FROM_STATE" == CLOSED && -z "$REASON" ]]; then
+  echo 'REJECTED: reopening CLOSED requires --reason (history is preserved)'
+  exit 2
+fi
 
 # CLOSED requires evidence
 if [[ "$TO_STATE" == "CLOSED" && -z "$EVIDENCE" ]]; then
@@ -87,10 +95,11 @@ fi
 
 # Update the issue state
 jq --arg i "$ISSUE" --arg to "$TO_STATE" --arg from "$FROM_STATE" --arg ts "$TIMESTAMP" \
-  --arg ev "$EVIDENCE" --arg pr "$PR" \
+  --arg ev "$EVIDENCE" --arg pr "$PR" --arg reason "$REASON" \
   '.issues[$i].state = $to |
     .issues[$i].state_updated = $ts |
-    .issues[$i].history += [{"from": $from, "to": $to, "at": $ts}] |
+    .issues[$i].history += [{"from": $from, "to": $to, "at": $ts} + (if $reason != "" then {"reason": $reason} else {} end)] |
+    (if $from == "CLOSED" then .issues[$i].closed_at = null else . end) |
     (if $to == "WAITING" then .issues[$i].action = "WAITING" else . end) |
     (if $ev != "" then .issues[$i].evidence = $ev else . end) |
     (if $pr != "" then .issues[$i].pr = $pr else . end)' \
