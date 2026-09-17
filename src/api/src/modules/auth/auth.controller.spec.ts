@@ -54,6 +54,8 @@ describe('AuthController', () => {
         ageConfirmation: true,
         termsAccepted: true,
         dateOfBirth: '',
+        referralCode: undefined,
+        deviceFingerprint: undefined,
       });
     });
 
@@ -76,6 +78,37 @@ describe('AuthController', () => {
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
       expect(errors.some((e) => e.property === 'password')).toBe(true);
+    });
+
+    it('rejects malformed nested device fingerprints', async () => {
+      const dto = plainToInstance(RegisterDto, {
+        email: 'test@styx.protocol', password: 'Secure-pass123!',
+        ageConfirmation: true, termsAccepted: true,
+        deviceFingerprint: { platform: 'desktop' },
+      });
+      const errors = await validate(dto);
+      expect(errors.some((error) => error.property === 'deviceFingerprint')).toBe(true);
+    });
+
+    it('accepts a bounded opaque web device identifier', async () => {
+      const dto = plainToInstance(RegisterDto, {
+        email: 'test@styx.protocol', password: 'Secure-pass123!',
+        ageConfirmation: true, termsAccepted: true,
+        deviceFingerprint: { platform: 'web', rawVendorId: 'device-identifier-1234' },
+      });
+      expect(await validate(dto)).toEqual([]);
+    });
+
+    it('rejects fingerprints with both identifier forms', async () => {
+      const dto = plainToInstance(RegisterDto, {
+        email: 'test@styx.protocol', password: 'Secure-pass123!',
+        ageConfirmation: true, termsAccepted: true,
+        deviceFingerprint: {
+          platform: 'web', rawVendorId: 'device-identifier-1234', hash: 'a'.repeat(64),
+        },
+      });
+      const errors = await validate(dto);
+      expect(errors.some((error) => error.property === 'deviceFingerprint')).toBe(true);
     });
   });
 

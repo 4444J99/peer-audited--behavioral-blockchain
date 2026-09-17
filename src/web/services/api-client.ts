@@ -466,6 +466,7 @@ export const api = {
       ageConfirmation?: boolean;
       termsAccepted?: boolean;
       dateOfBirth?: string;
+      deviceFingerprint?: { platform: "web"; rawVendorId: string };
     }, // allow-secret
   ) =>
     request<{ userId: string; token: string }>("/auth/register", {

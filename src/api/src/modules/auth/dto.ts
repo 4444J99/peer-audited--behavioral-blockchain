@@ -10,8 +10,47 @@ import {
   Min,
   Max,
   MaxLength,
+  IsIn,
+  ValidateNested,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+
+@ValidatorConstraint({ name: 'exactlyOneDeviceIdentifier', async: false })
+class ExactlyOneDeviceIdentifier implements ValidatorConstraintInterface {
+  validate(_platform: unknown, args: ValidationArguments): boolean {
+    const value = args.object as DeviceFingerprintDto;
+    return [value.hash, value.rawVendorId].filter((item) => item != null).length === 1;
+  }
+
+  defaultMessage(): string {
+    return 'deviceFingerprint requires exactly one of hash or rawVendorId';
+  }
+}
+
+export class DeviceFingerprintDto {
+  @ApiProperty({ enum: ['ios', 'android', 'web'] })
+  @IsIn(['ios', 'android', 'web'])
+  @Validate(ExactlyOneDeviceIdentifier)
+  platform!: 'ios' | 'android' | 'web';
+
+  @ApiProperty({ required: false, description: 'SHA-256 device identifier' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[0-9a-f]{64}$/i)
+  hash?: string;
+
+  @ApiProperty({ required: false, description: 'Opaque client device identifier' })
+  @IsOptional()
+  @IsString()
+  @MinLength(16)
+  @MaxLength(256)
+  rawVendorId?: string;
+}
 
 export class RegisterDto {
   @ApiProperty({ description: 'User email address', example: 'user@example.com' })
@@ -46,11 +85,9 @@ export class RegisterDto {
 
   @ApiProperty({ description: 'Optional device fingerprint for multi-account fraud prevention', required: false })
   @IsOptional()
-  deviceFingerprint?: {
-    hash?: string;
-    platform: 'ios' | 'android' | 'web';
-    rawVendorId?: string;
-  };
+  @ValidateNested()
+  @Type(() => DeviceFingerprintDto)
+  deviceFingerprint?: DeviceFingerprintDto;
 }
 
 export class LoginDto {
