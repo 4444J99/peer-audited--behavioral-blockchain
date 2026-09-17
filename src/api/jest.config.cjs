@@ -5,6 +5,10 @@ const tsJestTransformCfg = createDefaultPreset().transform;
 /** @type {import("jest").Config} **/
 module.exports = {
   testEnvironment: "node",
+  // Bound isolated ESM contexts on small runners; recycle workers between
+  // suites instead of accumulating their module graphs for the entire run.
+  maxWorkers: 2,
+  workerIdleMemoryLimit: "512MB",
   setupFiles: ["<rootDir>/jest.setup.cjs"],
   transform: {
     ...tsJestTransformCfg,
