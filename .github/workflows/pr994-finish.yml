@@ -1,0 +1,132 @@
+name: PR 994 integration acceptance
+on:
+  push:
+    branches: [work/lane-verify/ci-gate-fixes-2026-09-17]
+    paths: [.github/workflows/pr994-finish.yml]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: pr994-finish
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pr994_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Retrieve the previously strict-installable SDK candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/pr994-evidence" "$RUNNER_TEMP/pr994-candidate"
+          gh api repos/${{ github.repository }}/actions/artifacts/10519701788/zip > "$RUNNER_TEMP/candidate.zip"
+          unzip -q "$RUNNER_TEMP/candidate.zip" -d "$RUNNER_TEMP/pr994-candidate"
+          python3 <<'PY'
+          import hashlib,os,pathlib,subprocess
+          expected={'package.json':'db0fa7a012e0f6bf974ab74f1482494ff7433a896a08cc96a8af69f2ee41292b','src/mobile/package.json':'b399ccc1e4c03355a49ba1ff2b4160d66b61c6fedd18fb6873ab8fee41eba964','package-lock.json':'3faa4697768ac9a3b65d80df90fd2996558773748c8fb1e1e90b00a02bdb5e9e'}
+          for path,digest in expected.items():
+            assert hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()==digest,f'Concurrent dependency change: {path}'
+          patch=pathlib.Path(os.environ['RUNNER_TEMP'])/'pr994-candidate/candidate.diff'
+          assert hashlib.sha256(patch.read_bytes()).hexdigest()=='463fb4e87d593cb3ee90b58270bb7b727d4fe6f199288d56b2402e86c603c6e3'
+          subprocess.run(['git','apply','--check',str(patch)],check=True)
+          subprocess.run(['git','apply',str(patch)],check=True)
+          assert set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())==set(expected)
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --global npm@10.8.2
+      - name: Resolve the coherent SDK peer graph
+        run: |
+          node <<'JS'
+          const fs=require('fs');
+          const root=JSON.parse(fs.readFileSync('package.json','utf8'));
+          const mobile=JSON.parse(fs.readFileSync('src/mobile/package.json','utf8'));
+          // Direct root anchors keep npm workspace peer hoisting on the same SDK.
+          Object.assign(root.devDependencies, {expo:'57.0.23','react-native':'0.86.3'});
+          Object.assign(root.overrides, {expo:'57.0.23','react-native':'0.86.3',xcode:{uuid:'11.1.1'},'@react-navigation/native':'7.4.1','@react-navigation/core':'7.22.1'});
+          Object.assign(mobile.devDependencies, {'@react-native/metro-config':'0.86.3','jest-environment-jsdom':'29.7.0'});
+          fs.writeFileSync('package.json',JSON.stringify(root,null,2)+'\n');
+          fs.writeFileSync('src/mobile/package.json',JSON.stringify(mobile,null,2)+'\n');
+          JS
+          set -o pipefail
+          # First preserve the previously tested graph, updating only real
+          # peer anchors and affected SDK/UUID inputs. Never --force/legacy peers.
+          if ! timeout 240 npm update expo react-native @react-native/metro-config xcode uuid jest-environment-jsdom --package-lock-only --ignore-scripts --engine-strict 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/generation-incremental.log"; then
+            # A stale hoisted lock can be unsatisfiable during update. Preserve it
+            # as evidence and regenerate from the complete unchanged manifests.
+            cp package-lock.json "$RUNNER_TEMP/pr994-evidence/prior-generated-lock.json"
+            rm package-lock.json
+            timeout 240 npm install --package-lock-only --ignore-scripts --engine-strict 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/generation-fresh.log"
+          fi
+          npm ci --engine-strict --strict-peer-deps 2>&1 | tee "$RUNNER_TEMP/pr994-evidence/strict-install.log"
+      - name: Inspect the actual installed SDK and behavior
+        run: |
+          out="$RUNNER_TEMP/pr994-evidence"
+          set +e
+          node scripts/ci/check-dependency-graph.mjs > "$out/graph.log" 2>&1; echo "$?" > "$out/graph-exit.txt"
+          (cd src/mobile && CI=1 npx expo install --check) > "$out/expo.log" 2>&1; echo "$?" > "$out/expo-exit.txt"
+          node --test scripts/ci/dependency-compatibility.test.mjs > "$out/compatibility.log" 2>&1; echo "$?" > "$out/compatibility-exit.txt"
+          npm audit --json > "$out/audit.json"; echo "$?" > "$out/audit-exit.txt"
+          node -e 'const fs=require("fs"); for(const name of ["@react-navigation/core","@react-navigation/native","xcode","expo"]) {let p=require.resolve(name+"/package.json");console.log(p,fs.readFileSync(p,"utf8"));}' > "$out/installed-metadata.txt"
+          test "$(cat "$out/graph-exit.txt")" = 0 && test "$(cat "$out/expo-exit.txt")" = 0
+      - name: Persist strictly installed SDK graph on unchanged branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          branch=work/lane-verify/ci-gate-fixes-2026-09-17
+          test "$(git ls-remote origin refs/heads/$branch | cut -f1)" = "$EXPECTED_HEAD"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json src/mobile/package.json package-lock.json
+          git diff --cached --check
+          git commit -m 'fix(deps): consolidate strict SDK graph and scoped security repairs'
+          git push origin HEAD:refs/heads/$branch
+      - name: Full verification at the committed head
+        env:
+          PR994_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/pr994_test
+        run: bash scripts/ci/verify-pr994.sh
+      - name: Collect canonical commands and all failure evidence
+        if: always()
+        run: |
+          out="$RUNNER_TEMP/pr994-evidence"
+          mkdir -p "$out"
+          set +e
+          if test -x node_modules/.bin/turbo; then
+            timeout 600 npx turbo run test > "$out/canonical-tests.log" 2>&1; echo "$?" > "$out/canonical-tests-exit.txt"
+            timeout 300 npx turbo run build > "$out/canonical-build.log" 2>&1; echo "$?" > "$out/canonical-build-exit.txt"
+            timeout 180 npx turbo run lint > "$out/canonical-lint.log" 2>&1; echo "$?" > "$out/canonical-lint-exit.txt"
+          fi
+          git rev-parse HEAD > "$out/head.txt"
+          git status --porcelain > "$out/status.txt"
+          git diff --binary --full-index > "$out/candidate.diff"
+          cp package-lock.json "$out/candidate-lock.json"
+          git archive --format=tar.gz HEAD > "$out/source.tar.gz"
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr994-finish-${{ github.run_id }}
+          path: ${{ runner.temp }}/pr994-evidence/
+          retention-days: 14

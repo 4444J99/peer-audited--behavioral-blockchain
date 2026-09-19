@@ -53,14 +53,16 @@
     "eslint": "^10.9.0",
     "jest-util": "^30.5.1",
     "prettier": "^3.9.6",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "tsx": "4.23.13",
     "turbo": "2.10.12",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "expo": "57.0.23",
+    "react-native": "0.86.3"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.0.0"
   },
   "overrides": {
     "fast-xml-parser": ">=5.3.8",
@@ -79,7 +81,18 @@
     "ws": "8.21.3",
     "yaml": "2.8.3",
     "cross-spawn": "7.0.5",
-    "postcss": "8.5.15"
+    "postcss": "8.5.26",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-test-renderer": "19.2.3",
+    "react-native": "0.86.3",
+    "xcode": {
+      "uuid": "11.1.1"
+    },
+    "@react-navigation/native": "7.4.1",
+    "@react-navigation/core": "7.22.1",
+    "expo": "57.0.23",
+    "@types/react-dom": "19.2.4"
   },
   "dependencies": {
     "class-validator": "^0.15.1"
