@@ -8,7 +8,7 @@ import {
 } from '../../../services/billing';
 import {
   ESCROW_PROVIDER,
-  EscrowProvider,
+  type EscrowProvider,
 } from '../../common/interfaces/payout-provider.interface';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';

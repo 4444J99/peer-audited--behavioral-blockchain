@@ -1,68 +1,67 @@
-import { GoalEthicsService } from './goal-ethics.service';
+import { jest } from '@jest/globals';
+import { GoalEthicsService, type GoalEthicsResult } from './goal-ethics.service';
 
 describe('GoalEthicsService', () => {
   let service: GoalEthicsService;
-  const originalEnv = process.env;
+  let originalKey: string | undefined;
 
   beforeEach(() => {
-    process.env = { ...originalEnv };
+    originalKey = process.env.GEMINI_API_KEY;
     delete process.env.GEMINI_API_KEY;
+    // The service uses import(), so mock the ESM registry, not only require().
+    // Clear cached synthetic modules so each case exercises its own factory.
+    jest.resetModules();
+    jest.unstable_unmockModule('./GeminiClient');
     service = new GoalEthicsService();
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    if (originalKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = originalKey;
+    jest.unstable_unmockModule('./GeminiClient');
   });
 
-  it('should return true (pass through) when no GEMINI_API_KEY is set', async () => {
-    const result = await service.isGoalEthical('I want to lose 50 pounds in a week by starving');
-    expect(result).toBe(true);
+  it('passes through without loading Gemini when no key is configured', async () => {
+    const load = jest.fn(() => { throw new Error('Must not load without a key'); });
+    jest.unstable_mockModule('./GeminiClient', load);
+    expect(await service.isGoalEthical('An arbitrary description')).toBe(true);
+    expect(load).not.toHaveBeenCalled();
   });
 
-  it('should return true when Gemini screening passes', async () => {
+  it.each([true, false])('returns the actual screening decision: %s', async (ethical) => {
     process.env.GEMINI_API_KEY = 'test-key';
-
-    jest.mock('./GeminiClient', () => ({
-      screenGoalEthics: jest.fn().mockResolvedValue({ ethical: true }),
-    }), { virtual: true });
-
-    const result = await service.isGoalEthical('Run a 5K by the end of the month');
-    expect(result).toBe(true);
+    const screenGoalEthics = jest.fn<(description: string) => Promise<GoalEthicsResult>>()
+      .mockResolvedValue({ ethical });
+    jest.unstable_mockModule('./GeminiClient', () => ({ screenGoalEthics }));
+    const description = 'Run a 5K by the end of the month';
+    expect(await service.isGoalEthical(description)).toBe(ethical);
+    expect(screenGoalEthics).toHaveBeenCalledTimes(1);
+    expect(screenGoalEthics).toHaveBeenCalledWith(description);
   });
 
-  it('should return true (fail open) when Gemini import fails', async () => {
+  it('preserves the existing fallback when the Gemini import fails', async () => {
     process.env.GEMINI_API_KEY = 'test-key';
-
-    // Force the dynamic import to fail
-    jest.mock('./GeminiClient', () => {
-      throw new Error('Module not found');
-    }, { virtual: true });
-
-    const result = await service.isGoalEthical('Any goal description');
-    expect(result).toBe(true);
+    const load = jest.fn(() => { throw new Error('Module not found'); });
+    jest.unstable_mockModule('./GeminiClient', load);
+    expect(await service.isGoalEthical('Any goal description')).toBe(true);
+    expect(load).toHaveBeenCalledTimes(1);
   });
 
-  it('should return true (fail open) when screenGoalEthics throws', async () => {
+  it('preserves the existing fallback when screening rejects', async () => {
     process.env.GEMINI_API_KEY = 'test-key';
-
-    jest.mock('./GeminiClient', () => ({
-      screenGoalEthics: jest.fn().mockRejectedValue(new Error('Gemini API unavailable')),
-    }), { virtual: true });
-
-    const result = await service.isGoalEthical('Any goal description');
-    expect(result).toBe(true);
+    const screenGoalEthics = jest.fn<(description: string) => Promise<GoalEthicsResult>>()
+      .mockRejectedValue(new Error('Gemini API unavailable'));
+    jest.unstable_mockModule('./GeminiClient', () => ({ screenGoalEthics }));
+    expect(await service.isGoalEthical('Any goal description')).toBe(true);
+    expect(screenGoalEthics).toHaveBeenCalledTimes(1);
+    expect(screenGoalEthics).toHaveBeenCalledWith('Any goal description');
   });
 
-  it('should accept a benign goal description', async () => {
-    // Without API key, all goals pass
-    const result = await service.isGoalEthical('Read 30 minutes every day');
-    expect(result).toBe(true);
+  it('accepts a benign description when screening is unconfigured', async () => {
+    expect(await service.isGoalEthical('Read 30 minutes every day')).toBe(true);
   });
 
-  it('should handle empty goal description', async () => {
-    const result = await service.isGoalEthical('');
-    expect(result).toBe(true);
+  it('preserves the unconfigured empty-description behavior', async () => {
+    expect(await service.isGoalEthical('')).toBe(true);
   });
 });

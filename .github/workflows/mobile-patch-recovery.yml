@@ -1,0 +1,22 @@
+name: Mobile patch recovery record
+
+# The one-shot generator is retired. This record cannot modify Git objects,
+# refs, dependencies, checks, or pull requests. Historical runs retain evidence.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recovery_record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Report the historical recovery receipt (not a new validation)
+        run: |
+          echo 'Historical Expo 57 patch candidate: f31851007a5c7df53daed388f0457a1ba3b102a5'
+          echo 'Generation input: d52bca65e1175408495a4437e73a532add6ab14d'
+          echo 'Evidence run: 35538433870; artifact: 10613801142'
+          echo 'Strict installation, Expo compatibility, low-severity audit, runtime policy, and dependency regressions passed in that run.'
+          echo 'This workflow is a historical record only, not current CI or deployment acceptance.'

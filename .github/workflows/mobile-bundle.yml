@@ -1,0 +1,117 @@
+name: Mobile production bundles
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/mobile/**'
+      - 'src/shared/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.node-version'
+      - '.github/workflows/mobile-bundle.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/mobile/**'
+      - 'src/shared/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.node-version'
+      - '.github/workflows/mobile-bundle.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-bundle-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile_bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [android, ios]
+    env:
+      CI: '1'
+      npm_config_engine_strict: 'true'
+      EXPO_NO_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install the committed dependency graph
+        run: |
+          version="$(node -p "require('./package.json').packageManager.replace(/^npm@/, '')")"
+          npm install --global "npm@${version}" --ignore-scripts
+          npm ci --ignore-scripts --strict-peer-deps --no-audit --no-fund
+          npm run build --workspace @styx/shared
+      - name: Export the real production JavaScript bundle
+        working-directory: src/mobile
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          npx --no-install expo install --check
+          npx --no-install expo export --platform "$PLATFORM" --source-maps --output-dir "$RUNNER_TEMP/mobile-export"
+      - name: Verify a single React runtime in the exported source maps
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          node <<'JS'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const crypto = require('node:crypto');
+          const cp = require('node:child_process');
+          const root = path.join(process.env.RUNNER_TEMP, 'mobile-export');
+          const files = [];
+          function walk(dir) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const file = path.join(dir, entry.name);
+              if (entry.isDirectory()) walk(file);
+              else if (entry.isFile()) files.push(file);
+            }
+          }
+          walk(root);
+          const maps = files.filter(file => file.endsWith('.map'));
+          assert.ok(maps.length > 0, 'Export must include source maps');
+          const reactRoots = new Set();
+          function inspect(map) {
+            for (const source of map.sources || []) {
+              const normalized = source.replaceAll('\\', '/');
+              const marker = 'node_modules/react/';
+              const index = normalized.lastIndexOf(marker);
+              if (index >= 0) reactRoots.add(normalized.slice(0, index + marker.length - 1));
+            }
+            for (const section of map.sections || []) inspect(section.map);
+          }
+          for (const file of maps) inspect(JSON.parse(fs.readFileSync(file, 'utf8')));
+          assert.equal(reactRoots.size, 1, `Expected one React package in the native app; found ${JSON.stringify([...reactRoots])}`);
+          const head = cp.execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+          const receipt = {
+            head, platform: process.env.PLATFORM, node: process.version,
+            reactRoots: [...reactRoots],
+            files: files.map(file => ({
+              path: path.relative(root, file),
+              sha256: crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex'),
+            })),
+          };
+          console.log(JSON.stringify(receipt, null, 2));
+          fs.writeFileSync(path.join(process.env.RUNNER_TEMP, 'mobile-bundle-receipt.json'), JSON.stringify(receipt, null, 2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Verified ${receipt.platform} JavaScript export at \`${head}\` with one React package. This does not claim a native binary or physical-device test.\n`);
+          JS
+          git diff --exit-code -- package.json package-lock.json src/mobile/package.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mobile-bundle-receipt-${{ matrix.platform }}-${{ github.sha }}
+          path: ${{ runner.temp }}/mobile-bundle-receipt.json
+          if-no-files-found: error
+          retention-days: 14

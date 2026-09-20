@@ -4,7 +4,7 @@ import {
   InjectThrottlerOptions,
   InjectThrottlerStorage,
   ThrottlerGuard,
-  ThrottlerModuleOptions,
+  type ThrottlerModuleOptions,
   ThrottlerStorage,
 } from "@nestjs/throttler";
 import { isIP } from "node:net";

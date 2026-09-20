@@ -3,10 +3,10 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuthGuard } from '../../../guards/auth.guard';
 import {
-  AppAttestAssertion,
-  AppAttestRegistration,
+  type AppAttestAssertion,
+  type AppAttestRegistration,
   DeviceAttestationService,
-  PlayIntegrityVerdict,
+  type PlayIntegrityVerdict,
 } from '../../../services/security/device-attestation.service';
 
 @ApiTags('Device Attestation')
