@@ -50,7 +50,7 @@ jobs:
         run: |
           npm run validate:runtime
           npm run test:runtime
-          node --test .github/scripts/ci-context.test.cjs
+          node --test .github/scripts/ci-context.test.cjs scripts/validation/ci-gate-ordering.test.cjs
       - name: Turbo Cache
         uses: actions/cache@v6
         with:
@@ -98,6 +98,7 @@ jobs:
             src/*/coverage/
           retention-days: 14
       - name: Build for Validation Gates (Turborepo)
+        id: build_validation
         run: npx turbo run build
       - name: Lint (Turborepo)
         run: npx turbo run lint
@@ -108,18 +109,15 @@ jobs:
           API_URL: ${{ secrets.CI_GATE05_API_URL }}
         run: npx tsx scripts/validation/05-behavioral-physics-check.ts
       - name: Gate 06 — Security Invariant Check
-        run: |
-          npx tsx scripts/validation/06-security-invariant-check.ts
-          code=$?
-          if [ "$code" -eq 2 ]; then
-            echo "::warning::Gate 06 NOT VERIFIED (exit 2): no build output to scan in this PR context — run after build to enforce."
-            echo "::warning::Blocking copy runs after build in this same job; exit 2 here means scan had nothing to read, not PASS."
-            exit 0
-          fi
-          exit $code
+        if: ${{ !cancelled() && steps.build_validation.outcome == 'success' }}
+        # A missing deployment target must not hide defects in built artifacts.
+        # Missing build evidence remains nonzero; no exit-code suppression.
+        run: npx tsx scripts/validation/06-security-invariant-check.ts
       - name: Gate 07 — Claim Drift Check
+        if: ${{ !cancelled() && steps.build_validation.outcome == 'success' }}
         run: npm run validate:claims
       - name: Gate 08 — Fury Crucible Simulation (enforcing)
+        if: ${{ !cancelled() && steps.build_validation.outcome == 'success' }}
         run: npx tsx scripts/validation/08-fury-crucible-simulation.ts
       - name: Gate 08b — Compliance Artifact Check (integration)
         env:
@@ -142,10 +140,13 @@ jobs:
 
   beta_readiness:
     runs-on: ubuntu-latest
-    needs: build_and_test_matrix
+    # Independent execution collects deployment evidence even when another check fails.
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - name: Use Node.js 24.x
         uses: actions/setup-node@v7
         with:
@@ -156,6 +157,8 @@ jobs:
           npm_version="$(node -p "require('./package.json').packageManager.replace(/^npm@/, '')")"
           npm install --global "npm@${npm_version}" --ignore-scripts
           npm ci --strict-peer-deps
+      - name: Build the exact artifacts required by security readiness
+        run: npx turbo run build --filter=@styx/api --filter=@styx/web
       - name: Run Beta Readiness Suite
         env:
           READINESS_PROFILE: beta
@@ -163,6 +166,7 @@ jobs:
           BETA_API_URL: ${{ secrets.CI_BETA_API_URL || secrets.CI_GATE05_API_URL }}
           BETA_WEB_URL: ${{ secrets.BETA_WEB_URL }}
           BETA_ENV_LABEL: ${{ secrets.BETA_ENV_LABEL }}
+          STYX_DEMO_PASSWORD: ${{ secrets.BETA_DEMO_PASSWORD }}
         run: npm run beta:readiness
       - name: Upload Beta Readiness Summary
         if: always()
@@ -197,6 +201,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
         with:
@@ -229,8 +236,9 @@ jobs:
 
   e2e_browsers:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [build_and_test_matrix, beta_readiness, changed-files]
+    timeout-minutes: 20
+    # Browser evidence is independent; build_and_test still requires live readiness.
+    needs: [changed-files]
     if: needs.changed-files.outputs.web == 'true'
     strategy:
       fail-fast: false
@@ -239,6 +247,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - name: Use Node.js 24
         uses: actions/setup-node@v7
         with:
