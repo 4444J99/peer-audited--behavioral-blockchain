@@ -35,7 +35,7 @@ jobs:
       - id: eligible
         name: Limit generation to the single authorized recovery input
         run: |
-          if [ "$(git rev-parse HEAD^)" = '4dc98ecf1c4e4664f431530394c6ad99e3f8a795' ]; then
+          if [ "$(git rev-parse HEAD^)" = 'fbdae401161027383b2afb6b656ed8d1a5d7787a' ]; then
             echo 'run=true' >> "$GITHUB_OUTPUT"
           else
             echo 'run=false' >> "$GITHUB_OUTPUT"
@@ -52,7 +52,15 @@ jobs:
           set -euo pipefail
           version="$(node -p "require('./package.json').packageManager.replace(/^npm@/, '')")"
           npm install --global "npm@${version}" --ignore-scripts
-          npm install --workspace @styx/mobile 'expo@~57.0.24' 'expo-notifications@~57.0.20' --package-lock-only --ignore-scripts --strict-peer-deps --no-audit --no-fund
+          node <<'JS'
+          const fs = require('node:fs');
+          const path = 'src/mobile/package.json';
+          const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
+          manifest.dependencies.expo = '~57.0.24';
+          manifest.dependencies['expo-notifications'] = '~57.0.20';
+          fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n');
+          JS
+          npm update expo @expo/cli expo-notifications --package-lock-only --ignore-scripts --strict-peer-deps --no-audit --no-fund
           npm ci --ignore-scripts --strict-peer-deps --no-audit --no-fund
           (cd src/mobile && CI=1 npx --no-install expo install --check)
           npm audit --audit-level=low
