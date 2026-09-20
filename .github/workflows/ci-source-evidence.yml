@@ -1,0 +1,56 @@
+name: CI source evidence
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - '.github/scripts/**'
+      - '.node-version'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-source-evidence-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source_evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Bind and package the actual validation input
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/ci-source-evidence"
+          mkdir -p "$out"
+          node .github/scripts/ci-context.cjs > "$out/context.json"
+          git archive --format=tar.gz -o "$out/source.tar.gz" HEAD
+          git ls-tree -rz --full-tree HEAD > "$out/tree.zlist"
+          git cat-file commit HEAD > "$out/commit.txt"
+          node --version > "$out/node-version.txt"
+          # The binary enables offline reproduction when package hosts are
+          # unavailable. Never include the process environment or credentials.
+          tar -cJf "$out/node-runtime.tar.xz" -C "$(dirname "$(command -v node)")" node
+          (cd "$out" && sha256sum source.tar.gz tree.zlist commit.txt context.json node-runtime.tar.xz > SHA256SUMS)
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ci-source-evidence-${{ github.sha }}
+          path: ${{ runner.temp }}/ci-source-evidence/
+          if-no-files-found: error
+          retention-days: 7
