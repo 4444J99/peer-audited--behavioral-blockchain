@@ -7,10 +7,8 @@ import {
 } from "../../../config/queue.config";
 import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import {
-  ESCROW_PROVIDER,
-  EscrowProvider,
-} from "../../common/interfaces/payout-provider.interface";
+import { ESCROW_PROVIDER } from "../../common/interfaces/payout-provider.interface";
+import type { EscrowProvider } from "../../common/interfaces/payout-provider.interface";
 import { buildSettlementQuote } from "./settlement-quote";
 import { toCents } from "../../../../shared/libs/money";
 

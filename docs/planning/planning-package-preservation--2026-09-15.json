@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "generated": "2026-09-15",
+  "repo": "peer-audited--behavioral-blockchain",
+  "organ": "III",
+  "packages": {
+    "@styx/api": {
+      "path": "src/api",
+      "stack": "NestJS 11, BullMQ, Stripe, pg",
+      "tests": "Jest",
+      "build": "turbo build"
+    },
+    "@styx/web": {
+      "path": "src/web",
+      "stack": "Next.js 16, React 18, Tailwind",
+      "tests": "Jest",
+      "build": "turbo build"
+    },
+    "@styx/mobile": {
+      "path": "src/mobile",
+      "stack": "React Native 0.81, Expo 54",
+      "tests": "Jest",
+      "build": "tsc --noEmit"
+    },
+    "@styx/desktop": {
+      "path": "src/desktop",
+      "stack": "Tauri 2, Vite, React",
+      "tests": "Jest",
+      "build": "turbo build"
+    },
+    "@styx/shared": {
+      "path": "src/shared",
+      "stack": "TypeScript",
+      "tests": "N/A",
+      "build": "tsc --noEmit"
+    },
+    "@styx/pitch": {
+      "path": "src/pitch",
+      "stack": "Vite, React, p5.js",
+      "tests": "N/A",
+      "build": "turbo build"
+    },
+    "@styx/ask-styx": {
+      "path": "src/ask-styx",
+      "stack": "Cloudflare Worker, wrangler",
+      "tests": "Vitest",
+      "build": "turbo build"
+    },
+    "@styx/test-harness": {
+      "path": "src/test-harness",
+      "stack": "Vitest, Commander CLI",
+      "tests": "Vitest",
+      "build": "turbo build"
+    },
+    "@styx/styx-cli": {
+      "path": "packages/styx-cli",
+      "stack": "TypeScript, Vitest",
+      "tests": "Vitest",
+      "build": "turbo build"
+    },
+    "@styx/audit-engine": {
+      "path": "packages/audit-engine",
+      "stack": "TypeScript, Vitest",
+      "tests": "Vitest",
+      "build": "turbo build"
+    },
+    "@styx/audience-engine": {
+      "path": "packages/audience-engine",
+      "stack": "TypeScript, Vitest",
+      "tests": "Vitest",
+      "build": "turbo build"
+    }
+  },
+  "last_preserved": "2026-09-15",
+  "notes": "Package workspace enumeration verified. All packages present in turbo.json workspaces. @styx/shared must build before any workspace that imports from it."
+}

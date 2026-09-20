@@ -626,3 +626,13 @@ a dedup deletes a file, every live link to it is residual drift that must be swe
   Require a dedicated flag, synthetic test-money mode, an explicit local
   runtime, loopback-bound host services, and a local transport peer. A generic
   internal service credential must never become global bypass authority.
+
+## closeout--2026-09-17 — 2026-09-17 — lane/verify parity + closeout
+
+**Session**: Parity audit + closeout
+**Head SHA**: `d3054acf`
+**Batches addressed**: `verify-login-throttle-2026-09-16` (#990), `teamwork-preview-verified-core-2026-09-17` (18 issues)
+**Parity**: All 4 branches IN PARITY after rebase and push
+**Rebase**: Required — remote advanced 2 commits (6b9a17a3). Conflicts in 5 files across 4 commits, all resolved keeping remote-base versions.
+**Tests**: 31/31 targeted API tests, 176/176 suites, 2190/2190 tests, Gate 04, Gate 06, Gate 08
+**Remaining**: Live-loop-receipt created at `docs/evidence/live-loop-receipt.md`. Closeout artifact created at `docs/closeouts/closeout--2026-09-17.md`.

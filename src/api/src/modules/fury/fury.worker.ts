@@ -1,5 +1,7 @@
 import { Injectable, Inject, OnModuleInit, Logger, forwardRef, Optional } from '@nestjs/common';
 import { Worker, Job } from 'bullmq';
+import { Interval } from '@nestjs/schedule';
+import { applyAutomaticHoneypotPenalty } from './automatic-penalty';
 import { Pool } from 'pg';
 import { FURY_ROUTER_QUEUE_NAME, getRedisConnectionConfig } from '../../../config/queue.config';
 import { ConsensusEngine, FuryVote } from './consensus.engine';
@@ -22,6 +24,7 @@ interface FuryRouteJob {
 export class FuryWorker implements OnModuleInit {
   private readonly logger = new Logger(FuryWorker.name);
   private worker!: Worker;
+  private reconcilingPenalties = false;
 
   constructor(
     private readonly pool: Pool,
@@ -119,7 +122,8 @@ export class FuryWorker implements OnModuleInit {
       [proofId],
     );
     if (claim.rows.length === 0) {
-      // Another concurrent verdict already claimed this proof for resolution.
+      // Retry only financial bookkeeping for a finalized honeypot; never re-grade it.
+      await this.reconcileCompletedHoneypot(proofId, assignments.rows);
       return;
     }
 
@@ -230,7 +234,7 @@ export class FuryWorker implements OnModuleInit {
       // Disburse Fury bounties/penalties via the double-entry ledger. Idempotent at
       // the DB level via per-(proof,fury) idempotencyKey, so re-running on a retry
       // cannot double-pay even if the marker check above raced.
-      if (this.ledger && result.outcome !== 'SPLIT' && !consensusAlreadyApplied) {
+      if (this.ledger && result.outcome !== 'SPLIT' && (!consensusAlreadyApplied || is_honeypot)) {
         await this.disburseFuryBounties(votes, result, is_honeypot, contract_id, proofId);
       }
 
@@ -343,6 +347,15 @@ export class FuryWorker implements OnModuleInit {
     contractId: string | null,
     proofId: string,
   ): Promise<void> {
+    if (isHoneypot) {
+      if (!this.ledger || !this.truthLog) throw new Error('Automatic penalties require ledger and audit services');
+      for (const reviewerId of result.flaggedFuries) {
+        await applyAutomaticHoneypotPenalty(this.pool, this.ledger, this.truthLog,
+          reviewerId, proofId, contractId, AUDITOR_STAKE_AMOUNT);
+      }
+      return;
+    }
+
     // Look up system accounts
     const bountyPoolResult = await this.pool.query(
       `SELECT id FROM accounts WHERE name = 'FURY_BOUNTY_POOL' LIMIT 1`,
@@ -354,53 +367,6 @@ export class FuryWorker implements OnModuleInit {
 
     const bountyPoolAccountId = bountyPoolResult.rows[0].id;
     const revenueAccountId = revenueResult.rows[0].id;
-
-    // For honeypot proofs, penalize flagged Furies financially
-    if (isHoneypot) {
-      for (const furyId of result.flaggedFuries) {
-        const furyUser = await this.pool.query(
-          `SELECT account_id FROM users WHERE id = $1`,
-          [furyId],
-        );
-        if (furyUser.rows.length === 0 || !furyUser.rows[0].account_id) continue;
-
-        try {
-          const debitAccountId = furyUser.rows[0].account_id;
-          const transactionId = await this.ledger!.recordTransaction(
-            debitAccountId,
-            revenueAccountId,
-            AUDITOR_STAKE_AMOUNT,
-            contractId ?? undefined,
-            { type: 'FURY_PENALTY', consensusProofId: proofId },
-            undefined,
-            `consensus:${proofId}:${furyId}:honeypot-penalty`,
-          );
-          await this.truthLog?.appendEvent('FURY_PENALTY_CHARGED', {
-            furyUserId: furyId,
-            proofId,
-            amount: AUDITOR_STAKE_AMOUNT,
-            reason: 'honeypot_failure',
-          });
-
-          // Record the automatic slash AS an enforcement case with a penalty row
-          // pointing at the ledger transaction. Without this the money moved here
-          // and the appeal flow had no object to reverse: resolveAppeal could only
-          // delete a fury_penalties row that never existed for an automatic slash,
-          // so a Fury who won an appeal stayed slashed. The case is opened already
-          // PENALTY_APPLIED because the charge has, in fact, already happened.
-          await this.recordAutomaticPenaltyCase(
-            furyId,
-            proofId,
-            transactionId,
-            debitAccountId,
-            AUDITOR_STAKE_AMOUNT,
-          );
-        } catch (err) {
-          this.logger.error(`Failed to charge honeypot penalty for Fury ${furyId}: ${err instanceof Error ? err.message : err}`);
-        }
-      }
-      return;
-    }
 
     // For regular proofs with clear outcome, reward/penalize each voter
     for (const vote of votes) {
@@ -454,54 +420,43 @@ export class FuryWorker implements OnModuleInit {
     }
   }
 
-  /**
-   * Records an already-charged automatic slash as an appealable enforcement case.
-   *
-   * Opened directly as PENALTY_APPLIED because the money has already moved — this
-   * is bookkeeping catching up with the ledger, not a decision. Idempotent on the
-   * ledger transaction id so a replayed consensus (the charge itself is
-   * idempotency-keyed) cannot open a second case for the same money.
-   */
-  private async recordAutomaticPenaltyCase(
-    furyId: string,
-    proofId: string,
-    transactionId: string,
-    debitAccountId: string,
-    amountCents: number,
+  /** Retry finalized honeypots without repeating grading, contract settlement, or notifications. */
+  private async reconcileCompletedHoneypot(
+    proofId: string, votes: Array<{ fury_user_id: string; verdict: string | null }>,
   ): Promise<void> {
+    if (!this.ledger || !this.truthLog) return;
+    const { rows } = await this.pool.query(
+      'SELECT is_honeypot, status, contract_id, honeypot_expected_verdict FROM proofs WHERE id = $1', [proofId],
+    );
+    const proof = rows[0];
+    if (!proof?.is_honeypot || !['VERIFIED', 'REJECTED'].includes(proof.status)) return;
+    const expected = proof.honeypot_expected_verdict === 'PASS' ? 'PASS' : 'FAIL';
+    const flaggedFuries = votes.filter(vote => vote.verdict !== null && vote.verdict !== expected)
+      .map(vote => vote.fury_user_id);
+    await this.disburseFuryBounties([], { outcome: proof.status, flaggedFuries }, true, proof.contract_id, proofId);
+  }
+
+  /** Durable DB selection also recovers failures that predate this repair. */
+  @Interval(60_000)
+  async reconcileAutomaticPenalties(): Promise<void> {
+    if (!this.ledger || !this.truthLog || this.reconcilingPenalties) return;
+    this.reconcilingPenalties = true;
     try {
-      const existing = await this.pool.query(
-        `SELECT 1 FROM fury_penalties WHERE ledger_transaction_id = $1`,
-        [transactionId],
-      );
-      if (existing.rows.length > 0) return;
-
-      const caseResult = await this.pool.query(
-        `INSERT INTO fury_enforcement_cases (reviewer_id, case_type, confidence, status, evidence_json)
-         VALUES ($1, 'HONEYPOT_FAILURE', 1.0, 'PENALTY_APPLIED', $2)
-         RETURNING id`,
-        [
-          furyId,
-          JSON.stringify({
-            proofId,
-            reason: 'Automatic honeypot slash applied at consensus',
-            automatic: true,
-          }),
-        ],
-      );
-
-      await this.pool.query(
-        `INSERT INTO fury_penalties
-           (case_id, penalty_type, amount_cents, ledger_transaction_id, ledger_debit_account_id)
-         VALUES ($1, 'STAKE_SLASH', $2, $3, $4)`,
-        [caseResult.rows[0].id, amountCents, transactionId, debitAccountId],
-      );
-    } catch (err) {
-      // Never let bookkeeping failure roll back a charge that already succeeded;
-      // surface it loudly instead, because an unrecorded slash is unappealable.
-      this.logger.error(
-        `Charged Fury ${furyId} but FAILED to record the enforcement case for transaction ${transactionId}: ${err instanceof Error ? err.message : err}. This penalty cannot be appealed until reconciled.`,
-      );
-    }
+      const pending = await this.pool.query(`
+        SELECT DISTINCT p.id FROM proofs p JOIN fury_assignments fa ON fa.proof_id = p.id
+        WHERE p.is_honeypot = true AND p.status IN ('VERIFIED', 'REJECTED')
+          AND fa.verdict IS NOT NULL
+          AND fa.verdict::text <> COALESCE(p.honeypot_expected_verdict::text, 'FAIL')
+          AND NOT EXISTS (
+            SELECT 1 FROM entries e JOIN fury_penalties fp ON fp.ledger_transaction_id = e.id
+            WHERE e.idempotency_key = 'consensus:' || p.id::text || ':' || fa.fury_user_id::text || ':honeypot-penalty'
+          ) ORDER BY p.id LIMIT 50`);
+      for (const proof of pending.rows) {
+        try { await this.checkConsensus(proof.id); }
+        catch (error) { this.logger.error(`Honeypot reconciliation failed for ${proof.id}: ${error instanceof Error ? error.message : error}`); }
+      }
+    } catch (error) {
+      this.logger.error(`Honeypot reconciliation scan failed: ${error instanceof Error ? error.message : error}`);
+    } finally { this.reconcilingPenalties = false; }
   }
 }

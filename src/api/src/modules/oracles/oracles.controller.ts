@@ -14,7 +14,8 @@ import * as crypto from 'crypto';
 import { AuthGuard } from '../../../guards/auth.guard';
 import { BannedUserGuard } from '../../guards/banned-user.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { HealthKitGuardService, HealthKitSampleMetadata } from '../compliance/healthkit-guard.service';
+import { HealthKitGuardService } from '../compliance/healthkit-guard.service';
+import type { HealthKitSampleMetadata } from '../compliance/healthkit-guard.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { ContractsService } from '../contracts/contracts.service';
 

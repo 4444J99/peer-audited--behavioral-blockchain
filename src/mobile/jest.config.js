@@ -15,6 +15,7 @@ module.exports = {
   },
   testPathIgnorePatterns: ["/node_modules/"],
   moduleNameMapper: {
+    "^expo-application$": "<rootDir>/__mocks__/expo-application.ts",
     "^@react-native-async-storage/async-storage$":
       "<rootDir>/__mocks__/async-storage.ts",
     "^expo-crypto$": "<rootDir>/__mocks__/expo-crypto.ts",

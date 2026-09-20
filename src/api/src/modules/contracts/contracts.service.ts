@@ -11,13 +11,11 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import { Pool, PoolClient } from "pg";
+import { inTransaction } from "../../../services/ledger/transaction";
 import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import {
-  ESCROW_PROVIDER,
-  EscrowProvider,
-  toEscrowHoldId,
-} from "../../common/interfaces/payout-provider.interface";
+import { ESCROW_PROVIDER, toEscrowHoldId } from "../../common/interfaces/payout-provider.interface";
+import type { EscrowProvider } from "../../common/interfaces/payout-provider.interface";
 import { JurisdictionTier } from "../../../services/geofencing";
 import { StripeFBOService as RealStripeFBOService } from "../payments/stripe-fbo.service";
 import { SettlementService } from "../payments/settlement.service";
@@ -3901,28 +3899,41 @@ export class ContractsService {
     accept: boolean,
   ) {
     const status = accept ? "ACTIVE" : "DECLINED";
-    const result = await this.pool.query(
-      `UPDATE accountability_partners
-       SET status = $1, partner_user_id = $3, accepted_at = CASE WHEN $1 = 'ACTIVE' THEN NOW() ELSE accepted_at END
-       WHERE contract_id = $2 AND (partner_user_id = $3 OR partner_email = (SELECT email FROM users WHERE id = $3))
-       RETURNING *`,
-      [status, contractId, partnerId],
-    );
-
-    if (result.rows.length === 0)
-      throw new NotFoundException("Invitation not found");
-
-    await this.pool.query(
-      `INSERT INTO accountability_partner_events (contract_id, actor_id, event_type) VALUES ($1, $2, $3)`,
-      [contractId, partnerId, accept ? "INVITE_ACCEPTED" : "INVITE_DECLINED"],
-    );
-
-    if (accept) {
-      await this.truthLog.appendEvent("PARTNER_INVITATION_ACCEPTED", {
-        contractId,
-        partnerUserId: partnerId,
-      });
-    }
+    const changed = await inTransaction(this.pool, async (client) => {
+      const result = await client.query(
+        `UPDATE accountability_partners
+         SET status = $1, partner_user_id = $3, accepted_at = CASE WHEN $1 = 'ACTIVE' THEN NOW() ELSE accepted_at END
+         WHERE contract_id = $2 AND (partner_user_id = $3 OR partner_email = (SELECT email FROM users WHERE id = $3))
+           AND status = 'PENDING'
+         RETURNING *`,
+        [status, contractId, partnerId],
+      );
+      if (result.rows.length === 0) {
+        const existing = await client.query(
+          `SELECT status FROM accountability_partners WHERE contract_id = $1
+           AND (partner_user_id = $2 OR partner_email = (SELECT email FROM users WHERE id = $2))`,
+          [contractId, partnerId],
+        );
+        if (existing.rows[0]?.status === status) return false;
+        if (existing.rows.length > 0) {
+          throw new ConflictException(
+            `Invitation already finalized as ${existing.rows[0].status}`,
+          );
+        }
+        throw new NotFoundException("Invitation not found");
+      }
+      await client.query(
+        `INSERT INTO accountability_partner_events (contract_id, actor_id, event_type) VALUES ($1, $2, $3)`,
+        [contractId, partnerId, accept ? "INVITE_ACCEPTED" : "INVITE_DECLINED"],
+      );
+      if (accept) {
+        await this.truthLog.appendEvent("PARTNER_INVITATION_ACCEPTED", {
+          contractId, partnerUserId: partnerId,
+        }, client);
+      }
+      return true;
+    });
+    if (!changed) return { success: true, status };
 
     // Notify the contract owner (non-critical). A decline is the case that
     // most needs a signal: the owner is otherwise left waiting on a partner
