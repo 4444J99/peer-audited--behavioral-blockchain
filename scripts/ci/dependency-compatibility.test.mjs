@@ -8,26 +8,25 @@ import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 
 const require = createRequire(import.meta.url);
-const coreRequire = createRequire(require.resolve('@react-navigation/core/package.json'));
-const queryURL = pathToFileURL(coreRequire.resolve('query-string')).href;
-const query = (await import(queryURL)).default;
+const coreURL = pathToFileURL(require.resolve('@react-navigation/core')).href;
+const { getStateFromPath, getPathFromState } = await import(coreURL);
 const xcode = require('xcode');
 const xcodeRequire = createRequire(require.resolve('xcode/package.json'));
 const uuid = xcodeRequire('uuid');
 
-test('navigation query parsing preserves unicode, repeated keys, and escaping', () => {
-  const parsed = query.parse('name=Ana%20Mar%C3%ADa&tag=a&tag=b&value=x%26y%3Dz');
-  assert.deepEqual({ ...parsed }, { name: 'Ana María', tag: ['a', 'b'], value: 'x&y=z' });
-  assert.deepEqual({ ...query.parse(query.stringify(parsed)) }, { ...parsed });
-  assert.equal(query.parse('blank=&flag').blank, '');
-  assert.equal(query.parse('blank=&flag').flag, null);
+test('installed navigation parses and round-trips unicode and escaped query values', () => {
+  const state = getStateFromPath('/Profile?name=Ana%20Mar%C3%ADa&value=x%26y%3Dz');
+  assert.ok(state);
+  const params = state.routes.at(-1).params;
+  assert.equal(params.name, 'Ana María');
+  assert.equal(params.value, 'x&y=z');
+  assert.deepEqual(getStateFromPath(getPathFromState(state)).routes.at(-1).params, params);
 });
 
-test('malformed URI input completes inside a killable subprocess', () => {
-  const script = `import query from ${JSON.stringify(queryURL)};
-    const malformed = '%ab'.repeat(5000);
-    const result = query.parse('q=' + malformed);
-    if (typeof result.q !== 'string') throw new Error('Lost query value');
+test('malformed navigation URI completes inside a killable subprocess', () => {
+  const script = `import { getStateFromPath } from ${JSON.stringify(coreURL)};
+    try { getStateFromPath('/Profile?q=' + '%ab'.repeat(5000)); }
+    catch (error) { if (!(error instanceof URIError)) throw error; }
     console.log('completed');`;
   assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', script], {
     encoding: 'utf8', timeout: 5000,

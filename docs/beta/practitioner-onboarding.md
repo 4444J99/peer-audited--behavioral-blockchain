@@ -33,21 +33,18 @@ A Practitioner is a licensed professional (therapist, life coach, recovery couns
 
 - [ ] Practitioner confirmed they've reviewed `docs/legal/legal--aegis-protocol.md` Sections 1–3
 
-### Phase 2 — First Session Setup
+### Phase 2 — Seeded Local Session
 
-- [ ] Practitioner logs into The Judge (desktop admin app)
-- [ ] Practitioner creates their first client commitment:
-  - Navigate to **Contracts → New Contract → On Behalf Of Client**
-  - Set client name, oath type, duration, stake amount
-  - Review Fury audit assignment parameters
-- [ ] Client receives invite link and completes account setup
-- [ ] First contract signed by client (cryptographic oath)
+- [ ] Sign in as the seeded practitioner and open `/practitioner` in the web app.
+- [ ] Review the preassigned synthetic clients and their embedded journal alerts. This dashboard is a monitoring surface, not a create-client or send-invitation workflow.
+- [ ] To demonstrate contract creation, switch to a separate seeded `USER` account and use `/contracts/new`, including the accountability-partner email and all four recovery safety acknowledgments described in the dogfood guide.
+- [ ] Do not claim the new user-created contract was automatically assigned to the practitioner. Client invitation, practitioner provisioning and actual assignment must be verified separately before the external pilot (#363).
 
-### Phase 3 — Ongoing Monitoring
+### Phase 3 — Monitoring and Feedback
 
-- [ ] Practitioner reviews daily attestation logs in The Judge
-- [ ] Weekly: Review Fury audit queue for pending verdicts on client proofs
-- [ ] Practitioner submits feedback via [Feedback Template](./feedback-synthesis-template.md) after 2 weeks
+- [ ] Reopen `/practitioner` and inspect its seeded client summaries and journal alerts.
+- [ ] Demonstrate proof review separately with the seeded `FURY` account at `/fury`. Practitioner access alone does not authorize Fury review.
+- [ ] Record observed results in the [Feedback Template](./feedback-synthesis-template.md). The Judge desktop does not implement the former client-contract creation or invitation instructions.
 
 ---
 
@@ -74,9 +71,9 @@ A structured 20-minute walkthrough for the practitioner pre-engagement call:
 
 ### Minutes 13–18: Practitioner Dashboard Walkthrough
 
-- Show the HR dashboard (`/hr` route in the web app)
-- Show the ledger inspector (The Judge desktop)
-- Show the anti-collusion routing panel
+- Show the seeded client summaries and journal alerts at `/practitioner`.
+- Present `/hr` only in the separately authorized seeded admin account; do not imply practitioner access.
+- Mark unexercised ledger, assignment, and anti-collusion behavior **not verified** rather than substituting an aggregate desktop screen.
 
 ### Minutes 18–20: Pricing & Next Steps
 

@@ -27,7 +27,8 @@ describe('EnforcementService', () => {
   describe('penalty transactions', () => {
     beforeEach(() => {
       mockPool.query.mockImplementation(async (sql: string) => {
-        if (sql.includes('FOR UPDATE')) return {rows:[{reviewer_id:'fury-1'}]};
+        if (sql.includes('SELECT reviewer_id')) return {rows:[{reviewer_id:'fury-1',case_type:'COLLUSION_RING'}]};
+        if (sql.includes('FOR UPDATE')) return {rows:[{id:'fury-1'}]};
         if (sql.includes('RETURNING id')) return {rows:[{id:'new-id'}]};
         if (sql.includes('SELECT account_id')) return {rows:[{account_id:'acct-fury-1'}]};
         if (sql.includes('SYSTEM_REVENUE')) return {rows:[{id:'acct-sys-rev'}]};
@@ -36,16 +37,16 @@ describe('EnforcementService', () => {
     });
     it('locks the parent before the guarded penalty insert and commits audit on the same client', async () => {
       await service.applyPenalty('case-1','REP_BURN',0);
-      expect(mockPool.query.mock.calls[0][0]).toContain('FOR UPDATE');
-      expect(mockPool.query.mock.calls[1][0]).toMatch(/INSERT INTO fury_penalties/);
-      expect(mockPool.query.mock.calls[1][0]).toMatch(/WHERE NOT EXISTS/);
+      const statements = mockPool.query.mock.calls.map(call => String(call[0]));
+      expect(statements.findIndex(sql => /users.*FOR UPDATE/.test(sql))).toBeLessThan(statements.findIndex(sql => /fury_enforcement_cases.*FOR UPDATE/.test(sql)));
+      expect(statements.find(sql => /INSERT INTO fury_penalties/.test(sql))).toMatch(/WHERE NOT EXISTS/);
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('FURY_PENALTY_APPLIED',expect.objectContaining({caseId:'case-1',reviewerId:'fury-1'}),client);
       expect(client.query).toHaveBeenLastCalledWith('COMMIT');expect(client.release).toHaveBeenCalledTimes(1);
     });
     it('does not double post a penalty on retry', async () => {
-      mockPool.query.mockResolvedValueOnce({rows:[{reviewer_id:'fury-1'}]}).mockResolvedValueOnce({rows:[]});
+      mockPool.query.mockImplementation(async (sql: string) => ({rows: sql.includes('SELECT reviewer_id') ? [{reviewer_id:'fury-1'}] : []}));
       await service.applyPenalty('case-1','STAKE_SLASH',500);
-      expect(mockPool.query).toHaveBeenCalledTimes(2);expect(mockLedger.recordTransaction).not.toHaveBeenCalled();expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
+      expect(mockPool.query).toHaveBeenCalledTimes(4);expect(mockLedger.recordTransaction).not.toHaveBeenCalled();expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
     });
     it('rejects an unclaimable pending case', async () => {
       mockPool.query.mockResolvedValueOnce({rows:[]});
@@ -56,8 +57,12 @@ describe('EnforcementService', () => {
       expect((await service.confirmCase('case-1','STAKE_SLASH')).amountCents).toBeGreaterThan(0);
     });
     it('refuses to charge a pending honeypot case a second time', async () => {
-      mockPool.query.mockResolvedValueOnce({rows:[{id:'case-hp-1',case_type:'HONEYPOT_FAILURE'}]});
-      await expect(service.confirmCase('case-hp-1','STAKE_SLASH')).rejects.toThrow(/applied automatically/);
+      mockPool.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SELECT reviewer_id')) return {rows:[{reviewer_id:'fury-1',case_type:'HONEYPOT_FAILURE',evidence_json:{proofId:'proof-1'}}]};
+        if (sql.includes('RETURNING id') || sql.includes('FROM entries')) return {rows:[{id:'existing'}]};
+        return {rows:[]};
+      });
+      await expect(service.confirmCase('case-hp-1','STAKE_SLASH')).rejects.toThrow(/already exists/);
       expect(mockLedger.recordTransaction).not.toHaveBeenCalled();
       expect(client.query).toHaveBeenLastCalledWith('ROLLBACK');
     });
@@ -85,15 +90,6 @@ describe('EnforcementService', () => {
     it('executes a double-entry ledger transaction when applying STAKE_SLASH to an auditor with an account', async () => {
       // Preserve the target branch's ledger-leg assertions using the current
       // transaction query order and shared client, not the pre-repair sequence.
-      mockPool.query
-        .mockResolvedValueOnce({ rows: [{ id: 'case-1', case_type: 'COLLUSION_RING' }] })
-        .mockResolvedValueOnce({ rows: [{ reviewer_id: 'fury-1' }] })
-        .mockResolvedValueOnce({ rows: [{ id: 'penalty-1' }] })
-        .mockResolvedValueOnce({ rows: [{ account_id: 'acct-fury-1' }] })
-        .mockResolvedValueOnce({ rows: [{ id: 'acct-sys-rev' }] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] });
-
       mockLedger.recordTransaction.mockResolvedValueOnce('txn-slash-100');
 
       const result = await service.confirmCase('case-1', 'STAKE_SLASH', 500);

@@ -1,12 +1,7 @@
 import { ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import {
-  InjectThrottlerOptions,
-  InjectThrottlerStorage,
-  ThrottlerGuard,
-  ThrottlerModuleOptions,
-  ThrottlerStorage,
-} from "@nestjs/throttler";
+import { InjectThrottlerOptions, InjectThrottlerStorage, ThrottlerGuard, ThrottlerStorage } from "@nestjs/throttler";
+import type { ThrottlerModuleOptions } from "@nestjs/throttler";
 import { isIP } from "node:net";
 
 const LOCAL_ENVIRONMENTS = new Set(["development", "demo"]);

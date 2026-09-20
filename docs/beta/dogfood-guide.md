@@ -16,19 +16,14 @@ This guide walks a dogfood participant through the full Styx behavioral commitme
 ## Prerequisites
 
 1. **Node 24+** and **Docker Desktop** installed
-2. Repo cloned and `.env` set up:
+2. From the cloned repository, install the locked dependencies and launch the isolated, test-money demo:
    ```bash
-   cp .env.example .env
-   # Set GEOFENCE_FAIL_OPEN_ON_MISSING_HEADERS=true for local dev (no geo headers)
+   npm ci
+   npm run demo:launch
+   npm run demo:credentials
    ```
-3. Stack running:
-   ```bash
-   # Start only the datastores. `make docker-up` starts API and Web too,
-   # which would conflict with the local processes started by `make dev`.
-   docker compose --env-file .env -f .config/docker/docker-compose.yml up -d styx-postgres styx-redis
-   npm run dev:migrate
-   make dev         # API (port 3000) + Web (port 3001)
-   ```
+   This single launcher runs the migrations, base seed and `seed-circles.sql`, and provisions local synthetic credentials. Use the API/Web URLs printed by the launcher. Do **not** run `make dev` or another Compose application stack alongside it. An already-running demo is checked rather than treated as proof that seeding succeeded.
+3. Keep the local credentials private. For the review step, use `alecto@demo.styx.protocol` (role `FURY`); use `dr.moira@demo.styx.protocol` for the separate practitioner view. Both passwords come from `npm run demo:credentials`, not this document. No real participants or real money belong in this seeded environment.
 
 ---
 
@@ -48,12 +43,11 @@ This guide walks a dogfood participant through the full Styx behavioral commitme
 
 1. Click **New Contract** on the dashboard
 2. Choose oath type: **No-Contact Breakup Recovery**
-3. Set parameters:
-   - Duration: 30 days (recommended for dogfood)
-   - Stake amount: $25 (test money)
-   - Contact method ban: Text + Call + DMs
-4. Review the behavioral physics summary (loss aversion multiplier, dispute window)
-5. Sign the oath — confirm the cryptographic commitment
+3. Choose the verification method and a duration of at most 30 days. Enter a test-money stake within the limit shown for the account's current integrity tier.
+4. Enter the required **accountability-partner email** using a synthetic consenting demo participant.
+5. For No-Contact, the implemented optional input is a comma-separated list of **hashed no-contact identifiers**. There is no Text/Call/DM multi-select; do not paste private contact data into the form.
+6. Confirm all four required safety acknowledgments: voluntary participation, no minors, no dependents, and no legal obligations requiring contact.
+7. Review and submit the form. Confirm that the request succeeds and the dashboard shows the contract; do not describe a separate cryptographic signing UI that this form does not expose.
 
 **What to notice:** Is the stake amount framing compelling? Does the loss-aversion math feel intuitive? Is any copy confusing?
 
@@ -87,14 +81,9 @@ Open the mobile app in Expo Go (`expo start` from `src/mobile`):
 
 ## Step 5 — Fury Review (Web — Fury Workbench)
 
-Run the web app and open the implemented Fury queue:
+Use the web app already started by `npm run demo:launch`; do not start another `make dev` process.
 
-```bash
-make dev
-# then open http://localhost:${STYX_WEB_PORT:-3001}/fury
-```
-
-1. Log in with a seeded `FURY` or `ADMIN` credential.
+1. Retrieve the local password with `npm run demo:credentials`, sign out of the participant account, and sign in as `alecto@demo.styx.protocol` (role `FURY`).
 2. Open `/fury`; this is the implemented Fury Workbench backed by `GET /fury/queue`.
 3. Inspect the assignment's proof ID, masked media, contract, description, and assigned timestamp.
 4. Submit a test verdict only when the dogfood account is authorized to alter that assignment.

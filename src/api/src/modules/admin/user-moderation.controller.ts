@@ -2,7 +2,8 @@ import { Controller, Post, Body, Param, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { AuthGuard } from "../../../guards/auth.guard";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { ModerationService, ContentType } from "../../../services/security/moderation.service";
+import { ModerationService } from "../../../services/security/moderation.service";
+import type { ContentType } from "../../../services/security/moderation.service";
 import { IsString, IsEnum, IsOptional } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 

@@ -4,10 +4,8 @@ import { randomBytes } from "crypto";
 import { parseWaitlistAttribution } from "@styx/shared/libs/waitlist-attribution";
 import { readFirstEnv, normalizeBaseUrl } from "../../config/runtime";
 import { JoinBetaWaitlistDto } from "./dto";
-import {
-  BETA_WAITLIST_NOTIFIER,
-  BetaWaitlistNotifier,
-} from "./beta-waitlist.notifier";
+import { BETA_WAITLIST_NOTIFIER } from "./beta-waitlist.notifier";
+import type { BetaWaitlistNotifier } from "./beta-waitlist.notifier";
 
 export interface BetaWaitlistEntry {
   id: string;

@@ -1,3 +1,4 @@
+import { honeypotPenaltyKey } from './automatic-penalty';
 import { Injectable, Logger, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
 import { inTransaction } from '../../../services/ledger/transaction';
@@ -231,17 +232,13 @@ export class EnforcementService {
       );
     }
     await inTransaction(this.pool, async (client) => {
+      await this.lockPenaltyReviewer(client, caseId);
       const claim = await client.query(
         `UPDATE fury_enforcement_cases SET status = 'PENALTY_APPLIED'
          WHERE id = $1 AND status = 'PENDING_REVIEW' RETURNING id, case_type`,
         [caseId],
       );
       if (claim.rows.length === 0) throw new NotFoundException('Pending case not found');
-      if (claim.rows[0].case_type === 'HONEYPOT_FAILURE' && FINANCIAL_PENALTY_TYPES.has(penaltyType)) {
-        throw new ConflictException(
-          'Honeypot stake slashes are applied automatically; this case cannot be charged again.',
-        );
-      }
       await this.applyPenaltyWithClient(client, caseId, penaltyType, resolvedAmount);
     });
     return { success: true, caseId, status: 'PENALTY_APPLIED', amountCents: resolvedAmount };
@@ -252,6 +249,12 @@ export class EnforcementService {
       this.applyPenaltyWithClient(client, caseId, penaltyType, amountCents));
   }
 
+  private async lockPenaltyReviewer(client: PoolClient, caseId: string): Promise<void> {
+    const record = await client.query('SELECT reviewer_id FROM fury_enforcement_cases WHERE id = $1', [caseId]);
+    if (!record.rows.length) throw new NotFoundException('Pending case not found');
+    await client.query('SELECT id FROM users WHERE id = $1 FOR UPDATE', [record.rows[0].reviewer_id]);
+  }
+
   private async applyPenaltyWithClient(
     client: PoolClient, caseId: string, penaltyType: string, amountCents: number,
   ): Promise<void> {
@@ -259,10 +262,11 @@ export class EnforcementService {
         (!Number.isSafeInteger(amountCents) || amountCents <= 0)) {
       throw new BadRequestException(`${penaltyType} requires a positive integer amountCents.`);
     }
-    // All entry points serialize on the same parent row, including direct retries.
+    await this.lockPenaltyReviewer(client, caseId);
+    // All entry points serialize reviewer-first, then on the same parent row.
     // NOT EXISTS alone would not prevent two concurrent INSERTs under READ COMMITTED.
     const locked = await client.query(
-      'SELECT reviewer_id FROM fury_enforcement_cases WHERE id = $1 FOR UPDATE', [caseId],
+      'SELECT reviewer_id, case_type, evidence_json FROM fury_enforcement_cases WHERE id = $1 FOR UPDATE', [caseId],
     );
     if (locked.rows.length === 0) throw new NotFoundException('Enforcement case not found');
     const reviewerId = locked.rows[0].reviewer_id;
@@ -275,6 +279,17 @@ export class EnforcementService {
     );
     if (inserted.rows.length === 0) return;
 
+    const record = locked.rows[0];
+    const isHoneypot = record.case_type === 'HONEYPOT_FAILURE' && FINANCIAL_PENALTY_TYPES.has(penaltyType);
+    const proofId = record.evidence_json?.proofId;
+    if (isHoneypot && (typeof proofId !== 'string' || !proofId)) {
+      throw new BadRequestException('Honeypot case is missing its proof identity');
+    }
+    const key = isHoneypot ? honeypotPenaltyKey(proofId, reviewerId) : `fury-penalty:${caseId}`;
+    if (isHoneypot) {
+      const existing = await client.query('SELECT 1 FROM entries WHERE idempotency_key = $1', [key]);
+      if (existing.rows.length) throw new ConflictException('This honeypot slash already exists; reconcile its appeal record instead of charging again.');
+    }
     let ledgerTransactionId: string | null = null;
     let ledgerDebitAccountId: string | null = null;
     if (FINANCIAL_PENALTY_TYPES.has(penaltyType)) {
@@ -286,8 +301,8 @@ export class EnforcementService {
       }
       ledgerTransactionId = await this.ledger.recordTransaction(
         ledgerDebitAccountId, revenue.rows[0].id, amountCents, undefined,
-        { type: 'FURY_STAKE_SLASH', caseId, reviewerId, penaltyType },
-        client, `fury-penalty:${caseId}`,
+        { type: 'FURY_STAKE_SLASH', caseId, reviewerId, penaltyType, ...(isHoneypot ? { consensusProofId: proofId } : {}) },
+        client, key,
       );
       await client.query(
         `UPDATE fury_penalties SET ledger_transaction_id = $1, ledger_debit_account_id = $2

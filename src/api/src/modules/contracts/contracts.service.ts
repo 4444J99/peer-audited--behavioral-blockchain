@@ -14,11 +14,8 @@ import { Pool, PoolClient } from "pg";
 import { inTransaction } from "../../../services/ledger/transaction";
 import { LedgerService } from "../../../services/ledger/ledger.service";
 import { TruthLogService } from "../../../services/ledger/truth-log.service";
-import {
-  ESCROW_PROVIDER,
-  EscrowProvider,
-  toEscrowHoldId,
-} from "../../common/interfaces/payout-provider.interface";
+import { ESCROW_PROVIDER, toEscrowHoldId } from "../../common/interfaces/payout-provider.interface";
+import type { EscrowProvider } from "../../common/interfaces/payout-provider.interface";
 import { JurisdictionTier } from "../../../services/geofencing";
 import { StripeFBOService as RealStripeFBOService } from "../payments/stripe-fbo.service";
 import { SettlementService } from "../payments/settlement.service";
