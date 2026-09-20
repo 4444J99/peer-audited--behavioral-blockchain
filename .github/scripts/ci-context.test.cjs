@@ -75,3 +75,23 @@ test('missing merge-group comparison objects fail instead of skipping validation
   const f = fixture(t);
   assert.throws(() => inspectContext({ cwd: f.cwd, sha: f.sha, eventName: 'merge_group', groupBaseSha: '1'.repeat(40) }));
 });
+
+for (const file of ['.github/scripts/ci-context.cjs', '.github/scripts/ci-context.test.cjs']) {
+  test(`requires browser validation when ${file} changes`, t => {
+    const f = fixture(t, file);
+    const result = inspectContext({ cwd: f.cwd, sha: f.sha, eventName: 'pull_request', prHeadSha: f.head });
+    assert.deepEqual(result.changed, [file]);
+    assert.equal(result.web, true);
+  });
+}
+
+for (const file of ['dependency-contract.yml', 'mobile-bundle.yml']) {
+  test(`${file} validates the event merge revision rather than the isolated PR head`, () => {
+    const workflow = fs.readFileSync(path.join(__dirname, '..', 'workflows', file), 'utf8');
+    const checkouts = [...workflow.matchAll(/uses: actions\/checkout@[^\n]+\n([\s\S]*?)(?=\n      - |$)/g)];
+    assert.equal(checkouts.length, 1, 'Expected one source checkout');
+    assert.match(checkouts[0][1], /ref: \$\{\{ github\.sha \}\}/);
+    assert.doesNotMatch(checkouts[0][1], /pull_request\.head\.sha/);
+    assert.match(checkouts[0][1], /persist-credentials: false/);
+  });
+}

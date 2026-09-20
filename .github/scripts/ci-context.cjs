@@ -25,7 +25,7 @@ function inspectContext({ cwd = process.cwd(), sha, eventName, prHeadSha, groupB
   }
   git('cat-file', '-e', `${base}^{commit}`);
   const changed = git('diff', '--name-only', '--no-renames', base, sha).split('\n').filter(Boolean);
-  const web = eventName === 'merge_group' || changed.some(file => /^(src\/web\/|src\/shared\/|e2e\/|\.config\/playwright\/|package(?:-lock)?\.json$|\.node-version$|\.github\/workflows\/ci\.yml$)/.test(file));
+  const web = eventName === 'merge_group' || changed.some(file => /^(src\/web\/|src\/shared\/|e2e\/|\.config\/playwright\/|package(?:-lock)?\.json$|\.node-version$|\.github\/workflows\/ci\.yml$|\.github\/scripts\/ci-context(?:\.test)?\.cjs$)/.test(file));
   return { sha, base, prHeadSha: eventName === 'pull_request' ? prHeadSha : null, web, changed };
 }
 

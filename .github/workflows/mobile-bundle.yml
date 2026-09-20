@@ -42,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
@@ -111,7 +111,7 @@ jobs:
           git diff --exit-code -- package.json package-lock.json src/mobile/package.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: mobile-bundle-receipt-${{ matrix.platform }}-${{ github.event.pull_request.head.sha || github.sha }}
+          name: mobile-bundle-receipt-${{ matrix.platform }}-${{ github.sha }}
           path: ${{ runner.temp }}/mobile-bundle-receipt.json
           if-no-files-found: error
           retention-days: 14
