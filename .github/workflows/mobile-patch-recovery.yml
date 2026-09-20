@@ -35,7 +35,7 @@ jobs:
       - id: eligible
         name: Limit generation to the single authorized recovery input
         run: |
-          if [ "$(git rev-parse HEAD^)" = 'fbdae401161027383b2afb6b656ed8d1a5d7787a' ]; then
+          if [ "$(git rev-parse HEAD^)" = 'a88c752c7e54300c3cb3827f1c51458067ba7c8d' ]; then
             echo 'run=true' >> "$GITHUB_OUTPUT"
           else
             echo 'run=false' >> "$GITHUB_OUTPUT"
@@ -50,8 +50,6 @@ jobs:
         if: steps.eligible.outputs.run == 'true'
         run: |
           set -euo pipefail
-          version="$(node -p "require('./package.json').packageManager.replace(/^npm@/, '')")"
-          npm install --global "npm@${version}" --ignore-scripts
           node <<'JS'
           const fs = require('node:fs');
           const path = 'src/mobile/package.json';
@@ -60,7 +58,10 @@ jobs:
           manifest.dependencies['expo-notifications'] = '~57.0.20';
           fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n');
           JS
-          npm update expo @expo/cli expo-notifications --package-lock-only --ignore-scripts --strict-peer-deps --no-audit --no-fund
+          # Generate with the current solver; acceptance still uses the repository npm.
+          npx --yes npm@11.19.0 update expo @expo/cli expo-notifications --package-lock-only --ignore-scripts --strict-peer-deps --no-audit --no-fund
+          version="$(node -p "require('./package.json').packageManager.replace(/^npm@/, '')")"
+          npm install --global "npm@${version}" --ignore-scripts
           npm ci --ignore-scripts --strict-peer-deps --no-audit --no-fund
           (cd src/mobile && CI=1 npx --no-install expo install --check)
           npm audit --audit-level=low
