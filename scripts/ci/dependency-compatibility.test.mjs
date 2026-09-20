@@ -50,13 +50,18 @@ test('Expo xcode dependency round-trips the existing native project', () => {
   const generated = new Set(Array.from({ length: 1000 }, () => project.generateUuid()));
   assert.equal(generated.size, 1000);
   for (const id of generated) assert.match(id, /^[0-9A-F]{24}$/);
-  project.addPbxGroup([], 'StyxDependencyRegression');
+  const group = project.addPbxGroup([], 'StyxDependencyRegression', 'StyxDependencyRegression');
   const dir = mkdtempSync(path.join(tmpdir(), 'styx-xcode-'));
   try {
     const target = path.join(dir, 'project.pbxproj');
-    writeFileSync(target, project.writeSync());
+    const serialized = project.writeSync();
+    writeFileSync(target, serialized);
     const reread = xcode.project(target).parseSync();
-    assert.deepEqual(reread.hash, project.hash);
+    // The parser uses null-prototype dictionaries; inserted API objects do not.
+    // Compare every serialized value, rather than implementation-only prototypes.
+    assert.deepEqual(JSON.parse(JSON.stringify(reread.hash)), JSON.parse(JSON.stringify(project.hash)));
+    assert.equal(reread.hash.project.objects.PBXGroup[group.uuid].path, 'StyxDependencyRegression');
+    assert.equal(reread.writeSync(), serialized);
     assert.equal(readFileSync(projectPath, 'utf8'), original);
   } finally {
     rmSync(dir, { recursive: true, force: true });

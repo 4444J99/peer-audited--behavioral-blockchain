@@ -3,6 +3,9 @@ import { ConsensusEngine } from './consensus.engine';
 import { ContractsService } from '../contracts/contracts.service';
 import { EnforcementService } from './enforcement.service';
 import { Pool } from 'pg';
+import type { LedgerService } from '../../../services/ledger/ledger.service';
+import type { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { AUDITOR_STAKE_AMOUNT } from '../../../../shared/libs/integrity';
 
 /**
  * TKT-P1-008: before this wiring `EnforcementService.evaluateCollusion` was
@@ -142,24 +145,54 @@ describe('FuryWorker — honeypot enforcement auto-open', () => {
     await expect(bareWorker.checkConsensus('proof-hp-bare')).resolves.toBeUndefined();
   });
 
-  it('promotes the existing honeypot case when recording an automatic slash', async () => {
-    mockPool.query
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ id: 'case-pending' }] })
-      .mockResolvedValueOnce({ rows: [] });
-
-    await (worker as any).recordAutomaticPenaltyCase(
-      'fury-1', 'proof-hp-1', 'txn-auto-1', 'acct-fury-1', 500,
+  it('promotes the existing honeypot case within the automatic charge transaction', async () => {
+    const client = {
+      query: jest.fn(async (sql: string) => {
+        if (sql.includes('SELECT account_id FROM users')) return { rows: [{ account_id: 'acct-fury-1' }] };
+        if (sql.includes("name = 'SYSTEM_REVENUE'")) return { rows: [{ id: 'acct-revenue' }] };
+        if (sql.includes('UPDATE fury_enforcement_cases')) return { rows: [{ id: 'case-pending' }] };
+        return { rows: [] };
+      }),
+      release: jest.fn(),
+    };
+    const pool = { query: jest.fn(), connect: jest.fn().mockResolvedValue(client) };
+    const ledger = { recordTransaction: jest.fn().mockResolvedValue('txn-auto-1') };
+    const truthLog = { appendEvent: jest.fn().mockResolvedValue(undefined) };
+    const fundedWorker = new FuryWorker(
+      pool as unknown as Pool, mockConsensus, mockContractsService, undefined,
+      ledger as unknown as LedgerService, truthLog as unknown as TruthLogService,
     );
 
-    expect(mockPool.query.mock.calls[1][0]).toMatch(/UPDATE fury_enforcement_cases/);
-    expect(mockPool.query.mock.calls[1][0]).toMatch(/evidence_json->>'proofId' = \$2/);
-    expect(mockPool.query.mock.calls[2]).toEqual([
+    await (fundedWorker as any).disburseFuryBounties(
+      [], { outcome: 'REJECTED', flaggedFuries: ['fury-1'] }, true, 'c-1', 'proof-hp-1',
+    );
+
+    expect(pool.connect).toHaveBeenCalledTimes(1);
+    expect(pool.query).not.toHaveBeenCalled();
+    expect(ledger.recordTransaction).toHaveBeenCalledWith(
+      'acct-fury-1', 'acct-revenue', AUDITOR_STAKE_AMOUNT, 'c-1',
+      { type: 'FURY_PENALTY', consensusProofId: 'proof-hp-1', reviewerId: 'fury-1' },
+      client, 'consensus:proof-hp-1:fury-1:honeypot-penalty',
+    );
+    expect(client.query).toHaveBeenCalledWith(
+      expect.stringMatching(/UPDATE fury_enforcement_cases[\s\S]*evidence_json->>'proofId' = \$2/),
+      ['fury-1', 'proof-hp-1', expect.any(String)],
+    );
+    expect(client.query).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO fury_penalties'),
-      ['case-pending', 500, 'txn-auto-1', 'acct-fury-1'],
-    ]);
-    expect(mockPool.query.mock.calls.some(([sql]) =>
-      String(sql).includes('INSERT INTO fury_enforcement_cases'),
-    )).toBe(false);
+      ['case-pending', AUDITOR_STAKE_AMOUNT, 'txn-auto-1', 'acct-fury-1'],
+    );
+    expect(client.query.mock.calls.some(([sql]) => sql.includes('INSERT INTO fury_enforcement_cases'))).toBe(false);
+    expect(truthLog.appendEvent).toHaveBeenCalledWith(
+      'FURY_PENALTY_CHARGED', expect.objectContaining({
+        caseId: 'case-pending', transactionId: 'txn-auto-1', amount: AUDITOR_STAKE_AMOUNT,
+      }), client,
+    );
+    expect(client.query.mock.calls[0]).toEqual(['BEGIN']);
+    expect(client.query.mock.calls.at(-1)).toEqual(['COMMIT']);
+    expect(truthLog.appendEvent.mock.invocationCallOrder[0]).toBeLessThan(
+      client.query.mock.invocationCallOrder.at(-1)!,
+    );
+    expect(client.release).toHaveBeenCalledTimes(1);
   });
 });
