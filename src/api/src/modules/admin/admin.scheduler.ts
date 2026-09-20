@@ -2,10 +2,8 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { Pool } from 'pg';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
-import {
-  ESCROW_PROVIDER,
-  EscrowProvider,
-} from '../../common/interfaces/payout-provider.interface';
+import { ESCROW_PROVIDER } from '../../common/interfaces/payout-provider.interface';
+import type { EscrowProvider } from '../../common/interfaces/payout-provider.interface';
 
 const RECONCILE_MAX_ATTEMPTS = 5;
 const RECONCILE_BATCH_LIMIT = 100;

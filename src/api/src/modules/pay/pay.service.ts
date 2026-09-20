@@ -6,10 +6,8 @@ import {
   TICKET_PRICE_BASE,
   processIAP,
 } from '../../../services/billing';
-import {
-  ESCROW_PROVIDER,
-  EscrowProvider,
-} from '../../common/interfaces/payout-provider.interface';
+import { ESCROW_PROVIDER } from '../../common/interfaces/payout-provider.interface';
+import type { EscrowProvider } from '../../common/interfaces/payout-provider.interface';
 import { LedgerService } from '../../../services/ledger/ledger.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { RecordMeteredUsageDto } from './dto';

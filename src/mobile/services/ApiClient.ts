@@ -122,7 +122,9 @@ export const ApiClient = {
       body: JSON.stringify({ email, password }),
     }),
 
-  register: (data: { email: string; password: string; ageConfirmation: boolean; termsAccepted: boolean; dateOfBirth: string; deviceFingerprint: { platform: 'ios' | 'android'; rawVendorId: string } }) =>
+  // RegisterDto permits omission on web. Native registration still fails closed
+  // in getNativeDeviceFingerprint when its platform identifier is unavailable.
+  register: (data: { email: string; password: string; ageConfirmation: boolean; termsAccepted: boolean; dateOfBirth: string; deviceFingerprint?: { platform: 'ios' | 'android'; rawVendorId: string } }) =>
     request<{ userId: string; token: string }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),

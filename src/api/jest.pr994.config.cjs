@@ -1,0 +1,1 @@
+module.exports = {...require('./jest.config.cjs'), testMatch:['**/pr994-atomicity.int.spec.ts'], testPathIgnorePatterns:['/node_modules/','/dist/'], collectCoverage:false, coverageThreshold:undefined};

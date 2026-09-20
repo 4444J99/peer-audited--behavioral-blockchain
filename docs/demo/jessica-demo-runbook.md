@@ -20,35 +20,44 @@ The demo data is synthetic. With Docker, reset removes only containers and volum
 
 ## Showing it to people in the room
 
-The demo already binds every interface, so anyone on the same Wi-Fi can open it. The one address
-that will **not** work from their device is the `127.0.0.1` one the launcher prints.
+The interactive demo and API remain **loopback-only**. Do not remove those bindings
+or expose the demo's login-throttle bypass to make a QR code work. LAN sharing now
+uses the existing **read-only synthetic snapshot**, not the live demo.
+
+After verifying the local demo, prepare and check the snapshot:
 
 ```bash
-npm run demo:share        # prints the LAN URL, a QR code, and writes a printable PNG
+npm run snapshot:capture
+npm run snapshot:build
+npm run snapshot:verify
+STYX_SNAPSHOT_LAN=true npm run snapshot:serve
 ```
 
-That is the only command you need. The note/interaction collector now starts **with** the demo and
-stops with it — `demo:launch` and `demo:reset:verify` bring it up detached, `demo:down` takes it
-down, and everything collected is retained across a reset. Closing the terminal stops none of it.
+The last command stays in the foreground and explicitly binds only the static export
+on port 4315 to all interfaces. Use only an appropriate trusted rehearsal network;
+any device able to reach this listener can read the exported synthetic fixtures.
+In a second terminal:
 
-Its start is deliberately non-fatal: if the collector cannot start, the launch prints a warning and
-the demo comes up anyway. Telemetry must never turn a working demo into a failed launch.
+```bash
+npm run demo:share
+```
 
-The separate controls remain for when you want them: `npm run demo:feedback:status` (up? how much
-collected?), `demo:feedback:stop`, `demo:feedback` to start it again. Starting twice is safe — it
-reports the running instance rather than fighting for the port.
+This prints the LAN URL and attempts QR generation. It checks that `/tour/` matches
+the exact local export and that `/api/users/me` returns 404; it refuses to advertise
+the loopback live demo, a stale export, or a listener serving an API. Set
+`STYX_DEMO_SHARE_HOST` to the machine's IPv4 LAN address when automatic selection is
+ambiguous. A custom `STYX_DEMO_SHARE_PORT` must be supplied to both commands.
 
-`demo:share` resolves the address on the interface carrying the default route, refuses to print an
-address that is not actually answering, and tells you whether the collector is running — an empty
-report afterwards should never be the first sign that it was not.
+Snapshot viewers navigate captured personas, not live authenticated accounts. Writes
+are refused, telemetry is disabled, and **no password should be read aloud**. Use the
+loopback presenter demo for interactive changes. Stop sharing with Ctrl-C in the
+snapshot terminal, and rerun `demo:share` after changing networks. Building a snapshot
+overwrites `.next`; rebuild with `demo:reset:verify` before returning to a live rehearsal.
 
-Everyone scans the QR, opens the tour, and drives it themselves. Read the synthetic password aloud
-from `npm run demo:credentials`; never put it on a slide.
+### Notes and interaction tracking — live presenter demo only
 
-Two practical failure modes: the address changes when you join a different network (re-run
-`demo:share`), and a sleeping machine drops everyone (`caffeinate -d` while presenting).
-
-### Notes and interaction tracking
+The following collector instructions apply to the live presenter demo, **not** to the
+LAN snapshot. A snapshot viewer cannot submit notes or contribute interaction events.
 
 Every viewer can leave a note on any page, from the panel itself, with an optional name. Notes are
 recorded against the route they were left on, which is what makes them actionable later — "this was
@@ -66,8 +75,8 @@ The collector is a **separate, detached process** on purpose (`scripts/demo/feed
 `feedback-server.mjs`, port 4312, append-only NDJSON under `artifacts/`, gitignored). Detaching
 matters because of an asymmetry that is otherwise silent: the demo survives the terminal that
 launched it, so a foreground collector would stop while the demo kept working perfectly — and the
-first sign would be an empty report after everyone had gone home. `demo:share` probes its health for
-the same reason.
+first sign would be an empty report after everyone had gone home. `npm run demo:feedback:status` reports its state; the static sharing command does not
+claim a working collector.
 
 It is not part of the product API: rehearsal
 telemetry must never land in a migration, a seed, or the product database, and a telemetry failure

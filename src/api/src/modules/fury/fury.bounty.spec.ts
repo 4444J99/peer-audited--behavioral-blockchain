@@ -8,7 +8,7 @@ import { AUDITOR_STAKE_AMOUNT } from '../../../../shared/libs/integrity';
 
 describe('FuryWorker — Bounty Economy', () => {
   let worker: FuryWorker;
-  let mockPool: { query: jest.Mock };
+  let mockPool: { query: jest.Mock; connect: jest.Mock };
   let mockLedger: { recordTransaction: jest.Mock };
   let mockTruthLog: { appendEvent: jest.Mock };
 
@@ -24,7 +24,8 @@ describe('FuryWorker — Bounty Economy', () => {
   const demotionStatsMock = { rows: [{ total_audits: '5', successful_audits: '4', false_accusations: '0' }] };
 
   beforeEach(() => {
-    mockPool = { query: jest.fn() };
+    mockPool = { query: jest.fn().mockResolvedValue({rows:[]}), connect: jest.fn() };
+    mockPool.connect.mockResolvedValue({ query: jest.fn((sql: string, values?: unknown[]) => /^(BEGIN|COMMIT|ROLLBACK)$/.test(sql) ? Promise.resolve({rows:[]}) : mockPool.query(sql, values)), release: jest.fn() });
     mockLedger = { recordTransaction: jest.fn().mockResolvedValue('entry-id') };
     mockTruthLog = { appendEvent: jest.fn().mockResolvedValue('log-id') };
     worker = new FuryWorker(
@@ -94,27 +95,19 @@ describe('FuryWorker — Bounty Economy', () => {
 
     // 7. Bounty disbursement: system account lookups
     if (outcome !== 'SPLIT') {
-      // SYSTEM_ESCROW lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-account' }] });
-      // SYSTEM_REVENUE lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'revenue-account' }] });
-
       if (isHoneypot) {
-        // For honeypot: look up each flagged Fury's account_id, then the three
-        // queries that record the automatic slash AS an appealable enforcement
-        // case (dedupe probe, case insert, penalty insert). Without that record
-        // the appeal flow has no object to reverse and a Fury who wins an appeal
-        // stays slashed.
         for (const furyId of flaggedFuries) {
           const accountId = furyAccountIds[furyId] ?? 'fury-acct-' + furyId;
-          mockPool.query.mockResolvedValueOnce({
-            rows: [{ account_id: accountId }],
-          });
-          mockPool.query.mockResolvedValueOnce({ rows: [] }); // no existing penalty for this txn
-          mockPool.query.mockResolvedValueOnce({ rows: [{ id: `case-${furyId}` }] }); // case insert
-          mockPool.query.mockResolvedValueOnce({ rows: [] }); // penalty insert
+          mockPool.query.mockResolvedValueOnce({rows:[{account_id:accountId}]});
+          mockPool.query.mockResolvedValueOnce({rows:[{id:'revenue-account'}]});
+          mockPool.query.mockResolvedValueOnce({rows:[]}); // no legacy ledger entry
+          mockPool.query.mockResolvedValueOnce({rows:[]}); // no linked penalty
+          mockPool.query.mockResolvedValueOnce({rows:[{id:`case-${furyId}`}]}); // reuse pending case
+          mockPool.query.mockResolvedValueOnce({rows:[]}); // insert penalty
         }
       } else {
+        mockPool.query.mockResolvedValueOnce({rows:[{id:'escrow-account'}]});
+        mockPool.query.mockResolvedValueOnce({rows:[{id:'revenue-account'}]});
         // For regular: look up each voter's account_id
         for (const vote of votes) {
           const accountId = furyAccountIds[vote.id] ?? 'fury-acct-' + vote.id;
@@ -229,7 +222,7 @@ describe('FuryWorker — Bounty Economy', () => {
     // transaction it charged — otherwise resolveAppeal has nothing to reverse
     // and a Fury who wins an appeal never gets the money back.
     const sql = mockPool.query.mock.calls.map((c: any[]) => String(c[0]));
-    expect(sql.some((s) => /INSERT INTO fury_enforcement_cases/.test(s))).toBe(true);
+    expect(sql.some((s) => /UPDATE fury_enforcement_cases/.test(s))).toBe(true);
     const penaltyInsert = mockPool.query.mock.calls.find((c: any[]) =>
       /INSERT INTO fury_penalties/.test(String(c[0])),
     );
@@ -245,7 +238,7 @@ describe('FuryWorker — Bounty Economy', () => {
     expect(mockTruthLog.appendEvent).toHaveBeenCalledWith('FURY_PENALTY_CHARGED', expect.objectContaining({
       furyUserId: 'fury-corrupt',
       reason: 'honeypot_failure',
-    }));
+    }), expect.objectContaining({query:expect.any(Function)}));
   });
 
   it('should skip financial bounty for Furies without account_id', async () => {
@@ -382,5 +375,29 @@ describe('FuryWorker — Bounty Economy', () => {
         (c[0].includes('integrity_score + 2') || c[0].includes('integrity_score - 5')),
     );
     expect(scoreCalls).toHaveLength(0);
+  });
+
+  it('reconciles a completed honeypot on retry without grading or resolving again', async () => {
+    mockPool.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM fury_assignments')) return {rows:[{fury_user_id:'fury-1',verdict:'PASS'}]};
+      if (sql.includes('FROM proofs')) return {rows:[{is_honeypot:true,status:'VERIFIED',contract_id:'c-1',honeypot_expected_verdict:'FAIL'}]};
+      if (sql.includes('SELECT account_id')) return {rows:[{account_id:'acct-1'}]};
+      if (sql.includes('SYSTEM_REVENUE')) return {rows:[{id:'rev'}]};
+      if (sql.includes('RETURNING id') && sql.includes('fury_enforcement_cases')) return {rows:[{id:'case-1'}]};
+      return {rows:[]};
+    });
+    await worker.checkConsensus('proof-retry');
+    expect(mockConsensus.evaluate).not.toHaveBeenCalled();
+    expect(mockContractsService.resolveContract).not.toHaveBeenCalled();
+    expect(mockLedger.recordTransaction).toHaveBeenCalledTimes(1);
+    expect(mockPool.connect).toHaveBeenCalledTimes(1);
+  });
+
+  it('scheduled reconciliation continues after one failed proof', async () => {
+    mockPool.query.mockResolvedValueOnce({rows:[{id:'broken'},{id:'recoverable'}]});
+    const check = jest.spyOn(worker,'checkConsensus').mockRejectedValueOnce(new Error('transient')).mockResolvedValueOnce();
+    await worker.reconcileAutomaticPenalties();
+    expect(check).toHaveBeenNthCalledWith(1,'broken');
+    expect(check).toHaveBeenNthCalledWith(2,'recoverable');
   });
 });

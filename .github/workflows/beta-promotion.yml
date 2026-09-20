@@ -109,7 +109,7 @@ jobs:
       - name: Use Node.js 22
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
 
       - name: Ensure Render services, collector, and env vars
         env:
@@ -172,7 +172,7 @@ jobs:
       - name: Use Node.js 22
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: "npm"
 
       - name: Install Dependencies
@@ -205,7 +205,7 @@ jobs:
       - name: Use Node.js 22
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: "npm"
 
       - name: Install Dependencies
@@ -272,7 +272,7 @@ jobs:
       - name: Use Node.js 22
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: "npm"
 
       - name: Install dependencies
@@ -315,7 +315,7 @@ jobs:
       - name: Use Node.js 22
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: "npm"
 
       - name: Install dependencies

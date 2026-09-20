@@ -22,7 +22,9 @@ import { MetricsService } from './metrics.service';
 import { AnonymizeService } from './anonymize.service';
 import { DataLakeService } from './datalake.service';
 import { CrmService } from './crm.service';
-import { CohortOrchestrationService, CreateCohortDto, UpdateCohortDto } from './cohort-orchestration.service';
+import { CohortOrchestrationService } from './cohort-orchestration.service';
+import type { UpdateCohortDto } from './cohort-orchestration.service';
+import type { CreateCohortDto } from './cohort-orchestration.service';
 import { EMPLOYEE_EVENT_TYPES, EmployeeEventType } from './connectors/crm-connector.interface';
 
 @ApiTags('B2B')

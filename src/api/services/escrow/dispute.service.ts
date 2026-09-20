@@ -1,10 +1,7 @@
 import { Injectable, HttpException, HttpStatus, NotFoundException, Logger, Inject } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
-import {
-  ESCROW_PROVIDER,
-  EscrowHold,
-  EscrowProvider,
-} from '../../src/common/interfaces/payout-provider.interface';
+import { ESCROW_PROVIDER, EscrowHold } from '../../src/common/interfaces/payout-provider.interface';
+import type { EscrowProvider } from '../../src/common/interfaces/payout-provider.interface';
 import { TruthLogService } from '../ledger/truth-log.service';
 import { LedgerService } from '../ledger/ledger.service';
 import { APPEAL_FEE_AMOUNT, isAppealFeeEnabled } from '../billing';

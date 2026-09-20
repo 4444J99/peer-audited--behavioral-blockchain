@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { browserRegistrationOptions } from '../../services/browser-registration';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -17,15 +18,6 @@ export default function RegisterPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const deviceIdentifier = () => {
-    const key = 'styx-device-id';
-    const existing = window.localStorage.getItem(key);
-    if (existing) return existing;
-    const created = window.crypto.randomUUID();
-    window.localStorage.setItem(key, created);
-    return created;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,12 +59,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(email, password, {
-        ageConfirmation: true,
-        termsAccepted: true,
-        dateOfBirth,
-        deviceFingerprint: { platform: 'web', rawVendorId: deviceIdentifier() },
-      });
+      await register(email, password, browserRegistrationOptions(dateOfBirth));
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');

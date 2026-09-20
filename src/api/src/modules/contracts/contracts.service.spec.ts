@@ -2927,12 +2927,15 @@ describe("ContractsService", () => {
     // The service takes notifications as an @Optional() dependency and every
     // other case in this file passes `undefined`, so this block builds its own
     // instance with the collaborator wired in.
-    let notifyPool: { query: jest.Mock };
+    let notifyPool: { query: jest.Mock; connect: jest.Mock };
+    let notifyClient: { query: jest.Mock; release: jest.Mock };
     let notifyService: ContractsService;
     const mockNotifications = { create: jest.fn().mockResolvedValue({}) };
 
     beforeEach(() => {
-      notifyPool = { query: jest.fn().mockResolvedValue({ rows: [] }) };
+      notifyPool = { query: jest.fn().mockResolvedValue({ rows: [] }), connect: jest.fn() };
+      notifyClient = {query: jest.fn((sql: string, values?: unknown[]) => /^(BEGIN|COMMIT|ROLLBACK)$/.test(sql) ? Promise.resolve({rows: []}) : notifyPool.query(sql,values)), release: jest.fn()};
+      notifyPool.connect.mockResolvedValue(notifyClient);
       mockNotifications.create.mockClear();
       notifyService = new ContractsService(
         notifyPool as unknown as Pool,
@@ -3002,6 +3005,7 @@ describe("ContractsService", () => {
       expect(mockTruthLog.appendEvent).toHaveBeenCalledWith(
         "PARTNER_INVITATION_ACCEPTED",
         { contractId: "c-1", partnerUserId: "partner-9" },
+        notifyClient,
       );
       expect(mockNotifications.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -3009,6 +3013,31 @@ describe("ContractsService", () => {
           type: "PARTNER_INVITATION_ACCEPTED",
         }),
       );
+    });
+
+    it("does not duplicate accepted invitation events or notifications", async () => {
+      notifyPool.query.mockResolvedValueOnce({rows:[]}).mockResolvedValueOnce({rows:[{status:"ACTIVE"}]});
+      await expect(notifyService.respondToInvite("c-1","partner-9",true)).resolves.toEqual({success:true,status:"ACTIVE"});
+      expect(notifyPool.query).toHaveBeenCalledTimes(2);
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(notifyClient.query).toHaveBeenLastCalledWith("COMMIT");
+    });
+    it("does not let a later opposite response rewrite a finalized invitation", async () => {
+      notifyPool.query.mockResolvedValueOnce({rows:[]}).mockResolvedValueOnce({rows:[{status:"ACTIVE"}]});
+      await expect(notifyService.respondToInvite("c-1","partner-9",false)).rejects.toThrow("Invitation already finalized as ACTIVE");
+      expect(notifyPool.query.mock.calls[0][0]).toContain("status = 'PENDING'");
+      expect(mockTruthLog.appendEvent).not.toHaveBeenCalled();
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(notifyClient.query).toHaveBeenLastCalledWith("ROLLBACK");
+    });
+    it("rolls back acceptance on audit failure before sending notifications", async () => {
+      notifyPool.query.mockResolvedValueOnce({rows:[{id:"ap-1"}]}).mockResolvedValueOnce({rows:[]});
+      (mockTruthLog.appendEvent as jest.Mock).mockRejectedValueOnce(new Error("audit failure"));
+      await expect(notifyService.respondToInvite("c-1","partner-9",true)).rejects.toThrow("audit failure");
+      expect(notifyClient.query).toHaveBeenLastCalledWith("ROLLBACK");
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(notifyClient.release).toHaveBeenCalledTimes(1);
     });
 
     it("notifies the owner when the invitation is accepted", async () => {

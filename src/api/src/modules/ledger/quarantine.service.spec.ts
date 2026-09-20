@@ -2,7 +2,9 @@ import { QuarantineService } from './quarantine.service';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { Pool } from 'pg';
 
+const client = { query: jest.fn((sql: string, values?: unknown[]) => /^(BEGIN|COMMIT|ROLLBACK)$/.test(sql) ? Promise.resolve({rows: []}) : mockPool.query(sql, values)), release: jest.fn() };
 const mockPool = {
+  connect: jest.fn().mockResolvedValue(client),
   query: jest.fn(),
 } as unknown as Pool;
 
@@ -44,6 +46,7 @@ describe('QuarantineService', () => {
           reason: 'balance integrity violation',
           severity: 'CRITICAL',
         }),
+        client,
       );
     });
 
@@ -74,7 +77,7 @@ describe('QuarantineService', () => {
 
       await service.activateQuarantine('acc-004', 'test ordering');
 
-      expect(callOrder).toEqual(['users', 'truthLog', 'accounts']);
+      expect(callOrder).toEqual(['users', 'accounts', 'truthLog']);
     });
 
     it('should pass accountId and reason to the users UPDATE query correctly', async () => {
@@ -119,6 +122,7 @@ describe('QuarantineService', () => {
           metadata,
           severity: 'CRITICAL',
         }),
+        client,
       );
     });
 
@@ -135,6 +139,7 @@ describe('QuarantineService', () => {
           reason: 'no metadata case',
           severity: 'CRITICAL',
         }),
+        client,
       );
     });
 

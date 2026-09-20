@@ -2,12 +2,10 @@ import { BadRequestException, Body, Controller, Post, UseGuards } from '@nestjs/
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuthGuard } from '../../../guards/auth.guard';
-import {
-  AppAttestAssertion,
-  AppAttestRegistration,
-  DeviceAttestationService,
-  PlayIntegrityVerdict,
-} from '../../../services/security/device-attestation.service';
+import { DeviceAttestationService } from '../../../services/security/device-attestation.service';
+import type { PlayIntegrityVerdict } from '../../../services/security/device-attestation.service';
+import type { AppAttestRegistration } from '../../../services/security/device-attestation.service';
+import type { AppAttestAssertion } from '../../../services/security/device-attestation.service';
 
 @ApiTags('Device Attestation')
 @Controller('attestation')

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { mkdtemp, readFile, rm } from "fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -221,9 +221,4 @@ export class RedactionService {
     };
     return map[contentType] || "mp4";
   }
-}
-
-async function writeFile(path: string, data: Buffer): Promise<void> {
-  const { writeFile: wf } = await import("fs/promises");
-  await wf(path, data);
 }

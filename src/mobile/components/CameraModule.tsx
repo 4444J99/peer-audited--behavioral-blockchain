@@ -1,24 +1,25 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { UploadService } from '../services/UploadService';
-import { ApiClient } from '../services/ApiClient';
-import type { ProofProcessingStatus } from '../services/ApiClient';
-import { createCameraWatermark, createSyntheticCaptureSession } from '../utils/proof-media';
-
-let CameraViewComponent: any = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const expoCam = require('expo-camera');
-  CameraViewComponent = expoCam.CameraView || expoCam.Camera;
-} catch {
-  // Fallback to simulated viewfinder when native camera is unavailable
-}
+import React, { useEffect, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import { UploadService } from "../services/UploadService";
+import { ApiClient } from "../services/ApiClient";
+import type { ProofProcessingStatus } from "../services/ApiClient";
+import {
+  createCameraWatermark,
+  createSyntheticCaptureSession,
+} from "../utils/proof-media";
 
 /**
  * The Styx Camera Module.
  * ARCHITECTURE RULE: ZERO TRUST.
- * This component intentionally omits any integration with `expo-image-picker` or the device gallery.
- * The ONLY way a user can submit a proof is by pressing the live record button through this view.
+ * This beta path is explicitly synthetic. It mounts neither a native camera preview nor a
+ * gallery picker, so it cannot imply that camera permission or native recording succeeded.
  */
 export const CameraModule = ({ contractId }: { contractId?: string }) => {
   const [isRecording, setIsRecording] = useState(false);
@@ -31,8 +32,11 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
 
   // Backend pipeline state, deliberately separate from isUploading: that flag
   // tracks the raw R2 PUT, which is already finished when any of this begins.
-  const [processingProofId, setProcessingProofId] = useState<string | null>(null);
-  const [processingStatus, setProcessingStatus] = useState<ProofProcessingStatus | null>(null);
+  const [processingProofId, setProcessingProofId] = useState<string | null>(
+    null,
+  );
+  const [processingStatus, setProcessingStatus] =
+    useState<ProofProcessingStatus | null>(null);
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
 
@@ -51,7 +55,8 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
 
   const watchProcessing = async (proofId: string) => {
     const generation = ++pollGenerationRef.current;
-    const isStale = () => unmountedRef.current || pollGenerationRef.current !== generation;
+    const isStale = () =>
+      unmountedRef.current || pollGenerationRef.current !== generation;
 
     setProcessingProofId(proofId);
     setProcessingStatus(null);
@@ -112,21 +117,28 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
 
   const submitProof = async () => {
     if (!videoUri || !contractId) {
-      Alert.alert('Upload Failed', 'A contract ID is required to submit proof.');
+      Alert.alert(
+        "Upload Failed",
+        "A contract ID is required to submit proof.",
+      );
       return;
     }
 
     setIsUploading(true);
     try {
-      const { uploadUrl, proofId, storageKey, captureNonce } = await UploadService.requestPreSignedUrl(
-        contractId,
-        'video/mp4',
-        `Live camera submission | capture-hash:${captureHash || 'none'} | ${captureLabel || 'n/a'}`,
-      );
+      const { uploadUrl, proofId, storageKey, captureNonce } =
+        await UploadService.requestPreSignedUrl(
+          contractId,
+          "video/mp4",
+          `Live camera submission | capture-hash:${captureHash || "none"} | ${captureLabel || "n/a"}`,
+        );
 
-      const transmissionSuccess = await UploadService.uploadVideoBuffer(videoUri, uploadUrl);
+      const transmissionSuccess = await UploadService.uploadVideoBuffer(
+        videoUri,
+        uploadUrl,
+      );
       if (!transmissionSuccess) {
-        throw new Error('Video blob failed to transmit to Cloudflare R2.');
+        throw new Error("Video blob failed to transmit to Cloudflare R2.");
       }
 
       // This build's capture path is synthetic (createSyntheticCaptureSession),
@@ -136,11 +148,11 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
       const dispatchSuccess = await UploadService.confirmUpload(
         proofId,
         storageKey,
-        'SYNTHETIC_BETA',
+        "SYNTHETIC_BETA",
         captureNonce,
       );
       if (!dispatchSuccess) {
-        throw new Error('Proof upload confirmed failed during queue dispatch.');
+        throw new Error("Proof upload confirmed failed during queue dispatch.");
       }
 
       await ApiClient.submitProof(contractId, {
@@ -159,7 +171,7 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
       // claimed completion the pipeline had not reached.
       await watchProcessing(proofId);
     } catch (error: any) {
-      Alert.alert('Upload Failed', error.message);
+      Alert.alert("Upload Failed", error.message);
     } finally {
       setIsUploading(false);
     }
@@ -169,10 +181,11 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
     // The API orders proof_processing_jobs newest-first, so jobs[0] is the stage
     // the worker is on right now.
     const latestJob = processingStatus?.jobs?.[0] || null;
-    const failedJob = processingStatus?.jobs?.find((job) => job.status === 'FAILED') || null;
-    const overallStatus = processingStatus?.overallStatus || 'NOT_STARTED';
-    const hasFailed = overallStatus === 'FAILED' || processingError !== null;
-    const hasCompleted = overallStatus === 'COMPLETED' && !processingError;
+    const failedJob =
+      processingStatus?.jobs?.find((job) => job.status === "FAILED") || null;
+    const overallStatus = processingStatus?.overallStatus || "NOT_STARTED";
+    const hasFailed = overallStatus === "FAILED" || processingError !== null;
+    const hasCompleted = overallStatus === "COMPLETED" && !processingError;
 
     return (
       <View style={styles.container}>
@@ -183,14 +196,18 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
         <View style={styles.processingPanel}>
           {hasFailed ? (
             <>
-              <Text style={styles.processingFailedTitle}>Processing Failed</Text>
+              <Text style={styles.processingFailedTitle}>
+                Processing Failed
+              </Text>
               <Text style={styles.processingDetail}>
                 {processingError ||
                   failedJob?.error ||
-                  'The processing pipeline could not finish this proof.'}
+                  "The processing pipeline could not finish this proof."}
               </Text>
               {failedJob ? (
-                <Text style={styles.processingStage}>Failed at stage: {failedJob.stage}</Text>
+                <Text style={styles.processingStage}>
+                  Failed at stage: {failedJob.stage}
+                </Text>
               ) : null}
               <View style={styles.actionRow}>
                 <TouchableOpacity
@@ -209,32 +226,43 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
             </>
           ) : hasCompleted ? (
             <>
-              <Text style={styles.processingDoneTitle}>Processing Complete</Text>
-              <Text style={styles.processingDetail}>
-                Your proof is redacted and queued with the Fury Router for validation.
+              <Text style={styles.processingDoneTitle}>
+                Processing Complete
               </Text>
-              <TouchableOpacity style={styles.submitButton} onPress={dismissProcessing}>
+              <Text style={styles.processingDetail}>
+                Your proof is redacted and queued with the Fury Router for
+                validation.
+              </Text>
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={dismissProcessing}
+              >
                 <Text style={styles.submitText}>DONE</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
-              {isPolling ? <ActivityIndicator size="large" color="#FF3B30" /> : null}
+              {isPolling ? (
+                <ActivityIndicator size="large" color="#FF3B30" />
+              ) : null}
               <Text style={styles.processingTitle}>
-                {overallStatus === 'NOT_STARTED'
-                  ? 'Waiting for the processing worker...'
-                  : 'Processing your proof...'}
+                {overallStatus === "NOT_STARTED"
+                  ? "Waiting for the processing worker..."
+                  : "Processing your proof..."}
               </Text>
               <Text style={styles.processingStage}>
                 {latestJob
                   ? `Stage: ${latestJob.stage} — ${latestJob.status}`
-                  : 'No pipeline stage reported yet.'}
+                  : "No pipeline stage reported yet."}
               </Text>
               <Text style={styles.processingDetail}>
-                Transcoding and identity redaction run on a background worker. You can leave this
-                screen; processing continues either way.
+                Transcoding and identity redaction run on a background worker.
+                You can leave this screen; processing continues either way.
               </Text>
-              <TouchableOpacity style={styles.discardButton} onPress={dismissProcessing}>
+              <TouchableOpacity
+                style={styles.discardButton}
+                onPress={dismissProcessing}
+              >
                 <Text style={styles.discardText}>RUN IN BACKGROUND</Text>
               </TouchableOpacity>
             </>
@@ -255,13 +283,6 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
 
       {/* Camera Viewfinder */}
       <View style={styles.viewfinder}>
-        {CameraViewComponent ? (
-          <CameraViewComponent
-            style={StyleSheet.absoluteFill}
-            facing="back"
-            mode="video"
-          />
-        ) : null}
         {isRecording ? (
           <>
             <View style={styles.recordingIndicator}>
@@ -274,7 +295,9 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
           </>
         ) : (
           <Text style={styles.viewfinderText}>
-            {videoUri ? 'Exhaust Captured. Ready for Upload.' : 'Camera Ready (Gallery Disabled)'}
+            {videoUri
+              ? "Synthetic Payload Ready for Upload."
+              : "Synthetic Capture Ready (Native Camera Disabled)"}
           </Text>
         )}
       </View>
@@ -290,10 +313,15 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
           <>
             {!videoUri ? (
               <TouchableOpacity
-                style={[styles.recordButton, isRecording && styles.recordingButton]}
+                style={[
+                  styles.recordButton,
+                  isRecording && styles.recordingButton,
+                ]}
                 onPress={toggleRecording}
               >
-                <View style={isRecording ? styles.squareIcon : styles.circleIcon} />
+                <View
+                  style={isRecording ? styles.squareIcon : styles.circleIcon}
+                />
               </TouchableOpacity>
             ) : (
               <View style={styles.actionRow}>
@@ -309,7 +337,10 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
                 >
                   <Text style={styles.discardText}>DISCARD</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.submitButton} onPress={submitProof}>
+                <TouchableOpacity
+                  style={styles.submitButton}
+                  onPress={submitProof}
+                >
                   <Text style={styles.submitText}>SUBMIT TO FURY</Text>
                 </TouchableOpacity>
               </View>
@@ -327,34 +358,144 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000', flexDirection: 'column' },
-  viewfinder: { flex: 4, backgroundColor: '#1A1A1A', justifyContent: 'center', alignItems: 'center' },
-  viewfinderText: { color: '#666', fontSize: 16 },
-  recordingIndicator: { position: 'absolute', top: 40, right: 30, flexDirection: 'row', alignItems: 'center' },
-  redDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#FF3B30', marginRight: 8 },
-  recordingText: { color: '#FF3B30', fontWeight: 'bold' },
-  controls: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', paddingBottom: 40 },
-  recordButton: { width: 80, height: 80, borderRadius: 40, borderWidth: 4, borderColor: '#FFF', justifyContent: 'center', alignItems: 'center' },
-  recordingButton: { borderColor: '#FF3B30' },
-  circleIcon: { width: 66, height: 66, borderRadius: 33, backgroundColor: '#FF3B30' },
-  squareIcon: { width: 36, height: 36, borderRadius: 4, backgroundColor: '#FF3B30' },
-  actionRow: { flexDirection: 'row', width: '100%', justifyContent: 'space-around', paddingHorizontal: 20 },
+  container: { flex: 1, backgroundColor: "#000", flexDirection: "column" },
+  viewfinder: {
+    flex: 4,
+    backgroundColor: "#1A1A1A",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  viewfinderText: { color: "#666", fontSize: 16 },
+  recordingIndicator: {
+    position: "absolute",
+    top: 40,
+    right: 30,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  redDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#FF3B30",
+    marginRight: 8,
+  },
+  recordingText: { color: "#FF3B30", fontWeight: "bold" },
+  controls: {
+    flex: 1,
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingBottom: 40,
+  },
+  recordButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 4,
+    borderColor: "#FFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  recordingButton: { borderColor: "#FF3B30" },
+  circleIcon: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: "#FF3B30",
+  },
+  squareIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 4,
+    backgroundColor: "#FF3B30",
+  },
+  actionRow: {
+    flexDirection: "row",
+    width: "100%",
+    justifyContent: "space-around",
+    paddingHorizontal: 20,
+  },
   discardButton: { padding: 20 },
-  discardText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
-  submitButton: { backgroundColor: '#FFF', paddingVertical: 20, paddingHorizontal: 40, borderRadius: 30 },
-  submitText: { color: '#000', fontSize: 16, fontWeight: '900' },
-  uploadingState: { alignItems: 'center' },
-  uploadingText: { color: '#FFF', marginTop: 16, fontWeight: 'bold' },
-  watermarkOverlay: { position: 'absolute', bottom: 20, left: 20, right: 20, backgroundColor: 'rgba(0,0,0,0.6)', padding: 10, borderRadius: 4, borderWidth: 1, borderColor: '#fff' },
-  watermarkText: { color: '#FFF', fontFamily: 'monospace', fontSize: 10, textAlign: 'center' },
-  captureMeta: { alignItems: 'center', paddingBottom: 10 },
-  captureMetaText: { color: '#888', fontSize: 12 },
-  betaBanner: { backgroundColor: '#20150d', padding: 8, borderBottomWidth: 1, borderBottomColor: '#4a2a16' },
-  processingPanel: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30 },
-  processingTitle: { color: '#FFF', fontSize: 18, fontWeight: 'bold', marginTop: 20, textAlign: 'center' },
-  processingDoneTitle: { color: '#34C759', fontSize: 20, fontWeight: '900', textAlign: 'center' },
-  processingFailedTitle: { color: '#FF3B30', fontSize: 20, fontWeight: '900', textAlign: 'center' },
-  processingStage: { color: '#FFB26B', fontFamily: 'monospace', fontSize: 12, marginTop: 12, textAlign: 'center' },
-  processingDetail: { color: '#888', fontSize: 13, marginTop: 12, marginBottom: 20, textAlign: 'center' },
-  betaBannerText: { color: '#ffb26b', fontSize: 10, fontWeight: '800', textAlign: 'center', letterSpacing: 1 },
+  discardText: { color: "#FFF", fontSize: 16, fontWeight: "bold" },
+  submitButton: {
+    backgroundColor: "#FFF",
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+  },
+  submitText: { color: "#000", fontSize: 16, fontWeight: "900" },
+  uploadingState: { alignItems: "center" },
+  uploadingText: { color: "#FFF", marginTop: 16, fontWeight: "bold" },
+  watermarkOverlay: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    padding: 10,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#fff",
+  },
+  watermarkText: {
+    color: "#FFF",
+    fontFamily: "monospace",
+    fontSize: 10,
+    textAlign: "center",
+  },
+  captureMeta: { alignItems: "center", paddingBottom: 10 },
+  captureMetaText: { color: "#888", fontSize: 12 },
+  betaBanner: {
+    backgroundColor: "#20150d",
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#4a2a16",
+  },
+  processingPanel: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 30,
+  },
+  processingTitle: {
+    color: "#FFF",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 20,
+    textAlign: "center",
+  },
+  processingDoneTitle: {
+    color: "#34C759",
+    fontSize: 20,
+    fontWeight: "900",
+    textAlign: "center",
+  },
+  processingFailedTitle: {
+    color: "#FF3B30",
+    fontSize: 20,
+    fontWeight: "900",
+    textAlign: "center",
+  },
+  processingStage: {
+    color: "#FFB26B",
+    fontFamily: "monospace",
+    fontSize: 12,
+    marginTop: 12,
+    textAlign: "center",
+  },
+  processingDetail: {
+    color: "#888",
+    fontSize: 13,
+    marginTop: 12,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  betaBannerText: {
+    color: "#ffb26b",
+    fontSize: 10,
+    fontWeight: "800",
+    textAlign: "center",
+    letterSpacing: 1,
+  },
 });
