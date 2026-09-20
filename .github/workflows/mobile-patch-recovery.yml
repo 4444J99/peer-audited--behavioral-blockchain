@@ -1,0 +1,125 @@
+name: Mobile patch recovery candidate
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/mobile-patch-recovery.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-patch-recovery-1006
+  cancel-in-progress: false
+
+jobs:
+  candidate:
+    if: >-
+      github.repository == '4444J99/peer-audited--behavioral-blockchain' &&
+      github.event.pull_request.number == 1006 &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'work/heal/998-runtime-ci-recovery'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      npm_config_engine_strict: 'true'
+      INPUT_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - id: eligible
+        name: Limit generation to the single authorized recovery input
+        run: |
+          if [ "$(git rev-parse HEAD^)" = '4dc98ecf1c4e4664f431530394c6ad99e3f8a795' ]; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+            echo 'One-shot input no longer matches; no candidate will be created.'
+          fi
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        if: steps.eligible.outputs.run == 'true'
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Regenerate only the required SDK patch upgrades
+        if: steps.eligible.outputs.run == 'true'
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').packageManager.replace(/^npm@/, '')")"
+          npm install --global "npm@${version}" --ignore-scripts
+          npm install --workspace @styx/mobile 'expo@~57.0.24' 'expo-notifications@~57.0.20' --package-lock-only --ignore-scripts --strict-peer-deps --no-audit --no-fund
+          npm ci --ignore-scripts --strict-peer-deps --no-audit --no-fund
+          (cd src/mobile && CI=1 npx --no-install expo install --check)
+          npm audit --audit-level=low
+          npm run validate:runtime
+          node --test scripts/validation/dependency-regressions.test.cjs
+      - name: Store candidate Git objects for a separate reviewed fast-forward
+        if: steps.eligible.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import cp from 'node:child_process';
+          const git = (...args) => cp.execFileSync('git', args, {encoding:'utf8'}).trim();
+          const expected = process.env.INPUT_SHA;
+          assert.match(expected, /^[a-f0-9]{40}$/);
+          assert.equal(git('rev-parse', 'HEAD'), expected);
+          const paths = ['package-lock.json', 'src/mobile/package.json'];
+          assert.deepEqual(git('diff','--name-only').split('\n').sort(), paths);
+          const manifest = JSON.parse(fs.readFileSync(paths[1], 'utf8'));
+          const old = JSON.parse(git('show', `${expected}:${paths[1]}`));
+          assert.equal(manifest.dependencies.expo, '~57.0.24');
+          assert.equal(manifest.dependencies['expo-notifications'], '~57.0.20');
+          const comparable = structuredClone(manifest);
+          comparable.dependencies.expo = old.dependencies.expo;
+          comparable.dependencies['expo-notifications'] = old.dependencies['expo-notifications'];
+          assert.deepEqual(comparable, old, 'Only the two approved manifest fields may change');
+          const lock = JSON.parse(fs.readFileSync(paths[0], 'utf8'));
+          assert.deepEqual(lock.packages['src/mobile'].dependencies, manifest.dependencies);
+          async function request(route, body) {
+            const response = await fetch(`https://api.github.com/repos/4444J99/peer-audited--behavioral-blockchain/${route}`, {
+              method: body ? 'POST' : 'GET',
+              headers: {Authorization:`Bearer ${process.env.GH_TOKEN}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json'},
+              body: body ? JSON.stringify(body) : undefined,
+              signal: AbortSignal.timeout(30000),
+            });
+            assert.ok(response.ok, `Git object request failed: HTTP ${response.status}`);
+            return response.json();
+          }
+          const pr = await request('pulls/1006');
+          assert.equal(pr.state, 'open');
+          assert.equal(pr.head.sha, expected, 'PR advanced; candidate rejected');
+          assert.equal(pr.head.ref, 'work/heal/998-runtime-ci-recovery');
+          const entries = [];
+          for (const path of paths) {
+            const blob = await request('git/blobs', {content:fs.readFileSync(path,'utf8'), encoding:'utf-8'});
+            entries.push({path, mode:'100644', type:'blob', sha:blob.sha});
+          }
+          const tree = await request('git/trees', {base_tree:git('rev-parse','HEAD^{tree}'), tree:entries});
+          const commit = await request('git/commits', {
+            message:'fix(mobile): align Expo 57 patch dependencies with the SDK contract',
+            tree:tree.sha, parents:[expected],
+          });
+          // Deliberately no ref mutation, merge, workflow dispatch, or status write.
+          fs.mkdirSync('artifacts/mobile-patch', {recursive:true});
+          const receipt = {inputSha:expected, candidateSha:commit.sha, treeSha:tree.sha, entries,
+            validation:['strict engine/peer clean install','Expo install --check','audit --audit-level=low','runtime contract','dependency regressions'],
+            scope:'Dependency patch candidate only; normal merge-revision CI remains mandatory'};
+          fs.writeFileSync('artifacts/mobile-patch/candidate.json', JSON.stringify(receipt,null,2)+'\n');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Candidate ${commit.sha}; input ${expected}. No branch ref was changed.\n`);
+          console.log(JSON.stringify(receipt,null,2));
+          JS
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: steps.eligible.outputs.run == 'true'
+        with:
+          name: mobile-patch-candidate-${{ github.event.pull_request.head.sha }}
+          path: artifacts/mobile-patch/candidate.json
+          if-no-files-found: error
+          retention-days: 7
