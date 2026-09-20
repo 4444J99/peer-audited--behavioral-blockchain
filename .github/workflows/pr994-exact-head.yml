@@ -1,16 +1,16 @@
-name: PR 994 exact-head verification
+name: Styx strict integration acceptance
 on:
   push:
-    branches: [work/lane-verify/ci-gate-fixes-2026-09-17]
+    branches: [main, lane/verify, work/lane-verify/ci-gate-fixes-2026-09-17]
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: pr994-exact-head-${{ github.ref }}
+  group: styx-strict-integration-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   verify:
-    if: github.ref == 'refs/heads/work/lane-verify/ci-gate-fixes-2026-09-17'
+    if: github.repository == '4444J99/peer-audited--behavioral-blockchain' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/lane/verify' || github.ref == 'refs/heads/work/lane-verify/ci-gate-fixes-2026-09-17')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     services:
@@ -53,7 +53,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pr994-verification-${{ github.sha }}
+          name: styx-strict-integration-${{ github.sha }}
           path: |
             ${{ runner.temp }}/pr994-evidence/*.log
             ${{ runner.temp }}/pr994-evidence/*.json
