@@ -1,0 +1,19 @@
+{
+  "ciphertext_asset_count": 10,
+  "complete_group_capture": false,
+  "full_native_metadata_accepted": false,
+  "independent_key_recovery_verified": false,
+  "owner_url": "https://github.com/4444J99/limen/issues/2742",
+  "private_journal_atomic_same_volume_relocation": true,
+  "private_journal_directory_mode": "0700",
+  "private_journal_retained_in_assigned_git_store": true,
+  "private_retained_artifact_id": "group04-custody-01a0f92b-a511-7871-89fe-d86f687b8bc3",
+  "raw_private_journal_independent_custody_verified": false,
+  "remote_release_tag": "arca-objects-5ff610ff47a0b543804fb68a9cbca3a5",
+  "remote_repository_id": 1332536900,
+  "restored_git_objects": 8244,
+  "restored_regular_files": 1000,
+  "retirement_authorized": false,
+  "schema": "group04.session-custody-evidence.v1",
+  "verified": false
+}
