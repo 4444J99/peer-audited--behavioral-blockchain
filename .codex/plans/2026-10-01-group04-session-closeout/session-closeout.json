@@ -1,0 +1,76 @@
+{
+  "base_head": "9c69118253ec2d417f70d98c8c5d68249a39245d",
+  "canonical_repository": "4444J99/peer-audited--behavioral-blockchain",
+  "custody": {
+    "evidence": ".codex/plans/2026-10-01-group04-session-closeout/custody.json",
+    "owner_url": "https://github.com/4444J99/limen/issues/2742",
+    "sha256": "3dc8edb2b48d8a37c153b8cc7fe7fce526deb0e5b7ee2d87d0c694a6334b6fa6",
+    "verified": false
+  },
+  "disposition": "handoff",
+  "owned_paths": [
+    ".codex/plans/2026-10-01-group04-execution-receipt.json"
+  ],
+  "owner_url": "https://github.com/4444J99/limen/issues/2740",
+  "publication_branch": "work/verify/2740-group04-execution-receipt-20261001",
+  "receipt_checkout_is_native_subject": false,
+  "repository": "organvm/peer-audited--behavioral-blockchain",
+  "repository_id": 1164285458,
+  "retained_scope": {
+    "assigned_candidates": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "native_caller_is_git_checkout": false,
+    "native_caller_worktree_name": "Workspace",
+    "receipt_checkout_candidate": 8,
+    "removed_candidates": [],
+    "retained_candidates": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "unlisted_checkouts_adopted": false
+  },
+  "retained_work": [],
+  "retirement_authorized": false,
+  "schema": "limen.session_closeout.v1",
+  "session_id": "01a0f92b-a511-7871-89fe-d86f687b8bc3",
+  "session_released": false,
+  "successor_required": false,
+  "task_completed": false,
+  "verification": [
+    {
+      "evidence": ".codex/plans/2026-10-01-group04-session-closeout/verification.json",
+      "exit_code": 0,
+      "head": "dc6e318b58e936621df7a4614e9499709e8e93bc",
+      "sha256": "7bdda2a0d0c77e11c4d1ba74244da805a8fe6aae91c76266662fee9c220e3f3d"
+    },
+    {
+      "evidence": ".codex/plans/2026-10-01-group04-session-closeout/verification.json",
+      "exit_code": 0,
+      "head": "dc6e318b58e936621df7a4614e9499709e8e93bc",
+      "sha256": "7bdda2a0d0c77e11c4d1ba74244da805a8fe6aae91c76266662fee9c220e3f3d"
+    }
+  ],
+  "worktree_name": "Workspace"
+}
