@@ -144,10 +144,11 @@
     "historical_mixed_campaign_report": "not verified Group 04 spend",
     "aborted_native_timed_seconds": 3.873,
     "aborted_timestamp_inferred_seconds": 200.411,
-    "current_turn": "provisional until native task_complete",
+    "current_turn": "closeout turn provisional until native task_complete; not included in completed total",
     "historical_root_run": "not established; no historical keeper graph fabricated",
     "other_groups": "must assess their own envelopes independently",
-    "verified_native_session_completed_seconds": 766.119,
-    "cumulative_outcome_spend": "unresolved outside the verified native session lineage; no fresh numeric campaign budget inferred"
+    "verified_native_session_completed_seconds": 2817.122,
+    "cumulative_outcome_spend": "unresolved outside the verified native session lineage; no fresh numeric campaign budget inferred",
+    "execution_turn_completed_seconds": 2051.003
   }
 }
