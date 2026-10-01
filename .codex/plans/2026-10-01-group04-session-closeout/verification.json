@@ -26,6 +26,22 @@
   "current_closeout_turn": "provisional and excluded from completed total",
   "head": "dc6e318b58e936621df7a4614e9499709e8e93bc",
   "historical_outcome_cumulative_spend": "unresolved outside exact native lineage",
+  "installed_session_predicate": {
+    "command_display": "domus-limen-env-run -- bash scripts/no-tasks-on-me.sh --session-id 01a0f92b-a511-7871-89fe-d86f687b8bc3 --worktree /Users/4jp/Workspace --receipt <published owner receipt> --native-transcript <exact private native transcript> --json",
+    "exit_code": 2,
+    "observed_receipt_head": "877ddc8975a82db3808f1a27c7cf56dc95c05b62",
+    "private_arguments_redacted": true,
+    "result": {
+      "error_type": "CalledProcessError",
+      "schema": "limen.session_closeout.v1",
+      "session_released": false,
+      "status": "unmeasured",
+      "successor_required": false,
+      "task_completed": false
+    },
+    "subject_git_probe_command": "git -C /Users/4jp/Workspace rev-parse --show-toplevel",
+    "subject_git_probe_exit_code": 128
+  },
   "keeper_retained_state": {
     "active_lease_count": 0,
     "historical_registration_and_request_history": "unmeasured",
@@ -55,6 +71,11 @@
       "predicate": "native lineage cumulative outcome accounting reconciled; exhausted allowance requires genuinely new authorization"
     }
   ],
+  "owned_artifact_secret_scan": {
+    "command_display": "gitleaks dir --redact --no-banner --exit-code 1 <owned JSON snapshot>",
+    "exit_code": 0,
+    "scanned_bytes": 12265
+  },
   "process_observation": {
     "complete": true,
     "counts": {
