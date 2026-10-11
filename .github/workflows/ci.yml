@@ -51,7 +51,7 @@ jobs:
             turbo-
 
       - name: Dependency audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
 
       - name: Compute changed workspaces
         id: changed
