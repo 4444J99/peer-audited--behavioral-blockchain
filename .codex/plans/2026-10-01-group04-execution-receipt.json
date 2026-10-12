@@ -1,0 +1,154 @@
+{
+  "schema": "group04.repository-reconciliation.v1",
+  "recorded_at": "2026-10-01T21:25:20.157420+00:00",
+  "owner": "https://github.com/4444J99/limen/issues/2740",
+  "execution_authorization": "https://github.com/4444J99/limen/issues/2740#issuecomment-5940390242",
+  "group": 4,
+  "assigned_paths": 12,
+  "distinct_valid_stores": 8,
+  "retained_candidates": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+  ],
+  "removed_candidates": [],
+  "reclaimed_bytes": 0,
+  "checkout_mutation": "candidate 8 receives only this session receipt on a new topic branch; other checkout HEADs and dirty payload retained",
+  "source_parity": {
+    "canonical_heads_and_tags": "live exact-OID checked",
+    "export_added_branches": 9,
+    "export_added_tags": 2,
+    "export_exact_named_ref_matches": 12,
+    "export_expected_named_refs": 12,
+    "export_refs": {
+      "refs/heads/chore/styx-990-pr991-closeout": "1e1c969791de94374e3a67c36f96d359b5713e56",
+      "refs/heads/lane/evolve-platform": "d688fd83ed232442cd7f694392d18f939be3519d",
+      "refs/heads/lane/expand-external": "bb8101ac7efeda161ffc20b51f2e1ee4fe465a73",
+      "refs/heads/lane/expand-product": "711905ca9aa44dd2eee3d58ce427355b21f3e8fb",
+      "refs/heads/lane/heal": "2cde23b4c35b99ee60f7952bb4de3e09447db659",
+      "refs/heads/lane/verify": "41b95f6286e5665e43f1c86008906775637790ab",
+      "refs/heads/main": "3a471c4b88cf208b836bc8ea1864f5508f0583b3",
+      "refs/heads/work/lane-evolve-platform/bifurcation-types-extraction-2026-09-17": "9b1c52a0016a1b033ff629e3c049df75b5cd004b",
+      "refs/heads/work/lane-verify/ci-gate-fixes-2026-09-17": "c750c75a4cff7f4245af80d23475dd5aeaf73fdc",
+      "refs/heads/work/verify/990-local-demo-login-throttle": "27a1a717c23449d3590de97888862f7b4d94dc13",
+      "refs/tags/v0.1.0": "ed2eb0b6a6c0645d54e425aef917ae654021e561",
+      "refs/tags/v0.1.0^{}": "b7940b920dc83b38715f2ab8d15e7faed0542342",
+      "refs/tags/v0.9.0-beta-ready": "94767ee911e1271353b2d41f0bcbdefb3a54d6e0"
+    },
+    "secret_scan": "one dummy-key unit-test fixture classified; normal Git hooks retained; no scanner policy changed"
+  },
+  "custody": {
+    "repository_id": 1332536900,
+    "tag": "arca-objects-5ff610ff47a0b543804fb68a9cbca3a5",
+    "asset_count": 10,
+    "ciphertext_bytes": 40043703,
+    "remote_readback": true,
+    "restoration": {
+      "remote_ciphertext_readback": true,
+      "remote_plaintext_readback": true,
+      "native_regular_files_restored": 1000,
+      "native_symlinks_restored": 0,
+      "native_unsupported_objects": 2,
+      "native_metadata_differences": 210,
+      "metadata_difference_fields": [
+        "mtime_ns"
+      ],
+      "remote_restored_git_objects": 8244,
+      "pack_proof": [
+        {
+          "candidates": [
+            1,
+            2,
+            3
+          ],
+          "restored_objects": 3414
+        },
+        {
+          "candidates": [
+            5
+          ],
+          "restored_objects": 926
+        },
+        {
+          "candidates": [
+            6
+          ],
+          "restored_objects": 1062
+        },
+        {
+          "candidates": [
+            7
+          ],
+          "restored_objects": 98
+        },
+        {
+          "candidates": [
+            8
+          ],
+          "restored_objects": 898
+        },
+        {
+          "candidates": [
+            10
+          ],
+          "restored_objects": 1409
+        },
+        {
+          "candidates": [
+            11,
+            12
+          ],
+          "restored_objects": 437
+        }
+      ],
+      "full_native_metadata_accepted": false,
+      "independent_key_recovery": false,
+      "complete_group_custody": false
+    },
+    "registered_physical_target_ciphertext_copies": 2,
+    "replica_ciphertext_readback": true,
+    "independent_physical_identity_verified": false,
+    "independent_key_recovery_verified": false,
+    "native_acl_xattr_owner_timestamp_acceptance": false,
+    "complete_group_capture": false
+  },
+  "retirement": {
+    "eligible": false,
+    "owner": "https://github.com/4444J99/limen/issues/2741",
+    "custody_owner": "https://github.com/4444J99/limen/issues/2742",
+    "bulk_capture_admission": {
+      "allowed": false,
+      "reasons": [
+        "swap-fraction"
+      ],
+      "observed_at": "2026-10-01T21:07:18.167140+00:00"
+    },
+    "remaining_predicates": [
+      "bulk payload capture under host admission",
+      "full native metadata equality and independent key recovery",
+      "registered device identity and encryption acceptance",
+      "candidate 4 original worktree administrative linkage reconstruction",
+      "candidate-specific runtime/lease and lifecycle retirement acceptance"
+    ]
+  },
+  "accounting": {
+    "historical_mixed_campaign_report": "not verified Group 04 spend",
+    "aborted_native_timed_seconds": 3.873,
+    "aborted_timestamp_inferred_seconds": 200.411,
+    "current_turn": "closeout turn provisional until native task_complete; not included in completed total",
+    "historical_root_run": "not established; no historical keeper graph fabricated",
+    "other_groups": "must assess their own envelopes independently",
+    "verified_native_session_completed_seconds": 2817.122,
+    "cumulative_outcome_spend": "unresolved outside the verified native session lineage; no fresh numeric campaign budget inferred",
+    "execution_turn_completed_seconds": 2051.003
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "checks": [
+    {
+      "command": [
+        "git",
+        "-C",
+        "/Users/4jp/Workspace/limen/issue_backlog_work/peer-audited--behavioral-blockchain",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "/Users/4jp/.local/share/limen/current/venv/bin/python",
+        "/Users/4jp/.local/share/limen/runtimes/875f19907e1ea155fad2a49e25aaf578b0ad8f8e/source/scripts/credential-wall.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "1b27be12b457a94f21fcf19b2d1f0168dad51d5cb42d51d7aa9e41b498dbb079"
+    }
+  ],
+  "completed_execution_turn_seconds": 2051.003,
+  "completed_native_session_seconds": 2817.122,
+  "current_closeout_turn": "provisional and excluded from completed total",
+  "head": "dc6e318b58e936621df7a4614e9499709e8e93bc",
+  "historical_outcome_cumulative_spend": "unresolved outside exact native lineage",
+  "installed_session_predicate": {
+    "command_display": "domus-limen-env-run -- bash scripts/no-tasks-on-me.sh --session-id 01a0f92b-a511-7871-89fe-d86f687b8bc3 --worktree /Users/4jp/Workspace --receipt <published owner receipt> --native-transcript <exact private native transcript> --json",
+    "exit_code": 2,
+    "observed_receipt_head": "877ddc8975a82db3808f1a27c7cf56dc95c05b62",
+    "private_arguments_redacted": true,
+    "result": {
+      "error_type": "CalledProcessError",
+      "schema": "limen.session_closeout.v1",
+      "session_released": false,
+      "status": "unmeasured",
+      "successor_required": false,
+      "task_completed": false
+    },
+    "subject_git_probe_command": "git -C /Users/4jp/Workspace rev-parse --show-toplevel",
+    "subject_git_probe_exit_code": 128
+  },
+  "keeper_retained_state": {
+    "active_lease_count": 0,
+    "historical_registration_and_request_history": "unmeasured",
+    "retained_run_count": 0,
+    "retained_state_complete": true,
+    "session_present": false
+  },
+  "next_actions": [
+    {
+      "next_command": "domus-process-ownership observe --worktree /Users/4jp/Workspace --session-id 01a0f92b-a511-7871-89fe-d86f687b8bc3",
+      "owner_url": "https://github.com/4444J99/limen/issues/2763",
+      "predicate": "exact native multi-repository session scope and attributable process census"
+    },
+    {
+      "next_action": "use existing private artifact ID and pinned ARCA lifecycle; retain all candidates until acceptance",
+      "owner_url": "https://github.com/4444J99/limen/issues/2742",
+      "predicate": "complete admitted native capture, independent key/device restoration, metadata equality"
+    },
+    {
+      "next_action": "run established lifecycle only after custody owner acceptance",
+      "owner_url": "https://github.com/4444J99/limen/issues/2741",
+      "predicate": "candidate-specific custody, runtime ownership and retirement acceptance"
+    },
+    {
+      "next_action": "finalize this closeout turn from its exact native task_complete before reporting a new native total",
+      "owner_url": "https://github.com/4444J99/limen/issues/2740",
+      "predicate": "native lineage cumulative outcome accounting reconciled; exhausted allowance requires genuinely new authorization"
+    }
+  ],
+  "owned_artifact_secret_scan": {
+    "command_display": "gitleaks dir --redact --no-banner --exit-code 1 <owned JSON snapshot>",
+    "exit_code": 0,
+    "scanned_bytes": 12265
+  },
+  "process_observation": {
+    "complete": true,
+    "counts": {
+      "checker": 4,
+      "foreign_session": 0,
+      "owned_survivor": 0,
+      "shared_service": 168,
+      "unknown": 44,
+      "unmeasured": 0
+    },
+    "exit_code": 1,
+    "process_count": 44,
+    "raw_argv_and_environment_published": false,
+    "unresolved_owner": "https://github.com/4444J99/limen/issues/2763"
+  },
+  "recorded_at": "2026-10-01T21:38:16.242170+00:00",
+  "release_limitations": [
+    "native caller is not a Git checkout; installed session checker requires Git HEAD",
+    "independent custody remains unproven",
+    "native caller process observation has unresolved ownership"
+  ],
+  "reused_passing_evidence": [
+    "live named-ref exact-OID parity",
+    "remote ciphertext and plaintext readback",
+    "8244 isolated object OID checks",
+    "1000 restored regular-file content checks"
+  ],
+  "schema": "group04.session-verification.v1",
+  "scope": {
+    "assigned_candidates": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "native_caller_is_git_checkout": false,
+    "native_caller_worktree_name": "Workspace",
+    "receipt_checkout_candidate": 8,
+    "removed_candidates": [],
+    "retained_candidates": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "unlisted_checkouts_adopted": false
+  }
+}
