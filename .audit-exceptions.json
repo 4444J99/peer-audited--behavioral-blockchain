@@ -1,0 +1,21 @@
+{
+  "$comment": "High/critical npm advisories allowed past the CI 'Dependency audit' gate (npm audit --audit-level=high). Each entry must name one exact GHSA. Entries past reviewBy fail the gate. Changes require PR review and Anthony's approval.",
+  "exceptions": [
+    {
+      "id": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "reason": "no upstream fix as of 2026-10-12",
+      "approvedBy": "Anthony Padavano",
+      "approvedOn": "2026-10-12",
+      "reviewBy": "2026-11-12"
+    },
+    {
+      "id": "GHSA-86w9-cpqp-85rv",
+      "package": "node-forge",
+      "reason": "no upstream fix as of 2026-10-12",
+      "approvedBy": "Anthony Padavano",
+      "approvedOn": "2026-10-12",
+      "reviewBy": "2026-11-12"
+    }
+  ]
+}

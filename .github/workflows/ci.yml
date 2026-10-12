@@ -51,7 +51,8 @@ jobs:
             turbo-
 
       - name: Dependency audit
-        run: npm audit --audit-level=high
+        # Equivalent to npm audit --audit-level=high, minus the exact GHSAs in .audit-exceptions.json
+        run: node scripts/audit-gate.mjs
 
       - name: Compute changed workspaces
         id: changed
