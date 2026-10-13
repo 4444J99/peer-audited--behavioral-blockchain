@@ -118,7 +118,7 @@ jobs:
         env:
           API_URL: ${{ secrets.CI_GATE05_API_URL }}
         run: |
-          node --test scripts/validation/__tests__/
+          node --test scripts/validation/__tests__/05-behavioral-physics-check.test.mjs
           npx tsx scripts/validation/05-behavioral-physics-check.ts
 
       - name: Gate 06 — Security Invariant Check
