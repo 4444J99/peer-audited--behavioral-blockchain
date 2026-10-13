@@ -117,7 +117,9 @@ jobs:
       - name: Gate 05 — Behavioral Physics Check
         env:
           API_URL: ${{ secrets.CI_GATE05_API_URL }}
-        run: npx tsx scripts/validation/05-behavioral-physics-check.ts
+        run: |
+          node --test scripts/validation/__tests__/
+          npx tsx scripts/validation/05-behavioral-physics-check.ts
 
       - name: Gate 06 — Security Invariant Check
         run: |
