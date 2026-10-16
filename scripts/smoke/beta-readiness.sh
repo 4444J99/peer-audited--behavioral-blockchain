@@ -6,6 +6,11 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 PROFILE="${READINESS_PROFILE:-beta}"
 REQUIRE_TARGETS="${READINESS_REQUIRE_TARGETS:-false}"
+# Approved policy (PR #1028): when NO target API URL is configured, the live
+# half is skipped and recorded, but does not fail or downgrade the run. Local
+# gates still run and any failure (or a local gate that cannot verify) still
+# fails. Default false, so beta-promotion keeps requiring real targets.
+ALLOW_NO_TARGET="${READINESS_ALLOW_NO_TARGET:-false}"
 OUTPUT_PATH="${READINESS_OUTPUT_PATH:-${REPO_ROOT}/artifacts/beta-readiness-summary.json}"
 RUN_ID="${READINESS_RUN_ID:-beta-readiness-$(date -u +%Y%m%dT%H%M%SZ)}"
 STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -118,6 +123,21 @@ skip_gate() {
   fi
 }
 
+# Record a remote gate skipped only because no target is configured. Under the
+# approved no-target policy this is non-failing; otherwise it behaves exactly
+# like skip_gate.
+no_target_gate() {
+  local name="$1"
+  local required="$2"
+  local message="$3"
+
+  if [[ "${ALLOW_NO_TARGET}" == "true" ]]; then
+    add_gate "${name}" "skipped" "0" "${required}" "${message} (approved no-target skip)"
+  else
+    skip_gate "${name}" "${required}" "${message}"
+  fi
+}
+
 cd "${REPO_ROOT}"
 
 echo ""
@@ -125,6 +145,7 @@ echo "-------------------------------------------"
 echo "  Styx Beta Readiness"
 echo "  Profile: ${PROFILE}"
 echo "  Require targets: ${REQUIRE_TARGETS}"
+echo "  Allow no-target skip: ${ALLOW_NO_TARGET}"
 echo "-------------------------------------------"
 echo ""
 
@@ -138,12 +159,12 @@ if [[ -z "${TARGET_API_URL}" ]]; then
   # Overall-status arithmetic is unchanged: skip_gate's assignments are
   # idempotent, and at least one required gate is present either way.
   no_target="missing target API URL for profile '${PROFILE}'"
-  skip_gate "api_ready" "true" "${no_target}"
-  skip_gate "api_release_meta" "true" "${no_target}"
-  skip_gate "web_availability" "false" "${no_target}"
-  skip_gate "critical_endpoints" "true" "${no_target}"
-  skip_gate "ledger_invariant" "true" "${no_target}"
-  skip_gate "behavioral_constants" "false" "${no_target}"
+  no_target_gate "api_ready" "true" "${no_target}"
+  no_target_gate "api_release_meta" "true" "${no_target}"
+  no_target_gate "web_availability" "false" "${no_target}"
+  no_target_gate "critical_endpoints" "true" "${no_target}"
+  no_target_gate "ledger_invariant" "true" "${no_target}"
+  no_target_gate "behavioral_constants" "false" "${no_target}"
 else
   export API_URL="${TARGET_API_URL%/}"
   export EXPECTED_ENV_LABEL="${TARGET_ENV_LABEL}"
