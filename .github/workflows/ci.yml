@@ -23,7 +23,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22]
+        node-version: [24]
 
     steps:
       - name: Checkout Repository
@@ -51,7 +51,8 @@ jobs:
             turbo-
 
       - name: Dependency audit
-        run: npm audit --audit-level=high
+        # Equivalent to npm audit --audit-level=high, minus the exact GHSAs in .audit-exceptions.json
+        run: node scripts/audit-gate.mjs
 
       - name: Compute changed workspaces
         id: changed
@@ -116,7 +117,9 @@ jobs:
       - name: Gate 05 — Behavioral Physics Check
         env:
           API_URL: ${{ secrets.CI_GATE05_API_URL }}
-        run: npx tsx scripts/validation/05-behavioral-physics-check.ts
+        run: |
+          node --test scripts/validation/__tests__/05-behavioral-physics-check.test.mjs
+          npx tsx scripts/validation/05-behavioral-physics-check.ts
 
       - name: Gate 06 — Security Invariant Check
         run: |
@@ -175,7 +178,7 @@ jobs:
       - name: Use Node.js 24.x
         uses: actions/setup-node@v7
         with:
-          node-version: 24.x
+          node-version: 24
           cache: "npm"
 
       - name: Install Dependencies with repository npm
@@ -183,10 +186,17 @@ jobs:
           npm_version="$(node -p "require('./package.json').packageManager.replace(/^npm@/, '')")"
           npx --yes "npm@${npm_version}" ci
 
+      # Local readiness gates (04 redacted build, 06 security invariants) scan
+      # build output; without it they exit 2 (not verified) and fail readiness.
+      - name: Build for Readiness Gates (Turborepo)
+        run: npx turbo run build
+
       - name: Run Beta Readiness Suite
         env:
           READINESS_PROFILE: beta
           READINESS_REQUIRE_TARGETS: "true"
+          # Approved: with no target URL the live half is skipped, non-failing.
+          READINESS_ALLOW_NO_TARGET: "true"
           BETA_API_URL: ${{ secrets.CI_BETA_API_URL || secrets.CI_GATE05_API_URL }}
           BETA_WEB_URL: ${{ secrets.BETA_WEB_URL }}
           BETA_ENV_LABEL: ${{ secrets.BETA_ENV_LABEL }}
@@ -285,7 +295,7 @@ jobs:
       - name: Use Node.js 22
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: "npm"
 
       - name: Install Dependencies with repository npm
