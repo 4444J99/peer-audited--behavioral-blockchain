@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   preflight:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: staging
     steps:
       - name: Validate required staging secrets
@@ -54,7 +54,7 @@ jobs:
           echo "Running staging promotion gate before target: ${{ inputs.promotion_target || 'prod' }}"
 
   deploy_staging_api:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: preflight
     environment: staging
     steps:
@@ -68,7 +68,7 @@ jobs:
           api-key: ${{ secrets.RENDER_API_KEY }}
 
   deploy_staging_web:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: preflight
     environment: staging
     steps:
@@ -82,7 +82,7 @@ jobs:
           api-key: ${{ secrets.RENDER_API_KEY }}
 
   migrate_staging:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: deploy_staging_api
     environment: staging
     timeout-minutes: 5
@@ -105,7 +105,7 @@ jobs:
         run: cd src/api && npm run migrate
 
   smoke_staging:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [deploy_staging_api, deploy_staging_web, migrate_staging]
     environment: staging
     steps:
@@ -124,7 +124,7 @@ jobs:
           bash scripts/smoke/staging-smoke.sh
 
   promotion_ready:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: smoke_staging
     steps:
       - name: Mark promotion gate passed
