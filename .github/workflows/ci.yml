@@ -19,7 +19,7 @@ jobs:
   # BLOCKING gate (must be able to fail a merge — do not add `continue-on-error`
   # here). Advisory/infra-dependent jobs further below keep it.
   build_and_test_matrix:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:
@@ -169,7 +169,7 @@ jobs:
           echo "Load-test scenarios parse OK (execution remains deployment-gated: K6_API_BASE_URL + k6)."
 
   beta_readiness:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build_and_test_matrix
     steps:
       - name: Checkout Repository
@@ -217,7 +217,7 @@ jobs:
   # SKIPPED summary, which leaves required-check status pending forever
   # (silent-deadlock failure mode).
   build_and_test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [build_and_test_matrix, beta_readiness]
     if: always()
     steps:
@@ -236,7 +236,7 @@ jobs:
           echo "build_and_test_matrix and beta_readiness succeeded — gate passed."
 
   terraform_validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout Repository
@@ -260,7 +260,7 @@ jobs:
         run: terraform validate
 
   changed-files:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       web: ${{ steps.check.outputs.web }}
     steps:
@@ -280,7 +280,7 @@ jobs:
   # name (`e2e`, the summary gate below) never changes shape and always posts a result.
   # Web-gated: browser failures are merge-blocking whenever browser-relevant files change.
   e2e_browsers:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: [build_and_test_matrix, beta_readiness, changed-files]
     if: needs.changed-files.outputs.web == 'true'
@@ -336,7 +336,7 @@ jobs:
   #   - web changed               -> reflect the browser result and fail on any
   #                                   unsuccessful browser matrix outcome.
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [changed-files, e2e_browsers]
     if: always()
     steps:
