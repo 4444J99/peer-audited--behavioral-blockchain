@@ -48,7 +48,7 @@ permissions:
 
 jobs:
   preflight:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: beta
     steps:
       - name: Validate required beta secrets
@@ -80,7 +80,7 @@ jobs:
           echo "Run migrations: ${{ inputs.run_migrations }}"
 
   manual_approval:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: preflight
     if: ${{ inputs.require_manual_approval }}
     environment: beta-promotion-approval
@@ -95,7 +95,7 @@ jobs:
   # defaults ON. This job also finds-or-creates the feedback collector service
   # (never fatal — telemetry must not turn a working launch into a failed one).
   ensure_beta_env:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [preflight, manual_approval]
     if: ${{ always() && needs.preflight.result == 'success' && (!inputs.require_manual_approval || needs.manual_approval.result == 'success') }}
     environment: beta
@@ -124,7 +124,7 @@ jobs:
         run: node scripts/demo/render-ensure-beta.mjs
 
   deploy_beta_api:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [preflight, manual_approval, ensure_beta_env]
     if: ${{ always() && needs.preflight.result == 'success' && needs.ensure_beta_env.result == 'success' && (!inputs.require_manual_approval || needs.manual_approval.result == 'success') }}
     environment: beta
@@ -141,7 +141,7 @@ jobs:
           api-key: ${{ secrets.RENDER_API_KEY }}
 
   deploy_beta_web:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [preflight, manual_approval, ensure_beta_env]
     if: ${{ always() && needs.preflight.result == 'success' && needs.ensure_beta_env.result == 'success' && (!inputs.require_manual_approval || needs.manual_approval.result == 'success') }}
     environment: beta
@@ -158,7 +158,7 @@ jobs:
           api-key: ${{ secrets.RENDER_API_KEY }}
 
   migrate_beta:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: deploy_beta_api
     environment: beta
     timeout-minutes: 5
@@ -191,7 +191,7 @@ jobs:
   # is safe; the password UPDATE binds the seeded accounts to the same
   # BETA_DEMO_PASSWORD the readiness job logs in with, closing the drift window.
   seed_beta:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [deploy_beta_api, migrate_beta]
     environment: beta
     timeout-minutes: 10
@@ -234,7 +234,7 @@ jobs:
           SQL
 
   smoke_beta:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [deploy_beta_api, deploy_beta_web, migrate_beta, seed_beta]
     environment: beta
     if: ${{ always() && needs.deploy_beta_api.result == 'success' && needs.deploy_beta_web.result == 'success' && (needs.migrate_beta.result == 'success' || needs.migrate_beta.result == 'skipped') && needs.seed_beta.result == 'success' }}
@@ -259,7 +259,7 @@ jobs:
   # PR CI deliberately has no such target; it must not turn an incomplete
   # receipt into either a green beta claim or an unrelated red PR check.
   beta_readiness:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [deploy_beta_api, deploy_beta_web, migrate_beta, seed_beta]
     environment: beta
     if: ${{ always() && needs.deploy_beta_api.result == 'success' && needs.deploy_beta_web.result == 'success' && (needs.migrate_beta.result == 'success' || needs.migrate_beta.result == 'skipped') && needs.seed_beta.result == 'success' }}
@@ -301,7 +301,7 @@ jobs:
   # broken route carries its error as text inside the page, which is exactly how
   # 8 of 48 snapshot routes shipped broken past every cheaper gate.
   beta_verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [deploy_beta_web, seed_beta]
     environment: beta
     timeout-minutes: 20
@@ -334,7 +334,7 @@ jobs:
         run: node scripts/demo/verify-beta.mjs
 
   promotion_ready:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [smoke_beta, beta_readiness, beta_verify]
     if: ${{ always() && needs.smoke_beta.result == 'success' && needs.beta_readiness.result == 'success' && needs.beta_verify.result == 'success' }}
     steps:

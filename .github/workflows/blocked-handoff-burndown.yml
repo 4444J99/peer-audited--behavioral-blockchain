@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   publish_report:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Generate weekly blocked handoff report issue
         uses: actions/github-script@v9

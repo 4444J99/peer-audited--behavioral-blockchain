@@ -28,7 +28,7 @@ jobs:
     secrets: inherit
 
   preflight:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [staging_promotion_gate, beta_promotion_gate]
     steps:
       - name: Validate deployment trigger and ref
@@ -57,7 +57,7 @@ jobs:
   # database, which is why it lives here and not in ci.yml — a PR runner has no
   # production DATABASE_URL to read.
   compliance_gate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: preflight
     environment: production
     timeout-minutes: 5
@@ -71,7 +71,7 @@ jobs:
         run: bash scripts/validation/08-compliance-artifact-check.sh
 
   deploy_api:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [preflight, compliance_gate]
     environment: production
     steps:
@@ -85,7 +85,7 @@ jobs:
           api-key: ${{ secrets.RENDER_API_KEY }}
 
   deploy_web:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [preflight, compliance_gate]
     environment: production
     steps:
@@ -99,7 +99,7 @@ jobs:
           api-key: ${{ secrets.RENDER_API_KEY }}
 
   migrate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: deploy_api
     environment: production
     timeout-minutes: 5
@@ -122,7 +122,7 @@ jobs:
         run: cd src/api && npm run migrate
 
   smoke_test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [deploy_api, deploy_web, migrate]
     environment: production
     steps:
