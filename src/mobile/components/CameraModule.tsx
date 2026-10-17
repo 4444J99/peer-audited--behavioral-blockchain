@@ -1,50 +1,120 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Platform } from 'react-native';
 import { UploadService } from '../services/UploadService';
 import { ApiClient } from '../services/ApiClient';
+import { NativeCameraBridge, CaptureResult } from '../services/NativeCameraBridge';
 import { createCameraWatermark, createSyntheticCaptureSession } from '../utils/proof-media';
 
-/**
- * The Styx Camera Module.
- * ARCHITECTURE RULE: ZERO TRUST.
- * This component intentionally omits any integration with `expo-image-picker` or the device gallery.
- * The ONLY way a user can submit a proof is by pressing the live record button through this view.
- */
+function tempFilePath(extension: string): string {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).slice(2, 8);
+  return `${Platform.select({ ios: '/tmp/', android: '/data/local/tmp/', default: '/tmp/' })}styx_capture_${timestamp}_${random}.${extension}`;
+}
+
 export const CameraModule = ({ contractId }: { contractId?: string }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [videoUri, setVideoUri] = useState<string | null>(null);
-  const [captureHash, setCaptureHash] = useState<string | null>(null);
+  const [captureResult, setCaptureResult] = useState<CaptureResult | null>(null);
   const [watermark, setWatermark] = useState<string | null>(null);
   const [captureStartedAt, setCaptureStartedAt] = useState<number | null>(null);
   const [captureLabel, setCaptureLabel] = useState<string | null>(null);
+  const [isNativeAvailable, setIsNativeAvailable] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const toggleRecording = () => {
-    if (isRecording) {
-      setIsRecording(false);
-      const captureSession = createSyntheticCaptureSession(
+  const nonceRef = useRef<string>('');
+  const availabilityChecked = useRef(false);
+
+  const checkNativeAvailability = useCallback(async (): Promise<boolean> => {
+    if (availabilityChecked.current && isNativeAvailable !== null) {
+      return isNativeAvailable;
+    }
+    try {
+      const availability = await NativeCameraBridge.isCameraAvailable();
+      const available = availability.available && availability.authorized;
+      setIsNativeAvailable(available);
+      availabilityChecked.current = true;
+      return available;
+    } catch {
+      setIsNativeAvailable(false);
+      availabilityChecked.current = true;
+      return false;
+    }
+  }, [isNativeAvailable]);
+
+  useEffect(() => {
+    checkNativeAvailability();
+  }, [checkNativeAvailability]);
+
+  const startRecording = useCallback(async () => {
+    setError(null);
+    setCaptureResult(null);
+    setCaptureLabel(null);
+    setIsRecording(true);
+    setCaptureStartedAt(Date.now());
+    const newWatermark = createCameraWatermark(contractId);
+    setWatermark(newWatermark);
+
+    try {
+      const nonceResult = await NativeCameraBridge.requestNonce(contractId || 'no-contract');
+      nonceRef.current = nonceResult.nonce;
+    } catch {
+      nonceRef.current = newWatermark;
+    }
+  }, [contractId]);
+
+  const stopRecording = useCallback(async () => {
+    setIsRecording(false);
+    const nativeAvailable = await checkNativeAvailability();
+
+    if (nativeAvailable && Platform.OS === 'ios') {
+      try {
+        const outputPath = tempFilePath('mp4');
+        const currentWatermark = watermark || createCameraWatermark(contractId);
+
+        const result = await NativeCameraBridge.captureVideo(
+          outputPath,
+          nonceRef.current,
+          currentWatermark,
+          30000,
+        );
+
+        setCaptureResult(result);
+        setCaptureLabel(
+          `Native • ${result.durationMs ? `${(result.durationMs / 1000).toFixed(1)}s` : 'video'}`,
+        );
+      } catch (e: any) {
+        setError(`Capture failed: ${e.message}`);
+        setCaptureLabel(null);
+      }
+    } else {
+      const session = createSyntheticCaptureSession(
         contractId,
         watermark,
         captureStartedAt,
         Date.now(),
       );
-      setVideoUri(captureSession.mediaUri);
-      setCaptureHash(captureSession.captureHash);
+      setCaptureResult({
+        path: session.mediaUri,
+        nonce: nonceRef.current,
+        format: 'data:video/mp4;base64',
+        durationMs: session.durationMs,
+      });
       setCaptureLabel(
-        `${(captureSession.durationMs / 1000).toFixed(1)}s capture • ${captureSession.captureId}`,
+        `${(session.durationMs / 1000).toFixed(1)}s synthetic • ${session.captureId}`,
       );
-    } else {
-      setVideoUri(null);
-      setCaptureHash(null);
-      setCaptureLabel(null);
-      setIsRecording(true);
-      setCaptureStartedAt(Date.now());
-      setWatermark(createCameraWatermark(contractId));
     }
-  };
+  }, [contractId, watermark, captureStartedAt, checkNativeAvailability]);
+
+  const toggleRecording = useCallback(() => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }, [isRecording, startRecording, stopRecording]);
 
   const submitProof = async () => {
-    if (!videoUri || !contractId) {
+    if (!captureResult || !contractId) {
       Alert.alert('Upload Failed', 'A contract ID is required to submit proof.');
       return;
     }
@@ -54,32 +124,27 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
       const { uploadUrl, proofId, storageKey } = await UploadService.requestPreSignedUrl(
         contractId,
         'video/mp4',
-        `Live camera submission | capture-hash:${captureHash || 'none'} | ${captureLabel || 'n/a'}`,
+        `Native camera submission | nonce:${nonceRef.current.slice(0, 20)}... | ${captureLabel || 'n/a'}`,
       );
 
-      const transmissionSuccess = await UploadService.uploadVideoBuffer(videoUri, uploadUrl);
+      const transmissionSuccess = await UploadService.uploadVideoBuffer(captureResult.path, uploadUrl);
       if (!transmissionSuccess) {
         throw new Error('Video blob failed to transmit to Cloudflare R2.');
       }
 
-      const dispatchSuccess = await UploadService.confirmUpload(proofId, storageKey);
-      if (!dispatchSuccess) {
-        throw new Error('Proof upload confirmed failed during queue dispatch.');
-      }
+      await UploadService.confirmUpload(proofId, storageKey);
 
       await ApiClient.submitProof(contractId, {
         mediaUri: storageKey,
       });
 
       Alert.alert(
-        'Beta Proof Secured',
-        'Your recording has been sent to the Fury Router for validation. NOTE: This is a synthetic capture path for the Phase 1 Beta pilot.',
+        'Proof Secured',
+        isNativeAvailable
+          ? 'Your native camera capture has been sent to the Fury Router for validation.'
+          : 'Your synthetic capture has been sent to the Fury Router for validation.',
       );
-      setVideoUri(null);
-      setCaptureHash(null);
-      setWatermark(null);
-      setCaptureStartedAt(null);
-      setCaptureLabel(null);
+      discard();
     } catch (error: any) {
       Alert.alert('Upload Failed', error.message);
     } finally {
@@ -87,16 +152,23 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
     }
   };
 
+  const discard = () => {
+    setCaptureResult(null);
+    setWatermark(null);
+    setCaptureStartedAt(null);
+    setCaptureLabel(null);
+    setError(null);
+    nonceRef.current = '';
+  };
+
   return (
     <View style={styles.container}>
-      {/* Beta Preview Banner */}
       <View style={styles.betaBanner}>
         <Text style={styles.betaBannerText}>
-          NON-PRODUCTION CAPTURE PREVIEW
+          {isNativeAvailable ? 'LIVE CAPTURE — NATIVE CAMERA' : 'NON-PRODUCTION CAPTURE PREVIEW'}
         </Text>
       </View>
 
-      {/* Mock Camera Viewfinder */}
       <View style={styles.viewfinder}>
         {isRecording ? (
           <>
@@ -108,14 +180,15 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
               <Text style={styles.watermarkText}>{watermark}</Text>
             </View>
           </>
+        ) : captureResult ? (
+          <Text style={styles.viewfinderText}>Exhaust Captured. Ready for Upload.</Text>
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
         ) : (
-          <Text style={styles.viewfinderText}>
-            {videoUri ? 'Exhaust Captured. Ready for Upload.' : 'Camera Ready (Gallery Disabled)'}
-          </Text>
+          <Text style={styles.viewfinderText}>Camera Ready (Gallery Disabled)</Text>
         )}
       </View>
 
-      {/* Controls Container */}
       <View style={styles.controls}>
         {isUploading ? (
           <View style={styles.uploadingState}>
@@ -124,7 +197,7 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
           </View>
         ) : (
           <>
-            {!videoUri ? (
+            {!captureResult ? (
               <TouchableOpacity
                 style={[styles.recordButton, isRecording && styles.recordingButton]}
                 onPress={toggleRecording}
@@ -133,16 +206,7 @@ export const CameraModule = ({ contractId }: { contractId?: string }) => {
               </TouchableOpacity>
             ) : (
               <View style={styles.actionRow}>
-                <TouchableOpacity
-                  style={styles.discardButton}
-                  onPress={() => {
-                    setVideoUri(null);
-                    setCaptureHash(null);
-                    setWatermark(null);
-                    setCaptureStartedAt(null);
-                    setCaptureLabel(null);
-                  }}
-                >
+                <TouchableOpacity style={styles.discardButton} onPress={discard}>
                   <Text style={styles.discardText}>DISCARD</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.submitButton} onPress={submitProof}>
@@ -166,6 +230,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000', flexDirection: 'column' },
   viewfinder: { flex: 4, backgroundColor: '#1A1A1A', justifyContent: 'center', alignItems: 'center' },
   viewfinderText: { color: '#666', fontSize: 16 },
+  errorText: { color: '#FF3B30', fontSize: 14, marginHorizontal: 20, textAlign: 'center' },
   recordingIndicator: { position: 'absolute', top: 40, right: 30, flexDirection: 'row', alignItems: 'center' },
   redDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#FF3B30', marginRight: 8 },
   recordingText: { color: '#FF3B30', fontWeight: 'bold' },

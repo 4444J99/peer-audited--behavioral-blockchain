@@ -5,11 +5,12 @@ import { FuryRouterService } from '../../../services/fury-router/fury-router.ser
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { PHashService } from '../../../services/intelligence/phash.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
+import { NonceService } from '../../../services/nonce/nonce.service';
 import { ProofsService } from './proofs.service';
 
 @Module({
   controllers: [ProofsController],
-  providers: [R2StorageService, FuryRouterService, TruthLogService, PHashService, AnomalyService, ProofsService],
-  exports: [R2StorageService],
+  providers: [R2StorageService, FuryRouterService, TruthLogService, PHashService, AnomalyService, NonceService, ProofsService],
+  exports: [R2StorageService, NonceService],
 })
 export class ProofsModule {}

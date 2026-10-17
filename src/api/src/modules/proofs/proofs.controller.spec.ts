@@ -6,6 +6,7 @@ import { FuryRouterService } from '../../../services/fury-router/fury-router.ser
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { PHashService } from '../../../services/intelligence/phash.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
+import { NonceService } from '../../../services/nonce/nonce.service';
 import { ProofMediaType } from './dto';
 import { ProofsService } from './proofs.service';
 
@@ -17,6 +18,7 @@ describe('ProofsController', () => {
   let mockTruthLog: jest.Mocked<Pick<TruthLogService, 'appendEvent'>>;
   let mockPhash: jest.Mocked<Pick<PHashService, 'computeFrameHash' | 'isDuplicate'>>;
   let mockAnomaly: jest.Mocked<Pick<AnomalyService, 'analyze'>>;
+  let mockNonce: jest.Mocked<Pick<NonceService, 'generateNonce' | 'verifyNonce' | 'consumeNonce'>>;
   let mockProofsService: jest.Mocked<Pick<ProofsService, 'getProofUploadContractAccess' | 'getProofUploadConfirmationAccess' | 'getProofDetail'>>;
 
   beforeEach(() => {
@@ -34,6 +36,11 @@ describe('ProofsController', () => {
     mockAnomaly = {
       analyze: jest.fn(),
     };
+    mockNonce = {
+      generateNonce: jest.fn(),
+      verifyNonce: jest.fn(),
+      consumeNonce: jest.fn(),
+    };
     mockProofsService = {
       getProofUploadContractAccess: jest.fn(),
       getProofUploadConfirmationAccess: jest.fn(),
@@ -48,6 +55,7 @@ describe('ProofsController', () => {
       mockPhash as unknown as PHashService,
       mockAnomaly as unknown as AnomalyService,
       mockProofsService as unknown as ProofsService,
+      mockNonce as unknown as NonceService,
     );
     jest.clearAllMocks();
   });

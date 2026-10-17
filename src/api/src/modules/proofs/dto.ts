@@ -28,11 +28,25 @@ export class ConfirmUploadDto {
   @IsString()
   storageKey!: string;
 
-  // NOTE: client-asserted biometric verification (biometricVerified/biometricType)
-  // was intentionally removed. The server must not trust a client claiming its own
-  // biometric check passed; that requires server-side attestation to be meaningful.
+  @ApiPropertyOptional({ description: 'Capture nonce from the native camera challenge flow' })
+  @IsOptional()
+  @IsString()
+  captureNonce?: string;
+
   @ApiPropertyOptional({ description: 'Hardware/Device metadata for sensory integrity verification' })
   @IsOptional()
   @IsObject()
   deviceMetadata?: Record<string, any>;
+}
+
+export class ChallengeNonceDto {
+  @ApiProperty({ description: 'Contract ID for which the nonce is requested' })
+  @IsString()
+  contractId!: string;
+}
+
+export class VerifyNonceDto {
+  @ApiProperty({ description: 'The nonce string to verify' })
+  @IsString()
+  nonce!: string;
 }

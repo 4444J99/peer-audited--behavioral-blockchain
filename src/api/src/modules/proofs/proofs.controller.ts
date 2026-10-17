@@ -13,7 +13,8 @@ import { FuryRouterService } from '../../../services/fury-router/fury-router.ser
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
 import { PHashService } from '../../../services/intelligence/phash.service';
 import { AnomalyService } from '../../../services/anomaly/anomaly.service';
-import { RequestUploadUrlDto, ConfirmUploadDto } from './dto';
+import { NonceService } from '../../../services/nonce/nonce.service';
+import { RequestUploadUrlDto, ConfirmUploadDto, ChallengeNonceDto } from './dto';
 import { ProofsService } from './proofs.service';
 
 @ApiTags('Proofs')
@@ -28,7 +29,32 @@ export class ProofsController {
     private readonly phash: PHashService,
     private readonly anomaly: AnomalyService,
     private readonly proofsService: ProofsService,
+    private readonly nonceService: NonceService,
   ) {}
+
+  @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
+  @Post('challenge-nonce')
+  @ApiOperation({ summary: 'Request a capture nonce for native camera proof integrity' })
+  @Throttle({ default: { ttl: 60000, limit: 30 } })
+  async requestChallengeNonce(
+    @CurrentUser() user: { id: string },
+    @Body() dto: ChallengeNonceDto,
+  ) {
+    const contractAccess = await this.proofsService.getProofUploadContractAccess(dto.contractId, {
+      userId: user.id,
+    });
+
+    if (contractAccess.status !== 'ACTIVE') {
+      throw new BadRequestException('Proof submission is only allowed for active contracts');
+    }
+
+    const { nonce, raw, expiresAt } = await this.nonceService.generateNonce(
+      dto.contractId,
+      user.id,
+    );
+
+    return { nonce, raw, expiresAt, ttlSeconds: 120 };
+  }
 
   @UseGuards(AuthGuard, GeofenceGuard, ComplianceAccessGuard, BannedUserGuard)
   @Post('upload-url')
@@ -82,19 +108,30 @@ export class ProofsController {
       throw new BadRequestException(`Proof is in state '${proofAccess.status}', expected 'PENDING_UPLOAD'`);
     }
 
-    // TKT-P0-002: Native Camera Proof Integrity
+    // Nonce verification: if a capture nonce was provided, verify it
+    if (dto.captureNonce) {
+      const nonceValid = await this.nonceService.verifyNonce(
+        dto.captureNonce,
+        proofAccess.contractId,
+        proofAccess.ownerUserId,
+      );
+      if (!nonceValid) {
+        throw new BadRequestException('Capture nonce verification failed — proof rejected');
+      }
+      await this.nonceService.consumeNonce(dto.captureNonce, proofId);
+      await this.truthLog.appendEvent('PROOF_NONCE_VERIFIED', {
+        proofId,
+        contractId: proofAccess.contractId,
+        userId: proofAccess.ownerUserId,
+      });
+    }
+
     const mediaBuffer = await this.r2.downloadFile(dto.storageKey);
-    
+
     // 1. Anomaly & Sensory Integrity Check
     const anomalyResult = await this.anomaly.analyze(mediaBuffer, user.id, dto.storageKey);
     const combinedFlags = [...(anomalyResult.flags || [])];
 
-    // 1a. Honor the anomaly screen's verdict. When the sensory-integrity check
-    // rejects the media (e.g. SOFTWARE_MANIPULATION_DETECTED / EXIF_TIMESTAMP_
-    // DISCREPANCY / STRIPPED_METADATA), do NOT route it into the Fury network as a
-    // normal submission — that would let edited/tampered media earn a stake. Park it
-    // in MANUAL_REVIEW (distinguishable from a normally-queued PENDING_REVIEW proof)
-    // for human triage, with an atomic truth-log audit event.
     if (anomalyResult.rejected) {
       const client = await this.pool.connect();
       try {
@@ -127,11 +164,6 @@ export class ProofsController {
     }
 
     // 2. pHash Duplicate Detection
-    // Screen for CROSS-contract media reuse: a user must not be able to re-submit
-    // the same media against a different contract. We compare this proof's media
-    // against all of the SAME user's other proofs (across every contract),
-    // excluding the current proof id. Scoping to the contract only (the prior bug)
-    // would let a user recycle one clip across many contracts undetected.
     let isDuplicate = false;
     let pHashFailed = false;
     try {
@@ -156,9 +188,6 @@ export class ProofsController {
         );
       }
     } catch (e) {
-      // Fail closed: if we cannot compute/compare a perceptual hash (e.g. malformed
-      // or unparseable media), we must NOT silently accept the proof — that would
-      // let an attacker bypass dedup by submitting media that breaks hashing.
       pHashFailed = true;
       combinedFlags.push('PHASH_PROCESSING_ERROR');
     }
@@ -169,13 +198,6 @@ export class ProofsController {
     }
 
     if (pHashFailed) {
-      // Quarantine for manual review rather than auto-accepting unhashable media.
-      // Use a DISTINCT status ('MANUAL_REVIEW') so the proof is not indistinguishable
-      // from a normally-queued PENDING_REVIEW proof and is never silently orphaned:
-      // it is explicitly parked for a human to triage (it is intentionally NOT routed
-      // to the Fury network, since we could not run dedup). Wrap the status UPDATE and
-      // the truth-log append in a single transaction so the quarantine and its audit
-      // event commit (or roll back) atomically.
       const client = await this.pool.connect();
       try {
         await client.query('BEGIN');
@@ -206,10 +228,7 @@ export class ProofsController {
       );
     }
 
-    // 3. Finalize Proof with Anomaly Metadata.
-    // Client-asserted biometric verification is NOT trusted: a client could set
-    // biometricVerified/biometricType arbitrarily. These are only meaningful when
-    // backed by server-side attestation, so we do not persist them here.
+    // 3. Finalize Proof with Anomaly Metadata
     await this.pool.query(
       `UPDATE proofs
        SET status = 'PENDING_REVIEW',
@@ -285,25 +304,8 @@ export class ProofsController {
     @Headers('x-proof-challenge') proofChallenge: string | undefined,
     @Body() dto: { status: 'COMPLETED' | 'FAILED', error?: string, maskedMediaUri?: string },
   ) {
-    // Service-to-service only: this callback marks proofs COMPLETED and must NOT be
-    // reachable by arbitrary end users (IDOR). It is no longer behind the user
-    // AuthGuard; instead it requires a shared internal token verified in constant
-    // time. Fail closed if the token is not configured.
     this.assertInternalCaller(internalToken);
 
-    // SH15: the shared internal token alone is not enough. A single leaked token
-    // must NOT let a caller mark ANY proofId COMPLETED/FAILED or plant masked
-    // media. We add per-proof scoping: the caller must also present the proof's
-    // own `challenge_token` (issued when this specific proof was dispatched for
-    // processing), validated in constant time, and the proof must currently be in
-    // an in-flight processing state. This binds the call to one specific proof, so
-    // a leaked global token cannot be replayed against arbitrary proofs.
-    //
-    // NOTE: the dispatch side (the video-processing service that enqueues a proof)
-    // is responsible for issuing the per-proof `challenge_token` and moving
-    // `processing_status` into an in-flight state ('IN_PROGRESS'/'PENDING'/
-    // 'PROCESSING') at dispatch time. This callback fails closed if that has not
-    // happened, so a proof can never be finalized without a matching dispatch.
     const proofResult = await this.pool.query(
       'SELECT user_id, challenge_token, processing_status FROM proofs WHERE id = $1',
       [proofId],
@@ -314,9 +316,6 @@ export class ProofsController {
     const { challenge_token: expectedChallenge, processing_status: currentProcessingStatus } =
       proofResult.rows[0];
 
-    // The proof must have an issued challenge token and be in-flight; otherwise this
-    // callback has no business mutating it (prevents re-driving an already-finalized
-    // or never-dispatched proof).
     if (!expectedChallenge) {
       throw new ForbiddenException('Proof is not awaiting a processing callback');
     }
@@ -331,8 +330,6 @@ export class ProofsController {
     }
     this.assertProofChallenge(proofChallenge, expectedChallenge);
 
-    // Per-proof scoping passed: clear the challenge token as we finalize so the
-    // callback is single-use and cannot be replayed against this proof.
     await this.pool.query(
       `UPDATE proofs
        SET processing_status = $1,
@@ -346,11 +343,6 @@ export class ProofsController {
     return { success: true };
   }
 
-  /**
-   * Validate a service-to-service caller for internal callbacks.
-   * Fails closed (503) when the internal token is not configured, and rejects
-   * (403) any caller that does not present the exact token (constant-time compare).
-   */
   private assertInternalCaller(presentedToken: string | undefined): void {
     const expected = process.env.INTERNAL_SERVICE_TOKEN;
     if (!expected) {
@@ -367,12 +359,6 @@ export class ProofsController {
     }
   }
 
-  /**
-   * SH15: Validate the per-proof challenge token presented by the processing
-   * service against the value stored for THIS proof, in constant time. This binds
-   * an internal callback to a single specific proofId so a leaked global service
-   * token cannot be used to finalize or plant masked media on arbitrary proofs.
-   */
   private assertProofChallenge(presented: string | undefined, expected: string): void {
     if (!presented) {
       throw new ForbiddenException('Missing per-proof challenge token');
