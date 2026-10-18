@@ -116,4 +116,5 @@ promote a proposal into a deployment claim.
 
 ## Recent workflow receipts
 
+- 2026-10-18: Styx CI/CD Pipeline workflow succeeded (run [39089497151](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/39089497151), head `820ebeb41b9c574265bb000dc16e37068837258c`). Exact-head, no force-push, no bypass. Prototype boundaries preserved.
 - 2026-10-18: Release Drafter workflow succeeded (run [39089478587](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/39089478587), head `d8334c672b36397b7eca9daf04c3803283a0fc56`). Exact-head, no force-push, no bypass. Prototype boundaries preserved.
