@@ -28,6 +28,27 @@ describe('FuryWorker', () => {
     jest.clearAllMocks();
   });
 
+  describe('process', () => {
+    it('deduplicates candidate Furies and uses ON CONFLICT (proof_id, fury_user_id) DO NOTHING on insert', async () => {
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ id: 'fury-1' }, { id: 'fury-1' }, { id: 'fury-2' }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      await (worker as any).process({
+        data: { proofId: 'proof-route-1', submitterUserId: 'submitter-1', requiredReviewers: 2 },
+      });
+
+      const insertCalls = mockPool.query.mock.calls.filter(
+        (c) => typeof c[0] === 'string' && c[0].includes('INSERT INTO fury_assignments'),
+      );
+      expect(insertCalls).toHaveLength(2);
+      expect(insertCalls[0][0]).toContain('ON CONFLICT (proof_id, fury_user_id) DO NOTHING');
+      expect(insertCalls[0][1]).toEqual(['proof-route-1', 'fury-1', 'Subject_submitte']);
+      expect(insertCalls[1][1]).toEqual(['proof-route-1', 'fury-2', 'Subject_submitte']);
+    });
+  });
+
   describe('checkConsensus', () => {
     it('should not trigger consensus if not all Furies have voted', async () => {
       mockPool.query.mockResolvedValueOnce({
@@ -653,6 +674,109 @@ describe('FuryWorker', () => {
       );
       expect(rewardCalls).toHaveLength(0);
       expect(penaltyCalls).toHaveLength(0);
+    });
+
+    it('deduplicates duplicate fury_assignments rows so each distinct reviewer is weighted, scored, and demotion-checked only once', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { fury_user_id: 'fury-dup', verdict: 'PASS' },
+          { fury_user_id: 'fury-dup', verdict: 'PASS' },
+          { fury_user_id: 'fury-2', verdict: 'PASS' },
+          { fury_user_id: 'fury-3', verdict: 'PASS' },
+        ],
+      });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-dup-rows' }] });
+      // proofs
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ is_honeypot: false, contract_id: 'c-dup' }],
+      });
+      (mockConsensus.evaluate as jest.Mock).mockResolvedValueOnce({
+        outcome: 'VERIFIED',
+        votes: [
+          { furyUserId: 'fury-dup', verdict: 'PASS' },
+          { furyUserId: 'fury-2', verdict: 'PASS' },
+          { furyUserId: 'fury-3', verdict: 'PASS' },
+        ],
+        flaggedFuries: [],
+      });
+      // UPDATE proofs
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Accuracy tracking: 3 distinct furies (not 4)
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Demotion check stats: 3 distinct furies (not 4)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      // Notification
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-dup' }] });
+
+      await worker.checkConsensus('proof-dup-rows');
+
+      expect(mockConsensus.evaluate).toHaveBeenCalledWith(
+        'proof-dup-rows',
+        [
+          { furyUserId: 'fury-dup', verdict: 'PASS' },
+          { furyUserId: 'fury-2', verdict: 'PASS' },
+          { furyUserId: 'fury-3', verdict: 'PASS' },
+        ],
+        false,
+        'FAIL',
+      );
+
+      const rewardCalls = mockPool.query.mock.calls.filter(
+        (c) => typeof c[0] === 'string' && c[0].includes('integrity_score + 2'),
+      );
+      expect(rewardCalls).toHaveLength(3);
+      expect(rewardCalls.map((c) => c[1][0])).toEqual(['fury-dup', 'fury-2', 'fury-3']);
+    });
+
+    it('fails closed to SPLIT without accuracy scoring when a reviewer has conflicting duplicate verdicts', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { fury_user_id: 'fury-conflict', verdict: 'PASS' },
+          { fury_user_id: 'fury-conflict', verdict: 'FAIL' },
+          { fury_user_id: 'fury-2', verdict: 'PASS' },
+          { fury_user_id: 'fury-3', verdict: 'PASS' },
+        ],
+      });
+      // claim resolution
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-conflict-rows' }] });
+      // proofs
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ is_honeypot: false, contract_id: 'c-conflict' }],
+      });
+      (mockConsensus.evaluate as jest.Mock).mockResolvedValueOnce({
+        outcome: 'SPLIT',
+        votes: [
+          { furyUserId: 'fury-2', verdict: 'PASS' },
+          { furyUserId: 'fury-3', verdict: 'PASS' },
+        ],
+        flaggedFuries: [],
+      });
+      // UPDATE proofs -> SPLIT
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Demotion check stats for non-conflicting distinct furies (fury-2, fury-3)
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+      // Notification
+      mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-conflict' }] });
+
+      await worker.checkConsensus('proof-conflict-rows');
+
+      expect(mockContractsService.resolveContract).not.toHaveBeenCalled();
+
+      const updateCall = mockPool.query.mock.calls[3];
+      expect(updateCall[0]).toMatch(/UPDATE proofs SET status/);
+      expect(updateCall[1]).toEqual(['SPLIT', 'proof-conflict-rows']);
+
+      const scoreCalls = mockPool.query.mock.calls.filter(
+        (c) => typeof c[0] === 'string' &&
+          (c[0].includes('integrity_score + 2') || c[0].includes('integrity_score - 5')),
+      );
+      expect(scoreCalls).toHaveLength(0);
     });
   });
 });

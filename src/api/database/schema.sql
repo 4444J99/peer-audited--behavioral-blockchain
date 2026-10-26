@@ -210,7 +210,8 @@ CREATE TABLE fury_assignments (
     rejection_code TEXT,
     reviewed_at TIMESTAMPTZ,
     assigned_at TIMESTAMPTZ DEFAULT NOW(),
-    subject_alias TEXT
+    subject_alias TEXT,
+    CONSTRAINT uq_fury_assignments_proof_reviewer UNIQUE (proof_id, fury_user_id)
 );
 
 CREATE TABLE notifications (

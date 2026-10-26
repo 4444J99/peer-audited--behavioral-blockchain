@@ -175,6 +175,32 @@ describe("Consensus Resolution", () => {
     // breachConfidence = 0.5 / 2.5 = 0.2 < 0.33 → CLEAN
     expect(resolver.resolve(decisions)).toBe("CLEAN");
   });
+
+  it("deduplicates duplicate auditorId entries with the same decision so a single auditor cannot double-weight", () => {
+    const resolver = new ConsensusResolver();
+    // Without deduplication, 'a' (BREACH) repeated 3x would have 3.0 vs 2.0 CLEAN (60% -> UNCERTAIN instead of CLEAN)
+    // or if repeated 5x would flip CLEAN to BREACH.
+    const decisions = [
+      { auditorId: "a", integrityScore: 1.0, decision: "BREACH" as const },
+      { auditorId: "a", integrityScore: 1.0, decision: "BREACH" as const },
+      { auditorId: "a", integrityScore: 1.0, decision: "BREACH" as const },
+      { auditorId: "b", integrityScore: 1.5, decision: "CLEAN" as const },
+      { auditorId: "c", integrityScore: 1.5, decision: "CLEAN" as const },
+    ];
+    // Deduplicated: a=1.0 BREACH, b=1.5 CLEAN, c=1.5 CLEAN -> breachConfidence = 1.0 / 4.0 = 0.25 <= 0.33 -> CLEAN
+    expect(resolver.resolve(decisions)).toBe("CLEAN");
+  });
+
+  it("fails closed to UNCERTAIN when the same auditorId submits conflicting decisions", () => {
+    const resolver = new ConsensusResolver();
+    const decisions = [
+      { auditorId: "a", integrityScore: 1.0, decision: "BREACH" as const },
+      { auditorId: "a", integrityScore: 1.0, decision: "CLEAN" as const },
+      { auditorId: "b", integrityScore: 1.0, decision: "BREACH" as const },
+      { auditorId: "c", integrityScore: 1.0, decision: "BREACH" as const },
+    ];
+    expect(resolver.resolve(decisions)).toBe("UNCERTAIN");
+  });
 });
 
 describe("Honeypot Engine", () => {
