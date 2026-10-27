@@ -167,13 +167,14 @@ export class FuryRouterWorker implements OnModuleInit {
       // Use a crypto-random alias so the mask is unpredictable / non-enumerable.
       // ON CONFLICT (proof_id, fury_user_id) DO NOTHING makes replayed/concurrent
       // routing idempotent under the unique assignment constraint.
-      for (const fury of selectedFuries) {
+      for (const fury of selectedFuries.slice(0, requiredReviewers)) {
         const alias = `Target_${randomUUID().slice(0, 8)}`;
         await client.query(
           `INSERT INTO fury_assignments (proof_id, fury_user_id, subject_alias)
-           VALUES ($1, $2, $3)
+           SELECT $1, $2, $3
+           WHERE (SELECT COUNT(*) FROM fury_assignments WHERE proof_id = $1) < $4
            ON CONFLICT (proof_id, fury_user_id) DO NOTHING`,
-          [proofId, fury.id, alias],
+          [proofId, fury.id, alias, requiredReviewers],
         );
       }
 

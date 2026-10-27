@@ -162,7 +162,7 @@ describe('FuryRouterWorker', () => {
     );
     expect(insertCalls).toHaveLength(2);
     expect(insertCalls[0][0]).toContain('ON CONFLICT (proof_id, fury_user_id) DO NOTHING');
-    expect(insertCalls[0][1]).toEqual(['proof-dedup', 'fury-1', expect.stringMatching(/^Target_/)]);
-    expect(insertCalls[1][1]).toEqual(['proof-dedup', 'fury-2', expect.stringMatching(/^Target_/)]);
+    expect(insertCalls[0][1]).toEqual(['proof-dedup', 'fury-1', expect.stringMatching(/^Target_/), 2]);
+    expect(insertCalls[1][1]).toEqual(['proof-dedup', 'fury-2', expect.stringMatching(/^Target_/), 2]);
   });
 });

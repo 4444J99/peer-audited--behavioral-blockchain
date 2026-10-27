@@ -33,6 +33,7 @@ describe('FuryWorker', () => {
       mockPool.query
         .mockResolvedValueOnce({ rows: [{ id: 'fury-1' }, { id: 'fury-1' }, { id: 'fury-2' }] })
         .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] });
 
       await (worker as any).process({
@@ -44,8 +45,23 @@ describe('FuryWorker', () => {
       );
       expect(insertCalls).toHaveLength(2);
       expect(insertCalls[0][0]).toContain('ON CONFLICT (proof_id, fury_user_id) DO NOTHING');
-      expect(insertCalls[0][1]).toEqual(['proof-route-1', 'fury-1', 'Subject_submitte']);
-      expect(insertCalls[1][1]).toEqual(['proof-route-1', 'fury-2', 'Subject_submitte']);
+      expect(insertCalls[0][1]).toEqual(['proof-route-1', 'fury-1', 'Subject_submitte', 2]);
+      expect(insertCalls[1][1]).toEqual(['proof-route-1', 'fury-2', 'Subject_submitte', 2]);
+    });
+
+    it('does not finalize routing when duplicate candidate rows leave fewer than requiredReviewers distinct Furies', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'fury-1' }, { id: 'fury-1' }],
+      });
+
+      await (worker as any).process({
+        data: { proofId: 'proof-route-short', submitterUserId: 'submitter-1', requiredReviewers: 2 },
+      });
+
+      const insertCalls = mockPool.query.mock.calls.filter(
+        (c) => typeof c[0] === 'string' && c[0].includes('INSERT INTO fury_assignments'),
+      );
+      expect(insertCalls).toHaveLength(0);
     });
   });
 

@@ -71,11 +71,6 @@ export class FuryWorker implements OnModuleInit {
       [submitterUserId, requiredReviewers],
     );
 
-    if (eligibleResult.rows.length === 0) {
-      this.logger.warn(`No eligible Furies found for proof ${proofId}`);
-      return;
-    }
-
     const seenFuryIds = new Set<string>();
     const uniqueEligibleRows = eligibleResult.rows.filter((row: { id: string }) => {
       if (seenFuryIds.has(row.id)) return false;
@@ -83,13 +78,21 @@ export class FuryWorker implements OnModuleInit {
       return true;
     });
 
+    if (uniqueEligibleRows.length < requiredReviewers) {
+      this.logger.warn(
+        `Insufficient distinct eligible Furies (${uniqueEligibleRows.length}/${requiredReviewers}) found for proof ${proofId}`,
+      );
+      return;
+    }
+
     // 2. Create fury_assignments with anonymized subject_alias (idempotent on (proof_id, fury_user_id))
-    for (const row of uniqueEligibleRows) {
+    for (const row of uniqueEligibleRows.slice(0, requiredReviewers)) {
       await this.pool.query(
         `INSERT INTO fury_assignments (proof_id, fury_user_id, subject_alias)
-         VALUES ($1, $2, $3)
+         SELECT $1, $2, $3
+         WHERE (SELECT COUNT(*) FROM fury_assignments WHERE proof_id = $1) < $4
          ON CONFLICT (proof_id, fury_user_id) DO NOTHING`,
-        [proofId, row.id, `Subject_${submitterUserId.substring(0, 8)}`],
+        [proofId, row.id, `Subject_${submitterUserId.substring(0, 8)}`, requiredReviewers],
       );
     }
 
@@ -186,8 +189,10 @@ export class FuryWorker implements OnModuleInit {
         [proofStatus, proofId],
       );
 
-      // Grade honeypot performance via HoneypotService (nuanced ±5 scoring)
-      if (is_honeypot && this.honeypotService) {
+      // Grade honeypot performance via HoneypotService (nuanced ±5 scoring).
+      // Fail closed when duplicate rows contain conflicting verdicts so conflicted
+      // reviewers cannot be treated as unflagged/correct and earn integrity bonuses.
+      if (is_honeypot && this.honeypotService && !hasConflictingVerdicts) {
         try {
           await this.honeypotService.gradeHoneypotPerformance(proofId, result.flaggedFuries);
         } catch (err) {

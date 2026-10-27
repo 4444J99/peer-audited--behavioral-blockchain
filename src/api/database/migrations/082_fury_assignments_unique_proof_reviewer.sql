@@ -1,9 +1,37 @@
 -- 082: Enforce one Fury assignment per (proof_id, fury_user_id)
--- Deduplicate any pre-existing duplicate (proof_id, fury_user_id) rows before adding
--- the uniqueness constraint, preserving rows that already carry a verdict first,
--- then the earliest assigned row, without deleting unrelated proof/reviewer history.
+-- Lock fury_assignments to prevent concurrent routing writers from inserting duplicates
+-- between cleanup and constraint installation. Fail closed on opposite non-null duplicate
+-- verdicts by routing affected unresolved proofs to SPLIT and clearing the conflicting
+-- verdicts before deduplicating.
 DO $$
 BEGIN
+  LOCK TABLE fury_assignments IN SHARE ROW EXCLUSIVE MODE;
+
+  DELETE FROM fury_assignments
+  WHERE proof_id IS NULL
+     OR fury_user_id IS NULL;
+
+  WITH conflicting_pairs AS (
+    SELECT proof_id, fury_user_id
+    FROM fury_assignments
+    WHERE verdict IS NOT NULL
+    GROUP BY proof_id, fury_user_id
+    HAVING COUNT(DISTINCT verdict) > 1
+  ),
+  mark_split_proofs AS (
+    UPDATE proofs p
+    SET status = 'SPLIT'
+    FROM conflicting_pairs cp
+    WHERE p.id = cp.proof_id
+      AND p.status IN ('PENDING_REVIEW', 'IN_REVIEW', 'UNDER_REVIEW', 'RESOLVING')
+  )
+  UPDATE fury_assignments fa
+  SET verdict = NULL,
+      reviewed_at = NULL
+  FROM conflicting_pairs cp
+  WHERE fa.proof_id = cp.proof_id
+    AND fa.fury_user_id = cp.fury_user_id;
+
   WITH ranked_assignments AS (
     SELECT
       id,
@@ -16,13 +44,15 @@ BEGIN
           id ASC
       ) AS duplicate_rank
     FROM fury_assignments
-    WHERE proof_id IS NOT NULL
-      AND fury_user_id IS NOT NULL
   )
   DELETE FROM fury_assignments fa
   USING ranked_assignments ra
   WHERE fa.id = ra.id
     AND ra.duplicate_rank > 1;
+
+  ALTER TABLE fury_assignments
+    ALTER COLUMN proof_id SET NOT NULL,
+    ALTER COLUMN fury_user_id SET NOT NULL;
 
   IF NOT EXISTS (
     SELECT 1
