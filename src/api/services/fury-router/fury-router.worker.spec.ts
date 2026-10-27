@@ -139,4 +139,30 @@ describe('FuryRouterWorker', () => {
     expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
     expect(mockClient.query).not.toHaveBeenCalledWith('ROLLBACK');
   });
+
+  it('deduplicates candidate Furies before quorum check and uses ON CONFLICT DO NOTHING on insert', async () => {
+    mockClient.query
+      .mockResolvedValueOnce(undefined) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ last_known_state: null, social_guild_id: null, enterprise_id: null }] })
+      .mockResolvedValueOnce({ rows: [] }) // No partners
+      .mockResolvedValueOnce({ rows: [{ id: 'fury-1' }, { id: 'fury-1' }, { id: 'fury-2' }] }) // 3 rows but only 2 distinct
+      .mockResolvedValueOnce(undefined) // INSERT fury-1
+      .mockResolvedValueOnce(undefined) // INSERT fury-2
+      .mockResolvedValueOnce(undefined) // UPDATE proof
+      .mockResolvedValueOnce(undefined); // COMMIT
+
+    await processJob({
+      proofId: 'proof-dedup',
+      submitterUserId: 'user-5',
+      requiredReviewers: 2,
+    });
+
+    const insertCalls = mockClient.query.mock.calls.filter(
+      (c: any[]) => typeof c[0] === 'string' && c[0].includes('INSERT INTO fury_assignments'),
+    );
+    expect(insertCalls).toHaveLength(2);
+    expect(insertCalls[0][0]).toContain('ON CONFLICT (proof_id, fury_user_id) DO NOTHING');
+    expect(insertCalls[0][1]).toEqual(['proof-dedup', 'fury-1', expect.stringMatching(/^Target_/), 2]);
+    expect(insertCalls[1][1]).toEqual(['proof-dedup', 'fury-2', expect.stringMatching(/^Target_/), 2]);
+  });
 });

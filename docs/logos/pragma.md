@@ -10,6 +10,7 @@ Styx exists as a TypeScript-based monorepo managed by Turborepo.
 - **Desktop**: Tauri admin interface for dispute resolution and collusion ring triage.
 
 ### Recent Hardening
+- **Fury Assignment Uniqueness & Vote Normalization**: Enforced unique (proof_id, fury_user_id) assignment constraints, idempotent routing, reviewer vote deduplication, and fail-closed SPLIT conflict resolution.
 - **Double-Entry Enforcement**: `STAKE_SLASH` penalties post real compensating debits from auditor accounts to `SYSTEM_REVENUE`.
 - **Financial Invariant Monitoring**: Sentry financial alerts wired to ledger quarantines and catastrophic outbox failures.
 - **Native Camera Attestation**: Integrated `expo-camera` with live sensor viewfinder, zero gallery access, and cryptographic watermarks.

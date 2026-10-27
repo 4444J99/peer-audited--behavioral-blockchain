@@ -2,7 +2,7 @@ import { Injectable, Inject, OnModuleInit, Logger, forwardRef, Optional } from '
 import { Worker, Job } from 'bullmq';
 import { Pool } from 'pg';
 import { FURY_ROUTER_QUEUE_NAME, getRedisConnectionConfig } from '../../../config/queue.config';
-import { ConsensusEngine, FuryVote } from './consensus.engine';
+import { ConsensusEngine, FuryVote, normalizeFuryVotes } from './consensus.engine';
 import { ContractsService } from '../contracts/contracts.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { LedgerService } from '../../../services/ledger/ledger.service';
@@ -71,16 +71,28 @@ export class FuryWorker implements OnModuleInit {
       [submitterUserId, requiredReviewers],
     );
 
-    if (eligibleResult.rows.length === 0) {
-      this.logger.warn(`No eligible Furies found for proof ${proofId}`);
+    const seenFuryIds = new Set<string>();
+    const uniqueEligibleRows = eligibleResult.rows.filter((row: { id: string }) => {
+      if (seenFuryIds.has(row.id)) return false;
+      seenFuryIds.add(row.id);
+      return true;
+    });
+
+    if (uniqueEligibleRows.length < requiredReviewers) {
+      this.logger.warn(
+        `Insufficient distinct eligible Furies (${uniqueEligibleRows.length}/${requiredReviewers}) found for proof ${proofId}`,
+      );
       return;
     }
 
-    // 2. Create fury_assignments with anonymized subject_alias
-    for (const row of eligibleResult.rows) {
+    // 2. Create fury_assignments with anonymized subject_alias (idempotent on (proof_id, fury_user_id))
+    for (const row of uniqueEligibleRows.slice(0, requiredReviewers)) {
       await this.pool.query(
-        `INSERT INTO fury_assignments (proof_id, fury_user_id, subject_alias) VALUES ($1, $2, $3)`,
-        [proofId, row.id, `Subject_${submitterUserId.substring(0, 8)}`],
+        `INSERT INTO fury_assignments (proof_id, fury_user_id, subject_alias)
+         SELECT $1, $2, $3
+         WHERE (SELECT COUNT(*) FROM fury_assignments WHERE proof_id = $1) < $4
+         ON CONFLICT (proof_id, fury_user_id) DO NOTHING`,
+        [proofId, row.id, `Subject_${submitterUserId.substring(0, 8)}`, requiredReviewers],
       );
     }
 
@@ -91,7 +103,7 @@ export class FuryWorker implements OnModuleInit {
     );
 
     this.logger.log(
-      `Assigned ${eligibleResult.rows.length} Furies to proof ${proofId}`,
+      `Assigned ${uniqueEligibleRows.length} Furies to proof ${proofId}`,
     );
   }
 
@@ -144,12 +156,25 @@ export class FuryWorker implements OnModuleInit {
       const expectedVerdict: 'PASS' | 'FAIL' =
         is_honeypot && proofResult.rows[0].honeypot_expected_verdict === 'PASS' ? 'PASS' : 'FAIL';
 
-      const votes: FuryVote[] = assignments.rows.map((r) => ({
+      const rawVotes: FuryVote[] = assignments.rows.map((r) => ({
         furyUserId: r.fury_user_id,
         verdict: r.verdict,
       }));
+      const { votes, hasConflictingVerdicts } = normalizeFuryVotes(rawVotes);
 
-      const result = await this.consensusEngine.evaluate(proofId, votes, is_honeypot, expectedVerdict);
+      const evaluatedResult = await this.consensusEngine.evaluate(
+        proofId,
+        hasConflictingVerdicts ? rawVotes : votes,
+        is_honeypot,
+        expectedVerdict,
+      );
+      const outcome = hasConflictingVerdicts ? 'SPLIT' : evaluatedResult.outcome;
+      const flaggedFuries = Array.from(new Set(evaluatedResult.flaggedFuries));
+      const result = {
+        ...evaluatedResult,
+        outcome,
+        flaggedFuries,
+      };
 
       // Update proof status based on consensus
       const proofStatus =
@@ -164,8 +189,10 @@ export class FuryWorker implements OnModuleInit {
         [proofStatus, proofId],
       );
 
-      // Grade honeypot performance via HoneypotService (nuanced ±5 scoring)
-      if (is_honeypot && this.honeypotService) {
+      // Grade honeypot performance via HoneypotService (nuanced ±5 scoring).
+      // Fail closed when duplicate rows contain conflicting verdicts so conflicted
+      // reviewers cannot be treated as unflagged/correct and earn integrity bonuses.
+      if (is_honeypot && this.honeypotService && !hasConflictingVerdicts) {
         try {
           await this.honeypotService.gradeHoneypotPerformance(proofId, result.flaggedFuries);
         } catch (err) {
@@ -357,7 +384,8 @@ export class FuryWorker implements OnModuleInit {
 
     // For honeypot proofs, penalize flagged Furies financially
     if (isHoneypot) {
-      for (const furyId of result.flaggedFuries) {
+      const uniqueFlaggedFuries = Array.from(new Set(result.flaggedFuries));
+      for (const furyId of uniqueFlaggedFuries) {
         const furyUser = await this.pool.query(
           `SELECT account_id FROM users WHERE id = $1`,
           [furyId],
@@ -402,8 +430,10 @@ export class FuryWorker implements OnModuleInit {
       return;
     }
 
+    const { votes: uniqueVotes } = normalizeFuryVotes(votes);
+
     // For regular proofs with clear outcome, reward/penalize each voter
-    for (const vote of votes) {
+    for (const vote of uniqueVotes) {
       const wasCorrect =
         (result.outcome === 'VERIFIED' && vote.verdict === 'PASS') ||
         (result.outcome === 'REJECTED' && vote.verdict === 'FAIL');
