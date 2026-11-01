@@ -116,6 +116,7 @@ promote a proposal into a deployment claim.
 
 ## Recent workflow receipts
 
+- 2026-11-01: Release Drafter workflow succeeded (run [41303365907](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/41303365907), head `0f60b92fe6606614ab478763ddbfd0d62b62f2f2`). Exact-head, no force-push, no bypass. Prototype boundaries preserved. See [receipt](green-progress-receipt--2026-11-01-release-drafter-on-pages-receipt.md).
 - 2026-11-01: Release Drafter workflow succeeded (run [41303349827](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/41303349827), head `a48141ac0316527498ceeee7ff640334ca5d1bf3`). Exact-head, no force-push, no bypass. Prototype boundaries preserved.
 - 2026-11-01: Release Drafter workflow succeeded (run [41303322746](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/41303322746), head `647a9b5ee723755655f4589b3d35157c4e2e42f8`). Exact-head, no force-push, no bypass. Prototype boundaries preserved.
 - 2026-11-01: Secret Scan workflow succeeded (run [41303256993](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/41303256993), head `16370f37b9f2551cc4c25dcd5243f687d1e3da8b`). Exact-head, no force-push, no bypass. Prototype boundaries preserved.
