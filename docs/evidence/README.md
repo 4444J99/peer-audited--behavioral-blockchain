@@ -116,6 +116,7 @@ promote a proposal into a deployment claim.
 
 ## Recent workflow receipts
 
+- 2026-11-01: Release Drafter workflow succeeded (run [41303322746](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/41303322746), head `647a9b5ee723755655f4589b3d35157c4e2e42f8`). Exact-head, no force-push, no bypass. Prototype boundaries preserved.
 - 2026-11-01: Secret Scan workflow succeeded (run [41303256993](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/41303256993), head `16370f37b9f2551cc4c25dcd5243f687d1e3da8b`). Exact-head, no force-push, no bypass. Prototype boundaries preserved.
 - 2026-11-01: Dependabot npm_and_yarn workflow succeeded (run [41303052887](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/41303052887), head `1e8aa228b99537fd4a958a3c0511ce6a217f8a2f`). Exact-head, no force-push, no bypass. Prototype boundaries preserved.
 - 2026-10-21: Dependabot npm_and_yarn workflow succeeded (run [39616897240](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/39616897240), head `53a20b3f65a7fe2a343b8627a39adc35d3205742`). Exact-head, no force-push, no bypass. Prototype boundaries preserved.
