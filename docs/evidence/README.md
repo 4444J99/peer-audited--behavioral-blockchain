@@ -116,6 +116,7 @@ promote a proposal into a deployment claim.
 
 ## Recent workflow receipts
 
+- 2026-11-01: Dependabot npm_and_yarn workflow succeeded for next (run [41388213458](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/41388213458), head `413ad09558b4bb12c1eb89fa1f438f78b5ab830c`). Exact-head, no force-push, no bypass. Prototype boundaries preserved. See [receipt](green-progress-receipt--2026-11-01-dependabot-npm-next.md).
 - 2026-11-01: CodeQL workflow succeeded (run [41303349902](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/41303349902), head `a48141ac0316527498ceeee7ff640334ca5d1bf3`). Exact-head, no force-push, no bypass. Prototype boundaries preserved. See [receipt](green-progress-receipt--2026-11-01-codeql.md).
 - 2026-11-01: Release Drafter workflow succeeded (run [41303365907](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/41303365907), head `0f60b92fe6606614ab478763ddbfd0d62b62f2f2`). Exact-head, no force-push, no bypass. Prototype boundaries preserved. See [receipt](green-progress-receipt--2026-11-01-release-drafter-on-pages-receipt.md).
 - 2026-11-01: Release Drafter workflow succeeded (run [41303349827](https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/41303349827), head `a48141ac0316527498ceeee7ff640334ca5d1bf3`). Exact-head, no force-push, no bypass. Prototype boundaries preserved.
