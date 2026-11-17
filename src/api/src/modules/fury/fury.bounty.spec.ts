@@ -383,4 +383,62 @@ describe('FuryWorker — Bounty Economy', () => {
     );
     expect(scoreCalls).toHaveLength(0);
   });
+
+  it('deduplicates duplicate assignment rows before disbursing bounties/penalties so a reviewer is only paid or penalized once', async () => {
+    // fury_assignments includes duplicate row for fury-1
+    mockPool.query.mockResolvedValueOnce({
+      rows: [
+        { fury_user_id: 'fury-1', verdict: 'PASS' },
+        { fury_user_id: 'fury-1', verdict: 'PASS' },
+        { fury_user_id: 'fury-2', verdict: 'FAIL' },
+      ],
+    });
+    // claim resolution
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'proof-dup-bounty' }] });
+    // proofs
+    mockPool.query.mockResolvedValueOnce({
+      rows: [{ is_honeypot: false, contract_id: 'contract-dup-bounty' }],
+    });
+    // ConsensusEngine
+    (mockConsensus.evaluate as jest.Mock).mockResolvedValueOnce({
+      outcome: 'VERIFIED',
+      votes: [
+        { furyUserId: 'fury-1', verdict: 'PASS' },
+        { furyUserId: 'fury-2', verdict: 'FAIL' },
+      ],
+      flaggedFuries: [],
+    });
+    // UPDATE proofs
+    mockPool.query.mockResolvedValueOnce({ rows: [] });
+    // LC5 idempotency guard: not yet applied
+    mockPool.query.mockResolvedValueOnce({ rows: [] });
+    // Accuracy tracking: 2 distinct furies
+    mockPool.query.mockResolvedValueOnce({ rows: [] });
+    mockPool.query.mockResolvedValueOnce({ rows: [] });
+    // System accounts
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'escrow-account' }] });
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'revenue-account' }] });
+    // Voter account lookups: 2 distinct furies
+    mockPool.query.mockResolvedValueOnce({ rows: [{ account_id: 'acct-f1' }] });
+    mockPool.query.mockResolvedValueOnce({ rows: [{ account_id: 'acct-f2' }] });
+    // Demotion check stats: 2 distinct furies
+    mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+    mockPool.query.mockResolvedValueOnce(demotionStatsMock);
+    // Notification
+    mockPool.query.mockResolvedValueOnce({ rows: [{ user_id: 'user-dup-bounty' }] });
+
+    await worker.checkConsensus('proof-dup-bounty');
+
+    expect(mockLedger.recordTransaction).toHaveBeenCalledTimes(2);
+    expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
+      'escrow-account', 'acct-f1', AUDITOR_STAKE_AMOUNT, 'contract-dup-bounty',
+      { type: 'FURY_BOUNTY', consensusProofId: 'proof-dup-bounty' },
+      undefined, 'consensus:proof-dup-bounty:fury-1:bounty',
+    );
+    expect(mockLedger.recordTransaction).toHaveBeenCalledWith(
+      'acct-f2', 'revenue-account', AUDITOR_STAKE_AMOUNT, 'contract-dup-bounty',
+      { type: 'FURY_PENALTY', consensusProofId: 'proof-dup-bounty' },
+      undefined, 'consensus:proof-dup-bounty:fury-2:penalty',
+    );
+  });
 });

@@ -26,6 +26,45 @@ export interface ConsensusResult {
   bountyDistributed: boolean;
 }
 
+export interface NormalizedFuryVotes {
+  votes: FuryVote[];
+  hasConflictingVerdicts: boolean;
+  conflictingFuryIds: string[];
+}
+
+/**
+ * Deduplicates repeated reviewer votes for the same proof.
+ * - Identical duplicate verdicts for a reviewer collapse to a single vote.
+ * - Opposite duplicate verdicts ('PASS' vs 'FAIL') for the same reviewer are
+ *   rejected from valid voting power and flagged so consensus fails closed (SPLIT).
+ */
+export function normalizeFuryVotes(votes: FuryVote[]): NormalizedFuryVotes {
+  const verdictByReviewer = new Map<string, Verdict>();
+  const conflictingReviewerSet = new Set<string>();
+  const deduplicated: FuryVote[] = [];
+
+  for (const vote of votes) {
+    const existing = verdictByReviewer.get(vote.furyUserId);
+    if (existing === undefined) {
+      verdictByReviewer.set(vote.furyUserId, vote.verdict);
+      deduplicated.push({ furyUserId: vote.furyUserId, verdict: vote.verdict });
+    } else if (existing !== vote.verdict) {
+      conflictingReviewerSet.add(vote.furyUserId);
+    }
+  }
+
+  const filteredVotes =
+    conflictingReviewerSet.size > 0
+      ? deduplicated.filter((vote) => !conflictingReviewerSet.has(vote.furyUserId))
+      : deduplicated;
+
+  return {
+    votes: filteredVotes,
+    hasConflictingVerdicts: conflictingReviewerSet.size > 0,
+    conflictingFuryIds: Array.from(conflictingReviewerSet),
+  };
+}
+
 @Injectable()
 export class ConsensusEngine {
   private readonly logger = new Logger(ConsensusEngine.name);
@@ -51,11 +90,13 @@ export class ConsensusEngine {
     isHoneypot: boolean,
     expectedVerdict: Verdict = 'FAIL',
   ): Promise<ConsensusResult> {
+    const { votes: uniqueVotes, hasConflictingVerdicts } = normalizeFuryVotes(votes);
+
     let totalPower = 0;
     let passPower = 0;
     let failPower = 0;
 
-    for (const vote of votes) {
+    for (const vote of uniqueVotes) {
       // Fetch Fury history to calculate weight. fury_assignments has no `status`
       // column; an audit is "completed" once it has a verdict on a finalized proof,
       // and "successful" when the verdict matched the proof's final consensus.
@@ -90,14 +131,15 @@ export class ConsensusEngine {
     }
 
     // Distinct voters present a quorum requirement; without enough voters (or with no
-    // weighted power at all) we cannot make a confident call and must escalate.
-    const distinctVoters = new Set(votes.map((v) => v.furyUserId)).size;
+    // weighted power at all, or conflicting duplicate verdicts for a reviewer) we
+    // cannot make a confident call and must escalate.
+    const distinctVoters = uniqueVotes.length;
 
     let outcome: ConsensusOutcome;
     const THRESHOLD = 0.66; // strictly more than 66% of total power required
 
-    if (totalPower === 0 || distinctVoters < FURY_CONSENSUS_SIZE) {
-      // Empty/zero-weight votes (NaN guard) or sub-quorum → escalate to human judge.
+    if (hasConflictingVerdicts || totalPower === 0 || distinctVoters < FURY_CONSENSUS_SIZE) {
+      // Conflicting duplicate verdicts, empty/zero-weight votes, or sub-quorum → escalate to human judge.
       outcome = 'SPLIT';
     } else if (passPower / totalPower > THRESHOLD) {
       outcome = 'VERIFIED';
@@ -111,7 +153,7 @@ export class ConsensusEngine {
     // known-correct (expected) verdict — not merely everyone who voted PASS.
     const flaggedFuries: string[] = [];
     if (isHoneypot) {
-      for (const vote of votes) {
+      for (const vote of uniqueVotes) {
         if (vote.verdict !== expectedVerdict) {
           flaggedFuries.push(vote.furyUserId);
         }
@@ -128,8 +170,8 @@ export class ConsensusEngine {
         failPower,
       },
       rawCounts: {
-        pass: votes.filter(v => v.verdict === 'PASS').length,
-        fail: votes.filter(v => v.verdict === 'FAIL').length,
+        pass: uniqueVotes.filter(v => v.verdict === 'PASS').length,
+        fail: uniqueVotes.filter(v => v.verdict === 'FAIL').length,
       },
       isHoneypot,
       flaggedFuries,
@@ -141,7 +183,7 @@ export class ConsensusEngine {
     // because this method does not move funds.
     return {
       outcome,
-      votes,
+      votes: uniqueVotes,
       weightedStats: { totalPower, passPower, failPower },
       flaggedFuries,
       bountyDistributed: false,

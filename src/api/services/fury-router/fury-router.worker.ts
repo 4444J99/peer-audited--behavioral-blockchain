@@ -121,7 +121,12 @@ export class FuryRouterWorker implements OnModuleInit {
         ],
       );
 
-      const selectedFuries = eligibleResult.rows;
+      const seenFuryIds = new Set<string>();
+      const selectedFuries = eligibleResult.rows.filter((row: { id: string }) => {
+        if (seenFuryIds.has(row.id)) return false;
+        seenFuryIds.add(row.id);
+        return true;
+      });
 
       // Do not finalize consensus routing with fewer than the required reviewers — a
       // single reviewer must never constitute "full consensus".
@@ -160,12 +165,16 @@ export class FuryRouterWorker implements OnModuleInit {
 
       // Create fury_assignments for each selected reviewer with an identity mask.
       // Use a crypto-random alias so the mask is unpredictable / non-enumerable.
-      for (const fury of selectedFuries) {
+      // ON CONFLICT (proof_id, fury_user_id) DO NOTHING makes replayed/concurrent
+      // routing idempotent under the unique assignment constraint.
+      for (const fury of selectedFuries.slice(0, requiredReviewers)) {
         const alias = `Target_${randomUUID().slice(0, 8)}`;
         await client.query(
           `INSERT INTO fury_assignments (proof_id, fury_user_id, subject_alias)
-           VALUES ($1, $2, $3)`,
-          [proofId, fury.id, alias],
+           SELECT $1, $2, $3
+           WHERE (SELECT COUNT(*) FROM fury_assignments WHERE proof_id = $1) < $4
+           ON CONFLICT (proof_id, fury_user_id) DO NOTHING`,
+          [proofId, fury.id, alias, requiredReviewers],
         );
       }
 

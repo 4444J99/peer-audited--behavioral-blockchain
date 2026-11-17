@@ -204,13 +204,14 @@ CREATE TABLE proofs (
 
 CREATE TABLE fury_assignments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    proof_id UUID REFERENCES proofs(id),
-    fury_user_id UUID REFERENCES users(id),
+    proof_id UUID NOT NULL REFERENCES proofs(id),
+    fury_user_id UUID NOT NULL REFERENCES users(id),
     verdict TEXT,
     rejection_code TEXT,
     reviewed_at TIMESTAMPTZ,
     assigned_at TIMESTAMPTZ DEFAULT NOW(),
-    subject_alias TEXT
+    subject_alias TEXT,
+    CONSTRAINT uq_fury_assignments_proof_reviewer UNIQUE (proof_id, fury_user_id)
 );
 
 CREATE TABLE notifications (

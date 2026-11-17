@@ -1,5 +1,6 @@
 import { ConsensusEngine, FuryVote } from './consensus.engine';
 import { TruthLogService } from '../../../services/ledger/truth-log.service';
+import { ConsensusResolver } from '../../../../shared/fury-logic/consensus.resolver';
 
 describe('ConsensusEngine', () => {
   let engine: ConsensusEngine;
@@ -113,6 +114,106 @@ describe('ConsensusEngine', () => {
       const result = await engine.evaluate('honeypot-clean', votes, true, 'PASS');
 
       expect(result.flaggedFuries).not.toContain('honest');
+    });
+
+    it('should deduplicate identical duplicate reviewer votes so 3 distinct voters + 1 duplicate row matches the 3-voter outcome and flaggedFuries', async () => {
+      // Master voter 'a' (weight 2.0) has a duplicate PASS row, while 'b' and 'c' (weight 1.0 each) vote FAIL.
+      // Without deduplication, 'a' would get 4.0 PASS vs 2.0 FAIL (66.7% PASS -> VERIFIED).
+      // With deduplication, 'a' gets 2.0 PASS vs 2.0 FAIL (50% each -> SPLIT), identical to 3 distinct voters.
+      const deduplicatedVotes: FuryVote[] = [
+        { furyUserId: 'a', verdict: 'PASS' },
+        { furyUserId: 'b', verdict: 'FAIL' },
+        { furyUserId: 'c', verdict: 'FAIL' },
+      ];
+      const duplicateVotes: FuryVote[] = [
+        { furyUserId: 'a', verdict: 'PASS' },
+        { furyUserId: 'a', verdict: 'PASS' },
+        { furyUserId: 'b', verdict: 'FAIL' },
+        { furyUserId: 'c', verdict: 'FAIL' },
+      ];
+
+      const masterStats = { rows: [{ successful_audits: '200', false_accusations: '0', total_audits: '200' }] };
+      const noviceStats = { rows: [{ successful_audits: '0', false_accusations: '0', total_audits: '0' }] };
+
+      mockPool.query
+        .mockResolvedValueOnce(masterStats)
+        .mockResolvedValueOnce(noviceStats)
+        .mockResolvedValueOnce(noviceStats);
+      const baseline = await engine.evaluate('proof-dedup-base', deduplicatedVotes, true, 'FAIL');
+
+      mockPool.query
+        .mockResolvedValueOnce(masterStats)
+        .mockResolvedValueOnce(noviceStats)
+        .mockResolvedValueOnce(noviceStats);
+      const withDuplicate = await engine.evaluate('proof-dedup-dup', duplicateVotes, true, 'FAIL');
+
+      expect(withDuplicate.outcome).toBe(baseline.outcome);
+      expect(withDuplicate.outcome).toBe('SPLIT');
+      expect(withDuplicate.votes).toEqual(baseline.votes);
+      expect(withDuplicate.flaggedFuries).toEqual(baseline.flaggedFuries);
+      expect(withDuplicate.flaggedFuries).toEqual(['a']);
+    });
+
+    it('should return SPLIT when fewer than FURY_CONSENSUS_SIZE distinct voters exist even if duplicate rows reach 3 total rows', async () => {
+      const votes: FuryVote[] = [
+        { furyUserId: 'fury-1', verdict: 'PASS' },
+        { furyUserId: 'fury-1', verdict: 'PASS' },
+        { furyUserId: 'fury-2', verdict: 'PASS' },
+      ];
+
+      const noviceStats = { rows: [{ successful_audits: '0', false_accusations: '0', total_audits: '0' }] };
+      mockPool.query
+        .mockResolvedValueOnce(noviceStats)
+        .mockResolvedValueOnce(noviceStats);
+
+      const result = await engine.evaluate('proof-dup-quorum', votes, false);
+
+      expect(result.outcome).toBe('SPLIT');
+      expect(result.votes).toHaveLength(2);
+    });
+
+    it('should fail closed to SPLIT when the same reviewer has conflicting duplicate verdicts', async () => {
+      const votes: FuryVote[] = [
+        { furyUserId: 'fury-conflict', verdict: 'PASS' },
+        { furyUserId: 'fury-conflict', verdict: 'FAIL' },
+        { furyUserId: 'fury-2', verdict: 'PASS' },
+        { furyUserId: 'fury-3', verdict: 'PASS' },
+      ];
+
+      const noviceStats = { rows: [{ successful_audits: '0', false_accusations: '0', total_audits: '0' }] };
+      mockPool.query
+        .mockResolvedValueOnce(noviceStats)
+        .mockResolvedValueOnce(noviceStats);
+
+      const result = await engine.evaluate('proof-conflict', votes, false);
+
+      expect(result.outcome).toBe('SPLIT');
+      expect(result.votes.map((v) => v.furyUserId)).toEqual(['fury-2', 'fury-3']);
+    });
+  });
+
+  describe('ConsensusResolver (shared/fury-logic)', () => {
+    it('deduplicates duplicate auditorId entries with the same decision so a single auditor cannot double-weight', () => {
+      const resolver = new ConsensusResolver();
+      const decisions = [
+        { auditorId: 'a', integrityScore: 1.0, decision: 'BREACH' as const },
+        { auditorId: 'a', integrityScore: 1.0, decision: 'BREACH' as const },
+        { auditorId: 'a', integrityScore: 1.0, decision: 'BREACH' as const },
+        { auditorId: 'b', integrityScore: 1.5, decision: 'CLEAN' as const },
+        { auditorId: 'c', integrityScore: 1.5, decision: 'CLEAN' as const },
+      ];
+      expect(resolver.resolve(decisions)).toBe('CLEAN');
+    });
+
+    it('fails closed to UNCERTAIN when the same auditorId submits conflicting decisions', () => {
+      const resolver = new ConsensusResolver();
+      const decisions = [
+        { auditorId: 'a', integrityScore: 1.0, decision: 'BREACH' as const },
+        { auditorId: 'a', integrityScore: 1.0, decision: 'CLEAN' as const },
+        { auditorId: 'b', integrityScore: 1.0, decision: 'BREACH' as const },
+        { auditorId: 'c', integrityScore: 1.0, decision: 'BREACH' as const },
+      ];
+      expect(resolver.resolve(decisions)).toBe('UNCERTAIN');
     });
   });
 });
